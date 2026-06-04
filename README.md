@@ -1,39 +1,28 @@
-# IdeaWheel
+# Spinup
 
-Official local repo path:
-- `/Users/vincent/.openclaw/workspace/projects/idea-wheel`
+> Spin the wheel. Ship the company.
 
-Official GitHub repo:
-- `https://github.com/vincentploum-cmyk/idea-wheel`
+An interactive idea generator: spin a wheel to land on a startup frontier, validate the
+market, and reveal a full blueprint (product, go-to-market, infrastructure, prototype).
 
-Official production URL:
-- `https://idea-wheel.onrender.com`
+## Run it
+It's a static site — no build step. Just open `index.html`, or serve the folder:
 
-## Canonical source of truth
+```bash
+python3 -m http.server 8000   # then visit http://localhost:8000
+```
 
-Use this workspace repo as the canonical local source of truth for IdeaWheel.
+## Host it free on GitHub Pages
+1. Push this folder to a GitHub repo.
+2. Repo **Settings → Pages → Build and deployment → Source: Deploy from a branch**.
+3. Pick branch `main` and folder `/ (root)`, then **Save**.
+4. Your site goes live at `https://<your-username>.github.io/<repo-name>/`.
 
-Do not use the older Documents-path repo for normal work:
-- `/Users/vincent/Documents/Projects/idea-wheel`
+## Files
+- `index.html` / `Spinup.html` — entry point (identical; `index.html` is what Pages serves)
+- `styles.css`, `screens.css` — design tokens + screen styles
+- `data.js` — the idea dataset
+- `components.jsx`, `wheel.jsx`, `screens.jsx`, `app.jsx` — React UI (compiled in-browser via Babel)
+- `tweaks-panel.jsx` — the live Tweaks panel
 
-That older path hit macOS file-provider / `.git` deadlock issues and is not the trusted working copy.
-
-## Normal workflow
-
-1. Make changes in this repo.
-2. Run local checks.
-3. Commit to `main`.
-4. Push to GitHub.
-5. Render auto-deploys from GitHub.
-
-## Render
-
-This repo is deployed on Render (free tier).
-Pushing to `main` triggers automatic deploys.
-Note: free tier spins down after 15 min of inactivity (~30s cold start).
-
-## Notes
-
-- Keep `.env.local` out of git.
-- Prefer GitHub-backed deploys over ad hoc clean-snapshot deploys.
-- Use the temporary snapshot workaround only if the old broken repo path is being referenced for historical recovery.
+React, ReactDOM, and Babel load from a CDN, so an internet connection is needed on first load.
