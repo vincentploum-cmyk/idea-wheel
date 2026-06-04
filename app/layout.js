@@ -4,19 +4,19 @@ import CookieBanner from '@/components/CookieBanner';
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   title: {
-    default: 'Idea Generator',
-    template: '%s | Idea Generator',
+    default: 'IdeaWheel',
+    template: '%s | IdeaWheel',
   },
-  description: 'Spin an idea, validate the market for free, and generate a full blueprint with product, GTM, infrastructure, and prototype output.',
+  description: 'Generate a business idea, validate the market for free, and unlock a full product, GTM, infrastructure, and prototype blueprint.',
   openGraph: {
-    title: 'Idea Generator',
-    description: 'Spin an idea, validate the market for free, and generate a full blueprint with product, GTM, infrastructure, and prototype output.',
+    title: 'IdeaWheel',
+    description: 'Generate a business idea, validate the market for free, and unlock a full product, GTM, infrastructure, and prototype blueprint.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Idea Generator',
-    description: 'Spin an idea, validate the market for free, and generate a full blueprint with product, GTM, infrastructure, and prototype output.',
+    title: 'IdeaWheel',
+    description: 'Generate a business idea, validate the market for free, and unlock a full product, GTM, infrastructure, and prototype blueprint.',
   },
 };
 

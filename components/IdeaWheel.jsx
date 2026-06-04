@@ -432,42 +432,71 @@ export default function IdeaWheel() {
         <section className="su-screen su-landing">
           <div className="su-landing-inner">
 
+            <div className="su-proof-bar">
+              <span className="su-proof-chip">For founders, operators, and domain experts</span>
+              <span className="su-proof-chip">Free market validation before you build</span>
+              <span className="su-proof-chip">Blueprint only when the idea holds up</span>
+            </div>
+
             <h1 className="su-display su-landing-h1">
-              <span style={{ display:"block" }}>Stop guessing.</span>
-              <span className="su-grad-text" style={{ display:"block" }}>Start with proof.</span>
+              <span style={{ display:"block" }}>Find a business idea</span>
+              <span className="su-grad-text" style={{ display:"block" }}>you can actually win with.</span>
             </h1>
             <p className="su-landing-sub">
-              Most startup ideas die because founders build first and validate never. Idea Generator flips that — spin an idea, get a real market check in seconds, then build the full blueprint only if the numbers hold up.
+              IdeaWheel gives you a sharper starting point than a blank prompt. Spin a curated concept, run a free market check, and only generate the full blueprint when the opportunity looks real.
             </p>
 
             <div className="su-landing-cta">
-              <button className="su-btn su-btn-primary su-btn-lg" onClick={() => goTo("wheel")}>
-                Get started
-              </button>
+              <div className="su-landing-cta-row">
+                <button className="su-btn su-btn-primary su-btn-lg" onClick={() => goTo("wheel")}>
+                  Generate my idea
+                </button>
+                <button className="su-btn su-btn-ghost su-btn-lg" onClick={() => document.getElementById("landing-steps")?.scrollIntoView({ behavior:"smooth", block:"start" })}>
+                  See how it works
+                </button>
+              </div>
               <p className="su-landing-free">No signup needed · Validation is always free</p>
             </div>
 
+            <div className="su-value-grid">
+              <div className="su-value-card">
+                <span className="su-value-icon">🎯</span>
+                <div className="su-value-t">Skip generic idea lists</div>
+                <div className="su-value-d">Start with a concrete concept, clear problem, and believable angle instead of vague inspiration.</div>
+              </div>
+              <div className="su-value-card">
+                <span className="su-value-icon">🔎</span>
+                <div className="su-value-t">Validate before you commit</div>
+                <div className="su-value-d">See demand, competition, market size, and the gap before you spend time building the wrong thing.</div>
+              </div>
+              <div className="su-value-card">
+                <span className="su-value-icon">⚡</span>
+                <div className="su-value-t">Move from idea to blueprint fast</div>
+                <div className="su-value-d">When a concept looks strong, unlock product, GTM, infrastructure, and prototype output in one flow.</div>
+              </div>
+            </div>
+
             {/* steps — above teaser */}
-            <div className="su-landing-steps">
+            <div className="su-landing-steps" id="landing-steps">
               <div className="su-land-step">
                 <span className="su-grad-text su-land-step-n">01</span>
                 <div>
-                  <div className="su-land-step-t">Spin an idea</div>
-                  <div className="su-land-step-d">Pick from 8 curated startup frontiers — health, fintech, AI tools, creator economy, and more. Each frontier is a real market with proven demand. One spin gives you a named concept, a tagline, and a clear problem statement to work from.</div>
+                  <div className="su-land-step-t">Generate a stronger starting point</div>
+                  <div className="su-land-step-d">Spin across curated startup frontiers like health, fintech, AI tools, creator economy, and more. Each result gives you a named concept, a sharper position, and a problem worth exploring.</div>
                 </div>
               </div>
               <div className="su-land-step">
                 <span className="su-grad-text su-land-step-n">02</span>
                 <div>
-                  <div className="su-land-step-t">Validate the market — free</div>
-                  <div className="su-land-step-d">Before spending anything, an AI scout searches for real competitors, maps the market size, scores demand, and finds the gap you could exploit. You get a build/avoid verdict with reasons — not a generic summary. This always runs for free.</div>
+                  <div className="su-land-step-t">Pressure-test the market for free</div>
+                  <div className="su-land-step-d">Before you pay for anything, IdeaWheel checks demand, competition, market size, and the wedge you might own. You get a real build, caution, or avoid signal, not generic AI fluff.</div>
                 </div>
               </div>
               <div className="su-land-step">
                 <span className="su-grad-text su-land-step-n">03</span>
                 <div>
-                  <div className="su-land-step-t">Build the full blueprint</div>
-                  <div className="su-land-step-d">One credit runs 4 specialized AI agents back to back: a product designer names your product and specs the features, a GTM strategist writes your first-5-customers plan and 30-day roadmap, an infrastructure architect details every service to sign up for, and a prototype builder ships a clickable HTML demo you can test immediately.</div>
+                  <div className="su-land-step-t">Unlock the blueprint only if it passes</div>
+                  <div className="su-land-step-d">One credit runs product design, GTM planning, infrastructure mapping, and prototype generation so you can move from idea to something testable without starting from scratch.</div>
                 </div>
               </div>
             </div>
@@ -494,8 +523,8 @@ export default function IdeaWheel() {
                 <div className="su-result-empty">
                   <div className="su-result-empty-ring">✦</div>
                   <div>
-                    <div className="su-result-empty-t">Your idea appears here</div>
-                    <div className="su-result-empty-d">Hit SPIN to draw from {SEGMENTS.length} frontiers</div>
+                    <div className="su-result-empty-t">Your business concept appears here</div>
+                    <div className="su-result-empty-d">Hit SPIN to generate from {SEGMENTS.length} curated frontiers</div>
                   </div>
                 </div>
               ) : (
@@ -509,7 +538,7 @@ export default function IdeaWheel() {
                   <p className="su-result-blurb">{idea.blurb}</p>
                   <div className="su-result-actions">
                     <button className="su-btn su-btn-primary" onClick={() => { goTo("validate"); runValidate(); }}>
-                      Validate this idea →
+                      Run free market check →
                     </button>
                   </div>
                 </>
@@ -774,7 +803,7 @@ export default function IdeaWheel() {
 
       {/* ── DISCLAIMER ── */}
       <div className="su-disclaimer">
-        <p>Idea Generator is an AI-powered research and ideation tool. All market analysis, competitor data, build scores, and recommendations are generated by AI and provided for informational purposes only. They do not constitute professional business, legal, or financial advice. AI-generated research may be incomplete, inaccurate, or outdated — market conditions change rapidly. We make no guarantees about the commercial viability of any idea or the accuracy of competitive intelligence. You are solely responsible for any business decisions you make based on this tool. Always conduct your own research and consult qualified professionals before investing time or money into any venture.</p>
+        <p>IdeaWheel is an AI-powered research and ideation tool. All market analysis, competitor data, build scores, and recommendations are generated by AI and provided for informational purposes only. They do not constitute professional business, legal, or financial advice. AI-generated research may be incomplete, inaccurate, or outdated, and market conditions change rapidly. We make no guarantees about the commercial viability of any idea or the accuracy of competitive intelligence. You are solely responsible for any business decisions you make based on this tool. Always conduct your own research and consult qualified professionals before investing time or money into any venture.</p>
       </div>
     </div>
   );
@@ -858,9 +887,10 @@ const CSS = `
 .su-landing-inner { text-align:center; max-width:620px; margin:0 auto; position:relative; z-index:2; }
 .su-landing-h1 { font-size:clamp(44px,7vw,82px); color:var(--ink); margin:0 0 22px; }
 .su-landing-sub { font-size:17px; color:var(--muted); margin:0 0 36px; line-height:1.65; max-width:500px; margin-left:auto; margin-right:auto; }
-.su-landing-cta { display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:48px; }
+.su-landing-cta { display:flex; flex-direction:column; align-items:center; gap:12px; margin:36px 0 20px; }
+.su-landing-cta-row { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
 .su-landing-meta { font-size:13px; color:var(--faint); }
-.su-landing-free { font-size:12px; color:var(--faint); margin:8px 0 0; }
+.su-landing-free { font-size:12px; color:var(--faint); margin:0; }
 
 /* proof bar */
 .su-proof-bar { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-bottom:28px; }
