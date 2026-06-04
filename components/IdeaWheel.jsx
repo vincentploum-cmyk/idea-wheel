@@ -100,7 +100,6 @@ function TeaserReels() {
           <TeaserReel key={i} bank={bank} color={REEL_COLORS[i]} label={REEL_LABELS[i]} />
         ))}
       </div>
-      <div className="tr-hint">Infinite combinations · AI validates each one</div>
     </div>
   );
 }
