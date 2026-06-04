@@ -36,6 +36,7 @@ export default function ProfileClient({ user, error }) {
 
   return (
     <div style={s.page}>
+      <style>{`@keyframes blobdrift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,-30px) scale(1.12)}}`}</style>
       {/* blobs */}
       <div style={s.blob1} />
       <div style={s.blob2} />
@@ -130,11 +131,14 @@ const s = {
     position: 'fixed', width: 480, height: 480, top: '-8%', left: '-6%',
     borderRadius: '50%', background: '#7c3aed', filter: 'blur(70px)',
     opacity: .32, pointerEvents: 'none', zIndex: 0,
+    animation: 'blobdrift 22s ease-in-out infinite',
   },
   blob2: {
     position: 'fixed', width: 420, height: 420, bottom: '-12%', right: '-6%',
     borderRadius: '50%', background: '#ff4d8d', filter: 'blur(70px)',
     opacity: .28, pointerEvents: 'none', zIndex: 0,
+    animation: 'blobdrift 22s ease-in-out infinite',
+    animationDelay: '-7s',
   },
   center: {
     flex: 1,

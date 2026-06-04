@@ -64,9 +64,10 @@ export default function PricingPageClient({ searchParams }) {
       position: 'relative',
       overflow: 'hidden',
     }}>
+      <style>{`@keyframes blobdrift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,-30px) scale(1.12)}}`}</style>
       {/* blobs */}
-      <div style={{ position:'fixed', width:480, height:480, top:'-8%', left:'-6%', borderRadius:'50%', background:'#7c3aed', filter:'blur(70px)', opacity:.32, pointerEvents:'none', zIndex:0 }}/>
-      <div style={{ position:'fixed', width:420, height:420, bottom:'-12%', right:'-6%', borderRadius:'50%', background:'#ff4d8d', filter:'blur(70px)', opacity:.28, pointerEvents:'none', zIndex:0, animationDelay:'-7s' }}/>
+      <div style={{ position:'fixed', width:480, height:480, top:'-8%', left:'-6%', borderRadius:'50%', background:'#7c3aed', filter:'blur(70px)', opacity:.32, pointerEvents:'none', zIndex:0, animation:'blobdrift 22s ease-in-out infinite' }}/>
+      <div style={{ position:'fixed', width:420, height:420, bottom:'-12%', right:'-6%', borderRadius:'50%', background:'#ff4d8d', filter:'blur(70px)', opacity:.28, pointerEvents:'none', zIndex:0, animation:'blobdrift 22s ease-in-out infinite', animationDelay:'-7s' }}/>
 
       <div style={{ position:'relative', zIndex:1, maxWidth: 900, margin: '0 auto' }}>
         {/* back link */}
