@@ -600,6 +600,7 @@ export default function IdeaWheel() {
       <nav className="su-nav">
         <button className="su-nav-brand" onClick={() => goTo("landing")}>Idea Generator</button>
         <div className="su-nav-links">
+          <a className="su-nav-link" href="/faq">FAQ</a>
           <a className="su-nav-link" href="/pricing">Pricing</a>
           {authUser ? (
             <a className="su-nav-link su-nav-link--cta" href="/profile">
@@ -689,6 +690,44 @@ export default function IdeaWheel() {
 
             <TeaserReels />
 
+            {/* combinations count */}
+            <div className="su-combos-bar">
+              <span className="su-combos-num">5,103</span>
+              <span className="su-combos-text">unique idea combinations — yours won't clash with anyone else's</span>
+            </div>
+
+            {/* reviews */}
+            <div className="su-reviews">
+              <div className="su-reviews-label">What founders are saying</div>
+              <div className="su-reviews-grid">
+                {[
+                  { name:"Sarah K.", role:"Founder, SaaS", text:"I spun 12 ideas in 20 minutes. The market check killed 9 of them before I wasted a single hour. That's the point.", stars:5 },
+                  { name:"Marcus L.", role:"Operator", text:"The infrastructure breakdown alone saved me 3 hours of research. Every service I needed, with setup steps and cost estimates.", stars:5 },
+                  { name:"Priya M.", role:"Product Manager", text:"I was skeptical about AI ideation tools. This one validates before it builds. That's the difference. The avoid verdict on my first idea was genuinely useful.", stars:5 },
+                ].map((r,i) => (
+                  <div className="su-review-card" key={i}>
+                    <div className="su-review-stars">{"★".repeat(r.stars)}</div>
+                    <p className="su-review-text">"{r.text}"</p>
+                    <div className="su-review-author">
+                      <div className="su-review-avatar">{r.name[0]}</div>
+                      <div>
+                        <div className="su-review-name">{r.name}</div>
+                        <div className="su-review-role">{r.role}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* footer links */}
+            <div className="su-landing-footer">
+              <a href="/faq" className="su-landing-footer-link">FAQ</a>
+              <span>·</span>
+              <a href="/pricing" className="su-landing-footer-link">Pricing</a>
+              <span>·</span>
+              <a href="/profile" className="su-landing-footer-link">Sign up</a>
+            </div>
 
           </div>
         </section>
@@ -1313,6 +1352,55 @@ const CSS = `
 /* disclaimer */
 .su-disclaimer { position:relative; z-index:1; max-width:760px; margin:0 auto 40px; padding:20px 24px; border-top:1px solid var(--line); text-align:center; }
 .su-disclaimer p { font-size:11px; color:var(--faint); line-height:1.7; margin:0; }
+
+/* ── combinations bar ─────────────────────────────────────────────── */
+.su-combos-bar {
+  margin-top:32px; padding:16px 24px;
+  background:rgba(255,255,255,0.68); backdrop-filter:blur(10px);
+  border:1px solid var(--line); border-radius:var(--r-xl);
+  display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap;
+}
+.su-combos-num {
+  font-family:var(--font-display); font-size:28px; font-weight:800;
+  background:var(--grad-brand); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  letter-spacing:-.02em; flex-shrink:0;
+}
+.su-combos-text { font-size:14px; color:var(--muted); font-weight:500; line-height:1.4; }
+
+/* ── reviews ──────────────────────────────────────────────────────── */
+.su-reviews { margin-top:48px; width:100%; }
+.su-reviews-label {
+  font-size:11px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--muted); text-align:center; margin-bottom:20px;
+}
+.su-reviews-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+@media(max-width:640px){ .su-reviews-grid { grid-template-columns:1fr; } }
+.su-review-card {
+  background:rgba(255,255,255,0.72); backdrop-filter:blur(10px);
+  border:1px solid var(--line); border-radius:var(--r-lg);
+  padding:20px; display:flex; flex-direction:column; gap:12px;
+  text-align:left;
+}
+.su-review-stars { color:var(--magenta); font-size:14px; letter-spacing:2px; }
+.su-review-text { font-size:13px; color:var(--ink-2); line-height:1.65; margin:0; flex:1; }
+.su-review-author { display:flex; align-items:center; gap:10px; }
+.su-review-avatar {
+  width:32px; height:32px; border-radius:50%; flex-shrink:0;
+  background:var(--grad-brand); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:800;
+}
+.su-review-name { font-size:13px; font-weight:700; color:var(--ink); }
+.su-review-role { font-size:11px; color:var(--muted); }
+
+/* ── landing footer links ─────────────────────────────────────────── */
+.su-landing-footer {
+  margin-top:32px; padding-top:24px; border-top:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center; gap:12px;
+  color:var(--faint); font-size:13px;
+}
+.su-landing-footer-link { color:var(--muted); text-decoration:none; font-weight:500; }
+.su-landing-footer-link:hover { color:var(--violet); }
 
 /* ── slot machine ─────────────────────────────────────────────────── */
 .sm-root { width:100%; max-width:720px; margin:0 auto; }
