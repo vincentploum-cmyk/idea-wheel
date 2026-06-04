@@ -401,13 +401,6 @@ export default function IdeaWheel() {
         <section className="su-screen su-landing">
           <div className="su-landing-inner">
 
-            {/* proof bar */}
-            <div className="su-proof-bar">
-              <span className="su-proof-chip">⚡ AI-powered validation</span>
-              <span className="su-proof-chip">🔍 Live competitor scan</span>
-              <span className="su-proof-chip">🏗️ Full blueprint in minutes</span>
-            </div>
-
             <h1 className="su-display su-landing-h1">
               <span style={{ display:"block" }}>Stop guessing.</span>
               <span className="su-grad-text" style={{ display:"block" }}>Start with proof.</span>
@@ -421,6 +414,31 @@ export default function IdeaWheel() {
                 ✦ Spin a free idea
               </button>
               <p className="su-landing-free">No signup needed · Validation is always free</p>
+            </div>
+
+            {/* steps — above teaser */}
+            <div className="su-landing-steps">
+              <div className="su-land-step">
+                <span className="su-grad-text su-land-step-n">01</span>
+                <div>
+                  <div className="su-land-step-t">Spin an idea</div>
+                  <div className="su-land-step-d">Pick from 8 curated startup frontiers — health, fintech, AI tools, creator economy, and more. Each frontier is a real market with proven demand. One spin gives you a named concept, a tagline, and a clear problem statement to work from.</div>
+                </div>
+              </div>
+              <div className="su-land-step">
+                <span className="su-grad-text su-land-step-n">02</span>
+                <div>
+                  <div className="su-land-step-t">Validate the market — free</div>
+                  <div className="su-land-step-d">Before spending anything, an AI scout searches for real competitors, maps the market size, scores demand, and finds the gap you could exploit. You get a build/avoid verdict with reasons — not a generic summary. This always runs for free.</div>
+                </div>
+              </div>
+              <div className="su-land-step">
+                <span className="su-grad-text su-land-step-n">03</span>
+                <div>
+                  <div className="su-land-step-t">Build the full blueprint</div>
+                  <div className="su-land-step-d">One credit runs 4 specialized AI agents back to back: a product designer names your product and specs the features, a GTM strategist writes your first-5-customers plan and 30-day roadmap, an infrastructure architect details every service to sign up for, and a prototype builder ships a clickable HTML demo you can test immediately.</div>
+                </div>
+              </div>
             </div>
 
             <TeaserReels />
@@ -442,20 +460,6 @@ export default function IdeaWheel() {
                 <div className="su-value-t">Pay only for winners</div>
                 <div className="su-value-d">Validation is always free. Spend a credit only when the market signals are strong enough to justify building. No wasted budget on dead ends.</div>
               </div>
-            </div>
-
-            {/* steps */}
-            <div className="su-landing-steps">
-              {[
-                ["01","Spin","Pick from 8 validated startup frontiers — health, fintech, AI tools, and more."],
-                ["02","Validate free","Get a live market check: demand score, competitor weaknesses, and the gap to exploit."],
-                ["03","Build the blueprint","1 credit unlocks product spec, GTM playbook, infra plan, and a clickable prototype."]
-              ].map(([n,t,d]) => (
-                <div className="su-land-step" key={n}>
-                  <span className="su-grad-text su-land-step-n">{n}</span>
-                  <div><div className="su-land-step-t">{t}</div><div className="su-land-step-d">{d}</div></div>
-                </div>
-              ))}
             </div>
 
           </div>
