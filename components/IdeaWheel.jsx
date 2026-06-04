@@ -795,7 +795,7 @@ export default function IdeaWheel() {
             </div>
           )}
         </section>
-      }}
+      )}
 
       {/* ── BLUEPRINT ── */}
       {screen === "blueprint" && idea && (
