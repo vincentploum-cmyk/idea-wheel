@@ -640,17 +640,23 @@ export default function IdeaWheel() {
 
             <div className="su-value-grid">
               <div className="su-value-card">
-                <span className="su-value-icon">🎯</span>
+                <div className="su-value-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                </div>
                 <div className="su-value-t">Skip generic idea lists</div>
                 <div className="su-value-d">Start with a concrete concept, clear problem, and believable angle instead of vague inspiration.</div>
               </div>
               <div className="su-value-card">
-                <span className="su-value-icon">🔎</span>
+                <div className="su-value-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </div>
                 <div className="su-value-t">Validate before you commit</div>
                 <div className="su-value-d">See demand, competition, market size, and the gap before you spend time building the wrong thing.</div>
               </div>
               <div className="su-value-card">
-                <span className="su-value-icon">⚡</span>
+                <div className="su-value-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                </div>
                 <div className="su-value-t">Move from idea to blueprint fast</div>
                 <div className="su-value-d">When a concept looks strong, unlock product, GTM, infrastructure, and prototype output in one flow.</div>
               </div>
@@ -1068,7 +1074,13 @@ const CSS = `
   background:rgba(255,255,255,0.62); backdrop-filter:blur(10px);
   border:1px solid var(--line);
 }
-.su-value-icon { font-size:22px; display:block; margin-bottom:10px; }
+.su-value-icon {
+  width:40px; height:40px; border-radius:10px; margin-bottom:14px;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--grad-brand);
+  color:#fff;
+  flex-shrink:0;
+}
 .su-value-t { font-weight:700; font-size:14px; color:var(--ink); margin-bottom:8px; line-height:1.3; }
 .su-value-d { font-size:13px; color:var(--muted); line-height:1.65; }
 .su-landing-steps { display:flex; gap:0; justify-content:center; flex-wrap:wrap; }
