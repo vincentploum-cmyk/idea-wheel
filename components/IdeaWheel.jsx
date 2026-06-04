@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { CREDIT_PACKAGES } from "@/lib/pricing";
+import { createClient } from "@/lib/supabase-browser";
 
 /* ─── IDEA SEGMENTS ──────────────────────────────────────────────── */
 const SEGMENTS = [
@@ -246,6 +247,8 @@ export default function IdeaWheel() {
   const [idea, setIdea]     = useState(null);
   const [credits, setCredits] = useState(3);
   const [mounted, setMounted] = useState(false);
+  const [authUser, setAuthUser]       = useState(null);   // logged-in user
+  const [hasAccount, setHasAccount]   = useState(false);  // ever signed up
 
   // validate state
   const [validating, setValidating] = useState(false);
@@ -271,7 +274,27 @@ export default function IdeaWheel() {
     try {
       const stored = Number(localStorage.getItem("ideaWheelCredits") || "3");
       if (Number.isFinite(stored) && stored >= 0) setCredits(stored);
+      if (localStorage.getItem("ideaWheelHasAccount") === "1") setHasAccount(true);
     } catch {}
+    // check Supabase session
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => {
+      if (data?.session?.user) {
+        setAuthUser(data.session.user);
+        try { localStorage.setItem("ideaWheelHasAccount", "1"); } catch {}
+        setHasAccount(true);
+      }
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (session?.user) {
+        setAuthUser(session.user);
+        try { localStorage.setItem("ideaWheelHasAccount", "1"); } catch {}
+        setHasAccount(true);
+      } else {
+        setAuthUser(null);
+      }
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -391,7 +414,16 @@ export default function IdeaWheel() {
       <nav className="su-nav">
         <div className="su-nav-links">
           <a className="su-nav-link" href="/pricing">Pricing</a>
-          <a className="su-nav-link su-nav-link--cta" href="/profile">Profile</a>
+          {authUser ? (
+            <a className="su-nav-link su-nav-link--cta" href="/profile">
+              <span className="su-nav-avatar">{authUser.email?.[0]?.toUpperCase()}</span>
+              Profile
+            </a>
+          ) : hasAccount ? (
+            <a className="su-nav-link su-nav-link--cta" href="/profile">Log in</a>
+          ) : (
+            <a className="su-nav-link su-nav-link--cta" href="/profile">Sign up</a>
+          )}
         </div>
       </nav>
 
@@ -784,6 +816,12 @@ const CSS = `
 .su-nav-link:hover { color:var(--ink); background:var(--bg-2); }
 .su-nav-link--cta { color:var(--ink); border-color:var(--line); background:var(--bg-2); }
 .su-nav-link--cta:hover { border-color:var(--violet); color:var(--violet); }
+.su-nav-avatar {
+  width:20px; height:20px; border-radius:50%;
+  background:var(--grad-brand); color:#fff;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:800; flex-shrink:0;
+}
 
 /* screens */
 .su-screen {
