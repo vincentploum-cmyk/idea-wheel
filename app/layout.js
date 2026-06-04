@@ -3,18 +3,18 @@ import './globals.css';
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   title: {
-    default: 'IdeaWheel',
-    template: '%s | IdeaWheel',
+    default: 'Idea Generator',
+    template: '%s | Idea Generator',
   },
   description: 'Spin an idea, validate the market for free, and generate a full blueprint with product, GTM, infrastructure, and prototype output.',
   openGraph: {
-    title: 'IdeaWheel',
+    title: 'Idea Generator',
     description: 'Spin an idea, validate the market for free, and generate a full blueprint with product, GTM, infrastructure, and prototype output.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'IdeaWheel',
+    title: 'Idea Generator',
     description: 'Spin an idea, validate the market for free, and generate a full blueprint with product, GTM, infrastructure, and prototype output.',
   },
 };

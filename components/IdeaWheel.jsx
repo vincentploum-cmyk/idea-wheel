@@ -613,7 +613,7 @@ export default function IdeaWheel() {
             </div>
             <div className="iw-headgrid">
               <div className="iw-headcopy">
-                <h1 className="iw-title">IdeaWheel</h1>
+                <h1 className="iw-title">Idea Generator</h1>
                 <p className="iw-sub">Generate an AI wedge, pressure-test the market for free, then unlock the full multi-agent blueprint only when the opportunity is real.</p>
                 <div className="iw-proofrow">
                   <span className="iw-proofchip">Free validation</span>
@@ -632,7 +632,6 @@ export default function IdeaWheel() {
 
           <div className="iw-controlshelf">
             <div className="iw-bar">
-              <div className="iw-barlabel">Mode</div>
               <div className="iw-modes">
                 {Object.keys(MODES).map((k) => (<button key={k} className={`iw-modebtn ${mode === k ? "on" : ""}`} onClick={() => setMode(k)} disabled={anySpinning}>{MODES[k].name}</button>))}
               </div>
@@ -641,28 +640,9 @@ export default function IdeaWheel() {
                 <span className="iw-creditlbl">credits</span>
               </button>
             </div>
-            <div className="iw-steprail" aria-label="Progress">
-              <span className={`iw-stepchip ${!scoutDone && !buildRunning && !briefDone ? 'iw-stepchip--active' : 'iw-stepchip--done'}`}>
-                {(!scoutDone && !buildRunning && !briefDone) ? '1 Spin' : '✓ Spun'}
-              </span>
-              <span className="iw-steprail-arrow" aria-hidden>›</span>
-              <span className={`iw-stepchip ${scoutRunning ? 'iw-stepchip--active' : scoutDone || buildRunning || briefDone ? 'iw-stepchip--done' : ''}`}>
-                {scoutDone || buildRunning || briefDone ? '✓ Validated' : scoutRunning ? 'Validating…' : '2 Validate free'}
-              </span>
-              <span className="iw-steprail-arrow" aria-hidden>›</span>
-              <span className={`iw-stepchip ${buildRunning ? 'iw-stepchip--active' : briefDone ? 'iw-stepchip--done' : ''}`}>
-                {briefDone ? '✓ Blueprint ready' : buildRunning ? 'Building…' : '3 Build blueprint'}
-              </span>
-            </div>
           </div>
 
           <div className="iw-slotmachine">
-            <div className="iw-marquee">
-              <span className="iw-marquee-label">IDEAWHEEL JACKPOT</span>
-              <div className="iw-marquee-dots" aria-hidden><span /><span /><span /><span /><span /></div>
-              <span className="iw-marquee-copy">Spin a wedge, validate it free, then build only the winners.</span>
-            </div>
-
             <div className="iw-reelintro">
               <div>
                 <span className="iw-reelintro-label">LIVE WEDGE GENERATOR</span>
@@ -696,7 +676,7 @@ export default function IdeaWheel() {
                 <span /><span /><span /><span /><span /><span /><span />
               </div>
               <div className="iw-controls">
-                <button className="iw-spin" onClick={spinAll} disabled={anySpinning}>{anySpinning ? "Spinning…" : <><Dices size={16} /> Spin a better wedge</>}</button>
+                <button className="iw-spin" onClick={spinAll} disabled={anySpinning}>{anySpinning ? "Spinning…" : <><Dices size={16} /> Generate Idea!</>}</button>
                 <span className="iw-spinhint">Lock a good reel, then reroll the rest.</span>
               </div>
             </div>
