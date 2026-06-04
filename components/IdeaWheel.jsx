@@ -400,27 +400,64 @@ export default function IdeaWheel() {
       {screen === "landing" && (
         <section className="su-screen su-landing">
           <div className="su-landing-inner">
+
+            {/* proof bar */}
+            <div className="su-proof-bar">
+              <span className="su-proof-chip">⚡ AI-powered validation</span>
+              <span className="su-proof-chip">🔍 Live competitor scan</span>
+              <span className="su-proof-chip">🏗️ Full blueprint in minutes</span>
+            </div>
+
             <h1 className="su-display su-landing-h1">
-              <span style={{ display:"block" }}>Spin the wheel.</span>
-              <span className="su-grad-text" style={{ display:"block" }}>Ship the company.</span>
+              <span style={{ display:"block" }}>Stop guessing.</span>
+              <span className="su-grad-text" style={{ display:"block" }}>Start with proof.</span>
             </h1>
             <p className="su-landing-sub">
-              One spin lands you on a validated startup idea — then we build the full blueprint: product, go-to-market, infrastructure, and a clickable prototype.
+              Most startup ideas die because founders build first and validate never. Idea Generator flips that — spin an idea, get a real market check in seconds, then build the full blueprint only if the numbers hold up.
             </p>
+
             <div className="su-landing-cta">
               <button className="su-btn su-btn-primary su-btn-lg" onClick={() => goTo("wheel")}>
-                ✦ Spin an idea
+                ✦ Spin a free idea
               </button>
+              <p className="su-landing-free">No signup needed · Validation is always free</p>
             </div>
+
             <TeaserReels />
+
+            {/* value props */}
+            <div className="su-value-grid">
+              <div className="su-value-card">
+                <span className="su-value-icon">🎯</span>
+                <div className="su-value-t">Validate before you build</div>
+                <div className="su-value-d">Real competitor data, market sizing, and demand signals — not vibes. Know if it's worth your time before writing a line of code.</div>
+              </div>
+              <div className="su-value-card">
+                <span className="su-value-icon">🤖</span>
+                <div className="su-value-t">4 AI agents, one blueprint</div>
+                <div className="su-value-d">Product designer, GTM strategist, infrastructure architect, and prototype builder all run in sequence. You get a complete plan, not a summary.</div>
+              </div>
+              <div className="su-value-card">
+                <span className="su-value-icon">💸</span>
+                <div className="su-value-t">Pay only for winners</div>
+                <div className="su-value-d">Validation is always free. Spend a credit only when the market signals are strong enough to justify building. No wasted budget on dead ends.</div>
+              </div>
+            </div>
+
+            {/* steps */}
             <div className="su-landing-steps">
-              {[["01","Spin","Land on a frontier"],["02","Validate","Read the market"],["03","Build","Get the blueprint"]].map(([n,t,d]) => (
+              {[
+                ["01","Spin","Pick from 8 validated startup frontiers — health, fintech, AI tools, and more."],
+                ["02","Validate free","Get a live market check: demand score, competitor weaknesses, and the gap to exploit."],
+                ["03","Build the blueprint","1 credit unlocks product spec, GTM playbook, infra plan, and a clickable prototype."]
+              ].map(([n,t,d]) => (
                 <div className="su-land-step" key={n}>
                   <span className="su-grad-text su-land-step-n">{n}</span>
                   <div><div className="su-land-step-t">{t}</div><div className="su-land-step-d">{d}</div></div>
                 </div>
               ))}
             </div>
+
           </div>
         </section>
       )}
@@ -800,11 +837,38 @@ const CSS = `
 .su-landing-sub { font-size:17px; color:var(--muted); margin:0 0 36px; line-height:1.65; max-width:500px; margin-left:auto; margin-right:auto; }
 .su-landing-cta { display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:48px; }
 .su-landing-meta { font-size:13px; color:var(--faint); }
+.su-landing-free { font-size:12px; color:var(--faint); margin:8px 0 0; }
+
+/* proof bar */
+.su-proof-bar { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-bottom:28px; }
+.su-proof-chip {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 14px; border-radius:var(--r-pill);
+  background:rgba(255,255,255,0.72); backdrop-filter:blur(8px);
+  border:1px solid var(--line); font-size:12px; font-weight:600; color:var(--ink-2);
+}
+
+/* value grid */
+.su-value-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:14px;
+  margin:36px 0 0; text-align:left;
+}
+@media(max-width:640px){ .su-value-grid { grid-template-columns:1fr; } }
+.su-value-card {
+  padding:20px; border-radius:var(--r-lg);
+  background:rgba(255,255,255,0.62); backdrop-filter:blur(10px);
+  border:1px solid var(--line);
+}
+.su-value-icon { font-size:22px; display:block; margin-bottom:10px; }
+.su-value-t { font-weight:700; font-size:14px; color:var(--ink); margin-bottom:8px; line-height:1.3; }
+.su-value-d { font-size:13px; color:var(--muted); line-height:1.65; }
 .su-landing-steps { display:flex; gap:0; justify-content:center; flex-wrap:wrap; }
-.su-land-step { display:flex; align-items:center; gap:12px; padding:16px 24px; }
-.su-land-step-n { font-family:var(--font-display); font-size:22px; font-weight:700; }
-.su-land-step-t { font-weight:700; font-size:14px; color:var(--ink); }
-.su-land-step-d { font-size:12px; color:var(--muted); margin-top:2px; }
+.su-landing-steps { display:flex; flex-direction:column; gap:0; margin-top:36px; max-width:560px; text-align:left; }
+.su-land-step { display:flex; align-items:flex-start; gap:16px; padding:16px 0; border-top:1px solid var(--line); }
+.su-land-step:last-child { border-bottom:1px solid var(--line); }
+.su-land-step-n { font-family:var(--font-display); font-size:20px; font-weight:700; flex-shrink:0; padding-top:2px; }
+.su-land-step-t { font-weight:700; font-size:14px; color:var(--ink); margin-bottom:4px; }
+.su-land-step-d { font-size:13px; color:var(--muted); line-height:1.6; }
 
 /* buttons */
 .su-btn {
