@@ -614,7 +614,7 @@ export default function IdeaWheel() {
             <div className="iw-headgrid">
               <div className="iw-headcopy">
                 <h1 className="iw-title">Idea Generator</h1>
-                <p className="iw-sub">Generate an AI wedge, pressure-test the market for free, then unlock the full multi-agent blueprint only when the opportunity is real.</p>
+                <p className="iw-sub">Spin an idea. Validate the market for free. Build only when it's worth it.</p>
                 <div className="iw-proofrow">
                   <span className="iw-proofchip">Free validation</span>
                   <span className="iw-proofchip">Live blueprint build</span>
