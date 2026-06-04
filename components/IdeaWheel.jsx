@@ -351,15 +351,6 @@ export default function IdeaWheel() {
       {/* ── LANDING ── */}
       {screen === "landing" && (
         <section className="su-screen su-landing">
-          <div className="su-landing-chips" aria-hidden>
-            {SEGMENTS.map((s,i) => (
-              <span key={s.id} className="su-float-chip"
-                style={{ "--c":s.color, left:CHIP_POS[i].x+"%", top:CHIP_POS[i].y+"%", animationDelay:(i*0.5)+"s" }}>
-                <span className="su-float-dot" style={{ background:s.color }}/>
-                {s.label}
-              </span>
-            ))}
-          </div>
           <div className="su-landing-inner">
             <div className="su-eyebrow">From a spin to a startup</div>
             <h1 className="su-display su-landing-h1">
