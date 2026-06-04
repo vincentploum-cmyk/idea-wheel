@@ -243,7 +243,7 @@ function ProtoFrame({ html }) {
 
 /* ─── MAIN APP ───────────────────────────────────────────────────── */
 export default function IdeaWheel() {
-  const [screen, setScreen] = useState("landing");   // landing | wheel | validate | blueprint
+  const [screen, setScreen] = useState("wheel");   // landing | wheel | validate | blueprint
   const [idea, setIdea]     = useState(null);
   const [credits, setCredits] = useState(3);
   const [mounted, setMounted] = useState(false);
@@ -412,6 +412,7 @@ export default function IdeaWheel() {
 
       {/* ── NAV ── */}
       <nav className="su-nav">
+        <button className="su-nav-brand" onClick={() => goTo("landing")}>Idea Generator</button>
         <div className="su-nav-links">
           <a className="su-nav-link" href="/pricing">Pricing</a>
           {authUser ? (
