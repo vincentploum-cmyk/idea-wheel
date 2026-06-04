@@ -1121,6 +1121,8 @@ const CSS = `
   height:56px; overflow:hidden; border-radius:var(--r-sm);
   background:rgba(255,255,255,0.9); border:1px solid var(--line-2);
   position:relative;
+  filter:blur(3.5px);
+  user-select:none; pointer-events:none;
 }
 .tr-window::before,.tr-window::after {
   content:''; position:absolute; left:0; right:0; height:12px; z-index:2; pointer-events:none;
