@@ -696,13 +696,10 @@ const CSS = `
 /* nav */
 .su-nav {
   position:relative; z-index:10;
-  max-width:860px; margin:0 auto;
+  max-width:860px; margin:20px auto 0;
   display:flex; align-items:center; justify-content:flex-end;
-  padding:14px 20px;
-  background:rgba(255,255,255,0.72); backdrop-filter:blur(12px);
-  border:1px solid var(--line); border-radius:var(--r-xl);
-  margin-top:20px;
-  box-shadow:var(--sh-sm);
+  padding:8px 20px;
+  background:none; border:none; box-shadow:none;
 }
 .su-nav-brand {
   font-family:var(--font-display); font-size:15px; font-weight:800;
