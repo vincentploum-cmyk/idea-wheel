@@ -611,21 +611,13 @@ export default function IdeaWheel() {
               <span className="iw-kicker">SPIN. VALIDATE. BUILD.</span>
               <span className="iw-headbadge">Free market check before checkout</span>
             </div>
-            <div className="iw-headgrid">
-              <div className="iw-headcopy">
-                <h1 className="iw-title">Idea Generator</h1>
-                <p className="iw-sub">Spin an idea. Validate the market for free. Build only when it's worth it.</p>
-                <div className="iw-proofrow">
-                  <span className="iw-proofchip">Free validation</span>
-                  <span className="iw-proofchip">Live blueprint build</span>
-                  <span className="iw-proofchip">1 credit only if it passes</span>
-                </div>
-              </div>
-              <div className="iw-headcard">
-                <span className="iw-headcard-label">What happens next</span>
-                <div className="iw-headcard-metric"><strong>1.</strong><span>Spin a wedge and lock the pieces you like.</span></div>
-                <div className="iw-headcard-metric"><strong>2.</strong><span>Run a free market check against real competitors.</span></div>
-                <div className="iw-headcard-metric"><strong>3.</strong><span>Spend 1 credit only if the gap is worth building.</span></div>
+            <div className="iw-headcopy">
+              <h1 className="iw-title">Idea Generator</h1>
+              <p className="iw-sub">Spin an idea. Validate the market for free. Build only when it's worth it.</p>
+              <div className="iw-proofrow">
+                <span className="iw-proofchip">Free validation</span>
+                <span className="iw-proofchip">Live blueprint build</span>
+                <span className="iw-proofchip">1 credit only if it passes</span>
               </div>
             </div>
           </header>
