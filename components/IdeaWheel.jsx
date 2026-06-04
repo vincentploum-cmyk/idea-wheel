@@ -56,6 +56,55 @@ function lighten(hex, t) {
   return `rgb(${r},${g},${b})`;
 }
 
+/* ─── TEASER REEL DATA ───────────────────────────────────────────── */
+const TEASER_BANKS = [
+  ['Automate','Predict','Personalize','Track','Simplify','Detect','Coach','Gamify','Streamline','Analyze','Recommend','Eliminate'],
+  ['customer onboarding','invoice matching','health tracking','daily habits','lead qualification','mental wellness','appointment scheduling','money management','compliance checks','sleep & recovery','contract review','skill learning'],
+  ['Healthcare','Freelancers','EdTech companies','Fintech startups','Dental practices','ADHD adults','Legal services','New parents','Marketing agencies','Athletes','Non-profits','Remote workers'],
+];
+const REEL_COLORS = ['#7c3aed','#c026d3','#ff4d8d'];
+const REEL_LABELS = ['ACTION','WORKFLOW','FOR'];
+
+/* ─── AUTO-CYCLING TEASER REEL ──────────────────────────────────── */
+function TeaserReel({ bank, color, label }) {
+  const [offset, setOffset] = useState(0);
+  const ITEM_H = 56;
+  useEffect(() => {
+    const id = setInterval(() => setOffset(o => o + 1), 1800);
+    return () => clearInterval(id);
+  }, []);
+  const idx = offset % bank.length;
+  const items = [...bank, ...bank, ...bank];
+  return (
+    <div className="tr-col">
+      <div className="tr-label" style={{ color }}>{label}</div>
+      <div className="tr-window">
+        <div className="tr-strip" style={{
+          transform: `translateY(${-(idx + bank.length) * ITEM_H + ITEM_H}px)`,
+          transition: 'transform 0.55s cubic-bezier(0.16,1,0.3,1)',
+        }}>
+          {items.map((word, i) => (
+            <div className="tr-item" key={i} style={{ height: ITEM_H }}>{word}</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TeaserReels() {
+  return (
+    <div className="tr-root">
+      <div className="tr-reels">
+        {TEASER_BANKS.map((bank, i) => (
+          <TeaserReel key={i} bank={bank} color={REEL_COLORS[i]} label={REEL_LABELS[i]} />
+        ))}
+      </div>
+      <div className="tr-hint">Infinite combinations · AI validates each one</div>
+    </div>
+  );
+}
+
 /* ─── SVG WHEEL ──────────────────────────────────────────────────── */
 function Wheel({ onResult }) {
   const N = SEGMENTS.length;
@@ -351,7 +400,6 @@ export default function IdeaWheel() {
       {screen === "landing" && (
         <section className="su-screen su-landing">
           <div className="su-landing-inner">
-            <div className="su-eyebrow">From a spin to a startup</div>
             <h1 className="su-display su-landing-h1">
               <span style={{ display:"block" }}>Spin the wheel.</span>
               <span className="su-grad-text" style={{ display:"block" }}>Ship the company.</span>
@@ -365,6 +413,7 @@ export default function IdeaWheel() {
               </button>
               <div className="su-landing-meta">✓ Free market check · 1 credit for the full blueprint</div>
             </div>
+            <TeaserReels />
             <div className="su-landing-steps">
               {[["01","Spin","Land on a frontier"],["02","Validate","Read the market"],["03","Build","Get the blueprint"]].map(([n,t,d]) => (
                 <div className="su-land-step" key={n}>
@@ -989,6 +1038,44 @@ const CSS = `
 /* disclaimer */
 .su-disclaimer { position:relative; z-index:1; max-width:760px; margin:0 auto 40px; padding:20px 24px; border-top:1px solid var(--line); text-align:center; }
 .su-disclaimer p { font-size:11px; color:var(--faint); line-height:1.7; margin:0; }
+
+/* teaser reels */
+.tr-root { margin:36px auto 0; max-width:560px; }
+.tr-reels {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+  padding:20px 16px 16px;
+  background:rgba(255,255,255,0.62); backdrop-filter:blur(12px);
+  border:1px solid var(--line); border-radius:var(--r-xl);
+  box-shadow:var(--sh-md);
+  overflow:hidden;
+}
+.tr-col { display:flex; flex-direction:column; align-items:stretch; gap:8px; }
+.tr-label {
+  font-size:10px; font-weight:700; letter-spacing:.2em; text-transform:uppercase;
+  text-align:center;
+}
+.tr-window {
+  height:56px; overflow:hidden; border-radius:var(--r-sm);
+  background:rgba(255,255,255,0.9); border:1px solid var(--line-2);
+  position:relative;
+}
+.tr-window::before,.tr-window::after {
+  content:''; position:absolute; left:0; right:0; height:12px; z-index:2; pointer-events:none;
+}
+.tr-window::before { top:0; background:linear-gradient(to bottom,rgba(255,255,255,.9),transparent); }
+.tr-window::after  { bottom:0; background:linear-gradient(to top,rgba(255,255,255,.9),transparent); }
+.tr-strip { will-change:transform; }
+.tr-item {
+  display:flex; align-items:center; justify-content:center;
+  text-align:center; padding:0 8px;
+  font-size:clamp(10px,1.2vw,13px); font-weight:700;
+  text-transform:uppercase; letter-spacing:.02em;
+  color:var(--ink); line-height:1.2;
+}
+.tr-hint {
+  text-align:center; margin-top:10px;
+  font-size:11.5px; color:var(--faint); font-weight:500;
+}
 
 /* responsive */
 @media(max-width:640px){
