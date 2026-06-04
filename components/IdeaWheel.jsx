@@ -1184,7 +1184,7 @@ const css = `
 /* ── control shelf ─────────────────────────────────────────────── */
 .iw-controlshelf{ margin:0 0 18px; }
 .iw-bar{
-  display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px;
+  display:flex; align-items:center; gap:12px;
   margin:0 auto; padding:12px 14px;
   background:linear-gradient(180deg, oklch(99.4% 0.004 78), oklch(96.5% 0.012 78));
   border:1px solid var(--border); border-radius:22px;
@@ -2133,8 +2133,8 @@ const css = `
   .iw-proofrow{ gap:6px; }
   .iw-proofchip{ font-size:11px; padding:8px 10px; }
   .iw-headcard{ padding:14px; border-radius:18px; }
-  .iw-bar{ grid-template-columns:1fr auto; gap:10px; padding:12px; border-radius:18px; }
-  .iw-barlabel{ grid-column:1 / -1; }
+  .iw-bar{ gap:10px; padding:12px; border-radius:18px; }
+  .iw-modes{ flex:1; display:grid; grid-template-columns:1fr 1fr; min-width:0; }
   .iw-modes{ width:100%; display:grid; grid-template-columns:1fr 1fr; min-width:0; }
   .iw-modebtn{ width:100%; padding:11px 10px; }
   .iw-creditpill{ min-width:72px; padding:10px 12px; }
