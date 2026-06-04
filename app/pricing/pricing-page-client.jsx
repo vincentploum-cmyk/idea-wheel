@@ -4,21 +4,6 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { CREDIT_PACKAGES, CREDIT_PACKAGE_BY_KEY } from '../../lib/pricing';
 
-const shell = {
-  minHeight: '100vh',
-  background: '#0d0d10',
-  color: '#f5f7fb',
-  padding: '48px 20px 80px',
-  fontFamily: 'system-ui, sans-serif',
-};
-
-const card = {
-  background: '#15171d',
-  border: '1px solid #2a2d37',
-  borderRadius: 18,
-  padding: 22,
-};
-
 export default function PricingPageClient({ searchParams }) {
   const [loadingKey, setLoadingKey] = useState(null);
   const [error, setError] = useState('');
@@ -41,123 +26,118 @@ export default function PricingPageClient({ searchParams }) {
   }, [success, packageConfig, sessionId]);
 
   const statusMessage = useMemo(() => {
-    if (success && packageConfig) {
-      return {
-        tone: '#8de1d2',
-        bg: 'rgba(141,225,210,0.08)',
-        border: 'rgba(141,225,210,0.24)',
-        title: `${packageConfig.credits} credits added`,
-        text: 'Credits were applied to this browser so you can keep going immediately.',
-      };
-    }
-    if (canceled) {
-      return {
-        tone: '#f4be4f',
-        bg: 'rgba(244,190,79,0.08)',
-        border: 'rgba(244,190,79,0.24)',
-        title: 'Checkout canceled',
-        text: 'Nothing was charged. Pick up where you left off whenever you want.',
-      };
-    }
+    if (success && packageConfig) return {
+      tone: '#7c3aed', bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.24)',
+      title: `${packageConfig.credits} credits added`,
+      text: 'Credits were applied to this browser so you can keep going immediately.',
+    };
+    if (canceled) return {
+      tone: '#c026d3', bg: 'rgba(192,38,211,0.08)', border: 'rgba(192,38,211,0.24)',
+      title: 'Checkout canceled',
+      text: 'Nothing was charged. Pick up where you left off whenever you want.',
+    };
     return null;
   }, [success, canceled, packageConfig]);
 
   async function startCheckout(pkg) {
-    setLoadingKey(pkg.key);
-    setError('');
+    setLoadingKey(pkg.key); setError('');
     try {
       const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ packageKey: pkg.key }),
       });
       const data = await res.json();
-      if (!res.ok || data.error || !data.url) {
-        throw new Error(data.error || 'Unable to start checkout');
-      }
+      if (!res.ok || data.error || !data.url) throw new Error(data.error || 'Unable to start checkout');
       window.location.assign(data.url);
     } catch (err) {
-      setError(err.message || 'Unable to start checkout');
-      setLoadingKey(null);
+      setError(err.message || 'Unable to start checkout'); setLoadingKey(null);
     }
   }
 
   return (
-    <main style={shell}>
-      <div style={{ maxWidth: 1120, margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-          <div>
-            <p style={{ color: '#8de1d2', fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 12 }}>IdeaWheel</p>
-            <h1 style={{ fontSize: 'clamp(36px, 6vw, 68px)', lineHeight: 1, margin: 0 }}>Buy Blueprint credits</h1>
-            <p style={{ maxWidth: 720, color: '#b7bcc8', fontSize: 18, lineHeight: 1.6, marginTop: 16 }}>
-              One credit unlocks the full pipeline, market scout, skeptic, judge, product design, GTM, infrastructure, and live prototype.
-            </p>
-          </div>
-          <Link href="/" style={{ color: '#f5f7fb', textDecoration: 'none', border: '1px solid #2a2d37', borderRadius: 999, padding: '10px 16px', alignSelf: 'center' }}>
-            Back to app
-          </Link>
+    <main style={{
+      minHeight: '100vh',
+      background: '#faf7ff',
+      fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+      color: '#18112b',
+      padding: '48px 20px 80px',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* blobs */}
+      <div style={{ position:'fixed', width:480, height:480, top:'-8%', left:'-6%', borderRadius:'50%', background:'#7c3aed', filter:'blur(70px)', opacity:.32, pointerEvents:'none', zIndex:0 }}/>
+      <div style={{ position:'fixed', width:420, height:420, bottom:'-12%', right:'-6%', borderRadius:'50%', background:'#ff4d8d', filter:'blur(70px)', opacity:.28, pointerEvents:'none', zIndex:0, animationDelay:'-7s' }}/>
+
+      <div style={{ position:'relative', zIndex:1, maxWidth: 900, margin: '0 auto' }}>
+        {/* back link */}
+        <div style={{ display:'flex', justifyContent:'flex-end', marginBottom: 32 }}>
+          <Link href="/" style={{
+            fontSize: 13, fontWeight: 600, color: '#7a7191',
+            textDecoration: 'none', padding: '8px 16px',
+            border: '1px solid #ece6f5', borderRadius: 999,
+            background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(8px)',
+          }}>← Back</Link>
         </div>
 
-        {statusMessage ? (
-          <section style={{ ...card, marginTop: 24, background: statusMessage.bg, borderColor: statusMessage.border }}>
-            <strong style={{ display: 'block', color: statusMessage.tone, fontSize: 18 }}>{statusMessage.title}</strong>
-            <p style={{ margin: '8px 0 0', color: '#d5dae4', lineHeight: 1.6 }}>{statusMessage.text}</p>
-          </section>
-        ) : null}
+        <h1 style={{
+          fontFamily: '"Sora", system-ui, sans-serif',
+          fontSize: 'clamp(32px,5vw,54px)', fontWeight: 700,
+          letterSpacing: '-0.03em', lineHeight: 1,
+          margin: '0 0 12px', color: '#18112b',
+        }}>Get blueprint credits</h1>
+        <p style={{ fontSize: 16, color: '#7a7191', margin: '0 0 40px', lineHeight: 1.65, maxWidth: 520 }}>
+          One credit runs the full 4-agent pipeline — market scout, product design, GTM playbook, infrastructure plan, and a live prototype.
+        </p>
 
-        {error ? (
-          <section style={{ ...card, marginTop: 24, background: 'rgba(255,107,107,0.08)', borderColor: 'rgba(255,107,107,0.24)' }}>
-            <strong style={{ display: 'block', color: '#ff8f8f', fontSize: 17 }}>Checkout isn’t configured yet</strong>
-            <p style={{ margin: '8px 0 0', color: '#d5dae4', lineHeight: 1.6 }}>{error}</p>
-          </section>
-        ) : null}
+        {statusMessage && (
+          <div style={{ padding: '16px 20px', borderRadius: 16, background: statusMessage.bg, border: `1.5px solid ${statusMessage.border}`, marginBottom: 24 }}>
+            <strong style={{ color: statusMessage.tone, fontSize: 15, display:'block', marginBottom:6 }}>{statusMessage.title}</strong>
+            <p style={{ margin: 0, color: '#463a5f', lineHeight: 1.6, fontSize: 14 }}>{statusMessage.text}</p>
+          </div>
+        )}
 
-        <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', marginTop: 32 }}>
+        {error && (
+          <div style={{ padding: '14px 18px', borderRadius: 14, background: 'rgba(220,38,38,0.07)', border: '1px solid rgba(220,38,38,0.2)', marginBottom: 20 }}>
+            <p style={{ margin: 0, color: '#dc2626', fontSize: 13 }}>{error}</p>
+          </div>
+        )}
+
+        <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
           {CREDIT_PACKAGES.map((pkg) => (
-            <section
-              key={pkg.key}
-              style={{
-                ...card,
-                background: pkg.highlight ? 'linear-gradient(180deg, #1f2330 0%, #15171d 100%)' : '#15171d',
-                border: pkg.highlight ? '1.5px solid #f4be4f' : '1px solid #2a2d37',
-                boxShadow: pkg.highlight ? '0 20px 60px rgba(244,190,79,0.12)' : 'none',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                <strong style={{ fontSize: 20 }}>{pkg.label}</strong>
-                {pkg.highlight ? <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#f4be4f' }}>Most popular</span> : null}
+            <div key={pkg.key} style={{
+              background: 'rgba(255,255,255,0.78)', backdropFilter: 'blur(10px)',
+              border: pkg.highlight ? '2px solid #7c3aed' : '1px solid #ece6f5',
+              borderRadius: 24, padding: '24px 22px',
+              boxShadow: pkg.highlight ? '0 20px 50px -16px rgba(124,58,237,0.28)' : '0 10px 30px -10px rgba(80,30,120,0.1)',
+            }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+                <strong style={{ fontFamily:'"Sora",system-ui', fontSize:16, fontWeight:700, color:'#18112b' }}>{pkg.label}</strong>
+                {pkg.highlight && <span style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'.12em', color:'#7c3aed', fontWeight:700 }}>Popular</span>}
               </div>
-              <div style={{ marginTop: 20, fontSize: 40, fontWeight: 700 }}>{pkg.price}</div>
-              <div style={{ color: '#b7bcc8', marginTop: 4 }}>{pkg.credits} credits</div>
-              <div style={{ color: '#8de1d2', marginTop: 10 }}>{pkg.per} / credit</div>
-              <p style={{ color: '#9ca3af', lineHeight: 1.6, marginTop: 18, minHeight: 72 }}>
+              <div style={{ fontSize: 38, fontWeight: 800, fontFamily:'"Sora",system-ui', letterSpacing:'-0.03em', color:'#18112b', lineHeight:1, marginBottom:4 }}>{pkg.price}</div>
+              <div style={{ fontSize:13, color:'#7a7191', marginBottom:4 }}>{pkg.credits} credits</div>
+              <div style={{ fontSize:12, color:'#c026d3', fontWeight:600, marginBottom:18 }}>{pkg.per} / credit</div>
+              <p style={{ color:'#7a7191', fontSize:13, lineHeight:1.6, margin:'0 0 20px', minHeight:60 }}>
                 {pkg.highlight
-                  ? 'Best for founders actively validating and refining multiple wedges in one sitting.'
+                  ? 'Best for founders validating multiple wedges in one sitting.'
                   : pkg.key === 'starter'
-                    ? 'Good for a first pass when you want a few serious concepts instead of vague ideation.'
+                    ? 'Good for a first pass on a few serious concepts.'
                     : pkg.key === 'studio'
-                      ? 'For teams or operators who want enough credits for repeated exploration and iteration.'
-                      : 'For agencies, venture studios, or heavy internal use with room for many full blueprint runs.'}
+                      ? 'For teams doing repeated exploration and iteration.'
+                      : 'For agencies and studios with heavy blueprint usage.'}
               </p>
-              <button
-                onClick={() => startCheckout(pkg)}
-                disabled={loadingKey !== null}
-                style={{
-                  marginTop: 24,
-                  width: '100%',
-                  border: 'none',
-                  borderRadius: 12,
-                  padding: '12px 16px',
-                  background: pkg.highlight ? '#f4be4f' : '#7c72ff',
-                  color: pkg.highlight ? '#1b1305' : '#fff',
-                  fontWeight: 700,
-                  cursor: loadingKey !== null ? 'wait' : 'pointer',
-                  opacity: loadingKey && loadingKey !== pkg.key ? 0.55 : 1,
-                }}
-              >
+              <button onClick={() => startCheckout(pkg)} disabled={loadingKey !== null} style={{
+                width: '100%', border: 'none', borderRadius: 12, padding: '12px 0',
+                background: pkg.highlight ? 'linear-gradient(120deg,#7c3aed,#c026d3,#ff4d8d)' : '#f3edff',
+                color: pkg.highlight ? '#fff' : '#7c3aed',
+                fontWeight: 700, fontSize: 14,
+                fontFamily: '"Plus Jakarta Sans",system-ui',
+                cursor: loadingKey ? 'wait' : 'pointer',
+                opacity: loadingKey && loadingKey !== pkg.key ? 0.5 : 1,
+              }}>
                 {loadingKey === pkg.key ? 'Redirecting…' : 'Checkout'}
               </button>
-            </section>
+            </div>
           ))}
         </div>
       </div>

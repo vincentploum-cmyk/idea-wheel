@@ -411,7 +411,6 @@ export default function IdeaWheel() {
               <button className="su-btn su-btn-primary su-btn-lg" onClick={() => goTo("wheel")}>
                 ✦ Spin an idea
               </button>
-              <div className="su-landing-meta">✓ Free market check · 1 credit for the full blueprint</div>
             </div>
             <TeaserReels />
             <div className="su-landing-steps">
