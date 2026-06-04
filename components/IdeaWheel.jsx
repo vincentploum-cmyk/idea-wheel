@@ -355,6 +355,13 @@ function SlotMachine({ onResult }) {
 
   const prefix = m.prefix;
   const conn = m.connector;
+  const liveVerb = landed[0]
+    ? (/[^aeiou]y$/i.test(landed[0])
+        ? `${landed[0].slice(0,-1).toLowerCase()}ies`
+        : /(s|sh|ch|x|z)$/i.test(landed[0])
+          ? `${landed[0].toLowerCase()}es`
+          : `${landed[0].toLowerCase()}s`)
+    : '';
 
   return (
     <div className="sm-root">
@@ -397,7 +404,7 @@ function SlotMachine({ onResult }) {
       <div className="sm-live-sentence">
         <p>
           <span style={{fontStyle:'italic',color:'var(--muted)'}}>{prefix} </span>
-          {landed[0] ? <span className="sm-slot">{landed[0].toLowerCase()}</span> : <span className="sm-slot-empty"/>}
+          {landed[0] ? <span className="sm-slot">{liveVerb}</span> : <span className="sm-slot-empty"/>}
           {' '}
           {landed[1] ? <span className="sm-slot">{landed[1]}</span> : <span className="sm-slot-empty"/>}
           {' '}<span style={{fontStyle:'italic',color:'var(--muted)'}}>{conn}</span>{' '}
@@ -612,12 +619,6 @@ export default function IdeaWheel() {
         <section className="su-screen su-landing">
           <div className="su-landing-inner">
 
-            <div className="su-proof-bar">
-              <span className="su-proof-chip">For founders, operators, and domain experts</span>
-              <span className="su-proof-chip">Free market validation before you build</span>
-              <span className="su-proof-chip">Blueprint only when the idea holds up</span>
-            </div>
-
             <h1 className="su-display su-landing-h1">
               <span style={{ display:"block" }}>Find a business idea</span>
               <span className="su-grad-text" style={{ display:"block" }}>you can actually win with.</span>
@@ -635,7 +636,6 @@ export default function IdeaWheel() {
                   See how it works
                 </button>
               </div>
-              <p className="su-landing-free">No signup needed · Validation is always free</p>
             </div>
 
             <div className="su-value-grid">

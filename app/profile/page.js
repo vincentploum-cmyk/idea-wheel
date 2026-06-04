@@ -3,7 +3,7 @@ import ProfileClient from './profile-client';
 
 export const metadata = {
   title: 'Profile',
-  description: 'Your IdeaWheel profile and credits.',
+  description: 'Your Idea Generator profile and credits.',
 };
 
 export default async function ProfilePage({ searchParams }) {
