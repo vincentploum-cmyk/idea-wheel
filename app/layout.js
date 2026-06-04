@@ -7,16 +7,16 @@ export const metadata = {
     default: 'Idea Generator',
     template: '%s | Idea Generator',
   },
-  description: 'Generate a business idea, validate the market for free, and unlock a full product, GTM, infrastructure, and prototype blueprint.',
+  description: 'Generate a business idea, validate the market for free, and unlock a full product, launch plan, infrastructure, and prototype blueprint.',
   openGraph: {
     title: 'Idea Generator',
-    description: 'Generate a business idea, validate the market for free, and unlock a full product, GTM, infrastructure, and prototype blueprint.',
+    description: 'Generate a business idea, validate the market for free, and unlock a full product, launch plan, infrastructure, and prototype blueprint.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Idea Generator',
-    description: 'Generate a business idea, validate the market for free, and unlock a full product, GTM, infrastructure, and prototype blueprint.',
+    description: 'Generate a business idea, validate the market for free, and unlock a full product, launch plan, infrastructure, and prototype blueprint.',
   },
 };
 

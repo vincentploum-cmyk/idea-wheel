@@ -87,7 +87,7 @@ export default function PricingPageClient({ searchParams }) {
           margin: '0 0 12px', color: '#18112b',
         }}>Get blueprint credits</h1>
         <p style={{ fontSize: 16, color: '#7a7191', margin: '0 0 40px', lineHeight: 1.65, maxWidth: 520 }}>
-          One credit runs the full 4-agent pipeline — market scout, product design, GTM playbook, infrastructure plan, and a live prototype.
+          One credit runs the full 4-agent pipeline — market scout, product design, a launch plan, infrastructure planning, and a live prototype.
         </p>
 
         {statusMessage && (

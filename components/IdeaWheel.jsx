@@ -659,7 +659,7 @@ export default function IdeaWheel() {
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                 </div>
                 <div className="su-value-t">Move from idea to blueprint fast</div>
-                <div className="su-value-d">When a concept looks strong, unlock product, GTM, infrastructure, and prototype output in one flow.</div>
+                <div className="su-value-d">When a concept looks strong, unlock product, launch plan, infrastructure, and prototype output in one flow.</div>
               </div>
             </div>
 
@@ -683,7 +683,7 @@ export default function IdeaWheel() {
                 <span className="su-grad-text su-land-step-n">03</span>
                 <div>
                   <div className="su-land-step-t">Unlock the blueprint only if it passes</div>
-                  <div className="su-land-step-d">One credit runs product design, GTM planning, infrastructure mapping, and prototype generation so you can move from idea to something testable without starting from scratch.</div>
+                  <div className="su-land-step-d">One credit runs product design, launch planning, infrastructure mapping, and prototype generation so you can move from idea to something testable without starting from scratch.</div>
                 </div>
               </div>
             </div>
@@ -850,7 +850,7 @@ export default function IdeaWheel() {
           {bpRunning && !design && (
             <div className="su-scan su-glass">
               <div className="su-scan-bar"><div className="su-scan-fill"/></div>
-              <div className="su-scan-text">✦ Drafting product, GTM, infrastructure &amp; prototype…</div>
+              <div className="su-scan-text">✦ Drafting product, launch plan, infrastructure &amp; prototype…</div>
             </div>
           )}
 

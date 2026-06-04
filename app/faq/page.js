@@ -13,7 +13,7 @@ const FAQS = [
   },
   {
     q: "What does a credit unlock?",
-    a: "One credit runs a 4-agent AI pipeline: a product designer names your product and specs the features, a GTM strategist writes your first-5-customers plan and 30-day roadmap, an infrastructure architect details every service you need to sign up for, and a prototype builder ships a clickable HTML demo you can test immediately.",
+    a: "One credit runs a 4-agent AI pipeline: a product designer names your product and specs the features, a launch strategist writes your first-customer plan and 30-day roadmap, an infrastructure architect details every service you need to sign up for, and a prototype builder ships a clickable HTML demo you can test immediately.",
   },
   {
     q: "Can two users get the same idea?",
@@ -29,7 +29,7 @@ const FAQS = [
   },
   {
     q: "What's in the blueprint?",
-    a: "The full blueprint includes: a product spec (name, tagline, differentiator, core features), a go-to-market plan (persona, first 5 customers, pricing rationale, 30-day action plan), an infrastructure breakdown (services to sign up for, .env template, DB schema, deploy steps, monthly cost estimate), and a clickable prototype you can open in your browser.",
+    a: "The full blueprint includes: a product spec (name, tagline, differentiator, core features), a launch plan (target customer, first 5 customers, pricing rationale, 30-day action plan), an infrastructure breakdown (services to sign up for, .env template, DB schema, deploy steps, monthly cost estimate), and a clickable prototype you can open in your browser.",
   },
   {
     q: "Can I actually use the blueprint to build?",
