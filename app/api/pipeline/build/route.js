@@ -619,14 +619,15 @@ export async function POST(request) {
     infra,
     sessionId: rawSessionId,
     validationId,
+    freeformIdea,
   } = body;
 
-  if (!action || !workflow || !industry) {
-    return NextResponse.json({ error: 'Missing: action, workflow, industry' }, { status: 400 });
+  if (!freeformIdea && (!action || !workflow || !industry)) {
+    return NextResponse.json({ error: 'Missing: action, workflow, industry (or freeformIdea)' }, { status: 400 });
   }
 
   const sessionId = ensureSessionId(rawSessionId);
-  const agentDesc = `an agent that ${action} ${workflow} ${connector} ${industry}`;
+  const agentDesc = freeformIdea || `an agent that ${action} ${workflow} ${connector} ${industry}`;
   const retrieval = comp?.retrieval || (await buildRetrievalContext({ modeName, industry, action, workflow }));
 
   try {

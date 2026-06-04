@@ -1,50 +1,94 @@
 @import "tailwindcss";
 
 :root {
-  --iw-color-bg: #F5F5F7;
-  --iw-color-surface: #FFFFFF;
-  --iw-color-surface-soft: #FAFAFA;
-  --iw-color-border: rgba(0, 0, 0, 0.09);
-  --iw-color-ink: #1D1D1F;
-  --iw-color-muted: #6E6E73;
+  /* Spinup brand palette */
+  --violet:   #7c3aed;
+  --purple:   #9333ea;
+  --magenta:  #c026d3;
+  --pink:     #ff4d8d;
+  --coral:    #ff6f61;
+  --indigo:   #5b5bf5;
 
-  /* amber/gold primary — the original "casino jackpot" warmth */
-  --iw-color-brand-primary: #C98A22;
-  /* deep indigo secondary — replaces hot-pink */
-  --iw-color-brand-secondary: #5240C0;
-  /* teal tertiary — unchanged */
-  --iw-color-brand-tertiary: #1A9492;
-  --iw-color-brand-soft: #FDF6E8;
+  --grad-brand: linear-gradient(120deg, #7c3aed 0%, #c026d3 45%, #ff4d8d 100%);
+  --grad-soft:  linear-gradient(120deg, #efe6ff 0%, #fbe6f4 55%, #ffe9e6 100%);
 
-  --iw-brand-primary-rgb: 201 138 34;
-  --iw-brand-secondary-rgb: 82 64 192;
-  --iw-brand-tertiary-rgb: 26 148 146;
+  /* neutrals */
+  --ink:     #18112b;
+  --ink-2:   #463a5f;
+  --muted:   #7a7191;
+  --faint:   #aaa1bd;
+  --line:    #ece6f5;
+  --line-2:  #e1d9f0;
 
-  --iw-gradient-brand: linear-gradient(90deg, #C98A22, #1A9492);
-  --iw-gradient-brand-diagonal: linear-gradient(135deg, #5240C0, #1A9492);
-  --iw-shadow-brand: 0 8px 28px -10px rgba(201, 138, 34, 0.38), 0 2px 10px rgba(26, 148, 146, 0.18);
-  --iw-shadow-brand-soft: 0 6px 20px -8px rgba(82, 64, 192, 0.28);
+  /* surfaces */
+  --bg:      #faf7ff;
+  --bg-2:    #f3edff;
+  --surface: #ffffff;
+  --glass:   rgba(255,255,255,0.62);
 
-  --iw-font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --iw-font-display: 'Unbounded', var(--iw-font-ui);
+  /* feedback */
+  --good: #16a34a;
+  --warn: #e0a800;
 
-  --background: var(--iw-color-bg);
-  --foreground: var(--iw-color-ink);
+  /* radii */
+  --r-sm:   10px;
+  --r-md:   16px;
+  --r-lg:   24px;
+  --r-xl:   34px;
+  --r-pill: 999px;
+
+  /* shadows */
+  --sh-sm:   0 2px 8px rgba(60,20,90,0.06);
+  --sh-md:   0 10px 30px -10px rgba(80,30,120,0.18);
+  --sh-lg:   0 30px 70px -24px rgba(90,30,130,0.30);
+  --sh-glow: 0 20px 60px -18px rgba(200,40,150,0.45);
+
+  --font-display: "Sora", system-ui, sans-serif;
+  --font-body:    "Plus Jakarta Sans", system-ui, sans-serif;
+  --ease-out: cubic-bezier(.16,1,.3,1);
+
+  /* legacy aliases used by existing API-facing components */
+  --iw-color-bg:              var(--bg);
+  --iw-color-surface:         var(--surface);
+  --iw-color-surface-soft:    var(--bg-2);
+  --iw-color-border:          var(--line);
+  --iw-color-ink:             var(--ink);
+  --iw-color-muted:           var(--muted);
+  --iw-color-brand-primary:   var(--violet);
+  --iw-color-brand-secondary: var(--magenta);
+  --iw-color-brand-tertiary:  #1A9492;
+  --iw-color-brand-soft:      #efe6ff;
+  --iw-brand-primary-rgb:     124 58 237;
+  --iw-brand-secondary-rgb:   192 38 211;
+  --iw-brand-tertiary-rgb:    26 148 146;
+  --iw-gradient-brand:        var(--grad-brand);
+  --iw-gradient-brand-diagonal: var(--grad-brand);
+  --iw-shadow-brand:          var(--sh-glow);
+  --iw-shadow-brand-soft:     0 6px 20px -8px rgba(124,58,237,0.32);
+  --iw-font-ui:               var(--font-body);
+  --iw-font-display:          var(--font-display);
+
+  --background: var(--bg);
+  --foreground: var(--ink);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--iw-font-ui);
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --font-sans: var(--font-body);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
 }
 
-html {
-  background: var(--iw-color-bg);
-}
-
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { background: var(--bg); }
 body {
-  background: var(--iw-color-bg);
-  color: var(--iw-color-ink);
-  font-family: var(--iw-font-ui);
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+::selection { background: rgba(192,38,211,0.18); }

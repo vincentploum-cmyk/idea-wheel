@@ -1,2182 +1,1017 @@
 "use client";
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { Lock, Unlock, Dices, Plus, X, Copy, Check, Trash2, ArrowRight, Zap, Volume2, VolumeX, Share2, Search, Paintbrush, Code2, ChevronDown, ChevronUp, Rocket } from "lucide-react";
 import { CREDIT_PACKAGES } from "@/lib/pricing";
 
-/* ------------------------------------------------------------------ *
- * THE IDEA WHEEL  ·  v5
- * Spin → Build it → three coordinated agents run:
- *   1. COMPETITOR SCOUT  (web search, finds gaps)
- *   2. PRODUCT DESIGNER  (names it, specs it)
- *   3. PROTOTYPE BUILDER (ships working HTML, rendered inline)
- * The sophistication of the pipeline IS the moat.
- * ------------------------------------------------------------------ */
+/* ─── IDEA SEGMENTS ──────────────────────────────────────────────── */
+const SEGMENTS = [
+  { id: "health",    label: "Health",     color: "#7c3aed",
+    title: "VitalLoop",
+    tagline: "At-home metabolic coaching from a finger-prick and a phone camera.",
+    blurb: "A $39/mo membership that turns a monthly at-home blood panel into a living, AI-personalized nutrition and habit plan — closing the loop between lab work and daily life." },
+  { id: "climate",   label: "Climate",    color: "#9333ea",
+    title: "Cumulus",
+    tagline: "A marketplace for verified carbon credits from small regenerative farms.",
+    blurb: "Pairs satellite + soil-sensor verification with a clean buying experience so mid-market companies can fund real, local soil carbon — not sketchy offsets." },
+  { id: "fintech",   label: "Fintech",    color: "#c026d3",
+    title: "Float",
+    tagline: "Zero-fee instant payroll advances for gig and shift workers.",
+    blurb: "Workers tap earned-but-unpaid wages instantly; employers pay a flat platform fee. No predatory interest, no tips, no overdraft — just access to money already earned." },
+  { id: "creator",   label: "Creator",    color: "#db2777",
+    title: "Encore",
+    tagline: "Turn a podcast or video back-catalog into a searchable, sellable course.",
+    blurb: "Point Encore at years of episodes; it restructures them into a navigable, searchable curriculum creators can sell — unlocking the value buried in the archive." },
+  { id: "ai",        label: "AI Tools",   color: "#ff4d8d",
+    title: "Bench",
+    tagline: "An AI ops analyst that watches your dashboards and pings you before things break.",
+    blurb: "Connect your data tools; Bench learns what 'normal' looks like, flags anomalies in plain English, and drafts the Slack message you'd send — your always-on analyst." },
+  { id: "edu",       label: "Education",  color: "#5b5bf5",
+    title: "Cohortly",
+    tagline: "Tiny, high-touch cohort classes taught by working domain experts.",
+    blurb: "A platform for 8-person, 3-week cohorts where practitioners teach the exact skill they do daily — accountability and access, not another video library." },
+  { id: "logistics", label: "Logistics",  color: "#ff6f61",
+    title: "Lastmile",
+    tagline: "Shared same-day delivery that finally makes sense for indie retailers.",
+    blurb: "Pools deliveries across nearby small shops into shared driver routes — giving independents same-day shipping at a price big-box logistics keeps for themselves." },
+  { id: "social",    label: "Social",     color: "#a21caf",
+    title: "Campfire",
+    tagline: "Small-group audio rooms built for hobby communities, not influencers.",
+    blurb: "Cozy, recurring 12-person audio rooms organized around niche hobbies — the warmth of a group call with the discoverability of a community, minus the broadcast noise." },
+];
 
-const MODES = {
-  b2b: {
-    name: 'B2B', connector: 'in', prefix: 'I want to build an agent that',
-    labels: ['ACTION', 'WORKFLOW', 'FOR'],
-    banks: [
-      ['Automate','Streamline','Replace','Predict','Personalize','Match','Summarize','Track','Verify','Forecast','Simplify','Detect','Schedule','Score','Recommend','Flag','Translate','Eliminate','Analyze','Extract'],
-      ['customer onboarding','invoice matching','appointment scheduling','lead qualification','expense approval','contract review','quote generation','manual data entry','quality inspection','dispatch routing','document intake','incident triage','client check-ins','compliance checks','due diligence','RFP responses','performance reviews','shift handoffs','returns handling','onboarding docs'],
-      ['Healthcare','Construction','Logistics','Legal services','Property management','Insurance','Dental practices','Field services','Auto repair','Veterinary clinics','Accounting firms','Staffing agencies','Home services','Real estate','Restaurants','Pharmacies','Distribution','Freelancers','Consultants','Financial analysts','Entertainment & media','Sports organizations','Non-profits','Government agencies','E-commerce brands','Marketing agencies','Mental health practices','Gaming studios','EdTech companies','Fintech startups','Architecture firms','Event planning','Cleaning services','Food & beverage','AI startups','Trucking & freight','Mortgage & lending','HR & people ops','Cybersecurity firms','Publishing & content'],
-    ],
-    hiAction: ['Automate','Predict','Detect','Forecast','Flag','Extract','Analyze'],
-    loAction: ['Organize','Connect','Track'],
-    hiThing: ['invoice matching','dispatch routing','incident triage','compliance checks','quality inspection','due diligence','contract review'],
-    hiCtx: ['Field services','Auto repair','Veterinary clinics','Dental practices','Home services','Construction','Distribution','Freelancers','Consultants','Cleaning services','Mental health practices','Non-profits','Event planning','Architecture firms'],
-    loCtx: ['Healthcare','Insurance','Legal services','Real estate'],
-  },
-  consumer: {
-    name: 'Consumer', connector: 'for', prefix: 'I want to make an app that',
-    labels: ['ACTION', 'EXPERIENCE', 'FOR'],
-    banks: [
-      ['Track','Plan','Personalize','Simplify','Remind','Organize','Discover','Budget','Coach','Gamify','Curate','Automate','Teach','Guide','Challenge','Reward','Optimize','Analyze','Improve','Streamline'],
-      ['daily habits','personal goals','health tracking','money management','skill learning','sleep & recovery','mental wellness','meal planning','productivity','social connections','career growth','home organization','travel planning','stress management','time management','reading & learning','side income','kids education','creative projects','community building','relationship building','fitness routines','job searching','saving money','staying motivated','building a business','managing a team','learning a language'],
-      ['new parents','couples','college students','freelancers','athletes','dog owners','renters','recent immigrants','family caregivers','retirees','content creators','ADHD adults','frequent travelers','young children','homeschool families','anxious people','night shift workers','new homeowners','musicians','seniors living alone','solopreneurs','remote workers','job seekers','new graduates','small business owners','expats','fitness beginners','busy professionals'],
-    ],
-    hiAction: ['Personalize','Coach','Match','Gamify'],
-    loAction: ['Share','Organize'],
-    hiThing: ['daily habits','mental wellness','money management','stress management','side income','sleep & recovery','staying motivated','skill learning','building a business'],
-    hiCtx: ['family caregivers','recent immigrants','ADHD adults','retirees','seniors living alone','anxious people','homeschool families','night shift workers','new parents','job seekers'],
-    loCtx: ['couples','college students','frequent travelers','athletes','musicians'],
-  },
-};
-const TINTS = ["var(--reel1)", "var(--reel2)", "var(--reel3)"];
-const ITEM_H = 80;
-const REPEATS = 12;
-const HOME_COPY = 4;
-
-const reduceMotion =
-  typeof window !== "undefined" && window.matchMedia &&
-  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-const rand = (n) => Math.floor(Math.random() * n);
-const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
-function conjugate(v) {
-  const w = v.toLowerCase();
-  if (/[^aeiou]y$/.test(w)) return w.slice(0, -1) + "ies";
-  if (/(s|sh|ch|x|z)$/.test(w)) return w + "es";
-  return w + "s";
+/* ─── HELPERS ────────────────────────────────────────────────────── */
+function polar(cx, cy, r, deg) {
+  const a = (deg - 90) * Math.PI / 180;
+  return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
 }
-function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
-function scoreCombo(m, a, t, c) {
-  let s = 46;
-  if (m.hiAction.includes(a)) s += 8; else if (m.loAction.includes(a)) s -= 4;
-  if (m.hiThing.includes(t)) s += 10;
-  if (m.hiCtx.includes(c)) s += 12; else if (m.loCtx.includes(c)) s -= 6;
-  s += hashStr(a + "|" + t + "|" + c) % 15;
-  return Math.max(12, Math.min(96, s));
+function slicePath(cx, cy, r, startDeg, endDeg) {
+  const [x1, y1] = polar(cx, cy, r, startDeg);
+  const [x2, y2] = polar(cx, cy, r, endDeg);
+  const large = endDeg - startDeg > 180 ? 1 : 0;
+  return `M${cx} ${cy} L${x1} ${y1} A${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`;
 }
-function band(score) {
-  if (score >= 80) return { label: "Goldmine", color: "var(--amber)", desc: "Rare combo — high pain, clear whitespace, active market" };
-  if (score >= 66) return { label: "Spicy",    color: "var(--teal)",  desc: "Strong signal — real problem with room to build" };
-  if (score >= 52) return { label: "Solid",    color: "var(--violet)",desc: "Decent opportunity — worth validating before building" };
-  return              { label: "Sleeper",   color: "var(--muted)", desc: "Low signal — market may be thin or crowded" };
+function lighten(hex, t) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  r = Math.round(r + (255 - r) * t); g = Math.round(g + (255 - g) * t); b = Math.round(b + (255 - b) * t);
+  return `rgb(${r},${g},${b})`;
 }
 
-// Real, verified community sources for every wheel option.
-// These feed into scout + GTM prompts so they always reference real places.
-const COMMUNITY_META = {
-  // ── B2B Industries ──────────────────────────────────────────────
-  "Healthcare":          { find: ["r/healthIT (56K)", "HIMSS Slack", "r/medicine", "Health IT Answers forum"], size: "$4.3T market, 6,000+ health systems" },
-  "Construction":        { find: ["r/Construction (280K)", "r/contractorsofreddit", "ConstructionJunkie community"], size: "750K contractors in the US" },
-  "Logistics":           { find: ["r/logistics (43K)", "r/supplychain (78K)", "FreightWaves Slack", "r/Trucking"], size: "$1.6T US logistics market" },
-  "Legal services":      { find: ["r/LawFirm", "r/paralegal (40K)", "Lawyerist Slack", "Above the Law forums"], size: "440K law firms in the US" },
-  "Property management": { find: ["r/PropertyManagement (38K)", "BiggerPockets forums (1M+)", "r/landlord (120K)"], size: "300K property management companies" },
-  "Insurance":           { find: ["r/Insurance (45K)", "r/InsuranceAgent", "InsurancePro Slack", "CPCU community"], size: "$1.4T US insurance premium market" },
-  "Dental practices":    { find: ["r/dentistry (200K)", "Dental Town forum", "AADOM Slack", "r/DentalHygiene"], size: "185K practices in the US" },
-  "Field services":      { find: ["r/HVAC (85K)", "r/plumbing (40K)", "Jobber community", "r/electricians (55K)"], size: "500K+ field service businesses" },
-  "Restaurants":         { find: ["r/restaurantowners (95K)", "r/KitchenConfidential (900K)", "Toast community", "r/ChefKnives"], size: "1M restaurants in the US" },
-  "Auto repair":         { find: ["r/MechanicAdvice (300K)", "r/AutoRepair (80K)", "NAPA ProLink community", "ATI forums"], size: "165K independent shops" },
-  "Veterinary clinics":  { find: ["r/Vetmed (100K)", "r/VetTech (65K)", "VIN community", "AVMA forums"], size: "30K vet clinics in the US" },
-  "Accounting firms":    { find: ["r/taxpros (90K)", "r/Accounting (350K)", "AICPA forums", "Accounting Web community"], size: "140K CPA firms in the US" },
-  "Staffing agencies":   { find: ["r/recruiting (90K)", "r/humanresources (220K)", "ERE community", "SHRM forums"], size: "25K staffing agencies in the US" },
-  "Home services":       { find: ["r/HomeImprovement (2M)", "r/HomeOwners", "Angi Pro community", "r/Construction"], size: "600K home service businesses" },
-  "Real estate":         { find: ["r/realestateinvesting (2M)", "r/RealEstate (1.7M)", "BiggerPockets (2M)", "r/FirstTimeHomeBuyer"], size: "3M licensed agents in the US" },
-  "Fitness studios":     { find: ["r/personaltraining (45K)", "r/gymowners", "Mindbody community", "PFP Magazine forums"], size: "110K fitness studios in the US" },
-  "Pharmacies":          { find: ["r/pharmacy (60K)", "r/PharmacyTech (70K)", "NCPA community", "r/PharmacyStudents"], size: "88K pharmacies in the US" },
-  "Senior care":         { find: ["r/caregivers (45K)", "r/AgingParents", "NAHC forums", "Leading Age community"], size: "$400B senior care market" },
-  "Distribution":        { find: ["r/logistics", "r/supplychain", "DC Velocity forums", "NAW community"], size: "165K wholesale distributors" },
-  "Hospitality":         { find: ["r/Hospitality (15K)", "r/TalesFromTheFrontDesk (700K)", "AHLA community", "Lodging Interactive forums"], size: "54K hotels in the US" },
-  "Freelancers":         { find: ["r/freelance (230K)", "r/freelanceWriters", "Indie Hackers (100K)", "r/digitalnomad (1.8M)"], size: "60M freelancers in the US" },
-  "Consultants":         { find: ["r/consulting (90K)", "r/MBA", "Consultant Ninja forums", "Management Consulted community"], size: "700K consulting firms in the US" },
-  "Financial analysts":  { find: ["r/finance (1.8M)", "r/financialanalysis", "Wall Street Oasis", "CFA Institute forums"], size: "300K financial analysts in the US" },
+/* ─── SVG WHEEL ──────────────────────────────────────────────────── */
+function Wheel({ onResult }) {
+  const N = SEGMENTS.length;
+  const seg = 360 / N;
+  const C = 200, R = 192;
+  const [rotation, setRotation] = useState(0);
+  const [spinning, setSpinning] = useState(false);
+  const [landed, setLanded] = useState(null);
+  const rotRef = useRef(0);
 
-  // ── New B2B Industries ──────────────────────────────────────────
-  "Entertainment & media":   { find: ["r/filmmakers (280K)", "r/videoediting (340K)", "r/podcasting (220K)", "ProductionHUB community"], size: "$2.3T global entertainment market" },
-  "Sports organizations":    { find: ["r/SportsBusiness (45K)", "r/sportsmanagement", "SBJ community", "TeamWork Online forums"], size: "500K+ sports orgs in the US" },
-  "Non-profits":             { find: ["r/nonprofit (120K)", "NTC Slack (10K nonprofits)", "CharityVillage", "NTEN community"], size: "1.8M registered non-profits in the US" },
-  "Government agencies":     { find: ["r/govtech (15K)", "GovLoop (300K)", "Code for America community", "Digital.gov community"], size: "90K government entities in the US" },
-  "E-commerce brands":       { find: ["r/ecommerce (150K)", "r/shopify (200K)", "Shopify Partners Slack", "r/Entrepreneur (2.6M)"], size: "$1.1T US e-commerce market" },
-  "Marketing agencies":      { find: ["r/marketing (1.4M)", "r/agency (45K)", "Smart Insights community", "Agency Management Institute"], size: "180K marketing agencies in the US" },
-  "Mental health practices": { find: ["r/therapists (90K)", "r/psychotherapy (50K)", "Therapy Brands community", "SimplePractice forums"], size: "130K mental health practices in the US" },
-  "Gaming studios":          { find: ["r/gamedev (600K)", "r/indiegaming (150K)", "GameDevLeague Slack", "GDC community"], size: "$200B+ global games market" },
-  "EdTech companies":        { find: ["r/elearning (50K)", "r/EdTech (40K)", "EdSurge community", "ISTE forums"], size: "$340B global EdTech market by 2025" },
-  "Fintech startups":        { find: ["r/fintech (80K)", "r/FinancialTechnology (45K)", "FinTech Sandbox community", "Money 20/20 network"], size: "$340B global fintech market" },
-  "Architecture firms":      { find: ["r/architecture (1.4M)", "r/ArchitecturalDesign", "AIA Knowledge Community", "Archinect forums"], size: "120K architecture firms in the US" },
-  "Event planning":          { find: ["r/eventplanning (50K)", "r/weddingplanning (900K)", "Event Planners Association", "NACE community"], size: "$1.1T global events market" },
-  "Cleaning services":       { find: ["r/cleaningbusiness (25K)", "r/janitorial", "Cleaning Business Academy", "ISSA community"], size: "1.2M cleaning businesses in the US" },
-  "Food & beverage":         { find: ["r/foodbusiness (30K)", "r/foodtrucks (90K)", "r/FoodService", "National Restaurant Association"], size: "$900B US food & beverage industry" },
-  "AI startups":             { find: ["r/MachineLearning (2.7M)", "r/artificial (2M)", "Hacker News (YC community)", "AI Twitter / r/singularity"], size: "$200B+ AI market by 2026" },
-  "Trucking & freight":      { find: ["r/Trucking (140K)", "r/FreightBrokers (35K)", "Truckers Report forums", "DAT community"], size: "$900B US freight market" },
-  "Mortgage & lending":      { find: ["r/mortgage (170K)", "r/FirstTimeHomeBuyer (400K)", "Mortgage Bankers Association", "NAMB community"], size: "$4T US mortgage market" },
-  "HR & people ops":         { find: ["r/humanresources (220K)", "r/recruiting (90K)", "SHRM community (340K)", "People Ops community Slack"], size: "700K HR professionals in the US" },
-  "Cybersecurity firms":     { find: ["r/netsec (150K)", "r/cybersecurity (800K)", "DEFCON community", "ISACA community"], size: "$200B+ global cybersecurity market" },
-  "Publishing & content":    { find: ["r/selfpublish (110K)", "r/writing (1.9M)", "Alliance of Independent Authors", "r/blogger (50K)"], size: "55K publishing companies in the US" },
-
-  "TikTok creators":         { find: ["r/Tiktokhelp (200K)", "r/TikTokCreators", "Creator Marketplace community", "TikTok Shop Seller Center"], size: "1B+ TikTok users, $20B creator economy" },
-  "newsletter writers":      { find: ["r/newsletters (30K)", "r/beehiiv", "Substack community", "r/EmailMarketing (100K)"], size: "500M+ newsletter subscribers globally" },
-  "YouTubers":               { find: ["r/NewTubers (275K)", "r/youtube (800K)", "Creator Insider community", "r/videography"], size: "51M YouTube channels worldwide" },
-  "Twitch streamers":        { find: ["r/Twitch (550K)", "r/streaming (120K)", "r/letsplay", "StreamElements community"], size: "8M active Twitch streamers" },
-  "podcast hosts":           { find: ["r/podcasting (220K)", "Podcast Movement community", "r/podcasters", "Buzzsprout community"], size: "4M+ active podcasts globally" },
-  "affiliate marketers":     { find: ["r/Affiliatemarketing (90K)", "r/juststart (110K)", "Authority Hacker community", "r/SEO (250K)"], size: "$17B affiliate marketing industry" },
-  "Etsy sellers":            { find: ["r/EtsySellers (90K)", "r/Etsy (120K)", "Etsy Seller Handbook community", "r/smallbusiness"], size: "9M active Etsy sellers" },
-  "print-on-demand sellers": { find: ["r/passive_income (430K)", "r/redbubble (30K)", "Printful community", "r/Merch"], size: "$9.9B print-on-demand market by 2026" },
-  "indie game developers":   { find: ["r/gamedev (600K)", "r/indiegaming (150K)", "GameDevLeague Slack", "r/Unity3D (270K)"], size: "$90B+ indie game market share of $200B industry" },
-  "affiliate product research":{ find: ["r/Affiliatemarketing","r/juststart","r/SEO"], size: "Top workflow pain for 73% of affiliate marketers" },
-  "commission tracking":     { find: ["r/Affiliatemarketing","r/ecommerce (150K)","r/dropship (85K)"], size: "Manual tracking costs affiliates 8hrs/week avg" },
-  "content scheduling":      { find: ["r/socialmedia (200K)","r/marketing (1.4M)","Buffer community","Hootsuite community"], size: "$17B social media management market" },
-  "social media growth":     { find: ["r/socialmedia","r/Instagram (1.5M)","r/TikTokHelp","r/youtube"], size: "4.9B social media users worldwide" },
-  // ── Consumer audiences (including education & family) ──────────
-
-  "toddlers (ages 2-4)":    { find: ["r/toddlers (350K)", "r/Parenting (1.6M)", "r/beyondthebump (1.1M)", "What to Expect community"], size: "18M toddlers in the US, $40B kids app market" },
-  "young children (5-8)":   { find: ["r/Parenting (1.6M)", "r/Teachers (300K)", "r/HomeschoolRecovery", "Common Sense Media community"], size: "32M children ages 5-8 in the US" },
-  "tweens & teens":         { find: ["r/teenagers (2.4M)", "r/Parenting", "r/Teachers", "r/highschool (450K)"], size: "42M teens in the US, $143B teen spending market" },
-  "homeschool families":    { find: ["r/homeschool (180K)", "r/homeschooling", "HSLDA community", "Homeschool.com forums"], size: "3.3M homeschooled students in the US" },
-  "special needs learners": { find: ["r/specialeducation (45K)", "r/autism (200K)", "r/ADHD (1.1M)", "CHADD community"], size: "7M students with IEPs in the US" },
-  "adult learners":         { find: ["r/learnprogramming (3.8M)", "r/Coursera", "r/ArtificialIntelligence", "Duolingo community"], size: "36M adults enrolled in continuing education" },
-  "anxious people":         { find: ["r/Anxiety (950K)", "r/mentalhealth (450K)", "r/therapy (90K)", "7 Cups community"], size: "40M adults with anxiety disorders in the US" },
-  "night shift workers":    { find: ["r/nursing (180K)", "r/911dispatchers", "r/SecurityGuards", "r/overnights"], size: "15M night shift workers in the US" },
-  "solo travelers":         { find: ["r/solotravel (1.6M)", "r/travel (12M)", "r/backpacking (330K)", "Lonely Planet community"], size: "25M solo travelers annually in the US" },
-  "new homeowners":         { find: ["r/FirstTimeHomeBuyer (400K)", "r/HomeImprovement (2M)", "r/DIY (520K)", "r/personalfinance"], size: "4M first-time homebuyers per year in the US" },
-  "pet owners":             { find: ["r/pets (700K)", "r/dogs (3M)", "r/cats (5.7M)", "r/Pets (general)"], size: "90M households with pets in the US" },
-  "gardeners":              { find: ["r/gardening (4.6M)", "r/vegetablegardening (490K)", "r/houseplants (2.4M)", "GardenWeb community"], size: "55M households garden in the US" },
-  "musicians":              { find: ["r/WeAreTheMusicMakers (600K)", "r/Guitar (1.1M)", "r/piano (250K)", "r/singing (150K)"], size: "54M amateur musicians in the US" },
-  "athletes":               { find: ["r/running (2.8M)", "r/cycling (620K)", "r/weightroom (450K)", "r/AdvancedRunning (350K)"], size: "175M Americans exercise regularly" },
-  "seniors living alone":   { find: ["r/AgingParents (60K)", "r/eldercare", "AARP community (38M members)", "r/retirement (120K)"], size: "14M seniors living alone in the US" },
-  "phonics & reading":      { find: ["r/learnreading", "r/Teachers (300K)", "r/homeschool (180K)", "Reading Rockets community"], size: "$8B US early literacy market" },
-  "math fluency":           { find: ["r/math (1.1M)", "r/learnmath (280K)", "r/Teachers", "Khan Academy community"], size: "$5B US math ed market" },
-  "emotional learning":     { find: ["r/socialskills (250K)", "r/Teachers", "r/Parenting", "CASEL community"], size: "$2.1B SEL market growing 21% annually" },
-  "mental wellness":        { find: ["r/mentalhealth (450K)", "r/Meditation (700K)", "r/Mindfulness (400K)", "Headspace community"], size: "$140B global mental wellness market" },
-
-  "new parents":         { find: ["r/NewParents (350K)", "r/beyondthebump (1.1M)", "r/daddit (700K)", "WhatToExpect community"], size: "3.6M births/year in the US" },
-  "remote teams":        { find: ["r/remotework (310K)", "r/digitalnomad (1.8M)", "Remote Workers Slack", "We Work Remotely community"], size: "32% of US workers hybrid/remote" },
-  "couples":             { find: ["r/relationship_advice (4M)", "r/Marriage (100K)", "r/weddingplanning (400K)"], size: "130M people in relationships in the US" },
-  "college students":    { find: ["r/college (675K)", "r/ApplyingToCollege", "r/StudentLoans (170K)", "r/GradSchool"], size: "20M college students in the US" },
-  "freelancers":         { find: ["r/freelance (230K)", "r/freelanceWriters", "Indie Hackers", "r/digitalnomad (1.8M)"], size: "60M freelancers in the US" },
-  "hobby runners":       { find: ["r/running (2.8M)", "r/AdvancedRunning (350K)", "Strava community", "r/Marathon"], size: "50M runners in the US" },
-  "dog owners":          { find: ["r/dogs (3M)", "r/Dogtraining (700K)", "r/puppy101 (400K)", "r/DogAdvice"], size: "90M dogs in the US" },
-  "renters":             { find: ["r/renting (150K)", "r/Tenant (90K)", "r/FirstTimeHomeBuyer", "r/personalfinance (17M)"], size: "44M renter households in the US" },
-  "recent immigrants":   { find: ["r/immigration (550K)", "r/expats (310K)", "r/moving", "Immigrant Connect forums"], size: "1M+ legal immigrants/year to the US" },
-  "family caregivers":   { find: ["r/caregivers (45K)", "r/dementia (100K)", "r/AgingParents (60K)", "AARP Caregiving community"], size: "53M family caregivers in the US" },
-  "retirees":            { find: ["r/retirement (120K)", "r/financialindependence (2M)", "r/personalfinance", "AARP community"], size: "56M retirees in the US" },
-  "small creators":      { find: ["r/NewTubers (275K)", "r/podcasting (220K)", "r/Twitch (550K)", "Creator Economy community"], size: "50M+ content creators in the US" },
-  "ADHD adults":         { find: ["r/ADHD (1.1M)", "r/adhdwomen (240K)", "r/ADHD_Programmers (50K)", "How to ADHD community"], size: "20M adults with ADHD in the US" },
-  "book clubs":          { find: ["r/bookclub (70K)", "r/books (22M)", "Goodreads community (150M)", "r/52book"], size: "5M book club members in the US" },
-  "roommates":           { find: ["r/badroommates (150K)", "r/Tenant", "r/college (675K)", "SpareRoom community"], size: "30M+ people with roommates" },
-  "frequent travelers":  { find: ["r/travel (12M)", "r/solotravel (1.6M)", "r/churning (400K)", "r/digitalnomad (1.8M)"], size: "700M US domestic trips/year" },
-};
-
-// Get sources for a specific landed item (searched across all modes)
-function getItemMeta(item) { return COMMUNITY_META[item] || null; }
-
-// Strip citation markup from API responses before display
-function stripCites(text) {
-  if (!text) return '';
-  return text.replace(/<cite[^>]*>|<\/cite>/g, '').replace(/\s+/g, ' ').trim();
-}
-
-
-
-// Real pricing confirmed May 2026 — per million tokens
-const PRICING = {
-  "claude-haiku-4-5-20251001": { input: 1.00, output: 5.00 },
-  "claude-sonnet-4-6":          { input: 3.00, output: 15.00 },
-};
-function calcCost(model, inp, out) {
-  const p = PRICING[model] || PRICING["claude-sonnet-4-6"];
-  return (inp * p.input + out * p.output) / 1_000_000;
-}
-function fmtCost(n) { return n < 0.01 ? "<$0.01" : "$" + n.toFixed(4); }
-function fmtNum(n) { return n.toLocaleString(); }
-
-async function callClaude(prompt, useWebSearch, maxTokens, model = "claude-sonnet-4-6") {
-  const body = {
-    model,
-    max_tokens: maxTokens,
-    messages: [{ role: "user", content: prompt }],
+  const spin = () => {
+    if (spinning) return;
+    setSpinning(true); setLanded(null);
+    const i = Math.floor(Math.random() * N);
+    const centerDeg = i * seg;
+    const targetMod = ((-centerDeg) % 360 + 360) % 360;
+    const curMod = ((rotRef.current % 360) + 360) % 360;
+    let delta = targetMod - curMod; if (delta < 0) delta += 360;
+    const turns = 5 + Math.floor(Math.random() * 2);
+    const next = rotRef.current + delta + 360 * turns;
+    rotRef.current = next;
+    setRotation(next);
+    setTimeout(() => { setSpinning(false); setLanded(i); onResult(SEGMENTS[i]); }, 4600);
   };
-  if (useWebSearch) body.tools = [{ type: "web_search_20250305", name: "web_search" }];
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "anthropic-version": "2023-06-01" },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  const text = data.content.filter((b) => b.type === "text").map((b) => b.text).join("");
-  const usage = data.usage || { input_tokens: 0, output_tokens: 0 };
-  return { text, usage };
+
+  return (
+    <div className="su-wheel-wrap">
+      <div className="su-wheel-pointer">
+        <svg width="42" height="50" viewBox="0 0 46 54" fill="none">
+          <path d="M23 50 L6 14 A20 20 0 0 1 40 14 Z" fill="#fff" stroke="#ece6f5" strokeWidth="1.5"/>
+          <circle cx="23" cy="18" r="6" fill="url(#pg)"/>
+          <defs><linearGradient id="pg" x1="17" y1="12" x2="29" y2="24">
+            <stop stopColor="#7c3aed"/><stop offset="1" stopColor="#ff4d8d"/></linearGradient></defs>
+        </svg>
+      </div>
+      <div className="su-wheel-shadow"/>
+      <svg className="su-wheel-svg" viewBox="0 0 400 400"
+        style={{ transform:`rotate(${rotation}deg)`,
+          transition: spinning ? `transform 4.6s cubic-bezier(.12,.74,.16,1)` : "none" }}>
+        <defs>
+          {SEGMENTS.map((s,i) => (
+            <linearGradient key={i} id={`sg${i}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor={lighten(s.color, 0.16)}/>
+              <stop offset="1" stopColor={s.color}/>
+            </linearGradient>
+          ))}
+          <radialGradient id="gloss" cx="0.5" cy="0.3" r="0.75">
+            <stop offset="0" stopColor="#fff" stopOpacity="0.30"/>
+            <stop offset="0.55" stopColor="#fff" stopOpacity="0.04"/>
+            <stop offset="1" stopColor="#fff" stopOpacity="0"/>
+          </radialGradient>
+        </defs>
+        <circle cx={C} cy={C} r={R+2} fill="#fff"/>
+        {SEGMENTS.map((s,i) => {
+          const start = i*seg - seg/2, end = i*seg + seg/2;
+          const win = landed === i;
+          return (
+            <g key={s.id} style={{ transformOrigin:`${C}px ${C}px`,
+              transform: win ? "scale(1.012)" : "scale(1)", transition:"transform .5s ease" }}>
+              <path d={slicePath(C,C,R,start,end)} fill={`url(#sg${i})`} stroke="#fff" strokeWidth="2.5"/>
+            </g>
+          );
+        })}
+        <circle cx={C} cy={C} r={R} fill="url(#gloss)" pointerEvents="none"/>
+        {SEGMENTS.map((s,i) => (
+          <g key={s.id} transform={`rotate(${i*seg} ${C} ${C})`}>
+            <text x={C} y={60} textAnchor="middle"
+              fontFamily="Sora,sans-serif" fontWeight="700" fontSize="17" fill="#fff">{s.label}</text>
+          </g>
+        ))}
+        <circle cx={C} cy={C} r={R} fill="none" stroke="rgba(80,20,110,.08)" strokeWidth="2"/>
+      </svg>
+      <button className={`su-wheel-hub ${spinning?"is-spinning":""}`} onClick={spin} disabled={spinning}>
+        <span className="su-hub-inner">
+          {spinning
+            ? <span className="su-hub-dots"><i/><i/><i/></span>
+            : <><span className="su-hub-spark">✦</span><span className="su-hub-label">SPIN</span></>}
+        </span>
+      </button>
+    </div>
+  );
 }
 
-function parseJSON(text) {
-  const clean = text.replace(/```json\n?|```\n?/g, "").trim();
-  const s = clean.search(/[{[]/);
-  const e = Math.max(clean.lastIndexOf("}"), clean.lastIndexOf("]")) + 1;
-  if (s === -1 || e === 0) throw new Error("No JSON in response");
-  return JSON.parse(clean.slice(s, e));
+/* ─── SCORE RING ─────────────────────────────────────────────────── */
+function ScoreRing({ value, size = 128, label }) {
+  const [v, setV] = useState(0);
+  const r = size/2 - 11, c = 2*Math.PI*r;
+  const gid = useMemo(() => "sr" + Math.random().toString(36).slice(2,7), []);
+  useEffect(() => { const t = setTimeout(() => setV(value), 300); return () => clearTimeout(t); }, [value]);
+  return (
+    <div style={{ position:"relative", width:size, height:size, flexShrink:0 }}>
+      <svg width={size} height={size}>
+        <defs><linearGradient id={gid} x1="0" y1="0" x2={size} y2={size}>
+          <stop stopColor="#7c3aed"/><stop offset="1" stopColor="#ff4d8d"/></linearGradient></defs>
+        <circle cx={size/2} cy={size/2} r={r} stroke="#f3edff" strokeWidth="11" fill="none"/>
+        <circle cx={size/2} cy={size/2} r={r} stroke={`url(#${gid})`} strokeWidth="11" fill="none"
+          strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c-(c*v)/100}
+          transform={`rotate(-90 ${size/2} ${size/2})`}
+          style={{ transition:"stroke-dashoffset 1.3s cubic-bezier(.16,1,.3,1)" }}/>
+      </svg>
+      <div style={{ position:"absolute", inset:0, display:"grid", placeItems:"center", textAlign:"center" }}>
+        <div>
+          <div className="su-ring-num">{Math.round(v)}</div>
+          <div className="su-ring-label">{label}</div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
+/* ─── METER BAR ──────────────────────────────────────────────────── */
+function Meter({ value, delay=0 }) {
+  const [w, setW] = useState(0);
+  useEffect(() => { const t = setTimeout(() => setW(value), delay); return () => clearTimeout(t); }, [value, delay]);
+  return (
+    <div className="su-meter-track">
+      <div className="su-meter-fill" style={{ width:`${w}%`, transition:`width 1.1s cubic-bezier(.16,1,.3,1) ${delay}ms` }}/>
+    </div>
+  );
+}
+
+/* ─── PROTO IFRAME ───────────────────────────────────────────────── */
+function ProtoFrame({ html }) {
+  const [src, setSrc] = useState(null);
+  useEffect(() => {
+    const blob = new Blob([html], { type:"text/html" });
+    const url = URL.createObjectURL(blob);
+    setSrc(url);
+    return () => URL.revokeObjectURL(url);
+  }, [html]);
+  if (!src) return null;
+  return <iframe src={src} sandbox="allow-scripts allow-forms"
+    style={{ width:"100%", height:480, border:"none", display:"block", borderRadius:"0 0 14px 14px" }}
+    title="prototype"/>;
+}
+
+/* ─── MAIN APP ───────────────────────────────────────────────────── */
 export default function IdeaWheel() {
-  const stripRefs = [useRef(null), useRef(null), useRef(null)];
-  const indexRef = useRef([0, 0, 0]);
-  const targetRef = useRef([0, 0, 0]);
-  const spinAllRef = useRef(() => {});
-  const audioRef = useRef(null);
-
-  const [mode, setMode] = useState("b2b");
-  const m = MODES[mode];
-  const banks = m.banks;
-
-  const [landed, setLanded] = useState(["", "", ""]);
-  const [locked, setLocked] = useState([false, false, false]);
-  const [spinning, setSpinning] = useState([false, false, false]);
-  const [shortlist, setShortlist] = useState([]);
-  const [copied, setCopied] = useState(false);
-  const [soundOn, setSoundOn] = useState(false);
-
-  // Pipeline: null | { stage: 1|2|3|4, results: [comp|null, design|null, proto|null], error: null|{stage,msg} }
-  const [pipeline, setPipeline] = useState(null);
+  const [screen, setScreen] = useState("landing");   // landing | wheel | validate | blueprint
+  const [idea, setIdea]     = useState(null);
   const [credits, setCredits] = useState(3);
-  const [aiScore, setAiScore] = useState(null); // { score, eureka, insight, angle, loading }
-  const [showPricing, setShowPricing] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState("");
-  const [checkoutError, setCheckoutError] = useState("");
   const [mounted, setMounted] = useState(false);
-  const [sessionId, setSessionId] = useState("");
+
+  // validate state
+  const [validating, setValidating] = useState(false);
+  const [comp, setComp]             = useState(null);
+  const [validateErr, setValidateErr] = useState("");
+
+  // blueprint state  — pipeline stages: null | 1-4 | "done"
+  const [bpStage, setBpStage]   = useState(null);
+  const [design, setDesign]     = useState(null);
+  const [gtm, setGtm]           = useState(null);
+  const [infra, setInfra]       = useState(null);
+  const [proto, setProto]       = useState(null);
+  const [bpErr, setBpErr]       = useState("");
+  const [protoOpen, setProtoOpen] = useState(false);
+
+  // pricing
+  const [showPricing, setShowPricing]     = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState("");
+  const [checkoutErr, setCheckoutErr]     = useState("");
+
   useEffect(() => {
     setMounted(true);
     try {
-      const existing = window.localStorage.getItem("ideaWheelSessionId");
-      const id = existing || window.crypto?.randomUUID?.() || `iw-${Date.now()}`;
-      if (!existing) window.localStorage.setItem("ideaWheelSessionId", id);
-      setSessionId(id);
-
-      const storedCredits = Number(window.localStorage.getItem("ideaWheelCredits") || "3");
-      if (Number.isFinite(storedCredits) && storedCredits >= 0) setCredits(storedCredits);
-    } catch {
-      setSessionId(`iw-${Date.now()}`);
-    }
+      const stored = Number(localStorage.getItem("ideaWheelCredits") || "3");
+      if (Number.isFinite(stored) && stored >= 0) setCredits(stored);
+    } catch {}
   }, []);
-  const [protoOpen, setProtoOpen] = useState(true);
-  const [cardCopied, setCardCopied] = useState(false);
-
-  const rememberSessionId = (id) => {
-    if (!id) return;
-    setSessionId(id);
-    try { window.localStorage.setItem("ideaWheelSessionId", id); } catch {}
-  };
 
   useEffect(() => {
     if (!mounted) return;
-    try { window.localStorage.setItem("ideaWheelCredits", String(credits)); } catch {}
+    try { localStorage.setItem("ideaWheelCredits", String(credits)); } catch {}
   }, [credits, mounted]);
 
-  const setTransform = (w, idx, animate, duration) => {
-    const el = stripRefs[w].current;
-    if (!el) return;
-    el.style.transition = animate ? `transform ${duration}ms cubic-bezier(0.16,1,0.3,1)` : "none";
-    el.style.transform = `translateY(${-(idx - 1) * ITEM_H}px)`;
+  const goTo = (s) => { setScreen(s); window.scrollTo({ top:0, behavior:"smooth" }); };
+
+  const handleSpin = (segment) => {
+    setIdea(segment);
+    setComp(null); setValidateErr("");
+    setDesign(null); setGtm(null); setInfra(null); setProto(null);
+    setBpStage(null); setBpErr("");
+    goTo("wheel");
   };
 
-  const clearPipeline = () => setPipeline(null);
-
-  const tick = () => {
-    if (!soundOn) return;
+  /* ── FREE VALIDATE ── */
+  const runValidate = async () => {
+    if (!idea) return;
+    setValidating(true); setComp(null); setValidateErr("");
     try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!audioRef.current) audioRef.current = new Ctx();
-      const ctx = audioRef.current;
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = "triangle"; o.frequency.value = 430 + Math.random() * 110;
-      g.gain.setValueAtTime(0.0001, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.16, ctx.currentTime + 0.005);
-      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
-      o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 0.13);
-    } catch (e) {}
+      const res = await fetch("/api/pipeline/validate", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({
+          freeformIdea: `${idea.title}: ${idea.tagline} ${idea.blurb}`,
+          modeName: idea.label,
+          sessionId: "",
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setComp(data.comp);
+    } catch(e) {
+      setValidateErr("Market check failed. " + e.message);
+    } finally {
+      setValidating(false);
+    }
   };
 
-  useEffect(() => {
-    const b = MODES[mode].banks;
-    b.forEach((bank, w) => {
-      const start = rand(bank.length);
-      indexRef.current[w] = HOME_COPY * bank.length + start;
-    });
-    setLanded(["", "", ""]);
-    setLocked([false, false, false]);
-    setSpinning([false, false, false]);
-    clearPipeline();
-    requestAnimationFrame(() => b.forEach((_, w) => setTransform(w, indexRef.current[w], false)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
+  /* ── PAID BLUEPRINT ── */
+  const runBlueprint = async () => {
+    if (!comp || credits <= 0) { setShowPricing(true); return; }
+    setCredits(c => c-1);
+    setBpStage(1); setBpErr("");
+    setDesign(null); setGtm(null); setInfra(null); setProto(null);
+    setProtoOpen(false);
 
-  const spinWheel = (w, duration) => {
-    if (spinning[w] || locked[w]) return;
-    const bank = banks[w];
-    const L = bank.length;
-    const cur = indexRef.current[w];
-    const curBase = ((cur % L) + L) % L;
-    const t = rand(L);
-    const forward = ((t - curBase) % L + L) % L;
-    const loops = reduceMotion ? 0 : 4 + rand(3);
-    const newIndex = cur + loops * L + forward + (forward === 0 ? L : 0);
-    indexRef.current[w] = newIndex;
-    targetRef.current[w] = newIndex % L;
-    requestAnimationFrame(() => setTransform(w, newIndex, true, reduceMotion ? 260 : duration));
-    setSpinning((s) => { const n = [...s]; n[w] = true; return n; });
-  };
-
-  const onSettle = (w) => {
-    const bank = banks[w];
-    const t = targetRef.current[w];
-    indexRef.current[w] = HOME_COPY * bank.length + t;
-    setTransform(w, indexRef.current[w], false);
-    setLanded((p) => { const n = [...p]; n[w] = bank[t]; return n; });
-    setSpinning((s) => { const n = [...s]; n[w] = false; return n; });
-    tick();
-  };
-
-  const anySpinning = spinning.some(Boolean);
-  const complete = landed.every(Boolean);
-  const verb = complete ? conjugate(landed[0]) : "";
-  const combo = complete ? `${verb} ${landed[1]} ${m.connector} ${landed[2]}.` : "";
-  const sentence = complete ? `${m.prefix} ${combo}` : "";
-  const score = useMemo(() => (complete ? scoreCombo(m, landed[0], landed[1], landed[2]) : 0), [complete, landed, mode]);
-  const displayedScore = aiScore?.score ?? score;
-  const b = band(score);
-  const displayBand = band(displayedScore);
-
-  // Fire AI scoring in background after wheels settle
-  useEffect(() => {
-    if (!complete || anySpinning) return;
-    setAiScore({ loading: true });
-    fetch('/api/score', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: landed[0],
-        experience: landed[1],
-        audience: landed[2],
-        mode,
-        heuristicScore: score,
-      }),
-    })
-      .then(r => r.json())
-      .then(data => setAiScore({ ...data, loading: false }))
-      .catch(() => setAiScore(null));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [complete, anySpinning]);
-
-  const spinAll = () => {
-    if (anySpinning) return;
-    clearPipeline();
-    setAiScore(null);
-    let slot = 0;
-    banks.forEach((_, w) => { if (locked[w]) return; spinWheel(w, 2500 + slot * 450); slot++; });
-  };
-  spinAllRef.current = spinAll;
-
-  const reroll = (w) => { if (anySpinning) return; clearPipeline(); spinWheel(w, 2500); };
-  const toggleLock = (w) => setLocked((l) => { const n = [...l]; n[w] = !n[w]; return n; });
-
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.code !== "Space") return;
-      const tag = (document.activeElement && document.activeElement.tagName) || "";
-      if (tag === "INPUT" || tag === "TEXTAREA") return;
-      e.preventDefault();
-      spinAllRef.current();
+    const base = {
+      freeformIdea: `${idea.title}: ${idea.tagline} ${idea.blurb}`,
+      modeName: idea.label,
+      sessionId: "",
+      validationId: comp.validationId,
+      comp,
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+    const api = (body) => fetch("/api/pipeline/build", {
+      method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
+    }).then(r => r.json());
 
-  const recordSignal = (signal, payload = {}) => {
-    if (!sessionId) return;
-    fetch('/api/pipeline/outcome', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId,
-        signal,
-        modeName: m.name,
-        action: landed[0],
-        workflow: landed[1],
-        industry: landed[2],
-        payload,
-      }),
-    }).catch(() => {});
-  };
-
-  const openPricing = (reason = 'manual') => {
-    setCheckoutError("");
-    setShowPricing(true);
-    recordSignal('pricing_viewed', { reason, credits });
-  };
-
-  const startCheckout = async (pkg) => {
-    setCheckoutError("");
-    setCheckoutLoading(pkg.key);
-    recordSignal('checkout_started', { package: pkg.label, credits: pkg.credits, price: pkg.price });
     try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      // Stage 1 – designer
+      const d = await api({ ...base, stage:"designer" });
+      if (d.error) throw new Error(d.error);
+      setDesign(d.result); setBpStage(2);
+
+      // Stage 2 – launch
+      const g = await api({ ...base, stage:"launch", design: d.result });
+      if (g.error) throw new Error(g.error);
+      setGtm(g.result); setBpStage(3);
+
+      // Stage 3 – infrastructure
+      const inf = await api({ ...base, stage:"infrastructure", design: d.result, gtm: g.result });
+      if (inf.error) throw new Error(inf.error);
+      setInfra(inf.result); setBpStage(4);
+
+      // Stage 4 – prototype
+      const pr = await api({ ...base, stage:"builder", design: d.result, gtm: g.result, infra: inf.result });
+      if (pr.error) throw new Error(pr.error);
+      setProto(pr.result); setBpStage("done");
+    } catch(e) {
+      setCredits(c => c+1);
+      setBpErr(e.message);
+    }
+  };
+
+  /* ── STRIPE CHECKOUT ── */
+  const startCheckout = async (pkg) => {
+    setCheckoutErr(""); setCheckoutLoading(pkg.key);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ packageKey: pkg.key }),
       });
       const data = await res.json();
-      if (!res.ok || data.error || !data.url) throw new Error(data.error || 'Unable to start checkout');
+      if (!res.ok || data.error || !data.url) throw new Error(data.error || "Unable to start checkout");
       window.location.assign(data.url);
-    } catch (err) {
-      setCheckoutError(err.message || 'Unable to start checkout');
-      setCheckoutLoading("");
+    } catch(e) {
+      setCheckoutErr(e.message); setCheckoutLoading("");
     }
   };
 
-  const save = () => {
-    if (!complete || anySpinning) return;
-    setShortlist((l) => (l[0] && l[0].full === sentence ? l : [{ display: cap(combo), full: sentence, score: displayedScore, label: displayBand.label }, ...l].slice(0, 40)));
-    recordSignal('shortlist_saved', { sentence, score: displayedScore, band: displayBand.label });
-  };
+  const bpRunning = bpStage !== null && bpStage !== "done";
+  const bpDone    = bpStage === "done";
+  const vt        = comp?.verdictType || "build";
 
-  const copyAll = async () => {
-    try {
-      await navigator.clipboard.writeText(shortlist.map((s, i) => `${i + 1}. ${s.full}  [${s.score} ${s.label}]`).join("\n"));
-      setCopied(true);
-      recordSignal('shortlist_exported', { items: shortlist.length });
-      setTimeout(() => setCopied(false), 1400);
-    } catch (e) {}
-  };
-
-  const copyCard = async () => {
-    const r = pipeline && pipeline.results;
-    const [comp, design, gtm] = r || [];
-    const lines = [`🤖 ${sentence}`, `Build Score: ${displayedScore}/100 · ${displayBand.label}`];
-    if (comp) lines.push(``, `MARKET: ${comp.marketSize || ""}`, `GAP: ${stripCites(comp?.gap)}`, `VERDICT: ${stripCites(comp?.verdict)}`);
-    if (design) lines.push(``, `PRODUCT: ${design.name} — ${design.tagline}`, `EDGE: ${design.differentiator}`);
-    if (gtm) {
-      lines.push(``, `TARGET: ${gtm.persona}`, `PRICING: ${gtm.pricing?.price} — ${gtm.pricing?.rationale}`, `REVENUE GOAL: ${gtm.revenueGoal}`);
-      lines.push(``, `FIRST 5 CUSTOMERS:`);
-      (gtm.firstFiveCustomers || []).forEach((c, i) => lines.push(`  ${i+1}. ${c}`));
-      lines.push(``, `30-DAY PLAN:`);
-      (gtm.plan || []).forEach(w => lines.push(`  Week ${w.week} (${w.theme}): ${(w.actions||[]).join(" | ")}`));
-    }
-    lines.push(``, `— made with IdeaWheel`);
-    try {
-      await navigator.clipboard.writeText(lines.join("\n"));
-      setCardCopied(true);
-      recordSignal('blueprint_copied', { score: displayedScore, sentence, blueprintReady: briefDone });
-      recordSignal('blueprint_exported', { score: displayedScore, sentence, blueprintReady: briefDone, format: 'clipboard' });
-      setTimeout(() => setCardCopied(false), 1400);
-    } catch (e) {}
-  };
-
-  // ── FREE: validate market (scout only, no credit) ───────────────
-  const runScout = async () => {
-    if (!complete || anySpinning) return;
-    clearPipeline();
-    setPipeline({ stage: 'scouting', results: [null,null,null,null,null], costs: [], error: null });
-    try {
-      const res = await fetch('/api/pipeline/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: landed[0], workflow: landed[1], industry: landed[2],
-          mode, connector: m.connector, modeName: m.name,
-          sessionId,
-        }),
-      });
-      if (!res.ok) throw new Error('Validation failed: ' + res.status);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      if (data.sessionId) rememberSessionId(data.sessionId);
-      const comp = data.comp;
-      const scoutCost = { label: 'Scout', model: 'claude-haiku-4-5-20251001', input_tokens: data.cost?.input_tokens || 0, output_tokens: data.cost?.output_tokens || 0, cost: data.cost?.cost_usd || 0 };
-      const vt = comp.verdictType || 'build';
-      recordSignal(vt === 'avoid' ? 'validation_avoided' : 'validation_completed', {
-        validationId: comp.validationId,
-        verdictType: vt,
-        score: displayedScore,
-        sentence,
-      });
-      setPipeline({ stage: vt === 'avoid' ? 'avoided' : 'scouted', results: [comp,null,null,null,null], costs: [scoutCost], error: null });
-    } catch (e) {
-      setPipeline(p => ({ ...p, stage: null, error: { stage: 'scout', msg: 'Market check failed. ' + e.message } }));
-    }
-  };
-
-  // ── PAID: build the full brief (4 agents via API routes, 1 credit) ──
-  const runBrief = async () => {
-    if (!pipeline || pipeline.stage !== 'scouted') return;
-    if (credits <= 0) { openPricing('no_credits'); return; }
-    const comp = pipeline.results[0];
-    if (!comp) return;
-    setCredits(c => c - 1);
-    setShowPricing(false);
-    setProtoOpen(true);
-    const baseCosts = pipeline.costs || [];
-    recordSignal('blueprint_started', { validationId: comp.validationId, score: displayedScore, sentence });
-    const combo = {
-      action: landed[0], workflow: landed[1], industry: landed[2], mode, connector: m.connector, modeName: m.name,
-      sessionId, validationId: comp.validationId,
-    };
-    const api = (body) => fetch('/api/pipeline/build', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
-
-    // Stage 1: Designer
-    setPipeline(p => ({ ...p, stage: 1 }));
-    let design;
-    try {
-      const data = await api({ ...combo, stage: 'designer', comp });
-      if (data.sessionId) rememberSessionId(data.sessionId);
-      if (data.error) throw new Error(data.error);
-      design = data.result;
-      const c2 = { label: 'Designer', model: 'claude-sonnet-4-6', input_tokens: data.usage?.input_tokens || 0, output_tokens: data.usage?.output_tokens || 0, cost: data.cost_usd || 0 };
-      setPipeline(p => ({ ...p, results: [comp,design,null,null,null], costs: [...baseCosts, c2] }));
-    } catch (e) { setCredits(c => c + 1); setPipeline(p => ({ ...p, error: { stage: 1, msg: 'Designer failed. ' + e.message } })); return; }
-
-    // Stage 2: Launch Plan
-    setPipeline(p => ({ ...p, stage: 2 }));
-    let gtm;
-    try {
-      const data = await api({ ...combo, stage: 'launch', comp, design });
-      if (data.sessionId) rememberSessionId(data.sessionId);
-      if (data.error) throw new Error(data.error);
-      gtm = data.result;
-      const c3 = { label: 'Launch', model: 'claude-sonnet-4-6', input_tokens: data.usage?.input_tokens || 0, output_tokens: data.usage?.output_tokens || 0, cost: data.cost_usd || 0 };
-      setPipeline(p => ({ ...p, results: [comp,design,gtm,null,null], costs: [...p.costs, c3] }));
-    } catch (e) { setCredits(c => c + 1); setPipeline(p => ({ ...p, error: { stage: 2, msg: 'Launch Plan failed. ' + e.message } })); return; }
-
-    // Stage 3: Infrastructure
-    setPipeline(p => ({ ...p, stage: 3 }));
-    let infra;
-    try {
-      const data = await api({ ...combo, stage: 'infrastructure', comp, design, gtm });
-      if (data.sessionId) rememberSessionId(data.sessionId);
-      if (data.error) throw new Error(data.error);
-      infra = data.result;
-      const c3b = { label: 'Infra', model: 'claude-haiku-4-5-20251001', input_tokens: data.usage?.input_tokens || 0, output_tokens: data.usage?.output_tokens || 0, cost: data.cost_usd || 0 };
-      setPipeline(p => ({ ...p, results: [comp,design,gtm,infra,null], costs: [...p.costs, c3b] }));
-    } catch (e) { setCredits(c => c + 1); setPipeline(p => ({ ...p, error: { stage: 3, msg: 'Infrastructure failed. ' + e.message } })); return; }
-
-    // Stage 4: Prototype Builder
-    setPipeline(p => ({ ...p, stage: 4 }));
-    let proto;
-    try {
-      const data = await api({ ...combo, stage: 'builder', comp, design, gtm, infra });
-      if (data.sessionId) rememberSessionId(data.sessionId);
-      if (data.error) throw new Error(data.error);
-      proto = data.result;
-      const c4 = { label: 'Builder', model: 'claude-sonnet-4-6', input_tokens: data.usage?.input_tokens || 0, output_tokens: data.usage?.output_tokens || 0, cost: data.cost_usd || 0 };
-      setPipeline(p => ({ stage: 5, results: [comp,design,gtm,infra,proto], costs: [...p.costs, c4], error: null }));
-    } catch (e) { setCredits(c => c + 1); setPipeline(p => ({ ...p, error: { stage: 4, msg: 'Prototype failed. ' + e.message } })); }
-  };
-  const scoutRunning  = pipeline && pipeline.stage === 'scouting';
-  const scoutDone     = pipeline && (pipeline.stage === 'scouted' || pipeline.stage === 'avoided');
-  const buildRunning  = pipeline && typeof pipeline.stage === 'number' && pipeline.stage >= 1 && pipeline.stage <= 4;
-  const briefDone     = pipeline && pipeline.stage === 5;
-  const pipelineRunning = scoutRunning || buildRunning;
-  const pipelineResults = pipeline && pipeline.results;
-
-  // Stage numbers for the 3 build agents: 1=designer, 2=gtm, 3=builder
-  // results: [0]=comp, [1]=design, [2]=gtm, [3]=proto
-  const buildStageStatus = (n) => {
-    if (!buildRunning && !briefDone) return "idle";
-    if (pipeline.error && pipeline.error.stage === n) return "error";
-    if (pipeline.stage === n) return "running";
-    if (pipelineResults && pipelineResults[n] !== null) return "done";
-    return "idle";
-  };
-
-
+  /* ── SCREENS ── */
   return (
-    <div className="iw-root">
-      {mounted && <style>{css}</style>}
-      <div className="iw-grain" aria-hidden />
-      <div className="iw-glow" aria-hidden />
+    <div className="su-root">
+      {mounted && <style>{CSS}</style>}
 
-      <nav className="iw-topnav">
-        <span className="iw-topnav-brand">Idea Generator</span>
-        <div className="iw-topnav-links">
-          <a className="iw-topnav-link" href="/pricing">Pricing</a>
-          <a className="iw-topnav-link iw-topnav-link--cta" href="/profile">Profile</a>
+      {/* atmospheric blobs */}
+      <div className="su-blob" style={{ width:500, height:500, top:"-8%", left:"-6%", background:"#7c3aed" }}/>
+      <div className="su-blob" style={{ width:440, height:440, bottom:"-12%", right:"-6%", background:"#ff4d8d", animationDelay:"-7s" }}/>
+
+      {/* ── NAV ── */}
+      <nav className="su-nav">
+        <button className="su-nav-brand" onClick={() => goTo("landing")}>Idea Generator</button>
+        <div className="su-nav-links">
+          <a className="su-nav-link" href="/pricing">Pricing</a>
+          <a className="su-nav-link su-nav-link--cta" href="/profile">Profile</a>
         </div>
       </nav>
 
-      <div className="iw-shell">
-        <section className="iw-machine">
-          <header className="iw-head">
-            <div className="iw-headtop">
-              <span className="iw-kicker">SPIN. VALIDATE. BUILD.</span>
-              <span className="iw-headbadge">Free market check before checkout</span>
-            </div>
-            <div className="iw-headcopy">
-              <h1 className="iw-title">Idea Generator</h1>
-              <p className="iw-sub">Spin an idea. Validate the market for free. Build only when it's worth it.</p>
-              <div className="iw-proofrow">
-                <span className="iw-proofchip">Free validation</span>
-                <span className="iw-proofchip">Live blueprint build</span>
-                <span className="iw-proofchip">1 credit only if it passes</span>
-              </div>
-            </div>
-          </header>
-
-          <div className="iw-controlshelf">
-            <div className="iw-bar">
-              <div className="iw-modes">
-                {Object.keys(MODES).map((k) => (<button key={k} className={`iw-modebtn ${mode === k ? "on" : ""}`} onClick={() => setMode(k)} disabled={anySpinning}>{MODES[k].name}</button>))}
-              </div>
-              <button className="iw-creditpill" onClick={() => openPricing('credit_pill')} title="Buy more credits">
-                <span className="iw-creditnum">{credits}</span>
-                <span className="iw-creditlbl">credits</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="iw-slotmachine">
-            <div className="iw-reelintro">
-              <div>
-                <span className="iw-reelintro-label">LIVE WEDGE GENERATOR</span>
-                <p className="iw-reelintro-copy">Tap any reel to reroll it. Lock the words you like, then validate the idea before spending a credit.</p>
-              </div>
-            </div>
-
-            <div className="iw-reels">
-              <span className="iw-marker iw-marker-l" aria-hidden />
-              <span className="iw-marker iw-marker-r" aria-hidden />
-              <span className="iw-payline" aria-hidden />
-              {banks.map((bank, w) => {
-                const repeated = Array.from({ length: REPEATS }, () => bank).flat();
-                return (
-                  <div className="iw-col" key={mode + w} style={{ "--accent": TINTS[w] }}>
-                    <div className="iw-collabel">{m.labels[w]}</div>
-                    <div className="iw-window" onClick={() => reroll(w)} role="button">
-                      <div className="iw-strip" ref={stripRefs[w]} onTransitionEnd={() => onSettle(w)}>
-                        {repeated.map((word, i) => (<div className="iw-item" key={i} style={{ height: ITEM_H }}><span>{word}</span></div>))}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="iw-slotbase">
-              <div className="iw-slotlights" aria-hidden>
-                <span /><span /><span /><span /><span /><span /><span />
-              </div>
-              <div className="iw-controls">
-                <button className="iw-spin" onClick={spinAll} disabled={anySpinning}>{anySpinning ? "Spinning…" : <><Dices size={16} /> Generate Idea!</>}</button>
-                <span className="iw-spinhint">Lock a good reel, then reroll the rest.</span>
-              </div>
-            </div>
-          </div>
-
-          <div className={`iw-result ${complete && !anySpinning ? "show" : ""}`}>
-            <p className="iw-statement">
-              <span className="iw-prefix">{m.prefix}</span>
-              <span className="iw-fill">
-                <span style={{ color: TINTS[0] }}>{verb}</span>{" "}
-                <span style={{ color: TINTS[1] }}>{landed[1]}</span>{" "}
-                <span className="iw-in">{m.connector}</span>{" "}
-                <span style={{ color: TINTS[2] }}>{landed[2]}</span>
-                <span className="iw-dot">.</span>
+      {/* ── LANDING ── */}
+      {screen === "landing" && (
+        <section className="su-screen su-landing">
+          <div className="su-landing-chips" aria-hidden>
+            {SEGMENTS.map((s,i) => (
+              <span key={s.id} className="su-float-chip"
+                style={{ "--c":s.color, left:CHIP_POS[i].x+"%", top:CHIP_POS[i].y+"%", animationDelay:(i*0.5)+"s" }}>
+                <span className="su-float-dot" style={{ background:s.color }}/>
+                {s.label}
               </span>
+            ))}
+          </div>
+          <div className="su-landing-inner">
+            <div className="su-eyebrow">From a spin to a startup</div>
+            <h1 className="su-display su-landing-h1">
+              <span style={{ display:"block" }}>Spin the wheel.</span>
+              <span className="su-grad-text" style={{ display:"block" }}>Ship the company.</span>
+            </h1>
+            <p className="su-landing-sub">
+              One spin lands you on a validated startup idea — then we build the full blueprint: product, go-to-market, infrastructure, and a clickable prototype.
             </p>
+            <div className="su-landing-cta">
+              <button className="su-btn su-btn-primary su-btn-lg" onClick={() => goTo("wheel")}>
+                ✦ Spin an idea
+              </button>
+              <div className="su-landing-meta">✓ Free market check · 1 credit for the full blueprint</div>
+            </div>
+            <div className="su-landing-steps">
+              {[["01","Spin","Land on a frontier"],["02","Validate","Read the market"],["03","Build","Get the blueprint"]].map(([n,t,d]) => (
+                <div className="su-land-step" key={n}>
+                  <span className="su-grad-text su-land-step-n">{n}</span>
+                  <div><div className="su-land-step-t">{t}</div><div className="su-land-step-d">{d}</div></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
-            <div className={`iw-score${aiScore?.eureka ? ' iw-score--eureka' : ''}`}>
-              <div className="iw-score-top">
-                {aiScore?.eureka ? (
-                  <>
-                    <span className="iw-scorenum" style={{ color: 'var(--amber)' }}>{aiScore.score}</span>
-                    <span className="iw-scoreband iw-scoreband--eureka">⚡ EUREKA</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="iw-scorenum" style={{ color: displayBand.color }}>
-                      {displayedScore}
-                    </span>
-                    <span className="iw-scoreband" style={{ color: displayBand.color, borderColor: displayBand.color + '55' }}>
-                      {aiScore?.loading ? '…' : displayBand.label}
-                    </span>
-                  </>
-                )}
-                <span className="iw-scoredesc">
-                  {aiScore?.loading ? 'AI is evaluating this combination…'
-                    : aiScore?.insight || b.desc}
-                </span>
+      {/* ── WHEEL ── */}
+      {screen === "wheel" && (
+        <section className="su-screen su-wheel-screen">
+          <div className="su-screen-head">
+            <div className="su-eyebrow">Step one</div>
+            <h2 className="su-display su-screen-title">Give it a spin</h2>
+            <p className="su-screen-desc">Eight frontiers, one decisive spin. The pointer picks your starting line.</p>
+          </div>
+          <div className="su-wheel-stage">
+            <Wheel onResult={(s) => { setIdea(s); setComp(null); setValidateErr(""); }}/>
+            <div className={`su-result-card ${idea ? "in" : ""}`}>
+              {!idea ? (
+                <div className="su-result-empty">
+                  <div className="su-result-empty-ring">✦</div>
+                  <div>
+                    <div className="su-result-empty-t">Your idea appears here</div>
+                    <div className="su-result-empty-d">Hit SPIN to draw from {SEGMENTS.length} frontiers</div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <span className="su-chip su-result-domain" style={{ "--c":idea.color }}>
+                    <span className="su-float-dot" style={{ background:idea.color }}/>
+                    {idea.label}
+                  </span>
+                  <h3 className="su-display su-result-title">{idea.title}</h3>
+                  <p className="su-result-tagline">{idea.tagline}</p>
+                  <p className="su-result-blurb">{idea.blurb}</p>
+                  <div className="su-result-actions">
+                    <button className="su-btn su-btn-primary" onClick={() => { goTo("validate"); runValidate(); }}>
+                      Validate this idea →
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── VALIDATE ── */}
+      {screen === "validate" && idea && (
+        <section className="su-screen su-validate">
+          <div className="su-screen-head">
+            <div className="su-eyebrow">Step two · Free market check</div>
+            <h2 className="su-display su-screen-title">
+              Is <span className="su-grad-text">{idea.title}</span> worth building?
+            </h2>
+            <p className="su-screen-desc">{idea.tagline}</p>
+          </div>
+
+          {validating && (
+            <div className="su-scan su-glass">
+              <div className="su-scan-bar"><div className="su-scan-fill"/></div>
+              <div className="su-scan-text">⚡ Scanning demand, market size & competition…</div>
+            </div>
+          )}
+
+          {validateErr && <p className="su-err">{validateErr} <button className="su-retry" onClick={runValidate}>Retry</button></p>}
+
+          {comp && !validating && (
+            <div className="su-validate-grid">
+              {/* Score + competition */}
+              <div className="su-card su-v-score">
+                <ScoreRing value={comp.score ?? 65} label="Demand"/>
+                <div className="su-v-score-side">
+                  <span className="su-chip" style={{
+                    background: vt==="avoid"?"#dc2626":vt==="warning"?"#d97706":"#16a34a",
+                    color:"#fff", border:"none"
+                  }}>
+                    {vt==="avoid"?"High":vt==="warning"?"Medium":"Low"} competition
+                  </span>
+                  <p className="su-v-verdict">{comp.verdict || comp.verdictReasoning}</p>
+                </div>
               </div>
-              {aiScore?.eureka && aiScore.angle && (
-                <div className="iw-eureka-angle">
-                  <span>BUILD THIS</span> {aiScore.angle}
+
+              {/* Market size */}
+              <div className="su-card su-v-market">
+                <div className="su-v-market-cell">
+                  <div className="su-v-k su-grad-text">{comp.marketSize || "—"}</div>
+                  <div className="su-v-l">Market size</div>
+                </div>
+                {comp.gap && (
+                  <div className="su-v-gap">
+                    <div className="su-v-gap-label">The gap</div>
+                    <p>{comp.gap}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Players */}
+              {(comp.players||[]).length > 0 && (
+                <div className="su-card su-v-signals">
+                  <div className="su-v-signals-head">⚡ Key players</div>
+                  {(comp.players||[]).slice(0,3).map((pl,i) => (
+                    <div className="su-v-signal" key={i}>
+                      <div className="su-v-signal-top">
+                        <span>{pl.name}</span>
+                        <b>{pl.pricing||"—"}</b>
+                      </div>
+                      <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{pl.weakness}</div>
+                      <Meter value={60+Math.random()*30} delay={200+i*150}/>
+                    </div>
+                  ))}
                 </div>
               )}
-              <div className="iw-meter">
-                <span className="iw-meterfill" style={{
-                  width: `${displayedScore}%`,
-                  background: aiScore?.eureka ? 'var(--amber)' : displayBand.color,
-                  transition: 'width 0.6s ease-out, background 0.4s ease'
-                }} />
-              </div>
-            </div>
 
-            <div className="iw-buildrow">
-              <div className="iw-resultbtns">
-                <button className="iw-save" onClick={save} disabled={anySpinning || pipelineRunning}><Plus size={15} /> Shortlist</button>
-                {!scoutDone && !buildRunning && !briefDone ? (
-                  <button className="iw-validate iw-validate--primary" onClick={runScout} disabled={anySpinning || scoutRunning}>
-                    {scoutRunning ? <><span className="iw-dotspinner iw-dotspinner--light" /> Checking market…</> : <><Search size={15} /> Validate Market<span className="iw-freebadge">free</span></>}
-                  </button>
-                ) : scoutDone && !buildRunning && !briefDone ? (
-                  <button className="iw-validate" onClick={runScout} disabled={anySpinning} style={{opacity:.6,fontSize:"12px"}}>
-                    <Search size={13} /> Check again
-                  </button>
-                ) : null}
-              </div>
-
-            </div>
-            <span className="iw-scorehint">Validation is always free. Credits unlock the full Blueprint.</span>
-
-            {/* ── SCOUT VERDICT (shown after free validation) ── */}
-            {scoutDone && pipelineResults && pipelineResults[0] && (() => {
-              const c = pipelineResults[0];
-              const vt = c.verdictType || 'build';
-              if (vt === 'avoid') return (
-                <div className="iw-verdict iw-verdict--avoid">
-                  <div className="iw-verdict-banner">
-                    <span className="iw-verdict-icon">⛔</span>
-                    <span className="iw-verdict-title">Crowded Market</span>
-                    {c.marketSize && <span className="iw-verdict-sub">{c.marketSize}</span>}
+              {/* CTA */}
+              {vt !== "avoid" && (
+                <div className="su-v-cta">
+                  <div className="su-v-cta-text">Signal is strong. Ready to turn this into a real plan?</div>
+                  <div className="su-v-cta-row">
+                    <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); }}>
+                      ✦ Generate the blueprint
+                    </button>
+                    <button className="su-creditpill" onClick={() => setShowPricing(true)}>
+                      <span className="su-creditnum">{credits}</span>
+                      <span className="su-creditlbl">credits</span>
+                    </button>
                   </div>
-                  <div className="iw-verdict-body">
-                    <p className="iw-verdict-reason">{stripCites(c.verdictReasoning)}</p>
-                    {(c.players||[]).slice(0,3).length > 0 && (<>
-                      <span className="iw-verdict-players-label">Who owns this space</span>
-                      <div className="iw-verdict-players">
-                        {(c.players||[]).slice(0,3).map((pl,i) => (
-                          <div key={i} className="iw-verdict-player">
-                            <span className="iw-verdict-pname">{pl.name}</span>
-                            <div className="iw-verdict-pdetail">
-                              <span className="iw-verdict-pprice">{stripCites(pl.pricing)||"—"}</span>
-                              <span className="iw-verdict-pweak">{stripCites(pl.weakness)}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </>)}
-                    {c.pivotHint && (
-                      <div className="iw-verdict-pivot">
-                        <div className="iw-verdict-pivot-label">💡 Instead, consider</div>
-                        <p>{stripCites(c.pivotHint)}</p>
-                      </div>
-                    )}
-                    <button className="iw-verdict-spin" onClick={() => { clearPipeline(); spinAll(); }}>↩ Spin a new idea</button>
-                  </div>
+                  <div className="su-v-hint">1 credit · always free to validate</div>
                 </div>
-              );
-              return (
-                <div className={"iw-verdict" + (vt === 'warning' ? " iw-verdict--warn" : " iw-verdict--build")}>
-                  <div className="iw-verdict-banner">
-                    <span className="iw-verdict-icon">{vt === 'build' ? '✅' : '⚡'}</span>
-                    <span className="iw-verdict-title">{vt === 'build' ? 'Build-Worthy' : 'Competitive — Wedge Exists'}</span>
-                    {c.marketSize && <span className="iw-verdict-sub">{c.marketSize}</span>}
-                  </div>
-                  <div className="iw-verdict-body">
-                    <p className="iw-verdict-reason">{stripCites(c.verdictReasoning)}</p>
-                    {c.gap && (
-                      <div className="iw-verdict-gap">
-                        <span>The Gap</span>
-                        <p>{stripCites(c.gap)}</p>
-                      </div>
-                    )}
-                    {(c.players||[]).slice(0,3).length > 0 && (<>
-                      <span className="iw-verdict-players-label">Key players</span>
-                      <div className="iw-verdict-players">
-                        {(c.players||[]).slice(0,3).map((pl,i) => (
-                          <div key={i} className="iw-verdict-player">
-                            <span className="iw-verdict-pname">{pl.name}</span>
-                            <div className="iw-verdict-pdetail">
-                              <span className="iw-verdict-pprice">{stripCites(pl.pricing)||"—"}</span>
-                              <span className="iw-verdict-pweak">{stripCites(pl.weakness)}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </>)}
-                    <div className="iw-buildbtnrow">
-                      <button className="iw-buildbtn" onClick={runBrief} disabled={buildRunning || briefDone}>
-                        {credits === 0
-                          ? <><Zap size={15} /> Get credits to build the Blueprint</>
-                          : <><Zap size={15} /> Build the Blueprint <span className="iw-creditcost">· 1 credit</span></>}
-                      </button>
-                      <button className="iw-creditpill iw-creditpill--verdict" onClick={() => openPricing('verdict_cta')} title={credits === 0 ? 'Buy credits' : 'Buy more credits'}>
-                        <span className="iw-creditnum">{credits}</span>
-                        <span className="iw-creditlbl">credits</span>
-                      </button>
-                    </div>
-                    {credits === 0 && <button className="iw-verdict-getc" onClick={() => openPricing('verdict_cta')}>Get credits →</button>}
-                  </div>
-                </div>
-              );
-            })()}
+              )}
 
-            {showPricing && (
-              <div className="iw-pricing">
-                <div className="iw-pricinghead">
-                  <span>GET MORE CREDITS</span>
-                  <button className="iw-pricingclose" onClick={() => setShowPricing(false)}>✕</button>
-                </div>
-                <p className="iw-pricingsub">Each credit unlocks one full Blueprint run: market analysis, product spec, GTM playbook, infrastructure plan, and live prototype.</p>
-                {checkoutError && <p className="iw-priceerr">{checkoutError}</p>}
-                <div className="iw-pkgs">
-                  {CREDIT_PACKAGES.map(pkg => (
-                    <div key={pkg.key} className={"iw-pkg" + (pkg.highlight ? " iw-pkg--hl" : "")}>
-                      <span className="iw-pkglabel">{pkg.label}</span>
-                      <span className="iw-pkgcredits">{pkg.credits} credits</span>
-                      <span className="iw-pkgprice">{pkg.price}</span>
-                      <span className="iw-pkgper">{pkg.per} / credit</span>
-                      <button className="iw-pkgbtn" disabled={Boolean(checkoutLoading)} onClick={() => startCheckout(pkg)}>
-                        {checkoutLoading === pkg.key ? 'Redirecting…' : 'Checkout'}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ── PIPELINE ── */}
-          {(buildRunning || briefDone) && pipelineResults && (
-            <div className="pip-root">
-              <div className="pip-header">
-                <span>THE BLUEPRINT</span>
-                {briefDone && (<button className="iw-cardbtn" onClick={copyCard}>{cardCopied ? <Check size={13} /> : <Share2 size={13} />}{cardCopied ? "Copied" : "Copy blueprint"}</button>)}
-              </div>
-
-              {/* ── Build progress bar ── */}
-              <div className="pip-progress">
-                {[
-                  { n: 1, label: 'Product' },
-                  { n: 2, label: 'Launch' },
-                  { n: 3, label: 'Infra' },
-                  { n: 4, label: 'Prototype' },
-                ].map(({ n, label }) => {
-                  const st = buildStageStatus(n);
-                  return (
-                    <div key={n} className={`pip-progress-step pip-progress-step--${st}`}>
-                      <div className="pip-progress-dot">
-                        {st === 'done' ? '✓' : st === 'running' ? <span className="pip-spinner pip-spinner--sm" /> : n}
-                      </div>
-                      <span className="pip-progress-label">{label}</span>
-                    </div>
-                  );
-                })}
-                <div className="pip-progress-track">
-                  <div className="pip-progress-fill" style={{
-                    width: briefDone ? '100%' :
-                      buildRunning ? `${((typeof pipeline.stage === 'number' ? pipeline.stage - 1 : 0) / 4) * 100}%` : '0%'
-                  }} />
-                </div>
-              </div>
-
-              {/* ── Stage 1: Product Designer ── */}              <AgentCard n={1} icon={<Paintbrush size={15} />} label="PRODUCT DESIGNER" model="sonnet-4.6"
-                desc="Names the product, specs the differentiator, defines what to build."
-                status={buildStageStatus(1)} accent="var(--teal)">
-                {pipelineResults[1] && (() => { const d = pipelineResults[1]; return (
-                  <div className="pip-output">
-                    <div className="pip-product"><span className="pip-productname">{d.name}</span><span className="pip-producttag">{d.tagline}</span></div>
-                    <p className="pip-diff"><strong>Edge:</strong> {d.differentiator}</p>
-                    <ul className="pip-features">{(d.coreFeatures||[]).map((f,i)=><li key={i}>{f}</li>)}</ul>
-                  </div>); })()}
-                {pipeline.error && pipeline.error.stage === 1 && <p className="pip-err">{pipeline.error.msg} <button className="iw-retry" onClick={runBrief}>Retry</button></p>}
-              </AgentCard>
-              <div className="pip-connector" />
-
-              {/* ── Stage 2: GTM Strategist ── */}              <AgentCard n={2} icon={<Rocket size={15} />} label="LAUNCH PLAN" model="sonnet-4.6"
-                desc="First 5 customers, pricing rationale, 30-day plan, build stack."
-                status={buildStageStatus(2)} accent="var(--violet)">
-                {pipelineResults[2] && (() => { const g = pipelineResults[2]; return (
-                  <div className="pip-output">
-                    <div className="pip-gtmhero"><div className="pip-revgoal"><span className="pip-revnum">{g.revenueGoal}</span><span className="pip-revlabel">30-DAY TARGET</span></div><div className="pip-buildtime"><span className="pip-btnum">{g.buildTime}</span><span className="pip-btlabel">TO BUILD V1</span></div></div>
-                    <div className="pip-section"><span className="pip-seclabel">TARGET CUSTOMER</span><p className="pip-persona">{g.persona}</p>{g.whereToFind && <p className="pip-where"><strong>Where:</strong> {g.whereToFind}</p>}</div>
-                    <div className="pip-section"><span className="pip-seclabel">FIRST 5 CUSTOMERS</span><ol className="pip-five">{(g.firstFiveCustomers||[]).map((c,i)=><li key={i}>{c}</li>)}</ol></div>
-                    {(g.channels||[]).length > 0 && <div className="pip-section"><span className="pip-seclabel">CHANNELS</span>{g.channels.map((ch,i)=><div key={i} className="pip-channel"><span className="pip-chname">{ch.name}</span><span className="pip-chtactic">{ch.tactic}</span><span className="pip-chtl">{ch.timeline}</span></div>)}</div>}
-                    {g.pricing && <div className="pip-pricebox"><span className="pip-price">{g.pricing.price}</span><span className="pip-pricerat">{g.pricing.rationale}</span>{g.pricing.trial && <span className="pip-pricetrial">{g.pricing.trial}</span>}</div>}
-                    {(g.plan||[]).length > 0 && <div className="pip-section"><span className="pip-seclabel">30-DAY PLAN</span><div className="pip-weeks">{g.plan.map((w,i)=><div key={i} className="pip-week"><span className="pip-weekn">W{w.week}</span><span className="pip-weektheme">{w.theme}</span><ul>{(w.actions||[]).map((a,j)=><li key={j}>{a}</li>)}</ul></div>)}</div></div>}
-                    {(g.startNow||[]).length > 0 && (
-                      <div className="pip-startnow">
-                        <span className="pip-seclabel">START TODAY</span>
-                        <p className="pip-startnow-sub">Three actions you can take in the next 24 hours.</p>
-                        <ol className="pip-today">{(g.startNow||[]).map((a,i)=><li key={i}>{a}</li>)}</ol>
-                      </div>
-                    )}
-                    {(g.stack||[]).length > 0 && <div className="pip-section"><span className="pip-seclabel">BUILD STACK</span><div className="pip-stack">{g.stack.map((s,i)=><span key={i} className="pip-stackpill">{s}</span>)}</div></div>}
-                  </div>); })()}
-                {pipeline.error && pipeline.error.stage === 2 && <p className="pip-err">{pipeline.error.msg} <button className="iw-retry" onClick={runBrief}>Retry</button></p>}
-              </AgentCard>
-              <div className="pip-connector" />
-
-              {/* ── Stage 3: Infrastructure Architect ── */}
-              <AgentCard n={3} icon={<Zap size={15} />} label="INFRASTRUCTURE"
-                desc="Services to sign up for, env vars, DB schema, AI wiring, deploy steps, and monthly cost."
-                status={buildStageStatus(3)} accent="var(--amber)">
-                {pipelineResults && pipelineResults[3] && (() => { const inf = pipelineResults[3]; return (
-                  <div className="pip-output">
-                    {(inf.services||[]).length > 0 && (
-                      <div className="pip-section">
-                        <span className="pip-seclabel">SETUP — {inf.services.length} SERVICES</span>
-                        <div className="pip-services">
-                          {(inf.services||[]).map((svc,i) => (
-                            <div key={i} className="pip-svc">
-                              <div className="pip-svc-head">
-                                <span className="pip-svc-name">{svc.name}</span>
-                                <span className="pip-svc-time">{svc.setupTime}</span>
-                                {svc.url && <a className="pip-svc-url" href={svc.url} target="_blank" rel="noopener noreferrer">Sign up →</a>}
-                              </div>
-                              <span className="pip-svc-purpose">{svc.purpose}</span>
-                              <span className="pip-svc-free">{svc.freeTier}</span>
-                              {(svc.setupSteps||[]).length > 0 && <ol className="pip-svc-steps">{svc.setupSteps.map((s,j)=><li key={j}>{s}</li>)}</ol>}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {inf.envVars && <div className="pip-section"><span className="pip-seclabel">.ENV TEMPLATE</span><pre className="pip-envblock">{Array.isArray(inf.envVars)?inf.envVars.join("\n"):inf.envVars}</pre></div>}
-                    {inf.schema && <div className="pip-section"><span className="pip-seclabel">DATABASE SCHEMA</span><p className="pip-schema">{inf.schema}</p></div>}
-                    {inf.aiWiring && <div className="pip-section pip-aiwiring"><span className="pip-seclabel">AI AGENT WIRING</span><p>{inf.aiWiring}</p></div>}
-                    {(inf.deploySteps||[]).length > 0 && <div className="pip-section"><span className="pip-seclabel">DEPLOY STEPS</span><ol className="pip-deploylist">{inf.deploySteps.map((s,i)=><li key={i}>{s}</li>)}</ol></div>}
-                    {inf.monthlyCost && <div className="pip-costgrid">{Object.entries(inf.monthlyCost).map(([k,v],i)=><div key={i} className="pip-costcell"><span className="pip-costcellval">{v}</span><span className="pip-costcellkey">{k==='dev'?'Dev mode':k==='at100users'?'100 users':'1,000 users'}</span></div>)}</div>}
-                    {inf.buildOrder && <div className="pip-section"><span className="pip-seclabel">BUILD ORDER</span><p className="pip-buildorder">{inf.buildOrder}</p></div>}
-                  </div>
-                ); })()}
-                {pipeline.error && pipeline.error.stage === 3 && <p className="pip-err">{pipeline.error.msg} <button className="iw-retry" onClick={runBrief}>Retry</button></p>}
-              </AgentCard>
-
-              <div className="pip-connector" />
-
-              {/* ── Stage 4: Prototype Builder ── */}
-              <AgentCard n={4} icon={<Code2 size={15} />} label="PROTOTYPE BUILDER" model="sonnet-4.6"
-                desc="Working interactive prototype built for your target customer — rendered live."
-                status={buildStageStatus(4)} accent="oklch(58% 0.14 195)">
-                {pipelineResults[4] && (
-                  <div className="pip-output">
-                    <button className="pip-prototoggle" onClick={()=>setProtoOpen(v=>!v)}>{protoOpen ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}{protoOpen ? "Hide prototype" : "Show prototype"}</button>
-                    {protoOpen && <div className="pip-frame-wrap"><div className="pip-chrome"><span/><span/><span/><div className="pip-url">{pipelineResults[1] && pipelineResults[1].name ? pipelineResults[1].name.toLowerCase().replace(/\s+/g,"-")+".app" : "prototype.app"}</div></div><ProtoFrame html={pipelineResults[4]} /></div>}
-                  </div>)}
-                {pipeline.error && pipeline.error.stage === 4 && <p className="pip-err">{pipeline.error.msg} <button className="iw-retry" onClick={runBrief}>Retry</button></p>}
-              </AgentCard>
-
-              {/* ── Cost bar ── */}              {briefDone && pipeline.costs && (
-                <div className="pip-costbar">
-                  <span className="pip-costlabel">RUN COST</span>
-                  {pipeline.costs.map((c,i)=>(
-                    <span key={i} className="pip-costagent"><span className="pip-costagentname">{c.label}</span><span>{fmtNum(c.input_tokens)}↑ {fmtNum(c.output_tokens)}↓</span><span className="pip-costamt">{fmtCost(c.cost)}</span></span>
-                  ))}
-                  <span className="pip-costtotal">Total: <strong>{fmtCost(pipeline.costs.reduce((s,c)=>s+c.cost,0))}</strong></span>
+              {vt === "avoid" && (
+                <div className="su-v-cta su-v-cta--avoid">
+                  <div className="su-v-cta-text">⛔ Crowded market — consider a different angle.</div>
+                  {comp.pivotHint && <p style={{ fontSize:13, color:"var(--muted)", margin:"8px 0 0" }}>{comp.pivotHint}</p>}
+                  <button className="su-btn su-btn-ghost" onClick={() => goTo("wheel")}>↩ Spin again</button>
                 </div>
               )}
             </div>
           )}
         </section>
+      )}
 
-      </div>
-      <div className="iw-disclaimer">
+      {/* ── BLUEPRINT ── */}
+      {screen === "blueprint" && idea && (
+        <section className="su-screen su-blueprint">
+          <div className="su-screen-head">
+            <div className="su-eyebrow">Step three · The plan</div>
+            <h2 className="su-display su-screen-title">
+              The <span className="su-grad-text">{idea.title}</span> blueprint
+            </h2>
+            <p className="su-screen-desc">{idea.blurb}</p>
+          </div>
+
+          {bpRunning && !design && (
+            <div className="su-scan su-glass">
+              <div className="su-scan-bar"><div className="su-scan-fill"/></div>
+              <div className="su-scan-text">✦ Drafting product, GTM, infrastructure &amp; prototype…</div>
+            </div>
+          )}
+
+          {bpErr && <p className="su-err">{bpErr} <button className="su-retry" onClick={runBlueprint}>Retry</button></p>}
+
+          {/* Pipeline progress */}
+          {(bpRunning || bpDone) && (
+            <div className="su-pip-progress">
+              {[{n:1,label:"Product"},{n:2,label:"Launch"},{n:3,label:"Infra"},{n:4,label:"Prototype"}].map(({n,label}) => {
+                const done = bpDone || (typeof bpStage === "number" && bpStage > n);
+                const running = typeof bpStage === "number" && bpStage === n;
+                return (
+                  <div key={n} className={`su-pip-step ${done?"done":""} ${running?"running":""}`}>
+                    <div className="su-pip-dot">{done?"✓":running?<span className="su-spin-sm"/>:n}</div>
+                    <span className="su-pip-label">{label}</span>
+                  </div>
+                );
+              })}
+              <div className="su-pip-track">
+                <div className="su-pip-fill" style={{ width: bpDone?"100%":typeof bpStage==="number"?`${((bpStage-1)/4)*100}%`:"0%" }}/>
+              </div>
+            </div>
+          )}
+
+          {(design || gtm || infra || proto) && (
+            <div className="su-bp-grid">
+              {/* Product */}
+              {design && (
+                <div className="su-card su-bp-card">
+                  <div className="su-bp-head"><span className="su-bp-icon">◈</span><h3 className="su-bp-title">Product</h3></div>
+                  <p className="su-bp-name su-grad-text">{design.name}</p>
+                  <p className="su-bp-summary">{design.tagline}</p>
+                  <p className="su-bp-summary">{design.differentiator}</p>
+                  <div className="su-bp-list-label">Core features</div>
+                  <ul className="su-bp-list">{(design.coreFeatures||[]).map((f,i)=><li key={i}>{f}</li>)}</ul>
+                </div>
+              )}
+
+              {/* GTM */}
+              {gtm && (
+                <div className="su-card su-bp-card">
+                  <div className="su-bp-head"><span className="su-bp-icon">↗</span><h3 className="su-bp-title">Go-to-Market</h3></div>
+                  <div className="su-bp-kpis">
+                    <div className="su-bp-kpi"><span className="su-grad-text">{gtm.revenueGoal}</span><small>30-day target</small></div>
+                    <div className="su-bp-kpi"><span>{gtm.buildTime}</span><small>to build V1</small></div>
+                  </div>
+                  <p className="su-bp-summary">{gtm.persona}</p>
+                  {(gtm.firstFiveCustomers||[]).length>0 && <>
+                    <div className="su-bp-list-label">First 5 customers</div>
+                    <ol className="su-bp-list su-bp-list--ol">{(gtm.firstFiveCustomers||[]).map((c,i)=><li key={i}>{c}</li>)}</ol>
+                  </>}
+                  {gtm.pricing && <div className="su-bp-pricebox"><span className="su-grad-text">{gtm.pricing.price}</span><span>{gtm.pricing.rationale}</span></div>}
+                </div>
+              )}
+
+              {/* Infra */}
+              {infra && (
+                <div className="su-card su-bp-card">
+                  <div className="su-bp-head"><span className="su-bp-icon">⬡</span><h3 className="su-bp-title">Infrastructure</h3></div>
+                  {(infra.services||[]).length>0 && <>
+                    <div className="su-bp-list-label">Services</div>
+                    <div className="su-bp-chips">{(infra.services||[]).map((s,i)=><span className="su-chip" key={i}>{s.name}</span>)}</div>
+                  </>}
+                  {infra.envVars && <>
+                    <div className="su-bp-list-label">.env</div>
+                    <pre className="su-bp-env">{Array.isArray(infra.envVars)?infra.envVars.join("\n"):infra.envVars}</pre>
+                  </>}
+                  {infra.monthlyCost && (
+                    <div className="su-bp-costs">
+                      {Object.entries(infra.monthlyCost).map(([k,v],i) => (
+                        <div key={i} className="su-bp-cost-cell">
+                          <span className="su-grad-text">{v}</span>
+                          <small>{k==="dev"?"Dev":k==="at100users"?"100 users":"1K users"}</small>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Prototype */}
+              {proto && (
+                <div className="su-card su-bp-card su-bp-card--proto">
+                  <div className="su-bp-head"><span className="su-bp-icon">▣</span><h3 className="su-bp-title">Prototype</h3></div>
+                  <button className="su-proto-toggle" onClick={()=>setProtoOpen(v=>!v)}>
+                    {protoOpen?"Hide":"Show"} live prototype
+                  </button>
+                  {protoOpen && (
+                    <div className="su-proto-wrap">
+                      <div className="su-proto-chrome">
+                        <span/><span/><span/>
+                        <div className="su-proto-url">{design?.name?.toLowerCase().replace(/\s+/g,"-")||"prototype"}.app</div>
+                      </div>
+                      <ProtoFrame html={proto}/>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {bpDone && (
+            <div className="su-bp-footer">
+              <div>
+                <div className="su-display su-bp-footer-t">That's a company in 3 spins.</div>
+                <div className="su-bp-footer-d">Not feeling it? Draw another frontier and compare.</div>
+              </div>
+              <div className="su-bp-footer-actions">
+                <button className="su-btn su-btn-ghost" onClick={() => { goTo("wheel"); setIdea(null); }}>↺ Spin again</button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ── PRICING MODAL ── */}
+      {showPricing && (
+        <div className="su-modal-overlay" onClick={() => setShowPricing(false)}>
+          <div className="su-modal" onClick={e=>e.stopPropagation()}>
+            <div className="su-modal-head">
+              <span>Get credits</span>
+              <button onClick={() => setShowPricing(false)}>✕</button>
+            </div>
+            <p className="su-modal-sub">Each credit runs the full 4-agent blueprint pipeline.</p>
+            {checkoutErr && <p className="su-err">{checkoutErr}</p>}
+            <div className="su-pkgs">
+              {CREDIT_PACKAGES.map(pkg => (
+                <div key={pkg.key} className={`su-pkg${pkg.highlight?" su-pkg--hl":""}`}>
+                  <span className="su-pkg-label">{pkg.label}</span>
+                  <span className="su-pkg-credits">{pkg.credits} credits</span>
+                  <span className="su-pkg-price">{pkg.price}</span>
+                  <span className="su-pkg-per">{pkg.per}/credit</span>
+                  <button className="su-pkg-btn" disabled={!!checkoutLoading} onClick={()=>startCheckout(pkg)}>
+                    {checkoutLoading===pkg.key?"Redirecting…":"Checkout"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── DISCLAIMER ── */}
+      <div className="su-disclaimer">
         <p>Idea Generator is an AI-powered research and ideation tool. All market analysis, competitor data, build scores, and recommendations are generated by AI and provided for informational purposes only. They do not constitute professional business, legal, or financial advice. AI-generated research may be incomplete, inaccurate, or outdated — market conditions change rapidly. We make no guarantees about the commercial viability of any idea or the accuracy of competitive intelligence. You are solely responsible for any business decisions you make based on this tool. Always conduct your own research and consult qualified professionals before investing time or money into any venture.</p>
       </div>
     </div>
   );
 }
 
-function AgentCard({ n, icon, label, desc, status, accent, model, children }) {
-  return (
-    <div className={`pip-card pip-card--${status}`} style={{ "--accent": accent }}>
-      <div className="pip-card-head">
-        <div className="pip-card-icon" style={{ color: accent }}>{icon}</div>
-        <div className="pip-card-info">
-          <span className="pip-card-label" style={{ color: accent }}>{label}</span>
-          <span className="pip-card-desc">{desc}</span>
-        </div>
-        <div className="pip-card-badge">
-          {status === "running" && <span className="pip-spinner" />}
-          {status === "done" && <span className="pip-check">✓</span>}
-          {status === "error" && <span className="pip-xerr">✗</span>}
-          {status === "idle" && <span className="pip-num">{n}</span>}
-        </div>
-      </div>
-      {model && <span className="pip-modelbadge">{model}</span>}
-      {children}
-    </div>
-  );
-}
+const CHIP_POS = [
+  {x:7,y:19},{x:80,y:13},{x:14,y:62},{x:86,y:56},
+  {x:4,y:41},{x:90,y:35},{x:6,y:84},{x:89,y:82},
+];
 
-function ProtoFrame({ html }) {
-  const [src, setSrc] = useState(null);
-  useEffect(() => {
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    setSrc(url);
-    return () => URL.revokeObjectURL(url);
-  }, [html]);
-  if (!src) return null;
-  return <iframe src={src} sandbox="allow-scripts allow-forms" style={{ width: "100%", height: "500px", border: "none", display: "block", borderRadius: "0 0 10px 10px" }} title="prototype" />;
+/* ─── CSS ────────────────────────────────────────────────────────── */
+const CSS = `
+/* atmospheric backdrop */
+.su-root { min-height:100vh; position:relative; overflow:hidden; }
+.su-blob {
+  position:fixed; border-radius:50%; filter:blur(70px); opacity:.38; z-index:0;
+  pointer-events:none; animation:sudrift 22s ease-in-out infinite;
 }
+@keyframes sudrift { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(40px,-30px) scale(1.12)} }
 
-const css = `
-/* ── tokens ──────────────────────────────────────────────────── */
-.iw-root{
-  --bg:        var(--iw-color-bg);
-  --surface:   var(--iw-color-surface);
-  --surface2:  var(--iw-color-surface-soft);
-  --border:    var(--iw-color-border);
-  --ink:       var(--iw-color-ink);
-  --muted:     var(--iw-color-muted);
-  --amber:     var(--iw-color-brand-primary);
-  --amber-bg:  var(--iw-color-brand-soft);
-  --teal:      var(--iw-color-brand-tertiary);
-  --violet:    var(--iw-color-brand-secondary);
-  --reel1:     var(--iw-color-brand-primary);
-  --reel2:     var(--iw-color-brand-secondary);
-  --reel3:     var(--iw-color-brand-tertiary);
-  --grad:      var(--iw-gradient-brand);
-  --grad-diag: var(--iw-gradient-brand-diagonal);
-  --font-ui:   var(--iw-font-ui);
-  --font-display: var(--iw-font-display);
-
-  position:relative; min-height:100%; width:100%;
-  background:
-    radial-gradient(circle at top, rgb(var(--iw-brand-primary-rgb) / 0.18), transparent 32%),
-    radial-gradient(circle at 85% 15%, rgb(var(--iw-brand-secondary-rgb) / 0.10), transparent 26%),
-    linear-gradient(180deg, #ffffff, var(--bg));
-  color:var(--ink);
-  font-family:var(--font-ui);
-  padding:40px 24px 72px;
-  box-sizing:border-box; overflow:hidden;
-}
-.iw-root *{box-sizing:border-box;}
-
-.iw-grain{
-  position:absolute; inset:0; pointer-events:none;
-  opacity:.022; mix-blend-mode:multiply;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-.iw-glow{
-  position:absolute; top:-240px; left:50%; transform:translateX(-50%);
-  width:900px; height:600px; pointer-events:none;
-  background:radial-gradient(closest-side, rgb(var(--iw-brand-primary-rgb) / 0.18), transparent 72%);
-}
-
-/* ── layout ──────────────────────────────────────────────────── */
-.iw-shell{
-  position:relative; max-width:800px; margin:0 auto;
-  display:block;
-}
-.iw-machine{
-  position:relative;
-  padding:34px clamp(20px, 3vw, 36px) 36px;
-  background:linear-gradient(180deg, var(--surface), var(--surface2));
-  border:1px solid var(--border);
-  border-radius:34px;
-  box-shadow:
-    0 32px 80px -44px rgba(29, 29, 31, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.88),
-    inset 0 -1px 0 rgba(29, 29, 31, 0.06);
-  overflow:hidden;
-}
-.iw-machine::before{
-  content:"";
-  position:absolute; inset:0 0 auto 0; height:170px; pointer-events:none;
-  background:linear-gradient(180deg, rgb(var(--iw-brand-primary-rgb) / 0.08), transparent 74%);
-}
-.iw-machine::after{
-  content:"";
-  position:absolute; left:70px; right:70px; bottom:18px; height:24px;
-  border-radius:999px;
-  background:radial-gradient(closest-side, oklch(18% 0.02 70 / .16), transparent 76%);
-  pointer-events:none;
-}
-
-/* ── header ──────────────────────────────────────────────────── */
-.iw-head{ margin-bottom:26px; }
-.iw-headtop{
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
-  margin-bottom:16px;
-}
-.iw-kicker{
-  display:block; font-family:'Inter',-apple-system,sans-serif; font-size:11px;
-  font-weight:700; letter-spacing:.28em; text-transform:uppercase;
-  color:var(--amber);
-}
-.iw-headbadge{
-  display:inline-flex; align-items:center; padding:7px 12px;
-  border-radius:999px; border:1px solid rgb(var(--iw-brand-primary-rgb) / 0.20);
-  background:rgb(var(--iw-brand-primary-rgb) / 0.08); color:var(--amber);
-  font-size:11px; font-weight:700; letter-spacing:.05em;
-}
-.iw-headgrid{
-  display:grid; grid-template-columns:minmax(0,1.2fr) minmax(260px,.8fr); gap:18px; align-items:stretch;
-}
-.iw-headcopy{
-  padding:4px 0 0; text-align:center;
-}
-.iw-title{
-  font-family:'Unbounded',sans-serif; font-weight:900;
-  font-size:clamp(34px,5vw,58px); line-height:.94;
-  letter-spacing:-.04em; color:var(--ink); margin:0 0 12px;
-}
-.iw-sub{ color:var(--muted); font-size:16px; font-weight:500; margin:0 auto; line-height:1.58; max-width:60ch; }
-.iw-proofrow{
-  display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; justify-content:center;
-}
-.iw-proofchip{
-  display:inline-flex; align-items:center; padding:9px 12px;
-  border-radius:999px; border:1px solid var(--border);
-  background:oklch(100% 0 0 / .68); color:var(--ink);
-  font-size:12px; font-weight:700; letter-spacing:.02em;
-  box-shadow:inset 0 1px 0 oklch(100% 0 0 / .74);
-}
-.iw-headcard{
-  position:relative; padding:18px 18px 16px;
-  border-radius:22px; border:1px solid oklch(55% 0.14 195 / .16);
-  background:linear-gradient(180deg, oklch(56% 0.11 196 / .10), oklch(100% 0 0 / .66));
-  box-shadow:inset 0 1px 0 oklch(100% 0 0 / .7), 0 18px 36px -30px oklch(55% 0.14 195 / .38);
-}
-.iw-headcard-label{
-  display:block; margin-bottom:12px;
-  font-size:11px; font-weight:800; letter-spacing:.18em; text-transform:uppercase; color:var(--teal);
-}
-.iw-headcard-metric{
-  display:grid; grid-template-columns:24px 1fr; gap:10px; align-items:start;
-  padding:10px 0; border-top:1px solid oklch(55% 0.14 195 / .12);
-}
-.iw-headcard-metric:first-of-type{ border-top:none; padding-top:0; }
-.iw-headcard-metric strong{
-  font-family:'Unbounded',sans-serif; font-size:13px; line-height:1.2; color:var(--teal);
-}
-.iw-headcard-metric span{
-  font-size:13px; line-height:1.5; color:var(--ink); font-weight:600;
-}
-
-/* ── control shelf ─────────────────────────────────────────────── */
-.iw-controlshelf{ margin:0 0 18px; }
-.iw-bar{
-  display:flex; align-items:center; gap:12px;
-  margin:0 auto; padding:12px 14px;
-  background:linear-gradient(180deg, oklch(99.4% 0.004 78), oklch(96.5% 0.012 78));
-  border:1px solid var(--border); border-radius:22px;
-  box-shadow:inset 0 1px 0 oklch(100% 0 0 / .8), 0 16px 30px -28px oklch(18% 0.022 78 / .38);
-}
-.iw-barlabel{
-  font-size:11px; font-weight:800; letter-spacing:.18em; text-transform:uppercase; color:var(--muted);
-}
-.iw-modes{ display:flex; gap:6px; background:transparent; border:none; padding:0; }
-.iw-modebtn{
-  font-family:'Inter',-apple-system,sans-serif; font-size:14px; font-weight:700;
-  color:var(--muted); background:transparent; border:none;
-  padding:10px 16px; cursor:pointer; border-radius:999px;
-  transition:all .15s ease;
-}
-.iw-modebtn:hover:not(:disabled){ color:var(--ink); background:rgb(var(--iw-brand-primary-rgb) / 0.06); }
-.iw-modebtn.on{ color:#fff; background:var(--grad-diag); box-shadow:var(--iw-shadow-brand-soft); }
-.iw-modebtn:disabled{ opacity:.4; cursor:default; }
-.iw-steprail{
-  display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;
-}
-.iw-stepchip{
-  display:inline-flex; align-items:center; padding:8px 11px;
-  border-radius:999px; border:1px solid var(--border);
-  background:oklch(100% 0 0 / .65); color:var(--muted);
-  font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
-}
-.iw-stepchip--active{
-  color:var(--amber); border-color:rgb(var(--iw-brand-primary-rgb) / 0.22); background:rgb(var(--iw-brand-primary-rgb) / 0.08);
-}
-.iw-stepchip--done{
-  color:var(--teal); border-color:rgb(var(--iw-brand-tertiary-rgb,55 195 195) / 0.3);
-  background:rgb(var(--iw-brand-tertiary-rgb,55 195 195) / 0.07);
-}
-.iw-steprail-arrow{
-  color:var(--muted); font-size:14px; line-height:1;
-  align-self:center; opacity:.5; flex-shrink:0;
-}
-
-/* ── slot machine cabinet ──────────────────────────────────────── */
-.iw-slotmachine{
-  position:relative; margin:0 0 10px; padding:16px;
-  border-radius:34px;
-  background:linear-gradient(180deg, oklch(44% 0.06 65), oklch(24% 0.03 58) 18%, oklch(14% 0.018 60) 100%);
-  border:1px solid oklch(62% 0.12 72 / .55);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.22),
-    inset 0 -1px 0 rgb(29 29 31 / 0.24),
-    0 30px 60px -42px rgba(29, 29, 31, 0.45);
-}
-.iw-slotmachine::before{
-  content:"";
-  position:absolute; inset:10px;
-  border-radius:26px;
-  border:1px solid rgb(255 255 255 / 0.10);
-  pointer-events:none;
-}
-.iw-marquee{
-  display:flex; flex-direction:column; align-items:center; gap:8px;
-  margin-bottom:14px; padding:14px 16px 12px;
-  border-radius:22px;
-  background:linear-gradient(180deg, oklch(80% 0.16 75), oklch(70% 0.19 65) 48%, oklch(58% 0.16 52));
-  border:1px solid oklch(92% 0.12 82 / .45);
-  box-shadow:inset 0 1px 0 oklch(100% 0 0 / .46), 0 16px 32px -24px oklch(0% 0 0 / .58);
-  text-align:center;
-}
-.iw-marquee-label{
-  font-family:'Unbounded',sans-serif; font-size:15px; font-weight:900; letter-spacing:.08em; color:#fff;
-}
-.iw-marquee-dots{ display:flex; gap:7px; }
-.iw-marquee-dots span{
-  width:8px; height:8px; border-radius:999px; background:oklch(99% 0.01 90);
-  box-shadow:0 0 10px oklch(100% 0 0 / .9), 0 0 18px oklch(98% 0.08 88 / .65);
-}
-.iw-marquee-copy{
-  font-size:12px; font-weight:700; letter-spacing:.03em; color:rgb(255 255 255 / 0.88);
-}
-.iw-reelintro{
-  display:flex; align-items:end; justify-content:space-between; gap:16px;
-  margin:0 0 14px; padding:0 4px;
-}
-.iw-reelintro-label{
-  display:block; margin-bottom:6px;
-  font-size:11px; font-weight:800; letter-spacing:.18em; text-transform:uppercase; color:oklch(83% 0.1 78);
-}
-.iw-reelintro-copy{
-  margin:0; font-size:14px; line-height:1.55; color:oklch(95% 0.01 80); font-weight:600;
-}
-.iw-reelintro-tip{
-  flex-shrink:0; display:inline-flex; align-items:center; padding:9px 12px;
-  border-radius:999px; background:oklch(100% 0 0 / .12); color:oklch(98% 0.004 78);
-  border:1px solid oklch(100% 0 0 / .12);
-  font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
-}
-
-/* ── reels ─────────────────────────────────────────────────────── */
-.iw-reels{
-  position:relative; display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px;
-  margin-bottom:0;
-  padding:24px 18px 18px;
-  border-radius:32px;
-  background:linear-gradient(180deg, rgb(var(--iw-brand-primary-rgb) / 0.26) 0%, rgba(44, 22, 64, 0.94) 12%, rgba(24, 12, 38, 0.98) 100%);
-  border:1px solid rgb(255 255 255 / 0.12);
-  box-shadow:
-    inset 0 2px 0 rgb(255 255 255 / 0.16),
-    inset 0 -1px 0 rgb(29 29 31 / 0.58),
-    0 26px 54px -36px rgba(29, 29, 31, 0.55);
-  overflow:hidden;
-}
-.iw-reels::before{
-  content:"";
-  position:absolute; left:28px; right:28px; top:12px; height:12px;
-  border-radius:999px;
-  background:
-    radial-gradient(circle at 6px 50%, oklch(90% 0.14 80) 0 2px, transparent 2.2px) 0 0 / 22px 12px repeat-x,
-    linear-gradient(180deg, oklch(88% 0.09 78 / .42), oklch(48% 0.06 70 / .08));
-  opacity:.88;
-  pointer-events:none;
-}
-.iw-reels::after{
-  content:"";
-  position:absolute; inset:12px;
-  border-radius:24px;
-  border:1px solid oklch(100% 0 0 / .06);
-  box-shadow:inset 0 0 0 1px oklch(16% 0.012 70 / .7);
-  pointer-events:none;
-}
-.iw-payline{
-  position:absolute; left:18px; right:18px;
-  top:50%; height:${ITEM_H}px;
-  transform:translateY(calc(-50% + 16px));
-  border-top:2px solid rgb(var(--iw-brand-secondary-rgb) / 0.55);
-  border-bottom:2px solid rgb(var(--iw-brand-secondary-rgb) / 0.55);
-  background:linear-gradient(180deg, transparent 0%, rgb(255 255 255 / 0.05) 50%, transparent 100%);
-  box-shadow:0 0 18px -14px rgb(var(--iw-brand-secondary-rgb) / 0.45);
-  pointer-events:none; z-index:3;
-}
-.iw-marker{ display:none; }
-
-.iw-col{
-  --accent: var(--amber);
-  min-width:0;
-  position:relative; display:flex; flex-direction:column; align-items:stretch; gap:10px; z-index:2;
-}
-.iw-col:not(:last-child)::after{
-  content:"";
-  position:absolute; top:48px; right:-5px; bottom:8px; width:1px;
-  background:linear-gradient(180deg, transparent, oklch(100% 0 0 / .16), transparent);
-}
-.iw-collabel{
-  align-self:center;
-  font-family:'Inter',-apple-system,sans-serif; font-size:11px; font-weight:700;
-  letter-spacing:.24em; text-transform:uppercase;
-  text-align:center; margin-bottom:2px; opacity:.95;
-  color:var(--accent);
-}
-.iw-collabel::after{
-  content:"";
-  display:block; width:36px; height:2px; border-radius:999px;
-  background:var(--accent); margin:8px auto 0;
-  opacity:.9;
-}
-.iw-window{
-  min-width:0;
-  position:relative; width:100%; height:${ITEM_H * 3}px;
-  background:linear-gradient(180deg, oklch(99.2% 0.008 78), oklch(95.5% 0.018 78));
-  border:1px solid oklch(84% 0.03 78 / .92);
-  border-radius:16px; overflow:hidden; cursor:pointer;
-  box-shadow:
-    inset 0 1px 0 oklch(100% 0 0 / .82),
-    0 14px 24px -24px oklch(0% 0 0 / .72);
-  transition:transform .18s ease, box-shadow .2s ease, border-color .18s ease;
-}
-.iw-window::before{
-  content:"";
-  position:absolute; inset:0;
-  background:linear-gradient(180deg, oklch(18% 0.016 70 / .18) 0%, transparent 16%, transparent 84%, oklch(18% 0.016 70 / .24) 100%);
-  pointer-events:none; z-index:1;
-}
-.iw-window::after{
-  content:"";
-  position:absolute; inset:0;
-  box-shadow:inset 0 0 0 1px oklch(100% 0 0 / .16);
-  pointer-events:none; z-index:1;
-}
-.iw-window:hover{ transform:translateY(-1px); box-shadow:inset 0 1px 0 oklch(100% 0 0 / .82), 0 18px 30px -24px oklch(0% 0 0 / .76); }
-.iw-window.is-locked{ border-color:rgb(var(--iw-brand-primary-rgb) / 0.72); box-shadow:0 0 0 1px rgb(var(--iw-brand-primary-rgb) / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.82), 0 18px 30px -24px rgb(var(--iw-brand-primary-rgb) / 0.28); }
-
-.iw-lock{
-  position:absolute; top:10px; right:10px; z-index:5;
-  width:30px; height:30px; display:grid; place-items:center;
-  border:1px solid oklch(83% 0.03 78 / .9); border-radius:999px;
-  background:oklch(99.5% 0.006 78 / .86); color:var(--muted);
-  box-shadow:0 8px 16px -14px oklch(18% 0.022 78 / .4);
-  cursor:pointer; transition:all .15s ease;
-}
-.iw-lock:hover{ color:var(--ink); border-color:oklch(76% 0.05 78); }
-.iw-lock:active{ transform:scale(.9); }
-.iw-lock.on{ color:var(--amber); border-color:var(--amber); background:var(--amber-bg); }
-
-.iw-strip{
-  position:relative; z-index:0; will-change:transform;
-  -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
-  mask-image:linear-gradient(180deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
-}
-.iw-item{
-  min-width:0;
-  display:flex; align-items:center; justify-content:center;
-  text-align:center; padding:0 10px;
-  background:linear-gradient(180deg, oklch(99.4% 0.008 78 / .96), oklch(95.8% 0.016 78 / .96));
-  border-bottom:1px solid oklch(84% 0.025 78 / .52);
-}
-.iw-item:last-child{ border-bottom:none; }
-.iw-item span{
-  max-width:100%;
-  font-family:ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size:clamp(14px, 1.35vw, 21px); font-weight:800; line-height:.94; letter-spacing:0;
-  text-transform:uppercase;
-  text-wrap:balance;
-  overflow-wrap:normal;
-  word-break:normal;
-  hyphens:none;
-  color:oklch(22% 0.02 78);
-  text-shadow:none;
-}
-
-/* ── slot base / controls ─────────────────────────────────────── */
-.iw-slotbase{
-  margin-top:14px; padding:14px 8px 2px;
-  border-radius:22px;
-  background:linear-gradient(180deg, oklch(24% 0.03 58), oklch(15% 0.018 60));
-  border:1px solid oklch(100% 0 0 / .08);
-  box-shadow:inset 0 1px 0 oklch(100% 0 0 / .08);
-}
-.iw-slotlights{
-  display:flex; justify-content:center; gap:10px; margin-bottom:14px;
-}
-.iw-slotlights span{
-  width:10px; height:10px; border-radius:999px;
-  background:linear-gradient(180deg, oklch(95% 0.1 85), oklch(75% 0.16 70));
-  box-shadow:0 0 14px oklch(86% 0.14 78 / .45);
-}
-.iw-controls{ display:flex; flex-direction:column; align-items:center; gap:10px; margin:0 0 8px; }
-.iw-spin{
-  display:inline-flex; align-items:center; justify-content:center; gap:10px;
-  font-family:'Unbounded',sans-serif; font-weight:800; font-size:15px; letter-spacing:.01em;
-  color:#221607; padding:18px 28px; min-width:min(100%, 420px); width:100%; max-width:420px; border:none; border-radius:18px;
-  background:linear-gradient(180deg, oklch(84% 0.16 78), oklch(72% 0.19 65) 52%, oklch(63% 0.18 58));
-  cursor:pointer;
-  box-shadow:
-    inset 0 1px 0 oklch(100% 0 0 / .75),
-    inset 0 -2px 0 oklch(45% 0.13 55 / .35),
-    0 20px 38px -20px oklch(64% 0.18 58 / .65);
-  transition:transform .12s cubic-bezier(0.16,1,0.3,1), filter .15s ease;
-}
-.iw-spin:hover:not(:disabled){ filter:brightness(1.03); transform:translateY(-2px); }
-.iw-spin:active:not(:disabled){ transform:scale(.985) translateY(0); }
-.iw-spin:disabled{ opacity:.45; cursor:default; }
-.iw-spinhint{ font-size:12px; color:oklch(92% 0.01 80 / .78); font-weight:700; letter-spacing:.02em; }
-
-/* ── result stage ─────────────────────────────────────────────── */
-.iw-result{
-  display:flex; flex-direction:column; align-items:center; gap:16px;
-  margin-top:20px; padding-top:24px;
-  border-top:1px solid var(--border);
-  opacity:0; transform:translateY(10px);
-  transition:opacity .35s ease-out, transform .35s cubic-bezier(0.16,1,0.3,1);
-}
-.iw-result.show{ opacity:1; transform:translateY(0); }
-
-.iw-statement{ display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; margin:0; }
-.iw-prefix{ font-size:14px; font-weight:400; font-style:italic; color:var(--muted); }
-.iw-fill{
-  font-family:'Unbounded',sans-serif; font-weight:800;
-  font-size:clamp(18px,3.2vw,30px);
-  line-height:1.18; letter-spacing:-.02em; color:var(--ink);
-}
-.iw-in{ color:var(--muted); font-family:'Inter',-apple-system,sans-serif; font-weight:400; font-style:italic; font-size:.82em; }
-.iw-dot{ color:var(--amber); }
-
-.iw-score{ display:flex; flex-direction:column; gap:8px; }
-.iw-score-top{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
-.iw-meter{
-  height:6px; border-radius:999px; background:var(--surface2);
-  border:1px solid var(--border); overflow:hidden; margin-top:4px;
-}
-.iw-meterfill{
-  display:block; height:100%; border-radius:999px;
-}
-.iw-scorenum{
-  font-family:'Unbounded',sans-serif; font-weight:900; font-size:36px;
-  line-height:1; letter-spacing:-.02em;
-}
-.iw-scoredesc{
-  font-size:12.5px; color:var(--muted); font-weight:400;
-  line-height:1.4; flex:1; min-width:160px;
-}
-.iw-scoreband{
-  font-family:'Inter',-apple-system,sans-serif; font-size:12px; font-weight:700;
-  letter-spacing:.18em; text-transform:uppercase;
-  border:1.5px solid currentColor; border-radius:3px; padding:3px 9px;
-}
-
-.iw-resultbtns{ display:flex; gap:10px; }
-.iw-save,.iw-develop{
-  display:inline-flex; align-items:center; gap:6px;
-  font-family:'Inter',-apple-system,sans-serif; font-size:13px; font-weight:600;
-  border-radius:5px; padding:10px 20px; cursor:pointer;
-  transition:all .15s ease-out;
-}
-.iw-save{
-  color:var(--ink); background:var(--surface);
-  border:1.5px solid var(--border);
-}
-.iw-save:hover:not(:disabled){ border-color:var(--amber); color:var(--amber); }
-.iw-develop{
-  color:#fff; border:none;
-  background:linear-gradient(135deg, var(--teal), var(--violet));
-  box-shadow:0 6px 20px -8px oklch(46% 0.20 290 / .5);
-}
-.iw-develop:hover:not(:disabled){ filter:brightness(1.08); }
-.iw-save:active:not(:disabled),.iw-develop:active:not(:disabled){ transform:scale(.96); }
-.iw-save:disabled,.iw-develop:disabled{ opacity:.38; cursor:default; }
-.iw-scorehint{
-  display:block; font-size:11.5px; color:var(--muted);
-  font-weight:500; text-align:center; margin-top:-4px;
-}
-
-/* ── share card button ────────────────────────────────────────── */
-.iw-cardbtn{
-  display:inline-flex; align-items:center; gap:6px;
-  font-family:'Inter',-apple-system,sans-serif; font-size:12px; font-weight:600;
-  color:var(--amber); background:var(--amber-bg);
-  border:1.5px solid oklch(70% 0.19 65 / .3);
-  border-radius:5px; padding:5px 12px; cursor:pointer;
-  transition:all .15s ease-out;
-}
-.iw-cardbtn:hover{ background:oklch(92% 0.09 72); }
-.iw-retry{ background:none; border:none; color:var(--amber); cursor:pointer; font-size:13px; text-decoration:underline; padding:0 2px; }
-
-/* ── pipeline ─────────────────────────────────────────────────── */
-.pip-root{ margin-top:32px; display:flex; flex-direction:column; }
-.pip-header{
-  display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;
-}
-.pip-header span{
-  font-family:'Inter',-apple-system,sans-serif; font-size:11px; font-weight:700;
-  letter-spacing:.24em; text-transform:uppercase; color:var(--muted);
-}
-.pip-connector{ width:1.5px; height:18px; background:var(--border); margin:0 auto; }
-.pip-card{
-  border:1.5px solid var(--border); border-radius:8px;
-  padding:16px 18px; background:var(--surface);
-  transition:border-color .3s ease, box-shadow .3s ease;
-}
-.pip-card--running{
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px oklch(from var(--accent) l c h / .12);
-}
-.pip-card--done{ border-color:oklch(55% 0.14 195 / .35); }
-.pip-card--error{ border-color:oklch(52% 0.18 25 / .4); }
-.pip-card-head{ display:flex; align-items:flex-start; gap:12px; margin-bottom:0; }
-.pip-card--done .pip-card-head,.pip-card--running .pip-card-head{ margin-bottom:14px; }
-.pip-card-icon{
-  width:30px; height:30px; display:grid; place-items:center;
-  background:var(--surface2); border:1px solid var(--border);
-  border-radius:6px; flex-shrink:0; margin-top:2px;
-}
-.pip-card-info{ flex:1; }
-.pip-card-label{
-  display:block; font-family:'Inter',-apple-system,sans-serif; font-size:10px; font-weight:700;
-  letter-spacing:.2em; text-transform:uppercase; margin-bottom:3px;
-}
-.pip-card-desc{ font-size:13px; color:var(--muted); line-height:1.45; }
-.pip-card-badge{ display:flex; align-items:center; justify-content:center; width:24px; height:24px; flex-shrink:0; }
-.pip-spinner{
-  width:16px; height:16px; border:2px solid var(--border); border-top-color:var(--accent);
-  border-radius:50%; animation:iwspin .7s linear infinite;
-}
-@keyframes iwspin{ to{ transform:rotate(360deg); } }
-.pip-check{ color:var(--teal); font-size:16px; font-weight:700; }
-.pip-xerr{ color:oklch(52% 0.18 25); font-size:16px; font-weight:700; }
-.pip-num{ font-family:'Inter',-apple-system,sans-serif; font-size:13px; font-weight:600; color:var(--muted); }
-.pip-output{ animation:iwIn .3s ease-out both; }
-@keyframes iwIn{ from{ opacity:0; transform:translateY(5px); } to{ opacity:1; transform:translateY(0); } }
-.pip-verdict{
-  font-family:'Unbounded',sans-serif; font-size:14px; font-weight:800;
-  color:var(--amber); margin:0 0 10px; line-height:1.35; letter-spacing:-.01em;
-}
-.pip-gap{ font-size:13.5px; color:var(--ink); margin:0 0 12px; line-height:1.5; }
-.pip-gap strong,.pip-diff strong{
-  color:var(--muted); font-size:10px; font-family:'Inter',-apple-system,sans-serif;
-  letter-spacing:.16em; text-transform:uppercase; font-weight:700; margin-right:6px;
-}
-.pip-player{
-  display:flex; flex-direction:column; gap:2px;
-  padding:8px 10px; background:var(--surface2); border:1px solid var(--border);
-  border-radius:6px; margin-bottom:6px;
-}
-.pip-playername{ font-size:13px; font-weight:600; color:var(--ink); }
-.pip-playerweak{ font-size:12px; color:var(--muted); }
-.pip-product{ margin-bottom:10px; }
-.pip-productname{
-  display:block; font-family:'Unbounded',sans-serif;
-  font-size:20px; font-weight:800; color:var(--teal);
-  letter-spacing:-.02em; line-height:1;
-}
-.pip-producttag{ display:block; font-size:14px; color:var(--muted); margin-top:4px; }
-.pip-diff{ font-size:13.5px; color:var(--ink); margin:0 0 12px; line-height:1.5; }
-.pip-features{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
-.pip-features li{ font-size:13px; color:var(--ink); padding-left:16px; position:relative; }
-.pip-features li::before{ content:"→"; position:absolute; left:0; color:var(--teal); font-size:12px; }
-.pip-err{ font-size:13px; color:oklch(52% 0.18 25); margin:8px 0 0; }
-.pip-prototoggle{
-  display:inline-flex; align-items:center; gap:6px;
-  font-family:'Inter',-apple-system,sans-serif; font-size:12.5px; font-weight:600;
-  color:var(--violet); background:oklch(46% 0.20 290 / .07);
-  border:1.5px solid oklch(46% 0.20 290 / .25);
-  border-radius:5px; padding:6px 12px; cursor:pointer; margin-bottom:12px;
-  transition:all .15s ease;
-}
-.pip-prototoggle:hover{ background:oklch(46% 0.20 290 / .13); }
-.pip-frame-wrap{
-  border:1px solid var(--border); border-radius:10px; overflow:hidden;
-  box-shadow:0 4px 24px -6px oklch(18% 0.022 78 / .12);
-}
-.pip-chrome{
-  display:flex; align-items:center; gap:6px; padding:10px 14px;
-  background:var(--surface2); border-bottom:1px solid var(--border);
-}
-.pip-chrome span{ width:10px; height:10px; border-radius:50%; }
-.pip-chrome span:nth-child(1){ background:#ff5f57; }
-.pip-chrome span:nth-child(2){ background:#febc2e; }
-.pip-chrome span:nth-child(3){ background:#28c840; }
-.pip-url{
-  margin-left:10px; font-family:'Inter',-apple-system,sans-serif; font-size:11px;
-  color:var(--muted); background:var(--surface); border:1px solid var(--border);
-  border-radius:4px; padding:2px 10px;
-}
-
-/* ── shortlist ─────────────────────────────────────────────────── */
-.iw-list{
-  background:var(--surface); border:1.5px solid var(--border); border-radius:12px;
-  padding:22px 20px; position:sticky; top:20px; min-height:260px;
-  box-shadow:0 2px 16px -4px oklch(18% 0.022 78 / .08);
-}
-.iw-listhead{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
-.iw-listhead h2{
-  font-family:'Unbounded',sans-serif; font-weight:800; font-size:16px;
-  margin:0; color:var(--ink); display:flex; align-items:center; gap:10px;
-  letter-spacing:-.01em;
-}
-.iw-listhead h2 span{
-  font-family:'Inter',-apple-system,sans-serif; font-size:12px; font-weight:700;
-  color:var(--amber); background:var(--amber-bg);
-  border:1.5px solid oklch(70% 0.19 65 / .28);
-  border-radius:5px; padding:1px 8px;
-}
-.iw-listactions{ display:flex; gap:6px; }
-.iw-listactions button{
-  width:28px; height:28px; display:grid; place-items:center;
-  border:1px solid var(--border); border-radius:6px; background:var(--surface2);
-  color:var(--muted); cursor:pointer; transition:all .15s ease;
-}
-.iw-listactions button:hover{ color:var(--ink); }
-.iw-listactions button:active{ transform:scale(.9); }
-.iw-empty{ text-align:center; padding:32px 12px; color:var(--muted); }
-.iw-empty p{
-  font-family:'Unbounded',sans-serif; font-size:13px; font-weight:700;
-  color:var(--ink); margin:0 0 7px; letter-spacing:-.01em;
-}
-.iw-empty span{ font-size:13px; line-height:1.55; }
-.iw-empty strong{ color:var(--amber); font-weight:600; }
-.iw-list ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
-.iw-row{
-  display:flex; align-items:flex-start; gap:12px; padding:10px 12px;
-  background:var(--surface2); border:1px solid var(--border);
-  border-radius:7px; animation:iwIn .28s ease-out both;
-}
-.iw-num{
-  font-family:'Unbounded',sans-serif; font-size:13px; font-weight:900;
-  padding-top:1px; min-width:22px; line-height:1;
-}
-.iw-text{ flex:1; font-size:13px; line-height:1.45; color:var(--ink); font-weight:500; }
-.iw-del{
-  flex-shrink:0; width:20px; height:20px; display:grid; place-items:center;
-  border:none; background:transparent; color:var(--muted);
-  cursor:pointer; border-radius:5px; transition:all .15s ease;
-}
-.iw-del:hover{ color:oklch(52% 0.18 25); background:oklch(52% 0.18 25 / .08); }
-.iw-tip{
-  display:flex; align-items:flex-start; gap:8px; margin-top:16px;
-  padding-top:14px; border-top:1px dashed var(--border);
-  color:var(--muted); font-size:12px; line-height:1.5; font-weight:500;
-}
-.iw-tip svg{ color:var(--teal); flex-shrink:0; margin-top:2px; }
-
-
-.pip-modelbadge{
-  display:block; margin-top:8px;
-  font-family:'Inter',-apple-system,sans-serif; font-size:10px; font-weight:700;
-  letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
-  background:var(--surface2); border:1px solid var(--border);
-  border-radius:4px; padding:2px 8px; width:fit-content;
-}
-
-
-
-
-
-
-
-
-/* ── infrastructure agent ──────────────────────────────────────── */
-.pip-services{display:flex;flex-direction:column;gap:10px;}
-.pip-svc{padding:11px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;}
-.pip-svc-head{display:flex;align-items:baseline;gap:8px;margin-bottom:4px;flex-wrap:wrap;}
-.pip-svc-name{font-family:'Unbounded',sans-serif;font-size:12px;font-weight:800;color:var(--ink);letter-spacing:-.01em;}
-.pip-svc-time{font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1px 6px;}
-.pip-svc-url{margin-left:auto;font-size:11px;font-weight:700;color:var(--teal);text-decoration:none;}
-.pip-svc-url:hover{text-decoration:underline;}
-.pip-svc-purpose{display:block;font-size:13px;color:var(--ink);margin-bottom:3px;line-height:1.45;}
-.pip-svc-free{display:block;font-size:11.5px;color:var(--teal);margin-bottom:6px;}
-.pip-svc-steps{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:4px;}
-.pip-svc-steps li{font-size:12px;color:var(--muted);line-height:1.45;}
-.pip-envblock{margin:0;font-family:'Space Mono',monospace;font-size:11.5px;line-height:1.7;color:var(--amber);background:oklch(18% 0.022 78);border:1px solid var(--line2,var(--border));border-radius:8px;padding:12px 14px;white-space:pre-wrap;word-break:break-all;overflow-x:auto;}
-.pip-schema{font-size:13px;color:var(--ink);line-height:1.6;margin:0;font-family:'Space Mono',monospace;font-size:12px;}
-.pip-aiwiring{padding:12px 14px;background:oklch(46% 0.20 290 / .06);border:1px solid oklch(46% 0.20 290 / .18);border-radius:8px;}
-.pip-aiwiring p{font-size:13px;color:var(--ink);margin:4px 0 0;line-height:1.55;}
-.pip-deploylist{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:5px;}
-.pip-deploylist li{font-size:12.5px;color:var(--ink);line-height:1.45;}
-.pip-costgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px;}
-.pip-costcell{padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;text-align:center;}
-.pip-costcellval{display:block;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:800;color:var(--ink);letter-spacing:-.01em;}
-.pip-costcellkey{display:block;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:3px;}
-.pip-buildorder{font-size:13px;color:var(--ink);line-height:1.6;margin:0;}
-
-/* ── start today ───────────────────────────────────────────────── */
-.pip-startnow{margin-bottom:16px;padding:14px 16px;background:oklch(46% 0.20 290 / .06);border:1.5px solid oklch(46% 0.20 290 / .22);border-radius:10px;}
-.pip-startnow-sub{font-size:12.5px;color:var(--muted);margin:4px 0 10px;line-height:1.4;}
-.pip-today{list-style:none;margin:0;padding:0;counter-reset:today;display:flex;flex-direction:column;gap:8px;}
-.pip-today li{counter-increment:today;position:relative;padding:10px 12px 10px 36px;background:var(--surface);border:1px solid var(--border);border-radius:7px;font-size:13px;line-height:1.5;color:var(--ink);}
-.pip-today li::before{content:counter(today);position:absolute;left:10px;top:11px;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:900;color:var(--violet);}
-/* ── validate button ─────────────────────────────────────────── */
-.iw-validate{display:inline-flex;align-items:center;gap:7px;font-family:'Inter',-apple-system,sans-serif;font-size:13px;font-weight:700;color:var(--ink);background:var(--surface);border:1.5px solid var(--border);border-radius:9px;padding:9px 16px;cursor:pointer;transition:all .15s ease-out;position:relative;}
-.iw-validate:hover:not(:disabled){border-color:var(--ink);}
-.iw-validate:active:not(:disabled){transform:scale(.97);}
-.iw-validate:disabled{opacity:.55;cursor:default;}
-.iw-validate--primary{
-  color:#fff; background:var(--grad-diag); border-color:transparent;
-  padding:12px 22px; font-size:14px; border-radius:12px;
-  box-shadow:0 8px 24px -10px rgb(var(--iw-brand-secondary-rgb) / 0.45);
-}
-.iw-validate--primary:hover:not(:disabled){ filter:brightness(1.07); border-color:transparent; transform:translateY(-1px); }
-.iw-validate--primary:active:not(:disabled){ transform:scale(.98) translateY(0); }
-.iw-freebadge{font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgb(255 255 255 / 0.25);border-radius:4px;padding:2px 6px;margin-left:2px;border:1px solid rgb(255 255 255 / 0.3);}
-.iw-dotspinner{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--ink);border-radius:50%;animation:iwspin .7s linear infinite;}
-.iw-dotspinner--light{border-color:rgb(255 255 255 / 0.35);border-top-color:#fff;}
-
-/* ── build brief button ─────────────────────────────────────── */
-.iw-buildbtn{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:9px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:800;color:#fff;border:none;border-radius:12px;padding:15px;cursor:pointer;background:var(--grad-diag);box-shadow:var(--iw-shadow-brand);transition:all .18s ease-out;margin-top:16px;letter-spacing:-.01em;}
-.iw-buildbtn:hover:not(:disabled){filter:brightness(1.07);}
-.iw-buildbtn:active:not(:disabled){transform:scale(.98);}
-.iw-buildbtn:disabled{opacity:.45;cursor:default;}
-.iw-creditcost{font-size:12px;opacity:.8;font-weight:500;}
-.iw-verdict-getc{display:block;width:100%;text-align:center;margin-top:8px;font-size:12px;color:var(--amber);background:none;border:none;cursor:pointer;text-decoration:underline;}
-
-/* ── scout verdict card ─────────────────────────────────────── */
-.iw-verdict{
-  margin-top:18px;
-  border-radius:20px;
-  overflow:hidden;
-  border:1.5px solid var(--border);
-  box-shadow:0 12px 40px -16px oklch(18% 0.022 78 / .16);
-}
-.iw-verdict--build{ border-color:oklch(55% 0.14 195 / .5); }
-.iw-verdict--warn{ border-color:oklch(70% 0.19 65 / .5); }
-.iw-verdict--avoid{ border-color:oklch(62% 0.18 30 / .4); }
-
-/* banner strip */
-.iw-verdict-banner{
+/* nav */
+.su-nav {
+  position:relative; z-index:10;
+  max-width:860px; margin:0 auto;
+  display:flex; align-items:center; justify-content:space-between;
   padding:14px 20px;
-  display:flex; align-items:center; gap:10px;
-  border-bottom:1px solid oklch(0% 0 0 / .06);
+  background:rgba(255,255,255,0.72); backdrop-filter:blur(12px);
+  border:1px solid var(--line); border-radius:var(--r-xl);
+  margin-top:20px;
+  box-shadow:var(--sh-sm);
 }
-.iw-verdict--build .iw-verdict-banner{ background:linear-gradient(90deg,oklch(55% 0.14 195 / .14),transparent); }
-.iw-verdict--warn .iw-verdict-banner{ background:linear-gradient(90deg,oklch(70% 0.19 65 / .12),transparent); }
-.iw-verdict--avoid .iw-verdict-banner{ background:linear-gradient(90deg,oklch(62% 0.18 30 / .12),transparent); }
+.su-nav-brand {
+  font-family:var(--font-display); font-size:15px; font-weight:800;
+  color:var(--ink); letter-spacing:-.02em; background:none; border:none; cursor:pointer;
+}
+.su-nav-links { display:flex; align-items:center; gap:8px; }
+.su-nav-link {
+  font-size:13px; font-weight:600; color:var(--muted);
+  text-decoration:none; padding:7px 14px; border-radius:var(--r-sm);
+  border:1px solid transparent; transition:all .15s;
+}
+.su-nav-link:hover { color:var(--ink); background:var(--bg-2); }
+.su-nav-link--cta { color:var(--ink); border-color:var(--line); background:var(--bg-2); }
+.su-nav-link--cta:hover { border-color:var(--violet); color:var(--violet); }
 
-.iw-verdict-icon{ font-size:18px; flex-shrink:0; line-height:1; }
-.iw-verdict-title{
-  font-family:'Unbounded',sans-serif;
-  font-size:11px; font-weight:900;
-  letter-spacing:.04em; text-transform:uppercase;
-  flex:1;
+/* screens */
+.su-screen {
+  position:relative; z-index:1;
+  max-width:860px; margin:0 auto;
+  padding:60px 20px 80px;
 }
-.iw-verdict--build .iw-verdict-title{ color:var(--teal); }
-.iw-verdict--warn .iw-verdict-title{ color:var(--amber); }
-.iw-verdict--avoid .iw-verdict-title{ color:oklch(55% 0.18 30); }
-.iw-verdict-sub{
-  font-size:11px; font-weight:600;
-  color:var(--muted);
-  background:var(--surface2);
-  border:1px solid var(--border);
-  border-radius:99px;
-  padding:3px 10px;
-  white-space:nowrap;
-  overflow:hidden; text-overflow:ellipsis;
-  max-width:160px;
+.su-screen-head { text-align:center; margin-bottom:48px; }
+.su-eyebrow {
+  font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--magenta); margin-bottom:14px;
 }
-
-/* body */
-.iw-verdict-body{
-  padding:18px 20px 20px;
-  background:var(--surface);
-}
-.iw-verdict-reason{
-  font-size:13.5px; color:var(--ink);
-  line-height:1.65; margin:0 0 16px;
-  word-break:break-word;
+.su-display { font-family:var(--font-display); font-weight:700; letter-spacing:-.03em; line-height:.98; }
+.su-screen-title { font-size:clamp(30px,4vw,46px); color:var(--ink); margin:0 0 14px; }
+.su-screen-desc { font-size:16px; color:var(--muted); margin:0; line-height:1.6; }
+.su-grad-text {
+  background:var(--grad-brand); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
 }
 
-/* gap highlight */
-.iw-verdict-gap{
-  padding:12px 16px;
-  background:oklch(55% 0.14 195 / .07);
-  border-left:3px solid var(--teal);
-  border-radius:0 10px 10px 0;
-  margin-bottom:16px;
+/* landing */
+.su-landing { min-height:90vh; display:flex; align-items:center; justify-content:center; padding:40px 20px; }
+.su-landing-chips { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.su-float-chip {
+  position:absolute; display:inline-flex; align-items:center; gap:7px;
+  padding:7px 13px; border-radius:var(--r-pill);
+  background:rgba(255,255,255,0.72); border:1px solid var(--line);
+  font-size:12px; font-weight:600; color:var(--ink-2);
+  backdrop-filter:blur(8px);
+  animation:sufloat 5s ease-in-out infinite;
 }
-.iw-verdict-gap span{
-  font-size:9px; font-weight:800;
-  letter-spacing:.24em; text-transform:uppercase;
-  color:var(--teal); display:block; margin-bottom:5px;
+@keyframes sufloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+.su-float-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.su-landing-inner { text-align:center; max-width:620px; margin:0 auto; position:relative; z-index:2; }
+.su-landing-h1 { font-size:clamp(44px,7vw,82px); color:var(--ink); margin:0 0 22px; }
+.su-landing-sub { font-size:17px; color:var(--muted); margin:0 0 36px; line-height:1.65; max-width:500px; margin-left:auto; margin-right:auto; }
+.su-landing-cta { display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:48px; }
+.su-landing-meta { font-size:13px; color:var(--faint); }
+.su-landing-steps { display:flex; gap:0; justify-content:center; flex-wrap:wrap; }
+.su-land-step { display:flex; align-items:center; gap:12px; padding:16px 24px; }
+.su-land-step-n { font-family:var(--font-display); font-size:22px; font-weight:700; }
+.su-land-step-t { font-weight:700; font-size:14px; color:var(--ink); }
+.su-land-step-d { font-size:12px; color:var(--muted); margin-top:2px; }
+
+/* buttons */
+.su-btn {
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:var(--font-body); font-weight:700; font-size:14px;
+  padding:12px 22px; border-radius:var(--r-md); cursor:pointer;
+  border:none; transition:all .18s ease; text-decoration:none;
 }
-.iw-verdict-gap p{
-  margin:0; font-size:13.5px; font-weight:600;
-  color:var(--ink); line-height:1.5;
-  word-break:break-word;
+.su-btn-primary {
+  background:var(--grad-brand); color:#fff;
+  box-shadow:0 8px 28px -10px rgba(200,38,211,.5);
+}
+.su-btn-primary:hover { filter:brightness(1.07); transform:translateY(-1px); }
+.su-btn-primary:active { transform:scale(.98); }
+.su-btn-ghost {
+  background:rgba(255,255,255,.7); color:var(--ink-2);
+  border:1.5px solid var(--line); backdrop-filter:blur(6px);
+}
+.su-btn-ghost:hover { border-color:var(--violet); color:var(--violet); }
+.su-btn-lg { font-size:16px; padding:15px 28px; border-radius:var(--r-lg); }
+
+/* chip */
+.su-chip {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 12px; border-radius:var(--r-pill);
+  font-size:12px; font-weight:600;
+  background:var(--bg-2); border:1px solid var(--line-2);
+  color:var(--ink-2);
 }
 
-/* competitors */
-.iw-verdict-players-label{
-  font-size:9px; font-weight:800;
-  letter-spacing:.24em; text-transform:uppercase;
-  color:var(--muted); display:block; margin-bottom:8px;
+/* wheel */
+.su-wheel-screen .su-screen-head { margin-bottom:36px; }
+.su-wheel-stage { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:start; }
+@media(max-width:700px){ .su-wheel-stage { grid-template-columns:1fr; } }
+.su-wheel-wrap { position:relative; width:320px; height:320px; margin:0 auto; }
+.su-wheel-pointer {
+  position:absolute; top:-20px; left:50%; transform:translateX(-50%);
+  z-index:4; filter:drop-shadow(0 2px 6px rgba(80,20,110,.18));
 }
-.iw-verdict-players{
-  border:1px solid var(--border);
-  border-radius:12px; overflow:hidden;
-  margin-bottom:16px;
+.su-wheel-shadow {
+  position:absolute; bottom:-10px; left:50%; transform:translateX(-50%);
+  width:260px; height:30px; border-radius:50%;
+  background:radial-gradient(closest-side, rgba(80,20,110,.18), transparent);
 }
-.iw-verdict-player{
-  display:grid;
-  grid-template-columns:120px 1fr;
-  gap:10px;
-  padding:10px 14px;
-  border-bottom:1px solid var(--border);
-  background:var(--surface);
+.su-wheel-svg { width:100%; height:100%; display:block; }
+.su-wheel-hub {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:68px; height:68px; border-radius:50%; z-index:5;
+  background:#fff; border:3px solid var(--line-2);
+  box-shadow:0 4px 20px -6px rgba(80,20,110,.28);
+  display:grid; place-items:center; cursor:pointer;
+  transition:all .18s; font-family:var(--font-display);
 }
-.iw-verdict-player:last-child{ border-bottom:none; }
-.iw-verdict-player:nth-child(even){ background:var(--surface2); }
-.iw-verdict-pname{
-  font-weight:800; font-size:12.5px;
-  color:var(--ink);
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.iw-verdict-pdetail{ display:flex; flex-direction:column; gap:2px; min-width:0; }
-.iw-verdict-pprice{
-  font-size:11px; font-weight:700; color:var(--teal);
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.iw-verdict-pweak{
-  font-size:12px; color:var(--muted); line-height:1.4;
-  display:-webkit-box; -webkit-line-clamp:2;
-  -webkit-box-orient:vertical; overflow:hidden;
-}
+.su-wheel-hub:hover:not(:disabled) { box-shadow:0 6px 28px -6px rgba(124,58,237,.45); border-color:var(--violet); }
+.su-wheel-hub:disabled { cursor:default; }
+.su-hub-inner { display:flex; flex-direction:column; align-items:center; gap:2px; }
+.su-hub-spark { font-size:16px; background:var(--grad-brand); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.su-hub-label { font-size:9px; font-weight:800; letter-spacing:.14em; color:var(--muted); }
+.su-hub-dots { display:flex; gap:5px; }
+.su-hub-dots i { width:6px; height:6px; border-radius:50%; background:var(--grad-brand); animation:sudots .8s ease-in-out infinite; }
+.su-hub-dots i:nth-child(2){ animation-delay:.15s; }
+.su-hub-dots i:nth-child(3){ animation-delay:.3s; }
+@keyframes sudots { 0%,100%{opacity:.3;transform:scale(.7)} 50%{opacity:1;transform:scale(1)} }
 
-/* pivot / instead */
-.iw-verdict-pivot{
-  padding:14px 16px;
-  background:oklch(95% 0.06 75 / .5);
-  border:1.5px solid oklch(70% 0.19 65 / .35);
-  border-radius:12px; margin-bottom:16px;
+/* result card */
+.su-result-card {
+  background:rgba(255,255,255,0.78); backdrop-filter:blur(12px);
+  border:1px solid var(--line); border-radius:var(--r-xl);
+  padding:28px; box-shadow:var(--sh-md);
+  opacity:0; transform:translateY(8px);
+  transition:opacity .35s ease, transform .35s var(--ease-out);
 }
-.iw-verdict-pivot-label{
-  display:flex; align-items:center; gap:6px;
-  font-size:9px; font-weight:800;
-  letter-spacing:.24em; text-transform:uppercase;
-  color:var(--amber); margin-bottom:8px;
+.su-result-card.in { opacity:1; transform:translateY(0); }
+.su-result-empty { display:flex; align-items:center; gap:16px; }
+.su-result-empty-ring {
+  width:44px; height:44px; border-radius:50%; border:2px dashed var(--line-2);
+  display:grid; place-items:center; font-size:18px;
+  background:var(--grad-brand); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
 }
-.iw-verdict-pivot p{
-  margin:0; font-size:13.5px; font-weight:500;
-  color:var(--ink); line-height:1.6;
-  word-break:break-word;
-}
+.su-result-empty-t { font-weight:700; font-size:14px; color:var(--ink); }
+.su-result-empty-d { font-size:12px; color:var(--muted); margin-top:3px; }
+.su-result-domain { margin-bottom:12px; }
+.su-result-title { font-size:28px; color:var(--ink); margin:8px 0 6px; }
+.su-result-tagline { font-size:14px; font-weight:600; color:var(--ink-2); margin:0 0 8px; line-height:1.5; }
+.su-result-blurb { font-size:13px; color:var(--muted); margin:0 0 20px; line-height:1.6; }
+.su-result-actions { display:flex; gap:10px; flex-wrap:wrap; }
 
-/* spin again button */
-.iw-verdict-spin{
-  width:100%;
-  font-family:'Inter',-apple-system,sans-serif;
-  font-size:13px; font-weight:700;
-  color:var(--muted);
-  background:transparent;
-  border:1.5px solid var(--border);
-  border-radius:12px; padding:11px;
-  cursor:pointer; transition:all .15s ease-out;
-  display:flex; align-items:center; justify-content:center; gap:8px;
+/* card */
+.su-card {
+  background:rgba(255,255,255,0.78); backdrop-filter:blur(10px);
+  border:1px solid var(--line); border-radius:var(--r-xl);
+  padding:24px; box-shadow:var(--sh-sm);
 }
-.iw-verdict-spin:hover{ border-color:var(--ink); color:var(--ink); background:var(--surface2); }
-.iw-verdict-spin:active{ transform:scale(.98); }
+.su-glass { background:rgba(255,255,255,0.58); backdrop-filter:blur(14px); border:1px solid var(--line); border-radius:var(--r-lg); }
 
+/* scan */
+.su-scan { padding:24px; margin-bottom:32px; }
+.su-scan-bar { height:4px; border-radius:4px; background:var(--line-2); overflow:hidden; margin-bottom:12px; }
+.su-scan-fill { height:100%; width:45%; border-radius:4px; background:var(--grad-brand); animation:suscan 1.8s ease-in-out infinite; }
+@keyframes suscan { 0%{margin-left:-45%;width:45%} 100%{margin-left:100%;width:45%} }
+.su-scan-text { font-size:14px; color:var(--muted); font-weight:500; }
 
+/* validate grid */
+.su-validate-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(max-width:640px){ .su-validate-grid { grid-template-columns:1fr; } }
+.su-v-score { display:flex; align-items:flex-start; gap:20px; }
+.su-v-score-side { display:flex; flex-direction:column; gap:12px; }
+.su-v-verdict { font-size:13px; color:var(--ink-2); line-height:1.6; margin:0; }
+.su-v-market { display:flex; flex-direction:column; gap:16px; }
+.su-v-market-cell { display:flex; flex-direction:column; gap:4px; }
+.su-v-k { font-family:var(--font-display); font-size:26px; font-weight:700; line-height:1; }
+.su-v-l { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.su-v-gap { padding:12px 14px; background:var(--bg-2); border-radius:var(--r-sm); }
+.su-v-gap-label { font-size:10px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--violet); margin-bottom:6px; }
+.su-v-gap p { font-size:13px; color:var(--ink); margin:0; line-height:1.5; font-weight:500; }
+.su-v-signals { grid-column:1/-1; }
+.su-v-signals-head { font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+.su-v-signal { margin-bottom:12px; }
+.su-v-signal-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px; font-size:13px; color:var(--ink); }
+.su-v-signal-top b { font-size:12px; color:var(--muted); }
+.su-meter-track { height:7px; border-radius:7px; background:var(--bg-2); overflow:hidden; }
+.su-meter-fill { height:100%; border-radius:7px; background:var(--grad-brand); }
+.su-v-cta { grid-column:1/-1; text-align:center; padding:28px; background:rgba(255,255,255,.6); border:1.5px solid var(--line); border-radius:var(--r-xl); backdrop-filter:blur(8px); }
+.su-v-cta--avoid { background:rgba(254,226,226,.6); border-color:rgba(220,38,38,.2); }
+.su-v-cta-text { font-size:15px; font-weight:600; color:var(--ink); margin-bottom:18px; line-height:1.5; }
+.su-v-cta-row { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
+.su-v-hint { font-size:11.5px; color:var(--faint); margin-top:10px; }
+.su-creditpill {
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:10px 14px; background:var(--bg-2);
+  border:1.5px solid var(--line); border-radius:var(--r-md); cursor:pointer;
+  transition:all .15s;
+}
+.su-creditpill:hover { border-color:var(--violet); }
+.su-creditnum { font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--ink); line-height:1; }
+.su-creditlbl { font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
 
-/* ── eureka score state ─────────────────────────────────────────── */
-.iw-score--eureka{position:relative;}
-.iw-score--eureka::before{
-  content:'';position:absolute;inset:-8px -12px;border-radius:14px;
-  background:linear-gradient(135deg,oklch(70% 0.19 65 / .12),oklch(82% 0.16 70 / .08));
-  border:1.5px solid oklch(70% 0.19 65 / .35);
-  animation:eurekapulse 2.4s ease-in-out infinite;pointer-events:none;
+/* blueprint */
+.su-pip-progress {
+  position:relative; display:grid; grid-template-columns:repeat(4,1fr);
+  background:rgba(255,255,255,.72); border:1px solid var(--line);
+  border-radius:var(--r-lg); padding:16px 20px 14px;
+  margin-bottom:28px; overflow:hidden;
 }
-@keyframes eurekapulse{
-  0%,100%{box-shadow:0 0 0 0 oklch(70% 0.19 65 / .2);}
-  50%{box-shadow:0 0 18px 4px oklch(70% 0.19 65 / .15);}
-}
-.iw-scoreband--eureka{
-  font-family:'Unbounded',sans-serif;font-size:10px;font-weight:900;
-  letter-spacing:.06em;color:var(--amber);
-  background:oklch(70% 0.19 65 / .12);
-  border:1.5px solid oklch(70% 0.19 65 / .4);
-  border-radius:6px;padding:3px 8px;
-}
-.iw-eureka-angle{
-  display:inline-flex;align-items:center;gap:7px;margin-top:6px;
-  font-size:12px;font-weight:600;color:var(--amber);
-  background:oklch(70% 0.19 65 / .08);
-  border:1px solid oklch(70% 0.19 65 / .25);
-  border-radius:8px;padding:6px 12px;
-}
-.iw-eureka-angle span{
-  font-family:'Unbounded',sans-serif;font-size:9px;
-  font-weight:900;letter-spacing:.14em;opacity:.7;
-}
-
-/* ── disclaimer ─────────────────────────────────────────────────── */
-.iw-disclaimer{
-  max-width:680px;
-  margin:40px auto 0;
-  padding:20px 24px;
-  border-top:1px solid var(--border);
-  text-align:center;
-}
-.iw-disclaimer p{
-  font-size:11.5px;
-  color:var(--muted);
-  line-height:1.7;
-  margin:0;
-  font-weight:400;
-}
-/* ── run cost bar ──────────────────────────────────────────────── */
-.pip-costbar{margin-top:20px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.pip-costlabel{font-family:'Inter',-apple-system,sans-serif;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);flex-shrink:0;}
-.pip-costagent{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--muted);padding:2px 8px;background:var(--surface);border:1px solid var(--border);border-radius:5px;}
-.pip-costagentname{font-weight:700;color:var(--ink);}
-.pip-costamt{font-weight:700;color:var(--teal);}
-.pip-costtotal{margin-left:auto;font-size:12px;color:var(--ink);}
-.pip-costtotal strong{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;color:var(--ink);}
-/* ── crowded market ────────────────────────────────────────────── */
-.pip-crowded{border:1.5px solid oklch(70% 0.19 65 / .45);border-radius:12px;padding:20px;background:var(--surface);position:relative;overflow:hidden;}
-.pip-crowded::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--amber);}
-.pip-crowded-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;}
-.pip-crowded-icon{font-size:26px;line-height:1;flex-shrink:0;}
-.pip-crowded-title{display:block;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:800;color:var(--amber);letter-spacing:-.01em;}
-.pip-crowded-refund{display:block;font-size:11.5px;color:var(--teal);font-weight:600;margin-top:3px;}
-.pip-crowded-reason{font-size:14px;color:var(--ink);line-height:1.6;margin:0 0 16px;}
-.pip-pivot{padding:12px 14px;background:var(--amber-bg);border:1px solid oklch(70% 0.19 65 / .25);border-radius:8px;margin-bottom:16px;}
-.pip-pivot p{font-size:13.5px;color:var(--ink);margin:6px 0 0;line-height:1.5;}
-.pip-crowded-spin{width:100%;font-family:'Inter',-apple-system,sans-serif;font-size:13px;font-weight:700;color:var(--ink);background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:11px;cursor:pointer;transition:all .15s ease-out;}
-.pip-crowded-spin:hover{border-color:var(--amber);color:var(--amber);}
-.pip-crowded-spin:active{transform:scale(.98);}
-/* ── verdict badge ─────────────────────────────────────────────── */
-.pip-verdictrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
-.pip-verdictbadge{font-family:'Inter',-apple-system,sans-serif;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:5px;padding:3px 10px;border:1.5px solid;}
-.pip-vt--build{color:var(--teal);border-color:oklch(55% 0.14 195 / .4);background:oklch(55% 0.14 195 / .08);}
-.pip-vt--warning{color:var(--amber);border-color:oklch(70% 0.19 65 / .4);background:var(--amber-bg);}
-.pip-warningnote{font-size:12px;color:var(--muted);font-style:italic;}
-/* ── credits & pricing ─────────────────────────────────────────── */
-.iw-buildrow{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;}
-.iw-creditpill{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 14px;background:linear-gradient(180deg, var(--surface), oklch(96% 0.014 78));border:1.5px solid var(--border);border-radius:16px;min-width:84px;cursor:pointer;transition:all .15s ease-out;box-shadow:inset 0 1px 0 oklch(100% 0 0 / .74);}
-.iw-creditpill:hover{border-color:var(--teal);background:oklch(55% 0.14 195 / .08);}
-.iw-creditnum{font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;color:var(--ink);line-height:1;}
-.iw-creditlbl{font-family:'Inter',-apple-system,sans-serif;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);}
-
-.iw-pricing{margin-top:20px;padding:20px;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;box-shadow:0 4px 24px -8px oklch(18% 0.022 78 / .12);}
-.iw-pricinghead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-.iw-pricinghead span{font-family:'Inter',-apple-system,sans-serif;font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);}
-.iw-pricingclose{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0;line-height:1;transition:color .15s;}
-.iw-pricingclose:hover{color:var(--ink);}
-.iw-pricingsub{font-size:13px;color:var(--muted);margin:0 0 16px;line-height:1.5;}
-.iw-priceerr{margin:0 0 14px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,107,107,.25);background:rgba(255,107,107,.08);color:#ffb0b0;font-size:12px;line-height:1.45;}
-.iw-pkgs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
-.iw-pkg{display:flex;flex-direction:column;gap:3px;padding:12px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;transition:border-color .15s;}
-.iw-pkg--hl{border-color:var(--amber);background:var(--amber-bg);}
-.iw-pkg:hover{border-color:oklch(88% 0.018 78);}
-.iw-pkg--hl:hover{border-color:var(--amber);}
-.iw-pkglabel{font-family:'Unbounded',sans-serif;font-size:11px;font-weight:800;color:var(--ink);letter-spacing:-.01em;}
-.iw-pkgcredits{font-family:'Inter',-apple-system,sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin:2px 0;}
-.iw-pkgprice{font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;color:var(--ink);letter-spacing:-.02em;line-height:1;}
-.iw-pkgper{font-size:11px;color:var(--muted);margin-bottom:8px;}
-.iw-pkgbtn{font-family:'Inter',-apple-system,sans-serif;font-size:12px;font-weight:700;color:#fff;background:var(--ink);border:none;border-radius:6px;padding:7px 0;cursor:pointer;transition:all .15s;}
-.iw-pkg--hl .iw-pkgbtn{background:var(--amber);color:#1a1206;}
-.iw-pkgbtn:hover{filter:brightness(1.1);}
-.iw-pkgbtn:disabled{cursor:wait;opacity:.7;filter:none;}
-.iw-pkgbtn:active{transform:scale(.97);}
-/* ── market sizing ─────────────────────────────────────────────── */
-.pip-marketsz{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;}
-.pip-mslabel{font-family:'Inter',-apple-system,sans-serif;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);flex-shrink:0;}
-
-/* ── competitor table ──────────────────────────────────────────── */
-.pip-comptable{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px;}
-.pip-comptable th{font-family:'Inter',-apple-system,sans-serif;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px 6px 0;border-bottom:1px solid var(--border);}
-.pip-comptable td{padding:7px 8px 7px 0;vertical-align:top;border-bottom:1px solid var(--border);color:var(--ink);line-height:1.4;}
-.pip-comptable tr:last-child td{border-bottom:none;}
-.pip-compname{font-weight:700;color:var(--ink);}
-.pip-compprice{font-family:'Inter',-apple-system,sans-serif;font-weight:600;color:var(--teal);white-space:nowrap;}
-
-/* ── GTM hero ──────────────────────────────────────────────────── */
-.pip-gtmhero{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
-.pip-revgoal,.pip-buildtime{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:3px;}
-.pip-revnum,.pip-btnum{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:800;color:var(--ink);line-height:1.2;}
-.pip-revlabel,.pip-btlabel{font-family:'Inter',-apple-system,sans-serif;font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
-
-/* ── GTM sections ──────────────────────────────────────────────── */
-.pip-section{margin-bottom:16px;}
-.pip-seclabel{display:block;font-family:'Inter',-apple-system,sans-serif;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
-.pip-persona{font-size:13.5px;color:var(--ink);margin:0 0 6px;font-weight:600;line-height:1.45;}
-.pip-where{font-size:13px;color:var(--ink);margin:0;line-height:1.45;}
-.pip-where strong{color:var(--muted);font-size:10px;font-family:'Inter',-apple-system,sans-serif;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-right:4px;}
-
-/* ── first 5 customers ─────────────────────────────────────────── */
-.pip-five{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;counter-reset:five;}
-.pip-five li{counter-increment:five;position:relative;padding:9px 12px 9px 36px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;font-size:13px;line-height:1.5;color:var(--ink);}
-.pip-five li::before{content:counter(five);position:absolute;left:10px;top:10px;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:900;color:var(--violet);}
-
-/* ── channels ──────────────────────────────────────────────────── */
-.pip-channel{padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;margin-bottom:6px;}
-.pip-chname{display:block;font-family:'Inter',-apple-system,sans-serif;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:4px;}
-.pip-chtactic{display:block;font-size:13px;color:var(--ink);line-height:1.45;margin-bottom:4px;}
-.pip-chtl{display:block;font-size:11.5px;color:var(--muted);}
-
-/* ── pricing box ───────────────────────────────────────────────── */
-.pip-pricebox{margin:16px 0;padding:14px 16px;background:oklch(95% 0.06 75 / .45);border:1.5px solid oklch(70% 0.19 65 / .35);border-radius:10px;}
-.pip-price{display:block;font-family:'Unbounded',sans-serif;font-size:24px;font-weight:900;color:var(--amber);letter-spacing:-.02em;margin-bottom:4px;}
-.pip-pricerat{display:block;font-size:13px;color:var(--ink);line-height:1.5;margin-bottom:4px;}
-.pip-pricetrial{display:block;font-size:12px;color:var(--muted);font-style:italic;}
-
-/* ── 30-day plan ───────────────────────────────────────────────── */
-.pip-weeks{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.pip-week{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 12px;}
-.pip-weekn{display:block;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:900;color:var(--violet);margin-bottom:3px;}
-.pip-weektheme{display:block;font-size:12px;font-weight:700;color:var(--ink);margin-bottom:7px;line-height:1.3;}
-.pip-week ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;}
-.pip-week ul li{font-size:11.5px;color:var(--muted);line-height:1.4;padding-left:10px;position:relative;}
-.pip-week ul li::before{content:"·";position:absolute;left:0;color:var(--violet);}
-
-/* ── build stack ───────────────────────────────────────────────── */
-.pip-stack{display:flex;flex-wrap:wrap;gap:6px;}
-.pip-stackpill{font-family:'Inter',-apple-system,sans-serif;font-size:11.5px;font-weight:700;color:var(--teal);background:oklch(55% 0.14 195 / .08);border:1px solid oklch(55% 0.14 195 / .28);border-radius:5px;padding:3px 10px;}
-/* ── build button row (verdict) ────────────────────────────────── */
-.iw-buildbtnrow{
-  display:flex; align-items:stretch; gap:10px; margin-top:16px;
-}
-.iw-buildbtnrow .iw-buildbtn{ flex:1; margin-top:0; }
-.iw-creditpill--verdict{
-  flex-shrink:0; min-width:64px;
-  border-radius:12px;
-}
-
-/* ── pipeline progress bar ─────────────────────────────────────── */
-.pip-progress{
-  position:relative;
-  display:grid; grid-template-columns:repeat(4,1fr); gap:0;
-  margin-bottom:24px; padding:16px 18px 14px;
-  background:var(--surface2); border:1px solid var(--border);
-  border-radius:12px; overflow:hidden;
-}
-.pip-progress-track{
-  position:absolute; bottom:0; left:0; right:0; height:3px;
-  background:var(--border);
-}
-.pip-progress-fill{
-  height:100%; background:var(--grad-diag);
-  border-radius:999px; transition:width 0.6s cubic-bezier(0.16,1,0.3,1);
-}
-.pip-progress-step{
-  display:flex; flex-direction:column; align-items:center; gap:7px;
-  position:relative;
-}
-.pip-progress-step:not(:last-child)::after{
-  content:'';
-  position:absolute; top:14px; left:calc(50% + 14px); right:calc(-50% + 14px);
-  height:1px; background:var(--border); z-index:0;
-}
-.pip-progress-dot{
+.su-pip-track { position:absolute; bottom:0; left:0; right:0; height:3px; background:var(--line); }
+.su-pip-fill { height:100%; background:var(--grad-brand); transition:width .6s var(--ease-out); }
+.su-pip-step { display:flex; flex-direction:column; align-items:center; gap:6px; }
+.su-pip-dot {
   width:28px; height:28px; border-radius:50%;
   display:grid; place-items:center;
-  font-family:'Unbounded',sans-serif; font-size:11px; font-weight:800;
-  background:var(--surface); border:1.5px solid var(--border);
-  color:var(--muted); transition:all .3s ease; position:relative; z-index:1;
+  font-family:var(--font-display); font-size:11px; font-weight:800;
+  background:var(--bg-2); border:1.5px solid var(--line);
+  color:var(--muted); transition:all .3s;
 }
-.pip-progress-step--running .pip-progress-dot{
-  border-color:var(--amber); color:var(--amber);
-  background:rgb(var(--iw-brand-primary-rgb) / 0.08);
-  box-shadow:0 0 0 4px rgb(var(--iw-brand-primary-rgb) / 0.12);
+.su-pip-step.running .su-pip-dot { border-color:var(--magenta); color:var(--magenta); background:rgba(192,38,211,.08); box-shadow:0 0 0 4px rgba(192,38,211,.1); }
+.su-pip-step.done .su-pip-dot { border-color:var(--violet); color:var(--violet); background:rgba(124,58,237,.08); }
+.su-pip-label { font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.su-pip-step.running .su-pip-label { color:var(--magenta); }
+.su-pip-step.done .su-pip-label { color:var(--violet); }
+.su-spin-sm { display:inline-block; width:11px; height:11px; border:2px solid rgba(192,38,211,.25); border-top-color:var(--magenta); border-radius:50%; animation:suspin .7s linear infinite; }
+@keyframes suspin { to{transform:rotate(360deg)} }
+.su-bp-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:32px; }
+@media(max-width:640px){ .su-bp-grid { grid-template-columns:1fr; } }
+.su-bp-card {}
+.su-bp-card--proto { grid-column:1/-1; }
+.su-bp-head { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+.su-bp-icon { font-size:20px; background:var(--grad-brand); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.su-bp-title { font-family:var(--font-display); font-size:15px; font-weight:700; color:var(--ink); margin:0; }
+.su-bp-name { font-family:var(--font-display); font-size:22px; font-weight:700; margin:0 0 6px; line-height:1; }
+.su-bp-summary { font-size:13px; color:var(--muted); margin:0 0 12px; line-height:1.6; }
+.su-bp-list-label { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.su-bp-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.su-bp-list li { font-size:13px; color:var(--ink); padding-left:16px; position:relative; line-height:1.5; }
+.su-bp-list li::before { content:"→"; position:absolute; left:0; color:var(--violet); font-size:11px; top:1px; }
+.su-bp-list--ol { counter-reset:ol; }
+.su-bp-list--ol li::before { content:counter(ol); counter-increment:ol; font-family:var(--font-display); font-size:10px; font-weight:800; color:var(--magenta); top:2px; }
+.su-bp-kpis { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.su-bp-kpi { background:var(--bg-2); border-radius:var(--r-sm); padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
+.su-bp-kpi span { font-family:var(--font-display); font-size:15px; font-weight:700; }
+.su-bp-kpi small { font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.su-bp-pricebox { margin-top:14px; padding:12px 14px; background:var(--bg-2); border-radius:var(--r-sm); display:flex; flex-direction:column; gap:4px; }
+.su-bp-pricebox span:first-child { font-family:var(--font-display); font-size:20px; font-weight:700; }
+.su-bp-pricebox span:last-child { font-size:12px; color:var(--muted); line-height:1.5; }
+.su-bp-chips { display:flex; flex-wrap:wrap; gap:6px; }
+.su-bp-env { font-size:11px; background:rgba(18,17,43,.88); color:#c4b5fd; border-radius:var(--r-sm); padding:12px; white-space:pre-wrap; word-break:break-all; margin:0; line-height:1.7; }
+.su-bp-costs { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px; }
+.su-bp-cost-cell { text-align:center; background:var(--bg-2); border-radius:var(--r-sm); padding:10px 8px; }
+.su-bp-cost-cell span { font-family:var(--font-display); font-size:14px; font-weight:700; display:block; }
+.su-bp-cost-cell small { font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.su-proto-toggle {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:13px; font-weight:600; color:var(--violet);
+  background:rgba(124,58,237,.07); border:1.5px solid rgba(124,58,237,.2);
+  border-radius:var(--r-sm); padding:7px 14px; cursor:pointer; margin-bottom:14px;
+  transition:all .15s;
 }
-.pip-progress-step--done .pip-progress-dot{
-  border-color:var(--teal); color:var(--teal);
-  background:rgb(var(--iw-brand-tertiary-rgb,55 195 195) / 0.10);
-}
-.pip-progress-label{
-  font-family:'Inter',-apple-system,sans-serif; font-size:10px; font-weight:700;
-  letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
-  transition:color .3s ease;
-}
-.pip-progress-step--running .pip-progress-label{ color:var(--amber); }
-.pip-progress-step--done .pip-progress-label{ color:var(--teal); }
-.pip-spinner--sm{
-  width:12px; height:12px; border:2px solid var(--border);
-  border-top-color:var(--amber); border-radius:50%;
-  animation:iwspin .7s linear infinite;
-  display:inline-block;
-}
+.su-proto-toggle:hover { background:rgba(124,58,237,.14); }
+.su-proto-wrap { border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden; }
+.su-proto-chrome { display:flex; align-items:center; gap:6px; padding:10px 14px; background:var(--bg-2); border-bottom:1px solid var(--line); }
+.su-proto-chrome span { width:10px; height:10px; border-radius:50%; }
+.su-proto-chrome span:nth-child(1){background:#ff5f57} .su-proto-chrome span:nth-child(2){background:#febc2e} .su-proto-chrome span:nth-child(3){background:#28c840}
+.su-proto-url { margin-left:10px; font-size:11px; color:var(--muted); background:var(--surface); border:1px solid var(--line); border-radius:4px; padding:2px 10px; }
+.su-bp-footer { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:28px; background:rgba(255,255,255,.7); border:1px solid var(--line); border-radius:var(--r-xl); flex-wrap:wrap; }
+.su-bp-footer-t { font-size:22px; color:var(--ink); margin-bottom:4px; }
+.su-bp-footer-d { font-size:13px; color:var(--muted); }
+.su-bp-footer-actions { display:flex; gap:10px; flex-wrap:wrap; }
 
-/* ── top nav ───────────────────────────────────────────────────── */
-.iw-topnav{
-  position:relative; z-index:10;
-  max-width:800px; margin:0 auto 28px;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:12px 18px;
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:16px;
-  box-shadow:0 2px 12px -4px oklch(18% 0.022 78 / .08);
-}
-.iw-topnav-brand{
-  font-family:'Unbounded',sans-serif; font-size:13px; font-weight:800;
-  color:var(--ink); letter-spacing:-.01em;
-}
-.iw-topnav-links{ display:flex; align-items:center; gap:8px; }
-.iw-topnav-link{
-  font-family:'Inter',-apple-system,sans-serif; font-size:13px; font-weight:600;
-  color:var(--muted); text-decoration:none;
-  padding:7px 14px; border-radius:8px;
-  border:1px solid transparent;
-  transition:all .15s ease;
-}
-.iw-topnav-link:hover{ color:var(--ink); background:var(--surface2); }
-.iw-topnav-link--cta{
-  color:var(--ink); border-color:var(--border); background:var(--surface2);
-}
-.iw-topnav-link--cta:hover{ border-color:var(--amber); color:var(--amber); background:var(--amber-bg); }
+/* pricing modal */
+.su-modal-overlay { position:fixed; inset:0; background:rgba(18,11,40,.45); backdrop-filter:blur(6px); z-index:100; display:grid; place-items:center; }
+.su-modal { background:#fff; border-radius:var(--r-xl); padding:28px; max-width:420px; width:90%; box-shadow:var(--sh-lg); }
+.su-modal-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.su-modal-head span { font-family:var(--font-display); font-size:16px; font-weight:700; color:var(--ink); }
+.su-modal-head button { font-size:16px; color:var(--muted); }
+.su-modal-sub { font-size:13px; color:var(--muted); margin:0 0 20px; line-height:1.5; }
+.su-pkgs { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.su-pkg { display:flex; flex-direction:column; gap:3px; padding:14px; background:var(--bg-2); border:1.5px solid var(--line); border-radius:var(--r-md); }
+.su-pkg--hl { border-color:var(--violet); background:rgba(124,58,237,.06); }
+.su-pkg-label { font-family:var(--font-display); font-size:12px; font-weight:700; color:var(--ink); }
+.su-pkg-credits { font-size:13px; color:var(--muted); }
+.su-pkg-price { font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--ink); line-height:1; }
+.su-pkg-per { font-size:11px; color:var(--muted); margin-bottom:8px; }
+.su-pkg-btn { font-size:12px; font-weight:700; color:#fff; background:var(--grad-brand); border-radius:var(--r-sm); padding:8px 0; cursor:pointer; transition:all .15s; }
+.su-pkg-btn:hover { filter:brightness(1.07); }
+.su-pkg-btn:disabled { opacity:.6; cursor:wait; }
 
-/* ── responsive ───────────────────────────────────────────────── */
-@media (max-width:860px){
-  .iw-root{ padding:20px 14px 56px; }
-  .iw-shell{ grid-template-columns:1fr; gap:18px; }
-  .iw-machine{ padding:20px 14px 24px; border-radius:26px; }
-  .iw-list{ position:static; }
-  .iw-headtop{ flex-direction:column; align-items:flex-start; gap:8px; margin-bottom:14px; }
-  .iw-headgrid{ grid-template-columns:1fr; gap:14px; }
-  .iw-title{ font-size:42px; }
-  .iw-sub{ font-size:15px; }
-  .iw-proofrow{ gap:6px; }
-  .iw-proofchip{ font-size:11px; padding:8px 10px; }
-  .iw-headcard{ padding:14px; border-radius:18px; }
-  .iw-bar{ gap:10px; padding:12px; border-radius:18px; }
-  .iw-modes{ flex:1; display:grid; grid-template-columns:1fr 1fr; min-width:0; }
-  .iw-modes{ width:100%; display:grid; grid-template-columns:1fr 1fr; min-width:0; }
-  .iw-modebtn{ width:100%; padding:11px 10px; }
-  .iw-creditpill{ min-width:72px; padding:10px 12px; }
-  .iw-steprail{ gap:6px; }
-  .iw-stepchip{ font-size:10px; padding:7px 9px; }
-  .iw-slotmachine{ padding:12px; border-radius:26px; }
-  .iw-marquee{ margin-bottom:12px; padding:12px 12px 11px; border-radius:18px; }
-  .iw-marquee-label{ font-size:13px; }
-  .iw-marquee-copy{ font-size:11px; }
-  .iw-reelintro{ flex-direction:column; align-items:flex-start; gap:10px; padding:0 2px; }
-  .iw-reelintro-copy{ font-size:13px; }
-  .iw-reelintro-tip{ font-size:10px; }
-  .iw-fill{ font-size:19px; }
-  .iw-reels{ gap:6px; padding:16px 8px 10px; border-radius:22px; }
-  .iw-payline{ left:10px; right:10px; }
-  .iw-col{ gap:8px; min-width:0; }
-  .iw-col:not(:last-child)::after{ right:-3px; }
-  .iw-collabel{ font-size:8px; letter-spacing:.16em; }
-  .iw-collabel::after{ width:24px; margin-top:6px; }
-  .iw-window{ border-radius:12px; }
-  .iw-lock{ top:8px; right:8px; width:26px; height:26px; }
-  .iw-item{ padding:0 4px; }
-  .iw-item span{ font-size:11.5px; line-height:1; }
-  .iw-slotbase{ margin-top:10px; padding:12px 6px 2px; border-radius:18px; }
-  .iw-slotlights{ gap:8px; margin-bottom:12px; }
-  .iw-slotlights span{ width:8px; height:8px; }
-  .iw-controls{ margin-top:0; }
-  .iw-spin{ max-width:none; font-size:14px; padding:16px 18px; border-radius:16px; }
+/* util */
+.su-err { font-size:13px; color:#dc2626; margin:12px 0; }
+.su-retry { background:none; border:none; color:var(--violet); cursor:pointer; font-size:13px; text-decoration:underline; }
+
+/* disclaimer */
+.su-disclaimer { position:relative; z-index:1; max-width:760px; margin:0 auto 40px; padding:20px 24px; border-top:1px solid var(--line); text-align:center; }
+.su-disclaimer p { font-size:11px; color:var(--faint); line-height:1.7; margin:0; }
+
+/* responsive */
+@media(max-width:640px){
+  .su-nav { margin-top:12px; border-radius:var(--r-lg); }
+  .su-screen { padding:40px 16px 60px; }
+  .su-landing-h1 { font-size:42px; }
+  .su-wheel-wrap { width:280px; height:280px; }
+  .su-bp-grid,.su-validate-grid { grid-template-columns:1fr; }
+  .su-v-signals { grid-column:auto; }
+  .su-v-cta { grid-column:auto; }
+  .su-pip-progress { grid-template-columns:repeat(2,1fr); }
 }
-@media (prefers-reduced-motion:reduce){
-  .iw-result{ transition:opacity .2s ease; }
-  .iw-row,.pip-output{ animation:none; }
-}
-`
+`;
