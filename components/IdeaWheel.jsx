@@ -700,111 +700,102 @@ export default function IdeaWheel() {
           <SlotMachine onResult={(result) => {
             setIdea(result); setComp(null); setValidateErr("");
           }}/>
+          {/* Validate button + inline results */}
           {idea && (
-            <div className="sm-result-cta">
-              <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { goTo("validate"); runValidate(); }}>
-                Run free market check →
-              </button>
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* ── VALIDATE ── */}
-      {screen === "validate" && idea && (
-        <section className="su-screen su-validate">
-          <div className="su-screen-head">
-            <div className="su-eyebrow">Step two · Free market check</div>
-            <h2 className="su-display su-screen-title">
-              Is <span className="su-grad-text">{idea.title}</span> worth building?
-            </h2>
-            <p className="su-screen-desc">{idea.tagline}</p>
-          </div>
-
-          {validating && (
-            <div className="su-scan su-glass">
-              <div className="su-scan-bar"><div className="su-scan-fill"/></div>
-              <div className="su-scan-text">⚡ Scanning demand, market size & competition…</div>
-            </div>
-          )}
-
-          {validateErr && <p className="su-err">{validateErr} <button className="su-retry" onClick={runValidate}>Retry</button></p>}
-
-          {comp && !validating && (
-            <div className="su-validate-grid">
-              {/* Score + competition */}
-              <div className="su-card su-v-score">
-                <ScoreRing value={comp.score ?? 65} label="Demand"/>
-                <div className="su-v-score-side">
-                  <span className="su-chip" style={{
-                    background: vt==="avoid"?"#dc2626":vt==="warning"?"#d97706":"#16a34a",
-                    color:"#fff", border:"none"
-                  }}>
-                    {vt==="avoid"?"High":vt==="warning"?"Medium":"Low"} competition
-                  </span>
-                  <p className="su-v-verdict">{comp.verdict || comp.verdictReasoning}</p>
+            <div className="sm-validate-section">
+              {!comp && !validating && !validateErr && (
+                <div className="sm-result-cta">
+                  <button className="su-btn su-btn-primary su-btn-lg" onClick={runValidate}>
+                    Validate this market — free →
+                  </button>
                 </div>
-              </div>
+              )}
 
-              {/* Market size */}
-              <div className="su-card su-v-market">
-                <div className="su-v-market-cell">
-                  <div className="su-v-k su-grad-text">{comp.marketSize || "—"}</div>
-                  <div className="su-v-l">Market size</div>
+              {validating && (
+                <div className="su-scan su-glass" style={{marginTop:24}}>
+                  <div className="su-scan-bar"><div className="su-scan-fill"/></div>
+                  <div className="su-scan-text">⚡ Scanning demand, market size & competition…</div>
                 </div>
-                {comp.gap && (
-                  <div className="su-v-gap">
-                    <div className="su-v-gap-label">The gap</div>
-                    <p>{comp.gap}</p>
-                  </div>
-                )}
-              </div>
+              )}
 
-              {/* Players */}
-              {(comp.players||[]).length > 0 && (
-                <div className="su-card su-v-signals">
-                  <div className="su-v-signals-head">⚡ Key players</div>
-                  {(comp.players||[]).slice(0,3).map((pl,i) => (
-                    <div className="su-v-signal" key={i}>
-                      <div className="su-v-signal-top">
-                        <span>{pl.name}</span>
-                        <b>{pl.pricing||"—"}</b>
-                      </div>
-                      <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{pl.weakness}</div>
-                      <Meter value={60+Math.random()*30} delay={200+i*150}/>
+              {validateErr && (
+                <p className="su-err" style={{marginTop:16}}>
+                  {validateErr} <button className="su-retry" onClick={runValidate}>Retry</button>
+                </p>
+              )}
+
+              {comp && !validating && (
+                <div className="su-validate-grid" style={{marginTop:24}}>
+                  <div className="su-card su-v-score">
+                    <ScoreRing value={comp.score ?? 65} label="Demand"/>
+                    <div className="su-v-score-side">
+                      <span className="su-chip" style={{
+                        background: vt==="avoid"?"#dc2626":vt==="warning"?"#d97706":"#16a34a",
+                        color:"#fff", border:"none"
+                      }}>
+                        {vt==="avoid"?"High":vt==="warning"?"Medium":"Low"} competition
+                      </span>
+                      <p className="su-v-verdict">{comp.verdict || comp.verdictReasoning}</p>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {/* CTA */}
-              {vt !== "avoid" && (
-                <div className="su-v-cta">
-                  <div className="su-v-cta-text">Signal is strong. Ready to turn this into a real plan?</div>
-                  <div className="su-v-cta-row">
-                    <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); }}>
-                      ✦ Generate the blueprint
-                    </button>
-                    <button className="su-creditpill" onClick={() => setShowPricing(true)}>
-                      <span className="su-creditnum">{credits}</span>
-                      <span className="su-creditlbl">credits</span>
-                    </button>
                   </div>
-                  <div className="su-v-hint">1 credit · always free to validate</div>
-                </div>
-              )}
 
-              {vt === "avoid" && (
-                <div className="su-v-cta su-v-cta--avoid">
-                  <div className="su-v-cta-text">⛔ Crowded market — consider a different angle.</div>
-                  {comp.pivotHint && <p style={{ fontSize:13, color:"var(--muted)", margin:"8px 0 0" }}>{comp.pivotHint}</p>}
-                  <button className="su-btn su-btn-ghost" onClick={() => goTo("wheel")}>↩ Spin again</button>
+                  <div className="su-card su-v-market">
+                    <div className="su-v-market-cell">
+                      <div className="su-v-k su-grad-text">{comp.marketSize || "—"}</div>
+                      <div className="su-v-l">Market size</div>
+                    </div>
+                    {comp.gap && (
+                      <div className="su-v-gap">
+                        <div className="su-v-gap-label">The gap</div>
+                        <p>{comp.gap}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {(comp.players||[]).length > 0 && (
+                    <div className="su-card su-v-signals">
+                      <div className="su-v-signals-head">Key players</div>
+                      {(comp.players||[]).slice(0,3).map((pl,i) => (
+                        <div className="su-v-signal" key={i}>
+                          <div className="su-v-signal-top">
+                            <span>{pl.name}</span><b>{pl.pricing||"—"}</b>
+                          </div>
+                          <div style={{fontSize:12,color:"var(--muted)",marginTop:2}}>{pl.weakness}</div>
+                          <Meter value={60+Math.random()*30} delay={200+i*150}/>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {vt !== "avoid" && (
+                    <div className="su-v-cta">
+                      <div className="su-v-cta-text">Signal is strong. Ready to turn this into a real plan?</div>
+                      <div className="su-v-cta-row">
+                        <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); }}>
+                          ✦ Generate the blueprint
+                        </button>
+                        <button className="su-creditpill" onClick={() => setShowPricing(true)}>
+                          <span className="su-creditnum">{credits}</span>
+                          <span className="su-creditlbl">credits</span>
+                        </button>
+                      </div>
+                      <div className="su-v-hint">1 credit · always free to validate</div>
+                    </div>
+                  )}
+
+                  {vt === "avoid" && (
+                    <div className="su-v-cta su-v-cta--avoid">
+                      <div className="su-v-cta-text">⛔ Crowded market — consider a different angle.</div>
+                      {comp.pivotHint && <p style={{fontSize:13,color:"var(--muted)",margin:"8px 0 0"}}>{comp.pivotHint}</p>}
+                      <button className="su-btn su-btn-ghost" onClick={() => { setComp(null); setIdea(null); }}>↩ Spin again</button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
         </section>
-      )}
+      }}
 
       {/* ── BLUEPRINT ── */}
       {screen === "blueprint" && idea && (
