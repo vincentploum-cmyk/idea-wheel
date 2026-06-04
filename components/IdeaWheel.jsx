@@ -442,24 +442,6 @@ export default function IdeaWheel() {
 
             <TeaserReels />
 
-            {/* value props */}
-            <div className="su-value-grid">
-              <div className="su-value-card">
-                <span className="su-value-icon">🎯</span>
-                <div className="su-value-t">Validate before you build</div>
-                <div className="su-value-d">Real competitor data, market sizing, and demand signals — not vibes. Know if it's worth your time before writing a line of code.</div>
-              </div>
-              <div className="su-value-card">
-                <span className="su-value-icon">🤖</span>
-                <div className="su-value-t">4 AI agents, one blueprint</div>
-                <div className="su-value-d">Product designer, GTM strategist, infrastructure architect, and prototype builder all run in sequence. You get a complete plan, not a summary.</div>
-              </div>
-              <div className="su-value-card">
-                <span className="su-value-icon">💸</span>
-                <div className="su-value-t">Pay only for winners</div>
-                <div className="su-value-d">Validation is always free. Spend a credit only when the market signals are strong enough to justify building. No wasted budget on dead ends.</div>
-              </div>
-            </div>
 
           </div>
         </section>
