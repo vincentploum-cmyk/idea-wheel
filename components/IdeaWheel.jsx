@@ -641,10 +641,18 @@ export default function IdeaWheel() {
                 <span className="iw-creditlbl">credits</span>
               </button>
             </div>
-            <div className="iw-steprail" aria-hidden>
-              <span className="iw-stepchip iw-stepchip--active">1 Spin</span>
-              <span className="iw-stepchip">2 Validate free</span>
-              <span className="iw-stepchip">3 Build blueprint</span>
+            <div className="iw-steprail" aria-label="Progress">
+              <span className={`iw-stepchip ${!scoutDone && !buildRunning && !briefDone ? 'iw-stepchip--active' : 'iw-stepchip--done'}`}>
+                {(!scoutDone && !buildRunning && !briefDone) ? '1 Spin' : '✓ Spun'}
+              </span>
+              <span className="iw-steprail-arrow" aria-hidden>›</span>
+              <span className={`iw-stepchip ${scoutRunning ? 'iw-stepchip--active' : scoutDone || buildRunning || briefDone ? 'iw-stepchip--done' : ''}`}>
+                {scoutDone || buildRunning || briefDone ? '✓ Validated' : scoutRunning ? 'Validating…' : '2 Validate free'}
+              </span>
+              <span className="iw-steprail-arrow" aria-hidden>›</span>
+              <span className={`iw-stepchip ${buildRunning ? 'iw-stepchip--active' : briefDone ? 'iw-stepchip--done' : ''}`}>
+                {briefDone ? '✓ Blueprint ready' : buildRunning ? 'Building…' : '3 Build blueprint'}
+              </span>
             </div>
           </div>
 
@@ -746,8 +754,8 @@ export default function IdeaWheel() {
               <div className="iw-resultbtns">
                 <button className="iw-save" onClick={save} disabled={anySpinning || pipelineRunning}><Plus size={15} /> Shortlist</button>
                 {!scoutDone && !buildRunning && !briefDone ? (
-                  <button className="iw-validate" onClick={runScout} disabled={anySpinning || scoutRunning}>
-                    {scoutRunning ? <><span className="iw-dotspinner" /> Checking…</> : <><Search size={15} /> Is this worth building?<span className="iw-freebadge">free</span></>}
+                  <button className="iw-validate iw-validate--primary" onClick={runScout} disabled={anySpinning || scoutRunning}>
+                    {scoutRunning ? <><span className="iw-dotspinner iw-dotspinner--light" /> Checking market…</> : <><Search size={15} /> Validate Market<span className="iw-freebadge">free</span></>}
                   </button>
                 ) : scoutDone && !buildRunning && !briefDone ? (
                   <button className="iw-validate" onClick={runScout} disabled={anySpinning} style={{opacity:.6,fontSize:"12px"}}>
@@ -825,11 +833,17 @@ export default function IdeaWheel() {
                         ))}
                       </div>
                     </>)}
-                    <button className="iw-buildbtn" onClick={runBrief} disabled={buildRunning || briefDone}>
-                      {credits === 0
-                        ? <><Zap size={15} /> Get credits to build the Blueprint</>
-                        : <><Zap size={15} /> Build the Blueprint <span className="iw-creditcost">· 1 credit</span></>}
-                    </button>
+                    <div className="iw-buildbtnrow">
+                      <button className="iw-buildbtn" onClick={runBrief} disabled={buildRunning || briefDone}>
+                        {credits === 0
+                          ? <><Zap size={15} /> Get credits to build the Blueprint</>
+                          : <><Zap size={15} /> Build the Blueprint <span className="iw-creditcost">· 1 credit</span></>}
+                      </button>
+                      <button className="iw-creditpill iw-creditpill--verdict" onClick={() => openPricing('verdict_cta')} title={credits === 0 ? 'Buy credits' : 'Buy more credits'}>
+                        <span className="iw-creditnum">{credits}</span>
+                        <span className="iw-creditlbl">credits</span>
+                      </button>
+                    </div>
                     {credits === 0 && <button className="iw-verdict-getc" onClick={() => openPricing('verdict_cta')}>Get credits →</button>}
                   </div>
                 </div>
@@ -867,6 +881,32 @@ export default function IdeaWheel() {
               <div className="pip-header">
                 <span>THE BLUEPRINT</span>
                 {briefDone && (<button className="iw-cardbtn" onClick={copyCard}>{cardCopied ? <Check size={13} /> : <Share2 size={13} />}{cardCopied ? "Copied" : "Copy blueprint"}</button>)}
+              </div>
+
+              {/* ── Build progress bar ── */}
+              <div className="pip-progress">
+                {[
+                  { n: 1, label: 'Product' },
+                  { n: 2, label: 'Launch' },
+                  { n: 3, label: 'Infra' },
+                  { n: 4, label: 'Prototype' },
+                ].map(({ n, label }) => {
+                  const st = buildStageStatus(n);
+                  return (
+                    <div key={n} className={`pip-progress-step pip-progress-step--${st}`}>
+                      <div className="pip-progress-dot">
+                        {st === 'done' ? '✓' : st === 'running' ? <span className="pip-spinner pip-spinner--sm" /> : n}
+                      </div>
+                      <span className="pip-progress-label">{label}</span>
+                    </div>
+                  );
+                })}
+                <div className="pip-progress-track">
+                  <div className="pip-progress-fill" style={{
+                    width: briefDone ? '100%' :
+                      buildRunning ? `${((typeof pipeline.stage === 'number' ? pipeline.stage - 1 : 0) / 4) * 100}%` : '0%'
+                  }} />
+                </div>
               </div>
 
               {/* ── Stage 1: Product Designer ── */}              <AgentCard n={1} icon={<Paintbrush size={15} />} label="PRODUCT DESIGNER" model="sonnet-4.6"
@@ -1195,6 +1235,14 @@ const css = `
 .iw-stepchip--active{
   color:var(--amber); border-color:rgb(var(--iw-brand-primary-rgb) / 0.22); background:rgb(var(--iw-brand-primary-rgb) / 0.08);
 }
+.iw-stepchip--done{
+  color:var(--teal); border-color:rgb(var(--iw-brand-tertiary-rgb,55 195 195) / 0.3);
+  background:rgb(var(--iw-brand-tertiary-rgb,55 195 195) / 0.07);
+}
+.iw-steprail-arrow{
+  color:var(--muted); font-size:14px; line-height:1;
+  align-self:center; opacity:.5; flex-shrink:0;
+}
 
 /* ── slot machine cabinet ──────────────────────────────────────── */
 .iw-slotmachine{
@@ -1440,7 +1488,13 @@ const css = `
 
 .iw-score{ display:flex; flex-direction:column; gap:8px; }
 .iw-score-top{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
-.iw-meter{ display:none; }
+.iw-meter{
+  height:6px; border-radius:999px; background:var(--surface2);
+  border:1px solid var(--border); overflow:hidden; margin-top:4px;
+}
+.iw-meterfill{
+  display:block; height:100%; border-radius:999px;
+}
 .iw-scorenum{
   font-family:'Unbounded',sans-serif; font-weight:900; font-size:36px;
   line-height:1; letter-spacing:-.02em;
@@ -1475,7 +1529,10 @@ const css = `
 .iw-develop:hover:not(:disabled){ filter:brightness(1.08); }
 .iw-save:active:not(:disabled),.iw-develop:active:not(:disabled){ transform:scale(.96); }
 .iw-save:disabled,.iw-develop:disabled{ opacity:.38; cursor:default; }
-.iw-scorehint{ display:none; }
+.iw-scorehint{
+  display:block; font-size:11.5px; color:var(--muted);
+  font-weight:500; text-align:center; margin-top:-4px;
+}
 
 /* ── share card button ────────────────────────────────────────── */
 .iw-cardbtn{
@@ -1697,8 +1754,16 @@ const css = `
 .iw-validate:hover:not(:disabled){border-color:var(--ink);}
 .iw-validate:active:not(:disabled){transform:scale(.97);}
 .iw-validate:disabled{opacity:.55;cursor:default;}
-.iw-freebadge{font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--teal);border-radius:4px;padding:2px 6px;margin-left:2px;}
+.iw-validate--primary{
+  color:#fff; background:var(--grad-diag); border-color:transparent;
+  padding:12px 22px; font-size:14px; border-radius:12px;
+  box-shadow:0 8px 24px -10px rgb(var(--iw-brand-secondary-rgb) / 0.45);
+}
+.iw-validate--primary:hover:not(:disabled){ filter:brightness(1.07); border-color:transparent; transform:translateY(-1px); }
+.iw-validate--primary:active:not(:disabled){ transform:scale(.98) translateY(0); }
+.iw-freebadge{font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgb(255 255 255 / 0.25);border-radius:4px;padding:2px 6px;margin-left:2px;border:1px solid rgb(255 255 255 / 0.3);}
 .iw-dotspinner{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--ink);border-radius:50%;animation:iwspin .7s linear infinite;}
+.iw-dotspinner--light{border-color:rgb(255 255 255 / 0.35);border-top-color:#fff;}
 
 /* ── build brief button ─────────────────────────────────────── */
 .iw-buildbtn{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:9px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:800;color:#fff;border:none;border-radius:12px;padding:15px;cursor:pointer;background:var(--grad-diag);box-shadow:var(--iw-shadow-brand);transition:all .18s ease-out;margin-top:16px;letter-spacing:-.01em;}
@@ -2010,6 +2075,71 @@ const css = `
 /* ── build stack ───────────────────────────────────────────────── */
 .pip-stack{display:flex;flex-wrap:wrap;gap:6px;}
 .pip-stackpill{font-family:'Inter',-apple-system,sans-serif;font-size:11.5px;font-weight:700;color:var(--teal);background:oklch(55% 0.14 195 / .08);border:1px solid oklch(55% 0.14 195 / .28);border-radius:5px;padding:3px 10px;}
+/* ── build button row (verdict) ────────────────────────────────── */
+.iw-buildbtnrow{
+  display:flex; align-items:stretch; gap:10px; margin-top:16px;
+}
+.iw-buildbtnrow .iw-buildbtn{ flex:1; margin-top:0; }
+.iw-creditpill--verdict{
+  flex-shrink:0; min-width:64px;
+  border-radius:12px;
+}
+
+/* ── pipeline progress bar ─────────────────────────────────────── */
+.pip-progress{
+  position:relative;
+  display:grid; grid-template-columns:repeat(4,1fr); gap:0;
+  margin-bottom:24px; padding:16px 18px 14px;
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:12px; overflow:hidden;
+}
+.pip-progress-track{
+  position:absolute; bottom:0; left:0; right:0; height:3px;
+  background:var(--border);
+}
+.pip-progress-fill{
+  height:100%; background:var(--grad-diag);
+  border-radius:999px; transition:width 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+.pip-progress-step{
+  display:flex; flex-direction:column; align-items:center; gap:7px;
+  position:relative;
+}
+.pip-progress-step:not(:last-child)::after{
+  content:'';
+  position:absolute; top:14px; left:calc(50% + 14px); right:calc(-50% + 14px);
+  height:1px; background:var(--border); z-index:0;
+}
+.pip-progress-dot{
+  width:28px; height:28px; border-radius:50%;
+  display:grid; place-items:center;
+  font-family:'Unbounded',sans-serif; font-size:11px; font-weight:800;
+  background:var(--surface); border:1.5px solid var(--border);
+  color:var(--muted); transition:all .3s ease; position:relative; z-index:1;
+}
+.pip-progress-step--running .pip-progress-dot{
+  border-color:var(--amber); color:var(--amber);
+  background:rgb(var(--iw-brand-primary-rgb) / 0.08);
+  box-shadow:0 0 0 4px rgb(var(--iw-brand-primary-rgb) / 0.12);
+}
+.pip-progress-step--done .pip-progress-dot{
+  border-color:var(--teal); color:var(--teal);
+  background:rgb(var(--iw-brand-tertiary-rgb,55 195 195) / 0.10);
+}
+.pip-progress-label{
+  font-family:'Inter',-apple-system,sans-serif; font-size:10px; font-weight:700;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+  transition:color .3s ease;
+}
+.pip-progress-step--running .pip-progress-label{ color:var(--amber); }
+.pip-progress-step--done .pip-progress-label{ color:var(--teal); }
+.pip-spinner--sm{
+  width:12px; height:12px; border:2px solid var(--border);
+  border-top-color:var(--amber); border-radius:50%;
+  animation:iwspin .7s linear infinite;
+  display:inline-block;
+}
+
 /* ── responsive ───────────────────────────────────────────────── */
 @media (max-width:860px){
   .iw-root{ padding:20px 14px 56px; }
