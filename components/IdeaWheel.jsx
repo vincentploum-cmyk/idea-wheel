@@ -329,11 +329,32 @@ function SlotMachine({ onResult }) {
     if (complete && !anySpinning && onResult) {
       const v = landed[0]; const w = landed[1]; const ind = landed[2];
       const conj = (s) => { const x=s.toLowerCase(); if(/[^aeiou]y$/.test(x)) return x.slice(0,-1)+'ies'; if(/(s|sh|ch|x|z)$/.test(x)) return x+'es'; return x+'s'; };
-      onResult({ action:v, workflow:w, industry:ind, connector:m.connector, modeName:m.name,
-        freeformIdea:`${conj(v)} ${w} ${m.connector} ${ind}` });
+      const thirdPerson = (s) => { const x=s.toLowerCase(); if(/[^aeiou]y$/.test(x)) return x.slice(0,-1)+'ies'; if(/(s|sh|ch|x|z)$/.test(x)) return x+'es'; return x+'s'; };
+      const title = `${w.replace(/\b\w/g, c => c.toUpperCase())} for ${ind.replace(/\b\w/g, c => c.toUpperCase())}`;
+      const tagline = m.name === 'B2B'
+        ? `A B2B concept for ${ind} teams that ${thirdPerson(v)} ${w}.`
+        : `A consumer concept for ${ind} that ${thirdPerson(v)} ${w}.`;
+      const blurb = m.name === 'B2B'
+        ? `Built for ${ind} teams that need to ${v.toLowerCase()} ${w} faster, with less manual work and more consistency.`
+        : `Built for ${ind} who want a simpler way to ${v.toLowerCase()} ${w} without another bloated app.`;
+      onResult({
+        action:v,
+        workflow:w,
+        industry:ind,
+        connector:m.connector,
+        modeName:m.name,
+        label:m.name,
+        title,
+        tagline,
+        blurb,
+        freeformIdea:`${conj(v)} ${w} ${m.connector} ${ind}`,
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [complete, anySpinning]);
+
+  const prefix = m.prefix;
+  const conn = m.connector;
 
   return (
     <div className="sm-root">
@@ -367,9 +388,22 @@ function SlotMachine({ onResult }) {
         </div>
         <div className="sm-base">
           <button className="sm-spin" onClick={spinAll} disabled={anySpinning}>
-            {anySpinning ? 'Spinning…' : 'Generate Idea!'}
+            {anySpinning ? 'Spinning…' : 'Generate idea'}
           </button>
         </div>
+      </div>
+
+      {/* live sentence under reels */}
+      <div className="sm-live-sentence">
+        <p>
+          <span style={{fontStyle:'italic',color:'var(--muted)'}}>{prefix} </span>
+          {landed[0] ? <span className="sm-slot">{landed[0].toLowerCase()}</span> : <span className="sm-slot-empty"/>}
+          {' '}
+          {landed[1] ? <span className="sm-slot">{landed[1]}</span> : <span className="sm-slot-empty"/>}
+          {' '}<span style={{fontStyle:'italic',color:'var(--muted)'}}>{conn}</span>{' '}
+          {landed[2] ? <span className="sm-slot">{landed[2]}</span> : <span className="sm-slot-empty"/>}
+          <span style={{color:'var(--magenta)'}}>.</span>
+        </p>
       </div>
     </div>
   );
@@ -441,6 +475,13 @@ export default function IdeaWheel() {
 
   const goTo = (s) => { setScreen(s); window.scrollTo({ top:0, behavior:"smooth" }); };
   const m_prefix = (idea) => idea?.modeName === 'B2B' ? 'I want to build an agent that' : 'I want to make an app that';
+  const ideaSummary = (currentIdea) => {
+    if (!currentIdea) return '';
+    if (currentIdea.freeformIdea) {
+      return `${m_prefix(currentIdea)} ${currentIdea.freeformIdea}. ${currentIdea.tagline || ''} ${currentIdea.blurb || ''}`.trim();
+    }
+    return `${currentIdea.title}: ${currentIdea.tagline} ${currentIdea.blurb}`;
+  };
 
   const handleSpin = (segment) => {
     setIdea(segment);
@@ -459,7 +500,7 @@ export default function IdeaWheel() {
         method:"POST",
         headers:{ "Content-Type":"application/json" },
         body: JSON.stringify({
-          freeformIdea: `${idea.title}: ${idea.tagline} ${idea.blurb}`,
+          freeformIdea: ideaSummary(idea),
           modeName: idea.label,
           sessionId: "",
         }),
@@ -483,7 +524,7 @@ export default function IdeaWheel() {
     setProtoOpen(false);
 
     const base = {
-      freeformIdea: `${idea.title}: ${idea.tagline} ${idea.blurb}`,
+      freeformIdea: ideaSummary(idea),
       modeName: idea.label,
       sessionId: "",
       validationId: comp.validationId,
@@ -582,7 +623,7 @@ export default function IdeaWheel() {
               <span className="su-grad-text" style={{ display:"block" }}>you can actually win with.</span>
             </h1>
             <p className="su-landing-sub">
-              IdeaWheel gives you a sharper starting point than a blank prompt. Spin a curated concept, run a free market check, and only generate the full blueprint when the opportunity looks real.
+              Idea Generator gives you a sharper starting point than a blank prompt. Spin a curated concept, run a free market check, and only generate the full blueprint when the opportunity looks real.
             </p>
 
             <div className="su-landing-cta">
@@ -628,7 +669,7 @@ export default function IdeaWheel() {
                 <span className="su-grad-text su-land-step-n">02</span>
                 <div>
                   <div className="su-land-step-t">Pressure-test the market for free</div>
-                  <div className="su-land-step-d">Before you pay for anything, IdeaWheel checks demand, competition, market size, and the wedge you might own. You get a real build, caution, or avoid signal, not generic AI fluff.</div>
+                  <div className="su-land-step-d">Before you pay for anything, Idea Generator checks demand, competition, market size, and the gap you might own. You get a real build, caution, or avoid signal, not generic AI fluff.</div>
                 </div>
               </div>
               <div className="su-land-step">
@@ -654,13 +695,9 @@ export default function IdeaWheel() {
             setIdea(result); setComp(null); setValidateErr("");
           }}/>
           {idea && (
-            <div className="sm-result-area">
-              <p className="sm-sentence">
-                <span style={{fontStyle:'italic',color:'var(--muted)',fontSize:14}}>{m_prefix(idea)}</span>{' '}
-                <strong>{idea.freeformIdea}</strong>
-              </p>
+            <div className="sm-result-cta">
               <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { goTo("validate"); runValidate(); }}>
-                Validate this market — free →
+                Run free market check →
               </button>
             </div>
           )}
@@ -922,7 +959,7 @@ export default function IdeaWheel() {
 
       {/* ── DISCLAIMER ── */}
       <div className="su-disclaimer">
-        <p>IdeaWheel is an AI-powered research and ideation tool. All market analysis, competitor data, build scores, and recommendations are generated by AI and provided for informational purposes only. They do not constitute professional business, legal, or financial advice. AI-generated research may be incomplete, inaccurate, or outdated, and market conditions change rapidly. We make no guarantees about the commercial viability of any idea or the accuracy of competitive intelligence. You are solely responsible for any business decisions you make based on this tool. Always conduct your own research and consult qualified professionals before investing time or money into any venture.</p>
+        <p>Idea Generator is an AI-powered research and ideation tool. All market analysis, competitor data, build scores, and recommendations are generated by AI and provided for informational purposes only. They do not constitute professional business, legal, or financial advice. AI-generated research may be incomplete, inaccurate, or outdated, and market conditions change rapidly. We make no guarantees about the commercial viability of any idea or the accuracy of competitive intelligence. You are solely responsible for any business decisions you make based on this tool. Always conduct your own research and consult qualified professionals before investing time or money into any venture.</p>
       </div>
     </div>
   );
@@ -1287,10 +1324,9 @@ const CSS = `
 .sm-modebtn.on { color:#fff; background:var(--grad-brand); border-color:transparent; box-shadow:var(--sh-glow); }
 .sm-modebtn:disabled { opacity:.45; cursor:default; }
 .sm-cabinet {
-  background:linear-gradient(180deg, oklch(44% 0.06 65), oklch(14% 0.018 60) 100%);
-  border:1px solid oklch(62% 0.12 72 / .55);
-  border-radius:28px; padding:20px 16px 16px;
-  box-shadow:0 30px 60px -24px rgba(0,0,0,0.5);
+  background:rgba(255,255,255,0.68); backdrop-filter:blur(16px);
+  border:1px solid var(--line); border-radius:28px; padding:24px 20px 20px;
+  box-shadow:var(--sh-lg);
 }
 .sm-reels { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
 .sm-col { display:flex; flex-direction:column; gap:8px; }
@@ -1300,39 +1336,55 @@ const CSS = `
   color:var(--accent,#c026d3);
 }
 .sm-window {
-  height:216px; overflow:hidden; border-radius:12px;
-  background:rgba(255,255,255,0.95);
-  border:1px solid rgba(255,255,255,0.3);
+  height:216px; overflow:hidden; border-radius:14px;
+  background:var(--bg-2); border:1.5px solid var(--line-2);
   cursor:pointer; position:relative;
-  -webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 14%,#000 86%,transparent 100%);
-  mask-image:linear-gradient(180deg,transparent 0%,#000 14%,#000 86%,transparent 100%);
+  -webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 16%,#000 84%,transparent 100%);
+  mask-image:linear-gradient(180deg,transparent 0%,#000 16%,#000 84%,transparent 100%);
+  transition:border-color .2s;
 }
+.sm-window:hover { border-color:var(--violet); }
 .sm-strip { will-change:transform; }
 .sm-item {
   display:flex; align-items:center; justify-content:center;
-  text-align:center; padding:0 8px;
-  font-size:clamp(12px,1.4vw,17px); font-weight:800;
-  text-transform:uppercase; color:#18112b; line-height:1.1;
-  border-bottom:1px solid rgba(0,0,0,0.06);
+  text-align:center; padding:0 10px;
+  font-size:clamp(11px,1.3vw,16px); font-weight:800;
+  text-transform:uppercase; color:var(--ink); line-height:1.15;
+  border-bottom:1px solid var(--line);
 }
-.sm-base { display:flex; justify-content:center; padding-top:4px; }
+.sm-base { display:flex; justify-content:center; padding-top:12px; }
 .sm-spin {
-  font-family:var(--font-display); font-size:16px; font-weight:800;
-  color:#221607; padding:16px 40px; border:none; border-radius:16px;
-  background:linear-gradient(180deg, oklch(84% 0.16 78), oklch(63% 0.18 58));
-  cursor:pointer; min-width:240px;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.7), 0 16px 32px -16px rgba(200,130,0,0.5);
-  transition:all .15s;
+  font-family:var(--font-body); font-size:16px; font-weight:700;
+  color:#fff; padding:14px 40px; border:none; border-radius:var(--r-lg);
+  background:var(--grad-brand); cursor:pointer; min-width:220px;
+  box-shadow:var(--sh-glow); transition:all .15s;
 }
-.sm-spin:hover:not(:disabled) { filter:brightness(1.05); transform:translateY(-1px); }
+.sm-spin:hover:not(:disabled) { filter:brightness(1.07); transform:translateY(-1px); }
 .sm-spin:active:not(:disabled) { transform:scale(.98); }
-.sm-spin:disabled { opacity:.45; cursor:default; }
-.sm-result-area {
-  margin-top:28px; text-align:center; display:flex; flex-direction:column;
-  align-items:center; gap:20px;
+.sm-spin:disabled { opacity:.5; cursor:default; }
+.sm-live-sentence {
+  margin-top:22px; padding:18px 24px;
+  background:rgba(255,255,255,0.72); backdrop-filter:blur(10px);
+  border:1px solid var(--line); border-radius:var(--r-lg);
+  text-align:center; min-height:64px; display:flex; align-items:center; justify-content:center;
+}
+.sm-live-sentence p {
+  margin:0; font-size:15px; line-height:1.7; color:var(--ink);
+}
+.sm-live-sentence .sm-slot {
+  display:inline-block; font-weight:800; padding:1px 6px; border-radius:6px;
+  background:var(--grad-brand); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.sm-live-sentence .sm-slot-empty {
+  display:inline-block; width:80px; height:14px; border-radius:4px;
+  background:var(--line-2); vertical-align:middle; margin:0 4px;
+  animation:smpulse 1.2s ease-in-out infinite;
+}
+@keyframes smpulse { 0%,100%{opacity:.4} 50%{opacity:.9} }
+.sm-result-cta {
+  margin-top:20px; text-align:center;
   animation:iwIn .35s ease-out both;
 }
-.sm-sentence { font-size:15px; color:var(--ink); line-height:1.6; margin:0; max-width:560px; }
 @keyframes iwIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
 /* teaser reels */
