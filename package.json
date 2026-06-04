@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "palette:audit": "node migrate-palette.js",
+    "palette:print": "node migrate-palette.js --json"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",
