@@ -341,7 +341,6 @@ export default function IdeaWheel() {
 
       {/* ── NAV ── */}
       <nav className="su-nav">
-        <button className="su-nav-brand" onClick={() => goTo("landing")}>Idea Generator</button>
         <div className="su-nav-links">
           <a className="su-nav-link" href="/pricing">Pricing</a>
           <a className="su-nav-link su-nav-link--cta" href="/profile">Profile</a>
@@ -698,7 +697,7 @@ const CSS = `
 .su-nav {
   position:relative; z-index:10;
   max-width:860px; margin:0 auto;
-  display:flex; align-items:center; justify-content:space-between;
+  display:flex; align-items:center; justify-content:flex-end;
   padding:14px 20px;
   background:rgba(255,255,255,0.72); backdrop-filter:blur(12px);
   border:1px solid var(--line); border-radius:var(--r-xl);
