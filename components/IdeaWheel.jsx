@@ -1248,8 +1248,8 @@ const css = `
 .iw-slotmachine{
   position:relative; margin:0 0 10px; padding:16px;
   border-radius:34px;
-  background:linear-gradient(180deg, rgb(var(--iw-brand-primary-rgb) / 0.94), rgb(var(--iw-brand-tertiary-rgb) / 0.90) 48%, rgb(var(--iw-brand-secondary-rgb) / 0.86) 100%);
-  border:1px solid rgb(255 255 255 / 0.18);
+  background:linear-gradient(180deg, oklch(44% 0.06 65), oklch(24% 0.03 58) 18%, oklch(14% 0.018 60) 100%);
+  border:1px solid oklch(62% 0.12 72 / .55);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.22),
     inset 0 -1px 0 rgb(29 29 31 / 0.24),
@@ -1266,9 +1266,9 @@ const css = `
   display:flex; flex-direction:column; align-items:center; gap:8px;
   margin-bottom:14px; padding:14px 16px 12px;
   border-radius:22px;
-  background:var(--grad-diag);
-  border:1px solid rgb(255 255 255 / 0.22);
-  box-shadow:inset 0 1px 0 rgb(255 255 255 / 0.24), 0 16px 32px -24px rgba(29, 29, 31, 0.42);
+  background:linear-gradient(180deg, oklch(80% 0.16 75), oklch(70% 0.19 65) 48%, oklch(58% 0.16 52));
+  border:1px solid oklch(92% 0.12 82 / .45);
+  box-shadow:inset 0 1px 0 oklch(100% 0 0 / .46), 0 16px 32px -24px oklch(0% 0 0 / .58);
   text-align:center;
 }
 .iw-marquee-label{
@@ -1436,29 +1436,29 @@ const css = `
 .iw-slotbase{
   margin-top:14px; padding:14px 8px 2px;
   border-radius:22px;
-  background:linear-gradient(180deg, rgb(var(--iw-brand-tertiary-rgb) / 0.24), rgb(29 29 31 / 0.22));
-  border:1px solid rgb(255 255 255 / 0.10);
-  box-shadow:inset 0 1px 0 rgb(255 255 255 / 0.08);
+  background:linear-gradient(180deg, oklch(24% 0.03 58), oklch(15% 0.018 60));
+  border:1px solid oklch(100% 0 0 / .08);
+  box-shadow:inset 0 1px 0 oklch(100% 0 0 / .08);
 }
 .iw-slotlights{
   display:flex; justify-content:center; gap:10px; margin-bottom:14px;
 }
 .iw-slotlights span{
   width:10px; height:10px; border-radius:999px;
-  background:var(--grad);
-  box-shadow:0 0 14px rgb(var(--iw-brand-secondary-rgb) / 0.42);
+  background:linear-gradient(180deg, oklch(95% 0.1 85), oklch(75% 0.16 70));
+  box-shadow:0 0 14px oklch(86% 0.14 78 / .45);
 }
 .iw-controls{ display:flex; flex-direction:column; align-items:center; gap:10px; margin:0 0 8px; }
 .iw-spin{
   display:inline-flex; align-items:center; justify-content:center; gap:10px;
   font-family:'Unbounded',sans-serif; font-weight:800; font-size:15px; letter-spacing:.01em;
-  color:#fff; padding:18px 28px; min-width:min(100%, 420px); width:100%; max-width:420px; border:none; border-radius:18px;
-  background:var(--grad-diag);
+  color:#221607; padding:18px 28px; min-width:min(100%, 420px); width:100%; max-width:420px; border:none; border-radius:18px;
+  background:linear-gradient(180deg, oklch(84% 0.16 78), oklch(72% 0.19 65) 52%, oklch(63% 0.18 58));
   cursor:pointer;
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.22),
-    inset 0 -2px 0 rgb(29 29 31 / 0.18),
-    var(--iw-shadow-brand);
+    inset 0 1px 0 oklch(100% 0 0 / .75),
+    inset 0 -2px 0 oklch(45% 0.13 55 / .35),
+    0 20px 38px -20px oklch(64% 0.18 58 / .65);
   transition:transform .12s cubic-bezier(0.16,1,0.3,1), filter .15s ease;
 }
 .iw-spin:hover:not(:disabled){ filter:brightness(1.03); transform:translateY(-2px); }
