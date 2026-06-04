@@ -604,6 +604,14 @@ export default function IdeaWheel() {
       <div className="iw-grain" aria-hidden />
       <div className="iw-glow" aria-hidden />
 
+      <nav className="iw-topnav">
+        <span className="iw-topnav-brand">Idea Generator</span>
+        <div className="iw-topnav-links">
+          <a className="iw-topnav-link" href="/pricing">Pricing</a>
+          <a className="iw-topnav-link iw-topnav-link--cta" href="/profile">Profile</a>
+        </div>
+      </nav>
+
       <div className="iw-shell">
         <section className="iw-machine">
           <header className="iw-head">
@@ -2094,6 +2102,34 @@ const css = `
   animation:iwspin .7s linear infinite;
   display:inline-block;
 }
+
+/* ── top nav ───────────────────────────────────────────────────── */
+.iw-topnav{
+  position:relative; z-index:10;
+  max-width:800px; margin:0 auto 28px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 18px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px;
+  box-shadow:0 2px 12px -4px oklch(18% 0.022 78 / .08);
+}
+.iw-topnav-brand{
+  font-family:'Unbounded',sans-serif; font-size:13px; font-weight:800;
+  color:var(--ink); letter-spacing:-.01em;
+}
+.iw-topnav-links{ display:flex; align-items:center; gap:8px; }
+.iw-topnav-link{
+  font-family:'Inter',-apple-system,sans-serif; font-size:13px; font-weight:600;
+  color:var(--muted); text-decoration:none;
+  padding:7px 14px; border-radius:8px;
+  border:1px solid transparent;
+  transition:all .15s ease;
+}
+.iw-topnav-link:hover{ color:var(--ink); background:var(--surface2); }
+.iw-topnav-link--cta{
+  color:var(--ink); border-color:var(--border); background:var(--surface2);
+}
+.iw-topnav-link--cta:hover{ border-color:var(--amber); color:var(--amber); background:var(--amber-bg); }
 
 /* ── responsive ───────────────────────────────────────────────── */
 @media (max-width:860px){
