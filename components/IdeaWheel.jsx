@@ -1135,16 +1135,16 @@ const css = `
   display:grid; grid-template-columns:minmax(0,1.2fr) minmax(260px,.8fr); gap:18px; align-items:stretch;
 }
 .iw-headcopy{
-  padding:4px 0 0;
+  padding:4px 0 0; text-align:center;
 }
 .iw-title{
   font-family:'Unbounded',sans-serif; font-weight:900;
   font-size:clamp(34px,5vw,58px); line-height:.94;
   letter-spacing:-.04em; color:var(--ink); margin:0 0 12px;
 }
-.iw-sub{ color:var(--muted); font-size:16px; font-weight:500; margin:0; line-height:1.58; max-width:60ch; }
+.iw-sub{ color:var(--muted); font-size:16px; font-weight:500; margin:0 auto; line-height:1.58; max-width:60ch; }
 .iw-proofrow{
-  display:flex; flex-wrap:wrap; gap:8px; margin-top:16px;
+  display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; justify-content:center;
 }
 .iw-proofchip{
   display:inline-flex; align-items:center; padding:9px 12px;
