@@ -241,9 +241,144 @@ function ProtoFrame({ html }) {
     title="prototype"/>;
 }
 
+/* ─── SLOT MACHINE DATA ──────────────────────────────────────────── */
+const MODES = {
+  b2b: {
+    name:'B2B', connector:'in', prefix:'I want to build an agent that',
+    labels:['ACTION','WORKFLOW','FOR'],
+    banks:[
+      ['Automate','Streamline','Predict','Personalize','Detect','Score','Summarize','Verify','Forecast','Analyze','Extract','Eliminate','Track','Recommend','Flag'],
+      ['customer onboarding','invoice matching','appointment scheduling','lead qualification','contract review','compliance checks','dispatch routing','incident triage','due diligence','RFP responses','performance reviews','shift handoffs','returns handling','expense approval','document intake'],
+      ['Healthcare','Construction','Logistics','Legal services','Insurance','Dental practices','Field services','Auto repair','Accounting firms','Staffing agencies','Real estate','Restaurants','Fintech startups','Marketing agencies','Non-profits'],
+    ],
+  },
+  consumer: {
+    name:'Consumer', connector:'for', prefix:'I want to make an app that',
+    labels:['ACTION','EXPERIENCE','FOR'],
+    banks:[
+      ['Track','Plan','Personalize','Simplify','Coach','Gamify','Curate','Teach','Budget','Optimize','Remind','Discover'],
+      ['daily habits','health tracking','money management','skill learning','mental wellness','sleep & recovery','meal planning','productivity','career growth','travel planning','stress management','fitness routines'],
+      ['new parents','college students','freelancers','athletes','ADHD adults','retirees','family caregivers','anxious people','night shift workers','new homeowners','musicians','remote workers'],
+    ],
+  },
+};
+const ITEM_H = 72;
+const REPEATS = 10;
+const HOME_COPY = 4;
+const REEL_TINTS = ['#7c3aed','#c026d3','#ff4d8d'];
+
+function SlotMachine({ onResult }) {
+  const [mode, setMode] = useState('b2b');
+  const m = MODES[mode];
+  const banks = m.banks;
+  const stripRefs = [useRef(null), useRef(null), useRef(null)];
+  const indexRef = useRef([0,0,0]);
+  const targetRef = useRef([0,0,0]);
+  const [landed, setLanded] = useState(['','','']);
+  const [spinning, setSpinning] = useState([false,false,false]);
+  const anySpinning = spinning.some(Boolean);
+
+  useEffect(() => {
+    banks.forEach((bank,w) => {
+      const start = Math.floor(Math.random()*bank.length);
+      indexRef.current[w] = HOME_COPY*bank.length + start;
+      const el = stripRefs[w].current;
+      if (el) { el.style.transition='none'; el.style.transform=`translateY(${-(indexRef.current[w]-1)*ITEM_H}px)`; }
+    });
+    setLanded(['','','']);
+    setSpinning([false,false,false]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  const spinWheel = (w, duration) => {
+    if (spinning[w]) return;
+    const bank = banks[w];
+    const L = bank.length;
+    const cur = indexRef.current[w];
+    const curBase = ((cur%L)+L)%L;
+    const t = Math.floor(Math.random()*L);
+    const forward = ((t-curBase)%L+L)%L;
+    const loops = 4 + Math.floor(Math.random()*3);
+    const newIndex = cur + loops*L + forward + (forward===0?L:0);
+    indexRef.current[w] = newIndex;
+    targetRef.current[w] = newIndex%L;
+    const el = stripRefs[w].current;
+    if (el) { el.style.transition=`transform ${duration}ms cubic-bezier(0.16,1,0.3,1)`; el.style.transform=`translateY(${-(newIndex-1)*ITEM_H}px)`; }
+    setSpinning(s => { const n=[...s]; n[w]=true; return n; });
+  };
+
+  const onSettle = (w) => {
+    const bank = banks[w];
+    const t = targetRef.current[w];
+    indexRef.current[w] = HOME_COPY*bank.length + t;
+    const el = stripRefs[w].current;
+    if (el) { el.style.transition='none'; el.style.transform=`translateY(${-(indexRef.current[w]-1)*ITEM_H}px)`; }
+    setLanded(p => { const n=[...p]; n[w]=bank[t]; return n; });
+    setSpinning(s => { const n=[...s]; n[w]=false; return n; });
+  };
+
+  const spinAll = () => {
+    if (anySpinning) return;
+    let slot=0;
+    banks.forEach((_,w) => { spinWheel(w, 2200+slot*400); slot++; });
+  };
+
+  const complete = landed.every(Boolean);
+
+  useEffect(() => {
+    if (complete && !anySpinning && onResult) {
+      const v = landed[0]; const w = landed[1]; const ind = landed[2];
+      const conj = (s) => { const x=s.toLowerCase(); if(/[^aeiou]y$/.test(x)) return x.slice(0,-1)+'ies'; if(/(s|sh|ch|x|z)$/.test(x)) return x+'es'; return x+'s'; };
+      onResult({ action:v, workflow:w, industry:ind, connector:m.connector, modeName:m.name,
+        freeformIdea:`${conj(v)} ${w} ${m.connector} ${ind}` });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [complete, anySpinning]);
+
+  return (
+    <div className="sm-root">
+      {/* mode toggle */}
+      <div className="sm-modebar">
+        {Object.keys(MODES).map(k => (
+          <button key={k} className={`sm-modebtn${mode===k?' on':''}`} onClick={()=>setMode(k)} disabled={anySpinning}>
+            {MODES[k].name}
+          </button>
+        ))}
+      </div>
+
+      {/* reels */}
+      <div className="sm-cabinet">
+        <div className="sm-reels">
+          {banks.map((bank,w) => {
+            const repeated = Array.from({length:REPEATS},()=>bank).flat();
+            return (
+              <div className="sm-col" key={mode+w} style={{'--accent':REEL_TINTS[w]}}>
+                <div className="sm-collabel">{m.labels[w]}</div>
+                <div className="sm-window" onClick={()=>!anySpinning&&spinWheel(w,2200)}>
+                  <div className="sm-strip" ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)}>
+                    {repeated.map((word,i)=>(
+                      <div className="sm-item" key={i} style={{height:ITEM_H}}>{word}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="sm-base">
+          <button className="sm-spin" onClick={spinAll} disabled={anySpinning}>
+            {anySpinning ? 'Spinning…' : 'Generate Idea!'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── MAIN APP ───────────────────────────────────────────────────── */
 export default function IdeaWheel() {
-  const [screen, setScreen] = useState("wheel");   // landing | wheel | validate | blueprint
+  const [screen, setScreen] = useState("landing");  // landing | wheel | validate | blueprint
+  const [authChecked, setAuthChecked] = useState(false);
   const [idea, setIdea]     = useState(null);
   const [credits, setCredits] = useState(3);
   const [mounted, setMounted] = useState(false);
@@ -276,14 +411,16 @@ export default function IdeaWheel() {
       if (Number.isFinite(stored) && stored >= 0) setCredits(stored);
       if (localStorage.getItem("ideaWheelHasAccount") === "1") setHasAccount(true);
     } catch {}
-    // check Supabase session
+    // check Supabase session — gate wheel behind auth
     const supabase = createClient();
     supabase.auth.getSession().then(({ data }) => {
       if (data?.session?.user) {
         setAuthUser(data.session.user);
         try { localStorage.setItem("ideaWheelHasAccount", "1"); } catch {}
         setHasAccount(true);
+        setScreen("wheel");
       }
+      setAuthChecked(true);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
       if (session?.user) {
@@ -303,6 +440,7 @@ export default function IdeaWheel() {
   }, [credits, mounted]);
 
   const goTo = (s) => { setScreen(s); window.scrollTo({ top:0, behavior:"smooth" }); };
+  const m_prefix = (idea) => idea?.modeName === 'B2B' ? 'I want to build an agent that' : 'I want to make an app that';
 
   const handleSpin = (segment) => {
     setIdea(segment);
@@ -509,43 +647,23 @@ export default function IdeaWheel() {
         </section>
       )}
 
-      {/* ── WHEEL ── */}
+      {/* ── WHEEL (slot machine reels) ── */}
       {screen === "wheel" && (
         <section className="su-screen su-wheel-screen">
-          <div className="su-screen-head">
-            <div className="su-eyebrow">Step one</div>
-            <h2 className="su-display su-screen-title">Give it a spin</h2>
-            <p className="su-screen-desc">Eight frontiers, one decisive spin. The pointer picks your starting line.</p>
-          </div>
-          <div className="su-wheel-stage">
-            <Wheel onResult={(s) => { setIdea(s); setComp(null); setValidateErr(""); }}/>
-            <div className={`su-result-card ${idea ? "in" : ""}`}>
-              {!idea ? (
-                <div className="su-result-empty">
-                  <div className="su-result-empty-ring">✦</div>
-                  <div>
-                    <div className="su-result-empty-t">Your business concept appears here</div>
-                    <div className="su-result-empty-d">Hit SPIN to generate from {SEGMENTS.length} curated frontiers</div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <span className="su-chip su-result-domain" style={{ "--c":idea.color }}>
-                    <span className="su-float-dot" style={{ background:idea.color }}/>
-                    {idea.label}
-                  </span>
-                  <h3 className="su-display su-result-title">{idea.title}</h3>
-                  <p className="su-result-tagline">{idea.tagline}</p>
-                  <p className="su-result-blurb">{idea.blurb}</p>
-                  <div className="su-result-actions">
-                    <button className="su-btn su-btn-primary" onClick={() => { goTo("validate"); runValidate(); }}>
-                      Run free market check →
-                    </button>
-                  </div>
-                </>
-              )}
+          <SlotMachine onResult={(result) => {
+            setIdea(result); setComp(null); setValidateErr("");
+          }}/>
+          {idea && (
+            <div className="sm-result-area">
+              <p className="sm-sentence">
+                <span style={{fontStyle:'italic',color:'var(--muted)',fontSize:14}}>{m_prefix(idea)}</span>{' '}
+                <strong>{idea.freeformIdea}</strong>
+              </p>
+              <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { goTo("validate"); runValidate(); }}>
+                Validate this market — free →
+              </button>
             </div>
-          </div>
+          )}
         </section>
       )}
 
@@ -1155,6 +1273,67 @@ const CSS = `
 /* disclaimer */
 .su-disclaimer { position:relative; z-index:1; max-width:760px; margin:0 auto 40px; padding:20px 24px; border-top:1px solid var(--line); text-align:center; }
 .su-disclaimer p { font-size:11px; color:var(--faint); line-height:1.7; margin:0; }
+
+/* ── slot machine ─────────────────────────────────────────────────── */
+.sm-root { width:100%; max-width:720px; margin:0 auto; }
+.sm-modebar { display:flex; gap:8px; justify-content:center; margin-bottom:20px; }
+.sm-modebtn {
+  font-family:var(--font-body); font-size:14px; font-weight:700;
+  color:var(--muted); padding:9px 20px; border-radius:var(--r-pill);
+  border:1.5px solid var(--line); background:rgba(255,255,255,0.6);
+  cursor:pointer; transition:all .15s;
+}
+.sm-modebtn:hover:not(:disabled) { color:var(--ink); border-color:var(--line-2); }
+.sm-modebtn.on { color:#fff; background:var(--grad-brand); border-color:transparent; box-shadow:var(--sh-glow); }
+.sm-modebtn:disabled { opacity:.45; cursor:default; }
+.sm-cabinet {
+  background:linear-gradient(180deg, oklch(44% 0.06 65), oklch(14% 0.018 60) 100%);
+  border:1px solid oklch(62% 0.12 72 / .55);
+  border-radius:28px; padding:20px 16px 16px;
+  box-shadow:0 30px 60px -24px rgba(0,0,0,0.5);
+}
+.sm-reels { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+.sm-col { display:flex; flex-direction:column; gap:8px; }
+.sm-collabel {
+  text-align:center; font-size:10px; font-weight:800;
+  letter-spacing:.22em; text-transform:uppercase;
+  color:var(--accent,#c026d3);
+}
+.sm-window {
+  height:216px; overflow:hidden; border-radius:12px;
+  background:rgba(255,255,255,0.95);
+  border:1px solid rgba(255,255,255,0.3);
+  cursor:pointer; position:relative;
+  -webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 14%,#000 86%,transparent 100%);
+  mask-image:linear-gradient(180deg,transparent 0%,#000 14%,#000 86%,transparent 100%);
+}
+.sm-strip { will-change:transform; }
+.sm-item {
+  display:flex; align-items:center; justify-content:center;
+  text-align:center; padding:0 8px;
+  font-size:clamp(12px,1.4vw,17px); font-weight:800;
+  text-transform:uppercase; color:#18112b; line-height:1.1;
+  border-bottom:1px solid rgba(0,0,0,0.06);
+}
+.sm-base { display:flex; justify-content:center; padding-top:4px; }
+.sm-spin {
+  font-family:var(--font-display); font-size:16px; font-weight:800;
+  color:#221607; padding:16px 40px; border:none; border-radius:16px;
+  background:linear-gradient(180deg, oklch(84% 0.16 78), oklch(63% 0.18 58));
+  cursor:pointer; min-width:240px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.7), 0 16px 32px -16px rgba(200,130,0,0.5);
+  transition:all .15s;
+}
+.sm-spin:hover:not(:disabled) { filter:brightness(1.05); transform:translateY(-1px); }
+.sm-spin:active:not(:disabled) { transform:scale(.98); }
+.sm-spin:disabled { opacity:.45; cursor:default; }
+.sm-result-area {
+  margin-top:28px; text-align:center; display:flex; flex-direction:column;
+  align-items:center; gap:20px;
+  animation:iwIn .35s ease-out both;
+}
+.sm-sentence { font-size:15px; color:var(--ink); line-height:1.6; margin:0; max-width:560px; }
+@keyframes iwIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
 /* teaser reels */
 .tr-root { margin:36px auto 0; max-width:560px; }
