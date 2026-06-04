@@ -7,7 +7,7 @@ Official GitHub repo:
 - `https://github.com/vincentploum-cmyk/idea-wheel`
 
 Official production URL:
-- `https://idea-wheel-sigma.vercel.app`
+- `https://idea-wheel.onrender.com`
 
 ## Canonical source of truth
 
@@ -24,12 +24,13 @@ That older path hit macOS file-provider / `.git` deadlock issues and is not the 
 2. Run local checks.
 3. Commit to `main`.
 4. Push to GitHub.
-5. Let Vercel auto-deploy from GitHub.
+5. Render auto-deploys from GitHub.
 
-## Vercel
+## Render
 
-This repo is connected to the Vercel project `idea-wheel`.
-Pushing to `main` should trigger production deploys automatically.
+This repo is deployed on Render (free tier).
+Pushing to `main` triggers automatic deploys.
+Note: free tier spins down after 15 min of inactivity (~30s cold start).
 
 ## Notes
 
