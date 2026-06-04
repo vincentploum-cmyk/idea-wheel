@@ -410,7 +410,7 @@ export default function IdeaWheel() {
 
             <div className="su-landing-cta">
               <button className="su-btn su-btn-primary su-btn-lg" onClick={() => goTo("wheel")}>
-                ✦ Spin a free idea
+                Get started
               </button>
               <p className="su-landing-free">No signup needed · Validation is always free</p>
             </div>
