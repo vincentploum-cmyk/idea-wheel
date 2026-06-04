@@ -652,8 +652,7 @@ export default function IdeaWheel() {
                 return (
                   <div className="iw-col" key={mode + w} style={{ "--accent": TINTS[w] }}>
                     <div className="iw-collabel">{m.labels[w]}</div>
-                    <div className={`iw-window ${locked[w] ? "is-locked" : ""}`} onClick={() => reroll(w)} role="button">
-                      <button className={`iw-lock ${locked[w] ? "on" : ""}`} onClick={(e) => { e.stopPropagation(); toggleLock(w); }}>{locked[w] ? <Lock size={13} /> : <Unlock size={13} />}</button>
+                    <div className="iw-window" onClick={() => reroll(w)} role="button">
                       <div className="iw-strip" ref={stripRefs[w]} onTransitionEnd={() => onSettle(w)}>
                         {repeated.map((word, i) => (<div className="iw-item" key={i} style={{ height: ITEM_H }}><span>{word}</span></div>))}
                       </div>
