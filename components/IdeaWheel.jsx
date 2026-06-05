@@ -250,24 +250,25 @@ const MODES = {
     name:'B2B', connector:'in', prefix:'I want to build an agent that',
     labels:['ACTION','WORKFLOW','FOR'],
     banks:[
-      // Actions: transitive verbs that work with ANY business process below
-      ['Automates','Streamlines','Manages','Coordinates','Tracks','Handles','Schedules','Simplifies','Accelerates','Digitizes'],
-      // Workflows: noun phrases — any action above reads naturally before these
-      ['client onboarding','invoice processing','appointment booking','contract management','compliance tracking','expense reporting','lead management','shift scheduling','document processing','project tracking','quote generation','staff communication'],
-      // Industries: clear businesses with obvious admin pain
-      ['Healthcare','Legal services','Construction','Logistics','Insurance','Dental practices','Field services','Accounting firms','Property management','Restaurants','Staffing agencies','Real estate'],
+      // 15 actions — every verb pairs naturally with every workflow below
+      ['Automates','Streamlines','Manages','Coordinates','Tracks','Handles','Schedules','Simplifies','Accelerates','Digitizes','Processes','Organizes','Monitors','Validates','Prioritizes'],
+      // 18 workflows — noun phrases that read naturally after any action above
+      ['client onboarding','invoice processing','appointment booking','contract management','compliance tracking','expense reporting','lead management','shift scheduling','document processing','project tracking','quote generation','staff communication','vendor management','customer support','payroll processing','performance reviews','inventory management','billing & collections'],
+      // 18 industries
+      ['Healthcare','Legal services','Construction','Logistics','Insurance','Dental practices','Field services','Accounting firms','Property management','Restaurants','Staffing agencies','Real estate','Veterinary clinics','Auto repair shops','Marketing agencies','Financial advisors','Cleaning services','Home services'],
     ],
   },
   consumer: {
     name:'Consumer', connector:'for', prefix:'I want to make an app that',
     labels:['ACTION','EXPERIENCE','FOR'],
     banks:[
-      // Actions: verbs that work with ANY experience noun below
-      ['Tracks','Improves','Manages','Builds','Optimizes','Plans','Simplifies','Coaches','Monitors','Personalizes'],
-      // Experiences: noun phrases — any action reads naturally before these
-      ['daily habits','sleep quality','personal finances','mental health','fitness goals','meal planning','career progress','productivity','stress levels','skill development','time management','nutrition'],
+      // 15 actions — every verb pairs naturally with every experience below
+      ['Tracks','Improves','Manages','Builds','Optimizes','Plans','Simplifies','Coaches','Monitors','Personalizes','Develops','Boosts','Structures','Transforms','Organizes'],
+      // 18 experiences — noun phrases that read naturally after any action above
+      ['daily habits','sleep quality','personal finances','mental health','fitness goals','meal planning','career progress','productivity','stress levels','skill development','time management','nutrition','home organization','creative projects','work-life balance','learning routines','relationship goals','social life'],
       // Audiences: clear groups with a shared pain point
-      ['busy professionals','new parents','college students','freelancers','athletes','small business owners','retirees','remote workers','people with ADHD','musicians','young adults','solopreneurs'],
+      // 18 audiences
+      ['busy professionals','new parents','college students','freelancers','athletes','small business owners','retirees','remote workers','people with ADHD','musicians','young adults','solopreneurs','teachers','healthcare workers','content creators','night shift workers','seniors living alone','couples'],
     ],
   },
 };
@@ -701,7 +702,7 @@ export default function IdeaWheel() {
 
             {/* combinations count */}
             <div className="su-combos-bar">
-              <span className="su-combos-num">2,880</span>
+              <span className="su-combos-num">9,720</span>
               <span className="su-combos-text">unique idea combinations — yours won't clash with anyone else's</span>
             </div>
 

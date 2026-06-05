@@ -17,7 +17,7 @@ const FAQS = [
   },
   {
     q: "Can two users get the same idea?",
-    a: "Unlikely. There are 2,880 unique combinations across B2B and consumer modes — and the AI validation layer adds another dimension of specificity. Even if two users land on the same base combination, the competitor landscape, gap analysis, and blueprint output are generated fresh each time based on live market conditions.",
+    a: "Unlikely. There are 9,720 unique combinations across B2B and consumer modes — and the AI validation layer adds another dimension of specificity. Even if two users land on the same base combination, the competitor landscape, gap analysis, and blueprint output are generated fresh each time based on live market conditions.",
   },
   {
     q: "How does the AI validation work?",
