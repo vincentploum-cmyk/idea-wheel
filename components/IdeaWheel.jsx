@@ -703,7 +703,7 @@ export default function IdeaWheel() {
 
             <h1 className="su-display su-landing-h1">
               <span style={{ display:"block" }}>Stop wasting time on bad startup ideas.</span>
-              <span className="su-grad-text" style={{ display:"block" }}>Find one worth building</span>
+              <span className="su-grad-text" style={{ display:"block", paddingRight:"6px" }}>Find one worth building.</span>
             </h1>
             <p className="su-landing-sub">
               Generate a concrete idea, run a free market check, and unlock the full blueprint only when the signal is real.
