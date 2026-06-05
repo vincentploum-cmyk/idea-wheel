@@ -733,7 +733,7 @@ export default function IdeaWheel() {
                 <div className="su-hiw-step">
                   <div className="su-hiw-num">2</div>
                   <div>
-                    <div className="su-hiw-t">Validate against real market data — free</div>
+                    <div className="su-hiw-t">Validate against real market data</div>
                     <div className="su-hiw-d">Every idea is pressure-tested with live competitor analysis, market sizing, and demand signals. You get a clear build, caution, or avoid verdict before spending anything.</div>
                   </div>
                 </div>
@@ -1543,7 +1543,7 @@ const CSS = `
 .su-hiw-step { display:flex; align-items:flex-start; gap:18px; }
 .su-hiw-num {
   width:36px; height:36px; border-radius:50%; flex-shrink:0;
-  background:var(--grad-brand); color:#fff;
+  background:transparent; border:2px solid var(--violet); color:var(--violet);
   display:flex; align-items:center; justify-content:center;
   font-family:var(--font-display); font-size:14px; font-weight:800;
 }
