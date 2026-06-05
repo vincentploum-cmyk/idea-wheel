@@ -635,7 +635,7 @@ export default function IdeaWheel() {
               <span className="su-grad-text" style={{ display:"block" }}>you can actually win with.</span>
             </h1>
             <p className="su-landing-sub">
-              Idea Generator gives you a sharper starting point than a blank prompt. Spin a curated concept, run a free market check, and only generate the full blueprint when the opportunity looks real.
+              Our Business Idea Generator goes further than just handing you ideas. We run a free market check and give you the full blueprint only when the opportunity is real.
             </p>
 
             <div className="su-landing-cta">
