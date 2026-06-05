@@ -726,7 +726,7 @@ export default function IdeaWheel() {
                   <div className="su-hiw-num">1</div>
                   <div>
                     <div className="su-hiw-t">Generate business ideas</div>
-                    <div className="su-hiw-d">Combine actions, workflows, and target industries across 9,720 unique combinations to land on a concept worth exploring.</div>
+                    <div className="su-hiw-d">Combine actions, workflows, and target industries to land on a concept worth exploring.</div>
                   </div>
                 </div>
                 <div className="su-hiw-connector" aria-hidden />
@@ -774,12 +774,6 @@ export default function IdeaWheel() {
 
             {/* steps — above teaser */}
             <TeaserReels />
-
-            {/* combinations count */}
-            <div className="su-combos-bar">
-              <span className="su-combos-num">9,720</span>
-              <span className="su-combos-text">unique idea combinations — yours won't clash with anyone else's</span>
-            </div>
 
             {/* reviews */}
             <div className="su-reviews">
