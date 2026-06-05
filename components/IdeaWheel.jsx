@@ -641,7 +641,7 @@ export default function IdeaWheel() {
             <div className="su-landing-cta">
               <div className="su-landing-cta-row">
                 <button className="su-btn su-btn-primary su-btn-lg" onClick={() => goTo("wheel")}>
-                  Generate my idea
+                  Get started
                 </button>
                 <button className="su-btn su-btn-ghost su-btn-lg" onClick={() => document.getElementById("landing-steps")?.scrollIntoView({ behavior:"smooth", block:"start" })}>
                   See how it works
