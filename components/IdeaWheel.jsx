@@ -702,11 +702,11 @@ export default function IdeaWheel() {
           <div className="su-landing-inner">
 
             <h1 className="su-display su-landing-h1">
-              <span style={{ display:"block" }}>Find a business idea</span>
-              <span className="su-grad-text" style={{ display:"block" }}>you can actually win with.</span>
+              <span style={{ display:"block" }}>Stop wasting time on bad startup ideas.</span>
+              <span className="su-grad-text" style={{ display:"block" }}>Find one worth building.</span>
             </h1>
             <p className="su-landing-sub">
-              Our Business Idea Generator goes further than just handing you ideas. We run a free market check and give you the full blueprint only when the opportunity is real.
+              Generate a concrete idea, run a free market check, and unlock the full blueprint only when the signal is real.
             </p>
 
             <div className="su-landing-cta">
