@@ -314,10 +314,12 @@ Return ONLY JSON:
 {
   "name": "product name, 2-3 words max",
   "tagline": "one-liner — what it does and for whom",
+  "niche": "one sentence: the specific niche and the exact pain being solved",
   "differentiator": "specific wedge, not generic AI language",
   "coreFeatures": ["feature 1","feature 2","feature 3"],
   "userFlow": "trigger to value in 2-3 sentences",
   "buildSpec": "detailed UI spec with the one magical interaction",
+  "landingAngle": "the headline + subheadline for the product's landing page — hook the visitor in 2 lines",
   "dataMoat": "what proprietary workflow memory or feedback loop compounds over time",
   "defensibilityPlan": "how this becomes harder to copy after 90 days"
 }`;
@@ -384,7 +386,8 @@ Return ONLY JSON:
   ],
   "stack": ["Next.js","Supabase","..."],
   "buildTime": "realistic solo v1 estimate",
-  "whyNow": "why this wedge is timely right now"
+  "whyNow": "why this wedge is timely right now — macro trend, regulation, or technology shift making this possible/urgent",
+  "cursorPrompt": "The exact first prompt to paste into Cursor, Claude, or Codex to start building this product. Should include: what to build, tech stack, first screen/feature to implement, and the core AI behavior. 150-200 words."
 }`;
 }
 

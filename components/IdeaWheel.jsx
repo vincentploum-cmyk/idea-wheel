@@ -892,35 +892,81 @@ export default function IdeaWheel() {
           {(design || gtm || infra || proto) && (
             <div className="su-bp-grid">
               {/* Product */}
+              {/* 1. Niche + Problem */}
+              {design && (
+                <div className="su-card su-bp-card su-bp-card--full">
+                  <div className="su-bp-head"><span className="su-bp-icon">◎</span><h3 className="su-bp-title">Niche & Problem</h3></div>
+                  <p className="su-bp-summary" style={{fontSize:14,color:'var(--ink)'}}>{design.niche}</p>
+                </div>
+              )}
+
+              {/* 2. Product Concept */}
               {design && (
                 <div className="su-card su-bp-card">
-                  <div className="su-bp-head"><span className="su-bp-icon">◈</span><h3 className="su-bp-title">Product</h3></div>
+                  <div className="su-bp-head"><span className="su-bp-icon">◈</span><h3 className="su-bp-title">Product Concept</h3></div>
                   <p className="su-bp-name su-grad-text">{design.name}</p>
                   <p className="su-bp-summary">{design.tagline}</p>
                   <p className="su-bp-summary">{design.differentiator}</p>
-                  <div className="su-bp-list-label">Core features</div>
+                  <div className="su-bp-list-label">MVP scope</div>
                   <ul className="su-bp-list">{(design.coreFeatures||[]).map((f,i)=><li key={i}>{f}</li>)}</ul>
                 </div>
               )}
 
-              {/* GTM */}
+              {/* 3. Target User + Why Now */}
               {gtm && (
                 <div className="su-card su-bp-card">
-                  <div className="su-bp-head"><span className="su-bp-icon">↗</span><h3 className="su-bp-title">Go-to-Market</h3></div>
-                  <div className="su-bp-kpis">
+                  <div className="su-bp-head"><span className="su-bp-icon">👤</span><h3 className="su-bp-title">Target User</h3></div>
+                  <p className="su-bp-summary" style={{fontSize:14,color:'var(--ink)',fontWeight:600}}>{gtm.persona}</p>
+                  {gtm.whereToFind && <p className="su-bp-summary"><strong style={{fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--muted)'}}>Where to find them: </strong>{gtm.whereToFind}</p>}
+                  {gtm.whyNow && <>
+                    <div className="su-bp-list-label" style={{marginTop:12}}>Why now</div>
+                    <p className="su-bp-summary" style={{color:'var(--ink)'}}>{gtm.whyNow}</p>
+                  </>}
+                </div>
+              )}
+
+              {/* 4. Competitor / Gap Snapshot */}
+              {comp && (
+                <div className="su-card su-bp-card">
+                  <div className="su-bp-head"><span className="su-bp-icon">⚡</span><h3 className="su-bp-title">Competitor & Gap</h3></div>
+                  {comp.marketSize && <p className="su-bp-name su-grad-text" style={{fontSize:20}}>{comp.marketSize}</p>}
+                  {comp.gap && <p className="su-bp-summary" style={{color:'var(--ink)'}}>{comp.gap}</p>}
+                  {(comp.players||[]).length>0 && <>
+                    <div className="su-bp-list-label">Key players</div>
+                    <ul className="su-bp-list">{(comp.players||[]).slice(0,3).map((pl,i)=><li key={i}><strong>{pl.name}</strong> — {pl.weakness}</li>)}</ul>
+                  </>}
+                </div>
+              )}
+
+              {/* 5. Pricing */}
+              {gtm?.pricing && (
+                <div className="su-card su-bp-card">
+                  <div className="su-bp-head"><span className="su-bp-icon">💰</span><h3 className="su-bp-title">Pricing Idea</h3></div>
+                  <div className="su-bp-pricebox">
+                    <span className="su-grad-text">{gtm.pricing.price}</span>
+                    <span>{gtm.pricing.rationale}</span>
+                    {gtm.pricing.trial && <span style={{fontSize:12,color:'var(--muted)',fontStyle:'italic'}}>{gtm.pricing.trial}</span>}
+                  </div>
+                  <div className="su-bp-kpis" style={{marginTop:12}}>
                     <div className="su-bp-kpi"><span className="su-grad-text">{gtm.revenueGoal}</span><small>30-day target</small></div>
                     <div className="su-bp-kpi"><span>{gtm.buildTime}</span><small>to build V1</small></div>
                   </div>
-                  <p className="su-bp-summary">{gtm.persona}</p>
                   {(gtm.firstFiveCustomers||[]).length>0 && <>
                     <div className="su-bp-list-label">First 5 customers</div>
                     <ol className="su-bp-list su-bp-list--ol">{(gtm.firstFiveCustomers||[]).map((c,i)=><li key={i}>{c}</li>)}</ol>
                   </>}
-                  {gtm.pricing && <div className="su-bp-pricebox"><span className="su-grad-text">{gtm.pricing.price}</span><span>{gtm.pricing.rationale}</span></div>}
                 </div>
               )}
 
-              {/* Infra */}
+              {/* 6. Landing Page Angle */}
+              {design?.landingAngle && (
+                <div className="su-card su-bp-card su-bp-card--full">
+                  <div className="su-bp-head"><span className="su-bp-icon">📣</span><h3 className="su-bp-title">Landing Page Angle</h3></div>
+                  <p className="su-bp-summary" style={{fontSize:15,color:'var(--ink)',fontStyle:'italic',lineHeight:1.7}}>"{design.landingAngle}"</p>
+                </div>
+              )}
+
+              {/* 7. Infra */}
               {infra && (
                 <div className="su-card su-bp-card">
                   <div className="su-bp-head"><span className="su-bp-icon">⬡</span><h3 className="su-bp-title">Infrastructure</h3></div>
@@ -928,10 +974,7 @@ export default function IdeaWheel() {
                     <div className="su-bp-list-label">Services</div>
                     <div className="su-bp-chips">{(infra.services||[]).map((s,i)=><span className="su-chip" key={i}>{s.name}</span>)}</div>
                   </>}
-                  {infra.envVars && <>
-                    <div className="su-bp-list-label">.env</div>
-                    <pre className="su-bp-env">{Array.isArray(infra.envVars)?infra.envVars.join("\n"):infra.envVars}</pre>
-                  </>}
+                  {infra.buildOrder && <p className="su-bp-summary" style={{marginTop:10,color:'var(--ink)'}}>{infra.buildOrder}</p>}
                   {infra.monthlyCost && (
                     <div className="su-bp-costs">
                       {Object.entries(infra.monthlyCost).map(([k,v],i) => (
@@ -942,6 +985,14 @@ export default function IdeaWheel() {
                       ))}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* 8. First Cursor/Claude Prompt */}
+              {gtm?.cursorPrompt && (
+                <div className="su-card su-bp-card su-bp-card--full">
+                  <div className="su-bp-head"><span className="su-bp-icon">⌨️</span><h3 className="su-bp-title">First Prompt for Cursor / Claude / Codex</h3></div>
+                  <pre className="su-bp-cursor-prompt">{gtm.cursorPrompt}</pre>
                 </div>
               )}
 
@@ -1299,6 +1350,13 @@ const CSS = `
 @media(max-width:640px){ .su-bp-grid { grid-template-columns:1fr; } }
 .su-bp-card {}
 .su-bp-card--proto { grid-column:1/-1; }
+.su-bp-card--full { grid-column:1/-1; }
+.su-bp-cursor-prompt {
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px;
+  line-height:1.75; color:var(--ink); background:var(--bg-2);
+  border:1px solid var(--line-2); border-radius:var(--r-sm);
+  padding:16px; white-space:pre-wrap; word-break:break-word; margin:0;
+}
 .su-bp-head { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
 .su-bp-icon { font-size:20px; background:var(--grad-brand); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
 .su-bp-title { font-family:var(--font-display); font-size:15px; font-weight:700; color:var(--ink); margin:0; }
