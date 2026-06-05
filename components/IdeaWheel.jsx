@@ -1694,26 +1694,56 @@ const CSS = `
 @keyframes iwIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
 /* ── laptop mockup ────────────────────────────────────────────────── */
-.su-laptop { margin:40px auto 0; max-width:580px; width:100%; display:flex; flex-direction:column; align-items:center; }
+/* monitor */
+.su-laptop {
+  margin:40px auto 0; max-width:620px; width:100%;
+  display:flex; flex-direction:column; align-items:center;
+  filter:drop-shadow(0 32px 64px rgba(80,20,120,0.22));
+}
 .su-laptop-screen {
-  width:100%;
-  background:rgba(255,255,255,0.82); backdrop-filter:blur(12px);
-  border:10px solid #e8e0f5; border-radius:14px; overflow:hidden;
-  box-shadow:0 8px 40px -12px rgba(80,20,120,0.28), 0 0 0 1px rgba(124,58,237,0.12);
+  width:100%; position:relative;
+  background:#1a1a2e;
+  border:12px solid #2a2a3e;
+  border-bottom:16px solid #2a2a3e;
+  border-radius:18px 18px 6px 6px;
+  overflow:hidden;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.06),
+    0 0 0 1px #111;
 }
+/* subtle screen glare */
+.su-laptop-screen::after {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:35%;
+  background:linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
+  pointer-events:none; z-index:10; border-radius:6px 6px 0 0;
+}
+/* bottom bezel bar with brand dot */
+.su-laptop-screen::before {
+  content:'';
+  position:absolute; bottom:0; left:0; right:0; height:16px;
+  background:#2a2a3e;
+  pointer-events:none; z-index:10;
+}
+/* stand neck */
 .su-monitor-neck {
-  width:4px; height:28px;
-  background:linear-gradient(180deg,#ddd4f0,#c8bce8);
+  width:0; height:0;
+  border-left:28px solid transparent;
+  border-right:28px solid transparent;
+  border-top:32px solid #2a2a3e;
 }
+/* stand base */
 .su-monitor-foot {
-  width:120px; height:8px; border-radius:99px;
-  background:linear-gradient(180deg,#ddd4f0,#c8bce8);
+  width:160px; height:10px;
+  background:linear-gradient(180deg, #2a2a3e 0%, #1a1a2e 100%);
+  border-radius:0 0 8px 8px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3);
 }
 .su-laptop-chrome {
-  background:var(--bg-2); border-bottom:1px solid var(--line);
-  padding:10px 14px; display:flex; gap:7px; align-items:center;
+  background:#f5f4f8; border-bottom:1px solid #e8e4f0;
+  padding:9px 14px; display:flex; gap:6px; align-items:center;
 }
-.su-laptop-chrome span { width:11px; height:11px; border-radius:50%; }
+.su-laptop-chrome span { width:10px; height:10px; border-radius:50%; }
 .su-laptop-chrome span:nth-child(1){background:#ff5f57}
 .su-laptop-chrome span:nth-child(2){background:#febc2e}
 .su-laptop-chrome span:nth-child(3){background:#28c840}
