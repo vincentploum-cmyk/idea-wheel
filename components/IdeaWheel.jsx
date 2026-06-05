@@ -751,50 +751,6 @@ export default function IdeaWheel() {
             </div>
 
             {/* steps — above teaser */}
-            {/* Laptop mockup */}
-            <div className="su-laptop">
-              <div className="su-laptop-screen">
-                <div className="su-laptop-chrome">
-                  <span/><span/><span/>
-                </div>
-                <div className="su-laptop-body">
-                  <div className="su-laptop-modebar">
-                    <span className="su-laptop-mode on">B2B</span>
-                    <span className="su-laptop-mode">Consumer</span>
-                  </div>
-                  <div className="su-laptop-reels">
-                    {[
-                      { label:'ACTION',  color:'#7c3aed', words:['Automates','Streamlines','Manages']   },
-                      { label:'WORKFLOW', color:'#c026d3', words:['client onboarding','invoice processing','appointment booking'] },
-                      { label:'FOR',     color:'#ff4d8d', words:['Healthcare','Legal services','Construction'] },
-                    ].map((col,i) => (
-                      <div className="su-laptop-col" key={i}>
-                        <div className="su-laptop-label" style={{color:col.color}}>{col.label}</div>
-                        <div className="su-laptop-reel">
-                          <div className="su-laptop-reel-fade su-laptop-reel-fade--top"/>
-                          {col.words.map((w,j) => (
-                            <div key={j} className={`su-laptop-reel-item${j===1?' active':''}`}>{w}</div>
-                          ))}
-                          <div className="su-laptop-reel-fade su-laptop-reel-fade--bottom"/>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="su-laptop-sentence">
-                    <em>I want to build an agent that </em>
-                    <strong style={{color:'#7c3aed'}}>streamlines</strong>{' '}
-                    <strong style={{color:'#c026d3'}}>client onboarding</strong>{' '}
-                    <em>in </em>
-                    <strong style={{color:'#ff4d8d'}}>Healthcare</strong>.
-                  </div>
-                  <div className="su-laptop-btn">Generate Idea!</div>
-                </div>
-              </div>
-              {/* monitor stand */}
-              <div className="su-monitor-neck"/>
-              <div className="su-monitor-foot"/>
-            </div>
-
             {/* reviews */}
             <div className="su-reviews">
               <div className="su-reviews-label">What founders are saying</div>
