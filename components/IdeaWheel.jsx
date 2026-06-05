@@ -642,6 +642,39 @@ export default function IdeaWheel() {
               <button className="su-btn su-btn-primary su-btn-lg" onClick={() => goTo("wheel")}>
                 Get started
               </button>
+              <button className="su-btn su-btn-ghost su-btn-lg" onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior:"smooth", block:"start" })}>
+                How it works
+              </button>
+            </div>
+
+            {/* How it works */}
+            <div className="su-hiw" id="how-it-works">
+              <div className="su-hiw-label">How it works</div>
+              <div className="su-hiw-steps">
+                <div className="su-hiw-step">
+                  <div className="su-hiw-num">1</div>
+                  <div>
+                    <div className="su-hiw-t">Generate business ideas</div>
+                    <div className="su-hiw-d">Combine actions, workflows, and target industries across 9,720 unique combinations to land on a concept worth exploring.</div>
+                  </div>
+                </div>
+                <div className="su-hiw-connector" aria-hidden />
+                <div className="su-hiw-step">
+                  <div className="su-hiw-num">2</div>
+                  <div>
+                    <div className="su-hiw-t">Validate against real market data — free</div>
+                    <div className="su-hiw-d">Every idea is pressure-tested with live competitor analysis, market sizing, and demand signals. You get a clear build, caution, or avoid verdict before spending anything.</div>
+                  </div>
+                </div>
+                <div className="su-hiw-connector" aria-hidden />
+                <div className="su-hiw-step">
+                  <div className="su-hiw-num">3</div>
+                  <div>
+                    <div className="su-hiw-t">Build the full product blueprint</div>
+                    <div className="su-hiw-d">One credit runs 4 AI agents: product designer, launch strategist, infrastructure architect, and prototype builder — delivering a complete plan you can act on immediately.</div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="su-value-grid">
@@ -1333,6 +1366,32 @@ const CSS = `
 /* disclaimer */
 .su-disclaimer { position:relative; z-index:1; max-width:760px; margin:0 auto 40px; padding:20px 24px; border-top:1px solid var(--line); text-align:center; }
 .su-disclaimer p { font-size:11px; color:var(--faint); line-height:1.7; margin:0; }
+
+/* ── how it works ─────────────────────────────────────────────────── */
+.su-hiw {
+  margin-top:48px; width:100%;
+  background:rgba(255,255,255,0.68); backdrop-filter:blur(12px);
+  border:1px solid var(--line); border-radius:var(--r-xl); padding:32px 28px;
+  text-align:left;
+}
+.su-hiw-label {
+  font-size:11px; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:24px; text-align:center;
+}
+.su-hiw-steps { display:flex; flex-direction:column; gap:0; }
+.su-hiw-step { display:flex; align-items:flex-start; gap:18px; }
+.su-hiw-num {
+  width:36px; height:36px; border-radius:50%; flex-shrink:0;
+  background:var(--grad-brand); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-display); font-size:14px; font-weight:800;
+}
+.su-hiw-t { font-weight:700; font-size:15px; color:var(--ink); margin-bottom:6px; }
+.su-hiw-d { font-size:13px; color:var(--muted); line-height:1.65; }
+.su-hiw-connector {
+  width:1.5px; height:24px; background:var(--line);
+  margin:8px 0 8px 17px;
+}
 
 /* ── combinations bar ─────────────────────────────────────────────── */
 .su-combos-bar {
