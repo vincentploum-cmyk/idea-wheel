@@ -703,7 +703,7 @@ export default function IdeaWheel() {
 
             <h1 className="su-display su-landing-h1">
               <span style={{ display:"block" }}>Stop wasting time on bad startup ideas.</span>
-              <span className="su-grad-text" style={{ display:"block" }}>Find one worth building.</span>
+              <span className="su-grad-text" style={{ display:"block" }}>Find one worth building</span>
             </h1>
             <p className="su-landing-sub">
               Generate a concrete idea, run a free market check, and unlock the full blueprint only when the signal is real.
@@ -747,30 +747,6 @@ export default function IdeaWheel() {
                     <div className="su-hiw-d">One credit unlocks four AI specialists, product design, launch strategy, infrastructure, and prototype generation, so you get a complete blueprint you can act on immediately.</div>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <div className="su-value-grid">
-              <div className="su-value-card">
-                <div className="su-value-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-                </div>
-                <div className="su-value-t">Skip generic idea lists</div>
-                <div className="su-value-d">Start with a concrete concept, clear problem, and believable angle instead of vague inspiration.</div>
-              </div>
-              <div className="su-value-card">
-                <div className="su-value-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                </div>
-                <div className="su-value-t">Validate before you commit</div>
-                <div className="su-value-d">See demand, competition, market size, and the gap before you spend time building the wrong thing.</div>
-              </div>
-              <div className="su-value-card">
-                <div className="su-value-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                </div>
-                <div className="su-value-t">Move from idea to blueprint fast</div>
-                <div className="su-value-d">When a concept looks strong, unlock product, launch plan, infrastructure, and prototype output in one flow.</div>
               </div>
             </div>
 
