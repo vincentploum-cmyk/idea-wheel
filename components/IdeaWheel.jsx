@@ -814,9 +814,9 @@ export default function IdeaWheel() {
                   <div className="su-laptop-btn">Generate Idea!</div>
                 </div>
               </div>
-              <div className="su-laptop-base">
-                <div className="su-laptop-notch"/>
-              </div>
+              {/* monitor stand */}
+              <div className="su-monitor-neck"/>
+              <div className="su-monitor-foot"/>
             </div>
 
             {/* reviews */}
@@ -1718,11 +1718,20 @@ const CSS = `
 @keyframes iwIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
 /* ── laptop mockup ────────────────────────────────────────────────── */
-.su-laptop { margin:40px auto 0; max-width:580px; width:100%; }
+.su-laptop { margin:40px auto 0; max-width:580px; width:100%; display:flex; flex-direction:column; align-items:center; }
 .su-laptop-screen {
+  width:100%;
   background:rgba(255,255,255,0.82); backdrop-filter:blur(12px);
-  border:1px solid var(--line); border-radius:16px 16px 0 0; overflow:hidden;
-  box-shadow:0 8px 40px -12px rgba(80,20,120,0.22);
+  border:10px solid #e8e0f5; border-radius:14px; overflow:hidden;
+  box-shadow:0 8px 40px -12px rgba(80,20,120,0.28), 0 0 0 1px rgba(124,58,237,0.12);
+}
+.su-monitor-neck {
+  width:4px; height:28px;
+  background:linear-gradient(180deg,#ddd4f0,#c8bce8);
+}
+.su-monitor-foot {
+  width:120px; height:8px; border-radius:99px;
+  background:linear-gradient(180deg,#ddd4f0,#c8bce8);
 }
 .su-laptop-chrome {
   background:var(--bg-2); border-bottom:1px solid var(--line);
@@ -1748,8 +1757,6 @@ const CSS = `
 .su-laptop-reel-fade--bottom { bottom:0; background:linear-gradient(to top,var(--bg-2),transparent); }
 .su-laptop-sentence { font-size:12px; color:var(--muted); text-align:center; padding:10px 8px; background:rgba(255,255,255,0.6); border:1px solid var(--line); border-radius:10px; margin-bottom:12px; line-height:1.6; }
 .su-laptop-btn { display:flex; align-items:center; justify-content:center; background:var(--grad-brand); color:#fff; border-radius:12px; padding:11px; font-size:13px; font-weight:700; }
-.su-laptop-base { height:16px; background:var(--bg-2); border:1px solid var(--line); border-top:none; border-radius:0 0 20px 20px; display:flex; align-items:center; justify-content:center; }
-.su-laptop-notch { width:60px; height:5px; border-radius:99px; background:var(--line-2); }
 
 /* responsive */
 @media(max-width:640px){
