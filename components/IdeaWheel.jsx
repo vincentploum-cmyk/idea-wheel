@@ -710,12 +710,14 @@ export default function IdeaWheel() {
             </p>
 
             <div className="su-landing-cta">
-              <button className="su-btn su-btn-primary su-btn-lg" onClick={() => goTo("wheel")}>
-                Get started
-              </button>
-              <button className="su-btn su-btn-ghost su-btn-lg" onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior:"smooth", block:"start" })}>
-                How it works
-              </button>
+              <div style={{display:'flex',gap:12,flexWrap:'wrap',justifyContent:'center'}}>
+                <button className="su-btn su-btn-primary su-btn-lg" onClick={() => goTo("wheel")}>
+                  Get started
+                </button>
+                <button className="su-btn su-btn-ghost su-btn-lg" onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior:"smooth", block:"start" })}>
+                  How it works
+                </button>
+              </div>
             </div>
 
             {/* How it works */}
@@ -773,7 +775,49 @@ export default function IdeaWheel() {
             </div>
 
             {/* steps — above teaser */}
-            <TeaserReels />
+            {/* Laptop mockup */}
+            <div className="su-laptop">
+              <div className="su-laptop-screen">
+                <div className="su-laptop-chrome">
+                  <span/><span/><span/>
+                </div>
+                <div className="su-laptop-body">
+                  <div className="su-laptop-modebar">
+                    <span className="su-laptop-mode on">B2B</span>
+                    <span className="su-laptop-mode">Consumer</span>
+                  </div>
+                  <div className="su-laptop-reels">
+                    {[
+                      { label:'ACTION',  color:'#7c3aed', words:['Automates','Streamlines','Manages']   },
+                      { label:'WORKFLOW', color:'#c026d3', words:['client onboarding','invoice processing','appointment booking'] },
+                      { label:'FOR',     color:'#ff4d8d', words:['Healthcare','Legal services','Construction'] },
+                    ].map((col,i) => (
+                      <div className="su-laptop-col" key={i}>
+                        <div className="su-laptop-label" style={{color:col.color}}>{col.label}</div>
+                        <div className="su-laptop-reel">
+                          <div className="su-laptop-reel-fade su-laptop-reel-fade--top"/>
+                          {col.words.map((w,j) => (
+                            <div key={j} className={`su-laptop-reel-item${j===1?' active':''}`}>{w}</div>
+                          ))}
+                          <div className="su-laptop-reel-fade su-laptop-reel-fade--bottom"/>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="su-laptop-sentence">
+                    <em>I want to build an agent that </em>
+                    <strong style={{color:'#7c3aed'}}>streamlines</strong>{' '}
+                    <strong style={{color:'#c026d3'}}>client onboarding</strong>{' '}
+                    <em>in </em>
+                    <strong style={{color:'#ff4d8d'}}>Healthcare</strong>.
+                  </div>
+                  <div className="su-laptop-btn">Generate Idea!</div>
+                </div>
+              </div>
+              <div className="su-laptop-base">
+                <div className="su-laptop-notch"/>
+              </div>
+            </div>
 
             {/* reviews */}
             <div className="su-reviews">
@@ -1673,45 +1717,39 @@ const CSS = `
 }
 @keyframes iwIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
-/* teaser reels */
-.tr-root { margin:36px auto 0; max-width:560px; }
-.tr-reels {
-  display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
-  padding:20px 16px 16px;
-  background:rgba(255,255,255,0.62); backdrop-filter:blur(12px);
-  border:1px solid var(--line); border-radius:var(--r-xl);
-  box-shadow:var(--sh-md);
-  overflow:hidden;
+/* ── laptop mockup ────────────────────────────────────────────────── */
+.su-laptop { margin:40px auto 0; max-width:580px; width:100%; }
+.su-laptop-screen {
+  background:rgba(255,255,255,0.82); backdrop-filter:blur(12px);
+  border:1px solid var(--line); border-radius:16px 16px 0 0; overflow:hidden;
+  box-shadow:0 8px 40px -12px rgba(80,20,120,0.22);
 }
-.tr-col { display:flex; flex-direction:column; align-items:stretch; gap:8px; }
-.tr-label {
-  font-size:10px; font-weight:700; letter-spacing:.2em; text-transform:uppercase;
-  text-align:center;
+.su-laptop-chrome {
+  background:var(--bg-2); border-bottom:1px solid var(--line);
+  padding:10px 14px; display:flex; gap:7px; align-items:center;
 }
-.tr-window {
-  height:56px; overflow:hidden; border-radius:var(--r-sm);
-  background:rgba(255,255,255,0.9); border:1px solid var(--line-2);
-  position:relative;
-  filter:blur(3.5px);
-  user-select:none; pointer-events:none;
-}
-.tr-window::before,.tr-window::after {
-  content:''; position:absolute; left:0; right:0; height:12px; z-index:2; pointer-events:none;
-}
-.tr-window::before { top:0; background:linear-gradient(to bottom,rgba(255,255,255,.9),transparent); }
-.tr-window::after  { bottom:0; background:linear-gradient(to top,rgba(255,255,255,.9),transparent); }
-.tr-strip { will-change:transform; }
-.tr-item {
-  display:flex; align-items:center; justify-content:center;
-  text-align:center; padding:0 8px;
-  font-size:clamp(10px,1.2vw,13px); font-weight:700;
-  text-transform:uppercase; letter-spacing:.02em;
-  color:var(--ink); line-height:1.2;
-}
-.tr-hint {
-  text-align:center; margin-top:10px;
-  font-size:11.5px; color:var(--faint); font-weight:500;
-}
+.su-laptop-chrome span { width:11px; height:11px; border-radius:50%; }
+.su-laptop-chrome span:nth-child(1){background:#ff5f57}
+.su-laptop-chrome span:nth-child(2){background:#febc2e}
+.su-laptop-chrome span:nth-child(3){background:#28c840}
+.su-laptop-body { padding:20px 20px 16px; }
+.su-laptop-modebar { display:flex; gap:8px; margin-bottom:16px; justify-content:center; }
+.su-laptop-mode { font-size:12px; font-weight:700; padding:6px 16px; border-radius:99px; border:1.5px solid var(--line); color:var(--muted); }
+.su-laptop-mode.on { background:var(--grad-brand); color:#fff; border-color:transparent; }
+.su-laptop-reels { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+.su-laptop-col { display:flex; flex-direction:column; gap:6px; }
+.su-laptop-label { font-size:9px; font-weight:800; letter-spacing:.2em; text-transform:uppercase; text-align:center; }
+.su-laptop-reel { position:relative; border-radius:10px; overflow:hidden; background:var(--bg-2); border:1.5px solid var(--line-2); }
+.su-laptop-reel-item { padding:10px 6px; text-align:center; font-size:11px; font-weight:700; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--line); letter-spacing:.02em; line-height:1.2; }
+.su-laptop-reel-item.active { color:var(--ink); background:rgba(255,255,255,0.9); font-weight:800; }
+.su-laptop-reel-item:last-child { border-bottom:none; }
+.su-laptop-reel-fade { position:absolute; left:0; right:0; height:18px; pointer-events:none; z-index:2; }
+.su-laptop-reel-fade--top { top:0; background:linear-gradient(to bottom,var(--bg-2),transparent); }
+.su-laptop-reel-fade--bottom { bottom:0; background:linear-gradient(to top,var(--bg-2),transparent); }
+.su-laptop-sentence { font-size:12px; color:var(--muted); text-align:center; padding:10px 8px; background:rgba(255,255,255,0.6); border:1px solid var(--line); border-radius:10px; margin-bottom:12px; line-height:1.6; }
+.su-laptop-btn { display:flex; align-items:center; justify-content:center; background:var(--grad-brand); color:#fff; border-radius:12px; padding:11px; font-size:13px; font-weight:700; }
+.su-laptop-base { height:16px; background:var(--bg-2); border:1px solid var(--line); border-top:none; border-radius:0 0 20px 20px; display:flex; align-items:center; justify-content:center; }
+.su-laptop-notch { width:60px; height:5px; border-radius:99px; background:var(--line-2); }
 
 /* responsive */
 @media(max-width:640px){
