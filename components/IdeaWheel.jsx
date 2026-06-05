@@ -639,14 +639,9 @@ export default function IdeaWheel() {
             </p>
 
             <div className="su-landing-cta">
-              <div className="su-landing-cta-row">
-                <button className="su-btn su-btn-primary su-btn-lg" onClick={() => goTo("wheel")}>
-                  Get started
-                </button>
-                <button className="su-btn su-btn-ghost su-btn-lg" onClick={() => document.getElementById("landing-steps")?.scrollIntoView({ behavior:"smooth", block:"start" })}>
-                  See how it works
-                </button>
-              </div>
+              <button className="su-btn su-btn-primary su-btn-lg" onClick={() => goTo("wheel")}>
+                Get started
+              </button>
             </div>
 
             <div className="su-value-grid">
@@ -674,30 +669,6 @@ export default function IdeaWheel() {
             </div>
 
             {/* steps — above teaser */}
-            <div className="su-landing-steps" id="landing-steps">
-              <div className="su-land-step">
-                <span className="su-grad-text su-land-step-n">01</span>
-                <div>
-                  <div className="su-land-step-t">Generate a stronger starting point</div>
-                  <div className="su-land-step-d">Spin across curated startup frontiers like health, fintech, AI tools, creator economy, and more. Each result gives you a named concept, a sharper position, and a problem worth exploring.</div>
-                </div>
-              </div>
-              <div className="su-land-step">
-                <span className="su-grad-text su-land-step-n">02</span>
-                <div>
-                  <div className="su-land-step-t">Pressure-test the market for free</div>
-                  <div className="su-land-step-d">Before you pay for anything, Idea Generator checks demand, competition, market size, and the gap you might own. You get a real build, caution, or avoid signal, not generic AI fluff.</div>
-                </div>
-              </div>
-              <div className="su-land-step">
-                <span className="su-grad-text su-land-step-n">03</span>
-                <div>
-                  <div className="su-land-step-t">Unlock the blueprint only if it passes</div>
-                  <div className="su-land-step-d">One credit runs product design, launch planning, infrastructure mapping, and prototype generation so you can move from idea to something testable without starting from scratch.</div>
-                </div>
-              </div>
-            </div>
-
             <TeaserReels />
 
             {/* combinations count */}
