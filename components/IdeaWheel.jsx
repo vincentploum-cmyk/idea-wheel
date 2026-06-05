@@ -226,6 +226,70 @@ function Meter({ value, delay=0 }) {
   );
 }
 
+/* ─── DYNAMIC CREDIT COST ────────────────────────────────────────── */
+function creditCost(score) {
+  if (score >= 85) return 3;
+  if (score >= 65) return 2;
+  return 1;
+}
+function creditLabel(score) {
+  if (score >= 85) return { cost: 3, tier: '🔥 Exceptional', color: '#7c3aed' };
+  if (score >= 65) return { cost: 2, tier: '⚡ Strong signal', color: '#c026d3' };
+  return { cost: 1, tier: 'Standard', color: '#7a7191' };
+}
+
+/* ─── CONFETTI ───────────────────────────────────────────────────── */
+function Confetti({ active }) {
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    if (!active) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ['#7c3aed','#c026d3','#ff4d8d','#ff6f61','#5b5bf5','#fbbf24'];
+    const pieces = Array.from({ length: 120 }, () => ({
+      x: Math.random() * canvas.width,
+      y: -20 - Math.random() * 200,
+      w: 8 + Math.random() * 8,
+      h: 4 + Math.random() * 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rot: Math.random() * Math.PI * 2,
+      vx: (Math.random() - 0.5) * 3,
+      vy: 2 + Math.random() * 4,
+      vrot: (Math.random() - 0.5) * 0.15,
+      opacity: 1,
+    }));
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let alive = false;
+      pieces.forEach(p => {
+        p.x += p.vx; p.y += p.vy; p.rot += p.vrot;
+        if (p.y > canvas.height * 0.6) p.opacity -= 0.02;
+        if (p.opacity > 0) alive = true;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.opacity);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        ctx.restore();
+      });
+      if (alive) rafRef.current = requestAnimationFrame(draw);
+    };
+    rafRef.current = requestAnimationFrame(draw);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [active]);
+
+  if (!active) return null;
+  return <canvas ref={canvasRef} style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:999 }}/>;
+}
+
 /* ─── PROTO IFRAME ───────────────────────────────────────────────── */
 function ProtoFrame({ html }) {
   const [src, setSrc] = useState(null);
@@ -449,6 +513,7 @@ export default function IdeaWheel() {
   const [proto, setProto]       = useState(null);
   const [bpErr, setBpErr]       = useState("");
   const [protoOpen, setProtoOpen] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   // pricing
   const [showPricing, setShowPricing]     = useState(false);
@@ -525,6 +590,10 @@ export default function IdeaWheel() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setComp(data.comp);
+      if ((data.comp?.score ?? 0) >= 85) {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 4000);
+      }
     } catch(e) {
       setValidateErr("Market check failed. " + e.message);
     } finally {
@@ -534,8 +603,9 @@ export default function IdeaWheel() {
 
   /* ── PAID BLUEPRINT ── */
   const runBlueprint = async () => {
-    if (!comp || credits <= 0) { setShowPricing(true); return; }
-    setCredits(c => c-1);
+    const cost = creditCost(comp?.score ?? 0);
+    if (!comp || credits < cost) { setShowPricing(true); return; }
+    setCredits(c => c - cost);
     setBpStage(1); setBpErr("");
     setDesign(null); setGtm(null); setInfra(null); setProto(null);
     setProtoOpen(false);
@@ -572,7 +642,7 @@ export default function IdeaWheel() {
       if (pr.error) throw new Error(pr.error);
       setProto(pr.result); setBpStage("done");
     } catch(e) {
-      setCredits(c => c+1);
+      setCredits(c => c + creditCost(comp?.score ?? 0));
       setBpErr(e.message);
     }
   };
@@ -601,6 +671,7 @@ export default function IdeaWheel() {
   return (
     <div className="su-root">
       {mounted && <style>{CSS}</style>}
+      <Confetti active={showConfetti} />
 
       {/* atmospheric blobs */}
       <div className="su-blob" style={{ width:500, height:500, top:"-8%", left:"-6%", background:"#7c3aed" }}/>
@@ -820,21 +891,39 @@ export default function IdeaWheel() {
                     </div>
                   )}
 
-                  {vt !== "avoid" && (
-                    <div className="su-v-cta">
-                      <div className="su-v-cta-text">Signal is strong. Ready to turn this into a real plan?</div>
-                      <div className="su-v-cta-row">
-                        <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); }}>
-                          ✦ Generate the blueprint
-                        </button>
-                        <button className="su-creditpill" onClick={() => setShowPricing(true)}>
-                          <span className="su-creditnum">{credits}</span>
-                          <span className="su-creditlbl">credits</span>
-                        </button>
+                  {vt !== "avoid" && (() => {
+                    const score = comp.score ?? 0;
+                    const cl = creditLabel(score);
+                    const cost = cl.cost;
+                    return (
+                      <div className="su-v-cta">
+                        {score >= 85 && (
+                          <div className="su-v-exceptional">
+                            🎉 This idea scored in the top tier — it has genuine potential.
+                          </div>
+                        )}
+                        <div className="su-v-cta-text">
+                          {score >= 85 ? "Build this before someone else does." : "Signal is strong. Ready to turn this into a real plan?"}
+                        </div>
+                        <div className="su-v-cta-row">
+                          <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); }}>
+                            ✦ Generate the blueprint
+                            <span className="su-credit-badge" style={{background: cl.color}}>
+                              {cost} credit{cost > 1 ? 's' : ''}
+                            </span>
+                          </button>
+                          <button className="su-creditpill" onClick={() => setShowPricing(true)}>
+                            <span className="su-creditnum">{credits}</span>
+                            <span className="su-creditlbl">credits</span>
+                          </button>
+                        </div>
+                        <div className="su-v-hint">
+                          <span style={{color: cl.color, fontWeight:700}}>{cl.tier}</span>
+                          {' · '}validation always free{' · '}you have {credits} credits
+                        </div>
                       </div>
-                      <div className="su-v-hint">1 credit · always free to validate</div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {vt === "avoid" && (
                     <div className="su-v-cta su-v-cta--avoid">
@@ -1312,6 +1401,22 @@ const CSS = `
 .su-v-cta-text { font-size:15px; font-weight:600; color:var(--ink); margin-bottom:18px; line-height:1.5; }
 .su-v-cta-row { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
 .su-v-hint { font-size:11.5px; color:var(--faint); margin-top:10px; }
+.su-v-exceptional {
+  background:linear-gradient(120deg,rgba(124,58,237,.1),rgba(255,77,141,.1));
+  border:1.5px solid rgba(124,58,237,.3); border-radius:var(--r-md);
+  padding:12px 16px; margin-bottom:16px;
+  font-size:14px; font-weight:600; color:var(--ink); line-height:1.5;
+  animation:eurekapulse 2s ease-in-out infinite;
+}
+@keyframes eurekapulse {
+  0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.15)}
+  50%{box-shadow:0 0 20px 6px rgba(124,58,237,.12)}
+}
+.su-credit-badge {
+  display:inline-flex; align-items:center; padding:2px 8px;
+  border-radius:99px; font-size:11px; font-weight:800;
+  color:#fff; margin-left:6px; letter-spacing:.04em;
+}
 .su-creditpill {
   display:flex; flex-direction:column; align-items:center; gap:2px;
   padding:10px 14px; background:var(--bg-2);
