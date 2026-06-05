@@ -727,24 +727,24 @@ export default function IdeaWheel() {
                 <div className="su-hiw-step">
                   <div className="su-hiw-num">1</div>
                   <div>
-                    <div className="su-hiw-t">Generate business ideas</div>
-                    <div className="su-hiw-d">Combine actions, workflows, and target industries to land on a concept worth exploring.</div>
+                    <div className="su-hiw-t">Generate a business idea worth chasing</div>
+                    <div className="su-hiw-d">Combine proven actions, real workflows, and target industries to uncover concrete startup concepts, not vague inspiration.</div>
                   </div>
                 </div>
                 <div className="su-hiw-connector" aria-hidden />
                 <div className="su-hiw-step">
                   <div className="su-hiw-num">2</div>
                   <div>
-                    <div className="su-hiw-t">Validate against real market data</div>
-                    <div className="su-hiw-d">Every idea is pressure-tested with live competitor analysis, market sizing, and demand signals. You get a clear build, caution, or avoid verdict before spending anything.</div>
+                    <div className="su-hiw-t">Know if it's worth building, for free</div>
+                    <div className="su-hiw-d">Every idea gets a real market check with competitor analysis, market size, and demand signals, so you get a clear build, caution, or avoid verdict before spending a dollar.</div>
                   </div>
                 </div>
                 <div className="su-hiw-connector" aria-hidden />
                 <div className="su-hiw-step">
                   <div className="su-hiw-num">3</div>
                   <div>
-                    <div className="su-hiw-t">Build the full product blueprint</div>
-                    <div className="su-hiw-d">One credit runs 4 AI agents: product designer, launch strategist, infrastructure architect, and prototype builder — delivering a complete plan you can act on immediately.</div>
+                    <div className="su-hiw-t">Turn the winner into a build-ready plan</div>
+                    <div className="su-hiw-d">One credit unlocks four AI specialists, product design, launch strategy, infrastructure, and prototype generation, so you get a complete blueprint you can act on immediately.</div>
                   </div>
                 </div>
               </div>
