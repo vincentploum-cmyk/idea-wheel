@@ -59,9 +59,9 @@ function lighten(hex, t) {
 
 /* ─── TEASER REEL DATA ───────────────────────────────────────────── */
 const TEASER_BANKS = [
-  ['Automate','Predict','Personalize','Track','Simplify','Detect','Coach','Gamify','Streamline','Analyze','Recommend','Eliminate'],
-  ['customer onboarding','invoice matching','health tracking','daily habits','lead qualification','mental wellness','appointment scheduling','money management','compliance checks','sleep & recovery','contract review','skill learning'],
-  ['Healthcare','Freelancers','EdTech companies','Fintech startups','Dental practices','ADHD adults','Legal services','New parents','Marketing agencies','Athletes','Non-profits','Remote workers'],
+  ['Automates','Streamlines','Manages','Tracks','Builds','Improves','Optimizes','Simplifies','Coaches','Plans'],
+  ['client onboarding','invoice processing','daily habits','sleep quality','appointment booking','personal finances','contract management','fitness goals','shift scheduling','mental health'],
+  ['Healthcare','Legal services','busy professionals','Dental practices','new parents','Construction','remote workers','Accounting firms','athletes','small business owners'],
 ];
 const REEL_COLORS = ['#7c3aed','#c026d3','#ff4d8d'];
 const REEL_LABELS = ['ACTION','WORKFLOW','FOR'];
@@ -242,23 +242,32 @@ function ProtoFrame({ html }) {
 }
 
 /* ─── SLOT MACHINE DATA ──────────────────────────────────────────── */
+// Rule: every action must pair naturally with every workflow in the same bank.
+// Sentence: "I want to build an agent that [action] [workflow] in [industry]"
+//           "I want to make an app that [action] [experience] for [audience]"
 const MODES = {
   b2b: {
     name:'B2B', connector:'in', prefix:'I want to build an agent that',
     labels:['ACTION','WORKFLOW','FOR'],
     banks:[
-      ['Automate','Streamline','Predict','Personalize','Detect','Score','Summarize','Verify','Forecast','Analyze','Extract','Eliminate','Track','Recommend','Flag'],
-      ['customer onboarding','invoice matching','appointment scheduling','lead qualification','contract review','compliance checks','dispatch routing','incident triage','due diligence','RFP responses','performance reviews','shift handoffs','returns handling','expense approval','document intake'],
-      ['Healthcare','Construction','Logistics','Legal services','Insurance','Dental practices','Field services','Auto repair','Accounting firms','Staffing agencies','Real estate','Restaurants','Fintech startups','Marketing agencies','Non-profits'],
+      // Actions: transitive verbs that work with ANY business process below
+      ['Automates','Streamlines','Manages','Coordinates','Tracks','Handles','Schedules','Simplifies','Accelerates','Digitizes'],
+      // Workflows: noun phrases — any action above reads naturally before these
+      ['client onboarding','invoice processing','appointment booking','contract management','compliance tracking','expense reporting','lead management','shift scheduling','document processing','project tracking','quote generation','staff communication'],
+      // Industries: clear businesses with obvious admin pain
+      ['Healthcare','Legal services','Construction','Logistics','Insurance','Dental practices','Field services','Accounting firms','Property management','Restaurants','Staffing agencies','Real estate'],
     ],
   },
   consumer: {
     name:'Consumer', connector:'for', prefix:'I want to make an app that',
     labels:['ACTION','EXPERIENCE','FOR'],
     banks:[
-      ['Track','Plan','Personalize','Simplify','Coach','Gamify','Curate','Teach','Budget','Optimize','Remind','Discover'],
-      ['daily habits','health tracking','money management','skill learning','mental wellness','sleep & recovery','meal planning','productivity','career growth','travel planning','stress management','fitness routines'],
-      ['new parents','college students','freelancers','athletes','ADHD adults','retirees','family caregivers','anxious people','night shift workers','new homeowners','musicians','remote workers'],
+      // Actions: verbs that work with ANY experience noun below
+      ['Tracks','Improves','Manages','Builds','Optimizes','Plans','Simplifies','Coaches','Monitors','Personalizes'],
+      // Experiences: noun phrases — any action reads naturally before these
+      ['daily habits','sleep quality','personal finances','mental health','fitness goals','meal planning','career progress','productivity','stress levels','skill development','time management','nutrition'],
+      // Audiences: clear groups with a shared pain point
+      ['busy professionals','new parents','college students','freelancers','athletes','small business owners','retirees','remote workers','people with ADHD','musicians','young adults','solopreneurs'],
     ],
   },
 };
@@ -692,7 +701,7 @@ export default function IdeaWheel() {
 
             {/* combinations count */}
             <div className="su-combos-bar">
-              <span className="su-combos-num">5,103</span>
+              <span className="su-combos-num">2,880</span>
               <span className="su-combos-text">unique idea combinations — yours won't clash with anyone else's</span>
             </div>
 
