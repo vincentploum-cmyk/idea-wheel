@@ -1254,9 +1254,7 @@ const CSS = `
 }
 @media(max-width:640px){ .su-value-grid { grid-template-columns:1fr; } }
 .su-value-card {
-  padding:20px; border-radius:var(--r-lg);
-  background:rgba(255,255,255,0.62); backdrop-filter:blur(10px);
-  border:1px solid var(--line);
+  padding:20px;
 }
 .su-value-icon {
   width:40px; height:40px; border-radius:10px; margin-bottom:14px;
@@ -1533,8 +1531,7 @@ const CSS = `
 /* ── how it works ─────────────────────────────────────────────────── */
 .su-hiw {
   margin-top:48px; width:100%;
-  background:rgba(255,255,255,0.68); backdrop-filter:blur(12px);
-  border:1px solid var(--line); border-radius:var(--r-xl); padding:32px 28px;
+  padding:8px 0;
   text-align:left;
 }
 .su-hiw-label {
