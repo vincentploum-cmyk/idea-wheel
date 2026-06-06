@@ -702,7 +702,7 @@ export default function IdeaWheel() {
           <div className="su-landing-inner">
 
             <h1 className="su-display su-landing-h1">
-              <span style={{ display:"block" }}>Your next startup idea</span>
+              <span style={{ display:"block" }}>Your startup idea</span>
               <span className="su-grad-text" style={{ display:"block", paddingRight:"6px", paddingBottom:"16px" }}>is one spin away.</span>
             </h1>
             <p className="su-landing-sub">
