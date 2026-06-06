@@ -45,7 +45,7 @@ const FAQS = [
   },
   {
     q: "How do I get a refund?",
-    a: "If you experience a technical issue that prevents a blueprint from generating, we'll refund the credit automatically. For billing issues, contact us at hello@ideareels.io and we'll sort it within 24 hours.",
+    a: "If you experience a technical issue that prevents a blueprint from generating, we'll refund the credit automatically. For billing issues, contact us at support@ideareels.io and we'll sort it within 24 hours.",
   },
 ];
 
@@ -84,7 +84,7 @@ export default function FaqPage() {
         </div>
         <div style={s.cta}>
           <p style={s.ctaText}>Still have questions?</p>
-          <a href="mailto:hello@ideareels.io" style={s.ctaLink}>hello@ideareels.io →</a>
+          <a href="mailto:support@ideareels.io" style={s.ctaLink}>support@ideareels.io →</a>
         </div>
         <div style={s.disclaimer}>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 12 }}>
@@ -107,7 +107,7 @@ const s = {
   topbar: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:40 },
   back: { fontSize:13, fontWeight:600, color:"#7a7191", textDecoration:"none", padding:"8px 16px", border:"1px solid #ece6f5", borderRadius:999, background:"rgba(255,255,255,0.7)", backdropFilter:"blur(8px)" },
   h1: { fontFamily:'"Sora",system-ui', fontSize:"clamp(28px,5vw,48px)", fontWeight:700, letterSpacing:"-0.03em", margin:"0 0 12px", color:"#18112b" },
-  sub: { fontSize:16, color:"#7a7191", margin:"0 0 40px", lineHeight:1.6 },
+  sub: { fontSize:16, color:"#7a7191", margin:"0 0 20px", lineHeight:1.6 },
   list: { display:"flex", flexDirection:"column", gap:0 },
   item: { padding:"20px 0", borderBottom:"1px solid #ece6f5", cursor:"pointer", userSelect:"none" },
   question: { display:"flex", justifyContent:"space-between", alignItems:"center", gap:16, fontWeight:700, fontSize:16, color:"#18112b", lineHeight:1.4 },
