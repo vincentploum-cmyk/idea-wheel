@@ -2,7 +2,7 @@ import Link from 'next/link';
 import CloudBackground from '@/components/CloudBackground';
 
 export const metadata = {
-  title: 'Terms of Service | IdeaReels',
+  title: 'Terms of Service',
   description: 'Terms governing your use of IdeaReels.',
 };
 
