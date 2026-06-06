@@ -15,7 +15,7 @@ async function getUser() {
 
 export async function POST(request) {
   const user = await getUser();
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user) return Response.json({ error: 'Please sign in to purchase credits.', code: 'AUTH_REQUIRED' }, { status: 401 });
 
   const { packId } = await request.json();
   const pack = CREDIT_PACKS.find(p => p.id === packId);
