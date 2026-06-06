@@ -1,7 +1,7 @@
 'use client';
-"use client";
 
 import Link from 'next/link';
+import { createClient as createBrowserClient } from '@/lib/supabase-browser';
 import { useEffect, useMemo, useState } from 'react';
 const CREDIT_PACKAGES = [
   { key: 'starter', label: 'Starter',  credits: 5,  price: '$4.99', per: '$1.00', highlight: false, priceEnvVar: 'STRIPE_PRICE_ID_STARTER' },
@@ -10,7 +10,6 @@ const CREDIT_PACKAGES = [
 ];
 const CREDIT_PACKAGE_BY_KEY = Object.fromEntries(CREDIT_PACKAGES.map(p => [p.key, p]));
 
-const supabase = createSupabaseBrowser();
 export default function PricingPageClient({ searchParams }) {
   const [loadingKey, setLoadingKey] = useState(null);
   const [error, setError] = useState('');
