@@ -126,9 +126,7 @@ export default function PricingPageClient({ searchParams }) {
               <p style={{ color:'#7a7191', fontSize:13, lineHeight:1.6, margin:'0 0 20px', minHeight:60 }}>
                 {pkg.highlight
                   ? 'Best for founders validating multiple ideas in one sitting.'
-                  : pkg.key === 'starter'
-                    ? 'Perfect for trying out your first blueprint.'
-                    : 'For founders validating multiple ideas in one sitting.'}
+                  : pkg.key === 'starter' ? 'Perfect for trying out your first blueprint.' : pkg.key === 'pro' ? 'For founders validating multiple ideas in one sitting.' : 'For power users and teams running deep exploration.'}
               </p>
               <button onClick={() => startCheckout(pkg)} disabled={loadingKey !== null} style={{
                 width: '100%', border: 'none', borderRadius: 12, padding: '12px 0',
