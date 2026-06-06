@@ -315,9 +315,9 @@ const MODES = {
     labels:['ACTION','WORKFLOW','FOR'],
     banks:[
       // 15 actions — every verb pairs naturally with every workflow below
-      ['Automates','Streamlines','Manages','Coordinates','Tracks','Handles','Schedules','Simplifies','Accelerates','Digitizes','Processes','Organizes','Monitors','Validates','Prioritizes'],
+      ['Automates','Streamlines','Manages','Centralizes','Tracks','Handles','Simplifies','Accelerates','Transforms','Digitizes','Processes','Organizes','Monitors','Optimizes','Prioritizes'],
       // 18 workflows — noun phrases that read naturally after any action above
-      ['client onboarding','invoice processing','booking management','contract management','compliance tracking','expense reporting','lead management','staff scheduling','document processing','project tracking','quote generation','team communication','vendor management','customer requests','payroll processing','performance reviews','inventory management','billing & collections'],
+      ['client onboarding','invoice processing','contract management','compliance reporting','expense tracking','lead management','staff coordination','document management','project tracking','quote generation','team communication','vendor management','customer requests','payroll processing','performance management','inventory tracking','billing & collections','field operations'],
       // 18 industries
       ['Healthcare','Legal services','Construction','Logistics','Insurance','Dental practices','Field services','Accounting firms','Property management','Restaurants','Staffing agencies','Real estate','Veterinary clinics','Auto repair shops','Marketing agencies','Financial advisors','Cleaning services','Home services'],
     ],
