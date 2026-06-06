@@ -311,7 +311,7 @@ function ProtoFrame({ html }) {
 //           "I want to make an app that [action] [experience] for [audience]"
 const MODES = {
   b2b: {
-    name:'B2B', connector:'in', prefix:'I want to build an agent that',
+    name:'B2B', connector:'in the', prefix:'I want to build an agent that',
     labels:['ACTION','WORKFLOW','FOR'],
     banks:[
       // 15 actions — every verb pairs naturally with every workflow below
@@ -421,7 +421,7 @@ function SlotMachine({ onResult }) {
         title,
         tagline,
         blurb,
-        freeformIdea:`${v.toLowerCase()} ${w} ${m.connector} ${ind}`,
+        freeformIdea:m.name === 'B2B' ? `${v.toLowerCase()} ${w} in the ${ind} industry` : `${v.toLowerCase()} ${w} ${m.connector} ${ind}`,
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -429,13 +429,7 @@ function SlotMachine({ onResult }) {
 
   const prefix = m.prefix;
   const conn = m.connector;
-  const liveVerb = landed[0]
-    ? (/[^aeiou]y$/i.test(landed[0])
-        ? `${landed[0].slice(0,-1).toLowerCase()}ies`
-        : /(s|sh|ch|x|z)$/i.test(landed[0])
-          ? `${landed[0].toLowerCase()}es`
-          : `${landed[0].toLowerCase()}s`)
-    : '';
+  const liveVerb = landed[0] ? landed[0].toLowerCase() : '';
 
   return (
     <div className="sm-root">
@@ -483,6 +477,7 @@ function SlotMachine({ onResult }) {
           {landed[1] ? <span className="sm-slot">{landed[1]}</span> : <span className="sm-slot-empty"/>}
           {' '}<span style={{fontStyle:'italic',color:'var(--muted)'}}>{conn}</span>{' '}
           {landed[2] ? <span className="sm-slot">{landed[2]}</span> : <span className="sm-slot-empty"/>}
+          {landed[2] && m.name === 'B2B' ? <span style={{fontStyle:'italic',color:'var(--muted)'}}> industry</span> : null}
           <span style={{color:'var(--magenta)'}}>.</span>
         </p>
       </div>
