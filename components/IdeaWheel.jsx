@@ -713,8 +713,7 @@ export default function IdeaWheel() {
       <nav className="su-nav">
         <button className="su-nav-brand" onClick={() => goTo("landing")}>IdeaReels</button>
         <div className="su-nav-links">
-          <a className="su-nav-link" href="/faq">FAQ</a>
-          <a className="su-nav-link" href="/pricing">Pricing</a>
+                    <a className="su-nav-link" href="/pricing">Pricing</a>
           {authUser ? (
             <a className="su-nav-link su-nav-link--cta" href="/profile">
               <span className="su-nav-avatar">{authUser.email?.[0]?.toUpperCase()}</span>
