@@ -18,7 +18,7 @@ async function getUser(request) {
 
 export async function GET(request) {
   const user = await getUser(request);
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user) return Response.json({ balance: 0, transactions: [] }, { status: 200 });
   const balance = await getBalance(user.id);
   const db = getAdmin();
   const { data: transactions } = await db.from('credit_transactions').select('amount,reason,created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10);
