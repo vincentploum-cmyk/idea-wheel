@@ -489,6 +489,8 @@ function SlotMachine({ onResult }) {
                       <div className="sm-item" key={i} style={{height:ITEM_H}}>{word}</div>
                     ))}
                   </div>
+                  <div className="sm-blur-top"/>
+                  <div className="sm-blur-bottom"/>
                 </div>
               </div>
             );
@@ -1638,14 +1640,29 @@ const CSS = `
   content:'';
   position:absolute; top:0; left:0; right:0; bottom:0;
   background:linear-gradient(180deg,
-    rgba(255,255,255,0.96) 0%,
-    rgba(255,255,255,0.7) 20%,
-    transparent 35%,
-    transparent 65%,
-    rgba(255,255,255,0.7) 80%,
-    rgba(255,255,255,0.96) 100%
+    rgba(255,255,255,1) 0%,
+    rgba(255,255,255,1) 15%,
+    transparent 33%,
+    transparent 67%,
+    rgba(255,255,255,1) 85%,
+    rgba(255,255,255,1) 100%
   );
   pointer-events:none; z-index:2;
+}
+.sm-window::after {
+  display:none;
+}
+.sm-blur-top {
+  position:absolute; top:0; left:0; right:0; height:72px;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  pointer-events:none; z-index:3;
+}
+.sm-blur-bottom {
+  position:absolute; bottom:0; left:0; right:0; height:72px;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  pointer-events:none; z-index:3;
 }
 .sm-window::after { display:none; }
 .sm-window:hover {}
