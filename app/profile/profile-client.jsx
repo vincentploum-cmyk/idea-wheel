@@ -57,7 +57,6 @@ export default function ProfileClient({ user, error }) {
 
           {user ? (
             <>
-              <div style={s.avatar}>{user.email?.[0]?.toUpperCase() ?? '?'}</div>
               <h1 style={s.title}>Your Profile</h1>
               <p style={s.email}>{user.email}</p>
 
@@ -145,7 +144,6 @@ const s = {
   center: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 20px 24px', position: 'relative', zIndex: 1 },
   card: { background: 'rgba(255,255,255,0.82)', backdropFilter: 'blur(14px)', border: '1px solid #ece6f5', borderRadius: 24, padding: '36px 32px', maxWidth: 400, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 10px 40px -12px rgba(80,30,120,0.2)' },
   back: { alignSelf: 'flex-start', fontSize: 13, color: '#7a7191', textDecoration: 'none', marginBottom: 24 },
-  avatar: { width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(120deg,#7c3aed,#c026d3,#ff4d8d)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 800, marginBottom: 16 },
   title: { fontFamily: '"Sora", system-ui', fontSize: 22, fontWeight: 700, margin: '0 0 8px', color: '#18112b', textAlign: 'center', letterSpacing: '-0.02em' },
   email: { fontSize: 14, color: '#7a7191', margin: '0 0 24px' },
   sub: { fontSize: 14, color: '#7a7191', margin: '0 0 24px', textAlign: 'center', lineHeight: 1.6 },
