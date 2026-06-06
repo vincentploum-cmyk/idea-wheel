@@ -3,9 +3,13 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 export async function GET(request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const next = searchParams.get('next') ?? '/profile';
+
+  // Always use the canonical site URL — never trust request.url origin
+  // which can be localhost on Render's internal network
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideareels.io';
 
   if (code) {
     const cookieStore = await cookies();
@@ -23,8 +27,8 @@ export async function GET(request) {
       }
     );
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${origin}${next}`);
+    if (!error) return NextResponse.redirect(`${siteUrl}${next}`);
   }
 
-  return NextResponse.redirect(`${origin}/profile?error=auth`);
+  return NextResponse.redirect(`${siteUrl}/profile?error=auth`);
 }
