@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import CloudBackground from '@/components/CloudBackground';
 
 export const metadata = {
   title: 'Privacy Policy | IdeaReels',
@@ -8,7 +9,8 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <main style={s.page}>
-      <div style={s.wrap}>
+      <CloudBackground />
+      <div style={{ ...s.wrap, position: 'relative', zIndex: 1 }}>
         <div style={s.topbar}>
           <Link href="/" style={s.back}>← IdeaReels</Link>
         </div>
