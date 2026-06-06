@@ -402,7 +402,7 @@ function SlotMachine({ onResult }) {
   useEffect(() => {
     if (complete && !anySpinning && onResult) {
       const v = landed[0]; const w = landed[1]; const ind = landed[2];
-      const conj = (s) => { const x=s.toLowerCase(); if(/[^aeiou]y$/.test(x)) return x.slice(0,-1)+'ies'; if(/(s|sh|ch|x|z)$/.test(x)) return x+'es'; return x+'s'; };
+
       const thirdPerson = (s) => { const x=s.toLowerCase(); if(/[^aeiou]y$/.test(x)) return x.slice(0,-1)+'ies'; if(/(s|sh|ch|x|z)$/.test(x)) return x+'es'; return x+'s'; };
       const title = `${w.replace(/\b\w/g, c => c.toUpperCase())} for ${ind.replace(/\b\w/g, c => c.toUpperCase())}`;
       const tagline = m.name === 'B2B'
@@ -421,7 +421,7 @@ function SlotMachine({ onResult }) {
         title,
         tagline,
         blurb,
-        freeformIdea:`${conj(v)} ${w} ${m.connector} ${ind}`,
+        freeformIdea:`${v.toLowerCase()} ${w} ${m.connector} ${ind}`,
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1586,9 +1586,12 @@ const CSS = `
 .sm-modebtn.on { color:#fff; background:var(--grad-brand); border-color:transparent; box-shadow:var(--sh-glow); }
 .sm-modebtn:disabled { opacity:.45; cursor:default; }
 .sm-cabinet {
-  background:rgba(255,255,255,0.68); backdrop-filter:blur(16px);
-  border:1px solid var(--line); border-radius:28px; padding:24px 20px 20px;
-  box-shadow:var(--sh-lg);
+  background:rgba(255,255,255,0.78); backdrop-filter:blur(20px);
+  border:1px solid rgba(124,58,237,0.12); border-radius:28px; padding:24px 20px 20px;
+  box-shadow:
+    0 2px 0 rgba(255,255,255,0.9) inset,
+    0 30px 60px -20px rgba(80,20,120,0.22),
+    0 8px 24px -8px rgba(80,20,120,0.12);
 }
 .sm-reels { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
 .sm-col { display:flex; flex-direction:column; gap:8px; }
@@ -1599,19 +1602,44 @@ const CSS = `
 }
 .sm-window {
   height:216px; overflow:hidden; border-radius:14px;
-  background:var(--bg-2); border:1.5px solid var(--line-2);
+  background:#fff; border:1.5px solid var(--line-2);
   cursor:pointer; position:relative;
-  -webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 16%,#000 84%,transparent 100%);
-  mask-image:linear-gradient(180deg,transparent 0%,#000 16%,#000 84%,transparent 100%);
-  transition:border-color .2s;
+  box-shadow:
+    inset 0 8px 16px -8px rgba(80,20,120,0.08),
+    inset 0 -8px 16px -8px rgba(80,20,120,0.08),
+    0 4px 16px -4px rgba(80,20,120,0.1);
+  transition:border-color .2s, box-shadow .2s;
 }
-.sm-window:hover { border-color:var(--violet); }
+.sm-window::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; bottom:0;
+  background:linear-gradient(180deg,
+    rgba(250,247,255,0.95) 0%,
+    transparent 22%,
+    transparent 78%,
+    rgba(250,247,255,0.95) 100%
+  );
+  pointer-events:none; z-index:2;
+}
+/* payline highlight on the centre item */
+.sm-window::after {
+  content:'';
+  position:absolute; left:8px; right:8px;
+  top:50%; transform:translateY(-50%);
+  height:72px;
+  border-top:1.5px solid rgba(124,58,237,0.2);
+  border-bottom:1.5px solid rgba(124,58,237,0.2);
+  background:rgba(124,58,237,0.04);
+  border-radius:8px;
+  pointer-events:none; z-index:1;
+}
+.sm-window:hover { border-color:var(--violet); box-shadow:inset 0 8px 16px -8px rgba(124,58,237,0.12), inset 0 -8px 16px -8px rgba(124,58,237,0.12), 0 4px 20px -4px rgba(124,58,237,0.18); }
 .sm-strip { will-change:transform; }
 .sm-item {
   display:flex; align-items:center; justify-content:center;
   text-align:center; padding:0 10px;
-  font-size:clamp(11px,1.3vw,16px); font-weight:800;
-  text-transform:uppercase; color:var(--ink); line-height:1.15;
+  font-size:clamp(11px,1.3vw,15px); font-weight:700;
+  text-transform:uppercase; color:var(--ink-2); line-height:1.15;
   border-bottom:1px solid var(--line);
 }
 .sm-base { display:flex; justify-content:center; padding-top:12px; }
