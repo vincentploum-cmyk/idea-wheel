@@ -627,7 +627,7 @@ export default function IdeaWheel() {
         setTimeout(() => setShowConfetti(false), 4000);
       }
     } catch(e) {
-      setValidateErr("Market check failed. " + e.message);
+      setValidateErr(e.message.includes("AI_CREDITS") || e.message.includes("temporarily") ? "Our AI is taking a short break. Please try again in a minute." : "Market check failed. " + e.message);
     } finally {
       setValidating(false);
     }
