@@ -2,7 +2,7 @@ import Link from 'next/link';
 import CloudBackground from '@/components/CloudBackground';
 
 export const metadata = {
-  title: 'Privacy Policy | IdeaReels',
+  title: 'Privacy Policy',
   description: 'How IdeaReels collects and uses your data.',
 };
 
