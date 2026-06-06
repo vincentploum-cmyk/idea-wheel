@@ -332,12 +332,12 @@ const MODES = {
     labels:['ACTION','EXPERIENCE','FOR'],
     banks:[
       // 15 actions — every verb pairs naturally with every experience below
-      ['Tracks','Improves','Manages','Builds','Optimizes','Plans','Simplifies','Coaches','Monitors','Personalizes','Develops','Boosts','Structures','Transforms','Organizes'],
+      ['Tracks', 'Improves', 'Manages', 'Builds', 'Optimizes', 'Plans', 'Simplifies', 'Coaches', 'Monitors', 'Personalizes', 'Boosts', 'Structures', 'Transforms', 'Organizes', 'Gamifies'],
       // 18 experiences — noun phrases that read naturally after any action above
-      ['daily habits','sleep quality','personal finances','mental health','fitness goals','meal planning','career progress','productivity','stress levels','skill development','time management','nutrition','home organization','creative projects','work-life balance','learning routines','relationship goals','social life'],
+      ['daily habits', 'sleep quality', 'personal finances', 'mental health', 'fitness goals', 'meal planning', 'career progress', 'productivity', 'anxiety & stress', 'skill development', 'time management', 'nutrition tracking', 'home organization', 'creative projects', 'work-life balance', 'learning routines', 'relationship goals', 'social confidence', 'spending habits', 'morning routines', 'workout recovery', 'focus & deep work', 'journaling & reflection', 'language learning', 'financial independence', 'digital wellbeing', 'parenting routines', 'reading habits', 'dating & relationships', 'side hustle growth'],
       // Audiences: clear groups with a shared pain point
       // 18 audiences
-      ['busy professionals','new parents','college students','freelancers','athletes','small business owners','retirees','remote workers','people with ADHD','musicians','young adults','solopreneurs','teachers','healthcare workers','content creators','night shift workers','seniors living alone','couples'],
+      ['busy professionals', 'new parents', 'college students', 'freelancers', 'athletes', 'small business owners', 'retirees', 'remote workers', 'people with ADHD', 'musicians', 'young adults', 'solopreneurs', 'teachers', 'healthcare workers', 'content creators', 'night shift workers', 'seniors living alone', 'couples', 'first-time homeowners', 'job seekers', 'new graduates', 'introverts', 'chronic illness patients', 'travel enthusiasts', 'new immigrants'],
     ],
   },
 };
@@ -414,22 +414,19 @@ function SlotMachine({ onResult }) {
 
   const B2B_VALID_PAIRS = {0: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 1: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 3: [0, 2, 3, 4, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 24, 25], 4: [0, 2, 3, 4, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27], 5: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 6: [0, 1, 6, 7, 8, 21, 29], 7: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 8: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 9: [0, 2, 3, 4, 5, 10, 14, 15, 16, 17, 19, 20, 23, 24, 26], 10: [0, 2, 3, 5, 10, 14, 17, 19, 23], 11: [0, 2, 4, 5, 9, 10, 11, 12, 16, 18, 19, 22, 25, 26, 28], 12: [0, 4, 5, 11, 13, 15, 16, 18, 19, 20, 21, 25, 26, 27], 13: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 14: [0, 9, 11, 13, 14, 15, 17, 19, 20, 24, 25, 26]};
 
+  const CONSUMER_VALID_PAIRS = {0: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 1: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 3: [0, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29], 4: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 5: [0, 2, 4, 6, 7, 9, 10, 11, 12, 13, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 6: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 7: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29], 8: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 9: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 10: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29], 11: [0, 2, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29], 12: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 13: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 14: [0, 2, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27, 29]};
+
   const spinAll = () => {
     if (anySpinning) return;
-    if (mode === 'b2b') {
-      // Pick a random valid action first, then a compatible workflow, then random industry
-      const actionIdx = Math.floor(Math.random() * banks[0].length);
-      const allowedWorkflows = B2B_VALID_PAIRS[actionIdx] || [...Array(banks[1].length).keys()];
-      const workflowIdx = allowedWorkflows[Math.floor(Math.random() * allowedWorkflows.length)];
-      const industryIdx = Math.floor(Math.random() * banks[2].length);
-      // Spin each reel to the pre-selected index
-      spinWheelTo(0, actionIdx, 2200);
-      spinWheelTo(1, workflowIdx, 2600);
-      spinWheelTo(2, industryIdx, 3000);
-    } else {
-      let slot=0;
-      banks.forEach((_,w) => { spinWheel(w, 2200+slot*400); slot++; });
-    }
+    const validPairs = mode === 'b2b' ? B2B_VALID_PAIRS : CONSUMER_VALID_PAIRS;
+    // Pick a random valid action first, then a compatible experience/workflow
+    const actionIdx = Math.floor(Math.random() * banks[0].length);
+    const allowed = validPairs[actionIdx] || [...Array(banks[1].length).keys()];
+    const expIdx = allowed[Math.floor(Math.random() * allowed.length)];
+    const audienceIdx = Math.floor(Math.random() * banks[2].length);
+    spinWheelTo(0, actionIdx, 2200);
+    spinWheelTo(1, expIdx, 2600);
+    spinWheelTo(2, audienceIdx, 3000);
   };
 
   const complete = landed.every(Boolean);
