@@ -9,6 +9,7 @@ const CREDIT_PACKAGES = [
 ];
 const CREDIT_PACKAGE_BY_KEY = Object.fromEntries(CREDIT_PACKAGES.map(p => [p.key, p]));
 
+const supabase = createSupabaseBrowser();
 export default function PricingPageClient({ searchParams }) {
   const [loadingKey, setLoadingKey] = useState(null);
   const [error, setError] = useState('');
