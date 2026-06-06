@@ -341,7 +341,7 @@ const MODES = {
     ],
   },
 };
-const ITEM_H = 72;
+const ITEM_H = 80;
 const REPEATS = 10;
 const HOME_COPY = 4;
 const REEL_TINTS = ['#7c3aed','#c026d3','#ff4d8d'];
@@ -377,12 +377,12 @@ function SlotMachine({ onResult }) {
     const curBase = ((cur%L)+L)%L;
     const t = Math.floor(Math.random()*L);
     const forward = ((t-curBase)%L+L)%L;
-    const loops = 4 + Math.floor(Math.random()*3);
+    const loops = 8 + Math.floor(Math.random()*4);
     const newIndex = cur + loops*L + forward + (forward===0?L:0);
     indexRef.current[w] = newIndex;
     targetRef.current[w] = newIndex%L;
     const el = stripRefs[w].current;
-    if (el) { el.style.transition=`transform ${duration}ms cubic-bezier(0.16,1,0.3,1)`; el.style.transform=`translateY(${-(newIndex-1)*ITEM_H}px)`; }
+    if (el) { el.style.transition=`transform ${duration}ms cubic-bezier(0.12,0.0,0.08,1.0)`; el.style.transform=`translateY(${-(newIndex-1)*ITEM_H}px)`; }
     setSpinning(s => { const n=[...s]; n[w]=true; return n; });
   };
 
@@ -424,9 +424,9 @@ function SlotMachine({ onResult }) {
     const allowed = validPairs[actionIdx] || [...Array(banks[1].length).keys()];
     const expIdx = allowed[Math.floor(Math.random() * allowed.length)];
     const audienceIdx = Math.floor(Math.random() * banks[2].length);
-    spinWheelTo(0, actionIdx, 2200);
-    spinWheelTo(1, expIdx, 2600);
-    spinWheelTo(2, audienceIdx, 3000);
+    spinWheelTo(0, actionIdx, 3000);
+    spinWheelTo(1, expIdx, 3600);
+    spinWheelTo(2, audienceIdx, 4200);
   };
 
   const complete = landed.every(Boolean);
@@ -483,7 +483,7 @@ function SlotMachine({ onResult }) {
             return (
               <div className="sm-col" key={mode+w} style={{'--accent':REEL_TINTS[w]}}>
                 <div className="sm-collabel">{m.labels[w]}</div>
-                <div className="sm-window" onClick={()=>!anySpinning&&spinWheel(w,2200)}>
+                <div className="sm-window" onClick={()=>!anySpinning&&spinWheel(w,3200)}>
                   <div className="sm-strip" ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)}>
                     {repeated.map((word,i)=>(
                       <div className="sm-item" key={i} style={{height:ITEM_H}}>{word}</div>
@@ -1630,7 +1630,7 @@ const CSS = `
   color:var(--accent,#c026d3);
 }
 .sm-window {
-  height:216px; overflow:hidden; border-radius:0;
+  height:240px; overflow:hidden; border-radius:0;
   background:#fff; border:none;
   cursor:pointer; position:relative;
   transition:background .2s;
@@ -1652,13 +1652,13 @@ const CSS = `
   display:none;
 }
 .sm-blur-top {
-  position:absolute; top:0; left:0; right:0; height:72px;
+  position:absolute; top:0; left:0; right:0; height:80px;
   backdrop-filter:blur(6px);
   -webkit-backdrop-filter:blur(6px);
   pointer-events:none; z-index:3;
 }
 .sm-blur-bottom {
-  position:absolute; bottom:0; left:0; right:0; height:72px;
+  position:absolute; bottom:0; left:0; right:0; height:80px;
   backdrop-filter:blur(6px);
   -webkit-backdrop-filter:blur(6px);
   pointer-events:none; z-index:3;
@@ -1669,7 +1669,7 @@ const CSS = `
 .sm-payline-bar {
   position:absolute; left:0; right:0;
   top:50%; transform:translateY(-50%);
-  height:72px;
+  height:80px;
   border-top:2px solid rgba(124,58,237,0.5);
   border-bottom:2px solid rgba(124,58,237,0.5);
   background:rgba(124,58,237,0.05);
