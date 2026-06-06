@@ -1715,7 +1715,7 @@ const CSS = `
   background:linear-gradient(175deg, #1c0f35 0%, #0e0620 40%, #180a30 100%);
   border-radius:32px;
   padding:0;
-  overflow:hidden;
+  overflow:visible;
   box-shadow:
     0 0 0 1px rgba(255,255,255,0.06) inset,
     0 0 0 3px rgba(120,50,220,0.15) inset,
@@ -1749,20 +1749,31 @@ const CSS = `
   position:relative; z-index:5;
   text-align:center;
   padding:22px 24px 18px;
-  border-bottom:2px solid rgba(180,100,255,0.2);
-  background:linear-gradient(180deg, rgba(100,30,200,0.25) 0%, transparent 100%);
+  border-bottom:1px solid rgba(180,100,255,0.25);
+  background:linear-gradient(180deg, rgba(80,20,180,0.3) 0%, rgba(50,10,120,0.1) 100%);
   display:block;
+  /* decorative top corners */
+}
+.sm-marquee::before {
+  content:'— ✦ —';
+  display:block;
+  font-size:11px;
+  letter-spacing:0.3em;
+  color:rgba(180,120,255,0.5);
+  margin-bottom:8px;
 }
 .sm-marquee-title {
-  font-family:var(--font-head), 'Sora', system-ui, sans-serif;
-  font-size:clamp(22px,4vw,34px);
+  font-family:'Sora', var(--font-head), system-ui, sans-serif;
+  font-size:clamp(20px,3.5vw,30px);
   font-weight:900;
-  letter-spacing:0.15em;
+  letter-spacing:0.18em;
   text-transform:uppercase;
-  background:linear-gradient(120deg, #f0d0ff 0%, #ffffff 40%, #d8a8ff 70%, #f472b6 100%);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  color:#fff;
   display:block;
-  filter:drop-shadow(0 0 20px rgba(200,120,255,0.7));
+  text-shadow:
+    0 0 20px rgba(220,140,255,0.8),
+    0 0 60px rgba(180,80,255,0.4),
+    0 2px 4px rgba(0,0,0,0.5);
 }
 .sm-marquee-sub {
   display:block;
@@ -1856,7 +1867,7 @@ const CSS = `
   text-align:center; padding:0 14px;
   font-size:clamp(10px,1.4vw,14px); font-weight:800;
   text-transform:uppercase;
-  color:rgba(200,170,255,0.7);
+  color:rgba(230,210,255,0.85);
   line-height:1.2; letter-spacing:0.06em;
   pointer-events:none; user-select:none;
   border-bottom:1px solid rgba(80,40,160,0.15);
@@ -1884,6 +1895,13 @@ const CSS = `
 }
 
 /* Active item highlight (center slot) */
+.sm-payline-center-text {
+  position:absolute; left:0; right:0;
+  top:50%; transform:translateY(-50%);
+  height:80px;
+  display:grid; grid-template-columns:repeat(3,1fr);
+  pointer-events:none; z-index:6;
+}
 .sm-payline-bar::before {
   content:'';
   position:absolute; inset:0;
