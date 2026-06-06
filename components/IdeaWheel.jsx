@@ -476,33 +476,48 @@ function SlotMachine({ onResult }) {
 
       {/* reels */}
       <div className="sm-cabinet">
-        <div className="sm-reels-wrap">
-        <div className="sm-reels">
-          {banks.map((bank,w) => {
-            const repeated = Array.from({length:REPEATS},()=>bank).flat();
-            return (
-              <div className="sm-col" key={mode+w} style={{'--accent':REEL_TINTS[w]}}>
-                <div className="sm-collabel">{m.labels[w]}</div>
-                <div className="sm-window" onClick={()=>!anySpinning&&spinWheel(w,3200)}>
-                  <div className="sm-strip" ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)}>
-                    {repeated.map((word,i)=>(
-                      <div className="sm-item" key={i} style={{height:ITEM_H}}>{word}</div>
-                    ))}
-                  </div>
-                  <div className="sm-blur-top"/>
-                  <div className="sm-blur-bottom"/>
-                </div>
-              </div>
-            );
-          })}
+        {/* Marquee header */}
+        <div className="sm-marquee">
+          <div className="sm-marquee-title">Idea Generator</div>
+          <div className="sm-marquee-sub">Spin to discover your next venture</div>
         </div>
-        <div className="sm-payline-bar"/>
+
+        {/* Reels */}
+        <div className="sm-reels-outer">
+          {/* Column labels */}
+          <div className="sm-labels-row">
+            {m.labels.map((label,w) => (
+              <div className="sm-collabel" key={w}>{label}</div>
+            ))}
+          </div>
+
+          <div className="sm-reels-wrap">
+            <div className="sm-reels">
+              {banks.map((bank,w) => {
+                const repeated = Array.from({length:REPEATS},()=>bank).flat();
+                return (
+                  <div className="sm-col" key={mode+w} style={{'--accent':REEL_TINTS[w]}}>
+                    <div className="sm-window" onClick={()=>!anySpinning&&spinWheel(w,3200)}>
+                      <div className="sm-strip" ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)}>
+                        {repeated.map((word,i)=>(
+                          <div className="sm-item" key={i} style={{height:ITEM_H}}>{word}</div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="sm-payline-bar"/>
+          </div>
+          <div className="sm-reels-ledge"/>
         </div>
         <div className="sm-base">
-          <button className="sm-spin" onClick={spinAll} disabled={anySpinning}>
-            {anySpinning ? 'Spinning…' : 'Generate idea'}
-          </button>
-        </div>
+          <div className="sm-btn-housing">
+            <button className="sm-spin" onClick={spinAll} disabled={anySpinning}>
+              {anySpinning ? '✦  Spinning…' : '✦  Generate Idea'}
+            </button>
+          </div>
       </div>
 
       {/* live sentence under reels */}
@@ -1594,168 +1609,301 @@ const CSS = `
 .su-landing-footer-link:hover { color:var(--violet); }
 
 /* ── slot machine ─────────────────────────────────────────────────── */
-.sm-root { width:100%; max-width:720px; margin:0 auto; }
-.sm-modebar { display:flex; gap:8px; justify-content:center; margin-bottom:20px; }
+.sm-root { width:100%; max-width:760px; margin:0 auto; }
+
+/* ── Mode toggle ── */
+.sm-modebar { display:flex; gap:10px; justify-content:center; margin-bottom:24px; }
 .sm-modebtn {
   font-family:var(--font-body); font-size:14px; font-weight:700;
-  color:var(--muted); padding:9px 20px; border-radius:var(--r-pill);
-  border:1.5px solid var(--line); background:rgba(255,255,255,0.6);
-  cursor:pointer; transition:all .15s;
+  color:rgba(180,140,255,0.8); padding:10px 28px; border-radius:99px;
+  border:1.5px solid rgba(180,100,255,0.25); background:rgba(255,255,255,0.04);
+  cursor:pointer; transition:all .2s; letter-spacing:0.02em;
 }
-.sm-modebtn:hover:not(:disabled) { color:rgba(220,180,255,0.9); border-color:rgba(180,100,255,0.4); background:rgba(150,80,255,0.08); }
-.sm-modebtn.on { color:#fff; background:linear-gradient(120deg,#7c3aed,#c026d3); border-color:transparent; box-shadow:0 0 20px rgba(180,80,255,0.4), 0 4px 12px rgba(0,0,0,0.3); }
-.sm-modebtn:disabled { opacity:.45; cursor:default; }
+.sm-modebtn:hover:not(:disabled) { color:rgba(220,180,255,1); border-color:rgba(180,100,255,0.5); background:rgba(150,80,255,0.1); }
+.sm-modebtn.on {
+  color:#fff; background:linear-gradient(120deg,#7c3aed,#c026d3);
+  border-color:transparent;
+  box-shadow:0 0 24px rgba(180,80,255,0.5), 0 4px 16px rgba(0,0,0,0.4);
+}
+.sm-modebtn:disabled { opacity:.4; cursor:default; }
+
+/* ── Cabinet — the physical machine body ── */
 .sm-cabinet {
-  background:linear-gradient(160deg, #1a0d2e 0%, #0f0820 50%, #1a0530 100%);
-  border:1px solid rgba(180,100,255,0.2);
-  border-radius:28px;
-  padding:28px 24px 24px;
   position:relative;
+  background:linear-gradient(175deg, #1c0f35 0%, #0e0620 40%, #180a30 100%);
+  border-radius:32px;
+  padding:0;
   overflow:hidden;
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.04) inset,
-    0 40px 80px -20px rgba(10,0,30,0.9),
-    0 0 60px -10px rgba(124,58,237,0.3),
-    0 8px 24px -8px rgba(0,0,0,0.5);
+    0 0 0 1px rgba(255,255,255,0.06) inset,
+    0 0 0 3px rgba(120,50,220,0.15) inset,
+    0 60px 120px -20px rgba(5,0,20,0.95),
+    0 0 80px -10px rgba(120,50,220,0.35),
+    0 20px 40px -10px rgba(0,0,0,0.8);
 }
-/* Top glow strip */
+
+/* Chrome trim top */
 .sm-cabinet::before {
   content:'';
-  position:absolute; top:0; left:10%; right:10%; height:1px;
-  background:linear-gradient(90deg, transparent, rgba(180,100,255,0.6), rgba(255,80,160,0.6), transparent);
+  position:absolute; top:0; left:0; right:0; height:4px;
+  background:linear-gradient(90deg,
+    transparent 0%, rgba(200,150,255,0.3) 20%,
+    rgba(255,255,255,0.6) 50%,
+    rgba(200,150,255,0.3) 80%, transparent 100%
+  );
+  z-index:10;
 }
-/* Inner ambient glow */
+
+/* Inner top glow */
 .sm-cabinet::after {
   content:'';
-  position:absolute; top:-40px; left:50%; transform:translateX(-50%);
-  width:60%; height:80px;
-  background:radial-gradient(ellipse, rgba(124,58,237,0.25) 0%, transparent 70%);
-  pointer-events:none;
+  position:absolute; top:0; left:0; right:0; height:120px;
+  background:radial-gradient(ellipse at 50% 0%, rgba(140,60,255,0.2) 0%, transparent 70%);
+  pointer-events:none; z-index:1;
 }
-.sm-reels-wrap {
-  position:relative; margin-bottom:20px;
-  border:1px solid rgba(180,100,255,0.25);
-  border-radius:16px; overflow:hidden;
-  background:linear-gradient(180deg, #0d0618 0%, #130822 100%);
-  box-shadow:
-    0 0 0 1px rgba(0,0,0,0.4) inset,
-    0 4px 32px -4px rgba(0,0,0,0.6),
-    0 0 20px -5px rgba(124,58,237,0.2);
+
+/* ── Cabinet header / marquee ── */
+.sm-marquee {
+  position:relative; z-index:5;
+  text-align:center;
+  padding:20px 24px 16px;
+  border-bottom:1px solid rgba(180,100,255,0.15);
+  background:linear-gradient(180deg, rgba(80,20,160,0.3) 0%, transparent 100%);
 }
-.sm-reels { display:grid; grid-template-columns:repeat(3,1fr); gap:0; }
-.sm-col { display:flex; flex-direction:column; gap:0; border-right:1px solid rgba(150,80,255,0.15); }
-.sm-col:last-child { border-right:none; }
-.sm-col:first-child .sm-window { border-radius:0; }
-.sm-col:last-child .sm-window { border-radius:0; }
+.sm-marquee-title {
+  font-family:var(--font-head);
+  font-size:clamp(18px,3vw,26px);
+  font-weight:900;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  background:linear-gradient(120deg, #e0b0ff, #fff, #c084fc);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  text-shadow:none;
+  filter:drop-shadow(0 0 12px rgba(180,100,255,0.6));
+}
+.sm-marquee-sub {
+  font-size:10px; letter-spacing:0.2em; text-transform:uppercase;
+  color:rgba(180,140,255,0.5); margin-top:4px;
+}
+
+/* ── Reels container ── */
+.sm-reels-outer {
+  padding:16px 20px 0;
+  position:relative; z-index:5;
+}
+
+/* Column labels row */
+.sm-labels-row {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+  margin-bottom:8px;
+}
 .sm-collabel {
-  text-align:center; font-size:10px; font-weight:800;
-  letter-spacing:.22em; text-transform:uppercase;
-  color:rgba(200,140,255,0.7);
-  padding-bottom:8px;
+  text-align:center; font-size:9px; font-weight:900;
+  letter-spacing:0.25em; text-transform:uppercase;
+  color:rgba(180,130,255,0.6);
+  background:rgba(100,50,200,0.15);
+  border:1px solid rgba(150,80,255,0.15);
+  border-radius:6px;
+  padding:5px 0;
 }
+
+/* The 3-reel display */
+.sm-reels-wrap {
+  position:relative;
+  border-radius:16px;
+  overflow:hidden;
+  /* Chrome bezel */
+  background:linear-gradient(180deg, #2a1a4a 0%, #1a0d30 100%);
+  box-shadow:
+    0 0 0 2px rgba(120,60,220,0.4),
+    0 0 0 4px rgba(60,20,100,0.6),
+    0 0 0 5px rgba(200,150,255,0.1),
+    inset 0 2px 4px rgba(0,0,0,0.8),
+    inset 0 0 40px rgba(0,0,0,0.5);
+}
+.sm-reels {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:0;
+  /* The actual reel drum - dark inside */
+  background:linear-gradient(180deg, #080412 0%, #0d0820 100%);
+}
+
+/* Column dividers — look like physical separators */
+.sm-col {
+  display:flex; flex-direction:column; gap:0;
+  border-right:2px solid rgba(80,30,150,0.6);
+  position:relative;
+}
+.sm-col:last-child { border-right:none; }
+
+/* Individual reel window */
 .sm-window {
   height:240px; overflow:hidden; border-radius:0;
   background:transparent; border:none;
   cursor:pointer; position:relative;
-  transition:background .2s;
 }
+
+/* Top/bottom shadow to simulate physical drum curve */
 .sm-window::before {
   content:'';
-  position:absolute; top:0; left:0; right:0; bottom:0;
+  position:absolute; inset:0;
   background:linear-gradient(180deg,
-    rgba(13,6,24,1) 0%,
-    rgba(13,6,24,0.92) 14%,
-    rgba(13,6,24,0.3) 30%,
-    transparent 42%,
-    transparent 58%,
-    rgba(13,6,24,0.3) 70%,
-    rgba(13,6,24,0.92) 86%,
-    rgba(13,6,24,1) 100%
+    rgba(8,4,18,1) 0%,
+    rgba(8,4,18,0.95) 12%,
+    rgba(8,4,18,0.6) 25%,
+    rgba(8,4,18,0.1) 35%,
+    transparent 45%,
+    transparent 55%,
+    rgba(8,4,18,0.1) 65%,
+    rgba(8,4,18,0.6) 75%,
+    rgba(8,4,18,0.95) 88%,
+    rgba(8,4,18,1) 100%
   );
   pointer-events:none; z-index:2;
 }
-.sm-window::after {
-  display:none;
-}
-.sm-blur-top {
-  position:absolute; top:0; left:0; right:0; height:80px;
-  background:linear-gradient(180deg, rgba(13,6,24,0.95) 0%, transparent 100%);
-  pointer-events:none; z-index:3;
-}
-.sm-blur-bottom {
-  position:absolute; bottom:0; left:0; right:0; height:80px;
-  background:linear-gradient(0deg, rgba(13,6,24,0.95) 0%, transparent 100%);
-  pointer-events:none; z-index:3;
-}
 .sm-window::after { display:none; }
 .sm-window:hover {}
+
+/* Reel strip */
 .sm-strip { will-change:transform; pointer-events:none; user-select:none; }
+
+/* Individual item on the reel */
+.sm-item {
+  display:flex; align-items:center; justify-content:center;
+  text-align:center; padding:0 14px;
+  font-size:clamp(10px,1.4vw,15px); font-weight:800;
+  text-transform:uppercase;
+  color:rgba(220,200,255,0.85);
+  line-height:1.2; letter-spacing:0.05em;
+  pointer-events:none; user-select:none;
+  /* Subtle separator */
+  border-bottom:1px solid rgba(80,40,160,0.2);
+}
+
+/* ── Payline — the glowing center line ── */
 .sm-payline-bar {
   position:absolute; left:0; right:0;
   top:50%; transform:translateY(-50%);
   height:80px;
-  border-top:1px solid rgba(200,120,255,0.6);
-  border-bottom:1px solid rgba(200,120,255,0.6);
+  pointer-events:none; z-index:5;
+  /* Neon top and bottom lines */
+  border-top:1.5px solid rgba(220,150,255,0.8);
+  border-bottom:1.5px solid rgba(220,150,255,0.8);
+  /* Glow through the center */
   background:linear-gradient(180deg,
-    rgba(150,80,255,0.08) 0%,
-    rgba(180,100,255,0.12) 50%,
-    rgba(150,80,255,0.08) 100%
+    rgba(160,80,255,0.12) 0%,
+    rgba(180,100,255,0.18) 50%,
+    rgba(160,80,255,0.12) 100%
   );
-  pointer-events:none; z-index:4;
   box-shadow:
-    0 0 20px rgba(180,100,255,0.15),
-    inset 0 1px 0 rgba(255,255,255,0.06),
-    inset 0 -1px 0 rgba(255,255,255,0.06);
+    0 0 12px rgba(200,120,255,0.4),
+    0 0 40px rgba(180,80,255,0.15),
+    inset 0 0 20px rgba(180,100,255,0.08);
 }
-.sm-item {
+
+/* Active item highlight (center slot) */
+.sm-payline-bar::before {
+  content:'';
+  position:absolute; inset:0;
+  background:linear-gradient(90deg,
+    transparent 0%,
+    rgba(180,100,255,0.06) 20%,
+    rgba(200,120,255,0.1) 50%,
+    rgba(180,100,255,0.06) 80%,
+    transparent 100%
+  );
+}
+
+/* Side chrome trim lines */
+.sm-reels-wrap::before {
+  content:'';
+  position:absolute; left:0; top:0; bottom:0; width:3px;
+  background:linear-gradient(180deg, rgba(200,150,255,0.15), rgba(120,60,200,0.3), rgba(200,150,255,0.15));
+  z-index:10;
+}
+.sm-reels-wrap::after {
+  content:'';
+  position:absolute; right:0; top:0; bottom:0; width:3px;
+  background:linear-gradient(180deg, rgba(200,150,255,0.15), rgba(120,60,200,0.3), rgba(200,150,255,0.15));
+  z-index:10;
+}
+
+/* ── Bottom of reels — chrome ledge ── */
+.sm-reels-ledge {
+  height:8px;
+  background:linear-gradient(180deg, rgba(80,40,160,0.4), rgba(40,15,80,0.8));
+  border-top:1px solid rgba(120,60,200,0.3);
+  margin:0 0 0 0;
+}
+
+/* ── Generate button section ── */
+.sm-base {
+  display:flex; flex-direction:column; align-items:center;
+  padding:20px 24px 24px;
+  position:relative; z-index:5;
+  gap:12px;
+}
+
+/* Button housing */
+.sm-btn-housing {
+  position:relative;
+  background:linear-gradient(180deg, rgba(60,20,120,0.4), rgba(30,10,60,0.6));
+  border-radius:20px;
+  padding:16px 24px;
+  border:1px solid rgba(120,60,200,0.2);
+  width:100%;
   display:flex; align-items:center; justify-content:center;
-  text-align:center; padding:0 12px;
-  font-size:clamp(11px,1.3vw,14px); font-weight:700;
-  text-transform:uppercase;
-  color:rgba(220,200,255,0.9);
-  line-height:1.2;
-  pointer-events:none; user-select:none;
-  letter-spacing:0.04em;
 }
-.sm-base { display:flex; justify-content:center; padding-top:12px; }
+
 .sm-spin {
-  font-family:var(--font-body); font-size:17px; font-weight:800;
-  color:#fff; padding:16px 48px; border:none; border-radius:var(--r-lg);
-  background:linear-gradient(120deg, #7c3aed 0%, #c026d3 50%, #ff4d8d 100%);
-  cursor:pointer; min-width:240px; letter-spacing:0.02em;
+  font-family:var(--font-body); font-size:18px; font-weight:900;
+  color:#fff; padding:18px 56px; border:none; border-radius:14px;
+  letter-spacing:0.06em; text-transform:uppercase;
+  background:linear-gradient(135deg, #9333ea 0%, #c026d3 40%, #e11d7a 80%, #f43f5e 100%);
+  cursor:pointer; min-width:260px; position:relative;
   box-shadow:
-    0 0 30px rgba(180,80,255,0.5),
-    0 0 60px rgba(180,80,255,0.2),
-    0 8px 24px rgba(0,0,0,0.4);
+    0 0 0 1px rgba(255,255,255,0.1) inset,
+    0 0 30px rgba(180,60,255,0.5),
+    0 0 60px rgba(180,60,255,0.25),
+    0 10px 30px rgba(0,0,0,0.5);
   transition:all .2s;
-  animation:spinbtnpulse 3s ease-in-out infinite;
+  animation:spinbtnpulse 2.5s ease-in-out infinite;
 }
 @keyframes spinbtnpulse {
-  0%,100% { box-shadow: 0 0 30px rgba(180,80,255,0.5), 0 0 60px rgba(180,80,255,0.2), 0 8px 24px rgba(0,0,0,0.4); }
-  50% { box-shadow: 0 0 40px rgba(180,80,255,0.7), 0 0 80px rgba(180,80,255,0.3), 0 8px 24px rgba(0,0,0,0.4); }
+  0%,100% { box-shadow:0 0 0 1px rgba(255,255,255,0.1) inset, 0 0 30px rgba(180,60,255,0.5), 0 0 60px rgba(180,60,255,0.25), 0 10px 30px rgba(0,0,0,0.5); }
+  50% { box-shadow:0 0 0 1px rgba(255,255,255,0.15) inset, 0 0 50px rgba(180,60,255,0.75), 0 0 100px rgba(180,60,255,0.4), 0 10px 30px rgba(0,0,0,0.5); }
 }
-.sm-spin:hover:not(:disabled) { transform:translateY(-2px) scale(1.02); animation:none; box-shadow:0 0 50px rgba(180,80,255,0.8), 0 12px 32px rgba(0,0,0,0.5); }
-.sm-spin:active:not(:disabled) { transform:scale(.97); }
+.sm-spin:hover:not(:disabled) {
+  transform:translateY(-2px) scale(1.02);
+  animation:none;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.2) inset, 0 0 60px rgba(200,80,255,0.9), 0 0 120px rgba(180,60,255,0.5), 0 14px 40px rgba(0,0,0,0.6);
+}
+.sm-spin:active:not(:disabled) { transform:scale(.97) translateY(1px); }
 .sm-spin:disabled { opacity:.4; cursor:default; animation:none; }
+
+/* ── Live sentence ── */
 .sm-live-sentence {
-  margin-top:20px; padding:18px 24px;
-  background:rgba(255,255,255,0.06); backdrop-filter:blur(10px);
-  border:1px solid rgba(150,80,255,0.2); border-radius:var(--r-lg);
-  text-align:center; min-height:64px; display:flex; align-items:center; justify-content:center;
+  width:100%;
+  padding:14px 20px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(150,80,255,0.2);
+  border-radius:12px;
+  text-align:center; min-height:52px;
+  display:flex; align-items:center; justify-content:center;
 }
-.sm-live-sentence p {
-  margin:0; font-size:15px; line-height:1.7; color:rgba(220,200,255,0.85);
-}
+.sm-live-sentence p { margin:0; font-size:14px; line-height:1.7; color:rgba(200,175,255,0.8); }
 .sm-live-sentence .sm-slot {
-  display:inline-block; font-weight:800; padding:1px 6px; border-radius:6px;
-  background:var(--grad-brand); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  display:inline-block; font-weight:900; padding:1px 6px; border-radius:6px;
+  background:linear-gradient(120deg,#c084fc,#f0abfc);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  font-size:15px;
 }
 .sm-live-sentence .sm-slot-empty {
-  display:inline-block; width:80px; height:14px; border-radius:4px;
+  display:inline-block; width:80px; height:12px; border-radius:4px;
   background:rgba(150,80,255,0.2); vertical-align:middle; margin:0 4px;
   animation:smpulse 1.2s ease-in-out infinite;
 }
 @keyframes smpulse { 0%,100%{opacity:.4} 50%{opacity:.9} }
+
 .sm-result-cta {
   margin-top:20px; text-align:center;
   animation:iwIn .35s ease-out both;
