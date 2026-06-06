@@ -513,11 +513,9 @@ function SlotMachine({ onResult }) {
           <div className="sm-reels-ledge"/>
         </div>
         <div className="sm-base">
-          <div className="sm-btn-housing">
-            <button className="sm-spin" onClick={spinAll} disabled={anySpinning}>
-              {anySpinning ? '✦  Spinning…' : '✦  Generate Idea'}
-            </button>
-          </div>
+          <button className="sm-spin" onClick={spinAll} disabled={anySpinning}>
+            {anySpinning ? '⟳  Spinning…' : '✦  Generate Idea'}
+          </button>
       </div>
 
       {/* live sentence under reels */}
@@ -1750,24 +1748,26 @@ const CSS = `
 .sm-marquee {
   position:relative; z-index:5;
   text-align:center;
-  padding:20px 24px 16px;
-  border-bottom:1px solid rgba(180,100,255,0.15);
-  background:linear-gradient(180deg, rgba(80,20,160,0.3) 0%, transparent 100%);
+  padding:22px 24px 18px;
+  border-bottom:2px solid rgba(180,100,255,0.2);
+  background:linear-gradient(180deg, rgba(100,30,200,0.25) 0%, transparent 100%);
+  display:block;
 }
 .sm-marquee-title {
-  font-family:var(--font-head);
-  font-size:clamp(18px,3vw,26px);
+  font-family:var(--font-head), 'Sora', system-ui, sans-serif;
+  font-size:clamp(22px,4vw,34px);
   font-weight:900;
-  letter-spacing:0.12em;
+  letter-spacing:0.15em;
   text-transform:uppercase;
-  background:linear-gradient(120deg, #e0b0ff, #fff, #c084fc);
+  background:linear-gradient(120deg, #f0d0ff 0%, #ffffff 40%, #d8a8ff 70%, #f472b6 100%);
   -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-  text-shadow:none;
-  filter:drop-shadow(0 0 12px rgba(180,100,255,0.6));
+  display:block;
+  filter:drop-shadow(0 0 20px rgba(200,120,255,0.7));
 }
 .sm-marquee-sub {
-  font-size:10px; letter-spacing:0.2em; text-transform:uppercase;
-  color:rgba(180,140,255,0.5); margin-top:4px;
+  display:block;
+  font-size:10px; letter-spacing:0.22em; text-transform:uppercase;
+  color:rgba(180,140,255,0.55); margin-top:6px;
 }
 
 /* ── Reels container ── */
@@ -1854,13 +1854,13 @@ const CSS = `
 .sm-item {
   display:flex; align-items:center; justify-content:center;
   text-align:center; padding:0 14px;
-  font-size:clamp(10px,1.4vw,15px); font-weight:800;
+  font-size:clamp(10px,1.4vw,14px); font-weight:800;
   text-transform:uppercase;
-  color:rgba(220,200,255,0.85);
-  line-height:1.2; letter-spacing:0.05em;
+  color:rgba(200,170,255,0.7);
+  line-height:1.2; letter-spacing:0.06em;
   pointer-events:none; user-select:none;
-  /* Subtle separator */
-  border-bottom:1px solid rgba(80,40,160,0.2);
+  border-bottom:1px solid rgba(80,40,160,0.15);
+  transition:color .1s;
 }
 
 /* ── Payline — the glowing center line ── */
@@ -1869,19 +1869,18 @@ const CSS = `
   top:50%; transform:translateY(-50%);
   height:80px;
   pointer-events:none; z-index:5;
-  /* Neon top and bottom lines */
-  border-top:1.5px solid rgba(220,150,255,0.8);
-  border-bottom:1.5px solid rgba(220,150,255,0.8);
-  /* Glow through the center */
+  border-top:2px solid rgba(230,160,255,0.95);
+  border-bottom:2px solid rgba(230,160,255,0.95);
   background:linear-gradient(180deg,
-    rgba(160,80,255,0.12) 0%,
-    rgba(180,100,255,0.18) 50%,
-    rgba(160,80,255,0.12) 100%
+    rgba(160,80,255,0.15) 0%,
+    rgba(190,110,255,0.25) 50%,
+    rgba(160,80,255,0.15) 100%
   );
   box-shadow:
-    0 0 12px rgba(200,120,255,0.4),
-    0 0 40px rgba(180,80,255,0.15),
-    inset 0 0 20px rgba(180,100,255,0.08);
+    0 0 0 1px rgba(220,150,255,0.2),
+    0 0 20px rgba(210,130,255,0.6),
+    0 0 60px rgba(180,80,255,0.25),
+    inset 0 0 30px rgba(190,110,255,0.12);
 }
 
 /* Active item highlight (center slot) */
@@ -1927,29 +1926,20 @@ const CSS = `
   gap:12px;
 }
 
-/* Button housing */
-.sm-btn-housing {
-  position:relative;
-  background:linear-gradient(180deg, rgba(60,20,120,0.4), rgba(30,10,60,0.6));
-  border-radius:20px;
-  padding:16px 24px;
-  border:1px solid rgba(120,60,200,0.2);
-  width:100%;
-  display:flex; align-items:center; justify-content:center;
-}
-
 .sm-spin {
-  font-family:var(--font-body); font-size:18px; font-weight:900;
-  color:#fff; padding:18px 56px; border:none; border-radius:14px;
-  letter-spacing:0.06em; text-transform:uppercase;
-  background:linear-gradient(135deg, #9333ea 0%, #c026d3 40%, #e11d7a 80%, #f43f5e 100%);
-  cursor:pointer; min-width:260px; position:relative;
+  font-family:var(--font-body); font-size:17px; font-weight:900;
+  color:#fff; padding:16px 52px; border:none; border-radius:50px;
+  letter-spacing:0.08em; text-transform:uppercase;
+  background:linear-gradient(135deg, #7c3aed 0%, #a855f7 25%, #d946ef 60%, #ec4899 100%);
+  cursor:pointer; min-width:240px; position:relative;
+  border:1.5px solid rgba(255,255,255,0.15);
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.1) inset,
-    0 0 30px rgba(180,60,255,0.5),
-    0 0 60px rgba(180,60,255,0.25),
-    0 10px 30px rgba(0,0,0,0.5);
-  transition:all .2s;
+    0 0 0 1px rgba(255,255,255,0.08) inset,
+    0 -3px 0 rgba(0,0,0,0.3) inset,
+    0 0 30px rgba(168,85,247,0.6),
+    0 0 70px rgba(168,85,247,0.3),
+    0 12px 32px rgba(0,0,0,0.6);
+  transition:all .18s;
   animation:spinbtnpulse 2.5s ease-in-out infinite;
 }
 @keyframes spinbtnpulse {
