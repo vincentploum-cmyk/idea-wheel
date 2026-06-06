@@ -3,21 +3,22 @@ import CookieBanner from '@/components/CookieBanner';
 import CloudBackground from '@/components/CloudBackground';
 
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://ideareels.io'),
   title: {
-    default: 'Idea Generator',
-    template: '%s | Idea Generator',
+    default: 'IdeaReels — Spin an idea. Ship a company.',
+    template: '%s | IdeaReels',
   },
-  description: 'Generate a business idea, validate the market for free, and unlock a full product, launch plan, infrastructure, and prototype blueprint.',
+  description: 'Spin three reels to land on a startup idea. Get free market validation, then unlock a full blueprint: product, go-to-market, architecture, and prototype.',
   openGraph: {
-    title: 'Idea Generator',
-    description: 'Generate a business idea, validate the market for free, and unlock a full product, launch plan, infrastructure, and prototype blueprint.',
+    title: 'IdeaReels — Spin an idea. Ship a company.',
+    description: 'Spin three reels to land on a startup idea. Get free market validation, then unlock a full blueprint.',
     type: 'website',
+    url: 'https://ideareels.io',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Idea Generator',
-    description: 'Generate a business idea, validate the market for free, and unlock a full product, launch plan, infrastructure, and prototype blueprint.',
+    title: 'IdeaReels — Spin an idea. Ship a company.',
+    description: 'Spin three reels to land on a startup idea. Get free market validation, then unlock a full blueprint.',
   },
 };
 
