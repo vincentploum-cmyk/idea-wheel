@@ -538,6 +538,90 @@ function SlotMachine({ onResult }) {
 }
 
 /* ─── MAIN APP ───────────────────────────────────────────────────── */
+
+/* ── Confetti + EUREKA overlay ─────────────────────────────── */
+function FullConfetti() {
+  const canvasRef = React.useRef(null);
+  React.useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const COLORS = ['#c084fc','#f0abfc','#818cf8','#fb7185','#fbbf24','#34d399','#60a5fa','#fff'];
+    const pieces = Array.from({length:180}, (_, i) => ({
+      x: Math.random() * canvas.width,
+      y: -20 - Math.random() * 200,
+      w: 6 + Math.random() * 10,
+      h: 4 + Math.random() * 8,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      rotation: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.15,
+      vx: (Math.random() - 0.5) * 4,
+      vy: 2 + Math.random() * 4,
+      opacity: 1,
+    }));
+
+    let frame;
+    let tick = 0;
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      tick++;
+      pieces.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rotation += p.rotSpeed;
+        p.vy += 0.05; // gravity
+        if (tick > 120) p.opacity -= 0.008;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.opacity);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        ctx.restore();
+      });
+      if (pieces.some(p => p.opacity > 0 && p.y < canvas.height + 50)) {
+        frame = requestAnimationFrame(draw);
+      }
+    };
+    draw();
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  return (
+    <div style={{position:'fixed',inset:0,pointerEvents:'none',zIndex:9999}}>
+      <canvas ref={canvasRef} style={{position:'absolute',inset:0,width:'100%',height:'100%'}}/>
+      <div style={{
+        position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-60%)',
+        textAlign:'center', animation:'eurekaIn .5s cubic-bezier(0.34,1.56,0.64,1) both',
+      }}>
+        <div style={{
+          fontSize:'clamp(48px,10vw,96px)', fontWeight:900,
+          fontFamily:'var(--font-head)',
+          background:'linear-gradient(120deg,#fbbf24,#f59e0b,#fcd34d,#fbbf24)',
+          WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
+          filter:'drop-shadow(0 0 30px rgba(251,191,36,0.8))',
+          letterSpacing:'-0.02em',
+          lineHeight:1,
+        }}>EUREKA!</div>
+        <div style={{
+          fontSize:'clamp(14px,2.5vw,22px)', color:'rgba(255,255,255,0.9)',
+          fontWeight:700, marginTop:12, letterSpacing:'0.05em',
+          textShadow:'0 2px 20px rgba(0,0,0,0.5)',
+        }}>Strong market signal detected ✦</div>
+      </div>
+      <style>{`
+        @keyframes eurekaIn {
+          from { opacity:0; transform:translate(-50%,-60%) scale(0.5); }
+          to { opacity:1; transform:translate(-50%,-60%) scale(1); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function IdeaWheel() {
   const [screen, setScreen] = useState("landing");  // landing | wheel | validate | blueprint
   const [authChecked, setAuthChecked] = useState(false);
@@ -1901,6 +1985,10 @@ const CSS = `
   display:inline-block; width:80px; height:12px; border-radius:4px;
   background:rgba(150,80,255,0.2); vertical-align:middle; margin:0 4px;
   animation:smpulse 1.2s ease-in-out infinite;
+}
+@keyframes scorePulse {
+  0%,100% { transform:scale(1); }
+  50% { transform:scale(1.08); }
 }
 @keyframes smpulse { 0%,100%{opacity:.4} 50%{opacity:.9} }
 
