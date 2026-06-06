@@ -317,7 +317,7 @@ const MODES = {
       // 15 actions — every verb pairs naturally with every workflow below
       ['Automates','Streamlines','Manages','Coordinates','Tracks','Handles','Schedules','Simplifies','Accelerates','Digitizes','Processes','Organizes','Monitors','Validates','Prioritizes'],
       // 18 workflows — noun phrases that read naturally after any action above
-      ['client onboarding','invoice processing','appointment booking','contract management','compliance tracking','expense reporting','lead management','shift scheduling','document processing','project tracking','quote generation','staff communication','vendor management','customer support','payroll processing','performance reviews','inventory management','billing & collections'],
+      ['client onboarding','invoice processing','booking management','contract management','compliance tracking','expense reporting','lead management','staff scheduling','document processing','project tracking','quote generation','team communication','vendor management','customer requests','payroll processing','performance reviews','inventory management','billing & collections'],
       // 18 industries
       ['Healthcare','Legal services','Construction','Logistics','Insurance','Dental practices','Field services','Accounting firms','Property management','Restaurants','Staffing agencies','Real estate','Veterinary clinics','Auto repair shops','Marketing agencies','Financial advisors','Cleaning services','Home services'],
     ],
@@ -403,11 +403,11 @@ function SlotMachine({ onResult }) {
     if (complete && !anySpinning && onResult) {
       const v = landed[0]; const w = landed[1]; const ind = landed[2];
 
-      const thirdPerson = (s) => { const x=s.toLowerCase(); if(/[^aeiou]y$/.test(x)) return x.slice(0,-1)+'ies'; if(/(s|sh|ch|x|z)$/.test(x)) return x+'es'; return x+'s'; };
+      const thirdPerson = (s) => s.toLowerCase();
       const title = `${w.replace(/\b\w/g, c => c.toUpperCase())} for ${ind.replace(/\b\w/g, c => c.toUpperCase())}`;
       const tagline = m.name === 'B2B'
-        ? `A B2B concept for ${ind} teams that ${thirdPerson(v)} ${w}.`
-        : `A consumer concept for ${ind} that ${thirdPerson(v)} ${w}.`;
+        ? `A B2B agent that ${thirdPerson(v)} ${w} in the ${ind} industry.`
+        : `A consumer app that ${thirdPerson(v)} ${w} for ${ind}.`;
       const blurb = m.name === 'B2B'
         ? `Built for ${ind} teams that need to ${v.toLowerCase()} ${w} faster, with less manual work and more consistency.`
         : `Built for ${ind} who want a simpler way to ${v.toLowerCase()} ${w} without another bloated app.`;
