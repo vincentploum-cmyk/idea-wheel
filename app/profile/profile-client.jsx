@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase-browser';
 
 export default function ProfileClient({ user, error }) {
   const supabase = createClient();
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideareels.io';
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -24,7 +25,7 @@ export default function ProfileClient({ user, error }) {
     setLoading(true); setErr('');
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${location.origin}/auth/callback` },
+      options: { emailRedirectTo: `${siteUrl}/auth/callback` },
     });
     if (error) { setErr(error.message); setLoading(false); }
     else { setSent(true); setLoading(false); }
@@ -34,7 +35,7 @@ export default function ProfileClient({ user, error }) {
     setErr('');
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${location.origin}/auth/callback` },
+      options: { redirectTo: `${siteUrl}/auth/callback` },
     });
     if (error) setErr(error.message);
   };
