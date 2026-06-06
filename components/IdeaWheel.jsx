@@ -706,7 +706,7 @@ export default function IdeaWheel() {
               <span className="su-grad-text" style={{ display:"block", paddingRight:"6px" }}>is one spin away.</span>
             </h1>
             <p className="su-landing-sub">
-              Spin three reels. Land on a validated startup concept. Unlock a full blueprint — product, go-to-market, infrastructure, and prototype — only when the signal is real.
+              Spin the reels to find your next business idea. Our AI agents validate the market for you and hand you a detailed blueprint, recommended architecture, go-to-market strategy and clear steps to create your prototype.
             </p>
 
             <div className="su-landing-cta">
