@@ -15,7 +15,7 @@ async function getUser() {
 
 export async function GET() {
   const user = await getUser();
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user) return Response.json({ blueprints: [], error: 'not_authenticated' }, { status: 200 });
 
   const db = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
