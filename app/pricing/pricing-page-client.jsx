@@ -46,6 +46,19 @@ export default function PricingPageClient({ searchParams }) {
   }, [success, canceled, packageConfig]);
 
   async function startCheckout(pkg) {
+    // Check auth first — redirect to profile if not signed in
+    try {
+      const { createClient } = await import('@/lib/supabase-browser');
+      const sb = createClient();
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) {
+        window.location.href = '/profile?message=sign-in-to-purchase';
+        return;
+      }
+    } catch(e) {
+      window.location.href = '/profile?message=sign-in-to-purchase';
+      return;
+    }
     setLoadingKey(pkg.key); setError('');
     try {
       const res = await fetch('/api/credits/purchase', {
