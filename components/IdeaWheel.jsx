@@ -702,11 +702,11 @@ export default function IdeaWheel() {
           <div className="su-landing-inner">
 
             <h1 className="su-display su-landing-h1">
-              <span style={{ display:"block" }}>Stop wasting time on bad startup ideas.</span>
-              <span className="su-grad-text" style={{ display:"block", paddingRight:"6px" }}>Find one worth building.</span>
+              <span style={{ display:"block" }}>Your next startup idea</span>
+              <span className="su-grad-text" style={{ display:"block", paddingRight:"6px" }}>is one spin away.</span>
             </h1>
             <p className="su-landing-sub">
-              Generate a concrete idea, run a free market check, and unlock the full blueprint only when the signal is real.
+              Spin three reels. Land on a validated startup concept. Unlock a full blueprint — product, go-to-market, infrastructure, and prototype — only when the signal is real.
             </p>
 
             <div className="su-landing-cta">
@@ -1202,7 +1202,7 @@ const CSS = `
 @keyframes sufloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
 .su-float-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 .su-landing-inner { text-align:center; max-width:620px; margin:0 auto; position:relative; z-index:2; }
-.su-landing-h1 { font-size:clamp(44px,7vw,82px); color:var(--ink); margin:0 0 22px; }
+.su-landing-h1 { font-size:clamp(36px,5.5vw,64px); color:var(--ink); margin:0 0 22px; }
 .su-landing-sub { font-size:17px; color:var(--muted); margin:0 0 36px; line-height:1.65; max-width:500px; margin-left:auto; margin-right:auto; }
 .su-landing-cta { display:flex; flex-direction:column; align-items:center; gap:12px; margin:36px 0 20px; }
 .su-landing-cta-row { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
