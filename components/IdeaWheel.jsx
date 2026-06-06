@@ -60,7 +60,7 @@ function lighten(hex, t) {
 /* ─── TEASER REEL DATA ───────────────────────────────────────────── */
 const TEASER_BANKS = [
   ['Automates','Streamlines','Manages','Tracks','Builds','Improves','Optimizes','Simplifies','Coaches','Plans'],
-  ['client onboarding','invoice processing','daily habits','sleep quality','appointment booking','personal finances','contract management','fitness goals','shift scheduling','mental health'],
+  ['client onboarding','invoice processing','daily habits','sleep quality','referral tracking','personal finances','contract management','fitness goals','shift scheduling','mental health'],
   ['Healthcare','Legal services','busy professionals','Dental practices','new parents','Construction','remote workers','Accounting firms','athletes','small business owners'],
 ];
 const REEL_COLORS = ['#7c3aed','#c026d3','#ff4d8d'];
@@ -323,7 +323,7 @@ const MODES = {
       //   12=customer requests, 13=payroll processing, 14=performance reviews,
       //   15=inventory tracking, 16=billing & collections, 17=field operations
       ['Automates','Streamlines','Manages','Centralizes','Tracks','Handles','Schedules','Simplifies','Accelerates','Digitizes','Processes','Organizes','Monitors','Optimizes','Prioritizes'],
-      ['time & expense reporting', 'appointment booking', 'client onboarding', 'invoice processing', 'contract management', 'compliance reporting', 'staff scheduling', 'job site inspections', 'quote generation', 'lead management', 'document management', 'project tracking', 'vendor management', 'customer follow-ups', 'payroll processing', 'performance reviews', 'inventory tracking', 'billing & collections', 'field operations', 'service request routing', 'safety incident reporting', 'equipment maintenance', 'crew dispatching', 'patient intake', 'referral management', 'renewal reminders', 'work order management', 'quality control checks', 'subcontractor coordination', 'delivery scheduling'],
+      ['time & expense reporting', 'referral tracking', 'client onboarding', 'invoice processing', 'contract management', 'compliance reporting', 'staff scheduling', 'job site inspections', 'quote generation', 'lead management', 'document management', 'project tracking', 'vendor management', 'customer follow-ups', 'payroll processing', 'performance reviews', 'inventory tracking', 'billing & collections', 'field operations', 'service request routing', 'safety incident reporting', 'equipment maintenance', 'crew dispatching', 'patient intake', 'referral management', 'renewal reminders', 'work order management', 'quality control checks', 'subcontractor coordination', 'delivery scheduling'],
       ['Healthcare','Legal services','Construction','Logistics','Insurance','Dental practices','Field services','Accounting firms','Property management','Restaurants','Staffing agencies','Real estate','Veterinary clinics','Auto repair shops','Marketing agencies','Financial advisors','Cleaning services','Home services'],
     ],
   },
