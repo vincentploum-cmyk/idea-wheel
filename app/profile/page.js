@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase-server';
 import ProfileClient from './profile-client';
 
 export const metadata = {
-  title: 'Profile | IdeaReels',
+  title: 'Profile',
   description: 'Your IdeaReels profile and credits.',
 };
 
