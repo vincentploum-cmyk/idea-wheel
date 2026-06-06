@@ -1,8 +1,8 @@
 import PricingPageClient from './pricing-page-client';
 
 export const metadata = {
-  title: 'Pricing',
-  description: 'Buy credits for Idea Generator blueprints.',
+  title: 'Pricing | IdeaReels',
+  description: 'Buy IdeaReels credits and unlock full blueprints.',
 };
 
 export default function PricingPage({ searchParams }) {
