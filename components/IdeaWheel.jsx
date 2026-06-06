@@ -1202,7 +1202,7 @@ const CSS = `
 @keyframes sufloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
 .su-float-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 .su-landing-inner { text-align:center; max-width:620px; margin:0 auto; position:relative; z-index:2; }
-.su-landing-h1 { font-size:clamp(36px,5.5vw,64px); color:var(--ink); margin:0 0 22px; }
+.su-landing-h1 { font-size:clamp(32px,4.5vw,56px); padding-bottom:6px; overflow:visible; color:var(--ink); margin:0 0 22px; }
 .su-landing-sub { font-size:17px; color:var(--muted); margin:0 0 36px; line-height:1.65; max-width:500px; margin-left:auto; margin-right:auto; }
 .su-landing-cta { display:flex; flex-direction:column; align-items:center; gap:12px; margin:36px 0 20px; }
 .su-landing-cta-row { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
