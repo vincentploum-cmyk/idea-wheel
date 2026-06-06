@@ -1139,7 +1139,7 @@ export default function IdeaWheel() {
       )}
 
       {/* ── DISCLAIMER ── */}
-      <div className="su-disclaimer"><div style={{display:"flex",gap:16,justifyContent:"center",marginBottom:10,flexWrap:"wrap"}}><a href="/faq" style={{fontSize:12,color:"#7a7191",textDecoration:"none",fontWeight:500}}>FAQ</a><a href="/pricing" style={{fontSize:12,color:"#7a7191",textDecoration:"none",fontWeight:500}}>Pricing</a><a href="/profile" style={{fontSize:12,color:"#7a7191",textDecoration:"none",fontWeight:500}}>Sign in</a><a href="/privacy" style={{fontSize:12,color:"#7a7191",textDecoration:"none",fontWeight:500}}>Privacy</a><a href="/terms" style={{fontSize:12,color:"#7a7191",textDecoration:"none",fontWeight:500}}>Terms</a></div>
+      <div className="su-disclaimer"><div style={{display:"flex",gap:16,justifyContent:"center",marginBottom:10,flexWrap:"wrap"}}><a href="/faq" style={{fontSize:12,color:"#7a7191",textDecoration:"none",fontWeight:500}}>FAQ</a><a href="/pricing" style={{fontSize:12,color:"#7a7191",textDecoration:"none",fontWeight:500}}>Pricing</a><a href="/privacy" style={{fontSize:12,color:"#7a7191",textDecoration:"none",fontWeight:500}}>Privacy</a><a href="/terms" style={{fontSize:12,color:"#7a7191",textDecoration:"none",fontWeight:500}}>Terms</a></div>
         <p>© {new Date().getFullYear()} IdeaReels · AI-generated content is for informational purposes only, not professional advice.</p>
       </div>
     </div>
