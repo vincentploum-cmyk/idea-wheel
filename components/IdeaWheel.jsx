@@ -703,7 +703,7 @@ export default function IdeaWheel() {
 
             <h1 className="su-display su-landing-h1">
               <span style={{ display:"block" }}>Your next startup idea</span>
-              <span className="su-grad-text" style={{ display:"block", paddingRight:"6px" }}>is one spin away.</span>
+              <span className="su-grad-text" style={{ display:"block", paddingRight:"6px", paddingBottom:"16px" }}>is one spin away.</span>
             </h1>
             <p className="su-landing-sub">
               Spin the reels to find your next business idea. Our AI agents validate the market for you and hand you a detailed blueprint, recommended architecture, go-to-market strategy and clear steps to create your prototype.
@@ -1202,7 +1202,7 @@ const CSS = `
 @keyframes sufloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
 .su-float-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 .su-landing-inner { text-align:center; max-width:960px; margin:0 auto; position:relative; z-index:2; padding:0 32px; }
-.su-landing-h1 { font-size:clamp(48px,7vw,88px); padding-bottom:12px; overflow:visible; color:var(--ink); margin:0 0 22px; }
+.su-landing-h1 { font-size:clamp(48px,7vw,88px); padding-bottom:20px; line-height:1.15; overflow:visible; color:var(--ink); margin:0 0 22px; }
 .su-landing-sub { font-size:18px; color:var(--muted); margin:0 0 36px; line-height:1.65; max-width:760px; margin-left:auto; margin-right:auto; }
 .su-landing-cta { display:flex; flex-direction:column; align-items:center; gap:12px; margin:36px 0 20px; }
 .su-landing-cta-row { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
