@@ -314,11 +314,16 @@ const MODES = {
     name:'B2B', connector:'in the', prefix:'I want to build an agent that',
     labels:['ACTION','WORKFLOW','FOR'],
     banks:[
-      // 15 actions — every verb pairs naturally with every workflow below
-      ['Automates','Streamlines','Manages','Centralizes','Tracks','Handles','Simplifies','Accelerates','Transforms','Digitizes','Processes','Organizes','Monitors','Optimizes','Prioritizes'],
-      // 18 workflows — noun phrases that read naturally after any action above
-      ['client onboarding','invoice processing','contract management','compliance reporting','expense tracking','lead management','staff coordination','document management','project tracking','quote generation','team communication','vendor management','customer requests','payroll processing','performance management','inventory tracking','billing & collections','field operations'],
-      // 18 industries
+      // Valid action→workflow pairs — every combo is guaranteed to make sense
+      // Format: [action, [...allowed workflow indices]]
+      // Workflows: 0=client onboarding, 1=invoice processing, 2=contract management,
+      //   3=compliance reporting, 4=expense tracking, 5=lead management,
+      //   6=staff scheduling, 7=document management, 8=project tracking,
+      //   9=quote generation, 10=team communication, 11=vendor management,
+      //   12=customer requests, 13=payroll processing, 14=performance reviews,
+      //   15=inventory tracking, 16=billing & collections, 17=field operations
+      ['Automates','Streamlines','Manages','Centralizes','Tracks','Handles','Schedules','Simplifies','Accelerates','Digitizes','Processes','Organizes','Monitors','Optimizes','Prioritizes'],
+      ['client onboarding','invoice processing','contract management','compliance reporting','expense tracking','lead management','staff scheduling','document management','project tracking','quote generation','team communication','vendor management','customer requests','payroll processing','performance reviews','inventory tracking','billing & collections','field operations'],
       ['Healthcare','Legal services','Construction','Logistics','Insurance','Dental practices','Field services','Accounting firms','Property management','Restaurants','Staffing agencies','Real estate','Veterinary clinics','Auto repair shops','Marketing agencies','Financial advisors','Cleaning services','Home services'],
     ],
   },
@@ -381,6 +386,22 @@ function SlotMachine({ onResult }) {
     setSpinning(s => { const n=[...s]; n[w]=true; return n; });
   };
 
+  const spinWheelTo = (w, targetIdx, duration) => {
+    if (spinning[w]) return;
+    const bank = banks[w];
+    const L = bank.length;
+    const cur = indexRef.current[w];
+    const curBase = ((cur%L)+L)%L;
+    const forward = ((targetIdx-curBase)%L+L)%L;
+    const loops = 4 + Math.floor(Math.random()*3);
+    const newIndex = cur + loops*L + forward + (forward===0?L:0);
+    indexRef.current[w] = newIndex;
+    targetRef.current[w] = newIndex%L;
+    const el = stripRefs[w].current;
+    if (el) { el.style.transition=`transform ${duration}ms cubic-bezier(0.16,1,0.3,1)`; el.style.transform=`translateY(${-(newIndex-1)*ITEM_H}px)`; }
+    setSpinning(s => { const n=[...s]; n[w]=true; return n; });
+  };
+
   const onSettle = (w) => {
     const bank = banks[w];
     const t = targetRef.current[w];
@@ -391,10 +412,24 @@ function SlotMachine({ onResult }) {
     setSpinning(s => { const n=[...s]; n[w]=false; return n; });
   };
 
+  const B2B_VALID_PAIRS = {0: [0, 1, 2, 3, 4, 5, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17], 1: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17], 2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17], 3: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], 4: [1, 2, 3, 4, 5, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17], 5: [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17], 6: [0, 6, 7, 17], 7: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17], 8: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17], 9: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], 10: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17], 11: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17], 12: [1, 2, 3, 4, 5, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17], 13: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17], 14: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]};
+
   const spinAll = () => {
     if (anySpinning) return;
-    let slot=0;
-    banks.forEach((_,w) => { spinWheel(w, 2200+slot*400); slot++; });
+    if (mode === 'b2b') {
+      // Pick a random valid action first, then a compatible workflow, then random industry
+      const actionIdx = Math.floor(Math.random() * banks[0].length);
+      const allowedWorkflows = B2B_VALID_PAIRS[actionIdx] || [...Array(banks[1].length).keys()];
+      const workflowIdx = allowedWorkflows[Math.floor(Math.random() * allowedWorkflows.length)];
+      const industryIdx = Math.floor(Math.random() * banks[2].length);
+      // Spin each reel to the pre-selected index
+      spinWheelTo(0, actionIdx, 2200);
+      spinWheelTo(1, workflowIdx, 2600);
+      spinWheelTo(2, industryIdx, 3000);
+    } else {
+      let slot=0;
+      banks.forEach((_,w) => { spinWheel(w, 2200+slot*400); slot++; });
+    }
   };
 
   const complete = landed.every(Boolean);
