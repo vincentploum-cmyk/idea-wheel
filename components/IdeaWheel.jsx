@@ -509,7 +509,7 @@ function SlotMachine({ onResult }) {
           {landed[1] ? <span className="sm-slot">{landed[1]}</span> : <span className="sm-slot-empty"/>}
           {' '}<span style={{fontStyle:'italic',color:'var(--muted)'}}>{conn}</span>{' '}
           {landed[2] ? <span className="sm-slot">{landed[2]}</span> : <span className="sm-slot-empty"/>}
-          {landed[2] && m.name === 'B2B' ? <span style={{fontStyle:'italic',color:'var(--muted)'}}> industry</span> : null}
+          {mode === 'b2b' ? <span style={{fontStyle:'italic',color:'var(--muted)'}}> industry</span> : null}
           <span style={{color:'var(--magenta)'}}>.</span>
         </p>
       </div>
