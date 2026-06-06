@@ -715,10 +715,7 @@ export default function IdeaWheel() {
         <div className="su-nav-links">
                     <a className="su-nav-link" href="/pricing">Pricing</a>
           {authUser ? (
-            <a className="su-nav-link su-nav-link--cta" href="/profile">
-              <span className="su-nav-avatar">{authUser.email?.[0]?.toUpperCase()}</span>
-              Profile
-            </a>
+            <a className="su-nav-link su-nav-link--cta" href="/profile">Profile</a>
           ) : hasAccount ? (
             <a className="su-nav-link su-nav-link--cta" href="/profile">Log in</a>
           ) : (
