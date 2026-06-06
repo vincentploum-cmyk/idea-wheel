@@ -1615,12 +1615,12 @@ const CSS = `
     0 30px 60px -20px rgba(80,20,120,0.22),
     0 8px 24px -8px rgba(80,20,120,0.12);
 }
-.sm-reels-wrap { position:relative; margin-bottom:14px; }
+.sm-reels-wrap { position:relative; margin-bottom:14px; border:1.5px solid rgba(124,58,237,0.25); border-radius:16px; overflow:hidden; background:#fff; box-shadow:0 4px 24px -4px rgba(80,20,120,0.13); }
 .sm-reels { display:grid; grid-template-columns:repeat(3,1fr); gap:0; }
-.sm-col { display:flex; flex-direction:column; gap:0; border-right:1px solid var(--line-2); }
+.sm-col { display:flex; flex-direction:column; gap:0; border-right:1px solid rgba(124,58,237,0.12); }
 .sm-col:last-child { border-right:none; }
-.sm-col:first-child .sm-window { border-radius:14px 0 0 14px; }
-.sm-col:last-child .sm-window { border-radius:0 14px 14px 0; }
+.sm-col:first-child .sm-window { border-radius:0; }
+.sm-col:last-child .sm-window { border-radius:0; }
 .sm-reels-wrap { border:1.5px solid var(--line-2); border-radius:14px; overflow:hidden; box-shadow:0 4px 16px -4px rgba(80,20,120,0.1); background:#fff; }
 .sm-reels { border:none; }
 .sm-collabel {
@@ -1629,31 +1629,43 @@ const CSS = `
   color:var(--accent,#c026d3);
 }
 .sm-window {
-  height:72px; overflow:hidden; border-radius:0;
+  height:216px; overflow:hidden; border-radius:0;
   background:#fff; border:none;
   cursor:pointer; position:relative;
   transition:background .2s;
 }
-.sm-window::before { display:none; }
+.sm-window::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; bottom:0;
+  background:linear-gradient(180deg,
+    rgba(255,255,255,0.96) 0%,
+    rgba(255,255,255,0.7) 20%,
+    transparent 35%,
+    transparent 65%,
+    rgba(255,255,255,0.7) 80%,
+    rgba(255,255,255,0.96) 100%
+  );
+  pointer-events:none; z-index:2;
+}
 .sm-window::after { display:none; }
-.sm-window:hover { background:rgba(124,58,237,0.03); }
+.sm-window:hover {}
 .sm-strip { will-change:transform; pointer-events:none; user-select:none; }
 .sm-payline-bar {
   position:absolute; left:0; right:0;
   top:50%; transform:translateY(-50%);
   height:72px;
-  border-top:2px solid rgba(124,58,237,0.4);
-  border-bottom:2px solid rgba(124,58,237,0.4);
-  background:rgba(124,58,237,0.06);
-  pointer-events:none; z-index:3;
-  border-radius:0;
+  border-top:2px solid rgba(124,58,237,0.5);
+  border-bottom:2px solid rgba(124,58,237,0.5);
+  background:rgba(124,58,237,0.05);
+  pointer-events:none; z-index:4;
 }
 .sm-item {
   display:flex; align-items:center; justify-content:center;
-  text-align:center; padding:0 12px;
+  text-align:center; padding:0 10px;
   font-size:clamp(11px,1.3vw,14px); font-weight:700;
-  text-transform:uppercase; color:var(--ink-2); line-height:1.2;
+  text-transform:uppercase; color:var(--ink-2); line-height:1.15;
   pointer-events:none; user-select:none;
+  border-bottom:1px solid rgba(124,58,237,0.06);
 }
 .sm-base { display:flex; justify-content:center; padding-top:12px; }
 .sm-spin {
