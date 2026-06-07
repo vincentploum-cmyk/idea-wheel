@@ -1853,18 +1853,18 @@ const CSS = `
   cursor:pointer; position:relative;
 }
 
-/* Hard mask — only the center row is visible, top/bottom nearly opaque */
+/* Slot machine mask — 3 rows visible, fading to dark at edges */
 .sm-window::before {
   content:'';
   position:absolute; inset:0;
   background:linear-gradient(180deg,
     rgba(8,4,18,1) 0%,
-    rgba(8,4,18,0.98) 28%,
-    rgba(8,4,18,0.7) 38%,
-    transparent 43%,
-    transparent 57%,
-    rgba(8,4,18,0.7) 62%,
-    rgba(8,4,18,0.98) 72%,
+    rgba(8,4,18,0.85) 18%,
+    rgba(8,4,18,0.15) 30%,
+    transparent 38%,
+    transparent 62%,
+    rgba(8,4,18,0.15) 70%,
+    rgba(8,4,18,0.85) 82%,
     rgba(8,4,18,1) 100%
   );
   pointer-events:none; z-index:2;
