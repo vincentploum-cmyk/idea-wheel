@@ -1853,19 +1853,17 @@ const CSS = `
   cursor:pointer; position:relative;
 }
 
-/* Slot machine mask — 3 rows visible, fading to dark at edges */
+/* Slot machine mask — center row fully visible, adjacent rows dimmed, edges dark */
 .sm-window::before {
   content:'';
   position:absolute; inset:0;
   background:linear-gradient(180deg,
-    rgba(8,4,18,1) 0%,
-    rgba(8,4,18,0.85) 18%,
-    rgba(8,4,18,0.15) 30%,
-    transparent 38%,
-    transparent 62%,
-    rgba(8,4,18,0.15) 70%,
-    rgba(8,4,18,0.85) 82%,
-    rgba(8,4,18,1) 100%
+    rgba(8,4,18,0.96) 0%,
+    rgba(8,4,18,0.55) 22%,
+    rgba(8,4,18,0.0) 36%,
+    rgba(8,4,18,0.0) 64%,
+    rgba(8,4,18,0.55) 78%,
+    rgba(8,4,18,0.96) 100%
   );
   pointer-events:none; z-index:2;
 }
