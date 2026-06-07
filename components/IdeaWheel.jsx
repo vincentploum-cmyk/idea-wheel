@@ -674,7 +674,12 @@ export default function IdeaWheel() {
         setAuthUser(data.session.user);
         try { localStorage.setItem("ideaWheelHasAccount", "1"); } catch {}
         setHasAccount(true);
-        setScreen("wheel");
+        // Only auto-navigate to wheel if coming from auth callback (?wheel=1)
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('wheel') === '1') {
+          setScreen("wheel");
+          window.history.replaceState({}, '', window.location.pathname);
+        }
       }
       setAuthChecked(true);
     });
@@ -1848,20 +1853,18 @@ const CSS = `
   cursor:pointer; position:relative;
 }
 
-/* Top/bottom shadow to simulate physical drum curve */
+/* Hard mask — only the center row is visible, top/bottom nearly opaque */
 .sm-window::before {
   content:'';
   position:absolute; inset:0;
   background:linear-gradient(180deg,
     rgba(8,4,18,1) 0%,
-    rgba(8,4,18,0.95) 12%,
-    rgba(8,4,18,0.6) 25%,
-    rgba(8,4,18,0.1) 35%,
-    transparent 45%,
-    transparent 55%,
-    rgba(8,4,18,0.1) 65%,
-    rgba(8,4,18,0.6) 75%,
-    rgba(8,4,18,0.95) 88%,
+    rgba(8,4,18,0.98) 28%,
+    rgba(8,4,18,0.7) 38%,
+    transparent 43%,
+    transparent 57%,
+    rgba(8,4,18,0.7) 62%,
+    rgba(8,4,18,0.98) 72%,
     rgba(8,4,18,1) 100%
   );
   pointer-events:none; z-index:2;
