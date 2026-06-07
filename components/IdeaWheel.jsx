@@ -1945,10 +1945,10 @@ const CSS = `
 }
 
 .sm-spin {
-  font-family:var(--font-body); font-size:17px; font-weight:900;
-  color:#fff; padding:16px 52px; border:none; border-radius:50px;
-  letter-spacing:0.08em; text-transform:uppercase;
-  background:linear-gradient(135deg, #7c3aed 0%, #a855f7 25%, #d946ef 60%, #ec4899 100%);
+  font-family:var(--font-body); font-size:16px; font-weight:800;
+  color:#fff; padding:15px 48px; border:none; border-radius:999px;
+  letter-spacing:0.06em; text-transform:uppercase;
+  background:linear-gradient(135deg, #8b5cf6 0%, #a855f7 40%, #ec4899 100%);
   cursor:pointer; min-width:240px; position:relative;
   border:1.5px solid rgba(255,255,255,0.15);
   box-shadow:
