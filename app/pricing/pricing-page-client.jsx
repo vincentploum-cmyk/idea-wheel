@@ -1,14 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { createClient as createBrowserClient } from '@/lib/supabase-browser';
 import { useEffect, useMemo, useState } from 'react';
+
 const CREDIT_PACKAGES = [
-  { key: 'starter', label: 'Starter',  credits: 5,  price: '$4.99', per: '$1.00', highlight: false, priceEnvVar: 'STRIPE_PRICE_ID_STARTER' },
-  { key: 'pro',     label: 'Pro',      credits: 10, price: '$9',    per: '$0.90', highlight: true,  priceEnvVar: 'STRIPE_PRICE_ID_PRO' },
-  { key: 'power',   label: 'Power',    credits: 25, price: '$19',   per: '$0.76', highlight: false, priceEnvVar: 'STRIPE_PRICE_ID_POWER' },
+  { key: 'starter', label: 'Starter', credits: 5,  price: '$4.99', per: '$1.00', highlight: false },
+  { key: 'pro',     label: 'Pro',     credits: 10, price: '$9',    per: '$0.90', highlight: true  },
+  { key: 'power',   label: 'Power',   credits: 25, price: '$19',   per: '$0.76', highlight: false },
 ];
 const CREDIT_PACKAGE_BY_KEY = Object.fromEntries(CREDIT_PACKAGES.map(p => [p.key, p]));
+
+const PACK_DESCRIPTIONS = {
+  starter: 'For trying your first full blueprint.',
+  pro:     'Best for founders validating multiple ideas in one sitting.',
+  power:   'For power users and teams running deep exploration.',
+};
 
 export default function PricingPageClient({ searchParams }) {
   const [loadingKey, setLoadingKey] = useState(null);
@@ -33,12 +39,12 @@ export default function PricingPageClient({ searchParams }) {
 
   const statusMessage = useMemo(() => {
     if (success && packageConfig) return {
-      tone: '#7c3aed', bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.24)',
+      tone: 'success',
       title: `${packageConfig.credits} credits added`,
       text: 'Credits were applied to this browser so you can keep going immediately.',
     };
     if (canceled) return {
-      tone: '#c026d3', bg: 'rgba(192,38,211,0.08)', border: 'rgba(192,38,211,0.24)',
+      tone: 'neutral',
       title: 'Checkout canceled',
       text: 'Nothing was charged. Pick up where you left off whenever you want.',
     };
@@ -65,101 +71,239 @@ export default function PricingPageClient({ searchParams }) {
   }
 
   return (
-    <main style={{
-      minHeight: '100vh',
-      background: '#faf7ff',
-      fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-      color: '#18112b',
-      padding: '48px 20px 80px',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      <style>{`@keyframes blobdrift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,-30px) scale(1.12)}}`}</style>
-      {/* blobs */}
-      <div style={{ position:'fixed', width:480, height:480, top:'-8%', left:'-6%', borderRadius:'50%', background:'#7c3aed', filter:'blur(70px)', opacity:.32, pointerEvents:'none', zIndex:0, animation:'blobdrift 22s ease-in-out infinite' }}/>
-      <div style={{ position:'fixed', width:420, height:420, bottom:'-12%', right:'-6%', borderRadius:'50%', background:'#ff4d8d', filter:'blur(70px)', opacity:.28, pointerEvents:'none', zIndex:0, animation:'blobdrift 22s ease-in-out infinite', animationDelay:'-7s' }}/>
+    <>
+      <style>{CSS}</style>
+      <main className="pr-page">
+        <nav className="pr-nav">
+          <Link href="/" className="pr-brand">IdeaReels</Link>
+          <Link href="/" className="pr-back">← Back</Link>
+        </nav>
 
-      <div style={{ position:'relative', zIndex:1, maxWidth: 900, margin: '0 auto' }}>
-        {/* back link */}
-        <div style={{ display:'flex', justifyContent:'flex-end', marginBottom: 32 }}>
-          <Link href="/" style={{
-            fontSize: 13, fontWeight: 600, color: '#7a7191',
-            textDecoration: 'none', padding: '8px 16px',
-            border: '1px solid #ece6f5', borderRadius: 999,
-            background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(8px)',
-          }}>← Back</Link>
-        </div>
-
-        <h1 style={{
-          fontFamily: '"Sora", system-ui, sans-serif',
-          fontSize: 'clamp(32px,5vw,54px)', fontWeight: 700,
-          letterSpacing: '-0.03em', lineHeight: 1,
-          margin: '0 0 12px', color: '#18112b',
-        }}>Get IdeaReels credits</h1>
-        <p style={{ fontSize: 16, color: '#7a7191', margin: '0 0 40px', lineHeight: 1.65, maxWidth: 520 }}>
-          One credit runs the full 4-agent pipeline — market scout, product design, a launch plan, infrastructure planning, and a live prototype.
-        </p>
+        <section className="pr-hero">
+          <div className="pr-eyebrow">Credits</div>
+          <h1 className="pr-title">Buy credits when you&apos;re ready</h1>
+          <p className="pr-subtitle">
+            Validation stays free. Use credits only when you want the full blueprint, launch plan, and prototype package.
+          </p>
+        </section>
 
         {statusMessage && (
-          <div style={{ padding: '16px 20px', borderRadius: 16, background: statusMessage.bg, border: `1.5px solid ${statusMessage.border}`, marginBottom: 24 }}>
-            <strong style={{ color: statusMessage.tone, fontSize: 15, display:'block', marginBottom:6 }}>{statusMessage.title}</strong>
-            <p style={{ margin: 0, color: '#463a5f', lineHeight: 1.6, fontSize: 14 }}>{statusMessage.text}</p>
+          <div className={`pr-status pr-status--${statusMessage.tone}`}>
+            <strong>{statusMessage.title}</strong>
+            <p>{statusMessage.text}</p>
           </div>
         )}
 
         {error && (
-          <div style={{ padding: '14px 18px', borderRadius: 14, background: 'rgba(220,38,38,0.07)', border: '1px solid rgba(220,38,38,0.2)', marginBottom: 20 }}>
-            <p style={{ margin: 0, color: '#dc2626', fontSize: 13 }}>{error}</p>
+          <div className="pr-status pr-status--error" role="alert">
+            <p>{error}</p>
           </div>
         )}
 
-        <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+        <section className="pr-grid">
           {CREDIT_PACKAGES.map((pkg) => (
-            <div key={pkg.key} style={{
-              background: 'rgba(255,255,255,0.78)', backdropFilter: 'blur(10px)',
-              border: pkg.highlight ? '2px solid #7c3aed' : '1px solid #ece6f5',
-              borderRadius: 24, padding: '24px 22px',
-              boxShadow: pkg.highlight ? '0 20px 50px -16px rgba(124,58,237,0.28)' : '0 10px 30px -10px rgba(80,30,120,0.1)',
-            }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-                <strong style={{ fontFamily:'"Sora",system-ui', fontSize:16, fontWeight:700, color:'#18112b' }}>{pkg.label}</strong>
-                {pkg.highlight && <span style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'.12em', color:'#7c3aed', fontWeight:700 }}>Popular</span>}
+            <article key={pkg.key} className={`pr-card${pkg.highlight ? ' pr-card--hl' : ''}`}>
+              <header className="pr-card-head">
+                <span className="pr-card-label">{pkg.label}</span>
+                {pkg.highlight && <span className="pr-card-tag">Most popular</span>}
+              </header>
+              <div className="pr-card-price">
+                <span className="pr-card-price-num">{pkg.price}</span>
+                <span className="pr-card-price-meta">{pkg.credits} credits · {pkg.per} each</span>
               </div>
-              <div style={{ fontSize: 38, fontWeight: 800, fontFamily:'"Sora",system-ui', letterSpacing:'-0.03em', color:'#18112b', lineHeight:1, marginBottom:4 }}>{pkg.price}</div>
-              <div style={{ fontSize:13, color:'#7a7191', marginBottom:4 }}>{pkg.credits} credits</div>
-              <div style={{ fontSize:12, color:'#c026d3', fontWeight:600, marginBottom:18 }}>{pkg.per} / credit</div>
-              <p style={{ color:'#7a7191', fontSize:13, lineHeight:1.6, margin:'0 0 20px', minHeight:60 }}>
-                {pkg.highlight
-                  ? 'Best for founders validating multiple ideas in one sitting.'
-                  : pkg.key === 'starter' ? 'Perfect for trying out your first blueprint.' : pkg.key === 'pro' ? 'For founders validating multiple ideas in one sitting.' : 'For power users and teams running deep exploration.'}
-              </p>
-              <button onClick={() => startCheckout(pkg)} disabled={loadingKey !== null} style={{
-                width: '100%', border: 'none', borderRadius: 999, padding: '12px 0',
-                background: pkg.highlight ? 'linear-gradient(120deg,#7c3aed,#c026d3,#ff4d8d)' : '#f3edff',
-                color: pkg.highlight ? '#fff' : '#7c3aed',
-                fontWeight: 700, fontSize: 14,
-                fontFamily: '"Plus Jakarta Sans",system-ui',
-                cursor: loadingKey ? 'wait' : 'pointer',
-                opacity: loadingKey && loadingKey !== pkg.key ? 0.5 : 1,
-              }}>
-                {loadingKey === pkg.key ? 'Redirecting…' : 'Checkout'}
+              <p className="pr-card-desc">{PACK_DESCRIPTIONS[pkg.key]}</p>
+              <button
+                onClick={() => startCheckout(pkg)}
+                disabled={loadingKey !== null}
+                className={`pr-card-btn${pkg.highlight ? ' pr-card-btn--primary' : ''}`}
+              >
+                {loadingKey === pkg.key ? 'Redirecting…' : 'Continue to checkout'}
               </button>
-            </div>
+            </article>
           ))}
-        </div>
+        </section>
 
-        <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid #ece6f5', textAlign: 'center' }}>
-          <div style={{ display:'flex', gap:16, justifyContent:'center', marginBottom:8, flexWrap:'wrap' }}>
-            <a href="/faq" style={{ fontSize:12, color:'#7a7191', textDecoration:'none' }}>FAQ</a>
-            <a href="/privacy" style={{ fontSize:12, color:'#7a7191', textDecoration:'none' }}>Privacy</a>
-            <a href="/terms" style={{ fontSize:12, color:'#7a7191', textDecoration:'none' }}>Terms</a>
-            <a href="/" style={{ fontSize:12, color:'#7a7191', textDecoration:'none' }}>IdeaReels</a>
+        <section className="pr-tldr">
+          <ul>
+            <li>Validation is always free — no credit needed.</li>
+            <li>Credits never expire. Use them whenever you want.</li>
+            <li>Stripe checkout. Cancel anytime, no subscription.</li>
+          </ul>
+        </section>
+
+        <footer className="pr-footer">
+          <div className="pr-footer-links">
+            <Link href="/faq">FAQ</Link>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
+            <Link href="/">IdeaReels</Link>
           </div>
-          <p style={{ fontSize: 11, color: '#aaa1bd', lineHeight: 1.7, margin: 0 }}>
-            © {new Date().getFullYear()} IdeaReels · AI-generated content is for informational purposes only, not professional advice.
-          </p>
-        </div>
-      </div>
-    </main>
+          <p>© {new Date().getFullYear()} IdeaReels · AI-generated content is for informational purposes only.</p>
+        </footer>
+      </main>
+    </>
   );
 }
+
+const CSS = `
+.pr-page {
+  min-height:100vh;
+  max-width:980px; margin:0 auto;
+  padding:0 24px 64px;
+  font-family:var(--font-body);
+  color:var(--ink);
+  background:var(--bg);
+}
+.pr-nav {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:20px 0 0;
+}
+.pr-brand {
+  font-family:var(--font-display); font-size:17px; font-weight:800;
+  color:var(--ink); letter-spacing:-.02em; text-decoration:none;
+}
+.pr-back {
+  font-size:13.5px; font-weight:500; color:var(--ink-2);
+  text-decoration:none; padding:8px 14px; border-radius:var(--r-pill);
+  border:1px solid var(--line); background:var(--surface);
+  transition:border-color .15s, color .15s;
+}
+.pr-back:hover { border-color:var(--line-2); color:var(--ink); }
+
+.pr-hero { text-align:center; max-width:620px; margin:64px auto 32px; }
+.pr-eyebrow {
+  font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent-mid); margin-bottom:14px;
+}
+.pr-title {
+  font-family:var(--font-display);
+  font-size:clamp(32px,5vw,48px); font-weight:700;
+  letter-spacing:-.025em; line-height:1.08;
+  margin:0 0 18px; color:var(--ink);
+}
+.pr-subtitle {
+  font-size:16px; color:var(--muted);
+  margin:0 auto; line-height:1.6; max-width:560px;
+}
+
+.pr-status {
+  max-width:620px; margin:0 auto 24px;
+  padding:14px 18px; border-radius:var(--r-md);
+  background:var(--surface); border:1px solid var(--line);
+}
+.pr-status strong { display:block; font-size:14px; color:var(--ink); margin-bottom:4px; }
+.pr-status p { font-size:13.5px; color:var(--muted); margin:0; line-height:1.55; }
+.pr-status--success { background:var(--accent-light); border-color:var(--accent-border); }
+.pr-status--success strong { color:var(--accent); }
+.pr-status--error { background:rgba(185,28,28,0.04); border-color:rgba(185,28,28,0.18); }
+.pr-status--error p { color:var(--bad); }
+
+.pr-grid {
+  display:grid; gap:14px;
+  grid-template-columns:repeat(3, 1fr);
+  margin:0 auto 40px;
+}
+@media (max-width:760px) {
+  .pr-grid { grid-template-columns:1fr; }
+}
+
+.pr-card {
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r-xl);
+  padding:24px;
+  display:flex; flex-direction:column;
+  transition:border-color .15s, transform .2s var(--ease-out), box-shadow .2s;
+}
+.pr-card:hover { border-color:var(--line-2); transform:translateY(-2px); box-shadow:var(--sh-sm); }
+.pr-card--hl {
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px var(--accent), var(--sh-md);
+}
+.pr-card--hl:hover { box-shadow:0 0 0 1px var(--accent), var(--sh-lg); }
+
+.pr-card-head {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:16px; min-height:24px;
+}
+.pr-card-label {
+  font-family:var(--font-display);
+  font-size:14px; font-weight:700; color:var(--ink);
+  letter-spacing:-.01em;
+}
+.pr-card-tag {
+  font-size:10.5px; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase;
+  color:var(--accent);
+  padding:3px 10px; border-radius:99px;
+  background:var(--accent-light);
+  border:1px solid var(--accent-border);
+}
+
+.pr-card-price { margin-bottom:14px; }
+.pr-card-price-num {
+  display:block;
+  font-family:var(--font-display);
+  font-size:40px; font-weight:700;
+  letter-spacing:-.03em; line-height:1;
+  color:var(--ink);
+}
+.pr-card-price-meta {
+  display:block; margin-top:6px;
+  font-size:12.5px; color:var(--muted);
+}
+.pr-card-desc {
+  font-size:13.5px; color:var(--muted); line-height:1.55;
+  margin:0 0 20px; flex:1;
+}
+
+.pr-card-btn {
+  width:100%; padding:11px 0; border-radius:var(--r-pill);
+  font-family:var(--font-body); font-size:13.5px; font-weight:600;
+  cursor:pointer; transition:background .15s, border-color .15s, color .15s, box-shadow .2s;
+  background:var(--surface); color:var(--ink);
+  border:1px solid var(--line-2);
+}
+.pr-card-btn:hover { border-color:var(--accent); color:var(--accent); }
+.pr-card-btn--primary {
+  background:var(--accent); color:#fff;
+  border-color:var(--accent);
+  box-shadow:0 1px 0 rgba(255,255,255,0.16) inset, 0 12px 24px -16px rgba(91,33,182,0.55);
+}
+.pr-card-btn--primary:hover { background:#4C1D95; border-color:#4C1D95; color:#fff; }
+.pr-card-btn:disabled { opacity:.55; cursor:wait; }
+
+.pr-tldr {
+  max-width:620px; margin:0 auto 40px;
+  padding:20px 24px;
+  background:var(--bg-2); border:1px solid var(--line);
+  border-radius:var(--r-lg);
+}
+.pr-tldr ul { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px; }
+.pr-tldr li {
+  font-size:13.5px; color:var(--ink-2);
+  padding-left:18px; position:relative;
+}
+.pr-tldr li::before {
+  content:""; position:absolute; left:2px; top:8px;
+  width:6px; height:6px; border-radius:50%;
+  background:var(--accent-mid);
+}
+
+.pr-footer { margin-top:48px; padding-top:24px; border-top:1px solid var(--line); text-align:center; }
+.pr-footer-links { display:flex; justify-content:center; gap:24px; flex-wrap:wrap; margin-bottom:12px; }
+.pr-footer-links a {
+  font-size:13px; color:var(--ink-2); text-decoration:none; font-weight:500;
+  transition:color .15s;
+}
+.pr-footer-links a:hover { color:var(--accent); }
+.pr-footer p { font-size:11.5px; color:var(--faint); line-height:1.7; margin:0; }
+
+@media (max-width:640px) {
+  .pr-page { padding:0 16px 48px; }
+  .pr-hero { margin:36px auto 28px; }
+  .pr-title { font-size:clamp(30px, 9vw, 40px); margin-bottom:14px; }
+  .pr-subtitle { font-size:15.5px; max-width:unset; }
+  .pr-card { padding:22px; }
+}
+`;

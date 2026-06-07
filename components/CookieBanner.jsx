@@ -18,26 +18,80 @@ export default function CookieBanner() {
   if (!visible) return null;
 
   return (
-    <div style={s.bar}>
-      <p style={s.text}>
-        We use cookies to keep you signed in and remember your preferences.{" "}
-        <a href="/privacy" style={s.link}>Privacy Policy</a>
-        {" · "}
-        <a href="/terms" style={s.link}>Terms</a>
-      </p>
-      <div style={s.btns}>
-        <button style={s.decline} onClick={() => respond("declined")}>Decline</button>
-        <button style={s.accept} onClick={() => respond("accepted")}>Accept</button>
+    <>
+      <style>{CSS}</style>
+      <div className="cb-bar" role="dialog" aria-label="Cookie preferences">
+        <p className="cb-text">
+          We use cookies to keep your session secure and remember your preferences.{" "}
+          <a href="/privacy" className="cb-link">Privacy</a>
+          {" · "}
+          <a href="/terms" className="cb-link">Terms</a>
+        </p>
+        <div className="cb-btns">
+          <button className="cb-btn cb-btn--ghost" onClick={() => respond("declined")}>Decline</button>
+          <button className="cb-btn cb-btn--primary" onClick={() => respond("accepted")}>Accept</button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
-const s = {
-  bar: { position:"fixed", bottom:0, left:0, right:0, zIndex:1000, display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:16, padding:"16px 28px", background:"rgba(24,17,43,0.92)", backdropFilter:"blur(14px)", borderTop:"1px solid rgba(255,255,255,0.08)", boxShadow:"0 -4px 30px rgba(80,20,120,0.25)" },
-  text: { margin:0, flex:1, minWidth:240, fontSize:13, lineHeight:1.6, color:"rgba(255,255,255,0.78)", fontFamily:'"Plus Jakarta Sans", system-ui, sans-serif' },
-  link: { color:"rgba(200,160,255,0.9)", textDecoration:"none", fontWeight:600 },
-  btns: { display:"flex", gap:10, flexShrink:0 },
-  decline: { padding:"9px 18px", borderRadius:10, cursor:"pointer", background:"transparent", border:"1px solid rgba(255,255,255,0.18)", color:"rgba(255,255,255,0.6)", fontSize:13, fontWeight:600, fontFamily:'"Plus Jakarta Sans", system-ui, sans-serif' },
-  accept: { padding:"9px 20px", borderRadius:10, cursor:"pointer", background:"linear-gradient(120deg,#7c3aed,#c026d3,#ff4d8d)", border:"none", color:"#fff", fontSize:13, fontWeight:700, fontFamily:'"Plus Jakarta Sans", system-ui, sans-serif' },
-};
+const CSS = `
+.cb-bar {
+  position:fixed; bottom:12px; left:12px; right:12px;
+  z-index:1000;
+  max-width:640px; margin:0 auto;
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:10px 14px;
+  padding:12px 14px;
+  background:rgba(255,255,255,0.96);
+  border:1px solid var(--line);
+  border-radius:18px;
+  box-shadow:0 18px 36px -24px rgba(15, 23, 42, 0.32);
+  font-family:var(--font-body);
+}
+.cb-text {
+  margin:0; flex:1; min-width:220px;
+  font-size:12.5px; line-height:1.5;
+  color:var(--ink-2);
+}
+.cb-link {
+  color:var(--accent); text-decoration:none; font-weight:600;
+  transition:color .15s;
+}
+.cb-link:hover { color:var(--accent-mid); text-decoration:underline; }
+.cb-btns { display:flex; gap:8px; flex-shrink:0; }
+.cb-btn {
+  min-height:36px;
+  padding:8px 14px; border-radius:var(--r-pill);
+  font-family:inherit; font-size:12.5px; font-weight:700;
+  cursor:pointer;
+  transition:background .15s, border-color .15s, color .15s, transform .15s ease;
+}
+.cb-btn:hover { transform:translateY(-1px); }
+.cb-btn--ghost {
+  background:#fff;
+  border:1px solid var(--line-2);
+  color:var(--ink-2);
+}
+.cb-btn--ghost:hover { border-color:var(--ink-2); color:var(--ink); }
+.cb-btn--primary {
+  background:var(--accent); color:#fff;
+  border:1px solid var(--accent);
+  box-shadow:0 10px 18px -12px rgba(91,33,182,0.55);
+}
+.cb-btn--primary:hover { background:#4C1D95; border-color:#4C1D95; }
+@media (max-width: 640px) {
+  .cb-bar {
+    left:10px; right:10px; bottom:10px;
+    align-items:flex-start;
+    padding:12px;
+  }
+  .cb-btns {
+    width:100%;
+  }
+  .cb-btn {
+    flex:1;
+  }
+}
+`;

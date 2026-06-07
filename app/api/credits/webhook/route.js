@@ -2,14 +2,21 @@ import Stripe from 'stripe';
 import { addCredits } from '@/lib/credits';
 import { createClient } from '@supabase/supabase-js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+let _stripe = null;
+function getStripe() {
+  if (_stripe) return _stripe;
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error('STRIPE_SECRET_KEY is not configured');
+  _stripe = new Stripe(key);
+  return _stripe;
+}
 
 export async function POST(request) {
   const body = await request.text();
   const sig = request.headers.get('stripe-signature');
   let event;
   try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    event = getStripe().webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     return new Response(`Webhook error: ${err.message}`, { status: 400 });
   }
