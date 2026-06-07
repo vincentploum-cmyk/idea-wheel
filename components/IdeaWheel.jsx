@@ -322,8 +322,12 @@ const MODES = {
       //   9=quote generation, 10=team communication, 11=vendor management,
       //   12=customer requests, 13=payroll processing, 14=performance reviews,
       //   15=inventory tracking, 16=billing & collections, 17=field operations
-      ['Automates','Streamlines','Manages','Centralizes','Tracks','Handles','Schedules','Simplifies','Accelerates','Digitizes','Processes','Organizes','Monitors','Optimizes','Prioritizes'],
-      ['time & expense reporting', 'referral tracking', 'client onboarding', 'invoice processing', 'contract management', 'compliance reporting', 'staff scheduling', 'job site inspections', 'quote generation', 'lead management', 'document management', 'project tracking', 'vendor management', 'customer follow-ups', 'payroll processing', 'performance reviews', 'inventory tracking', 'billing & collections', 'field operations', 'service request routing', 'safety incident reporting', 'equipment maintenance', 'crew dispatching', 'patient intake', 'referral management', 'renewal reminders', 'work order management', 'quality control checks', 'subcontractor coordination', 'delivery scheduling'],
+      // Fixed: removed Schedules (too narrow), Processes (redundant with workflow names),
+      // Digitizes (often redundant). Added: Standardizes, Consolidates, Replaces.
+      ['Automates','Streamlines','Manages','Centralizes','Tracks','Handles','Standardizes','Simplifies','Accelerates','Consolidates','Replaces','Organizes','Monitors','Optimizes','Prioritizes'],
+      // Fixed: "invoice processing"→"invoicing", "payroll processing"→"payroll",
+      // "inventory tracking"→"inventory management", "referral tracking"→"referrals"
+      ['time & expense reporting', 'referrals', 'client onboarding', 'invoicing', 'contract management', 'compliance reporting', 'staff scheduling', 'job site inspections', 'quote generation', 'lead management', 'document management', 'project tracking', 'vendor management', 'customer follow-ups', 'payroll', 'performance reviews', 'inventory management', 'billing & collections', 'field operations', 'service request routing', 'safety incident reporting', 'equipment maintenance', 'crew dispatching', 'patient intake', 'referral management', 'renewal reminders', 'work order management', 'quality control checks', 'subcontractor coordination', 'delivery scheduling'],
       ['Healthcare','Legal services','Construction','Logistics','Insurance','Dental practices','Manufacturing','Accounting firms','Property management','Restaurants','Staffing agencies','Real estate','Veterinary clinics','Auto repair shops','Marketing agencies','Financial advisors','Cleaning services','Retail','Physical therapy','Childcare'],
     ],
   },
@@ -331,10 +335,16 @@ const MODES = {
     name:'Consumer', connector:'for', prefix:'I want to make an app that',
     labels:['ACTION','EXPERIENCE','FOR'],
     banks:[
-      // 15 actions — every verb pairs naturally with every experience below
-      ['Tracks', 'Improves', 'Manages', 'Builds', 'Optimizes', 'Plans', 'Simplifies', 'Coaches', 'Monitors', 'Personalizes', 'Boosts', 'Structures', 'Transforms', 'Organizes', 'Gamifies'],
-      // 18 experiences — noun phrases that read naturally after any action above
-      ['daily habits', 'sleep quality', 'personal finances', 'mental health', 'fitness goals', 'meal planning', 'career progress', 'productivity', 'anxiety & stress', 'skill development', 'time management', 'nutrition tracking', 'home organization', 'creative projects', 'work-life balance', 'learning routines', 'relationship goals', 'social confidence', 'spending habits', 'morning routines', 'workout recovery', 'focus & deep work', 'journaling & reflection', 'language learning', 'financial independence', 'digital wellbeing', 'parenting routines', 'reading habits', 'dating & relationships', 'side hustle growth'],
+      // Fixed: removed Boosts (backfires on goals/abstract nouns), Transforms (too narrow),
+      // Gamifies (breaks on stress/health/finances), Personalizes (too narrow).
+      // Added: Reduces, Strengthens, Accelerates, Develops.
+      ['Tracks', 'Improves', 'Manages', 'Builds', 'Optimizes', 'Plans', 'Simplifies', 'Coaches', 'Monitors', 'Reduces', 'Strengthens', 'Structures', 'Accelerates', 'Organizes', 'Develops'],
+      // Fixed problematic objects: "fitness goals"→"fitness", "relationship goals"→"relationships",
+      // "skill development"→"skills", "sleep quality"→"sleep", "career progress"→"career growth",
+      // "nutrition tracking"→"nutrition", "home organization"→"home routines",
+      // "learning routines"→"learning", "social confidence"→"social life",
+      // "time management"→"daily schedule"
+      ['daily habits', 'sleep', 'personal finances', 'mental health', 'fitness', 'meal planning', 'career growth', 'productivity', 'stress', 'skills', 'daily schedule', 'nutrition', 'home routines', 'creative projects', 'work-life balance', 'learning', 'relationships', 'social life', 'spending habits', 'morning routines', 'workout recovery', 'focus & deep work', 'journaling', 'language learning', 'financial independence', 'digital wellbeing', 'parenting', 'reading habits', 'dating', 'side hustle'],
       // Audiences: clear groups with a shared pain point
       // 18 audiences
       ['busy professionals', 'new parents', 'college students', 'freelancers', 'athletes', 'small business owners', 'retirees', 'remote workers', 'people with ADHD', 'musicians', 'young adults', 'solopreneurs', 'teachers', 'healthcare workers', 'content creators', 'night shift workers', 'seniors living alone', 'couples', 'first-time homeowners', 'job seekers', 'new graduates', 'introverts', 'chronic illness patients', 'travel enthusiasts', 'new immigrants'],
