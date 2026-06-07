@@ -134,7 +134,7 @@ export default function PricingPageClient({ searchParams }) {
                   : pkg.key === 'starter' ? 'Perfect for trying out your first blueprint.' : pkg.key === 'pro' ? 'For founders validating multiple ideas in one sitting.' : 'For power users and teams running deep exploration.'}
               </p>
               <button onClick={() => startCheckout(pkg)} disabled={loadingKey !== null} style={{
-                width: '100%', border: 'none', borderRadius: 12, padding: '12px 0',
+                width: '100%', border: 'none', borderRadius: 999, padding: '12px 0',
                 background: pkg.highlight ? 'linear-gradient(120deg,#7c3aed,#c026d3,#ff4d8d)' : '#f3edff',
                 color: pkg.highlight ? '#fff' : '#7c3aed',
                 fontWeight: 700, fontSize: 14,
