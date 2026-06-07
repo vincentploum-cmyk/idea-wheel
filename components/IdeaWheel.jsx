@@ -526,6 +526,7 @@ function SlotMachine({ onResult }) {
           <button className="sm-spin" onClick={spinAll} disabled={anySpinning}>
             {anySpinning ? '⟳  Spinning…' : '✦  Generate Idea'}
           </button>
+        </div>
       </div>
 
       {/* live sentence under reels */}
