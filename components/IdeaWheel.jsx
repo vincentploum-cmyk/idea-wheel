@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { CREDIT_PACKAGES } from "@/lib/pricing";
 import { createClient } from "@/lib/supabase-browser";
+import { DEFAULT_MODE_CONFIGS, buildGeneratorIdea } from "@/lib/generator-config";
 
 /* ─── IDEA SEGMENTS ──────────────────────────────────────────────── */
 const SEGMENTS = [
@@ -334,16 +335,46 @@ const REPEATS = 10;
 const HOME_COPY = 4;
 const REEL_TINTS = ['#7c3aed','#c026d3','#ff4d8d'];
 
+function pickWeightedIndex(weights = []) {
+  if (!weights.length) return 0;
+  const safe = weights.map((weight) => (Number.isFinite(weight) && weight > 0 ? weight : 1));
+  const total = safe.reduce((sum, weight) => sum + weight, 0);
+  let roll = Math.random() * total;
+  for (let i = 0; i < safe.length; i += 1) {
+    roll -= safe[i];
+    if (roll <= 0) return i;
+  }
+  return safe.length - 1;
+}
+
+const CLIENT_DEFAULT_MODE_CONFIGS = DEFAULT_MODE_CONFIGS;
+
 function SlotMachine({ onResult }) {
   const [mode, setMode] = useState('b2b');
-  const m = MODES[mode];
-  const banks = m.banks;
+  const [modeConfigs, setModeConfigs] = useState(CLIENT_DEFAULT_MODE_CONFIGS);
   const stripRefs = [useRef(null), useRef(null), useRef(null)];
   const indexRef = useRef([0,0,0]);
   const targetRef = useRef([0,0,0]);
   const [landed, setLanded] = useState(['','','']);
   const [spinning, setSpinning] = useState([false,false,false]);
   const anySpinning = spinning.some(Boolean);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/generator/config', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.modes) setModeConfigs(data.modes);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const m = modeConfigs[mode] || CLIENT_DEFAULT_MODE_CONFIGS[mode];
+  const banks = m.banks;
+  const weights = m.weights || banks.map((bank) => bank.map(() => 1));
 
   useEffect(() => {
     banks.forEach((bank,w) => {
@@ -355,7 +386,28 @@ function SlotMachine({ onResult }) {
     setLanded(['','','']);
     setSpinning([false,false,false]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
+  }, [mode, JSON.stringify(banks)]);
+
+  const selectIndex = (column, allowedValues = null, valueWeights = null) => {
+    const bank = banks[column];
+    if (!allowedValues) {
+      return pickWeightedIndex(weights[column] || bank.map(() => 1));
+    }
+
+    const entries = allowedValues
+      .map((value) => {
+        const index = bank.indexOf(value);
+        if (index === -1) return null;
+        return {
+          index,
+          weight: valueWeights?.[value] ?? weights[column]?.[index] ?? 1,
+        };
+      })
+      .filter(Boolean);
+
+    if (!entries.length) return pickWeightedIndex(weights[column] || bank.map(() => 1));
+    return entries[pickWeightedIndex(entries.map((entry) => entry.weight))].index;
+  };
 
   const spinWheel = (w, duration) => {
     if (spinning[w]) return;
@@ -363,7 +415,7 @@ function SlotMachine({ onResult }) {
     const L = bank.length;
     const cur = indexRef.current[w];
     const curBase = ((cur%L)+L)%L;
-    const t = Math.floor(Math.random()*L);
+    const t = pickWeightedIndex(weights[w] || bank.map(() => 1));
     const forward = ((t-curBase)%L+L)%L;
     const loops = 8 + Math.floor(Math.random()*4);
     const newIndex = cur + loops*L + forward + (forward===0?L:0);
@@ -400,49 +452,25 @@ function SlotMachine({ onResult }) {
     setSpinning(s => { const n=[...s]; n[w]=false; return n; });
   };
 
-  const B2B_VALID_PAIRS = {0: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 1: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 3: [0, 1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 24, 25, 26, 28], 4: [0, 1, 2, 3, 4, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24, 25, 26, 27, 28], 5: [0, 2, 3, 4, 5, 7, 8, 9, 10, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 6: [2, 7, 8, 18, 21, 22], 7: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 8: [0, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 23, 24, 25, 26, 28], 9: [0, 2, 3, 4, 5, 7, 9, 10, 12, 13, 14, 15, 16, 17, 20, 21, 23, 24, 25, 26, 27, 28], 10: [0, 2, 3, 4, 5, 9, 10, 13, 14, 16, 17, 19, 20, 23, 24, 25, 26], 11: [0, 1, 2, 4, 5, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22, 24, 25, 26, 27, 28], 12: [0, 1, 4, 5, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24, 25, 26, 27, 28], 13: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 14: [0, 9, 11, 12, 13, 14, 15, 17, 19, 20, 22, 23, 24, 25, 26, 27]};
-
-  const CONSUMER_VALID_PAIRS = {0: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 1: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 3: [0, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29], 4: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 5: [0, 2, 4, 6, 7, 9, 10, 11, 12, 13, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 6: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 7: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29], 8: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 9: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 10: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29], 11: [0, 2, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29], 12: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 13: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 14: [0, 2, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27, 29]};
-
   const spinAll = () => {
     if (anySpinning) return;
-    const validPairs = mode === 'b2b' ? B2B_VALID_PAIRS : CONSUMER_VALID_PAIRS;
-    // Pick a random valid action first, then a compatible experience/workflow
-    const actionIdx = Math.floor(Math.random() * banks[0].length);
-    const allowed = validPairs[actionIdx] || [...Array(banks[1].length).keys()];
-    const expIdx = allowed[Math.floor(Math.random() * allowed.length)];
-    const audienceIdx = Math.floor(Math.random() * banks[2].length);
+    const actionIdx = selectIndex(0);
+    const action = banks[0][actionIdx];
+    const allowedWorkflows = (m.pairMap?.[action] || banks[1]).filter((workflow) => banks[1].includes(workflow));
+    const workflowIdx = selectIndex(1, allowedWorkflows, m.pairWeights?.[action]);
+    const workflow = banks[1][workflowIdx];
+    const industryIdx = selectIndex(2, banks[2], m.workflowIndustryWeights?.[workflow]);
+
     spinWheelTo(0, actionIdx, 3000);
-    spinWheelTo(1, expIdx, 3600);
-    spinWheelTo(2, audienceIdx, 4200);
+    spinWheelTo(1, workflowIdx, 3600);
+    spinWheelTo(2, industryIdx, 4200);
   };
 
   const complete = landed.every(Boolean);
 
   useEffect(() => {
     if (complete && !anySpinning && onResult) {
-      const v = landed[0]; const w = landed[1]; const ind = landed[2];
-
-      const thirdPerson = (s) => s.toLowerCase();
-      const title = `${w.replace(/\b\w/g, c => c.toUpperCase())} for ${ind.replace(/\b\w/g, c => c.toUpperCase())}`;
-      const tagline = m.name === 'B2B'
-        ? `A B2B agent that ${thirdPerson(v)} ${w} in the ${ind} industry.`
-        : `A consumer app that ${thirdPerson(v)} ${w} for ${ind}.`;
-      const blurb = m.name === 'B2B'
-        ? `Built for ${ind} teams that need to ${v.toLowerCase()} ${w} faster, with less manual work and more consistency.`
-        : `Built for ${ind} who want a simpler way to ${v.toLowerCase()} ${w} without another bloated app.`;
-      onResult({
-        action:v,
-        workflow:w,
-        industry:ind,
-        connector:m.connector,
-        modeName:m.name,
-        label:m.name,
-        title,
-        tagline,
-        blurb,
-        freeformIdea:m.name === 'B2B' ? `${v.toLowerCase()} ${w} in the ${ind} industry` : `${v.toLowerCase()} ${w} ${m.connector} ${ind}`,
-      });
+      onResult(buildGeneratorIdea(m, landed[0], landed[1], landed[2]));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [complete, anySpinning]);
@@ -454,18 +482,16 @@ function SlotMachine({ onResult }) {
   return (
     <div className="sm-root">
       <div className="sm-cabinet">
-        {/* mode toggle */}
         <div className="sm-topbar">
           <div className="sm-modebar">
-            {Object.keys(MODES).map(k => (
+            {Object.keys(CLIENT_DEFAULT_MODE_CONFIGS).map(k => (
               <button key={k} className={`sm-modebtn${mode===k?' on':''}`} onClick={()=>setMode(k)} disabled={anySpinning}>
-                {MODES[k].name}
+                {CLIENT_DEFAULT_MODE_CONFIGS[k].name}
               </button>
             ))}
           </div>
         </div>
 
-        {/* reels + dominant center band */}
         <div className="sm-reels-wrap">
           <div className="sm-payline-bar" aria-hidden="true" />
           <div className="sm-reels">
@@ -493,7 +519,6 @@ function SlotMachine({ onResult }) {
         </div>
       </div>
 
-      {/* live sentence under reels */}
       <div className="sm-live-sentence">
         <p>
           <span style={{fontStyle:'italic',color:'var(--muted)'}}>{prefix} </span>
@@ -525,6 +550,7 @@ export default function IdeaWheel() {
   const [validating, setValidating] = useState(false);
   const [comp, setComp]             = useState(null);
   const [validateErr, setValidateErr] = useState("");
+  const [sessionId, setSessionId] = useState("");
 
   // blueprint state  — pipeline stages: null | 1-4 | "done"
   const [bpStage, setBpStage]   = useState(null);
@@ -597,10 +623,32 @@ export default function IdeaWheel() {
 
   const handleSpin = (segment) => {
     setIdea(segment);
+    setSessionId("");
     setComp(null); setValidateErr("");
     setDesign(null); setGtm(null); setInfra(null); setProto(null);
     setBpStage(null); setBpErr("");
     goTo("wheel");
+  };
+
+  const trackOutcome = async (signal, payload = {}, explicitSessionId = sessionId) => {
+    if (!signal || !idea) return;
+    try {
+      const res = await fetch('/api/pipeline/outcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          signal,
+          sessionId: explicitSessionId || undefined,
+          modeName: idea.label,
+          action: idea.action,
+          workflow: idea.workflow,
+          industry: idea.industry,
+          payload,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data?.sessionId && !sessionId) setSessionId(data.sessionId);
+    } catch {}
   };
 
   /* ── FREE VALIDATE ── */
@@ -612,14 +660,24 @@ export default function IdeaWheel() {
         method:"POST",
         headers:{ "Content-Type":"application/json" },
         body: JSON.stringify({
+          action: idea.action,
+          workflow: idea.workflow,
+          industry: idea.industry,
+          connector: idea.connector,
           freeformIdea: ideaSummary(idea),
           modeName: idea.label,
-          sessionId: "",
+          sessionId,
         }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+      if (data.sessionId) setSessionId(data.sessionId);
       setComp(data.comp);
+      void trackOutcome('market_scan_completed', {
+        validationId: data.comp?.validationId,
+        verdictType: data.comp?.verdictType,
+        overallScore: data.comp?.eval?.scores?.overall || null,
+      }, data.sessionId || sessionId);
     } catch(e) {
       setValidateErr(e.message.includes("AI_CREDITS") || e.message.includes("temporarily") ? "Our AI is taking a short break. Please try again in a minute." : "Market check failed. " + e.message);
     } finally {
@@ -631,15 +689,24 @@ export default function IdeaWheel() {
   const runBlueprint = async () => {
     const cost = creditCost(comp?.score ?? 0);
     if (!comp || credits < cost) { setShowPricing(true); return; }
+    void trackOutcome('blueprint_started', {
+      validationId: comp.validationId,
+      verdictType: comp.verdictType,
+      overallScore: comp?.eval?.scores?.overall || null,
+    }, sessionId);
     setCredits(c => c - cost);
     setBpStage(1); setBpErr("");
     setDesign(null); setGtm(null); setInfra(null); setProto(null);
     setProtoOpen(false);
 
     const base = {
+      action: idea.action,
+      workflow: idea.workflow,
+      industry: idea.industry,
+      connector: idea.connector,
       freeformIdea: ideaSummary(idea),
       modeName: idea.label,
-      sessionId: "",
+      sessionId,
       validationId: comp.validationId,
       comp,
     };
@@ -801,9 +868,7 @@ export default function IdeaWheel() {
       {/* ── WHEEL (slot machine reels) ── */}
       {screen === "wheel" && (
         <section className="su-screen su-wheel-screen">
-          <SlotMachine onResult={(result) => {
-            setIdea(result); setComp(null); setValidateErr("");
-          }}/>
+          <SlotMachine onResult={handleSpin}/>
           {/* Validate button + inline results */}
           {idea && (
             <div className="sm-validate-section">

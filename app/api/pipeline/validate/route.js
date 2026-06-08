@@ -352,6 +352,7 @@ function buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval,
   const decision = judge.decision || scout.verdictType || 'warning';
   return {
     ...scout,
+    score: evalResult?.scores?.overall || null,
     verdictType: decision,
     verdict: scout.verdict,
     verdictReasoning: `${judge.reasoning} ${scout.verdictReasoning || ''}`.trim(),
