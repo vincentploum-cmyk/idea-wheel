@@ -198,8 +198,8 @@ function ScoreRing({ value, size = 128, label }) {
     <div style={{ position:"relative", width:size, height:size, flexShrink:0 }}>
       <svg width={size} height={size}>
         <defs><linearGradient id={gid} x1="0" y1="0" x2={size} y2={size}>
-          <stop stopColor="#5B21B6"/><stop offset="1" stopColor="#7C3AED"/></linearGradient></defs>
-        <circle cx={size/2} cy={size/2} r={r} stroke="#EDE9FE" strokeWidth="11" fill="none"/>
+          <stop stopColor="#7C3AED"/><stop offset="1" stopColor="#FF4D8D"/></linearGradient></defs>
+        <circle cx={size/2} cy={size/2} r={r} stroke="#EFE6FF" strokeWidth="11" fill="none"/>
         <circle cx={size/2} cy={size/2} r={r} stroke={`url(#${gid})`} strokeWidth="11" fill="none"
           strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c-(c*v)/100}
           transform={`rotate(-90 ${size/2} ${size/2})`}
@@ -1146,11 +1146,11 @@ const CSS = `
 }
 .su-nav-link:hover { color:var(--ink); background:var(--bg-2); }
 .su-nav-link--cta {
-  color:#fff; background:var(--accent); border-color:var(--accent);
+  color:#fff; background:var(--grad-brand); border-color:transparent;
   padding:8px 18px; border-radius:var(--r-pill); margin-left:6px;
-  box-shadow:0 10px 18px -14px rgba(91,33,182,0.55);
+  box-shadow:0 10px 24px -14px rgba(192,38,211,0.45);
 }
-.su-nav-link--cta:hover { background:#4C1D95; border-color:#4C1D95; color:#fff; }
+.su-nav-link--cta:hover { filter:brightness(1.06); color:#fff; transform:translateY(-1px); }
 
 /* screens */
 .su-screen {
@@ -1220,10 +1220,10 @@ const CSS = `
   text-decoration:none; line-height:1; letter-spacing:-.005em;
 }
 .su-btn-primary {
-  background:var(--accent); color:#fff;
-  box-shadow:0 1px 0 rgba(255,255,255,0.16) inset, 0 12px 24px -16px rgba(91,33,182,0.55);
+  background:var(--grad-brand); color:#fff;
+  box-shadow:0 1px 0 rgba(255,255,255,0.16) inset, 0 12px 24px -16px rgba(192,38,211,0.5);
 }
-.su-btn-primary:hover { background:#4C1D95; box-shadow:0 1px 0 rgba(255,255,255,0.16) inset, 0 16px 28px -18px rgba(76,29,149,0.6); transform:translateY(-1px); }
+.su-btn-primary:hover { filter:brightness(1.06); box-shadow:0 1px 0 rgba(255,255,255,0.16) inset, 0 16px 28px -18px rgba(192,38,211,0.56); transform:translateY(-1px); }
 .su-btn-primary:active { transform:translateY(0); }
 .su-btn-ghost {
   background:var(--surface); color:var(--ink);
@@ -1734,18 +1734,18 @@ const CSS = `
   font-family:var(--font-body); font-size:14.5px; font-weight:600;
   color:#fff; padding:13px 36px; border-radius:var(--r-pill);
   letter-spacing:-.005em;
-  background:var(--accent);
+  background:var(--grad-brand);
   cursor:pointer; min-width:220px; position:relative;
   border:1px solid rgba(255,255,255,0.08);
   box-shadow:
     0 1px 0 rgba(255,255,255,0.18) inset,
-    0 8px 24px -10px rgba(91,33,182,0.6);
+    0 8px 24px -10px rgba(192,38,211,0.56);
   transition:background .15s, box-shadow .2s, transform .15s ease;
 }
 .sm-spin:hover:not(:disabled) {
-  background:var(--accent-mid);
+  filter:brightness(1.06);
   transform:translateY(-1px);
-  box-shadow:0 1px 0 rgba(255,255,255,0.18) inset, 0 12px 28px -10px rgba(124,58,237,0.7);
+  box-shadow:0 1px 0 rgba(255,255,255,0.18) inset, 0 12px 28px -10px rgba(192,38,211,0.64);
 }
 .sm-spin:active:not(:disabled) { transform:translateY(0); }
 .sm-spin:disabled { opacity:.5; cursor:default; }

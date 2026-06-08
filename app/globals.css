@@ -2,30 +2,30 @@
 
 :root {
   /* ── Brand ────────────────────────────────────────── */
-  --accent:        #5B21B6;   /* deep violet — primary */
-  --accent-mid:    #7C3AED;   /* mid violet — hover/secondary */
-  --accent-light:  #EDE9FE;   /* tinted surface */
-  --accent-border: #C4B5FD;
+  --accent:        #7C3AED;
+  --accent-mid:    #C026D3;
+  --accent-light:  #EFE6FF;
+  --accent-border: #E1D9F0;
 
-  /* The ONE brand gradient — used sparingly */
-  --grad-cta: linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%);
+  /* The restored purple → pink gradient */
+  --grad-cta: linear-gradient(120deg, #7C3AED 0%, #C026D3 45%, #FF4D8D 100%);
 
   /* ── Neutrals ─────────────────────────────────────── */
-  --bg:      #FAFAF9;
-  --bg-2:    #F4F2FA;
+  --bg:      #FAF7FF;
+  --bg-2:    #F3EDFF;
   --surface: #FFFFFF;
-  --line:    #E7E3F1;
-  --line-2:  #D5CEE7;
+  --line:    #ECE6F5;
+  --line-2:  #E1D9F0;
 
   /* ── Text ─────────────────────────────────────────── */
-  --ink:   #0D0820;
-  --ink-2: #3B3459;
-  --muted: #6B6589;
-  --faint: #9D98B4;
+  --ink:   #18112B;
+  --ink-2: #463A5F;
+  --muted: #7A7191;
+  --faint: #AAA1BD;
 
   /* ── Feedback ─────────────────────────────────────── */
-  --good: #15803D;
-  --warn: #B45309;
+  --good: #16A34A;
+  --warn: #E0A800;
   --bad:  #B91C1C;
 
   /* ── Radii ────────────────────────────────────────── */
@@ -38,10 +38,11 @@
   --r-pill: 999px;
 
   /* ── Shadows ──────────────────────────────────────── */
-  --sh-xs: 0 1px 2px rgba(13,8,32,0.05);
-  --sh-sm: 0 2px 8px rgba(13,8,32,0.06);
-  --sh-md: 0 6px 24px -8px rgba(13,8,32,0.10);
-  --sh-lg: 0 16px 48px -12px rgba(13,8,32,0.18);
+  --sh-xs: 0 1px 2px rgba(60,20,90,0.05);
+  --sh-sm: 0 2px 8px rgba(60,20,90,0.06);
+  --sh-md: 0 10px 30px -10px rgba(80,30,120,0.18);
+  --sh-lg: 0 30px 70px -24px rgba(90,30,130,0.30);
+  --sh-glow: 0 20px 60px -18px rgba(200,40,150,0.45);
 
   /* ── Typography ───────────────────────────────────── */
   /* All "Sora" / "Plus Jakarta Sans" references resolve through these tokens. */
@@ -49,14 +50,15 @@
   --font-body:    "Epilogue", "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* ── Legacy aliases (referenced by existing components) ──── */
-  --violet:   var(--accent-mid);
-  --magenta:  var(--accent-mid);
-  --pink:     var(--accent-mid);
-  --coral:    var(--accent);
-  --indigo:   var(--accent);
+  --violet:   var(--accent);
+  --purple:   #9333EA;
+  --magenta:  #C026D3;
+  --pink:     #FF4D8D;
+  --coral:    #FF6F61;
+  --indigo:   #5B5BF5;
 
   --grad-brand: var(--grad-cta);
-  --grad-soft:  linear-gradient(135deg, var(--accent-light), var(--bg-2));
+  --grad-soft:  linear-gradient(120deg, #EFE6FF 0%, #FBE6F4 55%, #FFE9E6 100%);
 
   --iw-color-bg:              var(--bg);
   --iw-color-surface:         var(--surface);
@@ -64,17 +66,17 @@
   --iw-color-border:          var(--line);
   --iw-color-ink:             var(--ink);
   --iw-color-muted:           var(--muted);
-  --iw-color-brand-primary:   var(--accent);
-  --iw-color-brand-secondary: var(--accent-mid);
-  --iw-color-brand-tertiary:  #0F766E;
-  --iw-color-brand-soft:      var(--accent-light);
-  --iw-brand-primary-rgb:     91 33 182;
-  --iw-brand-secondary-rgb:   124 58 237;
-  --iw-brand-tertiary-rgb:    15 118 110;
+  --iw-color-brand-primary:   var(--violet);
+  --iw-color-brand-secondary: var(--magenta);
+  --iw-color-brand-tertiary:  #1A9492;
+  --iw-color-brand-soft:      #EFE6FF;
+  --iw-brand-primary-rgb:     124 58 237;
+  --iw-brand-secondary-rgb:   192 38 211;
+  --iw-brand-tertiary-rgb:    26 148 146;
   --iw-gradient-brand:        var(--grad-cta);
   --iw-gradient-brand-diagonal: var(--grad-cta);
-  --iw-shadow-brand:          var(--sh-md);
-  --iw-shadow-brand-soft:     0 4px 16px rgba(91,33,182,0.18);
+  --iw-shadow-brand:          var(--sh-glow);
+  --iw-shadow-brand-soft:     0 6px 20px -8px rgba(124,58,237,0.32);
   --iw-font-ui:               var(--font-body);
   --iw-font-display:          var(--font-display);
 
@@ -126,7 +128,7 @@ button {
 a { color: inherit; }
 img, svg { display: block; max-width: 100%; }
 
-::selection { background: rgba(91,33,182,0.18); color: var(--ink); }
+::selection { background: rgba(192,38,211,0.18); color: var(--ink); }
 
 :focus-visible {
   outline: 2px solid var(--accent-mid);

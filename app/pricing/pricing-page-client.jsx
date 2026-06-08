@@ -256,11 +256,11 @@ const CSS = `
 }
 .pr-card-btn:hover { border-color:var(--accent); color:var(--accent); }
 .pr-card-btn--primary {
-  background:var(--accent); color:#fff;
-  border-color:var(--accent);
-  box-shadow:0 1px 0 rgba(255,255,255,0.16) inset, 0 12px 24px -16px rgba(91,33,182,0.55);
+  background:var(--grad-brand); color:#fff;
+  border-color:transparent;
+  box-shadow:0 1px 0 rgba(255,255,255,0.16) inset, 0 12px 24px -16px rgba(192,38,211,0.5);
 }
-.pr-card-btn--primary:hover { background:#4C1D95; border-color:#4C1D95; color:#fff; }
+.pr-card-btn--primary:hover { filter:brightness(1.06); color:#fff; }
 .pr-card-btn:disabled { opacity:.55; cursor:wait; }
 
 .pr-tldr {

@@ -99,11 +99,11 @@ const CSS = `
 }
 .cb-btn--ghost:hover { border-color:var(--ink-2); color:var(--ink); }
 .cb-btn--primary {
-  background:var(--accent); color:#fff;
-  border:1px solid var(--accent);
-  box-shadow:0 10px 18px -12px rgba(91,33,182,0.55);
+  background:var(--grad-brand); color:#fff;
+  border:1px solid transparent;
+  box-shadow:0 10px 18px -12px rgba(192,38,211,0.5);
 }
-.cb-btn--primary:hover { background:#4C1D95; border-color:#4C1D95; }
+.cb-btn--primary:hover { filter:brightness(1.06); }
 @media (max-width: 640px) {
   .cb-bar {
     position:static;

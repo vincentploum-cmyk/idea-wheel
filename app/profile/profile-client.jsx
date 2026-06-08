@@ -246,7 +246,7 @@ const s = {
   divider: { width: '100%', display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0', color: 'var(--muted)', fontSize: 12 },
   form: { width: '100%', display: 'flex', flexDirection: 'column', gap: 10 },
   input: { width: '100%', minHeight: 46, padding: '12px 14px', border: '1px solid var(--line)', borderRadius: 999, fontSize: 14, fontFamily: 'var(--font-body)', outline: 'none', boxSizing: 'border-box', background: 'var(--bg-2)', color: 'var(--ink)' },
-  submitBtn: { width: '100%', minHeight: 46, padding: '12px', background: 'var(--accent)', color: '#fff', border: '1px solid var(--accent)', borderRadius: 999, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)', display: 'block', boxShadow: '0 12px 24px -18px rgba(91,33,182,0.55)' },
+  submitBtn: { width: '100%', minHeight: 46, padding: '12px', background: 'var(--grad-brand)', color: '#fff', border: '1px solid transparent', borderRadius: 999, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)', display: 'block', boxShadow: '0 12px 24px -18px rgba(192,38,211,0.5)' },
   reassure: { margin: '12px 0 0', fontSize: 12, lineHeight: 1.55, color: 'var(--muted)', textAlign: 'center', maxWidth: 320 },
   ghostBtn: { marginTop: 16, background: 'none', border: 'none', color: 'var(--ink-2)', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' },
   signoutBtn: { padding: '10px 16px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 999, fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', cursor: 'pointer', flexShrink: 0 },
