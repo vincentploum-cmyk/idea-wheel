@@ -229,6 +229,12 @@ function creditLabel(score) {
 
 function cleanValidationText(text = '') {
   return String(text)
+    .replace(/<\/?cite\b[^>]*>/gi, ' ')
+    .replace(/<\/?source\b[^>]*>/gi, ' ')
+    .replace(/<\/?sup\b[^>]*>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\bindex="[^"]*">?/gi, ' ')
+    .replace(/\[(?:\d+[\d,\-\s]*)\]/g, ' ')
     .replace(/\*\*/g, '')
     .replace(/^N\/A[—-]?\s*/i, '')
     .replace(/does not exist as a discrete segment/gi, 'is not a clear standalone category yet')
@@ -717,7 +723,7 @@ export default function IdeaWheel() {
               <span className="su-grad-text" style={{ display:"block", paddingRight:"6px", paddingBottom:"16px" }}>worth building.</span>
             </h1>
             <p className="su-landing-sub">
-              Generate sharper business ideas in seconds, validate them for free, and unlock a build-ready blueprint only when one is worth pursuing.
+              Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.
             </p>
 
             <div className="su-landing-cta">
@@ -746,8 +752,8 @@ export default function IdeaWheel() {
                 <div className="su-hiw-step">
                   <div className="su-hiw-num">2</div>
                   <div>
-                    <div className="su-hiw-t">Know if it's worth building, for free</div>
-                    <div className="su-hiw-d">Every idea gets a real market check with competitor analysis, market size, and demand signals, so you get a clear build, caution, or avoid verdict before spending a dollar.</div>
+                    <div className="su-hiw-t">Know if it's worth building before you commit</div>
+                    <div className="su-hiw-d">Every idea gets a market check with competitor analysis, market size, and demand signals, so you get a clear build, caution, or avoid verdict before you sink time into it.</div>
                   </div>
                 </div>
                 <div className="su-hiw-connector" aria-hidden />
@@ -804,7 +810,7 @@ export default function IdeaWheel() {
               {!comp && !validating && !validateErr && (
                 <div className="sm-result-cta">
                   <button className="su-btn su-btn-primary su-btn-lg" onClick={runValidate}>
-                    Validate this market — free
+                    Run market scan
                   </button>
                 </div>
               )}
@@ -904,7 +910,7 @@ export default function IdeaWheel() {
                         </div>
                         <div className="su-v-hint">
                           <span style={{color: cl.color, fontWeight:700}}>{cl.tier}</span>
-                          {' · '}validation always free{' · '}you have {credits} credits
+                          {' · '}blueprint costs {cost} credit{cost > 1 ? 's' : ''}{' · '}you have {credits} credits
                         </div>
                       </div>
                     );
@@ -1355,11 +1361,11 @@ const CSS = `
 /* validate grid */
 .su-validate-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 @media(max-width:640px){ .su-validate-grid { grid-template-columns:1fr; } }
-.su-v-score { display:flex; align-items:flex-start; gap:20px; }
-.su-v-score-side { display:flex; flex-direction:column; gap:10px; }
+.su-v-score { display:flex; align-items:flex-start; gap:20px; min-width:0; }
+.su-v-score-side { display:flex; flex-direction:column; gap:10px; min-width:0; flex:1 1 auto; }
 .su-v-minihead { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
-.su-v-market { display:flex; flex-direction:column; gap:16px; }
-.su-v-market-cell { display:flex; flex-direction:column; gap:8px; }
+.su-v-market { display:flex; flex-direction:column; gap:16px; min-width:0; }
+.su-v-market-cell { display:flex; flex-direction:column; gap:8px; min-width:0; }
 .su-v-k { font-family:var(--font-display); font-size:26px; font-weight:700; line-height:1; }
 .su-v-l { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
 .su-v-gap { padding:14px; background:var(--bg-2); border-radius:var(--r-md); }
@@ -1368,12 +1374,13 @@ const CSS = `
 .su-v-signals-head { font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
 .su-v-signal { margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--line); }
 .su-v-signal:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none; }
-.su-v-signal-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:8px; font-size:13px; color:var(--ink); }
-.su-v-signal-top b { font-size:12px; color:var(--muted); white-space:nowrap; }
+.su-v-signal-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:8px; font-size:13px; color:var(--ink); min-width:0; }
+.su-v-signal-top span { min-width:0; flex:1 1 auto; overflow-wrap:anywhere; }
+.su-v-signal-top b { font-size:12px; color:var(--muted); white-space:normal; text-align:right; max-width:45%; overflow-wrap:anywhere; }
 .su-ring-num { font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--ink); line-height:1; letter-spacing:-.02em; }
 .su-ring-label { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
-.su-v-bullets { margin:0; padding-left:18px; display:flex; flex-direction:column; gap:8px; }
-.su-v-bullets li { font-size:13px; color:var(--ink-2); line-height:1.55; }
+.su-v-bullets { margin:0; padding-left:18px; display:flex; flex-direction:column; gap:8px; min-width:0; }
+.su-v-bullets li { font-size:13px; color:var(--ink-2); line-height:1.55; overflow-wrap:anywhere; word-break:break-word; }
 .su-v-bullets--compact { gap:6px; }
 .su-v-bullets--compact li { font-size:12.5px; }
 .su-v-bullets--gap li { color:var(--ink); font-weight:500; }
@@ -1895,6 +1902,7 @@ const CSS = `
   .su-landing-cta-row .su-btn { flex:1 1 100%; }
   .su-wheel-wrap { width:280px; height:280px; }
   .su-bp-grid,.su-validate-grid { grid-template-columns:1fr; }
+  .su-v-score { flex-direction:column; align-items:stretch; }
   .su-v-signals { grid-column:auto; }
   .su-v-cta { grid-column:auto; padding:22px; }
   .su-pip-progress { grid-template-columns:repeat(2,1fr); }

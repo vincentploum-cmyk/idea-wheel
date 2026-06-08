@@ -159,9 +159,21 @@ function mergeUsage(...usages) {
   );
 }
 
+function stripCitationNoise(value) {
+  return String(value || '')
+    .replace(/<\/?cite\b[^>]*>/gi, ' ')
+    .replace(/<\/?source\b[^>]*>/gi, ' ')
+    .replace(/<\/?sup\b[^>]*>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\bindex="[^"]*">?/gi, ' ')
+    .replace(/\[(?:\d+[\d,\-\s]*)\]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function shortText(value, max = 220) {
   if (!value) return '';
-  const text = String(value).replace(/\s+/g, ' ').trim();
+  const text = stripCitationNoise(value);
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
 
