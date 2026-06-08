@@ -411,6 +411,7 @@ function SlotMachine({ onResult }) {
   const targetRef = useRef([0,0,0]);
   const [landed, setLanded] = useState(['','','']);
   const [spinning, setSpinning] = useState([false,false,false]);
+  const [hasSpun, setHasSpun] = useState(false);
   const anySpinning = spinning.some(Boolean);
 
   useEffect(() => {
@@ -555,7 +556,7 @@ function SlotMachine({ onResult }) {
               return (
                 <div className="sm-col" key={mode+w} style={{'--accent':REEL_TINTS[w]}}>
                   <div className="sm-window" onClick={()=>!anySpinning&&spinWheel(w,3200)}>
-                    <div className={`sm-strip${spinning[w]?' is-spinning':''}`} ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)}>
+                    <div className={`sm-strip${spinning[w]?' is-spinning':''}`} ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)} style={{opacity: hasSpun ? 1 : 0}}>
                       {repeated.map((word,i)=>(
                         <div className="sm-item" key={i}>{word}</div>
                       ))}
