@@ -59,6 +59,8 @@ export default function ProfileClient({ user, error }) {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  const creditsSpent = blueprints.reduce((sum, bp) => sum + Number(bp.credits_spent || 0), 0);
+
   return (
     <div style={s.page}>
       <style>{`@keyframes blobdrift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,-30px) scale(1.12)}}`}</style>
@@ -91,12 +93,12 @@ export default function ProfileClient({ user, error }) {
               <div style={s.statCard}>
                 <div style={s.statLabel}>BLUEPRINTS</div>
                 <div style={s.statVal}>{bpLoading ? '…' : blueprints.length}</div>
-                <div style={{ fontSize: 11, color: '#aaa1bd', marginTop: 4 }}>generated</div>
+                <div style={s.statMeta}>generated</div>
               </div>
               <div style={s.statCard}>
                 <div style={s.statLabel}>CREDITS SPENT</div>
-                <div style={s.statVal}>{bpLoading ? '…' : blueprints.length * 5}</div>
-                <div style={{ fontSize: 11, color: '#aaa1bd', marginTop: 4 }}>on blueprints</div>
+                <div style={s.statVal}>{bpLoading ? '…' : creditsSpent}</div>
+                <div style={s.statMeta}>tracked automatically</div>
               </div>
             </div>
 
@@ -111,7 +113,7 @@ export default function ProfileClient({ user, error }) {
                 <div style={s.empty}>
                   <div style={{ fontSize: 28, marginBottom: 8 }}>✦</div>
                   <div style={{ fontWeight: 600, marginBottom: 4 }}>No blueprints yet</div>
-                  <div style={{ fontSize: 13, color: '#aaa1bd', marginBottom: 16 }}>Spin an idea and generate your first blueprint</div>
+                  <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>Spin an idea and generate your first blueprint</div>
                   <a href="/" style={s.buyBtn}>Spin an idea →</a>
                 </div>
               ) : (
@@ -129,7 +131,11 @@ export default function ProfileClient({ user, error }) {
                         {[bp.reel_1, bp.reel_2, bp.reel_3].filter(Boolean).map((tag, i) => (
                           <span key={i} style={s.bpTag}>{tag}</span>
                         ))}
-                        <span style={{ ...s.bpTag, background: '#f3edff', color: '#7c3aed' }}>5 credits</span>
+                        {Number(bp.credits_spent || 0) > 0 && (
+                          <span style={{ ...s.bpTag, background: 'var(--accent-light)', color: 'var(--accent)' }}>
+                            {bp.credits_spent} credit{Number(bp.credits_spent) === 1 ? '' : 's'}
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -145,9 +151,9 @@ export default function ProfileClient({ user, error }) {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                   {transactions.map((t, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: '#7a7191', padding: '10px 0', borderBottom: '1px solid #f3edff' }}>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: 'var(--ink-2)', padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
                       <span style={{ textTransform: 'capitalize' }}>{t.reason.replace(/_/g, ' ')}</span>
-                      <span style={{ fontWeight: 700, color: t.amount > 0 ? '#16a34a' : '#7c3aed' }}>
+                      <span style={{ fontWeight: 700, color: t.amount > 0 ? '#15803D' : 'var(--accent)' }}>
                         {t.amount > 0 ? `+${t.amount}` : t.amount} credits
                       </span>
                     </div>
@@ -188,15 +194,16 @@ export default function ProfileClient({ user, error }) {
               <input type="email" required placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} style={s.input}/>
               <button type="submit" disabled={loading} style={s.submitBtn}>{loading ? 'Sending…' : 'Send magic link'}</button>
             </form>
+            <p style={s.reassure}>No password to remember. We only use your email for sign-in links and purchase receipts.</p>
           </div>
         )}
       </div>
 
       <div style={s.disclaimer}>
         <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 8 }}>
-          <a href="/privacy" style={{ fontSize: 12, color: '#7a7191', textDecoration: 'none' }}>Privacy</a>
-          <a href="/terms" style={{ fontSize: 12, color: '#7a7191', textDecoration: 'none' }}>Terms</a>
-          <a href="/faq" style={{ fontSize: 12, color: '#7a7191', textDecoration: 'none' }}>FAQ</a>
+          <a href="/privacy" style={{ fontSize: 12, color: 'var(--ink-2)', textDecoration: 'none' }}>Privacy</a>
+          <a href="/terms" style={{ fontSize: 12, color: 'var(--ink-2)', textDecoration: 'none' }}>Terms</a>
+          <a href="/faq" style={{ fontSize: 12, color: 'var(--ink-2)', textDecoration: 'none' }}>FAQ</a>
         </div>
         <p style={s.disclaimerText}>© {new Date().getFullYear()} IdeaReels. All rights reserved.</p>
       </div>
@@ -205,42 +212,44 @@ export default function ProfileClient({ user, error }) {
 }
 
 const s = {
-  page: { minHeight: '100vh', background: '#faf7ff', fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif', color: '#18112b', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' },
-  blob1: { position: 'fixed', width: 480, height: 480, top: '-8%', left: '-6%', borderRadius: '50%', background: '#7c3aed', filter: 'blur(70px)', opacity: .32, pointerEvents: 'none', zIndex: 0, animation: 'blobdrift 22s ease-in-out infinite' },
-  blob2: { position: 'fixed', width: 420, height: 420, bottom: '-12%', right: '-6%', borderRadius: '50%', background: '#ff4d8d', filter: 'blur(70px)', opacity: .28, pointerEvents: 'none', zIndex: 0, animation: 'blobdrift 22s ease-in-out infinite', animationDelay: '-7s' },
-  wrap: { flex: 1, maxWidth: 680, margin: '0 auto', width: '100%', padding: '32px 20px 40px', position: 'relative', zIndex: 1 },
-  topbar: { marginBottom: 32 },
-  back: { fontSize: 13, fontWeight: 600, color: '#7a7191', textDecoration: 'none', padding: '8px 16px', border: '1px solid #ece6f5', borderRadius: 999, background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(8px)' },
+  page: { minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-body)', color: 'var(--ink)', display: 'flex', flexDirection: 'column', position: 'relative' },
+  blob1: { display: 'none' },
+  blob2: { display: 'none' },
+  wrap: { flex: 1, maxWidth: 760, margin: '0 auto', width: '100%', padding: '28px 20px 40px', position: 'relative', zIndex: 1 },
+  topbar: { marginBottom: 28 },
+  back: { display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--ink-2)', textDecoration: 'none', padding: '10px 16px', border: '1px solid var(--line)', borderRadius: 999, background: 'var(--surface)' },
   header: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, gap: 16 },
-  title: { fontFamily: '"Sora", system-ui', fontSize: 24, fontWeight: 700, margin: '0 0 4px', color: '#18112b', letterSpacing: '-0.02em' },
-  emailTxt: { fontSize: 14, color: '#7a7191', margin: 0 },
-  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 },
-  statCard: { background: 'rgba(255,255,255,0.82)', backdropFilter: 'blur(14px)', border: '1px solid #ece6f5', borderRadius: 16, padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' },
-  statLabel: { fontSize: 9, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa1bd', marginBottom: 4 },
-  statVal: { fontSize: 28, fontWeight: 900, fontFamily: '"Sora", system-ui', color: '#18112b', lineHeight: 1, marginBottom: 4 },
-  buyBtn: { fontSize: 11, fontWeight: 700, color: '#7c3aed', textDecoration: 'none', marginTop: 2 },
-  section: { background: 'rgba(255,255,255,0.82)', backdropFilter: 'blur(14px)', border: '1px solid #ece6f5', borderRadius: 16, padding: '20px', marginBottom: 16 },
+  title: { fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, margin: '0 0 6px', color: 'var(--ink)', letterSpacing: '-0.03em', lineHeight: 1.05 },
+  emailTxt: { fontSize: 14, color: 'var(--muted)', margin: 0 },
+  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 24 },
+  statCard: { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 18, padding: '18px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: 'var(--sh-sm)' },
+  statLabel: { fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 },
+  statVal: { fontSize: 30, fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--ink)', lineHeight: 1, marginBottom: 4 },
+  statMeta: { fontSize: 11, color: 'var(--muted)', marginTop: 4 },
+  buyBtn: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 34, padding: '0 12px', fontSize: 12, fontWeight: 700, color: '#fff', textDecoration: 'none', marginTop: 6, borderRadius: 999, background: 'var(--accent)' },
+  section: { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 20, padding: '22px', marginBottom: 16, boxShadow: 'var(--sh-sm)' },
   sectionHead: { marginBottom: 16 },
-  seclabel: { fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa1bd' },
-  empty: { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '24px 0', color: '#7a7191', fontSize: 14 },
+  seclabel: { fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)' },
+  empty: { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '28px 0', color: 'var(--muted)', fontSize: 14 },
   bpList: { display: 'flex', flexDirection: 'column', gap: 12 },
-  bpCard: { padding: '14px', background: '#faf7ff', border: '1px solid #ece6f5', borderRadius: 999 },
-  bpTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 4 },
-  bpTitle: { fontWeight: 700, fontSize: 14, color: '#18112b', lineHeight: 1.3 },
-  bpDate: { fontSize: 11, color: '#aaa1bd', flexShrink: 0 },
-  bpTagline: { fontSize: 12, color: '#7a7191', marginBottom: 8, lineHeight: 1.4 },
-  bpTags: { display: 'flex', flexWrap: 'wrap', gap: 4 },
-  bpTag: { fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: '#f3edff', color: '#463a5f', textTransform: 'capitalize' },
-  card: { background: 'rgba(255,255,255,0.82)', backdropFilter: 'blur(14px)', border: '1px solid #ece6f5', borderRadius: 24, padding: '36px 32px', maxWidth: 400, margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 10px 40px -12px rgba(80,30,120,0.2)' },
-  sub: { fontSize: 14, color: '#7a7191', margin: '0 0 24px', textAlign: 'center', lineHeight: 1.6 },
-  errBox: { width: '100%', padding: '10px 14px', background: 'rgba(220,38,38,0.07)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 10, color: '#dc2626', fontSize: 13, margin: '0 0 16px', textAlign: 'center' },
-  oauthBtn: { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '12px 16px', background: '#fff', border: '1.5px solid #ece6f5', borderRadius: 999, fontSize: 14, fontWeight: 600, color: '#18112b', cursor: 'pointer', marginBottom: 8 },
-  divider: { width: '100%', display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0', color: '#aaa1bd', fontSize: 12 },
+  bpCard: { padding: '16px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 18 },
+  bpTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
+  bpTitle: { fontWeight: 700, fontSize: 14, color: 'var(--ink)', lineHeight: 1.35 },
+  bpDate: { fontSize: 11, color: 'var(--muted)', flexShrink: 0 },
+  bpTagline: { fontSize: 12.5, color: 'var(--ink-2)', marginBottom: 10, lineHeight: 1.5 },
+  bpTags: { display: 'flex', flexWrap: 'wrap', gap: 6 },
+  bpTag: { fontSize: 10.5, fontWeight: 600, padding: '4px 8px', borderRadius: 999, background: 'var(--accent-light)', color: 'var(--ink-2)', textTransform: 'capitalize' },
+  card: { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 24, padding: '32px 28px', maxWidth: 440, margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: 'var(--sh-md)' },
+  sub: { fontSize: 14, color: 'var(--muted)', margin: '0 0 24px', textAlign: 'center', lineHeight: 1.6, maxWidth: 320 },
+  errBox: { width: '100%', padding: '10px 14px', background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.18)', borderRadius: 12, color: '#B91C1C', fontSize: 13, margin: '0 0 16px', textAlign: 'center' },
+  oauthBtn: { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '12px 16px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 999, fontSize: 14, fontWeight: 600, color: 'var(--ink)', cursor: 'pointer', marginBottom: 8 },
+  divider: { width: '100%', display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0', color: 'var(--muted)', fontSize: 12 },
   form: { width: '100%', display: 'flex', flexDirection: 'column', gap: 10 },
-  input: { width: '100%', padding: '12px 14px', border: '1.5px solid #ece6f5', borderRadius: 999, fontSize: 14, fontFamily: '"Plus Jakarta Sans", system-ui', outline: 'none', boxSizing: 'border-box', background: '#faf7ff' },
-  submitBtn: { width: '100%', padding: '12px', background: 'linear-gradient(135deg,#8b5cf6 0%,#a855f7 40%,#ec4899 100%)', color: '#fff', border: 'none', borderRadius: 999, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: '"Plus Jakarta Sans", system-ui', display: 'block' },
-  ghostBtn: { marginTop: 16, background: 'none', border: 'none', color: '#7a7191', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' },
-  signoutBtn: { padding: '8px 16px', background: 'transparent', border: '1.5px solid #ece6f5', borderRadius: 10, fontSize: 12, fontWeight: 600, color: '#7a7191', cursor: 'pointer', flexShrink: 0 },
-  disclaimer: { position: 'relative', zIndex: 1, padding: '16px 24px 24px', borderTop: '1px solid #ece6f5', textAlign: 'center', maxWidth: 600, margin: '0 auto', width: '100%' },
-  disclaimerText: { fontSize: 11, color: '#aaa1bd', lineHeight: 1.7, margin: 0 },
+  input: { width: '100%', minHeight: 46, padding: '12px 14px', border: '1px solid var(--line)', borderRadius: 999, fontSize: 14, fontFamily: 'var(--font-body)', outline: 'none', boxSizing: 'border-box', background: 'var(--bg-2)', color: 'var(--ink)' },
+  submitBtn: { width: '100%', minHeight: 46, padding: '12px', background: 'var(--accent)', color: '#fff', border: '1px solid var(--accent)', borderRadius: 999, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)', display: 'block', boxShadow: '0 12px 24px -18px rgba(91,33,182,0.55)' },
+  reassure: { margin: '12px 0 0', fontSize: 12, lineHeight: 1.55, color: 'var(--muted)', textAlign: 'center', maxWidth: 320 },
+  ghostBtn: { marginTop: 16, background: 'none', border: 'none', color: 'var(--ink-2)', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' },
+  signoutBtn: { padding: '10px 16px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 999, fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', cursor: 'pointer', flexShrink: 0 },
+  disclaimer: { position: 'relative', zIndex: 1, padding: '16px 24px 24px', borderTop: '1px solid var(--line)', textAlign: 'center', maxWidth: 600, margin: '0 auto', width: '100%' },
+  disclaimerText: { fontSize: 11, color: 'var(--muted)', lineHeight: 1.7, margin: 0 },
 };

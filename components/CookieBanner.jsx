@@ -1,14 +1,37 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
+  const barRef = useRef(null);
 
   useEffect(() => {
     try {
       if (!localStorage.getItem("cookieConsent")) setVisible(true);
     } catch {}
   }, []);
+
+  useEffect(() => {
+    if (!visible) {
+      document.documentElement.style.setProperty("--cookie-banner-space", "0px");
+      return;
+    }
+
+    const syncSpace = () => {
+      const isMobile = window.matchMedia("(max-width: 640px)").matches;
+      const height = barRef.current?.offsetHeight || 0;
+      document.documentElement.style.setProperty("--cookie-banner-space", isMobile ? "0px" : `${height + 28}px`);
+    };
+
+    const frame = requestAnimationFrame(syncSpace);
+    window.addEventListener("resize", syncSpace);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", syncSpace);
+      document.documentElement.style.setProperty("--cookie-banner-space", "0px");
+    };
+  }, [visible]);
 
   const respond = (choice) => {
     try { localStorage.setItem("cookieConsent", choice); } catch {}
@@ -20,7 +43,7 @@ export default function CookieBanner() {
   return (
     <>
       <style>{CSS}</style>
-      <div className="cb-bar" role="dialog" aria-label="Cookie preferences">
+      <div ref={barRef} className="cb-bar" role="dialog" aria-label="Cookie preferences">
         <p className="cb-text">
           We use cookies to keep your session secure and remember your preferences.{" "}
           <a href="/privacy" className="cb-link">Privacy</a>
@@ -83,7 +106,10 @@ const CSS = `
 .cb-btn--primary:hover { background:#4C1D95; border-color:#4C1D95; }
 @media (max-width: 640px) {
   .cb-bar {
-    left:10px; right:10px; bottom:10px;
+    position:static;
+    left:auto; right:auto; bottom:auto;
+    max-width:none;
+    margin:0 10px 12px;
     align-items:flex-start;
     padding:12px;
   }

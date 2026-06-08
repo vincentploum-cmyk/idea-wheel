@@ -1,41 +1,25 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-
-const CREDIT_PACKAGES = [
-  { key: 'starter', label: 'Starter', credits: 5,  price: '$4.99', per: '$1.00', highlight: false },
-  { key: 'pro',     label: 'Pro',     credits: 10, price: '$9',    per: '$0.90', highlight: true  },
-  { key: 'power',   label: 'Power',   credits: 25, price: '$19',   per: '$0.76', highlight: false },
-];
-const CREDIT_PACKAGE_BY_KEY = Object.fromEntries(CREDIT_PACKAGES.map(p => [p.key, p]));
+import { useMemo, useState } from 'react';
+import { CREDIT_PACKAGES, CREDIT_PACKAGE_BY_KEY } from '@/lib/pricing';
 
 const PACK_DESCRIPTIONS = {
-  starter: 'For trying your first full blueprint.',
-  pro:     'Best for founders validating multiple ideas in one sitting.',
-  power:   'For power users and teams running deep exploration.',
+  starter: 'For trying your first full blueprint end-to-end.',
+  pro:     'Best for founders validating several ideas back-to-back.',
+  power:   'For builders running deep exploration across markets.',
 };
 
 export default function PricingPageClient({ searchParams }) {
   const [loadingKey, setLoadingKey] = useState(null);
   const [error, setError] = useState('');
-  const success = searchParams?.success === '1';
-  const canceled = searchParams?.canceled === '1';
-  const packageKey = searchParams?.package || '';
-  const sessionId = searchParams?.session_id || '';
+  // Support both the legacy `success=1&package=…` flow and the new `credits=success&pack=…` redirect
+  const success = searchParams?.success === '1' || searchParams?.credits === 'success';
+  const canceled = searchParams?.canceled === '1' || searchParams?.credits === 'cancelled';
+  const packageKey = searchParams?.package || searchParams?.pack || '';
   const packageConfig = CREDIT_PACKAGE_BY_KEY[packageKey] || null;
 
-  useEffect(() => {
-    if (!success || !packageConfig || !sessionId) return;
-    try {
-      const grantKey = `ideaWheelStripeGrant:${sessionId}`;
-      if (window.localStorage.getItem(grantKey)) return;
-      const existing = Number(window.localStorage.getItem('ideaWheelCredits') || '3');
-      const base = Number.isFinite(existing) ? existing : 3;
-      window.localStorage.setItem('ideaWheelCredits', String(base + packageConfig.credits));
-      window.localStorage.setItem(grantKey, '1');
-    } catch {}
-  }, [success, packageConfig, sessionId]);
+  // Credits are granted server-side by the Stripe webhook. No client mutation needed.
 
   const statusMessage = useMemo(() => {
     if (success && packageConfig) return {
@@ -111,6 +95,7 @@ export default function PricingPageClient({ searchParams }) {
                 <span className="pr-card-price-num">{pkg.price}</span>
                 <span className="pr-card-price-meta">{pkg.credits} credits · {pkg.per} each</span>
               </div>
+              <div className="pr-card-tagline">~ {pkg.tagline}</div>
               <p className="pr-card-desc">{PACK_DESCRIPTIONS[pkg.key]}</p>
               <button
                 onClick={() => startCheckout(pkg)}
@@ -251,6 +236,11 @@ const CSS = `
 .pr-card-price-meta {
   display:block; margin-top:6px;
   font-size:12.5px; color:var(--muted);
+}
+.pr-card-tagline {
+  font-size:12px; font-weight:600; letter-spacing:.04em;
+  color:var(--accent-mid);
+  margin:0 0 14px;
 }
 .pr-card-desc {
   font-size:13.5px; color:var(--muted); line-height:1.55;

@@ -13,7 +13,7 @@ const FAQS = [
   },
   {
     q: "What does a credit unlock?",
-    a: "One credit runs a 4-agent AI pipeline: a product designer names your product and specs the features, a launch strategist writes your first-customer plan and 30-day roadmap, an infrastructure architect details every service you need to sign up for, and a prototype builder ships a clickable HTML demo you can test immediately.",
+    a: "Blueprints typically cost 1 to 3 credits depending on the signal strength. Each blueprint runs a 4-agent AI pipeline: a product designer names your product and specs the features, a launch strategist writes your first-customer plan and 30-day roadmap, an infrastructure architect details every service you need to sign up for, and a prototype builder ships a clickable HTML demo you can test immediately.",
   },
   {
     q: "How many free spins do I get?",

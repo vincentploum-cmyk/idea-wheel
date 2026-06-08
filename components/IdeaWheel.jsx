@@ -739,7 +739,7 @@ export default function IdeaWheel() {
                   <div className="su-hiw-num">3</div>
                   <div>
                     <div className="su-hiw-t">Turn the winner into a build-ready plan</div>
-                    <div className="su-hiw-d">One credit unlocks four AI specialists, product design, launch strategy, infrastructure, and prototype generation, so you get a complete blueprint you can act on immediately.</div>
+                    <div className="su-hiw-d">Blueprints cost 1 to 3 credits based on signal strength, and each one unlocks four AI specialists across product design, launch strategy, infrastructure, and prototype generation.</div>
                   </div>
                 </div>
               </div>
@@ -1083,7 +1083,7 @@ export default function IdeaWheel() {
               <span>Get credits</span>
               <button onClick={() => setShowPricing(false)}>✕</button>
             </div>
-            <p className="su-modal-sub">Each credit runs the full 4-agent blueprint pipeline.</p>
+            <p className="su-modal-sub">Blueprints typically cost 1 to 3 credits, depending on how strong the opportunity looks.</p>
             {checkoutErr && <p className="su-err">{checkoutErr}</p>}
             <div className="su-pkgs">
               {CREDIT_PACKAGES.map(pkg => (
