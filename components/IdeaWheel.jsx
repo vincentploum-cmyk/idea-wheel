@@ -548,11 +548,6 @@ function SlotMachine({ onResult }) {
           </div>
         </div>
 
-        {!hasSpun && (
-          <div style={{textAlign:'center',padding:'6px 0 10px',fontSize:12,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase',color:'var(--violet)',opacity:0.6}}>
-            🎰 &nbsp; Hit generate to spin the reels
-          </div>
-        )}
         <div className="sm-reels-wrap">
           <div className="sm-payline-bar" aria-hidden="true" />
           <div className="sm-reels">
@@ -574,6 +569,15 @@ function SlotMachine({ onResult }) {
           {/* frosted haze: off-payline words blur out of focus, the centered row stays crisp */}
           <div className="sm-reel-haze sm-reel-haze--top" aria-hidden="true" />
           <div className="sm-reel-haze sm-reel-haze--bottom" aria-hidden="true" />
+          {/* Before the first spin, cover the reels so no words are pre-populated,
+              and show a clear call-to-action banner across the generator. */}
+          {!hasSpun && (
+            <div className="sm-reel-cover" onClick={()=>!anySpinning&&spinAll()}>
+              <span className="sm-reel-cover-emoji">🎰</span>
+              <span className="sm-reel-cover-title">Click “Generate idea” to start</span>
+              <span className="sm-reel-cover-sub">Spin the reels for a fresh startup idea</span>
+            </div>
+          )}
         </div>
 
         <div className="sm-base">
@@ -2239,6 +2243,39 @@ const CSS = `
     rgba(247,242,255,0.16) 100%);
   -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 44%, #000 100%);
   mask-image:linear-gradient(180deg, transparent 0%, #000 44%, #000 100%);
+}
+
+/* Pre-spin cover: hides the reel words (so nothing is pre-populated) and
+   carries the call-to-action across the full width of the generator. */
+.sm-reel-cover {
+  position:absolute;
+  inset:8px;
+  z-index:6;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px;
+  text-align:center;
+  cursor:pointer;
+  border-radius:14px;
+  background:linear-gradient(180deg,
+    rgba(247,242,255,0.92) 0%,
+    rgba(244,236,252,0.88) 100%);
+  -webkit-backdrop-filter:blur(8px);
+  backdrop-filter:blur(8px);
+  border:1px solid rgba(192,38,211,0.20);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.86);
+}
+.sm-reel-cover-emoji { font-size:24px; line-height:1; }
+.sm-reel-cover-title {
+  font-family:var(--font-display);
+  font-weight:800;
+  font-size:clamp(15px, 2.6vw, 18px);
+  letter-spacing:-.01em;
+  background:linear-gradient(120deg,#7c3aed 0%,#c026d3 50%,#ff4d8d 100%);
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:transparent;
+}
+.sm-reel-cover-sub {
+  font-size:12.5px; font-weight:600; color:var(--muted);
 }
 
 .sm-item {
