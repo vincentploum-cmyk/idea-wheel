@@ -1728,24 +1728,6 @@ const CSS = `
   will-change:transform;
   pointer-events:none; user-select:none;
   position:relative; z-index:0;
-  -webkit-mask-image:linear-gradient(180deg,
-    transparent 0%,
-    rgba(0,0,0,0.04) 14%,
-    rgba(0,0,0,0.22) 30%,
-    rgba(0,0,0,1) 46%,
-    rgba(0,0,0,1) 54%,
-    rgba(0,0,0,0.22) 70%,
-    rgba(0,0,0,0.04) 86%,
-    transparent 100%);
-  mask-image:linear-gradient(180deg,
-    transparent 0%,
-    rgba(0,0,0,0.04) 14%,
-    rgba(0,0,0,0.22) 30%,
-    rgba(0,0,0,1) 46%,
-    rgba(0,0,0,1) 54%,
-    rgba(0,0,0,0.22) 70%,
-    rgba(0,0,0,0.04) 86%,
-    transparent 100%);
 }
 
 /* Motion blur while the reel travels — smooths the fast scroll so it no
@@ -1755,34 +1737,39 @@ const CSS = `
   filter:blur(1.4px);
 }
 
-/* Frosted depth-of-field: everything off the centered payline is blurred
-   out of focus and tinted so the words above/below are not readable —
-   only the centered row reads clearly. */
+/* Frosted depth-of-field over the off-payline zone. Lives on the fixed
+   wrap (NOT the moving strip — a mask on the strip scrolls with it and
+   never lands over the window), so the blur+tint stay pinned above and
+   below the centered band. backdrop-filter blurs the words scrolling
+   behind; the tint hides them even where backdrop-filter is unsupported.
+   Only the centered row, in the clear band between the two hazes, reads. */
 .sm-reel-haze {
   position:absolute;
   left:8px; right:8px;
   z-index:3;
   pointer-events:none;
-  -webkit-backdrop-filter:blur(6px);
-  backdrop-filter:blur(6px);
-  background:linear-gradient(180deg,
-    rgba(248,243,255,0.66) 0%,
-    rgba(248,243,255,0.28) 100%);
+  -webkit-backdrop-filter:blur(7px);
+  backdrop-filter:blur(7px);
 }
 .sm-reel-haze--top {
   top:8px;
   bottom:calc(50% + 39px);
-  -webkit-mask-image:linear-gradient(180deg, #000 0%, #000 58%, transparent 100%);
-  mask-image:linear-gradient(180deg, #000 0%, #000 58%, transparent 100%);
+  background:linear-gradient(180deg,
+    rgba(247,242,255,0.94) 0%,
+    rgba(247,242,255,0.62) 55%,
+    rgba(247,242,255,0.16) 100%);
+  -webkit-mask-image:linear-gradient(180deg, #000 0%, #000 56%, transparent 100%);
+  mask-image:linear-gradient(180deg, #000 0%, #000 56%, transparent 100%);
 }
 .sm-reel-haze--bottom {
   top:calc(50% + 39px);
   bottom:8px;
   background:linear-gradient(0deg,
-    rgba(248,243,255,0.66) 0%,
-    rgba(248,243,255,0.28) 100%);
-  -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 42%, #000 100%);
-  mask-image:linear-gradient(180deg, transparent 0%, #000 42%, #000 100%);
+    rgba(247,242,255,0.94) 0%,
+    rgba(247,242,255,0.62) 55%,
+    rgba(247,242,255,0.16) 100%);
+  -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 44%, #000 100%);
+  mask-image:linear-gradient(180deg, transparent 0%, #000 44%, #000 100%);
 }
 
 .sm-item {
@@ -1954,7 +1941,7 @@ const CSS = `
   .sm-modebtn { padding:7px 16px; font-size:12px; }
   .sm-reels-wrap { padding:6px; border-radius:16px; }
   .sm-payline-bar { left:6px; right:6px; height:68px; border-radius:14px; }
-  .sm-reel-haze { left:6px; right:6px; -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px); }
+  .sm-reel-haze { left:6px; right:6px; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
   .sm-reel-haze--top { top:6px; bottom:calc(50% + 34px); }
   .sm-reel-haze--bottom { top:calc(50% + 34px); bottom:6px; }
   .sm-reels { gap:3px; }
