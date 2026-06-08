@@ -310,7 +310,7 @@ function briefPlayerWeakness(text = '') {
 
 function reelDisplayLine(idea) {
   if (!idea) return '';
-  return [idea.action, idea.workflow, idea.industry].filter(Boolean).join(' · ');
+  return [idea.displayAction || idea.action, idea.displayWorkflow || idea.workflow, idea.displayIndustry || idea.industry].filter(Boolean).join(' · ');
 }
 
 /* ─── PROTO IFRAME ───────────────────────────────────────────────── */
@@ -397,6 +397,11 @@ function pickWeightedIndex(weights = []) {
 }
 
 const CLIENT_DEFAULT_MODE_CONFIGS = DEFAULT_MODE_CONFIGS;
+const REEL_DISPLAY_KEYS = ['actions', 'workflows', 'industries'];
+
+function displayReelValue(modeConfig, column, value = '') {
+  return modeConfig?.display?.[REEL_DISPLAY_KEYS[column]]?.[value] || value;
+}
 
 function SlotMachine({ onResult }) {
   const [mode, setMode] = useState('b2b');
@@ -559,7 +564,8 @@ function SlotMachine({ onResult }) {
     const allowedWorkflows = (m.pairMap?.[action] || banks[1]).filter((workflow) => banks[1].includes(workflow));
     const workflowIdx = selectIndex(1, allowedWorkflows, m.pairWeights?.[action]);
     const workflow = banks[1][workflowIdx];
-    const industryIdx = selectIndex(2, banks[2], m.workflowIndustryWeights?.[workflow]);
+    const allowedIndustries = (m.workflowIndustryMap?.[workflow] || banks[2]).filter((industry) => banks[2].includes(industry));
+    const industryIdx = selectIndex(2, allowedIndustries, m.workflowIndustryWeights?.[workflow]);
 
     spinWheelTo(0, actionIdx, 3000);
     spinWheelTo(1, workflowIdx, 3600);
@@ -578,7 +584,7 @@ function SlotMachine({ onResult }) {
 
   const prefix = m.prefix;
   const conn = m.connector;
-  const liveVerb = landed[0] ? landed[0].toLowerCase() : '';
+  const liveVerb = landed[0] ? displayReelValue(m, 0, landed[0]).toLowerCase() : '';
 
   return (
     <div className="sm-root">
@@ -603,7 +609,7 @@ function SlotMachine({ onResult }) {
                   <div className="sm-window" onClick={()=>!anySpinning&&spinWheel(w,3200)}>
                     <div className={`sm-strip${spinning[w]?' is-spinning':''}`} ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)}>
                       {repeated.map((word,i)=>(
-                        <div className="sm-item" key={i} style={{height:ITEM_H}}>{word}</div>
+                        <div className="sm-item" key={i} style={{height:ITEM_H}}>{displayReelValue(m, w, word)}</div>
                       ))}
                     </div>
                   </div>
@@ -628,9 +634,9 @@ function SlotMachine({ onResult }) {
           <span style={{fontStyle:'italic',color:'var(--muted)'}}>{prefix} </span>
           {landed[0] ? <span className="sm-slot">{liveVerb}</span> : <span className="sm-slot-empty"/>}
           {' '}
-          {landed[1] ? <span className="sm-slot">{landed[1]}</span> : <span className="sm-slot-empty"/>}
+          {landed[1] ? <span className="sm-slot">{displayReelValue(m, 1, landed[1])}</span> : <span className="sm-slot-empty"/>}
           {' '}<span style={{fontStyle:'italic',color:'var(--muted)'}}>{conn}</span>{' '}
-          {landed[2] ? <span className="sm-slot">{landed[2]}</span> : <span className="sm-slot-empty"/>}
+          {landed[2] ? <span className="sm-slot">{displayReelValue(m, 2, landed[2])}</span> : <span className="sm-slot-empty"/>}
           {mode === 'b2b' ? <span style={{fontStyle:'italic',color:'var(--muted)'}}> industry</span> : null}
           <span style={{color:'var(--magenta)'}}>.</span>
         </p>
@@ -1049,9 +1055,9 @@ export default function IdeaWheel() {
                   <div className="su-v-minihead" style={{marginBottom:6}}>Reel match</div>
                   <div style={{color:'var(--ink)', fontWeight:700, marginBottom:10}}>{idea.reelDescription || reelDisplayLine(idea)}</div>
                   <div style={{display:'flex', gap:8, flexWrap:'wrap', marginBottom:10}}>
-                    <span className="su-v-precheck-tag">Reel 1 · {idea.action}</span>
-                    <span className="su-v-precheck-tag">Reel 2 · {idea.workflow}</span>
-                    <span className="su-v-precheck-tag">Reel 3 · {idea.industry}</span>
+                    <span className="su-v-precheck-tag">Reel 1 · {idea.displayAction || idea.action}</span>
+                    <span className="su-v-precheck-tag">Reel 2 · {idea.displayWorkflow || idea.workflow}</span>
+                    <span className="su-v-precheck-tag">Reel 3 · {idea.displayIndustry || idea.industry}</span>
                   </div>
                   {idea.seedTitle && (
                     <>
