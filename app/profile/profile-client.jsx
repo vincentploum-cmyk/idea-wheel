@@ -63,10 +63,6 @@ export default function ProfileClient({ user, error }) {
 
   return (
     <div style={s.page}>
-      <style>{`@keyframes blobdrift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,-30px) scale(1.12)}}`}</style>
-      <div style={s.blob1} />
-      <div style={s.blob2} />
-
       <div style={s.wrap}>
         <div style={s.topbar}>
           <a href="/" style={s.back}>← IdeaReels</a>
@@ -211,45 +207,47 @@ export default function ProfileClient({ user, error }) {
   );
 }
 
+const glassSoft = 'rgba(255,255,255,0.36)';
+const glassStrong = 'rgba(255,255,255,0.5)';
+const softLine = 'rgba(236,230,245,0.92)';
+
 const s = {
-  page: { minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-body)', color: 'var(--ink)', display: 'flex', flexDirection: 'column', position: 'relative' },
-  blob1: { display: 'none' },
-  blob2: { display: 'none' },
+  page: { minHeight: '100vh', background: 'transparent', fontFamily: 'var(--font-body)', color: 'var(--ink)', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' },
   wrap: { flex: 1, maxWidth: 760, margin: '0 auto', width: '100%', padding: '28px 20px 40px', position: 'relative', zIndex: 1 },
   topbar: { marginBottom: 28 },
-  back: { display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--ink-2)', textDecoration: 'none', padding: '10px 16px', border: '1px solid var(--line)', borderRadius: 999, background: 'var(--surface)' },
+  back: { display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--ink-2)', textDecoration: 'none', padding: '10px 16px', border: `1px solid ${softLine}`, borderRadius: 999, background: glassStrong, backdropFilter: 'blur(8px)' },
   header: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, gap: 16 },
   title: { fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, margin: '0 0 6px', color: 'var(--ink)', letterSpacing: '-0.03em', lineHeight: 1.05 },
   emailTxt: { fontSize: 14, color: 'var(--muted)', margin: 0 },
   statsRow: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 24 },
-  statCard: { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 18, padding: '18px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: 'var(--sh-sm)' },
+  statCard: { background: glassSoft, backdropFilter: 'blur(14px)', border: `1px solid ${softLine}`, borderRadius: 18, padding: '18px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: '0 16px 34px -30px rgba(124,58,237,0.24)' },
   statLabel: { fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 },
   statVal: { fontSize: 30, fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--ink)', lineHeight: 1, marginBottom: 4 },
   statMeta: { fontSize: 11, color: 'var(--muted)', marginTop: 4 },
   buyBtn: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 34, padding: '0 12px', fontSize: 12, fontWeight: 700, color: '#fff', textDecoration: 'none', marginTop: 6, borderRadius: 999, background: 'var(--accent)' },
-  section: { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 20, padding: '22px', marginBottom: 16, boxShadow: 'var(--sh-sm)' },
+  section: { background: glassSoft, backdropFilter: 'blur(14px)', border: `1px solid ${softLine}`, borderRadius: 20, padding: '22px', marginBottom: 16, boxShadow: '0 18px 36px -30px rgba(124,58,237,0.22)' },
   sectionHead: { marginBottom: 16 },
   seclabel: { fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)' },
   empty: { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '28px 0', color: 'var(--muted)', fontSize: 14 },
   bpList: { display: 'flex', flexDirection: 'column', gap: 12 },
-  bpCard: { padding: '16px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 18 },
+  bpCard: { padding: '16px', background: 'rgba(255,255,255,0.26)', border: `1px solid ${softLine}`, borderRadius: 18, backdropFilter: 'blur(10px)' },
   bpTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
   bpTitle: { fontWeight: 700, fontSize: 14, color: 'var(--ink)', lineHeight: 1.35 },
   bpDate: { fontSize: 11, color: 'var(--muted)', flexShrink: 0 },
   bpTagline: { fontSize: 12.5, color: 'var(--ink-2)', marginBottom: 10, lineHeight: 1.5 },
   bpTags: { display: 'flex', flexWrap: 'wrap', gap: 6 },
   bpTag: { fontSize: 10.5, fontWeight: 600, padding: '4px 8px', borderRadius: 999, background: 'var(--accent-light)', color: 'var(--ink-2)', textTransform: 'capitalize' },
-  card: { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 24, padding: '32px 28px', maxWidth: 440, margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: 'var(--sh-md)' },
+  card: { background: glassSoft, backdropFilter: 'blur(16px)', border: `1px solid ${softLine}`, borderRadius: 24, padding: '32px 28px', maxWidth: 440, margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 22px 42px -30px rgba(124,58,237,0.26)' },
   sub: { fontSize: 14, color: 'var(--muted)', margin: '0 0 24px', textAlign: 'center', lineHeight: 1.6, maxWidth: 320 },
   errBox: { width: '100%', padding: '10px 14px', background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.18)', borderRadius: 12, color: '#B91C1C', fontSize: 13, margin: '0 0 16px', textAlign: 'center' },
-  oauthBtn: { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '12px 16px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 999, fontSize: 14, fontWeight: 600, color: 'var(--ink)', cursor: 'pointer', marginBottom: 8 },
+  oauthBtn: { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '12px 16px', background: glassStrong, border: `1px solid ${softLine}`, borderRadius: 999, fontSize: 14, fontWeight: 600, color: 'var(--ink)', cursor: 'pointer', marginBottom: 8, backdropFilter: 'blur(10px)' },
   divider: { width: '100%', display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0', color: 'var(--muted)', fontSize: 12 },
   form: { width: '100%', display: 'flex', flexDirection: 'column', gap: 10 },
-  input: { width: '100%', minHeight: 46, padding: '12px 14px', border: '1px solid var(--line)', borderRadius: 999, fontSize: 14, fontFamily: 'var(--font-body)', outline: 'none', boxSizing: 'border-box', background: 'var(--bg-2)', color: 'var(--ink)' },
+  input: { width: '100%', minHeight: 46, padding: '12px 14px', border: `1px solid ${softLine}`, borderRadius: 999, fontSize: 14, fontFamily: 'var(--font-body)', outline: 'none', boxSizing: 'border-box', background: 'rgba(255,255,255,0.46)', color: 'var(--ink)', backdropFilter: 'blur(10px)' },
   submitBtn: { width: '100%', minHeight: 46, padding: '12px', background: 'var(--grad-brand)', color: '#fff', border: '1px solid transparent', borderRadius: 999, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)', display: 'block', boxShadow: '0 12px 24px -18px rgba(192,38,211,0.5)' },
   reassure: { margin: '12px 0 0', fontSize: 12, lineHeight: 1.55, color: 'var(--muted)', textAlign: 'center', maxWidth: 320 },
   ghostBtn: { marginTop: 16, background: 'none', border: 'none', color: 'var(--ink-2)', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' },
-  signoutBtn: { padding: '10px 16px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 999, fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', cursor: 'pointer', flexShrink: 0 },
-  disclaimer: { position: 'relative', zIndex: 1, padding: '16px 24px 24px', borderTop: '1px solid var(--line)', textAlign: 'center', maxWidth: 600, margin: '0 auto', width: '100%' },
+  signoutBtn: { padding: '10px 16px', background: glassStrong, backdropFilter: 'blur(8px)', border: `1px solid ${softLine}`, borderRadius: 999, fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', cursor: 'pointer', flexShrink: 0 },
+  disclaimer: { position: 'relative', zIndex: 1, padding: '16px 24px 24px', borderTop: `1px solid ${softLine}`, textAlign: 'center', maxWidth: 600, margin: '0 auto', width: '100%' },
   disclaimerText: { fontSize: 11, color: 'var(--muted)', lineHeight: 1.7, margin: 0 },
 };

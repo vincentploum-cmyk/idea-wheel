@@ -67,8 +67,6 @@ function FaqItem({ q, a }) {
 export default function FaqPage() {
   return (
     <main style={s.page}>
-      <style>{`@keyframes blobdrift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,-30px) scale(1.12)}}`}</style>
-      <div style={s.blob1}/><div style={s.blob2}/>
       <div style={s.wrap}>
         <div style={s.topbar}>
           <Link href="/" style={s.back}>← IdeaReels</Link>
@@ -100,12 +98,10 @@ export default function FaqPage() {
 }
 
 const s = {
-  page: { minHeight:"100vh", background:"#faf7ff", fontFamily:'"Plus Jakarta Sans",system-ui,sans-serif', color:"#18112b", position:"relative", overflow:"hidden" },
-  blob1: { position:"fixed", width:480, height:480, top:"-8%", left:"-6%", borderRadius:"50%", background:"#7c3aed", filter:"blur(70px)", opacity:.28, pointerEvents:"none", zIndex:0, animation:"blobdrift 22s ease-in-out infinite" },
-  blob2: { position:"fixed", width:420, height:420, bottom:"-12%", right:"-6%", borderRadius:"50%", background:"#ff4d8d", filter:"blur(70px)", opacity:.22, pointerEvents:"none", zIndex:0, animation:"blobdrift 22s ease-in-out infinite", animationDelay:"-7s" },
+  page: { minHeight:"100vh", background:"transparent", fontFamily:'"Plus Jakarta Sans",system-ui,sans-serif', color:"#18112b", position:"relative", overflow:"hidden" },
   wrap: { position:"relative", zIndex:1, maxWidth:720, margin:"0 auto", padding:"32px 20px 80px" },
   topbar: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:40 },
-  back: { fontSize:13, fontWeight:600, color:"#7a7191", textDecoration:"none", padding:"8px 16px", border:"1px solid #ece6f5", borderRadius:999, background:"rgba(255,255,255,0.7)", backdropFilter:"blur(8px)" },
+  back: { fontSize:13, fontWeight:600, color:"#7a7191", textDecoration:"none", padding:"8px 16px", border:"1px solid #ece6f5", borderRadius:999, background:"var(--glass)", backdropFilter:"blur(8px)" },
   h1: { fontFamily:'"Sora",system-ui', fontSize:"clamp(28px,5vw,48px)", fontWeight:700, letterSpacing:"-0.03em", margin:"0 0 12px", color:"#18112b" },
   sub: { fontSize:16, color:"#7a7191", margin:"0 0 20px", lineHeight:1.6 },
   list: { display:"flex", flexDirection:"column", gap:0 },
@@ -113,7 +109,7 @@ const s = {
   question: { display:"flex", justifyContent:"space-between", alignItems:"center", gap:16, fontWeight:700, fontSize:16, color:"#18112b", lineHeight:1.4 },
   chevron: { flexShrink:0, color:"#7a7191", transition:"transform .2s ease" },
   answer: { margin:"14px 0 0", fontSize:14, color:"#463a5f", lineHeight:1.75 },
-  cta: { marginTop:48, textAlign:"center", padding:"32px", background:"rgba(255,255,255,0.68)", backdropFilter:"blur(12px)", border:"1px solid #ece6f5", borderRadius:20 },
+  cta: { marginTop:48, textAlign:"center", padding:"32px", background:"var(--glass)", backdropFilter:"blur(12px)", border:"1px solid #ece6f5", borderRadius:20 },
   ctaText: { margin:"0 0 8px", fontWeight:600, fontSize:16, color:"#18112b" },
   ctaLink: { fontSize:14, fontWeight:700, color:"#7c3aed", textDecoration:"none" },
   disclaimer: { marginTop:40, paddingTop:24, borderTop:"1px solid #ece6f5", textAlign:"center" },

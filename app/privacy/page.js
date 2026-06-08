@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import CloudBackground from '@/components/CloudBackground';
 
 export const metadata = {
   title: 'Privacy Policy',
@@ -9,7 +8,6 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <main style={s.page}>
-      <CloudBackground />
       <div style={{ ...s.wrap, position: 'relative', zIndex: 1 }}>
         <div style={s.topbar}>
           <Link href="/" style={s.back}>← IdeaReels</Link>
@@ -67,10 +65,10 @@ export default function PrivacyPage() {
 }
 
 const s = {
-  page: { minHeight: '100vh', background: '#faf7ff', fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif', color: '#18112b' },
+  page: { minHeight: '100vh', background: 'transparent', fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif', color: '#18112b', position: 'relative' },
   wrap: { maxWidth: 720, margin: '0 auto', padding: '32px 20px 80px' },
   topbar: { marginBottom: 40 },
-  back: { fontSize: 13, fontWeight: 600, color: '#7a7191', textDecoration: 'none', padding: '8px 16px', border: '1px solid #ece6f5', borderRadius: 999, background: 'rgba(255,255,255,0.7)' },
+  back: { fontSize: 13, fontWeight: 600, color: '#7a7191', textDecoration: 'none', padding: '8px 16px', border: '1px solid #ece6f5', borderRadius: 999, background: 'var(--glass)', backdropFilter: 'blur(8px)' },
   h1: { fontFamily: '"Sora", system-ui', fontSize: 'clamp(28px,5vw,42px)', fontWeight: 700, letterSpacing: '-0.03em', margin: '0 0 8px', color: '#18112b' },
   meta: { fontSize: 13, color: '#aaa1bd', margin: '0 0 40px' },
   section: { marginBottom: 20, paddingBottom: 20, borderBottom: '1px solid #ece6f5' },
