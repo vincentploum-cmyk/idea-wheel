@@ -277,9 +277,11 @@ Return ONLY a JSON object (no fences):
   "verdictReasoning": "2-3 honest sentences referencing specific players",
   "evidence": ["5 short evidence bullets referencing real products or pricing"],
   "retrievalFit": "1-2 sentences on whether the idea matches the workflow archetype from the retrieval context",
-  "pivotHint": "if avoid or warning: one adjacent idea with whitespace. else empty string."
+  "pivotHint": "if avoid or warning: one adjacent idea with whitespace. else empty string.",
+  "plainSummary": "2-3 plain-English sentences a non-technical person fully understands: is this worth building, who already does it, and where the opening is. No jargon, no buzzwords."
 }
-List up to 5 players, SORTED from largest/most-established to smallest. If premiseFit is "nonexistent", you MUST set verdictType to "avoid". Default to avoid when in doubt. CRITICAL SCOPE CHECK: this product must be SOFTWARE sold to others, not a business to operate.`;
+List up to 5 players, SORTED from largest/most-established to smallest. If premiseFit is "nonexistent", you MUST set verdictType to "avoid". Default to avoid when in doubt. CRITICAL SCOPE CHECK: this product must be SOFTWARE sold to others, not a business to operate.
+Write marketSize, landscape, verdict, verdictReasoning and plainSummary in plain, jargon-free language a non-technical founder can read at a glance.`;
 }
 
 function skepticPrompt(agentDesc, retrieval, scout) {
@@ -369,6 +371,7 @@ function buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval,
     premiseFit: scout.premiseFit,
     premiseNote,
     verdictReasoning: `${premiseNote ? premiseNote + ' ' : ''}${judge.reasoning} ${scout.verdictReasoning || ''}`.trim(),
+    plainSummary: shortText(scout.plainSummary, 360),
     gap: judge.wedge || scout.gap,
     moat: judge.defensibility,
     skeptic,

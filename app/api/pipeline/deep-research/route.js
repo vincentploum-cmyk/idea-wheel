@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ensureSessionId, recordOutcome } from '../../../../lib/moat-store';
 import { getBalance, deductCredits, ensureWelcomeGrant } from '../../../../lib/credits';
+import { clarify } from '../../../../lib/clarity';
 
 const DEEP_RESEARCH_COST = 1;
 
@@ -98,7 +99,8 @@ Return ONLY a JSON object (no fences):
   "willingnessToPay": "1-2 sentences on whether people pay for solutions today and roughly how much",
   "verdict": "2-3 sentences: does the deeper evidence strengthen or weaken this idea, and why?"
 }
-Be specific and honest. If the deeper search shows little real demand, say so.`;
+Be specific and honest. If the deeper search shows little real demand, say so.
+Write every field in plain, jargon-free language a non-technical founder can read at a glance — short sentences, no buzzwords. If you must use a niche term, explain it in a few words.`;
 }
 
 export async function POST(request) {
@@ -130,6 +132,14 @@ export async function POST(request) {
         { searchUses: 1, maxTokens: 1600 }
       );
       parsed = parse(repair.text);
+    }
+
+    // Additional readability check on the deep web-search outcome: attach a
+    // plain-English summary + takeaways so non-technical readers can digest it.
+    const clarity = await clarify({ label: 'Deep market demand research', payload: parsed });
+    if (clarity) {
+      parsed.plainSummary = clarity.plainSummary;
+      parsed.takeaways = clarity.takeaways;
     }
 
     const charge = await deductCredits(user.id, DEEP_RESEARCH_COST, 'deep_research', { validationId: comp?.validationId || null });

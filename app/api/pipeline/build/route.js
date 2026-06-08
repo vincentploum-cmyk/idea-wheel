@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { buildRetrievalContext } from '../../../../lib/moat-retrieval';
 import { addCredits, deductCredits } from '../../../../lib/credits';
 import { ensureSessionId, getBlueprintCharge, recordBlueprint, recordOutcome, saveBlueprintCharge } from '../../../../lib/moat-store';
+import { withPlainEnglish } from '../../../../lib/clarity';
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 
@@ -337,7 +338,8 @@ Return ONLY JSON:
   "landingAngle": "the headline + subheadline for the product's landing page — hook the visitor in 2 lines",
   "dataMoat": "what proprietary workflow memory or feedback loop compounds over time",
   "defensibilityPlan": "how this becomes harder to copy after 90 days"
-}`;
+}
+Write every field in plain, concrete language. A non-technical founder should understand it instantly; explain any unavoidable technical term in a few words.`;
 }
 
 function designCritiquePrompt(agentDesc, comp, design) {
@@ -403,7 +405,8 @@ Return ONLY JSON:
   "buildTime": "realistic solo v1 estimate",
   "whyNow": "why this wedge is timely right now — macro trend, regulation, or technology shift making this possible/urgent",
   "cursorPrompt": "The exact first prompt to paste into Cursor, Claude, or Codex to start building this product. Should include: what to build, tech stack, first screen/feature to implement, and the core AI behavior. 150-200 words."
-}`;
+}
+Keep the prose fields plain and jargon-free so a non-technical founder can follow the plan; the cursorPrompt may stay technical since it's for a builder/AI tool.`;
 }
 
 function gtmCritiquePrompt(design, gtm, comp) {
@@ -459,7 +462,8 @@ Return ONLY JSON:
   "deploySteps": ["1. Push to GitHub","2. Vercel → New Project → Import","3. Add env vars in Vercel Settings","4. Deploy"],
   "monthlyCost": {"dev":"$0","at100users":"$X/mo (math)","at1000users":"$Y/mo (math)"},
   "buildOrder": "Day 1: auth + schema. Day 2: core feature. Day 3: payments. Day 4: AI agent. Day 5: launch."
-}`;
+}
+This is read by a solo builder who may not be technical. For each service and step, add a short plain-English note on what it is and why it's needed; spell out acronyms the first time.`;
 }
 
 function protoSpecPrompt(design, gtm, comp, infra, retrieval) {
@@ -733,6 +737,9 @@ Search the web for the most current direct competitors, their pricing, recent (2
           rewritePrompt: (draft, critique) => designerRewritePrompt(agentDesc, comp, draft, critique),
         });
 
+        // Plain-English readability check on this paid deliverable.
+        const designerResult = await withPlainEnglish('Product design', designerStage.result);
+
         await recordOutcome({
           sessionId,
           signal: 'designer_completed',
@@ -740,11 +747,11 @@ Search the web for the most current direct competitors, their pricing, recent (2
           action,
           workflow,
           industry,
-          payload: { design: designerStage.result, critique: designerStage.critique },
+          payload: { design: designerResult, critique: designerStage.critique },
         });
 
         return NextResponse.json({
-          result: designerStage.result,
+          result: designerResult,
           critique: designerStage.critique,
           usage: designerStage.usage,
           cost_usd: designerStage.costUsd,
@@ -763,6 +770,9 @@ Search the web for the most current direct competitors, their pricing, recent (2
           rewritePrompt: (draft, critique) => gtmRewritePrompt(agentDesc, design, draft, comp, critique),
         });
 
+        // Plain-English readability check on this paid deliverable.
+        const launchResult = await withPlainEnglish('Launch & go-to-market plan', launchStage.result);
+
         await recordOutcome({
           sessionId,
           signal: 'launch_completed',
@@ -770,11 +780,11 @@ Search the web for the most current direct competitors, their pricing, recent (2
           action,
           workflow,
           industry,
-          payload: { gtm: launchStage.result, critique: launchStage.critique },
+          payload: { gtm: launchResult, critique: launchStage.critique },
         });
 
         return NextResponse.json({
-          result: launchStage.result,
+          result: launchResult,
           critique: launchStage.critique,
           usage: launchStage.usage,
           cost_usd: launchStage.costUsd,
@@ -786,7 +796,8 @@ Search the web for the most current direct competitors, their pricing, recent (2
       case 'infrastructure': {
         const infraCall = await call(infraPrompt(design, gtm, comp, retrieval), { model: MODELS.scout, maxTokens: 1800 });
         const infraParsed = await parseJSON(infraCall.text, 'infrastructure stage');
-        const infraResult = infraParsed.value;
+        // Plain-English readability check on this (most technical) paid deliverable.
+        const infraResult = await withPlainEnglish('Infrastructure & tech setup', infraParsed.value);
 
         await recordOutcome({
           sessionId,

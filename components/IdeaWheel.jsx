@@ -299,6 +299,27 @@ function briefPlayerWeakness(text = '') {
   return first.length > 120 ? `${first.slice(0, 117).trim()}...` : first;
 }
 
+/* ─── PLAIN-ENGLISH LAYER ────────────────────────────────────────────
+   A short, jargon-free lead shown above the detailed (often technical)
+   content, so a non-technical reader gets the gist before the detail. */
+function PlainEnglish({ summary, takeaways, compact = false }) {
+  const text = cleanValidationText(summary || '');
+  const list = (Array.isArray(takeaways) ? takeaways : [])
+    .map((t) => cleanValidationText(t)).filter(Boolean);
+  if (!text && list.length === 0) return null;
+  return (
+    <div className={`su-plain${compact ? ' su-plain--compact' : ''}`}>
+      <div className="su-plain-label">In plain English</div>
+      {text && <p className="su-plain-text">{text}</p>}
+      {list.length > 0 && (
+        <ul className="su-plain-takeaways">
+          {list.map((t, i) => <li key={i}>{t}</li>)}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 /* ─── PROTO IFRAME ───────────────────────────────────────────────── */
 function ProtoFrame({ html }) {
   const [src, setSrc] = useState(null);
@@ -1073,6 +1094,13 @@ export default function IdeaWheel() {
                 const goBlueprint = () => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); };
                 return (
                 <div className="su-validate-grid" style={{marginTop:24}}>
+                  {/* 0 — Plain-English lead: the whole market read in one digestible bite */}
+                  {comp.plainSummary && (
+                    <div className="su-card su-v-plainlead">
+                      <PlainEnglish summary={comp.plainSummary} />
+                    </div>
+                  )}
+
                   {/* 1 — Quick take */}
                   <div className="su-card su-v-score">
                     <ScoreRing value={score} label="Score"/>
@@ -1133,6 +1161,9 @@ export default function IdeaWheel() {
                         Deep demand research
                         {deepResearch.demandLevel && <span className={`su-deep-tag su-deep-tag--${/strong/i.test(deepResearch.demandLevel)?'good':/weak/i.test(deepResearch.demandLevel)?'bad':'warn'}`}>{deepResearch.demandLevel} demand</span>}
                       </div>
+                      {(deepResearch.plainSummary || (deepResearch.takeaways||[]).length > 0) && (
+                        <PlainEnglish summary={deepResearch.plainSummary} takeaways={deepResearch.takeaways} compact />
+                      )}
                       {(deepResearch.demandSignals||[]).length > 0 && (
                         <ul className="su-v-bullets">{deepResearch.demandSignals.slice(0,5).map((s,i)=><li key={i}>{cleanValidationText(s)}</li>)}</ul>
                       )}
@@ -1280,6 +1311,9 @@ export default function IdeaWheel() {
               {design && (
                 <div className="su-card su-bp-card su-bp-card--full">
                   <div className="su-bp-head"><span className="su-bp-num">01</span><h3 className="su-bp-title">Niche & Problem</h3></div>
+                  {(design.plainSummary || (design.takeaways||[]).length > 0) && (
+                    <PlainEnglish summary={design.plainSummary} takeaways={design.takeaways} compact />
+                  )}
                   <p className="su-bp-summary" style={{fontSize:14,color:'var(--ink)'}}>{design.niche}</p>
                 </div>
               )}
@@ -1300,6 +1334,9 @@ export default function IdeaWheel() {
               {gtm && (
                 <div className="su-card su-bp-card">
                   <div className="su-bp-head"><span className="su-bp-num">03</span><h3 className="su-bp-title">Target user</h3></div>
+                  {(gtm.plainSummary || (gtm.takeaways||[]).length > 0) && (
+                    <PlainEnglish summary={gtm.plainSummary} takeaways={gtm.takeaways} compact />
+                  )}
                   <p className="su-bp-summary" style={{fontSize:14,color:'var(--ink)',fontWeight:600}}>{gtm.persona}</p>
                   {gtm.whereToFind && <p className="su-bp-summary"><strong style={{fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--muted)'}}>Where to find them: </strong>{gtm.whereToFind}</p>}
                   {gtm.whyNow && <>
@@ -1354,6 +1391,9 @@ export default function IdeaWheel() {
               {infra && (
                 <div className="su-card su-bp-card">
                   <div className="su-bp-head"><span className="su-bp-num">07</span><h3 className="su-bp-title">Infrastructure</h3></div>
+                  {(infra.plainSummary || (infra.takeaways||[]).length > 0) && (
+                    <PlainEnglish summary={infra.plainSummary} takeaways={infra.takeaways} compact />
+                  )}
                   {(infra.services||[]).length>0 && <>
                     <div className="su-bp-list-label">Services</div>
                     <div className="su-bp-chips">{(infra.services||[]).map((s,i)=><span className="su-chip" key={i}>{s.name}</span>)}</div>
@@ -1705,6 +1745,17 @@ const CSS = `
 .su-v-gap-label { font-size:10px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--violet); margin-bottom:8px; }
 .su-v-signals { grid-column:1/-1; }
 /* deep market research panel */
+/* Plain-English layer — a digestible lead shown above the detailed content. */
+.su-plain { background:rgba(124,58,237,0.06); border:1px solid rgba(124,58,237,0.16); border-radius:12px; padding:12px 14px; margin:0 0 14px; }
+.su-plain--compact { padding:10px 12px; margin-bottom:12px; }
+.su-plain-label { font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-mid); margin-bottom:6px; }
+.su-plain-text { margin:0; font-size:14px; line-height:1.6; color:var(--ink); }
+.su-plain--compact .su-plain-text { font-size:13px; line-height:1.55; }
+.su-plain-takeaways { margin:8px 0 0; padding-left:18px; display:flex; flex-direction:column; gap:4px; }
+.su-plain-takeaways li { font-size:13px; line-height:1.5; color:var(--ink-2); }
+.su-v-plainlead { grid-column:1/-1; }
+.su-v-plainlead .su-plain { margin:0; background:transparent; border:none; padding:0; }
+.su-v-plainlead .su-plain-text { font-size:15px; }
 .su-v-deep { grid-column:1/-1; border-color:rgba(124,58,237,0.22); }
 .su-deep-tag { margin-left:10px; font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:3px 8px; border-radius:99px; }
 .su-deep-tag--good { background:rgba(21,128,61,0.10); color:var(--good); }
