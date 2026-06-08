@@ -548,6 +548,11 @@ function SlotMachine({ onResult }) {
           </div>
         </div>
 
+        {!hasSpun && (
+          <div style={{textAlign:'center',padding:'6px 0 10px',fontSize:12,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase',color:'var(--violet)',opacity:0.6}}>
+            🎰 &nbsp; Hit generate to spin the reels
+          </div>
+        )}
         <div className="sm-reels-wrap">
           <div className="sm-payline-bar" aria-hidden="true" />
           <div className="sm-reels">
@@ -556,9 +561,9 @@ function SlotMachine({ onResult }) {
               return (
                 <div className="sm-col" key={mode+w} style={{'--accent':REEL_TINTS[w]}}>
                   <div className="sm-window" onClick={()=>!anySpinning&&spinWheel(w,3200)}>
-                    <div className={`sm-strip${spinning[w]?' is-spinning':''}`} ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)} style={{opacity: hasSpun ? 1 : 0}}>
+                    <div className={`sm-strip${spinning[w]?' is-spinning':''}`} ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)} >
                       {repeated.map((word,i)=>(
-                        <div className="sm-item" key={i}>{word}</div>
+                        <div className="sm-item" key={i} style={{height:ITEM_H}}>{word}</div>
                       ))}
                     </div>
                   </div>
