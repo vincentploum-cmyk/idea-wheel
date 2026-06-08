@@ -216,6 +216,43 @@ function ScoreRing({ value, size = 128, label }) {
   );
 }
 
+function ValidationConfetti({ pieces = 34 }) {
+  const particles = useMemo(() => {
+    const palette = ['#7c3aed', '#a855f7', '#c026d3', '#ff4d8d', '#f59e0b', '#22c55e'];
+    return Array.from({ length: pieces }, (_, index) => ({
+      id: index,
+      color: palette[index % palette.length],
+      left: `${Math.round((index / Math.max(1, pieces - 1)) * 100)}%`,
+      drift: `${Math.round((Math.random() - 0.5) * 180)}px`,
+      spin: `${Math.round((Math.random() - 0.5) * 720)}deg`,
+      delay: `${(Math.random() * 0.2).toFixed(2)}s`,
+      duration: `${(1.8 + Math.random() * 0.9).toFixed(2)}s`,
+      size: `${8 + Math.round(Math.random() * 8)}px`,
+      shape: index % 5 === 0 ? 'pill' : index % 2 === 0 ? 'circle' : 'rect',
+    }));
+  }, [pieces]);
+
+  return (
+    <div className="su-confetti" aria-hidden="true">
+      {particles.map((particle) => (
+        <span
+          key={particle.id}
+          className={`su-confetti-piece su-confetti-piece--${particle.shape}`}
+          style={{
+            '--confetti-color': particle.color,
+            '--confetti-left': particle.left,
+            '--confetti-drift': particle.drift,
+            '--confetti-spin': particle.spin,
+            '--confetti-delay': particle.delay,
+            '--confetti-duration': particle.duration,
+            '--confetti-size': particle.size,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 /* ─── DYNAMIC CREDIT COST ────────────────────────────────────────── */
 function creditCost(score) {
   if (score >= 85) return 3;
@@ -557,6 +594,8 @@ export default function IdeaWheel() {
   const [comp, setComp]             = useState(null);
   const [validateErr, setValidateErr] = useState("");
   const [sessionId, setSessionId] = useState("");
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [confettiBurstId, setConfettiBurstId] = useState(0);
 
   // blueprint state  — pipeline stages: null | 1-4 | "done"
   const [bpStage, setBpStage]   = useState(null);
@@ -656,6 +695,18 @@ export default function IdeaWheel() {
       if (data?.sessionId && !sessionId) setSessionId(data.sessionId);
     } catch {}
   };
+
+  useEffect(() => {
+    if ((comp?.score ?? 0) <= 80) {
+      setShowConfetti(false);
+      return undefined;
+    }
+
+    setConfettiBurstId((value) => value + 1);
+    setShowConfetti(true);
+    const timeout = setTimeout(() => setShowConfetti(false), 2600);
+    return () => clearTimeout(timeout);
+  }, [comp?.validationId, comp?.score]);
 
   /* ── FREE VALIDATE ── */
   const runValidate = async () => {
@@ -878,6 +929,7 @@ export default function IdeaWheel() {
           {/* Validate button + inline results */}
           {idea && (
             <div className="sm-validate-section">
+              {showConfetti && <ValidationConfetti key={confettiBurstId} />}
               {!comp && !validating && !validateErr && (
                 <div className="sm-result-cta">
                   <button className="su-btn su-btn-primary su-btn-lg" onClick={runValidate}>
@@ -1430,6 +1482,28 @@ const CSS = `
 .su-scan-text { font-size:13.5px; color:var(--muted); font-weight:500; letter-spacing:-.005em; }
 
 /* validate grid */
+.sm-validate-section { position:relative; }
+.su-confetti {
+  position:absolute; left:0; right:0; top:-8px; height:0;
+  pointer-events:none; overflow:visible; z-index:6;
+}
+.su-confetti-piece {
+  position:absolute; left:var(--confetti-left); top:0;
+  width:var(--confetti-size); height:calc(var(--confetti-size) * 1.45);
+  background:var(--confetti-color); opacity:0;
+  transform:translate3d(0,-8px,0) rotate(0deg) scale(.82);
+  animation:suConfettiFall var(--confetti-duration) cubic-bezier(.16,1,.3,1) forwards;
+  animation-delay:var(--confetti-delay);
+  box-shadow:0 8px 18px rgba(124,58,237,.18);
+}
+.su-confetti-piece--circle { border-radius:999px; }
+.su-confetti-piece--pill { border-radius:999px; width:calc(var(--confetti-size) * 1.7); }
+.su-confetti-piece--rect { border-radius:3px; }
+@keyframes suConfettiFall {
+  0% { opacity:0; transform:translate3d(0,-10px,0) rotate(0deg) scale(.82); }
+  10% { opacity:1; }
+  100% { opacity:0; transform:translate3d(var(--confetti-drift), 280px, 0) rotate(var(--confetti-spin)) scale(1); }
+}
 .su-validate-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 @media(max-width:640px){ .su-validate-grid { grid-template-columns:1fr; } }
 .su-v-score { display:flex; align-items:flex-start; gap:20px; min-width:0; }
