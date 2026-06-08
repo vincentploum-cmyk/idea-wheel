@@ -591,6 +591,8 @@ export default function IdeaWheel() {
 
   // validate state
   const [validating, setValidating] = useState(false);
+  const [scanPct, setScanPct]       = useState(0);
+  const scanTimerRef = useRef(null);
   const [comp, setComp]             = useState(null);
   const [validateErr, setValidateErr] = useState("");
   const [sessionId, setSessionId] = useState("");
@@ -650,6 +652,8 @@ export default function IdeaWheel() {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => () => clearInterval(scanTimerRef.current), []);
 
   useEffect(() => {
     if (!mounted) return;
@@ -711,7 +715,17 @@ export default function IdeaWheel() {
   /* ── FREE VALIDATE ── */
   const runValidate = async () => {
     if (!idea) return;
-    setValidating(true); setComp(null); setValidateErr("");
+    setValidating(true); setComp(null); setValidateErr(""); setScanPct(0);
+    // The scan time varies, so ease a simulated bar toward ~90% while the
+    // request is in flight; it snaps to 100% the moment results land.
+    const startedAt = Date.now();
+    const estMs = 16000;
+    clearInterval(scanTimerRef.current);
+    scanTimerRef.current = setInterval(() => {
+      const t = (Date.now() - startedAt) / estMs;
+      const target = Math.round(90 * (1 - Math.exp(-2.4 * t)));
+      setScanPct(p => Math.min(90, Math.max(p, target)));
+    }, 180);
     try {
       const res = await fetch("/api/pipeline/validate", {
         method:"POST",
@@ -729,6 +743,9 @@ export default function IdeaWheel() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       if (data.sessionId) setSessionId(data.sessionId);
+      clearInterval(scanTimerRef.current);
+      setScanPct(100);
+      await new Promise(r => setTimeout(r, 350));  // let the bar finish to 100%
       setComp(data.comp);
       void trackOutcome('market_scan_completed', {
         validationId: data.comp?.validationId,
@@ -738,6 +755,7 @@ export default function IdeaWheel() {
     } catch(e) {
       setValidateErr(e.message.includes("AI_CREDITS") || e.message.includes("temporarily") ? "Our AI is taking a short break. Please try again in a minute." : "Market check failed. " + e.message);
     } finally {
+      clearInterval(scanTimerRef.current);
       setValidating(false);
     }
   };
@@ -940,8 +958,13 @@ export default function IdeaWheel() {
 
               {validating && (
                 <div className="su-scan su-glass" style={{marginTop:24}}>
-                  <div className="su-scan-bar"><div className="su-scan-fill"/></div>
-                  <div className="su-scan-text">Scanning demand, market size, and competition…</div>
+                  <div className="su-scan-head">
+                    <span className="su-scan-text">Scanning demand, market size, and competition…</span>
+                    <span className="su-scan-pct">{scanPct}%</span>
+                  </div>
+                  <div className="su-scan-bar su-scan-bar--progress">
+                    <div className="su-scan-fill su-scan-fill--progress" style={{width:`${scanPct}%`}}/>
+                  </div>
                 </div>
               )}
 
@@ -1481,6 +1504,17 @@ const CSS = `
 @keyframes suscan { 0%{left:-40%} 100%{left:100%} }
 .su-scan-text { font-size:13.5px; color:var(--muted); font-weight:500; letter-spacing:-.005em; }
 
+/* determinate progress variant — real % bar for the market scan */
+.su-scan-head { display:flex; align-items:baseline; justify-content:space-between; gap:14px; margin-bottom:12px; }
+.su-scan-pct { flex:none; font-size:14px; font-weight:800; color:var(--accent); font-variant-numeric:tabular-nums; letter-spacing:-.01em; }
+.su-scan-bar--progress { height:8px; border-radius:99px; margin-bottom:0; background:rgba(124,58,237,0.12); }
+.su-scan-fill--progress {
+  position:relative; left:0; width:0; min-width:8px;
+  border-radius:99px; background:var(--grad-brand);
+  animation:none;
+  transition:width .4s cubic-bezier(.16,1,.3,1);
+}
+
 /* validate grid */
 .sm-validate-section { position:relative; }
 .su-confetti {
@@ -1519,9 +1553,12 @@ const CSS = `
 .su-v-signals-head { font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
 .su-v-signal { margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--line); }
 .su-v-signal:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none; }
-.su-v-signal-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:8px; font-size:13px; color:var(--ink); min-width:0; }
-.su-v-signal-top span { min-width:0; flex:1 1 auto; overflow-wrap:anywhere; }
-.su-v-signal-top b { font-size:12px; color:var(--muted); white-space:normal; text-align:right; max-width:45%; overflow-wrap:anywhere; }
+/* Player name stacked above its pricing/description — the pricing field is
+   often a long sentence, so it gets a full-width, left-aligned line instead
+   of being crammed into a narrow right-aligned column. */
+.su-v-signal-top { display:flex; flex-direction:column; gap:3px; margin-bottom:8px; min-width:0; }
+.su-v-signal-top span { font-size:13.5px; font-weight:700; color:var(--ink); overflow-wrap:anywhere; }
+.su-v-signal-top b { font-size:12.5px; font-weight:500; color:var(--muted); text-align:left; line-height:1.5; overflow-wrap:anywhere; }
 .su-ring-num { font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--ink); line-height:1; letter-spacing:-.02em; }
 .su-ring-label { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
 .su-v-bullets { margin:0; padding-left:18px; display:flex; flex-direction:column; gap:8px; min-width:0; }
