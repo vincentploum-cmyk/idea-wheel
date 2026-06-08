@@ -299,7 +299,7 @@ const MODES = {
     ],
   },
 };
-const ITEM_H = 80;
+const ITEM_H = 72;
 const REPEATS = 10;
 const HOME_COPY = 4;
 const REEL_TINTS = ['#7c3aed','#c026d3','#ff4d8d'];
@@ -423,52 +423,39 @@ function SlotMachine({ onResult }) {
 
   return (
     <div className="sm-root">
-      {/* mode toggle */}
-      <div className="sm-modebar">
-        {Object.keys(MODES).map(k => (
-          <button key={k} className={`sm-modebtn${mode===k?' on':''}`} onClick={()=>setMode(k)} disabled={anySpinning}>
-            {MODES[k].name}
-          </button>
-        ))}
-      </div>
-
-      {/* reels */}
       <div className="sm-cabinet">
-        <div className="sm-marquee">
-          <div className="sm-marquee-title">Idea generator</div>
-          <div className="sm-marquee-sub">Spin to discover your next venture</div>
-        </div>
-
-        {/* Reels */}
-        <div className="sm-reels-outer">
-          {/* Column labels */}
-          <div className="sm-labels-row">
-            {m.labels.map((label,w) => (
-              <div className="sm-collabel" key={w}>{label}</div>
+        {/* mode toggle */}
+        <div className="sm-topbar">
+          <div className="sm-modebar">
+            {Object.keys(MODES).map(k => (
+              <button key={k} className={`sm-modebtn${mode===k?' on':''}`} onClick={()=>setMode(k)} disabled={anySpinning}>
+                {MODES[k].name}
+              </button>
             ))}
           </div>
+        </div>
 
-          <div className="sm-reels-wrap">
-            <div className="sm-reels">
-              {banks.map((bank,w) => {
-                const repeated = Array.from({length:REPEATS},()=>bank).flat();
-                return (
-                  <div className="sm-col" key={mode+w} style={{'--accent':REEL_TINTS[w]}}>
-                    <div className="sm-window" onClick={()=>!anySpinning&&spinWheel(w,3200)}>
-                      <div className="sm-strip" ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)}>
-                        {repeated.map((word,i)=>(
-                          <div className="sm-item" key={i} style={{height:ITEM_H}}>{word}</div>
-                        ))}
-                      </div>
+        {/* reels + dominant center band */}
+        <div className="sm-reels-wrap">
+          <div className="sm-payline-bar" aria-hidden="true" />
+          <div className="sm-reels">
+            {banks.map((bank,w) => {
+              const repeated = Array.from({length:REPEATS},()=>bank).flat();
+              return (
+                <div className="sm-col" key={mode+w} style={{'--accent':REEL_TINTS[w]}}>
+                  <div className="sm-window" onClick={()=>!anySpinning&&spinWheel(w,3200)}>
+                    <div className="sm-strip" ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)}>
+                      {repeated.map((word,i)=>(
+                        <div className="sm-item" key={i} style={{height:ITEM_H}}>{word}</div>
+                      ))}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-            <div className="sm-payline-bar"/>
+                </div>
+              );
+            })}
           </div>
-          <div className="sm-reels-ledge"/>
         </div>
+
         <div className="sm-base">
           <button className="sm-spin" onClick={spinAll} disabled={anySpinning}>
             {anySpinning ? 'Spinning…' : 'Generate idea'}
@@ -530,6 +517,12 @@ export default function IdeaWheel() {
       if (Number.isFinite(stored) && stored >= 0) setCredits(stored);
       if (localStorage.getItem("ideaWheelHasAccount") === "1") setHasAccount(true);
     } catch {}
+    const params = new URLSearchParams(window.location.search);
+    const isLocalPreview = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
+    if (isLocalPreview && params.get('preview') === 'wheel') {
+      setScreen('wheel');
+    }
+
     // check Supabase session — gate wheel behind auth
     const supabase = createClient();
     supabase.auth.getSession().then(({ data }) => {
@@ -538,7 +531,6 @@ export default function IdeaWheel() {
         try { localStorage.setItem("ideaWheelHasAccount", "1"); } catch {}
         setHasAccount(true);
         // Only auto-navigate to wheel if coming from auth callback (?wheel=1)
-        const params = new URLSearchParams(window.location.search);
         if (params.get('wheel') === '1') {
           setScreen("wheel");
           window.history.replaceState({}, '', window.location.pathname);
@@ -1559,204 +1551,179 @@ const CSS = `
 
 /* ── slot machine ─────────────────────────────────────────────────── */
 .sm-root {
-  width:100%; max-width:760px; margin:0 auto;
-  --sm-panel: rgba(255,255,255,0.42);
-  --sm-panel-strong: rgba(255,255,255,0.58);
-  --sm-window: rgba(248,243,255,0.94);
-  --sm-window-soft: rgba(241,233,252,0.88);
-  --sm-line: rgba(236,230,245,0.92);
-  --sm-line-strong: rgba(225,217,240,0.98);
-  --sm-text: var(--ink);
-  --sm-text-soft: var(--muted);
-  --sm-accent: rgba(124,58,237,0.16);
+  width:100%; max-width:680px; margin:0 auto;
+}
+
+/* ── Cabinet — one elegant glass component ── */
+.sm-cabinet {
+  position:relative;
+  background:
+    radial-gradient(120% 80% at 50% -20%, rgba(255,77,141,0.10), transparent 55%),
+    radial-gradient(120% 80% at 50% 120%, rgba(124,58,237,0.10), transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.50) 100%);
+  border-radius:28px;
+  padding:18px 16px 22px;
+  border:1px solid rgba(124,58,237,0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.94),
+    0 30px 70px -42px rgba(124,58,237,0.40),
+    0 14px 30px -22px rgba(255,77,141,0.18);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
 }
 
 /* ── Mode toggle ── */
+.sm-topbar { display:flex; justify-content:center; margin:0 0 16px; }
 .sm-modebar {
-  display:flex; max-width:280px; justify-content:center; margin:0 auto 24px;
-  padding:4px; border-radius:var(--r-pill);
-  background:rgba(255,255,255,0.48); border:1px solid var(--sm-line);
-  box-shadow:0 12px 28px -24px rgba(124,58,237,0.24);
+  display:inline-flex; gap:2px;
+  padding:4px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.7);
+  border:1px solid rgba(124,58,237,0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.94),
+    0 10px 22px -18px rgba(124,58,237,0.30);
   backdrop-filter:blur(14px);
 }
 .sm-modebtn {
-  font-family:var(--font-body); font-size:13px; font-weight:600;
-  color:var(--muted); flex:1; padding:8px 20px; border-radius:var(--r-pill);
+  font-family:var(--font-body); font-size:12.5px; font-weight:600;
+  color:var(--muted);
+  padding:7px 20px; border-radius:999px;
   border:none; background:transparent;
-  cursor:pointer; transition:color .15s, background .15s, box-shadow .15s;
-  letter-spacing:-.005em;
+  cursor:pointer;
+  transition:color .15s ease, background .25s ease, box-shadow .2s ease;
+  letter-spacing:.002em;
 }
 .sm-modebtn:hover:not(:disabled) { color:var(--ink); }
 .sm-modebtn.on {
-  color:var(--ink); background:rgba(255,255,255,0.9);
-  box-shadow:0 8px 22px -20px rgba(124,58,237,0.28);
+  color:#fff;
+  background:var(--grad-brand);
+  box-shadow:0 10px 22px -12px rgba(192,38,211,0.55);
 }
-.sm-modebtn:disabled { opacity:.4; cursor:default; }
+.sm-modebtn:disabled { opacity:.5; cursor:default; }
 
-/* ── Cabinet ── */
-.sm-cabinet {
-  position:relative;
-  background:linear-gradient(180deg, rgba(255,255,255,0.54) 0%, rgba(255,255,255,0.3) 100%);
-  border-radius:28px;
-  padding:0;
-  overflow:hidden;
-  border:1px solid var(--sm-line);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.82),
-    0 28px 64px -36px rgba(124,58,237,0.34),
-    0 12px 28px -20px rgba(255,77,141,0.18);
-  backdrop-filter:blur(18px);
-}
-
-/* ── Marquee header ── */
-.sm-marquee {
-  position:relative; z-index:5;
-  text-align:center;
-  padding:24px 24px 14px;
-}
-.sm-marquee-title {
-  font-family:var(--font-display);
-  font-size:19px;
-  font-weight:700;
-  letter-spacing:-.02em;
-  color:var(--sm-text);
-  display:block;
-}
-.sm-marquee-sub {
-  display:block;
-  font-size:11px; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--sm-text-soft); margin-top:7px;
-  font-weight:600;
-}
-
-/* ── Reels container ── */
-.sm-reels-outer {
-  padding:8px 18px 0;
-  position:relative; z-index:5;
-}
-
-/* Column labels row */
-.sm-labels-row {
-  display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
-  margin-bottom:12px;
-}
-.sm-collabel {
-  text-align:center; font-size:10px; font-weight:700;
-  letter-spacing:.18em; text-transform:uppercase;
-  color:var(--muted);
-  padding:9px 10px;
-  background:rgba(255,255,255,0.54);
-  border:1px solid var(--sm-line);
-  border-radius:999px;
-  box-shadow:0 10px 24px -24px rgba(124,58,237,0.24);
-}
-
-/* The 3-reel display */
+/* ── Reels container with dominant center band ── */
 .sm-reels-wrap {
   position:relative;
   border-radius:20px;
-  overflow:visible;
-  background:transparent;
-  border:none;
-  box-shadow:none;
+  padding:8px;
+  background:linear-gradient(180deg, rgba(248,243,255,0.78) 0%, rgba(244,236,252,0.50) 100%);
+  border:1px solid rgba(124,58,237,0.10);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.86),
+    inset 0 -1px 0 rgba(124,58,237,0.06);
+  overflow:hidden;
 }
+
+/* center band — visually dominant gradient pill spanning all 3 reels */
+.sm-payline-bar {
+  position:absolute;
+  left:10px; right:10px;
+  top:50%; height:78px;
+  transform:translateY(-50%);
+  border-radius:16px;
+  background:linear-gradient(120deg,
+    rgba(124,58,237,0.16) 0%,
+    rgba(192,38,211,0.14) 48%,
+    rgba(255,77,141,0.18) 100%);
+  border:1px solid rgba(192,38,211,0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.90),
+    inset 0 -1px 0 rgba(124,58,237,0.10),
+    0 18px 38px -22px rgba(192,38,211,0.40);
+  pointer-events:none;
+  z-index:1;
+  display:block;
+}
+
 .sm-reels {
-  display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
+  position:relative; z-index:2;
+  display:grid; grid-template-columns:repeat(3,1fr); gap:4px;
   background:transparent;
 }
 
 .sm-col {
-  display:flex; flex-direction:column; gap:0;
-  border-right:none;
+  display:flex; flex-direction:column;
   position:relative;
+  padding:0; background:none; border:none; box-shadow:none;
 }
 
 .sm-window {
-  height:228px; overflow:hidden;
-  background:linear-gradient(180deg, var(--sm-window) 0%, var(--sm-window-soft) 100%);
-  border:1px solid var(--sm-line-strong);
-  border-radius:20px;
-  cursor:pointer; position:relative;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.9),
-    0 18px 32px -28px rgba(124,58,237,0.22);
+  position:relative;
+  height:228px;
+  overflow:hidden;
+  cursor:pointer;
+  background:transparent;
+  border:none;
+  border-radius:14px;
+  box-shadow:none;
 }
 
-.sm-window::before {
-  content:'';
-  position:absolute; inset:0;
-  background:linear-gradient(180deg,
-    rgba(243,237,255,0.98) 0%,
-    rgba(243,237,255,0.9) 16%,
-    rgba(243,237,255,0) 36%,
-    rgba(243,237,255,0) 64%,
-    rgba(243,237,255,0.9) 84%,
-    rgba(243,237,255,0.98) 100%
-  );
-  pointer-events:none; z-index:2;
-}
-
-.sm-window::after {
-  content:'';
-  position:absolute; left:10px; right:10px;
-  top:50%; transform:translateY(-50%);
-  height:80px; border-radius:16px;
-  border:1px solid rgba(124,58,237,0.14);
-  background:linear-gradient(180deg,
-    rgba(255,255,255,0.7) 0%,
-    rgba(255,255,255,0.24) 50%,
-    rgba(255,255,255,0.7) 100%
-  );
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.72),
-    0 16px 24px -24px rgba(124,58,237,0.34),
-    0 0 0 1px rgba(255,255,255,0.22);
-  pointer-events:none; z-index:1;
-}
-
+/* Aggressive vignette mask: off-center items dissolve, the centered
+   row stays fully crisp — making it the visually dominant element. */
 .sm-strip {
-  will-change:transform; pointer-events:none; user-select:none;
+  will-change:transform;
+  pointer-events:none; user-select:none;
   position:relative; z-index:0;
+  -webkit-mask-image:linear-gradient(180deg,
+    transparent 0%,
+    rgba(0,0,0,0.04) 14%,
+    rgba(0,0,0,0.22) 30%,
+    rgba(0,0,0,1) 46%,
+    rgba(0,0,0,1) 54%,
+    rgba(0,0,0,0.22) 70%,
+    rgba(0,0,0,0.04) 86%,
+    transparent 100%);
+  mask-image:linear-gradient(180deg,
+    transparent 0%,
+    rgba(0,0,0,0.04) 14%,
+    rgba(0,0,0,0.22) 30%,
+    rgba(0,0,0,1) 46%,
+    rgba(0,0,0,1) 54%,
+    rgba(0,0,0,0.22) 70%,
+    rgba(0,0,0,0.04) 86%,
+    transparent 100%);
 }
 
 .sm-item {
   display:flex; align-items:center; justify-content:center;
-  text-align:center; padding:0 14px;
-  font-family:var(--font-body);
-  font-size:clamp(12px,1.6vw,15px); font-weight:700;
-  color:var(--ink-2);
-  line-height:1.22; letter-spacing:-.01em;
-  text-shadow:0 1px 0 rgba(255,255,255,0.38);
+  text-align:center; padding:0 8px;
+  font-family:var(--font-display);
+  font-size:clamp(11.5px, 1.8vw, 13.5px);
+  font-weight:700;
+  color:var(--ink);
+  line-height:1.08; letter-spacing:-.018em;
+  text-shadow:0 1px 0 rgba(255,255,255,0.60);
   pointer-events:none; user-select:none;
+  text-wrap:balance;
 }
 
-.sm-payline-bar,
 .sm-reels-ledge { display:none; }
 
-/* ── Generate button section ── */
+/* ── Generate button ── */
 .sm-base {
   display:flex; flex-direction:column; align-items:center;
-  padding:22px 24px 24px;
+  padding:18px 4px 0;
   position:relative; z-index:5;
-  gap:12px;
+  gap:10px;
 }
 
 .sm-spin {
   font-family:var(--font-body); font-size:14.5px; font-weight:600;
-  color:#fff; padding:13px 36px; border-radius:var(--r-pill);
+  color:#fff; padding:14px 36px; border-radius:var(--r-pill);
   letter-spacing:-.005em;
   background:var(--grad-brand);
-  cursor:pointer; min-width:220px; width:min(100%, 260px); position:relative;
-  border:1px solid rgba(255,255,255,0.12);
+  cursor:pointer; min-width:220px; width:min(100%, 300px); position:relative;
+  border:1px solid rgba(255,255,255,0.18);
   box-shadow:
-    0 1px 0 rgba(255,255,255,0.18) inset,
-    0 14px 28px -18px rgba(192,38,211,0.6);
-  transition:background .15s, box-shadow .2s, transform .15s ease;
+    inset 0 1px 0 rgba(255,255,255,0.28),
+    0 16px 32px -18px rgba(192,38,211,0.62);
+  transition:filter .15s, box-shadow .2s, transform .15s ease;
 }
 .sm-spin:hover:not(:disabled) {
   filter:brightness(1.06);
   transform:translateY(-1px);
-  box-shadow:0 1px 0 rgba(255,255,255,0.18) inset, 0 18px 32px -18px rgba(192,38,211,0.68);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.28), 0 20px 36px -18px rgba(192,38,211,0.70);
 }
 .sm-spin:active:not(:disabled) { transform:translateY(0); }
 .sm-spin:disabled { opacity:.5; cursor:default; }
@@ -1764,12 +1731,12 @@ const CSS = `
 /* ── Live sentence ── */
 .sm-live-sentence {
   width:100%;
-  padding:16px 22px;
-  margin-top:20px;
-  background:rgba(255,255,255,0.48);
-  border:1px solid var(--sm-line);
-  border-radius:var(--r-lg);
-  text-align:center; min-height:56px;
+  padding:14px 20px;
+  margin-top:16px;
+  background:rgba(255,255,255,0.72);
+  border:1px solid rgba(124,58,237,0.16);
+  border-radius:18px;
+  text-align:center; min-height:54px;
   display:flex; align-items:center; justify-content:center;
   backdrop-filter:blur(14px);
   box-shadow:0 18px 32px -28px rgba(124,58,237,0.22);
@@ -1777,12 +1744,14 @@ const CSS = `
 .sm-live-sentence p { margin:0; font-size:14.5px; line-height:1.6; color:var(--ink-2); }
 .sm-live-sentence .sm-slot {
   display:inline-block; font-weight:700; padding:1px 4px;
-  color:var(--accent);
+  background:var(--grad-brand);
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:transparent;
   font-size:15px;
 }
 .sm-live-sentence .sm-slot-empty {
   display:inline-block; width:72px; height:10px; border-radius:999px;
-  background:rgba(255,255,255,0.66); border:1px solid var(--sm-line);
+  background:rgba(124,58,237,0.10); border:1px solid rgba(124,58,237,0.14);
   vertical-align:middle; margin:0 4px;
   animation:smpulse 1.4s ease-in-out infinite;
 }
@@ -1879,17 +1848,18 @@ const CSS = `
   .su-v-signals { grid-column:auto; }
   .su-v-cta { grid-column:auto; padding:22px; }
   .su-pip-progress { grid-template-columns:repeat(2,1fr); }
-  .sm-marquee { padding:20px 18px 12px; }
-  .sm-marquee-title { font-size:18px; }
-  .sm-reels-outer { padding:8px 14px 0; }
-  .sm-labels-row,
-  .sm-reels { gap:8px; }
-  .sm-collabel { font-size:9px; padding:8px 6px; letter-spacing:.16em; }
-  .sm-base { padding:18px 18px 20px; }
-  .sm-window { height:192px; border-radius:18px; }
-  .sm-window::after { left:8px; right:8px; height:72px; border-radius:14px; }
-  .sm-item { font-size:12px; padding:0 10px; }
-  .sm-spin { width:100%; max-width:240px; }
+  .sm-cabinet { padding:14px 10px 16px; border-radius:24px; }
+  .sm-topbar { margin-bottom:12px; }
+  .sm-modebtn { padding:7px 16px; font-size:12px; }
+  .sm-reels-wrap { padding:6px; border-radius:16px; }
+  .sm-payline-bar { left:6px; right:6px; height:68px; border-radius:14px; }
+  .sm-reels { gap:3px; }
+  .sm-base { padding:14px 4px 0; }
+  .sm-window { height:192px; border-radius:12px; }
+  .sm-item { font-size:10.5px; padding:0 5px; line-height:1.06; }
+  .sm-spin { width:100%; max-width:320px; padding:14px 32px; }
+  .sm-live-sentence { padding:12px 16px; border-radius:16px; }
+  .sm-live-sentence p { font-size:13.5px; line-height:1.55; }
   .su-bp-footer { padding:20px; }
   .su-disclaimer-links { gap:14px; }
 }
