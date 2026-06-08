@@ -1098,12 +1098,12 @@ export default function IdeaWheel() {
       {/* ── WHEEL (slot machine reels) ── */}
       {screen === "wheel" && (
         <section className="su-screen su-wheel-screen">
-          <div className="su-eyebrow su-step-eyebrow">Step one · Spin up an idea</div>
+          <div className="su-eyebrow su-step-eyebrow">Step 1 · Generate idea</div>
           <SlotMachine onResult={handleSpin}/>
           {/* Validate button + inline results */}
           {idea && (
             <div className="sm-validate-section">
-              <div className="su-eyebrow su-step-eyebrow su-step-eyebrow--mt">Step two · Free basic market research</div>
+              <div className="su-eyebrow su-step-eyebrow su-step-eyebrow--mt">Step 2 · Free basic market research</div>
               {showConfetti && <ValidationConfetti key={confettiBurstId} />}
               {!comp && !validating && !validateErr && (
                 <div className="sm-result-cta">
@@ -1302,7 +1302,7 @@ export default function IdeaWheel() {
       {screen === "blueprint" && idea && (
         <section className="su-screen su-blueprint">
           <div className="su-screen-head">
-            <div className="su-eyebrow">Step four · The plan</div>
+            <div className="su-eyebrow">Step 4 · The plan</div>
             <h2 className="su-display su-screen-title">
               The <span className="su-grad-text">{idea.title}</span> blueprint
             </h2>
