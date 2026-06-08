@@ -254,6 +254,8 @@ function ValidationConfetti({ pieces = 34 }) {
 }
 
 /* ─── DYNAMIC CREDIT COST ────────────────────────────────────────── */
+const DEEP_SCAN_CREDITS = 1;
+
 function creditCost(score) {
   if (score >= 85) return 3;
   if (score >= 65) return 2;
@@ -590,7 +592,8 @@ export default function IdeaWheel() {
   const [hasAccount, setHasAccount]   = useState(false);  // ever signed up
 
   // validate state
-  const [validating, setValidating] = useState(false);
+  const [validatingTier, setValidatingTier] = useState("");
+  const [lastValidationTier, setLastValidationTier] = useState("precheck");
   const [scanPct, setScanPct]       = useState(0);
   const scanTimerRef = useRef(null);
   const [comp, setComp]             = useState(null);
@@ -673,6 +676,10 @@ export default function IdeaWheel() {
   const handleSpin = (segment) => {
     setIdea(segment);
     setSessionId("");
+    clearInterval(scanTimerRef.current);
+    setScanPct(0);
+    setValidatingTier("");
+    setLastValidationTier("precheck");
     setComp(null); setValidateErr("");
     setDesign(null); setGtm(null); setInfra(null); setProto(null);
     setBpStage(null); setBpErr("");
@@ -712,20 +719,28 @@ export default function IdeaWheel() {
     return () => clearTimeout(timeout);
   }, [comp?.validationId, comp?.score]);
 
-  /* ── FREE VALIDATE ── */
-  const runValidate = async () => {
+  /* ── VALIDATION ── */
+  const runValidate = async (tier = "precheck") => {
     if (!idea) return;
-    setValidating(true); setComp(null); setValidateErr(""); setScanPct(0);
-    // The scan time varies, so ease a simulated bar toward ~90% while the
-    // request is in flight; it snaps to 100% the moment results land.
-    const startedAt = Date.now();
-    const estMs = 16000;
+    if (tier === "deep" && credits < DEEP_SCAN_CREDITS) { setShowPricing(true); return; }
+
+    setLastValidationTier(tier);
+    setValidatingTier(tier);
+    setValidateErr("");
+    setScanPct(0);
     clearInterval(scanTimerRef.current);
-    scanTimerRef.current = setInterval(() => {
-      const t = (Date.now() - startedAt) / estMs;
-      const target = Math.round(90 * (1 - Math.exp(-2.4 * t)));
-      setScanPct(p => Math.min(90, Math.max(p, target)));
-    }, 180);
+    if (tier === "precheck") setComp(null);
+    if (tier === "deep") {
+      setCredits(c => c - DEEP_SCAN_CREDITS);
+      const startedAt = Date.now();
+      const estMs = 16000;
+      scanTimerRef.current = setInterval(() => {
+        const t = (Date.now() - startedAt) / estMs;
+        const target = Math.round(90 * (1 - Math.exp(-2.4 * t)));
+        setScanPct(p => Math.min(90, Math.max(p, target)));
+      }, 180);
+    }
+
     try {
       const res = await fetch("/api/pipeline/validate", {
         method:"POST",
@@ -738,32 +753,43 @@ export default function IdeaWheel() {
           freeformIdea: ideaSummary(idea),
           modeName: idea.label,
           sessionId,
+          tier,
         }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       if (data.sessionId) setSessionId(data.sessionId);
-      clearInterval(scanTimerRef.current);
-      setScanPct(100);
-      await new Promise(r => setTimeout(r, 350));  // let the bar finish to 100%
+      if (tier === 'deep') {
+        clearInterval(scanTimerRef.current);
+        setScanPct(100);
+        await new Promise(r => setTimeout(r, 350));
+        if (data.cached) setCredits(c => c + DEEP_SCAN_CREDITS);
+      }
       setComp(data.comp);
-      void trackOutcome('market_scan_completed', {
+      void trackOutcome(tier === 'deep' ? 'market_scan_completed' : 'precheck_completed', {
         validationId: data.comp?.validationId,
         verdictType: data.comp?.verdictType,
-        overallScore: data.comp?.eval?.scores?.overall || null,
+        overallScore: data.comp?.eval?.scores?.overall || data.comp?.score || null,
+        cached: Boolean(data.cached),
       }, data.sessionId || sessionId);
     } catch(e) {
-      setValidateErr(e.message.includes("AI_CREDITS") || e.message.includes("temporarily") ? "Our AI is taking a short break. Please try again in a minute." : "Market check failed. " + e.message);
+      if (tier === "deep") setCredits(c => c + DEEP_SCAN_CREDITS);
+      setValidateErr(e.message.includes("AI_CREDITS") || e.message.includes("temporarily") ? "Our AI is taking a short break. Please try again in a minute." : `${tier === 'deep' ? 'Deep market scan' : 'Free pre-check'} failed. ${e.message}`);
     } finally {
       clearInterval(scanTimerRef.current);
-      setValidating(false);
+      setValidatingTier("");
     }
   };
 
   /* ── PAID BLUEPRINT ── */
   const runBlueprint = async () => {
+    if (!comp || comp?.validationTier !== 'deep') {
+      setValidateErr("Run the deep market scan before generating a blueprint.");
+      goTo("wheel");
+      return;
+    }
     const cost = creditCost(comp?.score ?? 0);
-    if (!comp || credits < cost) { setShowPricing(true); return; }
+    if (credits < cost) { setShowPricing(true); return; }
     void trackOutcome('blueprint_started', {
       validationId: comp.validationId,
       verdictType: comp.verdictType,
@@ -831,6 +857,8 @@ export default function IdeaWheel() {
     }
   };
 
+  const validating = Boolean(validatingTier);
+  const isDeepScan = comp?.validationTier === 'deep';
   const bpRunning = bpStage !== null && bpStage !== "done";
   const bpDone    = bpStage === "done";
   const vt        = comp?.verdictType || "build";
@@ -865,7 +893,7 @@ export default function IdeaWheel() {
               <span className="su-grad-text" style={{ display:"block", paddingRight:"6px", paddingBottom:"16px" }}>worth building.</span>
             </h1>
             <p className="su-landing-sub">
-              Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.
+              Generate sharper business ideas in seconds, run a free pre-check, then unlock a deep market scan and blueprint only when one looks worth pursuing.
             </p>
 
             <div className="su-landing-cta">
@@ -894,8 +922,8 @@ export default function IdeaWheel() {
                 <div className="su-hiw-step">
                   <div className="su-hiw-num">2</div>
                   <div>
-                    <div className="su-hiw-t">Know if it's worth building before you commit</div>
-                    <div className="su-hiw-d">Every idea gets a market check with competitor analysis, market size, and demand signals, so you get a clear build, caution, or avoid verdict before you sink time into it.</div>
+                    <div className="su-hiw-t">Start with a free pre-check, then go deeper only when it earns it</div>
+                    <div className="su-hiw-d">Every idea gets a cheap first-pass verdict. Promising ones can unlock a deeper market scan with competitor analysis, market size, and wedge signals before you commit.</div>
                   </div>
                 </div>
                 <div className="su-hiw-connector" aria-hidden />
@@ -903,7 +931,7 @@ export default function IdeaWheel() {
                   <div className="su-hiw-num">3</div>
                   <div>
                     <div className="su-hiw-t">Turn the winner into a build-ready plan</div>
-                    <div className="su-hiw-d">Blueprints cost 1 to 3 credits based on signal strength, and each one unlocks four AI specialists across product design, launch strategy, infrastructure, and prototype generation.</div>
+                    <div className="su-hiw-d">Deep scans cost 1 credit, and blueprints cost 1 to 3 more based on signal strength. Each blueprint unlocks four AI specialists across product design, launch strategy, infrastructure, and prototype generation.</div>
                   </div>
                 </div>
               </div>
@@ -950,38 +978,53 @@ export default function IdeaWheel() {
               {showConfetti && <ValidationConfetti key={confettiBurstId} />}
               {!comp && !validating && !validateErr && (
                 <div className="sm-result-cta">
-                  <button className="su-btn su-btn-primary su-btn-lg" onClick={runValidate}>
-                    Run market scan
+                  <button className="su-btn su-btn-primary su-btn-lg" onClick={() => runValidate('precheck')}>
+                    Run free pre-check
                   </button>
+                  <div className="su-v-hint" style={{marginTop:12}}>
+                    Cheap first-pass triage now, deeper market scan only if this idea earns it.
+                  </div>
                 </div>
               )}
 
               {validating && (
                 <div className="su-scan su-glass" style={{marginTop:24}}>
-                  <div className="su-scan-head">
-                    <span className="su-scan-text">Scanning demand, market size, and competition…</span>
-                    <span className="su-scan-pct">{scanPct}%</span>
-                  </div>
-                  <div className="su-scan-bar su-scan-bar--progress">
-                    <div className="su-scan-fill su-scan-fill--progress" style={{width:`${scanPct}%`}}/>
-                  </div>
+                  {validatingTier === 'deep' ? (
+                    <>
+                      <div className="su-scan-head">
+                        <span className="su-scan-text">Scanning demand, market size, and competition…</span>
+                        <span className="su-scan-pct">{scanPct}%</span>
+                      </div>
+                      <div className="su-scan-bar su-scan-bar--progress">
+                        <div className="su-scan-fill su-scan-fill--progress" style={{width:`${scanPct}%`}}/>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="su-scan-bar"><div className="su-scan-fill"/></div>
+                      <div className="su-scan-text">Running a free pre-check on wedge, demand, and workflow fit…</div>
+                    </>
+                  )}
                 </div>
               )}
 
               {validateErr && (
                 <p className="su-err" style={{marginTop:16}}>
-                  {validateErr} <button className="su-retry" onClick={runValidate}>Retry</button>
+                  {validateErr} <button className="su-retry" onClick={() => runValidate(lastValidationTier)}>Retry</button>
                 </p>
               )}
 
               {comp && !validating && (
                 <div className="su-validate-grid" style={{marginTop:24}}>
                   <div className="su-card su-v-score">
-                    <ScoreRing value={comp.score ?? 65} label="Demand"/>
+                    <ScoreRing value={comp.score ?? 65} label={isDeepScan ? "Demand" : "Pre-check"}/>
                     <div className="su-v-score-side">
-                      <span className={`su-chip su-chip--${vt==="avoid"?"bad":vt==="warning"?"warn":"good"}`}>
-                        {vt==="avoid"?"High":vt==="warning"?"Medium":"Low"} competition
-                      </span>
+                      <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}>
+                        <span className={`su-chip su-chip--${vt==="avoid"?"bad":vt==="warning"?"warn":"good"}`}>
+                          {vt==="avoid"?"High":vt==="warning"?"Medium":"Low"} competition
+                        </span>
+                        {comp.cached && <span className="su-v-precheck-tag">Cached</span>}
+                      </div>
                       <div className="su-v-minihead">Quick take</div>
                       <ul className="su-v-bullets su-v-bullets--compact">
                         {splitValidationBullets(comp.verdict || comp.verdictReasoning, 2).map((item, i) => (
@@ -993,16 +1036,16 @@ export default function IdeaWheel() {
 
                   <div className="su-card su-v-market">
                     <div className="su-v-market-cell">
-                      <div className="su-v-l">Market read</div>
+                      <div className="su-v-l">{isDeepScan ? 'Market read' : 'First-pass read'}</div>
                       <ul className="su-v-bullets">
-                        {splitValidationBullets(comp.marketSize, 2).map((item, i) => (
+                        {splitValidationBullets(comp.marketSize || comp.retrievalFit || comp.verdictReasoning, 2).map((item, i) => (
                           <li key={i}>{item}</li>
                         ))}
                       </ul>
                     </div>
                     {comp.gap && (
                       <div className="su-v-gap">
-                        <div className="su-v-gap-label">The gap</div>
+                        <div className="su-v-gap-label">{isDeepScan ? 'The gap' : 'Best wedge to test'}</div>
                         <ul className="su-v-bullets su-v-bullets--gap">
                           {splitValidationBullets(comp.gap, 2).map((item, i) => (
                             <li key={i}>{item}</li>
@@ -1012,7 +1055,7 @@ export default function IdeaWheel() {
                     )}
                   </div>
 
-                  {(comp.players||[]).length > 0 && (
+                  {isDeepScan && (comp.players||[]).length > 0 && (
                     <div className="su-card su-v-signals">
                       <div className="su-v-signals-head">Key players</div>
                       {(comp.players||[]).slice(0,3).map((pl,i) => (
@@ -1028,7 +1071,41 @@ export default function IdeaWheel() {
                     </div>
                   )}
 
-                  {(() => {
+                  {!isDeepScan && (
+                    <div className={`su-v-cta ${vt === "avoid" ? "su-v-cta--avoid" : ""}`}>
+                      <div className="su-v-precheck-tag">Free pre-check</div>
+                      <div className="su-v-cta-text">
+                        {vt === "avoid" ? "Weak first-pass signal. Don’t trust it enough to build yet." : "This passed the cheap filter. Unlock the real market scan if you want competitor and wedge detail."}
+                      </div>
+                      {comp.pivotHint && (
+                        <ul className="su-v-bullets su-v-bullets--avoid">
+                          {splitValidationBullets(comp.pivotHint, 3).map((item, i) => (
+                            <li key={i}>{item}</li>
+                          ))}
+                        </ul>
+                      )}
+                      <div className="su-v-cta-row">
+                        <button className="su-btn su-btn-primary su-btn-lg" onClick={() => runValidate('deep')}>
+                          Unlock deep market scan
+                          <span className="su-credit-badge">
+                            {DEEP_SCAN_CREDITS} credit{DEEP_SCAN_CREDITS > 1 ? 's' : ''}
+                          </span>
+                        </button>
+                        <button className="su-creditpill" onClick={() => setShowPricing(true)}>
+                          <span className="su-creditnum">{credits}</span>
+                          <span className="su-creditlbl">credits</span>
+                        </button>
+                        <button className="su-btn su-btn-ghost" onClick={() => { setComp(null); setIdea(null); }}>
+                          Spin again
+                        </button>
+                      </div>
+                      <div className="su-v-hint">
+                        Deep scan adds live competitor checks, richer market sizing, and clearer wedge analysis.
+                      </div>
+                    </div>
+                  )}
+
+                  {isDeepScan && (() => {
                     const score = comp.score ?? 0;
                     const cl = creditLabel(score);
                     const cost = cl.cost;
@@ -1572,6 +1649,12 @@ const CSS = `
   border:1px solid var(--accent-border); border-radius:var(--r-md);
   padding:11px 16px; margin-bottom:16px;
   font-size:13.5px; font-weight:500; color:var(--accent); line-height:1.5;
+}
+.su-v-precheck-tag {
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:4px 10px; border-radius:999px; margin-bottom:14px;
+  font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--accent-mid); background:var(--accent-light); border:1px solid var(--accent-border);
 }
 .su-credit-badge {
   display:inline-flex; align-items:center; padding:3px 8px;
