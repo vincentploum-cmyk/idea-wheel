@@ -373,6 +373,8 @@ const ITEM_H = 72;
 const REPEATS = 10;
 const HOME_COPY = 4;
 const REEL_TINTS = ['#7c3aed','#c026d3','#ff4d8d'];
+const TRUST_SPIN_LIMIT = 3;
+const TRUST_SPIN_STATE_KEY = 'ideaWheelTrustSpins.v1';
 // Smooth wind-up → cruise → settle: gentle ease-in start (no teleport on
 // the first frame) and a controlled decel tail (no long creep at the end).
 const SPIN_EASE = 'cubic-bezier(0.30, 0.65, 0.30, 1)';
@@ -397,9 +399,21 @@ function SlotMachine({ onResult }) {
   const stripRefs = [useRef(null), useRef(null), useRef(null)];
   const indexRef = useRef([0,0,0]);
   const targetRef = useRef([0,0,0]);
+  const trustStateRef = useRef({ totalServed: 0, servedKeys: [] });
+  const pendingSeedRef = useRef(null);
   const [landed, setLanded] = useState(['','','']);
   const [spinning, setSpinning] = useState([false,false,false]);
   const anySpinning = spinning.some(Boolean);
+
+  useEffect(() => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(TRUST_SPIN_STATE_KEY) || '{}');
+      trustStateRef.current = {
+        totalServed: Number(parsed?.totalServed || 0),
+        servedKeys: Array.isArray(parsed?.servedKeys) ? parsed.servedKeys : [],
+      };
+    } catch {}
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -417,6 +431,28 @@ function SlotMachine({ onResult }) {
   const m = modeConfigs[mode] || CLIENT_DEFAULT_MODE_CONFIGS[mode];
   const banks = m.banks;
   const weights = m.weights || banks.map((bank) => bank.map(() => 1));
+
+  const getTrustedSeedCandidate = () => {
+    const queue = Array.isArray(m.trustQueue) ? m.trustQueue : [];
+    const current = trustStateRef.current || { totalServed: 0, servedKeys: [] };
+    if (current.totalServed >= TRUST_SPIN_LIMIT || !queue.length) return null;
+
+    const served = new Set(current.servedKeys || []);
+    return queue.find((seed) => seed?.key && !served.has(seed.key)) || null;
+  };
+
+  const markTrustedSeedServed = (seed) => {
+    if (!seed?.key) return;
+    const current = trustStateRef.current || { totalServed: 0, servedKeys: [] };
+    const served = new Set(current.servedKeys || []);
+    if (served.has(seed.key)) return;
+    const nextState = {
+      totalServed: current.totalServed + 1,
+      servedKeys: [...served, seed.key],
+    };
+    trustStateRef.current = nextState;
+    try { localStorage.setItem(TRUST_SPIN_STATE_KEY, JSON.stringify(nextState)); } catch {}
+  };
 
   useEffect(() => {
     banks.forEach((bank,w) => {
@@ -496,6 +532,23 @@ function SlotMachine({ onResult }) {
 
   const spinAll = () => {
     if (anySpinning) return;
+    const trustedSeed = getTrustedSeedCandidate();
+    if (trustedSeed) {
+      const actionIdx = banks[0].indexOf(trustedSeed.action);
+      const workflowIdx = banks[1].indexOf(trustedSeed.workflow);
+      const industryIdx = banks[2].indexOf(trustedSeed.industry);
+
+      if (actionIdx !== -1 && workflowIdx !== -1 && industryIdx !== -1) {
+        markTrustedSeedServed(trustedSeed);
+        pendingSeedRef.current = trustedSeed;
+        spinWheelTo(0, actionIdx, 3000);
+        spinWheelTo(1, workflowIdx, 3600);
+        spinWheelTo(2, industryIdx, 4200);
+        return;
+      }
+    }
+
+    pendingSeedRef.current = null;
     const actionIdx = selectIndex(0);
     const action = banks[0][actionIdx];
     const allowedWorkflows = (m.pairMap?.[action] || banks[1]).filter((workflow) => banks[1].includes(workflow));
@@ -512,7 +565,8 @@ function SlotMachine({ onResult }) {
 
   useEffect(() => {
     if (complete && !anySpinning && onResult) {
-      onResult(buildGeneratorIdea(m, landed[0], landed[1], landed[2]));
+      onResult(buildGeneratorIdea(m, landed[0], landed[1], landed[2], pendingSeedRef.current));
+      pendingSeedRef.current = null;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [complete, anySpinning]);
@@ -981,6 +1035,17 @@ export default function IdeaWheel() {
           {idea && (
             <div className="sm-validate-section">
               {showConfetti && <ValidationConfetti key={confettiBurstId} />}
+              {idea.seeded && (
+                <div className="su-card" style={{marginTop:20, marginBottom:20}}>
+                  <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap', marginBottom:10}}>
+                    <span className="su-v-precheck-tag">Live opportunity signal</span>
+                    {idea.source && <span className="su-v-precheck-tag">{String(idea.source).toUpperCase()}</span>}
+                  </div>
+                  <div className="su-v-minihead" style={{marginBottom:6}}>{idea.title}</div>
+                  <div style={{color:'var(--ink)', fontWeight:600, marginBottom:8}}>{idea.tagline}</div>
+                  <div style={{color:'var(--muted)'}}>{idea.blurb}</div>
+                </div>
+              )}
               {!comp && !validating && !validateErr && (
                 <div className="sm-result-cta">
                   <button className="su-btn su-btn-primary su-btn-lg" onClick={() => runValidate('precheck')}>
