@@ -189,6 +189,7 @@ function compactPlayers(players) {
     name: shortText(player?.name, 60),
     customer: shortText(player?.targetCustomer, 90),
     pricing: shortText(player?.pricing, 60),
+    coverage: shortText(player?.coverage, 140),
     weakness: shortText(player?.weakness, 120),
   }));
 }
@@ -218,6 +219,8 @@ function compactScout(scout) {
     landscape: shortText(scout?.landscape, 220),
     players: compactPlayers(scout?.players),
     gap: shortText(scout?.gap, 180),
+    premiseFit: scout?.premiseFit,
+    premiseNote: shortText(scout?.premiseNote, 180),
     verdict: shortText(scout?.verdict, 160),
     verdictType: scout?.verdictType,
     verdictReasoning: shortText(scout?.verdictReasoning, 220),
@@ -262,9 +265,11 @@ Search the web for real competing products, SaaS tools, AI startups, and establi
 Return ONLY a JSON object (no fences):
 {
   "marketSize": "estimated addressable market or scale signal",
-  "landscape": "2-3 honest sentences on market state",
-  "players": [{"name":"...","targetCustomer":"...","pricing":"...","weakness":"..."}],
+  "landscape": "2-3 crisp, easy-to-read sentences summarizing the state of this market",
+  "players": [{"name":"...","targetCustomer":"...","pricing":"...","coverage":"one plain sentence on how this player addresses (or ignores) this exact idea","weakness":"..."}],
   "gap": "specific unaddressed pain, or 'No clear gap' if market is well-served",
+  "premiseFit": "realistic | weak | nonexistent — does the named workflow/problem genuinely exist for THIS industry?",
+  "premiseNote": "if weak or nonexistent: one plain sentence naming the mismatch (e.g. 'Law firms rarely run equipment-maintenance operations, so this problem barely exists for them.'). else empty string.",
   "verdict": "one punchy sentence on the opportunity or lack of it",
   "verdictType": "build if genuine whitespace. warning if competitive but a wedge exists. avoid if 3+ well-funded players dominate with no real gap.",
   "verdictReasoning": "2-3 honest sentences referencing specific players",
@@ -272,7 +277,7 @@ Return ONLY a JSON object (no fences):
   "retrievalFit": "1-2 sentences on whether the idea matches the workflow archetype from the retrieval context",
   "pivotHint": "if avoid or warning: one adjacent idea with whitespace. else empty string."
 }
-Up to 5 players. Default to avoid when in doubt. CRITICAL SCOPE CHECK: this product must be SOFTWARE sold to others, not a business to operate.`;
+List up to 5 players, SORTED from largest/most-established to smallest. If premiseFit is "nonexistent", you MUST set verdictType to "avoid". Default to avoid when in doubt. CRITICAL SCOPE CHECK: this product must be SOFTWARE sold to others, not a business to operate.`;
 }
 
 function skepticPrompt(agentDesc, retrieval, scout) {
@@ -349,13 +354,19 @@ Scores must be integers from 0-100.`;
 }
 
 function buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval, validationId) {
-  const decision = judge.decision || scout.verdictType || 'warning';
+  const premiseBroken = scout.premiseFit === 'nonexistent';
+  // A premise mismatch (e.g. equipment maintenance for a law firm) overrides
+  // any optimistic verdict — there is no real problem to solve.
+  const decision = premiseBroken ? 'avoid' : (judge.decision || scout.verdictType || 'warning');
+  const premiseNote = shortText(scout.premiseNote, 180);
   return {
     ...scout,
-    score: evalResult?.scores?.overall || null,
+    score: premiseBroken ? Math.min(evalResult?.scores?.overall ?? 30, 35) : (evalResult?.scores?.overall || null),
     verdictType: decision,
     verdict: scout.verdict,
-    verdictReasoning: `${judge.reasoning} ${scout.verdictReasoning || ''}`.trim(),
+    premiseFit: scout.premiseFit,
+    premiseNote,
+    verdictReasoning: `${premiseNote ? premiseNote + ' ' : ''}${judge.reasoning} ${scout.verdictReasoning || ''}`.trim(),
     gap: judge.wedge || scout.gap,
     moat: judge.defensibility,
     skeptic,

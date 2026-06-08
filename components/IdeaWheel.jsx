@@ -974,33 +974,45 @@ export default function IdeaWheel() {
                 </p>
               )}
 
-              {comp && !validating && (
+              {comp && !validating && (() => {
+                const score = comp.score ?? 0;
+                const potential = score >= 61;                 // gates gap, key players, blueprint-forward CTA
+                const cl = creditLabel(score);
+                const cost = cl.cost;
+                const advice = score >= 80
+                  ? { label: "Get that Blueprint!", tone: "good" }
+                  : score >= 61
+                    ? { label: "This idea has potential", tone: "warn" }
+                    : { label: "Don't waste your time", tone: "bad" };
+                const premise = cleanValidationText(comp.premiseNote || "");
+                const verdictLines = splitValidationBullets(comp.verdictReasoning || comp.verdict, 3);
+                return (
                 <div className="su-validate-grid" style={{marginTop:24}}>
+                  {/* 1 — Quick take */}
                   <div className="su-card su-v-score">
-                    <ScoreRing value={comp.score ?? 65} label="Demand"/>
+                    <ScoreRing value={score} label="Score"/>
                     <div className="su-v-score-side">
-                      <span className={`su-chip su-chip--${vt==="avoid"?"bad":vt==="warning"?"warn":"good"}`}>
-                        {vt==="avoid"?"High":vt==="warning"?"Medium":"Low"} competition
-                      </span>
+                      <span className={`su-chip su-chip--${advice.tone}`}>{advice.label}</span>
                       <div className="su-v-minihead">Quick take</div>
                       <ul className="su-v-bullets su-v-bullets--compact">
-                        {splitValidationBullets(comp.verdict || comp.verdictReasoning, 2).map((item, i) => (
+                        {splitValidationBullets(comp.verdict || comp.verdictReasoning, 3).map((item, i) => (
                           <li key={i}>{item}</li>
                         ))}
                       </ul>
                     </div>
                   </div>
 
+                  {/* 2 — Market */}
                   <div className="su-card su-v-market">
                     <div className="su-v-market-cell">
-                      <div className="su-v-l">Market read</div>
+                      <div className="su-v-l">Market</div>
                       <ul className="su-v-bullets">
-                        {splitValidationBullets(comp.marketSize, 2).map((item, i) => (
+                        {splitValidationBullets(comp.landscape || comp.marketSize, 3).map((item, i) => (
                           <li key={i}>{item}</li>
                         ))}
                       </ul>
                     </div>
-                    {comp.gap && (
+                    {potential && cleanValidationText(comp.gap) && (
                       <div className="su-v-gap">
                         <div className="su-v-gap-label">The gap</div>
                         <ul className="su-v-bullets su-v-bullets--gap">
@@ -1012,63 +1024,61 @@ export default function IdeaWheel() {
                     )}
                   </div>
 
-                  {(comp.players||[]).length > 0 && (
+                  {/* 3 — Key players (only when the idea has potential), sorted largest → smallest */}
+                  {potential && (comp.players||[]).length > 0 && (
                     <div className="su-card su-v-signals">
                       <div className="su-v-signals-head">Key players</div>
                       {(comp.players||[]).slice(0,3).map((pl,i) => (
                         <div className="su-v-signal" key={i}>
                           <div className="su-v-signal-top">
-                            <span>{pl.name}</span><b>{pl.pricing||"—"}</b>
+                            <span>{pl.name}</span>
                           </div>
                           <ul className="su-v-bullets su-v-bullets--player">
-                            <li>{briefPlayerWeakness(pl.weakness)}</li>
+                            <li>{briefPlayerWeakness(pl.coverage || pl.weakness)}</li>
                           </ul>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {(() => {
-                    const score = comp.score ?? 0;
-                    const cl = creditLabel(score);
-                    const cost = cl.cost;
-                    const avoid = vt === "avoid";
-                    return (
-                      <div className={`su-v-cta${avoid ? " su-v-cta--avoid" : ""}`}>
-                        {score >= 85 && !avoid && (
-                          <div className="su-v-exceptional">
-                            This idea scored in the top tier — it has genuine potential.
-                          </div>
-                        )}
-                        <div className="su-v-cta-text">
-                          {avoid
-                            ? "Crowded market — but the right wedge can still win. Get the blueprint to find your angle."
-                            : score >= 85 ? "Build this before someone else does." : "Signal is strong. Ready to turn this into a real plan?"}
-                        </div>
+                  {/* 4 — Final verdict + CTA */}
+                  <div className={`su-v-cta${potential ? "" : " su-v-cta--avoid"}`}>
+                    <div className="su-v-l su-v-verdict-label">Final verdict</div>
+                    {premise && <p className="su-v-premise">{premise}</p>}
+                    <div className="su-v-cta-text">
+                      {verdictLines[0] || (potential ? "There's a real opening here." : "The signal isn't strong enough yet.")}
+                    </div>
+                    {verdictLines.length > 1 && (
+                      <ul className="su-v-bullets su-v-bullets--compact su-v-verdict-rationale">
+                        {verdictLines.slice(1).map((item, i) => (<li key={i}>{item}</li>))}
+                      </ul>
+                    )}
+                    {potential ? (
+                      <>
                         <div className="su-v-cta-row">
                           <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); }}>
-                            {avoid ? "Create the blueprint" : "Generate the blueprint"}
-                            <span className="su-credit-badge">
-                              {cost} credit{cost > 1 ? 's' : ''}
-                            </span>
+                            Build the full plan
+                            <span className="su-credit-badge">{cost} credit{cost > 1 ? 's' : ''}</span>
                           </button>
                           <button className="su-creditpill" onClick={() => setShowPricing(true)}>
                             <span className="su-creditnum">{credits}</span>
                             <span className="su-creditlbl">credits</span>
                           </button>
                         </div>
-                        <div className="su-v-hint">
-                          <span style={{color: cl.color, fontWeight:700}}>{cl.tier}</span>
-                          {' · '}blueprint costs {cost} credit{cost > 1 ? 's' : ''}{' · '}you have {credits} credits
-                        </div>
-                        {avoid && (
-                          <button className="su-btn su-btn-ghost su-v-cta-secondary" onClick={() => { setComp(null); setIdea(null); }}>Spin again</button>
-                        )}
+                        <div className="su-v-hint">{cl.tier} · {cost} credit{cost > 1 ? 's' : ''} · you have {credits}</div>
+                      </>
+                    ) : (
+                      <div className="su-v-cta-row">
+                        <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { setComp(null); setIdea(null); }}>Spin again</button>
+                        <button className="su-linkbtn" onClick={() => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); }}>
+                          Build it anyway · {cost} credit{cost > 1 ? 's' : ''}
+                        </button>
                       </div>
-                    );
-                  })()}
+                    )}
+                  </div>
                 </div>
-              )}
+                );
+              })()}
             </div>
           )}
         </section>
@@ -1567,6 +1577,17 @@ const CSS = `
 .su-v-cta-row { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
 .su-v-hint { font-size:12px; color:var(--muted); margin-top:12px; }
 .su-v-cta-secondary { margin-top:16px; }
+.su-v-verdict-label { margin-bottom:10px; }
+.su-v-premise { font-size:13.5px; font-weight:600; color:var(--bad); line-height:1.5; margin:0 0 10px; }
+.su-v-cta--avoid .su-v-premise { color:var(--bad); }
+.su-v-verdict-rationale { text-align:left; max-width:520px; margin:0 auto 18px; }
+.su-linkbtn {
+  background:none; border:none; cursor:pointer;
+  font-family:var(--font-body); font-size:13px; font-weight:600;
+  color:var(--muted); text-decoration:underline; text-underline-offset:3px;
+  padding:8px 4px;
+}
+.su-linkbtn:hover { color:var(--ink); }
 .su-v-exceptional {
   background:var(--accent-light);
   border:1px solid var(--accent-border); border-radius:var(--r-md);
