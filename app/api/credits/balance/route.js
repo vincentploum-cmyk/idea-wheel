@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { getBalance } from '@/lib/credits';
+import { getBalance, ensureWelcomeGrant } from '@/lib/credits';
 
 function getAdmin() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
@@ -19,6 +19,7 @@ async function getUser(request) {
 export async function GET(request) {
   const user = await getUser(request);
   if (!user) return Response.json({ balance: 0, transactions: [] }, { status: 200 });
+  await ensureWelcomeGrant(user.id);   // first balance check seeds 3 free credits
   const balance = await getBalance(user.id);
   const db = getAdmin();
   const { data: transactions } = await db.from('credit_transactions').select('amount,reason,created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10);

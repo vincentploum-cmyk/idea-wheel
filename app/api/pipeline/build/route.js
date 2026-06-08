@@ -4,6 +4,8 @@ import { cookies } from 'next/headers';
 import { buildRetrievalContext } from '../../../../lib/moat-retrieval';
 import { addCredits, deductCredits } from '../../../../lib/credits';
 import { ensureSessionId, getBlueprintCharge, recordBlueprint, recordOutcome, saveBlueprintCharge } from '../../../../lib/moat-store';
+import { withPlainEnglish } from '../../../../lib/clarity';
+import { attachBlueprint } from '../../../../lib/saved-ideas';
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 
@@ -49,7 +51,7 @@ function mergeUsage(...usages) {
   );
 }
 
-async function call(prompt, { model, maxTokens = 1000, webSearch = false, attempt = 0 }) {
+async function call(prompt, { model, maxTokens = 1000, webSearch = false, searchUses = 8, attempt = 0 }) {
   if (!ANTHROPIC_KEY) throw new Error('ANTHROPIC_API_KEY not set');
 
   const body = {
@@ -59,7 +61,8 @@ async function call(prompt, { model, maxTokens = 1000, webSearch = false, attemp
   };
 
   if (webSearch) {
-    body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+    // Paid blueprint: a deeper web search than the free validation.
+    body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: searchUses }];
   }
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -76,7 +79,7 @@ async function call(prompt, { model, maxTokens = 1000, webSearch = false, attemp
     const retryAfterHeader = Number(res.headers.get('retry-after') || 0);
     const retryMs = retryAfterHeader > 0 ? retryAfterHeader * 1000 : 8000 * (attempt + 1);
     await sleep(retryMs);
-    return call(prompt, { model, maxTokens, webSearch, attempt: attempt + 1 });
+    return call(prompt, { model, maxTokens, webSearch, searchUses, attempt: attempt + 1 });
   }
 
   if (!res.ok) {
@@ -336,7 +339,8 @@ Return ONLY JSON:
   "landingAngle": "the headline + subheadline for the product's landing page — hook the visitor in 2 lines",
   "dataMoat": "what proprietary workflow memory or feedback loop compounds over time",
   "defensibilityPlan": "how this becomes harder to copy after 90 days"
-}`;
+}
+Write every field in plain, concrete language. A non-technical founder should understand it instantly; explain any unavoidable technical term in a few words.`;
 }
 
 function designCritiquePrompt(agentDesc, comp, design) {
@@ -402,7 +406,8 @@ Return ONLY JSON:
   "buildTime": "realistic solo v1 estimate",
   "whyNow": "why this wedge is timely right now — macro trend, regulation, or technology shift making this possible/urgent",
   "cursorPrompt": "The exact first prompt to paste into Cursor, Claude, or Codex to start building this product. Should include: what to build, tech stack, first screen/feature to implement, and the core AI behavior. 150-200 words."
-}`;
+}
+Keep the prose fields plain and jargon-free so a non-technical founder can follow the plan; the cursorPrompt may stay technical since it's for a builder/AI tool.`;
 }
 
 function gtmCritiquePrompt(design, gtm, comp) {
@@ -458,7 +463,8 @@ Return ONLY JSON:
   "deploySteps": ["1. Push to GitHub","2. Vercel → New Project → Import","3. Add env vars in Vercel Settings","4. Deploy"],
   "monthlyCost": {"dev":"$0","at100users":"$X/mo (math)","at1000users":"$Y/mo (math)"},
   "buildOrder": "Day 1: auth + schema. Day 2: core feature. Day 3: payments. Day 4: AI agent. Day 5: launch."
-}`;
+}
+This is read by a solo builder who may not be technical. For each service and step, add a short plain-English note on what it is and why it's needed; spell out acronyms the first time.`;
 }
 
 function protoSpecPrompt(design, gtm, comp, infra, retrieval) {
@@ -709,13 +715,31 @@ export async function POST(request) {
 
     switch (stage) {
       case 'designer': {
+        // Deep web research feeds the paid blueprint. Defensive: if it fails or
+        // times out, we still design from the retrieval/validation context.
+        let deepResearch = '';
+        try {
+          const research = await call(
+            `Do fresh competitive research before we design this product: "${agentDesc}".
+Search the web for the most current direct competitors, their pricing, recent (2024-2025) launches, and any market shifts. Return 6-10 tight bullet points of concrete, specific facts — real names, prices and numbers. No preamble, bullets only.`,
+            { model: MODELS.scout, maxTokens: 1200, webSearch: true, searchUses: 8 }
+          );
+          deepResearch = (research.text || '').trim().slice(0, 2500);
+        } catch {
+          deepResearch = '';
+        }
+
         const designerStage = await runJsonStage({
-          prompt: designerPrompt(agentDesc, comp, retrieval),
+          prompt: designerPrompt(agentDesc, comp, retrieval)
+            + (deepResearch ? `\n\nFRESH WEB RESEARCH (use to sharpen specificity and pricing):\n${deepResearch}` : ''),
           model: MODELS.designer,
           maxTokens: 1400,
           critiquePrompt: (draft) => designCritiquePrompt(agentDesc, comp, draft),
           rewritePrompt: (draft, critique) => designerRewritePrompt(agentDesc, comp, draft, critique),
         });
+
+        // Plain-English readability check on this paid deliverable.
+        const designerResult = await withPlainEnglish('Product design', designerStage.result);
 
         await recordOutcome({
           sessionId,
@@ -724,11 +748,11 @@ export async function POST(request) {
           action,
           workflow,
           industry,
-          payload: { design: designerStage.result, critique: designerStage.critique },
+          payload: { design: designerResult, critique: designerStage.critique },
         });
 
         return NextResponse.json({
-          result: designerStage.result,
+          result: designerResult,
           critique: designerStage.critique,
           usage: designerStage.usage,
           cost_usd: designerStage.costUsd,
@@ -747,6 +771,9 @@ export async function POST(request) {
           rewritePrompt: (draft, critique) => gtmRewritePrompt(agentDesc, design, draft, comp, critique),
         });
 
+        // Plain-English readability check on this paid deliverable.
+        const launchResult = await withPlainEnglish('Launch & go-to-market plan', launchStage.result);
+
         await recordOutcome({
           sessionId,
           signal: 'launch_completed',
@@ -754,11 +781,11 @@ export async function POST(request) {
           action,
           workflow,
           industry,
-          payload: { gtm: launchStage.result, critique: launchStage.critique },
+          payload: { gtm: launchResult, critique: launchStage.critique },
         });
 
         return NextResponse.json({
-          result: launchStage.result,
+          result: launchResult,
           critique: launchStage.critique,
           usage: launchStage.usage,
           cost_usd: launchStage.costUsd,
@@ -770,7 +797,8 @@ export async function POST(request) {
       case 'infrastructure': {
         const infraCall = await call(infraPrompt(design, gtm, comp, retrieval), { model: MODELS.scout, maxTokens: 1800 });
         const infraParsed = await parseJSON(infraCall.text, 'infrastructure stage');
-        const infraResult = infraParsed.value;
+        // Plain-English readability check on this (most technical) paid deliverable.
+        const infraResult = await withPlainEnglish('Infrastructure & tech setup', infraParsed.value);
 
         await recordOutcome({
           sessionId,
@@ -858,6 +886,24 @@ export async function POST(request) {
           blueprintId: blueprintRow.id,
           totalCostUsd,
         });
+
+        // Attach the finished blueprint to the user's saved idea (creating the
+        // row if extended research was skipped). Resilient: never blocks the build.
+        await attachBlueprint({
+          userId: user.id,
+          validationId,
+          idea: { action, workflow, industry, connector, modeName, title: comp?.title },
+          comp,
+          blueprint: {
+            design,
+            gtm,
+            infra,
+            protoSpec: spec,
+            eval: prototypeEval,
+            prototypeHtml: typeof prototypeHtml === 'string' ? prototypeHtml.slice(0, 16000) : '',
+          },
+          creditsSpent: Number(charge?.amount) || 0,
+        }).catch(() => {});
 
         await recordOutcome({
           sessionId,

@@ -11,8 +11,8 @@ export default function ProfileClient({ user, error }) {
   const [err, setErr] = useState(error === 'auth' ? 'Sign-in link expired or invalid. Try again.' : '');
   const [balance, setBalance] = useState(null);
   const [transactions, setTransactions] = useState([]);
-  const [blueprints, setBlueprints] = useState([]);
-  const [bpLoading, setBpLoading] = useState(false);
+  const [ideas, setIdeas] = useState([]);
+  const [ideasLoading, setIdeasLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -21,12 +21,12 @@ export default function ProfileClient({ user, error }) {
       .then(d => { setBalance(d.balance ?? 0); setTransactions(d.transactions || []); })
       .catch(() => setBalance(0));
 
-    setBpLoading(true);
-    fetch('/api/blueprints')
+    setIdeasLoading(true);
+    fetch('/api/ideas')
       .then(r => r.json())
-      .then(d => setBlueprints(d.blueprints || []))
+      .then(d => setIdeas(d.ideas || []))
       .catch(() => {})
-      .finally(() => setBpLoading(false));
+      .finally(() => setIdeasLoading(false));
   }, [user]);
 
   const sendMagicLink = async (e) => {
@@ -59,7 +59,9 @@ export default function ProfileClient({ user, error }) {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  const creditsSpent = blueprints.reduce((sum, bp) => sum + Number(bp.credits_spent || 0), 0);
+  const blueprintCount = ideas.filter((i) => i.blueprint_status === 'complete').length;
+  const creditsSpent = ideas.reduce((sum, i) => sum + Number(i.credits_spent || 0), 0);
+  const demandTone = (level = '') => /strong/i.test(level) ? '#15803D' : /weak/i.test(level) ? '#B91C1C' : '#B45309';
 
   return (
     <div style={s.page}>
@@ -87,54 +89,79 @@ export default function ProfileClient({ user, error }) {
                 <a href="/pricing" style={s.buyBtn}>Buy more</a>
               </div>
               <div style={s.statCard}>
-                <div style={s.statLabel}>BLUEPRINTS</div>
-                <div style={s.statVal}>{bpLoading ? '…' : blueprints.length}</div>
-                <div style={s.statMeta}>generated</div>
+                <div style={s.statLabel}>IDEAS</div>
+                <div style={s.statVal}>{ideasLoading ? '…' : ideas.length}</div>
+                <div style={s.statMeta}>researched</div>
               </div>
               <div style={s.statCard}>
-                <div style={s.statLabel}>CREDITS SPENT</div>
-                <div style={s.statVal}>{bpLoading ? '…' : creditsSpent}</div>
-                <div style={s.statMeta}>tracked automatically</div>
+                <div style={s.statLabel}>BLUEPRINTS</div>
+                <div style={s.statVal}>{ideasLoading ? '…' : blueprintCount}</div>
+                <div style={s.statMeta}>generated</div>
               </div>
             </div>
 
-            {/* ── Blueprints history ── */}
+            {/* ── Saved ideas (those that reached paid extended research) ── */}
             <div style={s.section}>
               <div style={s.sectionHead}>
-                <span style={s.seclabel}>YOUR BLUEPRINTS</span>
+                <span style={s.seclabel}>YOUR IDEAS</span>
               </div>
-              {bpLoading ? (
+              {ideasLoading ? (
                 <div style={s.empty}>Loading…</div>
-              ) : blueprints.length === 0 ? (
+              ) : ideas.length === 0 ? (
                 <div style={s.empty}>
                   <div style={{ fontSize: 28, marginBottom: 8 }}>✦</div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>No blueprints yet</div>
-                  <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>Spin an idea and generate your first blueprint</div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>No saved ideas yet</div>
+                  <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>Run extended market research on an idea and it shows up here</div>
                   <a href="/" style={s.buyBtn}>Spin an idea →</a>
                 </div>
               ) : (
                 <div style={s.bpList}>
-                  {blueprints.map((bp) => (
-                    <div key={bp.id} style={s.bpCard}>
-                      <div style={s.bpTop}>
-                        <div style={s.bpTitle}>{bp.idea_title || bp.combo_label || 'Blueprint'}</div>
-                        <div style={s.bpDate}>{fmtDate(bp.created_at)}</div>
-                      </div>
-                      {bp.idea_tagline && (
-                        <div style={s.bpTagline}>{bp.idea_tagline}</div>
-                      )}
-                      <div style={s.bpTags}>
-                        {[bp.reel_1, bp.reel_2, bp.reel_3].filter(Boolean).map((tag, i) => (
-                          <span key={i} style={s.bpTag}>{tag}</span>
-                        ))}
-                        {Number(bp.credits_spent || 0) > 0 && (
-                          <span style={{ ...s.bpTag, background: 'var(--accent-light)', color: 'var(--accent)' }}>
-                            {bp.credits_spent} credit{Number(bp.credits_spent) === 1 ? '' : 's'}
-                          </span>
+                  {ideas.map((idea) => {
+                    const research = idea.research || {};
+                    const signals = (research.demandSignals || []).slice(0, 2);
+                    const hasBlueprint = idea.blueprint_status === 'complete';
+                    return (
+                      <div key={idea.id} style={s.ideaCard}>
+                        <div style={s.bpTop}>
+                          <div style={s.bpTitle}>{idea.title || idea.tagline || 'Idea'}</div>
+                          <div style={s.bpDate}>{fmtDate(idea.created_at)}</div>
+                        </div>
+
+                        {/* Extended research outcome */}
+                        <div style={s.ideaResearch}>
+                          <div style={s.ideaResearchHead}>
+                            <span style={s.seclabelSm}>Extended research</span>
+                            {research.demandLevel && (
+                              <span style={{ ...s.demandTag, color: demandTone(research.demandLevel) }}>
+                                {research.demandLevel} demand
+                              </span>
+                            )}
+                          </div>
+                          {(research.plainSummary || idea.summary) && (
+                            <p style={s.ideaSummary}>{research.plainSummary || idea.summary}</p>
+                          )}
+                          {signals.length > 0 && (
+                            <ul style={s.ideaSignals}>
+                              {signals.map((sig, i) => <li key={i}>{sig}</li>)}
+                            </ul>
+                          )}
+                        </div>
+
+                        {/* Blueprint: a section if created, else a create button */}
+                        {hasBlueprint ? (
+                          <div style={s.bpReadyRow}>
+                            <span style={s.bpReadyTag}>✦ Blueprint ready</span>
+                            <a href={`/?idea=${idea.id}&view=1`} style={s.viewBtn}>View blueprint</a>
+                          </div>
+                        ) : (
+                          <div style={s.bpReadyRow}>
+                            <span style={s.bpPendingTag}>No blueprint yet</span>
+                            <a href={`/?idea=${idea.id}`} style={s.createBtn}>Create blueprint · 2 credits</a>
+                          </div>
                         )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -237,6 +264,18 @@ const s = {
   bpTagline: { fontSize: 12.5, color: 'var(--ink-2)', marginBottom: 10, lineHeight: 1.5 },
   bpTags: { display: 'flex', flexWrap: 'wrap', gap: 6 },
   bpTag: { fontSize: 10.5, fontWeight: 600, padding: '4px 8px', borderRadius: 999, background: 'var(--accent-light)', color: 'var(--ink-2)', textTransform: 'capitalize' },
+  ideaCard: { padding: '16px', background: 'rgba(255,255,255,0.26)', border: `1px solid ${softLine}`, borderRadius: 18, backdropFilter: 'blur(10px)' },
+  ideaResearch: { marginTop: 4, padding: '12px', background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.14)', borderRadius: 12 },
+  ideaResearchHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6 },
+  seclabelSm: { fontSize: 9.5, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--accent)' },
+  demandTag: { fontSize: 10.5, fontWeight: 800, textTransform: 'capitalize' },
+  ideaSummary: { margin: 0, fontSize: 13, lineHeight: 1.55, color: 'var(--ink)' },
+  ideaSignals: { margin: '8px 0 0', paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 3 },
+  bpReadyRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginTop: 12 },
+  bpReadyTag: { fontSize: 12, fontWeight: 700, color: '#15803D' },
+  bpPendingTag: { fontSize: 12, fontWeight: 600, color: 'var(--muted)' },
+  viewBtn: { display: 'inline-flex', alignItems: 'center', minHeight: 34, padding: '0 14px', fontSize: 12, fontWeight: 700, color: 'var(--ink)', textDecoration: 'none', borderRadius: 999, background: glassStrong, border: `1px solid ${softLine}` },
+  createBtn: { display: 'inline-flex', alignItems: 'center', minHeight: 34, padding: '0 14px', fontSize: 12, fontWeight: 700, color: '#fff', textDecoration: 'none', borderRadius: 999, background: 'var(--accent)' },
   card: { background: glassSoft, backdropFilter: 'blur(16px)', border: `1px solid ${softLine}`, borderRadius: 24, padding: '32px 28px', maxWidth: 440, margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 22px 42px -30px rgba(124,58,237,0.26)' },
   sub: { fontSize: 14, color: 'var(--muted)', margin: '0 0 24px', textAlign: 'center', lineHeight: 1.6, maxWidth: 320 },
   errBox: { width: '100%', padding: '10px 14px', background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.18)', borderRadius: 12, color: '#B91C1C', fontSize: 13, margin: '0 0 16px', textAlign: 'center' },

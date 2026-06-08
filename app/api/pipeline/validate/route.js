@@ -1,28 +1,10 @@
-import crypto from 'crypto';
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import { addCredits, deductCredits } from '../../../../lib/credits';
 import { buildRetrievalContext } from '../../../../lib/moat-retrieval';
-import { ensureSessionId, readValidationCache, recordValidation, writeValidationCache } from '../../../../lib/moat-store';
+import { ensureSessionId, recordValidation } from '../../../../lib/moat-store';
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 const MODEL = 'claude-haiku-4-5-20251001';
 const PRICING = { input: 1.0, output: 5.0 };
-const PRECHECK_CACHE_MS = 72 * 60 * 60 * 1000;
-const DEEP_CACHE_MS = 7 * 24 * 60 * 60 * 1000;
-const DEEP_SCAN_CREDIT_COST = 1;
-
-async function getUser() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    { cookies: { getAll() { return cookieStore.getAll(); }, setAll() {} } }
-  );
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
-}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -32,7 +14,7 @@ function calcCost(inp, out) {
   return (inp * PRICING.input + out * PRICING.output) / 1_000_000;
 }
 
-async function call(prompt, { maxTokens = 1800, webSearch = false, attempt = 0 } = {}) {
+async function call(prompt, { maxTokens = 1800, webSearch = false, searchUses = 3, attempt = 0 } = {}) {
   if (!ANTHROPIC_KEY) throw new Error('ANTHROPIC_API_KEY not set');
 
   const body = {
@@ -42,7 +24,9 @@ async function call(prompt, { maxTokens = 1800, webSearch = false, attempt = 0 }
   };
 
   if (webSearch) {
-    body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+    // Free validation: a basic, capped web search — enough for a score,
+    // advice and market read at the bare minimum of tokens.
+    body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: searchUses }];
   }
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -59,7 +43,7 @@ async function call(prompt, { maxTokens = 1800, webSearch = false, attempt = 0 }
     const retryAfterHeader = Number(res.headers.get('retry-after') || 0);
     const retryMs = retryAfterHeader > 0 ? retryAfterHeader * 1000 : 8000 * (attempt + 1);
     await sleep(retryMs);
-    return call(prompt, { maxTokens, webSearch, attempt: attempt + 1 });
+    return call(prompt, { maxTokens, webSearch, searchUses, attempt: attempt + 1 });
   }
 
   if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
@@ -127,19 +111,6 @@ function normalizeJsonCandidate(text) {
 
 function parseJsonStrict(text) {
   return JSON.parse(normalizeJsonCandidate(extractBalancedJson(text)));
-}
-
-function parseJsonCheap(text) {
-  try {
-    return parseJsonStrict(text);
-  } catch (error) {
-    const stripped = stripJsonFences(text);
-    try {
-      return JSON.parse(normalizeJsonCandidate(stripped));
-    } catch {
-      throw error;
-    }
-  }
 }
 
 async function parseJSON(text, label) {
@@ -220,6 +191,7 @@ function compactPlayers(players) {
     name: shortText(player?.name, 60),
     customer: shortText(player?.targetCustomer, 90),
     pricing: shortText(player?.pricing, 60),
+    coverage: shortText(player?.coverage, 140),
     weakness: shortText(player?.weakness, 120),
   }));
 }
@@ -249,6 +221,8 @@ function compactScout(scout) {
     landscape: shortText(scout?.landscape, 220),
     players: compactPlayers(scout?.players),
     gap: shortText(scout?.gap, 180),
+    premiseFit: scout?.premiseFit,
+    premiseNote: shortText(scout?.premiseNote, 180),
     verdict: shortText(scout?.verdict, 160),
     verdictType: scout?.verdictType,
     verdictReasoning: shortText(scout?.verdictReasoning, 220),
@@ -293,17 +267,21 @@ Search the web for real competing products, SaaS tools, AI startups, and establi
 Return ONLY a JSON object (no fences):
 {
   "marketSize": "estimated addressable market or scale signal",
-  "landscape": "2-3 honest sentences on market state",
-  "players": [{"name":"...","targetCustomer":"...","pricing":"...","weakness":"..."}],
+  "landscape": "2-3 crisp, easy-to-read sentences summarizing the state of this market",
+  "players": [{"name":"...","targetCustomer":"...","pricing":"...","coverage":"one plain sentence on how this player addresses (or ignores) this exact idea","weakness":"..."}],
   "gap": "specific unaddressed pain, or 'No clear gap' if market is well-served",
+  "premiseFit": "realistic | weak | nonexistent — does the named workflow/problem genuinely exist for THIS industry?",
+  "premiseNote": "if weak or nonexistent: one plain sentence naming the mismatch (e.g. 'Law firms rarely run equipment-maintenance operations, so this problem barely exists for them.'). else empty string.",
   "verdict": "one punchy sentence on the opportunity or lack of it",
   "verdictType": "build if genuine whitespace. warning if competitive but a wedge exists. avoid if 3+ well-funded players dominate with no real gap.",
   "verdictReasoning": "2-3 honest sentences referencing specific players",
   "evidence": ["5 short evidence bullets referencing real products or pricing"],
   "retrievalFit": "1-2 sentences on whether the idea matches the workflow archetype from the retrieval context",
-  "pivotHint": "if avoid or warning: one adjacent idea with whitespace. else empty string."
+  "pivotHint": "if avoid or warning: one adjacent idea with whitespace. else empty string.",
+  "plainSummary": "2-3 plain-English sentences a non-technical person fully understands: is this worth building, who already does it, and where the opening is. No jargon, no buzzwords."
 }
-Up to 5 players. Default to avoid when in doubt. CRITICAL SCOPE CHECK: this product must be SOFTWARE sold to others, not a business to operate.`;
+List up to 5 players, SORTED from largest/most-established to smallest. If premiseFit is "nonexistent", you MUST set verdictType to "avoid". Default to avoid when in doubt. CRITICAL SCOPE CHECK: this product must be SOFTWARE sold to others, not a business to operate.
+Write marketSize, landscape, verdict, verdictReasoning and plainSummary in plain, jargon-free language a non-technical founder can read at a glance.`;
 }
 
 function skepticPrompt(agentDesc, retrieval, scout) {
@@ -379,81 +357,21 @@ Return ONLY JSON:
 Scores must be integers from 0-100.`;
 }
 
-function precheckPrompt(agentDesc, modeName, retrieval) {
-  return `You are the cheap first-pass triage analyst for IdeaWheel. This is a FREE pre-check, not a deep market scan.
-
-Idea: "${agentDesc}"
-Sector: ${modeName}
-PRIVATE RETRIEVAL CONTEXT:
-${JSON.stringify(compactRetrieval(retrieval), null, 2)}
-
-Rules:
-- Do NOT use web search.
-- Be decisive and concise.
-- Calibrate hard. 80+ should be rare.
-- Favor clear, narrow, workflow-native ideas over broad AI wrappers.
-- If the wedge is weak or crowded, say so.
-
-Return ONLY a JSON object (no fences):
-{
-  "marketSize": "1 short sentence on likely demand or market pull",
-  "verdict": "1 punchy sentence",
-  "verdictType": "build | warning | avoid",
-  "verdictReasoning": "2 short honest sentences",
-  "gap": "specific wedge to test first, or empty string",
-  "pivotHint": "one adjacent pivot with better odds, or empty string",
-  "retrievalFit": "1 sentence on fit with the workflow/archetype",
-  "confidence": "low | medium | high",
-  "mustProveNext": ["3 short proof points"],
-  "moat": "1 short sentence on what could make it defensible, or empty string",
-  "scores": {
-    "evidenceCoverage": 0,
-    "wedgeClarity": 0,
-    "defensibility": 0,
-    "specificity": 0,
-    "overall": 0
-  }
-}`;
-}
-
-function normalizeScore(value, fallback = 55) {
-  const num = Number(value);
-  if (!Number.isFinite(num)) return fallback;
-  return Math.max(0, Math.min(100, Math.round(num)));
-}
-
-function normalizePrecheck(precheck = {}) {
-  const overall = normalizeScore(precheck?.scores?.overall, 55);
-  const verdictType = ['build', 'warning', 'avoid'].includes(precheck?.verdictType) ? precheck.verdictType : (overall >= 74 ? 'build' : overall >= 58 ? 'warning' : 'avoid');
-  return {
-    marketSize: shortText(precheck.marketSize, 160),
-    verdict: shortText(precheck.verdict, 160),
-    verdictType,
-    verdictReasoning: shortText(precheck.verdictReasoning, 240),
-    gap: shortText(precheck.gap, 180),
-    pivotHint: shortText(precheck.pivotHint, 160),
-    retrievalFit: shortText(precheck.retrievalFit, 160),
-    confidence: ['low', 'medium', 'high'].includes(precheck?.confidence) ? precheck.confidence : 'medium',
-    mustProveNext: shortList(precheck.mustProveNext, 3, 100),
-    moat: shortText(precheck.moat, 180),
-    scores: {
-      evidenceCoverage: normalizeScore(precheck?.scores?.evidenceCoverage, Math.max(35, overall - 12)),
-      wedgeClarity: normalizeScore(precheck?.scores?.wedgeClarity, overall),
-      defensibility: normalizeScore(precheck?.scores?.defensibility, Math.max(30, overall - 8)),
-      specificity: normalizeScore(precheck?.scores?.specificity, overall),
-      overall,
-    },
-  };
-}
-
-function buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval, validationId, validationTier = 'deep') {
-  const decision = judge.decision || scout.verdictType || 'warning';
+function buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval, validationId) {
+  const premiseBroken = scout.premiseFit === 'nonexistent';
+  // A premise mismatch (e.g. equipment maintenance for a law firm) overrides
+  // any optimistic verdict — there is no real problem to solve.
+  const decision = premiseBroken ? 'avoid' : (judge.decision || scout.verdictType || 'warning');
+  const premiseNote = shortText(scout.premiseNote, 180);
   return {
     ...scout,
-    score: evalResult?.scores?.overall || null,
+    score: premiseBroken ? Math.min(evalResult?.scores?.overall ?? 30, 35) : (evalResult?.scores?.overall || null),
     verdictType: decision,
     verdict: scout.verdict,
-    verdictReasoning: `${judge.reasoning} ${scout.verdictReasoning || ''}`.trim(),
+    premiseFit: scout.premiseFit,
+    premiseNote,
+    verdictReasoning: `${premiseNote ? premiseNote + ' ' : ''}${judge.reasoning} ${scout.verdictReasoning || ''}`.trim(),
+    plainSummary: shortText(scout.plainSummary, 360),
     gap: judge.wedge || scout.gap,
     moat: judge.defensibility,
     skeptic,
@@ -461,82 +379,7 @@ function buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval,
     eval: evalResult,
     retrieval,
     validationId,
-    validationTier,
     agentDesc,
-  };
-}
-
-function buildPrecheckArtifacts(agentDesc, precheck, retrieval, validationId) {
-  const scout = {
-    marketSize: precheck.marketSize,
-    landscape: precheck.retrievalFit || precheck.verdictReasoning,
-    players: [],
-    gap: precheck.gap,
-    verdict: precheck.verdict,
-    verdictType: precheck.verdictType,
-    verdictReasoning: precheck.verdictReasoning,
-    evidence: precheck.mustProveNext,
-    retrievalFit: precheck.retrievalFit,
-    pivotHint: precheck.pivotHint,
-  };
-  const judge = {
-    decision: precheck.verdictType,
-    confidence: precheck.confidence,
-    wedge: precheck.gap,
-    defensibility: precheck.moat,
-    mustProveNext: precheck.mustProveNext,
-    reasoning: precheck.verdictReasoning,
-  };
-  const evalResult = {
-    scores: precheck.scores,
-    shipReady: precheck.verdictType !== 'avoid' && precheck.scores.overall >= 65,
-    failReasons: precheck.verdictType === 'avoid' ? ['Failed free pre-check'] : [],
-    improvementBrief: precheck.mustProveNext.join(' · '),
-  };
-
-  return {
-    scout,
-    judge,
-    evalResult,
-    comp: {
-      ...scout,
-      score: precheck.scores.overall,
-      moat: precheck.moat,
-      judge,
-      skeptic: null,
-      eval: evalResult,
-      retrieval,
-      validationId,
-      validationTier: 'precheck',
-      agentDesc,
-    },
-  };
-}
-
-function normalizeIdea(value = '') {
-  return String(value).toLowerCase().replace(/\s+/g, ' ').trim();
-}
-
-function buildCacheKey({ tier, modeName, action, workflow, industry, freeformIdea }) {
-  const normalized = {
-    version: 'v2',
-    tier,
-    modeName: normalizeIdea(modeName),
-    action: normalizeIdea(action),
-    workflow: normalizeIdea(workflow),
-    industry: normalizeIdea(industry),
-    freeformIdea: normalizeIdea(freeformIdea),
-  };
-  return crypto.createHash('sha256').update(JSON.stringify(normalized)).digest('hex');
-}
-
-function cachedResponse(response, sessionId) {
-  return {
-    sessionId,
-    comp: { ...(response?.comp || {}), cached: true },
-    cost: response?.cost || null,
-    tier: response?.tier || response?.comp?.validationTier || 'deep',
-    cached: true,
   };
 }
 
@@ -549,94 +392,17 @@ export async function POST(request) {
     modeName,
     sessionId: rawSessionId,
     freeformIdea,
-    tier: requestedTier,
   } = await request.json();
 
   if (!freeformIdea && (!action || !workflow || !industry)) {
     return NextResponse.json({ error: 'Missing: action, workflow, industry (or freeformIdea)' }, { status: 400 });
   }
 
-  const validationTier = requestedTier === 'precheck' ? 'precheck' : 'deep';
   const sessionId = ensureSessionId(rawSessionId);
   const agentDesc = freeformIdea || `an agent that ${action} ${workflow} ${connector} ${industry}`;
-  const cacheKey = buildCacheKey({ tier: validationTier, modeName, action, workflow, industry, freeformIdea: agentDesc });
-  let chargedUser = null;
-  let charged = false;
-  let balance = null;
 
   try {
-    const cached = await readValidationCache(cacheKey, validationTier === 'precheck' ? PRECHECK_CACHE_MS : DEEP_CACHE_MS);
-    if (cached) {
-      return NextResponse.json(cachedResponse(cached, sessionId));
-    }
-
-    if (validationTier === 'deep') {
-      chargedUser = await getUser();
-      if (!chargedUser) {
-        return NextResponse.json({ error: 'not_authenticated' }, { status: 401 });
-      }
-
-      const debit = await deductCredits(chargedUser.id, DEEP_SCAN_CREDIT_COST, 'deep_scan_started', {
-        sessionId,
-        modeName,
-        action,
-        workflow,
-        industry,
-      });
-
-      if (!debit.ok) {
-        return NextResponse.json({
-          error: debit.reason === 'insufficient_credits' ? 'Not enough credits for a deep market scan.' : 'Unable to charge credits for this deep market scan.',
-          balance: debit.balance ?? null,
-        }, { status: debit.reason === 'insufficient_credits' ? 402 : 400 });
-      }
-
-      charged = true;
-      balance = debit.newBalance ?? null;
-    }
-
     const retrieval = await buildRetrievalContext({ modeName, industry, action, workflow });
-
-    if (validationTier === 'precheck') {
-      const precheckCall = await call(precheckPrompt(agentDesc, modeName, retrieval), { maxTokens: 900 });
-      const precheck = normalizePrecheck(parseJsonCheap(precheckCall.text));
-      const usage = precheckCall.usage || { input_tokens: 0, output_tokens: 0 };
-      const costUsd = calcCost(usage.input_tokens, usage.output_tokens);
-      const { scout, judge, evalResult } = buildPrecheckArtifacts(agentDesc, precheck, retrieval, 'pending');
-
-      const validationRow = await recordValidation({
-        sessionId,
-        modeName,
-        action,
-        workflow,
-        industry,
-        agentDesc,
-        validationTier,
-        retrieval,
-        scout,
-        skeptic: null,
-        judge,
-        eval: evalResult,
-        verdictType: precheck.verdictType,
-        usage,
-        costUsd,
-      });
-
-      const { comp } = buildPrecheckArtifacts(agentDesc, precheck, retrieval, validationRow.id);
-      const response = {
-        comp,
-        cost: {
-          input_tokens: usage.input_tokens,
-          output_tokens: usage.output_tokens,
-          cost_usd: costUsd,
-        },
-        tier: validationTier,
-      };
-
-      await writeValidationCache(cacheKey, response, { tier: validationTier, modeName, action, workflow, industry });
-      return NextResponse.json({ sessionId, ...response, cached: false, balance });
-    }
-
     const scoutCall = await call(scoutPrompt(agentDesc, modeName, retrieval), { webSearch: true, maxTokens: 2200 });
     const scoutParsed = await parseJSON(scoutCall.text, 'validation scout');
     const scout = scoutParsed.value;
@@ -672,7 +438,6 @@ export async function POST(request) {
       workflow,
       industry,
       agentDesc,
-      validationTier,
       retrieval,
       scout,
       skeptic,
@@ -683,37 +448,19 @@ export async function POST(request) {
       costUsd,
     });
 
-    const comp = buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval, validationRow.id, validationTier);
-    const response = {
+    const comp = buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval, validationRow.id);
+
+    return NextResponse.json({
+      sessionId,
       comp,
       cost: {
         input_tokens: usage.input_tokens,
         output_tokens: usage.output_tokens,
         cost_usd: costUsd,
       },
-      tier: validationTier,
-    };
-
-    await writeValidationCache(cacheKey, response, { tier: validationTier, modeName, action, workflow, industry });
-
-    return NextResponse.json({ sessionId, ...response, cached: false, balance });
+    });
   } catch (err) {
-    if (charged && chargedUser) {
-      try {
-        const refund = await addCredits(chargedUser.id, DEEP_SCAN_CREDIT_COST, 'deep_scan_refund', {
-          sessionId,
-          modeName,
-          action,
-          workflow,
-          industry,
-          error: err.message,
-        });
-        balance = refund?.newBalance ?? balance;
-      } catch (refundErr) {
-        console.error('[validate/refund]', refundErr.message);
-      }
-    }
     console.error('[validate]', err.message);
-    return NextResponse.json({ error: err.message, balance }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

@@ -13,7 +13,7 @@ const FAQS = [
   },
   {
     q: "What does a credit unlock?",
-    a: "Blueprints typically cost 1 to 3 credits depending on the signal strength. Each blueprint runs a 4-agent AI pipeline: a product designer names your product and specs the features, a launch strategist writes your first-customer plan and 30-day roadmap, an infrastructure architect details every service you need to sign up for, and a prototype builder ships a clickable HTML demo you can test immediately.",
+    a: "Deep market research costs 1 credit — it digs through Reddit, forums and communities for real demand signals. The full blueprint costs 2 credits and runs a 4-agent AI pipeline: a product designer names your product and specs the features, a launch strategist writes your first-customer plan and 30-day roadmap, an infrastructure architect details every service you need to sign up for, and a prototype builder ships a clickable HTML demo you can test immediately. Every new account starts with 3 free credits.",
   },
   {
     q: "How many free spins do I get?",

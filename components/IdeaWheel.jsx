@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { CREDIT_PACKAGES } from "@/lib/pricing";
 import { createClient } from "@/lib/supabase-browser";
 import { DEFAULT_MODE_CONFIGS, buildGeneratorIdea } from "@/lib/generator-config";
@@ -253,19 +253,10 @@ function ValidationConfetti({ pieces = 34 }) {
   );
 }
 
-/* ─── DYNAMIC CREDIT COST ────────────────────────────────────────── */
-const DEEP_SCAN_CREDITS = 1;
-
-function creditCost(score) {
-  if (score >= 85) return 3;
-  if (score >= 65) return 2;
-  return 1;
-}
-function creditLabel(score) {
-  if (score >= 85) return { cost: 3, tier: 'Exceptional signal', color: 'var(--accent)' };
-  if (score >= 65) return { cost: 2, tier: 'Strong signal',      color: 'var(--accent-mid)' };
-  return                  { cost: 1, tier: 'Standard',            color: 'var(--muted)' };
-}
+/* ─── CREDIT COSTS ───────────────────────────────────────────────── */
+// Flat funnel: 1 credit for deep market research, 2 for the blueprint.
+const DEEP_RESEARCH_COST = 1;
+const BLUEPRINT_COST = 2;
 
 function cleanValidationText(text = '') {
   return String(text)
@@ -308,9 +299,25 @@ function briefPlayerWeakness(text = '') {
   return first.length > 120 ? `${first.slice(0, 117).trim()}...` : first;
 }
 
-function reelDisplayLine(idea) {
-  if (!idea) return '';
-  return [idea.displayAction || idea.action, idea.displayWorkflow || idea.workflow, idea.displayIndustry || idea.industry].filter(Boolean).join(' · ');
+/* ─── PLAIN-ENGLISH LAYER ────────────────────────────────────────────
+   A short, jargon-free lead shown above the detailed (often technical)
+   content, so a non-technical reader gets the gist before the detail. */
+function PlainEnglish({ summary, takeaways, compact = false }) {
+  const text = cleanValidationText(summary || '');
+  const list = (Array.isArray(takeaways) ? takeaways : [])
+    .map((t) => cleanValidationText(t)).filter(Boolean);
+  if (!text && list.length === 0) return null;
+  return (
+    <div className={`su-plain${compact ? ' su-plain--compact' : ''}`}>
+      <div className="su-plain-label">In plain English</div>
+      {text && <p className="su-plain-text">{text}</p>}
+      {list.length > 0 && (
+        <ul className="su-plain-takeaways">
+          {list.map((t, i) => <li key={i}>{t}</li>)}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 /* ─── PROTO IFRAME ───────────────────────────────────────────────── */
@@ -378,8 +385,6 @@ const ITEM_H = 72;
 const REPEATS = 10;
 const HOME_COPY = 4;
 const REEL_TINTS = ['#7c3aed','#c026d3','#ff4d8d'];
-const TRUST_SPIN_LIMIT = 3;
-const TRUST_SPIN_STATE_KEY = 'ideaWheelTrustSpins.v2';
 // Smooth wind-up → cruise → settle: gentle ease-in start (no teleport on
 // the first frame) and a controlled decel tail (no long creep at the end).
 const SPIN_EASE = 'cubic-bezier(0.30, 0.65, 0.30, 1)';
@@ -397,36 +402,16 @@ function pickWeightedIndex(weights = []) {
 }
 
 const CLIENT_DEFAULT_MODE_CONFIGS = DEFAULT_MODE_CONFIGS;
-const REEL_DISPLAY_KEYS = ['actions', 'workflows', 'industries'];
 
-function displayReelValue(modeConfig, column, value = '') {
-  return modeConfig?.display?.[REEL_DISPLAY_KEYS[column]]?.[value] || value;
-}
-
-function SlotMachine({ onResult, trustStateKey }) {
+function SlotMachine({ onResult }) {
   const [mode, setMode] = useState('b2b');
   const [modeConfigs, setModeConfigs] = useState(CLIENT_DEFAULT_MODE_CONFIGS);
   const stripRefs = [useRef(null), useRef(null), useRef(null)];
   const indexRef = useRef([0,0,0]);
   const targetRef = useRef([0,0,0]);
-  const trustStateRef = useRef({ totalServed: 0, servedKeys: [] });
-  const pendingSeedRef = useRef(null);
   const [landed, setLanded] = useState(['','','']);
   const [spinning, setSpinning] = useState([false,false,false]);
   const anySpinning = spinning.some(Boolean);
-  const resolvedTrustStateKey = trustStateKey || `${TRUST_SPIN_STATE_KEY}:anon`;
-
-  useEffect(() => {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(resolvedTrustStateKey) || '{}');
-      trustStateRef.current = {
-        totalServed: Number(parsed?.totalServed || 0),
-        servedKeys: Array.isArray(parsed?.servedKeys) ? parsed.servedKeys : [],
-      };
-    } catch {
-      trustStateRef.current = { totalServed: 0, servedKeys: [] };
-    }
-  }, [resolvedTrustStateKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -444,28 +429,6 @@ function SlotMachine({ onResult, trustStateKey }) {
   const m = modeConfigs[mode] || CLIENT_DEFAULT_MODE_CONFIGS[mode];
   const banks = m.banks;
   const weights = m.weights || banks.map((bank) => bank.map(() => 1));
-
-  const getTrustedSeedCandidate = () => {
-    const queue = Array.isArray(m.trustQueue) ? m.trustQueue : [];
-    const current = trustStateRef.current || { totalServed: 0, servedKeys: [] };
-    if (current.totalServed >= TRUST_SPIN_LIMIT || !queue.length) return null;
-
-    const served = new Set(current.servedKeys || []);
-    return queue.find((seed) => seed?.key && !served.has(seed.key)) || null;
-  };
-
-  const markTrustedSeedServed = (seed) => {
-    if (!seed?.key) return;
-    const current = trustStateRef.current || { totalServed: 0, servedKeys: [] };
-    const served = new Set(current.servedKeys || []);
-    if (served.has(seed.key)) return;
-    const nextState = {
-      totalServed: current.totalServed + 1,
-      servedKeys: [...served, seed.key],
-    };
-    trustStateRef.current = nextState;
-    try { localStorage.setItem(resolvedTrustStateKey, JSON.stringify(nextState)); } catch {}
-  };
 
   useEffect(() => {
     banks.forEach((bank,w) => {
@@ -545,30 +508,12 @@ function SlotMachine({ onResult, trustStateKey }) {
 
   const spinAll = () => {
     if (anySpinning) return;
-    const trustedSeed = getTrustedSeedCandidate();
-    if (trustedSeed) {
-      const actionIdx = banks[0].indexOf(trustedSeed.action);
-      const workflowIdx = banks[1].indexOf(trustedSeed.workflow);
-      const industryIdx = banks[2].indexOf(trustedSeed.industry);
-
-      if (actionIdx !== -1 && workflowIdx !== -1 && industryIdx !== -1) {
-        markTrustedSeedServed(trustedSeed);
-        pendingSeedRef.current = trustedSeed;
-        spinWheelTo(0, actionIdx, 3000);
-        spinWheelTo(1, workflowIdx, 3600);
-        spinWheelTo(2, industryIdx, 4200);
-        return;
-      }
-    }
-
-    pendingSeedRef.current = null;
     const actionIdx = selectIndex(0);
     const action = banks[0][actionIdx];
     const allowedWorkflows = (m.pairMap?.[action] || banks[1]).filter((workflow) => banks[1].includes(workflow));
     const workflowIdx = selectIndex(1, allowedWorkflows, m.pairWeights?.[action]);
     const workflow = banks[1][workflowIdx];
-    const allowedIndustries = (m.workflowIndustryMap?.[workflow] || banks[2]).filter((industry) => banks[2].includes(industry));
-    const industryIdx = selectIndex(2, allowedIndustries, m.workflowIndustryWeights?.[workflow]);
+    const industryIdx = selectIndex(2, banks[2], m.workflowIndustryWeights?.[workflow]);
 
     spinWheelTo(0, actionIdx, 3000);
     spinWheelTo(1, workflowIdx, 3600);
@@ -579,15 +524,14 @@ function SlotMachine({ onResult, trustStateKey }) {
 
   useEffect(() => {
     if (complete && !anySpinning && onResult) {
-      onResult(buildGeneratorIdea(m, landed[0], landed[1], landed[2], pendingSeedRef.current));
-      pendingSeedRef.current = null;
+      onResult(buildGeneratorIdea(m, landed[0], landed[1], landed[2]));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [complete, anySpinning]);
 
   const prefix = m.prefix;
   const conn = m.connector;
-  const liveVerb = landed[0] ? displayReelValue(m, 0, landed[0]).toLowerCase() : '';
+  const liveVerb = landed[0] ? landed[0].toLowerCase() : '';
 
   return (
     <div className="sm-root">
@@ -612,7 +556,7 @@ function SlotMachine({ onResult, trustStateKey }) {
                   <div className="sm-window" onClick={()=>!anySpinning&&spinWheel(w,3200)}>
                     <div className={`sm-strip${spinning[w]?' is-spinning':''}`} ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)}>
                       {repeated.map((word,i)=>(
-                        <div className="sm-item" key={i} style={{height:ITEM_H}}>{displayReelValue(m, w, word)}</div>
+                        <div className="sm-item" key={i} style={{height:ITEM_H}}>{word}</div>
                       ))}
                     </div>
                   </div>
@@ -637,9 +581,9 @@ function SlotMachine({ onResult, trustStateKey }) {
           <span style={{fontStyle:'italic',color:'var(--muted)'}}>{prefix} </span>
           {landed[0] ? <span className="sm-slot">{liveVerb}</span> : <span className="sm-slot-empty"/>}
           {' '}
-          {landed[1] ? <span className="sm-slot">{displayReelValue(m, 1, landed[1])}</span> : <span className="sm-slot-empty"/>}
+          {landed[1] ? <span className="sm-slot">{landed[1]}</span> : <span className="sm-slot-empty"/>}
           {' '}<span style={{fontStyle:'italic',color:'var(--muted)'}}>{conn}</span>{' '}
-          {landed[2] ? <span className="sm-slot">{displayReelValue(m, 2, landed[2])}</span> : <span className="sm-slot-empty"/>}
+          {landed[2] ? <span className="sm-slot">{landed[2]}</span> : <span className="sm-slot-empty"/>}
           {mode === 'b2b' ? <span style={{fontStyle:'italic',color:'var(--muted)'}}> industry</span> : null}
           <span style={{color:'var(--magenta)'}}>.</span>
         </p>
@@ -660,13 +604,18 @@ export default function IdeaWheel() {
   const [hasAccount, setHasAccount]   = useState(false);  // ever signed up
 
   // validate state
-  const [validatingTier, setValidatingTier] = useState("");
-  const [lastValidationTier, setLastValidationTier] = useState("precheck");
+  const [validating, setValidating] = useState(false);
   const [scanPct, setScanPct]       = useState(0);
   const scanTimerRef = useRef(null);
   const [comp, setComp]             = useState(null);
   const [validateErr, setValidateErr] = useState("");
   const [sessionId, setSessionId] = useState("");
+  // deep market research (paid 1-credit add-on)
+  const [deepResearch, setDeepResearch] = useState(null);
+  const [deepLoading, setDeepLoading]   = useState(false);
+  const [deepErr, setDeepErr]           = useState("");
+  const [deepPct, setDeepPct]           = useState(0);
+  const deepTimerRef = useRef(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiBurstId, setConfettiBurstId] = useState(0);
 
@@ -677,8 +626,10 @@ export default function IdeaWheel() {
   const [infra, setInfra]       = useState(null);
   const [proto, setProto]       = useState(null);
   const [bpErr, setBpErr]       = useState("");
-  const [bpChargeToken, setBpChargeToken] = useState("");
+  const [bpChargeToken, setBpChargeToken] = useState("");  // server charge token, reused across resume so the credit is taken once
   const [protoOpen, setProtoOpen] = useState(false);
+  const [pendingGenerate, setPendingGenerate] = useState(false);  // a profile "Create blueprint" deep-link is loaded and should auto-generate
+  const loadedIdeaRef = useRef(false);
 
   // pricing
   const [showPricing, setShowPricing]     = useState(false);
@@ -725,7 +676,61 @@ export default function IdeaWheel() {
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => () => clearInterval(scanTimerRef.current), []);
+  useEffect(() => () => { clearInterval(scanTimerRef.current); clearInterval(deepTimerRef.current); }, []);
+
+  // Deep link from the profile: ?idea=<id> opens a saved idea here. With &view=1
+  // we load its existing blueprint; otherwise we jump to the blueprint screen and
+  // generate one (charging 2 credits via the normal flow).
+  useEffect(() => {
+    if (!authChecked || !authUser || loadedIdeaRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const savedId = params.get('idea');
+    if (!savedId) return;
+    loadedIdeaRef.current = true;
+    const viewOnly = params.get('view') === '1';
+    (async () => {
+      try {
+        const r = await fetch(`/api/ideas/${savedId}`);
+        if (!r.ok) return;
+        const { idea: saved } = await r.json();
+        if (!saved) return;
+        setIdea({
+          action: saved.action, workflow: saved.workflow, industry: saved.industry,
+          connector: saved.connector, label: saved.mode_name, modeName: saved.mode_name,
+          title: saved.title, tagline: saved.tagline, blurb: saved.summary || saved.tagline,
+        });
+        if (saved.comp) setComp(saved.comp);
+        if (saved.session_id) setSessionId(saved.session_id);
+        if (saved.research) setDeepResearch(saved.research);
+
+        const bp = saved.blueprint;
+        if (viewOnly && saved.blueprint_status === 'complete' && bp) {
+          setDesign(bp.design || null);
+          setGtm(bp.gtm || null);
+          setInfra(bp.infra || null);
+          setProto(bp.prototypeHtml || null);
+          setBpStage('done');
+        } else {
+          setPendingGenerate(true);   // generate once idea + comp are in state
+        }
+        goTo('blueprint');
+        window.history.replaceState({}, '', window.location.pathname);
+      } catch {}
+    })();
+  }, [authChecked, authUser]);
+
+  // For signed-in users the Supabase balance is the source of truth: credits
+  // are added on purchase (Stripe webhook) and subtracted on blueprint spend.
+  const refreshBalance = useCallback(async () => {
+    if (!authUser) return;
+    try {
+      const r = await fetch('/api/credits/balance');
+      const d = await r.json();
+      if (typeof d?.balance === 'number') setCredits(d.balance);
+    } catch {}
+  }, [authUser]);
+
+  useEffect(() => { refreshBalance(); }, [refreshBalance]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -745,10 +750,6 @@ export default function IdeaWheel() {
   const handleSpin = (segment) => {
     setIdea(segment);
     setSessionId("");
-    clearInterval(scanTimerRef.current);
-    setScanPct(0);
-    setValidatingTier("");
-    setLastValidationTier("precheck");
     setComp(null); setValidateErr("");
     setDesign(null); setGtm(null); setInfra(null); setProto(null);
     setBpStage(null); setBpErr("");
@@ -788,27 +789,21 @@ export default function IdeaWheel() {
     return () => clearTimeout(timeout);
   }, [comp?.validationId, comp?.score]);
 
-  /* ── VALIDATION ── */
-  const runValidate = async (tier = "precheck") => {
+  /* ── FREE VALIDATE ── */
+  const runValidate = async () => {
     if (!idea) return;
-    if (tier === "deep" && credits < DEEP_SCAN_CREDITS) { setShowPricing(true); return; }
-
-    setLastValidationTier(tier);
-    setValidatingTier(tier);
-    setValidateErr("");
-    setScanPct(0);
+    setValidating(true); setComp(null); setValidateErr(""); setScanPct(0);
+    setDeepResearch(null); setDeepErr(""); setDeepLoading(false);   // fresh scan clears any prior deep research
+    // The scan time varies, so ease a simulated bar toward ~90% while the
+    // request is in flight; it snaps to 100% the moment results land.
+    const startedAt = Date.now();
+    const estMs = 16000;
     clearInterval(scanTimerRef.current);
-    if (tier === "precheck") setComp(null);
-    if (tier === "deep") {
-      const startedAt = Date.now();
-      const estMs = 16000;
-      scanTimerRef.current = setInterval(() => {
-        const t = (Date.now() - startedAt) / estMs;
-        const target = Math.round(90 * (1 - Math.exp(-2.4 * t)));
-        setScanPct(p => Math.min(90, Math.max(p, target)));
-      }, 180);
-    }
-
+    scanTimerRef.current = setInterval(() => {
+      const t = (Date.now() - startedAt) / estMs;
+      const target = Math.round(90 * (1 - Math.exp(-2.4 * t)));
+      setScanPct(p => Math.min(90, Math.max(p, target)));
+    }, 180);
     try {
       const res = await fetch("/api/pipeline/validate", {
         method:"POST",
@@ -821,52 +816,90 @@ export default function IdeaWheel() {
           freeformIdea: ideaSummary(idea),
           modeName: idea.label,
           sessionId,
-          tier,
         }),
       });
       const data = await res.json();
-      if (Number.isFinite(data.balance)) setCredits(data.balance);
       if (data.error) throw new Error(data.error);
       if (data.sessionId) setSessionId(data.sessionId);
-      if (tier === 'deep') {
-        clearInterval(scanTimerRef.current);
-        setScanPct(100);
-        await new Promise(r => setTimeout(r, 350));
-      }
+      clearInterval(scanTimerRef.current);
+      setScanPct(100);
+      await new Promise(r => setTimeout(r, 350));  // let the bar finish to 100%
       setComp(data.comp);
-      void trackOutcome(tier === 'deep' ? 'market_scan_completed' : 'precheck_completed', {
+      void trackOutcome('market_scan_completed', {
         validationId: data.comp?.validationId,
         verdictType: data.comp?.verdictType,
-        overallScore: data.comp?.eval?.scores?.overall || data.comp?.score || null,
-        cached: Boolean(data.cached),
+        overallScore: data.comp?.eval?.scores?.overall || null,
       }, data.sessionId || sessionId);
     } catch(e) {
-      if (tier === 'deep' && e.message.includes('Not enough credits')) setShowPricing(true);
-      setValidateErr(e.message.includes("AI_CREDITS") || e.message.includes("temporarily") ? "Our AI is taking a short break. Please try again in a minute." : `${tier === 'deep' ? 'Deep market scan' : 'Free pre-check'} failed. ${e.message}`);
+      setValidateErr(e.message.includes("AI_CREDITS") || e.message.includes("temporarily") ? "Our AI is taking a short break. Please try again in a minute." : "Market check failed. " + e.message);
     } finally {
       clearInterval(scanTimerRef.current);
-      setValidatingTier("");
+      setValidating(false);
+    }
+  };
+
+  /* ── PAID DEEP MARKET RESEARCH (1 credit) ── */
+  // Charged server-side only on success, so a failed run costs nothing.
+  const runDeepResearch = async () => {
+    if (!comp || deepLoading) return;
+    setDeepErr(""); setDeepLoading(true); setDeepPct(0);
+    const startedAt = Date.now();
+    const estMs = 20000;
+    clearInterval(deepTimerRef.current);
+    deepTimerRef.current = setInterval(() => {
+      const t = (Date.now() - startedAt) / estMs;
+      setDeepPct(p => Math.min(92, Math.max(p, Math.round(92 * (1 - Math.exp(-2.2 * t))))));
+    }, 180);
+    try {
+      const res = await fetch('/api/pipeline/deep-research', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: idea.action, workflow: idea.workflow, industry: idea.industry,
+          connector: idea.connector, modeName: idea.label, freeformIdea: ideaSummary(idea),
+          comp, sessionId,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401 || res.status === 402) {
+        if (typeof data.balance === 'number') setCredits(data.balance);
+        setShowPricing(true);
+        return;
+      }
+      if (!res.ok || data.error) throw new Error(data.error || 'Extended research failed.');
+      if (data.sessionId) setSessionId(data.sessionId);
+      if (typeof data.balance === 'number') setCredits(data.balance);
+      clearInterval(deepTimerRef.current);
+      setDeepPct(100);
+      await new Promise(r => setTimeout(r, 300));
+      setDeepResearch(data.research);
+    } catch(e) {
+      setDeepErr(e.message.includes("AI_CREDITS") || e.message.includes("temporarily") ? "Our AI is taking a short break. Please try again in a minute." : "Extended research failed. " + e.message);
+    } finally {
+      clearInterval(deepTimerRef.current);
+      setDeepLoading(false);
     }
   };
 
   /* ── PAID BLUEPRINT ── */
-  const runBlueprint = async () => {
-    if (!comp || comp?.validationTier !== 'deep') {
-      setValidateErr("Run the deep market scan before generating a blueprint.");
-      goTo("wheel");
-      return;
+  // The build route charges server-side on the first (designer) stage and hands
+  // back a chargeToken; every later stage reuses that token, so the credit is
+  // taken exactly once. `resume` picks up from the first incomplete stage with
+  // the same token, so a mid-pipeline failure never costs a second credit.
+  const runBlueprint = async ({ resume = false } = {}) => {
+    if (!comp) return;
+    const cost = BLUEPRINT_COST;
+
+    if (!resume) {
+      if (credits < cost) { setShowPricing(true); return; }   // fast client gate; the server is the source of truth
+      void trackOutcome('blueprint_started', {
+        validationId: comp.validationId,
+        verdictType: comp.verdictType,
+        overallScore: comp?.eval?.scores?.overall || null,
+      }, sessionId);
+      setDesign(null); setGtm(null); setInfra(null); setProto(null); setProtoOpen(false);
+      setBpChargeToken("");
     }
-    const cost = creditCost(comp?.score ?? 0);
-    if (credits < cost) { setShowPricing(true); return; }
-    void trackOutcome('blueprint_started', {
-      validationId: comp.validationId,
-      verdictType: comp.verdictType,
-      overallScore: comp?.eval?.scores?.overall || null,
-    }, sessionId);
-    setBpStage(1); setBpErr("");
-    setDesign(null); setGtm(null); setInfra(null); setProto(null);
-    setBpChargeToken("");
-    setProtoOpen(false);
+    setBpErr("");
 
     const base = {
       action: idea.action,
@@ -885,31 +918,46 @@ export default function IdeaWheel() {
     }).then(r => r.json());
 
     try {
+      let d = resume ? design : null;
+      let g = resume ? gtm   : null;
+      let inf = resume ? infra : null;
+      let pr = resume ? proto : null;
       let chargeToken = bpChargeToken || "";
 
-      // Stage 1 – designer
-      const d = await api({ ...base, stage:"designer" });
-      if (d.error) throw new Error(d.error);
-      chargeToken = d.chargeToken || "";
-      setBpChargeToken(chargeToken);
-      if (Number.isFinite(d.balance)) setCredits(d.balance);
-      setDesign(d.result); setBpStage(2);
-
+      // Stage 1 – designer (server charges the credit here and returns the token)
+      if (!d) {
+        setBpStage(1);
+        const r = await api({ ...base, stage:"designer" });
+        if (r.error) { if (/not enough credits/i.test(r.error)) setShowPricing(true); throw new Error(r.error); }
+        chargeToken = r.chargeToken || "";
+        setBpChargeToken(chargeToken);
+        if (typeof r.balance === 'number') setCredits(r.balance);
+        d = r.result; setDesign(d);
+      }
       // Stage 2 – launch
-      const g = await api({ ...base, stage:"launch", design: d.result, chargeToken });
-      if (g.error) throw new Error(g.error);
-      setGtm(g.result); setBpStage(3);
-
+      setBpStage(2);
+      if (!g) {
+        const r = await api({ ...base, stage:"launch", design: d, chargeToken });
+        if (r.error) throw new Error(r.error);
+        g = r.result; setGtm(g);
+      }
       // Stage 3 – infrastructure
-      const inf = await api({ ...base, stage:"infrastructure", design: d.result, gtm: g.result, chargeToken });
-      if (inf.error) throw new Error(inf.error);
-      setInfra(inf.result); setBpStage(4);
-
+      setBpStage(3);
+      if (!inf) {
+        const r = await api({ ...base, stage:"infrastructure", design: d, gtm: g, chargeToken });
+        if (r.error) throw new Error(r.error);
+        inf = r.result; setInfra(inf);
+      }
       // Stage 4 – prototype
-      const pr = await api({ ...base, stage:"builder", design: d.result, gtm: g.result, infra: inf.result, chargeToken });
-      if (pr.error) throw new Error(pr.error);
-      setProto(pr.result); setBpStage("done");
+      setBpStage(4);
+      if (!pr) {
+        const r = await api({ ...base, stage:"builder", design: d, gtm: g, infra: inf, chargeToken });
+        if (r.error) throw new Error(r.error);
+        pr = r.result; setProto(pr);
+      }
+      setBpStage("done");
     } catch(e) {
+      // No refund and no reset — the user can resume from here for free (the token is preserved).
       setBpErr(e.message);
     }
   };
@@ -930,11 +978,17 @@ export default function IdeaWheel() {
     }
   };
 
-  const validating = Boolean(validatingTier);
-  const isDeepScan = comp?.validationTier === 'deep';
   const bpRunning = bpStage !== null && bpStage !== "done";
   const bpDone    = bpStage === "done";
-  const vt        = comp?.verdictType || "build";
+
+  // Fire the deferred blueprint generation from a profile deep-link, once the
+  // idea + comp it loaded are in state (so runBlueprint sees them).
+  useEffect(() => {
+    if (pendingGenerate && screen === 'blueprint' && idea && comp && !bpRunning && !bpDone) {
+      setPendingGenerate(false);
+      runBlueprint();
+    }
+  }, [pendingGenerate, screen, idea, comp, bpRunning, bpDone]);
 
   /* ── SCREENS ── */
   return (
@@ -966,7 +1020,7 @@ export default function IdeaWheel() {
               <span className="su-grad-text" style={{ display:"block", paddingRight:"6px", paddingBottom:"16px" }}>worth building.</span>
             </h1>
             <p className="su-landing-sub">
-              Generate sharper business ideas in seconds, get an instant signal check, then unlock the full market scan and blueprint only when one looks worth pursuing.
+              Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.
             </p>
 
             <div className="su-landing-cta">
@@ -995,8 +1049,8 @@ export default function IdeaWheel() {
                 <div className="su-hiw-step">
                   <div className="su-hiw-num">2</div>
                   <div>
-                    <div className="su-hiw-t">Start with an instant signal check, then go deeper only when it earns it</div>
-                    <div className="su-hiw-d">Every idea gets a fast first-pass read. Promising ones can unlock a deeper market scan with competitor analysis, market size, and wedge signals before you commit.</div>
+                    <div className="su-hiw-t">Know if it's worth building before you commit</div>
+                    <div className="su-hiw-d">Every idea gets a market check with competitor analysis, market size, and demand signals, so you get a clear build, caution, or avoid verdict before you sink time into it.</div>
                   </div>
                 </div>
                 <div className="su-hiw-connector" aria-hidden />
@@ -1004,7 +1058,7 @@ export default function IdeaWheel() {
                   <div className="su-hiw-num">3</div>
                   <div>
                     <div className="su-hiw-t">Turn the winner into a build-ready plan</div>
-                    <div className="su-hiw-d">Deep scans cost 1 credit, and blueprints cost 1 to 3 more based on signal strength. Each blueprint unlocks four AI specialists across product design, launch strategy, infrastructure, and prototype generation.</div>
+                    <div className="su-hiw-d">Extended market research costs 1 credit and the full blueprint costs 2 — and every new account starts with 3 free credits. Each blueprint unlocks four AI specialists across product design, launch strategy, infrastructure, and prototype generation.</div>
                   </div>
                 </div>
               </div>
@@ -1044,103 +1098,88 @@ export default function IdeaWheel() {
       {/* ── WHEEL (slot machine reels) ── */}
       {screen === "wheel" && (
         <section className="su-screen su-wheel-screen">
-          <SlotMachine onResult={handleSpin} trustStateKey={`${TRUST_SPIN_STATE_KEY}:${authUser?.id || 'anon'}`}/>
+          <div className="su-eyebrow su-step-eyebrow">Step 1 · Generate idea</div>
+          <SlotMachine onResult={handleSpin}/>
           {/* Validate button + inline results */}
           {idea && (
             <div className="sm-validate-section">
+              <div className="su-eyebrow su-step-eyebrow su-step-eyebrow--mt">Step 2 · Free basic market research</div>
               {showConfetti && <ValidationConfetti key={confettiBurstId} />}
-              {idea.seeded && (
-                <div className="su-card" style={{marginTop:20, marginBottom:20}}>
-                  <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap', marginBottom:10}}>
-                    <span className="su-v-precheck-tag">Live opportunity signal</span>
-                    {idea.source && <span className="su-v-precheck-tag">{String(idea.source).toUpperCase()}</span>}
-                  </div>
-                  <div className="su-v-minihead" style={{marginBottom:6}}>Reel match</div>
-                  <div style={{color:'var(--ink)', fontWeight:700, marginBottom:10}}>{idea.reelDescription || reelDisplayLine(idea)}</div>
-                  <div style={{display:'flex', gap:8, flexWrap:'wrap', marginBottom:10}}>
-                    <span className="su-v-precheck-tag">Reel 1 · {idea.displayAction || idea.action}</span>
-                    <span className="su-v-precheck-tag">Reel 2 · {idea.displayWorkflow || idea.workflow}</span>
-                    <span className="su-v-precheck-tag">Reel 3 · {idea.displayIndustry || idea.industry}</span>
-                  </div>
-                  {idea.seedTitle && (
-                    <>
-                      <div className="su-v-minihead" style={{marginBottom:6}}>Tracker phrasing</div>
-                      <div style={{color:'var(--ink)', fontWeight:600, marginBottom:8}}>{idea.seedTitle}</div>
-                    </>
-                  )}
-                  <div style={{color:'var(--muted)'}}>{idea.blurb}</div>
-                </div>
-              )}
               {!comp && !validating && !validateErr && (
                 <div className="sm-result-cta">
-                  <button className="su-btn su-btn-primary su-btn-lg" onClick={() => runValidate('precheck')}>
-                    Run signal check
+                  <button className="su-btn su-btn-primary su-btn-lg" onClick={runValidate}>
+                    Run free basic market research
                   </button>
-                  <div className="su-v-hint" style={{marginTop:12}}>
-                    Start with a fast signal read, then unlock the full market scan only if this idea earns it.
-                  </div>
                 </div>
               )}
 
               {validating && (
                 <div className="su-scan su-glass" style={{marginTop:24}}>
-                  {validatingTier === 'deep' ? (
-                    <>
-                      <div className="su-scan-head">
-                        <span className="su-scan-text">Scanning demand, market size, and competition…</span>
-                        <span className="su-scan-pct">{scanPct}%</span>
-                      </div>
-                      <div className="su-scan-bar su-scan-bar--progress">
-                        <div className="su-scan-fill su-scan-fill--progress" style={{width:`${scanPct}%`}}/>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="su-scan-bar"><div className="su-scan-fill"/></div>
-                      <div className="su-scan-text">Running an instant signal check on wedge, demand, and workflow fit…</div>
-                    </>
-                  )}
+                  <div className="su-scan-head">
+                    <span className="su-scan-text">Scanning demand, market size, and competition…</span>
+                    <span className="su-scan-pct">{scanPct}%</span>
+                  </div>
+                  <div className="su-scan-bar su-scan-bar--progress">
+                    <div className="su-scan-fill su-scan-fill--progress" style={{width:`${scanPct}%`}}/>
+                  </div>
                 </div>
               )}
 
               {validateErr && (
                 <p className="su-err" style={{marginTop:16}}>
-                  {validateErr} <button className="su-retry" onClick={() => runValidate(lastValidationTier)}>Retry</button>
+                  {validateErr} <button className="su-retry" onClick={runValidate}>Retry</button>
                 </p>
               )}
 
-              {comp && !validating && (
+              {comp && !validating && (() => {
+                const score = comp.score ?? 0;
+                const potential = score >= 61;                 // gates gap, key players, blueprint-forward CTA
+                const advice = score >= 80
+                  ? { label: "Get that Blueprint!", tone: "good" }
+                  : score >= 61
+                    ? { label: "This idea has potential", tone: "warn" }
+                    : { label: "Don't waste your time", tone: "bad" };
+                const premise = cleanValidationText(comp.premiseNote || "");
+                const verdictLines = splitValidationBullets(comp.verdictReasoning || comp.verdict, 3);
+                // Funnel: 61-79 → deep research first (1cr); 80+ → blueprint (2cr) with research optional.
+                const deepPrimary = potential && !deepResearch && score < 80;
+                const goBlueprint = () => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); };
+                return (
                 <div className="su-validate-grid" style={{marginTop:24}}>
+                  {/* 0 — Plain-English lead: the whole market read in one digestible bite */}
+                  {comp.plainSummary && (
+                    <div className="su-card su-v-plainlead">
+                      <PlainEnglish summary={comp.plainSummary} />
+                    </div>
+                  )}
+
+                  {/* 1 — Quick take */}
                   <div className="su-card su-v-score">
-                    <ScoreRing value={comp.score ?? 65} label={isDeepScan ? "Demand" : "Pre-check"}/>
+                    <ScoreRing value={score} label="Score"/>
                     <div className="su-v-score-side">
-                      <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}>
-                        <span className={`su-chip su-chip--${vt==="avoid"?"bad":vt==="warning"?"warn":"good"}`}>
-                          {vt==="avoid"?"High":vt==="warning"?"Medium":"Low"} competition
-                        </span>
-                        {comp.cached && <span className="su-v-precheck-tag">Cached</span>}
-                      </div>
+                      <span className={`su-chip su-chip--${advice.tone}`}>{advice.label}</span>
                       <div className="su-v-minihead">Quick take</div>
                       <ul className="su-v-bullets su-v-bullets--compact">
-                        {splitValidationBullets(comp.verdict || comp.verdictReasoning, 2).map((item, i) => (
+                        {splitValidationBullets(comp.verdict || comp.verdictReasoning, 3).map((item, i) => (
                           <li key={i}>{item}</li>
                         ))}
                       </ul>
                     </div>
                   </div>
 
+                  {/* 2 — Market */}
                   <div className="su-card su-v-market">
                     <div className="su-v-market-cell">
-                      <div className="su-v-l">{isDeepScan ? 'Market read' : 'First-pass read'}</div>
+                      <div className="su-v-l">Market</div>
                       <ul className="su-v-bullets">
-                        {splitValidationBullets(comp.marketSize || comp.retrievalFit || comp.verdictReasoning, 2).map((item, i) => (
+                        {splitValidationBullets(comp.landscape || comp.marketSize, 3).map((item, i) => (
                           <li key={i}>{item}</li>
                         ))}
                       </ul>
                     </div>
-                    {comp.gap && (
+                    {potential && cleanValidationText(comp.gap) && (
                       <div className="su-v-gap">
-                        <div className="su-v-gap-label">{isDeepScan ? 'The gap' : 'Best wedge to test'}</div>
+                        <div className="su-v-gap-label">The gap</div>
                         <ul className="su-v-bullets su-v-bullets--gap">
                           {splitValidationBullets(comp.gap, 2).map((item, i) => (
                             <li key={i}>{item}</li>
@@ -1150,97 +1189,110 @@ export default function IdeaWheel() {
                     )}
                   </div>
 
-                  {isDeepScan && (comp.players||[]).length > 0 && (
+                  {/* 3 — Key players (only when the idea has potential), sorted largest → smallest */}
+                  {potential && (comp.players||[]).length > 0 && (
                     <div className="su-card su-v-signals">
                       <div className="su-v-signals-head">Key players</div>
                       {(comp.players||[]).slice(0,3).map((pl,i) => (
                         <div className="su-v-signal" key={i}>
                           <div className="su-v-signal-top">
-                            <span>{pl.name}</span><b>{pl.pricing||"—"}</b>
+                            <span>{pl.name}</span>
                           </div>
                           <ul className="su-v-bullets su-v-bullets--player">
-                            <li>{briefPlayerWeakness(pl.weakness)}</li>
+                            <li>{briefPlayerWeakness(pl.coverage || pl.weakness)}</li>
                           </ul>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {!isDeepScan && (
-                    <div className={`su-v-cta ${vt === "avoid" ? "su-v-cta--avoid" : ""}`}>
-                      <div className="su-v-precheck-tag">Signal check</div>
-                      <div className="su-v-cta-text">
-                        {vt === "avoid" ? "Weak first-pass signal. Don’t trust it enough to build yet." : "This cleared the initial signal check. Unlock the full market scan for competitor and wedge detail."}
+                  {/* Extended market research findings (paid add-on, once run) */}
+                  {deepResearch && (
+                    <div className="su-card su-v-deep">
+                      <div className="su-v-signals-head">
+                        Extended market research
+                        {deepResearch.demandLevel && <span className={`su-deep-tag su-deep-tag--${/strong/i.test(deepResearch.demandLevel)?'good':/weak/i.test(deepResearch.demandLevel)?'bad':'warn'}`}>{deepResearch.demandLevel} demand</span>}
                       </div>
-                      {comp.pivotHint && (
-                        <ul className="su-v-bullets su-v-bullets--avoid">
-                          {splitValidationBullets(comp.pivotHint, 3).map((item, i) => (
-                            <li key={i}>{item}</li>
-                          ))}
-                        </ul>
+                      {(deepResearch.plainSummary || (deepResearch.takeaways||[]).length > 0) && (
+                        <PlainEnglish summary={deepResearch.plainSummary} takeaways={deepResearch.takeaways} compact />
                       )}
-                      <div className="su-v-cta-row">
-                        <button className="su-btn su-btn-primary su-btn-lg" onClick={() => runValidate('deep')}>
-                          Unlock deep market scan
-                          <span className="su-credit-badge">
-                            {DEEP_SCAN_CREDITS} credit{DEEP_SCAN_CREDITS > 1 ? 's' : ''}
-                          </span>
-                        </button>
-                        <button className="su-creditpill" onClick={() => setShowPricing(true)}>
-                          <span className="su-creditnum">{credits}</span>
-                          <span className="su-creditlbl">credits</span>
-                        </button>
-                        <button className="su-btn su-btn-ghost" onClick={() => { setComp(null); setIdea(null); }}>
-                          Spin again
-                        </button>
-                      </div>
-                      <div className="su-v-hint">
-                        Deep scan adds live competitor checks, richer market sizing, and clearer wedge analysis.
-                      </div>
+                      {(deepResearch.demandSignals||[]).length > 0 && (
+                        <ul className="su-v-bullets">{deepResearch.demandSignals.slice(0,5).map((s,i)=><li key={i}>{cleanValidationText(s)}</li>)}</ul>
+                      )}
+                      {(deepResearch.voiceOfCustomer||[]).length > 0 && (
+                        <div className="su-v-deep-quotes">
+                          {deepResearch.voiceOfCustomer.slice(0,3).map((q,i)=><blockquote key={i} className="su-v-deep-quote">“{cleanValidationText(q)}”</blockquote>)}
+                        </div>
+                      )}
+                      {(deepResearch.communities||[]).length > 0 && (
+                        <div className="su-v-deep-row"><span className="su-v-l">Where they gather</span> <span className="su-v-deep-communities">{deepResearch.communities.slice(0,5).map(c=>cleanValidationText(c)).join(' · ')}</span></div>
+                      )}
+                      {deepResearch.willingnessToPay && <div className="su-v-deep-row"><span className="su-v-l">Willingness to pay</span> <span>{cleanValidationText(deepResearch.willingnessToPay)}</span></div>}
+                      {deepResearch.wedge && <div className="su-v-deep-row"><span className="su-v-l">Sharpest wedge</span> <span>{cleanValidationText(deepResearch.wedge)}</span></div>}
                     </div>
                   )}
 
-                  {isDeepScan && (() => {
-                    const score = comp.score ?? 0;
-                    const cl = creditLabel(score);
-                    const cost = cl.cost;
-                    const avoid = vt === "avoid";
-                    return (
-                      <div className={`su-v-cta${avoid ? " su-v-cta--avoid" : ""}`}>
-                        {score >= 85 && !avoid && (
-                          <div className="su-v-exceptional">
-                            This idea scored in the top tier — it has genuine potential.
-                          </div>
-                        )}
-                        <div className="su-v-cta-text">
-                          {avoid
-                            ? "Crowded market — but the right wedge can still win. Get the blueprint to find your angle."
-                            : score >= 85 ? "Build this before someone else does." : "Signal is strong. Ready to turn this into a real plan?"}
+                  {/* 4 — Final verdict + funnel CTA */}
+                  <div className={`su-v-cta${potential ? "" : " su-v-cta--avoid"}`}>
+                    <div className="su-v-l su-v-verdict-label">Final verdict</div>
+                    {premise && <p className="su-v-premise">{premise}</p>}
+                    <div className="su-v-cta-text">
+                      {(deepResearch?.verdict && cleanValidationText(deepResearch.verdict)) || verdictLines[0] || (potential ? "There's a real opening here." : "The signal isn't strong enough yet.")}
+                    </div>
+                    {!deepResearch && verdictLines.length > 1 && (
+                      <ul className="su-v-bullets su-v-bullets--compact su-v-verdict-rationale">
+                        {verdictLines.slice(1).map((item, i) => (<li key={i}>{item}</li>))}
+                      </ul>
+                    )}
+
+                    {deepLoading && (
+                      <div className="su-scan su-glass su-v-deep-progress">
+                        <div className="su-scan-head">
+                          <span className="su-scan-text">Digging through Reddit, forums &amp; communities…</span>
+                          <span className="su-scan-pct">{deepPct}%</span>
                         </div>
+                        <div className="su-scan-bar su-scan-bar--progress"><div className="su-scan-fill su-scan-fill--progress" style={{width:`${deepPct}%`}}/></div>
+                      </div>
+                    )}
+                    {deepErr && <p className="su-err">{deepErr} <button className="su-retry" onClick={runDeepResearch}>Retry</button></p>}
+
+                    {!deepLoading && (potential ? (
+                      <>
                         <div className="su-v-cta-row">
-                          <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); }}>
-                            {avoid ? "Create the blueprint" : "Generate the blueprint"}
-                            <span className="su-credit-badge">
-                              {cost} credit{cost > 1 ? 's' : ''}
-                            </span>
-                          </button>
+                          {deepPrimary ? (
+                            <button className="su-btn su-btn-primary su-btn-lg" onClick={runDeepResearch}>
+                              Run extended market research
+                              <span className="su-credit-badge">{DEEP_RESEARCH_COST} credit</span>
+                            </button>
+                          ) : (
+                            <button className="su-btn su-btn-primary su-btn-lg" onClick={goBlueprint}>
+                              Build the blueprint
+                              <span className="su-credit-badge">{BLUEPRINT_COST} credits</span>
+                            </button>
+                          )}
                           <button className="su-creditpill" onClick={() => setShowPricing(true)}>
                             <span className="su-creditnum">{credits}</span>
                             <span className="su-creditlbl">credits</span>
                           </button>
                         </div>
-                        <div className="su-v-hint">
-                          <span style={{color: cl.color, fontWeight:700}}>{cl.tier}</span>
-                          {' · '}blueprint costs {cost} credit{cost > 1 ? 's' : ''}{' · '}you have {credits} credits
-                        </div>
-                        {avoid && (
-                          <button className="su-btn su-btn-ghost su-v-cta-secondary" onClick={() => { setComp(null); setIdea(null); }}>Spin again</button>
+                        {deepPrimary && (
+                          <button className="su-linkbtn" onClick={goBlueprint}>Skip ahead — build the blueprint now · {BLUEPRINT_COST} credits</button>
                         )}
+                        {!deepResearch && !deepPrimary && (
+                          <button className="su-linkbtn" onClick={runDeepResearch}>First, dig into real demand · {DEEP_RESEARCH_COST} credit</button>
+                        )}
+                        <div className="su-v-hint">Research {DEEP_RESEARCH_COST} credit · blueprint {BLUEPRINT_COST} credits · you have {credits}</div>
+                      </>
+                    ) : (
+                      <div className="su-v-cta-row">
+                        <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { setComp(null); setIdea(null); }}>Spin again</button>
+                        <button className="su-linkbtn" onClick={goBlueprint}>Build it anyway · {BLUEPRINT_COST} credits</button>
                       </div>
-                    );
-                  })()}
+                    ))}
+                  </div>
                 </div>
-              )}
+                );
+              })()}
             </div>
           )}
         </section>
@@ -1250,39 +1302,58 @@ export default function IdeaWheel() {
       {screen === "blueprint" && idea && (
         <section className="su-screen su-blueprint">
           <div className="su-screen-head">
-            <div className="su-eyebrow">Step three · The plan</div>
+            <div className="su-eyebrow">Step 4 · The plan</div>
             <h2 className="su-display su-screen-title">
               The <span className="su-grad-text">{idea.title}</span> blueprint
             </h2>
             <p className="su-screen-desc">{idea.blurb}</p>
           </div>
 
-          {bpRunning && !design && (
-            <div className="su-scan su-glass">
-              <div className="su-scan-bar"><div className="su-scan-fill"/></div>
-              <div className="su-scan-text">Drafting product, launch plan, infrastructure, and prototype…</div>
-            </div>
-          )}
-
-          {bpErr && <p className="su-err">{bpErr} <button className="su-retry" onClick={runBlueprint}>Retry</button></p>}
-
-          {/* Pipeline progress */}
-          {(bpRunning || bpDone) && (
-            <div className="su-pip-progress">
-              {[{n:1,label:"Product"},{n:2,label:"Launch"},{n:3,label:"Infra"},{n:4,label:"Prototype"}].map(({n,label}) => {
-                const done = bpDone || (typeof bpStage === "number" && bpStage > n);
-                const running = typeof bpStage === "number" && bpStage === n;
-                return (
-                  <div key={n} className={`su-pip-step ${done?"done":""} ${running?"running":""}`}>
-                    <div className="su-pip-dot">{done?"✓":running?<span className="su-spin-sm"/>:n}</div>
-                    <span className="su-pip-label">{label}</span>
-                  </div>
-                );
-              })}
-              <div className="su-pip-track">
-                <div className="su-pip-fill" style={{ width: bpDone?"100%":typeof bpStage==="number"?`${((bpStage-1)/4)*100}%`:"0%" }}/>
+          {/* Pipeline progress — a visible bar + per-stage status so the user
+              always knows what's happening, and can resume if a stage fails. */}
+          {(bpRunning || bpDone || bpErr) && (() => {
+            const stages = [
+              { label:"Product",   doing:"Designing the product and MVP scope" },
+              { label:"Launch",    doing:"Writing the launch and first-customer plan" },
+              { label:"Infra",     doing:"Mapping the infrastructure and services" },
+              { label:"Prototype", doing:"Building the clickable prototype" },
+            ];
+            const completed = [design, gtm, infra, proto].filter(Boolean).length;
+            const paused = !!bpErr && !bpDone;
+            const activeIdx = Math.min(completed, 3);
+            const pct = bpDone ? 100 : Math.min(96, Math.round(((completed + (paused ? 0 : 0.5)) / 4) * 100));
+            return (
+              <div className="su-scan su-glass su-bp-progress">
+                <div className="su-scan-head">
+                  <span className="su-scan-text">
+                    {bpDone ? "Blueprint complete" : paused ? "Paused — resume to finish" : `Step ${activeIdx + 1} of 4 · ${stages[activeIdx].doing}…`}
+                  </span>
+                  <span className="su-scan-pct">{pct}%</span>
+                </div>
+                <div className="su-scan-bar su-scan-bar--progress">
+                  <div className="su-scan-fill su-scan-fill--progress" style={{ width:`${pct}%` }}/>
+                </div>
+                <div className="su-pip-progress su-pip-progress--compact">
+                  {stages.map((s, i) => {
+                    const done = bpDone || i < completed;
+                    const running = !bpDone && !paused && i === completed;
+                    const errored = paused && i === completed;
+                    return (
+                      <div key={i} className={`su-pip-step ${done?"done":""} ${running?"running":""} ${errored?"errored":""}`}>
+                        <div className="su-pip-dot">{done?"✓":errored?"!":running?<span className="su-spin-sm"/>:i+1}</div>
+                        <span className="su-pip-label">{s.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            );
+          })()}
+
+          {bpErr && (
+            <p className="su-err">
+              {bpErr} <button className="su-retry" onClick={() => runBlueprint({ resume: true })}>Resume</button>
+            </p>
           )}
 
           {(design || gtm || infra || proto) && (
@@ -1292,6 +1363,9 @@ export default function IdeaWheel() {
               {design && (
                 <div className="su-card su-bp-card su-bp-card--full">
                   <div className="su-bp-head"><span className="su-bp-num">01</span><h3 className="su-bp-title">Niche & Problem</h3></div>
+                  {(design.plainSummary || (design.takeaways||[]).length > 0) && (
+                    <PlainEnglish summary={design.plainSummary} takeaways={design.takeaways} compact />
+                  )}
                   <p className="su-bp-summary" style={{fontSize:14,color:'var(--ink)'}}>{design.niche}</p>
                 </div>
               )}
@@ -1312,6 +1386,9 @@ export default function IdeaWheel() {
               {gtm && (
                 <div className="su-card su-bp-card">
                   <div className="su-bp-head"><span className="su-bp-num">03</span><h3 className="su-bp-title">Target user</h3></div>
+                  {(gtm.plainSummary || (gtm.takeaways||[]).length > 0) && (
+                    <PlainEnglish summary={gtm.plainSummary} takeaways={gtm.takeaways} compact />
+                  )}
                   <p className="su-bp-summary" style={{fontSize:14,color:'var(--ink)',fontWeight:600}}>{gtm.persona}</p>
                   {gtm.whereToFind && <p className="su-bp-summary"><strong style={{fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--muted)'}}>Where to find them: </strong>{gtm.whereToFind}</p>}
                   {gtm.whyNow && <>
@@ -1366,6 +1443,9 @@ export default function IdeaWheel() {
               {infra && (
                 <div className="su-card su-bp-card">
                   <div className="su-bp-head"><span className="su-bp-num">07</span><h3 className="su-bp-title">Infrastructure</h3></div>
+                  {(infra.plainSummary || (infra.takeaways||[]).length > 0) && (
+                    <PlainEnglish summary={infra.plainSummary} takeaways={infra.takeaways} compact />
+                  )}
                   {(infra.services||[]).length>0 && <>
                     <div className="su-bp-list-label">Services</div>
                     <div className="su-bp-chips">{(infra.services||[]).map((s,i)=><span className="su-chip" key={i}>{s.name}</span>)}</div>
@@ -1435,7 +1515,7 @@ export default function IdeaWheel() {
               <span>Get credits</span>
               <button onClick={() => setShowPricing(false)}>✕</button>
             </div>
-            <p className="su-modal-sub">Blueprints typically cost 1 to 3 credits, depending on how strong the opportunity looks.</p>
+            <p className="su-modal-sub">Extended market research costs 1 credit; the full blueprint costs 2. New accounts start with 3 free credits.</p>
             {checkoutErr && <p className="su-err">{checkoutErr}</p>}
             <div className="su-pkgs">
               {CREDIT_PACKAGES.map(pkg => (
@@ -1515,6 +1595,8 @@ const CSS = `
   font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
   color:var(--accent-mid); margin-bottom:14px;
 }
+.su-step-eyebrow { text-align:center; }
+.su-step-eyebrow--mt { margin-top:36px; }
 .su-display { font-family:var(--font-display); font-weight:700; letter-spacing:-.025em; line-height:1.05; }
 .su-screen-title { font-size:clamp(30px,4vw,46px); color:var(--ink); margin:0 0 14px; }
 .su-screen-desc { font-size:16px; color:var(--muted); margin:0; line-height:1.6; }
@@ -1714,6 +1796,29 @@ const CSS = `
 .su-v-gap { padding:14px; background:var(--bg-2); border-radius:var(--r-md); }
 .su-v-gap-label { font-size:10px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--violet); margin-bottom:8px; }
 .su-v-signals { grid-column:1/-1; }
+/* deep market research panel */
+/* Plain-English layer — a digestible lead shown above the detailed content. */
+.su-plain { background:rgba(124,58,237,0.06); border:1px solid rgba(124,58,237,0.16); border-radius:12px; padding:12px 14px; margin:0 0 14px; }
+.su-plain--compact { padding:10px 12px; margin-bottom:12px; }
+.su-plain-label { font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-mid); margin-bottom:6px; }
+.su-plain-text { margin:0; font-size:14px; line-height:1.6; color:var(--ink); }
+.su-plain--compact .su-plain-text { font-size:13px; line-height:1.55; }
+.su-plain-takeaways { margin:8px 0 0; padding-left:18px; display:flex; flex-direction:column; gap:4px; }
+.su-plain-takeaways li { font-size:13px; line-height:1.5; color:var(--ink-2); }
+.su-v-plainlead { grid-column:1/-1; }
+.su-v-plainlead .su-plain { margin:0; background:transparent; border:none; padding:0; }
+.su-v-plainlead .su-plain-text { font-size:15px; }
+.su-v-deep { grid-column:1/-1; border-color:rgba(124,58,237,0.22); }
+.su-deep-tag { margin-left:10px; font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:3px 8px; border-radius:99px; }
+.su-deep-tag--good { background:rgba(21,128,61,0.10); color:var(--good); }
+.su-deep-tag--warn { background:rgba(180,83,9,0.10); color:var(--warn); }
+.su-deep-tag--bad  { background:rgba(185,28,28,0.10); color:var(--bad); }
+.su-v-deep-quotes { display:flex; flex-direction:column; gap:8px; margin:12px 0; }
+.su-v-deep-quote { margin:0; padding:8px 0 8px 14px; border-left:3px solid var(--accent-border); font-style:italic; font-size:13px; color:var(--ink-2); line-height:1.5; }
+.su-v-deep-row { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:baseline; margin-top:10px; font-size:13px; color:var(--ink-2); line-height:1.5; }
+.su-v-deep-row .su-v-l { flex:none; }
+.su-v-deep-communities { color:var(--accent-mid); font-weight:600; }
+.su-v-deep-progress { margin:14px 0 4px; }
 .su-v-signals-head { font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
 .su-v-signal { margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--line); }
 .su-v-signal:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none; }
@@ -1739,17 +1844,22 @@ const CSS = `
 .su-v-cta-row { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
 .su-v-hint { font-size:12px; color:var(--muted); margin-top:12px; }
 .su-v-cta-secondary { margin-top:16px; }
+.su-v-verdict-label { margin-bottom:10px; }
+.su-v-premise { font-size:13.5px; font-weight:600; color:var(--bad); line-height:1.5; margin:0 0 10px; }
+.su-v-cta--avoid .su-v-premise { color:var(--bad); }
+.su-v-verdict-rationale { text-align:left; max-width:520px; margin:0 auto 18px; }
+.su-linkbtn {
+  background:none; border:none; cursor:pointer;
+  font-family:var(--font-body); font-size:13px; font-weight:600;
+  color:var(--muted); text-decoration:underline; text-underline-offset:3px;
+  padding:8px 4px;
+}
+.su-linkbtn:hover { color:var(--ink); }
 .su-v-exceptional {
   background:var(--accent-light);
   border:1px solid var(--accent-border); border-radius:var(--r-md);
   padding:11px 16px; margin-bottom:16px;
   font-size:13.5px; font-weight:500; color:var(--accent); line-height:1.5;
-}
-.su-v-precheck-tag {
-  display:inline-flex; align-items:center; justify-content:center;
-  padding:4px 10px; border-radius:999px; margin-bottom:14px;
-  font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
-  color:var(--accent-mid); background:var(--accent-light); border:1px solid var(--accent-border);
 }
 .su-credit-badge {
   display:inline-flex; align-items:center; padding:3px 8px;
@@ -1776,6 +1886,11 @@ const CSS = `
 }
 .su-pip-track { position:absolute; bottom:0; left:0; right:0; height:2px; background:var(--line); }
 .su-pip-fill { height:100%; background:var(--accent-mid); transition:width .6s var(--ease-out); }
+/* compact pip row used inside the blueprint progress card */
+.su-bp-progress { margin-bottom:28px; }
+.su-pip-progress--compact { background:none; border:none; border-radius:0; padding:14px 0 0; margin:0; margin-top:14px; overflow:visible; }
+.su-pip-step.errored .su-pip-dot { border-color:var(--bad); color:#fff; background:var(--bad); }
+.su-pip-step.errored .su-pip-label { color:var(--bad); }
 .su-pip-step { display:flex; flex-direction:column; align-items:center; gap:8px; }
 .su-pip-dot {
   width:28px; height:28px; border-radius:50%;
