@@ -732,7 +732,6 @@ export default function IdeaWheel() {
     clearInterval(scanTimerRef.current);
     if (tier === "precheck") setComp(null);
     if (tier === "deep") {
-      setCredits(c => c - DEEP_SCAN_CREDITS);
       const startedAt = Date.now();
       const estMs = 16000;
       scanTimerRef.current = setInterval(() => {
@@ -758,13 +757,13 @@ export default function IdeaWheel() {
         }),
       });
       const data = await res.json();
+      if (Number.isFinite(data.balance)) setCredits(data.balance);
       if (data.error) throw new Error(data.error);
       if (data.sessionId) setSessionId(data.sessionId);
       if (tier === 'deep') {
         clearInterval(scanTimerRef.current);
         setScanPct(100);
         await new Promise(r => setTimeout(r, 350));
-        if (data.cached) setCredits(c => c + DEEP_SCAN_CREDITS);
       }
       setComp(data.comp);
       void trackOutcome(tier === 'deep' ? 'market_scan_completed' : 'precheck_completed', {
@@ -774,7 +773,7 @@ export default function IdeaWheel() {
         cached: Boolean(data.cached),
       }, data.sessionId || sessionId);
     } catch(e) {
-      if (tier === "deep") setCredits(c => c + DEEP_SCAN_CREDITS);
+      if (tier === 'deep' && e.message.includes('Not enough credits')) setShowPricing(true);
       setValidateErr(e.message.includes("AI_CREDITS") || e.message.includes("temporarily") ? "Our AI is taking a short break. Please try again in a minute." : `${tier === 'deep' ? 'Deep market scan' : 'Free pre-check'} failed. ${e.message}`);
     } finally {
       clearInterval(scanTimerRef.current);

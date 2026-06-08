@@ -1,5 +1,8 @@
 import crypto from 'crypto';
 import { NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { addCredits, deductCredits } from '../../../../lib/credits';
 import { buildRetrievalContext } from '../../../../lib/moat-retrieval';
 import { ensureSessionId, readValidationCache, recordValidation, writeValidationCache } from '../../../../lib/moat-store';
 
@@ -8,6 +11,18 @@ const MODEL = 'claude-haiku-4-5-20251001';
 const PRICING = { input: 1.0, output: 5.0 };
 const PRECHECK_CACHE_MS = 72 * 60 * 60 * 1000;
 const DEEP_CACHE_MS = 7 * 24 * 60 * 60 * 1000;
+const DEEP_SCAN_CREDIT_COST = 1;
+
+async function getUser() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { cookies: { getAll() { return cookieStore.getAll(); }, setAll() {} } }
+  );
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -545,11 +560,39 @@ export async function POST(request) {
   const sessionId = ensureSessionId(rawSessionId);
   const agentDesc = freeformIdea || `an agent that ${action} ${workflow} ${connector} ${industry}`;
   const cacheKey = buildCacheKey({ tier: validationTier, modeName, action, workflow, industry, freeformIdea: agentDesc });
+  let chargedUser = null;
+  let charged = false;
+  let balance = null;
 
   try {
     const cached = await readValidationCache(cacheKey, validationTier === 'precheck' ? PRECHECK_CACHE_MS : DEEP_CACHE_MS);
     if (cached) {
       return NextResponse.json(cachedResponse(cached, sessionId));
+    }
+
+    if (validationTier === 'deep') {
+      chargedUser = await getUser();
+      if (!chargedUser) {
+        return NextResponse.json({ error: 'not_authenticated' }, { status: 401 });
+      }
+
+      const debit = await deductCredits(chargedUser.id, DEEP_SCAN_CREDIT_COST, 'deep_scan_started', {
+        sessionId,
+        modeName,
+        action,
+        workflow,
+        industry,
+      });
+
+      if (!debit.ok) {
+        return NextResponse.json({
+          error: debit.reason === 'insufficient_credits' ? 'Not enough credits for a deep market scan.' : 'Unable to charge credits for this deep market scan.',
+          balance: debit.balance ?? null,
+        }, { status: debit.reason === 'insufficient_credits' ? 402 : 400 });
+      }
+
+      charged = true;
+      balance = debit.newBalance ?? null;
     }
 
     const retrieval = await buildRetrievalContext({ modeName, industry, action, workflow });
@@ -591,7 +634,7 @@ export async function POST(request) {
       };
 
       await writeValidationCache(cacheKey, response, { tier: validationTier, modeName, action, workflow, industry });
-      return NextResponse.json({ sessionId, ...response, cached: false });
+      return NextResponse.json({ sessionId, ...response, cached: false, balance });
     }
 
     const scoutCall = await call(scoutPrompt(agentDesc, modeName, retrieval), { webSearch: true, maxTokens: 2200 });
@@ -653,9 +696,24 @@ export async function POST(request) {
 
     await writeValidationCache(cacheKey, response, { tier: validationTier, modeName, action, workflow, industry });
 
-    return NextResponse.json({ sessionId, ...response, cached: false });
+    return NextResponse.json({ sessionId, ...response, cached: false, balance });
   } catch (err) {
+    if (charged && chargedUser) {
+      try {
+        const refund = await addCredits(chargedUser.id, DEEP_SCAN_CREDIT_COST, 'deep_scan_refund', {
+          sessionId,
+          modeName,
+          action,
+          workflow,
+          industry,
+          error: err.message,
+        });
+        balance = refund?.newBalance ?? balance;
+      } catch (refundErr) {
+        console.error('[validate/refund]', refundErr.message);
+      }
+    }
     console.error('[validate]', err.message);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: err.message, balance }, { status: 500 });
   }
 }
