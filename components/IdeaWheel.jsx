@@ -557,7 +557,7 @@ function SlotMachine({ onResult }) {
                   <div className="sm-window" onClick={()=>!anySpinning&&spinWheel(w,3200)}>
                     <div className={`sm-strip${spinning[w]?' is-spinning':''}`} ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)}>
                       {repeated.map((word,i)=>(
-                        <div className="sm-item" key={i} style={{height:ITEM_H}}>{word}</div>
+                        <div className="sm-item" key={i}>{word}</div>
                       ))}
                     </div>
                   </div>
