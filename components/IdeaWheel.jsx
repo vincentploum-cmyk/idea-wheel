@@ -333,6 +333,9 @@ const ITEM_H = 72;
 const REPEATS = 10;
 const HOME_COPY = 4;
 const REEL_TINTS = ['#7c3aed','#c026d3','#ff4d8d'];
+// Smooth wind-up → cruise → settle: gentle ease-in start (no teleport on
+// the first frame) and a controlled decel tail (no long creep at the end).
+const SPIN_EASE = 'cubic-bezier(0.30, 0.65, 0.30, 1)';
 
 function SlotMachine({ onResult }) {
   const [mode, setMode] = useState('b2b');
@@ -365,12 +368,12 @@ function SlotMachine({ onResult }) {
     const curBase = ((cur%L)+L)%L;
     const t = Math.floor(Math.random()*L);
     const forward = ((t-curBase)%L+L)%L;
-    const loops = 8 + Math.floor(Math.random()*4);
+    const loops = 5 + Math.floor(Math.random()*2);
     const newIndex = cur + loops*L + forward + (forward===0?L:0);
     indexRef.current[w] = newIndex;
     targetRef.current[w] = newIndex%L;
     const el = stripRefs[w].current;
-    if (el) { el.style.transition=`transform ${duration}ms cubic-bezier(0.12,0.0,0.08,1.0)`; el.style.transform=`translateY(${-(newIndex-1)*ITEM_H}px)`; }
+    if (el) { el.style.transition=`transform ${duration}ms ${SPIN_EASE}`; el.style.transform=`translateY(${-(newIndex-1)*ITEM_H}px)`; }
     setSpinning(s => { const n=[...s]; n[w]=true; return n; });
   };
 
@@ -381,12 +384,12 @@ function SlotMachine({ onResult }) {
     const cur = indexRef.current[w];
     const curBase = ((cur%L)+L)%L;
     const forward = ((targetIdx-curBase)%L+L)%L;
-    const loops = 4 + Math.floor(Math.random()*3);
+    const loops = 3 + Math.floor(Math.random()*2);
     const newIndex = cur + loops*L + forward + (forward===0?L:0);
     indexRef.current[w] = newIndex;
     targetRef.current[w] = newIndex%L;
     const el = stripRefs[w].current;
-    if (el) { el.style.transition=`transform ${duration}ms cubic-bezier(0.16,1,0.3,1)`; el.style.transform=`translateY(${-(newIndex-1)*ITEM_H}px)`; }
+    if (el) { el.style.transition=`transform ${duration}ms ${SPIN_EASE}`; el.style.transform=`translateY(${-(newIndex-1)*ITEM_H}px)`; }
     setSpinning(s => { const n=[...s]; n[w]=true; return n; });
   };
 
@@ -474,7 +477,7 @@ function SlotMachine({ onResult }) {
               return (
                 <div className="sm-col" key={mode+w} style={{'--accent':REEL_TINTS[w]}}>
                   <div className="sm-window" onClick={()=>!anySpinning&&spinWheel(w,3200)}>
-                    <div className="sm-strip" ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)}>
+                    <div className={`sm-strip${spinning[w]?' is-spinning':''}`} ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)}>
                       {repeated.map((word,i)=>(
                         <div className="sm-item" key={i} style={{height:ITEM_H}}>{word}</div>
                       ))}
@@ -484,6 +487,9 @@ function SlotMachine({ onResult }) {
               );
             })}
           </div>
+          {/* frosted haze: off-payline words blur out of focus, the centered row stays crisp */}
+          <div className="sm-reel-haze sm-reel-haze--top" aria-hidden="true" />
+          <div className="sm-reel-haze sm-reel-haze--bottom" aria-hidden="true" />
         </div>
 
         <div className="sm-base">
@@ -1742,6 +1748,43 @@ const CSS = `
     transparent 100%);
 }
 
+/* Motion blur while the reel travels — smooths the fast scroll so it no
+   longer strobes frame-to-frame. Removed the instant it settles (the
+   strip swaps to transition:none in onSettle) so the landed word is crisp. */
+.sm-strip.is-spinning {
+  filter:blur(1.4px);
+}
+
+/* Frosted depth-of-field: everything off the centered payline is blurred
+   out of focus and tinted so the words above/below are not readable —
+   only the centered row reads clearly. */
+.sm-reel-haze {
+  position:absolute;
+  left:8px; right:8px;
+  z-index:3;
+  pointer-events:none;
+  -webkit-backdrop-filter:blur(6px);
+  backdrop-filter:blur(6px);
+  background:linear-gradient(180deg,
+    rgba(248,243,255,0.66) 0%,
+    rgba(248,243,255,0.28) 100%);
+}
+.sm-reel-haze--top {
+  top:8px;
+  bottom:calc(50% + 39px);
+  -webkit-mask-image:linear-gradient(180deg, #000 0%, #000 58%, transparent 100%);
+  mask-image:linear-gradient(180deg, #000 0%, #000 58%, transparent 100%);
+}
+.sm-reel-haze--bottom {
+  top:calc(50% + 39px);
+  bottom:8px;
+  background:linear-gradient(0deg,
+    rgba(248,243,255,0.66) 0%,
+    rgba(248,243,255,0.28) 100%);
+  -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 42%, #000 100%);
+  mask-image:linear-gradient(180deg, transparent 0%, #000 42%, #000 100%);
+}
+
 .sm-item {
   display:flex; align-items:center; justify-content:center;
   text-align:center; padding:0 8px;
@@ -1911,6 +1954,9 @@ const CSS = `
   .sm-modebtn { padding:7px 16px; font-size:12px; }
   .sm-reels-wrap { padding:6px; border-radius:16px; }
   .sm-payline-bar { left:6px; right:6px; height:68px; border-radius:14px; }
+  .sm-reel-haze { left:6px; right:6px; -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px); }
+  .sm-reel-haze--top { top:6px; bottom:calc(50% + 34px); }
+  .sm-reel-haze--bottom { top:calc(50% + 34px); bottom:6px; }
   .sm-reels { gap:3px; }
   .sm-base { padding:14px 4px 0; }
   .sm-window { height:192px; border-radius:12px; }
