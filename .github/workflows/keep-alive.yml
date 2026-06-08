@@ -2,14 +2,16 @@ name: Keep Alive
 
 on:
   schedule:
-    # Every 10 min. Render free tier spins down after 15 min of inactivity.
-    # GitHub Actions cron is best-effort so we run more frequently than the threshold.
-    - cron: '*/10 * * * *'
+    # Every 5 min. GitHub Actions cron is still best-effort, so this is only a backup.
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping IdeaReels
+      - name: Ping Render health endpoints
         run: |
-          curl -fsS --max-time 30 https://ideareels.io/api/health > /dev/null || true
+          set -euo pipefail
+          curl -fsSL --retry 2 --retry-all-errors --connect-timeout 10 --max-time 30 https://idea-wheel.onrender.com/api/health > /dev/null
+          curl -fsSL --retry 2 --retry-all-errors --connect-timeout 10 --max-time 30 https://ideareels.io/api/health > /dev/null
