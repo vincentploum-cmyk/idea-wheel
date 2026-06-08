@@ -215,17 +215,6 @@ function ScoreRing({ value, size = 128, label }) {
   );
 }
 
-/* ─── METER BAR ──────────────────────────────────────────────────── */
-function Meter({ value, delay=0 }) {
-  const [w, setW] = useState(0);
-  useEffect(() => { const t = setTimeout(() => setW(value), delay); return () => clearTimeout(t); }, [value, delay]);
-  return (
-    <div className="su-meter-track">
-      <div className="su-meter-fill" style={{ width:`${w}%`, transition:`width 1.1s cubic-bezier(.16,1,.3,1) ${delay}ms` }}/>
-    </div>
-  );
-}
-
 /* ─── DYNAMIC CREDIT COST ────────────────────────────────────────── */
 function creditCost(score) {
   if (score >= 85) return 3;
@@ -236,6 +225,41 @@ function creditLabel(score) {
   if (score >= 85) return { cost: 3, tier: 'Exceptional signal', color: 'var(--accent)' };
   if (score >= 65) return { cost: 2, tier: 'Strong signal',      color: 'var(--accent-mid)' };
   return                  { cost: 1, tier: 'Standard',            color: 'var(--muted)' };
+}
+
+function cleanValidationText(text = '') {
+  return String(text)
+    .replace(/\*\*/g, '')
+    .replace(/^N\/A[—-]?\s*/i, '')
+    .replace(/does not exist as a discrete segment/gi, 'is not a clear standalone category yet')
+    .replace(/does not meet general wedge criteria/gi, 'does not have a clear reason to win yet')
+    .replace(/general wedge criteria/gi, 'clear reason to win')
+    .replace(/high-touch, expensive workflow/gi, 'time-consuming workflow')
+    .replace(/proof point:/gi, 'proof:')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function splitValidationBullets(text = '', max = 3) {
+  const clean = cleanValidationText(text)
+    .replace(/,\s+(but|and|while)\s+/gi, '|$1 ')
+    .replace(/\s*\(\d+\)\s*/g, '|')
+    .replace(/\s*[•·]\s*/g, '|')
+    .replace(/\.\s+/g, '.|')
+    .replace(/;\s+/g, '|');
+
+  return clean
+    .split('|')
+    .map((part) => part.trim().replace(/^[-–—]\s*/, ''))
+    .filter(Boolean)
+    .slice(0, max);
+}
+
+function briefPlayerWeakness(text = '') {
+  const cleaned = cleanValidationText(text);
+  if (!cleaned) return '';
+  const first = cleaned.split(/\.\s+|;\s+/)[0]?.trim() || cleaned;
+  return first.length > 120 ? `${first.slice(0, 117).trim()}...` : first;
 }
 
 /* ─── PROTO IFRAME ───────────────────────────────────────────────── */
@@ -806,19 +830,32 @@ export default function IdeaWheel() {
                       <span className={`su-chip su-chip--${vt==="avoid"?"bad":vt==="warning"?"warn":"good"}`}>
                         {vt==="avoid"?"High":vt==="warning"?"Medium":"Low"} competition
                       </span>
-                      <p className="su-v-verdict">{comp.verdict || comp.verdictReasoning}</p>
+                      <div className="su-v-minihead">Quick take</div>
+                      <ul className="su-v-bullets su-v-bullets--compact">
+                        {splitValidationBullets(comp.verdict || comp.verdictReasoning, 2).map((item, i) => (
+                          <li key={i}>{item}</li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
 
                   <div className="su-card su-v-market">
                     <div className="su-v-market-cell">
-                      <div className="su-v-k su-grad-text">{comp.marketSize || "—"}</div>
-                      <div className="su-v-l">Market size</div>
+                      <div className="su-v-l">Market read</div>
+                      <ul className="su-v-bullets">
+                        {splitValidationBullets(comp.marketSize, 2).map((item, i) => (
+                          <li key={i}>{item}</li>
+                        ))}
+                      </ul>
                     </div>
                     {comp.gap && (
                       <div className="su-v-gap">
                         <div className="su-v-gap-label">The gap</div>
-                        <p>{comp.gap}</p>
+                        <ul className="su-v-bullets su-v-bullets--gap">
+                          {splitValidationBullets(comp.gap, 2).map((item, i) => (
+                            <li key={i}>{item}</li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                   </div>
@@ -831,8 +868,9 @@ export default function IdeaWheel() {
                           <div className="su-v-signal-top">
                             <span>{pl.name}</span><b>{pl.pricing||"—"}</b>
                           </div>
-                          <div style={{fontSize:12,color:"var(--muted)",marginTop:2}}>{pl.weakness}</div>
-                          <Meter value={60+Math.random()*30} delay={200+i*150}/>
+                          <ul className="su-v-bullets su-v-bullets--player">
+                            <li>{briefPlayerWeakness(pl.weakness)}</li>
+                          </ul>
                         </div>
                       ))}
                     </div>
@@ -874,8 +912,14 @@ export default function IdeaWheel() {
 
                   {vt === "avoid" && (
                     <div className="su-v-cta su-v-cta--avoid">
-                      <div className="su-v-cta-text">Crowded market — consider a different angle.</div>
-                      {comp.pivotHint && <p style={{fontSize:13,color:"var(--muted)",margin:"8px 0 0"}}>{comp.pivotHint}</p>}
+                      <div className="su-v-cta-text">Crowded market, try a different angle.</div>
+                      {comp.pivotHint && (
+                        <ul className="su-v-bullets su-v-bullets--avoid">
+                          {splitValidationBullets(comp.pivotHint, 4).map((item, i) => (
+                            <li key={i}>{item}</li>
+                          ))}
+                        </ul>
+                      )}
                       <button className="su-btn su-btn-ghost" onClick={() => { setComp(null); setIdea(null); }}>Spin again</button>
                     </div>
                   )}
@@ -1312,27 +1356,33 @@ const CSS = `
 .su-validate-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 @media(max-width:640px){ .su-validate-grid { grid-template-columns:1fr; } }
 .su-v-score { display:flex; align-items:flex-start; gap:20px; }
-.su-v-score-side { display:flex; flex-direction:column; gap:12px; }
-.su-v-verdict { font-size:13px; color:var(--ink-2); line-height:1.6; margin:0; }
+.su-v-score-side { display:flex; flex-direction:column; gap:10px; }
+.su-v-minihead { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
 .su-v-market { display:flex; flex-direction:column; gap:16px; }
-.su-v-market-cell { display:flex; flex-direction:column; gap:4px; }
+.su-v-market-cell { display:flex; flex-direction:column; gap:8px; }
 .su-v-k { font-family:var(--font-display); font-size:26px; font-weight:700; line-height:1; }
 .su-v-l { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
-.su-v-gap { padding:12px 14px; background:var(--bg-2); border-radius:var(--r-sm); }
-.su-v-gap-label { font-size:10px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--violet); margin-bottom:6px; }
-.su-v-gap p { font-size:13px; color:var(--ink); margin:0; line-height:1.5; font-weight:500; }
+.su-v-gap { padding:14px; background:var(--bg-2); border-radius:var(--r-md); }
+.su-v-gap-label { font-size:10px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--violet); margin-bottom:8px; }
 .su-v-signals { grid-column:1/-1; }
 .su-v-signals-head { font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
-.su-v-signal { margin-bottom:12px; }
-.su-v-signal-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px; font-size:13px; color:var(--ink); }
-.su-v-signal-top b { font-size:12px; color:var(--muted); }
-.su-meter-track { height:6px; border-radius:6px; background:var(--bg-2); overflow:hidden; }
-.su-meter-fill { height:100%; border-radius:6px; background:var(--accent-mid); }
+.su-v-signal { margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+.su-v-signal:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none; }
+.su-v-signal-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:8px; font-size:13px; color:var(--ink); }
+.su-v-signal-top b { font-size:12px; color:var(--muted); white-space:nowrap; }
 .su-ring-num { font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--ink); line-height:1; letter-spacing:-.02em; }
 .su-ring-label { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+.su-v-bullets { margin:0; padding-left:18px; display:flex; flex-direction:column; gap:8px; }
+.su-v-bullets li { font-size:13px; color:var(--ink-2); line-height:1.55; }
+.su-v-bullets--compact { gap:6px; }
+.su-v-bullets--compact li { font-size:12.5px; }
+.su-v-bullets--gap li { color:var(--ink); font-weight:500; }
+.su-v-bullets--player { gap:6px; }
+.su-v-bullets--avoid { text-align:left; max-width:560px; margin:0 auto 18px; }
+.su-v-bullets--avoid li { font-size:13px; }
 .su-v-cta { grid-column:1/-1; text-align:center; padding:28px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-xl); }
 .su-v-cta--avoid { background:rgba(185,28,28,0.03); border-color:rgba(185,28,28,0.18); }
-.su-v-cta-text { font-size:15.5px; font-weight:600; color:var(--ink); margin-bottom:18px; line-height:1.5; }
+.su-v-cta-text { font-size:15.5px; font-weight:600; color:var(--ink); margin-bottom:16px; line-height:1.45; }
 .su-v-cta-row { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
 .su-v-hint { font-size:12px; color:var(--muted); margin-top:12px; }
 .su-v-exceptional {
