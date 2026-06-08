@@ -5,6 +5,7 @@ import { buildRetrievalContext } from '../../../../lib/moat-retrieval';
 import { addCredits, deductCredits } from '../../../../lib/credits';
 import { ensureSessionId, getBlueprintCharge, recordBlueprint, recordOutcome, saveBlueprintCharge } from '../../../../lib/moat-store';
 import { withPlainEnglish } from '../../../../lib/clarity';
+import { attachBlueprint } from '../../../../lib/saved-ideas';
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 
@@ -885,6 +886,24 @@ Search the web for the most current direct competitors, their pricing, recent (2
           blueprintId: blueprintRow.id,
           totalCostUsd,
         });
+
+        // Attach the finished blueprint to the user's saved idea (creating the
+        // row if extended research was skipped). Resilient: never blocks the build.
+        await attachBlueprint({
+          userId: user.id,
+          validationId,
+          idea: { action, workflow, industry, connector, modeName, title: comp?.title },
+          comp,
+          blueprint: {
+            design,
+            gtm,
+            infra,
+            protoSpec: spec,
+            eval: prototypeEval,
+            prototypeHtml: typeof prototypeHtml === 'string' ? prototypeHtml.slice(0, 16000) : '',
+          },
+          creditsSpent: Number(charge?.amount) || 0,
+        }).catch(() => {});
 
         await recordOutcome({
           sessionId,

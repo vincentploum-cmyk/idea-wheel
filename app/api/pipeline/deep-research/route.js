@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { ensureSessionId, recordOutcome } from '../../../../lib/moat-store';
 import { getBalance, deductCredits, ensureWelcomeGrant } from '../../../../lib/credits';
 import { clarify } from '../../../../lib/clarity';
+import { saveResearchedIdea } from '../../../../lib/saved-ideas';
 
 const DEEP_RESEARCH_COST = 1;
 
@@ -144,6 +145,18 @@ export async function POST(request) {
 
     const charge = await deductCredits(user.id, DEEP_RESEARCH_COST, 'deep_research', { validationId: comp?.validationId || null });
     const newBalance = charge.ok ? charge.newBalance : balance;
+
+    // Persist the idea + its extended-research outcome to the user's profile.
+    if (charge.ok) {
+      await saveResearchedIdea({
+        userId: user.id,
+        validationId: comp?.validationId,
+        idea: { action, workflow, industry, connector, modeName, title: comp?.title, sessionId },
+        comp,
+        research: parsed,
+        creditsSpent: DEEP_RESEARCH_COST,
+      }).catch(() => {});
+    }
 
     await recordOutcome({
       sessionId, signal: 'deep_research_completed', modeName, action, workflow, industry,

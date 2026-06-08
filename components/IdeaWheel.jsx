@@ -628,6 +628,8 @@ export default function IdeaWheel() {
   const [bpErr, setBpErr]       = useState("");
   const [bpChargeToken, setBpChargeToken] = useState("");  // server charge token, reused across resume so the credit is taken once
   const [protoOpen, setProtoOpen] = useState(false);
+  const [pendingGenerate, setPendingGenerate] = useState(false);  // a profile "Create blueprint" deep-link is loaded and should auto-generate
+  const loadedIdeaRef = useRef(false);
 
   // pricing
   const [showPricing, setShowPricing]     = useState(false);
@@ -675,6 +677,47 @@ export default function IdeaWheel() {
   }, []);
 
   useEffect(() => () => { clearInterval(scanTimerRef.current); clearInterval(deepTimerRef.current); }, []);
+
+  // Deep link from the profile: ?idea=<id> opens a saved idea here. With &view=1
+  // we load its existing blueprint; otherwise we jump to the blueprint screen and
+  // generate one (charging 2 credits via the normal flow).
+  useEffect(() => {
+    if (!authChecked || !authUser || loadedIdeaRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const savedId = params.get('idea');
+    if (!savedId) return;
+    loadedIdeaRef.current = true;
+    const viewOnly = params.get('view') === '1';
+    (async () => {
+      try {
+        const r = await fetch(`/api/ideas/${savedId}`);
+        if (!r.ok) return;
+        const { idea: saved } = await r.json();
+        if (!saved) return;
+        setIdea({
+          action: saved.action, workflow: saved.workflow, industry: saved.industry,
+          connector: saved.connector, label: saved.mode_name, modeName: saved.mode_name,
+          title: saved.title, tagline: saved.tagline, blurb: saved.summary || saved.tagline,
+        });
+        if (saved.comp) setComp(saved.comp);
+        if (saved.session_id) setSessionId(saved.session_id);
+        if (saved.research) setDeepResearch(saved.research);
+
+        const bp = saved.blueprint;
+        if (viewOnly && saved.blueprint_status === 'complete' && bp) {
+          setDesign(bp.design || null);
+          setGtm(bp.gtm || null);
+          setInfra(bp.infra || null);
+          setProto(bp.prototypeHtml || null);
+          setBpStage('done');
+        } else {
+          setPendingGenerate(true);   // generate once idea + comp are in state
+        }
+        goTo('blueprint');
+        window.history.replaceState({}, '', window.location.pathname);
+      } catch {}
+    })();
+  }, [authChecked, authUser]);
 
   // For signed-in users the Supabase balance is the source of truth: credits
   // are added on purchase (Stripe webhook) and subtracted on blueprint spend.
@@ -822,7 +865,7 @@ export default function IdeaWheel() {
         setShowPricing(true);
         return;
       }
-      if (!res.ok || data.error) throw new Error(data.error || 'Deep research failed.');
+      if (!res.ok || data.error) throw new Error(data.error || 'Extended research failed.');
       if (data.sessionId) setSessionId(data.sessionId);
       if (typeof data.balance === 'number') setCredits(data.balance);
       clearInterval(deepTimerRef.current);
@@ -830,7 +873,7 @@ export default function IdeaWheel() {
       await new Promise(r => setTimeout(r, 300));
       setDeepResearch(data.research);
     } catch(e) {
-      setDeepErr(e.message.includes("AI_CREDITS") || e.message.includes("temporarily") ? "Our AI is taking a short break. Please try again in a minute." : "Deep research failed. " + e.message);
+      setDeepErr(e.message.includes("AI_CREDITS") || e.message.includes("temporarily") ? "Our AI is taking a short break. Please try again in a minute." : "Extended research failed. " + e.message);
     } finally {
       clearInterval(deepTimerRef.current);
       setDeepLoading(false);
@@ -938,6 +981,15 @@ export default function IdeaWheel() {
   const bpRunning = bpStage !== null && bpStage !== "done";
   const bpDone    = bpStage === "done";
 
+  // Fire the deferred blueprint generation from a profile deep-link, once the
+  // idea + comp it loaded are in state (so runBlueprint sees them).
+  useEffect(() => {
+    if (pendingGenerate && screen === 'blueprint' && idea && comp && !bpRunning && !bpDone) {
+      setPendingGenerate(false);
+      runBlueprint();
+    }
+  }, [pendingGenerate, screen, idea, comp, bpRunning, bpDone]);
+
   /* ── SCREENS ── */
   return (
     <div className="su-root">
@@ -1006,7 +1058,7 @@ export default function IdeaWheel() {
                   <div className="su-hiw-num">3</div>
                   <div>
                     <div className="su-hiw-t">Turn the winner into a build-ready plan</div>
-                    <div className="su-hiw-d">Deep market research costs 1 credit and the full blueprint costs 2 — and every new account starts with 3 free credits. Each blueprint unlocks four AI specialists across product design, launch strategy, infrastructure, and prototype generation.</div>
+                    <div className="su-hiw-d">Extended market research costs 1 credit and the full blueprint costs 2 — and every new account starts with 3 free credits. Each blueprint unlocks four AI specialists across product design, launch strategy, infrastructure, and prototype generation.</div>
                   </div>
                 </div>
               </div>
@@ -1051,12 +1103,12 @@ export default function IdeaWheel() {
           {/* Validate button + inline results */}
           {idea && (
             <div className="sm-validate-section">
-              <div className="su-eyebrow su-step-eyebrow su-step-eyebrow--mt">Step two · Validate the market</div>
+              <div className="su-eyebrow su-step-eyebrow su-step-eyebrow--mt">Step two · Free basic market research</div>
               {showConfetti && <ValidationConfetti key={confettiBurstId} />}
               {!comp && !validating && !validateErr && (
                 <div className="sm-result-cta">
                   <button className="su-btn su-btn-primary su-btn-lg" onClick={runValidate}>
-                    Run market scan
+                    Run free basic market research
                   </button>
                 </div>
               )}
@@ -1154,11 +1206,11 @@ export default function IdeaWheel() {
                     </div>
                   )}
 
-                  {/* Deep market research findings (paid add-on, once run) */}
+                  {/* Extended market research findings (paid add-on, once run) */}
                   {deepResearch && (
                     <div className="su-card su-v-deep">
                       <div className="su-v-signals-head">
-                        Deep demand research
+                        Extended market research
                         {deepResearch.demandLevel && <span className={`su-deep-tag su-deep-tag--${/strong/i.test(deepResearch.demandLevel)?'good':/weak/i.test(deepResearch.demandLevel)?'bad':'warn'}`}>{deepResearch.demandLevel} demand</span>}
                       </div>
                       {(deepResearch.plainSummary || (deepResearch.takeaways||[]).length > 0) && (
@@ -1209,7 +1261,7 @@ export default function IdeaWheel() {
                         <div className="su-v-cta-row">
                           {deepPrimary ? (
                             <button className="su-btn su-btn-primary su-btn-lg" onClick={runDeepResearch}>
-                              Run deep market research
+                              Run extended market research
                               <span className="su-credit-badge">{DEEP_RESEARCH_COST} credit</span>
                             </button>
                           ) : (
@@ -1250,7 +1302,7 @@ export default function IdeaWheel() {
       {screen === "blueprint" && idea && (
         <section className="su-screen su-blueprint">
           <div className="su-screen-head">
-            <div className="su-eyebrow">Step three · The plan</div>
+            <div className="su-eyebrow">Step four · The plan</div>
             <h2 className="su-display su-screen-title">
               The <span className="su-grad-text">{idea.title}</span> blueprint
             </h2>
@@ -1463,7 +1515,7 @@ export default function IdeaWheel() {
               <span>Get credits</span>
               <button onClick={() => setShowPricing(false)}>✕</button>
             </div>
-            <p className="su-modal-sub">Deep market research costs 1 credit; the full blueprint costs 2. New accounts start with 3 free credits.</p>
+            <p className="su-modal-sub">Extended market research costs 1 credit; the full blueprint costs 2. New accounts start with 3 free credits.</p>
             {checkoutErr && <p className="su-err">{checkoutErr}</p>}
             <div className="su-pkgs">
               {CREDIT_PACKAGES.map(pkg => (
