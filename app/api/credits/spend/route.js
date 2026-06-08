@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { deductCredits, getBalance } from '@/lib/credits';
+import { deductCredits, getBalance, ensureWelcomeGrant } from '@/lib/credits';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -22,10 +22,13 @@ export async function POST(request) {
     return Response.json({ error: 'Please sign in.', code: 'AUTH_REQUIRED' }, { status: 401 });
   }
 
-  const { cost, validationId } = await request.json().catch(() => ({}));
+  const { cost, validationId, reason } = await request.json().catch(() => ({}));
   const amount = Math.max(1, Math.min(3, Math.round(Number(cost) || 1)));
+  const kind = reason === 'deep_research' ? 'deep_research' : 'blueprint';
 
-  const result = await deductCredits(user.id, amount, 'blueprint', { validationId: validationId || null });
+  await ensureWelcomeGrant(user.id);   // brand-new users get their 3 free credits before the first charge
+
+  const result = await deductCredits(user.id, amount, kind, { validationId: validationId || null });
   if (!result.ok) {
     const balance = result.balance ?? (await getBalance(user.id));
     return Response.json(

@@ -253,17 +253,10 @@ function ValidationConfetti({ pieces = 34 }) {
   );
 }
 
-/* ─── DYNAMIC CREDIT COST ────────────────────────────────────────── */
-function creditCost(score) {
-  if (score >= 85) return 3;
-  if (score >= 65) return 2;
-  return 1;
-}
-function creditLabel(score) {
-  if (score >= 85) return { cost: 3, tier: 'Exceptional signal', color: 'var(--accent)' };
-  if (score >= 65) return { cost: 2, tier: 'Strong signal',      color: 'var(--accent-mid)' };
-  return                  { cost: 1, tier: 'Standard',            color: 'var(--muted)' };
-}
+/* ─── CREDIT COSTS ───────────────────────────────────────────────── */
+// Flat funnel: 1 credit for deep market research, 2 for the blueprint.
+const DEEP_RESEARCH_COST = 1;
+const BLUEPRINT_COST = 2;
 
 function cleanValidationText(text = '') {
   return String(text)
@@ -596,6 +589,12 @@ export default function IdeaWheel() {
   const [comp, setComp]             = useState(null);
   const [validateErr, setValidateErr] = useState("");
   const [sessionId, setSessionId] = useState("");
+  // deep market research (paid 1-credit add-on)
+  const [deepResearch, setDeepResearch] = useState(null);
+  const [deepLoading, setDeepLoading]   = useState(false);
+  const [deepErr, setDeepErr]           = useState("");
+  const [deepPct, setDeepPct]           = useState(0);
+  const deepTimerRef = useRef(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiBurstId, setConfettiBurstId] = useState(0);
 
@@ -653,7 +652,7 @@ export default function IdeaWheel() {
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => () => clearInterval(scanTimerRef.current), []);
+  useEffect(() => () => { clearInterval(scanTimerRef.current); clearInterval(deepTimerRef.current); }, []);
 
   // For signed-in users the Supabase balance is the source of truth: credits
   // are added on purchase (Stripe webhook) and subtracted on blueprint spend.
@@ -729,6 +728,7 @@ export default function IdeaWheel() {
   const runValidate = async () => {
     if (!idea) return;
     setValidating(true); setComp(null); setValidateErr(""); setScanPct(0);
+    setDeepResearch(null); setDeepErr(""); setDeepLoading(false);   // fresh scan clears any prior deep research
     // The scan time varies, so ease a simulated bar toward ~90% while the
     // request is in flight; it snaps to 100% the moment results land.
     const startedAt = Date.now();
@@ -773,6 +773,48 @@ export default function IdeaWheel() {
     }
   };
 
+  /* ── PAID DEEP MARKET RESEARCH (1 credit) ── */
+  // Charged server-side only on success, so a failed run costs nothing.
+  const runDeepResearch = async () => {
+    if (!comp || deepLoading) return;
+    setDeepErr(""); setDeepLoading(true); setDeepPct(0);
+    const startedAt = Date.now();
+    const estMs = 20000;
+    clearInterval(deepTimerRef.current);
+    deepTimerRef.current = setInterval(() => {
+      const t = (Date.now() - startedAt) / estMs;
+      setDeepPct(p => Math.min(92, Math.max(p, Math.round(92 * (1 - Math.exp(-2.2 * t))))));
+    }, 180);
+    try {
+      const res = await fetch('/api/pipeline/deep-research', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: idea.action, workflow: idea.workflow, industry: idea.industry,
+          connector: idea.connector, modeName: idea.label, freeformIdea: ideaSummary(idea),
+          comp, sessionId,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401 || res.status === 402) {
+        if (typeof data.balance === 'number') setCredits(data.balance);
+        setShowPricing(true);
+        return;
+      }
+      if (!res.ok || data.error) throw new Error(data.error || 'Deep research failed.');
+      if (data.sessionId) setSessionId(data.sessionId);
+      if (typeof data.balance === 'number') setCredits(data.balance);
+      clearInterval(deepTimerRef.current);
+      setDeepPct(100);
+      await new Promise(r => setTimeout(r, 300));
+      setDeepResearch(data.research);
+    } catch(e) {
+      setDeepErr(e.message.includes("AI_CREDITS") || e.message.includes("temporarily") ? "Our AI is taking a short break. Please try again in a minute." : "Deep research failed. " + e.message);
+    } finally {
+      clearInterval(deepTimerRef.current);
+      setDeepLoading(false);
+    }
+  };
+
   /* ── PAID BLUEPRINT ── */
   // Charge exactly once. For signed-in users this hits Supabase atomically;
   // returns true only if the credit was actually taken.
@@ -785,7 +827,7 @@ export default function IdeaWheel() {
     try {
       const r = await fetch('/api/credits/spend', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cost, validationId: comp?.validationId }),
+        body: JSON.stringify({ cost, reason: 'blueprint', validationId: comp?.validationId }),
       });
       const data = await r.json().catch(() => ({}));
       if (r.ok && data.ok) { setCredits(data.balance); return true; }
@@ -802,7 +844,7 @@ export default function IdeaWheel() {
   // the credit was already spent when the blueprint first started.
   const runBlueprint = async ({ resume = false } = {}) => {
     if (!comp) return;
-    const cost = creditCost(comp?.score ?? 0);
+    const cost = BLUEPRINT_COST;
 
     if (!resume) {
       const paid = await chargeForBlueprint(cost);
@@ -959,7 +1001,7 @@ export default function IdeaWheel() {
                   <div className="su-hiw-num">3</div>
                   <div>
                     <div className="su-hiw-t">Turn the winner into a build-ready plan</div>
-                    <div className="su-hiw-d">Blueprints cost 1 to 3 credits based on signal strength, and each one unlocks four AI specialists across product design, launch strategy, infrastructure, and prototype generation.</div>
+                    <div className="su-hiw-d">Deep market research costs 1 credit and the full blueprint costs 2 — and every new account starts with 3 free credits. Each blueprint unlocks four AI specialists across product design, launch strategy, infrastructure, and prototype generation.</div>
                   </div>
                 </div>
               </div>
@@ -1035,8 +1077,6 @@ export default function IdeaWheel() {
               {comp && !validating && (() => {
                 const score = comp.score ?? 0;
                 const potential = score >= 61;                 // gates gap, key players, blueprint-forward CTA
-                const cl = creditLabel(score);
-                const cost = cl.cost;
                 const advice = score >= 80
                   ? { label: "Get that Blueprint!", tone: "good" }
                   : score >= 61
@@ -1044,6 +1084,9 @@ export default function IdeaWheel() {
                     : { label: "Don't waste your time", tone: "bad" };
                 const premise = cleanValidationText(comp.premiseNote || "");
                 const verdictLines = splitValidationBullets(comp.verdictReasoning || comp.verdict, 3);
+                // Funnel: 61-79 → deep research first (1cr); 80+ → blueprint (2cr) with research optional.
+                const deepPrimary = potential && !deepResearch && score < 80;
+                const goBlueprint = () => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); };
                 return (
                 <div className="su-validate-grid" style={{marginTop:24}}>
                   {/* 1 — Quick take */}
@@ -1099,40 +1142,86 @@ export default function IdeaWheel() {
                     </div>
                   )}
 
-                  {/* 4 — Final verdict + CTA */}
+                  {/* Deep market research findings (paid add-on, once run) */}
+                  {deepResearch && (
+                    <div className="su-card su-v-deep">
+                      <div className="su-v-signals-head">
+                        Deep demand research
+                        {deepResearch.demandLevel && <span className={`su-deep-tag su-deep-tag--${/strong/i.test(deepResearch.demandLevel)?'good':/weak/i.test(deepResearch.demandLevel)?'bad':'warn'}`}>{deepResearch.demandLevel} demand</span>}
+                      </div>
+                      {(deepResearch.demandSignals||[]).length > 0 && (
+                        <ul className="su-v-bullets">{deepResearch.demandSignals.slice(0,5).map((s,i)=><li key={i}>{cleanValidationText(s)}</li>)}</ul>
+                      )}
+                      {(deepResearch.voiceOfCustomer||[]).length > 0 && (
+                        <div className="su-v-deep-quotes">
+                          {deepResearch.voiceOfCustomer.slice(0,3).map((q,i)=><blockquote key={i} className="su-v-deep-quote">“{cleanValidationText(q)}”</blockquote>)}
+                        </div>
+                      )}
+                      {(deepResearch.communities||[]).length > 0 && (
+                        <div className="su-v-deep-row"><span className="su-v-l">Where they gather</span> <span className="su-v-deep-communities">{deepResearch.communities.slice(0,5).map(c=>cleanValidationText(c)).join(' · ')}</span></div>
+                      )}
+                      {deepResearch.willingnessToPay && <div className="su-v-deep-row"><span className="su-v-l">Willingness to pay</span> <span>{cleanValidationText(deepResearch.willingnessToPay)}</span></div>}
+                      {deepResearch.wedge && <div className="su-v-deep-row"><span className="su-v-l">Sharpest wedge</span> <span>{cleanValidationText(deepResearch.wedge)}</span></div>}
+                    </div>
+                  )}
+
+                  {/* 4 — Final verdict + funnel CTA */}
                   <div className={`su-v-cta${potential ? "" : " su-v-cta--avoid"}`}>
                     <div className="su-v-l su-v-verdict-label">Final verdict</div>
                     {premise && <p className="su-v-premise">{premise}</p>}
                     <div className="su-v-cta-text">
-                      {verdictLines[0] || (potential ? "There's a real opening here." : "The signal isn't strong enough yet.")}
+                      {(deepResearch?.verdict && cleanValidationText(deepResearch.verdict)) || verdictLines[0] || (potential ? "There's a real opening here." : "The signal isn't strong enough yet.")}
                     </div>
-                    {verdictLines.length > 1 && (
+                    {!deepResearch && verdictLines.length > 1 && (
                       <ul className="su-v-bullets su-v-bullets--compact su-v-verdict-rationale">
                         {verdictLines.slice(1).map((item, i) => (<li key={i}>{item}</li>))}
                       </ul>
                     )}
-                    {potential ? (
+
+                    {deepLoading && (
+                      <div className="su-scan su-glass su-v-deep-progress">
+                        <div className="su-scan-head">
+                          <span className="su-scan-text">Digging through Reddit, forums &amp; communities…</span>
+                          <span className="su-scan-pct">{deepPct}%</span>
+                        </div>
+                        <div className="su-scan-bar su-scan-bar--progress"><div className="su-scan-fill su-scan-fill--progress" style={{width:`${deepPct}%`}}/></div>
+                      </div>
+                    )}
+                    {deepErr && <p className="su-err">{deepErr} <button className="su-retry" onClick={runDeepResearch}>Retry</button></p>}
+
+                    {!deepLoading && (potential ? (
                       <>
                         <div className="su-v-cta-row">
-                          <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); }}>
-                            Build the full plan
-                            <span className="su-credit-badge">{cost} credit{cost > 1 ? 's' : ''}</span>
-                          </button>
+                          {deepPrimary ? (
+                            <button className="su-btn su-btn-primary su-btn-lg" onClick={runDeepResearch}>
+                              Run deep market research
+                              <span className="su-credit-badge">{DEEP_RESEARCH_COST} credit</span>
+                            </button>
+                          ) : (
+                            <button className="su-btn su-btn-primary su-btn-lg" onClick={goBlueprint}>
+                              Build the blueprint
+                              <span className="su-credit-badge">{BLUEPRINT_COST} credits</span>
+                            </button>
+                          )}
                           <button className="su-creditpill" onClick={() => setShowPricing(true)}>
                             <span className="su-creditnum">{credits}</span>
                             <span className="su-creditlbl">credits</span>
                           </button>
                         </div>
-                        <div className="su-v-hint">{cl.tier} · {cost} credit{cost > 1 ? 's' : ''} · you have {credits}</div>
+                        {deepPrimary && (
+                          <button className="su-linkbtn" onClick={goBlueprint}>Skip ahead — build the blueprint now · {BLUEPRINT_COST} credits</button>
+                        )}
+                        {!deepResearch && !deepPrimary && (
+                          <button className="su-linkbtn" onClick={runDeepResearch}>First, dig into real demand · {DEEP_RESEARCH_COST} credit</button>
+                        )}
+                        <div className="su-v-hint">Research {DEEP_RESEARCH_COST} credit · blueprint {BLUEPRINT_COST} credits · you have {credits}</div>
                       </>
                     ) : (
                       <div className="su-v-cta-row">
                         <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { setComp(null); setIdea(null); }}>Spin again</button>
-                        <button className="su-linkbtn" onClick={() => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); }}>
-                          Build it anyway · {cost} credit{cost > 1 ? 's' : ''}
-                        </button>
+                        <button className="su-linkbtn" onClick={goBlueprint}>Build it anyway · {BLUEPRINT_COST} credits</button>
                       </div>
-                    )}
+                    ))}
                   </div>
                 </div>
                 );
@@ -1350,7 +1439,7 @@ export default function IdeaWheel() {
               <span>Get credits</span>
               <button onClick={() => setShowPricing(false)}>✕</button>
             </div>
-            <p className="su-modal-sub">Blueprints typically cost 1 to 3 credits, depending on how strong the opportunity looks.</p>
+            <p className="su-modal-sub">Deep market research costs 1 credit; the full blueprint costs 2. New accounts start with 3 free credits.</p>
             {checkoutErr && <p className="su-err">{checkoutErr}</p>}
             <div className="su-pkgs">
               {CREDIT_PACKAGES.map(pkg => (
@@ -1631,6 +1720,18 @@ const CSS = `
 .su-v-gap { padding:14px; background:var(--bg-2); border-radius:var(--r-md); }
 .su-v-gap-label { font-size:10px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--violet); margin-bottom:8px; }
 .su-v-signals { grid-column:1/-1; }
+/* deep market research panel */
+.su-v-deep { grid-column:1/-1; border-color:rgba(124,58,237,0.22); }
+.su-deep-tag { margin-left:10px; font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:3px 8px; border-radius:99px; }
+.su-deep-tag--good { background:rgba(21,128,61,0.10); color:var(--good); }
+.su-deep-tag--warn { background:rgba(180,83,9,0.10); color:var(--warn); }
+.su-deep-tag--bad  { background:rgba(185,28,28,0.10); color:var(--bad); }
+.su-v-deep-quotes { display:flex; flex-direction:column; gap:8px; margin:12px 0; }
+.su-v-deep-quote { margin:0; padding:8px 0 8px 14px; border-left:3px solid var(--accent-border); font-style:italic; font-size:13px; color:var(--ink-2); line-height:1.5; }
+.su-v-deep-row { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:baseline; margin-top:10px; font-size:13px; color:var(--ink-2); line-height:1.5; }
+.su-v-deep-row .su-v-l { flex:none; }
+.su-v-deep-communities { color:var(--accent-mid); font-weight:600; }
+.su-v-deep-progress { margin:14px 0 4px; }
 .su-v-signals-head { font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
 .su-v-signal { margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--line); }
 .su-v-signal:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none; }
