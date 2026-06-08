@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "palette:audit": "node migrate-palette.js",
-    "palette:print": "node migrate-palette.js --json"
+    "palette:print": "node migrate-palette.js --json",
+    "opportunity-bank:sync": "node scripts/sync-opportunity-bank.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
