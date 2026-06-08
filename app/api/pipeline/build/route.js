@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { buildRetrievalContext } from '../../../../lib/moat-retrieval';
-import { ensureSessionId, recordBlueprint, recordOutcome } from '../../../../lib/moat-store';
+import { addCredits, deductCredits } from '../../../../lib/credits';
+import { ensureSessionId, getBlueprintCharge, recordBlueprint, recordOutcome, saveBlueprintCharge } from '../../../../lib/moat-store';
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 
@@ -15,6 +18,17 @@ const PRICING = {
   'claude-haiku-4-5-20251001': { input: 1.0, output: 5.0 },
   'claude-sonnet-4-6': { input: 3.0, output: 15.0 },
 };
+
+async function getUser() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { cookies: { getAll() { return cookieStore.getAll(); }, setAll() {} } }
+  );
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -623,6 +637,8 @@ export async function POST(request) {
     sessionId: rawSessionId,
     validationId,
     freeformIdea,
+    chargeToken,
+    creditCost,
   } = body;
 
   if (!freeformIdea && (!action || !workflow || !industry)) {
@@ -630,10 +646,67 @@ export async function POST(request) {
   }
 
   const sessionId = ensureSessionId(rawSessionId);
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'not_authenticated' }, { status: 401 });
+  }
+
   const agentDesc = freeformIdea || `an agent that ${action} ${workflow} ${connector} ${industry}`;
   const retrieval = comp?.retrieval || (await buildRetrievalContext({ modeName, industry, action, workflow }));
+  const blueprintCost = Math.max(1, Number(creditCost || 0));
+  let charge = null;
 
   try {
+    if (stage === 'designer') {
+      if (!Number.isFinite(blueprintCost) || blueprintCost < 1) {
+        return NextResponse.json({ error: 'Invalid blueprint credit cost' }, { status: 400 });
+      }
+
+      const debit = await deductCredits(user.id, blueprintCost, 'blueprint_started', {
+        validationId,
+        sessionId,
+        modeName,
+        action,
+        workflow,
+        industry,
+      });
+
+      if (!debit.ok) {
+        return NextResponse.json({
+          error: debit.reason === 'insufficient_credits' ? 'Not enough credits for this blueprint.' : 'Unable to charge credits for this blueprint.',
+          balance: debit.balance ?? null,
+        }, { status: debit.reason === 'insufficient_credits' ? 402 : 400 });
+      }
+
+      charge = await saveBlueprintCharge({
+        id: crypto.randomUUID(),
+        userId: user.id,
+        sessionId,
+        validationId,
+        modeName,
+        action,
+        workflow,
+        industry,
+        amount: blueprintCost,
+        status: 'authorized',
+        balanceAfter: debit.newBalance ?? null,
+      });
+    } else {
+      if (!chargeToken) {
+        return NextResponse.json({ error: 'Missing blueprint charge token' }, { status: 400 });
+      }
+      charge = await getBlueprintCharge(chargeToken);
+      if (!charge || charge.userId !== user.id) {
+        return NextResponse.json({ error: 'Invalid blueprint charge token' }, { status: 403 });
+      }
+      if (charge.status === 'refunded') {
+        return NextResponse.json({ error: 'This blueprint charge was already refunded. Start again.' }, { status: 409 });
+      }
+      if (charge.status === 'consumed') {
+        return NextResponse.json({ error: 'This blueprint charge was already used. Start again.' }, { status: 409 });
+      }
+    }
+
     switch (stage) {
       case 'designer': {
         const designerStage = await runJsonStage({
@@ -660,6 +733,8 @@ export async function POST(request) {
           usage: designerStage.usage,
           cost_usd: designerStage.costUsd,
           sessionId,
+          chargeToken: charge.id,
+          balance: charge.balanceAfter ?? null,
         });
       }
 
@@ -688,6 +763,7 @@ export async function POST(request) {
           usage: launchStage.usage,
           cost_usd: launchStage.costUsd,
           sessionId,
+          chargeToken: charge.id,
         });
       }
 
@@ -711,6 +787,7 @@ export async function POST(request) {
           usage: mergeUsage(infraCall.usage, infraParsed.usage),
           cost_usd: (infraCall.costUsd || 0) + (infraParsed.costUsd || 0),
           sessionId,
+          chargeToken: charge.id,
         });
       }
 
@@ -775,6 +852,13 @@ export async function POST(request) {
           costUsd: totalCostUsd,
         });
 
+        await saveBlueprintCharge({
+          ...charge,
+          status: 'consumed',
+          blueprintId: blueprintRow.id,
+          totalCostUsd,
+        });
+
         await recordOutcome({
           sessionId,
           signal: 'blueprint_completed',
@@ -798,6 +882,7 @@ export async function POST(request) {
           usage: totalUsage,
           cost_usd: totalCostUsd,
           sessionId,
+          chargeToken: charge.id,
         });
       }
 
@@ -805,6 +890,24 @@ export async function POST(request) {
         return NextResponse.json({ error: `Unknown stage: ${stage}` }, { status: 400 });
     }
   } catch (err) {
+    if (charge?.status === 'authorized') {
+      try {
+        await addCredits(user.id, charge.amount, 'blueprint_refund', {
+          chargeToken: charge.id,
+          validationId,
+          sessionId,
+          stage,
+          error: err.message,
+        });
+        await saveBlueprintCharge({
+          ...charge,
+          status: 'refunded',
+          error: err.message,
+        });
+      } catch (refundErr) {
+        console.error('[pipeline/build/refund]', refundErr.message);
+      }
+    }
     console.error(`[pipeline/${stage}]`, err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

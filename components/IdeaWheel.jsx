@@ -609,6 +609,7 @@ export default function IdeaWheel() {
   const [infra, setInfra]       = useState(null);
   const [proto, setProto]       = useState(null);
   const [bpErr, setBpErr]       = useState("");
+  const [bpChargeToken, setBpChargeToken] = useState("");
   const [protoOpen, setProtoOpen] = useState(false);
 
   // pricing
@@ -795,9 +796,9 @@ export default function IdeaWheel() {
       verdictType: comp.verdictType,
       overallScore: comp?.eval?.scores?.overall || null,
     }, sessionId);
-    setCredits(c => c - cost);
     setBpStage(1); setBpErr("");
     setDesign(null); setGtm(null); setInfra(null); setProto(null);
+    setBpChargeToken("");
     setProtoOpen(false);
 
     const base = {
@@ -810,33 +811,38 @@ export default function IdeaWheel() {
       sessionId,
       validationId: comp.validationId,
       comp,
+      creditCost: cost,
     };
     const api = (body) => fetch("/api/pipeline/build", {
       method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
     }).then(r => r.json());
 
     try {
+      let chargeToken = bpChargeToken || "";
+
       // Stage 1 – designer
       const d = await api({ ...base, stage:"designer" });
       if (d.error) throw new Error(d.error);
+      chargeToken = d.chargeToken || "";
+      setBpChargeToken(chargeToken);
+      if (Number.isFinite(d.balance)) setCredits(d.balance);
       setDesign(d.result); setBpStage(2);
 
       // Stage 2 – launch
-      const g = await api({ ...base, stage:"launch", design: d.result });
+      const g = await api({ ...base, stage:"launch", design: d.result, chargeToken });
       if (g.error) throw new Error(g.error);
       setGtm(g.result); setBpStage(3);
 
       // Stage 3 – infrastructure
-      const inf = await api({ ...base, stage:"infrastructure", design: d.result, gtm: g.result });
+      const inf = await api({ ...base, stage:"infrastructure", design: d.result, gtm: g.result, chargeToken });
       if (inf.error) throw new Error(inf.error);
       setInfra(inf.result); setBpStage(4);
 
       // Stage 4 – prototype
-      const pr = await api({ ...base, stage:"builder", design: d.result, gtm: g.result, infra: inf.result });
+      const pr = await api({ ...base, stage:"builder", design: d.result, gtm: g.result, infra: inf.result, chargeToken });
       if (pr.error) throw new Error(pr.error);
       setProto(pr.result); setBpStage("done");
     } catch(e) {
-      setCredits(c => c + creditCost(comp?.score ?? 0));
       setBpErr(e.message);
     }
   };
