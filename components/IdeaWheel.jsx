@@ -508,6 +508,7 @@ function SlotMachine({ onResult }) {
 
   const spinAll = () => {
     if (anySpinning) return;
+    setHasSpun(true);
     const actionIdx = selectIndex(0);
     const action = banks[0][actionIdx];
     const allowedWorkflows = (m.pairMap?.[action] || banks[1]).filter((workflow) => banks[1].includes(workflow));
