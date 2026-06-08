@@ -605,6 +605,7 @@ export default function IdeaWheel() {
   const [infra, setInfra]       = useState(null);
   const [proto, setProto]       = useState(null);
   const [bpErr, setBpErr]       = useState("");
+  const [bpChargeToken, setBpChargeToken] = useState("");  // server charge token, reused across resume so the credit is taken once
   const [protoOpen, setProtoOpen] = useState(false);
 
   // pricing
@@ -816,45 +817,23 @@ export default function IdeaWheel() {
   };
 
   /* ── PAID BLUEPRINT ── */
-  // Charge exactly once. For signed-in users this hits Supabase atomically;
-  // returns true only if the credit was actually taken.
-  const chargeForBlueprint = async (cost) => {
-    if (!authUser) {                                  // anonymous fallback (wheel is normally auth-gated)
-      if (credits < cost) { setShowPricing(true); return false; }
-      setCredits(c => c - cost);
-      return true;
-    }
-    try {
-      const r = await fetch('/api/credits/spend', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cost, reason: 'blueprint', validationId: comp?.validationId }),
-      });
-      const data = await r.json().catch(() => ({}));
-      if (r.ok && data.ok) { setCredits(data.balance); return true; }
-      if (typeof data.balance === 'number') setCredits(data.balance);
-      setShowPricing(true);                            // insufficient / no credits / auth
-      return false;
-    } catch {
-      setShowPricing(true);
-      return false;
-    }
-  };
-
-  // `resume` continues from the first incomplete stage and never re-charges —
-  // the credit was already spent when the blueprint first started.
+  // The build route charges server-side on the first (designer) stage and hands
+  // back a chargeToken; every later stage reuses that token, so the credit is
+  // taken exactly once. `resume` picks up from the first incomplete stage with
+  // the same token, so a mid-pipeline failure never costs a second credit.
   const runBlueprint = async ({ resume = false } = {}) => {
     if (!comp) return;
     const cost = BLUEPRINT_COST;
 
     if (!resume) {
-      const paid = await chargeForBlueprint(cost);
-      if (!paid) return;
+      if (credits < cost) { setShowPricing(true); return; }   // fast client gate; the server is the source of truth
       void trackOutcome('blueprint_started', {
         validationId: comp.validationId,
         verdictType: comp.verdictType,
         overallScore: comp?.eval?.scores?.overall || null,
       }, sessionId);
       setDesign(null); setGtm(null); setInfra(null); setProto(null); setProtoOpen(false);
+      setBpChargeToken("");
     }
     setBpErr("");
 
@@ -868,6 +847,7 @@ export default function IdeaWheel() {
       sessionId,
       validationId: comp.validationId,
       comp,
+      creditCost: cost,
     };
     const api = (body) => fetch("/api/pipeline/build", {
       method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
@@ -878,38 +858,42 @@ export default function IdeaWheel() {
       let g = resume ? gtm   : null;
       let inf = resume ? infra : null;
       let pr = resume ? proto : null;
+      let chargeToken = bpChargeToken || "";
 
-      // Stage 1 – designer
+      // Stage 1 – designer (server charges the credit here and returns the token)
       if (!d) {
         setBpStage(1);
         const r = await api({ ...base, stage:"designer" });
-        if (r.error) throw new Error(r.error);
+        if (r.error) { if (/not enough credits/i.test(r.error)) setShowPricing(true); throw new Error(r.error); }
+        chargeToken = r.chargeToken || "";
+        setBpChargeToken(chargeToken);
+        if (typeof r.balance === 'number') setCredits(r.balance);
         d = r.result; setDesign(d);
       }
       // Stage 2 – launch
       setBpStage(2);
       if (!g) {
-        const r = await api({ ...base, stage:"launch", design: d });
+        const r = await api({ ...base, stage:"launch", design: d, chargeToken });
         if (r.error) throw new Error(r.error);
         g = r.result; setGtm(g);
       }
       // Stage 3 – infrastructure
       setBpStage(3);
       if (!inf) {
-        const r = await api({ ...base, stage:"infrastructure", design: d, gtm: g });
+        const r = await api({ ...base, stage:"infrastructure", design: d, gtm: g, chargeToken });
         if (r.error) throw new Error(r.error);
         inf = r.result; setInfra(inf);
       }
       // Stage 4 – prototype
       setBpStage(4);
       if (!pr) {
-        const r = await api({ ...base, stage:"builder", design: d, gtm: g, infra: inf });
+        const r = await api({ ...base, stage:"builder", design: d, gtm: g, infra: inf, chargeToken });
         if (r.error) throw new Error(r.error);
         pr = r.result; setProto(pr);
       }
       setBpStage("done");
     } catch(e) {
-      // No refund and no reset — the user can resume from here for free.
+      // No refund and no reset — the user can resume from here for free (the token is preserved).
       setBpErr(e.message);
     }
   };
