@@ -308,6 +308,11 @@ function briefPlayerWeakness(text = '') {
   return first.length > 120 ? `${first.slice(0, 117).trim()}...` : first;
 }
 
+function reelDisplayLine(idea) {
+  if (!idea) return '';
+  return [idea.action, idea.workflow, idea.industry].filter(Boolean).join(' · ');
+}
+
 /* ─── PROTO IFRAME ───────────────────────────────────────────────── */
 function ProtoFrame({ html }) {
   const [src, setSrc] = useState(null);
@@ -1041,8 +1046,19 @@ export default function IdeaWheel() {
                     <span className="su-v-precheck-tag">Live opportunity signal</span>
                     {idea.source && <span className="su-v-precheck-tag">{String(idea.source).toUpperCase()}</span>}
                   </div>
-                  <div className="su-v-minihead" style={{marginBottom:6}}>{idea.title}</div>
-                  <div style={{color:'var(--ink)', fontWeight:600, marginBottom:8}}>{idea.tagline}</div>
+                  <div className="su-v-minihead" style={{marginBottom:6}}>Reel match</div>
+                  <div style={{color:'var(--ink)', fontWeight:700, marginBottom:10}}>{idea.reelDescription || reelDisplayLine(idea)}</div>
+                  <div style={{display:'flex', gap:8, flexWrap:'wrap', marginBottom:10}}>
+                    <span className="su-v-precheck-tag">Reel 1 · {idea.action}</span>
+                    <span className="su-v-precheck-tag">Reel 2 · {idea.workflow}</span>
+                    <span className="su-v-precheck-tag">Reel 3 · {idea.industry}</span>
+                  </div>
+                  {idea.seedTitle && (
+                    <>
+                      <div className="su-v-minihead" style={{marginBottom:6}}>Tracker phrasing</div>
+                      <div style={{color:'var(--ink)', fontWeight:600, marginBottom:8}}>{idea.seedTitle}</div>
+                    </>
+                  )}
                   <div style={{color:'var(--muted)'}}>{idea.blurb}</div>
                 </div>
               )}
