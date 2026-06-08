@@ -14,7 +14,7 @@ function calcCost(inp, out) {
   return (inp * PRICING.input + out * PRICING.output) / 1_000_000;
 }
 
-async function call(prompt, { maxTokens = 1800, webSearch = false, attempt = 0 } = {}) {
+async function call(prompt, { maxTokens = 1800, webSearch = false, searchUses = 3, attempt = 0 } = {}) {
   if (!ANTHROPIC_KEY) throw new Error('ANTHROPIC_API_KEY not set');
 
   const body = {
@@ -24,7 +24,9 @@ async function call(prompt, { maxTokens = 1800, webSearch = false, attempt = 0 }
   };
 
   if (webSearch) {
-    body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+    // Free validation: a basic, capped web search — enough for a score,
+    // advice and market read at the bare minimum of tokens.
+    body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: searchUses }];
   }
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -41,7 +43,7 @@ async function call(prompt, { maxTokens = 1800, webSearch = false, attempt = 0 }
     const retryAfterHeader = Number(res.headers.get('retry-after') || 0);
     const retryMs = retryAfterHeader > 0 ? retryAfterHeader * 1000 : 8000 * (attempt + 1);
     await sleep(retryMs);
-    return call(prompt, { maxTokens, webSearch, attempt: attempt + 1 });
+    return call(prompt, { maxTokens, webSearch, searchUses, attempt: attempt + 1 });
   }
 
   if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);

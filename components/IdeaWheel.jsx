@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { CREDIT_PACKAGES } from "@/lib/pricing";
 import { createClient } from "@/lib/supabase-browser";
 import { DEFAULT_MODE_CONFIGS, buildGeneratorIdea } from "@/lib/generator-config";
@@ -655,6 +655,19 @@ export default function IdeaWheel() {
 
   useEffect(() => () => clearInterval(scanTimerRef.current), []);
 
+  // For signed-in users the Supabase balance is the source of truth: credits
+  // are added on purchase (Stripe webhook) and subtracted on blueprint spend.
+  const refreshBalance = useCallback(async () => {
+    if (!authUser) return;
+    try {
+      const r = await fetch('/api/credits/balance');
+      const d = await r.json();
+      if (typeof d?.balance === 'number') setCredits(d.balance);
+    } catch {}
+  }, [authUser]);
+
+  useEffect(() => { refreshBalance(); }, [refreshBalance]);
+
   useEffect(() => {
     if (!mounted) return;
     try { localStorage.setItem("ideaWheelCredits", String(credits)); } catch {}
@@ -761,18 +774,47 @@ export default function IdeaWheel() {
   };
 
   /* ── PAID BLUEPRINT ── */
-  const runBlueprint = async () => {
+  // Charge exactly once. For signed-in users this hits Supabase atomically;
+  // returns true only if the credit was actually taken.
+  const chargeForBlueprint = async (cost) => {
+    if (!authUser) {                                  // anonymous fallback (wheel is normally auth-gated)
+      if (credits < cost) { setShowPricing(true); return false; }
+      setCredits(c => c - cost);
+      return true;
+    }
+    try {
+      const r = await fetch('/api/credits/spend', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cost, validationId: comp?.validationId }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (r.ok && data.ok) { setCredits(data.balance); return true; }
+      if (typeof data.balance === 'number') setCredits(data.balance);
+      setShowPricing(true);                            // insufficient / no credits / auth
+      return false;
+    } catch {
+      setShowPricing(true);
+      return false;
+    }
+  };
+
+  // `resume` continues from the first incomplete stage and never re-charges —
+  // the credit was already spent when the blueprint first started.
+  const runBlueprint = async ({ resume = false } = {}) => {
+    if (!comp) return;
     const cost = creditCost(comp?.score ?? 0);
-    if (!comp || credits < cost) { setShowPricing(true); return; }
-    void trackOutcome('blueprint_started', {
-      validationId: comp.validationId,
-      verdictType: comp.verdictType,
-      overallScore: comp?.eval?.scores?.overall || null,
-    }, sessionId);
-    setCredits(c => c - cost);
-    setBpStage(1); setBpErr("");
-    setDesign(null); setGtm(null); setInfra(null); setProto(null);
-    setProtoOpen(false);
+
+    if (!resume) {
+      const paid = await chargeForBlueprint(cost);
+      if (!paid) return;
+      void trackOutcome('blueprint_started', {
+        validationId: comp.validationId,
+        verdictType: comp.verdictType,
+        overallScore: comp?.eval?.scores?.overall || null,
+      }, sessionId);
+      setDesign(null); setGtm(null); setInfra(null); setProto(null); setProtoOpen(false);
+    }
+    setBpErr("");
 
     const base = {
       action: idea.action,
@@ -790,27 +832,42 @@ export default function IdeaWheel() {
     }).then(r => r.json());
 
     try {
+      let d = resume ? design : null;
+      let g = resume ? gtm   : null;
+      let inf = resume ? infra : null;
+      let pr = resume ? proto : null;
+
       // Stage 1 – designer
-      const d = await api({ ...base, stage:"designer" });
-      if (d.error) throw new Error(d.error);
-      setDesign(d.result); setBpStage(2);
-
+      if (!d) {
+        setBpStage(1);
+        const r = await api({ ...base, stage:"designer" });
+        if (r.error) throw new Error(r.error);
+        d = r.result; setDesign(d);
+      }
       // Stage 2 – launch
-      const g = await api({ ...base, stage:"launch", design: d.result });
-      if (g.error) throw new Error(g.error);
-      setGtm(g.result); setBpStage(3);
-
+      setBpStage(2);
+      if (!g) {
+        const r = await api({ ...base, stage:"launch", design: d });
+        if (r.error) throw new Error(r.error);
+        g = r.result; setGtm(g);
+      }
       // Stage 3 – infrastructure
-      const inf = await api({ ...base, stage:"infrastructure", design: d.result, gtm: g.result });
-      if (inf.error) throw new Error(inf.error);
-      setInfra(inf.result); setBpStage(4);
-
+      setBpStage(3);
+      if (!inf) {
+        const r = await api({ ...base, stage:"infrastructure", design: d, gtm: g });
+        if (r.error) throw new Error(r.error);
+        inf = r.result; setInfra(inf);
+      }
       // Stage 4 – prototype
-      const pr = await api({ ...base, stage:"builder", design: d.result, gtm: g.result, infra: inf.result });
-      if (pr.error) throw new Error(pr.error);
-      setProto(pr.result); setBpStage("done");
+      setBpStage(4);
+      if (!pr) {
+        const r = await api({ ...base, stage:"builder", design: d, gtm: g, infra: inf });
+        if (r.error) throw new Error(r.error);
+        pr = r.result; setProto(pr);
+      }
+      setBpStage("done");
     } catch(e) {
-      setCredits(c => c + creditCost(comp?.score ?? 0));
+      // No refund and no reset — the user can resume from here for free.
       setBpErr(e.message);
     }
   };
@@ -833,7 +890,6 @@ export default function IdeaWheel() {
 
   const bpRunning = bpStage !== null && bpStage !== "done";
   const bpDone    = bpStage === "done";
-  const vt        = comp?.verdictType || "build";
 
   /* ── SCREENS ── */
   return (
@@ -943,10 +999,12 @@ export default function IdeaWheel() {
       {/* ── WHEEL (slot machine reels) ── */}
       {screen === "wheel" && (
         <section className="su-screen su-wheel-screen">
+          <div className="su-eyebrow su-step-eyebrow">Step one · Spin up an idea</div>
           <SlotMachine onResult={handleSpin}/>
           {/* Validate button + inline results */}
           {idea && (
             <div className="sm-validate-section">
+              <div className="su-eyebrow su-step-eyebrow su-step-eyebrow--mt">Step two · Validate the market</div>
               {showConfetti && <ValidationConfetti key={confettiBurstId} />}
               {!comp && !validating && !validateErr && (
                 <div className="sm-result-cta">
@@ -1095,32 +1153,51 @@ export default function IdeaWheel() {
             <p className="su-screen-desc">{idea.blurb}</p>
           </div>
 
-          {bpRunning && !design && (
-            <div className="su-scan su-glass">
-              <div className="su-scan-bar"><div className="su-scan-fill"/></div>
-              <div className="su-scan-text">Drafting product, launch plan, infrastructure, and prototype…</div>
-            </div>
-          )}
-
-          {bpErr && <p className="su-err">{bpErr} <button className="su-retry" onClick={runBlueprint}>Retry</button></p>}
-
-          {/* Pipeline progress */}
-          {(bpRunning || bpDone) && (
-            <div className="su-pip-progress">
-              {[{n:1,label:"Product"},{n:2,label:"Launch"},{n:3,label:"Infra"},{n:4,label:"Prototype"}].map(({n,label}) => {
-                const done = bpDone || (typeof bpStage === "number" && bpStage > n);
-                const running = typeof bpStage === "number" && bpStage === n;
-                return (
-                  <div key={n} className={`su-pip-step ${done?"done":""} ${running?"running":""}`}>
-                    <div className="su-pip-dot">{done?"✓":running?<span className="su-spin-sm"/>:n}</div>
-                    <span className="su-pip-label">{label}</span>
-                  </div>
-                );
-              })}
-              <div className="su-pip-track">
-                <div className="su-pip-fill" style={{ width: bpDone?"100%":typeof bpStage==="number"?`${((bpStage-1)/4)*100}%`:"0%" }}/>
+          {/* Pipeline progress — a visible bar + per-stage status so the user
+              always knows what's happening, and can resume if a stage fails. */}
+          {(bpRunning || bpDone || bpErr) && (() => {
+            const stages = [
+              { label:"Product",   doing:"Designing the product and MVP scope" },
+              { label:"Launch",    doing:"Writing the launch and first-customer plan" },
+              { label:"Infra",     doing:"Mapping the infrastructure and services" },
+              { label:"Prototype", doing:"Building the clickable prototype" },
+            ];
+            const completed = [design, gtm, infra, proto].filter(Boolean).length;
+            const paused = !!bpErr && !bpDone;
+            const activeIdx = Math.min(completed, 3);
+            const pct = bpDone ? 100 : Math.min(96, Math.round(((completed + (paused ? 0 : 0.5)) / 4) * 100));
+            return (
+              <div className="su-scan su-glass su-bp-progress">
+                <div className="su-scan-head">
+                  <span className="su-scan-text">
+                    {bpDone ? "Blueprint complete" : paused ? "Paused — resume to finish" : `Step ${activeIdx + 1} of 4 · ${stages[activeIdx].doing}…`}
+                  </span>
+                  <span className="su-scan-pct">{pct}%</span>
+                </div>
+                <div className="su-scan-bar su-scan-bar--progress">
+                  <div className="su-scan-fill su-scan-fill--progress" style={{ width:`${pct}%` }}/>
+                </div>
+                <div className="su-pip-progress su-pip-progress--compact">
+                  {stages.map((s, i) => {
+                    const done = bpDone || i < completed;
+                    const running = !bpDone && !paused && i === completed;
+                    const errored = paused && i === completed;
+                    return (
+                      <div key={i} className={`su-pip-step ${done?"done":""} ${running?"running":""} ${errored?"errored":""}`}>
+                        <div className="su-pip-dot">{done?"✓":errored?"!":running?<span className="su-spin-sm"/>:i+1}</div>
+                        <span className="su-pip-label">{s.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            );
+          })()}
+
+          {bpErr && (
+            <p className="su-err">
+              {bpErr} <button className="su-retry" onClick={() => runBlueprint({ resume: true })}>Resume</button>
+            </p>
           )}
 
           {(design || gtm || infra || proto) && (
@@ -1353,6 +1430,8 @@ const CSS = `
   font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
   color:var(--accent-mid); margin-bottom:14px;
 }
+.su-step-eyebrow { text-align:center; }
+.su-step-eyebrow--mt { margin-top:36px; }
 .su-display { font-family:var(--font-display); font-weight:700; letter-spacing:-.025em; line-height:1.05; }
 .su-screen-title { font-size:clamp(30px,4vw,46px); color:var(--ink); margin:0 0 14px; }
 .su-screen-desc { font-size:16px; color:var(--muted); margin:0; line-height:1.6; }
@@ -1619,6 +1698,11 @@ const CSS = `
 }
 .su-pip-track { position:absolute; bottom:0; left:0; right:0; height:2px; background:var(--line); }
 .su-pip-fill { height:100%; background:var(--accent-mid); transition:width .6s var(--ease-out); }
+/* compact pip row used inside the blueprint progress card */
+.su-bp-progress { margin-bottom:28px; }
+.su-pip-progress--compact { background:none; border:none; border-radius:0; padding:14px 0 0; margin:0; margin-top:14px; overflow:visible; }
+.su-pip-step.errored .su-pip-dot { border-color:var(--bad); color:#fff; background:var(--bad); }
+.su-pip-step.errored .su-pip-label { color:var(--bad); }
 .su-pip-step { display:flex; flex-direction:column; align-items:center; gap:8px; }
 .su-pip-dot {
   width:28px; height:28px; border-radius:50%;

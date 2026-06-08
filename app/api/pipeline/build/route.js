@@ -35,7 +35,7 @@ function mergeUsage(...usages) {
   );
 }
 
-async function call(prompt, { model, maxTokens = 1000, webSearch = false, attempt = 0 }) {
+async function call(prompt, { model, maxTokens = 1000, webSearch = false, searchUses = 8, attempt = 0 }) {
   if (!ANTHROPIC_KEY) throw new Error('ANTHROPIC_API_KEY not set');
 
   const body = {
@@ -45,7 +45,8 @@ async function call(prompt, { model, maxTokens = 1000, webSearch = false, attemp
   };
 
   if (webSearch) {
-    body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+    // Paid blueprint: a deeper web search than the free validation.
+    body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: searchUses }];
   }
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -62,7 +63,7 @@ async function call(prompt, { model, maxTokens = 1000, webSearch = false, attemp
     const retryAfterHeader = Number(res.headers.get('retry-after') || 0);
     const retryMs = retryAfterHeader > 0 ? retryAfterHeader * 1000 : 8000 * (attempt + 1);
     await sleep(retryMs);
-    return call(prompt, { model, maxTokens, webSearch, attempt: attempt + 1 });
+    return call(prompt, { model, maxTokens, webSearch, searchUses, attempt: attempt + 1 });
   }
 
   if (!res.ok) {
@@ -636,8 +637,23 @@ export async function POST(request) {
   try {
     switch (stage) {
       case 'designer': {
+        // Deep web research feeds the paid blueprint. Defensive: if it fails or
+        // times out, we still design from the retrieval/validation context.
+        let deepResearch = '';
+        try {
+          const research = await call(
+            `Do fresh competitive research before we design this product: "${agentDesc}".
+Search the web for the most current direct competitors, their pricing, recent (2024-2025) launches, and any market shifts. Return 6-10 tight bullet points of concrete, specific facts — real names, prices and numbers. No preamble, bullets only.`,
+            { model: MODELS.scout, maxTokens: 1200, webSearch: true, searchUses: 8 }
+          );
+          deepResearch = (research.text || '').trim().slice(0, 2500);
+        } catch {
+          deepResearch = '';
+        }
+
         const designerStage = await runJsonStage({
-          prompt: designerPrompt(agentDesc, comp, retrieval),
+          prompt: designerPrompt(agentDesc, comp, retrieval)
+            + (deepResearch ? `\n\nFRESH WEB RESEARCH (use to sharpen specificity and pricing):\n${deepResearch}` : ''),
           model: MODELS.designer,
           maxTokens: 1400,
           critiquePrompt: (draft) => designCritiquePrompt(agentDesc, comp, draft),
