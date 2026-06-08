@@ -379,7 +379,7 @@ const REPEATS = 10;
 const HOME_COPY = 4;
 const REEL_TINTS = ['#7c3aed','#c026d3','#ff4d8d'];
 const TRUST_SPIN_LIMIT = 3;
-const TRUST_SPIN_STATE_KEY = 'ideaWheelTrustSpins.v1';
+const TRUST_SPIN_STATE_KEY = 'ideaWheelTrustSpins.v2';
 // Smooth wind-up → cruise → settle: gentle ease-in start (no teleport on
 // the first frame) and a controlled decel tail (no long creep at the end).
 const SPIN_EASE = 'cubic-bezier(0.30, 0.65, 0.30, 1)';
@@ -403,7 +403,7 @@ function displayReelValue(modeConfig, column, value = '') {
   return modeConfig?.display?.[REEL_DISPLAY_KEYS[column]]?.[value] || value;
 }
 
-function SlotMachine({ onResult }) {
+function SlotMachine({ onResult, trustStateKey }) {
   const [mode, setMode] = useState('b2b');
   const [modeConfigs, setModeConfigs] = useState(CLIENT_DEFAULT_MODE_CONFIGS);
   const stripRefs = [useRef(null), useRef(null), useRef(null)];
@@ -414,16 +414,19 @@ function SlotMachine({ onResult }) {
   const [landed, setLanded] = useState(['','','']);
   const [spinning, setSpinning] = useState([false,false,false]);
   const anySpinning = spinning.some(Boolean);
+  const resolvedTrustStateKey = trustStateKey || `${TRUST_SPIN_STATE_KEY}:anon`;
 
   useEffect(() => {
     try {
-      const parsed = JSON.parse(localStorage.getItem(TRUST_SPIN_STATE_KEY) || '{}');
+      const parsed = JSON.parse(localStorage.getItem(resolvedTrustStateKey) || '{}');
       trustStateRef.current = {
         totalServed: Number(parsed?.totalServed || 0),
         servedKeys: Array.isArray(parsed?.servedKeys) ? parsed.servedKeys : [],
       };
-    } catch {}
-  }, []);
+    } catch {
+      trustStateRef.current = { totalServed: 0, servedKeys: [] };
+    }
+  }, [resolvedTrustStateKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -461,7 +464,7 @@ function SlotMachine({ onResult }) {
       servedKeys: [...served, seed.key],
     };
     trustStateRef.current = nextState;
-    try { localStorage.setItem(TRUST_SPIN_STATE_KEY, JSON.stringify(nextState)); } catch {}
+    try { localStorage.setItem(resolvedTrustStateKey, JSON.stringify(nextState)); } catch {}
   };
 
   useEffect(() => {
@@ -963,7 +966,7 @@ export default function IdeaWheel() {
               <span className="su-grad-text" style={{ display:"block", paddingRight:"6px", paddingBottom:"16px" }}>worth building.</span>
             </h1>
             <p className="su-landing-sub">
-              Generate sharper business ideas in seconds, run a free pre-check, then unlock a deep market scan and blueprint only when one looks worth pursuing.
+              Generate sharper business ideas in seconds, get an instant signal check, then unlock the full market scan and blueprint only when one looks worth pursuing.
             </p>
 
             <div className="su-landing-cta">
@@ -992,8 +995,8 @@ export default function IdeaWheel() {
                 <div className="su-hiw-step">
                   <div className="su-hiw-num">2</div>
                   <div>
-                    <div className="su-hiw-t">Start with a free pre-check, then go deeper only when it earns it</div>
-                    <div className="su-hiw-d">Every idea gets a cheap first-pass verdict. Promising ones can unlock a deeper market scan with competitor analysis, market size, and wedge signals before you commit.</div>
+                    <div className="su-hiw-t">Start with an instant signal check, then go deeper only when it earns it</div>
+                    <div className="su-hiw-d">Every idea gets a fast first-pass read. Promising ones can unlock a deeper market scan with competitor analysis, market size, and wedge signals before you commit.</div>
                   </div>
                 </div>
                 <div className="su-hiw-connector" aria-hidden />
@@ -1041,7 +1044,7 @@ export default function IdeaWheel() {
       {/* ── WHEEL (slot machine reels) ── */}
       {screen === "wheel" && (
         <section className="su-screen su-wheel-screen">
-          <SlotMachine onResult={handleSpin}/>
+          <SlotMachine onResult={handleSpin} trustStateKey={`${TRUST_SPIN_STATE_KEY}:${authUser?.id || 'anon'}`}/>
           {/* Validate button + inline results */}
           {idea && (
             <div className="sm-validate-section">
@@ -1071,10 +1074,10 @@ export default function IdeaWheel() {
               {!comp && !validating && !validateErr && (
                 <div className="sm-result-cta">
                   <button className="su-btn su-btn-primary su-btn-lg" onClick={() => runValidate('precheck')}>
-                    Run free pre-check
+                    Run signal check
                   </button>
                   <div className="su-v-hint" style={{marginTop:12}}>
-                    Cheap first-pass triage now, deeper market scan only if this idea earns it.
+                    Start with a fast signal read, then unlock the full market scan only if this idea earns it.
                   </div>
                 </div>
               )}
@@ -1094,7 +1097,7 @@ export default function IdeaWheel() {
                   ) : (
                     <>
                       <div className="su-scan-bar"><div className="su-scan-fill"/></div>
-                      <div className="su-scan-text">Running a free pre-check on wedge, demand, and workflow fit…</div>
+                      <div className="su-scan-text">Running an instant signal check on wedge, demand, and workflow fit…</div>
                     </>
                   )}
                 </div>
@@ -1165,9 +1168,9 @@ export default function IdeaWheel() {
 
                   {!isDeepScan && (
                     <div className={`su-v-cta ${vt === "avoid" ? "su-v-cta--avoid" : ""}`}>
-                      <div className="su-v-precheck-tag">Free pre-check</div>
+                      <div className="su-v-precheck-tag">Signal check</div>
                       <div className="su-v-cta-text">
-                        {vt === "avoid" ? "Weak first-pass signal. Don’t trust it enough to build yet." : "This passed the cheap filter. Unlock the real market scan if you want competitor and wedge detail."}
+                        {vt === "avoid" ? "Weak first-pass signal. Don’t trust it enough to build yet." : "This cleared the initial signal check. Unlock the full market scan for competitor and wedge detail."}
                       </div>
                       {comp.pivotHint && (
                         <ul className="su-v-bullets su-v-bullets--avoid">
