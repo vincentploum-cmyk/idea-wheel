@@ -1028,23 +1028,26 @@ export default function IdeaWheel() {
                     </div>
                   )}
 
-                  {vt !== "avoid" && (() => {
+                  {(() => {
                     const score = comp.score ?? 0;
                     const cl = creditLabel(score);
                     const cost = cl.cost;
+                    const avoid = vt === "avoid";
                     return (
-                      <div className="su-v-cta">
-                        {score >= 85 && (
+                      <div className={`su-v-cta${avoid ? " su-v-cta--avoid" : ""}`}>
+                        {score >= 85 && !avoid && (
                           <div className="su-v-exceptional">
                             This idea scored in the top tier — it has genuine potential.
                           </div>
                         )}
                         <div className="su-v-cta-text">
-                          {score >= 85 ? "Build this before someone else does." : "Signal is strong. Ready to turn this into a real plan?"}
+                          {avoid
+                            ? "Crowded market — but the right wedge can still win. Get the blueprint to find your angle."
+                            : score >= 85 ? "Build this before someone else does." : "Signal is strong. Ready to turn this into a real plan?"}
                         </div>
                         <div className="su-v-cta-row">
                           <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); }}>
-                            Generate the blueprint
+                            {avoid ? "Create the blueprint" : "Generate the blueprint"}
                             <span className="su-credit-badge">
                               {cost} credit{cost > 1 ? 's' : ''}
                             </span>
@@ -1058,23 +1061,12 @@ export default function IdeaWheel() {
                           <span style={{color: cl.color, fontWeight:700}}>{cl.tier}</span>
                           {' · '}blueprint costs {cost} credit{cost > 1 ? 's' : ''}{' · '}you have {credits} credits
                         </div>
+                        {avoid && (
+                          <button className="su-btn su-btn-ghost su-v-cta-secondary" onClick={() => { setComp(null); setIdea(null); }}>Spin again</button>
+                        )}
                       </div>
                     );
                   })()}
-
-                  {vt === "avoid" && (
-                    <div className="su-v-cta su-v-cta--avoid">
-                      <div className="su-v-cta-text">Crowded market, try a different angle.</div>
-                      {comp.pivotHint && (
-                        <ul className="su-v-bullets su-v-bullets--avoid">
-                          {splitValidationBullets(comp.pivotHint, 4).map((item, i) => (
-                            <li key={i}>{item}</li>
-                          ))}
-                        </ul>
-                      )}
-                      <button className="su-btn su-btn-ghost" onClick={() => { setComp(null); setIdea(null); }}>Spin again</button>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -1574,6 +1566,7 @@ const CSS = `
 .su-v-cta-text { font-size:15.5px; font-weight:600; color:var(--ink); margin-bottom:16px; line-height:1.45; }
 .su-v-cta-row { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
 .su-v-hint { font-size:12px; color:var(--muted); margin-top:12px; }
+.su-v-cta-secondary { margin-top:16px; }
 .su-v-exceptional {
   background:var(--accent-light);
   border:1px solid var(--accent-border); border-radius:var(--r-md);
