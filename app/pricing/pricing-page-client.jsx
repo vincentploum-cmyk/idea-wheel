@@ -153,7 +153,7 @@ const CSS = `
   color:var(--ink); letter-spacing:-.02em; text-decoration:none;
 }
 .pr-back {
-  font-size:13.5px; font-weight:500; color:var(--ink-2);
+  font-family:var(--font-display); font-size:13.5px; font-weight:700; letter-spacing:-.01em; color:var(--ink-2);
   text-decoration:none; padding:8px 14px; border-radius:var(--r-pill);
   border:1px solid var(--pr-line); background:var(--pr-glass-strong); backdrop-filter:blur(8px);
   transition:border-color .15s, color .15s;

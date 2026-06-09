@@ -1583,7 +1583,7 @@ const CSS = `
 }
 .su-nav-links { display:flex; align-items:center; gap:4px; }
 .su-nav-link {
-  font-size:13.5px; font-weight:600; color:var(--ink-2);
+  font-family:var(--font-display); font-size:13.5px; font-weight:700; letter-spacing:-.01em; color:var(--ink-2);
   text-decoration:none; padding:8px 14px; border-radius:var(--r-sm);
   border:1px solid transparent; transition:color .15s, background .15s, border-color .15s;
 }
