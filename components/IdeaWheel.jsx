@@ -2221,28 +2221,28 @@ const CSS = `
   left:8px; right:8px;
   z-index:3;
   pointer-events:none;
-  -webkit-backdrop-filter:blur(7px);
-  backdrop-filter:blur(7px);
+  -webkit-backdrop-filter:blur(13px);
+  backdrop-filter:blur(13px);
 }
 .sm-reel-haze--top {
   top:8px;
   bottom:calc(50% + 39px);
   background:linear-gradient(180deg,
-    rgba(247,242,255,0.94) 0%,
-    rgba(247,242,255,0.62) 55%,
-    rgba(247,242,255,0.16) 100%);
-  -webkit-mask-image:linear-gradient(180deg, #000 0%, #000 56%, transparent 100%);
-  mask-image:linear-gradient(180deg, #000 0%, #000 56%, transparent 100%);
+    rgba(247,242,255,0.97) 0%,
+    rgba(247,242,255,0.90) 60%,
+    rgba(247,242,255,0.66) 100%);
+  -webkit-mask-image:linear-gradient(180deg, #000 0%, #000 80%, transparent 100%);
+  mask-image:linear-gradient(180deg, #000 0%, #000 80%, transparent 100%);
 }
 .sm-reel-haze--bottom {
   top:calc(50% + 39px);
   bottom:8px;
   background:linear-gradient(0deg,
-    rgba(247,242,255,0.94) 0%,
-    rgba(247,242,255,0.62) 55%,
-    rgba(247,242,255,0.16) 100%);
-  -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 44%, #000 100%);
-  mask-image:linear-gradient(180deg, transparent 0%, #000 44%, #000 100%);
+    rgba(247,242,255,0.97) 0%,
+    rgba(247,242,255,0.90) 60%,
+    rgba(247,242,255,0.66) 100%);
+  -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 20%, #000 100%);
+  mask-image:linear-gradient(180deg, transparent 0%, #000 20%, #000 100%);
 }
 
 /* Pre-spin cover: hides the reel words (so nothing is pre-populated) and
@@ -2447,7 +2447,7 @@ const CSS = `
   .sm-modebtn { padding:7px 16px; font-size:12px; }
   .sm-reels-wrap { padding:6px; border-radius:16px; }
   .sm-payline-bar { left:6px; right:6px; height:68px; border-radius:14px; }
-  .sm-reel-haze { left:6px; right:6px; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+  .sm-reel-haze { left:6px; right:6px; -webkit-backdrop-filter:blur(11px); backdrop-filter:blur(11px); }
   .sm-reel-haze--top { top:6px; bottom:calc(50% + 34px); }
   .sm-reel-haze--bottom { top:calc(50% + 34px); bottom:6px; }
   .sm-reels { gap:3px; }
