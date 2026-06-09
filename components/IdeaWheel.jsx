@@ -279,7 +279,9 @@ function cleanValidationText(text = '') {
 
 function splitValidationBullets(text = '', max = 3) {
   const clean = cleanValidationText(text)
-    .replace(/,\s+(but|and|while)\s+/gi, '|$1 ')
+    // Split only on contrastive joins ("…, but …"), never on ", and" — that
+    // breaks comma lists of names like "AppFolio, Yardi, and Buildium".
+    .replace(/,\s+(but|while|whereas)\s+/gi, '|$1 ')
     .replace(/\s*\(\d+\)\s*/g, '|')
     .replace(/\s*[•·]\s*/g, '|')
     .replace(/\.\s+/g, '.|')
@@ -1847,10 +1849,11 @@ const CSS = `
 .su-v-signal-top b { font-size:12.5px; font-weight:500; color:var(--muted); text-align:left; line-height:1.5; overflow-wrap:anywhere; }
 .su-ring-num { font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--ink); line-height:1; letter-spacing:-.02em; }
 .su-ring-label { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
-.su-v-bullets { margin:0; padding-left:18px; display:flex; flex-direction:column; gap:8px; min-width:0; }
-.su-v-bullets li { font-size:13px; color:var(--ink-2); line-height:1.55; overflow-wrap:anywhere; word-break:break-word; }
-.su-v-bullets--compact { gap:6px; }
-.su-v-bullets--compact li { font-size:12.5px; }
+.su-v-bullets { list-style:none; margin:0; padding-left:2px; display:flex; flex-direction:column; gap:10px; min-width:0; }
+.su-v-bullets li { position:relative; padding-left:18px; font-size:13.5px; color:var(--ink-2); line-height:1.55; overflow-wrap:anywhere; word-break:break-word; }
+.su-v-bullets li::before { content:""; position:absolute; left:1px; top:8px; width:6px; height:6px; border-radius:50%; background:var(--grad-brand); }
+.su-v-bullets--compact { gap:8px; }
+.su-v-bullets--compact li { font-size:13px; }
 .su-v-bullets--gap li { color:var(--ink); font-weight:500; }
 .su-v-bullets--player { gap:6px; }
 .su-v-bullets--avoid { text-align:left; max-width:560px; margin:0 auto 18px; }

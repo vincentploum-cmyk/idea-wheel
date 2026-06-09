@@ -281,7 +281,13 @@ Return ONLY a JSON object (no fences):
   "plainSummary": "2-3 plain-English sentences a non-technical person fully understands: is this worth building, who already does it, and where the opening is. No jargon, no buzzwords."
 }
 List up to 5 players, SORTED from largest/most-established to smallest. If premiseFit is "nonexistent", you MUST set verdictType to "avoid". Default to avoid when in doubt. CRITICAL SCOPE CHECK: this product must be SOFTWARE sold to others, not a business to operate.
-Write marketSize, landscape, verdict, verdictReasoning and plainSummary in plain, jargon-free language a non-technical founder can read at a glance.`;
+
+WRITING RULES (apply to marketSize, landscape, gap, verdict, verdictReasoning, premiseNote, plainSummary and every player "coverage"/"weakness"):
+- Write at an 8th-grade reading level. Short, everyday words. Short sentences (aim under 18 words each).
+- Each sentence must stand alone as its own clear point — these render as bullet points, so do not run ideas together with semicolons or long clauses.
+- Ban these words and their cousins: "tier-1", "incumbent", "commoditized", "whitespace", "wedge" (in scout fields), "synergy", "leverage", "robust", "holistic", "ecosystem", "vertical", "horizontal", "TAM", "GTM", "B2B SaaS". If you need one of these ideas, say it in plain words (e.g. "the big players already do this", "no real opening", "an underserved group").
+- Explain any company or acronym in plain terms the first time (e.g. "AppFolio (property-management software)").
+- No marketing fluff. State facts a busy non-technical founder understands in one read.`;
 }
 
 function skepticPrompt(agentDesc, retrieval, scout) {
@@ -370,7 +376,9 @@ function buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval,
     verdict: scout.verdict,
     premiseFit: scout.premiseFit,
     premiseNote,
-    verdictReasoning: `${premiseNote ? premiseNote + ' ' : ''}${judge.reasoning} ${scout.verdictReasoning || ''}`.trim(),
+    // The UI renders premiseNote separately above the verdict, so it is left
+    // out here to avoid showing the same sentence twice.
+    verdictReasoning: `${judge.reasoning} ${scout.verdictReasoning || ''}`.trim(),
     plainSummary: shortText(scout.plainSummary, 360),
     gap: judge.wedge || scout.gap,
     moat: judge.defensibility,
