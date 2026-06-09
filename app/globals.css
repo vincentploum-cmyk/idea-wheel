@@ -47,7 +47,7 @@
 
   /* ── Typography ───────────────────────────────────── */
   /* All "Sora" / "Plus Jakarta Sans" references resolve through these tokens. */
-  --font-display: "Bricolage Grotesque", "Sora", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Epilogue", "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-body:    "Epilogue", "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* ── Legacy aliases (referenced by existing components) ──── */
