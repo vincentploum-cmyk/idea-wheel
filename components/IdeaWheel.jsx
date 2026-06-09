@@ -1028,7 +1028,7 @@ export default function IdeaWheel() {
 
             <h1 className="su-display su-landing-h1">
               <span style={{ display:"block" }}>Find a startup idea</span>
-              <span className="su-grad-text" style={{ display:"block", paddingRight:"6px", paddingBottom:"16px" }}>worth building.</span>
+              <span className="su-grad-text" style={{ display:"block" }}>worth building.</span>
             </h1>
             <p className="su-landing-sub">
               Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.
@@ -1599,7 +1599,7 @@ const CSS = `
 .su-screen {
   position:relative; z-index:1;
   max-width:980px; margin:0 auto;
-  padding:56px 24px 80px;
+  padding:34px 24px 64px;
 }
 .su-screen-head { text-align:center; margin-bottom:48px; }
 .su-eyebrow {
@@ -1611,14 +1611,20 @@ const CSS = `
 .su-display { font-family:var(--font-display); font-weight:700; letter-spacing:-.025em; line-height:1.05; }
 .su-screen-title { font-size:clamp(30px,4vw,46px); color:var(--ink); margin:0 0 14px; }
 .su-screen-desc { font-size:16px; color:var(--muted); margin:0; line-height:1.6; }
-.su-grad-text { color:var(--accent-mid); }
+.su-grad-text {
+  background:var(--grad-brand);
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  color:transparent;
+}
 
 /* landing */
-.su-landing { min-height:auto; display:flex; align-items:center; justify-content:center; padding:60px 24px 40px; }
+.su-landing { min-height:auto; display:flex; align-items:center; justify-content:center; padding:26px 24px 20px; }
 .su-landing-inner { text-align:center; max-width:760px; margin:0 auto; position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; }
-.su-landing-h1 { font-size:clamp(44px,6.5vw,76px); padding-bottom:0; line-height:1.05; text-align:center; color:var(--ink); margin:0 0 22px; }
-.su-landing-sub { font-size:17px; color:var(--muted); margin:0 auto 24px; line-height:1.65; max-width:620px; }
-.su-landing-cta { display:flex; flex-direction:column; align-items:center; gap:12px; margin:28px 0 12px; }
+.su-landing-h1 { font-size:clamp(44px,6.5vw,76px); padding-bottom:0; line-height:1.01; text-align:center; color:var(--ink); margin:0 0 14px; }
+.su-landing-sub { font-size:17px; color:var(--muted); margin:0 auto 18px; line-height:1.6; max-width:620px; }
+.su-landing-cta { display:flex; flex-direction:column; align-items:center; gap:12px; margin:18px 0 8px; }
 .su-landing-cta-row { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
 
 /* proof bar */
@@ -2013,13 +2019,13 @@ const CSS = `
 
 /* ── how it works ─────────────────────────────────────────────────── */
 .su-hiw {
-  margin-top:64px; width:100%; max-width:640px;
+  margin-top:40px; width:100%; max-width:640px;
   padding:0;
   text-align:left;
 }
 .su-hiw-label {
   font-size:11px; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
-  color:var(--muted); margin-bottom:28px; text-align:center;
+  color:var(--muted); margin-bottom:20px; text-align:center;
 }
 .su-hiw-steps { display:flex; flex-direction:column; gap:0; }
 .su-hiw-step { display:flex; align-items:flex-start; gap:18px; }
@@ -2051,7 +2057,7 @@ const CSS = `
 .su-combos-text { font-size:14px; color:var(--muted); font-weight:500; line-height:1.4; }
 
 /* ── reviews ──────────────────────────────────────────────────────── */
-.su-reviews { margin-top:72px; width:100%; max-width:980px; }
+.su-reviews { margin-top:52px; width:100%; max-width:980px; }
 .su-reviews-label {
   font-size:11px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
   color:var(--muted); text-align:center; margin-bottom:28px;
@@ -2430,10 +2436,12 @@ const CSS = `
 /* responsive */
 @media(max-width:640px){
   .su-nav { padding:16px 16px 0; }
-  .su-screen { padding:32px 16px 60px; }
-  .su-landing { padding:28px 16px 24px; }
-  .su-landing-h1 { font-size:36px; line-height:1.06; margin-bottom:18px; }
-  .su-landing-sub { font-size:14.5px; line-height:1.6; max-width:34ch; }
+  .su-screen { padding:24px 16px 48px; }
+  .su-landing { padding:18px 16px 18px; }
+  .su-landing-h1 { font-size:36px; line-height:1.02; margin-bottom:12px; }
+  .su-landing-sub { font-size:14.5px; line-height:1.55; max-width:34ch; margin-bottom:14px; }
+  .su-landing-cta { margin:12px 0 6px; }
+  .su-hiw { margin-top:28px; }
   .su-landing-cta-row { width:100%; gap:10px; }
   .su-landing-cta-row .su-btn { flex:1 1 100%; }
   .su-wheel-wrap { width:280px; height:280px; }
