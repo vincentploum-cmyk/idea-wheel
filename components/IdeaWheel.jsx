@@ -385,6 +385,8 @@ const ITEM_H = 72;
 const REPEATS = 8;
 const HOME_COPY = 3;
 const REEL_TINTS = ['#315DFF','#5A6FFF','#8A96FF'];
+const TRUST_SPIN_LIMIT = 3;
+const TRUST_SPIN_STATE_KEY = 'ideaWheelTrustSpins.v2';
 // Smooth wind-up → cruise → settle: gentle ease-in start (no teleport on
 // the first frame) and a controlled decel tail (no long creep at the end).
 const SPIN_EASE = 'cubic-bezier(0.30, 0.65, 0.30, 1)';
@@ -422,17 +424,37 @@ function pickWeightedIndex(weights = []) {
 }
 
 const CLIENT_DEFAULT_MODE_CONFIGS = DEFAULT_MODE_CONFIGS;
+const REEL_DISPLAY_KEYS = ['actions', 'workflows', 'industries'];
 
-function SlotMachine({ onResult }) {
+function displayReelValue(modeConfig, column, value = '') {
+  return modeConfig?.display?.[REEL_DISPLAY_KEYS[column]]?.[value] || value;
+}
+
+function SlotMachine({ onResult, trustStateKey }) {
   const [mode, setMode] = useState('b2b');
   const [modeConfigs, setModeConfigs] = useState(CLIENT_DEFAULT_MODE_CONFIGS);
   const stripRefs = [useRef(null), useRef(null), useRef(null)];
   const indexRef = useRef([0,0,0]);
   const targetRef = useRef([0,0,0]);
+  const trustStateRef = useRef({ totalServed: 0, servedKeys: [] });
+  const pendingSeedRef = useRef(null);
   const [landed, setLanded] = useState(['','','']);
   const [spinning, setSpinning] = useState([false,false,false]);
   const [hasSpun, setHasSpun] = useState(false);
   const anySpinning = spinning.some(Boolean);
+  const resolvedTrustStateKey = trustStateKey || `${TRUST_SPIN_STATE_KEY}:anon`;
+
+  useEffect(() => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(resolvedTrustStateKey) || '{}');
+      trustStateRef.current = {
+        totalServed: Number(parsed?.totalServed || 0),
+        servedKeys: Array.isArray(parsed?.servedKeys) ? parsed.servedKeys : [],
+      };
+    } catch {
+      trustStateRef.current = { totalServed: 0, servedKeys: [] };
+    }
+  }, [resolvedTrustStateKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -451,6 +473,28 @@ function SlotMachine({ onResult }) {
   const banks = m.banks;
   const weights = m.weights || banks.map((bank) => bank.map(() => 1));
 
+  const getTrustedSeedCandidate = () => {
+    const queue = Array.isArray(m.trustQueue) ? m.trustQueue : [];
+    const current = trustStateRef.current || { totalServed: 0, servedKeys: [] };
+    if (current.totalServed >= TRUST_SPIN_LIMIT || !queue.length) return null;
+
+    const served = new Set(current.servedKeys || []);
+    return queue.find((seed) => seed?.key && !served.has(seed.key)) || null;
+  };
+
+  const markTrustedSeedServed = (seed) => {
+    if (!seed?.key) return;
+    const current = trustStateRef.current || { totalServed: 0, servedKeys: [] };
+    const served = new Set(current.servedKeys || []);
+    if (served.has(seed.key)) return;
+    const nextState = {
+      totalServed: current.totalServed + 1,
+      servedKeys: [...served, seed.key],
+    };
+    trustStateRef.current = nextState;
+    try { localStorage.setItem(resolvedTrustStateKey, JSON.stringify(nextState)); } catch {}
+  };
+
   useEffect(() => {
     banks.forEach((bank,w) => {
       const start = Math.floor(Math.random()*bank.length);
@@ -460,6 +504,8 @@ function SlotMachine({ onResult }) {
     });
     setLanded(['','','']);
     setSpinning([false,false,false]);
+    setHasSpun(false);
+    pendingSeedRef.current = null;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, JSON.stringify(banks)]);
 
@@ -530,6 +576,23 @@ function SlotMachine({ onResult }) {
   const spinAll = () => {
     if (anySpinning) return;
     setHasSpun(true);
+    const trustedSeed = getTrustedSeedCandidate();
+    if (trustedSeed) {
+      const actionIdx = banks[0].indexOf(trustedSeed.action);
+      const workflowIdx = banks[1].indexOf(trustedSeed.workflow);
+      const industryIdx = banks[2].indexOf(trustedSeed.industry);
+
+      if (actionIdx !== -1 && workflowIdx !== -1 && industryIdx !== -1) {
+        markTrustedSeedServed(trustedSeed);
+        pendingSeedRef.current = trustedSeed;
+        spinWheelTo(0, actionIdx, 1850);
+        spinWheelTo(1, workflowIdx, 2200);
+        spinWheelTo(2, industryIdx, 2550);
+        return;
+      }
+    }
+
+    pendingSeedRef.current = null;
     const actionIdx = selectIndex(0);
     const action = banks[0][actionIdx];
     const allowedWorkflows = (m.pairMap?.[action] || banks[1]).filter((workflow) => banks[1].includes(workflow));
@@ -547,14 +610,15 @@ function SlotMachine({ onResult }) {
 
   useEffect(() => {
     if (complete && !anySpinning && onResult) {
-      onResult(buildGeneratorIdea(m, landed[0], landed[1], landed[2]));
+      onResult(buildGeneratorIdea(m, landed[0], landed[1], landed[2], pendingSeedRef.current));
+      pendingSeedRef.current = null;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [complete, anySpinning]);
 
   const prefix = m.prefix;
   const conn = m.connector;
-  const liveVerb = landed[0] ? landed[0].toLowerCase() : '';
+  const liveVerb = landed[0] ? displayReelValue(m, 0, landed[0]).toLowerCase() : '';
 
   return (
     <div className="sm-root">
@@ -1180,13 +1244,44 @@ export default function IdeaWheel() {
       {/* ── WHEEL (slot machine reels) ── */}
       {screen === "wheel" && (
         <section className="su-screen su-wheel-screen">
-          <div className="su-eyebrow su-step-eyebrow">Step 1 · Generate idea</div>
-          <SlotMachine onResult={handleSpin}/>
+          <div className="su-wheel-shell">
+            <div className="su-wheel-shell-head">
+              <div className="su-panel-label">Idea generator</div>
+              <h2 className="su-display su-wheel-shell-title">Spin into a sharper starting point.</h2>
+              <p className="su-wheel-shell-copy">
+                The reels are tuned to land on combinations that feel more concrete, then the signal check filters out the weak ones before you spend more time.
+              </p>
+            </div>
+
+            <SlotMachine onResult={handleSpin} trustStateKey={`${TRUST_SPIN_STATE_KEY}:${authUser?.id || 'anon'}`}/>
+          </div>
           {/* Validate button + inline results */}
           {idea && (
             <div className="sm-validate-section">
               <div className="su-eyebrow su-step-eyebrow su-step-eyebrow--mt">Step 2 · Free basic market research</div>
               {showConfetti && <ValidationConfetti key={confettiBurstId} />}
+              {idea.seeded && (
+                <div className="su-card su-idea-match-card" style={{marginTop:20, marginBottom:20}}>
+                  <div className="su-idea-match-tags">
+                    <span className="su-v-precheck-tag">Live opportunity signal</span>
+                    {idea.source && <span className="su-v-precheck-tag">{String(idea.source).toUpperCase()}</span>}
+                  </div>
+                  <div className="su-v-minihead" style={{marginBottom:6}}>Reel match</div>
+                  <div className="su-idea-match-title">{idea.reelDescription || reelDisplayLine(idea)}</div>
+                  <div className="su-idea-match-reels">
+                    <span className="su-v-precheck-tag">Reel 1 · {idea.displayAction || idea.action}</span>
+                    <span className="su-v-precheck-tag">Reel 2 · {idea.displayWorkflow || idea.workflow}</span>
+                    <span className="su-v-precheck-tag">Reel 3 · {idea.displayIndustry || idea.industry}</span>
+                  </div>
+                  {idea.seedTitle && (
+                    <>
+                      <div className="su-v-minihead" style={{marginBottom:6}}>Tracker phrasing</div>
+                      <div className="su-idea-match-seed">{idea.seedTitle}</div>
+                    </>
+                  )}
+                  <div className="su-idea-match-copy">{idea.blurb}</div>
+                </div>
+              )}
               {!comp && !validating && !validateErr && (
                 <div className="sm-result-cta">
                   <button className="su-btn su-btn-primary su-btn-lg" onClick={runValidate}>
@@ -1908,6 +2003,25 @@ const CSS = `
 
 /* wheel */
 .su-wheel-screen .su-screen-head { margin-bottom:36px; }
+.su-wheel-shell {
+  display:grid; gap:24px; justify-items:center;
+  margin:0 auto 26px; padding:34px 28px 30px;
+  border-radius:34px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(244,246,249,0.62) 100%);
+  border:1px solid rgba(15,23,42,0.08);
+  box-shadow:0 38px 90px -58px rgba(15,23,42,0.22);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+.su-wheel-shell-head {
+  max-width:640px; text-align:center; display:grid; gap:10px;
+}
+.su-wheel-shell-title {
+  margin:0; font-size:clamp(34px, 4.5vw, 54px); color:var(--ink);
+}
+.su-wheel-shell-copy {
+  margin:0; font-size:15px; line-height:1.7; color:var(--muted); text-wrap:pretty;
+}
 .su-wheel-stage { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:start; }
 @media(max-width:700px){ .su-wheel-stage { grid-template-columns:1fr; } }
 .su-wheel-wrap { position:relative; width:320px; height:320px; margin:0 auto; }
@@ -1969,6 +2083,26 @@ const CSS = `
   border:1px solid var(--line); border-radius:var(--r-xl);
   padding:24px; box-shadow:var(--sh-sm);
 }
+.su-idea-match-card {
+  background:linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(246,248,252,0.8) 100%);
+  border-color:rgba(15,23,42,0.07);
+  box-shadow:0 24px 48px -38px rgba(15,23,42,0.18);
+}
+.su-idea-match-tags,
+.su-idea-match-reels {
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+}
+.su-idea-match-tags { margin-bottom:12px; }
+.su-idea-match-reels { margin-bottom:12px; }
+.su-idea-match-title {
+  color:var(--ink); font-weight:600; font-size:20px; line-height:1.35; letter-spacing:-.03em; margin-bottom:12px;
+}
+.su-idea-match-seed {
+  color:var(--ink); font-weight:600; margin-bottom:10px; line-height:1.55; text-wrap:pretty;
+}
+.su-idea-match-copy {
+  color:var(--muted); line-height:1.7; font-size:14px; max-width:70ch;
+}
 .su-glass { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); }
 
 /* scan */
@@ -2012,20 +2146,29 @@ const CSS = `
   10% { opacity:1; }
   100% { opacity:0; transform:translate3d(var(--confetti-drift), 280px, 0) rotate(var(--confetti-spin)) scale(1); }
 }
-.su-validate-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.su-validate-grid { display:grid; grid-template-columns:1.02fr 0.98fr; gap:18px; }
 @media(max-width:640px){ .su-validate-grid { grid-template-columns:1fr; } }
-.su-v-score { display:flex; align-items:flex-start; gap:20px; min-width:0; }
+.su-v-score {
+  display:flex; align-items:flex-start; gap:22px; min-width:0;
+  background:linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(245,247,250,0.82) 100%);
+}
 .su-v-score-side { display:flex; flex-direction:column; gap:10px; min-width:0; flex:1 1 auto; }
 .su-v-minihead { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
-.su-v-market { display:flex; flex-direction:column; gap:16px; min-width:0; }
+.su-v-market {
+  display:flex; flex-direction:column; gap:16px; min-width:0;
+  background:linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(245,247,250,0.78) 100%);
+}
 .su-v-market-cell { display:flex; flex-direction:column; gap:8px; min-width:0; }
 .su-v-k { font-family:var(--font-display); font-size:26px; font-weight:700; line-height:1; }
-.su-v-l { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.su-v-l { font-size:12px; font-weight:600; letter-spacing:-.01em; text-transform:none; color:var(--ink); }
 .su-v-gap { padding:14px; background:var(--bg-2); border-radius:var(--r-md); }
 .su-v-gap-label { font-size:10px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--violet); margin-bottom:8px; }
-.su-v-signals { grid-column:1/-1; }
+.su-v-signals {
+  grid-column:1/-1;
+  background:linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(245,247,250,0.78) 100%);
+}
 /* deep market research panel */
-/* Plain-English layer — a digestible lead shown above the detailed content. */
+/* Plain-English layer, a digestible lead shown above the detailed content. */
 .su-plain { background:rgba(124,58,237,0.06); border:1px solid rgba(124,58,237,0.16); border-radius:12px; padding:12px 14px; margin:0 0 14px; }
 .su-plain--compact { padding:10px 12px; margin-bottom:12px; }
 .su-plain-label { font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-mid); margin-bottom:6px; }
@@ -2048,27 +2191,33 @@ const CSS = `
 .su-v-deep-communities { color:var(--accent-mid); font-weight:600; }
 .su-v-deep-progress { margin:14px 0 4px; }
 .su-v-signals-head { font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
-.su-v-signal { margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--line); }
-.su-v-signal:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none; }
-/* Player name stacked above its pricing/description — the pricing field is
-   often a long sentence, so it gets a full-width, left-aligned line instead
-   of being crammed into a narrow right-aligned column. */
-.su-v-signal-top { display:flex; flex-direction:column; gap:3px; margin-bottom:8px; min-width:0; }
+.su-v-signal {
+  display:grid; gap:8px; margin-bottom:0; padding:14px 0;
+  border-top:1px solid var(--line);
+}
+.su-v-signal:first-of-type { padding-top:0; border-top:none; }
+.su-v-signal:last-child { padding-bottom:0; }
+.su-v-signal-top { display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; }
 .su-v-signal-top span { font-size:13.5px; font-weight:700; color:var(--ink); overflow-wrap:anywhere; }
-.su-v-signal-top b { font-size:12.5px; font-weight:500; color:var(--muted); text-align:left; line-height:1.5; overflow-wrap:anywhere; }
+.su-v-signal-top b { font-size:12.5px; font-weight:500; color:var(--muted); text-align:right; line-height:1.5; overflow-wrap:anywhere; }
 .su-ring-num { font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--ink); line-height:1; letter-spacing:-.02em; }
 .su-ring-label { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
 .su-v-bullets { margin:0; padding-left:18px; display:flex; flex-direction:column; gap:8px; min-width:0; }
-.su-v-bullets li { font-size:13px; color:var(--ink-2); line-height:1.55; overflow-wrap:anywhere; word-break:break-word; }
+.su-v-bullets li { font-size:13px; color:var(--ink-2); line-height:1.62; overflow-wrap:anywhere; word-break:break-word; }
 .su-v-bullets--compact { gap:6px; }
-.su-v-bullets--compact li { font-size:12.5px; }
+.su-v-bullets--compact li { font-size:13px; }
 .su-v-bullets--gap li { color:var(--ink); font-weight:500; }
 .su-v-bullets--player { gap:6px; }
 .su-v-bullets--avoid { text-align:left; max-width:560px; margin:0 auto 18px; }
 .su-v-bullets--avoid li { font-size:13px; }
-.su-v-cta { grid-column:1/-1; text-align:center; padding:28px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-xl); }
-.su-v-cta--avoid { background:rgba(185,28,28,0.03); border-color:rgba(185,28,28,0.18); }
-.su-v-cta-text { font-size:15.5px; font-weight:600; color:var(--ink); margin-bottom:16px; line-height:1.45; }
+.su-v-cta {
+  grid-column:1/-1; text-align:center; padding:32px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(245,247,250,0.84) 100%);
+  border:1px solid rgba(15,23,42,0.08); border-radius:32px;
+  box-shadow:0 28px 56px -42px rgba(15,23,42,0.18);
+}
+.su-v-cta--avoid { background:linear-gradient(180deg, rgba(255,249,249,0.92) 0%, rgba(252,244,244,0.84) 100%); border-color:rgba(185,28,28,0.14); }
+.su-v-cta-text { font-size:18px; font-weight:600; color:var(--ink); margin-bottom:16px; line-height:1.4; letter-spacing:-.025em; }
 .su-v-cta-row { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
 .su-v-hint { font-size:12px; color:var(--muted); margin-top:12px; }
 .su-v-cta-secondary { margin-top:16px; }
@@ -2088,6 +2237,12 @@ const CSS = `
   border:1px solid var(--accent-border); border-radius:var(--r-md);
   padding:11px 16px; margin-bottom:16px;
   font-size:13.5px; font-weight:500; color:var(--accent); line-height:1.5;
+}
+.su-v-precheck-tag {
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:4px 10px; border-radius:999px; margin-bottom:14px;
+  font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--accent-mid); background:rgba(238,244,255,0.96); border:1px solid rgba(79,70,229,0.12);
 }
 .su-credit-badge {
   display:inline-flex; align-items:center; padding:3px 8px;
@@ -2672,6 +2827,9 @@ const CSS = `
   .tr-window { height:156px; }
   .tr-item { font-size:12px; padding:0 6px; }
   .su-hiw-steps, .su-reviews-grid { grid-template-columns:1fr; }
+  .su-wheel-shell { padding:24px 18px 22px; border-radius:26px; }
+  .su-wheel-shell-title { font-size:32px; }
+  .su-wheel-shell-copy { font-size:14px; }
   .su-wheel-wrap { width:280px; height:280px; }
   .su-bp-grid,.su-validate-grid { grid-template-columns:1fr; }
   .su-v-score { flex-direction:column; align-items:stretch; }
