@@ -1780,11 +1780,11 @@ const CSS = `
 }
 .su-step-eyebrow { text-align:center; }
 .su-step-eyebrow--mt { margin-top:36px; }
-.su-display { font-family:var(--font-display); font-weight:600; letter-spacing:-.045em; line-height:0.96; text-wrap:balance; }
+.su-display { font-family:var(--font-display); font-weight:700; letter-spacing:-.055em; line-height:0.92; text-wrap:balance; }
 .su-screen-title { font-size:clamp(30px,4vw,46px); color:var(--ink); margin:0 0 14px; }
 .su-screen-desc { font-size:16px; color:var(--muted); margin:0; line-height:1.6; }
 .su-grad-text {
-  background:linear-gradient(180deg, rgba(29,29,31,0.96) 0%, rgba(79,70,229,0.86) 100%);
+  background:linear-gradient(135deg, #312E81 0%, #4F46E5 48%, #7C8CFF 100%);
   -webkit-background-clip:text;
   background-clip:text;
   -webkit-text-fill-color:transparent;
@@ -1792,45 +1792,47 @@ const CSS = `
 }
 
 /* landing */
-.su-landing { min-height:auto; display:flex; align-items:center; justify-content:center; padding-top:56px; }
+.su-landing { min-height:auto; display:flex; align-items:center; justify-content:center; padding-top:36px; }
 .su-landing-inner {
   width:100%; margin:0 auto; position:relative; z-index:2;
   display:flex; flex-direction:column; align-items:center;
 }
 .su-kicker {
   display:inline-flex; align-items:center; gap:8px;
-  padding:8px 14px; border-radius:999px;
-  background:rgba(255,255,255,0.72);
-  border:1px solid rgba(15,23,42,0.08);
-  box-shadow:0 20px 40px -32px rgba(15,23,42,0.18);
+  padding:9px 16px; border-radius:999px;
+  background:rgba(255,255,255,0.84);
+  border:1px solid rgba(15,23,42,0.06);
+  box-shadow:0 14px 32px -26px rgba(15,23,42,0.14);
   color:var(--ink-2); font-size:12px; font-weight:600; letter-spacing:-.01em;
 }
 .su-landing-h1 {
-  font-size:clamp(58px,8.8vw,112px);
-  text-align:center; color:var(--ink); margin:22px 0 18px;
-  max-width:10.4ch;
+  font-size:clamp(50px,7vw,92px);
+  text-align:center; color:var(--ink); margin:20px 0 16px;
+  max-width:11.8ch;
+  text-wrap:balance;
 }
 .su-landing-sub {
-  font-size:19px; color:var(--muted); margin:0 auto 28px; line-height:1.7;
-  max-width:670px; text-align:center; text-wrap:pretty;
+  font-size:17px; color:var(--muted); margin:0 auto 30px; line-height:1.68;
+  max-width:720px; text-align:center; text-wrap:pretty;
 }
-.su-landing-cta { display:flex; flex-direction:column; align-items:center; gap:12px; margin:0 0 18px; }
+.su-landing-cta { display:flex; flex-direction:column; align-items:center; gap:12px; margin:0 0 26px; }
 .su-landing-cta-row { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
 .su-hero-metrics {
-  width:100%; max-width:900px; display:grid; grid-template-columns:1.06fr 0.92fr 1.02fr;
-  gap:14px; margin:18px 0 34px;
+  width:100%; max-width:980px; display:grid; grid-template-columns:1.06fr 0.92fr 1.02fr;
+  gap:18px; margin:10px 0 34px;
 }
 .su-hero-metric {
   display:flex; flex-direction:column; align-items:flex-start; gap:6px;
-  padding:18px 20px; border-radius:22px;
-  background:rgba(255,255,255,0.68); border:1px solid rgba(15,23,42,0.07);
-  box-shadow:0 26px 60px -44px rgba(15,23,42,0.18);
+  justify-content:space-between; min-height:126px;
+  padding:22px 22px 18px; border-radius:24px;
+  background:rgba(255,255,255,0.78); border:1px solid rgba(15,23,42,0.06);
+  box-shadow:0 22px 48px -38px rgba(15,23,42,0.14);
 }
 .su-hero-metric-value {
-  font-family:var(--font-display); font-size:28px; font-weight:600; letter-spacing:-.04em; color:var(--ink);
+  font-family:var(--font-display); font-size:34px; font-weight:700; letter-spacing:-.05em; color:var(--ink);
 }
 .su-hero-metric-label {
-  font-size:13px; line-height:1.5; color:var(--muted); max-width:22ch;
+  font-size:13.5px; line-height:1.5; color:var(--muted); max-width:20ch;
 }
 .su-hero-stage {
   width:100%; display:grid; grid-template-columns:minmax(0, 1.02fr) minmax(340px, 0.98fr);
@@ -2810,10 +2812,10 @@ const CSS = `
     padding:12px 14px;
   }
   .su-screen { padding:32px 16px 60px; }
-  .su-landing { padding:28px 16px 24px; }
+  .su-landing { padding:24px 16px 24px; }
   .su-kicker { font-size:11px; }
-  .su-landing-h1 { font-size:44px; line-height:1; margin-bottom:18px; }
-  .su-landing-sub { font-size:14.5px; line-height:1.6; max-width:34ch; }
+  .su-landing-h1 { font-size:42px; line-height:0.96; margin-bottom:16px; max-width:12ch; }
+  .su-landing-sub { font-size:14.5px; line-height:1.62; max-width:35ch; }
   .su-landing-cta-row { width:100%; gap:10px; }
   .su-landing-cta-row .su-btn { flex:1 1 100%; }
   .su-hero-metrics { grid-template-columns:1fr; width:100%; }
