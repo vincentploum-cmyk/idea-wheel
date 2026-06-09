@@ -173,7 +173,7 @@ function Wheel({ onResult }) {
         {SEGMENTS.map((s,i) => (
           <g key={s.id} transform={`rotate(${i*seg} ${C} ${C})`}>
             <text x={C} y={60} textAnchor="middle"
-              fontFamily="Sora,sans-serif" fontWeight="700" fontSize="17" fill="#fff">{s.label}</text>
+              fontFamily="var(--font-display)" fontWeight="700" fontSize="17" fill="#fff">{s.label}</text>
           </g>
         ))}
         <circle cx={C} cy={C} r={R} fill="none" stroke="rgba(80,20,110,.08)" strokeWidth="2"/>
@@ -2295,7 +2295,7 @@ const CSS = `
 .su-bp-card--proto { grid-column:1/-1; }
 .su-bp-card--full { grid-column:1/-1; }
 .su-bp-cursor-prompt {
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px;
+  font-family:var(--font-body); font-size:12px;
   line-height:1.75; color:var(--ink); background:var(--bg-2);
   border:1px solid var(--line-2); border-radius:var(--r-sm);
   padding:16px; white-space:pre-wrap; word-break:break-word; margin:0;
