@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 
@@ -16,17 +17,26 @@ export default function ProfileClient({ user, error }) {
 
   useEffect(() => {
     if (!user) return;
+
     fetch('/api/credits/balance')
       .then(r => r.json())
       .then(d => { setBalance(d.balance ?? 0); setTransactions(d.transactions || []); })
       .catch(() => setBalance(0));
 
-    setIdeasLoading(true);
-    fetch('/api/ideas')
-      .then(r => r.json())
-      .then(d => setIdeas(d.ideas || []))
-      .catch(() => {})
-      .finally(() => setIdeasLoading(false));
+    const loadIdeas = async () => {
+      setIdeasLoading(true);
+      try {
+        const response = await fetch('/api/ideas');
+        const data = await response.json();
+        setIdeas(data.ideas || []);
+      } catch {
+        setIdeas([]);
+      } finally {
+        setIdeasLoading(false);
+      }
+    };
+
+    loadIdeas();
   }, [user]);
 
   const sendMagicLink = async (e) => {
@@ -67,7 +77,7 @@ export default function ProfileClient({ user, error }) {
     <div style={s.page}>
       <div style={s.wrap}>
         <div style={s.topbar}>
-          <a href="/" style={s.back}>← IdeaReels</a>
+          <Link href="/" style={s.back}>← IdeaReels</Link>
         </div>
 
         {user ? (
@@ -86,7 +96,7 @@ export default function ProfileClient({ user, error }) {
               <div style={s.statCard}>
                 <div style={s.statLabel}>CREDITS</div>
                 <div style={s.statVal}>{balance === null ? '…' : balance}</div>
-                <a href="/pricing" style={s.buyBtn}>Buy more</a>
+                <Link href="/pricing" style={s.buyBtn}>Buy more</Link>
               </div>
               <div style={s.statCard}>
                 <div style={s.statLabel}>IDEAS</div>
@@ -112,7 +122,7 @@ export default function ProfileClient({ user, error }) {
                   <div style={{ fontSize: 28, marginBottom: 8 }}>✦</div>
                   <div style={{ fontWeight: 600, marginBottom: 4 }}>No saved ideas yet</div>
                   <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>Run extended market research on an idea and it shows up here</div>
-                  <a href="/" style={s.buyBtn}>Spin an idea →</a>
+                  <Link href="/" style={s.buyBtn}>Spin an idea →</Link>
                 </div>
               ) : (
                 <div style={s.bpList}>
@@ -173,14 +183,17 @@ export default function ProfileClient({ user, error }) {
                   <span style={s.seclabel}>RECENT ACTIVITY</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                  {transactions.map((t, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: 'var(--ink-2)', padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
-                      <span style={{ textTransform: 'capitalize' }}>{t.reason.replace(/_/g, ' ')}</span>
-                      <span style={{ fontWeight: 700, color: t.amount > 0 ? '#15803D' : 'var(--accent)' }}>
-                        {t.amount > 0 ? `+${t.amount}` : t.amount} credits
-                      </span>
-                    </div>
-                  ))}
+                  {transactions.map((t, i) => {
+                    const delta = Number(t.amount ?? t.change ?? 0);
+                    return (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: 'var(--ink-2)', padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
+                        <span style={{ textTransform: 'capitalize' }}>{t.reason.replace(/_/g, ' ')}</span>
+                        <span style={{ fontWeight: 700, color: delta > 0 ? '#15803D' : 'var(--accent)' }}>
+                          {delta > 0 ? `+${delta}` : delta} credits
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

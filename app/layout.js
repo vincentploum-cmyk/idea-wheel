@@ -1,6 +1,19 @@
+import { IBM_Plex_Mono, Manrope } from 'next/font/google';
+
 import './globals.css';
 import CookieBanner from '@/components/CookieBanner';
 import CloudBackground from '@/components/CloudBackground';
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  variable: '--font-manrope',
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-ibm-plex-mono',
+});
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://ideareels.io'),
@@ -25,12 +38,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Epilogue:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      </head>
-      <body>
+      <body className={`${manrope.variable} ${ibmPlexMono.variable}`}>
         <CloudBackground />
         {children}
         <CookieBanner />

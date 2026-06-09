@@ -1,39 +1,53 @@
 export default function CloudBackground() {
   return (
     <>
-      <style>{`@keyframes ocBlobDrift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,-30px) scale(1.12)}}`}</style>
-      <div style={blobOne} aria-hidden="true" />
-      <div style={blobTwo} aria-hidden="true" />
+      <div style={baseWash} aria-hidden="true" />
+      <div style={topGlow} aria-hidden="true" />
+      <div style={sideGlow} aria-hidden="true" />
+      <div style={grain} aria-hidden="true" />
     </>
   );
 }
 
-const baseBlob = {
+const sharedLayer = {
   position: 'fixed',
-  borderRadius: '50%',
-  filter: 'blur(70px)',
+  inset: 0,
   pointerEvents: 'none',
   zIndex: 0,
-  animation: 'ocBlobDrift 22s ease-in-out infinite',
 };
 
-const blobOne = {
-  ...baseBlob,
-  width: 480,
-  height: 480,
-  top: '-8%',
-  left: '-6%',
-  background: '#7C3AED',
-  opacity: 0.28,
+const baseWash = {
+  ...sharedLayer,
+  background:
+    'linear-gradient(180deg, rgba(255,255,255,0.68) 0%, rgba(245,245,247,0.3) 32%, rgba(245,245,247,0.9) 100%)',
 };
 
-const blobTwo = {
-  ...baseBlob,
-  width: 420,
+const topGlow = {
+  ...sharedLayer,
+  inset: '-12% 8% auto 8%',
   height: 420,
-  right: '-6%',
-  bottom: '-12%',
-  background: '#FF4D8D',
-  opacity: 0.22,
-  animationDelay: '-7s',
+  borderRadius: '50%',
+  background:
+    'radial-gradient(circle at 50% 50%, rgba(79,70,229,0.12) 0%, rgba(79,70,229,0.06) 32%, rgba(79,70,229,0) 72%)',
+  filter: 'blur(22px)',
+};
+
+const sideGlow = {
+  ...sharedLayer,
+  inset: '18% auto auto -12%',
+  width: 520,
+  height: 520,
+  borderRadius: '50%',
+  background:
+    'radial-gradient(circle at 50% 50%, rgba(37,99,235,0.08) 0%, rgba(37,99,235,0.04) 38%, rgba(37,99,235,0) 72%)',
+  filter: 'blur(26px)',
+};
+
+const grain = {
+  ...sharedLayer,
+  opacity: 0.18,
+  backgroundImage:
+    'radial-gradient(rgba(255,255,255,0.9) 0.6px, transparent 0.6px)',
+  backgroundSize: '8px 8px',
+  mixBlendMode: 'soft-light',
 };

@@ -1,12 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-function getAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-    { auth: { persistSession: false } }
-  );
-}
+import { ensureWelcomeGrant, getBalance, getTransactions } from '@/lib/credits';
 
 async function getUser() {
   const { createServerClient } = await import('@supabase/ssr');
@@ -25,23 +17,16 @@ export async function GET() {
   const user = await getUser();
   if (!user) return Response.json({ balance: 0, transactions: [] });
 
-  const db = getAdmin();
+  await ensureWelcomeGrant(user.id);
 
-  // Balance = sum of all change values in credits table
-  const { data: rows } = await db
-    .from('credits')
-    .select('change')
-    .eq('user_id', user.id);
+  const balance = await getBalance(user.id);
+  const transactions = await getTransactions(user.id, 10);
 
-  const balance = (rows || []).reduce((sum, r) => sum + (r.change || 0), 0);
-
-  // Recent transactions
-  const { data: transactions } = await db
-    .from('credits')
-    .select('change, reason, created_at')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(10);
-
-  return Response.json({ balance, transactions: transactions || [] });
+  return Response.json({
+    balance,
+    transactions: (transactions || []).map((transaction) => ({
+      ...transaction,
+      amount: Number(transaction.change || 0),
+    })),
+  });
 }

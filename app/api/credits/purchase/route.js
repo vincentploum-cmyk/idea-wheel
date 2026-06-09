@@ -27,6 +27,7 @@ export async function POST(request) {
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     mode: 'payment',
+    client_reference_id: user.id,
     line_items: [{ price_data: {
       currency: 'usd', unit_amount: pack.price_cents,
       product_data: { name: `IdeaReels ${pack.label} — ${pack.credits} Credits`, description: pack.tagline },
