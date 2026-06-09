@@ -124,6 +124,7 @@ button {
   cursor: pointer;
   padding: 0;
 }
+a, input, textarea, select { font: inherit; color: inherit; }
 a { color: inherit; }
 img, svg { display: block; max-width: 100%; }
 

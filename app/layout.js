@@ -6,6 +6,7 @@ import CloudBackground from '@/components/CloudBackground';
 
 const manrope = Manrope({
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
   variable: '--font-manrope',
 });
 
@@ -37,8 +38,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className={`${manrope.variable} ${ibmPlexMono.variable}`}>
+    <html lang="en" className={`${manrope.variable} ${ibmPlexMono.variable}`}>
+      <body>
         <CloudBackground />
         {children}
         <CookieBanner />

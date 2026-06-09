@@ -89,7 +89,7 @@ function Wheel({ segments, onResult, motion = 1, style = "spectrum" }) {
           return (
             <g key={s.id} transform={`rotate(${centerDeg} ${C} ${C})`}>
               <text x={C} y={64} textAnchor="middle"
-                fontFamily="Sora, sans-serif" fontWeight="700" fontSize="19"
+                fontFamily="Manrope, sans-serif" fontWeight="700" fontSize="19"
                 fill="#fff" style={{ letterSpacing: "-0.01em" }}>{s.label}</text>
             </g>
           );
