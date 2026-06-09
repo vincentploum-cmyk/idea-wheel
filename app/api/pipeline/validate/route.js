@@ -369,19 +369,33 @@ function buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval,
   // any optimistic verdict — there is no real problem to solve.
   const decision = premiseBroken ? 'avoid' : (judge.decision || scout.verdictType || 'warning');
   const premiseNote = shortText(scout.premiseNote, 180);
+  // Web-search answers come back peppered with <cite index="…"> markup. Strip it
+  // from every user-facing string HERE so it can never leak into the validation
+  // screen or the blueprint (which renders these same comp fields).
+  const cleanPlayers = (Array.isArray(scout.players) ? scout.players : []).map((p) => ({
+    ...p,
+    name: stripCitationNoise(p?.name),
+    targetCustomer: stripCitationNoise(p?.targetCustomer),
+    pricing: stripCitationNoise(p?.pricing),
+    coverage: stripCitationNoise(p?.coverage),
+    weakness: stripCitationNoise(p?.weakness),
+  }));
   return {
     ...scout,
+    marketSize: stripCitationNoise(scout.marketSize),
+    landscape: stripCitationNoise(scout.landscape),
+    players: cleanPlayers,
     score: premiseBroken ? Math.min(evalResult?.scores?.overall ?? 30, 35) : (evalResult?.scores?.overall || null),
     verdictType: decision,
-    verdict: scout.verdict,
+    verdict: stripCitationNoise(scout.verdict),
     premiseFit: scout.premiseFit,
     premiseNote,
     // The UI renders premiseNote separately above the verdict, so it is left
     // out here to avoid showing the same sentence twice.
-    verdictReasoning: `${judge.reasoning} ${scout.verdictReasoning || ''}`.trim(),
+    verdictReasoning: stripCitationNoise(`${judge.reasoning} ${scout.verdictReasoning || ''}`.trim()),
     plainSummary: shortText(scout.plainSummary, 360),
-    gap: judge.wedge || scout.gap,
-    moat: judge.defensibility,
+    gap: stripCitationNoise(judge.wedge || scout.gap),
+    moat: stripCitationNoise(judge.defensibility),
     skeptic,
     judge,
     eval: evalResult,

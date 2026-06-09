@@ -317,6 +317,17 @@ function compactSpec(spec) {
   };
 }
 
+// Shared readability contract for every founder-facing prose field. The screens
+// render these strings as-is, so length and plainness must be enforced at the
+// source — long, jargon-y output becomes an unreadable wall of text.
+const PROSE_RULES = `WRITING RULES — apply to EVERY prose field a founder reads (not the cursorPrompt or code):
+- 8th-grade reading level. Short, everyday words. Short sentences.
+- Be brief. No single field longer than 2 short sentences unless the schema asks for a list.
+- Each list item is ONE concrete action or fact in plain words, max ~20 words. Never write multi-sentence paragraphs inside a bullet.
+- Ban buzzwords: synergy, leverage, robust, holistic, ecosystem, paradigm, seamless, best-in-class, "B2B SaaS". Say the plain-word version instead.
+- Spell out company names/acronyms in plain terms the first time (e.g. "AppFolio (property-management software)").
+- Output clean prose only — never include citation markup like <cite …> or bracketed reference numbers.`;
+
 function designerPrompt(agentDesc, comp, retrieval) {
   return `Design a lean, differentiated AI product that is harder to copy than a generic wrapper.
 
@@ -340,7 +351,9 @@ Return ONLY JSON:
   "dataMoat": "what proprietary workflow memory or feedback loop compounds over time",
   "defensibilityPlan": "how this becomes harder to copy after 90 days"
 }
-Write every field in plain, concrete language. A non-technical founder should understand it instantly; explain any unavoidable technical term in a few words.`;
+A non-technical founder should understand every field instantly.
+
+${PROSE_RULES}`;
 }
 
 function designCritiquePrompt(agentDesc, comp, design) {
@@ -391,11 +404,11 @@ ${JSON.stringify({
 Return ONLY JSON:
 {
   "revenueGoal": "first-month target with math e.g. $2,400 = 8 × $300/mo",
-  "persona": "specific role of ideal first customer",
-  "whereToFind": "3-4 named communities (subreddits, Slack groups, LinkedIn groups)",
-  "firstFiveCustomers": ["specific tactic 1 with exact place + angle","...×5"],
-  "channels": [{"name":"...","tactic":"specific action","timeline":"..."}],
-  "pricing": {"price":"$X/mo","rationale":"why this number","trial":"free tier structure"},
+  "persona": "the ideal first customer's role, in ONE plain sentence",
+  "whereToFind": "3-4 named communities (subreddits, Slack groups, LinkedIn groups), as a short comma-separated list — no long explanation",
+  "firstFiveCustomers": ["5 tactics. Each is ONE sentence naming the exact place + the angle. Max ~22 words each."],
+  "channels": [{"name":"...","tactic":"specific action, one short sentence","timeline":"..."}],
+  "pricing": {"price":"$X/mo","rationale":"why this number, max 2 short sentences","trial":"free tier structure, one phrase"},
   "plan": [
     {"week":1,"theme":"...","actions":["...","...","..."]},
     {"week":2,"theme":"...","actions":["...","...","..."]},
@@ -407,7 +420,8 @@ Return ONLY JSON:
   "whyNow": "why this wedge is timely right now — macro trend, regulation, or technology shift making this possible/urgent",
   "cursorPrompt": "The exact first prompt to paste into Cursor, Claude, or Codex to start building this product. Should include: what to build, tech stack, first screen/feature to implement, and the core AI behavior. 150-200 words."
 }
-Keep the prose fields plain and jargon-free so a non-technical founder can follow the plan; the cursorPrompt may stay technical since it's for a builder/AI tool.`;
+${PROSE_RULES}
+(The cursorPrompt is the ONE exception — it may stay technical since it's pasted into a builder/AI tool.)`;
 }
 
 function gtmCritiquePrompt(design, gtm, comp) {
@@ -464,7 +478,9 @@ Return ONLY JSON:
   "monthlyCost": {"dev":"$0","at100users":"$X/mo (math)","at1000users":"$Y/mo (math)"},
   "buildOrder": "Day 1: auth + schema. Day 2: core feature. Day 3: payments. Day 4: AI agent. Day 5: launch."
 }
-This is read by a solo builder who may not be technical. For each service and step, add a short plain-English note on what it is and why it's needed; spell out acronyms the first time.`;
+This is read by a solo builder who may not be technical. For each service and step, add a short plain-English note on what it is and why it's needed.
+
+${PROSE_RULES}`;
 }
 
 function protoSpecPrompt(design, gtm, comp, infra, retrieval) {

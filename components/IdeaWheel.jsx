@@ -634,6 +634,7 @@ export default function IdeaWheel() {
 
   // blueprint state  — pipeline stages: null | 1-4 | "done"
   const [bpStage, setBpStage]   = useState(null);
+  const [bpPct, setBpPct]       = useState(0);   // smooth, creeping progress %
   const [design, setDesign]     = useState(null);
   const [gtm, setGtm]           = useState(null);
   const [infra, setInfra]       = useState(null);
@@ -810,12 +811,13 @@ export default function IdeaWheel() {
     // The scan time varies, so ease a simulated bar toward ~90% while the
     // request is in flight; it snaps to 100% the moment results land.
     const startedAt = Date.now();
-    const estMs = 16000;
+    const estMs = 22000;
     clearInterval(scanTimerRef.current);
     scanTimerRef.current = setInterval(() => {
       const t = (Date.now() - startedAt) / estMs;
-      const target = Math.round(90 * (1 - Math.exp(-2.4 * t)));
-      setScanPct(p => Math.min(90, Math.max(p, target)));
+      // Keep creeping toward 96 so the bar never sits dead while the scan runs.
+      const target = Math.round(96 * (1 - Math.exp(-2.0 * t)));
+      setScanPct(p => Math.min(96, Math.max(p, target)));
     }, 180);
     try {
       const res = await fetch("/api/pipeline/validate", {
@@ -1002,6 +1004,29 @@ export default function IdeaWheel() {
       runBlueprint();
     }
   }, [pendingGenerate, screen, idea, comp, bpRunning, bpDone]);
+
+  // Smoothly creep the blueprint progress bar WITHIN the running stage, instead
+  // of jumping only when a whole stage finishes (which left it stuck at ~13%
+  // for the entire, slow first stage). Each of the 4 stages owns a 25% band; we
+  // ease toward the top of the current band while it runs, then continue from
+  // the next band as stages complete.
+  const bpCompletedCount = [design, gtm, infra, proto].filter(Boolean).length;
+  useEffect(() => {
+    if (bpDone) { setBpPct(100); return; }
+    if (!bpRunning) { setBpPct(0); return; }
+    if (bpErr) return;                       // frozen while paused on an error
+    const floor = (bpCompletedCount / 4) * 100;
+    const ceiling = ((bpCompletedCount + 1) / 4) * 100 - 3;
+    setBpPct(p => Math.max(p, Math.round(floor) + 1));
+    const startedAt = Date.now();
+    const estMs = bpCompletedCount === 0 ? 40000 : 24000;   // stage 1 (designer) is the slowest
+    const id = setInterval(() => {
+      const t = (Date.now() - startedAt) / estMs;
+      const target = floor + (ceiling - floor) * (1 - Math.exp(-2.2 * t));
+      setBpPct(p => Math.min(ceiling, Math.max(p, Math.round(target))));
+    }, 220);
+    return () => clearInterval(id);
+  }, [bpRunning, bpDone, bpErr, bpCompletedCount]);
 
   /* ── SCREENS ── */
   return (
@@ -1334,7 +1359,7 @@ export default function IdeaWheel() {
             const completed = [design, gtm, infra, proto].filter(Boolean).length;
             const paused = !!bpErr && !bpDone;
             const activeIdx = Math.min(completed, 3);
-            const pct = bpDone ? 100 : Math.min(96, Math.round(((completed + (paused ? 0 : 0.5)) / 4) * 100));
+            const pct = bpDone ? 100 : Math.max(bpPct, Math.round((completed / 4) * 100) + 1);
             return (
               <div className="su-scan su-glass su-bp-progress">
                 <div className="su-scan-head">
@@ -1415,11 +1440,11 @@ export default function IdeaWheel() {
               {comp && (
                 <div className="su-card su-bp-card">
                   <div className="su-bp-head"><span className="su-bp-num">04</span><h3 className="su-bp-title">Competitor & gap</h3></div>
-                  {comp.marketSize && <p className="su-bp-name" style={{fontSize:20}}>{comp.marketSize}</p>}
-                  {comp.gap && <p className="su-bp-summary" style={{color:'var(--ink)'}}>{comp.gap}</p>}
+                  {comp.marketSize && <p className="su-bp-name" style={{fontSize:20}}>{cleanValidationText(comp.marketSize)}</p>}
+                  {comp.gap && <p className="su-bp-summary" style={{color:'var(--ink)'}}>{cleanValidationText(comp.gap)}</p>}
                   {(comp.players||[]).length>0 && <>
                     <div className="su-bp-list-label">Key players</div>
-                    <ul className="su-bp-list">{(comp.players||[]).slice(0,3).map((pl,i)=><li key={i}><strong>{pl.name}</strong> — {pl.weakness}</li>)}</ul>
+                    <ul className="su-bp-list">{(comp.players||[]).slice(0,3).map((pl,i)=><li key={i}><strong>{cleanValidationText(pl.name)}</strong> — {cleanValidationText(pl.weakness)}</li>)}</ul>
                   </>}
                 </div>
               )}
