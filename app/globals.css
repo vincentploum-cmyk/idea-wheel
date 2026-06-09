@@ -2,61 +2,64 @@
 
 :root {
   /* ── Brand ────────────────────────────────────────── */
-  --accent:        #2563EB;
-  --accent-mid:    #4F46E5;
-  --accent-light:  #EEF4FF;
-  --accent-border: #D7E4FF;
-  --grad-cta: linear-gradient(135deg, #1D4ED8 0%, #4F46E5 56%, #6476FF 100%);
+  --accent:        #7C3AED;
+  --accent-mid:    #C026D3;
+  --accent-light:  #EFE6FF;
+  --accent-border: #E1D9F0;
+
+  /* The restored purple → pink gradient */
+  --grad-cta: linear-gradient(120deg, #7C3AED 0%, #C026D3 45%, #FF4D8D 100%);
 
   /* ── Neutrals ─────────────────────────────────────── */
-  --bg:      #F5F5F7;
-  --bg-2:    #ECEFF3;
-  --surface: rgba(255,255,255,0.86);
-  --glass:   rgba(255,255,255,0.72);
-  --line:    rgba(15,23,42,0.08);
-  --line-2:  rgba(15,23,42,0.14);
+  --bg:      #FAF7FF;
+  --bg-2:    #F3EDFF;
+  --surface: #FFFFFF;
+  --glass:   rgba(255,255,255,0.7);
+  --line:    #ECE6F5;
+  --line-2:  #E1D9F0;
 
   /* ── Text ─────────────────────────────────────────── */
-  --ink:   #1D1D1F;
-  --ink-2: #424245;
-  --muted: #6E6E73;
-  --faint: #8F9098;
+  --ink:   #18112B;
+  --ink-2: #463A5F;
+  --muted: #7A7191;
+  --faint: #AAA1BD;
 
   /* ── Feedback ─────────────────────────────────────── */
-  --good: #15803D;
-  --warn: #B45309;
+  --good: #16A34A;
+  --warn: #E0A800;
   --bad:  #B91C1C;
 
   /* ── Radii ────────────────────────────────────────── */
   --r-xs:   4px;
-  --r-sm:   10px;
-  --r-md:   14px;
-  --r-lg:   18px;
-  --r-xl:   28px;
-  --r-2xl:  36px;
+  --r-sm:   8px;
+  --r-md:   12px;
+  --r-lg:   16px;
+  --r-xl:   22px;
+  --r-2xl:  28px;
   --r-pill: 999px;
 
   /* ── Shadows ──────────────────────────────────────── */
-  --sh-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --sh-sm: 0 12px 30px -24px rgba(15, 23, 42, 0.14);
-  --sh-md: 0 28px 70px -36px rgba(15, 23, 42, 0.18);
-  --sh-lg: 0 44px 110px -48px rgba(15, 23, 42, 0.22);
-  --sh-glow: 0 28px 90px -38px rgba(79, 70, 229, 0.22);
+  --sh-xs: 0 1px 2px rgba(60,20,90,0.05);
+  --sh-sm: 0 2px 8px rgba(60,20,90,0.06);
+  --sh-md: 0 10px 30px -10px rgba(80,30,120,0.18);
+  --sh-lg: 0 30px 70px -24px rgba(90,30,130,0.30);
+  --sh-glow: 0 20px 60px -18px rgba(200,40,150,0.45);
 
   /* ── Typography ───────────────────────────────────── */
-  --font-display: var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-body:    var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* All "Sora" / "Plus Jakarta Sans" references resolve through these tokens. */
+  --font-display: "Bricolage Grotesque", "Sora", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-body:    "Epilogue", "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* ── Legacy aliases (referenced by existing components) ──── */
   --violet:   var(--accent);
-  --purple:   #4F46E5;
-  --magenta:  #6476FF;
-  --pink:     #7C8CFF;
-  --coral:    #D4D7DD;
+  --purple:   #9333EA;
+  --magenta:  #C026D3;
+  --pink:     #FF4D8D;
+  --coral:    #FF6F61;
   --indigo:   #5B5BF5;
 
   --grad-brand: var(--grad-cta);
-  --grad-soft: linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(243,245,248,0.64) 100%);
+  --grad-soft:  linear-gradient(120deg, #EFE6FF 0%, #FBE6F4 55%, #FFE9E6 100%);
 
   --iw-color-bg:              var(--bg);
   --iw-color-surface:         var(--surface);
@@ -66,15 +69,15 @@
   --iw-color-muted:           var(--muted);
   --iw-color-brand-primary:   var(--violet);
   --iw-color-brand-secondary: var(--magenta);
-  --iw-color-brand-tertiary:  #475569;
-  --iw-color-brand-soft:      var(--accent-light);
-  --iw-brand-primary-rgb:     37 99 235;
-  --iw-brand-secondary-rgb:   79 70 229;
-  --iw-brand-tertiary-rgb:    71 85 105;
+  --iw-color-brand-tertiary:  #1A9492;
+  --iw-color-brand-soft:      #EFE6FF;
+  --iw-brand-primary-rgb:     124 58 237;
+  --iw-brand-secondary-rgb:   192 38 211;
+  --iw-brand-tertiary-rgb:    26 148 146;
   --iw-gradient-brand:        var(--grad-cta);
   --iw-gradient-brand-diagonal: var(--grad-cta);
   --iw-shadow-brand:          var(--sh-glow);
-  --iw-shadow-brand-soft:     0 14px 36px -24px rgba(79,70,229,0.24);
+  --iw-shadow-brand-soft:     0 6px 20px -8px rgba(124,58,237,0.32);
   --iw-font-ui:               var(--font-body);
   --iw-font-display:          var(--font-display);
 
@@ -90,7 +93,7 @@
   --color-background: var(--bg);
   --color-foreground: var(--ink);
   --font-sans: var(--font-body);
-  --font-mono: var(--font-ibm-plex-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -111,7 +114,6 @@ body {
   font-feature-settings: "ss01", "cv11";
   overflow-x: hidden;
   line-height: 1.5;
-  letter-spacing: -0.011em;
   padding-bottom: var(--cookie-banner-space, 0px);
   transition: padding-bottom 0.18s ease;
 }
@@ -124,16 +126,15 @@ button {
   cursor: pointer;
   padding: 0;
 }
-a, input, textarea, select { font: inherit; color: inherit; }
 a { color: inherit; }
 img, svg { display: block; max-width: 100%; }
 
-::selection { background: rgba(79,70,229,0.14); color: var(--ink); }
+::selection { background: rgba(192,38,211,0.18); color: var(--ink); }
 
 :focus-visible {
-  outline: 2px solid rgba(79,70,229,0.62);
-  outline-offset: 3px;
-  border-radius: 8px;
+  outline: 2px solid var(--accent-mid);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 @media (prefers-reduced-motion: reduce) {
