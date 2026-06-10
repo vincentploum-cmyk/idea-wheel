@@ -5,7 +5,7 @@ import { buildRetrievalContext } from '../../../../lib/moat-retrieval';
 import { addCredits, deductCredits } from '../../../../lib/credits';
 import { ensureSessionId, getBlueprintCharge, recordBlueprint, recordOutcome, saveBlueprintCharge } from '../../../../lib/moat-store';
 import { withPlainEnglish } from '../../../../lib/clarity';
-import { attachBlueprint } from '../../../../lib/saved-ideas';
+import { attachBlueprint, saveBlueprintProgress } from '../../../../lib/saved-ideas';
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 
@@ -757,6 +757,19 @@ Search the web for the most current direct competitors, their pricing, recent (2
         // Plain-English readability check on this paid deliverable.
         const designerResult = await withPlainEnglish('Product design', designerStage.result);
 
+        // Persist progress so the idea is already in the user's shortlist and
+        // resumable even if they navigate away now. The credit (charged at this
+        // stage) is recorded here; later stages reuse the same charge token.
+        await saveBlueprintProgress({
+          userId: user.id,
+          validationId,
+          idea: { action, workflow, industry, connector, modeName, sessionId, title: comp?.title },
+          comp,
+          blueprint: { design: designerResult, chargeToken: charge.id },
+          status: 'generating',
+          creditsToAdd: blueprintCost,
+        }).catch(() => {});
+
         await recordOutcome({
           sessionId,
           signal: 'designer_completed',
@@ -790,6 +803,15 @@ Search the web for the most current direct competitors, their pricing, recent (2
         // Plain-English readability check on this paid deliverable.
         const launchResult = await withPlainEnglish('Launch & go-to-market plan', launchStage.result);
 
+        await saveBlueprintProgress({
+          userId: user.id,
+          validationId,
+          idea: { action, workflow, industry, connector, modeName, sessionId, title: comp?.title },
+          comp,
+          blueprint: { design, gtm: launchResult, chargeToken: charge.id },
+          status: 'generating',
+        }).catch(() => {});
+
         await recordOutcome({
           sessionId,
           signal: 'launch_completed',
@@ -815,6 +837,15 @@ Search the web for the most current direct competitors, their pricing, recent (2
         const infraParsed = await parseJSON(infraCall.text, 'infrastructure stage');
         // Plain-English readability check on this (most technical) paid deliverable.
         const infraResult = await withPlainEnglish('Infrastructure & tech setup', infraParsed.value);
+
+        await saveBlueprintProgress({
+          userId: user.id,
+          validationId,
+          idea: { action, workflow, industry, connector, modeName, sessionId, title: comp?.title },
+          comp,
+          blueprint: { design, gtm, infra: infraResult, chargeToken: charge.id },
+          status: 'generating',
+        }).catch(() => {});
 
         await recordOutcome({
           sessionId,
@@ -918,7 +949,9 @@ Search the web for the most current direct competitors, their pricing, recent (2
             eval: prototypeEval,
             prototypeHtml: typeof prototypeHtml === 'string' ? prototypeHtml.slice(0, 16000) : '',
           },
-          creditsSpent: Number(charge?.amount) || 0,
+          // Credit was already recorded at the designer stage (saveBlueprintProgress);
+          // don't count it again here.
+          creditsSpent: 0,
         }).catch(() => {});
 
         await recordOutcome({

@@ -120,6 +120,7 @@ export default function ProfileClient({ user, error }) {
                     const research = idea.research || {};
                     const signals = (research.demandSignals || []).slice(0, 2);
                     const hasBlueprint = idea.blueprint_status === 'complete';
+                    const blueprintInProgress = idea.blueprint_status === 'generating';
                     return (
                       <div key={idea.id} style={s.ideaCard}>
                         <div style={s.bpTop}>
@@ -147,11 +148,16 @@ export default function ProfileClient({ user, error }) {
                           )}
                         </div>
 
-                        {/* Blueprint: a section if created, else a create button */}
+                        {/* Blueprint: ready → view, in progress → resume, else → create */}
                         {hasBlueprint ? (
                           <div style={s.bpReadyRow}>
                             <span style={s.bpReadyTag}>✦ Blueprint ready</span>
                             <a href={`/?idea=${idea.id}&view=1`} style={s.viewBtn}>View blueprint</a>
+                          </div>
+                        ) : blueprintInProgress ? (
+                          <div style={s.bpReadyRow}>
+                            <span style={s.bpProgressTag}>⏳ Blueprint in progress</span>
+                            <a href={`/?idea=${idea.id}`} style={s.createBtn}>Resume blueprint</a>
                           </div>
                         ) : (
                           <div style={s.bpReadyRow}>
@@ -273,6 +279,7 @@ const s = {
   ideaSignals: { margin: '8px 0 0', paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 3 },
   bpReadyRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginTop: 12 },
   bpReadyTag: { fontSize: 12, fontWeight: 700, color: '#15803D' },
+  bpProgressTag: { fontSize: 12, fontWeight: 700, color: 'var(--accent)' },
   bpPendingTag: { fontSize: 12, fontWeight: 600, color: 'var(--muted)' },
   viewBtn: { display: 'inline-flex', alignItems: 'center', minHeight: 34, padding: '0 14px', fontSize: 12, fontWeight: 700, color: 'var(--ink)', textDecoration: 'none', borderRadius: 999, background: glassStrong, border: `1px solid ${softLine}` },
   createBtn: { display: 'inline-flex', alignItems: 'center', minHeight: 34, padding: '0 14px', fontSize: 12, fontWeight: 700, color: '#fff', textDecoration: 'none', borderRadius: 999, background: 'var(--accent)' },

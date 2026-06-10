@@ -643,6 +643,7 @@ export default function IdeaWheel() {
   const [bpChargeToken, setBpChargeToken] = useState("");  // server charge token, reused across resume so the credit is taken once
   const [protoOpen, setProtoOpen] = useState(false);
   const [pendingGenerate, setPendingGenerate] = useState(false);  // a profile "Create blueprint" deep-link is loaded and should auto-generate
+  const [pendingResume, setPendingResume]     = useState(false);  // an in-progress blueprint was loaded and should resume where it left off
   const loadedIdeaRef = useRef(false);
 
   // pricing
@@ -701,7 +702,6 @@ export default function IdeaWheel() {
     const savedId = params.get('idea');
     if (!savedId) return;
     loadedIdeaRef.current = true;
-    const viewOnly = params.get('view') === '1';
     (async () => {
       try {
         const r = await fetch(`/api/ideas/${savedId}`);
@@ -718,12 +718,23 @@ export default function IdeaWheel() {
         if (saved.research) setDeepResearch(saved.research);
 
         const bp = saved.blueprint;
-        if (viewOnly && saved.blueprint_status === 'complete' && bp) {
+        const status = saved.blueprint_status;
+        if (status === 'complete' && bp) {
+          // Finished blueprint — just show it.
           setDesign(bp.design || null);
           setGtm(bp.gtm || null);
           setInfra(bp.infra || null);
           setProto(bp.prototypeHtml || null);
           setBpStage('done');
+        } else if (status === 'generating' && bp?.design) {
+          // In-progress blueprint — load whatever already finished and resume
+          // the remaining stages, reusing the saved charge token (no re-charge).
+          setDesign(bp.design || null);
+          setGtm(bp.gtm || null);
+          setInfra(bp.infra || null);
+          setProto(bp.prototypeHtml || null);
+          if (bp.chargeToken) setBpChargeToken(bp.chargeToken);
+          setPendingResume(true);
         } else {
           setPendingGenerate(true);   // generate once idea + comp are in state
         }
@@ -1004,6 +1015,16 @@ export default function IdeaWheel() {
       runBlueprint();
     }
   }, [pendingGenerate, screen, idea, comp, bpRunning, bpDone]);
+
+  // Resume an in-progress blueprint loaded from the profile: the finished stages
+  // are already in state, so continue from the first missing one without a new
+  // charge (runBlueprint with resume:true reuses the saved charge token).
+  useEffect(() => {
+    if (pendingResume && screen === 'blueprint' && idea && comp && !bpRunning && !bpDone) {
+      setPendingResume(false);
+      runBlueprint({ resume: true });
+    }
+  }, [pendingResume, screen, idea, comp, bpRunning, bpDone]);
 
   // Smoothly creep the blueprint progress bar WITHIN the running stage, instead
   // of jumping only when a whole stage finishes (which left it stuck at ~13%
