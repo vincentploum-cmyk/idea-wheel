@@ -50,6 +50,46 @@
   --font-display: "Epilogue", "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-body:    "Epilogue", "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
+  /* Type scale — whole-pixel steps only. No half-pixels: they add no
+     hierarchy and only blur consistency. Use the nearest step. */
+  --fs-2xs: 11px;
+  --fs-xs:  12px;
+  --fs-sm:  13px;
+  --fs-md:  14px;
+  --fs-base:15px;
+  --fs-lg:  16px;
+  --fs-xl:  18px;
+  --fs-2xl: 20px;
+  --fs-3xl: 24px;
+  --fs-4xl: 28px;
+  --fs-5xl: 36px;
+
+  /* Line-height — five intentional steps, no drift between them. */
+  --lh-display: 1.1;   /* hero / big numerals */
+  --lh-heading: 1.2;   /* section titles */
+  --lh-snug:    1.4;   /* dense labels, multi-line buttons */
+  --lh-body:    1.6;   /* paragraphs */
+  --lh-relaxed: 1.7;   /* airy long-form */
+
+  /* Letter-spacing — tracking for display vs. uppercase eyebrows. */
+  --ls-tight:  -0.03em; /* hero display */
+  --ls-snug:   -0.02em; /* headings */
+  --ls-subtle: -0.01em; /* large body / buttons */
+  --ls-eyebrow: 0.12em; /* uppercase eyebrows / labels */
+  --ls-wide:    0.18em; /* extra-wide caps */
+
+  /* Spacing scale — 4px base. Snap paddings/gaps to these. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+
   /* ── Legacy aliases (referenced by existing components) ──── */
   --violet:   var(--accent);
   --purple:   #9333EA;
