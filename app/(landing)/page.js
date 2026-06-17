@@ -19,11 +19,7 @@ export default function LandingPage() {
         <div className="container">
           <div className="zubuz-hero-content center">
             <h1>
-              Find a startup idea{" "}
-              <span className="zubuz-title-shape">
-                worth building.
-                <img src="/zubaz/images/v3/shape-v3-01.png" alt="" />
-              </span>
+              Find a startup idea worth building.
             </h1>
             <p>
               Generate sharper business ideas in seconds, run a quick market

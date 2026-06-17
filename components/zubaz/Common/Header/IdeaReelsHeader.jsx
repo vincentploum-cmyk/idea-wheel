@@ -22,8 +22,10 @@ const IdeaReelsHeader = () => {
       <div className="container">
         <nav className="navbar site-navbar">
           <div className="brand-logo">
-            <Link href="/">
-              <img src="/zubaz/images/logo/logo-white.png" alt="IdeaReels" style={{ filter: "invert(1)" }} />
+            <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "1.25rem", fontWeight: "700", color: "#111", letterSpacing: "-0.02em" }}>
+                IdeaReels
+              </span>
             </Link>
           </div>
 
