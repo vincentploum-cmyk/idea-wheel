@@ -113,7 +113,7 @@ export default function ProfileClient({ user, error }) {
                   <div style={{ fontSize: 28, marginBottom: 8 }}>✦</div>
                   <div style={{ fontWeight: 600, marginBottom: 4 }}>No saved ideas yet</div>
                   <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>Run extended market research on an idea and it shows up here</div>
-                  <a href="/" style={s.buyBtn}>Spin an idea →</a>
+                  <a href="/?wheel=1" style={s.buyBtn}>Spin an idea →</a>
                 </div>
               ) : (
                 <div style={s.bpList}>

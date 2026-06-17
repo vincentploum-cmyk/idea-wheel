@@ -425,6 +425,7 @@ function SlotMachine({ onResult }) {
   const stripRefs = [useRef(null), useRef(null), useRef(null)];
   const indexRef = useRef([0,0,0]);
   const targetRef = useRef([0,0,0]);
+  const commitRef = useRef(false);   // only a deliberate "Generate idea" spin commits a new idea
   const [landed, setLanded] = useState(['','','']);
   const [spinning, setSpinning] = useState([false,false,false]);
   const [hasSpun, setHasSpun] = useState(false);
@@ -480,23 +481,6 @@ function SlotMachine({ onResult }) {
     return entries[pickWeightedIndex(entries.map((entry) => entry.weight))].index;
   };
 
-  const spinWheel = (w, duration) => {
-    if (spinning[w]) return;
-    const bank = banks[w];
-    const L = bank.length;
-    const cur = indexRef.current[w];
-    const curBase = ((cur%L)+L)%L;
-    const t = pickWeightedIndex(weights[w] || bank.map(() => 1));
-    const forward = ((t-curBase)%L+L)%L;
-    const loops = 5 + Math.floor(Math.random()*2);
-    const newIndex = cur + loops*L + forward + (forward===0?L:0);
-    indexRef.current[w] = newIndex;
-    targetRef.current[w] = newIndex%L;
-    const el = stripRefs[w].current;
-    if (el) { el.style.transition=`transform ${duration}ms ${SPIN_EASE}`; el.style.transform=`translateY(${-(newIndex-1)*ITEM_H}px)`; }
-    setSpinning(s => { const n=[...s]; n[w]=true; return n; });
-  };
-
   const spinWheelTo = (w, targetIdx, duration) => {
     if (spinning[w]) return;
     const bank = banks[w];
@@ -526,6 +510,7 @@ function SlotMachine({ onResult }) {
   const spinAll = () => {
     if (anySpinning) return;
     setHasSpun(true);
+    commitRef.current = true;   // this spin (and only this) will commit the resulting idea
     const actionIdx = selectIndex(0);
     const action = banks[0][actionIdx];
     const allowedWorkflows = (m.pairMap?.[action] || banks[1]).filter((workflow) => banks[1].includes(workflow));
@@ -541,7 +526,11 @@ function SlotMachine({ onResult }) {
   const complete = landed.every(Boolean);
 
   useEffect(() => {
-    if (complete && !anySpinning && onResult) {
+    // Commit (and reset any prior research) ONLY for a deliberate "Generate idea"
+    // spin. This keeps the idea cached: re-renders or single-reel nudges never
+    // silently swap the idea or wipe the market research the user is viewing.
+    if (complete && !anySpinning && commitRef.current && onResult) {
+      commitRef.current = false;
       onResult(buildGeneratorIdea(m, landed[0], landed[1], landed[2]));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -571,7 +560,7 @@ function SlotMachine({ onResult }) {
               const repeated = Array.from({length:REPEATS},()=>bank).flat();
               return (
                 <div className="sm-col" key={mode+w} style={{'--accent':REEL_TINTS[w]}}>
-                  <div className="sm-window" onClick={()=>!anySpinning&&spinWheel(w,3200)}>
+                  <div className="sm-window">
                     <div className={`sm-strip${spinning[w]?' is-spinning':''}`} ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)} >
                       {repeated.map((word,i)=>(
                         <div className="sm-item" key={i} style={{height:ITEM_H}}>{word}</div>
@@ -589,7 +578,6 @@ function SlotMachine({ onResult }) {
               and show a clear call-to-action banner across the generator. */}
           {!hasSpun && (
             <div className="sm-reel-cover" onClick={()=>!anySpinning&&spinAll()}>
-              <span className="sm-reel-cover-emoji">🎰</span>
               <span className="sm-reel-cover-title">Click “Generate idea” to start</span>
               <span className="sm-reel-cover-sub">Spin the reels for a fresh startup idea</span>
             </div>
@@ -2406,7 +2394,6 @@ const CSS = `
   position:relative;
   height:228px;
   overflow:hidden;
-  cursor:pointer;
   background:transparent;
   border:none;
   border-radius:14px;
