@@ -557,7 +557,7 @@ function SlotMachine({ onResult }) {
         <div className="sm-topbar">
           <div className="sm-modebar">
             {Object.keys(CLIENT_DEFAULT_MODE_CONFIGS).map(k => (
-              <button key={k} className={`sm-modebtn${mode===k?' on':''}`} onClick={()=>setMode(k)} disabled={anySpinning}>
+              <button key={k} className={`sm-modebtn${mode===k?' on':''}`} onClick={()=>{ if (k !== mode) { setMode(k); setHasSpun(false); } }} disabled={anySpinning}>
                 {CLIENT_DEFAULT_MODE_CONFIGS[k].name}
               </button>
             ))}
