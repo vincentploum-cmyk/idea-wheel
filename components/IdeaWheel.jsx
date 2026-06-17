@@ -1124,9 +1124,18 @@ export default function IdeaWheel() {
     return () => clearInterval(id);
   }, [bpRunning, bpDone, bpErr, bpCompletedCount]);
 
+  /* Scoped utilitarian proof: only the landing screen gets the new product-tool
+     language. Toggling a body class lets the scoped CSS suppress the global
+     cloud-blob background for landing without touching other screens. */
+  useEffect(() => {
+    const onLanding = screen === "landing";
+    document.body.classList.toggle("util-landing", onLanding);
+    return () => document.body.classList.remove("util-landing");
+  }, [screen]);
+
   /* ── SCREENS ── */
   return (
-    <div className="su-root">
+    <div className={`su-root${screen === "landing" ? " su-root--util" : ""}`}>
       {mounted && <style>{CSS}</style>}
 
       {/* ── NAV ── */}
@@ -1171,6 +1180,7 @@ export default function IdeaWheel() {
         <section className="su-screen su-landing">
           <div className="su-landing-inner">
 
+            <div className="su-util-eyebrow">Idea validation engine</div>
             <h1 className="su-display su-landing-h1">
               <span style={{ display:"block" }}>Find a startup idea</span>
               <span className="su-grad-text" style={{ display:"block" }}>worth building.</span>
@@ -2682,4 +2692,91 @@ const CSS = `
   .su-bp-footer { padding:20px; }
   .su-disclaimer-links { gap:14px; }
 }
+
+/* ══ UTILITARIAN LANDING (scoped proof) ════════════════════════════════
+   A product-tool design language (Linear/Vercel feel) scoped to the landing
+   screen only via .su-root--util. Flat neutral surfaces, hairline borders,
+   small radii, monospace labels, one restrained accent — no gradients,
+   glass, glows, or pastel. Nothing here touches the other screens. */
+.su-root--util {
+  --u-bg:#FAFAF9; --u-surface:#FFFFFF;
+  --u-ink:#16151A; --u-muted:#6E6D78; --u-faint:#9A99A4;
+  --u-line:#E8E7EC; --u-line-2:#DBDAE1;
+  --u-accent:#5B5BF5;
+  --u-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  background:var(--u-bg);
+}
+body.util-landing { background:#FAFAF9; }
+body.util-landing .oc-blob { opacity:0 !important; }
+
+/* nav */
+.su-root--util .su-brand-idea { color:var(--u-ink); }
+.su-root--util .su-brand-reels {
+  background:none; -webkit-background-clip:border-box; background-clip:border-box;
+  -webkit-text-fill-color:var(--u-accent); color:var(--u-accent);
+}
+.su-root--util .su-nav-link { color:var(--u-muted); font-weight:600; }
+.su-root--util .su-nav-link:hover { color:var(--u-ink); background:#F1F0F4; }
+.su-root--util .su-nav-link--cta {
+  background:var(--u-ink); color:#fff; border-radius:7px; box-shadow:none; padding:8px 16px;
+}
+.su-root--util .su-nav-link--cta:hover { filter:none; background:#000; transform:none; }
+
+/* hero */
+.su-util-eyebrow {
+  font-family:var(--u-mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--u-muted); margin:0 0 18px; display:inline-flex; align-items:center; gap:8px;
+}
+.su-util-eyebrow::before {
+  content:""; width:6px; height:6px; border-radius:2px; background:var(--u-accent); display:inline-block;
+}
+.su-root--util .su-landing-h1 {
+  color:var(--u-ink); letter-spacing:-.03em; line-height:1.04;
+  font-size:clamp(40px,5.4vw,64px);
+}
+.su-root--util .su-grad-text {
+  background:none; -webkit-text-fill-color:var(--u-accent); color:var(--u-accent);
+}
+.su-root--util .su-landing-sub { color:var(--u-muted); }
+
+/* buttons */
+.su-root--util .su-btn { border-radius:7px; letter-spacing:0; }
+.su-root--util .su-btn-primary {
+  background:var(--u-ink); color:#fff; border-color:var(--u-ink); box-shadow:none;
+}
+.su-root--util .su-btn-primary:hover { filter:none; background:#000; box-shadow:none; transform:none; }
+.su-root--util .su-btn-ghost {
+  background:var(--u-surface); color:var(--u-ink); border-color:var(--u-line-2); box-shadow:none;
+}
+.su-root--util .su-btn-ghost:hover { background:#F1F0F4; border-color:var(--u-muted); color:var(--u-ink); }
+
+/* how it works */
+.su-root--util .su-hiw-label,
+.su-root--util .su-reviews-label {
+  font-family:var(--u-mono); font-weight:500; letter-spacing:.06em; color:var(--u-muted); font-size:12px;
+}
+.su-root--util .su-hiw-num {
+  border-radius:7px; background:var(--u-surface); border:1px solid var(--u-line-2);
+  color:var(--u-ink); font-family:var(--u-mono); font-weight:500;
+}
+.su-root--util .su-hiw-t { color:var(--u-ink); }
+.su-root--util .su-hiw-d { color:var(--u-muted); }
+.su-root--util .su-hiw-connector { background:var(--u-line-2); }
+
+/* reviews */
+.su-root--util .su-review-card {
+  background:var(--u-surface); border:1px solid var(--u-line); border-radius:10px; box-shadow:none;
+}
+.su-root--util .su-review-stars { color:#E0A800; }
+.su-root--util .su-review-text { color:var(--u-ink); }
+.su-root--util .su-review-avatar {
+  background:var(--u-ink); border-radius:8px; font-family:var(--u-mono); font-weight:500;
+}
+.su-root--util .su-review-name { color:var(--u-ink); }
+.su-root--util .su-review-role { color:var(--u-muted); font-family:var(--u-mono); font-size:11px; }
+
+/* footer */
+.su-root--util .su-landing-footer { border-top:1px solid var(--u-line); color:var(--u-faint); }
+.su-root--util .su-landing-footer-link { color:var(--u-muted); }
+.su-root--util .su-landing-footer-link:hover { color:var(--u-ink); }
 `;

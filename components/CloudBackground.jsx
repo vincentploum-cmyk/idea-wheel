@@ -2,8 +2,8 @@ export default function CloudBackground() {
   return (
     <>
       <style>{`@keyframes ocBlobDrift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,-30px) scale(1.12)}}`}</style>
-      <div style={blobOne} aria-hidden="true" />
-      <div style={blobTwo} aria-hidden="true" />
+      <div className="oc-blob" style={blobOne} aria-hidden="true" />
+      <div className="oc-blob" style={blobTwo} aria-hidden="true" />
     </>
   );
 }
