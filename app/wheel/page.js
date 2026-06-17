@@ -1,5 +1,5 @@
 import IdeaWheel from '@/components/IdeaWheel';
 
-export default function Home() {
+export default function WheelPage() {
   return <IdeaWheel />;
 }
