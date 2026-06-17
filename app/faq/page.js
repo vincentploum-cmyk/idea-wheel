@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
 
 const FAQS = [
   {
@@ -69,7 +70,7 @@ export default function FaqPage() {
     <main style={s.page}>
       <div style={s.wrap}>
         <div style={s.topbar}>
-          <Link href="/" style={s.back}>← IdeaReels</Link>
+          <Link href="/" style={s.brandLink} aria-label="IdeaReels — home"><BrandLogo /></Link>
           <div style={{ display: 'flex', gap: 8 }}>
             <Link href="/pricing" style={s.back}>Pricing</Link>
             <Link href="/profile" style={s.back}>Sign in</Link>
@@ -102,6 +103,7 @@ const s = {
   wrap: { position:"relative", zIndex:1, maxWidth:720, margin:"0 auto", padding:"32px 20px 80px" },
   topbar: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:40 },
   back: { fontFamily:'var(--font-display)', fontSize:13, fontWeight:700, letterSpacing:'-0.01em', color:"#7a7191", textDecoration:"none", padding:"8px 16px", border:"1px solid #ece6f5", borderRadius:999, background:"var(--glass)", backdropFilter:"blur(8px)" },
+  brandLink: { display:'inline-flex', alignItems:'center', textDecoration:'none' },
   h1: { fontFamily:'var(--font-display)', fontSize:"clamp(28px,5vw,48px)", fontWeight:700, letterSpacing:"-0.03em", margin:"0 0 12px", color:"#18112b" },
   sub: { fontSize:16, color:"#7a7191", margin:"0 0 20px", lineHeight:1.6 },
   list: { display:"flex", flexDirection:"column", gap:0 },

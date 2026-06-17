@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
+import BrandLogo from '@/components/BrandLogo';
 
 export default function ProfileClient({ user, error }) {
   const supabase = createClient();
@@ -67,7 +68,7 @@ export default function ProfileClient({ user, error }) {
     <div style={s.page}>
       <div style={s.wrap}>
         <div style={s.topbar}>
-          <a href="/" style={s.back}>← IdeaReels</a>
+          <a href="/" style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }} aria-label="IdeaReels — home"><BrandLogo /></a>
         </div>
 
         {user ? (

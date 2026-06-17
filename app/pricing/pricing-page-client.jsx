@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { CREDIT_PACKAGES, CREDIT_PACKAGE_BY_KEY } from '@/lib/pricing';
+import BrandLogo from '@/components/BrandLogo';
 
 const PACK_DESCRIPTIONS = {
   starter: 'For trying your first full blueprint end-to-end.',
@@ -59,7 +60,7 @@ export default function PricingPageClient({ searchParams }) {
       <style>{CSS}</style>
       <main className="pr-page">
         <nav className="pr-nav">
-          <Link href="/" className="pr-brand">IdeaReels</Link>
+          <Link href="/" className="pr-brand" aria-label="IdeaReels — home"><BrandLogo /></Link>
           <Link href="/" className="pr-back">← Back</Link>
         </nav>
 

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import BrandLogo from '@/components/BrandLogo';
 
 export const metadata = {
   title: 'Privacy Policy',
@@ -10,7 +11,7 @@ export default function PrivacyPage() {
     <main style={s.page}>
       <div style={{ ...s.wrap, position: 'relative', zIndex: 1 }}>
         <div style={s.topbar}>
-          <Link href="/" style={s.back}>← IdeaReels</Link>
+          <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }} aria-label="IdeaReels — home"><BrandLogo /></Link>
         </div>
         <h1 style={s.h1}>Privacy Policy</h1>
         <p style={s.meta}>Last updated: June 2026</p>
