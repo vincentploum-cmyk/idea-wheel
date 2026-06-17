@@ -619,6 +619,7 @@ export default function IdeaWheel() {
   // validate state
   const [validating, setValidating] = useState(false);
   const [scanPct, setScanPct]       = useState(0);
+  const [scanSteps, setScanSteps]   = useState([]);   // live "research log" streamed from the pipeline
   const scanTimerRef = useRef(null);
   const [comp, setComp]             = useState(null);
   const [validateErr, setValidateErr] = useState("");
@@ -815,21 +816,34 @@ export default function IdeaWheel() {
   }, [comp?.validationId, comp?.score]);
 
   /* ── FREE VALIDATE ── */
+  // Per-stage progress targets so the bar steps forward on every streamed event
+  // (real signals from the pipeline, not a simulated timer).
+  const STAGE_START = { retrieval: 6, scout: 16, skeptic: 58, judge: 74, eval: 90 };
+  const STAGE_DONE  = { retrieval: 14, scout: 55, skeptic: 72, judge: 88, eval: 97 };
+
+  // Merge a streamed stage event into the live research log. One line per stage
+  // key, transitioning active → done; any still-active earlier line is marked
+  // done once a later stage starts.
+  const pushStage = (ev) => {
+    setScanSteps((prev) => {
+      const next = prev.map((s) => (s.status === 'active' && s.key !== ev.key ? { ...s, status: 'done' } : s));
+      const idx = next.findIndex((s) => s.key === ev.key);
+      const done = ev.status === 'done';
+      const entry = {
+        key: ev.key,
+        label: ev.label || (idx >= 0 ? next[idx].label : ''),
+        status: done ? 'done' : 'active',
+        items: ev.items || (idx >= 0 ? next[idx].items : undefined),
+      };
+      if (idx >= 0) next[idx] = entry; else next.push(entry);
+      return next;
+    });
+  };
+
   const runValidate = async () => {
     if (!idea) return;
-    setValidating(true); setComp(null); setValidateErr(""); setScanPct(0);
+    setValidating(true); setComp(null); setValidateErr(""); setScanPct(0); setScanSteps([]);
     setDeepResearch(null); setDeepErr(""); setDeepLoading(false);   // fresh scan clears any prior deep research
-    // The scan time varies, so ease a simulated bar toward ~90% while the
-    // request is in flight; it snaps to 100% the moment results land.
-    const startedAt = Date.now();
-    const estMs = 22000;
-    clearInterval(scanTimerRef.current);
-    scanTimerRef.current = setInterval(() => {
-      const t = (Date.now() - startedAt) / estMs;
-      // Keep creeping toward 96 so the bar never sits dead while the scan runs.
-      const target = Math.round(96 * (1 - Math.exp(-2.0 * t)));
-      setScanPct(p => Math.min(96, Math.max(p, target)));
-    }, 180);
     try {
       const res = await fetch("/api/pipeline/validate", {
         method:"POST",
@@ -844,22 +858,66 @@ export default function IdeaWheel() {
           sessionId,
         }),
       });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      if (data.sessionId) setSessionId(data.sessionId);
-      clearInterval(scanTimerRef.current);
+
+      const ctype = res.headers.get('content-type') || '';
+      // Fallback: if the response isn't streamed, parse it as plain JSON.
+      if (!res.body || !ctype.includes('ndjson')) {
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        if (data.sessionId) setSessionId(data.sessionId);
+        setScanPct(100);
+        setComp(data.comp);
+        void trackOutcome('market_scan_completed', {
+          validationId: data.comp?.validationId, verdictType: data.comp?.verdictType,
+          overallScore: data.comp?.eval?.scores?.overall || null,
+        }, data.sessionId || sessionId);
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      let resultData = null;
+      let streamErr = '';
+      const handle = (ev) => {
+        if (ev.t === 'stage') {
+          pushStage(ev);
+          const tbl = ev.status === 'done' ? STAGE_DONE : STAGE_START;
+          setScanPct((p) => Math.max(p, tbl[ev.key] || p));
+        } else if (ev.t === 'result') {
+          resultData = ev;
+        } else if (ev.t === 'error') {
+          streamErr = ev.error || 'Market check failed.';
+        }
+      };
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let nl;
+        while ((nl = buf.indexOf('\n')) >= 0) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (line) { try { handle(JSON.parse(line)); } catch {} }
+        }
+      }
+      const tail = buf.trim();
+      if (tail) { try { handle(JSON.parse(tail)); } catch {} }
+
+      if (streamErr) throw new Error(streamErr);
+      if (!resultData?.comp) throw new Error('Market check failed.');
+      if (resultData.sessionId) setSessionId(resultData.sessionId);
       setScanPct(100);
-      await new Promise(r => setTimeout(r, 350));  // let the bar finish to 100%
-      setComp(data.comp);
+      await new Promise(r => setTimeout(r, 400));   // let the log + bar finish
+      setComp(resultData.comp);
       void trackOutcome('market_scan_completed', {
-        validationId: data.comp?.validationId,
-        verdictType: data.comp?.verdictType,
-        overallScore: data.comp?.eval?.scores?.overall || null,
-      }, data.sessionId || sessionId);
+        validationId: resultData.comp?.validationId,
+        verdictType: resultData.comp?.verdictType,
+        overallScore: resultData.comp?.eval?.scores?.overall || null,
+      }, resultData.sessionId || sessionId);
     } catch(e) {
       setValidateErr(e.message.includes("AI_CREDITS") || e.message.includes("temporarily") ? "Our AI is taking a short break. Please try again in a minute." : "Market check failed. " + e.message);
     } finally {
-      clearInterval(scanTimerRef.current);
       setValidating(false);
     }
   };
@@ -1195,14 +1253,31 @@ export default function IdeaWheel() {
               )}
 
               {validating && (
-                <div className="su-scan su-glass" style={{marginTop:24}}>
+                <div className="su-scan su-glass su-research" style={{marginTop:24}}>
                   <div className="su-scan-head">
-                    <span className="su-scan-text">Scanning demand, market size, and competition…</span>
+                    <span className="su-scan-text">Researching your idea — live</span>
                     <span className="su-scan-pct">{scanPct}%</span>
                   </div>
                   <div className="su-scan-bar su-scan-bar--progress">
                     <div className="su-scan-fill su-scan-fill--progress" style={{width:`${scanPct}%`}}/>
                   </div>
+                  <ul className="su-research-log">
+                    {scanSteps.map((s) => (
+                      <li key={s.key} className={`su-research-step su-research-step--${s.status}`}>
+                        <span className="su-research-ico" aria-hidden="true">
+                          {s.status === 'done' ? '✓' : <span className="su-research-spin" />}
+                        </span>
+                        <span className="su-research-body">
+                          <span className="su-research-line">{s.label}</span>
+                          {s.items?.length > 0 && (
+                            <span className="su-research-chips">
+                              {s.items.map((it, i) => <span className="su-research-chip" key={i}>{it}</span>)}
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
 
@@ -1857,6 +1932,47 @@ const CSS = `
   border-radius:99px; background:var(--grad-brand);
   animation:none;
   transition:width .4s cubic-bezier(.16,1,.3,1);
+}
+
+/* live research log — the streamed pipeline, shown while validating */
+.su-research-log {
+  list-style:none; margin:16px 0 0; padding:0;
+  display:flex; flex-direction:column; gap:2px;
+}
+.su-research-step {
+  display:flex; align-items:flex-start; gap:11px;
+  padding:7px 0; min-height:30px;
+  animation:su-research-in .35s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes su-research-in {
+  from { opacity:0; transform:translateY(5px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.su-research-ico {
+  flex:none; width:18px; height:18px; margin-top:1px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:800;
+}
+.su-research-step--done .su-research-ico { color:var(--good); }
+.su-research-spin {
+  width:13px; height:13px; border-radius:50%;
+  border:2px solid rgba(124,58,237,0.22); border-top-color:var(--accent);
+  animation:su-research-spin .7s linear infinite;
+}
+@keyframes su-research-spin { to { transform:rotate(360deg); } }
+.su-research-body { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.su-research-line {
+  font-size:13.5px; line-height:1.45; letter-spacing:-.005em;
+  color:var(--muted); font-weight:500; transition:color .3s;
+}
+.su-research-step--active .su-research-line { color:var(--ink); font-weight:600; }
+.su-research-step--done .su-research-line { color:var(--ink-2); }
+.su-research-chips { display:flex; flex-wrap:wrap; gap:6px; }
+.su-research-chip {
+  font-size:11.5px; font-weight:600; color:var(--ink-2);
+  background:var(--accent-light); border:1px solid var(--accent-border);
+  border-radius:999px; padding:3px 10px;
+  animation:su-research-in .3s cubic-bezier(.16,1,.3,1) both;
 }
 
 /* validate grid */

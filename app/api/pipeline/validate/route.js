@@ -422,67 +422,99 @@ export async function POST(request) {
 
   const sessionId = ensureSessionId(rawSessionId);
   const agentDesc = freeformIdea || `an agent that ${action} ${workflow} ${connector} ${industry}`;
+  // Plain phrases used to make the live research log specific to THIS idea.
+  const sector = (stripCitationNoise(industry) || 'this market').toLowerCase();
+  const job = (stripCitationNoise(workflow) || 'this workflow').toLowerCase();
 
-  try {
-    const retrieval = await buildRetrievalContext({ modeName, industry, action, workflow });
-    const scoutCall = await call(scoutPrompt(agentDesc, modeName, retrieval), { webSearch: true, maxTokens: 2200 });
-    const scoutParsed = await parseJSON(scoutCall.text, 'validation scout');
-    const scout = scoutParsed.value;
+  // Stream the real pipeline as it runs (NDJSON: one JSON object per line). The
+  // client renders these as a live "research log" so the wait shows the actual
+  // scout → skeptic → judge → score work instead of a fake progress bar. The
+  // final `result` line carries the finished comp.
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (obj) => {
+        try { controller.enqueue(encoder.encode(`${JSON.stringify(obj)}\n`)); } catch {}
+      };
+      try {
+        send({ t: 'stage', key: 'retrieval', label: `Framing the idea for ${sector}…` });
+        const retrieval = await buildRetrievalContext({ modeName, industry, action, workflow });
 
-    const skepticCall = await call(skepticPrompt(agentDesc, retrieval, scout), { maxTokens: 1000 });
-    const skepticParsed = await parseJSON(skepticCall.text, 'validation skeptic');
-    const skeptic = skepticParsed.value;
+        send({ t: 'stage', key: 'scout', label: `Scanning ${sector} for tools that already do this…` });
+        const scoutCall = await call(scoutPrompt(agentDesc, modeName, retrieval), { webSearch: true, maxTokens: 2200 });
+        const scoutParsed = await parseJSON(scoutCall.text, 'validation scout');
+        const scout = scoutParsed.value;
+        const players = (Array.isArray(scout.players) ? scout.players : [])
+          .map((p) => stripCitationNoise(p?.name)).filter(Boolean).slice(0, 4);
+        send({
+          t: 'stage', key: 'scout', status: 'done',
+          label: players.length ? `Found ${players.length} player${players.length > 1 ? 's' : ''} already in this space` : 'Mapped the competitive landscape',
+          items: players,
+        });
 
-    const judgeCall = await call(judgePrompt(agentDesc, retrieval, scout, skeptic, retrieval.learning), { maxTokens: 1200 });
-    const judgeParsed = await parseJSON(judgeCall.text, 'validation judge');
-    const judge = judgeParsed.value;
+        send({ t: 'stage', key: 'skeptic', label: `Pressure-testing whether ${job} is a real, painful problem…` });
+        const skepticCall = await call(skepticPrompt(agentDesc, retrieval, scout), { maxTokens: 1000 });
+        const skepticParsed = await parseJSON(skepticCall.text, 'validation skeptic');
+        const skeptic = skepticParsed.value;
+        const riskN = (Array.isArray(skeptic.fatalRisks) ? skeptic.fatalRisks : []).length;
+        send({
+          t: 'stage', key: 'skeptic', status: 'done',
+          label: riskN ? `Flagged ${riskN} risk${riskN > 1 ? 's' : ''} that could sink it` : 'Stress-tested the premise',
+        });
 
-    const evalCall = await call(evalPrompt(agentDesc, scout, skeptic, judge), { maxTokens: 700 });
-    const evalParsed = await parseJSON(evalCall.text, 'validation eval');
-    const evalResult = evalParsed.value;
+        send({ t: 'stage', key: 'judge', label: 'Weighing the opportunity against the risks…' });
+        const judgeCall = await call(judgePrompt(agentDesc, retrieval, scout, skeptic, retrieval.learning), { maxTokens: 1200 });
+        const judgeParsed = await parseJSON(judgeCall.text, 'validation judge');
+        const judge = judgeParsed.value;
+        const decisionWord = (judge.decision || scout.verdictType || '').toString().toLowerCase();
+        send({
+          t: 'stage', key: 'judge', status: 'done',
+          label: decisionWord ? `Verdict forming: ${decisionWord}` : 'Reconciled the verdict',
+        });
 
-    const usage = mergeUsage(
-      scoutCall.usage,
-      scoutParsed.usage,
-      skepticCall.usage,
-      skepticParsed.usage,
-      judgeCall.usage,
-      judgeParsed.usage,
-      evalCall.usage,
-      evalParsed.usage,
-    );
-    const costUsd = calcCost(usage.input_tokens, usage.output_tokens);
+        send({ t: 'stage', key: 'eval', label: 'Scoring the idea out of 100…' });
+        const evalCall = await call(evalPrompt(agentDesc, scout, skeptic, judge), { maxTokens: 700 });
+        const evalParsed = await parseJSON(evalCall.text, 'validation eval');
+        const evalResult = evalParsed.value;
 
-    const validationRow = await recordValidation({
-      sessionId,
-      modeName,
-      action,
-      workflow,
-      industry,
-      agentDesc,
-      retrieval,
-      scout,
-      skeptic,
-      judge,
-      eval: evalResult,
-      verdictType: judge.decision || scout.verdictType || 'warning',
-      usage,
-      costUsd,
-    });
+        const usage = mergeUsage(
+          scoutCall.usage, scoutParsed.usage,
+          skepticCall.usage, skepticParsed.usage,
+          judgeCall.usage, judgeParsed.usage,
+          evalCall.usage, evalParsed.usage,
+        );
+        const costUsd = calcCost(usage.input_tokens, usage.output_tokens);
 
-    const comp = buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval, validationRow.id);
+        const validationRow = await recordValidation({
+          sessionId, modeName, action, workflow, industry, agentDesc,
+          retrieval, scout, skeptic, judge, eval: evalResult,
+          verdictType: judge.decision || scout.verdictType || 'warning',
+          usage, costUsd,
+        });
 
-    return NextResponse.json({
-      sessionId,
-      comp,
-      cost: {
-        input_tokens: usage.input_tokens,
-        output_tokens: usage.output_tokens,
-        cost_usd: costUsd,
-      },
-    });
-  } catch (err) {
-    console.error('[validate]', err.message);
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  }
+        const comp = buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval, validationRow.id);
+
+        send({ t: 'stage', key: 'eval', status: 'done', label: 'Putting your report together…' });
+        send({
+          t: 'result',
+          sessionId,
+          comp,
+          cost: { input_tokens: usage.input_tokens, output_tokens: usage.output_tokens, cost_usd: costUsd },
+        });
+      } catch (err) {
+        console.error('[validate]', err?.message);
+        send({ t: 'error', error: err?.message || 'Market check failed.' });
+      } finally {
+        try { controller.close(); } catch {}
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'application/x-ndjson; charset=utf-8',
+      'Cache-Control': 'no-store, no-transform',
+      'X-Accel-Buffering': 'no',
+    },
+  });
 }
