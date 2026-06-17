@@ -426,6 +426,7 @@ function SlotMachine({ onResult }) {
   const indexRef = useRef([0,0,0]);
   const targetRef = useRef([0,0,0]);
   const commitRef = useRef(false);   // only a deliberate "Generate idea" spin commits a new idea
+  const landedByMode = useRef({});   // persist spun result per mode so switching back restores it
   const [landed, setLanded] = useState(['','','']);
   const [spinning, setSpinning] = useState([false,false,false]);
   const [hasSpun, setHasSpun] = useState(false);
@@ -449,13 +450,26 @@ function SlotMachine({ onResult }) {
   const weights = m.weights || banks.map((bank) => bank.map(() => 1));
 
   useEffect(() => {
-    banks.forEach((bank,w) => {
-      const start = Math.floor(Math.random()*bank.length);
-      indexRef.current[w] = HOME_COPY*bank.length + start;
-      const el = stripRefs[w].current;
-      if (el) { el.style.transition='none'; el.style.transform=`translateY(${-(indexRef.current[w]-1)*ITEM_H}px)`; }
-    });
-    setLanded(['','','']);
+    const saved = landedByMode.current[mode];
+    if (saved && saved.every(Boolean)) {
+      // Restore the strip positions to match the previously-spun words for this mode
+      banks.forEach((bank, w) => {
+        const t = bank.indexOf(saved[w]);
+        const resolvedIdx = t >= 0 ? HOME_COPY * bank.length + t : HOME_COPY * bank.length;
+        indexRef.current[w] = resolvedIdx;
+        const el = stripRefs[w].current;
+        if (el) { el.style.transition='none'; el.style.transform=`translateY(${-(resolvedIdx-1)*ITEM_H}px)`; }
+      });
+      setLanded(saved);
+    } else {
+      banks.forEach((bank,w) => {
+        const start = Math.floor(Math.random()*bank.length);
+        indexRef.current[w] = HOME_COPY*bank.length + start;
+        const el = stripRefs[w].current;
+        if (el) { el.style.transition='none'; el.style.transform=`translateY(${-(indexRef.current[w]-1)*ITEM_H}px)`; }
+      });
+      setLanded(['','','']);
+    }
     setSpinning([false,false,false]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, JSON.stringify(banks)]);
@@ -531,6 +545,7 @@ function SlotMachine({ onResult }) {
     // silently swap the idea or wipe the market research the user is viewing.
     if (complete && !anySpinning && commitRef.current && onResult) {
       commitRef.current = false;
+      landedByMode.current[mode] = [...landed];
       onResult(buildGeneratorIdea(m, landed[0], landed[1], landed[2]));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -546,7 +561,7 @@ function SlotMachine({ onResult }) {
         <div className="sm-topbar">
           <div className="sm-modebar">
             {Object.keys(CLIENT_DEFAULT_MODE_CONFIGS).map(k => (
-              <button key={k} className={`sm-modebtn${mode===k?' on':''}`} onClick={()=>{ if (k !== mode) { setMode(k); setHasSpun(false); } }} disabled={anySpinning}>
+              <button key={k} className={`sm-modebtn${mode===k?' on':''}`} onClick={()=>{ if (k !== mode) { setMode(k); if (!landedByMode.current[k]?.every(Boolean)) setHasSpun(false); } }} disabled={anySpinning}>
                 {CLIENT_DEFAULT_MODE_CONFIGS[k].name}
               </button>
             ))}
