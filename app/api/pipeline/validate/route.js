@@ -176,7 +176,12 @@ function stripCitationNoise(value) {
 function shortText(value, max = 220) {
   if (!value) return '';
   const text = stripCitationNoise(value);
-  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+  if (text.length <= max) return text;
+  // Cut at the last whole word so we never slice mid-word ("crowded m…").
+  const slice = text.slice(0, max);
+  const lastSpace = slice.lastIndexOf(' ');
+  const trimmed = (lastSpace > max * 0.6 ? slice.slice(0, lastSpace) : slice).replace(/[\s,;:.!?–—-]+$/, '');
+  return `${trimmed}…`;
 }
 
 function shortList(values, maxItems = 5, maxLen = 120) {
@@ -290,6 +295,14 @@ WRITING RULES (apply to marketSize, landscape, gap, verdict, verdictReasoning, p
 - No marketing fluff. State facts a busy non-technical founder understands in one read.`;
 }
 
+// Every prose field below is shown directly to the founder, so it must read
+// like advice from a person — never expose the internal pipeline roles or the
+// in-house jargon the models like to reach for.
+const FOUNDER_VOICE = `WRITING RULES for every prose field (it is shown to the founder):
+- Write straight to the founder in plain, 8th-grade English. Short sentences.
+- NEVER mention the words "scout", "skeptic", "judge", "moat advice", or any internal role/step. Do not write things like "Scout and skeptic align". Just state the conclusion.
+- Do NOT use the words: wedge, whitespace, defensibility, defensible, incumbent, point solution, TAM, GTM, moat. Say them plainly instead — "a way to win", "an opening", "hard to copy", "the big players", "a single-feature tool".`;
+
 function skepticPrompt(agentDesc, retrieval, scout) {
   return `You are the internal skeptic for IdeaWheel. Your job is to kill weak ideas before they waste founder time.
 
@@ -304,10 +317,12 @@ Return ONLY a JSON object (no fences):
   "fatalRisks": ["up to 4 reasons this idea could fail or be too easy to copy"],
   "copyability": "low | medium | high",
   "missingProof": ["proof point 1", "proof point 2"],
-  "wedgeAdvice": "If this is salvageable, name the narrowest defensible wedge.",
+  "wedgeAdvice": "If this is salvageable, name the single narrowest way it could win — in plain words.",
   "recommendation": "advance | caution | kill",
-  "reasoning": "2-3 blunt sentences"
-}`;
+  "reasoning": "2-3 blunt sentences written straight to the founder"
+}
+
+${FOUNDER_VOICE}`;
 }
 
 function judgePrompt(agentDesc, retrieval, scout, skeptic, learning) {
@@ -332,11 +347,13 @@ Return ONLY a JSON object (no fences):
 {
   "decision": "build | warning | avoid",
   "confidence": "low | medium | high",
-  "wedge": "the actual narrow wedge to pursue",
+  "wedge": "the single narrowest angle this could win on — in plain words, no jargon",
   "defensibility": "2-3 sentences on what would make this hard to copy",
   "mustProveNext": ["3 things the founder must prove next"],
-  "reasoning": "2-3 sentences balancing scout and skeptic"
-}`;
+  "reasoning": "2-3 plain sentences explaining the decision, written straight to the founder"
+}
+
+${FOUNDER_VOICE}`;
 }
 
 function evalPrompt(agentDesc, scout, skeptic, judge) {
@@ -368,7 +385,13 @@ function buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval,
   // A premise mismatch (e.g. equipment maintenance for a law firm) overrides
   // any optimistic verdict — there is no real problem to solve.
   const decision = premiseBroken ? 'avoid' : (judge.decision || scout.verdictType || 'warning');
-  const premiseNote = shortText(scout.premiseNote, 180);
+  // Only surface the premise note when the problem genuinely barely exists for
+  // this industry. When the premise is realistic, the model sometimes fills it
+  // with a verdict-like sentence that just duplicates the verdict below — so
+  // suppress it to avoid showing the same point twice.
+  const premiseNote = (scout.premiseFit === 'weak' || scout.premiseFit === 'nonexistent')
+    ? shortText(scout.premiseNote, 240)
+    : '';
   // Web-search answers come back peppered with <cite index="…"> markup. Strip it
   // from every user-facing string HERE so it can never leak into the validation
   // screen or the blueprint (which renders these same comp fields).
@@ -393,7 +416,7 @@ function buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval,
     // The UI renders premiseNote separately above the verdict, so it is left
     // out here to avoid showing the same sentence twice.
     verdictReasoning: stripCitationNoise(`${judge.reasoning} ${scout.verdictReasoning || ''}`.trim()),
-    plainSummary: shortText(scout.plainSummary, 360),
+    plainSummary: shortText(scout.plainSummary, 480),
     gap: stripCitationNoise(judge.wedge || scout.gap),
     moat: stripCitationNoise(judge.defensibility),
     skeptic,

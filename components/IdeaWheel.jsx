@@ -273,7 +273,21 @@ function cleanValidationText(text = '') {
     .replace(/general wedge criteria/gi, 'clear reason to win')
     .replace(/high-touch, expensive workflow/gi, 'time-consuming workflow')
     .replace(/proof point:/gi, 'proof:')
+    // Strip internal-pipeline language that should never reach the founder.
+    .replace(/\b(the\s+)?(scout|skeptic|judge)(\s+and\s+(the\s+)?(scout|skeptic|judge))?\s+(align|aligns|agree|agrees|both\s+\w+|flags?|finds?|found|identif\w+|notes?|says?|conclude[sd]?|recommend[sd]?)\b[:,]?\s*/gi, '')
+    .replace(/\bthe moat advice\b/gi, 'the suggested edge')
+    .replace(/\bmoat\b/gi, 'edge')
+    .replace(/\bwhitespace\b/gi, 'open space')
+    .replace(/\bdefensibility\b/gi, 'staying power')
+    .replace(/\bdefensible\b/gi, 'hard to copy')
+    .replace(/\bincumbents?\b/gi, 'big players')
+    .replace(/\bpoint solution\b/gi, 'single-feature tool')
+    .replace(/\bwedges?\b/gi, 'angle')
+    // Tidy any double spaces / orphaned leading punctuation left by the swaps.
+    .replace(/\s+([.,;:])/g, '$1')
+    .replace(/^[\s—–-]+/, '')
     .replace(/\s+/g, ' ')
+    .replace(/^([a-z])/, (m) => m.toUpperCase())
     .trim();
 }
 
