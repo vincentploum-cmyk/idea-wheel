@@ -419,7 +419,7 @@ function pickWeightedIndex(weights = []) {
 
 const CLIENT_DEFAULT_MODE_CONFIGS = DEFAULT_MODE_CONFIGS;
 
-function SlotMachine({ onResult }) {
+function SlotMachine({ onResult, onModeChange }) {
   const [mode, setMode] = useState('b2b');
   const [modeConfigs, setModeConfigs] = useState(CLIENT_DEFAULT_MODE_CONFIGS);
   const stripRefs = [useRef(null), useRef(null), useRef(null)];
@@ -561,7 +561,7 @@ function SlotMachine({ onResult }) {
         <div className="sm-topbar">
           <div className="sm-modebar">
             {Object.keys(CLIENT_DEFAULT_MODE_CONFIGS).map(k => (
-              <button key={k} className={`sm-modebtn${mode===k?' on':''}`} onClick={()=>{ if (k !== mode) { setMode(k); setHasSpun(!!(landedByMode.current[k]?.every(Boolean))); } }} disabled={anySpinning}>
+              <button key={k} className={`sm-modebtn${mode===k?' on':''}`} onClick={()=>{ if (k !== mode) { setMode(k); setHasSpun(!!(landedByMode.current[k]?.every(Boolean))); onModeChange?.(k); } }} disabled={anySpinning}>
                 {CLIENT_DEFAULT_MODE_CONFIGS[k].name}
               </button>
             ))}
@@ -628,6 +628,8 @@ export default function IdeaWheel() {
   const [screen, setScreen] = useState("wheel");  // landing | wheel | validate | blueprint
   const [authChecked, setAuthChecked] = useState(false);
   const [idea, setIdea]     = useState(null);
+  const ideaByMode = useRef({});   // persist idea per mode so switching back restores it
+  const currentModeRef = useRef('b2b');
   const [credits, setCredits] = useState(3);
   const [mounted, setMounted] = useState(false);
   const [authUser, setAuthUser]       = useState(null);   // logged-in user
@@ -791,12 +793,24 @@ export default function IdeaWheel() {
   };
 
   const handleSpin = (segment) => {
+    ideaByMode.current[currentModeRef.current] = segment;
     setIdea(segment);
     setSessionId("");
     setComp(null); setValidateErr("");
     setDesign(null); setGtm(null); setInfra(null); setProto(null);
     setBpStage(null); setBpErr("");
     goTo("wheel");
+  };
+
+  const handleModeChange = (newMode) => {
+    currentModeRef.current = newMode;
+    const saved = ideaByMode.current[newMode] || null;
+    setIdea(saved);
+    // reset validate/blueprint state — it belongs to the previous mode's idea
+    setSessionId(""); setComp(null); setValidateErr("");
+    setDesign(null); setGtm(null); setInfra(null); setProto(null);
+    setBpStage(null); setBpErr("");
+    setDeepResearch(null); setDeepErr("");
   };
 
   const trackOutcome = async (signal, payload = {}, explicitSessionId = sessionId) => {
@@ -1228,7 +1242,7 @@ export default function IdeaWheel() {
       {screen === "wheel" && (
         <section className="su-screen su-wheel-screen">
           <div className="su-eyebrow su-step-eyebrow">Step 1 · Generate idea</div>
-          <SlotMachine onResult={handleSpin}/>
+          <SlotMachine onResult={handleSpin} onModeChange={handleModeChange}/>
           {/* Validate button + inline results */}
           {idea && (
             <div className="sm-validate-section">
@@ -2321,7 +2335,7 @@ const CSS = `
   border-radius:20px;
   padding:8px;
   background:rgba(248,248,248,0.9);
-  border:1px solid rgba(0,0,0,0.08);
+  border:2.5px solid rgba(0,0,0,0.18);
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.86);
   overflow:hidden;
 }
@@ -2468,18 +2482,23 @@ const CSS = `
 }
 
 .sm-spin {
-  font-family:var(--font-body); font-size:15px; font-weight:600;
-  color:#fff; padding:14px 36px; border-radius:var(--r-pill);
+  font-family:var(--font-body); font-size:15px; font-weight:700;
+  color:#111; padding:14px 36px; border-radius:var(--r-pill);
   letter-spacing:-.01em;
-  background:#111;
+  background:#FFE000;
   cursor:pointer; min-width:220px; width:min(100%, 300px); position:relative;
-  border:1px solid rgba(255,255,255,0.10);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.12);
-  transition:background .15s, transform .15s ease;
+  border:none;
+  box-shadow:0 2px 0 rgba(0,0,0,0.18);
+  transition:background .15s, transform .15s ease, box-shadow .15s;
 }
 .sm-spin:hover:not(:disabled) {
-  background:#333;
+  background:#F5D800;
   transform:translateY(-1px);
+  box-shadow:0 4px 0 rgba(0,0,0,0.18);
+}
+.sm-spin:active:not(:disabled) {
+  transform:translateY(1px);
+  box-shadow:0 1px 0 rgba(0,0,0,0.18);
 }
 .sm-spin:active:not(:disabled) { transform:translateY(0); }
 .sm-spin:disabled { opacity:.5; cursor:default; }
