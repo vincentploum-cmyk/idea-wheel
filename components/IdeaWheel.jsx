@@ -608,13 +608,13 @@ function SlotMachine({ onResult, onModeChange }) {
 
       <div className="sm-live-sentence">
         <p>
-          <span style={{fontStyle:'italic',color:'var(--muted)'}}>{prefix} </span>
+          <span style={{color:'#111'}}>{prefix} </span>
           {landed[0] ? <span className="sm-slot">{liveVerb}</span> : <span className="sm-slot-empty"/>}
           {' '}
           {landed[1] ? <span className="sm-slot">{landed[1]}</span> : <span className="sm-slot-empty"/>}
-          {' '}<span style={{fontStyle:'italic',color:'var(--muted)'}}>{conn}</span>{' '}
+          {' '}<span style={{color:'#111'}}>{conn}</span>{' '}
           {landed[2] ? <span className="sm-slot">{landed[2]}</span> : <span className="sm-slot-empty"/>}
-          {mode === 'b2b' ? <span style={{fontStyle:'italic',color:'var(--muted)'}}> industry</span> : null}
+          {mode === 'b2b' ? <span style={{color:'#111'}}> industry</span> : null}
           <span style={{color:'var(--magenta)'}}>.</span>
         </p>
       </div>
@@ -2511,7 +2511,7 @@ const CSS = `
   display:flex; align-items:center; justify-content:center;
   box-shadow:4px 4px 0 #111;
 }
-.sm-live-sentence p { margin:0; font-size:15px; line-height:1.6; color:var(--ink-2); }
+.sm-live-sentence p { margin:0; font-size:15px; line-height:1.6; color:#111; font-family:'Nunito',sans-serif; font-weight:700; }
 .sm-live-sentence .sm-slot {
   display:inline-block; font-weight:700; padding:1px 4px;
   color:var(--ink);
