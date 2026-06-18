@@ -12,20 +12,22 @@ export const metadata = {
 export default function LandingPage() {
   return (
     <PublicShell>
-      <section className="gt-hero-section gt-hero-1 bg-cover fix" style={{ backgroundImage: "url('/boostly/assets/img/home-1/hero/hero-bg.jpg')" }}>
+      <section className="gt-hero-section gt-hero-1 ideareels-hero fix">
         <div className="top-shape"><img src="/boostly/assets/img/home-1/hero/top-shape.png" alt="" /></div>
         <div className="left-shape"><img src="/boostly/assets/img/home-1/hero/left-shape.png" alt="" /></div>
         <div className="right-shape"><img src="/boostly/assets/img/home-1/hero/right-shape.png" alt="" /></div>
         <div className="robot-shape"><img src="/boostly/assets/img/home-1/hero/robot-shape.png" alt="" /></div>
         <div className="container">
-          <div className="gt-hero-items">
+          <div className="gt-hero-items ideareels-hero-panel">
             <div className="box-shape"><img src="/boostly/assets/img/home-1/hero/box-shape.png" alt="" /></div>
+            <div className="ideareels-hero-glow ideareels-hero-glow-1" />
+            <div className="ideareels-hero-glow ideareels-hero-glow-2" />
             <div className="row">
               <div className="col-lg-12">
-                <div className="gt-hero-content">
-                  <p>Idea validation, before the busywork</p>
+                <div className="gt-hero-content ideareels-hero-content">
+                  <p className="ideareels-kicker">Idea validation, before the busywork</p>
                   <h1>Find a startup idea <b>worth</b> <span>building.</span></h1>
-                  <p className="mt-4" style={{ maxWidth: 760, marginInline: 'auto' }}>
+                  <p className="ideareels-subheadline mt-4">
                     Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.
                   </p>
                   <div className="gt-cta-btn justify-content-center mt-4">
@@ -36,11 +38,6 @@ export default function LandingPage() {
                     <li><i className="fa-regular fa-circle-check me-2" />3 free credits on signup</li>
                     <li><i className="fa-regular fa-circle-check me-2" />No credit card required</li>
                   </ul>
-                </div>
-                <div className="gt-hero-image">
-                  <div className="border-shape"><img src="/boostly/assets/img/home-1/hero/border-shape.png" alt="" /></div>
-                  <img src="/boostly/assets/img/home-1/hero/hero-image.jpg" alt="IdeaReels dashboard preview" />
-                  <div className="shape2"><img src="/boostly/assets/img/new-icon/shape2.png" alt="" /></div>
                 </div>
               </div>
             </div>
@@ -91,7 +88,7 @@ export default function LandingPage() {
             <div className="row g-4 mt-4">
               {[['3', 'Free credits on signup'], ['4', 'AI specialists per blueprint'], ['<30s', 'Time to first market check']].map(([value, label]) => (
                 <div key={label} className="col-md-4">
-                  <div className="gt-pricing-box-items style-2 text-center h-100">
+                  <div className="gt-pricing-box-items style-2 text-center h-100 ideareels-stat-card">
                     <div className="gt-pricing-header">
                       <h2>{value}</h2>
                       <span className="sub-texts">{label}</span>
@@ -196,6 +193,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
     </PublicShell>
   );
 }

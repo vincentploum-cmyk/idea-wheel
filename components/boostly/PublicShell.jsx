@@ -17,16 +17,16 @@ export function PublicHeader() {
           </p>
         </div>
       </div>
-      <header id="header-sticky" className="header-3">
+      <header id="header-sticky" className="header-3 ideareels-header">
         <div className="container">
           <div className="mega-menu-wrapper">
-            <div className="header-main">
+            <div className="header-main ideareels-header-main">
               <div className="logo">
-                <Link href="/" className="header-logo" style={{ color: '#111827', fontWeight: 800, fontSize: 28 }}>
+                <Link href="/" className="header-logo ideareels-header-logo">
                   IdeaReels
                 </Link>
               </div>
-              <div className="mean__menu-wrapper">
+              <div className="mean__menu-wrapper ideareels-desktop-nav">
                 <div className="main-menu">
                   <nav>
                     <ul>
@@ -39,7 +39,7 @@ export function PublicHeader() {
                   </nav>
                 </div>
               </div>
-              <div className="header-right d-flex justify-content-end align-items-center">
+              <div className="header-right d-flex justify-content-end align-items-center ideareels-desktop-actions">
                 <div className="header-button">
                   <Link href="/auth/login" className="gt-theme-btn style-3 bg-border">
                     sign in
@@ -49,6 +49,27 @@ export function PublicHeader() {
                   </Link>
                 </div>
               </div>
+              <details className="ideareels-mobile-nav d-lg-none">
+                <summary aria-label="Open navigation menu">
+                  <span />
+                  <span />
+                  <span />
+                </summary>
+                <nav>
+                  <ul>
+                    {navItems.map((item) => (
+                      <li key={item.href}>
+                        <Link href={item.href}>{item.label}</Link>
+                      </li>
+                    ))}
+                    <li className="ideareels-mobile-cta">
+                      <Link href="/wheel" className="gt-theme-btn style-bg">
+                        get started free
+                      </Link>
+                    </li>
+                  </ul>
+                </nav>
+              </details>
             </div>
           </div>
         </div>
