@@ -3,6 +3,7 @@ import '@/styles/zubaz/bootstrap.min.css';
 import '@/styles/zubaz/app.css';
 import '@/styles/zubaz/main.css';
 import '@/styles/zubaz/react-adjustment.css';
+import Script from 'next/script';
 import CookieBanner from '@/components/CookieBanner';
 import CloudBackground from '@/components/CloudBackground';
 
@@ -33,20 +34,32 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-        <link rel="stylesheet" href="/boostly/assets/css/bootstrap.min.css" />
-        <link rel="stylesheet" href="/boostly/assets/css/all.min.css" />
-        <link rel="stylesheet" href="/boostly/assets/css/animate.css" />
-        <link rel="stylesheet" href="/boostly/assets/css/magnific-popup.css" />
-        <link rel="stylesheet" href="/boostly/assets/css/meanmenu.css" />
-        <link rel="stylesheet" href="/boostly/assets/css/swiper-bundle.min.css" />
-        <link rel="stylesheet" href="/boostly/assets/css/nice-select.css" />
-        <link rel="stylesheet" href="/boostly/assets/css/flaticon.css" />
-        <link rel="stylesheet" href="/boostly/assets/css/main.css" />
+        <link rel="stylesheet" href="/intellio-css/bootstrap.min.css" />
+        <link rel="stylesheet" href="/intellio-css/fontawesome.css" />
+        <link rel="stylesheet" href="/intellio-css/fontawesome-free.css" />
+        <link rel="stylesheet" href="/intellio-css/animate.css" />
+        <link rel="stylesheet" href="/intellio-css/magnific.css" />
+        <link rel="stylesheet" href="/intellio-css/meanmenu.min.css" />
+        <link rel="stylesheet" href="/intellio-css/nice-select.css" />
+        <link rel="stylesheet" href="/intellio-css/swiper.min.css" />
+        <link rel="stylesheet" href="/intellio-css/style-dark.css" />
+        <link rel="stylesheet" href="/intellio-css/responsive.css" />
       </head>
       <body>
         <CloudBackground />
         {children}
         <CookieBanner />
+        <Script src="/intellio-js/jquery.js" strategy="afterInteractive" />
+        <Script src="/intellio-js/bootstrap.min.js" strategy="afterInteractive" />
+        <Script src="/intellio-js/jquery.meanmenu.js" strategy="afterInteractive" />
+        <Script src="/intellio-js/wow.js" strategy="afterInteractive" />
+        <Script src="/intellio-js/appear.js" strategy="afterInteractive" />
+        <Script src="/intellio-js/swiper.min.js" strategy="afterInteractive" />
+        <Script src="/intellio-js/ScrollTrigger.min.js" strategy="afterInteractive" />
+        <Script src="/intellio-js/ScrollToPlugin.min.js" strategy="afterInteractive" />
+        <Script src="/intellio-js/ScrollSmoother.min.js" strategy="afterInteractive" />
+        <Script src="/intellio-js/SplitText.js" strategy="afterInteractive" />
+        <Script src="/intellio-js/main.js" strategy="afterInteractive" />
       </body>
     </html>
   );

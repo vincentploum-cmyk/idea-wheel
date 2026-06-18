@@ -1,5 +1,5 @@
-import PublicShell from '@/components/boostly/PublicShell';
-import { LEGAL_TERMS } from '@/components/boostly/data';
+import PublicShell from '@/components/intellio/PublicShell';
+import { LEGAL_TERMS } from '@/components/intellio/data';
 
 export const metadata = {
   title: 'Terms of Service',
@@ -8,19 +8,19 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <PublicShell title="Terms of Service">
-      <section className="gt-service-details-wrapper section-padding">
-        <div className="container">
+    <PublicShell title="Terms of Service" subtitle="Legal">
+      <section className="service-details-section section-padding">
+        <div className="auto-container">
           <div className="row justify-content-center">
             <div className="col-lg-9">
-              <div className="gt-service-details-content">
-                <div className="gt-section-title style-3 mb-4">
-                  <h6>Last updated: June 2026</h6>
+              <div className="service-details-content intellio-legal-copy">
+                <div className="section-title style-two mb-4">
+                  <h5>Last updated: June 2026</h5>
                   <h2>The rules for using <span>IdeaReels</span></h2>
                 </div>
                 {LEGAL_TERMS.map((section) => (
                   <div key={section.title} className="mb-5">
-                    <h3 className="mb-3">{section.title}</h3>
+                    <h3>{section.title}</h3>
                     <p>{section.body}</p>
                   </div>
                 ))}

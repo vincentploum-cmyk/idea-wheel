@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { CREDIT_PACKAGES, CREDIT_PACKAGE_BY_KEY } from '@/lib/pricing';
-import PublicShell from '@/components/boostly/PublicShell';
+import PublicShell from '@/components/intellio/PublicShell';
 
 const PACK_DESCRIPTIONS = {
   starter: 'For trying your first full blueprint end-to-end.',
@@ -55,14 +55,13 @@ export default function PricingPageClient({ searchParams }) {
   }
 
   return (
-    <PublicShell title="Pricing">
-      <section className="gt-pricing-section fix section-padding section-bg-4">
-        <div className="pricing-right-shape"><img src="/boostly/assets/img/home-1/pricing-right.png" alt="" /></div>
-        <div className="container">
-          <div className="gt-section-title text-center style-3">
-            <h6 className="tt-capitalize">pricing plan</h6>
-            <h2 className="inner-font fw-700 fz-50 text-header-color">Buy credits only when an idea is worth <span>pursuing</span></h2>
-            <p className="mt-3">Validation stays free. Credits are only for deeper research and blueprint generation.</p>
+    <PublicShell title="Pricing Plans" subtitle="Pricing Plan">
+      <section className="pricing-section section-padding">
+        <div className="auto-container">
+          <div className="section-title text-center style-two">
+            <h5>Buy credits only when an idea is worth pursuing</h5>
+            <h2>Validation stays free. Credits unlock the <span>deeper layers</span></h2>
+            <p>Deep research uses 1 credit. The full 4-agent blueprint uses 2 credits.</p>
           </div>
           {statusMessage ? (
             <div className={`alert ${statusMessage.tone === 'success' ? 'alert-success' : 'alert-light'} mb-4`}>
@@ -71,24 +70,30 @@ export default function PricingPageClient({ searchParams }) {
           ) : null}
           {error ? <div className="alert alert-danger mb-4">{error}</div> : null}
           <div className="row">
-            {CREDIT_PACKAGES.map((pkg, index) => (
-              <div key={pkg.key} className="col-xl-4 col-lg-6 col-md-6 mb-4">
-                <div className={`gt-pricing-box-items style-2 h-100 ${pkg.highlight ? 'active-2 top_view' : index === 0 ? 'left_view' : 'right_view'}`}>
-                  <div className="gt-pricing-header">
-                    <h2>{pkg.price}</h2>
-                    <span className="sub-texts">{pkg.label}</span>
+            {CREDIT_PACKAGES.map((pkg) => (
+              <div key={pkg.key} className="col-xl-4 col-lg-6 col-md-6">
+                <div className={`pricing-single-item intellio-price-card ${pkg.highlight ? 'active' : ''}`}>
+                  {pkg.highlight ? <h5 className="pricing-tag"><span>POPULAR</span></h5> : null}
+                  <h3 className="pricing-plan">{pkg.label}</h3>
+                  <div className="pricing-money"><h3>{pkg.price}</h3></div>
+                  <div className="pricing-desc"><p>{PACK_DESCRIPTIONS[pkg.key]}</p></div>
+                  <div className="pricing-btn">
+                    <button className="intellio-button-reset" disabled={loadingKey !== null} onClick={() => startCheckout(pkg)}>
+                      {loadingKey === pkg.key ? 'Redirecting...' : 'Continue to checkout'}<i className="fa-light fa-arrow-right" />
+                    </button>
                   </div>
-                  <button className="gt-theme-btn border-0" disabled={loadingKey !== null} onClick={() => startCheckout(pkg)}>
-                    {loadingKey === pkg.key ? 'redirecting...' : 'continue to checkout'}
-                  </button>
-                  <ul className="gt-pricing-list">
-                    <li><i className="fa-solid fa-circle-check" />{pkg.credits} credits included</li>
-                    <li><i className="fa-solid fa-circle-check" />{pkg.per} per credit</li>
-                    <li><i className="fa-solid fa-circle-check" />Free market validation on every idea</li>
-                    <li><i className="fa-solid fa-circle-check" />1 credit for extended deep research</li>
-                    <li><i className="fa-solid fa-circle-check" />2 credits for full AI blueprint</li>
-                    <li><i className="fa-solid fa-circle-check" />{PACK_DESCRIPTIONS[pkg.key]}</li>
-                  </ul>
+                  <div className="pricing-body">
+                    <div className="pricing-title"><h4>Key features</h4></div>
+                    <div className="pricing-feature">
+                      <ul>
+                        <li><span><img src="/intellio-images/demo-img/check.png" alt="check" /></span>{pkg.credits} credits included</li>
+                        <li><span><img src="/intellio-images/demo-img/check.png" alt="check" /></span>{pkg.per} per credit</li>
+                        <li><span><img src="/intellio-images/demo-img/check.png" alt="check" /></span>Free market validation on every idea</li>
+                        <li><span><img src="/intellio-images/demo-img/check.png" alt="check" /></span>1 credit for extended deep research</li>
+                        <li><span><img src="/intellio-images/demo-img/check.png" alt="check" /></span>2 credits for a full AI blueprint</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
