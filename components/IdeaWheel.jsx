@@ -2319,8 +2319,9 @@ const CSS = `
 }
 .sm-modebtn span { position:relative; z-index:2; }
 .sm-modebtn:hover:not(:disabled)::after { right:auto; left:0; width:0; }
-.sm-modebtn.on { background:#ffdd00; }
+.sm-modebtn.on { background:#111; color:#FFE000; }
 .sm-modebtn.on::after { width:0; }
+.sm-modebtn.on:hover:not(:disabled)::after { width:0; }
 .sm-modebtn:disabled { opacity:.5; cursor:default; }
 
 /* ── Reels container with dominant center band ── */
