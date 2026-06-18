@@ -1760,8 +1760,8 @@ const CSS = `
 }
 .su-screen-head { text-align:center; margin-bottom:48px; }
 .su-eyebrow {
-  font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--muted); margin-bottom:14px;
+  font-size:12px; font-weight:900; letter-spacing:.14em; text-transform:uppercase;
+  color:#111; margin-bottom:14px;
 }
 .su-step-eyebrow { text-align:center; }
 .su-step-eyebrow--mt { margin-top:36px; }
