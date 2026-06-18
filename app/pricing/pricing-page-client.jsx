@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { CREDIT_PACKAGES, CREDIT_PACKAGE_BY_KEY } from '@/lib/pricing';
-import BrandLogo from '@/components/BrandLogo';
+import ZubazShell from '@/components/zubaz/ZubazShell';
 
 const PACK_DESCRIPTIONS = {
   starter: 'For trying your first full blueprint end-to-end.',
@@ -56,15 +56,12 @@ export default function PricingPageClient({ searchParams }) {
   }
 
   return (
-    <>
+    <ZubazShell>
       <style>{CSS}</style>
-      <main className="pr-page">
-        <nav className="pr-nav">
-          <Link href="/" className="pr-brand" aria-label="IdeaReels — home"><BrandLogo /></Link>
-          <Link href="/" className="pr-back">← Back</Link>
-        </nav>
+      <div className="section zubuz-section-padding3">
+        <div className="container">
 
-        <section className="pr-hero">
+        <section className="pr-hero" style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div className="pr-eyebrow">Credits</div>
           <h1 className="pr-title">Buy credits when you&apos;re ready</h1>
           <p className="pr-subtitle">
@@ -109,7 +106,7 @@ export default function PricingPageClient({ searchParams }) {
           ))}
         </section>
 
-        <section className="pr-tldr">
+        <section className="pr-tldr" style={{ marginTop: '2rem' }}>
           <ul>
             <li>Validation is always free — no credit needed.</li>
             <li>Credits never expire. Use them whenever you want.</li>
@@ -117,17 +114,9 @@ export default function PricingPageClient({ searchParams }) {
           </ul>
         </section>
 
-        <footer className="pr-footer">
-          <div className="pr-footer-links">
-            <Link href="/faq">FAQ</Link>
-            <Link href="/privacy">Privacy</Link>
-            <Link href="/terms">Terms</Link>
-            <Link href="/">IdeaReels</Link>
-          </div>
-          <p>© {new Date().getFullYear()} IdeaReels · AI-generated content is for informational purposes only.</p>
-        </footer>
-      </main>
-    </>
+        </div>
+      </div>
+    </ZubazShell>
   );
 }
 
