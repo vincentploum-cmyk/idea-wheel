@@ -20,7 +20,7 @@ function NavItem({ href, label }) {
   );
 }
 
-export default async function PopitoShell({ children, banner, yellowBg }) {
+export default async function PopitoShell({ children, banner, yellowBg, noFooterCta }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -179,6 +179,7 @@ export default async function PopitoShell({ children, banner, yellowBg }) {
                 </ul>
               </div>
             </div>
+            {!noFooterCta && (
             <div className="middle_right">
               <div className="footer_subscribe">
                 <div className="subscribe_title">
@@ -194,6 +195,7 @@ export default async function PopitoShell({ children, banner, yellowBg }) {
                 </div>
               </div>
             </div>
+            )}
           </div>
           <div className="footer_bottom">
             <div className="copyright">
