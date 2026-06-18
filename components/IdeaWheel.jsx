@@ -562,7 +562,7 @@ function SlotMachine({ onResult, onModeChange }) {
           <div className="sm-modebar">
             {Object.keys(CLIENT_DEFAULT_MODE_CONFIGS).map(k => (
               <button key={k} className={`sm-modebtn${mode===k?' on':''}`} onClick={()=>{ if (k !== mode) { setMode(k); setHasSpun(!!(landedByMode.current[k]?.every(Boolean))); onModeChange?.(k); } }} disabled={anySpinning}>
-                {CLIENT_DEFAULT_MODE_CONFIGS[k].name}
+                <span>{CLIENT_DEFAULT_MODE_CONFIGS[k].name}</span>
               </button>
             ))}
           </div>
@@ -2204,11 +2204,11 @@ const CSS = `
 .su-retry { background:none; border:none; color:var(--ink); cursor:pointer; font-size:13px; text-decoration:underline; }
 
 /* disclaimer */
-.su-disclaimer { position:relative; z-index:1; max-width:980px; margin:48px auto 0; padding:28px 24px 40px; border-top:1px solid var(--line); text-align:center; }
+.su-disclaimer { position:relative; z-index:1; max-width:980px; margin:48px auto 0; padding:28px 24px 40px; border-top:3px solid #111; text-align:center; }
 .su-disclaimer-links { display:flex; gap:24px; justify-content:center; margin-bottom:14px; flex-wrap:wrap; }
-.su-disclaimer-links a { font-size:13px; color:var(--ink-2); text-decoration:none; font-weight:500; transition:color .15s; }
-.su-disclaimer-links a:hover { color:var(--ink); }
-.su-disclaimer p { font-size:12px; color:var(--faint); line-height:1.7; margin:0; }
+.su-disclaimer-links a { font-size:13px; color:#111; text-decoration:none; font-weight:700; transition:opacity .15s; }
+.su-disclaimer-links a:hover { opacity:.65; }
+.su-disclaimer p { font-size:12px; color:#111; line-height:1.7; margin:0; }
 
 /* ── how it works ─────────────────────────────────────────────────── */
 .su-hiw {
@@ -2302,27 +2302,34 @@ const CSS = `
 /* ── Mode toggle ── */
 .sm-topbar { display:flex; justify-content:center; margin:0 0 16px; }
 .sm-modebar {
-  display:inline-flex; gap:2px;
-  padding:4px;
-  border-radius:999px;
-  background:rgba(255,255,255,0.8);
-  border:1px solid rgba(0,0,0,0.10);
-  backdrop-filter:blur(14px);
+  display:inline-flex; gap:6px;
+  padding:0;
+  border-radius:0;
+  background:transparent;
+  border:none;
 }
 .sm-modebtn {
-  font-family:var(--font-body); font-size:13px; font-weight:600;
-  color:var(--muted);
-  padding:7px 20px; border-radius:999px;
-  border:none; background:transparent;
+  font-family:var(--font-body); font-size:14px; font-weight:900;
+  color:#000;
+  height:44px; line-height:36px;
+  padding:0 24px; border-radius:10px;
+  border:3px solid #111; background:#fff6be;
   cursor:pointer;
-  transition:color .15s ease, background .25s ease;
-  letter-spacing:0;
+  position:relative; overflow:hidden;
+  letter-spacing:.05em; text-transform:uppercase;
+  transition:color .3s;
 }
-.sm-modebtn:hover:not(:disabled) { color:var(--ink); }
-.sm-modebtn.on {
-  color:#fff;
-  background:#111;
+.sm-modebtn::after {
+  display:block; position:absolute;
+  top:0; right:0; height:100%; width:100%;
+  z-index:0; content:'';
+  background:#ffdd00;
+  transition:all .3s cubic-bezier(.42,0,.58,1);
 }
+.sm-modebtn span { position:relative; z-index:2; }
+.sm-modebtn:hover:not(:disabled)::after { right:auto; left:0; width:0; }
+.sm-modebtn.on { background:#ffdd00; }
+.sm-modebtn.on::after { width:0; }
 .sm-modebtn:disabled { opacity:.5; cursor:default; }
 
 /* ── Reels container with dominant center band ── */
