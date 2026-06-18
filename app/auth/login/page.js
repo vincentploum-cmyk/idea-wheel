@@ -65,7 +65,40 @@ export default function LoginPage() {
             <div className="fn__contact_form fn__bold_item">
               <div className="contact_item">
                 <div className="contact_left fn__img_icon">
-                  <img className="img" src="/popito-img/sign_in.jpg" alt="" />
+                  <div className="img" style={{
+                    background: '#FFE000',
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center',
+                    gap: 24, padding: 40, textAlign: 'center',
+                  }}>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center',
+                      background: '#111', border: '3px solid #111',
+                      borderRadius: '6px 999px 999px 6px',
+                      padding: '7px 22px 7px 14px',
+                      fontFamily: 'Nunito, sans-serif', fontWeight: 900,
+                      fontSize: 20, letterSpacing: '0.04em',
+                      textTransform: 'uppercase', color: '#FFE000',
+                    }}>IdeaReels</span>
+                    <p style={{
+                      fontFamily: 'Nunito, sans-serif', fontWeight: 900,
+                      fontSize: 'clamp(24px,4vw,36px)', lineHeight: 1.1,
+                      color: '#111', margin: 0, letterSpacing: '-0.02em',
+                    }}>
+                      Spin an idea.<br />Validate it free.<br />Build what works.
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 260 }}>
+                      {['🎰 Spin three reels', '📊 Free market verdict', '🗺️ Full build blueprint'].map(item => (
+                        <div key={item} style={{
+                          background: '#fff', border: '3px solid #111',
+                          borderRadius: 10, padding: '10px 16px',
+                          fontFamily: 'Nunito, sans-serif', fontWeight: 800,
+                          fontSize: 14, color: '#111', textAlign: 'left',
+                          boxShadow: '3px 3px 0 #111',
+                        }}>{item}</div>
+                      ))}
+                    </div>
+                  </div>
                   <img src="/popito-assets/svg/xxxxx.svg" alt="" className="fn__svg icon" />
                 </div>
                 <div className="contact_right">
