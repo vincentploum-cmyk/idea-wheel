@@ -92,9 +92,9 @@ export default function LandingPage() {
                       <div className={`fn__pricing_table_item fn__bold_item${pkg.highlight ? ' active' : ''}`}>
                         <div className="item_header">
                           <div className="plan"><span>{pkg.label}</span></div>
-                          <div className="pricing">
-                            <h3 className="price">{pkg.price}</h3>
-                            <span className="price_text">/ {pkg.credits} credits</span>
+                          <div className="pricing" style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'nowrap' }}>
+                            <h3 className="price" style={{ fontSize: 36, whiteSpace: 'nowrap' }}>{pkg.price}</h3>
+                            <span className="price_text" style={{ whiteSpace: 'nowrap' }}>/ {pkg.credits} credits</span>
                           </div>
                           <div className="desc"><p>{pkg.tagline}</p></div>
                         </div>
