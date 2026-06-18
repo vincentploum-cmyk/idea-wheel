@@ -1,12 +1,15 @@
 import IdeaWheel from '@/components/IdeaWheel';
-import { PublicHeader, PublicFooter } from '@/components/intellio/PublicShell';
+import PopitoShell from '@/components/popito/PopitoShell';
+
+export const metadata = {
+  title: 'Spin an Idea',
+  description: 'Spin three reels to generate a startup idea and get a free market verdict.',
+};
 
 export default function WheelPage() {
   return (
-    <>
-      <PublicHeader />
+    <PopitoShell>
       <IdeaWheel />
-      <PublicFooter />
-    </>
+    </PopitoShell>
   );
 }

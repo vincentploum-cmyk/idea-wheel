@@ -1,11 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { CREDIT_PACKAGES, CREDIT_PACKAGE_BY_KEY } from '@/lib/pricing';
-import PublicShell from '@/components/intellio/PublicShell';
 
 const PACK_DESCRIPTIONS = {
-  starter: 'For trying your first full blueprint end-to-end.',
+  starter: 'Try your first full blueprint end-to-end.',
   pro: 'Best for founders validating several ideas back-to-back.',
   power: 'For builders running deep exploration across markets.',
 };
@@ -42,10 +42,7 @@ export default function PricingPageClient({ searchParams }) {
         body: JSON.stringify({ packId: pkg.key }),
       });
       const data = await res.json();
-      if (data.code === 'AUTH_REQUIRED') {
-        window.location.href = '/auth/login';
-        return;
-      }
+      if (data.code === 'AUTH_REQUIRED') { window.location.href = '/auth/login'; return; }
       if (!res.ok || data.error || !data.url) throw new Error(data.error || 'Unable to start checkout');
       window.location.assign(data.url);
     } catch (err) {
@@ -55,51 +52,89 @@ export default function PricingPageClient({ searchParams }) {
   }
 
   return (
-    <PublicShell title="Pricing Plans" subtitle="Pricing Plan">
-      <section className="pricing-section section-padding">
-        <div className="auto-container">
-          <div className="section-title text-center style-two">
-            <h5>Buy credits only when an idea is worth pursuing</h5>
-            <h2>Validation stays free. Credits unlock the <span>deeper layers</span></h2>
-            <p>Deep research uses 1 credit. The full 4-agent blueprint uses 2 credits.</p>
-          </div>
-          {statusMessage ? (
-            <div className={`alert ${statusMessage.tone === 'success' ? 'alert-success' : 'alert-light'} mb-4`}>
-              <strong>{statusMessage.title}</strong><br />{statusMessage.text}
+    <div className="popito_fn_membership_page">
+      <section id="price">
+        <div className="container">
+          {statusMessage && (
+            <div style={{
+              padding: '16px 20px',
+              marginBottom: 32,
+              borderRadius: 8,
+              background: statusMessage.tone === 'success' ? '#f0fdf4' : '#f8f8f8',
+              border: `1px solid ${statusMessage.tone === 'success' ? '#86efac' : '#e5e5e5'}`,
+            }}>
+              <strong>{statusMessage.title}</strong><br />
+              <span style={{ fontSize: 14, opacity: 0.75 }}>{statusMessage.text}</span>
             </div>
-          ) : null}
-          {error ? <div className="alert alert-danger mb-4">{error}</div> : null}
-          <div className="row">
-            {CREDIT_PACKAGES.map((pkg) => (
-              <div key={pkg.key} className="col-xl-4 col-lg-6 col-md-6">
-                <div className={`pricing-single-item intellio-price-card ${pkg.highlight ? 'active' : ''}`}>
-                  {pkg.highlight ? <h5 className="pricing-tag"><span>POPULAR</span></h5> : null}
-                  <h3 className="pricing-plan">{pkg.label}</h3>
-                  <div className="pricing-money"><h3>{pkg.price}</h3></div>
-                  <div className="pricing-desc"><p>{PACK_DESCRIPTIONS[pkg.key]}</p></div>
-                  <div className="pricing-btn">
-                    <button className="intellio-button-reset" disabled={loadingKey !== null} onClick={() => startCheckout(pkg)}>
-                      {loadingKey === pkg.key ? 'Redirecting...' : 'Continue to checkout'}<i className="fa-light fa-arrow-right" />
-                    </button>
-                  </div>
-                  <div className="pricing-body">
-                    <div className="pricing-title"><h4>Key features</h4></div>
-                    <div className="pricing-feature">
-                      <ul>
-                        <li><span><img src="/intellio-images/demo-img/check.png" alt="check" /></span>{pkg.credits} credits included</li>
-                        <li><span><img src="/intellio-images/demo-img/check.png" alt="check" /></span>{pkg.per} per credit</li>
-                        <li><span><img src="/intellio-images/demo-img/check.png" alt="check" /></span>Free market validation on every idea</li>
-                        <li><span><img src="/intellio-images/demo-img/check.png" alt="check" /></span>1 credit for extended deep research</li>
-                        <li><span><img src="/intellio-images/demo-img/check.png" alt="check" /></span>2 credits for a full AI blueprint</li>
-                      </ul>
+          )}
+          {error && (
+            <div style={{ padding: '16px 20px', marginBottom: 32, borderRadius: 8, background: '#fef2f2', border: '1px solid #fca5a5', color: '#b91c1c', fontSize: 14 }}>
+              {error}
+            </div>
+          )}
+
+          <div className="fn__pricing_tables">
+            <div className="pt_content">
+              <ul className="pt_list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 24, listStyle: 'none', padding: 0 }}>
+                {CREDIT_PACKAGES.map((pkg) => (
+                  <li key={pkg.key} className="pt_list_item">
+                    <div className={`fn__pricing_table_item fn__bold_item${pkg.highlight ? ' active' : ''}`}>
+                      <div className="item_header">
+                        <div className="plan"><span>{pkg.label}</span></div>
+                        <div className="pricing">
+                          <h3 className="price">{pkg.price}</h3>
+                          <span className="price_text">/ {pkg.credits} credits</span>
+                        </div>
+                        <div className="desc">
+                          <p>{PACK_DESCRIPTIONS[pkg.key]}</p>
+                        </div>
+                      </div>
+                      <div className="item_content">
+                        <ul>
+                          <li>
+                            <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
+                            <span className="text">{pkg.credits} credits included</span>
+                          </li>
+                          <li>
+                            <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
+                            <span className="text">{pkg.per} per credit</span>
+                          </li>
+                          <li>
+                            <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
+                            <span className="text">Free market validation</span>
+                          </li>
+                          <li>
+                            <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
+                            <span className="text">1 credit → deep research</span>
+                          </li>
+                          <li>
+                            <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
+                            <span className="text">2 credits → full blueprint</span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="item_footer">
+                        <button
+                          className="fn__btn medium"
+                          disabled={loadingKey !== null}
+                          onClick={() => startCheckout(pkg)}
+                          style={{ background: 'none', border: 'none', padding: 0, cursor: loadingKey ? 'wait' : 'pointer' }}
+                        >
+                          <span>{loadingKey === pkg.key ? 'Redirecting…' : 'Buy now'}</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
+
+          <p style={{ textAlign: 'center', marginTop: 40, opacity: 0.55, fontSize: 13 }}>
+            Credits never expire · Secure checkout via Stripe · <Link href="/faq" className="fn__creative_link">FAQ</Link>
+          </p>
         </div>
       </section>
-    </PublicShell>
+    </div>
   );
 }

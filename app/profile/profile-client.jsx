@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
-import ZubazShell from '@/components/zubaz/ZubazShell';
 
 export default function ProfileClient({ user, error }) {
   const supabase = createClient();
@@ -55,233 +55,193 @@ export default function ProfileClient({ user, error }) {
     location.reload();
   };
 
-  const fmtDate = (iso) => {
-    const d = new Date(iso);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
-
-  const blueprintCount = ideas.filter((i) => i.blueprint_status === 'complete').length;
-  const creditsSpent = ideas.reduce((sum, i) => sum + Number(i.credits_spent || 0), 0);
+  const fmtDate = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const blueprintCount = ideas.filter(i => i.blueprint_status === 'complete').length;
   const demandTone = (level = '') => /strong/i.test(level) ? '#15803D' : /weak/i.test(level) ? '#B91C1C' : '#B45309';
 
-  return (
-    <ZubazShell>
-      <div className="section zubuz-section-padding3">
+  if (!user) {
+    return (
+      <div className="popito_fn_account_page">
         <div className="container">
-        <div style={s.wrap}>
-
-        {user ? (
-          <>
-            {/* ── Header ── */}
-            <div style={s.header}>
-              <div>
-                <h1 style={s.title}>Your Profile</h1>
-                <p style={s.emailTxt}>{user.email}</p>
-              </div>
-              <button onClick={signOut} style={s.signoutBtn}>Sign out</button>
+          <div className="fn__account_details fn__bold_item">
+            <div className="details_item">
+              {sent ? (
+                <>
+                  <div className="details_subtitle"><h3 className="title">Check your email</h3></div>
+                  <div className="details_content">
+                    <div className="details_left">
+                      <p>We sent a sign-in link to <strong>{email}</strong>.</p>
+                      <button onClick={() => setSent(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0, marginTop: 12 }}>
+                        Use a different email
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="details_subtitle"><h3 className="title">Sign in to IdeaReels</h3></div>
+                  <div className="details_content">
+                    <div className="details_left" style={{ maxWidth: 400 }}>
+                      {err && <p style={{ color: '#c00', marginBottom: 16, fontSize: 14 }}>{err}</p>}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+                        <button onClick={() => signInWithOAuth('google')} className="fn__btn medium" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                          <span>Continue with Google</span>
+                        </button>
+                        <button onClick={() => signInWithOAuth('github')} className="fn__btn medium" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                          <span>Continue with GitHub</span>
+                        </button>
+                      </div>
+                      <form onSubmit={sendMagicLink} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <input type="email" required placeholder="Email *" value={email} onChange={e => setEmail(e.target.value)} style={{ padding: '12px 16px', border: '1px solid #e5e5e5', borderRadius: 6, fontSize: 14 }} />
+                        <button type="submit" className="fn__btn" disabled={loading} style={{ display: 'flex', justifyContent: 'center' }}>
+                          <span>{loading ? 'Sending…' : 'Send magic link'}</span>
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-            {/* ── Stats row ── */}
-            <div style={s.statsRow}>
-              <div style={s.statCard}>
-                <div style={s.statLabel}>CREDITS</div>
-                <div style={s.statVal}>{balance === null ? '…' : balance}</div>
-                <a href="/pricing" style={s.buyBtn}>Buy more</a>
+  return (
+    <div className="popito_fn_account_page">
+      <div className="container">
+
+        {/* Account Details */}
+        <div className="fn__account_details fn__bold_item">
+          <div className="details_item">
+            <div className="details_subtitle">
+              <h3 className="title">Account Details</h3>
+            </div>
+            <div className="details_content">
+              <div className="details_left">
+                <ul>
+                  <li>
+                    <p className="label">Email address</p>
+                    <p className="value">{user.email}</p>
+                  </li>
+                  <li>
+                    <p className="label">Credits remaining</p>
+                    <p className="value">{balance === null ? '…' : balance}</p>
+                  </li>
+                  <li>
+                    <p className="label">Ideas researched</p>
+                    <p className="value">{ideasLoading ? '…' : ideas.length}</p>
+                  </li>
+                  <li>
+                    <p className="label">Blueprints generated</p>
+                    <p className="value">{ideasLoading ? '…' : blueprintCount}</p>
+                  </li>
+                </ul>
               </div>
-              <div style={s.statCard}>
-                <div style={s.statLabel}>IDEAS</div>
-                <div style={s.statVal}>{ideasLoading ? '…' : ideas.length}</div>
-                <div style={s.statMeta}>researched</div>
-              </div>
-              <div style={s.statCard}>
-                <div style={s.statLabel}>BLUEPRINTS</div>
-                <div style={s.statVal}>{ideasLoading ? '…' : blueprintCount}</div>
-                <div style={s.statMeta}>generated</div>
+              <div className="details_right">
+                <button onClick={signOut} className="fn__btn"><span>Sign Out</span></button>
               </div>
             </div>
+            <div className="details_footer">
+              <ul>
+                <li><Link href="/pricing" className="fn__creative_link">Buy Credits<span className="suffix">//</span></Link></li>
+                <li><Link href="/wheel" className="fn__creative_link">Spin an Idea<span className="suffix">//</span></Link></li>
+              </ul>
+            </div>
+          </div>
+        </div>
 
-            {/* ── Saved ideas (those that reached paid extended research) ── */}
-            <div style={s.section}>
-              <div style={s.sectionHead}>
-                <span style={s.seclabel}>YOUR IDEAS</span>
+        {/* Saved Ideas */}
+        {(ideas.length > 0 || ideasLoading) && (
+          <div className="fn__account_details fn__bold_item" style={{ marginTop: 32 }}>
+            <div className="details_item">
+              <div className="details_subtitle">
+                <h3 className="title">Your Ideas</h3>
               </div>
               {ideasLoading ? (
-                <div style={s.empty}>Loading…</div>
-              ) : ideas.length === 0 ? (
-                <div style={s.empty}>
-                  <div style={{ fontSize: 28, marginBottom: 8 }}>✦</div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>No saved ideas yet</div>
-                  <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>Run extended market research on an idea and it shows up here</div>
-                  <a href="/?wheel=1" style={s.buyBtn}>Spin an idea →</a>
-                </div>
+                <p style={{ opacity: 0.5, padding: '20px 0' }}>Loading…</p>
               ) : (
-                <div style={s.bpList}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 8 }}>
                   {ideas.map((idea) => {
                     const research = idea.research || {};
                     const signals = (research.demandSignals || []).slice(0, 2);
                     const hasBlueprint = idea.blueprint_status === 'complete';
                     const blueprintInProgress = idea.blueprint_status === 'generating';
                     return (
-                      <div key={idea.id} style={s.ideaCard}>
-                        <div style={s.bpTop}>
-                          <div style={s.bpTitle}>{idea.title || idea.tagline || 'Idea'}</div>
-                          <div style={s.bpDate}>{fmtDate(idea.created_at)}</div>
+                      <div key={idea.id} style={{ padding: '20px', border: '1px solid #e8e8e8', borderRadius: 8 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 8 }}>
+                          <h4 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 15, margin: 0 }}>
+                            {idea.title || idea.tagline || 'Idea'}
+                          </h4>
+                          <span style={{ fontSize: 12, opacity: 0.5, flexShrink: 0 }}>{fmtDate(idea.created_at)}</span>
                         </div>
 
-                        {/* Extended research outcome */}
-                        <div style={s.ideaResearch}>
-                          <div style={s.ideaResearchHead}>
-                            <span style={s.seclabelSm}>Extended research</span>
-                            {research.demandLevel && (
-                              <span style={{ ...s.demandTag, color: demandTone(research.demandLevel) }}>
-                                {research.demandLevel} demand
-                              </span>
-                            )}
-                          </div>
-                          {(research.plainSummary || idea.summary) && (
-                            <p style={s.ideaSummary}>{research.plainSummary || idea.summary}</p>
-                          )}
-                          {signals.length > 0 && (
-                            <ul style={s.ideaSignals}>
-                              {signals.map((sig, i) => <li key={i}>{sig}</li>)}
-                            </ul>
-                          )}
-                        </div>
-
-                        {/* Blueprint: ready → view, in progress → resume, else → create */}
-                        {hasBlueprint ? (
-                          <div style={s.bpReadyRow}>
-                            <span style={s.bpReadyTag}>✦ Blueprint ready</span>
-                            <a href={`/?idea=${idea.id}&view=1`} style={s.viewBtn}>View blueprint</a>
-                          </div>
-                        ) : blueprintInProgress ? (
-                          <div style={s.bpReadyRow}>
-                            <span style={s.bpProgressTag}>⏳ Blueprint in progress</span>
-                            <a href={`/?idea=${idea.id}`} style={s.createBtn}>Resume blueprint</a>
-                          </div>
-                        ) : (
-                          <div style={s.bpReadyRow}>
-                            <span style={s.bpPendingTag}>No blueprint yet</span>
-                            <a href={`/?idea=${idea.id}`} style={s.createBtn}>Create blueprint · 2 credits</a>
-                          </div>
+                        {research.demandLevel && (
+                          <p style={{ fontSize: 12, fontWeight: 700, color: demandTone(research.demandLevel), marginBottom: 6 }}>
+                            {research.demandLevel} demand
+                          </p>
                         )}
+                        {(research.plainSummary || idea.summary) && (
+                          <p style={{ fontSize: 13, opacity: 0.7, lineHeight: 1.55, marginBottom: 8 }}>
+                            {research.plainSummary || idea.summary}
+                          </p>
+                        )}
+                        {signals.length > 0 && (
+                          <ul style={{ paddingLeft: 16, margin: '0 0 12px', fontSize: 13, opacity: 0.65 }}>
+                            {signals.map((sig, i) => <li key={i}>{sig}</li>)}
+                          </ul>
+                        )}
+
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+                          {hasBlueprint ? (
+                            <>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: '#15803D' }}>✦ Blueprint ready</span>
+                              <a href={`/?idea=${idea.id}&view=1`} className="fn__btn medium"><span>View blueprint</span></a>
+                            </>
+                          ) : blueprintInProgress ? (
+                            <>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: '#7c3aed' }}>⏳ Blueprint in progress</span>
+                              <a href={`/?idea=${idea.id}`} className="fn__btn medium"><span>Resume</span></a>
+                            </>
+                          ) : (
+                            <>
+                              <span style={{ fontSize: 12, opacity: 0.5 }}>No blueprint yet</span>
+                              <a href={`/?idea=${idea.id}`} className="fn__btn medium"><span>Create blueprint · 2 credits</span></a>
+                            </>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
                 </div>
               )}
             </div>
-
-            {/* ── Recent activity ── */}
-            {transactions.length > 0 && (
-              <div style={s.section}>
-                <div style={s.sectionHead}>
-                  <span style={s.seclabel}>RECENT ACTIVITY</span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                  {transactions.map((t, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: 'var(--ink-2)', padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
-                      <span style={{ textTransform: 'capitalize' }}>{t.reason.replace(/_/g, ' ')}</span>
-                      <span style={{ fontWeight: 700, color: t.amount > 0 ? '#15803D' : 'var(--accent)' }}>
-                        {t.amount > 0 ? `+${t.amount}` : t.amount} credits
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        ) : sent ? (
-          <div style={s.card}>
-            <div style={{ fontSize: 36, marginBottom: 14 }}>✉️</div>
-            <h1 style={s.title}>Check your email</h1>
-            <p style={s.sub}>We sent a sign-in link to <strong>{email}</strong>. Click it to continue.</p>
-            <button onClick={() => setSent(false)} style={s.ghostBtn}>Use a different email</button>
-          </div>
-        ) : (
-          <div style={s.card}>
-            <h1 style={s.title}>Sign in to IdeaReels</h1>
-            <p style={s.sub}>Save your ideas and credits to your account.</p>
-            {err && <p style={s.errBox}>{err}</p>}
-            <button onClick={() => signInWithOAuth('google')} style={s.oauthBtn}>
-              <svg width="18" height="18" viewBox="0 0 18 18" style={{ flexShrink: 0 }}>
-                <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
-                <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-                <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
-                <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/>
-              </svg>
-              Continue with Google
-            </button>
-            <button onClick={() => signInWithOAuth('github')} style={s.oauthBtn}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
-                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
-              </svg>
-              Continue with GitHub
-            </button>
-            <div style={s.divider}><span>or</span></div>
-            <form onSubmit={sendMagicLink} style={s.form}>
-              <input type="email" required placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} style={s.input}/>
-              <button type="submit" disabled={loading} style={s.submitBtn}>{loading ? 'Sending…' : 'Send magic link'}</button>
-            </form>
-            <p style={s.reassure}>No password to remember. We only use your email for sign-in links and purchase receipts.</p>
           </div>
         )}
-        </div>
-        </div>
+
+        {/* Recent Activity */}
+        {transactions.length > 0 && (
+          <div className="fn__account_details fn__bold_item" style={{ marginTop: 32 }}>
+            <div className="details_item">
+              <div className="details_subtitle">
+                <h3 className="title">Recent Activity</h3>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {transactions.map((t, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
+                    <span style={{ textTransform: 'capitalize', opacity: 0.7 }}>{t.reason.replace(/_/g, ' ')}</span>
+                    <span style={{ fontWeight: 700, color: t.amount > 0 ? '#15803D' : '#c00' }}>
+                      {t.amount > 0 ? `+${t.amount}` : t.amount} credits
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
-    </ZubazShell>
+    </div>
   );
 }
-
-const glassSoft = 'rgba(255,255,255,0.36)';
-const glassStrong = 'rgba(255,255,255,0.5)';
-const softLine = 'rgba(236,230,245,0.92)';
-
-const s = {
-  wrap: { maxWidth: 760, margin: '0 auto', width: '100%' },
-  header: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, gap: 16 },
-  title: { fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, margin: '0 0 6px', color: 'var(--ink)', letterSpacing: '-0.03em', lineHeight: 1.05 },
-  emailTxt: { fontSize: 14, color: 'var(--muted)', margin: 0 },
-  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 24 },
-  statCard: { background: glassSoft, backdropFilter: 'blur(14px)', border: `1px solid ${softLine}`, borderRadius: 18, padding: '18px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: '0 16px 34px -30px rgba(124,58,237,0.24)' },
-  statLabel: { fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 },
-  statVal: { fontSize: 30, fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--ink)', lineHeight: 1, marginBottom: 4 },
-  statMeta: { fontSize: 11, color: 'var(--muted)', marginTop: 4 },
-  buyBtn: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 34, padding: '0 12px', fontSize: 12, fontWeight: 700, color: '#fff', textDecoration: 'none', marginTop: 6, borderRadius: 999, background: 'var(--accent)' },
-  section: { background: glassSoft, backdropFilter: 'blur(14px)', border: `1px solid ${softLine}`, borderRadius: 20, padding: '22px', marginBottom: 16, boxShadow: '0 18px 36px -30px rgba(124,58,237,0.22)' },
-  sectionHead: { marginBottom: 16 },
-  seclabel: { fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)' },
-  empty: { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '28px 0', color: 'var(--muted)', fontSize: 14 },
-  bpList: { display: 'flex', flexDirection: 'column', gap: 12 },
-  bpCard: { padding: '16px', background: 'rgba(255,255,255,0.26)', border: `1px solid ${softLine}`, borderRadius: 18, backdropFilter: 'blur(10px)' },
-  bpTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
-  bpTitle: { fontWeight: 700, fontSize: 14, color: 'var(--ink)', lineHeight: 1.35 },
-  bpDate: { fontSize: 11, color: 'var(--muted)', flexShrink: 0 },
-  bpTagline: { fontSize: 13, color: 'var(--ink-2)', marginBottom: 10, lineHeight: 1.5 },
-  bpTags: { display: 'flex', flexWrap: 'wrap', gap: 6 },
-  bpTag: { fontSize: 11, fontWeight: 600, padding: '4px 8px', borderRadius: 999, background: 'var(--accent-light)', color: 'var(--ink-2)', textTransform: 'capitalize' },
-  ideaCard: { padding: '16px', background: 'rgba(255,255,255,0.26)', border: `1px solid ${softLine}`, borderRadius: 18, backdropFilter: 'blur(10px)' },
-  ideaResearch: { marginTop: 4, padding: '12px', background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.14)', borderRadius: 12 },
-  ideaResearchHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6 },
-  seclabelSm: { fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--accent)' },
-  demandTag: { fontSize: 11, fontWeight: 800, textTransform: 'capitalize' },
-  ideaSummary: { margin: 0, fontSize: 13, lineHeight: 1.55, color: 'var(--ink)' },
-  ideaSignals: { margin: '8px 0 0', paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 3 },
-  bpReadyRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginTop: 12 },
-  bpReadyTag: { fontSize: 12, fontWeight: 700, color: '#15803D' },
-  bpProgressTag: { fontSize: 12, fontWeight: 700, color: 'var(--accent)' },
-  bpPendingTag: { fontSize: 12, fontWeight: 600, color: 'var(--muted)' },
-  viewBtn: { display: 'inline-flex', alignItems: 'center', minHeight: 34, padding: '0 14px', fontSize: 12, fontWeight: 700, color: 'var(--ink)', textDecoration: 'none', borderRadius: 999, background: glassStrong, border: `1px solid ${softLine}` },
-  createBtn: { display: 'inline-flex', alignItems: 'center', minHeight: 34, padding: '0 14px', fontSize: 12, fontWeight: 700, color: '#fff', textDecoration: 'none', borderRadius: 999, background: 'var(--accent)' },
-  card: { background: glassSoft, backdropFilter: 'blur(16px)', border: `1px solid ${softLine}`, borderRadius: 24, padding: '32px 28px', maxWidth: 440, margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 22px 42px -30px rgba(124,58,237,0.26)' },
-  sub: { fontSize: 14, color: 'var(--muted)', margin: '0 0 24px', textAlign: 'center', lineHeight: 1.6, maxWidth: 320 },
-  errBox: { width: '100%', padding: '10px 14px', background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.18)', borderRadius: 12, color: '#B91C1C', fontSize: 13, margin: '0 0 16px', textAlign: 'center' },
-  oauthBtn: { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '12px 16px', background: glassStrong, border: `1px solid ${softLine}`, borderRadius: 999, fontSize: 14, fontWeight: 600, color: 'var(--ink)', cursor: 'pointer', marginBottom: 8, backdropFilter: 'blur(10px)' },
-  divider: { width: '100%', display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0', color: 'var(--muted)', fontSize: 12 },
-  form: { width: '100%', display: 'flex', flexDirection: 'column', gap: 10 },
-  input: { width: '100%', minHeight: 46, padding: '12px 14px', border: `1px solid ${softLine}`, borderRadius: 999, fontSize: 14, fontFamily: 'var(--font-body)', outline: 'none', boxSizing: 'border-box', background: 'rgba(255,255,255,0.46)', color: 'var(--ink)', backdropFilter: 'blur(10px)' },
-  submitBtn: { width: '100%', minHeight: 46, padding: '12px', background: 'var(--grad-brand)', color: '#fff', border: '1px solid transparent', borderRadius: 999, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)', display: 'block', boxShadow: '0 12px 24px -18px rgba(192,38,211,0.5)' },
-  reassure: { margin: '12px 0 0', fontSize: 12, lineHeight: 1.55, color: 'var(--muted)', textAlign: 'center', maxWidth: 320 },
-  ghostBtn: { marginTop: 16, background: 'none', border: 'none', color: 'var(--ink-2)', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' },
-  signoutBtn: { padding: '10px 16px', background: glassStrong, backdropFilter: 'blur(8px)', border: `1px solid ${softLine}`, borderRadius: 999, fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', cursor: 'pointer', flexShrink: 0 },
-};

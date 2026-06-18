@@ -1,5 +1,5 @@
-import PublicShell from '@/components/intellio/PublicShell';
-import { LEGAL_TERMS } from '@/components/intellio/data';
+import PopitoShell from '@/components/popito/PopitoShell';
+import { LEGAL_TERMS } from '@/lib/content';
 
 export const metadata = {
   title: 'Terms of Service',
@@ -8,27 +8,27 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <PublicShell title="Terms of Service" subtitle="Legal">
-      <section className="service-details-section section-padding">
-        <div className="auto-container">
-          <div className="row justify-content-center">
-            <div className="col-lg-9">
-              <div className="service-details-content intellio-legal-copy">
-                <div className="section-title style-two mb-4">
-                  <h5>Last updated: June 2026</h5>
-                  <h2>The rules for using <span>IdeaReels</span></h2>
-                </div>
-                {LEGAL_TERMS.map((section) => (
-                  <div key={section.title} className="mb-5">
-                    <h3>{section.title}</h3>
-                    <p>{section.body}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+    <PopitoShell>
+      <div className="popito_fn_pagetitle">
+        <div className="container">
+          <div className="pagetitle">
+            <h3 className="fn__title">Terms of Service</h3>
+            <p className="fn__desc">Last updated: June 2026</p>
+            <span className="wings" />
+            <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
         </div>
-      </section>
-    </PublicShell>
+      </div>
+      <div className="popito_fn_membership_page">
+        <div className="container" style={{ padding: '60px 20px 100px', maxWidth: 720, margin: '0 auto' }}>
+          {LEGAL_TERMS.map((section) => (
+            <div key={section.title} className="fn__bold_item" style={{ marginBottom: 16, padding: '22px 26px' }}>
+              <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 16, marginBottom: 10 }}>{section.title}</h3>
+              <p style={{ opacity: 0.65, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{section.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </PopitoShell>
   );
 }

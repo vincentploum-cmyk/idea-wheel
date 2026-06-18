@@ -1,26 +1,24 @@
 import Link from 'next/link';
-import PublicShell from '@/components/intellio/PublicShell';
+import PopitoShell from '@/components/popito/PopitoShell';
 
 export default function NotFound() {
   return (
-    <PublicShell title="404 Error" subtitle="Page Not Found">
-      <section className="contact-page-section fix section-padding">
-        <div className="auto-container">
-          <div className="row justify-content-center">
-            <div className="col-lg-8">
-              <div className="contact-page-single-box text-center intellio-not-found-card">
-                <img src="/intellio-images/demo-img/about-thumb31.png" alt="404 illustration" className="intellio-not-found-image" />
-                <h2>Oops, this page doesn&apos;t exist</h2>
-                <p>Looks like you took a wrong turn. Head back to the homepage or jump straight into the idea wheel.</p>
-                <div className="banner-btn justify-content-center">
-                  <Link href="/" className="primary">Back to home</Link>
-                  <Link href="/wheel" className="border-btn">Open idea wheel</Link>
-                </div>
-              </div>
+    <PopitoShell>
+      <div className="popito_fn_pagetitle" style={{ minHeight: 400, display: 'flex', alignItems: 'center' }}>
+        <div className="container">
+          <div className="pagetitle" style={{ textAlign: 'center' }}>
+            <h3 className="fn__title" style={{ fontSize: '5rem', opacity: 0.15 }}>404</h3>
+            <h3 className="fn__title">This page doesn&apos;t exist</h3>
+            <p className="fn__desc">Looks like you took a wrong turn. Head back or spin a fresh idea.</p>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginTop: 24 }}>
+              <Link href="/" className="fn__btn"><span>Back to home</span></Link>
+              <Link href="/wheel" className="fn__btn medium"><span>Spin an idea</span></Link>
             </div>
+            <span className="wings" />
+            <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
         </div>
-      </section>
-    </PublicShell>
+      </div>
+    </PopitoShell>
   );
 }
