@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
-import BrandLogo from '@/components/BrandLogo';
+import ZubazShell from '@/components/zubaz/ZubazShell';
 
 export default function ProfileClient({ user, error }) {
   const supabase = createClient();
@@ -65,11 +65,10 @@ export default function ProfileClient({ user, error }) {
   const demandTone = (level = '') => /strong/i.test(level) ? '#15803D' : /weak/i.test(level) ? '#B91C1C' : '#B45309';
 
   return (
-    <div style={s.page}>
-      <div style={s.wrap}>
-        <div style={s.topbar}>
-          <a href="/" style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }} aria-label="IdeaReels — home"><BrandLogo /></a>
-        </div>
+    <ZubazShell>
+      <div className="section zubuz-section-padding3">
+        <div className="container">
+        <div style={s.wrap}>
 
         {user ? (
           <>
@@ -227,17 +226,10 @@ export default function ProfileClient({ user, error }) {
             <p style={s.reassure}>No password to remember. We only use your email for sign-in links and purchase receipts.</p>
           </div>
         )}
-      </div>
-
-      <div style={s.disclaimer}>
-        <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 8 }}>
-          <a href="/privacy" style={{ fontSize: 12, color: 'var(--ink-2)', textDecoration: 'none' }}>Privacy</a>
-          <a href="/terms" style={{ fontSize: 12, color: 'var(--ink-2)', textDecoration: 'none' }}>Terms</a>
-          <a href="/faq" style={{ fontSize: 12, color: 'var(--ink-2)', textDecoration: 'none' }}>FAQ</a>
         </div>
-        <p style={s.disclaimerText}>© {new Date().getFullYear()} IdeaReels. All rights reserved.</p>
+        </div>
       </div>
-    </div>
+    </ZubazShell>
   );
 }
 
@@ -246,10 +238,7 @@ const glassStrong = 'rgba(255,255,255,0.5)';
 const softLine = 'rgba(236,230,245,0.92)';
 
 const s = {
-  page: { minHeight: '100vh', background: 'transparent', fontFamily: 'var(--font-body)', color: 'var(--ink)', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' },
-  wrap: { flex: 1, maxWidth: 760, margin: '0 auto', width: '100%', padding: '28px 20px 40px', position: 'relative', zIndex: 1 },
-  topbar: { marginBottom: 28 },
-  back: { display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--ink-2)', textDecoration: 'none', padding: '10px 16px', border: `1px solid ${softLine}`, borderRadius: 999, background: glassStrong, backdropFilter: 'blur(8px)' },
+  wrap: { maxWidth: 760, margin: '0 auto', width: '100%' },
   header: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, gap: 16 },
   title: { fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, margin: '0 0 6px', color: 'var(--ink)', letterSpacing: '-0.03em', lineHeight: 1.05 },
   emailTxt: { fontSize: 14, color: 'var(--muted)', margin: 0 },
@@ -295,6 +284,4 @@ const s = {
   reassure: { margin: '12px 0 0', fontSize: 12, lineHeight: 1.55, color: 'var(--muted)', textAlign: 'center', maxWidth: 320 },
   ghostBtn: { marginTop: 16, background: 'none', border: 'none', color: 'var(--ink-2)', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' },
   signoutBtn: { padding: '10px 16px', background: glassStrong, backdropFilter: 'blur(8px)', border: `1px solid ${softLine}`, borderRadius: 999, fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', cursor: 'pointer', flexShrink: 0 },
-  disclaimer: { position: 'relative', zIndex: 1, padding: '16px 24px 24px', borderTop: `1px solid ${softLine}`, textAlign: 'center', maxWidth: 600, margin: '0 auto', width: '100%' },
-  disclaimerText: { fontSize: 11, color: 'var(--muted)', lineHeight: 1.7, margin: 0 },
 };
