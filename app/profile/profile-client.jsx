@@ -122,10 +122,6 @@ export default function ProfileClient({ user, error }) {
               <div className="details_left">
                 <ul>
                   <li>
-                    <p className="label">Email address</p>
-                    <p className="value">{user.email}</p>
-                  </li>
-                  <li>
                     <p className="label">Credits remaining</p>
                     <p className="value">{balance === null ? '…' : balance}</p>
                   </li>
