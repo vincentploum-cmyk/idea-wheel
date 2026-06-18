@@ -14,7 +14,7 @@ export default async function WheelPage() {
   if (!user) redirect('/auth/login?next=/wheel');
 
   return (
-    <PopitoShell yellowBg noFooterCta>
+    <PopitoShell noFooterCta>
       <IdeaWheel />
     </PopitoShell>
   );
