@@ -74,7 +74,7 @@ export default function LandingPage() {
               <div className="pt_content">
                 <ul className="pt_list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 24, listStyle: 'none', padding: 0 }}>
                   {CREDIT_PACKAGES.map((pkg) => (
-                    <li key={pkg.key} className="pt_list_item">
+                    <li key={pkg.key} className="pt_list_item" style={{ display: 'flex' }}>
                       <div className={`fn__pricing_table_item fn__bold_item${pkg.highlight ? ' active' : ''}`}>
                         <div className="item_header">
                           <div className="plan"><span>{pkg.label}</span></div>
