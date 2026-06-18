@@ -2290,6 +2290,7 @@ const CSS = `
   box-shadow:6px 6px 0 #111;
 }
 
+
 /* ── Mode toggle ── */
 .sm-topbar { display:flex; justify-content:center; margin:0 0 16px; }
 .sm-modebar {
@@ -2324,32 +2325,44 @@ const CSS = `
 .sm-modebtn.on:hover:not(:disabled)::after { width:0; }
 .sm-modebtn:disabled { opacity:.5; cursor:default; }
 
-/* ── Reels container with dominant center band ── */
+/* ── Reels container ── */
 .sm-reels-wrap {
   position:relative;
-  border-radius:20px;
-  padding:8px;
-  background:rgba(248,248,248,0.9);
+  border-radius:14px;
+  padding:0;
+  background:#f5f5f5;
   border:3px solid #111;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.86);
   overflow:hidden;
 }
 
-/* payline bar hidden — individual columns carry the visual weight */
-.sm-payline-bar { display:none; }
+/* center payline — yellow highlight bar across all 3 reels */
+.sm-payline-bar {
+  position:absolute;
+  left:0; right:0;
+  top:50%; height:72px;
+  transform:translateY(-50%);
+  background:#FFE000;
+  border-top:3px solid #111;
+  border-bottom:3px solid #111;
+  pointer-events:none;
+  z-index:1;
+  display:block;
+}
 
 .sm-reels {
   position:relative; z-index:2;
-  display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+  display:grid; grid-template-columns:repeat(3,1fr); gap:0;
   background:transparent;
 }
+/* vertical dividers between columns */
+.sm-col + .sm-col { border-left:2px solid #ddd; }
 
 .sm-col {
   display:flex; flex-direction:column;
   position:relative;
-  background:#FFE000;
-  border:3px solid #111;
-  border-radius:14px;
+  background:#f5f5f5;
+  border:none;
+  border-radius:0;
   overflow:hidden;
 }
 
@@ -2396,17 +2409,17 @@ const CSS = `
   top:0;
   bottom:calc(50% + 39px);
   background:linear-gradient(180deg,
-    rgba(255,224,0,0.97) 0%,
-    rgba(255,224,0,0.85) 60%,
-    rgba(255,224,0,0) 100%);
+    rgba(245,245,245,0.97) 0%,
+    rgba(245,245,245,0.85) 60%,
+    rgba(245,245,245,0) 100%);
 }
 .sm-reel-haze--bottom {
   top:calc(50% + 39px);
   bottom:0;
   background:linear-gradient(0deg,
-    rgba(255,224,0,0.97) 0%,
-    rgba(255,224,0,0.85) 60%,
-    rgba(255,224,0,0) 100%);
+    rgba(245,245,245,0.97) 0%,
+    rgba(245,245,245,0.85) 60%,
+    rgba(245,245,245,0) 100%);
 }
 
 /* Pre-spin cover: hides the reel words (so nothing is pre-populated) and
@@ -2420,7 +2433,7 @@ const CSS = `
   text-align:center;
   cursor:pointer;
   border-radius:0;
-  background:#FFE000;
+  background:#f5f5f5;
 }
 .sm-reel-cover-emoji { font-size:24px; line-height:1; }
 .sm-reel-cover-title {
