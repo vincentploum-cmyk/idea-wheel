@@ -20,12 +20,16 @@ function NavItem({ href, label }) {
   );
 }
 
-export default async function PopitoShell({ children, banner }) {
+export default async function PopitoShell({ children, banner, yellowBg }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
-    <div className="popito-fn-wrapper" data-bg-decor="enable">
+    <div
+      className="popito-fn-wrapper"
+      data-bg-decor={yellowBg ? undefined : 'enable'}
+      style={yellowBg ? { background: '#FFE000' } : undefined}
+    >
 
       {banner}
 

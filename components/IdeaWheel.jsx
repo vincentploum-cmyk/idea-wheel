@@ -2292,15 +2292,11 @@ const CSS = `
 /* ── Cabinet — one elegant glass component ── */
 .sm-cabinet {
   position:relative;
-  background:rgba(255,255,255,0.85);
+  background:#fff;
   border-radius:28px;
   padding:18px 16px 22px;
-  border:1px solid rgba(0,0,0,0.10);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.94),
-    0 20px 50px -30px rgba(0,0,0,0.14);
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
+  border:3px solid #111;
+  box-shadow:6px 6px 0 #111;
 }
 
 /* ── Mode toggle ── */
@@ -2335,7 +2331,7 @@ const CSS = `
   border-radius:20px;
   padding:8px;
   background:rgba(248,248,248,0.9);
-  border:2.5px solid rgba(0,0,0,0.18);
+  border:3px solid #111;
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.86);
   overflow:hidden;
 }
@@ -2508,12 +2504,12 @@ const CSS = `
   width:100%;
   padding:14px 20px;
   margin-top:16px;
-  background:rgba(255,255,255,0.85);
-  border:1px solid rgba(0,0,0,0.10);
+  background:#fff;
+  border:3px solid #111;
   border-radius:18px;
   text-align:center; min-height:54px;
   display:flex; align-items:center; justify-content:center;
-  backdrop-filter:blur(14px);
+  box-shadow:4px 4px 0 #111;
 }
 .sm-live-sentence p { margin:0; font-size:15px; line-height:1.6; color:var(--ink-2); }
 .sm-live-sentence .sm-slot {
