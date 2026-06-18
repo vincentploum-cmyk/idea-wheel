@@ -20,12 +20,14 @@ function NavItem({ href, label }) {
   );
 }
 
-export default async function PopitoShell({ children }) {
+export default async function PopitoShell({ children, banner }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
     <div className="popito-fn-wrapper" data-bg-decor="enable">
+
+      {banner}
 
       {/* Search Popup */}
       <div className="popito_fn_searchbox">

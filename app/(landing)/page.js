@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import PopitoShell from '@/components/popito/PopitoShell';
+import PromoBanner from '@/components/PromoBanner';
 import { LANDING_STEPS, FAQS } from '@/lib/content';
 import { CREDIT_PACKAGES } from '@/lib/pricing';
 
@@ -10,7 +11,13 @@ export const metadata = {
 
 export default function LandingPage() {
   return (
-    <PopitoShell>
+    <PopitoShell banner={
+      <PromoBanner
+        text="Generate your first startup idea for free."
+        linkLabel="Sign up — no credit card needed"
+        linkHref="/auth/register"
+      />
+    }>
 
       {/* Hero */}
       <div className="popito_fn_pagetitle" style={{ minHeight: 480, display: 'flex', alignItems: 'center' }}>
