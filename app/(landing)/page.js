@@ -55,9 +55,16 @@ export default function LandingPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 28 }}>
               {LANDING_STEPS.map((step) => (
                 <div key={step.number} className="fn__bold_item" style={{ padding: '32px 28px' }}>
-                  <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 42, opacity: 0.12, marginBottom: 12, lineHeight: 1 }}>
+                  <div style={{
+                    width: 52, height: 52, borderRadius: '50%',
+                    background: '#FFE000', border: '3px solid #111',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    marginBottom: 16,
+                    fontFamily: 'Nunito, sans-serif', fontWeight: 900,
+                    fontSize: 18, color: '#111', letterSpacing: '0.02em',
+                  }}>
                     {step.number}
-                  </p>
+                  </div>
                   <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 18, marginBottom: 10 }}>
                     {step.title}
                   </h3>
