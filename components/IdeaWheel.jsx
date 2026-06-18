@@ -601,7 +601,7 @@ function SlotMachine({ onResult, onModeChange }) {
 
         <div className="sm-base">
           <button className="sm-spin" onClick={spinAll} disabled={anySpinning}>
-            {anySpinning ? 'Spinning…' : 'Generate idea'}
+            <span>{anySpinning ? 'Spinning…' : 'Generate idea'}</span>
           </button>
         </div>
       </div>
@@ -2478,24 +2478,28 @@ const CSS = `
 }
 
 .sm-spin {
-  font-family:var(--font-body); font-size:15px; font-weight:700;
-  color:#111; padding:14px 36px; border-radius:var(--r-pill);
-  letter-spacing:-.01em;
-  background:#FFE000;
-  cursor:pointer; min-width:220px; width:min(100%, 300px); position:relative;
-  border:none;
-  box-shadow:0 2px 0 rgba(0,0,0,0.18);
-  transition:background .15s, transform .15s ease, box-shadow .15s;
+  font-family:var(--font-body); font-size:18px; font-weight:900;
+  color:#000;
+  height:60px; line-height:52px;
+  padding:0 50px; border-radius:10px;
+  letter-spacing:.25px;
+  background-color:#fff6be;
+  cursor:pointer; min-width:220px; width:min(100%, 320px);
+  position:relative; overflow:hidden;
+  border:4px solid #000;
+  text-align:center;
+  transition:color .3s;
 }
-.sm-spin:hover:not(:disabled) {
-  background:#F5D800;
-  transform:translateY(-1px);
-  box-shadow:0 4px 0 rgba(0,0,0,0.18);
+.sm-spin::after {
+  display:block; position:absolute;
+  top:0; right:0; height:100%; width:100%;
+  z-index:0; content:'';
+  background:#ffdd00;
+  transition:all .3s cubic-bezier(.42,0,.58,1);
 }
-.sm-spin:active:not(:disabled) {
-  transform:translateY(1px);
-  box-shadow:0 1px 0 rgba(0,0,0,0.18);
-}
+.sm-spin span { position:relative; z-index:2; }
+.sm-spin:hover:not(:disabled)::after { right:auto; left:0; width:0; }
+.sm-spin:disabled { opacity:.5; cursor:default; }
 .sm-spin:active:not(:disabled) { transform:translateY(0); }
 .sm-spin:disabled { opacity:.5; cursor:default; }
 
