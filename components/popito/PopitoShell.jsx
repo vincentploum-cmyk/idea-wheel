@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
+import PromoBanner from '@/components/PromoBanner';
 
 const NAV_LINKS = [
   { href: '/wheel', label: 'Spin Ideas' },
@@ -20,7 +21,7 @@ function NavItem({ href, label }) {
   );
 }
 
-export default async function PopitoShell({ children, banner, yellowBg, noFooterCta }) {
+export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -31,7 +32,11 @@ export default async function PopitoShell({ children, banner, yellowBg, noFooter
       style={yellowBg ? { background: '#FFE000' } : undefined}
     >
 
-      {banner}
+      <PromoBanner
+        text="Generate your first startup idea for free."
+        linkLabel="Sign up — no credit card needed"
+        linkHref="/auth/register"
+      />
 
       {/* Search Popup */}
       <div className="popito_fn_searchbox">
