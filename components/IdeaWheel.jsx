@@ -625,7 +625,7 @@ function SlotMachine({ onResult }) {
 /* ─── MAIN APP ───────────────────────────────────────────────────── */
 
 export default function IdeaWheel() {
-  const [screen, setScreen] = useState("landing");  // landing | wheel | validate | blueprint
+  const [screen, setScreen] = useState("wheel");  // landing | wheel | validate | blueprint
   const [authChecked, setAuthChecked] = useState(false);
   const [idea, setIdea]     = useState(null);
   const [credits, setCredits] = useState(3);
@@ -1701,8 +1701,8 @@ const CHIP_POS = [
 
 /* ─── CSS ────────────────────────────────────────────────────────── */
 const CSS = `
-/* root — clean, no blobs */
-.su-root { min-height:100vh; position:relative; background:var(--bg); }
+/* root — transparent so Popito background shows through */
+.su-root { min-height:100vh; position:relative; background:transparent; }
 .su-blob { display:none; } /* blobs removed — P2 fix */
 
 /* nav */
