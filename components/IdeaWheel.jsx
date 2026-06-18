@@ -1707,7 +1707,7 @@ const CHIP_POS = [
 /* ─── CSS ────────────────────────────────────────────────────────── */
 const CSS = `
 /* root — transparent so Popito background shows through */
-.su-root { min-height:100vh; position:relative; background:transparent; }
+.su-root { position:relative; background:transparent; }
 .su-blob { display:none; } /* blobs removed — P2 fix */
 
 /* nav */
