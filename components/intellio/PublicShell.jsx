@@ -15,8 +15,7 @@ export function PublicHeader() {
           <div className="row align-items-center">
             <div className="col-6 col-lg-2">
               <div className="header-logo">
-                <Link className="active_logo intellio-wordmark" href="/">IdeaReels</Link>
-                <Link className="logo_two intellio-wordmark" href="/">IdeaReels</Link>
+                <Link className="intellio-wordmark" href="/">IdeaReels</Link>
               </div>
             </div>
             <div className="col-lg-7 d-none d-lg-block">

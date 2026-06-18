@@ -26,9 +26,9 @@ export default function LandingPage() {
     <PublicShell>
       <section className="startup-banner-section" style={{ backgroundImage: "url('/intellio-images/demo-img/banner-bg2.png')" }}>
         <div className="auto-container">
-          <div className="row align-items-center">
-            <div className="col-lg-6">
-              <div className="startup-banner-content intellio-hero-copy">
+          <div className="row justify-content-center">
+            <div className="col-lg-12">
+              <div className="startup-banner-content intellio-hero-copy intellio-hero-copy-centered">
                 <h5>Idea validation, before the busywork</h5>
                 <h1>Find a startup idea <span>worth building.</span></h1>
                 <p>Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.</p>
@@ -40,19 +40,6 @@ export default function LandingPage() {
                   <li><i className="fa-regular fa-circle-check" />3 free credits on signup</li>
                   <li><i className="fa-regular fa-circle-check" />No credit card required</li>
                 </ul>
-              </div>
-            </div>
-            <div className="col-lg-6">
-              <div className="startup-banner-thumb intellio-hero-visual">
-                <img src="/intellio-images/demo-img/banner-thumb21.png" alt="IdeaReels dashboard preview" />
-                <div className="intellio-floating-card intellio-floating-card-one">
-                  <strong>Build</strong>
-                  <span>Free market check clears the idea first.</span>
-                </div>
-                <div className="intellio-floating-card intellio-floating-card-two">
-                  <strong>Blueprint ready</strong>
-                  <span>Product, GTM, infra, prototype.</span>
-                </div>
               </div>
             </div>
           </div>

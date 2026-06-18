@@ -204,6 +204,53 @@ img, svg { display: block; max-width: 100%; }
   backdrop-filter: blur(14px);
 }
 
+.nav_scroll {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 2rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav_scroll li a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 15px;
+}
+
+.intellio-header-area .auto-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.intellio-header-area .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.startup-banner-section {
+  padding: 120px 0 80px;
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+}
+
+.banner-btn {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.banner-btn a {
+  display: inline-block;
+}
+
 .intellio-mobile-menu {
   position: relative;
 }
@@ -290,6 +337,18 @@ img, svg { display: block; max-width: 100%; }
   align-items: center;
   gap: 10px;
   color: #fff;
+}
+
+.intellio-hero-copy-centered {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.intellio-hero-copy-centered .intellio-trust-list {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .intellio-trust-list li + li,
