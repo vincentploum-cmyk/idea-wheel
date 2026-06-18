@@ -2504,7 +2504,7 @@ const CSS = `
   width:100%;
   padding:14px 20px;
   margin-top:16px;
-  background:#fff;
+  background:#efbdc2;
   border:3px solid #111;
   border-radius:18px;
   text-align:center; min-height:54px;
