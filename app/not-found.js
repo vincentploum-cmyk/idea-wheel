@@ -1,74 +1,28 @@
 import Link from 'next/link';
+import PublicShell from '@/components/boostly/PublicShell';
 
 export default function NotFound() {
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        background: 'var(--bg)',
-        fontFamily: 'var(--font-body)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
-        gap: 20,
-        padding: 24,
-        textAlign: 'center',
-        color: 'var(--ink)',
-      }}
-    >
-      <div
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 'clamp(72px,12vw,128px)',
-          fontWeight: 700,
-          lineHeight: 1,
-          letterSpacing: '-0.04em',
-          color: 'var(--accent)',
-        }}
-      >
-        404
-      </div>
-      <h1
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 24,
-          fontWeight: 700,
-          margin: 0,
-          color: 'var(--ink)',
-          letterSpacing: '-0.02em',
-        }}
-      >
-        This page doesn't exist
-      </h1>
-      <p
-        style={{
-          fontSize: 15,
-          color: 'var(--muted)',
-          margin: 0,
-          maxWidth: 380,
-          lineHeight: 1.6,
-        }}
-      >
-        Looks like you took a wrong turn. Let's get you back on track.
-      </p>
-      <Link
-        href="/"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '12px 24px',
-          background: 'var(--accent)',
-          color: '#fff',
-          borderRadius: 999,
-          fontWeight: 600,
-          fontSize: 14,
-          textDecoration: 'none',
-        }}
-      >
-        Back to IdeaReels
-      </Link>
-    </main>
+    <PublicShell title="404 Error">
+      <section className="gt-error-section section-padding fix">
+        <div className="container">
+          <div className="row justify-content-center">
+            <div className="col-lg-8">
+              <div className="gt-error-items">
+                <div className="gt-error-image">
+                  <img src="/boostly/assets/img/inner/404.png" alt="404" />
+                </div>
+                <h2>Oops, this page doesn&apos;t exist</h2>
+                <p>Looks like you took a wrong turn. Head back to the homepage or jump straight into the idea wheel.</p>
+                <div className="gt-cta-btn justify-content-center">
+                  <Link href="/" className="gt-theme-btn">back to home</Link>
+                  <Link href="/wheel" className="gt-theme-btn style-3 bg-border">open idea wheel</Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </PublicShell>
   );
 }

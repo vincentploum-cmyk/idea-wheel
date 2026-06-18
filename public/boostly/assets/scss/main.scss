@@ -1,0 +1,88 @@
+/*
+Theme Name: Boostly 
+Author: Gramentheme
+Author URI: https://themeforest.net/user/Gramentheme/portfolio
+Description: Boostly - SaaS & Tech Startup HTML Template
+Service Html Template 
+Version: 1.0.0
+*/
+
+//====================================================================//
+//                            CSS TABLE OF CONTENTS                   //
+//====================================================================//
+
+//>> Basic Start <<//
+// 1. Mixins
+// 2. Variables
+// 3. Buttons
+// 4. Typography
+// 5. Fonts
+
+//>> Template Section Style Start <<//
+// 6. About
+// 7. Animation
+// 8. Contact
+// 9. CTA (Call To Action)
+// 10. Pricing
+// 11. FAQ
+// 12. Feature
+// 13. Footer
+// 14. Header
+// 15. Helping
+// 16. Hero
+// 17. MeanMenu
+// 18. News / Blog
+// 19. Preloader
+// 20. Section (Common Section Styling)
+// 21. Service
+// 22. Team
+// 23. Testimonial
+
+
+//>> Basic Start <<//
+
+/* -------------------------------------------------------------------------- */
+/*                               TABLE OF CONTENTS                            */
+/* -------------------------------------------------------------------------- */
+
+/* >> Utilities << */
+@import "_mixins";
+@import "_variables";
+@import "_buttons";
+@import "_typography";
+@import "_fonts";
+
+/* >> Base << */
+@import "_section"; 
+@import "_preloader";
+
+/* >> Layout << */
+@import "_header";
+@import "_footer";
+@import "_meanmenu";
+
+/* >> Sections << */
+@import "_hero";
+@import "_about";
+@import "_feature";
+@import "_service";
+@import "_helping";
+@import "_team";
+@import "_testimonial";
+@import "_pricing";
+@import "_faq";
+@import "_news";
+@import "_contact";
+@import "_cta";
+
+/* >> Components << */
+@import "_animation";
+
+/* -------------------------------------------------------------------------- */
+/*                               END TABLE OF CONTENTS                        */
+/* -------------------------------------------------------------------------- */
+
+
+
+//>> Template Section Style End <<//
+

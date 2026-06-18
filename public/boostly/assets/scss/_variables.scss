@@ -1,0 +1,41 @@
+
+:root {
+    
+    --gt-body: #fff;
+    --gt-black: #000;
+    --gt-white: #fff;
+    --gt-theme: #6B41FF;
+    --gt-theme2: #A0EA71;
+    --gt-theme3: #124AFF;
+    --gt-theme4: #7444FD;
+    --gt-theme5: #6A47ED;
+    --gt-header: #fff;
+    --gt-header2: #0E0E0C;
+    --gt-header3: #05111A;
+    --gt-text: #9BA0A3;
+    --gt-text2: #686866;
+    --gt-border: #FCFCFC;
+    --gt-bg: #05111A;
+    --gt-bg2: #F8F8F8;
+    --gt-bg3: #F7F3EE;
+    --gt-box-shadow: 0px 1px 14px 0px rgba(0, 0, 0, 0.13);
+}
+
+// Theme Color - Defualt Colors
+$gt-black: var(--gt-black);
+$gt-white: var(--gt-white);
+$gt-theme-color: var(--gt-theme);
+$gt-theme-color-2: var(--gt-theme2);
+$gt-theme-color-3: var(--gt-theme3);
+$gt-theme-color-4: var(--gt-theme4);
+$gt-theme-color-5: var(--gt-theme5);
+$gt-text-color: var(--gt-text);
+$gt-text-color-2: var(--gt-text2);
+$gt-header-color: var(--gt-header);
+$gt-header-color-2: var(--gt-header2);
+$gt-header-color-3: var(--gt-header3);
+$gt-border-color: var(--gt-border);
+$gt-bg-color: var(--gt-bg);
+$gt-bg-color-2: var(--gt-bg2);
+$gt-bg-color-3: var(--gt-bg3);
+$gt-shadow: var(--gt-box-shadow);

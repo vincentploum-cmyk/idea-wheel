@@ -1,0 +1,283 @@
+
+/*=======================
+    Preloader
+=======================*/
+.preloader {
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  z-index: 99999999;
+  background-color: #ffffff;
+
+}
+.preloader:after {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 158px;
+  margin-left: -55px;
+  margin-top: -70px;
+  height: 110px;
+  background-position: center center;
+  background-repeat: no-repeat;
+  -webkit-animation: pulse 1s infinite linear;
+  animation: pulse 1s infinite linear;
+  background-image: url(../../assets/img/prealoader.png);
+  content: "";
+}
+.preloader:before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  width: 100%;
+  text-align: center;
+  margin: 0 auto;
+  margin-top: 20px;
+  color: $gt-header-color-3;
+  font-weight: 600;
+  font-size: 14px;
+  font-family: $gt-heading-font;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  content: "Loading";
+  -webkit-transition: none;
+  transition: none;
+    left: 30px;
+}
+
+.gt-back-to-top {
+    background-color: $gt-theme-color;
+    width: 50px;
+    height: 50px;
+    line-height: 40px;
+    color: $gt-white;
+    font-size: 16px;
+    position: fixed;
+    display: inline-block;
+    z-index: 999;
+    right: 30px;
+    bottom: 30px;
+    @include transition;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    border-radius: 4px;
+
+    &.color-2 {
+        background-color: $gt-theme-color-2;
+        color: $gt-header-color-3;
+    }
+
+    &.color-3 {
+        background-color: $gt-theme-color-3;
+        color: $gt-white;
+    }
+
+     &.color-4 {
+        background-color: $gt-theme-color-4;
+        color: $gt-white;
+    }
+
+     &.color-5 {
+        background-color: $gt-theme-color-5;
+        color: $gt-white;
+    }
+
+
+    &:hover {
+        background-color: $gt-header-color-3;
+        color: $gt-white;
+
+        img {
+            animation: slideUp 600ms;
+        }
+    }
+    
+    &.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(0);
+    }
+}
+
+
+
+.cursor-outer {
+	-webkit-margin-start: -12px;
+	margin-inline-start: -12px;
+	margin-top: -12px;
+	width: 30px;
+	height: 30px;
+	border: 1px solid $gt-theme-color;
+	background-color: $gt-theme-color;
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
+	z-index: 10000000;
+	opacity: 0.34;
+	-webkit-transition: all 0.4s ease-out 0s;
+	transition: all 0.4s ease-out 0s;
+
+    &.color-2 {
+        border: 1px solid $gt-theme-color-2;
+        background-color: $gt-theme-color-2;
+    }
+
+    &.color-3 {
+        border: 1px solid $gt-theme-color-3;
+        background-color: $gt-theme-color-3;
+    }
+
+     &.color-3 {
+        border: 1px solid $gt-theme-color-4;
+        background-color: $gt-theme-color-4;
+    }
+
+     &.color-3 {
+        border: 1px solid $gt-theme-color-5;
+        background-color: $gt-theme-color-5;
+    }
+}
+.cursor-outer.cursor-hover {
+	opacity: 0.14;
+}
+.cursor-outer.cursor-big {
+	opacity: 0;
+}
+.mouseCursor {
+	position: fixed;
+	top: 0;
+	inset-inline-start: 0;
+	inset-inline-end: 0;
+	bottom: 0;
+	pointer-events: none;
+	border-radius: 50%;
+	-webkit-transform: translateZ(0);
+	transform: translateZ(0);
+	visibility: hidden;
+	text-align: center;
+}
+.mouseCursor.cursor-big {
+	width: 20px;
+	height: 20px;
+	-webkit-margin-start: -12px;
+	margin-inline-start: -12px;
+	margin-top: -12px;
+}
+.cursor-inner {
+	-webkit-margin-start: -3px;
+	margin-inline-start: -3px;
+	margin-top: -3px;
+	width: 10px;
+	height: 10px;
+	z-index: 10000001;
+	background-color: $gt-theme-color;
+	opacity: 1;
+	-webkit-transition: all 0.24s ease-out 0s;
+	transition: all 0.24s ease-out 0s;
+    &.color-2 {
+        background-color: $gt-theme-color-2;
+    }
+    &.color-3 {
+        background-color: $gt-theme-color-3;
+    }
+     &.color-4 {
+        background-color: $gt-theme-color-4;
+    }
+     &.color-5 {
+        background-color: $gt-theme-color-5;
+    }
+	span {
+		color: $gt-text-color;
+		line-height: 60px;
+		opacity: 0;
+		text-transform: uppercase;
+		letter-spacing: 1px;
+		font-size: 12px;
+	}
+}
+.cursor-inner.cursor-big {
+	span {
+		opacity: 1;
+	}
+}
+.cursor-inner.cursor-hover {
+	-webkit-margin-start: -10px;
+	margin-inline-start: -10px;
+	margin-top: -10px;
+	width: 30px;
+	height: 30px;
+	background-color: $gt-theme-color;
+	border: 1px solid #686363;
+	opacity: 0;
+}
+
+
+.gt-page-nav-wrap {
+    ul {
+        @include flex;
+        gap: 10px;
+        justify-content: center;
+
+        li {
+            display: inline-block;
+            border-radius: 4px;
+
+            &:first-child {
+                border: 1px solid #BFBFBF;
+                
+                a {
+                    color: $gt-theme-color;
+                    background-color: transparent;
+                }
+            }
+
+            &:last-child {
+                border: 1px solid $gt-theme-color;
+                
+                a {
+                    color: $gt-theme-color;
+                    background-color: transparent;
+                }
+            }
+  
+            .gt-page-numbers {
+                &.current {
+                    background-color: $gt-theme-color;
+                    color: $gt-white;
+                }
+  
+                display: inline-block;
+                width:50px;
+                height:50px;
+                line-height:50px;           
+                background: transparent;
+                font-weight: 600;
+                transition: all 0.3s ease-in-out;
+                color: $gt-header-color;
+                text-align: center;
+                background-color: $gt-bg-color;
+                border: 1px solid transparent;
+                border-radius: 4px;
+  
+                @media (max-width: 767px) {
+                    margin-top: 10px;
+                    width: 50px;
+                    height: 50px;
+                    line-height: 50px;
+                    font-size: 14px;
+                }
+  
+                i {
+                    margin-top: 2px;
+                }
+                &:hover {
+                    background-color: $gt-theme-color;
+                    color: $gt-white;
+                }
+            }
+        }
+    }
+  }

@@ -1,0 +1,149 @@
+/* --------------------------------------------
+    Template Default Fonts & Fonts Styles
+ ---------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sen:wght@400..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
+$gt-heading-font: 'TestTiemposFine-Regular-BF66457a50e8bc9', serif;
+$gt-heading-font-2: "Sen", sans-serif;
+$gt-heading-font-3: "Manrope", sans-serif;
+$gt-heading-font-4: "Montserrat", sans-serif;
+$gt-heading-font-5: "Plus Jakarta Sans", sans-serif;
+$gt-body-font: "DM Sans", sans-serif;
+//font-family: "Font Awesome 6 Free";
+$fa: "Font Awesome 6 Pro";
+
+body {
+    font-family: $gt-body-font;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 28px;
+    color: $gt-text-color;
+    background-color: $gt-white;
+	padding: 0;
+	margin: 0;
+	overflow-x: hidden;
+}
+
+ul {
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+button {
+    border: none;
+    background-color: transparent;
+	padding: 0;
+}
+
+input:focus{
+	color: $gt-white;
+	outline: none;
+}
+
+input{
+	color: $gt-white;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: $gt-heading-font;
+    margin: 0px;
+	padding: 0;
+    color: $gt-header-color;
+	@include transition;
+}
+
+h1 {
+	font-size: 60px;
+	font-weight: 400;
+	line-height: 117%;
+
+	@include breakpoint(max-xxl){
+		font-size: 56px;
+	}
+
+
+	@include breakpoint(max-md){
+		font-size: 55px;
+	}
+
+	@include breakpoint(max-sm){
+		font-size: 43px;
+	}
+
+	@include breakpoint(max-xxs){
+		font-size: 32px;
+	}
+}
+
+h2 {
+	font-size: 45px;
+	font-weight: 400;
+	line-height: 134%;
+
+	@include breakpoint(max-md){
+		font-size: 40px;
+	}
+
+	@include breakpoint(max-sm){
+		font-size: 37px;
+	}
+
+	@include breakpoint(max-xxs){
+		font-size: 32px;
+	}
+}
+
+h3 {
+	font-size: 24px;
+	font-weight: 600;
+	line-height: 134%;
+
+	@include breakpoint(max-sm){
+		font-size: 20px;
+	}
+}
+
+h4 {
+	font-size: 18px;
+	font-weight: 400;
+}
+
+h5 {
+	font-size: 18px;
+	font-weight: 700;
+}
+
+h6 {
+	font-size: 16px;
+	font-weight: 700;
+}
+
+a {
+    text-decoration: none;
+    outline: none !important;
+    cursor: pointer;
+    color: $gt-header-color;
+	@include transition;
+}
+
+p {
+    margin: 0px;
+	@include transition;
+}
+
+span {
+	margin: 0px;
+	// @include transition;
+}
+

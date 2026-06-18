@@ -1,0 +1,473 @@
+.cta-box-items {
+    border-radius: 20px;
+    padding: 60px;
+    box-shadow: 0 4px 150px 0 rgba(107, 65, 255, 0.50);
+
+    @include breakpoint (max-xl){
+        padding: 50px 40px;
+    }
+
+    @include breakpoint (max-md){
+        padding: 40px 30px;
+    }
+
+    @include breakpoint (max-sm){
+        padding: 30px 25px;
+    }
+
+    .cta-content {
+        max-width: 840px;
+        margin: 0 auto;
+
+        h2 {
+            font-style: italic;
+            font-size: 60px;
+
+            @include breakpoint (max-md){
+                font-size: 48px;
+            }
+
+             @include breakpoint (max-sm){
+                font-size: 40px;
+            }
+        }
+
+        p {
+            color: $gt-white;
+        }
+
+        .gt-theme-btn {
+            background: linear-gradient(90deg, #6B41FF 0%, #EA4BFF 52.98%, #FEBC5F 100%);
+            border: none;
+            margin-top: 50px;
+
+            @include breakpoint (max-xl){
+               margin-top: 40px;
+            }
+
+            @include breakpoint (max-lg){
+               margin-top: 35px;
+            }
+
+            @include breakpoint (max-md){
+                margin-top: 30px;
+            }
+
+            @include breakpoint (max-sm){
+                margin-top: 25px;
+            }
+
+            &::after {
+                background: linear-gradient(90deg, #6B41FF 0%, #EA4BFF 52.98%, #FEBC5F 100%);
+            }
+        }
+
+        ul {
+            @include flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+
+            @include breakpoint (max-xl){
+                flex-wrap: wrap;
+                margin-top: 30px;
+            }
+            
+            li {
+                font-size: 14px;
+                font-weight: 500;
+                color: #9BA0A3;
+                text-transform: capitalize;
+                position: relative;
+                padding-left: 20px;
+
+                &::before {
+                    position: absolute;
+                    top: 10px;
+                    left: 0;
+                    content: "";
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 8px;
+                    background-color: $gt-theme-color;
+                }
+            }
+        }
+    }
+}
+
+
+.cta-box-items-2 {
+    padding: 60px;
+    border-radius: 20px;
+    position: relative;
+    z-index: 9;
+    box-shadow: 0 4px 60px 0 rgba(160, 234, 113, 0.40);
+
+    @include breakpoint (max-md){
+        padding: 40px;
+    }
+
+    @include breakpoint (max-sm){
+        padding: 30px;
+    }
+
+    .vector-shape {
+        position: absolute;
+        bottom: 45px;
+        left: 61%;
+        transform: translateX(-50%);
+        z-index: -1;
+    }
+
+    .cta-content {
+        max-width: 750px;
+        margin: 0 auto;
+        text-align: center;
+
+        .gt-theme-btn {
+            color: $gt-theme-color-2;
+            margin-top: 38px;
+            padding: 0 30px;
+            height: 48px;
+            line-height: 48px;
+
+            @include breakpoint (max-md){
+                margin-top: 30px;
+            }
+
+            &::after {
+                display: none;
+            }
+
+            &::before {
+                background-color: $gt-header-color-2;
+            }
+        }
+    }
+}
+
+.gt-contact-managenment-image  {
+    position: relative;
+
+    .shape-3 {
+        position: absolute;
+        right: -32px;
+        text-align: 0;
+        top: -30px;
+
+        @include breakpoint (max-xxl){
+            display: none;
+        }
+    }
+}
+
+.gt-cta-wrapper-3 {
+    text-align: center;
+    padding: 60px;
+    border-radius: 20px;
+    box-shadow: 0 4px 250px 0 rgba(18, 74, 255, 0.20);
+
+    @include breakpoint (max-lg){
+       padding: 40px;
+    }
+
+    @include breakpoint (max-md){
+       padding: 30px;
+    }
+
+    p {
+        color: #05111A;
+        font-weight: 600;
+        margin-top: 20px;
+    }
+
+    .gt-cta-btn {
+        @include flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 40px;
+
+        @include breakpoint (max-xl){
+           flex-wrap: wrap;
+           margin-top: 30px;
+        }
+
+        .gt-theme-btn {
+            padding: 0 32px;
+            height: 49px;
+            line-height: 49px;
+
+            &.bg-header {
+                background-color: $gt-header-color-3;
+            }
+        }
+    } 
+
+    ul {
+        @include flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+
+         @include breakpoint (max-xl){
+           flex-wrap: wrap;
+        }
+
+        li {
+            color: #05111A;
+            font-weight: 500;
+            font-size: 14px;
+
+            i {
+                margin-right: 8px;
+            }
+        }
+    }
+}
+
+.gt-technology-box-items {
+    padding: 50px;
+    border-radius: 20px;
+    position: relative;
+
+    @include breakpoint (max-xl){
+        padding: 30px;
+    }
+
+    .technology-image {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+
+        @include breakpoint (max-xl){
+           display: none;
+        }
+    }
+
+    .content {
+        h6 {
+            color: $gt-theme-color-2 !important;
+        }
+
+        h2 {
+            color: $gt-white;
+        }
+
+        p {
+            max-width: 410px;
+            color: #ECEDEA;
+            margin-top: 20px;
+        }
+
+        .gt-theme-btn {
+            background-color: $gt-theme-color-2;
+            color: #173401;
+            margin-top: 45px;
+            height: 48px;
+            line-height: 48px;
+            padding: 0 30px;
+
+            &::before {
+                background-color: $gt-header-color;
+            }
+        }
+    }
+}
+
+.gt-cta-section-3 {
+    &.before-none {
+        &::before {
+            display: none;
+        }
+    }
+
+    &.before-white {
+        &::before {
+            @include before;
+            background-color: $gt-white;
+            height: 50%;
+        }
+    }
+}
+
+
+
+.tags-container > canvas {
+    position: relative;
+  }
+  
+  .tags-container {
+    width: 100%;
+    height: 483px;
+    margin-top: 0vw;
+    overflow: hidden;
+    background: #0E0E0C;
+    transform: scale(1.001);
+    border-radius: 20px;
+    position: relative;
+
+    &::before {
+        @include before;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-image: url('../../assets/img/home-2/technology-bg.jpg');
+    }
+}
+
+.cta-wrapper-5 {
+    border-radius: 30px;
+    padding: 65px 65px;
+    position: relative;
+    @include flex;
+    justify-content: space-between;
+    margin-top: -37px;
+
+    @include breakpoint (max-xl){
+        flex-wrap: wrap;
+        gap: 30px;
+        margin-top: -100px;
+    }
+
+    @include breakpoint (max-lg){
+       margin-top: -80px;
+       justify-content: center;
+       text-align: center;
+    }
+
+    h2 {
+        font-size: 32px;
+        font-weight: 700;
+        color: $gt-white;
+        margin-left: 450px;
+        font-family: $gt-heading-font-5;
+
+        @include breakpoint (max-xxl){
+           margin-left: 300px;
+           position: relative;
+           z-index: 9;
+        }
+
+        @include breakpoint (max-xl){
+            margin-left: 0;
+        }
+    }
+
+    .cta-img {
+        position: absolute;
+        bottom: 0;
+        left: 85px;
+
+        @include breakpoint (max-xl){
+           display: none;
+        }
+    }
+
+     .gt-theme-btn {
+        background-color: $gt-white;
+        color: $gt-header-color-3;
+        font-family: $gt-heading-font-5;
+
+        &:hover {
+            color: $gt-white;
+            background-color: $gt-header-color;
+        }
+     }
+
+}
+
+.cta-section-5 {
+    position: relative;
+    background-color: #F6F3FE;
+
+    &::before {
+        @include before;
+        background-color: #18185E;
+        top: 60%;
+        height: initial;
+    }
+
+    .rokect-shape {
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 99;
+
+        @include breakpoint (max-xl){
+            display: none;
+        }
+    }
+
+}
+
+.gt-cta-inner-bg {
+    background-color: #05111A;
+    position: relative;
+
+    .vec-shape {
+        position: absolute;
+        top: 0;
+        right: 0;
+    }
+
+    .cta-box-items {
+        border-radius: 20px;
+        background: #000;
+        box-shadow: 0 4px 150px 0 rgba(107, 65, 255, 0.50);
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+            position: absolute;
+            bottom: 0;
+            top: 0;
+            right: 0;
+            content: "";
+            width: 496px;
+            height: 574px;
+            background: rgba(160, 234, 113, 0.35);
+            filter: blur(135px)
+        }
+    }
+}
+
+.gt-cta-section {
+    position: relative;
+    z-index: 9;
+
+    .dot-circle-1 {
+        position: absolute;
+        top: 0;
+        left: 50px;
+        width: 15px;
+        height: 15px;
+        border-radius: 15px;
+        display: inline-block;
+        background-color: #A0EA71;
+        z-index: -1;
+    }
+
+    .dot-circle-2 {
+        position: absolute;
+        bottom: 120px;
+        left: 150px;
+        width: 15px;
+        height: 15px;
+        border-radius: 15px;
+        display: inline-block;
+        background-color: #6B41FF;
+        z-index: -1;
+    }
+
+    .dot-circle-3 {
+        position: absolute;
+        top: 0;
+        right: 150px;
+        width: 15px;
+        height: 15px;
+        border-radius: 15px;
+        display: inline-block;
+        background-color: #A0EA71;
+        z-index: -1;
+    }
+}

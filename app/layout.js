@@ -33,6 +33,15 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="/boostly/assets/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="/boostly/assets/css/all.min.css" />
+        <link rel="stylesheet" href="/boostly/assets/css/animate.css" />
+        <link rel="stylesheet" href="/boostly/assets/css/magnific-popup.css" />
+        <link rel="stylesheet" href="/boostly/assets/css/meanmenu.css" />
+        <link rel="stylesheet" href="/boostly/assets/css/swiper-bundle.min.css" />
+        <link rel="stylesheet" href="/boostly/assets/css/nice-select.css" />
+        <link rel="stylesheet" href="/boostly/assets/css/flaticon.css" />
+        <link rel="stylesheet" href="/boostly/assets/css/main.css" />
       </head>
       <body>
         <CloudBackground />

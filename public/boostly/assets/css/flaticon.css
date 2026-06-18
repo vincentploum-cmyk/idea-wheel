@@ -1,0 +1,116 @@
+/*!
+*    ______ _       _   _
+*    |  ____| |     | | (_)
+*    | |__  | | __ _| |_ _  ___ ___  _ __
+*    |  __| | |/ _` | __| |/ __/ _ \| '_ \
+*    | |    | | (_| | |_| | (_| (_) | | | |
+*    |_|    |_|\__,_|\__|_|\___\___/|_| |_|
+*
+*         https://www.flaticon.com
+*/
+
+@font-face {
+    font-family: "flaticon";
+    src: url("../flaticon/flaticon.woff2?2843f9fa2fe3ff92f859d3a90188538d") format("woff2"),
+url("../flaticon/flaticon.woff?2843f9fa2fe3ff92f859d3a90188538d") format("woff"),
+url("../flaticon/flaticon.eot?2843f9fa2fe3ff92f859d3a90188538d#iefix") format("embedded-opentype"),
+url("../flaticon/flaticon.ttf?2843f9fa2fe3ff92f859d3a90188538d") format("truetype"),
+url("../flaticon/flaticon.svg?2843f9fa2fe3ff92f859d3a90188538d#flaticon_hotle") format("svg")
+}
+
+i[class^="flaticon-"]:before, i[class*=" flaticon-"]:before, span[class^="flaticon-"]:before, span[class*=" flaticon-"]:before {
+    font-family: flaticon !important;
+    font-style: normal;
+    font-weight: normal !important;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.flaticon-arrows:before {
+    content: "\f101";
+}
+.flaticon-location:before {
+    content: "\f102";
+}
+.flaticon-bus:before {
+    content: "\f103";
+}
+.flaticon-free-parking:before {
+    content: "\f104";
+}
+.flaticon-wifi-router:before {
+    content: "\f105";
+}
+.flaticon-hotel-service:before {
+    content: "\f106";
+}
+.flaticon-fast-food:before {
+    content: "\f107";
+}
+.flaticon-swimming:before {
+    content: "\f108";
+}
+.flaticon-key-card:before {
+    content: "\f109";
+}
+.flaticon-route:before {
+    content: "\f10a";
+}
+.flaticon-right-arrow:before {
+    content: "\f10b";
+}
+.flaticon-arrow-right:before {
+    content: "\f10c";
+}
+.flaticon-bed:before {
+    content: "\f10d";
+}
+.flaticon-user:before {
+    content: "\f10e";
+}
+.flaticon-next:before {
+    content: "\f10f";
+}
+.flaticon-phone:before {
+    content: "\f110";
+}
+.flaticon-contact:before {
+    content: "\f111";
+}
+.flaticon-fitness-center:before {
+    content: "\f112";
+}
+.flaticon-suite:before {
+    content: "\f113";
+}
+.flaticon-luggage:before {
+    content: "\f114";
+}
+.flaticon-disinfect:before {
+    content: "\f115";
+}
+.flaticon-24-hour-service:before {
+    content: "\f116";
+}
+.flaticon-all-day:before {
+    content: "\f117";
+}
+.flaticon-bed-1:before {
+    content: "\f118";
+}
+.flaticon-house:before {
+    content: "\f119";
+}
+.flaticon-traveler-with-a-suitcase:before {
+    content: "\f11a";
+}
+.flaticon-target:before {
+    content: "\f11b";
+}
+.flaticon-leadership:before {
+    content: "\f11c";
+}
+

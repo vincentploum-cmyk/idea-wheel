@@ -1,363 +1,100 @@
-import Link from "next/link";
-import IdeaReelsHeader from "@/components/zubaz/Common/Header/IdeaReelsHeader";
-import StateSection from "@/components/zubaz/Home3/State/State";
-import IntegrationTwo from "@/components/zubaz/Common/Integration-2/IntegrationTwo";
+import Link from 'next/link';
+import PublicShell from '@/components/boostly/PublicShell';
+import { FAQS, LANDING_STEPS, LANDING_TESTIMONIALS } from '@/components/boostly/data';
+import FaqAccordion from '@/components/boostly/FaqAccordion';
+import { CREDIT_PACKAGES } from '@/lib/pricing';
 
 export const metadata = {
-  title: "IdeaReels — Spin an idea. Ship a company.",
-  description:
-    "Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.",
+  title: 'IdeaReels — Find a startup idea worth building.',
+  description: 'Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.',
 };
 
 export default function LandingPage() {
   return (
-    <>
-      <IdeaReelsHeader />
-
-      {/* Hero */}
-      <div className="zubuz-hero-section">
+    <PublicShell>
+      <section className="gt-hero-section gt-hero-1 bg-cover fix" style={{ backgroundImage: "url('/boostly/assets/img/home-1/hero/hero-bg.jpg')" }}>
+        <div className="top-shape"><img src="/boostly/assets/img/home-1/hero/top-shape.png" alt="" /></div>
+        <div className="left-shape"><img src="/boostly/assets/img/home-1/hero/left-shape.png" alt="" /></div>
+        <div className="right-shape"><img src="/boostly/assets/img/home-1/hero/right-shape.png" alt="" /></div>
+        <div className="robot-shape"><img src="/boostly/assets/img/home-1/hero/robot-shape.png" alt="" /></div>
         <div className="container">
-          <div className="zubuz-hero-content center">
-            <h1>
-              Find a startup idea worth building.
-            </h1>
-            <p>
-              Generate sharper business ideas in seconds, run a quick market
-              check, and unlock a build-ready blueprint only when one is worth
-              pursuing.
-            </p>
-            <div className="zubuz-extara-mt">
-              <div className="zubuz-subscribe-three">
-                <div className="zubuz-hero-btn-wrap" style={{ justifyContent: "center", display: "flex", gap: "1rem" }}>
-                  <Link href="/wheel" className="zubuz-default-btn zubuz-subscription-btn three">
-                    <span>Get started free</span>
-                  </Link>
-                  <Link href="#how-it-works" className="zubuz-login-btn">
-                    See how it works
-                  </Link>
+          <div className="gt-hero-items">
+            <div className="box-shape"><img src="/boostly/assets/img/home-1/hero/box-shape.png" alt="" /></div>
+            <div className="row">
+              <div className="col-lg-12">
+                <div className="gt-hero-content">
+                  <p>Idea validation, before the busywork</p>
+                  <h1>Find a startup idea <b>worth</b> <span>building.</span></h1>
+                  <p className="mt-4" style={{ maxWidth: 760, marginInline: 'auto' }}>
+                    Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.
+                  </p>
+                  <div className="gt-cta-btn justify-content-center mt-4">
+                    <Link href="/wheel" className="gt-theme-btn">get started free</Link>
+                    <Link href="/#how-it-works" className="gt-theme-btn style-3 bg-border">see how it works</Link>
+                  </div>
+                  <ul className="mt-4 d-flex justify-content-center gap-4 flex-wrap list-unstyled text-white">
+                    <li><i className="fa-regular fa-circle-check me-2" />3 free credits on signup</li>
+                    <li><i className="fa-regular fa-circle-check me-2" />No credit card required</li>
+                  </ul>
                 </div>
-              </div>
-              <div className="zubuz-icon-list">
-                <ul>
-                  <li>
-                    <img src="/zubaz/images/v3/check.png" alt="" /> 3 free
-                    credits on signup
-                  </li>
-                  <li>
-                    <img src="/zubaz/images/v3/check.png" alt="" /> No credit
-                    card required
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div className="zubuz-border-btoom">
-            <div className="zubuz-hero-thumb3">
-              <img src="/zubaz/images/v3/thumb-v3-01.png" alt="" />
-              <div className="zubuz-hero-thumb-card1">
-                <img src="/zubaz/images/v3/card-v3-1.png" alt="" />
-              </div>
-              <div className="zubuz-hero-thumb-card2">
-                <img src="/zubaz/images/v3/card-v3-2.png" alt="" />
-              </div>
-              <div className="zubuz-hero-thumb-card3">
-                <img src="/zubaz/images/v3/card-v3-3.png" alt="" />
+                <div className="gt-hero-image">
+                  <div className="border-shape"><img src="/boostly/assets/img/home-1/hero/border-shape.png" alt="" /></div>
+                  <img src="/boostly/assets/img/home-1/hero/hero-image.jpg" alt="IdeaReels dashboard preview" />
+                  <div className="shape2"><img src="/boostly/assets/img/new-icon/shape2.png" alt="" /></div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* How It Works */}
-      <div id="how-it-works" className="section zubuz-section-padding3">
+      <section id="how-it-works" className="gt-feature-section fix section-padding">
         <div className="container">
-          <div className="zubuz-section-title zubuz-two-column-title">
-            <div className="row">
-              <div className="col-lg-7">
-                <h2>How IdeaReels works</h2>
+          <div className="gt-section-title-area border-bottom-add">
+            <div className="gt-section-title">
+              <h6>How it works</h6>
+              <h2>Go from raw idea to clear verdict, then to a <span>build-ready blueprint</span></h2>
+              <p className="title-text mt-2 font-weight-500">IdeaReels gives founders the fast answer first: should you build this or walk away?</p>
+            </div>
+            <div className="gt-section-info d-flex align-items-center gap-3">
+              <div className="client-image">
+                <img src="/boostly/assets/img/new-add/c1.png" alt="" />
+                <img src="/boostly/assets/img/new-add/c2.png" alt="" />
+                <img src="/boostly/assets/img/new-add/c3.png" alt="" />
+                <i className="fa-solid fa-plus icon" />
               </div>
-              <div className="col-lg-5 d-flex align-items-center">
-                <div className="zubuz-title-btn">
-                  <Link className="zubuz-default-btn pill" href="/wheel">
-                    <span>Try it now</span>
-                  </Link>
-                </div>
-              </div>
+              <p>3 free credits <br /> on every new account</p>
             </div>
           </div>
           <div className="row">
-            {[
-              {
-                icon: "/zubaz/images/icon/feature5.svg",
-                title: "Generate a business idea worth chasing",
-                desc: "Combine proven actions, real workflows, and target industries to uncover concrete startup concepts — not vague inspiration.",
-              },
-              {
-                icon: "/zubaz/images/icon/feature6.svg",
-                title: "Know if it's worth building before you commit",
-                desc: "Every idea gets a free market check with competitor analysis, market size, and demand signals — build, caution, or avoid.",
-              },
-              {
-                icon: "/zubaz/images/icon/feature7.svg",
-                title: "Turn the winner into a build-ready plan",
-                desc: "Unlock a full blueprint: product design, launch strategy, infrastructure, and prototype generation across four AI specialists.",
-              },
-            ].map((item, i) => (
-              <div key={i} className="col-lg-4 col-md-6">
-                <div className="zubuz-iconbox-wrap-two">
-                  <div className="zubuz-iconbox-icon">
-                    <img src={item.icon} alt="" />
-                  </div>
-                  <div className="zubuz-iconbox-data">
-                    <h4>{item.title}</h4>
-                    <p>{item.desc}</p>
-                  </div>
+            {LANDING_STEPS.map((item) => (
+              <div key={item.number} className="col-xl-4 col-lg-6 col-md-6">
+                <div className="gt-feature-box-items">
+                  <div className="gt-number-box"><span>{item.number}</span><div className="bg-border-style" /></div>
+                  <h3>{item.title}</h3>
+                  <p>{item.desc}</p>
+                  <div className="hover-lines" />
                 </div>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Content Block 1 — Market Validation */}
-      <div className="section zubuz-section-padding3">
+      <div className="gt-brand-section section-padding pt-0">
         <div className="container">
-          <div className="row align-items-center">
-            <div className="col-lg-6">
-              <div className="zubuz-thumb">
-                <img src="/zubaz/images/v3/thumb-v3-02.png" alt="" />
-              </div>
-            </div>
-            <div className="col-lg-6">
-              <div className="zubuz-content-area">
-                <div className="zubuz-section-title">
-                  <h2>Agility to validate ideas before you waste time</h2>
-                </div>
-                <div className="zubuz-iconbox-wrap">
-                  <div className="zubuz-iconbox-icon">
-                    <img src="/zubaz/images/icon/check-circle.svg" alt="" />
-                  </div>
-                  <div className="zubuz-iconbox-data">
-                    <h5>Instant market check</h5>
-                    <p>
-                      Competitor analysis, market size, and demand signals
-                      surface within seconds so you know where to focus.
-                    </p>
-                  </div>
-                </div>
-                <div className="zubuz-iconbox-wrap">
-                  <div className="zubuz-iconbox-icon">
-                    <img src="/zubaz/images/icon/check-circle.svg" alt="" />
-                  </div>
-                  <div className="zubuz-iconbox-data">
-                    <h5>Clear build/avoid verdict</h5>
-                    <p>
-                      Every idea returns a plain-language build, caution, or
-                      avoid verdict — no ambiguity, no wasted commitment.
-                    </p>
-                  </div>
-                </div>
-                <div className="zubuz-iconbox-wrap">
-                  <div className="zubuz-iconbox-icon">
-                    <img src="/zubaz/images/icon/check-circle.svg" alt="" />
-                  </div>
-                  <div className="zubuz-iconbox-data">
-                    <h5>Blueprint unlocked only when it's worth it</h5>
-                    <p>
-                      Extended deep research and the full plan cost 1–2 credits
-                      — you spend only on ideas that clear the bar.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content Block 2 — Blueprint */}
-      <div className="section zubuz-section-padding3">
-        <div className="container">
-          <div className="row align-items-center">
-            <div className="col-lg-6 order-lg-2">
-              <div className="zubuz-thumb">
-                <img src="/zubaz/images/v3/thumb-v3-03.png" alt="" />
-              </div>
-            </div>
-            <div className="col-lg-6 order-lg-1">
-              <div className="zubuz-content-area">
-                <div className="zubuz-section-title">
-                  <h2>Cost-effective and simple — from idea to blueprint</h2>
-                </div>
-                <p>
-                  Every new account starts with 3 free credits. The full
-                  blueprint unlocks four AI specialists — product design,
-                  go-to-market, infrastructure, and prototype — in one click.
-                </p>
-                <div className="zubuz-counter-wrap3" style={{ marginTop: "2rem" }}>
-                  <div className="zubuz-counter-data">
-                    <h2>3</h2>
-                    <p>Free credits on signup</p>
-                  </div>
-                  <div className="zubuz-counter-data">
-                    <h2>4</h2>
-                    <p>AI specialists per blueprint</p>
-                  </div>
-                  <div className="zubuz-counter-data">
-                    <h2>&lt;30s</h2>
-                    <p>Time to first market check</p>
-                  </div>
-                </div>
-                <Link href="/wheel" className="zubuz-default-btn pill" style={{ marginTop: "2rem", display: "inline-block" }}>
-                  <span>Start for free</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <StateSection />
-
-      {/* Pricing */}
-      <div className="section zubuz-section-padding3">
-        <div className="container">
-          <div className="zubuz-section-title center">
-            <h2>Simple, transparent pricing</h2>
-            <p>Start free. Pay only for ideas worth pursuing.</p>
-          </div>
-          <div className="row justify-content-center">
-            {[
-              {
-                name: "Starter",
-                price: "Free",
-                desc: "3 credits on signup. Perfect for exploring.",
-                features: [
-                  "3 idea generations",
-                  "Free market check per idea",
-                  "Build / caution / avoid verdict",
-                  "No credit card required",
-                ],
-                active: false,
-                cta: "Get started free",
-                href: "/wheel",
-              },
-              {
-                name: "Explorer",
-                price: "$9",
-                desc: "10 credits. For serious idea hunters.",
-                features: [
-                  "10 credits",
-                  "Market check on every idea",
-                  "1 credit = extended deep research",
-                  "2 credits = full AI blueprint",
-                ],
-                active: true,
-                cta: "Buy Explorer pack",
-                href: "/pricing",
-              },
-              {
-                name: "Builder",
-                price: "$19",
-                desc: "25 credits. For founders moving fast.",
-                features: [
-                  "25 credits",
-                  "Everything in Explorer",
-                  "Priority generation queue",
-                  "Email support",
-                ],
-                active: false,
-                cta: "Buy Builder pack",
-                href: "/pricing",
-              },
-            ].map((plan, i) => (
-              <div key={i} className="col-xl-4 col-md-6">
-                <div className={`zubuz-pricing-wrap${plan.active ? " active" : ""}`}>
-                  <div className="zubuz-pricing-header">
-                    <h5>{plan.name}</h5>
-                  </div>
-                  <div className="zubuz-pricing-price">
-                    <h2>{plan.price}</h2>
-                  </div>
-                  <div className="zubuz-pricing-description">
-                    <p>{plan.desc}</p>
-                  </div>
-                  <div className="zubuz-pricing-body">
-                    <ul>
-                      {plan.features.map((f, j) => (
-                        <li key={j}>
-                          <img src="/zubaz/images/v3/check.png" alt="" />
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <Link
-                    className={`zubuz-pricing-btn${plan.active ? " active" : ""}`}
-                    href={plan.href}
-                  >
-                    {plan.cta}
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* FAQ */}
-      <div className="section zubuz-section-padding3">
-        <div className="container">
-          <div className="zubuz-section-title center">
-            <h2>Find all the answers to your questions</h2>
-          </div>
-          <div className="row justify-content-center">
-            <div className="col-lg-8">
-              {[
-                {
-                  q: "How does the market check work?",
-                  a: "When you generate an idea, IdeaReels immediately runs a free market check — pulling competitor data, market size signals, and demand indicators. You get a build, caution, or avoid verdict before spending any credits.",
-                },
-                {
-                  q: "What does a blueprint include?",
-                  a: "A full blueprint (2 credits) runs four AI specialists in parallel: product design, go-to-market strategy, infrastructure plan, and a prototype spec. Each specialist writes a detailed, actionable section.",
-                },
-                {
-                  q: "Do credits expire?",
-                  a: "No — credits never expire. Buy a pack when you need it and use them at your own pace.",
-                },
-                {
-                  q: "Can I generate my own idea instead of using the wheel?",
-                  a: "Yes. You can spin the wheel for a random concept or type in your own idea and run it through the market check and blueprint pipeline.",
-                },
-                {
-                  q: "Is IdeaReels suitable for non-technical founders?",
-                  a: "Absolutely. The market check and blueprint are written in plain language with no jargon. The infrastructure section explains what you'd need without requiring you to be an engineer.",
-                },
-              ].map((item, i) => (
-                <div key={i} className="zubuz-accordion-wrap">
-                  <div className="accordion" id={`faq-${i}`}>
-                    <div className="accordion-item">
-                      <h2 className="accordion-header">
-                        <button
-                          className="accordion-button collapsed"
-                          type="button"
-                          data-bs-toggle="collapse"
-                          data-bs-target={`#collapse-${i}`}
-                        >
-                          {item.q}
-                        </button>
-                      </h2>
-                      <div
-                        id={`collapse-${i}`}
-                        className="accordion-collapse collapse"
-                        data-bs-parent={`#faq-${i}`}
-                      >
-                        <div className="accordion-body">
-                          <p>{item.a}</p>
-                        </div>
-                      </div>
+          <div className="gt-brand-wrapper">
+            <h2 className="seco-tool-text">
+              Validate ideas in <span className="color-1">under 30 seconds</span>, spend credits only on the strongest opportunities, and hand the winners to <span className="color-3">four AI specialists</span> for execution.
+            </h2>
+            <h5>Built for founders who want signal before commitment</h5>
+            <div className="row g-4 mt-4">
+              {[['3', 'Free credits on signup'], ['4', 'AI specialists per blueprint'], ['<30s', 'Time to first market check']].map(([value, label]) => (
+                <div key={label} className="col-md-4">
+                  <div className="gt-pricing-box-items style-2 text-center h-100">
+                    <div className="gt-pricing-header">
+                      <h2>{value}</h2>
+                      <span className="sub-texts">{label}</span>
                     </div>
                   </div>
                 </div>
@@ -367,63 +104,98 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Footer CTA + Footer */}
-      <footer className="zubuz-footer-section dark-bg">
+      <section className="gt-testimonial-section section-padding section-bg-4">
         <div className="container">
-          <div className="zubuz-footer-extra-top">
-            <div className="row">
-              <div className="col-lg-7">
-                <div className="zubuz-footer-extra-title">
-                  <h2>Take your startup idea to the next level</h2>
-                </div>
-              </div>
-              <div className="col-lg-5 d-flex align-items-center">
-                <div className="zubuz-footer-btn">
-                  <Link className="zubuz-default-btn pill" href="/wheel">
-                    <span>Get started now</span>
-                  </Link>
-                </div>
-              </div>
-            </div>
+          <div className="gt-section-title text-center style-3">
+            <h6>Testimonials</h6>
+            <h2>What founders are <span>saying</span></h2>
           </div>
-          <div className="zubuz-footer-top">
-            <div className="row">
-              <div className="col-xl-4 col-lg-12">
-                <div className="zubuz-footer-textarea light">
-                  <Link href="/">
-                    <strong style={{ color: "white", fontSize: "1.25rem" }}>IdeaReels</strong>
-                  </Link>
-                  <p>
-                    Spin an idea. Validate it instantly. Ship a company.
-                  </p>
+          <div className="row mt-4">
+            {LANDING_TESTIMONIALS.map((item) => (
+              <div key={item.name} className="col-lg-4 col-md-6 mb-4">
+                <div className="gt-pricing-box-items style-2 h-100">
+                  <div className="mb-3" style={{ color: '#ffb11a' }}>★★★★★</div>
+                  <p>{item.text}</p>
+                  <div className="mt-4">
+                    <h5 className="mb-1">{item.name}</h5>
+                    <span className="sub-texts">{item.role}</span>
+                  </div>
                 </div>
               </div>
-              <div className="col-xl-2 col-lg-3 col-md-6">
-                <div className="zubuz-footer-menu light">
-                  <h6>Product</h6>
-                  <ul>
-                    <li><Link href="/wheel">Idea Generator</Link></li>
-                    <li><Link href="/pricing">Pricing</Link></li>
-                    <li><Link href="/faq">FAQ</Link></li>
-                  </ul>
-                </div>
-              </div>
-              <div className="col-xl-2 col-lg-3 col-md-6">
-                <div className="zubuz-footer-menu light">
-                  <h6>Legal</h6>
-                  <ul>
-                    <li><Link href="/privacy">Privacy Policy</Link></li>
-                    <li><Link href="/terms">Terms of Service</Link></li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="zubuz-footer-bottom light">
-            <p>© {new Date().getFullYear()} IdeaReels. All rights reserved.</p>
+            ))}
           </div>
         </div>
-      </footer>
-    </>
+      </section>
+
+      <section className="gt-pricing-section fix section-padding bg-cover" style={{ backgroundImage: "url('/boostly/assets/img/home-1/pricing-bg.jpg')" }}>
+        <div className="pricing-bg-shape"><img src="/boostly/assets/img/new-add/pricing-bg-shape.png" alt="" /></div>
+        <div className="pricing-right-shape"><img src="/boostly/assets/img/home-1/pricing-right.png" alt="" /></div>
+        <div className="container">
+          <div className="gt-section-title text-center">
+            <h6>Pricing</h6>
+            <h2>Simple, transparent pricing for <span>serious idea hunters</span></h2>
+            <p className="mt-3">Start free. Pay only when you want deeper research or a full blueprint.</p>
+          </div>
+          <div className="row">
+            {CREDIT_PACKAGES.map((pkg) => (
+              <div key={pkg.key} className="col-xl-4 col-lg-6 col-md-6 mb-4">
+                <div className={`gt-pricing-box-items style-2 h-100 ${pkg.highlight ? 'active-2' : ''}`}>
+                  <div className="gt-pricing-header">
+                    <h2>{pkg.price}</h2>
+                    <span className="sub-texts">{pkg.label}</span>
+                  </div>
+                  <Link href="/pricing" className="gt-theme-btn">{pkg.highlight ? 'buy most popular pack' : 'view pricing details'}</Link>
+                  <ul className="gt-pricing-list">
+                    <li><i className="fa-solid fa-circle-check" />{pkg.credits} credits included</li>
+                    <li><i className="fa-solid fa-circle-check" />Free validation on every idea</li>
+                    <li><i className="fa-solid fa-circle-check" />1 credit for extended research</li>
+                    <li><i className="fa-solid fa-circle-check" />2 credits for full blueprint</li>
+                    <li><i className="fa-solid fa-circle-check" />{pkg.tagline}</li>
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="gt-faq-section fix section-padding pb-0">
+        <div className="faq-left-shape"><img src="/boostly/assets/img/home-1/faq-left-shape.png" alt="" /></div>
+        <div className="right-shape"><img src="/boostly/assets/img/home-1/pricing-right-shape.png" alt="" /></div>
+        <div className="container">
+          <div className="gt-section-title text-center">
+            <h6>FAQ</h6>
+            <h2><span>Frequently</span> Asked Questions</h2>
+            <p className="mt-3">Everything you need to know before you spin your next idea.</p>
+          </div>
+          <div className="row justify-content-center">
+            <div className="col-lg-10">
+              <div className="gt-faq-wrapper">
+                <FaqAccordion items={FAQS.slice(0, 5)} id="landing-faq" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="gt-cta-section section-padding">
+          <div className="container">
+            <div className="cta-box-items zoom-effect-style bg-cover" style={{ backgroundImage: "url('/boostly/assets/img/home-1/cta-bg.jpg')" }}>
+              <div className="cta-content">
+                <div className="gt-section-title mb-0 text-center">
+                  <h6>Blueprint CTA</h6>
+                  <h2>Take your startup idea to the next level</h2>
+                  <p className="mt-3">Spin an idea, validate it instantly, and unlock the full plan only when the verdict says it deserves more time.</p>
+                  <Link href="/wheel" className="gt-theme-btn">start for free</Link>
+                </div>
+                <ul>
+                  <li>3 free credits on signup</li>
+                  <li>No credit card required</li>
+                  <li>Keep only the winners</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </PublicShell>
   );
 }

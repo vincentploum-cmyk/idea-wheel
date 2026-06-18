@@ -1,0 +1,253 @@
+
+//>>>>> Section Title Start <<<<<//
+
+.gt-section-title {
+	position: relative;
+	z-index: 99;
+	margin-bottom: 30px;
+
+	@include breakpoint (max-md){
+		margin-bottom: 0;
+	}
+
+	h6 {
+		font-size: 16px;
+		font-weight: 800;
+		text-transform: uppercase;
+		line-height: 1;
+		color: #FEBC5F;
+		font-family: $gt-heading-font;
+		position: relative;
+		font-family: $gt-body-font;
+		margin-bottom: 10px;
+
+	}
+
+	.title-text {
+		font-weight: 500;
+	}
+
+	h2 {
+		//text-transform: capitalize;
+		
+		span {
+			background: linear-gradient(90deg, #6B41FF 32.8%, #EA4BFF 57.18%, #FEBC5F 82.28%);
+			background-clip: text;
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			font-family: $gt-heading-font;
+			font-style: italic;
+			font-weight: 400;
+			padding-right: 8px;
+		}
+	}
+
+	&.style-2 {
+		h6 {
+			color: #173401;
+			font-family: $gt-heading-font-2;
+			font-weight: 700;
+			text-transform: uppercase;
+		}
+
+		h2 {
+			color: $gt-header-color-2;
+			font-size: 50px;
+			font-weight: 700;
+			font-family: $gt-heading-font-2;
+			line-height: 110%;
+
+			@include breakpoint(max-md){
+				font-size: 43px;
+			}
+
+			@include breakpoint(max-xxs){
+				font-size: 32px;
+			}
+		}
+	}
+
+	&.style-3 {
+		h6 {
+			color: $gt-theme-color-3;
+			font-family: $gt-heading-font-3;
+			font-weight: 600;
+			text-transform: uppercase;
+			font-size: 16px;
+		}
+
+		h2 {
+			color: $gt-header-color-2;
+			font-size: 50px;
+			font-weight: 800;
+			font-family: $gt-heading-font-3;
+			line-height: 120%;
+
+			@include breakpoint(max-md){
+				font-size: 43px;
+			}
+
+			@include breakpoint(max-xxs){
+				font-size: 32px;
+			}
+		}
+	}
+
+	&.style-4 {
+		h6 {
+			color: #E77096;
+			font-family: $gt-body-font;
+			font-weight: 600;
+			text-transform: uppercase;
+			font-size: 16px;
+		}
+
+		h2 {
+			color: $gt-header-color-2;
+			font-size: 50px;
+			font-weight: 800;
+			font-family: $gt-heading-font-3;
+			line-height: 120%;
+
+			@include breakpoint(max-md){
+				font-size: 43px;
+			}
+
+			@include breakpoint(max-xxs){
+				font-size: 32px;
+			}
+		}
+	}
+
+	&.style-5 {
+		h6 {
+			color: $gt-theme-color-5;
+			font-family: $gt-body-font;
+			font-weight: 600;
+			text-transform: uppercase;
+			font-size: 16px;
+		}
+
+		h2 {
+			color: $gt-header-color-3;
+			font-size: 50px;
+			font-weight: 800;
+			font-family: $gt-heading-font-5;
+			line-height: 120%;
+
+			@include breakpoint(max-md){
+				font-size: 43px;
+			}
+
+			@include breakpoint(max-xxs){
+				font-size: 32px;
+			}
+		}
+	}
+}
+
+.gt-section-title-area	{
+	@include flex;
+	justify-content: space-between;
+	position: relative;
+	z-index: 9;
+	margin-bottom: 30px;
+
+	
+	@include breakpoint (max-lg) {
+		flex-wrap: wrap;
+		// justify-content: center;
+		// text-align: center;
+		gap: 30px;
+	}
+
+	.gt-theme-btn {
+		&.style-3 {
+			height: 49px;
+			line-height: 49px;
+			padding: 0 25px;
+		}
+	}
+
+	@include breakpoint (max-md){
+		margin-bottom: 0;
+	}
+
+	.gt-section-title {
+		margin-bottom: 0;
+	}
+
+	&.border-bottom-add {
+		border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+		padding-bottom: 35px;
+
+		@include breakpoint (max-xl){
+			flex-wrap: wrap;
+			gap: 20px;
+		}
+	}
+
+	.gt-section-info {
+		.client-image {
+			@include flex;
+			gap: 0;
+
+			img {
+				margin-right: -20px;
+				border: 3px solid #05111A;
+				border-radius: 50%;
+			}
+
+			.icon {
+				width: 48px;
+				height: 48px;
+				line-height: 45px;
+				background-color: $gt-white;
+				border-radius: 50%;
+				text-align: center;
+				color: $gt-header-color-3;
+				border: 3px solid #05111A;
+			}
+		}
+	}
+}
+
+
+//>>>>> Section Title End <<<<<//
+
+//>>>>> Basic Css Start <<<<<//
+
+.center {
+	text-align: center;
+	margin: 0 auto;
+}
+
+.section-bg {
+	background-color: $gt-bg-color;
+}
+
+.section-bg-2 {
+	background-color: $gt-header-color;
+}
+
+.section-bg-3 {
+	background-color: $gt-bg-color-3;
+}
+
+.section-bg-4 {
+	background: #EDF1FF;
+}
+
+.section-padding {
+	padding: 120px 0;
+
+	@include breakpoint(max-xl){
+		padding: 100px 0;
+	}
+
+	@include breakpoint(max-lg){
+		padding: 80px 0;
+	}
+}
+//>>>>> Basic Css End <<<<<//
+

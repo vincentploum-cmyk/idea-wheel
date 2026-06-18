@@ -1,0 +1,473 @@
+.contact-wrapper-5 {
+    background-color: $gt-white;
+    padding: 60px;
+    border-radius: 30px;
+    position: relative;
+    z-index: 9;
+    margin-top: 60px;
+
+    @include breakpoint (max-xl){
+        padding: 50px;
+    }
+
+    @include breakpoint (max-md){
+        padding: 40px;
+        margin-top: 30px;
+    }
+
+    @include breakpoint (max-sm){
+        padding: 30px;
+    }
+
+    .contact-form-area {
+        border-radius: 16px;
+        border: 1px solid $gt-border-color;
+        padding: 40px;
+
+        @include breakpoint (max-sm){
+            padding: 30px;
+        }
+
+        h3 {
+            font-size: 30px;
+            margin-bottom: 25px;
+             font-family: $gt-heading-font-5;
+             color: $gt-header-color-3;
+        }
+
+        .form-clt {
+            input,textarea {
+                outline: none;
+                border: none;
+                width: 100%;
+                border-radius: 8px;
+                border: 1px solid #E5E5E5;
+                padding: 20px 20px;
+                line-height: 1;
+                color: $gt-text-color-2;
+            }
+
+            textarea {
+                padding-bottom: 110px;
+            }
+
+            .single-select {
+                width: 100%;
+                height: 60px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                border: 1px solid #E5E5E5;
+                color: $gt-text-color-2;
+                font-family: $gt-body-font;
+                font-size: 16px;
+                font-style: normal;
+                font-weight: 400;
+                line-height: 26px;
+
+                .list {
+                    width: 100%;
+                }
+            }
+    
+        }
+
+        .theme-btn {
+            position: relative;
+            z-index: 2;
+            display: inline-block;
+            border: none;
+            text-transform: capitalize;
+            text-align: center;
+            background-color: $gt-theme-color-5;
+            color: $gt-white;
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1;
+            padding: 19.5px 35px;
+            border-radius: 8px;
+            width: 100%;
+            @include transition;
+        
+            @include breakpoint (max-sm){
+                padding: 18px 30px;
+                font-size: 14px;
+            }
+
+            &:hover {
+                background-color: $gt-header-color-3;
+            }
+        }
+    }
+
+    .contact-map {
+        position: relative;
+
+        iframe {
+            width: 100%;
+            height: 630px;
+            border-radius: 20px;
+
+            // @include breakpoint (max-md){
+            //     height: 500px;
+            // }
+
+            // @include breakpoint (max-sm){
+            //     height: 450px;
+            // }
+        }
+    }
+    
+    .contact-info-wrapper {
+        position: absolute;
+        top: 0;
+        left: 90px;
+        right: 90px;
+        max-width: 430px;
+        margin: 0 auto;
+        padding: 30px;
+        background: $gt-theme-color-5;
+        border-radius: 0px 0px 8px 8px;
+
+        @include breakpoint (max-md){
+           left: 20px;
+           right: 20px;
+        }
+
+        .shape-left {
+            position: absolute;
+            top: 0;
+            left: -28px;
+        }
+
+        .shape-right {
+            position: absolute;
+            top: 0;
+            right: -28px;
+        }
+
+        h2 {
+            color: $gt-white;
+            font-size: 20px;
+            font-family: $gt-heading-font-5;
+            font-style: normal;
+            font-weight: 700;
+            line-height: 30px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.20);
+        }
+
+        .contact-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.20);
+
+            @include breakpoint (max-md){
+                flex-wrap: wrap;
+            }
+
+            .content {
+                h3 {
+                    color: $gt-white;
+                    font-family: $gt-body-font;
+                    font-size: 14px;
+                    font-style: normal;
+                    font-weight: 600;
+                    line-height: 28px;
+
+                    a {
+                        color: $gt-white;
+                        font-family: $gt-body-font;
+                        font-size: 14px;
+                        font-style: normal;
+                        font-weight: 600;
+                        line-height: 28px;
+                    }
+                }
+            }
+
+            .icon {
+                display: inline-block;
+                width: 38px;
+                height: 38px;
+                line-height: 38px;
+                text-align: center;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 50%;
+                color: $gt-white;
+            }
+        }
+    }
+}
+
+
+.contact-section-5 {
+    position: relative;
+
+    &::before {
+        @include before;
+        background-color: $gt-theme-color;
+        right: 50px;
+        left: 50px;
+        border-radius: 30px;
+        width: calc(100% - 95px);
+
+        @include breakpoint (max-xl4){
+            width: calc(100% - 0px);
+            left: 0;
+        }
+    }
+
+    &::after {
+        @include before;
+        background-color: #F6F3FE;
+        top: 50%;
+        z-index: -1;
+    }
+}
+
+.contact-info-items {
+    padding: 40px 20px;
+    text-align: center;
+    border-radius: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(155, 160, 163, 0.20);
+    background: #EDF1FF;
+
+    .icon {
+        font-size: 40px;
+        color: $gt-theme-color;
+    }
+
+    .content {
+        margin-top: 20px;
+
+        h3 {
+             font-weight: 700;
+                    font-family: $gt-heading-font-3;
+            color: $gt-header-color-3;
+
+            a {
+                color: $gt-header-color-3;
+            }
+        }
+
+        p {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+    }
+}
+
+.contact-wrapper-2 {
+    .map-items {
+        .googpemap {
+            iframe {
+                width: 100%;
+                border-radius: 16px;
+                height: 660px;
+
+                @include breakpoint (max-md){
+                    height: 550px;
+                }
+
+                @include breakpoint (max-sm){
+                    height: 450px;
+                }
+            }
+        }
+    }
+    .contact-content {
+        margin-left: 40px;
+
+        @include breakpoint (max-lg){
+            margin-left: 0;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+            color: $gt-header-color-3;
+        }
+
+        .contact-form-items {
+            margin-top: 30px;
+
+            .form-clt {
+                span {
+                    color: $gt-header-color-3;
+                    font-weight: 400;
+                    text-transform: capitalize;
+                    margin-bottom: 15px;
+                    display: inline-block;
+                }
+        
+                input,textarea {
+                    border-radius: 10px;
+                    border: 1px solid rgba(155, 160, 163, 0.20);
+                    color: $gt-text-color;
+                    padding: 15px 20px;
+                    width: 100%;
+                    outline: none;
+                    background-color: transparent;
+
+                    &::placeholder {
+                        color: $gt-text-color;
+                    }
+                }
+        
+                textarea {
+                    padding-bottom: 150px;
+                }
+            }
+
+             .gt-theme-btn {
+                background: linear-gradient(90deg, #6B41FF 0%, #EA4BFF 52.98%, #FEBC5F 100%);
+                border: none;
+                color: $gt-white;
+
+                &::after {
+                    background: linear-gradient(90deg, #6B41FF 0%, #EA4BFF 52.98%, #FEBC5F 100%);
+                }
+            }
+        }
+    }
+}
+
+.gt-account-box {
+    max-width: 400px;
+    background: #EDF1FF;
+    box-shadow: 0 4px 150px 0 rgba(107, 65, 255, 0.5);
+    padding: 30px 30px 50px;
+    margin: 0 auto;
+    border-radius: 12px;
+
+    @include breakpoint (max-xxs){
+        padding: 25px 15px;
+    }
+
+    .google-box {
+        .google-text {
+            
+            padding: 15px 50px;
+            @include flex;
+            gap: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: capitalize;
+            justify-content: center;
+            color: $gt-header-color-3;
+
+            @include breakpoint (max-sm){
+               padding: 15px 20px;
+            }
+        }
+
+        .text {
+            text-align: center;
+            color: $gt-header-color-3;
+            font-weight: 500;
+            font-size: 14px;
+            padding: 20px 0;
+            position: relative;
+            display: block;
+            z-index: 9;
+
+            &::before {
+                position: absolute;
+                top: 34px;
+                left: 0;
+                width: 42%;
+                content: "";
+                height: 1px;
+                z-index: -1;
+                background: rgba(155, 160, 163, 0.2);
+
+                @include breakpoint (max-xl){
+                    display: none;
+                }
+            }
+
+            &::after {
+                position: absolute;
+                top: 34px;
+                right: 0;
+                width: 42%;
+                content: "";
+                height: 1px;
+                z-index: -1;
+                background: rgba(155, 160, 163, 0.2);
+
+                @include breakpoint (max-xl){
+                    display: none;
+                }
+            }
+        }
+    }
+}
+
+
+.gt-account-box {
+    h4 {
+        font-size: 20px;
+        line-height: 1;
+        text-align: center;
+        color: $gt-header-color-3;
+        font-family: $gt-heading-font-3;
+        font-weight: 700;
+    }
+
+    form {
+        .form-clt {
+            margin-top: 20px;
+            position: relative;
+    
+            input,textarea {
+                width: 100%;
+                background: $gt-white;
+                border: none;
+                text-transform: capitalize;
+                padding: 18px 20px;
+                line-height: 1;
+                color: #7E8B96;
+                border-radius: 10px;
+                border: 1px solid rgba(155, 160, 163, 0.2);
+    
+                &::placeholder {
+                    color: #7E8B96;
+                }
+            }
+    
+            .toggle-password {
+                position: absolute;
+                right: 20px;
+                top: 22px;
+            }
+        }
+    
+        .gt-theme-btn {
+            width: 100%;
+            margin-top: 30px;
+            text-align: center;
+            background: linear-gradient(90deg, #6B41FF 0%, #EA4BFF 52.98%, #FEBC5F 100%);
+            border: none;
+            color: $gt-white;
+
+                &::after {
+                    display: none;
+                }
+        }
+    }
+
+    .login-text {
+        text-align: center;
+        font-size: 16px;
+        color: $gt-text-color;
+        margin-top: 30px;
+        line-height: 1;
+
+        a {
+            color: $gt-theme-color;
+        }
+    }
+}
