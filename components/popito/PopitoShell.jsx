@@ -197,7 +197,7 @@ export default async function PopitoShell({ children, banner, yellowBg }) {
           </div>
           <div className="footer_bottom">
             <div className="copyright">
-              <p>© {new Date().getFullYear()} IdeaReels. Find a startup idea worth building.</p>
+              <p>© {new Date().getFullYear()} IdeaReels. Find a startup idea worth building. · AI-generated content is for informational purposes only, not professional advice.</p>
             </div>
           </div>
         </div>

@@ -1695,15 +1695,6 @@ export default function IdeaWheel() {
       )}
 
       {/* ── DISCLAIMER ── */}
-      <footer className="su-disclaimer">
-        <div className="su-disclaimer-links">
-          <a href="/faq">FAQ</a>
-          <a href="/pricing">Pricing</a>
-          <a href="/privacy">Privacy</a>
-          <a href="/terms">Terms</a>
-        </div>
-        <p>© {new Date().getFullYear()} IdeaReels · AI-generated content is for informational purposes only, not professional advice.</p>
-      </footer>
     </div>
   );
 }
