@@ -2335,33 +2335,22 @@ const CSS = `
   overflow:hidden;
 }
 
-/* center band — visually dominant pill spanning all 3 reels */
-.sm-payline-bar {
-  position:absolute;
-  left:10px; right:10px;
-  top:50%; height:78px;
-  transform:translateY(-50%);
-  border-radius:16px;
-  background:rgba(255,255,255,0.92);
-  border:1.5px solid rgba(0,0,0,0.12);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.90),
-    0 4px 16px -8px rgba(0,0,0,0.12);
-  pointer-events:none;
-  z-index:1;
-  display:block;
-}
+/* payline bar hidden — individual columns carry the visual weight */
+.sm-payline-bar { display:none; }
 
 .sm-reels {
   position:relative; z-index:2;
-  display:grid; grid-template-columns:repeat(3,1fr); gap:4px;
+  display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
   background:transparent;
 }
 
 .sm-col {
   display:flex; flex-direction:column;
   position:relative;
-  padding:0; background:none; border:none; box-shadow:none;
+  background:#FFE000;
+  border:3px solid #111;
+  border-radius:14px;
+  overflow:hidden;
 }
 
 .sm-window {
@@ -2370,7 +2359,7 @@ const CSS = `
   overflow:hidden;
   background:transparent;
   border:none;
-  border-radius:14px;
+  border-radius:0;
   box-shadow:none;
 }
 
@@ -2404,50 +2393,43 @@ const CSS = `
   backdrop-filter:blur(13px);
 }
 .sm-reel-haze--top {
-  top:8px;
+  top:0;
   bottom:calc(50% + 39px);
   background:linear-gradient(180deg,
-    rgba(248,248,248,0.97) 0%,
-    rgba(248,248,248,0.90) 60%,
-    rgba(248,248,248,0.66) 100%);
-  -webkit-mask-image:linear-gradient(180deg, #000 0%, #000 80%, transparent 100%);
-  mask-image:linear-gradient(180deg, #000 0%, #000 80%, transparent 100%);
+    rgba(255,224,0,0.97) 0%,
+    rgba(255,224,0,0.85) 60%,
+    rgba(255,224,0,0) 100%);
 }
 .sm-reel-haze--bottom {
   top:calc(50% + 39px);
-  bottom:8px;
+  bottom:0;
   background:linear-gradient(0deg,
-    rgba(248,248,248,0.97) 0%,
-    rgba(248,248,248,0.90) 60%,
-    rgba(248,248,248,0.66) 100%);
-  -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 20%, #000 100%);
-  mask-image:linear-gradient(180deg, transparent 0%, #000 20%, #000 100%);
+    rgba(255,224,0,0.97) 0%,
+    rgba(255,224,0,0.85) 60%,
+    rgba(255,224,0,0) 100%);
 }
 
 /* Pre-spin cover: hides the reel words (so nothing is pre-populated) and
    carries the call-to-action across the full width of the generator. */
 .sm-reel-cover {
   position:absolute;
-  inset:8px;
+  inset:0;
   z-index:6;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:6px;
   text-align:center;
   cursor:pointer;
-  border-radius:14px;
-  background:rgba(248,248,248,0.92);
-  -webkit-backdrop-filter:blur(8px);
-  backdrop-filter:blur(8px);
-  border:1px solid rgba(0,0,0,0.10);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.86);
+  border-radius:0;
+  background:#FFE000;
 }
 .sm-reel-cover-emoji { font-size:24px; line-height:1; }
 .sm-reel-cover-title {
-  font-family:var(--font-display);
-  font-weight:800;
-  font-size:clamp(15px, 2.6vw, 18px);
-  letter-spacing:-.01em;
-  color:var(--ink);
+  font-family:'Nunito', sans-serif;
+  font-weight:900;
+  font-size:clamp(13px, 2vw, 16px);
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:#111;
 }
 .sm-reel-cover-sub {
   font-size:13px; font-weight:600; color:var(--muted);
@@ -2456,12 +2438,13 @@ const CSS = `
 .sm-item {
   display:flex; align-items:center; justify-content:center;
   text-align:center; padding:0 8px;
-  font-family:var(--font-display);
-  font-size:clamp(11.5px, 1.8vw, 13.5px);
-  font-weight:700;
-  color:var(--ink);
-  line-height:1.08; letter-spacing:-.02em;
-  text-shadow:0 1px 0 rgba(255,255,255,0.60);
+  font-family:'Nunito', sans-serif;
+  font-size:clamp(11px, 1.7vw, 13px);
+  font-weight:900;
+  color:#111;
+  line-height:1.1; letter-spacing:.04em;
+  text-transform:uppercase;
+  text-shadow:none;
   pointer-events:none; user-select:none;
   text-wrap:balance;
 }
