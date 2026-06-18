@@ -19,7 +19,7 @@ export default async function ProfilePage({ searchParams }) {
             <div className="fn__author_info">
               <div className="right_part">
                 {user
-                  ? <><p className="status"><span>Member</span></p><h1 className="title">{user.email}</h1></>
+                  ? <><p className="status"><span>Member</span></p><h1 className="title">My Account</h1></>
                   : <><h1 className="title">My Account</h1><p className="desc">Sign in to view your ideas and credits.</p></>}
               </div>
             </div>
