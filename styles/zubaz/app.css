@@ -3180,7 +3180,7 @@ h1.post__title {
   background-size: 9px;
   background-position: center right;
   background-repeat: no-repeat;
-  background-image: url(/images/blog/backspece.svg);
+  background-image: url(/zubaz/images/blog/backspece.svg);
 }
 .breadcrumbs ul li:last-child:before {
   content: none;
@@ -3191,7 +3191,7 @@ h1.post__title {
 }
 
 .breadcrumb-light .breadcrumbs ul li::before {
-  background-image: url(/images/blog/backspece2.svg);
+  background-image: url(/zubaz/images/blog/backspece2.svg);
 }
 .breadcrumb-light .breadcrumbs ul li a {
   color: var(--heading-color);
@@ -4735,18 +4735,18 @@ span.zubuz-title-shape {
   background-size: 25px;
   background-position: center right 5px;
   background-color: var(--blue-bg) !important;
-  background-image: url(/images/v2/circle.png);
+  background-image: url(/zubaz/images/v2/circle.png);
 }
 
 .pricing-btn .btn-toggle:focus {
   outline: none;
   box-shadow: none;
-  background-image: url(/images/v2/circle.png);
+  background-image: url(/zubaz/images/v2/circle.png);
 }
 
 .pricing-btn .btn-toggle:checked {
   background-position: center left 5px;
-  background-image: url(/images/v2/circle.png);
+  background-image: url(/zubaz/images/v2/circle.png);
 }
 
 .zubuz-pricing-wrap {

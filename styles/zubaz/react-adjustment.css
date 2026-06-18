@@ -94,14 +94,14 @@
   height: 1.4rem;
   margin-left: auto;
   content: "";
-  background-image: url("/images/icon/arrow-bottm.svg");
+  background-image: url("/zubaz/images/icon/arrow-bottm.svg");
   background-repeat: no-repeat;
   background-size: 1.4rem;
   background-position: center;
   transition: transform 0.4s ease-in-out;
 }
 .zubuz-accordion-wrap .accordion-button:not(.collapsed)::after {
-  background-image: url("/images/icon/arrow-bottom-green.svg");
+  background-image: url("/zubaz/images/icon/arrow-bottom-green.svg");
   transform: rotate(180deg);
 }
 .zubuz-accordion-wrap .accordion-button:focus {
@@ -163,14 +163,14 @@
   height: 18px;
   margin-left: auto;
   content: "";
-  background-image: url("/images/v3/plus.png");
+  background-image: url("/zubaz/images/v3/plus.png");
   background-repeat: no-repeat;
   background-size: 18px;
   background-position: center;
   transition: transform 0.4s ease-in-out;
 }
 .zubuz-accordion-wrap2 .accordion-button:not(.collapsed)::after {
-  background-image: url("/images/v3/minus.png");
+  background-image: url("/zubaz/images/v3/minus.png");
   transform: rotate(0deg);
   margin-top: 0px;
 }
