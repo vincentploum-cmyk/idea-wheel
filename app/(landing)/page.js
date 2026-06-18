@@ -20,7 +20,7 @@ export default function LandingPage() {
     }>
 
       {/* Hero */}
-      <div className="popito_fn_pagetitle" style={{ minHeight: 480, display: 'flex', alignItems: 'center' }}>
+      <div className="popito_fn_pagetitle" style={{ minHeight: 320, display: 'flex', alignItems: 'center' }}>
         <div className="container">
           <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 720, margin: '0 auto' }}>
             <h3 className="fn__title" style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', lineHeight: 1.15 }}>
@@ -44,9 +44,9 @@ export default function LandingPage() {
 
       {/* How it works */}
       <div className="popito_fn_membership_page">
-        <section id="how-it-works" style={{ padding: '80px 0' }}>
+        <section id="how-it-works" style={{ padding: '40px 0' }}>
           <div className="container">
-            <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
                 How it works
               </h2>
@@ -76,9 +76,9 @@ export default function LandingPage() {
         </section>
 
         {/* Pricing preview */}
-        <section id="price" style={{ padding: '0 0 80px' }}>
+        <section id="price" style={{ padding: '0 0 40px' }}>
           <div className="container">
-            <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
                 Simple pricing
               </h2>
@@ -131,9 +131,9 @@ export default function LandingPage() {
         </section>
 
         {/* FAQ teaser */}
-        <section style={{ padding: '0 0 100px' }}>
+        <section style={{ padding: '0 0 48px' }}>
           <div className="container">
-            <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
                 Common questions
               </h2>
