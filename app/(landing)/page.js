@@ -13,7 +13,7 @@ export default function LandingPage() {
     <PopitoShell>
 
       {/* Hero */}
-      <div className="popito_fn_pagetitle" style={{ minHeight: 320, display: 'flex', alignItems: 'center' }}>
+      <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '40px 0 20px', display: 'flex', alignItems: 'center' }}>
         <div className="container">
           <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 720, margin: '0 auto' }}>
             <h3 className="fn__title" style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', lineHeight: 1.15 }}>
@@ -37,7 +37,7 @@ export default function LandingPage() {
 
       {/* How it works */}
       <div className="popito_fn_membership_page">
-        <section id="how-it-works" style={{ padding: '40px 0' }}>
+        <section id="how-it-works" style={{ padding: '8px 0 40px' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
