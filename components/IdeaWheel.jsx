@@ -2338,14 +2338,15 @@ const CSS = `
 /* center payline — yellow highlight bar across all 3 reels */
 .sm-payline-bar {
   position:absolute;
-  left:0; right:0;
+  left:6px; right:6px;
   top:50%; height:72px;
   transform:translateY(-50%);
-  background:#FFE000;
-  border-top:3px solid #111;
-  border-bottom:3px solid #111;
+  background:rgba(255,224,0,0.18);
+  border:3px solid #111;
+  border-radius:12px;
+  box-shadow:4px 4px 0 #111;
   pointer-events:none;
-  z-index:1;
+  z-index:4;
   display:block;
 }
 
@@ -2622,7 +2623,7 @@ const CSS = `
   .sm-topbar { margin-bottom:12px; }
   .sm-modebtn { padding:7px 16px; font-size:12px; }
   .sm-reels-wrap { padding:6px; border-radius:16px; }
-  .sm-payline-bar { left:6px; right:6px; height:68px; border-radius:14px; }
+  .sm-payline-bar { left:4px; right:4px; height:68px; border-radius:10px; }
   .sm-reel-haze { left:6px; right:6px; -webkit-backdrop-filter:blur(11px); backdrop-filter:blur(11px); }
   .sm-reel-haze--top { top:6px; bottom:calc(50% + 34px); }
   .sm-reel-haze--bottom { top:calc(50% + 34px); bottom:6px; }
