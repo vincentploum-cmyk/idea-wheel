@@ -2283,7 +2283,7 @@ const CSS = `
 /* ── Cabinet — one elegant glass component ── */
 .sm-cabinet {
   position:relative;
-  background:#fff;
+  background:#efbdc2;
   border-radius:28px;
   padding:18px 16px 22px;
   border:3px solid #111;
