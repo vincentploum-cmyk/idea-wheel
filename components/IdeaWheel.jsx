@@ -2510,8 +2510,9 @@ const CSS = `
   text-align:center; min-height:54px;
   display:flex; align-items:center; justify-content:center;
   box-shadow:4px 4px 0 #111;
+  overflow:hidden;
 }
-.sm-live-sentence p { margin:0; font-size:15px; line-height:1.6; color:#111; font-family:'Nunito',sans-serif; font-weight:700; }
+.sm-live-sentence p { margin:0; font-size:16px; line-height:1.3; color:#111; font-family:'Nunito',sans-serif; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .sm-live-sentence .sm-slot {
   display:inline-block; font-weight:700; padding:1px 4px;
   color:var(--ink);
