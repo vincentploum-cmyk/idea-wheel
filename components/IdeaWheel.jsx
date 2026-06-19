@@ -694,6 +694,7 @@ export default function IdeaWheel() {
   const [checkoutErr, setCheckoutErr]     = useState("");
 
   const [saveState, setSaveState]     = useState(null); // null | 'saving' | 'saved' | 'error'
+  const [saveError, setSaveError]     = useState('');
   const [savedIdeaId, setSavedIdeaId] = useState(null);
 
   useEffect(() => {
@@ -1013,7 +1014,9 @@ export default function IdeaWheel() {
       if (!res.ok || data.error) throw new Error(data.error || 'save failed');
       setSavedIdeaId(data.id);
       setSaveState('saved');
-    } catch {
+    } catch (e) {
+      console.error('[saveIdea]', e?.message);
+      setSaveError(e?.message || 'unknown error');
       setSaveState('error');
     }
   };
@@ -1514,7 +1517,7 @@ export default function IdeaWheel() {
                               </span>
                             ) : (
                               <button className="su-linkbtn su-save-btn" onClick={saveIdea} disabled={saveState === 'saving'}>
-                                {saveState === 'saving' ? 'Saving…' : saveState === 'error' ? 'Save failed — retry' : '↓ Save idea to profile'}
+                                {saveState === 'saving' ? 'Saving…' : saveState === 'error' ? `Save failed (${saveError}) — retry` : '↓ Save idea to profile'}
                               </button>
                             )}
                           </div>
@@ -1534,7 +1537,7 @@ export default function IdeaWheel() {
                             </span>
                           ) : (
                             <button className="su-linkbtn su-save-btn" onClick={saveIdea} disabled={saveState === 'saving'}>
-                              {saveState === 'saving' ? 'Saving…' : saveState === 'error' ? 'Save failed — retry' : '↓ Save idea to profile'}
+                              {saveState === 'saving' ? 'Saving…' : saveState === 'error' ? `Save failed (${saveError}) — retry` : '↓ Save idea to profile'}
                             </button>
                           )}
                         </div>
