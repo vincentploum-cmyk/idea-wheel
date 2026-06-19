@@ -131,7 +131,7 @@ export default function PricingPageClient({ searchParams }) {
           </div>
 
           <p style={{ textAlign: 'center', marginTop: 40, opacity: 0.55, fontSize: 13 }}>
-            Credits never expire · Secure checkout via Stripe · <Link href="/faq" className="fn__creative_link">FAQ</Link>
+            Credits never expire · Secure checkout via Stripe
           </p>
         </div>
       </section>
