@@ -2514,9 +2514,15 @@ const CSS = `
 }
 .sm-live-sentence p { margin:0; font-size:16px; line-height:1.3; color:#111; font-family:'Nunito',sans-serif; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .sm-live-sentence .sm-slot {
-  display:inline-block; font-weight:700; padding:1px 4px;
-  color:var(--ink);
-  font-size:15px;
+  display:inline-block;
+  font-weight:900;
+  font-size:16px;
+  color:#111;
+  background:#FFE000;
+  border:2px solid #111;
+  border-radius:6px;
+  padding:0 6px;
+  line-height:1.4;
 }
 .sm-live-sentence .sm-slot-empty {
   display:inline-block; width:72px; height:10px; border-radius:999px;
