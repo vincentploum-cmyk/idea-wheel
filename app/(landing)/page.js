@@ -42,15 +42,15 @@ function IdeaSnippet({ item, align = 'left' }) {
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.4, marginBottom: 12 }}>
             ↳ From the engine
           </p>
-          <div className="fn__bold_item" style={{ padding: '24px 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.45 }}>{item.tag}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.4 }}>{item.tag}</span>
             <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 19, margin: 0 }}>{item.title}</h3>
-            <p style={{ fontSize: 14, lineHeight: 1.65, opacity: 0.72, margin: 0 }}>{item.idea}</p>
+            <p style={{ fontSize: 14, lineHeight: 1.65, opacity: 0.65, margin: 0 }}>{item.idea}</p>
             <blockquote style={{
-              margin: '2px 0 0',
+              margin: '4px 0 0',
               padding: '9px 14px',
               borderLeft: '3px solid #FFE000',
-              background: 'rgba(255,224,0,0.06)',
+              background: 'transparent',
               borderRadius: 4,
               fontSize: 13,
               fontStyle: 'italic',
