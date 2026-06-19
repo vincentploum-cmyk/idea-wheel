@@ -13,13 +13,13 @@ export default function OfferPricingPage({ searchParams }) {
         <div className="container">
           <div className="pagetitle">
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
-              Limited time only
+              Limited time offer
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2rem,4vw,3rem)', lineHeight: 1.15, marginBottom: 12 }}>
-              50% off Pro &amp; Power
+              50% off Pro &amp; Power credits
             </h1>
             <p className="fn__desc" style={{ maxWidth: 480, margin: '0 auto' }}>
-              Sign up free and spin your first idea — then grab credits at half price while this offer lasts.
+              Create a free account, spin your first idea, and get Pro or Power credits at half the regular price. This offer is available for a limited time only.
             </p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>

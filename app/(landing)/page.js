@@ -83,7 +83,7 @@ export default async function LandingPage() {
               Find a startup idea<br />worth building.
             </h3>
             <p className="fn__desc" style={{ maxWidth: 520, margin: '0 auto 2rem' }}>
-              Spin three reels to land on a concrete idea. Get a free market verdict in seconds. Unlock a full build blueprint only when the signal says it deserves it.
+              Spin three reels to generate a concrete startup concept. Get an instant AI market verdict — free, every time. Unlock a full build blueprint only when the idea earns it.
             </p>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
               {user ? <Link href="/wheel" className="fn__btn"><span>Spin a free idea</span></Link> : <Link href="/auth/register" className="fn__btn"><span>Get started</span></Link>}
@@ -103,7 +103,7 @@ export default async function LandingPage() {
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
                 How it works
               </h2>
-              <p style={{ opacity: 0.65, marginTop: 8 }}>From raw idea to build-ready blueprint in three steps.</p>
+              <p style={{ opacity: 0.65, marginTop: 8 }}>From first spin to a build-ready blueprint in three steps.</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 28 }}>
               {LANDING_STEPS.map((step) => (
@@ -188,7 +188,7 @@ export default async function LandingPage() {
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
                 Simple pricing
               </h2>
-              <p style={{ opacity: 0.65, marginTop: 8 }}>Market validation is always free. Credits unlock the deeper layers.</p>
+              <p style={{ opacity: 0.65, marginTop: 8 }}>Market validation is always free. Credits unlock the deeper analysis and the blueprint.</p>
             </div>
             <div className="fn__pricing_tables">
               <div className="pt_content">

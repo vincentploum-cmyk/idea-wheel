@@ -4,9 +4,9 @@ import { useMemo, useState } from 'react';
 import { CREDIT_PACKAGES } from '@/lib/pricing';
 
 const PACK_DESCRIPTIONS = {
-  starter: 'Try your first full blueprint end-to-end.',
-  pro: 'Best for founders validating several ideas back-to-back.',
-  power: 'For builders running deep exploration across markets.',
+  starter: 'Run your first full blueprint from start to finish.',
+  pro: 'Ideal for founders working through several ideas at once.',
+  power: 'Built for founders who want to go deep across multiple markets.',
 };
 
 // 50% off Pro and Power, Starter stays full price
@@ -126,7 +126,7 @@ export default function OfferPricingClient({ searchParams }) {
           </div>
 
           <p style={{ textAlign: 'center', marginTop: 40, opacity: 0.55, fontSize: 13 }}>
-            Credits never expire · Secure checkout via Stripe · Offer subject to availability
+            Credits never expire · Secure checkout via Stripe · Offer available for a limited time
           </p>
         </div>
       </section>
