@@ -10,6 +10,60 @@ export const metadata = {
   alternates: { canonical: 'https://ideareels.io' },
 };
 
+const IDEA_EXAMPLES = [
+  {
+    tag: 'B2B · Field service',
+    title: 'CertWatch',
+    idea: 'Tracks employee certifications, safety cards, and IDs — auto-sends reminders before expiry so field-service teams stop drowning in spreadsheets.',
+    signal: '"We have 40 staff and manage all certs manually. Someone always slips through."',
+  },
+  {
+    tag: 'B2B · Auto repair',
+    title: 'ShopPing',
+    idea: 'Auto-sends "waiting on part", "in progress", "ready for pickup" SMS updates for independent auto repair shops — cuts incoming calls by half.',
+    signal: '"Customers call 5x a day asking if their car is ready. I lose an hour just answering."',
+  },
+  {
+    tag: 'B2B · Amazon sellers',
+    title: 'Listing Suppression Decoder',
+    idea: "Scans a seller's full Amazon catalog, decodes why each listing is suppressed, and outputs the exact attribute fix — no more guessing at vague rejection codes.",
+    signal: '"Amazon suppressed 12 of my listings with zero explanation. Support is useless."',
+  },
+];
+
+function IdeaSnippet({ item, align = 'left' }) {
+  return (
+    <div style={{ padding: '0 0 48px' }}>
+      <div className="container">
+        <div style={{
+          maxWidth: 540,
+          margin: align === 'right' ? '0 0 0 auto' : align === 'center' ? '0 auto' : '0',
+        }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.4, marginBottom: 12 }}>
+            ↳ From the engine
+          </p>
+          <div className="fn__bold_item" style={{ padding: '24px 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.45 }}>{item.tag}</span>
+            <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 19, margin: 0 }}>{item.title}</h3>
+            <p style={{ fontSize: 14, lineHeight: 1.65, opacity: 0.72, margin: 0 }}>{item.idea}</p>
+            <blockquote style={{
+              margin: '2px 0 0',
+              padding: '9px 14px',
+              borderLeft: '3px solid #FFE000',
+              background: 'rgba(255,224,0,0.06)',
+              borderRadius: 4,
+              fontSize: 13,
+              fontStyle: 'italic',
+              opacity: 0.68,
+              lineHeight: 1.55,
+            }}>{item.signal}</blockquote>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default async function LandingPage() {
   const supabase = await createClient();
   const {
@@ -97,6 +151,8 @@ export default async function LandingPage() {
       </div>
 
       <div className="popito_fn_membership_page">
+        <IdeaSnippet item={IDEA_EXAMPLES[0]} align="left" />
+
         <section id="how-it-works" style={{ padding: '8px 0 40px' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
@@ -128,59 +184,7 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* Real output examples */}
-        <section style={{ padding: '0 0 48px' }}>
-          <div className="container">
-            <div style={{ textAlign: 'center', marginBottom: 28 }}>
-              <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
-                Real ideas the engine has found
-              </h2>
-              <p style={{ opacity: 0.65, marginTop: 8 }}>These came out of the IdeaReels radar — real market gaps, real pain signals.</p>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 24 }}>
-              {[
-                {
-                  tag: 'B2B · Field service',
-                  title: 'CertWatch',
-                  idea: 'Tracks employee certifications, safety cards, and IDs — auto-sends reminders before expiry so field-service teams stop drowning in spreadsheets.',
-                  signal: '"We have 40 staff and manage all certs manually. Someone always slips through."',
-                },
-                {
-                  tag: 'B2B · Auto repair',
-                  title: 'ShopPing',
-                  idea: 'Auto-sends "waiting on part", "in progress", "ready for pickup" SMS updates for independent auto repair shops — cuts incoming calls by half.',
-                  signal: '"Customers call 5x a day asking if their car is ready. I lose an hour just answering."',
-                },
-                {
-                  tag: 'B2B · Amazon sellers',
-                  title: 'Listing Suppression Decoder',
-                  idea: 'Scans a seller\'s full Amazon catalog, decodes why each listing is suppressed, and outputs the exact attribute fix — no more guessing at vague rejection codes.',
-                  signal: '"Amazon suppressed 12 of my listings with zero explanation. Support is useless."',
-                },
-              ].map((item) => (
-                <div key={item.title} className="fn__bold_item" style={{ padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.5 }}>{item.tag}</span>
-                  <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 20, margin: 0 }}>{item.title}</h3>
-                  <p style={{ fontSize: 14, lineHeight: 1.65, opacity: 0.75, margin: 0 }}>{item.idea}</p>
-                  <blockquote style={{
-                    margin: '4px 0 0',
-                    padding: '10px 14px',
-                    borderLeft: '3px solid #FFE000',
-                    background: 'rgba(255,224,0,0.06)',
-                    borderRadius: 4,
-                    fontSize: 13,
-                    fontStyle: 'italic',
-                    opacity: 0.7,
-                    lineHeight: 1.55,
-                  }}>{item.signal}</blockquote>
-                </div>
-              ))}
-            </div>
-            <div style={{ textAlign: 'center', marginTop: 32 }}>
-              <Link href="/wheel" className="fn__btn medium"><span>Find your idea →</span></Link>
-            </div>
-          </div>
-        </section>
+        <IdeaSnippet item={IDEA_EXAMPLES[1]} align="right" />
 
         <section id="price" style={{ padding: '0 0 40px' }}>
           <div className="container">
@@ -235,6 +239,8 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
+
+        <IdeaSnippet item={IDEA_EXAMPLES[2]} align="center" />
 
         <section style={{ padding: '0 0 48px' }}>
           <div className="container">
