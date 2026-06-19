@@ -88,7 +88,7 @@ export default function RegisterPage() {
                       Spin an idea.<br />Validate it free.<br />Build what works.
                     </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 260 }}>
-                      {['🎰 Spin three reels', '📊 Free market verdict', '🗺️ Full build blueprint'].map(item => (
+                      {['1. Spin three reels', '2. Free market verdict', '3. Full build blueprint'].map(item => (
                         <div key={item} style={{
                           background: '#fff', border: '3px solid #111',
                           borderRadius: 10, padding: '10px 16px',
