@@ -18,12 +18,8 @@ export default async function WheelPage() {
       <div className="popito_fn_pagetitle">
         <div className="container">
           <div className="pagetitle">
-            <div className="fn__author_info">
-              <div className="right_part">
-                <h1 className="title">Generate an Idea</h1>
-                <p className="desc">Spin three reels, get a free market verdict. Unlock deep research or a full blueprint only when it earns it.</p>
-              </div>
-            </div>
+            <h3 className="fn__title">Generate an Idea</h3>
+            <p className="fn__desc">Spin three reels, get a free market verdict. Unlock deep research or a full blueprint only when it earns it.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>

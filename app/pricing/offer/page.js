@@ -9,16 +9,14 @@ export const metadata = {
 export default function OfferPricingPage({ searchParams }) {
   return (
     <PopitoShell>
-      <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '40px 0 20px', textAlign: 'center' }}>
+      <div className="popito_fn_pagetitle">
         <div className="container">
           <div className="pagetitle">
-            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
+            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12, opacity: 0.5 }}>
               Limited time offer
             </p>
-            <h1 className="fn__title" style={{ fontSize: 'clamp(2rem,4vw,3rem)', lineHeight: 1.15, marginBottom: 12 }}>
-              50% off Pro &amp; Power credits
-            </h1>
-            <p className="fn__desc" style={{ maxWidth: 480, margin: '0 auto' }}>
+            <h3 className="fn__title">50% off Pro &amp; Power credits</h3>
+            <p className="fn__desc">
               Create a free account, spin your first idea, and get Pro or Power credits at half the regular price. This offer is available for a limited time only.
             </p>
             <span className="wings" />

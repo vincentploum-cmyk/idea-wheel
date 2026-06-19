@@ -15,14 +15,11 @@ function formatDate(dateStr) {
 export default function BlogPage() {
   return (
     <PopitoShell>
-      <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '40px 0 20px' }}>
+      <div className="popito_fn_pagetitle">
         <div className="container">
-          <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 720, margin: '0 auto' }}>
-            <h1 className="fn__title" style={{ fontSize: 'clamp(2rem,4vw,3rem)', lineHeight: 1.15 }}>
-              The IdeaReels Blog
-            </h1>
-            <p className="fn__desc" style={{ maxWidth: 480, margin: '0 auto' }}>
-              Practical writing on AI tools, startup validation, and building faster as a solo founder.
+          <div className="pagetitle">
+            <h3 className="fn__title">The IdeaReels Blog</h3>
+            <p className="fn__desc">Practical writing on AI tools, startup validation, and building faster as a solo founder.
             </p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>

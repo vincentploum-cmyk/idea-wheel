@@ -16,13 +16,8 @@ export default async function ProfilePage({ searchParams }) {
       <div className="popito_fn_pagetitle">
         <div className="container">
           <div className="pagetitle">
-            <div className="fn__author_info">
-              <div className="right_part">
-                {user
-                  ? <><h1 className="title">My Account</h1></>
-                  : <><h1 className="title">My Account</h1><p className="desc">Sign in to view your ideas and credits.</p></>}
-              </div>
-            </div>
+            <h3 className="fn__title">My Account</h3>
+            {!user && <p className="fn__desc">Sign in to view your ideas and credits.</p>}
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>

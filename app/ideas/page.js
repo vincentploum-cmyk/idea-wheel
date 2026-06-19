@@ -18,12 +18,8 @@ export default function IdeasPage() {
       <div className="popito_fn_pagetitle">
         <div className="container">
           <div className="pagetitle">
-            <div className="fn__author_info">
-              <div className="right_part">
-                <h1 className="title">Ideas from the engine</h1>
-                <p className="desc">Real concepts surfaced by IdeaReels — specific problems, real market pain, and a clear angle for each one.</p>
-              </div>
-            </div>
+            <h3 className="fn__title">Ideas from the engine</h3>
+            <p className="fn__desc">Real concepts surfaced by IdeaReels — specific problems, real market pain, and a clear angle for each one.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
