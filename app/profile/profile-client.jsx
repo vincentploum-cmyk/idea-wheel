@@ -56,10 +56,22 @@ function IdeaCard({ idea, onDelete }) {
           <h4 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 15, margin: 0, lineHeight: 1.3 }}>
             {idea.title || 'Untitled idea'}
           </h4>
-          {idea.action && idea.workflow && idea.industry && (
-            <p style={{ fontSize: 12, opacity: 0.5, margin: '3px 0 0', fontFamily: 'Nunito, sans-serif' }}>
-              {idea.action} · {idea.workflow} · {idea.industry}
-            </p>
+          {(idea.action || idea.workflow || idea.industry) && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+              {[idea.action, idea.workflow, idea.industry].filter(Boolean).map((t, i) => (
+                <span key={i} style={{
+                  display: 'inline-flex', alignItems: 'center',
+                  background: '#FFE000', color: '#111',
+                  border: '2px solid #111', borderRadius: '6px 999px 999px 6px',
+                  padding: '3px 12px 3px 8px',
+                  fontFamily: 'Nunito, sans-serif', fontWeight: 900,
+                  fontSize: 11, letterSpacing: '0.02em',
+                  boxShadow: '2px 2px 0 #111', whiteSpace: 'nowrap',
+                }}>
+                  {t}
+                </span>
+              ))}
+            </div>
           )}
         </div>
         <span style={{ fontSize: 11, opacity: 0.4, flexShrink: 0, paddingTop: 2 }}>{fmtDate(idea.created_at)}</span>

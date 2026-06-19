@@ -333,6 +333,19 @@ function briefPlayerWeakness(text = '') {
   return first.length > 120 ? `${first.slice(0, 117).trim()}...` : first;
 }
 
+/* ─── IDEA TAGS — yellow pill row showing the three reel values ────── */
+function IdeaTags({ action, workflow, industry }) {
+  const tags = [action, workflow, industry].filter(Boolean);
+  if (!tags.length) return null;
+  return (
+    <div className="su-idea-tags">
+      {tags.map((t, i) => (
+        <span key={i} className="su-idea-tag">{t}</span>
+      ))}
+    </div>
+  );
+}
+
 /* ─── PLAIN-ENGLISH LAYER ────────────────────────────────────────────
    A short, jargon-free lead shown above the detailed (often technical)
    content, so a non-technical reader gets the gist before the detail. */
@@ -1367,7 +1380,9 @@ export default function IdeaWheel() {
                 const deepPrimary = potential && !deepResearch && score < 80;
                 const goBlueprint = () => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); };
                 return (
-                <div className="su-validate-grid" style={{marginTop:24}}>
+                <div style={{marginTop:24}}>
+                <IdeaTags action={idea.action} workflow={idea.workflow} industry={idea.industry}/>
+                <div className="su-validate-grid" style={{marginTop:16}}>
                   {/* 0 — Plain-English lead: the whole market read in one digestible bite */}
                   {comp.plainSummary && (
                     <div className="su-card su-v-plainlead">
@@ -1539,6 +1554,7 @@ export default function IdeaWheel() {
                     ))}
                   </div>
                 </div>
+                </div>
                 );
               })()}
             </div>
@@ -1551,7 +1567,8 @@ export default function IdeaWheel() {
         <section className="su-screen su-blueprint">
           <div className="su-screen-head">
             <div className="su-eyebrow">Step 4 · The plan</div>
-            <h2 className="su-display su-screen-title">
+            <IdeaTags action={idea.action} workflow={idea.workflow} industry={idea.industry}/>
+            <h2 className="su-display su-screen-title" style={{marginTop:20}}>
               The <span className="su-grad-text">{idea.title}</span> blueprint
             </h2>
             <p className="su-screen-desc">{idea.blurb}</p>
@@ -2072,6 +2089,22 @@ const CSS = `
   10% { opacity:1; }
   100% { opacity:0; transform:translate3d(var(--confetti-drift), 280px, 0) rotate(var(--confetti-spin)) scale(1); }
 }
+/* idea tag row — three yellow chips showing the reel values */
+.su-idea-tags {
+  display:flex; flex-wrap:wrap; gap:8px;
+  justify-content:center; margin-bottom:4px;
+}
+.su-idea-tag {
+  display:inline-flex; align-items:center;
+  background:#FFE000; color:#111;
+  border:2px solid #111; border-radius:6px 999px 999px 6px;
+  padding:5px 16px 5px 10px;
+  font-family:'Nunito',sans-serif; font-weight:900;
+  font-size:13px; letter-spacing:0.02em;
+  box-shadow:2px 2px 0 #111;
+  white-space:nowrap;
+}
+
 .su-validate-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 @media(max-width:640px){ .su-validate-grid { grid-template-columns:1fr; } }
 .su-v-score { display:flex; align-items:flex-start; gap:20px; min-width:0; }
