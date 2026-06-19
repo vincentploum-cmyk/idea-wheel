@@ -8,7 +8,24 @@ const SCORE_COLOR = (s) => s >= 80 ? '#15803D' : s >= 65 ? '#B45309' : '#B91C1C'
 const SCORE_BG    = (s) => s >= 80 ? '#f0fdf4' : s >= 65 ? '#fffbeb' : '#fef2f2';
 const PREMIUM_SCORE = 80;
 
-function IdeaCard({ item, index, locked }) {
+function IdeaCard({ item, index, locked, showBlueprint }) {
+  const [saving, setSaving] = useState(false);
+
+  const handleBlueprint = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/ideas', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.id) throw new Error(data.error || 'failed');
+      window.location.href = `/wheel?idea=${data.id}&generate=1`;
+    } catch {
+      setSaving(false);
+    }
+  };
   return (
     <div style={{
       background: '#FFE000',
@@ -62,7 +79,7 @@ function IdeaCard({ item, index, locked }) {
           color: '#111', opacity: 0.6, lineHeight: 1.65,
           background: 'rgba(0,0,0,0.04)', borderRadius: '0 4px 4px 0',
         }}>{item.quote}</blockquote>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: showBlueprint ? 20 : 0 }}>
           {[item.action, item.workflow, item.industry].filter(Boolean).map((t) => (
             <span key={t} style={{
               fontSize: 12, fontWeight: 700,
@@ -72,6 +89,26 @@ function IdeaCard({ item, index, locked }) {
             }}>{t}</span>
           ))}
         </div>
+
+        {showBlueprint && (
+          <div style={{ borderTop: '2px solid rgba(0,0,0,0.12)', paddingTop: 16, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <button
+              onClick={handleBlueprint}
+              disabled={saving}
+              style={{
+                background: '#111', color: '#FFE000',
+                border: '2px solid #111', borderRadius: 8,
+                padding: '10px 20px',
+                fontFamily: 'Nunito, sans-serif', fontWeight: 900,
+                fontSize: 14, cursor: saving ? 'wait' : 'pointer',
+                boxShadow: '2px 2px 0 rgba(0,0,0,0.3)',
+              }}
+            >
+              {saving ? 'Setting up…' : 'Build blueprint · 2 credits'}
+            </button>
+            <span style={{ fontSize: 12, opacity: 0.55, color: '#111' }}>Saved to your profile automatically</span>
+          </div>
+        )}
       </div>
 
       {/* Lock overlay */}
@@ -138,6 +175,7 @@ export default function IdeasClient({ user, unlocked: initialUnlocked }) {
                 item={item}
                 index={IDEA_EXAMPLES.indexOf(item)}
                 locked={false}
+                showBlueprint={false}
               />
             ))}
 
@@ -199,6 +237,7 @@ export default function IdeasClient({ user, unlocked: initialUnlocked }) {
                 item={item}
                 index={IDEA_EXAMPLES.indexOf(item)}
                 locked={false}
+                showBlueprint={true}
               />
             ))}
 
