@@ -1536,7 +1536,7 @@ export default function IdeaWheel() {
                     ) : (
                       <>
                         <div className="su-v-cta-row">
-                          <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { setComp(null); setIdea(null); setSaveState(null); setSavedIdeaId(null); }}>Spin again</button>
+                          <button className="su-btn su-btn-yellow su-btn-lg" onClick={() => { setComp(null); setIdea(null); setSaveState(null); setSavedIdeaId(null); }}>Spin again</button>
                           <button className="su-linkbtn" onClick={goBlueprint}>Build it anyway · {BLUEPRINT_COST} credits</button>
                         </div>
                         <div className="su-save-row">
@@ -1765,7 +1765,7 @@ export default function IdeaWheel() {
                 <div className="su-bp-footer-d">Not feeling it? Spin another idea and compare.</div>
               </div>
               <div className="su-bp-footer-actions">
-                <button className="su-btn su-btn-ghost" onClick={() => { goTo("wheel"); setIdea(null); }}>Spin again</button>
+                <button className="su-btn su-btn-yellow" onClick={() => { goTo("wheel"); setIdea(null); }}>Spin again</button>
               </div>
             </div>
           )}
@@ -1924,6 +1924,13 @@ const CSS = `
 }
 .su-btn-primary:hover { background:#333; transform:translateY(-1px); }
 .su-btn-primary:active { transform:translateY(0); }
+.su-btn-yellow {
+  background:#FFE000; color:#111;
+  border:2px solid #111; box-shadow:3px 3px 0 #111;
+  font-weight:900; font-family:'Nunito',sans-serif;
+}
+.su-btn-yellow:hover { background:#ffe94d; transform:translateY(-1px); box-shadow:4px 4px 0 #111; }
+.su-btn-yellow:active { transform:translateY(0); box-shadow:2px 2px 0 #111; }
 .su-btn-ghost {
   background:var(--surface); color:var(--ink);
   border-color:var(--line-2);
