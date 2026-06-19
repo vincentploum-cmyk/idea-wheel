@@ -59,48 +59,66 @@ function lighten(hex, t) {
 }
 
 /* ─── TEASER REEL DATA ───────────────────────────────────────────── */
-const TEASER_BANKS = [
-  ['Automates','Streamlines','Manages','Tracks','Builds','Improves','Optimizes','Simplifies','Coaches','Plans','Diagnoses','Fixes','Prevents','Reconciles','Reduces'],
-  ['client onboarding','invoice processing','daily habits','sleep quality','referral tracking','personal finances','contract management','fitness goals','shift scheduling','mental health','compliance filing','contract renewals','bulk inventory tracking','certification tracking','invoice collection','reorder forecasting','session balances','job status updates','board reporting','listing management','compliance tracking','inventory deductions','inventory tracking'],
-  ['Healthcare','Legal services','busy professionals','Dental practices','new parents','Construction','remote workers','Accounting firms','athletes','small business owners','Amazon sellers','Landlords','Service businesses','Shopify sellers','Field service teams','Auto repair shops','Funded startups','Importers','Small businesses'],
+// Validated combos — all three columns advance together so every visible
+// combination is always coherent. Add more rows freely; never mix columns.
+const TEASER_COMBOS = [
+  ['Automates',    'invoice processing',      'Accounting firms'],
+  ['Tracks',       'compliance reporting',     'Healthcare'],
+  ['Manages',      'client onboarding',        'Legal services'],
+  ['Streamlines',  'contract management',      'Insurance'],
+  ['Simplifies',   'staff scheduling',         'Construction'],
+  ['Optimizes',    'inventory management',     'Shopify sellers'],
+  ['Coaches',      'daily habits',             'busy professionals'],
+  ['Improves',     'mental health',            'remote workers'],
+  ['Plans',        'meal planning',            'new parents'],
+  ['Builds',       'fitness routines',         'athletes'],
+  ['Reduces',      'reorder forecasting',      'Amazon sellers'],
+  ['Prevents',     'certification tracking',   'Field service teams'],
+  ['Reconciles',   'peak-event inventory',     'Funded startups'],
+  ['Diagnoses',    'listing issues',           'Amazon sellers'],
+  ['Fixes',        'board reporting',          'Small businesses'],
+  ['Organizes',    'job status updates',       'Auto repair shops'],
+  ['Centralizes',  'document management',      'Property management'],
+  ['Monitors',     'equipment maintenance',    'Manufacturing'],
+  ['Accelerates',  'quote generation',         'Staffing agencies'],
+  ['Handles',      'customer follow-ups',      'Service businesses'],
 ];
 const REEL_COLORS = ['#7c3aed','#c026d3','#ff4d8d'];
 const REEL_LABELS = ['ACTION','WORKFLOW','FOR'];
 
 /* ─── AUTO-CYCLING TEASER REEL ──────────────────────────────────── */
-function TeaserReel({ bank, color, label }) {
+// All three reels share a single offset so they always show a valid combo.
+function TeaserReels() {
   const [offset, setOffset] = useState(0);
   const ITEM_H = 56;
   useEffect(() => {
-    const id = setInterval(() => setOffset(o => o + 1), 1800);
+    const id = setInterval(() => setOffset(o => o + 1), 2000);
     return () => clearInterval(id);
   }, []);
-  const idx = offset % bank.length;
-  const items = [...bank, ...bank, ...bank];
-  return (
-    <div className="tr-col">
-      <div className="tr-label" style={{ color }}>{label}</div>
-      <div className="tr-window">
-        <div className="tr-strip" style={{
-          transform: `translateY(${-(idx + bank.length) * ITEM_H + ITEM_H}px)`,
-          transition: 'transform 0.55s cubic-bezier(0.16,1,0.3,1)',
-        }}>
-          {items.map((word, i) => (
-            <div className="tr-item" key={i} style={{ height: ITEM_H }}>{word}</div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
-function TeaserReels() {
   return (
     <div className="tr-root">
       <div className="tr-reels">
-        {TEASER_BANKS.map((bank, i) => (
-          <TeaserReel key={i} bank={bank} color={REEL_COLORS[i]} label={REEL_LABELS[i]} />
-        ))}
+        {[0, 1, 2].map((col) => {
+          const bank = TEASER_COMBOS.map(row => row[col]);
+          const idx = offset % bank.length;
+          const items = [...bank, ...bank, ...bank];
+          return (
+            <div key={col} className="tr-col">
+              <div className="tr-label" style={{ color: REEL_COLORS[col] }}>{REEL_LABELS[col]}</div>
+              <div className="tr-window">
+                <div className="tr-strip" style={{
+                  transform: `translateY(${-(idx + bank.length) * ITEM_H + ITEM_H}px)`,
+                  transition: 'transform 0.55s cubic-bezier(0.16,1,0.3,1)',
+                }}>
+                  {items.map((word, i) => (
+                    <div className="tr-item" key={i} style={{ height: ITEM_H }}>{word}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
