@@ -2,8 +2,9 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import { FAQS } from '@/lib/content';
 
 export const metadata = {
-  title: 'FAQ',
-  description: 'Answers to common questions about IdeaReels.',
+  title: 'FAQ — IdeaReels',
+  description: 'Common questions about IdeaReels: how credits work, what the blueprint includes, how market validation works, and how to get started.',
+  alternates: { canonical: 'https://ideareels.io/faq' },
 };
 
 export default function FaqPage() {

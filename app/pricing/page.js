@@ -2,8 +2,9 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import PricingPageClient from './pricing-page-client';
 
 export const metadata = {
-  title: 'Pricing',
-  description: 'Buy IdeaReels credits and unlock full blueprints.',
+  title: 'Pricing — IdeaReels Credits & Plans',
+  description: 'Start free with 3 credits. Unlock market validation reports and full blueprints covering product design, go-to-market, infrastructure, and prototype generation. No subscription required.',
+  alternates: { canonical: 'https://ideareels.io/pricing' },
 };
 
 export default function PricingPage({ searchParams }) {

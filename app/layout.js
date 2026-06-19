@@ -3,23 +3,31 @@ import Script from 'next/script';
 import CookieBanner from '@/components/CookieBanner';
 
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://ideareels.io'),
+  metadataBase: new URL('https://ideareels.io'),
   title: {
-    default: 'IdeaReels — Find a startup idea worth building.',
+    default: 'IdeaReels — Find a Startup Idea Worth Building',
     template: '%s | IdeaReels',
   },
-  description: 'Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.',
+  description: 'IdeaReels generates startup ideas from real market signals, validates them instantly with competitor analysis and market size data, and unlocks a build-ready blueprint — product, GTM, infrastructure, and prototype — only when the idea clears the bar.',
+  keywords: ['startup idea generator', 'business idea validator', 'startup blueprint', 'AI startup tool', 'idea validation', 'market validation tool', 'startup ideas', 'business ideas'],
+  authors: [{ name: 'IdeaReels' }],
+  creator: 'IdeaReels',
   openGraph: {
-    title: 'IdeaReels — Find a startup idea worth building.',
-    description: 'Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.',
+    title: 'IdeaReels — Find a Startup Idea Worth Building',
+    description: 'Generate startup ideas from real market signals, validate them instantly, and unlock a full blueprint — product, GTM, infrastructure, and prototype.',
     type: 'website',
     url: 'https://ideareels.io',
+    siteName: 'IdeaReels',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'IdeaReels — Startup Idea Generator' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'IdeaReels — Find a startup idea worth building.',
-    description: 'Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.',
+    title: 'IdeaReels — Find a Startup Idea Worth Building',
+    description: 'Generate startup ideas from real market signals, validate them instantly, and unlock a full blueprint.',
+    images: ['/og-image.png'],
   },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  alternates: { canonical: 'https://ideareels.io' },
 };
 
 export default function RootLayout({ children }) {

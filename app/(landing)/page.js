@@ -5,18 +5,77 @@ import { CREDIT_PACKAGES } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase-server';
 
 export const metadata = {
-  title: 'IdeaReels — Find a startup idea worth building.',
-  description: 'Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.',
+  title: 'IdeaReels — Find a Startup Idea Worth Building',
+  description: 'Generate sharper startup business ideas in seconds using real market signals. Get instant validation with competitor analysis, market size, and demand signals — then unlock a build-ready blueprint only when one is worth pursuing.',
+  alternates: { canonical: 'https://ideareels.io' },
 };
 
 export default async function LandingPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        name: 'IdeaReels',
+        url: 'https://ideareels.io',
+        description: 'IdeaReels generates startup ideas, validates them with market data, and produces build-ready blueprints for founders.',
+        applicationCategory: 'BusinessApplication',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+          description: '3 free credits on signup',
+        },
+        featureList: [
+          'Startup idea generation',
+          'Market validation',
+          'Competitor analysis',
+          'Build-ready blueprints',
+          'Product design recommendations',
+          'Go-to-market strategy',
+          'Infrastructure planning',
+          'Prototype generation',
+        ],
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'What is IdeaReels?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'IdeaReels is a startup idea generator and validator. It generates concrete startup concepts, runs a free market check with competitor analysis and demand signals, then unlocks a full build-ready blueprint only for ideas that clear the bar.',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'How do credits work?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Every new account starts with 3 free credits. A market check costs 1 credit and the full blueprint costs 2 credits. You can purchase more credits from the pricing page.',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'What does the blueprint include?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'The full blueprint unlocks four AI specialists: product design, go-to-market strategy, infrastructure planning, and prototype generation — all in one click.',
+            },
+          },
+        ],
+      },
+    ],
+  };
 
   return (
     <PopitoShell>
-
-      {/* Hero */}
       <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '40px 0 20px', display: 'flex', alignItems: 'center' }}>
         <div className="container">
           <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 720, margin: '0 auto' }}>
@@ -27,10 +86,7 @@ export default async function LandingPage() {
               Spin three reels to land on a concrete idea. Get a free market verdict in seconds. Unlock a full build blueprint only when the signal says it deserves it.
             </p>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-              {user
-                ? <Link href="/wheel" className="fn__btn"><span>Spin a free idea</span></Link>
-                : <Link href="/auth/register" className="fn__btn"><span>Get started</span></Link>
-              }
+              {user ? <Link href="/wheel" className="fn__btn"><span>Spin a free idea</span></Link> : <Link href="/auth/register" className="fn__btn"><span>Get started</span></Link>}
             </div>
             <span className="wings" />
             <span className="raleway">
@@ -40,7 +96,6 @@ export default async function LandingPage() {
         </div>
       </div>
 
-      {/* How it works */}
       <div className="popito_fn_membership_page">
         <section id="how-it-works" style={{ padding: '8px 0 40px' }}>
           <div className="container">
@@ -73,7 +128,6 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* Pricing preview */}
         <section id="price" style={{ padding: '0 0 40px' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
@@ -128,7 +182,6 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* FAQ teaser */}
         <section style={{ padding: '0 0 48px' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -151,6 +204,7 @@ export default async function LandingPage() {
         </section>
       </div>
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     </PopitoShell>
   );
 }
