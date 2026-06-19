@@ -35,25 +35,28 @@ export default function IdeasPage() {
           <div className="container">
 
             {/* Idea list */}
-            <div style={{ maxWidth: 780, margin: '0 auto' }}>
+            <div style={{ maxWidth: 780, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
               {IDEA_EXAMPLES.map((item, i) => (
                 <div key={item.title} style={{
-                  padding: '48px 0',
-                  borderBottom: i < IDEA_EXAMPLES.length - 1 ? '1px solid rgba(0,0,0,0.08)' : 'none',
+                  background: '#FFE000',
+                  border: '2px solid #111',
+                  borderRadius: 12,
+                  boxShadow: '4px 4px 0 #111',
+                  padding: '32px 28px',
                   display: 'grid',
                   gridTemplateColumns: '48px 1fr',
-                  gap: '0 28px',
+                  gap: '0 24px',
                   alignItems: 'start',
                 }}>
                   {/* Number */}
                   <div style={{
                     width: 48, height: 48,
-                    background: '#FFE000', border: '2px solid #111',
-                    borderRadius: '50%', boxShadow: '2px 2px 0 #111',
+                    background: '#111',
+                    borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontFamily: 'Nunito, sans-serif', fontWeight: 900,
-                    fontSize: 15, color: '#111', flexShrink: 0,
-                    marginTop: 4,
+                    fontSize: 15, color: '#FFE000', flexShrink: 0,
+                    marginTop: 2,
                   }}>
                     {String(i + 1).padStart(2, '0')}
                   </div>
@@ -64,12 +67,12 @@ export default function IdeasPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
                       <span style={{
                         fontSize: 11, fontWeight: 700, letterSpacing: '0.09em',
-                        textTransform: 'uppercase', opacity: 0.45,
+                        textTransform: 'uppercase', opacity: 0.55,
                       }}>{item.tag}</span>
                       <span style={{
                         fontSize: 11, fontWeight: 700,
                         color: SCORE_COLOR(item.score),
-                        background: SCORE_BG(item.score),
+                        background: '#fff',
                         border: `1px solid ${SCORE_COLOR(item.score)}`,
                         borderRadius: 4, padding: '2px 8px',
                       }}>Score {item.score}</span>
@@ -78,24 +81,24 @@ export default function IdeasPage() {
                     {/* Title */}
                     <h2 style={{
                       fontFamily: 'Nunito, sans-serif', fontWeight: 900,
-                      fontSize: 'clamp(22px, 3vw, 30px)', margin: '0 0 12px', color: '#111',
+                      fontSize: 'clamp(22px, 3vw, 28px)', margin: '0 0 10px', color: '#111',
                       lineHeight: 1.2,
                     }}>{item.title}</h2>
 
                     {/* Description */}
                     <p style={{
-                      fontSize: 15, lineHeight: 1.75, opacity: 0.72,
-                      margin: '0 0 20px', maxWidth: 600,
+                      fontSize: 15, lineHeight: 1.75, color: '#111', opacity: 0.75,
+                      margin: '0 0 18px',
                     }}>{item.description}</p>
 
                     {/* Quote */}
                     <blockquote style={{
-                      margin: '0 0 24px',
-                      padding: '12px 16px',
-                      borderLeft: '3px solid #FFE000',
-                      fontSize: 14, fontStyle: 'italic',
-                      opacity: 0.6, lineHeight: 1.65,
-                      background: 'rgba(255,224,0,0.05)',
+                      margin: '0 0 20px',
+                      padding: '10px 14px',
+                      borderLeft: '3px solid #111',
+                      fontSize: 13, fontStyle: 'italic',
+                      color: '#111', opacity: 0.6, lineHeight: 1.65,
+                      background: 'rgba(0,0,0,0.04)',
                       borderRadius: '0 4px 4px 0',
                     }}>{item.quote}</blockquote>
 
@@ -120,16 +123,16 @@ export default function IdeasPage() {
             <div style={{
               maxWidth: 780, margin: '48px auto 0',
               padding: '40px 36px',
-              background: '#FFE000', border: '2px solid #111',
-              borderRadius: 12, boxShadow: '4px 4px 0 #111',
+              background: '#111', border: '2px solid #111',
+              borderRadius: 12, boxShadow: '4px 4px 0 #FFE000',
               display: 'flex', alignItems: 'center',
               justifyContent: 'space-between', flexWrap: 'wrap', gap: 20,
             }}>
               <div>
-                <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 20, margin: '0 0 4px', color: '#111' }}>
+                <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 20, margin: '0 0 4px', color: '#FFE000' }}>
                   Find your own idea.
                 </p>
-                <p style={{ fontSize: 14, opacity: 0.65, margin: 0, color: '#111' }}>
+                <p style={{ fontSize: 14, opacity: 0.6, margin: 0, color: '#fff' }}>
                   Spin three reels, get a free market verdict in seconds.
                 </p>
               </div>
