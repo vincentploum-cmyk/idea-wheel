@@ -60,9 +60,9 @@ function lighten(hex, t) {
 
 /* ─── TEASER REEL DATA ───────────────────────────────────────────── */
 const TEASER_BANKS = [
-  ['Automates','Streamlines','Manages','Tracks','Builds','Improves','Optimizes','Simplifies','Coaches','Plans'],
-  ['client onboarding','invoice processing','daily habits','sleep quality','referral tracking','personal finances','contract management','fitness goals','shift scheduling','mental health'],
-  ['Healthcare','Legal services','busy professionals','Dental practices','new parents','Construction','remote workers','Accounting firms','athletes','small business owners'],
+  ['Automates','Streamlines','Manages','Tracks','Builds','Improves','Optimizes','Simplifies','Coaches','Plans','Diagnoses','Fixes','Prevents','Reconciles','Reduces'],
+  ['client onboarding','invoice processing','daily habits','sleep quality','referral tracking','personal finances','contract management','fitness goals','shift scheduling','mental health','compliance filing','contract renewals','bulk inventory tracking','certification tracking','invoice collection','reorder forecasting','session balances','job status updates','board reporting','listing management','compliance tracking','inventory deductions','inventory tracking'],
+  ['Healthcare','Legal services','busy professionals','Dental practices','new parents','Construction','remote workers','Accounting firms','athletes','small business owners','Amazon sellers','Landlords','Service businesses','Shopify sellers','Field service teams','Auto repair shops','Funded startups','Importers','Small businesses'],
 ];
 const REEL_COLORS = ['#7c3aed','#c026d3','#ff4d8d'];
 const REEL_LABELS = ['ACTION','WORKFLOW','FOR'];
