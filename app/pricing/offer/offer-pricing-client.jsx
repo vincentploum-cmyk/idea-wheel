@@ -27,7 +27,7 @@ export default function OfferPricingClient({ searchParams }) {
       const res = await fetch('/api/credits/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packId: pkg.key, offerPrice: override?.price_cents }),
+        body: JSON.stringify({ packId: pkg.key, offer: !!override }),
       });
       const data = await res.json();
       if (data.code === 'AUTH_REQUIRED') { window.location.href = '/auth/login'; return; }
