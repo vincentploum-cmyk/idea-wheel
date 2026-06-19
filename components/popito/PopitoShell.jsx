@@ -33,8 +33,8 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
     >
 
       <PromoBanner
-        text="Generate your first startup idea for free."
-        linkLabel="Sign up — no credit card needed"
+        text="Sign up to spin ideas for free. Now for limited time only 50% off the Pro & Power packages —"
+        linkLabel="Claim offer"
         linkHref="/auth/register"
       />
 
