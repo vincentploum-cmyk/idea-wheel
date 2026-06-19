@@ -2,13 +2,17 @@ import Link from 'next/link';
 import PopitoShell from '@/components/popito/PopitoShell';
 import { LANDING_STEPS, FAQS } from '@/lib/content';
 import { CREDIT_PACKAGES } from '@/lib/pricing';
+import { createClient } from '@/lib/supabase-server';
 
 export const metadata = {
   title: 'IdeaReels — Find a startup idea worth building.',
   description: 'Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.',
 };
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <PopitoShell>
 
@@ -23,8 +27,10 @@ export default function LandingPage() {
               Spin three reels to land on a concrete idea. Get a free market verdict in seconds. Unlock a full build blueprint only when the signal says it deserves it.
             </p>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/wheel" className="fn__btn"><span>Spin a free idea</span></Link>
-              <Link href="/pricing" className="fn__btn medium"><span>See pricing</span></Link>
+              {user
+                ? <Link href="/wheel" className="fn__btn"><span>Spin a free idea</span></Link>
+                : <Link href="/auth/register" className="fn__btn"><span>Get started</span></Link>
+              }
             </div>
             <p style={{ marginTop: 20, opacity: 0.6, fontSize: 13 }}>3 free credits on signup · No credit card required</p>
             <span className="wings" />
