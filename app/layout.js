@@ -27,6 +27,7 @@ export const metadata = {
     images: ['/og-image.png'],
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  verification: { google: '7-zPuvRs0wD-bV9Mr_dDdu4vcjW2o3XrZzVGJuqDyd0' },
   alternates: { canonical: 'https://ideareels.io' },
 };
 
