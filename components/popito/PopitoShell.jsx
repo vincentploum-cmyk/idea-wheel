@@ -82,11 +82,6 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
                   </ul>
                 </div>
               </div>
-              <div className="search">
-                <a href="#">
-                  <img src="/popito-assets/svg/search.svg" alt="" className="fn__svg" />
-                </a>
-              </div>
             </div>
             <div className="right__trigger">
               {user
@@ -108,11 +103,6 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
                     {NAV_LINKS.map(l => <NavItem key={l.href} {...l} />)}
                   </ul>
                 </div>
-              </div>
-              <div className="search">
-                <a href="#">
-                  <img src="/popito-assets/svg/search.svg" alt="" className="fn__svg" />
-                </a>
               </div>
             </div>
             <div className="right__trigger">
