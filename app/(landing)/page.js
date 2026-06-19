@@ -10,27 +10,6 @@ export const metadata = {
   alternates: { canonical: 'https://ideareels.io' },
 };
 
-const IDEA_EXAMPLES = [
-  {
-    tag: 'B2B · Field service',
-    title: 'CertWatch',
-    idea: 'Tracks employee certifications, safety cards, and IDs — auto-sends reminders before expiry so field-service teams stop drowning in spreadsheets.',
-    signal: '"We have 40 staff and manage all certs manually. Someone always slips through."',
-  },
-  {
-    tag: 'B2B · Auto repair',
-    title: 'ShopPing',
-    idea: 'Auto-sends "waiting on part", "in progress", "ready for pickup" SMS updates for independent auto repair shops — cuts incoming calls by half.',
-    signal: '"Customers call 5x a day asking if their car is ready. I lose an hour just answering."',
-  },
-  {
-    tag: 'B2B · Amazon sellers',
-    title: 'Listing Suppression Decoder',
-    idea: "Scans a seller's full Amazon catalog, decodes why each listing is suppressed, and outputs the exact attribute fix — no more guessing at vague rejection codes.",
-    signal: '"Amazon suppressed 12 of my listings with zero explanation. Support is useless."',
-  },
-];
-
 
 export default async function LandingPage() {
   const supabase = await createClient();
@@ -99,17 +78,16 @@ export default async function LandingPage() {
 
       <div className="popito_fn_membership_page">
 
-        {/* Proof-of-output strip — three real ideas, no boxes */}
-        <div style={{ borderTop: '1px solid rgba(0,0,0,0.07)', padding: '36px 0 48px' }}>
+        {/* Lean teaser linking to the ideas page */}
+        <div style={{ borderTop: '1px solid rgba(0,0,0,0.07)', padding: '24px 0 40px' }}>
           <div className="container">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '28px 48px' }}>
-              {IDEA_EXAMPLES.map((item) => (
-                <div key={item.title}>
-                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.35 }}>{item.tag}</span>
-                  <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 16, margin: '5px 0 8px', color: '#111' }}>{item.title}</p>
-                  <p style={{ fontSize: 13, fontStyle: 'italic', opacity: 0.5, lineHeight: 1.6, margin: 0, paddingLeft: 10, borderLeft: '2px solid #FFE000' }}>{item.signal}</p>
-                </div>
-              ))}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+              <p style={{ fontSize: 14, opacity: 0.55, margin: 0 }}>
+                CertWatch · ShopPing · IntakeFlow · ChurnSignal — real ideas the engine has found.
+              </p>
+              <Link href="/ideas" className="fn__creative_link" style={{ fontSize: 13 }}>
+                See all ideas<span className="suffix">//</span>
+              </Link>
             </div>
           </div>
         </div>

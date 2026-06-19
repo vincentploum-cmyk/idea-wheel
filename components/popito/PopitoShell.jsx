@@ -4,6 +4,7 @@ import PromoBanner from '@/components/PromoBanner';
 
 const NAV_LINKS = [
   { href: '/wheel', label: 'Spin Ideas' },
+  { href: '/ideas', label: 'Ideas' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/blog', label: 'Blog' },
   { href: '/faq', label: 'FAQ' },
