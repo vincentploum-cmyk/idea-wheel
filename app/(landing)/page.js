@@ -32,7 +32,6 @@ export default async function LandingPage() {
                 : <Link href="/auth/register" className="fn__btn"><span>Get started</span></Link>
               }
             </div>
-            <p style={{ marginTop: 20, opacity: 0.6, fontSize: 13 }}>3 free credits on signup · No credit card required</p>
             <span className="wings" />
             <span className="raleway">
               <span /><span /><span /><span /><span />
