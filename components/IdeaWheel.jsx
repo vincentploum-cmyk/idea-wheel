@@ -530,7 +530,8 @@ function SlotMachine({ onResult, onModeChange }) {
     const allowedWorkflows = (m.pairMap?.[action] || banks[1]).filter((workflow) => banks[1].includes(workflow));
     const workflowIdx = selectIndex(1, allowedWorkflows, m.pairWeights?.[action]);
     const workflow = banks[1][workflowIdx];
-    const industryIdx = selectIndex(2, banks[2], m.workflowIndustryWeights?.[workflow]);
+    const allowedIndustries = (m.workflowIndustryMap?.[workflow] || banks[2]).filter((ind) => banks[2].includes(ind));
+    const industryIdx = selectIndex(2, allowedIndustries.length ? allowedIndustries : banks[2], m.workflowIndustryWeights?.[workflow]);
 
     spinWheelTo(0, actionIdx, 3000);
     spinWheelTo(1, workflowIdx, 3600);
