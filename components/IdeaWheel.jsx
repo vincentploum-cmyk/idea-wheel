@@ -1461,7 +1461,6 @@ export default function IdeaWheel() {
                   {/* 4 — Final verdict + funnel CTA */}
                   <div className={`su-v-cta${potential ? "" : " su-v-cta--avoid"}`}>
                     <div className="su-v-l su-v-verdict-label">Final verdict</div>
-                    {premise && <p className="su-v-premise">{premise}</p>}
                     <div className="su-v-cta-text">
                       {(deepResearch?.verdict && cleanValidationText(deepResearch.verdict)) || verdictLines[0] || (potential ? "There's a real opening here." : "The signal isn't strong enough yet.")}
                     </div>
