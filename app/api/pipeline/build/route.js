@@ -2,6 +2,19 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { buildRetrievalContext } from '../../../../lib/moat-retrieval';
+
+// Max 5 blueprint requests per user per minute
+const buildRateLimitMap = new Map();
+function checkBuildRateLimit(userId) {
+  const now = Date.now();
+  const windowMs = 60_000;
+  const max = 5;
+  const entry = buildRateLimitMap.get(userId) || { count: 0, windowStart: now };
+  if (now - entry.windowStart > windowMs) { entry.count = 0; entry.windowStart = now; }
+  entry.count += 1;
+  buildRateLimitMap.set(userId, entry);
+  return entry.count <= max;
+}
 import { addCredits, deductCredits } from '../../../../lib/credits';
 import { ensureSessionId, getBlueprintCharge, recordBlueprint, recordOutcome, saveBlueprintCharge } from '../../../../lib/moat-store';
 import { withPlainEnglish } from '../../../../lib/clarity';
@@ -671,6 +684,9 @@ export async function POST(request) {
   const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'not_authenticated' }, { status: 401 });
+  }
+  if (!checkBuildRateLimit(user.id)) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
   }
 
   const agentDesc = freeformIdea || `an agent that ${action} ${workflow} ${connector} ${industry}`;

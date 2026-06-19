@@ -1,6 +1,35 @@
 import { NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { buildRetrievalContext } from '../../../../lib/moat-retrieval';
 import { ensureSessionId, recordValidation } from '../../../../lib/moat-store';
+
+async function getUser() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { cookies: { getAll() { return cookieStore.getAll(); }, setAll() {} } }
+  );
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+}
+
+// Simple in-memory rate limiter: max 10 validations per user per minute.
+const rateLimitMap = new Map();
+function checkRateLimit(userId) {
+  const now = Date.now();
+  const windowMs = 60_000;
+  const max = 10;
+  const entry = rateLimitMap.get(userId) || { count: 0, windowStart: now };
+  if (now - entry.windowStart > windowMs) {
+    entry.count = 0;
+    entry.windowStart = now;
+  }
+  entry.count += 1;
+  rateLimitMap.set(userId, entry);
+  return entry.count <= max;
+}
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 const MODEL = 'claude-haiku-4-5-20251001';
@@ -429,6 +458,14 @@ function buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval,
 }
 
 export async function POST(request) {
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'not_authenticated' }, { status: 401 });
+  }
+  if (!checkRateLimit(user.id)) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
+  }
+
   const {
     action,
     workflow,
