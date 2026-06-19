@@ -31,38 +31,6 @@ const IDEA_EXAMPLES = [
   },
 ];
 
-function IdeaSnippet({ item, align = 'left' }) {
-  return (
-    <div style={{ padding: '0 0 48px' }}>
-      <div className="container">
-        <div style={{
-          maxWidth: 540,
-          margin: align === 'right' ? '0 0 0 auto' : align === 'center' ? '0 auto' : '0',
-        }}>
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.4, marginBottom: 12 }}>
-            ↳ From the engine
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.4 }}>{item.tag}</span>
-            <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 19, margin: 0 }}>{item.title}</h3>
-            <p style={{ fontSize: 14, lineHeight: 1.65, opacity: 0.65, margin: 0 }}>{item.idea}</p>
-            <blockquote style={{
-              margin: '4px 0 0',
-              padding: '9px 14px',
-              borderLeft: '3px solid #FFE000',
-              background: 'transparent',
-              borderRadius: 4,
-              fontSize: 13,
-              fontStyle: 'italic',
-              opacity: 0.68,
-              lineHeight: 1.55,
-            }}>{item.signal}</blockquote>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default async function LandingPage() {
   const supabase = await createClient();
@@ -98,32 +66,11 @@ export default async function LandingPage() {
       },
       {
         '@type': 'FAQPage',
-        mainEntity: [
-          {
-            '@type': 'Question',
-            name: 'What is IdeaReels?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'IdeaReels is a startup idea generator and validator. It generates concrete startup concepts, runs a free market check with competitor analysis and demand signals, then unlocks a full build-ready blueprint only for ideas that clear the bar.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'How do credits work?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'Every new account starts with 3 free credits. A market check costs 1 credit and the full blueprint costs 2 credits. You can purchase more credits from the pricing page.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'What does the blueprint include?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'The full blueprint unlocks four AI specialists: product design, go-to-market strategy, infrastructure planning, and prototype generation — all in one click.',
-            },
-          },
-        ],
+        mainEntity: FAQS.map((faq) => ({
+          '@type': 'Question',
+          name: faq.q,
+          acceptedAnswer: { '@type': 'Answer', text: faq.a },
+        })),
       },
     ],
   };
@@ -151,7 +98,21 @@ export default async function LandingPage() {
       </div>
 
       <div className="popito_fn_membership_page">
-        <IdeaSnippet item={IDEA_EXAMPLES[0]} align="left" />
+
+        {/* Proof-of-output strip — three real ideas, no boxes */}
+        <div style={{ borderTop: '1px solid rgba(0,0,0,0.07)', padding: '36px 0 48px' }}>
+          <div className="container">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '28px 48px' }}>
+              {IDEA_EXAMPLES.map((item) => (
+                <div key={item.title}>
+                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.35 }}>{item.tag}</span>
+                  <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 16, margin: '5px 0 8px', color: '#111' }}>{item.title}</p>
+                  <p style={{ fontSize: 13, fontStyle: 'italic', opacity: 0.5, lineHeight: 1.6, margin: 0, paddingLeft: 10, borderLeft: '2px solid #FFE000' }}>{item.signal}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
         <section id="how-it-works" style={{ padding: '8px 0 40px' }}>
           <div className="container">
@@ -183,8 +144,6 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
-
-        <IdeaSnippet item={IDEA_EXAMPLES[1]} align="right" />
 
         <section id="price" style={{ padding: '0 0 40px' }}>
           <div className="container">
@@ -239,8 +198,6 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
-
-        <IdeaSnippet item={IDEA_EXAMPLES[2]} align="center" />
 
         <section style={{ padding: '0 0 48px' }}>
           <div className="container">
