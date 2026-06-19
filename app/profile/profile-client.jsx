@@ -299,26 +299,6 @@ export default function ProfileClient({ user, error }) {
           </div>
         </div>
 
-        {/* Recent Activity */}
-        {transactions.length > 0 && (
-          <div className="fn__account_details fn__bold_item" style={{ marginTop: 32 }}>
-            <div className="details_item">
-              <div className="details_subtitle">
-                <h3 className="title">Recent Activity</h3>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                {transactions.map((t, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
-                    <span style={{ textTransform: 'capitalize', opacity: 0.7 }}>{t.reason.replace(/_/g, ' ')}</span>
-                    <span style={{ fontWeight: 700, color: t.amount > 0 ? '#15803D' : '#c00' }}>
-                      {t.amount > 0 ? `+${t.amount}` : t.amount} credits
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
 
       </div>
     </div>
