@@ -26,6 +26,10 @@ export async function POST(request) {
   const { validationId, idea, comp } = await request.json();
   if (!validationId) return Response.json({ error: 'validationId required' }, { status: 400 });
   const result = await saveValidatedIdea({ userId: user.id, validationId, idea, comp });
-  if (!result) return Response.json({ error: 'save_failed' }, { status: 500 });
+  if (!result || result.error) {
+    const msg = result?.error || 'save_failed';
+    console.error('[POST /api/ideas] save failed:', msg, result?.code);
+    return Response.json({ error: msg, code: result?.code }, { status: 500 });
+  }
   return Response.json({ id: result.id });
 }

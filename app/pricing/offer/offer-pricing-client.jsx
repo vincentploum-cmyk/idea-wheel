@@ -55,8 +55,8 @@ export default function OfferPricingClient({ searchParams }) {
                 {CREDIT_PACKAGES.map((pkg) => {
                   const offer = OFFER_OVERRIDES[pkg.key];
                   return (
-                    <li key={pkg.key} className="pt_list_item" style={{ display: 'block', width: 'auto', padding: 0 }}>
-                      <div className={`fn__pricing_table_item fn__bold_item${pkg.highlight ? ' active' : ''}`} style={{ position: 'relative' }}>
+                    <li key={pkg.key} className="pt_list_item" style={{ display: 'flex', width: 'auto', padding: 0 }}>
+                      <div className={`fn__pricing_table_item fn__bold_item${pkg.highlight ? ' active' : ''}`} style={{ position: 'relative', display: 'flex', flexDirection: 'column', width: '100%' }}>
                         {offer && (
                           <div style={{
                             position: 'absolute', top: -14, right: 16,
@@ -107,7 +107,7 @@ export default function OfferPricingClient({ searchParams }) {
                             </li>
                           </ul>
                         </div>
-                        <div className="item_footer">
+                        <div className="item_footer" style={{ marginTop: 'auto' }}>
                           <button
                             className="fn__btn medium"
                             disabled={loadingKey !== null}
