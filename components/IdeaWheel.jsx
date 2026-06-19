@@ -690,6 +690,9 @@ export default function IdeaWheel() {
   const [checkoutLoading, setCheckoutLoading] = useState("");
   const [checkoutErr, setCheckoutErr]     = useState("");
 
+  const [saveState, setSaveState]     = useState(null); // null | 'saving' | 'saved' | 'error'
+  const [savedIdeaId, setSavedIdeaId] = useState(null);
+
   useEffect(() => {
     setMounted(true);
     try {
@@ -818,6 +821,7 @@ export default function IdeaWheel() {
     setComp(null); setValidateErr("");
     setDesign(null); setGtm(null); setInfra(null); setProto(null);
     setBpStage(null); setBpErr("");
+    setSaveState(null); setSavedIdeaId(null);
     goTo("wheel");
   };
 
@@ -830,6 +834,7 @@ export default function IdeaWheel() {
     setDesign(null); setGtm(null); setInfra(null); setProto(null);
     setBpStage(null); setBpErr("");
     setDeepResearch(null); setDeepErr("");
+    setSaveState(null); setSavedIdeaId(null);
   };
 
   const trackOutcome = async (signal, payload = {}, explicitSessionId = sessionId) => {
@@ -969,6 +974,27 @@ export default function IdeaWheel() {
       setValidateErr(e.message.includes("AI_CREDITS") || e.message.includes("temporarily") ? "Our AI is taking a short break. Please try again in a minute." : "Market check failed. " + e.message);
     } finally {
       setValidating(false);
+    }
+  };
+
+  /* ── SAVE IDEA (free, requires auth) ── */
+  const saveIdea = async () => {
+    if (!authUser) { window.location.href = '/auth/login'; return; }
+    if (saveState === 'saving' || saveState === 'saved') return;
+    if (!comp?.validationId) return;
+    setSaveState('saving');
+    try {
+      const res = await fetch('/api/ideas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ validationId: comp.validationId, idea, comp }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'save failed');
+      setSavedIdeaId(data.id);
+      setSaveState('saved');
+    } catch {
+      setSaveState('error');
     }
   };
 
@@ -1440,7 +1466,7 @@ export default function IdeaWheel() {
                         <div className="su-v-cta-row">
                           {deepPrimary ? (
                             <button className="su-btn su-btn-primary su-btn-lg" onClick={runDeepResearch}>
-                              Run extended market research
+                              Deep research
                               <span className="su-credit-badge">{DEEP_RESEARCH_COST} credit</span>
                             </button>
                           ) : (
@@ -1455,18 +1481,44 @@ export default function IdeaWheel() {
                           </button>
                         </div>
                         {deepPrimary && (
-                          <button className="su-linkbtn" onClick={goBlueprint}>Skip ahead — build the blueprint now · {BLUEPRINT_COST} credits</button>
+                          <button className="su-linkbtn" onClick={goBlueprint}>Skip to blueprint · {BLUEPRINT_COST} credits</button>
                         )}
                         {!deepResearch && !deepPrimary && (
-                          <button className="su-linkbtn" onClick={runDeepResearch}>First, dig into real demand · {DEEP_RESEARCH_COST} credit</button>
+                          <button className="su-linkbtn" onClick={runDeepResearch}>Run deep research first · {DEEP_RESEARCH_COST} credit</button>
                         )}
-                        <div className="su-v-hint">Research {DEEP_RESEARCH_COST} credit · blueprint {BLUEPRINT_COST} credits · you have {credits}</div>
+                        {!deepResearch && (
+                          <div className="su-save-row">
+                            {saveState === 'saved' ? (
+                              <span className="su-save-confirm">
+                                ✓ Saved — <a href="/profile" style={{color:'inherit',textDecoration:'underline'}}>view in profile</a>
+                              </span>
+                            ) : (
+                              <button className="su-linkbtn su-save-btn" onClick={saveIdea} disabled={saveState === 'saving'}>
+                                {saveState === 'saving' ? 'Saving…' : saveState === 'error' ? 'Save failed — retry' : '↓ Save idea to profile'}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        <div className="su-v-hint">Deep research {DEEP_RESEARCH_COST} credit · blueprint {BLUEPRINT_COST} credits · you have {credits}</div>
                       </>
                     ) : (
-                      <div className="su-v-cta-row">
-                        <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { setComp(null); setIdea(null); }}>Spin again</button>
-                        <button className="su-linkbtn" onClick={goBlueprint}>Build it anyway · {BLUEPRINT_COST} credits</button>
-                      </div>
+                      <>
+                        <div className="su-v-cta-row">
+                          <button className="su-btn su-btn-primary su-btn-lg" onClick={() => { setComp(null); setIdea(null); setSaveState(null); setSavedIdeaId(null); }}>Spin again</button>
+                          <button className="su-linkbtn" onClick={goBlueprint}>Build it anyway · {BLUEPRINT_COST} credits</button>
+                        </div>
+                        <div className="su-save-row">
+                          {saveState === 'saved' ? (
+                            <span className="su-save-confirm">
+                              ✓ Saved — <a href="/profile" style={{color:'inherit',textDecoration:'underline'}}>view in profile</a>
+                            </span>
+                          ) : (
+                            <button className="su-linkbtn su-save-btn" onClick={saveIdea} disabled={saveState === 'saving'}>
+                              {saveState === 'saving' ? 'Saving…' : saveState === 'error' ? 'Save failed — retry' : '↓ Save idea to profile'}
+                            </button>
+                          )}
+                        </div>
+                      </>
                     ))}
                   </div>
                 </div>
@@ -2063,6 +2115,10 @@ const CSS = `
 .su-v-cta-text { font-size:16px; font-weight:600; color:var(--ink); margin-bottom:16px; line-height:1.4; }
 .su-v-cta-row { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
 .su-v-hint { font-size:12px; color:var(--muted); margin-top:12px; }
+.su-save-row { margin-top:6px; text-align:center; }
+.su-save-btn { font-size:12px; opacity:0.6; }
+.su-save-btn:hover { opacity:1; }
+.su-save-confirm { font-size:12px; color:var(--good,#15803d); font-weight:600; }
 .su-v-cta-secondary { margin-top:16px; }
 .su-v-verdict-label { margin-bottom:10px; }
 .su-v-premise { font-size:14px; font-weight:600; color:var(--bad); line-height:1.5; margin:0 0 10px; }
