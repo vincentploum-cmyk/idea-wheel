@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase-server';
 import PromoBanner from '@/components/PromoBanner';
 
 const NAV_LINKS = [
-  { href: '/wheel', label: 'Spin Ideas' },
+  { href: '/wheel', label: 'Spin!' },
   { href: '/ideas', label: 'Ideas' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/blog', label: 'Blog' },
