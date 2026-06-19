@@ -735,15 +735,24 @@ export default function IdeaWheel() {
 
   useEffect(() => () => { clearInterval(scanTimerRef.current); clearInterval(deepTimerRef.current); }, []);
 
-  // Deep link from the profile: ?idea=<id> opens a saved idea here. With &view=1
-  // we load its existing blueprint; otherwise we jump to the blueprint screen and
-  // generate one (charging 2 credits via the normal flow).
+  // Deep link from the profile: ?idea=<id> restores a saved idea.
+  //
+  // Routing logic:
+  //   &view=1           → show a finished blueprint (read-only)
+  //   &generate=1       → go to blueprint screen and auto-generate (skips research)
+  //   blueprint complete → show it (same as &view=1)
+  //   blueprint generating → resume where it left off
+  //   research done, no blueprint → restore validation + research results on wheel screen
+  //   validated only, no research → restore validation result on wheel screen so user
+  //                                 can run deep research or save/continue from there
   useEffect(() => {
     if (!authChecked || !authUser || loadedIdeaRef.current) return;
     const params = new URLSearchParams(window.location.search);
     const savedId = params.get('idea');
     if (!savedId) return;
     loadedIdeaRef.current = true;
+    const wantGenerate = params.get('generate') === '1';
+    const wantView = params.get('view') === '1';
     (async () => {
       try {
         const r = await fetch(`/api/ideas/${savedId}`);
@@ -757,30 +766,38 @@ export default function IdeaWheel() {
         });
         if (saved.comp) setComp(saved.comp);
         if (saved.session_id) setSessionId(saved.session_id);
-        if (saved.research) setDeepResearch(saved.research);
+        if (saved.research && Object.keys(saved.research).length) setDeepResearch(saved.research);
+        // Mark idea as already saved so the Save button shows confirmed state
+        setSavedIdeaId(savedId);
+        setSaveState('saved');
 
         const bp = saved.blueprint;
         const status = saved.blueprint_status;
-        if (status === 'complete' && bp) {
-          // Finished blueprint — just show it.
+
+        if ((wantView || status === 'complete') && bp) {
           setDesign(bp.design || null);
           setGtm(bp.gtm || null);
           setInfra(bp.infra || null);
           setProto(bp.prototypeHtml || null);
           setBpStage('done');
+          goTo('blueprint');
         } else if (status === 'generating' && bp?.design) {
-          // In-progress blueprint — load whatever already finished and resume
-          // the remaining stages, reusing the saved charge token (no re-charge).
           setDesign(bp.design || null);
           setGtm(bp.gtm || null);
           setInfra(bp.infra || null);
           setProto(bp.prototypeHtml || null);
           if (bp.chargeToken) setBpChargeToken(bp.chargeToken);
           setPendingResume(true);
+          goTo('blueprint');
+        } else if (wantGenerate) {
+          setPendingGenerate(true);
+          goTo('blueprint');
         } else {
-          setPendingGenerate(true);   // generate once idea + comp are in state
+          // Show the validation result on the wheel screen — user can run deep
+          // research, go straight to blueprint, or spin a new idea.
+          goTo('wheel');
         }
-        goTo('blueprint');
+
         window.history.replaceState({}, '', window.location.pathname);
       } catch {}
     })();
