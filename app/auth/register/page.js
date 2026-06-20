@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
+import BrandLogo from '@/components/BrandLogo';
 
 export default function RegisterPage() {
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideareels.io';
@@ -39,17 +40,7 @@ export default function RegisterPage() {
           <div className="header_top">
             <div className="logo">
               <Link href="/" style={{ textDecoration: 'none' }}>
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center',
-                  background: '#FFE000', border: '2.5px solid #111',
-                  borderRadius: '6px 999px 999px 6px',
-                  padding: '5px 18px 5px 12px',
-                  fontFamily: 'Nunito, sans-serif', fontWeight: 900,
-                  fontSize: 17, letterSpacing: '0.04em',
-                  textTransform: 'uppercase', color: '#111', lineHeight: 1,
-                }}>
-                  IdeaReels
-                </span>
+                <BrandLogo size={26} />
               </Link>
             </div>
             <div className="right__trigger">
@@ -71,15 +62,7 @@ export default function RegisterPage() {
                     alignItems: 'center', justifyContent: 'center',
                     gap: 24, padding: 40, textAlign: 'center',
                   }}>
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center',
-                      background: '#111', border: '3px solid #111',
-                      borderRadius: '6px 999px 999px 6px',
-                      padding: '7px 22px 7px 14px',
-                      fontFamily: 'Nunito, sans-serif', fontWeight: 900,
-                      fontSize: 20, letterSpacing: '0.04em',
-                      textTransform: 'uppercase', color: '#FFE000',
-                    }}>IdeaReels</span>
+                    <BrandLogo size={30} />
                     <p style={{
                       fontFamily: 'Nunito, sans-serif', fontWeight: 900,
                       fontSize: 'clamp(24px,4vw,36px)', lineHeight: 1.1,
