@@ -19,36 +19,31 @@ async function getUser() {
   return user;
 }
 
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
-const MODEL = 'claude-haiku-4-5-20251001';
+const OPENAI_KEY = process.env.OPENAI_API_KEY;
+const MODEL = 'gpt-4o-mini';
 
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
 async function call(prompt, { maxTokens = 2000, searchUses = 8, attempt = 0 } = {}) {
-  if (!ANTHROPIC_KEY) throw new Error('ANTHROPIC_API_KEY not set');
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  if (!OPENAI_KEY) throw new Error('OPENAI_API_KEY not set');
+  const res = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: maxTokens,
-      messages: [{ role: 'user', content: prompt }],
-      // Deep, paid research: a wider web search aimed at communities.
-      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: searchUses }],
-    }),
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_KEY}` },
+    body: JSON.stringify({ model: MODEL, tools: [{ type: 'web_search_preview' }], input: prompt }),
   });
   if (res.status === 429 && attempt < 2) {
     await sleep(8000 * (attempt + 1));
     return call(prompt, { maxTokens, searchUses, attempt: attempt + 1 });
   }
-  if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
+  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
   const data = await res.json();
-  const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
-  return { text, usage: data.usage || {} };
+  const text = (data.output || [])
+    .filter(o => o.type === 'message')
+    .flatMap(o => o.content || [])
+    .filter(c => c.type === 'output_text')
+    .map(c => c.text)
+    .join('');
+  return { text, usage: { input_tokens: data.usage?.input_tokens ?? 0, output_tokens: data.usage?.output_tokens ?? 0 } };
 }
 
 function extractJson(text) {

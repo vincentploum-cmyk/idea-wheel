@@ -31,9 +31,9 @@ function checkRateLimit(userId) {
   return entry.count <= max;
 }
 
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
-const MODEL = 'claude-haiku-4-5-20251001';
-const PRICING = { input: 1.0, output: 5.0 };
+const OPENAI_KEY = process.env.OPENAI_API_KEY;
+const MODEL = 'gpt-4o-mini';
+const PRICING = { input: 0.15, output: 0.60 };
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -44,29 +44,22 @@ function calcCost(inp, out) {
 }
 
 async function call(prompt, { maxTokens = 1800, webSearch = false, searchUses = 3, attempt = 0 } = {}) {
-  if (!ANTHROPIC_KEY) throw new Error('ANTHROPIC_API_KEY not set');
+  if (!OPENAI_KEY) throw new Error('OPENAI_API_KEY not set');
 
-  const body = {
-    model: MODEL,
-    max_tokens: maxTokens,
-    messages: [{ role: 'user', content: prompt }],
-  };
-
+  let res;
   if (webSearch) {
-    // Free validation: a basic, capped web search — enough for a score,
-    // advice and market read at the bare minimum of tokens.
-    body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: searchUses }];
+    res = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_KEY}` },
+      body: JSON.stringify({ model: MODEL, tools: [{ type: 'web_search_preview' }], input: prompt }),
+    });
+  } else {
+    res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_KEY}` },
+      body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }),
+    });
   }
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify(body),
-  });
 
   if (res.status === 429 && attempt < 2) {
     const retryAfterHeader = Number(res.headers.get('retry-after') || 0);
@@ -75,10 +68,25 @@ async function call(prompt, { maxTokens = 1800, webSearch = false, searchUses = 
     return call(prompt, { maxTokens, webSearch, searchUses, attempt: attempt + 1 });
   }
 
-  if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
+  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
   const data = await res.json();
-  const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
-  const usage = data.usage || { input_tokens: 0, output_tokens: 0 };
+
+  let text;
+  if (webSearch) {
+    text = (data.output || [])
+      .filter(o => o.type === 'message')
+      .flatMap(o => o.content || [])
+      .filter(c => c.type === 'output_text')
+      .map(c => c.text)
+      .join('');
+  } else {
+    text = data.choices?.[0]?.message?.content || '';
+  }
+
+  const usage = {
+    input_tokens: data.usage?.input_tokens ?? data.usage?.prompt_tokens ?? 0,
+    output_tokens: data.usage?.output_tokens ?? data.usage?.completion_tokens ?? 0,
+  };
   return { text, usage };
 }
 

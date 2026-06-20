@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { syncOpportunityBankToSupabase } from '@/lib/opportunity-bank';
 import { DEFAULT_MODE_CONFIGS } from '@/lib/generator-config';
 
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
-const CRON_SECRET  = process.env.CRON_SECRET;
+const OPENAI_KEY  = process.env.OPENAI_API_KEY;
+const CRON_SECRET = process.env.CRON_SECRET;
 
 // Vocabulary exposed to Claude so it only picks valid bank values
 const B2B_ACTIONS    = DEFAULT_MODE_CONFIGS.b2b.banks[0];
@@ -50,24 +50,22 @@ Prioritise combinations where:
 Return a JSON array of 12 objects. Nothing else.`;
 }
 
-async function callClaude(prompt) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+async function callOpenAI(prompt) {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
-    },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_KEY}` },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'gpt-4o-mini',
       max_tokens: 4096,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: prompt }],
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
+      ],
     }),
   });
-  if (!res.ok) throw new Error(`Anthropic API error: ${res.status}`);
+  if (!res.ok) throw new Error(`OpenAI API error: ${res.status}`);
   const data = await res.json();
-  return data.content?.[0]?.text || '';
+  return data.choices?.[0]?.message?.content || '';
 }
 
 function parseSeeds(raw, date) {
@@ -118,14 +116,14 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!ANTHROPIC_KEY) {
-    return NextResponse.json({ error: 'ANTHROPIC_API_KEY not set' }, { status: 500 });
+  if (!OPENAI_KEY) {
+    return NextResponse.json({ error: 'OPENAI_API_KEY not set' }, { status: 500 });
   }
 
   const date = new Date().toISOString();
 
   try {
-    const raw = await callClaude(buildUserPrompt(date.slice(0, 10)));
+    const raw = await callOpenAI(buildUserPrompt(date.slice(0, 10)));
     const seeds = parseSeeds(raw, date);
 
     if (!seeds.length) {

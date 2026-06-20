@@ -20,18 +20,18 @@ import { ensureSessionId, getBlueprintCharge, recordBlueprint, recordOutcome, sa
 import { withPlainEnglish } from '../../../../lib/clarity';
 import { attachBlueprint, saveBlueprintProgress } from '../../../../lib/saved-ideas';
 
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+const OPENAI_KEY = process.env.OPENAI_API_KEY;
 
 const MODELS = {
-  scout: 'claude-haiku-4-5-20251001',
-  designer: 'claude-sonnet-4-6',
-  gtm: 'claude-sonnet-4-6',
-  builder: 'claude-sonnet-4-6',
+  scout: 'gpt-4o-mini',
+  designer: 'gpt-4o',
+  gtm: 'gpt-4o',
+  builder: 'gpt-4o',
 };
 
 const PRICING = {
-  'claude-haiku-4-5-20251001': { input: 1.0, output: 5.0 },
-  'claude-sonnet-4-6': { input: 3.0, output: 15.0 },
+  'gpt-4o-mini': { input: 0.15, output: 0.60 },
+  'gpt-4o':      { input: 2.50, output: 10.00 },
 };
 
 async function getUser() {
@@ -50,7 +50,7 @@ function sleep(ms) {
 }
 
 function calcCost(model, inp, out) {
-  const p = PRICING[model] || PRICING['claude-sonnet-4-6'];
+  const p = PRICING[model] || PRICING['gpt-4o'];
   return (inp * p.input + out * p.output) / 1_000_000;
 }
 
@@ -65,28 +65,22 @@ function mergeUsage(...usages) {
 }
 
 async function call(prompt, { model, maxTokens = 1000, webSearch = false, searchUses = 8, attempt = 0 }) {
-  if (!ANTHROPIC_KEY) throw new Error('ANTHROPIC_API_KEY not set');
+  if (!OPENAI_KEY) throw new Error('OPENAI_API_KEY not set');
 
-  const body = {
-    model,
-    max_tokens: maxTokens,
-    messages: [{ role: 'user', content: prompt }],
-  };
-
+  let res;
   if (webSearch) {
-    // Paid blueprint: a deeper web search than the free validation.
-    body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: searchUses }];
+    res = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_KEY}` },
+      body: JSON.stringify({ model, tools: [{ type: 'web_search_preview' }], input: prompt }),
+    });
+  } else {
+    res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_KEY}` },
+      body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }),
+    });
   }
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify(body),
-  });
 
   if (res.status === 429 && attempt < 2) {
     const retryAfterHeader = Number(res.headers.get('retry-after') || 0);
@@ -95,13 +89,25 @@ async function call(prompt, { model, maxTokens = 1000, webSearch = false, search
     return call(prompt, { model, maxTokens, webSearch, searchUses, attempt: attempt + 1 });
   }
 
-  if (!res.ok) {
-    throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
+  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+
+  let text;
+  if (webSearch) {
+    text = (data.output || [])
+      .filter(o => o.type === 'message')
+      .flatMap(o => o.content || [])
+      .filter(c => c.type === 'output_text')
+      .map(c => c.text)
+      .join('');
+  } else {
+    text = data.choices?.[0]?.message?.content || '';
   }
 
-  const data = await res.json();
-  const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
-  const usage = data.usage || { input_tokens: 0, output_tokens: 0 };
+  const usage = {
+    input_tokens: data.usage?.input_tokens ?? data.usage?.prompt_tokens ?? 0,
+    output_tokens: data.usage?.output_tokens ?? data.usage?.completion_tokens ?? 0,
+  };
   return { text, usage, model, costUsd: calcCost(model, usage.input_tokens, usage.output_tokens) };
 }
 

@@ -13,7 +13,7 @@
 import { getAllCatalogData, upsertCatalogIdea } from '../../../../lib/catalog-store';
 import { IDEA_EXAMPLES } from '../../../../lib/idea-examples';
 
-const KEY = process.env.ANTHROPIC_API_KEY;
+const KEY = process.env.OPENAI_API_KEY;
 const SECRET = process.env.SEED_SECRET;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -46,23 +46,37 @@ function deepStrip(val) {
   return val;
 }
 
-async function call(prompt, { model = 'claude-haiku-4-5-20251001', maxTokens = 2000, webSearch = false } = {}, attempt = 0) {
-  if (!KEY) throw new Error('ANTHROPIC_API_KEY not set');
-  const body = {
-    model,
-    max_tokens: maxTokens,
-    messages: [{ role: 'user', content: prompt }],
-  };
-  if (webSearch) body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 10 }];
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify(body),
-  });
+async function call(prompt, { model = 'gpt-4o-mini', maxTokens = 2000, webSearch = false } = {}, attempt = 0) {
+  if (!KEY) throw new Error('OPENAI_API_KEY not set');
+
+  let res;
+  if (webSearch) {
+    res = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${KEY}` },
+      body: JSON.stringify({ model, tools: [{ type: 'web_search_preview' }], input: prompt }),
+    });
+  } else {
+    res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${KEY}` },
+      body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }),
+    });
+  }
+
   if (res.status === 429 && attempt < 3) { await sleep(12000 * (attempt + 1)); return call(prompt, { model, maxTokens, webSearch }, attempt + 1); }
-  if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
+  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
   const data = await res.json();
-  return (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+
+  if (webSearch) {
+    return (data.output || [])
+      .filter(o => o.type === 'message')
+      .flatMap(o => o.content || [])
+      .filter(c => c.type === 'output_text')
+      .map(c => c.text)
+      .join('');
+  }
+  return data.choices?.[0]?.message?.content || '';
 }
 
 function parseJSON(text) {
@@ -167,7 +181,7 @@ CRITICAL: No citation tags, no HTML, no markup. Plain English only. Return ONLY 
   "userFlow": "sign-up to first real value in 2-3 plain sentences — name the actual screens",
   "wowMoment": "the exact moment a prospect sees the product and says 'I need this' — name the specific trigger and the specific output",
   "dataMoat": "what compound data or workflow memory builds up over time that a copycat can never replicate from day one"
-}`, { model: 'claude-sonnet-4-6', maxTokens: 1400 });
+}`, { model: 'gpt-4o', maxTokens: 1400 });
   const design = deepStrip(parseJSON(designText));
 
   // Stage 2 — GTM strategy
@@ -207,7 +221,7 @@ CRITICAL: No citation tags, no HTML. Plain English only. Return ONLY valid JSON:
     "exact community 4"
   ],
   "whyNow": "one specific macro event, regulation, or technology shift in 2024-2025 that makes this urgent right now — not generic AI hype"
-}`, { model: 'claude-sonnet-4-6', maxTokens: 2000 });
+}`, { model: 'gpt-4o', maxTokens: 2000 });
   const gtm = deepStrip(parseJSON(gtmText));
 
   // Stage 3 — Infrastructure
