@@ -11,6 +11,7 @@ export default async function ProfilePage({ searchParams }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const error = searchParams?.error;
+  const welcome = searchParams?.welcome === '1';
   return (
     <PopitoShell>
       <div className="popito_fn_pagetitle">
@@ -23,7 +24,7 @@ export default async function ProfilePage({ searchParams }) {
           </div>
         </div>
       </div>
-      <ProfileClient user={user} error={error} />
+      <ProfileClient user={user} error={error} welcome={welcome} />
     </PopitoShell>
   );
 }

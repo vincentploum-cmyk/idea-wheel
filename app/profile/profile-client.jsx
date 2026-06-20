@@ -130,7 +130,7 @@ function IdeaCard({ idea, onDelete }) {
   );
 }
 
-export default function ProfileClient({ user, error }) {
+export default function ProfileClient({ user, error, welcome }) {
   const supabase = createClient();
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideareels.io';
   const [email, setEmail] = useState('');
@@ -141,6 +141,7 @@ export default function ProfileClient({ user, error }) {
   const [transactions, setTransactions] = useState([]);
   const [ideas, setIdeas] = useState([]);
   const [ideasLoading, setIdeasLoading] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(!!welcome);
 
   useEffect(() => {
     if (!user) return;
@@ -239,6 +240,48 @@ export default function ProfileClient({ user, error }) {
   return (
     <div className="popito_fn_account_page">
       <div className="container">
+
+        {/* Welcome confirmation banner */}
+        {showWelcome && (
+          <div style={{
+            background: '#FFE000',
+            border: '2px solid #111',
+            borderRadius: 10,
+            boxShadow: '3px 3px 0 #111',
+            padding: '20px 24px',
+            marginBottom: 28,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+            flexWrap: 'wrap',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <span style={{ fontSize: 24 }}>✓</span>
+              <div>
+                <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16, margin: '0 0 2px', color: '#111' }}>
+                  You&apos;re signed in
+                </p>
+                <p style={{ fontSize: 13, color: '#111', opacity: 0.65, margin: 0 }}>
+                  Welcome to IdeaReels. Your account is ready.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowWelcome(false)}
+              style={{
+                background: '#111', color: '#FFE000',
+                border: '2px solid #111', borderRadius: 6,
+                padding: '8px 18px',
+                fontFamily: 'Nunito, sans-serif', fontWeight: 900,
+                fontSize: 13, cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Got it
+            </button>
+          </div>
+        )}
 
         {/* Account Details */}
         <div className="fn__account_details fn__bold_item">

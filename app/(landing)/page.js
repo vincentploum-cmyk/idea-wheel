@@ -78,20 +78,6 @@ export default async function LandingPage() {
 
       <div className="popito_fn_membership_page">
 
-        {/* Lean teaser linking to the ideas page */}
-        <div style={{ borderTop: '1px solid rgba(0,0,0,0.07)', padding: '24px 0 40px' }}>
-          <div className="container">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-              <p style={{ fontSize: 14, opacity: 0.55, margin: 0 }}>
-                CertWatch · ShopPing · IntakeFlow · ChurnSignal — real ideas the engine has found.
-              </p>
-              <Link href="/ideas" className="fn__creative_link" style={{ fontSize: 13 }}>
-                See all ideas<span className="suffix">//</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-
         <section id="how-it-works" style={{ padding: '8px 0 40px' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 28 }}>

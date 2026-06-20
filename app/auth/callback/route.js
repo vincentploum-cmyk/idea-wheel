@@ -5,8 +5,7 @@ import { cookies } from 'next/headers';
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
-  // After auth, always go to the app with ?wheel=1 so the app auto-navigates to the reels
-  const next = searchParams.get('next') ?? '/?wheel=1';
+  const next = searchParams.get('next') ?? '/profile?welcome=1';
 
   // Always use the canonical site URL — never trust request.url origin
   // which can be localhost on Render's internal network
