@@ -38,7 +38,7 @@ function Divider() {
 
 // ── Research panel (shown when ideas unlocked) ───────────────────────────────
 
-function ResearchPanel({ research, slug, blueprintUnlocked, onUnlockBlueprint, user }) {
+function ResearchPanel({ research, slug, blueprintUnlocked, blueprintCount, onUnlockBlueprint, user }) {
   const [expanded, setExpanded] = useState(false);
   if (!research) return null;
 
@@ -131,6 +131,7 @@ function ResearchPanel({ research, slug, blueprintUnlocked, onUnlockBlueprint, u
       <BlueprintCTA
         slug={slug}
         blueprintUnlocked={blueprintUnlocked}
+        blueprintCount={blueprintCount}
         onUnlockBlueprint={onUnlockBlueprint}
         user={user}
       />
@@ -140,7 +141,7 @@ function ResearchPanel({ research, slug, blueprintUnlocked, onUnlockBlueprint, u
 
 // ── Blueprint panel ──────────────────────────────────────────────────────────
 
-function BlueprintCTA({ slug, blueprintUnlocked, onUnlockBlueprint, user }) {
+function BlueprintCTA({ slug, blueprintUnlocked, blueprintCount, onUnlockBlueprint, user }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showBlueprint, setShowBlueprint] = useState(false);
@@ -209,6 +210,11 @@ function BlueprintCTA({ slug, blueprintUnlocked, onUnlockBlueprint, user }) {
           Product design · GTM plan · Tech setup · Cursor prompt
         </span>
       </div>
+      {blueprintCount > 0 && (
+        <p style={{ fontSize: 12, color: '#111', opacity: 0.45, margin: '8px 0 0' }}>
+          {blueprintCount} founder{blueprintCount !== 1 ? 's' : ''} {blueprintCount === 1 ? 'has' : 'have'} this blueprint
+        </p>
+      )}
       {error && (
         <p style={{ fontSize: 12, color: '#b91c1c', margin: '8px 0 0' }}>
           {error}{' '}
@@ -359,7 +365,7 @@ function BlueprintContent({ blueprint }) {
 
 // ── Idea card ────────────────────────────────────────────────────────────────
 
-function IdeaCard({ item, index, locked, unlocked, catalogEntry, blueprintUnlocked, onUnlockBlueprint, user }) {
+function IdeaCard({ item, index, locked, unlocked, catalogEntry, blueprintUnlocked, blueprintCount, onUnlockBlueprint, user }) {
   const research = catalogEntry?.research || null;
   const blueprint = catalogEntry?.blueprint || null;
   const isPremium = item.score >= PREMIUM_SCORE;
@@ -444,6 +450,7 @@ function IdeaCard({ item, index, locked, unlocked, catalogEntry, blueprintUnlock
               research={research}
               slug={item.slug}
               blueprintUnlocked={blueprintUnlocked}
+              blueprintCount={blueprintCount}
               onUnlockBlueprint={onUnlockBlueprint}
               user={user}
             />
@@ -497,7 +504,7 @@ function IdeaCard({ item, index, locked, unlocked, catalogEntry, blueprintUnlock
 
 // ── Root client component ────────────────────────────────────────────────────
 
-export default function IdeasClient({ user, unlocked: initialUnlocked, catalogData = {}, blueprintUnlocks: initialBlueprintUnlocks = {} }) {
+export default function IdeasClient({ user, unlocked: initialUnlocked, catalogData = {}, blueprintUnlocks: initialBlueprintUnlocks = {}, unlockCounts = {} }) {
   const [unlocked, setUnlocked] = useState(initialUnlocked);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -505,6 +512,8 @@ export default function IdeasClient({ user, unlocked: initialUnlocked, catalogDa
 
   const freeIdeas    = IDEA_EXAMPLES.filter(i => i.score < PREMIUM_SCORE);
   const premiumIdeas = IDEA_EXAMPLES.filter(i => i.score >= PREMIUM_SCORE);
+  const researchCount = unlockCounts.researchCount ?? 0;
+  const blueprintCounts = unlockCounts.blueprintCounts ?? {};
 
   const handleUnlock = async () => {
     if (!user) { window.location.href = '/auth/login?next=/ideas'; return; }
@@ -569,9 +578,14 @@ export default function IdeasClient({ user, unlocked: initialUnlocked, catalogDa
                 <p style={{ fontSize: 14, opacity: 0.65, margin: '0 0 6px', lineHeight: 1.65 }}>
                   These ideas scored {PREMIUM_SCORE}+ — strong demand signal, low competition, real market evidence.
                 </p>
-                <p style={{ fontSize: 14, opacity: 0.65, margin: '0 0 24px', lineHeight: 1.65 }}>
+                <p style={{ fontSize: 14, opacity: 0.65, margin: '0 0 12px', lineHeight: 1.65 }}>
                   Unlock them permanently for 1 credit. Includes the full market research report for each idea — competitor breakdown, market signals, risks, and the exact opening.
                 </p>
+                {researchCount > 0 && (
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#111', opacity: 0.55, margin: '0 0 20px' }}>
+                    {researchCount} founder{researchCount !== 1 ? 's' : ''} {researchCount === 1 ? 'has' : 'have'} already unlocked this
+                  </p>
+                )}
                 {error && (
                   <p style={{ color: '#b91c1c', fontSize: 13, marginBottom: 16 }}>
                     {error}{' '}
@@ -617,6 +631,7 @@ export default function IdeasClient({ user, unlocked: initialUnlocked, catalogDa
                 unlocked={false}
                 catalogEntry={null}
                 blueprintUnlocked={false}
+                blueprintCount={blueprintCounts[item.slug] ?? 0}
                 onUnlockBlueprint={handleUnlockBlueprint}
                 user={user}
               />
@@ -632,6 +647,7 @@ export default function IdeasClient({ user, unlocked: initialUnlocked, catalogDa
                 unlocked={true}
                 catalogEntry={catalogData[item.slug]}
                 blueprintUnlocked={!!blueprintUnlocks[item.slug]}
+                blueprintCount={blueprintCounts[item.slug] ?? 0}
                 onUnlockBlueprint={handleUnlockBlueprint}
                 user={user}
               />

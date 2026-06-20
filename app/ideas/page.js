@@ -2,7 +2,7 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import IdeasClient from './ideas-client';
 import { createClient } from '@/lib/supabase-server';
 import { hasUnlockedIdeas, hasUnlockedCatalogBlueprint } from '@/lib/credits';
-import { getAllCatalogData } from '@/lib/catalog-store';
+import { getAllCatalogData, getUnlockCounts } from '@/lib/catalog-store';
 import { IDEA_EXAMPLES } from '@/lib/idea-examples';
 
 export const metadata = {
@@ -18,8 +18,12 @@ export default async function IdeasPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const unlocked = user ? await hasUnlockedIdeas(user.id) : false;
 
-  // Fetch pre-generated catalog data (research + blueprints)
-  const catalogData = await getAllCatalogData().catch(() => ({}));
+  // Fetch pre-generated catalog data (research + blueprints) and unlock counts
+  const premiumSlugs = IDEA_EXAMPLES.filter(i => i.score >= 80).map(i => i.slug);
+  const [catalogData, unlockCounts] = await Promise.all([
+    getAllCatalogData().catch(() => ({})),
+    getUnlockCounts(premiumSlugs).catch(() => ({ researchCount: 0, blueprintCounts: {} })),
+  ]);
 
   // Check which blueprints this user has unlocked (per-idea)
   let blueprintUnlocks = {};
@@ -49,6 +53,7 @@ export default async function IdeasPage() {
         unlocked={unlocked}
         catalogData={catalogData}
         blueprintUnlocks={blueprintUnlocks}
+        unlockCounts={unlockCounts}
       />
     </PopitoShell>
   );
