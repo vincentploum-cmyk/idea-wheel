@@ -49,10 +49,10 @@ const IdeaReelsHeader = () => {
 
           <div className="header-btn header-btn-l1 ms-auto d-none d-xs-inline-flex">
             <div className="zubuz-header-btn-wrap">
-              <Link className="zubuz-login-btn" href="/profile">Login</Link>
+              <Link className="zubuz-login-btn" href="/profile">Sign in</Link>
             </div>
             <Link className="zubuz-default-btn zubuz-header-btn pill" href="/wheel">
-              <span>Get Started</span>
+              <span>Try the wheel</span>
             </Link>
           </div>
 

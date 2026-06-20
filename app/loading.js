@@ -49,7 +49,7 @@ export default function Loading() {
             letterSpacing: '-0.03em',
           }}
         >
-          Loading IdeaReels
+          Warming up IdeaReels
         </h1>
         <p
           style={{
@@ -59,7 +59,7 @@ export default function Loading() {
             color: 'var(--muted)',
           }}
         >
-          Preparing the idea generator and validation workflow.
+          Getting the wheel and market-check flow ready for you.
         </p>
       </div>
     </main>

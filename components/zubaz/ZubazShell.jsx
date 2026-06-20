@@ -47,10 +47,10 @@ function IdeaReelsHeader() {
 
           <div className="header-btn header-btn-l1 ms-auto d-none d-xs-inline-flex">
             <div className="zubuz-header-btn-wrap">
-              <Link className="zubuz-login-btn" href="/profile">Login</Link>
+              <Link className="zubuz-login-btn" href="/profile">Sign in</Link>
             </div>
             <Link className="zubuz-default-btn zubuz-header-btn pill" href="/wheel">
-              <span>Get Started</span>
+              <span>Try the wheel</span>
             </Link>
           </div>
 
@@ -74,14 +74,14 @@ function IdeaReelsFooter() {
                 <Link href="/" style={{ textDecoration: "none" }}>
                   <strong style={{ color: "white", fontSize: "1.25rem" }}>IdeaReels</strong>
                 </Link>
-                <p>Spin an idea. Validate it instantly. Ship a company.</p>
+                <p>Spin into a buildable idea, sanity-check it fast, then go deeper only when it deserves your time.</p>
               </div>
             </div>
             <div className="col-xl-2 col-lg-3 col-md-6">
               <div className="zubuz-footer-menu light">
                 <h6>Product</h6>
                 <ul>
-                  <li><Link href="/wheel">Idea Generator</Link></li>
+                  <li><Link href="/wheel">Wheel</Link></li>
                   <li><Link href="/pricing">Pricing</Link></li>
                   <li><Link href="/faq">FAQ</Link></li>
                 </ul>

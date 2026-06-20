@@ -111,8 +111,8 @@ export default function ProfileClient({ user, error }) {
                 <div style={s.empty}>
                   <div style={{ fontSize: 28, marginBottom: 8 }}>✦</div>
                   <div style={{ fontWeight: 600, marginBottom: 4 }}>No saved ideas yet</div>
-                  <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>Run extended market research on an idea and it shows up here</div>
-                  <a href="/?wheel=1" style={s.buyBtn}>Spin an idea →</a>
+                  <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>Spin the wheel, save a promising idea, and it will show up here.</div>
+                  <a href="/?wheel=1" style={s.buyBtn}>Try the wheel →</a>
                 </div>
               ) : (
                 <div style={s.bpList}>
@@ -195,13 +195,13 @@ export default function ProfileClient({ user, error }) {
           <div style={s.card}>
             <div style={{ fontSize: 36, marginBottom: 14 }}>✉️</div>
             <h1 style={s.title}>Check your email</h1>
-            <p style={s.sub}>We sent a sign-in link to <strong>{email}</strong>. Click it to continue.</p>
+            <p style={s.sub}>We sent a sign-in link to <strong>{email}</strong>. Your free credits will be waiting when you get back.</p>
             <button onClick={() => setSent(false)} style={s.ghostBtn}>Use a different email</button>
           </div>
         ) : (
           <div style={s.card}>
-            <h1 style={s.title}>Sign in to IdeaReels</h1>
-            <p style={s.sub}>Save your ideas and credits to your account.</p>
+            <h1 style={s.title}>Sign in and claim your 3 free credits</h1>
+            <p style={s.sub}>Save your ideas, keep your research, and buy more credits only when a spin feels worth chasing.</p>
             {err && <p style={s.errBox}>{err}</p>}
             <button onClick={() => signInWithOAuth('google')} style={s.oauthBtn}>
               <svg width="18" height="18" viewBox="0 0 18 18" style={{ flexShrink: 0 }}>
@@ -223,7 +223,7 @@ export default function ProfileClient({ user, error }) {
               <input type="email" required placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} style={s.input}/>
               <button type="submit" disabled={loading} style={s.submitBtn}>{loading ? 'Sending…' : 'Send magic link'}</button>
             </form>
-            <p style={s.reassure}>No password to remember. We only use your email for sign-in links and purchase receipts.</p>
+            <p style={s.reassure}>No password to remember. We only use your email for sign-in links, receipts, and keeping your work attached to your account.</p>
           </div>
         )}
         </div>

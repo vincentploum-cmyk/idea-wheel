@@ -3,7 +3,7 @@ import ProfileClient from './profile-client';
 
 export const metadata = {
   title: 'Profile',
-  description: 'Your IdeaReels profile and credits.',
+  description: 'Sign in, claim your free credits, and manage your IdeaReels research and blueprints.',
 };
 
 export default async function ProfilePage({ searchParams }) {

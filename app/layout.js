@@ -9,20 +9,20 @@ import CloudBackground from '@/components/CloudBackground';
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://ideareels.io'),
   title: {
-    default: 'IdeaReels — Spin an idea. Ship a company.',
+    default: 'IdeaReels — spin up your next weekend build',
     template: '%s | IdeaReels',
   },
-  description: 'Spin three reels to land on a startup idea. Get free market validation, then unlock a full blueprint: product, go-to-market, architecture, and prototype.',
+  description: 'IdeaReels helps vibe coders spin into buildable ideas, sanity-check them fast, and unlock a blueprint when a project feels real.',
   openGraph: {
-    title: 'IdeaReels — Spin an idea. Ship a company.',
-    description: 'Spin three reels to land on a startup idea. Get free market validation, then unlock a full blueprint.',
+    title: 'IdeaReels — spin up your next weekend build',
+    description: 'Spin the wheel, get a fast market sanity check, and unlock a build-ready blueprint.',
     type: 'website',
     url: 'https://ideareels.io',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'IdeaReels — Spin an idea. Ship a company.',
-    description: 'Spin three reels to land on a startup idea. Get free market validation, then unlock a full blueprint.',
+    title: 'IdeaReels — spin up your next weekend build',
+    description: 'Spin the wheel, get a fast market sanity check, and unlock a build-ready blueprint.',
   },
 };
 

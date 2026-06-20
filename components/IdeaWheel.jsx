@@ -1170,7 +1170,7 @@ export default function IdeaWheel() {
           ) : hasAccount ? (
             <a className="su-nav-link su-nav-link--cta" href="/profile">Log in</a>
           ) : (
-            <a className="su-nav-link su-nav-link--cta" href="/profile">Sign up</a>
+            <a className="su-nav-link su-nav-link--cta" href="/profile">Get free credits</a>
           )}
         </div>
       </nav>
@@ -1180,19 +1180,19 @@ export default function IdeaWheel() {
         <section className="su-screen su-landing">
           <div className="su-landing-inner">
 
-            <div className="su-util-eyebrow">Idea validation engine</div>
+            <div className="su-util-eyebrow">Built for vibe coders</div>
             <h1 className="su-display su-landing-h1">
-              <span style={{ display:"block" }}>Find a startup idea</span>
-              <span className="su-grad-text" style={{ display:"block" }}>worth building.</span>
+              <span style={{ display:"block" }}>Spin up a SaaS idea</span>
+              <span className="su-grad-text" style={{ display:"block" }}>you'd actually build tonight.</span>
             </h1>
             <p className="su-landing-sub">
-              Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.
+              Start with a niche, pain point, and angle, get a fast market sanity check, then unlock the deeper plan only when the project feels real.
             </p>
 
             <div className="su-landing-cta">
               <div className="su-landing-cta-row">
                 <button className="su-btn su-btn-primary su-btn-lg" onClick={() => authUser ? goTo("wheel") : window.location.assign("/profile")}>
-                  Get started
+                  {authUser ? "Start spinning" : "Claim 3 free credits"}
                 </button>
                 <button className="su-btn su-btn-ghost su-btn-lg" onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior:"smooth", block:"start" })}>
                   See how it works
@@ -1207,24 +1207,24 @@ export default function IdeaWheel() {
                 <div className="su-hiw-step">
                   <div className="su-hiw-num">1</div>
                   <div>
-                    <div className="su-hiw-t">Generate a business idea worth chasing</div>
-                    <div className="su-hiw-d">Combine proven actions, real workflows, and target industries to uncover concrete startup concepts, not vague inspiration.</div>
+                    <div className="su-hiw-t">Land on a specific wedge</div>
+                    <div className="su-hiw-d">Instead of staring at a blank prompt, you start with a niche, pain point, and angle you can imagine building this weekend.</div>
                   </div>
                 </div>
                 <div className="su-hiw-connector" aria-hidden />
                 <div className="su-hiw-step">
                   <div className="su-hiw-num">2</div>
                   <div>
-                    <div className="su-hiw-t">Know if it's worth building before you commit</div>
-                    <div className="su-hiw-d">Every idea gets a market check with competitor analysis, market size, and demand signals, so you get a clear build, caution, or avoid verdict before you sink time into it.</div>
+                    <div className="su-hiw-t">Pressure-test it before you overcommit</div>
+                    <div className="su-hiw-d">The market check helps you separate plausible ideas from fun nonsense before you sink a night or weekend into shipping.</div>
                   </div>
                 </div>
                 <div className="su-hiw-connector" aria-hidden />
                 <div className="su-hiw-step">
                   <div className="su-hiw-num">3</div>
                   <div>
-                    <div className="su-hiw-t">Turn the winner into a build-ready plan</div>
-                    <div className="su-hiw-d">Extended market research costs 1 credit and the full blueprint costs 2 — and every new account starts with 3 free credits. Each blueprint unlocks four AI specialists across product design, launch strategy, infrastructure, and prototype generation.</div>
+                    <div className="su-hiw-t">Go deeper only when the spin hits</div>
+                    <div className="su-hiw-d">Sign in to get 3 free credits. Use 1 for deeper research or 2 for the full blueprint with product, launch, infrastructure, and prototype guidance.</div>
                   </div>
                 </div>
               </div>
@@ -1233,16 +1233,15 @@ export default function IdeaWheel() {
             {/* steps — above teaser */}
             {/* reviews */}
             <div className="su-reviews">
-              <div className="su-reviews-label">What founders are saying</div>
+              <div className="su-reviews-label">Why vibe coders actually use it</div>
               <div className="su-reviews-grid">
                 {[
-                  { name:"Sarah K.", role:"Founder, SaaS", text:"I spun 12 ideas in 20 minutes. The market check killed 9 of them before I wasted a single hour. That's the point.", stars:5 },
-                  { name:"Marcus L.", role:"Operator", text:"The infrastructure breakdown alone saved me 3 hours of research. Every service I needed, with setup steps and cost estimates.", stars:5 },
-                  { name:"Priya M.", role:"Product Manager", text:"I was skeptical about AI ideation tools. This one validates before it builds. That's the difference. The avoid verdict on my first idea was genuinely useful.", stars:5 },
+                  { name:"Start with something buildable", role:"Skip the blank prompt", text:"The wheel gives you a niche, pain point, and angle you can scope tonight instead of random startup theater.", stars:0 },
+                  { name:"Kill weak ideas fast", role:"Save your weekend", text:"A clear avoid verdict is useful. It keeps you from burning momentum on ideas that only sounded fun for five minutes.", stars:0 },
+                  { name:"Keep shipping once it hits", role:"Blueprints for builders", text:"When an idea survives, you get product scope, launch direction, infra, and a first prompt for Cursor, Claude, or Codex.", stars:0 },
                 ].map((r,i) => (
                   <div className="su-review-card" key={i}>
-                    <div className="su-review-stars">{"★".repeat(r.stars)}</div>
-                    <p className="su-review-text">"{r.text}"</p>
+                    <p className="su-review-text">{r.text}</p>
                     <div className="su-review-author">
                       <div className="su-review-avatar">{r.name[0]}</div>
                       <div>
@@ -1274,7 +1273,7 @@ export default function IdeaWheel() {
               {!comp && !validating && !validateErr && (
                 <div className="sm-result-cta">
                   <button className="su-btn su-btn-primary su-btn-lg" onClick={runValidate}>
-                    Run free basic market research
+                    Run free market check
                   </button>
                 </div>
               )}
@@ -1485,7 +1484,7 @@ export default function IdeaWheel() {
       {screen === "blueprint" && idea && (
         <section className="su-screen su-blueprint">
           <div className="su-screen-head">
-            <div className="su-eyebrow">Step 4 · The plan</div>
+            <div className="su-eyebrow">Step 4 · Build plan</div>
             <h2 className="su-display su-screen-title">
               The <span className="su-grad-text">{idea.title}</span> blueprint
             </h2>
@@ -1679,7 +1678,7 @@ export default function IdeaWheel() {
           {bpDone && (
             <div className="su-bp-footer">
               <div>
-                <div className="su-display su-bp-footer-t">That's a company in three spins.</div>
+                <div className="su-display su-bp-footer-t">That is a weekend build with a real plan.</div>
                 <div className="su-bp-footer-d">Not feeling it? Spin another idea and compare.</div>
               </div>
               <div className="su-bp-footer-actions">
@@ -1698,7 +1697,7 @@ export default function IdeaWheel() {
               <span>Get credits</span>
               <button onClick={() => setShowPricing(false)}>✕</button>
             </div>
-            <p className="su-modal-sub">Extended market research costs 1 credit; the full blueprint costs 2. New accounts start with 3 free credits.</p>
+            <p className="su-modal-sub">Start with your 3 free credits. Deeper research costs 1 credit and the full blueprint costs 2.</p>
             {checkoutErr && <p className="su-err">{checkoutErr}</p>}
             <div className="su-pkgs">
               {CREDIT_PACKAGES.map(pkg => (

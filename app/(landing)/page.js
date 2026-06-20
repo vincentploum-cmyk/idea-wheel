@@ -1,39 +1,120 @@
 import Link from "next/link";
 import IdeaReelsHeader from "@/components/zubaz/Common/Header/IdeaReelsHeader";
 import StateSection from "@/components/zubaz/Home3/State/State";
-import IntegrationTwo from "@/components/zubaz/Common/Integration-2/IntegrationTwo";
+import { CREDIT_PACKAGES } from "@/lib/pricing";
 
 export const metadata = {
-  title: "IdeaReels — Spin an idea. Ship a company.",
+  title: "IdeaReels — Spin up your next weekend build",
   description:
-    "Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.",
+    "For vibe coders, indie hackers, and solo builders. Spin the wheel, get a market sanity check, and unlock a build-ready blueprint when an idea feels real.",
 };
 
+const PLAN_COPY = {
+  starter: {
+    desc: "Good for your first real IdeaReels session.",
+    features: [
+      "5 credits",
+      "Enough to explore a few strong angles",
+      "Great first paid pack",
+      "No subscription",
+    ],
+    cta: "Buy Starter",
+  },
+  pro: {
+    desc: "Best for a focused night of spinning, researching, and picking a winner.",
+    features: [
+      "10 credits",
+      "Best value for most builders",
+      "Plenty for multiple deep dives",
+      "No subscription",
+    ],
+    cta: "Buy Pro",
+  },
+  power: {
+    desc: "For builders testing multiple niches or shipping more than one project.",
+    features: [
+      "25 credits",
+      "Built for multi-idea exploration",
+      "Keep momentum across projects",
+      "No subscription",
+    ],
+    cta: "Buy Power",
+  },
+};
+
+const FAQ_ITEMS = [
+  {
+    q: "Who is IdeaReels for?",
+    a: "Vibe coders, indie hackers, solo builders, and curious founders who want something more concrete than a blank Cursor prompt.",
+  },
+  {
+    q: "What happens after I spin the wheel?",
+    a: "You get a niche, pain point, and angle, then a fast market verdict. If it still feels real, you can spend credits on deeper research or the full blueprint.",
+  },
+  {
+    q: "Do I need an account?",
+    a: "Yes, before you spin for real. Sign-in unlocks your 3 free credits and lets IdeaReels save your research and blueprints to your profile.",
+  },
+  {
+    q: "What does the blueprint give me?",
+    a: "A build-ready package: product scope, go-to-market angle, infrastructure plan, prototype direction, and a first prompt for Cursor, Claude, or Codex.",
+  },
+  {
+    q: "What if the verdict says avoid?",
+    a: "That is a win. IdeaReels is supposed to save you from wasting a weekend on weak ideas, not push every spin into a purchase.",
+  },
+];
+
 export default function LandingPage() {
+  const plans = [
+    {
+      key: "free",
+      name: "Free",
+      price: "$0",
+      desc: "Sign in and get 3 free credits to try the flow properly.",
+      features: [
+        "3 free credits after sign-in",
+        "Spin the wheel and save ideas",
+        "Get the fast market verdict",
+        "Perfect for your first session",
+      ],
+      active: false,
+      cta: "Try the wheel",
+      href: "/wheel",
+    },
+    ...CREDIT_PACKAGES.map((pkg) => ({
+      key: pkg.key,
+      name: pkg.label,
+      price: pkg.price,
+      desc: PLAN_COPY[pkg.key]?.desc || pkg.tagline,
+      features: PLAN_COPY[pkg.key]?.features || [`${pkg.credits} credits`, pkg.tagline],
+      active: pkg.highlight,
+      cta: PLAN_COPY[pkg.key]?.cta || "Buy credits",
+      href: "/pricing",
+    })),
+  ];
+
   return (
     <>
       <IdeaReelsHeader />
 
-      {/* Hero */}
       <div className="zubuz-hero-section">
         <div className="container">
           <div className="zubuz-hero-content center">
-            <h1>
-              Find a startup idea worth building.
-            </h1>
+            <h1>Spin up a SaaS idea you&apos;d actually build tonight.</h1>
             <p>
-              Generate sharper business ideas in seconds, run a quick market
-              check, and unlock a build-ready blueprint only when one is worth
-              pursuing.
+              IdeaReels is for vibe coders who want more than random inspiration.
+              Spin into a niche, pain point, and build angle, get a fast market sanity
+              check, then buy credits only when a project feels real.
             </p>
             <div className="zubuz-extara-mt">
               <div className="zubuz-subscribe-three">
-                <div className="zubuz-hero-btn-wrap" style={{ justifyContent: "center", display: "flex", gap: "1rem" }}>
+                <div className="zubuz-hero-btn-wrap" style={{ justifyContent: "center", display: "flex", gap: "1rem", flexWrap: "wrap" }}>
                   <Link href="/wheel" className="zubuz-default-btn zubuz-subscription-btn three">
-                    <span>Get started free</span>
+                    <span>Try the wheel</span>
                   </Link>
-                  <Link href="#how-it-works" className="zubuz-login-btn">
-                    See how it works
+                  <Link href="/pricing" className="zubuz-login-btn">
+                    See credit packs
                   </Link>
                 </div>
               </div>
@@ -41,11 +122,11 @@ export default function LandingPage() {
                 <ul>
                   <li>
                     <img src="/zubaz/images/v3/check.png" alt="" /> 3 free
-                    credits on signup
+                    credits after sign-in
                   </li>
                   <li>
-                    <img src="/zubaz/images/v3/check.png" alt="" /> No credit
-                    card required
+                    <img src="/zubaz/images/v3/check.png" alt="" /> Cursor-ready
+                    blueprint when a spin hits
                   </li>
                 </ul>
               </div>
@@ -68,18 +149,17 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* How It Works */}
       <div id="how-it-works" className="section zubuz-section-padding3">
         <div className="container">
           <div className="zubuz-section-title zubuz-two-column-title">
             <div className="row">
               <div className="col-lg-7">
-                <h2>How IdeaReels works</h2>
+                <h2>How IdeaReels fits the way vibe coders work</h2>
               </div>
               <div className="col-lg-5 d-flex align-items-center">
                 <div className="zubuz-title-btn">
                   <Link className="zubuz-default-btn pill" href="/wheel">
-                    <span>Try it now</span>
+                    <span>Start spinning</span>
                   </Link>
                 </div>
               </div>
@@ -89,18 +169,18 @@ export default function LandingPage() {
             {[
               {
                 icon: "/zubaz/images/icon/feature5.svg",
-                title: "Generate a business idea worth chasing",
-                desc: "Combine proven actions, real workflows, and target industries to uncover concrete startup concepts — not vague inspiration.",
+                title: "Land on a specific wedge",
+                desc: "Instead of staring at a blank prompt, you start with a concrete niche, workflow, and buyer angle you can imagine building this weekend.",
               },
               {
                 icon: "/zubaz/images/icon/feature6.svg",
-                title: "Know if it's worth building before you commit",
-                desc: "Every idea gets a free market check with competitor analysis, market size, and demand signals — build, caution, or avoid.",
+                title: "Pressure-test it before you overcommit",
+                desc: "IdeaReels gives you a quick market verdict so you can tell the difference between fun nonsense and something with plausible pull.",
               },
               {
                 icon: "/zubaz/images/icon/feature7.svg",
-                title: "Turn the winner into a build-ready plan",
-                desc: "Unlock a full blueprint: product design, launch strategy, infrastructure, and prototype generation across four AI specialists.",
+                title: "Go deeper only when the spin feels real",
+                desc: "Credits unlock deeper research and the full build blueprint, so you pay for momentum, not for filler.",
               },
             ].map((item, i) => (
               <div key={i} className="col-lg-4 col-md-6">
@@ -119,7 +199,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Content Block 1 — Market Validation */}
       <div className="section zubuz-section-padding3">
         <div className="container">
           <div className="row align-items-center">
@@ -131,17 +210,17 @@ export default function LandingPage() {
             <div className="col-lg-6">
               <div className="zubuz-content-area">
                 <div className="zubuz-section-title">
-                  <h2>Agility to validate ideas before you waste time</h2>
+                  <h2>Built for weekend builders, not pitch-deck theater</h2>
                 </div>
                 <div className="zubuz-iconbox-wrap">
                   <div className="zubuz-iconbox-icon">
                     <img src="/zubaz/images/icon/check-circle.svg" alt="" />
                   </div>
                   <div className="zubuz-iconbox-data">
-                    <h5>Instant market check</h5>
+                    <h5>Start from something plausible</h5>
                     <p>
-                      Competitor analysis, market size, and demand signals
-                      surface within seconds so you know where to focus.
+                      The wheel is playful, but the combinations are curated so you
+                      land on ideas that feel buildable instead of random.
                     </p>
                   </div>
                 </div>
@@ -150,10 +229,10 @@ export default function LandingPage() {
                     <img src="/zubaz/images/icon/check-circle.svg" alt="" />
                   </div>
                   <div className="zubuz-iconbox-data">
-                    <h5>Clear build/avoid verdict</h5>
+                    <h5>Kill weak ideas fast</h5>
                     <p>
-                      Every idea returns a plain-language build, caution, or
-                      avoid verdict — no ambiguity, no wasted commitment.
+                      The fast verdict exists to save your time. A clear avoid is as
+                      useful as a promising green light.
                     </p>
                   </div>
                 </div>
@@ -162,10 +241,10 @@ export default function LandingPage() {
                     <img src="/zubaz/images/icon/check-circle.svg" alt="" />
                   </div>
                   <div className="zubuz-iconbox-data">
-                    <h5>Blueprint unlocked only when it's worth it</h5>
+                    <h5>Keep the builder momentum alive</h5>
                     <p>
-                      Extended deep research and the full plan cost 1–2 credits
-                      — you spend only on ideas that clear the bar.
+                      When you do buy credits, they turn curiosity into next steps,
+                      not generic advice.
                     </p>
                   </div>
                 </div>
@@ -175,7 +254,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Content Block 2 — Blueprint */}
       <div className="section zubuz-section-padding3">
         <div className="container">
           <div className="row align-items-center">
@@ -187,29 +265,30 @@ export default function LandingPage() {
             <div className="col-lg-6 order-lg-1">
               <div className="zubuz-content-area">
                 <div className="zubuz-section-title">
-                  <h2>Cost-effective and simple — from idea to blueprint</h2>
+                  <h2>When a spin hits, you get the next moves fast</h2>
                 </div>
                 <p>
-                  Every new account starts with 3 free credits. The full
-                  blueprint unlocks four AI specialists — product design,
-                  go-to-market, infrastructure, and prototype — in one click.
+                  Deep research pulls in demand language and sharper signal. The full
+                  blueprint turns that idea into product scope, launch angle,
+                  infrastructure, and a first prompt you can paste straight into your
+                  coding stack.
                 </p>
                 <div className="zubuz-counter-wrap3" style={{ marginTop: "2rem" }}>
                   <div className="zubuz-counter-data">
                     <h2>3</h2>
-                    <p>Free credits on signup</p>
+                    <p>Free credits after sign-in</p>
                   </div>
                   <div className="zubuz-counter-data">
-                    <h2>4</h2>
-                    <p>AI specialists per blueprint</p>
+                    <h2>1</h2>
+                    <p>Credit for deeper research</p>
                   </div>
                   <div className="zubuz-counter-data">
-                    <h2>&lt;30s</h2>
-                    <p>Time to first market check</p>
+                    <h2>2</h2>
+                    <p>Credits for the blueprint</p>
                   </div>
                 </div>
                 <Link href="/wheel" className="zubuz-default-btn pill" style={{ marginTop: "2rem", display: "inline-block" }}>
-                  <span>Start for free</span>
+                  <span>See the wheel</span>
                 </Link>
               </div>
             </div>
@@ -217,62 +296,17 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Stats */}
       <StateSection />
 
-      {/* Pricing */}
       <div className="section zubuz-section-padding3">
         <div className="container">
           <div className="zubuz-section-title center">
-            <h2>Simple, transparent pricing</h2>
-            <p>Start free. Pay only for ideas worth pursuing.</p>
+            <h2>Start free. Top up only when you want more signal.</h2>
+            <p>IdeaReels is built for low-friction curiosity first, paid depth second.</p>
           </div>
           <div className="row justify-content-center">
-            {[
-              {
-                name: "Starter",
-                price: "Free",
-                desc: "3 credits on signup. Perfect for exploring.",
-                features: [
-                  "3 idea generations",
-                  "Free market check per idea",
-                  "Build / caution / avoid verdict",
-                  "No credit card required",
-                ],
-                active: false,
-                cta: "Get started free",
-                href: "/wheel",
-              },
-              {
-                name: "Explorer",
-                price: "$9",
-                desc: "10 credits. For serious idea hunters.",
-                features: [
-                  "10 credits",
-                  "Market check on every idea",
-                  "1 credit = extended deep research",
-                  "2 credits = full AI blueprint",
-                ],
-                active: true,
-                cta: "Buy Explorer pack",
-                href: "/pricing",
-              },
-              {
-                name: "Builder",
-                price: "$19",
-                desc: "25 credits. For founders moving fast.",
-                features: [
-                  "25 credits",
-                  "Everything in Explorer",
-                  "Priority generation queue",
-                  "Email support",
-                ],
-                active: false,
-                cta: "Buy Builder pack",
-                href: "/pricing",
-              },
-            ].map((plan, i) => (
-              <div key={i} className="col-xl-4 col-md-6">
+            {plans.map((plan) => (
+              <div key={plan.key} className="col-xl-3 col-md-6">
                 <div className={`zubuz-pricing-wrap${plan.active ? " active" : ""}`}>
                   <div className="zubuz-pricing-header">
                     <h5>{plan.name}</h5>
@@ -285,18 +319,15 @@ export default function LandingPage() {
                   </div>
                   <div className="zubuz-pricing-body">
                     <ul>
-                      {plan.features.map((f, j) => (
+                      {plan.features.map((feature, j) => (
                         <li key={j}>
                           <img src="/zubaz/images/v3/check.png" alt="" />
-                          {f}
+                          {feature}
                         </li>
                       ))}
                     </ul>
                   </div>
-                  <Link
-                    className={`zubuz-pricing-btn${plan.active ? " active" : ""}`}
-                    href={plan.href}
-                  >
+                  <Link className={`zubuz-pricing-btn${plan.active ? " active" : ""}`} href={plan.href}>
                     {plan.cta}
                   </Link>
                 </div>
@@ -306,36 +337,14 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* FAQ */}
       <div className="section zubuz-section-padding3">
         <div className="container">
           <div className="zubuz-section-title center">
-            <h2>Find all the answers to your questions</h2>
+            <h2>Questions a buyer asks before topping up</h2>
           </div>
           <div className="row justify-content-center">
             <div className="col-lg-8">
-              {[
-                {
-                  q: "How does the market check work?",
-                  a: "When you generate an idea, IdeaReels immediately runs a free market check — pulling competitor data, market size signals, and demand indicators. You get a build, caution, or avoid verdict before spending any credits.",
-                },
-                {
-                  q: "What does a blueprint include?",
-                  a: "A full blueprint (2 credits) runs four AI specialists in parallel: product design, go-to-market strategy, infrastructure plan, and a prototype spec. Each specialist writes a detailed, actionable section.",
-                },
-                {
-                  q: "Do credits expire?",
-                  a: "No — credits never expire. Buy a pack when you need it and use them at your own pace.",
-                },
-                {
-                  q: "Can I generate my own idea instead of using the wheel?",
-                  a: "Yes. You can spin the wheel for a random concept or type in your own idea and run it through the market check and blueprint pipeline.",
-                },
-                {
-                  q: "Is IdeaReels suitable for non-technical founders?",
-                  a: "Absolutely. The market check and blueprint are written in plain language with no jargon. The infrastructure section explains what you'd need without requiring you to be an engineer.",
-                },
-              ].map((item, i) => (
+              {FAQ_ITEMS.map((item, i) => (
                 <div key={i} className="zubuz-accordion-wrap">
                   <div className="accordion" id={`faq-${i}`}>
                     <div className="accordion-item">
@@ -367,20 +376,19 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Footer CTA + Footer */}
       <footer className="zubuz-footer-section dark-bg">
         <div className="container">
           <div className="zubuz-footer-extra-top">
             <div className="row">
               <div className="col-lg-7">
                 <div className="zubuz-footer-extra-title">
-                  <h2>Take your startup idea to the next level</h2>
+                  <h2>Ready to find the next thing you&apos;ll actually ship?</h2>
                 </div>
               </div>
               <div className="col-lg-5 d-flex align-items-center">
                 <div className="zubuz-footer-btn">
                   <Link className="zubuz-default-btn pill" href="/wheel">
-                    <span>Get started now</span>
+                    <span>Try the wheel</span>
                   </Link>
                 </div>
               </div>
@@ -394,7 +402,8 @@ export default function LandingPage() {
                     <strong style={{ color: "white", fontSize: "1.25rem" }}>IdeaReels</strong>
                   </Link>
                   <p>
-                    Spin an idea. Validate it instantly. Ship a company.
+                    Spin into a buildable idea, sanity-check it fast, then go deep
+                    only when it deserves your time.
                   </p>
                 </div>
               </div>
@@ -402,7 +411,7 @@ export default function LandingPage() {
                 <div className="zubuz-footer-menu light">
                   <h6>Product</h6>
                   <ul>
-                    <li><Link href="/wheel">Idea Generator</Link></li>
+                    <li><Link href="/wheel">Wheel</Link></li>
                     <li><Link href="/pricing">Pricing</Link></li>
                     <li><Link href="/faq">FAQ</Link></li>
                   </ul>

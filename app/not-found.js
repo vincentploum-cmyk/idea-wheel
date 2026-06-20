@@ -39,21 +39,21 @@ export default function NotFound() {
           letterSpacing: '-0.02em',
         }}
       >
-        This page doesn't exist
+        This route spun into the void
       </h1>
       <p
         style={{
           fontSize: 15,
           color: 'var(--muted)',
           margin: 0,
-          maxWidth: 380,
+          maxWidth: 420,
           lineHeight: 1.6,
         }}
       >
-        Looks like you took a wrong turn. Let's get you back on track.
+        The page you wanted is gone, but the wheel is still here and ready when you are.
       </p>
       <Link
-        href="/"
+        href="/wheel"
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -67,7 +67,7 @@ export default function NotFound() {
           textDecoration: 'none',
         }}
       >
-        Back to IdeaReels
+        Back to the wheel
       </Link>
     </main>
   );

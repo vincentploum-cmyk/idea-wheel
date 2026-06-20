@@ -6,9 +6,9 @@ import { CREDIT_PACKAGES, CREDIT_PACKAGE_BY_KEY } from '@/lib/pricing';
 import ZubazShell from '@/components/zubaz/ZubazShell';
 
 const PACK_DESCRIPTIONS = {
-  starter: 'For trying your first full blueprint end-to-end.',
-  pro:     'Best for founders validating several ideas back-to-back.',
-  power:   'For builders running deep exploration across markets.',
+  starter: 'Best first purchase if you want to see one good idea through.',
+  pro: 'Best for a focused session of spinning, researching, and picking a winner.',
+  power: 'For builders testing multiple niches or pushing more than one project forward.',
 };
 
 export default function PricingPageClient({ searchParams }) {
@@ -26,12 +26,12 @@ export default function PricingPageClient({ searchParams }) {
     if (success && packageConfig) return {
       tone: 'success',
       title: `${packageConfig.credits} credits added`,
-      text: 'Credits were applied to this browser so you can keep going immediately.',
+      text: 'Your balance is ready. Go spin, validate, and keep the momentum going.',
     };
     if (canceled) return {
       tone: 'neutral',
       title: 'Checkout canceled',
-      text: 'Nothing was charged. Pick up where you left off whenever you want.',
+      text: 'Nothing was charged. Come back when a spin feels worth chasing.',
     };
     return null;
   }, [success, canceled, packageConfig]);
@@ -63,9 +63,9 @@ export default function PricingPageClient({ searchParams }) {
 
         <section className="pr-hero" style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div className="pr-eyebrow">Credits</div>
-          <h1 className="pr-title">Buy credits when you&apos;re ready</h1>
+          <h1 className="pr-title">Buy credits when a spin feels real</h1>
           <p className="pr-subtitle">
-            Validation stays free. Use credits only when you want the full blueprint, launch plan, and prototype package.
+            Sign in, claim your 3 free credits, and top up only when you want deeper research or the full build blueprint.
           </p>
         </section>
 
@@ -87,20 +87,20 @@ export default function PricingPageClient({ searchParams }) {
             <article key={pkg.key} className={`pr-card${pkg.highlight ? ' pr-card--hl' : ''}`}>
               <header className="pr-card-head">
                 <span className="pr-card-label">{pkg.label}</span>
-                {pkg.highlight && <span className="pr-card-tag">Most popular</span>}
+                {pkg.highlight && <span className="pr-card-tag">Best first buy</span>}
               </header>
               <div className="pr-card-price">
                 <span className="pr-card-price-num">{pkg.price}</span>
                 <span className="pr-card-price-meta">{pkg.credits} credits · {pkg.per} each</span>
               </div>
-              <div className="pr-card-tagline">~ {pkg.tagline}</div>
+              <div className="pr-card-tagline">{pkg.tagline}</div>
               <p className="pr-card-desc">{PACK_DESCRIPTIONS[pkg.key]}</p>
               <button
                 onClick={() => startCheckout(pkg)}
                 disabled={loadingKey !== null}
                 className={`pr-card-btn${pkg.highlight ? ' pr-card-btn--primary' : ''}`}
               >
-                {loadingKey === pkg.key ? 'Redirecting…' : 'Continue to checkout'}
+                {loadingKey === pkg.key ? 'Redirecting…' : 'Buy credits'}
               </button>
             </article>
           ))}
@@ -108,9 +108,9 @@ export default function PricingPageClient({ searchParams }) {
 
         <section className="pr-tldr" style={{ marginTop: '2rem' }}>
           <ul>
-            <li>Validation is always free — no credit needed.</li>
-            <li>Credits never expire. Use them whenever you want.</li>
-            <li>Stripe checkout. Cancel anytime, no subscription.</li>
+            <li>Get 3 free credits after sign-in.</li>
+            <li>1 credit unlocks deeper research, 2 credits unlock the blueprint.</li>
+            <li>Stripe checkout, no subscription, credits never expire.</li>
           </ul>
         </section>
 
