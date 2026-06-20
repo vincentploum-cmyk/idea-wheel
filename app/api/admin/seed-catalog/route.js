@@ -1,16 +1,13 @@
 /**
  * POST /api/admin/seed-catalog
  *
- * Protected admin endpoint that runs the research + blueprint pipeline for
- * every curated idea and stores the results in Supabase.
+ * Protected admin endpoint. Runs research + blueprint pipeline for every
+ * curated idea and stores clean, citation-free results in Supabase.
  *
- * Authorization header: Bearer <SEED_SECRET>
- * (Set SEED_SECRET in Render env vars — use any random string.)
+ * Authorization: Bearer <SEED_SECRET>
+ * Optional body: { "slugs": ["certwatch"] }   — omit to regenerate all 6
  *
- * Optional body: { "slugs": ["certwatch", "intakeflow"] }
- * Omit to regenerate all 6 ideas.
- *
- * Returns: { generated: [...], failed: [...] }
+ * GET /api/admin/seed-catalog   — returns current stored data for review
  */
 
 import { getAllCatalogData, upsertCatalogIdea } from '../../../../lib/catalog-store';
@@ -19,9 +16,35 @@ import { IDEA_EXAMPLES } from '../../../../lib/idea-examples';
 const KEY = process.env.ANTHROPIC_API_KEY;
 const SECRET = process.env.SEED_SECRET;
 
-// --- Anthropic helpers -----------------------------------------------------------
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/** Strip every form of citation markup the web-search tool emits. */
+function stripCitations(value) {
+  if (!value || typeof value !== 'string') return value;
+  return value
+    .replace(/<cite\b[^>]*>.*?<\/cite>/gis, '')   // <cite ...>text</cite>
+    .replace(/<cite\b[^>]*\/>/gi, '')               // <cite ... />
+    .replace(/<\/?cite\b[^>]*>/gi, '')              // orphan tags
+    .replace(/<\/?source\b[^>]*>/gi, '')
+    .replace(/<\/?sup\b[^>]*>/gi, '')
+    .replace(/<[^>]+>/g, ' ')                       // any remaining HTML
+    .replace(/\bindex="[^"]*">?/gi, '')
+    .replace(/\[[\d,\-\s]+\]/g, '')                 // [1], [2,3], etc.
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+/** Recursively strip citations from every string in an object/array. */
+function deepStrip(val) {
+  if (typeof val === 'string') return stripCitations(val);
+  if (Array.isArray(val)) return val.map(deepStrip);
+  if (val && typeof val === 'object') {
+    return Object.fromEntries(Object.entries(val).map(([k, v]) => [k, deepStrip(v)]));
+  }
+  return val;
+}
 
 async function call(prompt, { model = 'claude-haiku-4-5-20251001', maxTokens = 2000, webSearch = false } = {}, attempt = 0) {
   if (!KEY) throw new Error('ANTHROPIC_API_KEY not set');
@@ -31,17 +54,12 @@ async function call(prompt, { model = 'claude-haiku-4-5-20251001', maxTokens = 2
     messages: [{ role: 'user', content: prompt }],
   };
   if (webSearch) body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 10 }];
-
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify(body),
   });
-
-  if (res.status === 429 && attempt < 3) {
-    await sleep(10000 * (attempt + 1));
-    return call(prompt, { model, maxTokens, webSearch }, attempt + 1);
-  }
+  if (res.status === 429 && attempt < 3) { await sleep(12000 * (attempt + 1)); return call(prompt, { model, maxTokens, webSearch }, attempt + 1); }
   if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
   const data = await res.json();
   return (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
@@ -59,163 +77,173 @@ function parseJSON(text) {
     if (inStr) { if (escaped) escaped = false; else if (ch === '\\') escaped = true; else if (ch === '"') inStr = false; continue; }
     if (ch === '"') { inStr = true; continue; }
     if (ch === opening) depth++;
-    if (ch === closing) { depth--; if (depth === 0) return JSON.parse(clean.slice(start, i + 1).replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/,\s*([}\]])/g, '$1')); }
+    if (ch === closing) { depth--; if (depth === 0) return JSON.parse(clean.slice(start, i + 1).replace(/['']/g, "'").replace(/[""]/g, '"').replace(/,\s*([}\]])/g, '$1')); }
   }
   return JSON.parse(clean.slice(start));
 }
 
-const PROSE = `WRITING RULES — every field read by a founder:
-- 8th-grade English. Short sentences. Everyday words.
-- No buzzwords: synergy, leverage, robust, holistic, ecosystem, B2B SaaS, TAM, GTM, incumbent, whitespace, wedge.
-- Each list item is one concrete fact/action, max 20 words.`;
-
-// --- Research pipeline -----------------------------------------------------------
+// ── Research pipeline ─────────────────────────────────────────────────────────
 
 async function generateResearch(idea) {
-  const agentDesc = `an agent that ${idea.action} ${idea.workflow} for ${idea.industry}`;
-  const text = await call(`You are a senior market analyst writing a deep-research report for a startup founder.
+  const agentDesc = `${idea.action} ${idea.workflow} for ${idea.industry}`;
 
-The idea: ${agentDesc}
-Description: ${idea.description}
+  const prompt = `You are writing a deep-research brief for a startup founder considering this idea.
 
-Search the web for real competing products, market size signals, user complaints on Reddit/ProductHunt/forums, pricing of existing tools, and any 2024-2025 market shifts.
+IDEA: "${idea.title}" — ${idea.description}
+WHAT IT DOES: ${agentDesc}
 
-Return ONLY valid JSON (no fences):
+Search the web thoroughly. Find:
+- Real, named competing products with their actual pricing
+- Concrete evidence the pain exists (Reddit threads, forum posts, OSHA/regulatory data, industry stats)
+- The specific gap none of the existing tools fill
+- Real risk factors that could kill this startup
+
+CRITICAL OUTPUT RULES:
+1. Return ONLY valid JSON. No markdown fences.
+2. NEVER include citation tags, HTML tags, <cite>, <source>, bracketed numbers like [1] or [2,3], or any markup in your output. Write plain sentences only.
+3. Every string must be clean plain English — imagine printing it on a page and showing it to a customer.
+
+JSON schema:
 {
-  "marketSize": "one specific sentence about the scale of this opportunity",
-  "teaserLine": "one punchy sentence (max 18 words) previewing the opportunity — shown as a teaser to non-paying users",
-  "landscape": "2-3 plain sentences about the market today. Name real companies.",
+  "marketSize": "one sentence with a real number or growth stat — e.g. '$2.1B market growing 16% per year'",
+  "teaserLine": "THE SINGLE MOST COMPELLING MARKET FACT you found — a specific dollar figure, penalty, stat, or user pain that makes a founder say 'this market is real'. Max 18 words. This is the first thing a non-paying visitor sees — make it land like a punch. BAD EXAMPLE: 'Stop teams from losing certifications.' GOOD EXAMPLE: 'OSHA fined US employers $185M last year — expired worker certs are the #1 trigger.'",
+  "landscape": "3 punchy sentences on the market today. Name the real players, their real price points, and exactly where they stop short. No fluff.",
   "players": [
-    { "name": "...", "pricing": "...", "weakness": "one sentence on where they fall short", "coverage": "one sentence on what they do well" }
+    {
+      "name": "exact product/company name",
+      "pricing": "real pricing — e.g. '$29/mo' or '$25k/yr enterprise'",
+      "coverage": "one sentence: what they actually do well",
+      "weakness": "one sentence: the specific gap they leave — the opening for this idea"
+    }
   ],
-  "gap": "the specific unaddressed pain these tools leave open",
+  "gap": "the exact, specific pain no existing tool solves — one sharp sentence referencing real tools by name",
   "signals": [
-    "signal 1 — a specific fact (user complaint quote, search volume stat, job posting, forum thread)",
-    "signal 2",
-    "signal 3",
-    "signal 4",
-    "signal 5"
+    "A real quote or stat from Reddit/forums/industry data proving people suffer this pain today",
+    "A regulatory or compliance event that makes this urgent (fine, law change, etc.)",
+    "A market size or growth stat with a source name",
+    "A pricing or adoption signal showing people already pay for partial solutions",
+    "A competitor weakness signal — something a real user complained about publicly"
   ],
   "risks": [
-    "risk 1 — a specific reason this could be harder than it looks",
-    "risk 2",
-    "risk 3"
+    "Risk 1: one concrete reason this could fail — reference a specific competitor or market dynamic",
+    "Risk 2: a distribution or pricing risk",
+    "Risk 3: a technical or adoption risk"
   ],
-  "opportunity": "2-3 honest sentences on the real opening in this market",
-  "verdict": "build | warning | avoid",
-  "verdictReasoning": "2 honest sentences explaining the verdict — reference specific players"
+  "opportunity": "2-3 honest sentences. Who exactly should build this, who are the first 50 customers, and what is the precise wedge. Reference real companies by name.",
+  "verdict": "build",
+  "verdictReasoning": "2 sentences. Name the 2 biggest players and explain exactly why neither owns this specific problem. Be blunt."
 }
 
-List up to 5 players sorted largest to smallest. Use real company names and real pricing where you can find it.
+List up to 5 players, largest to smallest. Output plain text only — zero HTML or citation markup anywhere.`;
 
-${PROSE}`, { webSearch: true, maxTokens: 2800 });
-  return parseJSON(text);
+  const raw = await call(prompt, { webSearch: true, maxTokens: 3000 });
+  return deepStrip(parseJSON(raw));
 }
 
-// --- Blueprint pipeline (3 calls in sequence — each informs the next) -----------
+// ── Blueprint pipeline ────────────────────────────────────────────────────────
 
 async function generateBlueprint(idea, research) {
-  const agentDesc = `an agent that ${idea.action} ${idea.workflow} for ${idea.industry}`;
+  const agentDesc = `${idea.action} ${idea.workflow} for ${idea.industry}`;
 
   // Stage 1 — Product design
-  const designText = await call(`Design a lean, differentiated AI product for this idea.
+  const designText = await call(`You are designing a lean, hard-to-copy AI product. Be specific. No generic advice.
 
-Idea: "${agentDesc}"
-Description: ${idea.description}
-Market gap: ${research.gap}
-Opportunity: ${research.opportunity}
-Players to beat: ${(research.players || []).slice(0, 4).map(p => `${p.name} (weak: ${p.weakness})`).join(' | ')}
+IDEA: "${idea.title}" — ${idea.description}
+MARKET GAP: ${research.gap}
+OPPORTUNITY: ${research.opportunity}
+PLAYERS TO BEAT: ${(research.players || []).slice(0, 4).map(p => `${p.name} (weakness: ${p.weakness})`).join(' | ')}
 
-Return ONLY valid JSON (no fences):
+CRITICAL: No citation tags, no HTML, no markup. Plain English only. Return ONLY valid JSON:
 {
-  "name": "product name (2-3 words max)",
-  "tagline": "what it does and for whom in one line",
-  "differentiator": "the ONE thing that makes this harder to copy than a generic AI wrapper — be specific",
+  "name": "product name (2-3 words)",
+  "tagline": "one line: what it does and who it's for",
+  "differentiator": "the ONE thing that makes this hard to copy — specific mechanism, not vague AI language",
   "coreFeatures": [
-    "feature 1 — one sentence, plain and concrete",
+    "feature 1 — one concrete sentence describing exactly what it does",
     "feature 2",
     "feature 3",
     "feature 4"
   ],
-  "userFlow": "how a user goes from sign-up to their first real result, in 2-3 plain sentences",
-  "wowMoment": "the single moment a prospect sees and says 'I need this now' — be specific",
-  "dataMoat": "what proprietary data or workflow memory accumulates over time that competitors can't easily copy"
-}
-
-${PROSE}`, { model: 'claude-sonnet-4-6', maxTokens: 1400 });
-  const design = parseJSON(designText);
+  "userFlow": "sign-up to first real value in 2-3 plain sentences — name the actual screens",
+  "wowMoment": "the exact moment a prospect sees the product and says 'I need this' — name the specific trigger and the specific output",
+  "dataMoat": "what compound data or workflow memory builds up over time that a copycat can never replicate from day one"
+}`, { model: 'claude-sonnet-4-6', maxTokens: 1400 });
+  const design = deepStrip(parseJSON(designText));
 
   // Stage 2 — GTM strategy
-  const gtmText = await call(`Go-to-market strategy. Make it feel specific and actionable, not generic.
+  const gtmText = await call(`Go-to-market plan. Every answer must be specific enough to execute tomorrow.
 
-Idea: "${agentDesc}"
-Product: ${design.name} — ${design.tagline}
-Market: ${research.landscape}
-Opportunity: ${research.opportunity}
+PRODUCT: "${design.name}" — ${design.tagline}
+IDEA: ${idea.description}
+MARKET: ${research.landscape}
+OPPORTUNITY: ${research.opportunity}
+GAP: ${research.gap}
 
-Return ONLY valid JSON (no fences):
+CRITICAL: No citation tags, no HTML. Plain English only. Return ONLY valid JSON:
 {
-  "persona": "the exact type of first customer — one sentence with their role and current pain",
-  "revenueGoal": "first-month target with simple math (e.g. $2,400 = 8 × $300/mo)",
+  "persona": "exact first-customer profile: their job title, company size, and the specific pain they wake up thinking about",
+  "revenueGoal": "month-one target with arithmetic — e.g. '$2,800 = 7 customers × $400/mo'",
   "pricing": {
-    "price": "$X/mo",
-    "rationale": "why this price fits what this customer already pays for similar tools",
-    "trial": "free trial or free tier structure"
+    "price": "$X/mo or $X/user/mo",
+    "rationale": "what comparable tools they already pay for and at what price — anchor to something real",
+    "trial": "exact trial structure — length, what's included, what's gated"
   },
   "firstFiveCustomers": [
-    "tactic 1 — name the exact community/platform + the exact pitch angle. One sentence.",
+    "tactic 1: exact platform name + exact search term or post type + exact pitch angle. One sentence.",
     "tactic 2",
     "tactic 3",
     "tactic 4",
     "tactic 5"
   ],
   "channels": [
-    { "name": "channel", "tactic": "specific action, one sentence", "timeline": "week 1 / month 1 / ongoing" },
-    { "name": "channel", "tactic": "specific action, one sentence", "timeline": "..." },
-    { "name": "channel", "tactic": "specific action, one sentence", "timeline": "..." }
+    { "name": "channel name", "tactic": "the exact action — post where, say what, link where", "timeline": "week 1 / month 1 / ongoing" },
+    { "name": "channel name", "tactic": "...", "timeline": "..." },
+    { "name": "channel name", "tactic": "...", "timeline": "..." }
   ],
-  "communities": ["named community (e.g. r/smallbusiness on Reddit)", "named community 2", "named community 3"],
-  "whyNow": "why 2025 is a good moment to build this — a macro trend, regulation, or technology shift"
-}
-
-${PROSE}`, { model: 'claude-sonnet-4-6', maxTokens: 1800 });
-  const gtm = parseJSON(gtmText);
+  "communities": [
+    "exact community name and platform — e.g. 'HVAC-Talk forum, Business section'",
+    "exact community 2",
+    "exact community 3",
+    "exact community 4"
+  ],
+  "whyNow": "one specific macro event, regulation, or technology shift in 2024-2025 that makes this urgent right now — not generic AI hype"
+}`, { model: 'claude-sonnet-4-6', maxTokens: 2000 });
+  const gtm = deepStrip(parseJSON(gtmText));
 
   // Stage 3 — Infrastructure
-  const infraText = await call(`Technical setup for a lean solo-built SaaS product.
+  const infraText = await call(`Technical blueprint for a solo founder building this as a lean SaaS.
 
-Idea: "${agentDesc}"
-Product: ${design.name} — ${design.tagline}
-Core features: ${(design.coreFeatures || []).join(' | ')}
+PRODUCT: "${design.name}" — ${design.tagline}
+CORE FEATURES: ${(design.coreFeatures || []).join(' | ')}
+AI BEHAVIOR: ${design.differentiator}
 
-Return ONLY valid JSON (no fences):
+CRITICAL: No citation tags, no HTML. Plain English only. Return ONLY valid JSON:
 {
-  "stack": ["Next.js 14 (App Router)", "Supabase", "Stripe", "..."],
-  "buildTime": "realistic solo v1 estimate (e.g. '5-7 days to MVP')",
-  "schema": "key tables in plain English: users (id, email, plan) | table2 (fields)",
-  "aiWiring": "which Claude model, what system prompt angle, what the AI actually does step by step",
+  "stack": ["specific tool 1 with version or variant", "specific tool 2", "..."],
+  "buildTime": "realistic estimate with day breakdown — e.g. '8 days: 2 days schema, 3 days core AI, 2 days payments, 1 day polish'",
+  "schema": "every key table with fields — e.g. 'users (id, email, org_id, plan) | jobs (id, user_id, status, ai_output)'",
+  "aiWiring": "exactly which Claude model, the system prompt direction, and the 3-5 step AI loop that makes the core feature work",
   "deploySteps": [
-    "step 1",
+    "step 1: what exactly to do and why",
     "step 2",
     "step 3",
-    "step 4"
+    "step 4",
+    "step 5"
   ],
   "monthlyCost": {
-    "dev": "$0",
-    "at100users": "$X/mo with breakdown",
-    "at1000users": "$Y/mo with breakdown"
+    "dev": "$0 or near-zero breakdown",
+    "at100users": "$X/mo — line by line: Supabase $X, Anthropic API $X, etc.",
+    "at1000users": "$Y/mo — line by line"
   },
-  "buildOrder": "Day 1: auth + schema. Day 2: core AI feature. Day 3: payments. Day 4: polish. Day 5: launch.",
-  "cursorPrompt": "The exact prompt to paste into Cursor or Claude Code to start building. Include: what to build, tech stack, the first screen to implement, and the core AI behavior. Write 140-180 words — enough to get started without being overwhelming."
-}
-
-${PROSE}`, { maxTokens: 1800 });
-  const infra = parseJSON(infraText);
+  "buildOrder": "Day-by-day plan. Day 1: what specifically. Day 2: what specifically. Through launch day.",
+  "cursorPrompt": "The exact prompt to paste into Cursor or Claude Code to start building. Must include: product name and what it does, tech stack, the first two screens to build, and step-by-step description of the core AI feature. 150-180 words. Technical and precise — this goes straight into an AI code editor."
+}`, { maxTokens: 2000 });
+  const infra = deepStrip(parseJSON(infraText));
 
   return { design, gtm, infra };
 }
 
-// --- Route handler ---------------------------------------------------------------
+// ── Route handlers ────────────────────────────────────────────────────────────
 
 export async function GET(request) {
   const auth = request.headers.get('authorization') || '';
@@ -227,19 +255,13 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  // Auth
   const auth = request.headers.get('authorization') || '';
-  const token = auth.replace('Bearer ', '').trim();
-  if (!SECRET || token !== SECRET) {
+  if (!SECRET || auth.replace('Bearer ', '').trim() !== SECRET) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let slugFilter = null;
-  try {
-    const body = await request.json().catch(() => ({}));
-    slugFilter = Array.isArray(body?.slugs) ? body.slugs : null;
-  } catch {}
-
+  const body = await request.json().catch(() => ({}));
+  const slugFilter = Array.isArray(body?.slugs) ? body.slugs : null;
   const ideas = IDEA_EXAMPLES.filter(i => !slugFilter || slugFilter.includes(i.slug));
   if (!ideas.length) return Response.json({ error: 'No matching ideas found' }, { status: 400 });
 
@@ -247,22 +269,19 @@ export async function POST(request) {
   const failed = [];
 
   for (const idea of ideas) {
-    const slug = idea.slug;
     console.log(`[seed-catalog] → ${idea.title}`);
     try {
       const research = await generateResearch(idea);
-      // Brief pause between research and blueprint
-      await sleep(1500);
+      await sleep(2000);
       const blueprint = await generateBlueprint(idea, research);
-      await upsertCatalogIdea(slug, { research, blueprint });
-      generated.push(slug);
+      await upsertCatalogIdea(idea.slug, { research, blueprint });
+      generated.push(idea.slug);
       console.log(`[seed-catalog] ✓ ${idea.title}`);
     } catch (err) {
       console.error(`[seed-catalog] ✗ ${idea.title}:`, err.message);
-      failed.push({ slug, error: err.message });
+      failed.push({ slug: idea.slug, error: err.message });
     }
-    // Pause between ideas
-    await sleep(2000);
+    await sleep(3000);
   }
 
   return Response.json({ generated, failed });
