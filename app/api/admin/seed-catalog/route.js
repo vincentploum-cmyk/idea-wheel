@@ -13,7 +13,7 @@
  * Returns: { generated: [...], failed: [...] }
  */
 
-import { upsertCatalogIdea } from '../../../../lib/catalog-store';
+import { getAllCatalogData, upsertCatalogIdea } from '../../../../lib/catalog-store';
 import { IDEA_EXAMPLES } from '../../../../lib/idea-examples';
 
 const KEY = process.env.ANTHROPIC_API_KEY;
@@ -216,6 +216,15 @@ ${PROSE}`, { maxTokens: 1800 });
 }
 
 // --- Route handler ---------------------------------------------------------------
+
+export async function GET(request) {
+  const auth = request.headers.get('authorization') || '';
+  if (!SECRET || auth.replace('Bearer ', '').trim() !== SECRET) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const data = await getAllCatalogData();
+  return Response.json(data);
+}
 
 export async function POST(request) {
   // Auth
