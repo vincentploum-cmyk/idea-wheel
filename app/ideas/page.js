@@ -1,7 +1,7 @@
 import PopitoShell from '@/components/popito/PopitoShell';
 import IdeasClient from './ideas-client';
 import { createClient } from '@/lib/supabase-server';
-import { hasUnlockedIdeas, hasUnlockedCatalogBlueprint } from '@/lib/credits';
+import { hasUnlockedIdea, getIdeaCreditBalance } from '@/lib/credits';
 import { getAllCatalogData, getUnlockCounts } from '@/lib/catalog-store';
 import { IDEA_EXAMPLES } from '@/lib/idea-examples';
 
@@ -11,29 +11,28 @@ export const metadata = {
   alternates: { canonical: 'https://ideareels.io/ideas' },
 };
 
-export const revalidate = 3600; // Revalidate catalog data once per hour
+export const revalidate = 3600;
 
 export default async function IdeasPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const unlocked = user ? await hasUnlockedIdeas(user.id) : false;
 
-  // Fetch pre-generated catalog data (research + blueprints) and unlock counts
   const premiumSlugs = IDEA_EXAMPLES.filter(i => i.score >= 80).map(i => i.slug);
+
   const [catalogData, unlockCounts] = await Promise.all([
     getAllCatalogData().catch(() => ({})),
-    getUnlockCounts(premiumSlugs).catch(() => ({ researchCount: 0, blueprintCounts: {} })),
+    getUnlockCounts(premiumSlugs).catch(() => ({})),
   ]);
 
-  // Check which blueprints this user has unlocked (per-idea)
-  let blueprintUnlocks = {};
-  if (user && unlocked) {
+  // Per-idea unlock state for this user
+  let ideaUnlocks = {};
+  let ideaCreditBalance = 0;
+  if (user) {
+    ideaCreditBalance = await getIdeaCreditBalance(user.id).catch(() => 0);
     const checks = await Promise.all(
-      IDEA_EXAMPLES
-        .filter(i => i.score >= 80)
-        .map(async i => [i.slug, await hasUnlockedCatalogBlueprint(user.id, i.slug).catch(() => false)])
+      premiumSlugs.map(async slug => [slug, await hasUnlockedIdea(user.id, slug).catch(() => false)])
     );
-    blueprintUnlocks = Object.fromEntries(checks);
+    ideaUnlocks = Object.fromEntries(checks);
   }
 
   return (
@@ -50,9 +49,9 @@ export default async function IdeasPage() {
       </div>
       <IdeasClient
         user={user}
-        unlocked={unlocked}
         catalogData={catalogData}
-        blueprintUnlocks={blueprintUnlocks}
+        ideaUnlocks={ideaUnlocks}
+        ideaCreditBalance={ideaCreditBalance}
         unlockCounts={unlockCounts}
       />
     </PopitoShell>

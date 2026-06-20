@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { addCredits } from '@/lib/credits';
+import { addCredits, addIdeaCredits, CREDIT_PACKS } from '@/lib/credits';
 import { createClient } from '@supabase/supabase-js';
 
 let _stripe = null;
@@ -24,18 +24,27 @@ export async function POST(request) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const userId = session.metadata?.user_id || session.client_reference_id;
-    const credits = parseInt(session.metadata?.credits || '0', 10);
     const packId = session.metadata?.pack_id;
-    if (!userId || !credits) return new Response('ok', { status: 200 });
+    if (!userId || !packId) return new Response('ok', { status: 200 });
 
+    const pack = CREDIT_PACKS.find(p => p.id === packId);
     const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-    await addCredits(userId, credits, 'purchase', { stripe_session_id: session.id, pack_id: packId });
+
+    if (pack?.type === 'idea' && pack.ideaCredits > 0) {
+      await addIdeaCredits(userId, pack.ideaCredits, { stripe_session_id: session.id });
+    } else {
+      const credits = parseInt(session.metadata?.credits || String(pack?.credits || 0), 10);
+      if (credits > 0) {
+        await addCredits(userId, credits, 'purchase', { stripe_session_id: session.id });
+      }
+    }
+
     await db.from('stripe_orders').upsert({
       user_id: userId,
       stripe_session_id: session.id,
       stripe_payment_id: typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id || null,
       pack_id: packId || 'unknown',
-      credits_amount: credits,
+      credits_amount: pack?.credits || 0,
       amount_cents: Number(session.amount_total || 0),
       status: 'complete',
       fulfilled_at: new Date().toISOString(),

@@ -29,9 +29,12 @@ export async function POST(request) {
 
   const offerOverride = offer ? OFFER_PRICES[packId] : null;
   const priceCents = offerOverride ? offerOverride.price_cents : pack.price_cents;
+  const isIdeaPack = pack.type === 'idea';
   const productName = offerOverride
-    ? `IdeaReels ${offerOverride.label} — ${pack.credits} Credits`
-    : `IdeaReels ${pack.label} — ${pack.credits} Credits`;
+    ? `IdeaReels ${offerOverride.label}`
+    : isIdeaPack
+      ? `IdeaReels ${pack.label} — ${pack.ideaCredits} idea unlock${pack.ideaCredits !== 1 ? 's' : ''}`
+      : `IdeaReels ${pack.label} — ${pack.credits} Credits`;
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideareels.io';
@@ -45,7 +48,7 @@ export async function POST(request) {
       product_data: { name: productName, description: pack.tagline },
     }, quantity: 1 }],
     customer_email: user.email,
-    metadata: { user_id: user.id, pack_id: pack.id, credits: String(pack.credits) },
+    metadata: { user_id: user.id, pack_id: pack.id, credits: String(pack.credits), idea_credits: String(pack.ideaCredits || 0) },
     success_url: `${siteUrl}?credits=success&pack=${pack.id}`,
     cancel_url: `${siteUrl}/pricing/offer`,
   });
