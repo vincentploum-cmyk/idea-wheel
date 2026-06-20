@@ -265,24 +265,45 @@ export async function POST(request) {
   const ideas = IDEA_EXAMPLES.filter(i => !slugFilter || slugFilter.includes(i.slug));
   if (!ideas.length) return Response.json({ error: 'No matching ideas found' }, { status: 400 });
 
-  const generated = [];
-  const failed = [];
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (obj) => {
+        try { controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n')); } catch {}
+      };
 
-  for (const idea of ideas) {
-    console.log(`[seed-catalog] → ${idea.title}`);
-    try {
-      const research = await generateResearch(idea);
-      await sleep(2000);
-      const blueprint = await generateBlueprint(idea, research);
-      await upsertCatalogIdea(idea.slug, { research, blueprint });
-      generated.push(idea.slug);
-      console.log(`[seed-catalog] ✓ ${idea.title}`);
-    } catch (err) {
-      console.error(`[seed-catalog] ✗ ${idea.title}:`, err.message);
-      failed.push({ slug: idea.slug, error: err.message });
-    }
-    await sleep(3000);
-  }
+      const generated = [];
+      const failed = [];
 
-  return Response.json({ generated, failed });
+      for (const idea of ideas) {
+        send({ status: 'running', slug: idea.slug, title: idea.title });
+        console.log(`[seed-catalog] → ${idea.title}`);
+        try {
+          const research = await generateResearch(idea);
+          await sleep(2000);
+          const blueprint = await generateBlueprint(idea, research);
+          await upsertCatalogIdea(idea.slug, { research, blueprint });
+          generated.push(idea.slug);
+          send({ status: 'done', slug: idea.slug, title: idea.title });
+          console.log(`[seed-catalog] ✓ ${idea.title}`);
+        } catch (err) {
+          console.error(`[seed-catalog] ✗ ${idea.title}:`, err.message);
+          failed.push({ slug: idea.slug, error: err.message });
+          send({ status: 'failed', slug: idea.slug, error: err.message });
+        }
+        await sleep(3000);
+      }
+
+      send({ status: 'complete', generated, failed });
+      try { controller.close(); } catch {}
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'application/x-ndjson; charset=utf-8',
+      'Cache-Control': 'no-store, no-transform',
+      'X-Accel-Buffering': 'no',
+    },
+  });
 }
