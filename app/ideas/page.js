@@ -1,7 +1,9 @@
 import PopitoShell from '@/components/popito/PopitoShell';
 import IdeasClient from './ideas-client';
 import { createClient } from '@/lib/supabase-server';
-import { hasUnlockedIdeas } from '@/lib/credits';
+import { hasUnlockedIdeas, hasUnlockedCatalogBlueprint } from '@/lib/credits';
+import { getAllCatalogData } from '@/lib/catalog-store';
+import { IDEA_EXAMPLES } from '@/lib/idea-examples';
 
 export const metadata = {
   title: 'Ideas From the Engine — IdeaReels',
@@ -9,10 +11,26 @@ export const metadata = {
   alternates: { canonical: 'https://ideareels.io/ideas' },
 };
 
+export const revalidate = 3600; // Revalidate catalog data once per hour
+
 export default async function IdeasPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const unlocked = user ? await hasUnlockedIdeas(user.id) : false;
+
+  // Fetch pre-generated catalog data (research + blueprints)
+  const catalogData = await getAllCatalogData().catch(() => ({}));
+
+  // Check which blueprints this user has unlocked (per-idea)
+  let blueprintUnlocks = {};
+  if (user && unlocked) {
+    const checks = await Promise.all(
+      IDEA_EXAMPLES
+        .filter(i => i.score >= 80)
+        .map(async i => [i.slug, await hasUnlockedCatalogBlueprint(user.id, i.slug).catch(() => false)])
+    );
+    blueprintUnlocks = Object.fromEntries(checks);
+  }
 
   return (
     <PopitoShell>
@@ -26,7 +44,12 @@ export default async function IdeasPage() {
           </div>
         </div>
       </div>
-      <IdeasClient user={user} unlocked={unlocked} />
+      <IdeasClient
+        user={user}
+        unlocked={unlocked}
+        catalogData={catalogData}
+        blueprintUnlocks={blueprintUnlocks}
+      />
     </PopitoShell>
   );
 }
