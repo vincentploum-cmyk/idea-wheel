@@ -2,6 +2,37 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
 import PromoBanner from '@/components/PromoBanner';
 
+function LogoMark({ height = 44 }) {
+  const w = Math.round(height * 4.1);
+  const fontSize = Math.round(height * 0.52);
+  const pad = Math.round(height * 0.18);
+  return (
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      background: '#FFE000',
+      border: '2.5px solid #141414',
+      borderRadius: height,
+      padding: `${pad}px ${Math.round(height * 0.45)}px`,
+      boxShadow: '2px 2px 0 #141414',
+      lineHeight: 1,
+      height,
+      boxSizing: 'border-box',
+    }}>
+      <span style={{
+        fontFamily: "'Arial Black', 'Helvetica Neue', Arial, sans-serif",
+        fontWeight: 900,
+        fontSize,
+        color: '#141414',
+        whiteSpace: 'nowrap',
+        letterSpacing: '0.01em',
+      }}>
+        Idea ★ Reels
+      </span>
+    </span>
+  );
+}
+
 const NAV_LINKS = [
   { href: '/wheel', label: 'Spin!' },
   { href: '/ideas', label: 'Ideas' },
@@ -57,7 +88,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
           <div className="header_top">
             <div className="logo">
               <Link href="/" style={{ textDecoration: 'none', display: 'inline-block', lineHeight: 0 }}>
-                <img src="/ideareels-logo.svg" alt="IdeaReels" height={44} style={{ display: 'block' }} />
+                <LogoMark height={44} />
               </Link>
             </div>
             <div className="popito_fn_nav main_nav">
@@ -106,7 +137,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
           <div className="logo">
             <div className="fn_logo">
               <Link href="/" style={{ display: 'inline-block', lineHeight: 0 }}>
-                <img src="/ideareels-logo.svg" alt="IdeaReels" height={38} style={{ display: 'block' }} />
+                <LogoMark height={38} />
               </Link>
             </div>
           </div>
