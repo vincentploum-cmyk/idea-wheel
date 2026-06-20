@@ -87,7 +87,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
         <div className="popito_fn_header">
           <div className="header_top">
             <div className="logo">
-              <Link href="/" style={{ textDecoration: 'none', display: 'inline-block', lineHeight: 0 }}>
+              <Link href="/" style={{ textDecoration: 'none' }}>
                 <LogoMark height={44} />
               </Link>
             </div>
