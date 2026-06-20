@@ -1,28 +1,13 @@
-<svg viewBox="0 0 300 76" xmlns="http://www.w3.org/2000/svg" width="300" height="76">
-  <!-- Yellow pill -->
-  <rect x="2" y="2" width="296" height="72" rx="36" ry="36" fill="#FFE000" stroke="#141414" stroke-width="4"/>
-
-  <!-- Spark icon: 3 bars + sparkle, directly positioned -->
-  <!-- Sparkle: 3 lines converging downward above center bar -->
-  <g stroke="#141414" stroke-width="3.5" stroke-linecap="round">
-    <line x1="44" y1="12" x2="44" y2="22"/>
-    <line x1="36" y1="16" x2="40" y2="22"/>
-    <line x1="52" y1="16" x2="48" y2="22"/>
-  </g>
-  <!-- 3 equal rounded bars -->
-  <rect x="24" y="26" width="12" height="36" rx="6" fill="#141414"/>
-  <rect x="40" y="26" width="12" height="36" rx="6" fill="#141414"/>
-  <rect x="56" y="26" width="12" height="36" rx="6" fill="#141414"/>
-
-  <!-- IDEAREELS text -->
+<svg viewBox="0 0 280 68" xmlns="http://www.w3.org/2000/svg" width="280" height="68">
+  <rect x="2" y="2" width="276" height="64" rx="32" ry="32" fill="#FFE000" stroke="#141414" stroke-width="4"/>
   <text
-    x="82" y="44"
+    x="140" y="38"
     font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif"
     font-weight="900"
-    font-size="26"
+    font-size="28"
     fill="#141414"
     dominant-baseline="middle"
-    text-anchor="start"
+    text-anchor="middle"
     letter-spacing="0.5"
-  >IDEAREELS</text>
+  >Idea &#9733; Reels</text>
 </svg>
