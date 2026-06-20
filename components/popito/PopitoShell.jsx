@@ -56,24 +56,8 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
         <div className="popito_fn_header">
           <div className="header_top">
             <div className="logo">
-              <Link href="/" style={{ textDecoration: 'none' }}>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  background: '#FFE000',
-                  border: '2.5px solid #111',
-                  borderRadius: '6px 999px 999px 6px',
-                  padding: '5px 18px 5px 12px',
-                  fontFamily: 'Nunito, sans-serif',
-                  fontWeight: 900,
-                  fontSize: 17,
-                  letterSpacing: '0.04em',
-                  textTransform: 'uppercase',
-                  color: '#111',
-                  lineHeight: 1,
-                }}>
-                  IdeaReels
-                </span>
+              <Link href="/" style={{ textDecoration: 'none', display: 'inline-block', lineHeight: 0 }}>
+                <img src="/ideareels-logo.svg" alt="IdeaReels" height={44} style={{ display: 'block' }} />
               </Link>
             </div>
             <div className="popito_fn_nav main_nav">
@@ -121,10 +105,8 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
         <div className="mob_top">
           <div className="logo">
             <div className="fn_logo">
-              <Link href="/">
-                <span style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 20, letterSpacing: '-0.02em', color: 'inherit' }}>
-                  IdeaReels
-                </span>
+              <Link href="/" style={{ display: 'inline-block', lineHeight: 0 }}>
+                <img src="/ideareels-logo.svg" alt="IdeaReels" height={38} style={{ display: 'block' }} />
               </Link>
             </div>
           </div>
