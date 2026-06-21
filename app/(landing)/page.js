@@ -27,7 +27,7 @@ const PACK_FEATURES = {
 
 export const metadata = {
   title: 'IdeaReels — Spin up your next weekend build',
-  description: 'For vibe coders, indie hackers, and solo builders. Spin into a software idea, sanity-check it fast, and unlock deeper research or a blueprint only when it feels real.',
+  description: 'AI gives builders the power to build almost anything. IdeaReels helps you find a software idea worth building, vet it fast, and turn it into a blueprint.',
   alternates: { canonical: 'https://ideareels.io' },
 };
 
@@ -44,7 +44,7 @@ export default async function LandingPage() {
         '@type': 'WebApplication',
         name: 'IdeaReels',
         url: 'https://ideareels.io',
-        description: 'IdeaReels helps builders spin into concrete software ideas, pressure-test them quickly, and unlock a blueprint when something feels worth building.',
+        description: 'IdeaReels helps builders who already have AI tools find better ideas, vet them quickly, and turn the winners into build-ready blueprints.',
         applicationCategory: 'BusinessApplication',
         offers: {
           '@type': 'Offer',
@@ -77,13 +77,13 @@ export default async function LandingPage() {
         <div className="container">
           <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto' }}>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
-              Built for vibe coders
+              Built for AI builders and vibe coders
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.08, marginBottom: 16 }}>
-              Spin up your next<br />weekend build.
+              AI can build almost anything.<br />The hard part is what to build.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 620, margin: '0 auto 1.5rem' }}>
-              IdeaReels gives you a concrete software angle, a fast market sanity check, and a deeper path only when a project feels worth chasing.
+              When you run out of creativity, IdeaReels helps you generate software ideas, vet them fast, and turn the promising ones into a blueprint you can actually build from.
             </p>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
               {user ? (
@@ -106,9 +106,9 @@ export default async function LandingPage() {
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
-                How IdeaReels fits the way builders actually work
+                When AI removes the build bottleneck, the bottleneck becomes the idea
               </h2>
-              <p style={{ opacity: 0.65, marginTop: 8 }}>Less startup theater, more buildable signal.</p>
+              <p style={{ opacity: 0.65, marginTop: 8 }}>IdeaReels gives you direction, validation, and a blueprint when something looks real.</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 28 }}>
               {LANDING_STEPS.map((step) => (
@@ -137,7 +137,7 @@ export default async function LandingPage() {
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 28, maxWidth: 760, marginInline: 'auto' }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
-                Start spinning, then buy the path you need
+                Pay only when an idea is worth chasing
               </h2>
               <p style={{ opacity: 0.65, marginTop: 8 }}>
                 Starter is for your own spins. Pro and Power are shortcut packs if you want a ready-made idea from the library instead of starting from scratch.
