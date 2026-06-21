@@ -123,6 +123,15 @@ export default async function LandingPage() {
         </div>
       </div>
 
+      {/* Cost of inaction banner */}
+      <div style={{ background: '#FFE000', borderTop: '3px solid #111', borderBottom: '3px solid #111', padding: '14px 0' }}>
+        <div className="container">
+          <p style={{ textAlign: 'center', margin: 0, fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 14, color: '#111', letterSpacing: '0.01em' }}>
+            The average failed startup spends <strong>4–6 months building</strong> the wrong thing. IdeaReels runs that check in <strong>5 minutes for $3.99</strong>.
+          </p>
+        </div>
+      </div>
+
       {/* Stats bar */}
       <div style={{ background: '#111', borderTop: '3px solid #111', borderBottom: '3px solid #111', padding: '18px 0' }}>
         <div className="container">
@@ -296,6 +305,33 @@ export default async function LandingPage() {
                     </li>
                   ))}
                 </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Risk reversal */}
+        <section style={{ padding: '0 0 48px' }}>
+          <div className="container">
+            <div style={{ maxWidth: 860, margin: '0 auto' }}>
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(1.5rem,3vw,2.1rem)', margin: '0 0 10px' }}>
+                  Why this costs less than a coffee and saves months
+                </h2>
+                <p style={{ opacity: 0.65, fontSize: 15 }}>You're about to commit weeks or months to an idea. Here's the math.</p>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 20 }}>
+                {[
+                  { icon: '⏱', heading: 'Without IdeaReels', body: 'Build for 3–6 months. Launch to silence. Discover the market was too crowded, too niche, or already solved.' },
+                  { icon: '✓', heading: 'With IdeaReels ($3.99)', body: 'Run the market check in 5 minutes. If the signal is weak, you saved months. If it\'s strong, you get the blueprint and build from evidence.' },
+                  { icon: '↩', heading: 'Risk reversal', body: 'Spinning is free — no card needed. Buy $3.99 in credits only when the market verdict tells you it\'s worth digging in. Credits never expire.' },
+                ].map(({ icon, heading, body }) => (
+                  <div key={heading} className="fn__bold_item" style={{ padding: '24px 22px' }}>
+                    <div style={{ fontSize: 28, marginBottom: 12 }}>{icon}</div>
+                    <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16, marginBottom: 10 }}>{heading}</h3>
+                    <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, opacity: 0.7 }}>{body}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

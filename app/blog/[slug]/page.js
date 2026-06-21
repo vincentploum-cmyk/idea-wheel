@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import NextLink from 'next/link';
 import PopitoShell from '@/components/popito/PopitoShell';
 import { BLOG_POSTS, getBlogPost } from '@/lib/blog-posts';
 
@@ -35,6 +36,25 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+function renderInlineLinks(text) {
+  const parts = text.split(/\[([^\]]+)\]\(([^)]+)\)/g);
+  if (parts.length === 1) return text;
+  const result = [];
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 3 === 0) { if (parts[i]) result.push(parts[i]); }
+    else if (i % 3 === 1) {
+      const label = parts[i];
+      const href = parts[i + 1];
+      const isInternal = href.startsWith('/');
+      result.push(isInternal
+        ? <NextLink key={i} href={href} style={{ color: '#111', fontWeight: 700, textDecoration: 'underline', textDecorationColor: '#FFE000', textUnderlineOffset: 3 }}>{label}</NextLink>
+        : <a key={i} href={href} style={{ color: '#111', fontWeight: 700, textDecoration: 'underline', textDecorationColor: '#FFE000', textUnderlineOffset: 3 }} target="_blank" rel="noopener noreferrer">{label}</a>
+      );
+    }
+  }
+  return result;
+}
+
 function renderBody(body) {
   const lines = body.split('\n');
   const elements = [];
@@ -68,7 +88,7 @@ function renderBody(body) {
     } else if (line.trim() !== '') {
       elements.push(
         <p key={i} style={{ margin: '0 0 18px', lineHeight: 1.8, fontSize: 16, opacity: 0.85 }}>
-          {line}
+          {renderInlineLinks(line)}
         </p>
       );
     }
@@ -93,6 +113,16 @@ export default function BlogPostPage({ params }) {
     author: { '@type': 'Organization', name: 'IdeaReels', url: 'https://ideareels.io' },
     publisher: { '@type': 'Organization', name: 'IdeaReels', url: 'https://ideareels.io' },
     mainEntityOfPage: { '@type': 'WebPage', '@id': `https://ideareels.io/blog/${post.slug}` },
+  };
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ideareels.io' },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://ideareels.io/blog' },
+      { '@type': 'ListItem', position: 3, name: post.title, item: `https://ideareels.io/blog/${post.slug}` },
+    ],
   };
 
   return (
@@ -180,6 +210,7 @@ export default function BlogPostPage({ params }) {
         </section>
       </div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
     </PopitoShell>
   );
 }
