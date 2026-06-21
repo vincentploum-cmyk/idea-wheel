@@ -652,7 +652,7 @@ export default function IdeaWheel() {
   const [idea, setIdea]     = useState(null);
   const ideaByMode = useRef({});   // persist idea per mode so switching back restores it
   const currentModeRef = useRef('b2b');
-  const [credits, setCredits] = useState(3);
+  const [credits, setCredits] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [authUser, setAuthUser]       = useState(null);   // logged-in user
   const [hasAccount, setHasAccount]   = useState(false);  // ever signed up
@@ -700,7 +700,7 @@ export default function IdeaWheel() {
   useEffect(() => {
     setMounted(true);
     try {
-      const stored = Number(localStorage.getItem("ideaWheelCredits") || "3");
+      const stored = Number(localStorage.getItem("ideaWheelCredits") || "0");
       if (Number.isFinite(stored) && stored >= 0) setCredits(stored);
       if (localStorage.getItem("ideaWheelHasAccount") === "1") setHasAccount(true);
     } catch {}
