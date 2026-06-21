@@ -173,12 +173,19 @@ img, svg { display: block; max-width: 100%; }
    on the container but not on the child span, which breaks with inline-flex display */
 .fn__btn span { white-space: nowrap; }
 
-::selection { background: rgba(192,38,211,0.18); color: var(--ink); }
+::selection { background: rgba(255,224,0,0.55); color: #111; }
 
 :focus-visible {
-  outline: 2px solid var(--accent-mid);
+  outline: 2.5px solid #111;
   outline-offset: 2px;
   border-radius: 6px;
+}
+
+/* Hero two-column → single column on narrow viewports */
+@media (max-width: 720px) {
+  .hero-grid { grid-template-columns: 1fr !important; }
+  .hero-grid .pagetitle { text-align: center !important; }
+  .hero-illustration { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
