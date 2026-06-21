@@ -161,6 +161,9 @@ export default function BlogPostPage({ params }) {
           <img
             src={post.image}
             alt={post.imageAlt}
+            width="800"
+            height="420"
+            fetchPriority="high"
             style={{ width: '100%', maxHeight: 420, objectFit: 'cover', display: 'block', borderTop: '3px solid #111' }}
           />
         </div>
@@ -195,7 +198,7 @@ export default function BlogPostPage({ params }) {
                   {otherPosts.map((p) => (
                     <Link key={p.slug} href={`/blog/${p.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                       <div className="fn__bold_item" style={{ padding: '16px 20px', display: 'flex', gap: 16, alignItems: 'center' }}>
-                        <img src={p.image} alt={p.imageAlt} style={{ width: 72, height: 52, objectFit: 'cover', borderRadius: 6, border: '2px solid #111', flexShrink: 0 }} />
+                        <img src={p.image} alt={p.imageAlt} width="72" height="52" loading="lazy" style={{ width: 72, height: 52, objectFit: 'cover', borderRadius: 6, border: '2px solid #111', flexShrink: 0 }} />
                         <div>
                           <p style={{ margin: '0 0 4px', fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 15, lineHeight: 1.25 }}>{p.title}</p>
                           <p style={{ margin: 0, fontSize: 12, opacity: 0.5, fontFamily: 'Nunito, sans-serif', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{p.readTime}</p>

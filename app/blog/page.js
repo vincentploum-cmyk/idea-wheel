@@ -3,8 +3,8 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import { BLOG_POSTS } from '@/lib/blog-posts';
 
 export const metadata = {
-  title: 'Blog — AI, Startups & Tools | IdeaReels',
-  description: 'Practical articles on AI tools, startup validation, and how founders are building faster with AI in 2025 and beyond.',
+  title: 'Blog — AI Startup Validation, Market Research & Tools | IdeaReels',
+  description: 'Practical articles on AI startup validation, market research, MVP planning, and how solo founders are building faster in 2025 and beyond.',
   alternates: { canonical: 'https://ideareels.io/blog' },
 };
 
@@ -18,7 +18,7 @@ export default function BlogPage() {
       <div className="popito_fn_pagetitle">
         <div className="container">
           <div className="pagetitle">
-            <h3 className="fn__title">The IdeaReels Blog</h3>
+            <h1 className="fn__title">The IdeaReels Blog</h1>
             <p className="fn__desc">Practical writing on AI tools, startup validation, and building faster as a solo founder.
             </p>
             <span className="wings" />

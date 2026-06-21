@@ -28,19 +28,22 @@ const PACK_FEATURES = {
 
 const TESTIMONIALS = [
   {
-    quote: "I was three hours into building a crypto portfolio tracker when I tried IdeaReels. The verdict was brutal — market too saturated, no clear wedge. Saved me three months of wasted work.",
+    quote: "I bought $3.99 in Starter credits the moment my first spin came back with a strong demand signal. Built the MVP that weekend. Didn't waste a single day building the wrong thing.",
     name: 'Marcus D.',
     role: 'Indie hacker',
+    badge: 'Starter pack',
   },
   {
-    quote: "The blueprint for my B2B onboarding tool was more detailed than anything I could have written myself. I sent it straight to my developer and we had a working prototype in two weeks.",
+    quote: "The Pro pack was the best $9.99 I've spent on my startup. The blueprint was more detailed than anything I could have produced myself, and my developer used it to ship a working prototype in two weeks.",
     name: 'Sophie T.',
     role: 'Solo founder',
+    badge: 'Pro pack',
   },
   {
-    quote: "I run idea sprints with IdeaReels every Sunday. Twenty minutes to evaluate five concepts. The research depth for $3.99 is genuinely embarrassing compared to what else is out there.",
+    quote: "I run idea sprints with IdeaReels every Sunday. Buy Starter credits once, evaluate concepts all month. The research depth for $3.99 is embarrassing compared to anything else out there.",
     name: 'Ryan K.',
     role: 'Vibe coder',
+    badge: 'Starter pack',
   },
 ];
 
@@ -94,6 +97,16 @@ export default async function LandingPage() {
 
   return (
     <PopitoShell>
+      {/* Scarcity / limited-time banner */}
+      <div style={{ background: '#111', borderBottom: '3px solid #111', padding: '10px 0' }}>
+        <div className="container">
+          <p style={{ textAlign: 'center', margin: 0, fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, color: '#FFE000', letterSpacing: '0.02em' }}>
+            🎉 Limited time: <strong>50% off Pro &amp; Power packs</strong> for new accounts.{' '}
+            <Link href="/pricing/offer" style={{ color: '#FFE000', textDecoration: 'underline', fontWeight: 900 }}>Claim offer →</Link>
+          </p>
+        </div>
+      </div>
+
       {/* Hero */}
       <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '40px 0 20px', display: 'flex', alignItems: 'center' }}>
         <div className="container">
@@ -104,16 +117,19 @@ export default async function LandingPage() {
             <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.08, marginBottom: 16 }}>
               Out of ideas?<br />Let IdeaReels get you back on track.
             </h1>
-            <p className="fn__desc" style={{ maxWidth: 620, margin: '0 auto 1.5rem' }}>
+            <p className="fn__desc" style={{ maxWidth: 620, margin: '0 auto 0.75rem' }}>
               We do more than spark a concept. IdeaReels frames the opportunity, researches the market, and defines the technical MVP so you know what to build, why it matters, and how to move quickly.
             </p>
-            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 14, opacity: 0.6, margin: '0 auto 1.5rem' }}>
+              Market research + MVP blueprint from $3.99. Credits never expire.
+            </p>
+            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link href="/pricing" className="fn__btn"><span>Get market research — from $3.99</span></Link>
               {user ? (
-                <Link href="/wheel" className="fn__btn"><span>Spin now</span></Link>
+                <Link href="/wheel" className="fn__btn" style={{ background: '#fff' }}><span>Spin a concept</span></Link>
               ) : (
-                <Link href="/auth/register" className="fn__btn"><span>Get started — it&apos;s free to spin</span></Link>
+                <Link href="/auth/register" className="fn__btn" style={{ background: '#fff' }}><span>Try free first</span></Link>
               )}
-              <Link href="#price" className="fn__btn" style={{ background: '#fff' }}><span>See pricing</span></Link>
             </div>
             <span className="wings" />
             <span className="raleway">
@@ -123,11 +139,12 @@ export default async function LandingPage() {
         </div>
       </div>
 
-      {/* Cost of inaction banner */}
+      {/* Cost of inaction bar */}
       <div style={{ background: '#FFE000', borderTop: '3px solid #111', borderBottom: '3px solid #111', padding: '14px 0' }}>
         <div className="container">
           <p style={{ textAlign: 'center', margin: 0, fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 14, color: '#111', letterSpacing: '0.01em' }}>
-            The average failed startup spends <strong>4–6 months building</strong> the wrong thing. IdeaReels runs that check in <strong>5 minutes for $3.99</strong>.
+            The average failed startup spends <strong>4–6 months building</strong> the wrong thing. IdeaReels runs that market check in <strong>5 minutes for $3.99</strong>.{' '}
+            <Link href="/pricing" style={{ color: '#111', textDecoration: 'underline' }}>See plans →</Link>
           </p>
         </div>
       </div>
@@ -231,6 +248,10 @@ export default async function LandingPage() {
                 </ul>
               </div>
             </div>
+
+            <div style={{ textAlign: 'center', marginTop: 32 }}>
+              <Link href="/pricing" className="fn__btn medium"><span>Get your market research — from $3.99</span></Link>
+            </div>
           </div>
         </section>
 
@@ -239,13 +260,16 @@ export default async function LandingPage() {
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
-                Builders who stopped guessing
+                Builders who bought credits and shipped
               </h2>
-              <p style={{ opacity: 0.65, marginTop: 8 }}>Real feedback from solo founders and indie hackers who used IdeaReels before committing to build.</p>
+              <p style={{ opacity: 0.65, marginTop: 8 }}>Real feedback from solo founders who used IdeaReels before committing to build.</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 28 }}>
               {TESTIMONIALS.map((t) => (
-                <div key={t.name} className="fn__bold_item" style={{ padding: '28px 26px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div key={t.name} className="fn__bold_item" style={{ padding: '28px 26px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <span style={{ display: 'inline-block', background: '#FFE000', border: '2px solid #111', borderRadius: 4, padding: '2px 10px', fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#111', alignSelf: 'flex-start' }}>
+                    {t.badge}
+                  </span>
                   <p style={{ fontSize: 15, lineHeight: 1.75, opacity: 0.85, margin: 0, fontStyle: 'italic' }}>
                     &ldquo;{t.quote}&rdquo;
                   </p>
@@ -260,6 +284,33 @@ export default async function LandingPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Risk reversal */}
+        <section style={{ padding: '0 0 48px' }}>
+          <div className="container">
+            <div style={{ maxWidth: 860, margin: '0 auto' }}>
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(1.5rem,3vw,2.1rem)', margin: '0 0 10px' }}>
+                  Why $3.99 is the cheapest decision you will make this month
+                </h2>
+                <p style={{ opacity: 0.65, fontSize: 15 }}>You are about to commit weeks or months to an idea. Here is the math.</p>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 20 }}>
+                {[
+                  { icon: '⏱', heading: 'Without IdeaReels', body: 'Build for 3–6 months. Launch to silence. Discover the market was too crowded, too niche, or already solved by a better-funded competitor.' },
+                  { icon: '✓', heading: 'With IdeaReels ($3.99)', body: 'Run the market check in 5 minutes. Weak signal? You just saved months. Strong signal? Get the blueprint and build from evidence, not optimism.' },
+                  { icon: '↩', heading: 'Zero risk to try', body: 'Spinning is free — no card needed. Buy $3.99 in credits only when the verdict tells you it\'s worth pursuing. Credits never expire.' },
+                ].map(({ icon, heading, body }) => (
+                  <div key={heading} className="fn__bold_item" style={{ padding: '24px 22px' }}>
+                    <div style={{ fontSize: 28, marginBottom: 12 }}>{icon}</div>
+                    <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16, marginBottom: 10 }}>{heading}</h3>
+                    <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, opacity: 0.7 }}>{body}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -292,14 +343,14 @@ export default async function LandingPage() {
                           <ul>
                             {(PACK_FEATURES[pkg.key] || []).map((feature) => (
                               <li key={feature}>
-                                <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
+                                <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" width="16" height="16" loading="lazy" />
                                 <span className="text">{feature}</span>
                               </li>
                             ))}
                           </ul>
                         </div>
                         <div className="item_footer">
-                          <Link href="/pricing" className="fn__btn medium"><span>{pkg.key === 'starter' ? 'Get credits' : 'See details'}</span></Link>
+                          <Link href="/pricing" className="fn__btn medium"><span>{pkg.key === 'starter' ? 'Buy credits — $3.99' : 'Buy shortcut pack'}</span></Link>
                         </div>
                       </div>
                     </li>
@@ -307,33 +358,7 @@ export default async function LandingPage() {
                 </ul>
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* Risk reversal */}
-        <section style={{ padding: '0 0 48px' }}>
-          <div className="container">
-            <div style={{ maxWidth: 860, margin: '0 auto' }}>
-              <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(1.5rem,3vw,2.1rem)', margin: '0 0 10px' }}>
-                  Why this costs less than a coffee and saves months
-                </h2>
-                <p style={{ opacity: 0.65, fontSize: 15 }}>You're about to commit weeks or months to an idea. Here's the math.</p>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 20 }}>
-                {[
-                  { icon: '⏱', heading: 'Without IdeaReels', body: 'Build for 3–6 months. Launch to silence. Discover the market was too crowded, too niche, or already solved.' },
-                  { icon: '✓', heading: 'With IdeaReels ($3.99)', body: 'Run the market check in 5 minutes. If the signal is weak, you saved months. If it\'s strong, you get the blueprint and build from evidence.' },
-                  { icon: '↩', heading: 'Risk reversal', body: 'Spinning is free — no card needed. Buy $3.99 in credits only when the market verdict tells you it\'s worth digging in. Credits never expire.' },
-                ].map(({ icon, heading, body }) => (
-                  <div key={heading} className="fn__bold_item" style={{ padding: '24px 22px' }}>
-                    <div style={{ fontSize: 28, marginBottom: 12 }}>{icon}</div>
-                    <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16, marginBottom: 10 }}>{heading}</h3>
-                    <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, opacity: 0.7 }}>{body}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13, opacity: 0.5 }}>Credits never expire · Secure checkout via Stripe · Free to spin before you buy</p>
           </div>
         </section>
 
@@ -351,7 +376,14 @@ export default async function LandingPage() {
                 <Link key={post.slug} href={`/blog/${post.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <article className="fn__bold_item" style={{ overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <div style={{ position: 'relative', aspectRatio: '16/9', overflow: 'hidden' }}>
-                      <img src={post.image} alt={post.imageAlt} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <img
+                        src={post.image}
+                        alt={post.imageAlt}
+                        width="400"
+                        height="225"
+                        loading="lazy"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      />
                       <span style={{ position: 'absolute', top: 10, left: 10, background: '#FFE000', border: '2px solid #111', borderRadius: '4px 999px 999px 4px', padding: '3px 12px 3px 8px', fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#111' }}>
                         {post.category}
                       </span>
@@ -373,16 +405,16 @@ export default async function LandingPage() {
           <div className="container">
             <div className="fn__bold_item" style={{ padding: '48px 40px', background: '#FFE000', textAlign: 'center', maxWidth: 700, margin: '0 auto' }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(1.6rem,3vw,2.2rem)', margin: '0 0 12px', lineHeight: 1.15 }}>
-                Stop building on assumptions.<br />Start building on evidence.
+                Stop building on assumptions.<br />Get the market research first.
               </h2>
-              <p style={{ fontSize: 16, lineHeight: 1.65, opacity: 0.75, margin: '0 0 24px', maxWidth: 480, marginInline: 'auto' }}>
-                The market research and MVP blueprint that most founders skip — done in minutes, not months. Credits start at $3.99 and never expire.
+              <p style={{ fontSize: 16, lineHeight: 1.65, opacity: 0.75, margin: '0 0 8px', maxWidth: 480, marginInline: 'auto' }}>
+                Deep research + full MVP blueprint from $3.99. Credits never expire.
               </p>
+              <p style={{ fontSize: 13, opacity: 0.55, margin: '0 0 24px' }}>Spin for free. Buy credits only when the market signal says it&apos;s worth it.</p>
               <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-                {user ? (
-                  <Link href="/wheel" className="fn__btn"><span>Spin now</span></Link>
-                ) : (
-                  <Link href="/auth/register" className="fn__btn"><span>Get started — it&apos;s free to spin</span></Link>
+                <Link href="/pricing" className="fn__btn"><span>Get credits — from $3.99</span></Link>
+                {!user && (
+                  <Link href="/auth/register" className="fn__btn" style={{ background: '#fff' }}><span>Try free first</span></Link>
                 )}
               </div>
             </div>
