@@ -164,6 +164,8 @@ export default function BlogPostPage({ params }) {
             width="800"
             height="420"
             fetchPriority="high"
+            srcSet={`${post.image.split('?')[0]}?auto=format&fit=crop&w=800&q=80 800w, ${post.image.split('?')[0]}?auto=format&fit=crop&w=1200&q=85 1200w`}
+            sizes="(max-width: 800px) 100vw, 800px"
             style={{ width: '100%', maxHeight: 420, objectFit: 'cover', display: 'block', borderTop: '3px solid #111' }}
           />
         </div>

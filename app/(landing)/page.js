@@ -120,17 +120,16 @@ export default async function LandingPage() {
             <p className="fn__desc" style={{ maxWidth: 620, margin: '0 auto 0.75rem' }}>
               We do more than spark a concept. IdeaReels frames the opportunity, researches the market, and defines the technical MVP so you know what to build, why it matters, and how to move quickly.
             </p>
-            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 14, opacity: 0.6, margin: '0 auto 1.5rem' }}>
-              Market research + MVP blueprint from $3.99. Credits never expire.
-            </p>
-            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/pricing" className="fn__btn"><span>Get market research — from $3.99</span></Link>
+            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
               {user ? (
-                <Link href="/wheel" className="fn__btn" style={{ background: '#fff' }}><span>Spin a concept</span></Link>
+                <Link href="/wheel" className="fn__btn"><span>Spin now — research from $3.99</span></Link>
               ) : (
-                <Link href="/auth/register" className="fn__btn" style={{ background: '#fff' }}><span>Try free first</span></Link>
+                <Link href="/pricing" className="fn__btn"><span>Get started — research from $3.99</span></Link>
               )}
             </div>
+            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, opacity: 0.5, margin: 0, textAlign: 'center' }}>
+              3 free spins with every account. Deep research and blueprints require credits from $3.99.
+            </p>
             <span className="wings" />
             <span className="raleway">
               <span /><span /><span /><span /><span />
@@ -251,6 +250,43 @@ export default async function LandingPage() {
 
             <div style={{ textAlign: 'center', marginTop: 32 }}>
               <Link href="/pricing" className="fn__btn medium"><span>Get your market research — from $3.99</span></Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Internal linking — keyword-rich nav */}
+        <section style={{ padding: '0 0 48px' }}>
+          <div className="container">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 20 }}>
+              {[
+                {
+                  href: '/ideas',
+                  label: 'Startup Ideas Library',
+                  desc: 'Browse pre-validated startup ideas with full market research and technical blueprints ready to unlock.',
+                },
+                {
+                  href: '/pricing',
+                  label: 'Pricing & Credits',
+                  desc: 'AI market research and MVP blueprints from $3.99. Credits never expire. Buy only when the signal is worth pursuing.',
+                },
+                {
+                  href: '/blog',
+                  label: 'Founder Playbooks',
+                  desc: 'Practical guides on AI startup validation, niche idea discovery, and how to go from concept to first paying customer.',
+                },
+                {
+                  href: '/faq',
+                  label: 'How It Works',
+                  desc: 'Answers to common questions about the spin workflow, credit system, and what the market research actually covers.',
+                },
+              ].map(({ href, label, desc }) => (
+                <Link key={href} href={href} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div className="fn__bold_item" style={{ padding: '22px 20px', height: '100%' }}>
+                    <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 15, marginBottom: 8, color: '#111' }}>{label} →</h3>
+                    <p style={{ margin: 0, fontSize: 13, lineHeight: 1.65, opacity: 0.65 }}>{desc}</p>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
         </section>
@@ -382,6 +418,8 @@ export default async function LandingPage() {
                         width="400"
                         height="225"
                         loading="lazy"
+                        srcSet={`${post.image.split('?')[0]}?auto=format&fit=crop&w=400&q=75 400w, ${post.image.split('?')[0]}?auto=format&fit=crop&w=800&q=80 800w`}
+                        sizes="(max-width: 640px) 400px, 800px"
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                       />
                       <span style={{ position: 'absolute', top: 10, left: 10, background: '#FFE000', border: '2px solid #111', borderRadius: '4px 999px 999px 4px', padding: '3px 12px 3px 8px', fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#111' }}>
@@ -413,10 +451,8 @@ export default async function LandingPage() {
               <p style={{ fontSize: 13, opacity: 0.55, margin: '0 0 24px' }}>Spin for free. Buy credits only when the market signal says it&apos;s worth it.</p>
               <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Link href="/pricing" className="fn__btn"><span>Get credits — from $3.99</span></Link>
-                {!user && (
-                  <Link href="/auth/register" className="fn__btn" style={{ background: '#fff' }}><span>Try free first</span></Link>
-                )}
               </div>
+              <p style={{ marginTop: 14, fontSize: 12, opacity: 0.55, margin: '14px 0 0' }}>Credits never expire · Secure checkout via Stripe</p>
             </div>
           </div>
         </section>

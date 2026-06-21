@@ -38,6 +38,11 @@ export default function BlogPage() {
                       <img
                         src={post.image}
                         alt={post.imageAlt}
+                        width="600"
+                        height="338"
+                        loading="lazy"
+                        srcSet={`${post.image.split('?')[0]}?auto=format&fit=crop&w=400&q=75 400w, ${post.image.split('?')[0]}?auto=format&fit=crop&w=800&q=80 800w`}
+                        sizes="(max-width: 640px) 400px, 600px"
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                       />
                       <span style={{
