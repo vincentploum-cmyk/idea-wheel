@@ -49,7 +49,7 @@ const TESTIMONIALS = [
 ];
 
 export const metadata = {
-  title: 'IdeaReels — AI Market Research & MVP Blueprints for Solo Builders',
+  title: 'AI Market Research & MVP Blueprints for Solo Builders',
   description: 'Stop building the wrong thing. IdeaReels gives you AI-powered market research and a full technical MVP blueprint in minutes — before you write a single line of code.',
   alternates: { canonical: 'https://ideareels.io' },
 };
@@ -339,7 +339,7 @@ export default async function LandingPage() {
                 {[
                   { icon: '⏱', heading: 'Without IdeaReels', body: 'Build for 3–6 months. Launch to silence. Discover the market was too crowded, too niche, or already solved by a better-funded competitor.' },
                   { icon: '✓', heading: 'With IdeaReels ($3.99)', body: 'Run the market check in 5 minutes. Weak signal? You just saved months. Strong signal? Get the blueprint and build from evidence, not optimism.' },
-                  { icon: '↩', heading: 'Zero risk to try', body: 'Spinning is free — no card needed. Buy $3.99 in credits only when the verdict tells you it\'s worth pursuing. Credits never expire.' },
+                  { icon: '↩', heading: 'No lock-in', body: 'Credits never expire and there is no subscription. Buy when the signal tells you it\'s worth pursuing. Nothing is charged until you decide to go deeper.' },
                 ].map(({ icon, heading, body }) => (
                   <div key={heading} className="fn__bold_item" style={{ padding: '24px 22px' }}>
                     <div style={{ fontSize: 28, marginBottom: 12 }}>{icon}</div>
@@ -387,7 +387,7 @@ export default async function LandingPage() {
                           </ul>
                         </div>
                         <div className="item_footer">
-                          <Link href="/pricing" className="fn__btn medium"><span>{pkg.key === 'starter' ? 'Buy credits — $3.99' : 'Buy shortcut pack'}</span></Link>
+                          <Link href="/pricing" className="fn__btn medium"><span>{pkg.key === 'starter' ? 'Buy credits — $3.99' : pkg.key === 'pro' ? 'Buy Pro pack — $9.99' : 'Buy Power pack — $19.99'}</span></Link>
                         </div>
                       </div>
                     </li>
@@ -395,7 +395,7 @@ export default async function LandingPage() {
                 </ul>
               </div>
             </div>
-            <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13, opacity: 0.5 }}>Credits never expire · Secure checkout via Stripe · Free to spin before you buy</p>
+            <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13, opacity: 0.5 }}>Credits never expire · No subscription · Secure checkout via Stripe</p>
           </div>
         </section>
 
@@ -446,7 +446,7 @@ export default async function LandingPage() {
               <p style={{ fontSize: 16, lineHeight: 1.65, opacity: 0.75, margin: '0 0 8px', maxWidth: 480, marginInline: 'auto' }}>
                 Deep research + full MVP blueprint from $3.99. Credits never expire.
               </p>
-              <p style={{ fontSize: 13, opacity: 0.55, margin: '0 0 24px' }}>Spin for free. Buy credits only when the market signal says it&apos;s worth it.</p>
+              <p style={{ fontSize: 13, opacity: 0.55, margin: '0 0 24px' }}>No subscription. Credits never expire. Buy only when the signal says it&apos;s worth it.</p>
               <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Link href="/pricing" className="fn__btn"><span>Get credits — from $3.99</span></Link>
               </div>

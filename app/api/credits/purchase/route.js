@@ -19,11 +19,13 @@ const OFFER_PRICES = {
   power: { price_cents: 999,  label: 'Power — Limited Offer' },
 };
 
+const CANCEL_PATH_ALLOWLIST = ['/pricing', '/pricing/offer', '/wheel'];
+
 export async function POST(request) {
   const user = await getUser();
   if (!user) return Response.json({ error: 'Please sign in to purchase credits.', code: 'AUTH_REQUIRED' }, { status: 401 });
 
-  const { packId, offer } = await request.json();
+  const { packId, offer, cancelPath } = await request.json();
   const pack = CREDIT_PACKS.find(p => p.id === packId);
   if (!pack) return Response.json({ error: 'Invalid pack' }, { status: 400 });
 
@@ -49,8 +51,8 @@ export async function POST(request) {
     }, quantity: 1 }],
     customer_email: user.email,
     metadata: { user_id: user.id, pack_id: pack.id, credits: String(pack.credits), idea_credits: String(pack.ideaCredits || 0) },
-    success_url: `${siteUrl}?credits=success&pack=${pack.id}`,
-    cancel_url: `${siteUrl}/pricing/offer`,
+    success_url: `${siteUrl}/pricing?credits=success&pack=${pack.id}`,
+    cancel_url: `${siteUrl}${CANCEL_PATH_ALLOWLIST.includes(cancelPath) ? cancelPath : '/pricing'}`,
   });
 
   const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });

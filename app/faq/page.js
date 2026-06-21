@@ -43,10 +43,13 @@ export default function FaqPage() {
             <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 20, margin: '0 0 10px' }}>
               Ready to validate your idea?
             </h2>
-            <p style={{ margin: '0 0 20px', opacity: 0.75, fontSize: 14 }}>
-              Spin for free, then decide if the market signal is worth digging into.
+            <p style={{ margin: '0 0 8px', opacity: 0.75, fontSize: 14 }}>
+              Get AI market research and a full technical MVP blueprint before you commit to building.
             </p>
-            <Link href="/auth/register" className="fn__btn"><span>Get started</span></Link>
+            <p style={{ margin: '0 0 20px', opacity: 0.6, fontSize: 13 }}>
+              Market research from $3.99. Credits never expire.
+            </p>
+            <Link href="/pricing" className="fn__btn"><span>Get credits — from $3.99</span></Link>
           </div>
         </div>
       </div>

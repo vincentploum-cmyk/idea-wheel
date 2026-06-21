@@ -34,7 +34,7 @@ export default function PricingPageClient({ searchParams }) {
   const [loadingKey, setLoadingKey] = useState(null);
   const [error, setError] = useState('');
   const success = searchParams?.success === '1' || searchParams?.credits === 'success';
-  const canceled = searchParams?.canceled === '1' || searchParams?.credits === 'cancelled';
+  const canceled = searchParams?.canceled === '1' || searchParams?.credits === 'canceled';
   const packageKey = searchParams?.package || searchParams?.pack || '';
   const packageConfig = CREDIT_PACKAGE_BY_KEY[packageKey] || null;
 

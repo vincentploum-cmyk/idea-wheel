@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import NextLink from 'next/link';
 import Image from 'next/image';
 import PopitoShell from '@/components/popito/PopitoShell';
 import { BLOG_POSTS, getBlogPost } from '@/lib/blog-posts';
@@ -45,10 +44,11 @@ function renderInlineLinks(text) {
     if (i % 3 === 0) { if (parts[i]) result.push(parts[i]); }
     else if (i % 3 === 1) {
       const label = parts[i];
-      const href = parts[i + 1];
+      const href = parts[i + 1] ?? '#';
+      if (!parts[i + 1]) { result.push(label); continue; }
       const isInternal = href.startsWith('/');
       result.push(isInternal
-        ? <NextLink key={i} href={href} style={{ color: '#111', fontWeight: 700, textDecoration: 'underline', textDecorationColor: '#FFE000', textUnderlineOffset: 3 }}>{label}</NextLink>
+        ? <Link key={i} href={href} style={{ color: '#111', fontWeight: 700, textDecoration: 'underline', textDecorationColor: '#FFE000', textUnderlineOffset: 3 }}>{label}</Link>
         : <a key={i} href={href} style={{ color: '#111', fontWeight: 700, textDecoration: 'underline', textDecorationColor: '#FFE000', textUnderlineOffset: 3 }} target="_blank" rel="noopener noreferrer">{label}</a>
       );
     }
@@ -201,7 +201,7 @@ export default function BlogPostPage({ params }) {
                   {otherPosts.map((p) => (
                     <Link key={p.slug} href={`/blog/${p.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                       <div className="fn__bold_item" style={{ padding: '16px 20px', display: 'flex', gap: 16, alignItems: 'center' }}>
-                        <img src={p.image} alt={p.imageAlt} width="72" height="52" loading="lazy" style={{ width: 72, height: 52, objectFit: 'cover', borderRadius: 6, border: '2px solid #111', flexShrink: 0 }} />
+                        <Image src={p.image} alt={p.imageAlt} width={72} height={52} loading="lazy" style={{ objectFit: 'cover', borderRadius: 6, border: '2px solid #111', flexShrink: 0 }} />
                         <div>
                           <p style={{ margin: '0 0 4px', fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 15, lineHeight: 1.25 }}>{p.title}</p>
                           <p style={{ margin: 0, fontSize: 12, opacity: 0.5, fontFamily: 'Nunito, sans-serif', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{p.readTime}</p>

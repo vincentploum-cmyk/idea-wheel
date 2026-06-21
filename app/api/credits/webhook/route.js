@@ -33,7 +33,8 @@ export async function POST(request) {
     if (pack?.type === 'idea' && pack.ideaCredits > 0) {
       await addIdeaCredits(userId, pack.ideaCredits, { stripe_session_id: session.id });
     } else {
-      const credits = parseInt(session.metadata?.credits || String(pack?.credits || 0), 10);
+      // Always derive credit amount from server-side CREDIT_PACKS — never trust metadata.credits
+      const credits = pack?.credits || 0;
       if (credits > 0) {
         await addCredits(userId, credits, 'purchase', { stripe_session_id: session.id });
       }

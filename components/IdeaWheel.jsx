@@ -1149,11 +1149,15 @@ export default function IdeaWheel() {
   const startCheckout = async (pkg) => {
     setCheckoutErr(""); setCheckoutLoading(pkg.key);
     try {
-      const res = await fetch("/api/stripe/checkout", {
+      const res = await fetch("/api/credits/purchase", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ packageKey: pkg.key }),
+        body: JSON.stringify({ packId: pkg.key, cancelPath: "/wheel" }),
       });
       const data = await res.json();
+      if (data.code === 'AUTH_REQUIRED') {
+        window.location.assign('/auth/login?next=/wheel');
+        return;
+      }
       if (!res.ok || data.error || !data.url) throw new Error(data.error || "Unable to start checkout");
       window.location.assign(data.url);
     } catch(e) {

@@ -1,7 +1,9 @@
 import './globals.css';
 import Script from 'next/script';
-import CookieBanner from '@/components/CookieBanner';
-import WebVitals from '@/components/WebVitals';
+import dynamic from 'next/dynamic';
+
+const CookieBanner = dynamic(() => import('@/components/CookieBanner'), { ssr: false });
+const WebVitals = dynamic(() => import('@/components/WebVitals'), { ssr: false });
 
 export const metadata = {
   metadataBase: new URL('https://ideareels.io'),
@@ -45,11 +47,7 @@ export const metadata = {
     description: 'Stop building the wrong thing. AI market research + MVP blueprint in under 5 minutes, from $3.99.',
     images: [{ width: 1200, height: 630 }],
   },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, 'max-snippet': -1, 'max-image-preview': 'large', 'max-video-preview': -1 },
-  },
+  // robots.txt is handled exclusively by app/robots.js — no meta robots tag here
   verification: { google: '7-zPuvRs0wD-bV9Mr_dDdu4vcjW2o3XrZzVGJuqDyd0' },
   alternates: { canonical: 'https://ideareels.io' },
 };
@@ -90,14 +88,9 @@ export default function RootLayout({ children }) {
         <link rel="dns-prefetch" href="https://js.stripe.com" />
         <link rel="dns-prefetch" href="https://ywroiurslbnnqecwmkbs.supabase.co" />
 
-        {/* CWV: font-display=swap prevents invisible text during font load (reduces CLS/FID) */}
+        {/* CWV: font-display=swap prevents invisible text during font load (reduces CLS/INP) */}
         <link
-          rel="preload"
-          as="style"
-          href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
           rel="stylesheet"
         />
 

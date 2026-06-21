@@ -15,27 +15,28 @@ export const metadata = {
   },
 };
 
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'CollectionPage',
-  name: 'IdeaReels Blog',
-  description: 'Practical articles on AI startup validation, market research, and MVP planning for solo founders.',
-  url: 'https://ideareels.io/blog',
-  hasPart: BLOG_POSTS.map((post) => ({
-    '@type': 'Article',
-    headline: post.title,
-    description: post.description,
-    url: `https://ideareels.io/blog/${post.slug}`,
-    datePublished: post.date,
-    image: post.image,
-  })),
-};
 
 function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 export default function BlogPage() {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'IdeaReels Blog',
+    description: 'Practical articles on AI startup validation, market research, and MVP planning for solo founders.',
+    url: 'https://ideareels.io/blog',
+    hasPart: (BLOG_POSTS ?? []).map((post) => ({
+      '@type': 'Article',
+      headline: post.title,
+      description: post.description,
+      url: `https://ideareels.io/blog/${post.slug}`,
+      datePublished: post.date,
+      image: post.image,
+    })),
+  };
+
   return (
     <PopitoShell>
       <div className="popito_fn_pagetitle">
@@ -98,6 +99,18 @@ export default function BlogPage() {
         </section>
       </div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+
+      {/* Conversion CTA at bottom of blog listing */}
+      <div style={{ background: '#FFE000', borderTop: '3px solid #111', padding: '48px 20px', textAlign: 'center' }}>
+        <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(1.4rem,3vw,2rem)', margin: '0 0 12px' }}>
+          Ready to validate your next idea?
+        </h2>
+        <p style={{ margin: '0 0 8px', opacity: 0.75, fontSize: 15 }}>
+          AI market research + full MVP blueprint from $3.99. Credits never expire.
+        </p>
+        <p style={{ margin: '0 0 24px', opacity: 0.55, fontSize: 13 }}>No subscription. Buy only when the signal is worth pursuing.</p>
+        <Link href="/pricing" className="fn__btn"><span>Get credits — from $3.99</span></Link>
+      </div>
     </PopitoShell>
   );
 }

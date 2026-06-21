@@ -100,17 +100,17 @@ Write every field in plain, jargon-free language a non-technical founder can rea
 }
 
 export async function POST(request) {
+  // Auth check must happen before parsing body so unauthenticated requests
+  // never touch user-supplied data.
+  const user = await getUser();
+  if (!user) return NextResponse.json({ error: 'Please sign in.', code: 'AUTH_REQUIRED' }, { status: 401 });
+
   const { action, workflow, industry, connector, modeName, freeformIdea, comp, sessionId: rawSessionId } = await request.json();
   if (!freeformIdea && (!action || !workflow || !industry)) {
     return NextResponse.json({ error: 'Missing: action, workflow, industry (or freeformIdea)' }, { status: 400 });
   }
   const sessionId = ensureSessionId(rawSessionId);
-  const agentDesc = freeformIdea || `an agent that ${action} ${workflow} ${connector} ${industry}`;
-
-  // Paid step: must be signed in with at least 1 credit. We charge only AFTER
-  // the research succeeds, so a failed run never costs a credit.
-  const user = await getUser();
-  if (!user) return NextResponse.json({ error: 'Please sign in.', code: 'AUTH_REQUIRED' }, { status: 401 });
+  const agentDesc = freeformIdea ? freeformIdea.slice(0, 500) : `an agent that ${action} ${workflow} ${connector} ${industry}`;
   const balance = await getBalance(user.id);
   if (balance < DEEP_RESEARCH_COST) {
     return NextResponse.json({ error: 'Not enough credits.', code: 'insufficient_credits', balance }, { status: 402 });
