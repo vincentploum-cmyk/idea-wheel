@@ -91,7 +91,6 @@ export default async function LandingPage() {
               ) : (
                 <Link href="/auth/register" className="fn__btn"><span>Get started</span></Link>
               )}
-              <Link href="/pricing" className="fn__btn medium"><span>See pricing</span></Link>
             </div>
             <span className="wings" />
             <span className="raleway">
