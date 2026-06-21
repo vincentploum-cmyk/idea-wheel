@@ -1,21 +1,39 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { CREDIT_PACKAGES } from '@/lib/pricing';
 
 const PACK_DESCRIPTIONS = {
-  starter: 'Run your first full blueprint from start to finish.',
-  pro: 'Ideal for founders working through several ideas at once.',
-  power: 'Built for founders who want to go deep across multiple markets.',
+  starter: 'Best if you want to spin, test, and build your own ideas.',
+  pro: 'One ready-made idea unlock for when you want a shortcut.',
+  power: 'Two ready-made idea unlocks for when you want stronger optionality.',
 };
 
-// 50% off Pro and Power, Starter stays full price
 const OFFER_OVERRIDES = {
-  pro:   { discount: '50% OFF', originalPrice: '$9.99',  price: '$4.99',  price_cents: 499  },
-  power: { discount: '50% OFF', originalPrice: '$19.99', price: '$9.99',  price_cents: 999  },
+  pro:   { discount: '50% OFF', originalPrice: '$9.99',  price: '$4.99' },
+  power: { discount: '50% OFF', originalPrice: '$19.99', price: '$9.99' },
 };
 
-export default function OfferPricingClient({ searchParams }) {
+const PACK_FEATURES = {
+  starter: [
+    '5 credits for your own ideas',
+    'Use credits inside the wheel flow',
+    '1 credit for deep research',
+    '2 credits for the full blueprint',
+  ],
+  pro: [
+    '1 ready-made idea unlock',
+    'Skip the spin and move faster',
+    'Built for people who want a stronger starting point',
+  ],
+  power: [
+    '2 ready-made idea unlocks',
+    'Compare two strong directions',
+    'Pick the one worth your weekend',
+  ],
+};
+
+export default function OfferPricingClient() {
   const [loadingKey, setLoadingKey] = useState(null);
   const [error, setError] = useState('');
 
@@ -72,7 +90,7 @@ export default function OfferPricingClient({ searchParams }) {
                         )}
                         <div className="item_header">
                           <div className="plan"><span>{pkg.label}</span></div>
-                          <div className="pricing" style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'nowrap' }}>
+                          <div className="pricing" style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
                             {offer ? (
                               <>
                                 <h3 className="price" style={{ fontSize: 36, whiteSpace: 'nowrap' }}>{offer.price}</h3>
@@ -81,7 +99,7 @@ export default function OfferPricingClient({ searchParams }) {
                             ) : (
                               <h3 className="price" style={{ fontSize: 36, whiteSpace: 'nowrap' }}>{pkg.price}</h3>
                             )}
-                            <span className="price_text" style={{ whiteSpace: 'nowrap' }}>/ {pkg.credits} credits</span>
+                            <span className="price_text" style={{ whiteSpace: 'nowrap' }}>/ {pkg.unitLabel}</span>
                           </div>
                           <div className="desc">
                             <p>{PACK_DESCRIPTIONS[pkg.key]}</p>
@@ -89,22 +107,12 @@ export default function OfferPricingClient({ searchParams }) {
                         </div>
                         <div className="item_content">
                           <ul>
-                            <li>
-                              <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
-                              <span className="text">{pkg.credits} credits included</span>
-                            </li>
-                            <li>
-                              <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
-                              <span className="text">Free market validation</span>
-                            </li>
-                            <li>
-                              <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
-                              <span className="text">1 credit → deep research</span>
-                            </li>
-                            <li>
-                              <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
-                              <span className="text">2 credits → full blueprint</span>
-                            </li>
+                            {(PACK_FEATURES[pkg.key] || []).map((feature) => (
+                              <li key={feature}>
+                                <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
+                                <span className="text">{feature}</span>
+                              </li>
+                            ))}
                           </ul>
                         </div>
                         <div className="item_footer" style={{ marginTop: 'auto' }}>

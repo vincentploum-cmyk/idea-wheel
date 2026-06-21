@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase-server';
 import PromoBanner from '@/components/PromoBanner';
 
 function LogoMark({ height = 44 }) {
-  const w = Math.round(height * 4.1);
   const fontSize = Math.round(height * 0.52);
   const pad = Math.round(height * 0.18);
   return (
@@ -34,7 +33,7 @@ function LogoMark({ height = 44 }) {
 }
 
 const NAV_LINKS = [
-  { href: '/wheel', label: 'Spin!' },
+  { href: '/wheel', label: 'Spin' },
   { href: '/ideas', label: 'Ideas' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/blog', label: 'Blog' },
@@ -64,14 +63,12 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
       data-bg-decor={yellowBg ? undefined : 'enable'}
       style={yellowBg ? { background: '#FFE000' } : undefined}
     >
-
       <PromoBanner
-        text="Idea generation is free. For a limited time, Pro and Power credits are 50% off —"
-        linkLabel="Claim the offer"
-        linkHref="/pricing/offer"
+        text="Start free with 3 credits. Buy only when a spin feels worth chasing."
+        linkLabel="See pricing"
+        linkHref="/pricing"
       />
 
-      {/* Search Popup */}
       <div className="popito_fn_searchbox">
         <div className="search_content">
           <div className="searchbox">
@@ -82,7 +79,6 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
         </div>
       </div>
 
-      {/* Header */}
       <header id="popito_fn_header">
         <div className="popito_fn_header">
           <div className="header_top">
@@ -95,7 +91,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
               <div className="menu">
                 <div className="menu-main-container">
                   <ul role="menu" className="popito_fn_main_nav">
-                    {NAV_LINKS.map(l => <NavItem key={l.href} {...l} />)}
+                    {NAV_LINKS.map((l) => <NavItem key={l.href} {...l} />)}
                   </ul>
                 </div>
               </div>
@@ -103,13 +99,12 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
             <div className="right__trigger">
               {user
                 ? <Link href="/profile">My Account</Link>
-                : <Link href="/auth/login">Sign in / Register</Link>}
+                : <Link href="/auth/login">Claim 3 free credits</Link>}
             </div>
           </div>
         </div>
       </header>
 
-      {/* Sticky Navigation */}
       <div className="popito_fn_stickynav">
         <div className="transform_hedaer">
           <div className="sticky_header">
@@ -117,7 +112,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
               <div className="menu">
                 <div className="menu-main-container">
                   <ul role="menu" className="popito_fn_main_nav">
-                    {NAV_LINKS.map(l => <NavItem key={l.href} {...l} />)}
+                    {NAV_LINKS.map((l) => <NavItem key={l.href} {...l} />)}
                   </ul>
                 </div>
               </div>
@@ -125,13 +120,12 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
             <div className="right__trigger">
               {user
                 ? <Link href="/profile">My Account</Link>
-                : <Link href="/auth/login">Sign in / Register</Link>}
+                : <Link href="/auth/login">Claim 3 free credits</Link>}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Navigation */}
       <div className="popito_fn_mobnav">
         <div className="mob_top">
           <div className="logo">
@@ -149,7 +143,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
         </div>
         <div className="mob_bot">
           <ul role="menu" className="mobile_menu">
-            {NAV_LINKS.map(l => (
+            {NAV_LINKS.map((l) => (
               <li key={l.href}>
                 <Link href={l.href}>
                   <span><span>{l.label}</span><span className="suffix">//</span></span>
@@ -159,18 +153,16 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
             <li>
               {user
                 ? <Link href="/profile"><span><span>My Account</span><span className="suffix">//</span></span></Link>
-                : <Link href="/auth/login"><span><span>Sign In</span><span className="suffix">//</span></span></Link>}
+                : <Link href="/auth/login"><span><span>Claim 3 free credits</span><span className="suffix">//</span></span></Link>}
             </li>
           </ul>
         </div>
       </div>
 
-      {/* Page Content */}
       <main className="popito_fn_content">
         {children}
       </main>
 
-      {/* Footer */}
       <footer id="popito_fn_footer">
         <div className="popito_fn_footer">
           <div className="footer_middle">
@@ -190,31 +182,30 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
               </div>
             </div>
             {!noFooterCta && (
-            <div className="middle_right">
-              <div className="footer_subscribe">
-                <div className="subscribe_title">
-                  <h3>Ready to spin an idea?</h3>
-                </div>
-                <div className="subscribe_form">
-                  <div className="form">
-                    <Link href="/wheel" className="fn__btn medium"><span>Start for free</span></Link>
+              <div className="middle_right">
+                <div className="footer_subscribe">
+                  <div className="subscribe_title">
+                    <h3>Ready to find a buildable idea?</h3>
                   </div>
-                  <div className="icon">
-                    <img src="/popito-assets/svg/arrow-curly.svg" alt="" className="fn__svg" />
+                  <div className="subscribe_form">
+                    <div className="form">
+                      <Link href={user ? '/wheel' : '/auth/login'} className="fn__btn medium"><span>{user ? 'Spin now' : 'Claim 3 free credits'}</span></Link>
+                    </div>
+                    <div className="icon">
+                      <img src="/popito-assets/svg/arrow-curly.svg" alt="" className="fn__svg" />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
             )}
           </div>
           <div className="footer_bottom">
             <div className="copyright">
-              <p>© {new Date().getFullYear()} IdeaReels. Find a startup idea worth building. · AI-generated content is for informational purposes only, not professional advice.</p>
+              <p>© {new Date().getFullYear()} IdeaReels. Built for vibe coders, indie hackers, and solo builders. · AI-generated content is informational, not professional advice.</p>
             </div>
           </div>
         </div>
       </footer>
-
     </div>
   );
 }

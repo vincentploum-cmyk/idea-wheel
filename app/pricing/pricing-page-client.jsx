@@ -4,29 +4,29 @@ import { useMemo, useState } from 'react';
 import { CREDIT_PACKAGES, CREDIT_PACKAGE_BY_KEY } from '@/lib/pricing';
 
 const PACK_DESCRIPTIONS = {
-  starter: 'Spin the wheel and generate custom blueprints for your own ideas.',
-  pro:     'Unlock one IdeaReels-curated idea with full deep research and blueprint.',
-  power:   'Unlock two curated ideas — get the full package for each.',
+  starter: 'The default path if you want to spin, test, and build your own ideas.',
+  pro: 'A shortcut pack for builders who want one ready-made idea instead of starting from a blank page.',
+  power: 'The best fit if you want two strong options from the library and the freedom to chase the better one.',
 };
 
 const PACK_FEATURES = {
   starter: [
-    '5 spin credits',
-    'Free market validation on every spin',
-    'Generate custom blueprints for your ideas',
-    '$0.80 per credit',
+    '5 credits for your own ideas',
+    'Use credits inside the wheel flow',
+    '1 credit for deep research',
+    '2 credits for the full blueprint',
   ],
   pro: [
-    'Unlock 1 curated idea',
-    'Full deep research report',
-    'Complete product blueprint',
-    'GTM plan + Cursor prompt included',
+    '1 ready-made idea unlock',
+    'Skip the spin and start from a stronger prompt',
+    'Designed for faster action',
+    'Good when you want a shortcut tonight',
   ],
   power: [
-    'Unlock 2 curated ideas',
-    'Full deep research for each',
-    'Complete blueprint for each idea',
-    'GTM plan + Cursor prompt included',
+    '2 ready-made idea unlocks',
+    'Compare two directions quickly',
+    'Pick the stronger path before you commit',
+    'Best when you want optionality',
   ],
 };
 
@@ -40,21 +40,18 @@ export default function PricingPageClient({ searchParams }) {
 
   const statusMessage = useMemo(() => {
     if (success && packageConfig) {
-      const isIdea = packageConfig.key === 'pro' || packageConfig.key === 'power';
       return {
         tone: 'success',
-        title: isIdea
-          ? `${packageConfig.key === 'power' ? '2 idea unlocks' : '1 idea unlock'} added`
-          : `${packageConfig.credits} credits added`,
-        text: isIdea
-          ? 'Head to the Ideas page and unlock the idea of your choice.'
-          : 'Credits applied — ready for your next blueprint.',
+        title: `${packageConfig.unitLabel} added`,
+        text: packageConfig.type === 'idea'
+          ? 'Head to the Ideas library when you want to unlock one.'
+          : 'Your credits are ready for the next promising spin.',
       };
     }
     if (canceled) return {
       tone: 'neutral',
       title: 'Checkout canceled',
-      text: 'Nothing was charged. Come back whenever you are ready.',
+      text: 'Nothing was charged. Come back when a project feels worth chasing.',
     };
     return null;
   }, [success, canceled, packageConfig]);
@@ -82,6 +79,11 @@ export default function PricingPageClient({ searchParams }) {
     <div className="popito_fn_membership_page">
       <section id="price">
         <div className="container">
+          <div style={{ maxWidth: 760, margin: '0 auto 32px', textAlign: 'center' }}>
+            <p style={{ fontSize: 14, opacity: 0.75, margin: '0 0 8px' }}>Sign in, claim your 3 free credits, and buy more only when you want to go deeper.</p>
+            <p style={{ fontSize: 13, opacity: 0.55, margin: 0 }}>Starter is for your own spins. Pro and Power are shortcut packs for ready-made ideas.</p>
+          </div>
+
           {statusMessage && (
             <div style={{
               padding: '16px 20px',
@@ -104,20 +106,15 @@ export default function PricingPageClient({ searchParams }) {
             <div className="pt_content">
               <ul className="pt_list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 32, listStyle: 'none', padding: 0, margin: 0 }}>
                 {CREDIT_PACKAGES.map((pkg) => {
-                  const isIdea = pkg.key === 'pro' || pkg.key === 'power';
                   const features = PACK_FEATURES[pkg.key] || [];
                   return (
                     <li key={pkg.key} className="pt_list_item" style={{ display: 'block', width: 'auto', padding: 0 }}>
                       <div className={`fn__pricing_table_item fn__bold_item${pkg.highlight ? ' active' : ''}`}>
                         <div className="item_header">
                           <div className="plan"><span>{pkg.label}</span></div>
-                          <div className="pricing" style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'nowrap' }}>
+                          <div className="pricing" style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
                             <h3 className="price" style={{ fontSize: 36, whiteSpace: 'nowrap' }}>{pkg.price}</h3>
-                            <span className="price_text" style={{ whiteSpace: 'nowrap' }}>
-                              {isIdea
-                                ? (pkg.key === 'power' ? '/ 2 ideas' : '/ 1 idea')
-                                : `/ ${pkg.credits} credits`}
-                            </span>
+                            <span className="price_text" style={{ whiteSpace: 'nowrap' }}>/ {pkg.unitLabel}</span>
                           </div>
                           <div className="desc">
                             <p>{PACK_DESCRIPTIONS[pkg.key]}</p>
@@ -125,8 +122,8 @@ export default function PricingPageClient({ searchParams }) {
                         </div>
                         <div className="item_content">
                           <ul>
-                            {features.map((f, i) => (
-                              <li key={i}>
+                            {features.map((f) => (
+                              <li key={f}>
                                 <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
                                 <span className="text">{f}</span>
                               </li>
@@ -140,7 +137,7 @@ export default function PricingPageClient({ searchParams }) {
                             onClick={() => startCheckout(pkg)}
                             style={{ background: 'none', border: 'none', padding: 0, cursor: loadingKey ? 'wait' : 'pointer' }}
                           >
-                            <span>{loadingKey === pkg.key ? 'Redirecting…' : 'Buy now'}</span>
+                            <span>{loadingKey === pkg.key ? 'Redirecting…' : pkg.type === 'spin' ? 'Get credits' : 'Buy shortcut pack'}</span>
                           </button>
                         </div>
                       </div>
@@ -151,9 +148,11 @@ export default function PricingPageClient({ searchParams }) {
             </div>
           </div>
 
-          <p style={{ textAlign: 'center', marginTop: 40, opacity: 0.55, fontSize: 13 }}>
-            Credits never expire · Secure checkout via Stripe
-          </p>
+          <ul style={{ listStyle: 'none', padding: 0, margin: '40px auto 0', maxWidth: 520, textAlign: 'center', fontSize: 13, opacity: 0.65, lineHeight: 1.8 }}>
+            <li>Get 3 free credits after sign-in.</li>
+            <li>Credits never expire.</li>
+            <li>Secure checkout via Stripe.</li>
+          </ul>
         </div>
       </section>
     </div>

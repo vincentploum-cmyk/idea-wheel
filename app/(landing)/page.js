@@ -4,12 +4,32 @@ import { LANDING_STEPS, FAQS } from '@/lib/content';
 import { CREDIT_PACKAGES } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase-server';
 
-export const metadata = {
-  title: 'IdeaReels — Find a Startup Idea Worth Building',
-  description: 'Generate sharper startup business ideas in seconds using real market signals. Get instant validation with competitor analysis, market size, and demand signals — then unlock a build-ready blueprint only when one is worth pursuing.',
-  alternates: { canonical: 'https://ideareels.io' },
+const PACK_FEATURES = {
+  starter: [
+    '5 credits for your own spins and blueprints',
+    'Free first-pass verdict before you spend more',
+    '1 credit for deep research',
+    '2 credits for the full blueprint',
+  ],
+  pro: [
+    'Unlock 1 ready-made idea from the library',
+    'Great if you want a shortcut instead of spinning',
+    'Includes the deeper research path',
+    'Best for builders who want to move tonight',
+  ],
+  power: [
+    'Unlock 2 ready-made ideas from the library',
+    'Compare two strong directions fast',
+    'Pick the one worth your weekend',
+    'Best for builders who want optionality',
+  ],
 };
 
+export const metadata = {
+  title: 'IdeaReels — Spin up your next weekend build',
+  description: 'For vibe coders, indie hackers, and solo builders. Spin into a software idea, sanity-check it fast, and unlock deeper research or a blueprint only when it feels real.',
+  alternates: { canonical: 'https://ideareels.io' },
+};
 
 export default async function LandingPage() {
   const supabase = await createClient();
@@ -24,23 +44,20 @@ export default async function LandingPage() {
         '@type': 'WebApplication',
         name: 'IdeaReels',
         url: 'https://ideareels.io',
-        description: 'IdeaReels generates startup ideas, validates them with market data, and produces build-ready blueprints for founders.',
+        description: 'IdeaReels helps builders spin into concrete software ideas, pressure-test them quickly, and unlock a blueprint when something feels worth building.',
         applicationCategory: 'BusinessApplication',
         offers: {
           '@type': 'Offer',
           price: '0',
           priceCurrency: 'USD',
-          description: '3 free credits on signup',
+          description: '3 free credits after sign-in',
         },
         featureList: [
-          'Startup idea generation',
-          'Market validation',
-          'Competitor analysis',
-          'Build-ready blueprints',
-          'Product design recommendations',
-          'Go-to-market strategy',
-          'Infrastructure planning',
-          'Prototype generation',
+          'Startup idea wheel',
+          'Free market verdict',
+          'Deep research add-on',
+          'Build blueprint generation',
+          'Ready-made idea unlocks',
         ],
       },
       {
@@ -58,15 +75,26 @@ export default async function LandingPage() {
     <PopitoShell>
       <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '40px 0 20px', display: 'flex', alignItems: 'center' }}>
         <div className="container">
-          <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 720, margin: '0 auto' }}>
-            <h3 className="fn__title" style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', lineHeight: 1.15 }}>
-              Find a startup idea<br />worth building.
-            </h3>
-            <p className="fn__desc" style={{ maxWidth: 520, margin: '0 auto 2rem' }}>
-              Spin three reels to generate a concrete startup concept. Get an instant AI market verdict — free, every time. Unlock a full build blueprint only when the idea earns it.
+          <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto' }}>
+            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
+              Built for vibe coders
+            </p>
+            <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.08, marginBottom: 16 }}>
+              Spin up your next<br />weekend build.
+            </h1>
+            <p className="fn__desc" style={{ maxWidth: 620, margin: '0 auto 1.5rem' }}>
+              IdeaReels gives you a concrete software angle, a fast market sanity check, and a deeper path only when a project feels worth chasing.
+            </p>
+            <p style={{ margin: '0 auto 2rem', fontSize: 14, opacity: 0.7 }}>
+              3 free credits after sign-in · 1 credit for deep research · 2 credits for the full blueprint
             </p>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-              {user ? <Link href="/wheel" className="fn__btn"><span>Spin a free idea</span></Link> : <Link href="/auth/register" className="fn__btn"><span>Get started</span></Link>}
+              {user ? (
+                <Link href="/wheel" className="fn__btn"><span>Spin now</span></Link>
+              ) : (
+                <Link href="/auth/register" className="fn__btn"><span>Claim 3 free credits</span></Link>
+              )}
+              <Link href="/pricing" className="fn__btn medium"><span>See pricing</span></Link>
             </div>
             <span className="wings" />
             <span className="raleway">
@@ -77,14 +105,13 @@ export default async function LandingPage() {
       </div>
 
       <div className="popito_fn_membership_page">
-
         <section id="how-it-works" style={{ padding: '8px 0 40px' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
-                How it works
+                How IdeaReels fits the way builders actually work
               </h2>
-              <p style={{ opacity: 0.65, marginTop: 8 }}>From first spin to a build-ready blueprint in three steps.</p>
+              <p style={{ opacity: 0.65, marginTop: 8 }}>Less startup theater, more buildable signal.</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 28 }}>
               {LANDING_STEPS.map((step) => (
@@ -111,11 +138,13 @@ export default async function LandingPage() {
 
         <section id="price" style={{ padding: '0 0 40px' }}>
           <div className="container">
-            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <div style={{ textAlign: 'center', marginBottom: 28, maxWidth: 760, marginInline: 'auto' }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
-                Simple pricing
+                Start free, then buy the path you need
               </h2>
-              <p style={{ opacity: 0.65, marginTop: 8 }}>Market validation is always free. Credits unlock the deeper analysis and the blueprint.</p>
+              <p style={{ opacity: 0.65, marginTop: 8 }}>
+                Starter is for your own spins. Pro and Power are shortcut packs if you want a ready-made idea from the library instead of starting from scratch.
+              </p>
             </div>
             <div className="fn__pricing_tables">
               <div className="pt_content">
@@ -127,32 +156,22 @@ export default async function LandingPage() {
                           <div className="plan"><span>{pkg.label}</span></div>
                           <div className="pricing" style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'nowrap' }}>
                             <h3 className="price" style={{ fontSize: 36, whiteSpace: 'nowrap' }}>{pkg.price}</h3>
-                            <span className="price_text" style={{ whiteSpace: 'nowrap' }}>/ {pkg.credits} credits</span>
+                            <span className="price_text" style={{ whiteSpace: 'nowrap' }}>/ {pkg.unitLabel}</span>
                           </div>
                           <div className="desc"><p>{pkg.tagline}</p></div>
                         </div>
                         <div className="item_content">
                           <ul>
-                            <li>
-                              <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
-                              <span className="text">{pkg.credits} credits included</span>
-                            </li>
-                            <li>
-                              <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
-                              <span className="text">Free market validation</span>
-                            </li>
-                            <li>
-                              <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
-                              <span className="text">1 credit → deep research</span>
-                            </li>
-                            <li>
-                              <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
-                              <span className="text">2 credits → full blueprint</span>
-                            </li>
+                            {(PACK_FEATURES[pkg.key] || []).map((feature) => (
+                              <li key={feature}>
+                                <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
+                                <span className="text">{feature}</span>
+                              </li>
+                            ))}
                           </ul>
                         </div>
                         <div className="item_footer">
-                          <Link href="/pricing" className="fn__btn medium"><span>Get started</span></Link>
+                          <Link href="/pricing" className="fn__btn medium"><span>{pkg.key === 'starter' ? 'Get credits' : 'See details'}</span></Link>
                         </div>
                       </div>
                     </li>
@@ -170,7 +189,7 @@ export default async function LandingPage() {
                 Common questions
               </h2>
             </div>
-            <div style={{ maxWidth: 680, margin: '0 auto' }}>
+            <div style={{ maxWidth: 760, margin: '0 auto' }}>
               {FAQS.slice(0, 4).map((faq) => (
                 <div key={faq.q} className="fn__bold_item" style={{ marginBottom: 16, padding: '20px 24px' }}>
                   <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 16, marginBottom: 8 }}>{faq.q}</h3>

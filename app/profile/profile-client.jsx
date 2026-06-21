@@ -208,10 +208,13 @@ export default function ProfileClient({ user, error, welcome }) {
                 </>
               ) : (
                 <>
-                  <div className="details_subtitle"><h3 className="title">Sign in to IdeaReels</h3></div>
+                  <div className="details_subtitle"><h3 className="title">Sign in and claim your 3 free credits</h3></div>
                   <div className="details_content">
-                    <div className="details_left" style={{ maxWidth: 400 }}>
+                    <div className="details_left" style={{ maxWidth: 440 }}>
                       {err && <p style={{ color: '#c00', marginBottom: 16, fontSize: 14 }}>{err}</p>}
+                      <p style={{ margin: '0 0 18px', fontSize: 14, lineHeight: 1.7, opacity: 0.7 }}>
+                        Save your spins, unlock deeper research, and keep the blueprints worth building instead of losing them when you leave.
+                      </p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
                         <button onClick={() => signInWithOAuth('google')} className="fn__btn medium" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
                           <span>Continue with Google</span>
@@ -221,9 +224,9 @@ export default function ProfileClient({ user, error, welcome }) {
                         </button>
                       </div>
                       <form onSubmit={sendMagicLink} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        <input type="email" required placeholder="Email *" value={email} onChange={e => setEmail(e.target.value)} style={{ padding: '12px 16px', border: '1px solid #e5e5e5', borderRadius: 6, fontSize: 14 }} />
+                        <input type="email" required placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} style={{ padding: '12px 16px', border: '1px solid #e5e5e5', borderRadius: 6, fontSize: 14 }} />
                         <button type="submit" className="fn__btn" disabled={loading} style={{ display: 'flex', justifyContent: 'center' }}>
-                          <span>{loading ? 'Sending…' : 'Send magic link'}</span>
+                          <span>{loading ? 'Sending…' : 'Email me a magic link'}</span>
                         </button>
                       </form>
                     </div>
@@ -263,7 +266,7 @@ export default function ProfileClient({ user, error, welcome }) {
                   You&apos;re signed in
                 </p>
                 <p style={{ fontSize: 13, color: '#111', opacity: 0.65, margin: 0 }}>
-                  Welcome to IdeaReels. Your account is ready.
+                  Welcome to IdeaReels. Your free credits are ready.
                 </p>
               </div>
             </div>
@@ -312,8 +315,8 @@ export default function ProfileClient({ user, error, welcome }) {
             </div>
             <div className="details_footer">
               <ul>
-                <li><Link href="/pricing" className="fn__creative_link">Buy Credits<span className="suffix">//</span></Link></li>
-                <li><Link href="/wheel" className="fn__creative_link">Generate an Idea<span className="suffix">//</span></Link></li>
+                <li><Link href="/pricing" className="fn__creative_link">Get More Credits<span className="suffix">//</span></Link></li>
+                <li><Link href="/wheel" className="fn__creative_link">Spin an Idea<span className="suffix">//</span></Link></li>
               </ul>
             </div>
           </div>

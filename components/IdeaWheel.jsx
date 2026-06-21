@@ -1776,11 +1776,11 @@ export default function IdeaWheel() {
               {CREDIT_PACKAGES.map(pkg => (
                 <div key={pkg.key} className={`su-pkg${pkg.highlight?" su-pkg--hl":""}`}>
                   <span className="su-pkg-label">{pkg.label}</span>
-                  <span className="su-pkg-credits">{pkg.credits} credits</span>
+                  <span className="su-pkg-credits">{pkg.unitLabel}</span>
                   <span className="su-pkg-price">{pkg.price}</span>
-                  <span className="su-pkg-per">{pkg.per}/credit</span>
+                  <span className="su-pkg-per">{pkg.per}{pkg.perSuffix}</span>
                   <button className="su-pkg-btn" disabled={!!checkoutLoading} onClick={()=>startCheckout(pkg)}>
-                    {checkoutLoading===pkg.key?"Redirecting…":"Checkout"}
+                    {checkoutLoading===pkg.key?"Redirecting…":pkg.type === 'spin' ? 'Get credits' : 'Buy shortcut pack'}
                   </button>
                 </div>
               ))}

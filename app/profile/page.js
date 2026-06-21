@@ -4,7 +4,7 @@ import ProfileClient from './profile-client';
 
 export const metadata = {
   title: 'My Account',
-  description: 'Your IdeaReels profile and credits.',
+  description: 'Your IdeaReels profile, saved ideas, and available credits.',
 };
 
 export default async function ProfilePage({ searchParams }) {
@@ -18,7 +18,7 @@ export default async function ProfilePage({ searchParams }) {
         <div className="container">
           <div className="pagetitle">
             <h3 className="fn__title">My Account</h3>
-            {!user && <p className="fn__desc">Sign in to view your ideas and credits.</p>}
+            {!user && <p className="fn__desc">Sign in, claim your 3 free credits, and save your best ideas.</p>}
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>

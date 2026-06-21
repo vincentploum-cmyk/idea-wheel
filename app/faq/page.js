@@ -3,7 +3,7 @@ import { FAQS } from '@/lib/content';
 
 export const metadata = {
   title: 'FAQ — IdeaReels',
-  description: 'Common questions about IdeaReels: how credits work, what the blueprint includes, how market validation works, and how to get started.',
+  description: 'Common questions about IdeaReels, including free credits, deep research, blueprint pricing, and shortcut packs.',
   alternates: { canonical: 'https://ideareels.io/faq' },
 };
 
@@ -14,7 +14,7 @@ export default function FaqPage() {
         <div className="container">
           <div className="pagetitle">
             <h3 className="fn__title">Frequently Asked Questions</h3>
-            <p className="fn__desc">Everything you need to know before you build.</p>
+            <p className="fn__desc">Everything you need to know before you burn a night or weekend on the wrong idea.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
