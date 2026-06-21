@@ -128,10 +128,10 @@ export default function BlogPostPage({ params }) {
             {/* CTA */}
             <div className="fn__bold_item" style={{ marginTop: 48, padding: '32px 36px', background: '#FFE000', textAlign: 'center' }}>
               <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 22, margin: '0 0 10px' }}>
-                Ready to find an idea worth building?
+                Ready to pressure-test an idea and build the MVP plan?
               </h3>
               <p style={{ margin: '0 0 20px', opacity: 0.75, fontSize: 15 }}>
-                Generate a startup concept and get an instant AI market verdict.
+                Get the market research and technical blueprint that tell you whether to build, and how to build it fast.
               </p>
               <Link href="/auth/register" className="fn__btn"><span>Get started</span></Link>
             </div>

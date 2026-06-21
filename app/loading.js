@@ -59,7 +59,7 @@ export default function Loading() {
             color: 'var(--muted)',
           }}
         >
-          Preparing the idea generator and validation workflow.
+          Preparing your market research and MVP blueprint workflow.
         </p>
       </div>
     </main>

@@ -4,8 +4,8 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import { createClient } from '@/lib/supabase-server';
 
 export const metadata = {
-  title: 'Generate an Idea',
-  description: 'Out of ideas? Use IdeaReels to get back on track with a software concept, fast validation, and a blueprint when it looks real.',
+  title: 'Research and Blueprint an MVP',
+  description: 'Out of ideas? Use IdeaReels to get back on track with a software concept, detailed market research, and the technical blueprint to build an MVP fast.',
 };
 
 export default async function WheelPage() {
@@ -18,8 +18,8 @@ export default async function WheelPage() {
       <div className="popito_fn_pagetitle">
         <div className="container">
           <div className="pagetitle">
-            <h3 className="fn__title">Generate an Idea</h3>
-            <p className="fn__desc">Out of ideas? Use IdeaReels to get back on track, vet a direction quickly, and go deeper only when it earns it.</p>
+            <h3 className="fn__title">Find, research, and blueprint an MVP</h3>
+            <p className="fn__desc">Out of ideas? Use IdeaReels to find a direction, pressure-test the market, and get the technical plan to build fast when the signal is there.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>

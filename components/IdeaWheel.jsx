@@ -1227,11 +1227,11 @@ export default function IdeaWheel() {
 
             <div className="su-util-eyebrow">Idea validation engine</div>
             <h1 className="su-display su-landing-h1">
-              <span style={{ display:"block" }}>Find a startup idea</span>
-              <span className="su-grad-text" style={{ display:"block" }}>worth building.</span>
+              <span style={{ display:"block" }}>Do the work you would want done</span>
+              <span className="su-grad-text" style={{ display:"block" }}>before pitching Shark Tank.</span>
             </h1>
             <p className="su-landing-sub">
-              Generate sharper business ideas in seconds, run a quick market check, and unlock a build-ready blueprint only when one is worth pursuing.
+              Start with a strong concept, run the market research, and get the technical MVP blueprint so you know what to build and how to build it fast.
             </p>
 
             <div className="su-landing-cta">
@@ -1252,24 +1252,24 @@ export default function IdeaWheel() {
                 <div className="su-hiw-step">
                   <div className="su-hiw-num">1</div>
                   <div>
-                    <div className="su-hiw-t">Generate a business idea worth chasing</div>
-                    <div className="su-hiw-d">Combine proven actions, real workflows, and target industries to uncover concrete startup concepts, not vague inspiration.</div>
+                    <div className="su-hiw-t">Start with a concept worth testing</div>
+                    <div className="su-hiw-d">Combine proven actions, real workflows, and target industries to uncover a concrete startup concept, not vague inspiration.</div>
                   </div>
                 </div>
                 <div className="su-hiw-connector" aria-hidden />
                 <div className="su-hiw-step">
                   <div className="su-hiw-num">2</div>
                   <div>
-                    <div className="su-hiw-t">Know if it's worth building before you commit</div>
-                    <div className="su-hiw-d">Every idea gets a market check with competitor analysis, market size, and demand signals, so you get a clear build, caution, or avoid verdict before you sink time into it.</div>
+                    <div className="su-hiw-t">Do the market homework before you commit</div>
+                    <div className="su-hiw-d">Every concept gets a market check with competitor analysis, market size, and demand signals, so you get a clear build, caution, or avoid verdict before you sink time into it.</div>
                   </div>
                 </div>
                 <div className="su-hiw-connector" aria-hidden />
                 <div className="su-hiw-step">
                   <div className="su-hiw-num">3</div>
                   <div>
-                    <div className="su-hiw-t">Turn the winner into a build-ready plan</div>
-                    <div className="su-hiw-d">Extended market research costs 1 credit and the full blueprint costs 2. Each blueprint unlocks four AI specialists across product design, launch strategy, infrastructure, and prototype generation.</div>
+                    <div className="su-hiw-t">Get the technical MVP blueprint</div>
+                    <div className="su-hiw-d">Extended market research costs 1 credit and the full blueprint costs 2. Each blueprint gives you product scope, launch strategy, infrastructure choices, and technical steps to build fast.</div>
                   </div>
                 </div>
               </div>

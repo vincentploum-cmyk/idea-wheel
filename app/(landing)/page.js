@@ -27,7 +27,7 @@ const PACK_FEATURES = {
 
 export const metadata = {
   title: 'IdeaReels — Spin up your next weekend build',
-  description: 'Out of ideas? IdeaReels helps you get back on track with fresh software ideas, fast validation, and full detailed blueprints.',
+  description: 'Out of ideas? IdeaReels helps you get back on track with a strong concept, detailed market research, and the technical blueprint to build an MVP fast.',
   alternates: { canonical: 'https://ideareels.io' },
 };
 
@@ -44,7 +44,7 @@ export default async function LandingPage() {
         '@type': 'WebApplication',
         name: 'IdeaReels',
         url: 'https://ideareels.io',
-        description: 'IdeaReels helps builders get back on track with fresh ideas, quick validation, and full detailed blueprints for the winners.',
+        description: 'IdeaReels helps builders get back on track with a strong concept, detailed market research, and the technical blueprint to build an MVP fast.',
         applicationCategory: 'BusinessApplication',
         offers: {
           '@type': 'Offer',
@@ -83,7 +83,7 @@ export default async function LandingPage() {
               Out of ideas?<br />Let IdeaReels get you back on track.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 620, margin: '0 auto 1.5rem' }}>
-              Generate fresh software ideas, vet them quickly, and unlock full detailed blueprints that help you move from stuck to shipping.
+              We do more than spark an idea. IdeaReels pressure-tests the market and gives you the technical blueprint to build an MVP fast, like the prep you would want before walking into Shark Tank.
             </p>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
               {user ? (
@@ -107,7 +107,7 @@ export default async function LandingPage() {
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
                 Get unstuck and move from idea to blueprint
               </h2>
-              <p style={{ opacity: 0.65, marginTop: 8 }}>IdeaReels helps you find a direction, vet it fast, and go deeper when something clicks.</p>
+              <p style={{ opacity: 0.65, marginTop: 8 }}>From concept to market research to MVP plan, IdeaReels helps you do the homework before you commit.</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 28 }}>
               {LANDING_STEPS.map((step) => (
