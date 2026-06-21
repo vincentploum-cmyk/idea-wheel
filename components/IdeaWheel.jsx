@@ -825,7 +825,7 @@ export default function IdeaWheel() {
     try { localStorage.setItem("ideaWheelCredits", String(credits)); } catch {}
   }, [credits, mounted]);
 
-  const goTo = (s) => { setScreen(s); window.scrollTo({ top:0, behavior:"smooth" }); };
+  const goTo = (s) => { setScreen(s); if (s !== 'wheel') window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const m_prefix = (idea) => idea?.modeName === 'B2B' ? 'I want to build an agent that' : 'I want to make an app that';
   const ideaSummary = (currentIdea) => {
     if (!currentIdea) return '';

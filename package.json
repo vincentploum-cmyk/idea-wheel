@@ -9,7 +9,8 @@
     "lint": "eslint",
     "palette:audit": "node migrate-palette.js",
     "palette:print": "node migrate-palette.js --json",
-    "opportunity-bank:sync": "node scripts/sync-opportunity-bank.mjs"
+    "opportunity-bank:sync": "node scripts/sync-opportunity-bank.mjs",
+    "test": "jest"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
@@ -30,9 +31,14 @@
     "web-vitals": "^5.3.0"
   },
   "devDependencies": {
+    "@babel/core": "^8.0.1",
+    "@babel/preset-env": "^8.0.2",
+    "@jest/globals": "^30.4.1",
     "@tailwindcss/postcss": "^4",
+    "babel-jest": "^30.4.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
+    "jest": "^30.4.2",
     "tailwindcss": "^4"
   }
 }
