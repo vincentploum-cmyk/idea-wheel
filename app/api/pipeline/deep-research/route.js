@@ -160,6 +160,6 @@ export async function POST(request) {
     return NextResponse.json({ sessionId, research: parsed, balance: newBalance });
   } catch (err) {
     console.error('[deep-research]', err.message);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Deep research failed. Please try again.' }, { status: 500 });
   }
 }

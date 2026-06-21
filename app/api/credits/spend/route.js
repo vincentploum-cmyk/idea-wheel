@@ -1,6 +1,12 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { deductCredits, getBalance } from '@/lib/credits';
+import { deductCredits, getBalance, CREDIT_COSTS } from '@/lib/credits';
+
+// Server-side cost schedule — clients cannot influence the charge amount
+const SPEND_COST_BY_REASON = {
+  deep_research: 1,
+  blueprint: CREDIT_COSTS.blueprint,
+};
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -22,9 +28,9 @@ export async function POST(request) {
     return Response.json({ error: 'Please sign in.', code: 'AUTH_REQUIRED' }, { status: 401 });
   }
 
-  const { cost, validationId, reason } = await request.json().catch(() => ({}));
-  const amount = Math.max(1, Math.min(3, Math.round(Number(cost) || 1)));
+  const { validationId, reason } = await request.json().catch(() => ({}));
   const kind = reason === 'deep_research' ? 'deep_research' : 'blueprint';
+  const amount = SPEND_COST_BY_REASON[kind] ?? CREDIT_COSTS.blueprint;
 
   const result = await deductCredits(user.id, amount, kind, { validationId: validationId || null });
   if (!result.ok) {

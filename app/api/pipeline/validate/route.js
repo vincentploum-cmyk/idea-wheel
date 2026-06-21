@@ -489,7 +489,9 @@ export async function POST(request) {
   }
 
   const sessionId = ensureSessionId(rawSessionId);
-  const agentDesc = freeformIdea || `an agent that ${action} ${workflow} ${connector} ${industry}`;
+  // Truncate user-supplied input to prevent prompt injection via oversized payloads
+  const sanitised = freeformIdea ? String(freeformIdea).slice(0, 500) : null;
+  const agentDesc = sanitised || `an agent that ${action} ${workflow} ${connector} ${industry}`;
   // Plain phrases used to make the live research log specific to THIS idea.
   const sector = (stripCitationNoise(industry) || 'this market').toLowerCase();
   const job = (stripCitationNoise(workflow) || 'this workflow').toLowerCase();
@@ -571,7 +573,7 @@ export async function POST(request) {
         });
       } catch (err) {
         console.error('[validate]', err?.message);
-        send({ t: 'error', error: err?.message || 'Market check failed.' });
+        send({ t: 'error', error: 'Market check failed. Please try again.' });
       } finally {
         try { controller.close(); } catch {}
       }

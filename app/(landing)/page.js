@@ -123,9 +123,9 @@ export default async function LandingPage() {
             </p>
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
               {user ? (
-                <Link href="/wheel" className="fn__btn"><span>Spin now — research from $3.99</span></Link>
+                <Link href="/wheel" className="fn__btn" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center' }}><span>Spin now — research from $3.99</span></Link>
               ) : (
-                <Link href="/pricing" className="fn__btn"><span>Get started — research from $3.99</span></Link>
+                <Link href="/pricing" className="fn__btn" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center' }}><span>Get started — research from $3.99</span></Link>
               )}
             </div>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, opacity: 0.5, margin: 0, textAlign: 'center' }}>
@@ -299,7 +299,7 @@ export default async function LandingPage() {
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
                 Builders who bought credits and shipped
               </h2>
-              <p style={{ opacity: 0.65, marginTop: 8 }}>Real feedback from solo founders who used IdeaReels before committing to build.</p>
+              <p style={{ opacity: 0.65, marginTop: 8 }}>Illustrative feedback from solo founders who used IdeaReels before committing to build.</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 28 }}>
               {TESTIMONIALS.map((t) => (

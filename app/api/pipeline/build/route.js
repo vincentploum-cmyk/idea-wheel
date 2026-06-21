@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { buildRetrievalContext } from '../../../../lib/moat-retrieval';
+import { CREDIT_COSTS } from '../../../../lib/credits';
 
 // Max 5 blueprint requests per user per minute
 const buildRateLimitMap = new Map();
@@ -695,9 +696,10 @@ export async function POST(request) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
   }
 
-  const agentDesc = freeformIdea || `an agent that ${action} ${workflow} ${connector} ${industry}`;
+  const agentDesc = freeformIdea ? String(freeformIdea).slice(0, 500) : `an agent that ${action} ${workflow} ${connector} ${industry}`;
   const retrieval = comp?.retrieval || (await buildRetrievalContext({ modeName, industry, action, workflow }));
-  const blueprintCost = Math.max(1, Number(creditCost || 0));
+  // Server-side cost — never trust client-supplied creditCost
+  const blueprintCost = CREDIT_COSTS.blueprint;
   let charge = null;
 
   try {
@@ -1026,6 +1028,6 @@ Search the web for the most current direct competitors, their pricing, recent (2
       }
     }
     console.error(`[pipeline/${stage}]`, err.message);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Blueprint generation failed. Please try again.' }, { status: 500 });
   }
 }
