@@ -130,7 +130,7 @@ export default async function LandingPage() {
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 28, maxWidth: 820, marginInline: 'auto' }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
-                What IdeaReels is actually doing under the hood
+                What IdeaReels actually delivers
               </h2>
               <p style={{ opacity: 0.65, marginTop: 8 }}>
                 The value is not just the idea. The value is the founder work you do not have to piece together yourself.
