@@ -13,6 +13,8 @@ export default function sitemap() {
     { url: 'https://ideareels.io/pricing',  lastModified: new Date('2026-06-20'), changeFrequency: 'monthly', priority: 0.85 },
     { url: 'https://ideareels.io/ideas',    lastModified: new Date('2026-06-20'), changeFrequency: 'weekly',  priority: 0.8 },
     { url: 'https://ideareels.io/blog',     lastModified: new Date('2026-06-20'), changeFrequency: 'weekly',  priority: 0.75 },
+    { url: 'https://ideareels.io/example',  lastModified: new Date('2026-06-21'), changeFrequency: 'monthly', priority: 0.8 },
+    { url: 'https://ideareels.io/contact',  lastModified: new Date('2026-06-21'), changeFrequency: 'yearly',  priority: 0.4 },
     { url: 'https://ideareels.io/faq',      lastModified: new Date('2026-06-01'), changeFrequency: 'monthly', priority: 0.6 },
     ...blogUrls,
   ];

@@ -35,6 +35,7 @@ function LogoMark({ height = 44 }) {
 const NAV_LINKS = [
   { href: '/wheel', label: 'Spin' },
   { href: '/ideas', label: 'Ideas' },
+  { href: '/example', label: 'Example' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/blog', label: 'Blog' },
   { href: '/faq', label: 'FAQ' },

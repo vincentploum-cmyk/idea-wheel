@@ -168,7 +168,7 @@ export default async function LandingPage() {
                 Most builders skip this. IdeaReels does it in 5 minutes.
               </p>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 24, marginBottom: 28 }}>
               {LANDING_STEPS.map((step) => (
                 <div key={step.number} className="fn__bold_item" style={{ padding: '28px 24px' }}>
                   <div style={{
@@ -186,6 +186,11 @@ export default async function LandingPage() {
                   <p style={{ opacity: 0.65, lineHeight: 1.65, fontSize: 14, margin: 0 }}>{step.desc}</p>
                 </div>
               ))}
+            </div>
+          <div style={{ textAlign: 'center' }}>
+              <Link href="/example" className="fn__creative_link" style={{ fontSize: 14 }}>
+                See a full example — spin to blueprint<span className="suffix">//</span>
+              </Link>
             </div>
           </div>
         </section>
