@@ -85,9 +85,6 @@ export default async function LandingPage() {
             <p className="fn__desc" style={{ maxWidth: 620, margin: '0 auto 1.5rem' }}>
               IdeaReels gives you a concrete software angle, a fast market sanity check, and a deeper path only when a project feels worth chasing.
             </p>
-            <p style={{ margin: '0 auto 2rem', fontSize: 14, opacity: 0.7 }}>
-              3 free credits after sign-in · 1 credit for deep research · 2 credits for the full blueprint
-            </p>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
               {user ? (
                 <Link href="/wheel" className="fn__btn"><span>Spin now</span></Link>
