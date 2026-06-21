@@ -61,7 +61,7 @@ export default function OgImage() {
             AI market research + MVP blueprint in under 5 minutes.
           </div>
           <div style={{ fontSize: 28, color: '#aaaaaa', fontWeight: 400, letterSpacing: '-0.3px' }}>
-            Built for vibe coders, indie hackers, and solo founders.
+            Built for vibe coders and solo founders.
           </div>
         </div>
 

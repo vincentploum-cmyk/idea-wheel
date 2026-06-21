@@ -83,7 +83,7 @@ The free scan already produced this read: ${JSON.stringify({
     verdict: comp?.verdict,
   })}
 
-Now go deeper. Search Reddit, Hacker News, Indie Hackers, niche forums, and community threads where REAL people discuss this problem. Find evidence of genuine, painful, recurring demand — not vendor marketing. Quote the kind of thing people actually say. Look for what they currently cobble together, what they hate about it, and whether they pay for solutions.
+Now go deeper. Search Reddit, Hacker News, Product Hunt, niche forums, and community threads where REAL people discuss this problem. Find evidence of genuine, painful, recurring demand — not vendor marketing. Quote the kind of thing people actually say. Look for what they currently cobble together, what they hate about it, and whether they pay for solutions.
 
 Return ONLY a JSON object (no fences):
 {

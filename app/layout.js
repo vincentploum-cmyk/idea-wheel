@@ -20,7 +20,7 @@ export const metadata = {
     'how to validate a startup idea',
     'business idea validator online',
     'technical MVP blueprint tool',
-    'indie hacker tools 2025',
+    'solo founder tools 2025',
     'vibe coder startup tools',
     'solo founder market research',
     'AI startup research tool',
@@ -33,7 +33,7 @@ export const metadata = {
   publisher: 'IdeaReels',
   openGraph: {
     title: 'IdeaReels — AI Startup Idea Validation & MVP Blueprints from $3.99',
-    description: 'Validate your startup idea with AI market research and get a full technical MVP blueprint in under 5 minutes. Built for vibe coders, indie hackers, and solo founders.',
+    description: 'Validate your startup idea with AI market research and get a full technical MVP blueprint in under 5 minutes. Built for vibe coders and solo founders.',
     type: 'website',
     url: 'https://ideareels.io',
     siteName: 'IdeaReels',

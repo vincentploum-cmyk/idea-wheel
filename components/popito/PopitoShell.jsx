@@ -64,8 +64,8 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
       style={yellowBg ? { background: '#FFE000' } : undefined}
     >
       <PromoBanner
-        text="Out of ideas? IdeaReels helps you get back on track with market research and a technical MVP blueprint before you commit."
-        linkLabel="See pricing"
+        text="Validate your startup idea in 5 min — AI market research + MVP blueprint from $3.99."
+        linkLabel="Start now →"
         linkHref="/pricing"
       />
 
@@ -178,6 +178,9 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
                   <li className="menu-item">
                     <Link href="/faq"><span className="text">FAQ</span><span className="suffix">//</span></Link>
                   </li>
+                  <li className="menu-item">
+                    <Link href="/contact"><span className="text">Contact</span><span className="suffix">//</span></Link>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -201,7 +204,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
           </div>
           <div className="footer_bottom">
             <div className="copyright">
-              <p>© {new Date().getFullYear()} IdeaReels. Built for vibe coders, indie hackers, and solo builders. · AI-generated content is informational, not professional advice.</p>
+              <p>© {new Date().getFullYear()} IdeaReels. Built for vibe coders and solo builders. · AI-generated content is informational, not professional advice.</p>
             </div>
           </div>
         </div>

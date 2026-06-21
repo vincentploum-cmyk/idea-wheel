@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import PopitoShell from '@/components/popito/PopitoShell';
+import ReviewForm from '@/components/ReviewForm';
 import { LANDING_STEPS, FAQS } from '@/lib/content';
 import { CREDIT_PACKAGES } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase-server';
@@ -31,7 +32,7 @@ const TESTIMONIALS = [
   {
     quote: "I bought $3.99 in Starter credits the moment my first spin came back with a strong demand signal. Built the MVP that weekend. Didn't waste a single day building the wrong thing.",
     name: 'Marcus D.',
-    role: 'Indie hacker',
+    role: 'Solo founder',
     badge: 'Starter pack',
   },
   {
@@ -322,6 +323,21 @@ export default async function LandingPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Review submission */}
+        <section style={{ padding: '0 0 48px' }}>
+          <div className="container">
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
+                Tried it? Tell other founders.
+              </h2>
+              <p style={{ opacity: 0.65, marginTop: 8 }}>
+                Every review is read before it goes live. No fluff — just honest signal.
+              </p>
+            </div>
+            <ReviewForm />
           </div>
         </section>
 
