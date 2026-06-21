@@ -3,7 +3,7 @@ import PricingPageClient from './pricing-page-client';
 
 export const metadata = {
   title: 'Pricing — IdeaReels credits and shortcut packs',
-  description: 'Pricing for builders who want better ideas, faster validation, and a blueprint when something looks worth building.',
+  description: 'Pricing for builders who want help getting back on track with fresh ideas, fast validation, and full detailed blueprints.',
   alternates: { canonical: 'https://ideareels.io/pricing' },
 };
 
@@ -14,7 +14,7 @@ export default function PricingPage({ searchParams }) {
         <div className="container">
           <div className="pagetitle">
             <h3 className="fn__title">Pricing that matches how builders buy</h3>
-            <p className="fn__desc">You already have AI tools to build. Pay only when you want help finding, vetting, or blueprinting an idea worth chasing.</p>
+            <p className="fn__desc">Pay only when you want help getting back on track with a fresh idea, a faster read on the market, or a full detailed blueprint.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>

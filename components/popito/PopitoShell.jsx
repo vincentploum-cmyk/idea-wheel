@@ -64,7 +64,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
       style={yellowBg ? { background: '#FFE000' } : undefined}
     >
       <PromoBanner
-        text="AI can build fast. IdeaReels helps you find, vet, and blueprint ideas worth chasing."
+        text="Out of ideas? IdeaReels helps you get back on track with fresh ideas, fast validation, and full detailed blueprints."
         linkLabel="See pricing"
         linkHref="/pricing"
       />

@@ -68,7 +68,7 @@ export default function LoginPage() {
                       fontSize: 'clamp(24px,4vw,36px)', lineHeight: 1.1,
                       color: '#111', margin: 0, letterSpacing: '-0.02em',
                     }}>
-                      AI can build fast.<br />IdeaReels gives it direction.<br />You ship with a blueprint.
+                      Out of ideas?<br />Get back on track.<br />Ship with a blueprint.
                     </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 260 }}>
                       {['1. Generate a buildable idea', '2. Vet the demand', '3. Get the blueprint'].map(item => (
