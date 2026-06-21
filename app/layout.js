@@ -1,6 +1,7 @@
 import './globals.css';
 import Script from 'next/script';
 import CookieBanner from '@/components/CookieBanner';
+import WebVitals from '@/components/WebVitals';
 
 export const metadata = {
   metadataBase: new URL('https://ideareels.io'),
@@ -120,6 +121,7 @@ export default function RootLayout({ children }) {
       <body>
         {children}
         <CookieBanner />
+        <WebVitals />
         {/* CWV: jQuery must be beforeInteractive (plugins depend on it); others deferred */}
         <Script src="/popito-assets/js/jquery.js" strategy="beforeInteractive" />
         <Script src="/popito-assets/js/plugins.js" strategy="afterInteractive" />
