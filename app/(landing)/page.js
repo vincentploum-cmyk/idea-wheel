@@ -12,22 +12,22 @@ const PACK_FEATURES = {
     '2 credits for the full blueprint',
   ],
   pro: [
-    'Unlock 1 ready-made idea from the library',
+    'Unlock 1 researched starting point from the library',
     'Great if you want a shortcut instead of spinning',
     'Includes the deeper research path',
     'Best for builders who want to move tonight',
   ],
   power: [
-    'Unlock 2 ready-made ideas from the library',
+    'Unlock 2 researched starting points from the library',
     'Compare two strong directions fast',
-    'Pick the one worth your weekend',
+    'Choose the one worth pursuing',
     'Best for builders who want optionality',
   ],
 };
 
 export const metadata = {
-  title: 'IdeaReels — Spin up your next weekend build',
-  description: 'Out of ideas? IdeaReels helps you frame the concept, research the market, and generate the technical MVP blueprint before you commit to building.',
+  title: 'IdeaReels — Market Research and MVP Blueprints for Builders',
+  description: 'Out of ideas? IdeaReels helps you frame the concept, research the market, and define the technical MVP before you commit to building.',
   alternates: { canonical: 'https://ideareels.io' },
 };
 
@@ -44,7 +44,7 @@ export default async function LandingPage() {
         '@type': 'WebApplication',
         name: 'IdeaReels',
         url: 'https://ideareels.io',
-        description: 'IdeaReels helps builders frame a strong concept, research the market, and generate a technical MVP blueprint before they commit to building.',
+        description: 'IdeaReels helps builders frame a strong concept, research the market, and define a technical MVP blueprint before they commit to building.',
         applicationCategory: 'BusinessApplication',
         featureList: [
           'Concept framing',
@@ -74,10 +74,10 @@ export default async function LandingPage() {
               Built for AI builders and vibe coders
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.08, marginBottom: 16 }}>
-              Out of ideas?<br />Let IdeaReels do the homework.
+              Out of ideas?<br />Let IdeaReels get you back on track.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 620, margin: '0 auto 1.5rem' }}>
-              We do more than spark a concept. IdeaReels frames the opportunity, researches the market, and maps the technical MVP so you know what to build, why it matters, and how to move fast.
+              We do more than spark a concept. IdeaReels frames the opportunity, researches the market, and defines the technical MVP so you know what to build, why it matters, and how to move quickly.
             </p>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
               {user ? (
@@ -101,7 +101,7 @@ export default async function LandingPage() {
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
                 This is the work founders usually do before they commit
               </h2>
-              <p style={{ opacity: 0.65, marginTop: 8 }}>Think of it like the prep you would want before Shark Tank, compressed into a builder-friendly workflow.</p>
+              <p style={{ opacity: 0.65, marginTop: 8 }}>Think of it as the founder diligence you would want before committing time, capital, or reputation.</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 28 }}>
               {LANDING_STEPS.map((step) => (
@@ -133,14 +133,14 @@ export default async function LandingPage() {
                 What IdeaReels actually delivers
               </h2>
               <p style={{ opacity: 0.65, marginTop: 8 }}>
-                The value is not just the idea. The value is the founder work you do not have to piece together yourself.
+                The value is not just the concept. The value is the founder work you do not have to piece together yourself.
               </p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 28 }}>
               <div className="fn__bold_item" style={{ padding: '28px 26px' }}>
                 <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 18, marginBottom: 16 }}>
-                  We do the analysis
+                  Market and opportunity analysis
                 </h3>
                 <ul style={{ margin: 0, paddingLeft: 20, opacity: 0.72, lineHeight: 1.8, fontSize: 14 }}>
                   <li>Frame the niche, buyer, pain point, and wedge</li>
@@ -152,7 +152,7 @@ export default async function LandingPage() {
 
               <div className="fn__bold_item" style={{ padding: '28px 26px' }}>
                 <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 18, marginBottom: 16 }}>
-                  We compose the MVP
+                  MVP and technical planning
                 </h3>
                 <ul style={{ margin: 0, paddingLeft: 20, opacity: 0.72, lineHeight: 1.8, fontSize: 14 }}>
                   <li>Define the MVP scope and what to leave out</li>
@@ -164,7 +164,7 @@ export default async function LandingPage() {
 
               <div className="fn__bold_item" style={{ padding: '28px 26px' }}>
                 <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 18, marginBottom: 16 }}>
-                  What you walk away with
+                  What you receive
                 </h3>
                 <ul style={{ margin: 0, paddingLeft: 20, opacity: 0.72, lineHeight: 1.8, fontSize: 14 }}>
                   <li>Market opportunity summary</li>
@@ -181,10 +181,10 @@ export default async function LandingPage() {
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 28, maxWidth: 760, marginInline: 'auto' }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
-                Pay only when you want the deeper work done
+                Pay only when you want the deeper analysis done
               </h2>
               <p style={{ opacity: 0.65, marginTop: 8 }}>
-                Starter is for testing your own directions. Pro and Power are shortcut packs if you want a researched starting point instead of beginning from scratch.
+                Starter is for evaluating your own concepts. Pro and Power are shortcut packs when you want a researched starting point instead of beginning from scratch.
               </p>
             </div>
             <div className="fn__pricing_tables">

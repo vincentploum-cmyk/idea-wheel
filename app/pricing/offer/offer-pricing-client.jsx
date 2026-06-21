@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { CREDIT_PACKAGES } from '@/lib/pricing';
 
 const PACK_DESCRIPTIONS = {
-  starter: 'Best if you want to spin, test, and build your own ideas.',
-  pro: 'One ready-made idea unlock for when you want a shortcut.',
-  power: 'Two ready-made idea unlocks for when you want stronger optionality.',
+  starter: 'Best if you want to evaluate and build your own concepts.',
+  pro: 'One researched starting point for when you want a shortcut.',
+  power: 'Two researched starting points for when you want stronger optionality.',
 };
 
 const OFFER_OVERRIDES = {
@@ -16,20 +16,20 @@ const OFFER_OVERRIDES = {
 
 const PACK_FEATURES = {
   starter: [
-    '5 credits for your own ideas',
-    'Use credits inside the wheel flow',
+    '5 credits for your own concepts',
+    'Use credits throughout the workflow',
     '1 credit for deep research',
     '2 credits for the full blueprint',
   ],
   pro: [
-    '1 ready-made idea unlock',
-    'Skip the spin and move faster',
+    '1 researched starting point',
+    'Skip the blank page and move faster',
     'Built for people who want a stronger starting point',
   ],
   power: [
-    '2 ready-made idea unlocks',
+    '2 researched starting points',
     'Compare two strong directions',
-    'Pick the one worth your weekend',
+    'Choose the one worth pursuing',
   ],
 };
 

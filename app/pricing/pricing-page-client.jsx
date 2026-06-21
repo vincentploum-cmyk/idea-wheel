@@ -4,28 +4,28 @@ import { useMemo, useState } from 'react';
 import { CREDIT_PACKAGES, CREDIT_PACKAGE_BY_KEY } from '@/lib/pricing';
 
 const PACK_DESCRIPTIONS = {
-  starter: 'The default path if you want to spin, test, and build your own ideas.',
-  pro: 'A shortcut pack for builders who want one ready-made idea instead of starting from a blank page.',
-  power: 'The best fit if you want two strong options from the library and the freedom to chase the better one.',
+  starter: 'The default path if you want to evaluate and build your own concepts.',
+  pro: 'A shortcut pack for builders who want one researched starting point instead of starting from a blank page.',
+  power: 'The best fit if you want two strong starting points and the freedom to compare them before you commit.',
 };
 
 const PACK_FEATURES = {
   starter: [
-    '5 credits for your own ideas',
-    'Use credits inside the wheel flow',
+    '5 credits for your own concepts',
+    'Use credits throughout the workflow',
     '1 credit for deep research',
     '2 credits for the full blueprint',
   ],
   pro: [
-    '1 ready-made idea unlock',
-    'Skip the spin and start from a stronger prompt',
-    'Designed for faster action',
-    'Good when you want a shortcut tonight',
+    '1 researched starting point',
+    'Skip the blank page and start from a stronger opportunity',
+    'Designed for faster decision-making',
+    'Good when you want a faster path into execution',
   ],
   power: [
-    '2 ready-made idea unlocks',
+    '2 researched starting points',
     'Compare two directions quickly',
-    'Pick the stronger path before you commit',
+    'Choose the stronger path before you commit',
     'Best when you want optionality',
   ],
 };
@@ -45,13 +45,13 @@ export default function PricingPageClient({ searchParams }) {
         title: `${packageConfig.unitLabel} added`,
         text: packageConfig.type === 'idea'
           ? 'Head to the Ideas library when you want to unlock one.'
-          : 'Your credits are ready for the next promising spin.',
+          : 'Your credits are ready for the next concept you want to evaluate.',
       };
     }
     if (canceled) return {
       tone: 'neutral',
       title: 'Checkout canceled',
-      text: 'Nothing was charged. Come back when a project feels worth chasing.',
+      text: 'Nothing was charged. Come back when you want to continue the analysis.',
     };
     return null;
   }, [success, canceled, packageConfig]);
@@ -80,8 +80,8 @@ export default function PricingPageClient({ searchParams }) {
       <section id="price">
         <div className="container">
           <div style={{ maxWidth: 760, margin: '0 auto 32px', textAlign: 'center' }}>
-            <p style={{ fontSize: 14, opacity: 0.75, margin: '0 0 8px' }}>Sign in to save your work, then buy credits only when you want to go deeper.</p>
-            <p style={{ fontSize: 13, opacity: 0.55, margin: 0 }}>Starter is for your own spins. Pro and Power are shortcut packs for ready-made ideas.</p>
+            <p style={{ fontSize: 14, opacity: 0.75, margin: '0 0 8px' }}>Sign in to save your work, then buy credits only when you want deeper research or the full blueprint.</p>
+            <p style={{ fontSize: 13, opacity: 0.55, margin: 0 }}>Starter is for your own concepts. Pro and Power are shortcut packs for researched starting points.</p>
           </div>
 
           {statusMessage && (
@@ -149,7 +149,7 @@ export default function PricingPageClient({ searchParams }) {
           </div>
 
           <ul style={{ listStyle: 'none', padding: 0, margin: '40px auto 0', maxWidth: 520, textAlign: 'center', fontSize: 13, opacity: 0.65, lineHeight: 1.8 }}>
-            <li>Buy credits only when a project feels worth chasing.</li>
+            <li>Buy credits only when you want deeper research and planning.</li>
             <li>Credits never expire.</li>
             <li>Secure checkout via Stripe.</li>
           </ul>

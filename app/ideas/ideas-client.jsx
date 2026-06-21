@@ -533,10 +533,10 @@ export default function IdeasClient({ user, catalogData = {}, ideaUnlocks: initi
             }}>
               <div>
                 <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 20, margin: '0 0 4px', color: '#FFE000' }}>
-                  Pressure-test your next build.
+                  Evaluate your next build.
                 </p>
                 <p style={{ fontSize: 14, opacity: 0.6, margin: 0, color: '#fff' }}>
-                  Get the market research and MVP blueprint before you commit.
+                  Review the market and define the MVP before you commit.
                 </p>
               </div>
               <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn">

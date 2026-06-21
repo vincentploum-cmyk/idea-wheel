@@ -1228,7 +1228,7 @@ export default function IdeaWheel() {
             <div className="su-util-eyebrow">Idea validation engine</div>
             <h1 className="su-display su-landing-h1">
               <span style={{ display:"block" }}>Do the work you would want done</span>
-              <span className="su-grad-text" style={{ display:"block" }}>before pitching Shark Tank.</span>
+              <span className="su-grad-text" style={{ display:"block" }}>before making the case to investors.</span>
             </h1>
             <p className="su-landing-sub">
               Start with a strong concept, run the market research, and get the technical MVP blueprint so you know what to build and how to build it fast.

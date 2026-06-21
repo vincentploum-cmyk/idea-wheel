@@ -64,7 +64,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
       style={yellowBg ? { background: '#FFE000' } : undefined}
     >
       <PromoBanner
-        text="Out of ideas? IdeaReels helps you get back on track with market research and a technical MVP blueprint, not just another idea."
+        text="Out of ideas? IdeaReels helps you get back on track with market research and a technical MVP blueprint before you commit."
         linkLabel="See pricing"
         linkHref="/pricing"
       />
