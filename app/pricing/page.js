@@ -3,7 +3,7 @@ import PricingPageClient from './pricing-page-client';
 
 export const metadata = {
   title: 'Pricing — IdeaReels credits and shortcut packs',
-  description: 'Start with 3 free credits, then top up only when you want deeper research, a full blueprint, or a shortcut into a ready-made idea.',
+  description: 'Buy credits only when you want deeper research, a full blueprint, or a shortcut into a ready-made idea.',
   alternates: { canonical: 'https://ideareels.io/pricing' },
 };
 

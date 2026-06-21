@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ensureSessionId, recordOutcome } from '../../../../lib/moat-store';
-import { getBalance, deductCredits, ensureWelcomeGrant } from '../../../../lib/credits';
+import { getBalance, deductCredits } from '../../../../lib/credits';
 import { clarify } from '../../../../lib/clarity';
 import { saveResearchedIdea } from '../../../../lib/saved-ideas';
 
@@ -111,7 +111,6 @@ export async function POST(request) {
   // the research succeeds, so a failed run never costs a credit.
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Please sign in.', code: 'AUTH_REQUIRED' }, { status: 401 });
-  await ensureWelcomeGrant(user.id);
   const balance = await getBalance(user.id);
   if (balance < DEEP_RESEARCH_COST) {
     return NextResponse.json({ error: 'Not enough credits.', code: 'insufficient_credits', balance }, { status: 402 });

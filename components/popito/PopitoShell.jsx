@@ -99,7 +99,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
             <div className="right__trigger">
               {user
                 ? <Link href="/profile">My Account</Link>
-                : <Link href="/auth/login">Claim 3 free credits</Link>}
+                : <Link href="/auth/login">Sign in</Link>}
             </div>
           </div>
         </div>
@@ -120,7 +120,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
             <div className="right__trigger">
               {user
                 ? <Link href="/profile">My Account</Link>
-                : <Link href="/auth/login">Claim 3 free credits</Link>}
+                : <Link href="/auth/login">Sign in</Link>}
             </div>
           </div>
         </div>
@@ -153,7 +153,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
             <li>
               {user
                 ? <Link href="/profile"><span><span>My Account</span><span className="suffix">//</span></span></Link>
-                : <Link href="/auth/login"><span><span>Claim 3 free credits</span><span className="suffix">//</span></span></Link>}
+                : <Link href="/auth/login"><span><span>Sign in</span><span className="suffix">//</span></span></Link>}
             </li>
           </ul>
         </div>
@@ -189,7 +189,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
                   </div>
                   <div className="subscribe_form">
                     <div className="form">
-                      <Link href={user ? '/wheel' : '/auth/login'} className="fn__btn medium"><span>{user ? 'Spin now' : 'Claim 3 free credits'}</span></Link>
+                      <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn medium"><span>{user ? 'Spin now' : 'Create account'}</span></Link>
                     </div>
                     <div className="icon">
                       <img src="/popito-assets/svg/arrow-curly.svg" alt="" className="fn__svg" />

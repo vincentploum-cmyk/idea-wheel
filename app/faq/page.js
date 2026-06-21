@@ -3,7 +3,7 @@ import { FAQS } from '@/lib/content';
 
 export const metadata = {
   title: 'FAQ — IdeaReels',
-  description: 'Common questions about IdeaReels, including free credits, deep research, blueprint pricing, and shortcut packs.',
+  description: 'Common questions about IdeaReels, including deep research, blueprint pricing, and shortcut packs.',
   alternates: { canonical: 'https://ideareels.io/faq' },
 };
 

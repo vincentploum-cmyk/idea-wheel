@@ -88,7 +88,7 @@ export default function RegisterPage() {
                     {sent ? (
                       <>
                         <h3 className="fn__title">Check your email</h3>
-                        <p className="fn__desc">We sent a sign-in link to <strong>{email}</strong>. Click it to activate your account — your 3 free credits will be waiting.</p>
+                        <p className="fn__desc">We sent a sign-in link to <strong>{email}</strong>. Click it to activate your account and start saving your work.</p>
                         <button onClick={() => setSent(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>
                           Use a different email
                         </button>
@@ -141,7 +141,7 @@ export default function RegisterPage() {
                           </div>
                         </form>
                         <p style={{ fontSize: 12, opacity: 0.5, marginTop: 16, textAlign: 'center' }}>
-                          Every new account includes 3 free credits.
+                          Create an account to save your ideas, research, and blueprints.
                         </p>
                       </>
                     )}

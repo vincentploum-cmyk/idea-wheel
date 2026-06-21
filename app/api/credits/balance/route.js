@@ -1,4 +1,4 @@
-import { ensureWelcomeGrant, getBalance, getTransactions } from '@/lib/credits';
+import { getBalance, getTransactions } from '@/lib/credits';
 
 async function getUser() {
   const { createServerClient } = await import('@supabase/ssr');
@@ -16,8 +16,6 @@ async function getUser() {
 export async function GET() {
   const user = await getUser();
   if (!user) return Response.json({ balance: 0, transactions: [] });
-
-  await ensureWelcomeGrant(user.id);
 
   const balance = await getBalance(user.id);
   const transactions = await getTransactions(user.id, 10);

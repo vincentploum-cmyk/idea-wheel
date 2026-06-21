@@ -1269,7 +1269,7 @@ export default function IdeaWheel() {
                   <div className="su-hiw-num">3</div>
                   <div>
                     <div className="su-hiw-t">Turn the winner into a build-ready plan</div>
-                    <div className="su-hiw-d">Extended market research costs 1 credit and the full blueprint costs 2 — and every new account starts with 3 free credits. Each blueprint unlocks four AI specialists across product design, launch strategy, infrastructure, and prototype generation.</div>
+                    <div className="su-hiw-d">Extended market research costs 1 credit and the full blueprint costs 2. Each blueprint unlocks four AI specialists across product design, launch strategy, infrastructure, and prototype generation.</div>
                   </div>
                 </div>
               </div>
@@ -1770,7 +1770,7 @@ export default function IdeaWheel() {
               <span>Get credits</span>
               <button onClick={() => setShowPricing(false)}>✕</button>
             </div>
-            <p className="su-modal-sub">Extended market research costs 1 credit; the full blueprint costs 2. New accounts start with 3 free credits.</p>
+            <p className="su-modal-sub">Extended market research costs 1 credit; the full blueprint costs 2.</p>
             {checkoutErr && <p className="su-err">{checkoutErr}</p>}
             <div className="su-pkgs">
               {CREDIT_PACKAGES.map(pkg => (

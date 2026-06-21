@@ -80,7 +80,7 @@ export default function PricingPageClient({ searchParams }) {
       <section id="price">
         <div className="container">
           <div style={{ maxWidth: 760, margin: '0 auto 32px', textAlign: 'center' }}>
-            <p style={{ fontSize: 14, opacity: 0.75, margin: '0 0 8px' }}>Sign in, claim your 3 free credits, and buy more only when you want to go deeper.</p>
+            <p style={{ fontSize: 14, opacity: 0.75, margin: '0 0 8px' }}>Sign in to save your work, then buy credits only when you want to go deeper.</p>
             <p style={{ fontSize: 13, opacity: 0.55, margin: 0 }}>Starter is for your own spins. Pro and Power are shortcut packs for ready-made ideas.</p>
           </div>
 
@@ -149,7 +149,7 @@ export default function PricingPageClient({ searchParams }) {
           </div>
 
           <ul style={{ listStyle: 'none', padding: 0, margin: '40px auto 0', maxWidth: 520, textAlign: 'center', fontSize: 13, opacity: 0.65, lineHeight: 1.8 }}>
-            <li>Get 3 free credits after sign-in.</li>
+            <li>Buy credits only when a project feels worth chasing.</li>
             <li>Credits never expire.</li>
             <li>Secure checkout via Stripe.</li>
           </ul>

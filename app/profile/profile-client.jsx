@@ -208,7 +208,7 @@ export default function ProfileClient({ user, error, welcome }) {
                 </>
               ) : (
                 <>
-                  <div className="details_subtitle"><h3 className="title">Sign in and claim your 3 free credits</h3></div>
+                  <div className="details_subtitle"><h3 className="title">Sign in to save your work</h3></div>
                   <div className="details_content">
                     <div className="details_left" style={{ maxWidth: 440 }}>
                       {err && <p style={{ color: '#c00', marginBottom: 16, fontSize: 14 }}>{err}</p>}
@@ -266,7 +266,7 @@ export default function ProfileClient({ user, error, welcome }) {
                   You&apos;re signed in
                 </p>
                 <p style={{ fontSize: 13, color: '#111', opacity: 0.65, margin: 0 }}>
-                  Welcome to IdeaReels. Your free credits are ready.
+                  Welcome to IdeaReels. Your account is ready.
                 </p>
               </div>
             </div>

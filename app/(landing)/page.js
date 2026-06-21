@@ -50,7 +50,7 @@ export default async function LandingPage() {
           '@type': 'Offer',
           price: '0',
           priceCurrency: 'USD',
-          description: '3 free credits after sign-in',
+          description: 'Free market verdict before paid deep research and blueprint steps',
         },
         featureList: [
           'Startup idea wheel',
@@ -89,7 +89,7 @@ export default async function LandingPage() {
               {user ? (
                 <Link href="/wheel" className="fn__btn"><span>Spin now</span></Link>
               ) : (
-                <Link href="/auth/register" className="fn__btn"><span>Claim 3 free credits</span></Link>
+                <Link href="/auth/register" className="fn__btn"><span>Create account</span></Link>
               )}
               <Link href="/pricing" className="fn__btn medium"><span>See pricing</span></Link>
             </div>

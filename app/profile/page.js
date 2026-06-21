@@ -18,7 +18,7 @@ export default async function ProfilePage({ searchParams }) {
         <div className="container">
           <div className="pagetitle">
             <h3 className="fn__title">My Account</h3>
-            {!user && <p className="fn__desc">Sign in, claim your 3 free credits, and save your best ideas.</p>}
+            {!user && <p className="fn__desc">Sign in to save your best ideas, research, and blueprints.</p>}
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
