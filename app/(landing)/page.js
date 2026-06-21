@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import PopitoShell from '@/components/popito/PopitoShell';
 import ReviewForm from '@/components/ReviewForm';
-import HeroIllustration from '@/components/HeroIllustration';
 import { LANDING_STEPS, FAQS } from '@/lib/content';
 import { CREDIT_PACKAGES } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase-server';
@@ -107,31 +106,28 @@ export default async function LandingPage() {
       {/* Hero */}
       <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '40px 0 20px', display: 'flex', alignItems: 'center' }}>
         <div className="container">
-          <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 48, alignItems: 'center' }}>
-            <div className="pagetitle" style={{ textAlign: 'left' }}>
-              <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
-                Built for AI builders and vibe coders
-              </p>
-              <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.08, marginBottom: 16 }}>
-                Out of ideas?<br />Let IdeaReels get you back on track.
-              </h1>
-              <p className="fn__desc" style={{ maxWidth: 520, margin: '0 0 20px' }}>
-                Frame the opportunity, research the market, and define your MVP — so you know exactly what to build before you commit a single day.
-              </p>
-              <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 12 }}>
-                {user ? (
-                  <Link href="/wheel" className="fn__btn"><span>Spin now — $3.99</span></Link>
-                ) : (
-                  <Link href="/pricing" className="fn__btn"><span>Get started — $3.99</span></Link>
-                )}
-              </div>
-              <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, opacity: 0.5, margin: 0 }}>
-                Market research + MVP blueprint from $3.99. Credits never expire.
-              </p>
-              <span className="wings" />
-              <span className="raleway"><span /><span /><span /><span /><span /></span>
+          <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto' }}>
+            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
+              Built for AI builders and vibe coders
+            </p>
+            <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.08, marginBottom: 16 }}>
+              Out of ideas?<br />Let IdeaReels get you back on track.
+            </h1>
+            <p className="fn__desc" style={{ maxWidth: 560, margin: '0 auto 20px' }}>
+              Frame the opportunity, research the market, and define your MVP — so you know exactly what to build before you commit a single day.
+            </p>
+            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+              {user ? (
+                <Link href="/wheel" className="fn__btn"><span>Spin now — $3.99</span></Link>
+              ) : (
+                <Link href="/pricing" className="fn__btn"><span>Get started — $3.99</span></Link>
+              )}
             </div>
-            <HeroIllustration className="hero-illustration" />
+            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, opacity: 0.5, margin: 0 }}>
+              Market research + MVP blueprint from $3.99. Credits never expire.
+            </p>
+            <span className="wings" />
+            <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
         </div>
       </div>
