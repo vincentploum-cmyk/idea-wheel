@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   name        TEXT NOT NULL,
   role        TEXT,
   quote       TEXT NOT NULL,
+  user_id     UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   approved    BOOLEAN NOT NULL DEFAULT FALSE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

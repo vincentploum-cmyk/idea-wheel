@@ -1,5 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { createClient as createBrowserClient } from '@/lib/supabase-browser';
 
 const inputStyle = {
   width: '100%',
@@ -28,19 +30,36 @@ const labelStyle = {
 
 export default function ReviewForm() {
   const [form, setForm] = useState({ name: '', role: '', quote: '' });
-  const [status, setStatus] = useState('idle');
+  const [status, setStatus] = useState('idle'); // idle | sending | sent | error
+  const [creditsGranted, setCreditsGranted] = useState(0);
+  const [session, setSession] = useState(undefined); // undefined = loading
+
+  useEffect(() => {
+    const sb = createBrowserClient();
+    sb.auth.getSession().then(({ data }) => setSession(data.session ?? null));
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (form.quote.trim().length < 20) return;
     setStatus('sending');
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
       const res = await fetch('/api/reviews', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(form),
       });
-      setStatus(res.ok ? 'sent' : 'error');
+      if (res.ok) {
+        const data = await res.json();
+        setCreditsGranted(data.creditsGranted ?? 0);
+        setStatus('sent');
+      } else {
+        setStatus('error');
+      }
     } catch {
       setStatus('error');
     }
@@ -50,14 +69,62 @@ export default function ReviewForm() {
     return (
       <div className="fn__bold_item" style={{ padding: '32px 28px', textAlign: 'center', maxWidth: 540, margin: '0 auto' }}>
         <div style={{ fontSize: 32, marginBottom: 10 }}>✓</div>
-        <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 20, marginBottom: 8 }}>Review received — thank you!</h3>
-        <p style={{ opacity: 0.65, fontSize: 14, margin: 0 }}>We review every submission before publishing.</p>
+        <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 20, marginBottom: 8 }}>
+          Review received — thank you!
+        </h3>
+        {creditsGranted > 0 && (
+          <p style={{
+            display: 'inline-block',
+            background: '#FFE000', border: '2px solid #111', borderRadius: 4,
+            padding: '4px 14px', fontFamily: 'Nunito, sans-serif', fontWeight: 900,
+            fontSize: 14, color: '#111', margin: '0 0 12px',
+          }}>
+            +{creditsGranted} credits added to your account
+          </p>
+        )}
+        <p style={{ opacity: 0.65, fontSize: 14, margin: creditsGranted > 0 ? '12px 0 0' : 0 }}>
+          We review every submission before publishing.
+        </p>
+      </div>
+    );
+  }
+
+  // Not-yet-loaded state — render nothing to avoid layout shift
+  if (session === undefined) return null;
+
+  // Unauthenticated — gate with sign-in prompt
+  if (session === null) {
+    return (
+      <div className="fn__bold_item" style={{ padding: '32px 28px', textAlign: 'center', maxWidth: 540, margin: '0 auto' }}>
+        <div style={{
+          display: 'inline-block',
+          background: '#FFE000', border: '2px solid #111', borderRadius: 4,
+          padding: '4px 14px', fontFamily: 'Nunito, sans-serif', fontWeight: 900,
+          fontSize: 13, color: '#111', marginBottom: 14,
+        }}>
+          +3 credits for leaving a review
+        </div>
+        <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 20, marginBottom: 8 }}>
+          Sign in to leave a review
+        </h3>
+        <p style={{ opacity: 0.65, fontSize: 14, marginBottom: 20 }}>
+          Share your experience and earn 3 free credits — enough to run a full deep research spin.
+        </p>
+        <Link href="/auth/login" className="fn__btn"><span>Sign in →</span></Link>
       </div>
     );
   }
 
   return (
     <form className="fn__bold_item" style={{ padding: '32px 28px', maxWidth: 540, margin: '0 auto' }} onSubmit={handleSubmit}>
+      <div style={{
+        display: 'inline-block',
+        background: '#FFE000', border: '2px solid #111', borderRadius: 4,
+        padding: '4px 14px', fontFamily: 'Nunito, sans-serif', fontWeight: 900,
+        fontSize: 13, color: '#111', marginBottom: 14,
+      }}>
+        +3 credits for leaving a review
+      </div>
       <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 20, marginBottom: 4 }}>
         Leave a review
       </h3>
@@ -107,7 +174,7 @@ export default function ReviewForm() {
           style={{ ...inputStyle, resize: 'vertical', minHeight: 100 }}
         />
         <p style={{ fontSize: 12, opacity: 0.45, margin: '4px 0 0', fontFamily: 'Nunito, sans-serif' }}>
-          {form.quote.length}/800 — min 20 characters
+          {form.quote.length}/800 · min 20 characters
         </p>
       </div>
 
