@@ -17,7 +17,7 @@ export default function OfferPricingPage({ searchParams }) {
             </p>
             <h3 className="fn__title">50% off Pro &amp; Power</h3>
             <p className="fn__desc">
-              Create a free account, try the wheel properly, then grab the shortcut packs at half price if you want to skip straight to ready-made ideas.
+              Create an account, try the wheel properly, then grab the shortcut packs at half price if you want to skip straight to ready-made ideas.
             </p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>

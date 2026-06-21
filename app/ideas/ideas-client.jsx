@@ -536,11 +536,11 @@ export default function IdeasClient({ user, catalogData = {}, ideaUnlocks: initi
                   Find your own idea.
                 </p>
                 <p style={{ fontSize: 14, opacity: 0.6, margin: 0, color: '#fff' }}>
-                  Spin three reels, get a free market verdict in seconds.
+                  Spin three reels, get a market verdict in seconds.
                 </p>
               </div>
               <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn">
-                <span>{user ? 'Spin now' : 'Get started free'}</span>
+                <span>{user ? 'Spin now' : 'Get started'}</span>
               </Link>
             </div>
 

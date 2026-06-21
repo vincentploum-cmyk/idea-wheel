@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase-server';
 const PACK_FEATURES = {
   starter: [
     '5 credits for your own spins and blueprints',
-    'Free first-pass verdict before you spend more',
+    'First-pass verdict before you spend more',
     '1 credit for deep research',
     '2 credits for the full blueprint',
   ],
@@ -50,11 +50,11 @@ export default async function LandingPage() {
           '@type': 'Offer',
           price: '0',
           priceCurrency: 'USD',
-          description: 'Free market verdict before paid deep research and blueprint steps',
+          description: 'Market verdict before deeper research and blueprint steps',
         },
         featureList: [
           'Startup idea wheel',
-          'Free market verdict',
+          'Market verdict',
           'Deep research add-on',
           'Build blueprint generation',
           'Ready-made idea unlocks',
@@ -89,7 +89,7 @@ export default async function LandingPage() {
               {user ? (
                 <Link href="/wheel" className="fn__btn"><span>Spin now</span></Link>
               ) : (
-                <Link href="/auth/register" className="fn__btn"><span>Create account</span></Link>
+                <Link href="/auth/register" className="fn__btn"><span>Get started</span></Link>
               )}
               <Link href="/pricing" className="fn__btn medium"><span>See pricing</span></Link>
             </div>
@@ -137,7 +137,7 @@ export default async function LandingPage() {
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 28, maxWidth: 760, marginInline: 'auto' }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
-                Start free, then buy the path you need
+                Start spinning, then buy the path you need
               </h2>
               <p style={{ opacity: 0.65, marginTop: 8 }}>
                 Starter is for your own spins. Pro and Power are shortcut packs if you want a ready-made idea from the library instead of starting from scratch.

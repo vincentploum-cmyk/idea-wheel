@@ -14,7 +14,7 @@ export default function PricingPage({ searchParams }) {
         <div className="container">
           <div className="pagetitle">
             <h3 className="fn__title">Pricing that matches how builders buy</h3>
-            <p className="fn__desc">Start free. Pay only when a project feels real, or skip ahead with a ready-made idea unlock.</p>
+            <p className="fn__desc">Pay only when a project feels real, or skip ahead with a ready-made idea unlock.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>

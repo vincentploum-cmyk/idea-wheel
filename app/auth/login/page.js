@@ -68,10 +68,10 @@ export default function LoginPage() {
                       fontSize: 'clamp(24px,4vw,36px)', lineHeight: 1.1,
                       color: '#111', margin: 0, letterSpacing: '-0.02em',
                     }}>
-                      Generate an idea.<br />Validate it free.<br />Build what works.
+                      Generate an idea.<br />Validate demand.<br />Build what works.
                     </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 260 }}>
-                      {['1. Generate a startup idea', '2. Free market verdict', '3. Full build blueprint'].map(item => (
+                      {['1. Generate a startup idea', '2. Market verdict', '3. Full build blueprint'].map(item => (
                         <div key={item} style={{
                           background: '#fff', border: '3px solid #111',
                           borderRadius: 10, padding: '10px 16px',

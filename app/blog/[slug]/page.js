@@ -131,9 +131,9 @@ export default function BlogPostPage({ params }) {
                 Ready to find an idea worth building?
               </h3>
               <p style={{ margin: '0 0 20px', opacity: 0.75, fontSize: 15 }}>
-                Generate a startup concept and get an instant AI market verdict — free, every time.
+                Generate a startup concept and get an instant AI market verdict.
               </p>
-              <Link href="/auth/register" className="fn__btn"><span>Get started free</span></Link>
+              <Link href="/auth/register" className="fn__btn"><span>Get started</span></Link>
             </div>
 
             {/* More articles */}

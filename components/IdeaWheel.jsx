@@ -1314,12 +1314,12 @@ export default function IdeaWheel() {
           {/* Validate button + inline results */}
           {idea && (
             <div className="sm-validate-section">
-              <div className="su-eyebrow su-step-eyebrow su-step-eyebrow--mt">Step 2 · Free basic market research</div>
+              <div className="su-eyebrow su-step-eyebrow su-step-eyebrow--mt">Step 2 · Basic market research</div>
               {showConfetti && <ValidationConfetti key={confettiBurstId} />}
               {!comp && !validating && !validateErr && (
                 <div className="sm-result-cta">
                   <button className="su-btn su-btn-primary su-btn-lg" onClick={runValidate}>
-                    Run free basic market research
+                    Run basic market research
                   </button>
                 </div>
               )}

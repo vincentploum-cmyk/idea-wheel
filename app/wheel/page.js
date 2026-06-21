@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase-server';
 
 export const metadata = {
   title: 'Generate an Idea',
-  description: 'Spin three reels to generate a startup idea and get a free market verdict.',
+  description: 'Spin three reels to generate a startup idea and get a market verdict.',
 };
 
 export default async function WheelPage() {
@@ -19,7 +19,7 @@ export default async function WheelPage() {
         <div className="container">
           <div className="pagetitle">
             <h3 className="fn__title">Generate an Idea</h3>
-            <p className="fn__desc">Spin three reels, get a free market verdict. Unlock deep research or a full blueprint only when it earns it.</p>
+            <p className="fn__desc">Spin three reels, get a market verdict, then unlock deep research or a full blueprint only when it earns it.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
