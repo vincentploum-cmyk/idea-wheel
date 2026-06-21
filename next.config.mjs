@@ -5,6 +5,18 @@ const nextConfig = {
   experimental: {
     trustHostHeader: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
+    ],
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [400, 640, 768, 1024, 1200, 1600],
+    imageSizes: [72, 128, 256, 400],
+  },
 };
 
 export default nextConfig;

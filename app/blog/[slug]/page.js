@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import NextLink from 'next/link';
+import Image from 'next/image';
 import PopitoShell from '@/components/popito/PopitoShell';
 import { BLOG_POSTS, getBlogPost } from '@/lib/blog-posts';
 
@@ -158,16 +159,16 @@ export default function BlogPostPage({ params }) {
         </div>
         {/* Hero image */}
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
-          <img
-            src={post.image}
-            alt={post.imageAlt}
-            width="800"
-            height="420"
-            fetchPriority="high"
-            srcSet={`${post.image.split('?')[0]}?auto=format&fit=crop&w=800&q=80 800w, ${post.image.split('?')[0]}?auto=format&fit=crop&w=1200&q=85 1200w`}
-            sizes="(max-width: 800px) 100vw, 800px"
-            style={{ width: '100%', maxHeight: 420, objectFit: 'cover', display: 'block', borderTop: '3px solid #111' }}
-          />
+          <div style={{ position: 'relative', width: '100%', maxHeight: 420, aspectRatio: '16/7', borderTop: '3px solid #111', overflow: 'hidden' }}>
+            <Image
+              src={post.image}
+              alt={post.imageAlt}
+              fill
+              priority
+              sizes="(max-width: 800px) 100vw, 800px"
+              style={{ objectFit: 'cover' }}
+            />
+          </div>
         </div>
       </div>
 

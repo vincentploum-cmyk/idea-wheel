@@ -4,8 +4,10 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import { createClient } from '@/lib/supabase-server';
 
 export const metadata = {
-  title: 'Evaluate and Blueprint an MVP',
-  description: 'Out of ideas? Use IdeaReels to evaluate the concept, research the market, and define the technical blueprint to build an MVP.',
+  title: 'Spin for Startup Ideas — IdeaReels AI Concept Validator',
+  description: 'Use IdeaReels to evaluate a startup concept, run AI market research, and generate a technical MVP blueprint. Research from $3.99.',
+  alternates: { canonical: 'https://ideareels.io/wheel' },
+  robots: { index: false, follow: false },
 };
 
 export default async function WheelPage() {

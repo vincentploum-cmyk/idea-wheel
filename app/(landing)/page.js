@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import PopitoShell from '@/components/popito/PopitoShell';
 import { LANDING_STEPS, FAQS } from '@/lib/content';
 import { CREDIT_PACKAGES } from '@/lib/pricing';
@@ -412,15 +413,12 @@ export default async function LandingPage() {
                 <Link key={post.slug} href={`/blog/${post.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <article className="fn__bold_item" style={{ overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <div style={{ position: 'relative', aspectRatio: '16/9', overflow: 'hidden' }}>
-                      <img
+                      <Image
                         src={post.image}
                         alt={post.imageAlt}
-                        width="400"
-                        height="225"
-                        loading="lazy"
-                        srcSet={`${post.image.split('?')[0]}?auto=format&fit=crop&w=400&q=75 400w, ${post.image.split('?')[0]}?auto=format&fit=crop&w=800&q=80 800w`}
-                        sizes="(max-width: 640px) 400px, 800px"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        fill
+                        sizes="(max-width: 640px) 100vw, 370px"
+                        style={{ objectFit: 'cover' }}
                       />
                       <span style={{ position: 'absolute', top: 10, left: 10, background: '#FFE000', border: '2px solid #111', borderRadius: '4px 999px 999px 4px', padding: '3px 12px 3px 8px', fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#111' }}>
                         {post.category}

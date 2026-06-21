@@ -2,8 +2,10 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import { LEGAL_PRIVACY } from '@/lib/content';
 
 export const metadata = {
-  title: 'Privacy Policy',
+  title: 'Privacy Policy | IdeaReels',
   description: 'How IdeaReels collects and uses your data.',
+  alternates: { canonical: 'https://ideareels.io/privacy' },
+  robots: { index: false, follow: false },
 };
 
 export default function PrivacyPage() {

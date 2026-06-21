@@ -1,11 +1,34 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import PopitoShell from '@/components/popito/PopitoShell';
 import { BLOG_POSTS } from '@/lib/blog-posts';
 
 export const metadata = {
-  title: 'Blog — AI Startup Validation, Market Research & Tools | IdeaReels',
-  description: 'Practical articles on AI startup validation, market research, MVP planning, and how solo founders are building faster in 2025 and beyond.',
+  title: 'Blog — AI Startup Validation, Market Research & MVP Planning | IdeaReels',
+  description: 'Practical guides on startup idea validation, AI market research, MVP planning, and how solo founders are building faster. Written for vibe coders and indie hackers.',
   alternates: { canonical: 'https://ideareels.io/blog' },
+  openGraph: {
+    title: 'IdeaReels Blog — Startup Validation & AI Tools for Founders',
+    description: 'Practical guides on startup idea validation, AI market research, and MVP planning for solo builders.',
+    type: 'website',
+    url: 'https://ideareels.io/blog',
+  },
+};
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'IdeaReels Blog',
+  description: 'Practical articles on AI startup validation, market research, and MVP planning for solo founders.',
+  url: 'https://ideareels.io/blog',
+  hasPart: BLOG_POSTS.map((post) => ({
+    '@type': 'Article',
+    headline: post.title,
+    description: post.description,
+    url: `https://ideareels.io/blog/${post.slug}`,
+    datePublished: post.date,
+    image: post.image,
+  })),
 };
 
 function formatDate(dateStr) {
@@ -19,8 +42,7 @@ export default function BlogPage() {
         <div className="container">
           <div className="pagetitle">
             <h1 className="fn__title">The IdeaReels Blog</h1>
-            <p className="fn__desc">Practical writing on AI tools, startup validation, and building faster as a solo founder.
-            </p>
+            <p className="fn__desc">Practical writing on AI startup validation, market research, and building faster as a solo founder.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
@@ -31,22 +53,20 @@ export default function BlogPage() {
         <section style={{ padding: '8px 0 60px' }}>
           <div className="container">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 32, maxWidth: 1100, margin: '0 auto' }}>
-              {BLOG_POSTS.map((post) => (
+              {BLOG_POSTS.map((post, i) => (
                 <Link key={post.slug} href={`/blog/${post.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <article className="fn__bold_item" style={{ overflow: 'hidden', padding: 0, transition: 'transform 0.15s', display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <div style={{ position: 'relative', aspectRatio: '16/9', overflow: 'hidden' }}>
-                      <img
+                      <Image
                         src={post.image}
                         alt={post.imageAlt}
-                        width="600"
-                        height="338"
-                        loading="lazy"
-                        srcSet={`${post.image.split('?')[0]}?auto=format&fit=crop&w=400&q=75 400w, ${post.image.split('?')[0]}?auto=format&fit=crop&w=800&q=80 800w`}
-                        sizes="(max-width: 640px) 400px, 600px"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1100px) 50vw, 370px"
+                        priority={i === 0}
+                        style={{ objectFit: 'cover' }}
                       />
                       <span style={{
-                        position: 'absolute', top: 12, left: 12,
+                        position: 'absolute', top: 12, left: 12, zIndex: 1,
                         background: '#FFE000', border: '2px solid #111',
                         borderRadius: '4px 999px 999px 4px',
                         padding: '3px 12px 3px 8px',
@@ -77,6 +97,7 @@ export default function BlogPage() {
           </div>
         </section>
       </div>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     </PopitoShell>
   );
 }

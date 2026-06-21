@@ -2,8 +2,10 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import { LEGAL_TERMS } from '@/lib/content';
 
 export const metadata = {
-  title: 'Terms of Service',
+  title: 'Terms of Service | IdeaReels',
   description: 'Terms governing your use of IdeaReels.',
+  alternates: { canonical: 'https://ideareels.io/terms' },
+  robots: { index: false, follow: false },
 };
 
 export default function TermsPage() {
