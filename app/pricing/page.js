@@ -3,7 +3,7 @@ import PricingPageClient from './pricing-page-client';
 
 export const metadata = {
   title: 'Pricing — IdeaReels: AI Market Research Starting at $3.99',
-  description: 'Get AI-powered market research and a technical MVP blueprint before you commit to building. Credits start at $3.99, never expire, and cover 1 deep research + 1 full blueprint.',
+  description: 'Buy AI market research and a full MVP blueprint before you commit to building. Starter credits from $3.99 — never expire, no subscription. Purchase today and validate your idea in 5 minutes.',
   alternates: { canonical: 'https://ideareels.io/pricing' },
 };
 

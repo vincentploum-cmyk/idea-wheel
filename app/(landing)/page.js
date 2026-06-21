@@ -129,7 +129,7 @@ export default async function LandingPage() {
               )}
             </div>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, opacity: 0.5, margin: 0, textAlign: 'center' }}>
-              3 free spins with every account. Deep research and blueprints require credits from $3.99.
+              AI market research + MVP blueprint from $3.99. Credits never expire.
             </p>
             <span className="wings" />
             <span className="raleway">

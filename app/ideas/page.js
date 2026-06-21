@@ -7,7 +7,7 @@ import { IDEA_EXAMPLES } from '@/lib/idea-examples';
 
 export const metadata = {
   title: 'Startup Ideas Library — IdeaReels',
-  description: 'Pre-validated startup ideas with AI market research, competitor analysis, and technical MVP blueprints ready to unlock. Built for vibe coders and indie hackers.',
+  description: 'Unlock pre-validated startup ideas with complete AI market research, competitor analysis, and technical MVP blueprints. Buy a Pro or Power pack to access ideas ready to build today.',
   alternates: { canonical: 'https://ideareels.io/ideas' },
 };
 
