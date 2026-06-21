@@ -1908,6 +1908,7 @@ const CSS = `
 /* buttons */
 .su-btn {
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  white-space:nowrap;
   font-family:var(--font-body); font-weight:600; font-size:14px;
   padding:11px 22px; border-radius:var(--r-pill); cursor:pointer;
   border:1px solid transparent; transition:background .15s, color .15s, border-color .15s, box-shadow .2s, transform .15s ease;

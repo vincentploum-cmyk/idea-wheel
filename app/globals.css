@@ -169,6 +169,10 @@ button {
 a { color: inherit; }
 img, svg { display: block; max-width: 100%; }
 
+/* Prevent button text from wrapping on mobile — fn__btn already sets white-space:nowrap
+   on the container but not on the child span, which breaks with inline-flex display */
+.fn__btn span { white-space: nowrap; }
+
 ::selection { background: rgba(192,38,211,0.18); color: var(--ink); }
 
 :focus-visible {

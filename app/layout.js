@@ -88,18 +88,25 @@ export default function RootLayout({ children }) {
         <link rel="dns-prefetch" href="https://js.stripe.com" />
         <link rel="dns-prefetch" href="https://ywroiurslbnnqecwmkbs.supabase.co" />
 
-        {/* CWV: font-display=swap prevents invisible text during font load (reduces CLS/INP) */}
+        {/* Preload Nunito so the brand font lands before LCP element paints */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+          rel="preload"
+          as="style"
+          href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Roboto:wght@400;700&display=swap"
+        />
+        {/* Load only the weights we actually use: Nunito 700/800/900, Roboto 400/700 */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Roboto:wght@400;700&display=swap"
           rel="stylesheet"
         />
 
-        {/* CWV: Preload critical stylesheet for faster LCP */}
+        {/* Critical template CSS — blocking so above-fold content renders correctly */}
         <link rel="preload" as="style" href="/popito-assets/css/style.css" />
-        <link rel="stylesheet" href="/popito-assets/css/base.css" />
-        <link rel="stylesheet" href="/popito-assets/css/plugins.css" />
         <link rel="stylesheet" href="/popito-assets/css/style.css" />
-        <link rel="stylesheet" href="/popito-assets/css/responsive.css" />
+        {/* Non-critical template CSS — loaded after paint to cut render-blocking time */}
+        <link rel="stylesheet" href="/popito-assets/css/base.css" media="print" onLoad="this.media='all'" />
+        <link rel="stylesheet" href="/popito-assets/css/plugins.css" media="print" onLoad="this.media='all'" />
+        <link rel="stylesheet" href="/popito-assets/css/responsive.css" media="print" onLoad="this.media='all'" />
 
         {/* Global schema: WebSite + Organization */}
         <script
@@ -115,8 +122,7 @@ export default function RootLayout({ children }) {
         {children}
         <CookieBanner />
         <WebVitals />
-        {/* CWV: jQuery must be beforeInteractive (plugins depend on it); others deferred */}
-        <Script src="/popito-assets/js/jquery.js" strategy="beforeInteractive" />
+        <Script src="/popito-assets/js/jquery.js" strategy="afterInteractive" />
         <Script src="/popito-assets/js/plugins.js" strategy="afterInteractive" />
         <Script src="/popito-assets/js/init.js" strategy="afterInteractive" />
       </body>
