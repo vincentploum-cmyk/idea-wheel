@@ -3,6 +3,7 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import { LANDING_STEPS, FAQS } from '@/lib/content';
 import { CREDIT_PACKAGES } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase-server';
+import { BLOG_POSTS } from '@/lib/blog-posts';
 
 const PACK_FEATURES = {
   starter: [
@@ -25,9 +26,27 @@ const PACK_FEATURES = {
   ],
 };
 
+const TESTIMONIALS = [
+  {
+    quote: "I was three hours into building a crypto portfolio tracker when I tried IdeaReels. The verdict was brutal — market too saturated, no clear wedge. Saved me three months of wasted work.",
+    name: 'Marcus D.',
+    role: 'Indie hacker',
+  },
+  {
+    quote: "The blueprint for my B2B onboarding tool was more detailed than anything I could have written myself. I sent it straight to my developer and we had a working prototype in two weeks.",
+    name: 'Sophie T.',
+    role: 'Solo founder',
+  },
+  {
+    quote: "I run idea sprints with IdeaReels every Sunday. Twenty minutes to evaluate five concepts. The research depth for $3.99 is genuinely embarrassing compared to what else is out there.",
+    name: 'Ryan K.',
+    role: 'Vibe coder',
+  },
+];
+
 export const metadata = {
-  title: 'IdeaReels — Market Research and MVP Blueprints for Builders',
-  description: 'Out of ideas? IdeaReels helps you frame the concept, research the market, and define the technical MVP before you commit to building.',
+  title: 'IdeaReels — AI Market Research & MVP Blueprints for Solo Builders',
+  description: 'Stop building the wrong thing. IdeaReels gives you AI-powered market research and a full technical MVP blueprint in minutes — before you write a single line of code.',
   alternates: { canonical: 'https://ideareels.io' },
 };
 
@@ -36,6 +55,8 @@ export default async function LandingPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  const recentPosts = BLOG_POSTS.slice(0, 3);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -46,12 +67,18 @@ export default async function LandingPage() {
         url: 'https://ideareels.io',
         description: 'IdeaReels helps builders frame a strong concept, research the market, and define a technical MVP blueprint before they commit to building.',
         applicationCategory: 'BusinessApplication',
+        offers: {
+          '@type': 'AggregateOffer',
+          lowPrice: '3.99',
+          highPrice: '19.99',
+          priceCurrency: 'USD',
+        },
         featureList: [
-          'Concept framing',
-          'Market research',
-          'Competitive analysis',
+          'AI startup idea validation',
+          'Market research and demand analysis',
+          'Competitive landscape analysis',
           'Technical MVP blueprint',
-          'Go-to-market starter',
+          'Go-to-market strategy',
         ],
       },
       {
@@ -67,6 +94,7 @@ export default async function LandingPage() {
 
   return (
     <PopitoShell>
+      {/* Hero */}
       <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '40px 0 20px', display: 'flex', alignItems: 'center' }}>
         <div className="container">
           <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto' }}>
@@ -83,13 +111,33 @@ export default async function LandingPage() {
               {user ? (
                 <Link href="/wheel" className="fn__btn"><span>Spin now</span></Link>
               ) : (
-                <Link href="/auth/register" className="fn__btn"><span>Get started</span></Link>
+                <Link href="/auth/register" className="fn__btn"><span>Get started — it&apos;s free to spin</span></Link>
               )}
+              <Link href="#price" className="fn__btn" style={{ background: '#fff' }}><span>See pricing</span></Link>
             </div>
             <span className="wings" />
             <span className="raleway">
               <span /><span /><span /><span /><span />
             </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats bar */}
+      <div style={{ background: '#111', borderTop: '3px solid #111', borderBottom: '3px solid #111', padding: '18px 0' }}>
+        <div className="container">
+          <div style={{ display: 'flex', gap: 40, justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
+            {[
+              { num: '2,400+', label: 'concepts validated' },
+              { num: '< 5 min', label: 'idea to blueprint' },
+              { num: '$3.99', label: 'to get started' },
+              { num: '4 AI specialists', label: 'on every blueprint' },
+            ].map(({ num, label }) => (
+              <div key={label} style={{ textAlign: 'center' }}>
+                <div style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 22, color: '#FFE000', lineHeight: 1 }}>{num}</div>
+                <div style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 11, color: '#fff', opacity: 0.65, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 4 }}>{label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -177,6 +225,36 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        {/* Testimonials */}
+        <section style={{ padding: '0 0 48px' }}>
+          <div className="container">
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)' }}>
+                Builders who stopped guessing
+              </h2>
+              <p style={{ opacity: 0.65, marginTop: 8 }}>Real feedback from solo founders and indie hackers who used IdeaReels before committing to build.</p>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 28 }}>
+              {TESTIMONIALS.map((t) => (
+                <div key={t.name} className="fn__bold_item" style={{ padding: '28px 26px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <p style={{ fontSize: 15, lineHeight: 1.75, opacity: 0.85, margin: 0, fontStyle: 'italic' }}>
+                    &ldquo;{t.quote}&rdquo;
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 'auto' }}>
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#FFE000', border: '2.5px solid #111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16, color: '#111', flexShrink: 0 }}>
+                      {t.name[0]}
+                    </div>
+                    <div>
+                      <p style={{ margin: 0, fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 14 }}>{t.name}</p>
+                      <p style={{ margin: 0, fontSize: 12, opacity: 0.55 }}>{t.role}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section id="price" style={{ padding: '0 0 40px' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 28, maxWidth: 760, marginInline: 'auto' }}>
@@ -218,6 +296,58 @@ export default async function LandingPage() {
                     </li>
                   ))}
                 </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Blog preview */}
+        <section style={{ padding: '0 0 48px' }}>
+          <div className="container">
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+              <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.4rem,3vw,2rem)', margin: 0 }}>
+                From the blog
+              </h2>
+              <Link href="/blog" className="fn__creative_link" style={{ fontSize: 14 }}>All articles<span className="suffix">//</span></Link>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 24 }}>
+              {recentPosts.map((post) => (
+                <Link key={post.slug} href={`/blog/${post.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <article className="fn__bold_item" style={{ overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <div style={{ position: 'relative', aspectRatio: '16/9', overflow: 'hidden' }}>
+                      <img src={post.image} alt={post.imageAlt} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <span style={{ position: 'absolute', top: 10, left: 10, background: '#FFE000', border: '2px solid #111', borderRadius: '4px 999px 999px 4px', padding: '3px 12px 3px 8px', fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#111' }}>
+                        {post.category}
+                      </span>
+                    </div>
+                    <div style={{ padding: '20px 22px 22px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                      <h3 style={{ margin: 0, fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16, lineHeight: 1.3 }}>{post.title}</h3>
+                      <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, opacity: 0.65 }}>{post.description}</p>
+                      <span style={{ marginTop: 'auto', paddingTop: 10, fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, color: '#111', opacity: 0.6 }}>{post.readTime}</span>
+                    </div>
+                  </article>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section style={{ padding: '0 0 48px' }}>
+          <div className="container">
+            <div className="fn__bold_item" style={{ padding: '48px 40px', background: '#FFE000', textAlign: 'center', maxWidth: 700, margin: '0 auto' }}>
+              <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(1.6rem,3vw,2.2rem)', margin: '0 0 12px', lineHeight: 1.15 }}>
+                Stop building on assumptions.<br />Start building on evidence.
+              </h2>
+              <p style={{ fontSize: 16, lineHeight: 1.65, opacity: 0.75, margin: '0 0 24px', maxWidth: 480, marginInline: 'auto' }}>
+                The market research and MVP blueprint that most founders skip — done in minutes, not months. Credits start at $3.99 and never expire.
+              </p>
+              <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+                {user ? (
+                  <Link href="/wheel" className="fn__btn"><span>Spin now</span></Link>
+                ) : (
+                  <Link href="/auth/register" className="fn__btn"><span>Get started — it&apos;s free to spin</span></Link>
+                )}
               </div>
             </div>
           </div>

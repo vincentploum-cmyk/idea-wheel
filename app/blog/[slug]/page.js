@@ -17,9 +17,16 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title: post.title,
       description: post.description,
-      images: [{ url: post.image, alt: post.imageAlt }],
+      images: [{ url: post.image, width: 1200, height: 630, alt: post.imageAlt }],
       type: 'article',
       publishedTime: post.date,
+      siteName: 'IdeaReels',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.description,
+      images: [post.image],
     },
   };
 }
@@ -75,6 +82,18 @@ export default function BlogPostPage({ params }) {
   if (!post) notFound();
 
   const otherPosts = BLOG_POSTS.filter((p) => p.slug !== post.slug).slice(0, 3);
+
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.description,
+    image: post.image,
+    datePublished: post.date,
+    author: { '@type': 'Organization', name: 'IdeaReels', url: 'https://ideareels.io' },
+    publisher: { '@type': 'Organization', name: 'IdeaReels', url: 'https://ideareels.io' },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `https://ideareels.io/blog/${post.slug}` },
+  };
 
   return (
     <PopitoShell>
@@ -160,6 +179,7 @@ export default function BlogPostPage({ params }) {
           </div>
         </section>
       </div>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
     </PopitoShell>
   );
 }

@@ -6,8 +6,8 @@ import { getAllCatalogData, getUnlockCounts } from '@/lib/catalog-store';
 import { IDEA_EXAMPLES } from '@/lib/idea-examples';
 
 export const metadata = {
-  title: 'Ideas From the Engine — IdeaReels',
-  description: 'Real startup ideas surfaced by IdeaReels — specific, validated, and built around genuine market pain.',
+  title: 'Startup Ideas Library — IdeaReels',
+  description: 'Pre-validated startup ideas with AI market research, competitor analysis, and technical MVP blueprints ready to unlock. Built for vibe coders and indie hackers.',
   alternates: { canonical: 'https://ideareels.io/ideas' },
 };
 

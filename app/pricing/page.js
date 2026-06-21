@@ -2,8 +2,8 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import PricingPageClient from './pricing-page-client';
 
 export const metadata = {
-  title: 'Pricing — IdeaReels credits and shortcut packs',
-  description: 'Pricing for builders who want detailed market research and a technical MVP blueprint before they commit to build.',
+  title: 'Pricing — IdeaReels: AI Market Research Starting at $3.99',
+  description: 'Get AI-powered market research and a technical MVP blueprint before you commit to building. Credits start at $3.99, never expire, and cover 1 deep research + 1 full blueprint.',
   alternates: { canonical: 'https://ideareels.io/pricing' },
 };
 
