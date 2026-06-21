@@ -82,7 +82,6 @@ export default function LoginPage() {
                       ))}
                     </div>
                   </div>
-                  <img src="/popito-assets/svg/xxxxx.svg" alt="" className="fn__svg icon" />
                 </div>
                 <div className="contact_right">
                   <div className="contact_right_in">
