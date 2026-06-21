@@ -36,14 +36,14 @@ export const metadata = {
     url: 'https://ideareels.io',
     siteName: 'IdeaReels',
     locale: 'en_US',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'IdeaReels — AI Startup Idea Validation & MVP Blueprints' }],
+    images: [{ width: 1200, height: 630, alt: 'IdeaReels — AI Startup Idea Validation & MVP Blueprints' }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@ideareels',
     title: 'IdeaReels — Validate Your Startup Idea with AI Market Research',
     description: 'Stop building the wrong thing. AI market research + MVP blueprint in under 5 minutes, from $3.99.',
-    images: ['/og-image.png'],
+    images: [{ width: 1200, height: 630 }],
   },
   robots: {
     index: true,
