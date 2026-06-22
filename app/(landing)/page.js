@@ -101,11 +101,10 @@ export default function LandingPage() {
       <div className="zubuz-hero-section">
         <div className="container">
           <div className="zubuz-hero-content center">
-            <h1>Spin up a SaaS idea you&apos;d actually build tonight.</h1>
+            <h1>Spin up an idea worth building tonight.</h1>
             <p>
-              IdeaReels is for vibe coders who want more than random inspiration.
-              Spin into a niche, pain point, and build angle, get a fast market sanity
-              check, then buy credits only when a project feels real.
+              Spin into a niche, pain point, and build angle. Get a fast market
+              verdict. Go deeper only when the idea earns it.
             </p>
             <div className="zubuz-extara-mt">
               <div className="zubuz-subscribe-three">
@@ -169,8 +168,8 @@ export default function LandingPage() {
             {[
               {
                 icon: "/zubaz/images/icon/feature5.svg",
-                title: "Land on a specific wedge",
-                desc: "Instead of staring at a blank prompt, you start with a concrete niche, workflow, and buyer angle you can imagine building this weekend.",
+                title: "Land on a concrete starting point",
+                desc: "Instead of staring at a blank prompt, you start with a specific niche, workflow, and buyer angle you can picture building this weekend.",
               },
               {
                 icon: "/zubaz/images/icon/feature6.svg",
