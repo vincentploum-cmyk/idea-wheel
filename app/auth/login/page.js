@@ -95,7 +95,7 @@ export default function LoginPage() {
                       </>
                     ) : (
                       <>
-                        <h3 className="fn__title">Welcome Back!</h3>
+                        <h1 className="fn__title">Welcome Back!</h1>
                         <p className="fn__desc">
                           Don&apos;t have an account? <Link className="fn__creative_link" href="/auth/register">Sign Up</Link>
                         </p>
@@ -122,7 +122,9 @@ export default function LoginPage() {
                         <form onSubmit={sendMagicLink}>
                           <div className="fields">
                             <section className="input_section">
+                              <label htmlFor="login-email" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>Email address</label>
                               <input
+                                id="login-email"
                                 type="email"
                                 required
                                 placeholder="Email *"

@@ -95,7 +95,7 @@ export default function RegisterPage() {
                       </>
                     ) : (
                       <>
-                        <h3 className="fn__title">Create Account</h3>
+                        <h1 className="fn__title">Create Account</h1>
                         <p className="fn__desc">
                           Already have an account? <Link className="fn__creative_link" href="/auth/login">Sign In</Link>
                         </p>
@@ -122,7 +122,9 @@ export default function RegisterPage() {
                         <form onSubmit={sendMagicLink}>
                           <div className="fields">
                             <section className="input_section">
+                              <label htmlFor="register-email" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>Email address</label>
                               <input
+                                id="register-email"
                                 type="email"
                                 required
                                 placeholder="Email *"

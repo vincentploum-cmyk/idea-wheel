@@ -1,14 +1,21 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
+  const declineRef = useRef(null);
 
   useEffect(() => {
     try {
       if (!localStorage.getItem("cookieConsent")) setVisible(true);
     } catch {}
   }, []);
+
+  useEffect(() => {
+    if (visible) {
+      declineRef.current?.focus();
+    }
+  }, [visible]);
 
   const respond = (choice) => {
     try { localStorage.setItem("cookieConsent", choice); } catch {}
@@ -18,7 +25,7 @@ export default function CookieBanner() {
   if (!visible) return null;
 
   return (
-    <div role="dialog" aria-label="Cookie consent" style={{
+    <div role="dialog" aria-modal="true" aria-label="Cookie consent" style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
       background: '#fff', borderTop: '3px solid #141414',
       boxShadow: '0 -4px 0 #141414',
@@ -34,6 +41,7 @@ export default function CookieBanner() {
       </p>
       <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
         <button
+          ref={declineRef}
           onClick={() => respond('declined')}
           style={{
             background: '#fff', border: '2.5px solid #141414', borderRadius: 8,

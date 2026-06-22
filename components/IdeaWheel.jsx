@@ -6,35 +6,35 @@ import { DEFAULT_MODE_CONFIGS, buildGeneratorIdea } from "@/lib/generator-config
 
 /* ─── IDEA SEGMENTS ──────────────────────────────────────────────── */
 const SEGMENTS = [
-  { id: "health",    label: "Health",     color: "#7c3aed",
+  { id: "health",    label: "Health",     color: "#E63946",
     title: "VitalLoop",
     tagline: "At-home metabolic coaching from a finger-prick and a phone camera.",
     blurb: "A $39/mo membership that turns a monthly at-home blood panel into a living, AI-personalized nutrition and habit plan — closing the loop between lab work and daily life." },
-  { id: "climate",   label: "Climate",    color: "#9333ea",
+  { id: "climate",   label: "Climate",    color: "#F4A261",
     title: "Cumulus",
     tagline: "A marketplace for verified carbon credits from small regenerative farms.",
     blurb: "Pairs satellite + soil-sensor verification with a clean buying experience so mid-market companies can fund real, local soil carbon — not sketchy offsets." },
-  { id: "fintech",   label: "Fintech",    color: "#c026d3",
+  { id: "fintech",   label: "Fintech",    color: "#2A9D8F",
     title: "Float",
     tagline: "Zero-fee instant payroll advances for gig and shift workers.",
     blurb: "Workers tap earned-but-unpaid wages instantly; employers pay a flat platform fee. No predatory interest, no tips, no overdraft — just access to money already earned." },
-  { id: "creator",   label: "Creator",    color: "#db2777",
+  { id: "creator",   label: "Creator",    color: "#264653",
     title: "Encore",
     tagline: "Turn a podcast or video back-catalog into a searchable, sellable course.",
     blurb: "Point Encore at years of episodes; it restructures them into a navigable, searchable curriculum creators can sell — unlocking the value buried in the archive." },
-  { id: "ai",        label: "AI Tools",   color: "#ff4d8d",
+  { id: "ai",        label: "AI Tools",   color: "#E9C46A",
     title: "Bench",
     tagline: "An AI ops analyst that watches your dashboards and pings you before things break.",
     blurb: "Connect your data tools; Bench learns what 'normal' looks like, flags anomalies in plain English, and drafts the Slack message you'd send — your always-on analyst." },
-  { id: "edu",       label: "Education",  color: "#5b5bf5",
+  { id: "edu",       label: "Education",  color: "#F4A261",
     title: "Cohortly",
     tagline: "Tiny, high-touch cohort classes taught by working domain experts.",
     blurb: "A platform for 8-person, 3-week cohorts where practitioners teach the exact skill they do daily — accountability and access, not another video library." },
-  { id: "logistics", label: "Logistics",  color: "#ff6f61",
+  { id: "logistics", label: "Logistics",  color: "#457B9D",
     title: "Lastmile",
     tagline: "Shared same-day delivery that finally makes sense for indie retailers.",
     blurb: "Pools deliveries across nearby small shops into shared driver routes — giving independents same-day shipping at a price big-box logistics keeps for themselves." },
-  { id: "social",    label: "Social",     color: "#a21caf",
+  { id: "social",    label: "Social",     color: "#1D3557",
     title: "Campfire",
     tagline: "Small-group audio rooms built for hobby communities, not influencers.",
     blurb: "Cozy, recurring 12-person audio rooms organized around niche hobbies — the warmth of a group call with the discoverability of a community, minus the broadcast noise." },
@@ -83,7 +83,7 @@ const TEASER_COMBOS = [
   ['Accelerates',  'quote generation',         'Staffing agencies'],
   ['Handles',      'customer follow-ups',      'Service businesses'],
 ];
-const REEL_COLORS = ['#7c3aed','#c026d3','#ff4d8d'];
+const REEL_COLORS = ['#E63946','#2A9D8F','#264653'];
 const REEL_LABELS = ['ACTION','WORKFLOW','FOR'];
 
 /* ─── AUTO-CYCLING TEASER REEL ──────────────────────────────────── */
@@ -153,10 +153,8 @@ function Wheel({ onResult }) {
     <div className="su-wheel-wrap">
       <div className="su-wheel-pointer">
         <svg width="42" height="50" viewBox="0 0 46 54" fill="none">
-          <path d="M23 50 L6 14 A20 20 0 0 1 40 14 Z" fill="#fff" stroke="#ece6f5" strokeWidth="1.5"/>
-          <circle cx="23" cy="18" r="6" fill="url(#pg)"/>
-          <defs><linearGradient id="pg" x1="17" y1="12" x2="29" y2="24">
-            <stop stopColor="#7c3aed"/><stop offset="1" stopColor="#ff4d8d"/></linearGradient></defs>
+          <path d="M23 50 L6 14 A20 20 0 0 1 40 14 Z" fill="#fff" stroke="#e5e5e5" strokeWidth="1.5"/>
+          <circle cx="23" cy="18" r="6" fill="#FFE000" stroke="#111" strokeWidth="1.5"/>
         </svg>
       </div>
       <div className="su-wheel-shadow"/>
@@ -216,10 +214,8 @@ function ScoreRing({ value, size = 128, label }) {
   return (
     <div style={{ position:"relative", width:size, height:size, flexShrink:0 }}>
       <svg width={size} height={size}>
-        <defs><linearGradient id={gid} x1="0" y1="0" x2={size} y2={size}>
-          <stop stopColor="#FFE000"/><stop offset="1" stopColor="#FFE000"/></linearGradient></defs>
         <circle cx={size/2} cy={size/2} r={r} stroke="#e8e8e8" strokeWidth="11" fill="none"/>
-        <circle cx={size/2} cy={size/2} r={r} stroke="#111" strokeWidth="11" fill="none"
+        <circle cx={size/2} cy={size/2} r={r} stroke="#FFE000" strokeWidth="11" fill="none"
           strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c-(c*v)/100}
           transform={`rotate(-90 ${size/2} ${size/2})`}
           style={{ transition:"stroke-dashoffset 1.3s cubic-bezier(.16,1,.3,1)" }}/>
@@ -236,7 +232,7 @@ function ScoreRing({ value, size = 128, label }) {
 
 function ValidationConfetti({ pieces = 34 }) {
   const particles = useMemo(() => {
-    const palette = ['#7c3aed', '#a855f7', '#c026d3', '#ff4d8d', '#f59e0b', '#22c55e'];
+    const palette = ['#FFE000', '#E63946', '#2A9D8F', '#264653', '#F4A261', '#22c55e'];
     return Array.from({ length: pieces }, (_, index) => ({
       id: index,
       color: palette[index % palette.length],

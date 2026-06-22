@@ -57,9 +57,6 @@ export default function ContactForm() {
     );
   }
 
-  function focusOn(e) { e.target.style.boxShadow = '3px 3px 0 #111'; }
-  function focusOff(e) { e.target.style.boxShadow = 'none'; }
-
   return (
     <form className="fn__bold_item" style={{ padding: '40px 36px' }} onSubmit={handleSubmit}>
       <div style={{ display: 'grid', gap: 20 }}>
@@ -75,8 +72,6 @@ export default function ContactForm() {
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             style={inputStyle}
-            onFocus={focusOn}
-            onBlur={focusOff}
           />
         </div>
         <div>
@@ -92,8 +87,6 @@ export default function ContactForm() {
             value={form.email}
             onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
             style={inputStyle}
-            onFocus={focusOn}
-            onBlur={focusOff}
           />
         </div>
         <div>
@@ -106,8 +99,6 @@ export default function ContactForm() {
             value={form.message}
             onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
             style={{ ...inputStyle, resize: 'vertical', minHeight: 120 }}
-            onFocus={focusOn}
-            onBlur={focusOff}
           />
         </div>
         <div aria-live="polite">

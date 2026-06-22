@@ -127,7 +127,6 @@ export default async function LandingPage() {
         <div className="container">
           <div style={{ display: 'flex', gap: 'clamp(20px,5vw,40px)', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
             {[
-              { num: '2,419', label: 'concepts validated' },
               { num: '< 5 min', label: 'idea to blueprint' },
               { num: '$3.99',  label: 'to get started' },
               { num: '4 AI agents', label: 'on every blueprint' },

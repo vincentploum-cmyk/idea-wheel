@@ -135,7 +135,7 @@ export default function PricingPageClient({ searchParams }) {
                             className="fn__btn medium"
                             disabled={loadingKey !== null}
                             onClick={() => startCheckout(pkg)}
-                            style={{ background: 'none', border: 'none', padding: 0, cursor: loadingKey ? 'wait' : 'pointer' }}
+                            style={{ cursor: loadingKey ? 'wait' : 'pointer' }}
                           >
                             <span>{loadingKey === pkg.key ? 'Redirecting…' : pkg.type === 'spin' ? 'Get credits' : 'Buy shortcut pack'}</span>
                           </button>

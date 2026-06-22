@@ -2,27 +2,27 @@
 
 :root {
   /* ── Brand ────────────────────────────────────────── */
-  --accent:        #7C3AED;
-  --accent-mid:    #C026D3;
-  --accent-light:  #EFE6FF;
-  --accent-border: #E1D9F0;
+  --accent:        #FFE000;
+  --accent-mid:    #111111;
+  --accent-light:  #FFF9CC;
+  --accent-border: #E5E5E5;
 
-  /* The restored purple → pink gradient */
-  --grad-cta: linear-gradient(120deg, #7C3AED 0%, #C026D3 45%, #FF4D8D 100%);
+  /* Neobrutalist CTA — solid yellow */
+  --grad-cta: #FFE000;
 
   /* ── Neutrals ─────────────────────────────────────── */
-  --bg:      #FAF7FF;
-  --bg-2:    #F3EDFF;
+  --bg:      #FAFAFA;
+  --bg-2:    #F5F5F5;
   --surface: #FFFFFF;
   --glass:   rgba(255,255,255,0.7);
-  --line:    #ECE6F5;
-  --line-2:  #E1D9F0;
+  --line:    #E5E5E5;
+  --line-2:  #D5D5D5;
 
   /* ── Text ─────────────────────────────────────────── */
-  --ink:   #18112B;
-  --ink-2: #463A5F;
-  --muted: #7A7191;
-  --faint: #AAA1BD;
+  --ink:   #111111;
+  --ink-2: #333333;
+  --muted: #666666;
+  --faint: #999999;
 
   /* ── Feedback ─────────────────────────────────────── */
   --good: #16A34A;
@@ -39,11 +39,11 @@
   --r-pill: 999px;
 
   /* ── Shadows ──────────────────────────────────────── */
-  --sh-xs: 0 1px 2px rgba(60,20,90,0.05);
-  --sh-sm: 0 2px 8px rgba(60,20,90,0.06);
-  --sh-md: 0 10px 30px -10px rgba(80,30,120,0.18);
-  --sh-lg: 0 30px 70px -24px rgba(90,30,130,0.30);
-  --sh-glow: 0 20px 60px -18px rgba(200,40,150,0.45);
+  --sh-xs: 0 1px 2px rgba(0,0,0,0.05);
+  --sh-sm: 0 2px 8px rgba(0,0,0,0.06);
+  --sh-md: 0 10px 30px -10px rgba(0,0,0,0.12);
+  --sh-lg: 0 30px 70px -24px rgba(0,0,0,0.16);
+  --sh-glow: 0 20px 60px -18px rgba(255,224,0,0.45);
 
   /* ── Typography ───────────────────────────────────── */
   --font-display: "Nunito", sans-serif;
@@ -89,16 +89,16 @@
   --sp-12: 48px;
   --sp-16: 64px;
 
-  /* ── Legacy aliases (referenced by existing components) ──── */
+  /* ── Legacy aliases (mapped to brand/neutral values) ──── */
   --violet:   var(--accent);
-  --purple:   #9333EA;
-  --magenta:  #C026D3;
-  --pink:     #FF4D8D;
-  --coral:    #FF6F61;
-  --indigo:   #5B5BF5;
+  --purple:   #FFE000;
+  --magenta:  #111111;
+  --pink:     #FFE000;
+  --coral:    #E63946;
+  --indigo:   #264653;
 
   --grad-brand: var(--grad-cta);
-  --grad-soft:  linear-gradient(120deg, #EFE6FF 0%, #FBE6F4 55%, #FFE9E6 100%);
+  --grad-soft:  linear-gradient(120deg, #FFF9CC 0%, #FFFFF0 55%, #FAFAFA 100%);
 
   --iw-color-bg:              var(--bg);
   --iw-color-surface:         var(--surface);
@@ -106,17 +106,17 @@
   --iw-color-border:          var(--line);
   --iw-color-ink:             var(--ink);
   --iw-color-muted:           var(--muted);
-  --iw-color-brand-primary:   var(--violet);
-  --iw-color-brand-secondary: var(--magenta);
+  --iw-color-brand-primary:   #FFE000;
+  --iw-color-brand-secondary: #111111;
   --iw-color-brand-tertiary:  #1A9492;
-  --iw-color-brand-soft:      #EFE6FF;
-  --iw-brand-primary-rgb:     124 58 237;
-  --iw-brand-secondary-rgb:   192 38 211;
+  --iw-color-brand-soft:      #FFF9CC;
+  --iw-brand-primary-rgb:     255 224 0;
+  --iw-brand-secondary-rgb:   17 17 17;
   --iw-brand-tertiary-rgb:    26 148 146;
-  --iw-gradient-brand:        var(--grad-cta);
-  --iw-gradient-brand-diagonal: var(--grad-cta);
-  --iw-shadow-brand:          var(--sh-glow);
-  --iw-shadow-brand-soft:     0 6px 20px -8px rgba(124,58,237,0.32);
+  --iw-gradient-brand:        #FFE000;
+  --iw-gradient-brand-diagonal: #FFE000;
+  --iw-shadow-brand:          3px 3px 0 #111111;
+  --iw-shadow-brand-soft:     2px 2px 0 rgba(17,17,17,0.2);
   --iw-font-ui:               var(--font-body);
   --iw-font-display:          var(--font-display);
 

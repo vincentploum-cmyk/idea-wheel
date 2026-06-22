@@ -10,7 +10,7 @@ function StatusBadge({ idea }) {
     return <span style={{ fontSize: 11, fontWeight: 700, color: '#15803D', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 4, padding: '2px 7px' }}>Blueprint ready</span>;
   }
   if (idea.blueprint_status === 'generating') {
-    return <span style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', background: '#faf5ff', border: '1px solid #e9d5ff', borderRadius: 4, padding: '2px 7px' }}>Blueprint in progress</span>;
+    return <span style={{ fontSize: 11, fontWeight: 700, color: '#111', background: '#FFE000', border: '2px solid #111', borderRadius: 4, padding: '2px 7px' }}>Blueprint in progress</span>;
   }
   if (idea.research && Object.keys(idea.research).length > 0) {
     return <span style={{ fontSize: 11, fontWeight: 700, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 4, padding: '2px 7px' }}>Research done</span>;

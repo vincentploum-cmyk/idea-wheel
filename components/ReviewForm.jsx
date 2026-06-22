@@ -131,7 +131,7 @@ export default function ReviewForm() {
         Used IdeaReels? Tell future founders what it was like.
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
         <div>
           <label style={labelStyle} htmlFor="review-name">First name</label>
           <input
