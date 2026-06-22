@@ -16,7 +16,7 @@ export default function BrandLogo({ size = 26 }) {
       lineHeight: 1,
     }}>
       <span style={{
-        fontFamily: "'Arial Black', 'Helvetica Neue', Arial, sans-serif",
+        fontFamily: "'Nunito', sans-serif",
         fontWeight: 900,
         fontSize,
         color: '#141414',

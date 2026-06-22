@@ -191,7 +191,7 @@ function Wheel({ onResult }) {
         {SEGMENTS.map((s,i) => (
           <g key={s.id} transform={`rotate(${i*seg} ${C} ${C})`}>
             <text x={C} y={60} textAnchor="middle"
-              fontFamily="Sora,sans-serif" fontWeight="700" fontSize="17" fill="#fff">{s.label}</text>
+              fontFamily="Nunito,sans-serif" fontWeight="700" fontSize="17" fill="#fff">{s.label}</text>
           </g>
         ))}
         <circle cx={C} cy={C} r={R} fill="none" stroke="rgba(80,20,110,.08)" strokeWidth="2"/>

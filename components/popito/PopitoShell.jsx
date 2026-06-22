@@ -19,7 +19,7 @@ function LogoMark({ height = 44 }) {
       boxSizing: 'border-box',
     }}>
       <span style={{
-        fontFamily: "'Arial Black', 'Helvetica Neue', Arial, sans-serif",
+        fontFamily: "'Nunito', sans-serif",
         fontWeight: 900,
         fontSize,
         color: '#141414',

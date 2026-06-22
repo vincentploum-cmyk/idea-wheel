@@ -46,9 +46,8 @@
   --sh-glow: 0 20px 60px -18px rgba(200,40,150,0.45);
 
   /* ── Typography ───────────────────────────────────── */
-  /* All "Sora" / "Plus Jakarta Sans" references resolve through these tokens. */
-  --font-display: "Epilogue", "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-body:    "Epilogue", "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Nunito", sans-serif;
+  --font-body:    "Roboto", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
   /* Type scale — whole-pixel steps only. No half-pixels: they add no
      hierarchy and only blur consistency. Use the nearest step. */
