@@ -96,17 +96,17 @@ export default async function LandingPage() {
       {/* Hero */}
       <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '40px 0 20px', display: 'flex', alignItems: 'center' }}>
         <div className="container">
-          <div className="pagetitle" style={{ maxWidth: 760 }}>
+          <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto' }}>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
               Built for AI builders and vibe coders
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.08, marginBottom: 16 }}>
               Out of ideas?<br />Spin one. Know if it's worth building.
             </h1>
-            <p className="fn__desc" style={{ maxWidth: 560, margin: '0 0 20px' }}>
+            <p className="fn__desc" style={{ maxWidth: 560, margin: '0 auto 20px' }}>
               Frame the opportunity, research the market, and define your MVP — so you know exactly what to build before you commit a single day.
             </p>
-            <div style={{ display: 'flex', gap: 14, justifyContent: 'flex-start', flexWrap: 'wrap', marginBottom: 12 }}>
+            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
               {user ? (
                 <Link href="/wheel" className="fn__btn"><span>Spin now — $3.99</span></Link>
               ) : (
