@@ -93,16 +93,6 @@ export default async function LandingPage() {
 
   return (
     <PopitoShell>
-      {/* Scarcity banner */}
-      <div style={{ background: '#111', borderBottom: '3px solid #111', padding: '10px 0' }}>
-        <div className="container">
-          <p style={{ textAlign: 'center', margin: 0, fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, color: '#FFE000', letterSpacing: '0.02em' }}>
-            🎉 Limited time: <strong>50% off Pro &amp; Power packs</strong> for new accounts.{' '}
-            <Link href="/pricing/offer" style={{ color: '#FFE000', textDecoration: 'underline', fontWeight: 900 }}>Claim offer →</Link>
-          </p>
-        </div>
-      </div>
-
       {/* Hero */}
       <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '40px 0 20px', display: 'flex', alignItems: 'center' }}>
         <div className="container">
