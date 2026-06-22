@@ -12,14 +12,14 @@ export default function ContactPage() {
     <PopitoShell>
       <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '48px 0 32px' }}>
         <div className="container">
-          <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 560, margin: '0 auto' }}>
+          <div className="pagetitle" style={{ maxWidth: 560 }}>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12, opacity: 0.5 }}>
               Get in touch
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2rem,5vw,3rem)', lineHeight: 1.1, marginBottom: 12 }}>
               We read every message.
             </h1>
-            <p className="fn__desc" style={{ maxWidth: 440, margin: '0 auto' }}>
+            <p className="fn__desc" style={{ maxWidth: 440 }}>
               Bug to report, idea to share, or just want to talk startup validation — send it over.
             </p>
             <span className="wings" />

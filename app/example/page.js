@@ -130,14 +130,14 @@ export default function ExamplePage() {
       {/* Header */}
       <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '48px 0 28px' }}>
         <div className="container">
-          <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto' }}>
+          <div className="pagetitle" style={{ maxWidth: 640 }}>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12, opacity: 0.45 }}>
               Live example
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2rem,5vw,3rem)', lineHeight: 1.1, marginBottom: 14 }}>
               Here's exactly what you get.
             </h1>
-            <p className="fn__desc" style={{ maxWidth: 500, margin: '0 auto' }}>
+            <p className="fn__desc" style={{ maxWidth: 500 }}>
               A real spin result, market verdict, deep research, and full MVP blueprint — produced in under 5 minutes.
             </p>
             <span className="wings" />

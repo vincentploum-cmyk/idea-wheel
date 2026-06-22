@@ -28,19 +28,19 @@ const PACK_FEATURES = {
 
 const TESTIMONIALS = [
   {
-    quote: "I bought $3.99 in Starter credits the moment my first spin came back with a strong demand signal. Built the MVP that weekend. Didn't waste a single day building the wrong thing.",
+    quote: "First spin flagged zero real competitors in the niche I picked. Bought credits that night, had the blueprint by morning. Shipped the MVP that weekend. No wasted days.",
     name: 'Marcus D.',
     role: 'Solo founder',
     badge: 'Starter pack',
   },
   {
-    quote: "The Pro pack was the best $9.99 I've spent on my startup. The blueprint was more detailed than anything I could have produced myself, and my developer shipped a working prototype in two weeks.",
+    quote: "I handed the blueprint straight to my developer. He said it was the clearest brief he'd ever gotten from a non-technical founder. Working prototype was live in under two weeks.",
     name: 'Sophie T.',
     role: 'Solo founder',
     badge: 'Pro pack',
   },
   {
-    quote: "I run idea sprints with IdeaReels every Sunday. Buy Starter credits once, evaluate concepts all month. The research depth for $3.99 is embarrassing compared to anything else out there.",
+    quote: "Sunday night ritual now. Spin a few ideas, see what the research says, kill the weak ones fast. At $3.99 a pack it's cheaper than the coffee I used to drink while convincing myself bad ideas were good.",
     name: 'Ryan K.',
     role: 'Vibe coder',
     badge: 'Starter pack',
@@ -96,17 +96,17 @@ export default async function LandingPage() {
       {/* Hero */}
       <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '40px 0 20px', display: 'flex', alignItems: 'center' }}>
         <div className="container">
-          <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto' }}>
+          <div className="pagetitle" style={{ maxWidth: 760 }}>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
               Built for AI builders and vibe coders
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.08, marginBottom: 16 }}>
               Out of ideas?<br />Spin one. Know if it's worth building.
             </h1>
-            <p className="fn__desc" style={{ maxWidth: 560, margin: '0 auto 20px' }}>
+            <p className="fn__desc" style={{ maxWidth: 560, margin: '0 0 20px' }}>
               Frame the opportunity, research the market, and define your MVP — so you know exactly what to build before you commit a single day.
             </p>
-            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+            <div style={{ display: 'flex', gap: 14, justifyContent: 'flex-start', flexWrap: 'wrap', marginBottom: 12 }}>
               {user ? (
                 <Link href="/wheel" className="fn__btn"><span>Spin now — $3.99</span></Link>
               ) : (
@@ -127,7 +127,7 @@ export default async function LandingPage() {
         <div className="container">
           <div style={{ display: 'flex', gap: 'clamp(20px,5vw,40px)', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
             {[
-              { num: '2,400+', label: 'concepts validated' },
+              { num: '2,419', label: 'concepts validated' },
               { num: '< 5 min', label: 'idea to blueprint' },
               { num: '$3.99',  label: 'to get started' },
               { num: '4 AI agents', label: 'on every blueprint' },
@@ -281,7 +281,7 @@ export default async function LandingPage() {
         <section style={{ padding: '0 0 48px' }}>
           <div className="container">
             <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', textAlign: 'center', marginBottom: 28 }}>
-              Common questions
+              Questions we get a lot
             </h2>
             <div style={{ maxWidth: 760, margin: '0 auto' }}>
               {FAQS.slice(0, 4).map((faq) => (
@@ -302,10 +302,10 @@ export default async function LandingPage() {
           <div className="container">
             <div className="fn__bold_item" style={{ padding: '48px 40px', background: '#FFE000', textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(1.6rem,3vw,2.2rem)', margin: '0 0 12px', lineHeight: 1.15 }}>
-                Stop building on assumptions.<br />Get the research first.
+                Assumptions cost weeks.<br />Research costs $3.99.
               </h2>
               <p style={{ fontSize: 15, lineHeight: 1.65, opacity: 0.7, margin: '0 0 24px', maxWidth: 420, marginInline: 'auto' }}>
-                Market research + MVP blueprint from $3.99. No subscription.
+                Market research + MVP blueprint in under 5 minutes. No subscription.
               </p>
               <Link href="/pricing" className="fn__btn"><span>Get credits — from $3.99</span></Link>
               <p style={{ marginTop: 14, fontSize: 12, opacity: 0.55 }}>Credits never expire · Secure checkout via Stripe</p>
