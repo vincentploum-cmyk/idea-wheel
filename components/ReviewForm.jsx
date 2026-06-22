@@ -13,7 +13,6 @@ const inputStyle = {
   fontSize: 14,
   color: '#111',
   background: '#fff',
-  outline: 'none',
   boxSizing: 'border-box',
 };
 
@@ -139,7 +138,9 @@ export default function ReviewForm() {
             id="review-name"
             type="text"
             required
-            placeholder="Alex"
+            placeholder="Alex…"
+            name="name"
+            autoComplete="name"
             maxLength={80}
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -151,7 +152,9 @@ export default function ReviewForm() {
           <input
             id="review-role"
             type="text"
-            placeholder="Solo founder"
+            placeholder="Solo founder…"
+            name="role"
+            autoComplete="organization-title"
             maxLength={80}
             value={form.role}
             onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
@@ -168,6 +171,7 @@ export default function ReviewForm() {
           rows={4}
           minLength={20}
           maxLength={800}
+          name="review"
           placeholder="What did IdeaReels help you figure out? What did you build?"
           value={form.quote}
           onChange={e => setForm(f => ({ ...f, quote: e.target.value }))}
@@ -178,11 +182,13 @@ export default function ReviewForm() {
         </p>
       </div>
 
-      {status === 'error' && (
-        <p style={{ color: '#B91C1C', fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, marginBottom: 12 }}>
-          Something went wrong. Try again.
-        </p>
-      )}
+      <div aria-live="polite">
+        {status === 'error' && (
+          <p style={{ color: '#B91C1C', fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, marginBottom: 12 }}>
+            Something went wrong. Try again.
+          </p>
+        )}
+      </div>
 
       <button
         type="submit"

@@ -154,7 +154,6 @@ body {
   overflow-x: hidden;
   line-height: 1.5;
   padding-bottom: var(--cookie-banner-space, 0px);
-  transition: padding-bottom 0.18s ease;
 }
 
 button {

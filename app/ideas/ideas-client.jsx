@@ -48,6 +48,7 @@ function ResearchPanel({ research }) {
         <SectionLabel>Deep research</SectionLabel>
         <button
           onClick={() => setExpanded(e => !e)}
+          aria-expanded={expanded}
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
             fontSize: 12, fontWeight: 700, color: '#111', opacity: 0.55,
@@ -143,6 +144,7 @@ function BlueprintContent({ blueprint }) {
           fontFamily: 'Nunito, sans-serif', fontWeight: 900,
           fontSize: 13, cursor: 'pointer',
         }}
+        aria-expanded={show}
       >
         {show ? 'Hide blueprint ↑' : 'View full blueprint ↓'}
       </button>
@@ -309,6 +311,7 @@ function IdeaUnlockCTA({ slug, ideaCreditBalance, user, onUnlocked }) {
             padding: '12px 24px',
             fontFamily: 'Nunito, sans-serif', fontWeight: 900,
             fontSize: 14, cursor: loading ? 'wait' : 'pointer',
+            touchAction: 'manipulation',
           }}
         >
           {loading
@@ -397,7 +400,7 @@ function IdeaCard({ item, index, catalogEntry, isUnlocked, ideaCreditBalance, un
             )}
           </div>
 
-          <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(22px, 3vw, 28px)', margin: '0 0 10px', color: '#111', lineHeight: 1.2 }}>
+          <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(22px, 3vw, 28px)', margin: '0 0 10px', color: '#111', lineHeight: 1.2, textWrap: 'balance' }}>
             {item.title}
           </h2>
           <p style={{ fontSize: 15, lineHeight: 1.75, color: '#111', opacity: 0.75, margin: '0 0 18px' }}>

@@ -34,13 +34,13 @@ const TESTIMONIALS = [
     badge: 'Starter pack',
   },
   {
-    quote: "I handed the blueprint straight to my developer. He said it was the clearest brief he'd ever gotten from a non-technical founder. Working prototype was live in under two weeks.",
+    quote: "I handed the blueprint straight to my developer. He said it was the clearest brief he’d ever gotten from a non-technical founder. Working prototype was live in under two weeks.",
     name: 'Sophie T.',
     role: 'Solo founder',
     badge: 'Pro pack',
   },
   {
-    quote: "Sunday night ritual now. Spin a few ideas, see what the research says, kill the weak ones fast. At $3.99 a pack it's cheaper than the coffee I used to drink while convincing myself bad ideas were good.",
+    quote: "Sunday night ritual now. Spin a few ideas, see what the research says, kill the weak ones fast. At $3.99 a pack it’s cheaper than the coffee I used to drink while convincing myself bad ideas were good.",
     name: 'Ryan K.',
     role: 'Vibe coder',
     badge: 'Starter pack',
@@ -100,7 +100,7 @@ export default async function LandingPage() {
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
               Built for AI builders and vibe coders
             </p>
-            <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.08, marginBottom: 16 }}>
+            <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.08, marginBottom: 16, textWrap: 'balance' }}>
               Out of ideas?<br />Spin one. Know if it's worth building.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 560, margin: '0 auto 20px' }}>
@@ -147,7 +147,7 @@ export default async function LandingPage() {
         <section id="how-it-works" style={{ padding: '48px 0' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 36 }}>
-              <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', marginBottom: 8 }}>
+              <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', marginBottom: 8, textWrap: 'balance' }}>
                 The founder diligence you should do before you commit
               </h2>
               <p style={{ opacity: 0.6, maxWidth: 520, margin: '0 auto' }}>
@@ -184,7 +184,7 @@ export default async function LandingPage() {
         {/* Testimonials */}
         <section style={{ padding: '0 0 48px' }}>
           <div className="container">
-            <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', textAlign: 'center', marginBottom: 32 }}>
+            <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', textAlign: 'center', marginBottom: 32, textWrap: 'balance' }}>
               What founders say
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 24 }}>
@@ -214,7 +214,7 @@ export default async function LandingPage() {
         {/* Leave a review */}
         <section style={{ padding: '0 0 56px' }}>
           <div className="container">
-            <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', textAlign: 'center', marginBottom: 28 }}>
+            <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', textAlign: 'center', marginBottom: 28, textWrap: 'balance' }}>
               Tried it? Tell other founders.
             </h2>
             <ReviewForm />
@@ -225,7 +225,7 @@ export default async function LandingPage() {
         <section id="price" style={{ padding: '0 0 48px' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 32, maxWidth: 640, marginInline: 'auto' }}>
-              <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', marginBottom: 8 }}>
+              <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', marginBottom: 8, textWrap: 'balance' }}>
                 Pay only when the signal says go
               </h2>
               <p style={{ opacity: 0.65 }}>
@@ -280,7 +280,7 @@ export default async function LandingPage() {
         {/* FAQ */}
         <section style={{ padding: '0 0 48px' }}>
           <div className="container">
-            <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', textAlign: 'center', marginBottom: 28 }}>
+            <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', textAlign: 'center', marginBottom: 28, textWrap: 'balance' }}>
               Questions we get a lot
             </h2>
             <div style={{ maxWidth: 760, margin: '0 auto' }}>
@@ -301,7 +301,7 @@ export default async function LandingPage() {
         <section style={{ padding: '0 0 56px' }}>
           <div className="container">
             <div className="fn__bold_item" style={{ padding: '48px 40px', background: '#FFE000', textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
-              <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(1.6rem,3vw,2.2rem)', margin: '0 0 12px', lineHeight: 1.15 }}>
+              <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(1.6rem,3vw,2.2rem)', margin: '0 0 12px', lineHeight: 1.15, textWrap: 'balance' }}>
                 Assumptions cost weeks.<br />Research costs $3.99.
               </h2>
               <p style={{ fontSize: 15, lineHeight: 1.65, opacity: 0.7, margin: '0 0 24px', maxWidth: 420, marginInline: 'auto' }}>

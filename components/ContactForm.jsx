@@ -12,7 +12,6 @@ const inputStyle = {
   fontSize: 15,
   color: '#111',
   background: '#fff',
-  outline: 'none',
   boxSizing: 'border-box',
   transition: 'box-shadow 0.12s',
 };
@@ -70,7 +69,9 @@ export default function ContactForm() {
             id="contact-name"
             type="text"
             required
-            placeholder="Alex"
+            placeholder="Alex…"
+            name="name"
+            autoComplete="name"
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             style={inputStyle}
@@ -84,7 +85,10 @@ export default function ContactForm() {
             id="contact-email"
             type="email"
             required
-            placeholder="alex@example.com"
+            placeholder="alex@example.com…"
+            name="email"
+            autoComplete="email"
+            spellCheck={false}
             value={form.email}
             onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
             style={inputStyle}
@@ -98,7 +102,7 @@ export default function ContactForm() {
             id="contact-message"
             required
             rows={6}
-            placeholder="What's on your mind?"
+            placeholder="What’s on your mind…"
             value={form.message}
             onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
             style={{ ...inputStyle, resize: 'vertical', minHeight: 120 }}
@@ -106,11 +110,13 @@ export default function ContactForm() {
             onBlur={focusOff}
           />
         </div>
-        {status === 'error' && (
-          <p style={{ color: '#B91C1C', fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, margin: 0 }}>
-            Something went wrong. Try again or email us at <a href="mailto:hello@ideareels.io" style={{ color: '#B91C1C' }}>hello@ideareels.io</a>
-          </p>
-        )}
+        <div aria-live="polite">
+          {status === 'error' && (
+            <p style={{ color: '#B91C1C', fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, margin: 0 }}>
+              Something went wrong. Try again or email us at <a href="mailto:hello@ideareels.io" style={{ color: '#B91C1C' }}>hello@ideareels.io</a>
+            </p>
+          )}
+        </div>
         <button
           type="submit"
           disabled={status === 'sending'}

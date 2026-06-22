@@ -73,7 +73,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
       <div className="popito_fn_searchbox">
         <div className="search_content">
           <div className="searchbox">
-            <input type="text" placeholder="Search…" />
+            <input type="search" name="search" placeholder="Search…" aria-label="Search" autoComplete="off" />
             <img src="/popito-assets/svg/search.svg" alt="" className="fn__svg" />
           </div>
           <div className="search_result"><ul /></div>
@@ -91,7 +91,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
             <div className="popito_fn_nav main_nav">
               <div className="menu">
                 <div className="menu-main-container">
-                  <ul role="menu" className="popito_fn_main_nav">
+                  <ul className="popito_fn_main_nav">
                     {NAV_LINKS.map((l) => <NavItem key={l.href} {...l} />)}
                   </ul>
                 </div>
@@ -112,7 +112,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
             <div className="popito_fn_nav sticky_nav">
               <div className="menu">
                 <div className="menu-main-container">
-                  <ul role="menu" className="popito_fn_main_nav">
+                  <ul className="popito_fn_main_nav">
                     {NAV_LINKS.map((l) => <NavItem key={l.href} {...l} />)}
                   </ul>
                 </div>
@@ -137,13 +137,13 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
             </div>
           </div>
           <div className="right__trigger">
-            <a href="#">
+            <button aria-label="Open menu">
               <span className="hamb"><span /></span>
-            </a>
+            </button>
           </div>
         </div>
         <div className="mob_bot">
-          <ul role="menu" className="mobile_menu">
+          <ul className="mobile_menu">
             {NAV_LINKS.map((l) => (
               <li key={l.href}>
                 <Link href={l.href}>

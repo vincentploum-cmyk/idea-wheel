@@ -18,7 +18,7 @@ export default function CookieBanner() {
   if (!visible) return null;
 
   return (
-    <div style={{
+    <div role="dialog" aria-label="Cookie consent" style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
       background: '#fff', borderTop: '3px solid #141414',
       boxShadow: '0 -4px 0 #141414',
@@ -39,7 +39,7 @@ export default function CookieBanner() {
             background: '#fff', border: '2.5px solid #141414', borderRadius: 8,
             padding: '10px 20px', fontFamily: 'inherit', fontWeight: 700,
             fontSize: 14, color: '#141414', cursor: 'pointer',
-            boxShadow: '2px 2px 0 #141414',
+            boxShadow: '2px 2px 0 #141414', touchAction: 'manipulation',
           }}
         >
           Decline
@@ -50,7 +50,7 @@ export default function CookieBanner() {
             background: '#FFE000', border: '2.5px solid #141414', borderRadius: 8,
             padding: '10px 20px', fontFamily: 'inherit', fontWeight: 900,
             fontSize: 14, color: '#141414', cursor: 'pointer',
-            boxShadow: '2px 2px 0 #141414',
+            boxShadow: '2px 2px 0 #141414', touchAction: 'manipulation',
           }}
         >
           Accept All Cookies

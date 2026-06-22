@@ -211,7 +211,9 @@ export default function ProfileClient({ user, error, welcome }) {
                   <div className="details_subtitle"><h3 className="title">Sign in to save your work</h3></div>
                   <div className="details_content">
                     <div className="details_left" style={{ maxWidth: 440 }}>
-                      {err && <p style={{ color: '#c00', marginBottom: 16, fontSize: 14 }}>{err}</p>}
+                      <div aria-live="polite">
+                        {err && <p style={{ color: '#c00', marginBottom: 16, fontSize: 14 }}>{err}</p>}
+                      </div>
                       <p style={{ margin: '0 0 18px', fontSize: 14, lineHeight: 1.7, opacity: 0.7 }}>
                         Save your spins, unlock deeper research, and keep the blueprints worth building instead of losing them when you leave.
                       </p>
@@ -224,7 +226,7 @@ export default function ProfileClient({ user, error, welcome }) {
                         </button>
                       </div>
                       <form onSubmit={sendMagicLink} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        <input type="email" required placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} style={{ padding: '12px 16px', border: '1px solid #e5e5e5', borderRadius: 6, fontSize: 14 }} />
+                        <input type="email" required placeholder="you@example.com" name="email" autoComplete="email" spellCheck={false} value={email} onChange={e => setEmail(e.target.value)} style={{ padding: '12px 16px', border: '1px solid #e5e5e5', borderRadius: 6, fontSize: 14 }} />
                         <button type="submit" className="fn__btn" disabled={loading} style={{ display: 'flex', justifyContent: 'center' }}>
                           <span>{loading ? 'Sending…' : 'Email me a magic link'}</span>
                         </button>

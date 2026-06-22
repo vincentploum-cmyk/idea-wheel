@@ -85,7 +85,7 @@ export default function PricingPageClient({ searchParams }) {
           </div>
 
           {statusMessage && (
-            <div style={{
+            <div aria-live="polite" style={{
               padding: '16px 20px',
               marginBottom: 32,
               borderRadius: 8,
@@ -97,7 +97,7 @@ export default function PricingPageClient({ searchParams }) {
             </div>
           )}
           {error && (
-            <div style={{ padding: '16px 20px', marginBottom: 32, borderRadius: 8, background: '#fef2f2', border: '1px solid #fca5a5', color: '#b91c1c', fontSize: 14 }}>
+            <div aria-live="polite" style={{ padding: '16px 20px', marginBottom: 32, borderRadius: 8, background: '#fef2f2', border: '1px solid #fca5a5', color: '#b91c1c', fontSize: 14 }}>
               {error}
             </div>
           )}
@@ -124,7 +124,7 @@ export default function PricingPageClient({ searchParams }) {
                           <ul>
                             {features.map((f) => (
                               <li key={f}>
-                                <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
+                                <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" width="16" height="16" />
                                 <span className="text">{f}</span>
                               </li>
                             ))}
