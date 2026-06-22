@@ -101,7 +101,7 @@ export default async function LandingPage() {
               Built for AI builders and vibe coders
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.08, marginBottom: 16 }}>
-              Out of ideas?<br />Let IdeaReels get you back on track.
+              Out of ideas?<br />Spin one. Know if it's worth building.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 560, margin: '0 auto 20px' }}>
               Frame the opportunity, research the market, and define your MVP — so you know exactly what to build before you commit a single day.
