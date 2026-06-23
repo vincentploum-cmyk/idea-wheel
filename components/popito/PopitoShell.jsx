@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
 import PromoBanner from '@/components/PromoBanner';
+import NavLinks from './NavLinks';
 
 function LogoMark({ height = 44 }) {
   const fontSize = Math.round(height * 0.52);
@@ -32,27 +33,6 @@ function LogoMark({ height = 44 }) {
   );
 }
 
-const NAV_LINKS = [
-  { href: '/wheel', label: 'Spin' },
-  { href: '/ideas', label: 'Ideas' },
-  { href: '/example', label: 'Example' },
-  { href: '/pricing', label: 'Pricing' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/faq', label: 'FAQ' },
-];
-
-function NavItem({ href, label }) {
-  return (
-    <li>
-      <Link href={href}>
-        <span>
-          <span>{label}</span>
-          <span className="suffix">//</span>
-        </span>
-      </Link>
-    </li>
-  );
-}
 
 export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
   const supabase = await createClient();
@@ -92,7 +72,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
               <div className="menu">
                 <div className="menu-main-container">
                   <ul className="popito_fn_main_nav">
-                    {NAV_LINKS.map((l) => <NavItem key={l.href} {...l} />)}
+                    <NavLinks />
                   </ul>
                 </div>
               </div>
@@ -113,7 +93,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
               <div className="menu">
                 <div className="menu-main-container">
                   <ul className="popito_fn_main_nav">
-                    {NAV_LINKS.map((l) => <NavItem key={l.href} {...l} />)}
+                    <NavLinks />
                   </ul>
                 </div>
               </div>
@@ -144,13 +124,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
         </div>
         <div className="mob_bot">
           <ul className="mobile_menu">
-            {NAV_LINKS.map((l) => (
-              <li key={l.href}>
-                <Link href={l.href}>
-                  <span><span>{l.label}</span><span className="suffix">//</span></span>
-                </Link>
-              </li>
-            ))}
+            <NavLinks mobile />
             <li>
               {user
                 ? <Link href="/profile"><span><span>My Account</span><span className="suffix">//</span></span></Link>

@@ -198,6 +198,47 @@ img, svg { display: block; max-width: 100%; }
   --sc2: #FFE000;
 }
 
+/* ── Page title consistency ───────────────────────────── */
+/* Template default is 72px + uppercase — override to match brand scale */
+.popito_fn_pagetitle {
+  min-height: 0 !important;
+}
+.popito_fn_pagetitle .pagetitle {
+  padding: 48px 0 40px;
+}
+.popito_fn_pagetitle .fn__title {
+  font-family: "Nunito", sans-serif;
+  font-size: clamp(2rem, 5vw, 3rem) !important;
+  font-weight: 900;
+  line-height: 1.1 !important;
+  letter-spacing: -0.02em;
+  text-transform: none !important;
+  margin-bottom: 14px !important;
+  text-wrap: balance;
+}
+.popito_fn_pagetitle .fn__desc {
+  font-family: "Roboto", sans-serif;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  color: #444 !important;
+  line-height: 1.6 !important;
+  max-width: 600px;
+  width: auto !important;
+}
+
+/* Active nav link */
+.popito_fn_main_nav li a.nav-active span:first-child,
+.mobile_menu li a.nav-active span:first-child {
+  color: #111;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
+}
+.popito_fn_main_nav li a.nav-active .suffix,
+.mobile_menu li a.nav-active .suffix {
+  opacity: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

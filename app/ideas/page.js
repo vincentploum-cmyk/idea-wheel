@@ -40,7 +40,7 @@ export default async function IdeasPage() {
       <div className="popito_fn_pagetitle">
         <div className="container">
           <div className="pagetitle">
-            <h3 className="fn__title">Ideas from the engine</h3>
+            <h1 className="fn__title">Ideas from the engine</h1>
             <p className="fn__desc">Real concepts surfaced by IdeaReels — specific problems, real market pain, and a clear angle for each one.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
