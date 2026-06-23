@@ -193,9 +193,16 @@ img, svg { display: block; max-width: 100%; }
   display: none;
 }
 
-/* Sign In / Register button: override template's pink --sc2 with brand yellow */
-:root {
-  --sc2: #FFE000;
+/* Sign In / Register button + My Account: override template's pink --sc2 with brand yellow.
+   Direct property override needed because style.css loads after globals and resets the variable. */
+.right__trigger a,
+.popito_fn_stickynav .right__trigger a {
+  background-color: #FFE000 !important;
+  color: #111 !important;
+  font-family: "Nunito", sans-serif !important;
+  font-weight: 900 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 /* ── Page title consistency ───────────────────────────── */
