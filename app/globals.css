@@ -186,6 +186,18 @@ img, svg { display: block; max-width: 100%; }
   .hero-illustration { display: none; }
 }
 
+/* ── Popito template overrides ────────────────────────── */
+/* Kill the purple radial gradient blobs from the template decorator */
+.popito-fn-wrapper[data-bg-decor="enable"]::before,
+.popito-fn-wrapper[data-bg-decor="enable"]::after {
+  display: none;
+}
+
+/* Sign In / Register button: override template's pink --sc2 with brand yellow */
+:root {
+  --sc2: #FFE000;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
