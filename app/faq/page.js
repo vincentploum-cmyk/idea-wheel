@@ -49,7 +49,9 @@ export default function FaqPage() {
             <p style={{ margin: '0 0 20px', opacity: 0.6, fontSize: 13 }}>
               Market research from $3.99. Credits never expire.
             </p>
-            <Link href="/pricing" className="fn__btn"><span>Get credits — from $3.99</span></Link>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <Link href="/pricing" className="fn__btn"><span>Get credits — from $3.99</span></Link>
+            </div>
           </div>
         </div>
       </div>
