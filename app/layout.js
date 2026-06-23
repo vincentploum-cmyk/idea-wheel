@@ -50,6 +50,10 @@ export const metadata = {
   // robots.txt is handled exclusively by app/robots.js — no meta robots tag here
   verification: { google: '7-zPuvRs0wD-bV9Mr_dDdu4vcjW2o3XrZzVGJuqDyd0' },
   alternates: { canonical: 'https://ideareels.io' },
+  other: { 'theme-color': '#FFE000' },
+  icons: {
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 // WebSite schema with SearchAction for Google Sitelinks searchbox
