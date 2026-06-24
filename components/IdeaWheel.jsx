@@ -436,7 +436,7 @@ function pickWeightedIndex(weights = []) {
 
 const CLIENT_DEFAULT_MODE_CONFIGS = DEFAULT_MODE_CONFIGS;
 
-function SlotMachine({ onResult, onModeChange }) {
+function SlotMachine({ onResult, onModeChange, snapTo }) {
   const [mode, setMode] = useState('b2b');
   const [modeConfigs, setModeConfigs] = useState(CLIENT_DEFAULT_MODE_CONFIGS);
   const stripRefs = [useRef(null), useRef(null), useRef(null)];
@@ -490,6 +490,28 @@ function SlotMachine({ onResult, onModeChange }) {
     setSpinning([false,false,false]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, JSON.stringify(banks)]);
+
+  // Snap reels to a saved idea's values when arriving from the profile
+  useEffect(() => {
+    if (!snapTo || !snapTo.every(Boolean)) return;
+    const snapMode = Object.keys(modeConfigs).find(k => {
+      const b = modeConfigs[k].banks;
+      return b[0].includes(snapTo[0]) && b[1].includes(snapTo[1]) && b[2].includes(snapTo[2]);
+    }) || mode;
+    if (snapMode !== mode) setMode(snapMode);
+    const b = modeConfigs[snapMode]?.banks || banks;
+    b.forEach((bank, w) => {
+      const t = bank.indexOf(snapTo[w]);
+      const resolvedIdx = t >= 0 ? HOME_COPY * bank.length + t : HOME_COPY * bank.length;
+      indexRef.current[w] = resolvedIdx;
+      const el = stripRefs[w].current;
+      if (el) { el.style.transition = 'none'; el.style.transform = `translateY(${-(resolvedIdx - 1) * ITEM_H}px)`; }
+    });
+    landedByMode.current[snapMode] = [...snapTo];
+    setLanded([...snapTo]);
+    setHasSpun(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snapTo]);
 
   const selectIndex = (column, allowedValues = null, valueWeights = null) => {
     const bank = banks[column];
@@ -648,6 +670,7 @@ export default function IdeaWheel() {
   const [idea, setIdea]     = useState(null);
   const ideaByMode = useRef({});   // persist idea per mode so switching back restores it
   const currentModeRef = useRef('b2b');
+  const [reelSnap, setReelSnap] = useState(null); // [action, workflow, industry] to pre-populate reels
   const [credits, setCredits] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [authUser, setAuthUser]       = useState(null);   // logged-in user
@@ -667,7 +690,6 @@ export default function IdeaWheel() {
   const [deepErr, setDeepErr]           = useState("");
   const [deepPct, setDeepPct]           = useState(0);
   const deepTimerRef = useRef(null);
-  const [pendingDeep, setPendingDeep]   = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiBurstId, setConfettiBurstId] = useState(0);
 
@@ -754,7 +776,6 @@ export default function IdeaWheel() {
     loadedIdeaRef.current = true;
     const wantGenerate = params.get('generate') === '1';
     const wantView = params.get('view') === '1';
-    const wantDeep = params.get('deep') === '1';
     (async () => {
       try {
         const r = await fetch(`/api/ideas/${savedId}`);
@@ -769,6 +790,10 @@ export default function IdeaWheel() {
         if (saved.comp) setComp(saved.comp);
         if (saved.session_id) setSessionId(saved.session_id);
         if (saved.research && Object.keys(saved.research).length) setDeepResearch(saved.research);
+        // Pre-populate the slot machine reels with the saved idea's values
+        if (saved.action && saved.workflow && saved.industry) {
+          setReelSnap([saved.action, saved.workflow, saved.industry]);
+        }
         // Mark idea as already saved so the Save button shows confirmed state
         setSavedIdeaId(savedId);
         setSaveState('saved');
@@ -797,7 +822,6 @@ export default function IdeaWheel() {
         } else {
           // Show the validation result on the wheel screen — user can run deep
           // research, go straight to blueprint, or spin a new idea.
-          if (wantDeep) setPendingDeep(true);
           goTo('wheel');
         }
 
@@ -1062,13 +1086,6 @@ export default function IdeaWheel() {
     }
   };
 
-  // Auto-trigger deep research when arriving from profile with &deep=1
-  useEffect(() => {
-    if (!pendingDeep || !comp || screen !== 'wheel' || deepLoading || deepResearch) return;
-    setPendingDeep(false);
-    runDeepResearch();
-  }, [pendingDeep, comp, screen, deepLoading, deepResearch]);
-
   /* ── PAID BLUEPRINT ── */
   // The build route charges server-side on the first (designer) stage and hands
   // back a chargeToken; every later stage reuses that token, so the credit is
@@ -1320,7 +1337,7 @@ export default function IdeaWheel() {
       {screen === "wheel" && (
         <section className="su-screen su-wheel-screen">
           <div className="su-eyebrow su-step-eyebrow">Step 1 · Generate idea</div>
-          <SlotMachine onResult={handleSpin} onModeChange={handleModeChange}/>
+          <SlotMachine onResult={handleSpin} onModeChange={handleModeChange} snapTo={reelSnap}/>
           {/* Validate button + inline results */}
           {idea && (
             <div className="sm-validate-section">
