@@ -633,7 +633,7 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
               and show a clear call-to-action banner across the generator. */}
           {!hasSpun && (
             <div className="sm-reel-cover" onClick={()=>!anySpinning&&spinAll()}>
-              <span className="sm-reel-cover-title">Click “Generate idea” to start</span>
+              <span className=”sm-reel-cover-title”>Click “SPIN IDEA” to start</span>
               <span className="sm-reel-cover-sub">Spin the reels for a fresh startup idea</span>
             </div>
           )}
@@ -641,7 +641,7 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
 
         <div className="sm-base">
           <button className="sm-spin" onClick={spinAll} disabled={anySpinning}>
-            <span>{anySpinning ? 'Spinning…' : 'Generate idea'}</span>
+            <span>{anySpinning ? '🎰 Spinning…' : '🎰 SPIN IDEA'}</span>
           </button>
         </div>
       </div>
@@ -2611,30 +2611,28 @@ const CSS = `
 }
 
 .sm-spin {
-  font-family:var(--font-body); font-size:18px; font-weight:900;
-  color:#000;
-  height:60px; line-height:52px;
-  padding:0 50px; border-radius:10px;
-  letter-spacing:.25px;
-  background-color:#fff6be;
-  cursor:pointer; min-width:220px; width:min(100%, 320px);
+  font-family:"Nunito", sans-serif; font-size:20px; font-weight:900;
+  color:#111;
+  height:68px; line-height:1;
+  padding:0 56px; border-radius:12px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  background-color:#FFE000;
+  cursor:pointer; min-width:240px; width:min(100%, 340px);
   position:relative; overflow:hidden;
-  border:4px solid #000;
+  border:4px solid #111;
+  box-shadow:5px 5px 0 #111;
   text-align:center;
-  transition:color .3s;
+  transition:transform .12s ease, box-shadow .12s ease;
+  display:inline-flex; align-items:center; justify-content:center;
 }
-.sm-spin::after {
-  display:block; position:absolute;
-  top:0; right:0; height:100%; width:100%;
-  z-index:0; content:'';
-  background:#ffdd00;
-  transition:all .3s cubic-bezier(.42,0,.58,1);
+.sm-spin:hover:not(:disabled) {
+  transform:translate(-2px,-2px);
+  box-shadow:7px 7px 0 #111;
 }
-.sm-spin span { position:relative; z-index:2; }
-.sm-spin:hover:not(:disabled)::after { right:auto; left:0; width:0; }
-.sm-spin:disabled { opacity:.5; cursor:default; }
-.sm-spin:active:not(:disabled) { transform:translateY(0); }
-.sm-spin:disabled { opacity:.5; cursor:default; }
+.sm-spin span { position:relative; z-index:2; font-size:20px; }
+.sm-spin:disabled { opacity:.5; cursor:default; box-shadow:5px 5px 0 #111; transform:none; }
+.sm-spin:active:not(:disabled) { transform:translate(2px,2px); box-shadow:3px 3px 0 #111; }
 
 /* ── Live sentence ── */
 .sm-live-sentence {
