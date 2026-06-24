@@ -108,9 +108,9 @@ export default async function LandingPage() {
             </p>
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
               {user ? (
-                <Link href="/wheel" className="fn__btn"><span>Spin now — $3.99</span></Link>
+                <Link href="/wheel" className="fn__btn"><span>Get started!</span></Link>
               ) : (
-                <Link href="/pricing" className="fn__btn"><span>Get started — $3.99</span></Link>
+                <Link href="/pricing" className="fn__btn"><span>Get started!</span></Link>
               )}
             </div>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, opacity: 0.5, margin: 0 }}>
