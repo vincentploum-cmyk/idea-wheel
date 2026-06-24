@@ -233,17 +233,19 @@ img, svg { display: block; max-width: 100%; }
   width: auto !important;
 }
 
-/* Active nav link */
-.popito_fn_main_nav li a.nav-active span:first-child,
-.mobile_menu li a.nav-active span:first-child {
-  color: #111;
+/* Active nav link — underline the current page */
+.popito_fn_main_nav li a.nav-active > span,
+.mobile_menu li a.nav-active > span {
   text-decoration: underline;
   text-underline-offset: 3px;
   text-decoration-thickness: 2px;
 }
-.popito_fn_main_nav li a.nav-active .suffix,
-.mobile_menu li a.nav-active .suffix {
-  opacity: 1;
+
+/* On hover, the template turns nav bg black + text white — keep that for inactive items.
+   For the active item, use yellow text so it stays readable on the black hover background. */
+.popito_fn_nav li:hover > a.nav-active > span {
+  color: #FFE000 !important;
+  background-color: #000 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
