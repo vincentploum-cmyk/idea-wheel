@@ -2542,15 +2542,8 @@ const CSS = `
   margin-top:-72px;
 }
 
-@keyframes sm-spin-blur {
-  0%   { filter:blur(0px); }
-  6%   { filter:blur(6px); }
-  75%  { filter:blur(4px); }
-  100% { filter:blur(0px); }
-}
-/* Animated motion blur: heavy as the reel accelerates, fades as it decelerates */
 .sm-strip.is-spinning {
-  animation: sm-spin-blur var(--spin-dur, 3.6s) ease-out both;
+  /* no blur — words fly visibly through the 72px window */
 }
 
 @keyframes sm-col-land {
