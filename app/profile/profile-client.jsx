@@ -100,7 +100,7 @@ function IdeaCard({ idea, onDelete }) {
         ) : (
           <>
             {!hasResearch && (
-              <a href={`/wheel?idea=${idea.id}`} className="fn__btn medium" style={{ fontSize: 13 }}><span>Deep research · 1 credit</span></a>
+              <a href={`/wheel?idea=${idea.id}&deep=1`} className="fn__btn medium" style={{ fontSize: 13 }}><span>Deep research · 1 credit</span></a>
             )}
             <a href={`/wheel?idea=${idea.id}&generate=1`} style={{ fontSize: 12, color: '#111', textDecoration: 'underline', textUnderlineOffset: 3, opacity: 0.6 }}>
               {hasResearch ? 'Build blueprint · 2 credits' : 'Skip to blueprint · 2 credits'}

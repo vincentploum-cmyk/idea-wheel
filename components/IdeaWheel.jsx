@@ -667,6 +667,7 @@ export default function IdeaWheel() {
   const [deepErr, setDeepErr]           = useState("");
   const [deepPct, setDeepPct]           = useState(0);
   const deepTimerRef = useRef(null);
+  const [pendingDeep, setPendingDeep]   = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiBurstId, setConfettiBurstId] = useState(0);
 
@@ -753,6 +754,7 @@ export default function IdeaWheel() {
     loadedIdeaRef.current = true;
     const wantGenerate = params.get('generate') === '1';
     const wantView = params.get('view') === '1';
+    const wantDeep = params.get('deep') === '1';
     (async () => {
       try {
         const r = await fetch(`/api/ideas/${savedId}`);
@@ -795,6 +797,7 @@ export default function IdeaWheel() {
         } else {
           // Show the validation result on the wheel screen — user can run deep
           // research, go straight to blueprint, or spin a new idea.
+          if (wantDeep) setPendingDeep(true);
           goTo('wheel');
         }
 
@@ -1058,6 +1061,13 @@ export default function IdeaWheel() {
       setDeepLoading(false);
     }
   };
+
+  // Auto-trigger deep research when arriving from profile with &deep=1
+  useEffect(() => {
+    if (!pendingDeep || !comp || screen !== 'wheel' || deepLoading || deepResearch) return;
+    setPendingDeep(false);
+    runDeepResearch();
+  }, [pendingDeep, comp, screen, deepLoading, deepResearch]);
 
   /* ── PAID BLUEPRINT ── */
   // The build route charges server-side on the first (designer) stage and hands
