@@ -457,7 +457,7 @@ function IdeaCard({ item, index, catalogEntry, isUnlocked, ideaCreditBalance, un
           {/* Free ideas CTA */}
           {!isPremium && (
             <div style={{ marginTop: 16 }}>
-              <Link href="/wheel" style={{
+              <Link href="/pricing" style={{
                 display: 'inline-block',
                 background: '#111', color: '#FFE000',
                 border: '2px solid #111', borderRadius: 8,
@@ -465,7 +465,7 @@ function IdeaCard({ item, index, catalogEntry, isUnlocked, ideaCreditBalance, un
                 fontFamily: 'Nunito, sans-serif', fontWeight: 900,
                 fontSize: 13, textDecoration: 'none',
               }}>
-                Spin your own variation →
+                Get the full blueprint →
               </Link>
             </div>
           )}
