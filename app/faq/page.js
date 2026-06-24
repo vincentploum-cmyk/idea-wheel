@@ -25,7 +25,7 @@ export default function FaqPage() {
         <div className="container">
           <div className="pagetitle">
             <h1 className="fn__title">Frequently Asked Questions</h1>
-            <p className="fn__desc">Everything you need to know before you burn a night or weekend on the wrong idea.</p>
+            <p className="fn__desc">Common questions about AI startup idea validation, how credits work, what's in an MVP blueprint, and whether IdeaReels is right for your stage.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>

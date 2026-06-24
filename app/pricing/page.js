@@ -80,7 +80,7 @@ export default function PricingPage({ searchParams }) {
         <div className="container">
           <div className="pagetitle">
             <h1 className="fn__title">Pricing that matches how builders buy</h1>
-            <p className="fn__desc">You are about to commit months of your life to an idea. The market research check that tells you whether to build costs $3.99.</p>
+            <p className="fn__desc">AI startup idea validation and full MVP blueprints from $3.99. No subscription — buy credits when you need them, use them at your own pace.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>

@@ -41,7 +41,7 @@ export default async function IdeasPage() {
         <div className="container">
           <div className="pagetitle">
             <h1 className="fn__title">Ideas from the engine</h1>
-            <p className="fn__desc">Real concepts surfaced by IdeaReels — specific problems, real market pain, and a clear angle for each one.</p>
+            <p className="fn__desc">Pre-validated startup ideas with AI market research and MVP blueprints included. Each one targets a specific problem, real demand, and a clear angle for building.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>

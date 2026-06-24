@@ -43,7 +43,7 @@ export default function BlogPage() {
         <div className="container">
           <div className="pagetitle">
             <h1 className="fn__title">The IdeaReels Blog</h1>
-            <p className="fn__desc">Practical writing on AI startup validation, market research, and building faster as a solo founder.</p>
+            <p className="fn__desc">Startup idea validation, AI market research, and MVP planning — practical guides for solo founders and vibe coders who want to build the right thing faster.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
