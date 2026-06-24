@@ -2492,7 +2492,7 @@ const CSS = `
   border-radius:0;
   box-shadow:none;
   pointer-events:none;
-  z-index:4;
+  z-index:1;
   display:block;
 }
 
