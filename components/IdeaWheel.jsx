@@ -647,8 +647,8 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
               and show a clear call-to-action banner across the generator. */}
           {!hasSpun && (
             <div className="sm-reel-cover" onClick={()=>!anySpinning&&spinAll()}>
-              <span className="sm-reel-cover-title">{'Click "SPIN IDEA" to start'}</span>
-              <span className="sm-reel-cover-sub">Spin the reels for a fresh startup idea</span>
+              <span className="sm-reel-cover-title">SPIN!</span>
+              <span className="sm-reel-cover-sub">tap to discover your next idea</span>
             </div>
           )}
         </div>
@@ -2435,11 +2435,22 @@ const CSS = `
 .sm-cabinet {
   position:relative;
   background:#111;
-  border-radius:28px;
+  border-radius:24px;
   padding:20px 20px 24px;
   border:3px solid #111;
   box-shadow:8px 8px 0 #FFE000;
 }
+/* corner accent dots */
+.sm-cabinet::before, .sm-cabinet::after {
+  content:'';
+  position:absolute;
+  width:10px; height:10px;
+  background:#FFE000;
+  border-radius:50%;
+  top:16px;
+}
+.sm-cabinet::before { left:16px; }
+.sm-cabinet::after  { right:16px; }
 
 /* ── Mode toggle ── */
 .sm-topbar { display:flex; justify-content:center; margin:0 0 16px; }
@@ -2452,31 +2463,30 @@ const CSS = `
 }
 .sm-modebtn {
   font-family:var(--font-body); font-size:14px; font-weight:900;
-  color:#aaa;
-  height:44px; line-height:36px;
-  padding:0 24px; border-radius:10px;
-  border:3px solid #333; background:#222;
+  color:#666;
+  height:40px; line-height:34px;
+  padding:0 22px; border-radius:8px;
+  border:2px solid #2a2a2a; background:#1a1a1a;
   cursor:pointer;
   position:relative; overflow:hidden;
-  letter-spacing:.05em; text-transform:uppercase;
-  transition:color .15s, background .15s, border-color .15s;
+  letter-spacing:.06em; text-transform:uppercase;
+  transition:color .12s, background .12s, border-color .12s;
 }
 .sm-modebtn::after { display:none; }
 .sm-modebtn span { position:relative; z-index:2; }
-.sm-modebtn:hover:not(:disabled) { border-color:#555; color:#fff; }
-.sm-modebtn.on { background:#FFE000; color:#111; border-color:#FFE000; }
+.sm-modebtn:hover:not(:disabled) { border-color:#444; color:#ccc; }
+.sm-modebtn.on { background:#FFE000; color:#111; border-color:#FFE000; font-weight:900; }
 .sm-modebtn.on:hover:not(:disabled) { background:#FFE000; color:#111; }
-.sm-modebtn:disabled { opacity:.4; cursor:default; }
+.sm-modebtn:disabled { opacity:.35; cursor:default; }
 
-/* ── Reels window ── */
+/* ── Reels window — comic panel ── */
 .sm-reels-wrap {
   position:relative;
-  border-radius:16px;
+  border-radius:14px;
   padding:0;
   background:#fff;
   border:3px solid #000;
   overflow:hidden;
-  box-shadow:inset 0 2px 12px rgba(0,0,0,0.10);
 }
 
 /* center payline — solid yellow band, full width, the money line */
@@ -2565,58 +2575,68 @@ const CSS = `
    Only the centered row, in the clear band between the two hazes, reads. */
 .sm-reel-haze {
   position:absolute;
-  left:8px; right:8px;
+  left:0; right:0;
   z-index:3;
   pointer-events:none;
-  -webkit-backdrop-filter:blur(13px);
-  backdrop-filter:blur(13px);
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
 }
 .sm-reel-haze--top {
   top:0;
   bottom:calc(50% + 41px);
   background:linear-gradient(180deg,
-    rgba(255,255,255,0.98) 0%,
-    rgba(255,255,255,0.88) 55%,
+    rgba(255,255,255,1) 0%,
+    rgba(255,255,255,0.92) 50%,
     rgba(255,255,255,0) 100%);
 }
 .sm-reel-haze--bottom {
   top:calc(50% + 41px);
   bottom:0;
   background:linear-gradient(0deg,
-    rgba(255,255,255,0.98) 0%,
-    rgba(255,255,255,0.88) 55%,
+    rgba(255,255,255,1) 0%,
+    rgba(255,255,255,0.92) 50%,
     rgba(255,255,255,0) 100%);
 }
 
-/* Pre-spin cover: hides the reel words (so nothing is pre-populated) and
-   carries the call-to-action across the full width of the generator. */
+/* Pre-spin cover: dark curtain hiding unpopulated reels.
+   Click anywhere to lift and spin — matches the cabinet's dark body. */
 .sm-reel-cover {
   position:absolute;
   inset:0;
   z-index:6;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:8px;
+  gap:0;
   text-align:center;
   cursor:pointer;
   border-radius:0;
-  background:#fff;
+  background:#111;
+}
+@keyframes sm-cover-pulse {
+  0%,100% { opacity:1; }
+  50%      { opacity:.65; }
 }
 .sm-reel-cover-emoji { display:none; }
 .sm-reel-cover-title {
   font-family:'Nunito', sans-serif;
   font-weight:900;
-  font-size:clamp(14px, 2.2vw, 18px);
-  letter-spacing:.06em;
+  font-size:clamp(22px, 5vw, 34px);
+  letter-spacing:.12em;
   text-transform:uppercase;
-  color:#111;
-  background:#FFE000;
-  border:3px solid #111;
-  border-radius:10px;
-  padding:8px 20px;
-  box-shadow:4px 4px 0 #111;
+  color:#FFE000;
+  background:none;
+  border:none;
+  border-radius:0;
+  padding:0;
+  box-shadow:none;
+  animation: sm-cover-pulse 2s ease-in-out infinite;
 }
 .sm-reel-cover-sub {
-  font-size:12px; font-weight:700; color:#888; letter-spacing:.03em; text-transform:uppercase;
+  font-family:'Nunito', sans-serif;
+  font-size:11px; font-weight:700;
+  color:#444;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  margin-top:6px;
 }
 
 .sm-item {
@@ -2644,31 +2664,30 @@ const CSS = `
 }
 
 .sm-spin {
-  font-family:"Nunito", sans-serif; font-size:20px; font-weight:900;
+  font-family:"Nunito", sans-serif; font-size:24px; font-weight:900;
   color:#111;
-  height:68px; line-height:1;
-  padding:0 56px; border-radius:12px;
-  letter-spacing:.06em;
+  height:76px; line-height:1;
+  padding:0 48px; border-radius:14px;
+  letter-spacing:.14em;
   text-transform:uppercase;
-  background-color:#FFE000;
-  cursor:pointer; min-width:240px; width:min(100%, 340px);
+  background:#FFE000;
+  cursor:pointer; min-width:260px; width:min(100%, 380px);
   position:relative; overflow:hidden;
   border:4px solid #111;
-  box-shadow:5px 5px 0 #111;
+  box-shadow:6px 6px 0 #111;
   text-align:center;
-  /* Release: spring back with slight overshoot */
   transition:transform .18s cubic-bezier(0.34,1.56,0.64,1), box-shadow .18s ease;
   display:inline-flex; align-items:center; justify-content:center;
 }
 .sm-spin:hover:not(:disabled) {
   transform:translate(-2px,-2px);
-  box-shadow:7px 7px 0 #111;
+  box-shadow:8px 8px 0 #111;
 }
-.sm-spin span { position:relative; z-index:2; font-size:20px; }
-.sm-spin:disabled { opacity:.5; cursor:default; box-shadow:5px 5px 0 #111; transform:none; transition:none; }
-/* Press: shadow collapses fully, button bottoms out — instant down, spring release */
+.sm-spin span { position:relative; z-index:2; }
+.sm-spin:disabled { opacity:.45; cursor:default; box-shadow:6px 6px 0 #111; transform:none; transition:none; }
+/* Press: collapses fully — instant down, spring release */
 .sm-spin:active:not(:disabled) {
-  transform:translate(5px,5px);
+  transform:translate(6px,6px);
   box-shadow:0px 0px 0 #111;
   transition:transform .07s ease, box-shadow .07s ease;
 }
@@ -2680,10 +2699,10 @@ const CSS = `
   margin-top:14px;
   background:#fff;
   border:3px solid #111;
-  border-radius:16px;
+  border-radius:14px;
   text-align:center; min-height:54px;
   display:flex; align-items:center; justify-content:center;
-  box-shadow:5px 5px 0 #FFE000;
+  box-shadow:5px 5px 0 #111;
   overflow:hidden;
 }
 .sm-live-sentence p { margin:0; font-size:13px; line-height:1.4; color:#111; font-family:'Nunito',sans-serif; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
