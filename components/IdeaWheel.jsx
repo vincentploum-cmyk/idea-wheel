@@ -2431,16 +2431,15 @@ const CSS = `
   width:100%; max-width:680px; margin:0 auto;
 }
 
-/* ── Cabinet — one elegant glass component ── */
+/* ── Cabinet — dark machine body ── */
 .sm-cabinet {
   position:relative;
-  background:#fff;
+  background:#111;
   border-radius:28px;
-  padding:18px 16px 22px;
+  padding:20px 20px 24px;
   border:3px solid #111;
-  box-shadow:6px 6px 0 #111;
+  box-shadow:8px 8px 0 #FFE000;
 }
-
 
 /* ── Mode toggle ── */
 .sm-topbar { display:flex; justify-content:center; margin:0 0 16px; }
@@ -2453,49 +2452,45 @@ const CSS = `
 }
 .sm-modebtn {
   font-family:var(--font-body); font-size:14px; font-weight:900;
-  color:#000;
+  color:#aaa;
   height:44px; line-height:36px;
   padding:0 24px; border-radius:10px;
-  border:3px solid #111; background:#fff6be;
+  border:3px solid #333; background:#222;
   cursor:pointer;
   position:relative; overflow:hidden;
   letter-spacing:.05em; text-transform:uppercase;
-  transition:color .3s;
+  transition:color .15s, background .15s, border-color .15s;
 }
-.sm-modebtn::after {
-  display:block; position:absolute;
-  top:0; right:0; height:100%; width:100%;
-  z-index:0; content:'';
-  background:#ffdd00;
-  transition:all .3s cubic-bezier(.42,0,.58,1);
-}
+.sm-modebtn::after { display:none; }
 .sm-modebtn span { position:relative; z-index:2; }
-.sm-modebtn:hover:not(:disabled)::after { right:auto; left:0; width:0; }
-.sm-modebtn.on { background:#111; color:#FFE000; }
-.sm-modebtn.on::after { width:0; }
-.sm-modebtn.on:hover:not(:disabled)::after { width:0; }
-.sm-modebtn:disabled { opacity:.5; cursor:default; }
+.sm-modebtn:hover:not(:disabled) { border-color:#555; color:#fff; }
+.sm-modebtn.on { background:#FFE000; color:#111; border-color:#FFE000; }
+.sm-modebtn.on:hover:not(:disabled) { background:#FFE000; color:#111; }
+.sm-modebtn:disabled { opacity:.4; cursor:default; }
 
-/* ── Reels container ── */
+/* ── Reels window ── */
 .sm-reels-wrap {
   position:relative;
-  border-radius:14px;
+  border-radius:16px;
   padding:0;
-  background:#f5f5f5;
-  border:3px solid #111;
+  background:#fff;
+  border:3px solid #000;
   overflow:hidden;
+  box-shadow:inset 0 2px 12px rgba(0,0,0,0.10);
 }
 
-/* center payline — yellow highlight bar across all 3 reels */
+/* center payline — solid yellow band, full width, the money line */
 .sm-payline-bar {
   position:absolute;
-  left:6px; right:6px;
-  top:50%; height:72px;
+  left:0; right:0;
+  top:50%; height:76px;
   transform:translateY(-50%);
-  background:rgba(255,224,0,0.18);
-  border:3px solid #111;
-  border-radius:12px;
-  box-shadow:4px 4px 0 #111;
+  background:#FFE000;
+  border-top:3px solid #111;
+  border-bottom:3px solid #111;
+  border-left:none; border-right:none;
+  border-radius:0;
+  box-shadow:none;
   pointer-events:none;
   z-index:4;
   display:block;
@@ -2506,13 +2501,13 @@ const CSS = `
   display:grid; grid-template-columns:repeat(3,1fr); gap:0;
   background:transparent;
 }
-/* vertical dividers between columns */
-.sm-col + .sm-col { border-left:2px solid #ddd; }
+/* mechanical column dividers */
+.sm-col + .sm-col { border-left:3px solid #111; }
 
 .sm-col {
   display:flex; flex-direction:column;
   position:relative;
-  background:#f5f5f5;
+  background:#fff;
   border:none;
   border-radius:0;
   overflow:hidden;
@@ -2578,19 +2573,19 @@ const CSS = `
 }
 .sm-reel-haze--top {
   top:0;
-  bottom:calc(50% + 39px);
+  bottom:calc(50% + 41px);
   background:linear-gradient(180deg,
-    rgba(245,245,245,0.97) 0%,
-    rgba(245,245,245,0.85) 60%,
-    rgba(245,245,245,0) 100%);
+    rgba(255,255,255,0.98) 0%,
+    rgba(255,255,255,0.88) 55%,
+    rgba(255,255,255,0) 100%);
 }
 .sm-reel-haze--bottom {
-  top:calc(50% + 39px);
+  top:calc(50% + 41px);
   bottom:0;
   background:linear-gradient(0deg,
-    rgba(245,245,245,0.97) 0%,
-    rgba(245,245,245,0.85) 60%,
-    rgba(245,245,245,0) 100%);
+    rgba(255,255,255,0.98) 0%,
+    rgba(255,255,255,0.88) 55%,
+    rgba(255,255,255,0) 100%);
 }
 
 /* Pre-spin cover: hides the reel words (so nothing is pre-populated) and
@@ -2600,33 +2595,38 @@ const CSS = `
   inset:0;
   z-index:6;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:6px;
+  gap:8px;
   text-align:center;
   cursor:pointer;
   border-radius:0;
-  background:#f5f5f5;
+  background:#fff;
 }
-.sm-reel-cover-emoji { font-size:24px; line-height:1; }
+.sm-reel-cover-emoji { display:none; }
 .sm-reel-cover-title {
   font-family:'Nunito', sans-serif;
   font-weight:900;
-  font-size:clamp(13px, 2vw, 16px);
-  letter-spacing:.04em;
+  font-size:clamp(14px, 2.2vw, 18px);
+  letter-spacing:.06em;
   text-transform:uppercase;
   color:#111;
+  background:#FFE000;
+  border:3px solid #111;
+  border-radius:10px;
+  padding:8px 20px;
+  box-shadow:4px 4px 0 #111;
 }
 .sm-reel-cover-sub {
-  font-size:13px; font-weight:600; color:var(--muted);
+  font-size:12px; font-weight:700; color:#888; letter-spacing:.03em; text-transform:uppercase;
 }
 
 .sm-item {
   display:flex; align-items:center; justify-content:center;
-  text-align:center; padding:0 8px;
+  text-align:center; padding:0 10px;
   font-family:'Nunito', sans-serif;
-  font-size:clamp(11px, 1.7vw, 13px);
+  font-size:clamp(12px, 1.9vw, 15px);
   font-weight:900;
   color:#111;
-  line-height:1.1; letter-spacing:.04em;
+  line-height:1.1; letter-spacing:.05em;
   text-transform:uppercase;
   text-shadow:none;
   pointer-events:none; user-select:none;
@@ -2638,7 +2638,7 @@ const CSS = `
 /* ── Generate button ── */
 .sm-base {
   display:flex; flex-direction:column; align-items:center;
-  padding:18px 4px 0;
+  padding:20px 4px 0;
   position:relative; z-index:5;
   gap:10px;
 }
@@ -2677,13 +2677,13 @@ const CSS = `
 .sm-live-sentence {
   width:100%;
   padding:14px 20px;
-  margin-top:16px;
-  background:#efbdc2;
+  margin-top:14px;
+  background:#fff;
   border:3px solid #111;
-  border-radius:18px;
+  border-radius:16px;
   text-align:center; min-height:54px;
   display:flex; align-items:center; justify-content:center;
-  box-shadow:4px 4px 0 #111;
+  box-shadow:5px 5px 0 #FFE000;
   overflow:hidden;
 }
 .sm-live-sentence p { margin:0; font-size:13px; line-height:1.4; color:#111; font-family:'Nunito',sans-serif; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
