@@ -1331,7 +1331,7 @@ export default function IdeaWheel() {
                     <span className="su-scan-pct">{scanPct}%</span>
                   </div>
                   <div className="su-scan-bar su-scan-bar--progress">
-                    <div className="su-scan-fill su-scan-fill--progress" style={{width:`${scanPct}%`}}/>
+                    <div className="su-scan-fill su-scan-fill--progress" style={{transform:`scaleX(${scanPct/100})`}}/>
                   </div>
                   <ul className="su-research-log">
                     {scanSteps.map((s) => (
@@ -1479,7 +1479,7 @@ export default function IdeaWheel() {
                           <span className="su-scan-text">Digging through Reddit, forums &amp; communities…</span>
                           <span className="su-scan-pct">{deepPct}%</span>
                         </div>
-                        <div className="su-scan-bar su-scan-bar--progress"><div className="su-scan-fill su-scan-fill--progress" style={{width:`${deepPct}%`}}/></div>
+                        <div className="su-scan-bar su-scan-bar--progress"><div className="su-scan-fill su-scan-fill--progress" style={{transform:`scaleX(${deepPct/100})`}}/></div>
                       </div>
                     )}
                     {deepErr && <p className="su-err">{deepErr} <button className="su-retry" onClick={runDeepResearch}>Retry</button></p>}
@@ -1586,7 +1586,7 @@ export default function IdeaWheel() {
                   <span className="su-scan-pct">{pct}%</span>
                 </div>
                 <div className="su-scan-bar su-scan-bar--progress">
-                  <div className="su-scan-fill su-scan-fill--progress" style={{ width:`${pct}%` }}/>
+                  <div className="su-scan-fill su-scan-fill--progress" style={{ transform:`scaleX(${pct/100})` }}/>
                 </div>
                 <div className="su-pip-progress su-pip-progress--compact">
                   {stages.map((s, i) => {
@@ -2018,10 +2018,11 @@ const CSS = `
 .su-scan-pct { flex:none; font-size:14px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums; letter-spacing:-.01em; }
 .su-scan-bar--progress { height:8px; border-radius:99px; margin-bottom:0; background:rgba(0,0,0,0.08); }
 .su-scan-fill--progress {
-  position:relative; left:0; width:0; min-width:8px;
+  position:relative; left:0; width:100%;
   border-radius:99px; background:#111;
   animation:none;
-  transition:width .4s cubic-bezier(.16,1,.3,1);
+  transform:scaleX(0); transform-origin:left;
+  transition:transform .4s cubic-bezier(.16,1,.3,1);
 }
 
 /* live research log — the streamed pipeline, shown while validating */
@@ -2195,7 +2196,7 @@ const CSS = `
   margin-bottom:28px; overflow:hidden;
 }
 .su-pip-track { position:absolute; bottom:0; left:0; right:0; height:2px; background:var(--line); }
-.su-pip-fill { height:100%; background:#111; transition:width .6s var(--ease-out); }
+.su-pip-fill { height:100%; background:#111; width:100%; transform:scaleX(0); transform-origin:left; transition:transform .6s var(--ease-out); }
 /* compact pip row used inside the blueprint progress card */
 .su-bp-progress { margin-bottom:28px; }
 .su-pip-progress--compact { background:none; border:none; border-radius:0; padding:14px 0 0; margin:0; margin-top:14px; overflow:visible; }
