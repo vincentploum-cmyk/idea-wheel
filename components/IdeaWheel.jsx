@@ -655,7 +655,7 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
 
         <div className="sm-base">
           <button className="sm-spin" onClick={spinAll} disabled={anySpinning}>
-            <span>{anySpinning ? '🎰 Spinning…' : '🎰 SPIN IDEA'}</span>
+            <span>{anySpinning ? 'Spinning…' : 'SPIN!'}</span>
           </button>
         </div>
       </div>
