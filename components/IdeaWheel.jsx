@@ -2525,7 +2525,7 @@ const CSS = `
 
 .sm-window {
   position:relative;
-  height:228px;
+  height:72px;
   overflow:hidden;
   background:transparent;
   border:none;
@@ -2539,6 +2539,7 @@ const CSS = `
   will-change:transform;
   pointer-events:none; user-select:none;
   position:relative; z-index:0;
+  margin-top:-72px;
 }
 
 @keyframes sm-spin-blur {
@@ -2573,30 +2574,7 @@ const CSS = `
    below the centered band. backdrop-filter blurs the words scrolling
    behind; the tint hides them even where backdrop-filter is unsupported.
    Only the centered row, in the clear band between the two hazes, reads. */
-.sm-reel-haze {
-  position:absolute;
-  left:0; right:0;
-  z-index:3;
-  pointer-events:none;
-  -webkit-backdrop-filter:blur(10px);
-  backdrop-filter:blur(10px);
-}
-.sm-reel-haze--top {
-  top:0;
-  bottom:calc(50% + 41px);
-  background:linear-gradient(180deg,
-    rgba(255,255,255,1) 0%,
-    rgba(255,255,255,0.92) 50%,
-    rgba(255,255,255,0) 100%);
-}
-.sm-reel-haze--bottom {
-  top:calc(50% + 41px);
-  bottom:0;
-  background:linear-gradient(0deg,
-    rgba(255,255,255,1) 0%,
-    rgba(255,255,255,0.92) 50%,
-    rgba(255,255,255,0) 100%);
-}
+.sm-reel-haze { display:none; }
 
 /* Pre-spin cover: dark curtain hiding unpopulated reels.
    Click anywhere to lift and spin — matches the cabinet's dark body. */
@@ -2824,12 +2802,9 @@ const CSS = `
   .sm-modebtn { padding:7px 16px; font-size:12px; }
   .sm-reels-wrap { padding:6px; border-radius:16px; }
   .sm-payline-bar { left:4px; right:4px; height:68px; border-radius:10px; }
-  .sm-reel-haze { left:6px; right:6px; -webkit-backdrop-filter:blur(11px); backdrop-filter:blur(11px); }
-  .sm-reel-haze--top { top:6px; bottom:calc(50% + 34px); }
-  .sm-reel-haze--bottom { top:calc(50% + 34px); bottom:6px; }
   .sm-reels { gap:3px; }
   .sm-base { padding:14px 4px 0; }
-  .sm-window { height:192px; border-radius:12px; }
+  .sm-window { height:72px; border-radius:0; }
   .sm-item { font-size:11px; padding:0 5px; line-height:1.06; }
   .sm-spin { width:100%; max-width:320px; padding:14px 32px; }
   .sm-live-sentence { padding:12px 16px; border-radius:16px; }
