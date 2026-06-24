@@ -420,7 +420,7 @@ const HOME_COPY = 4;
 const REEL_TINTS = ['#7c3aed','#c026d3','#ff4d8d'];
 // Smooth wind-up → cruise → settle: gentle ease-in start (no teleport on
 // the first frame) and a controlled decel tail (no long creep at the end).
-const SPIN_EASE = 'cubic-bezier(0.30, 0.65, 0.30, 1)';
+const SPIN_EASE = 'cubic-bezier(0.08, 0.82, 0.17, 1)';
 
 function pickWeightedIndex(weights = []) {
   if (!weights.length) return 0;
@@ -546,7 +546,11 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
     indexRef.current[w] = newIndex;
     targetRef.current[w] = newIndex%L;
     const el = stripRefs[w].current;
-    if (el) { el.style.transition=`transform ${duration}ms ${SPIN_EASE}`; el.style.transform=`translateY(${-(newIndex-1)*ITEM_H}px)`; }
+    if (el) {
+      el.style.setProperty('--spin-dur', `${duration}ms`);
+      el.style.transition=`transform ${duration}ms ${SPIN_EASE}`;
+      el.style.transform=`translateY(${-(newIndex-1)*ITEM_H}px)`;
+    }
     setSpinning(s => { const n=[...s]; n[w]=true; return n; });
   };
 
@@ -555,7 +559,17 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
     const t = targetRef.current[w];
     indexRef.current[w] = HOME_COPY*bank.length + t;
     const el = stripRefs[w].current;
-    if (el) { el.style.transition='none'; el.style.transform=`translateY(${-(indexRef.current[w]-1)*ITEM_H}px)`; }
+    if (el) {
+      el.style.transition='none';
+      el.style.transform=`translateY(${-(indexRef.current[w]-1)*ITEM_H}px)`;
+      // Bounce the column element so the landing feels mechanical
+      const col = el.parentElement?.parentElement;
+      if (col) {
+        col.classList.remove('landing');
+        void col.offsetWidth;
+        col.classList.add('landing');
+      }
+    }
     setLanded(p => { const n=[...p]; n[w]=bank[t]; return n; });
     setSpinning(s => { const n=[...s]; n[w]=false; return n; });
   };
@@ -633,7 +647,7 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
               and show a clear call-to-action banner across the generator. */}
           {!hasSpun && (
             <div className="sm-reel-cover" onClick={()=>!anySpinning&&spinAll()}>
-              <span className=”sm-reel-cover-title”>Click “SPIN IDEA” to start</span>
+              <span className=”sm-reel-cover-title”>Click &ldquo;SPIN IDEA&rdquo; to start</span>
               <span className="sm-reel-cover-sub">Spin the reels for a fresh startup idea</span>
             </div>
           )}
@@ -1477,7 +1491,7 @@ export default function IdeaWheel() {
                       )}
                       {(deepResearch.voiceOfCustomer||[]).length > 0 && (
                         <div className="su-v-deep-quotes">
-                          {deepResearch.voiceOfCustomer.slice(0,3).map((q,i)=><blockquote key={i} className="su-v-deep-quote">“{cleanValidationText(q)}”</blockquote>)}
+                          {deepResearch.voiceOfCustomer.slice(0,3).map((q,i)=><blockquote key={i} className="su-v-deep-quote">&ldquo;{cleanValidationText(q)}&rdquo;</blockquote>)}
                         </div>
                       )}
                       {(deepResearch.communities||[]).length > 0 && (
@@ -2522,11 +2536,30 @@ const CSS = `
   position:relative; z-index:0;
 }
 
-/* Motion blur while the reel travels — smooths the fast scroll so it no
-   longer strobes frame-to-frame. Removed the instant it settles (the
-   strip swaps to transition:none in onSettle) so the landed word is crisp. */
+@keyframes sm-spin-blur {
+  0%   { filter:blur(0px); }
+  6%   { filter:blur(6px); }
+  75%  { filter:blur(4px); }
+  100% { filter:blur(0px); }
+}
+/* Animated motion blur: heavy as the reel accelerates, fades as it decelerates */
 .sm-strip.is-spinning {
-  filter:blur(1.4px);
+  animation: sm-spin-blur var(--spin-dur, 3.6s) ease-out both;
+}
+
+@keyframes sm-col-land {
+  0%   { transform:translateY(0); }
+  18%  { transform:translateY(-9px) scaleY(0.97); }
+  42%  { transform:translateY(5px) scaleY(1.02); }
+  63%  { transform:translateY(-4px); }
+  80%  { transform:translateY(2px); }
+  100% { transform:translateY(0); }
+}
+/* Mechanical bounce when a reel settles — animated on the column so the
+   strip's absolute position is not disturbed */
+.sm-col.landing {
+  animation: sm-col-land 0.55s cubic-bezier(0.36,0.07,0.19,0.97) forwards;
+  transform-origin: bottom center;
 }
 
 /* Frosted depth-of-field over the off-payline zone. Lives on the fixed
@@ -2623,7 +2656,8 @@ const CSS = `
   border:4px solid #111;
   box-shadow:5px 5px 0 #111;
   text-align:center;
-  transition:transform .12s ease, box-shadow .12s ease;
+  /* Release: spring back with slight overshoot */
+  transition:transform .18s cubic-bezier(0.34,1.56,0.64,1), box-shadow .18s ease;
   display:inline-flex; align-items:center; justify-content:center;
 }
 .sm-spin:hover:not(:disabled) {
@@ -2631,8 +2665,13 @@ const CSS = `
   box-shadow:7px 7px 0 #111;
 }
 .sm-spin span { position:relative; z-index:2; font-size:20px; }
-.sm-spin:disabled { opacity:.5; cursor:default; box-shadow:5px 5px 0 #111; transform:none; }
-.sm-spin:active:not(:disabled) { transform:translate(2px,2px); box-shadow:3px 3px 0 #111; }
+.sm-spin:disabled { opacity:.5; cursor:default; box-shadow:5px 5px 0 #111; transform:none; transition:none; }
+/* Press: shadow collapses fully, button bottoms out — instant down, spring release */
+.sm-spin:active:not(:disabled) {
+  transform:translate(5px,5px);
+  box-shadow:0px 0px 0 #111;
+  transition:transform .07s ease, box-shadow .07s ease;
+}
 
 /* ── Live sentence ── */
 .sm-live-sentence {

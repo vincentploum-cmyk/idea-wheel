@@ -86,13 +86,36 @@ export default function RegisterPage() {
                 <div className="contact_right">
                   <div className="contact_right_in">
                     {sent ? (
-                      <>
-                        <h3 className="fn__title">Check your email</h3>
-                        <p className="fn__desc">We sent a sign-in link to <strong>{email}</strong>. Click it to activate your account and start saving your work.</p>
-                        <button onClick={() => setSent(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '32px 16px', gap: 20 }}>
+                        <div style={{
+                          width: 72, height: 72,
+                          background: '#FFE000',
+                          border: '3px solid #111',
+                          borderRadius: 16,
+                          boxShadow: '4px 4px 0 #111',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <rect x="2" y="4" width="20" height="16" rx="2"/>
+                            <path d="M2 7l10 7 10-7"/>
+                          </svg>
+                        </div>
+                        <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(24px,5vw,32px)', letterSpacing: '-0.02em', color: '#111', margin: 0, lineHeight: 1.1 }}>
+                          Check your email
+                        </h2>
+                        <p style={{ fontFamily: 'Roboto, sans-serif', fontSize: 15, color: '#444', lineHeight: 1.65, margin: 0, maxWidth: 320 }}>
+                          We&apos;ve sent a magic link to <strong style={{ color: '#111' }}>{email}</strong>. Click the link in the email to complete your sign up and access your account.
+                        </p>
+                        <p style={{ fontFamily: 'Roboto, sans-serif', fontSize: 13, color: '#888', margin: 0 }}>
+                          Didn&apos;t receive an email? Check your spam folder.
+                        </p>
+                        <button
+                          onClick={() => setSent(false)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, color: '#111', textDecoration: 'underline', textUnderlineOffset: 3, padding: 0, marginTop: 4 }}
+                        >
                           Use a different email
                         </button>
-                      </>
+                      </div>
                     ) : (
                       <>
                         <h1 className="fn__title">Create Account</h1>

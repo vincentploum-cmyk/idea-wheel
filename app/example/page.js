@@ -346,8 +346,7 @@ export default function ExamplePage() {
                   Spin the reels, get the free verdict, and go deeper if the signal is there. From $3.99.
                 </p>
                 <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <Link href="/pricing" className="fn__btn"><span>Get started — $3.99</span></Link>
-                  <Link href="/wheel" className="fn__btn" style={{ background: '#fff' }}><span>Try the free spin →</span></Link>
+                  <Link href="/pricing" className="fn__btn"><span>Get started</span></Link>
                 </div>
                 <p style={{ marginTop: 14, fontSize: 12, opacity: 0.55 }}>Credits never expire · No subscription · Secure checkout via Stripe</p>
               </div>
