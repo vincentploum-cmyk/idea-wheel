@@ -647,7 +647,7 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
               and show a clear call-to-action banner across the generator. */}
           {!hasSpun && (
             <div className="sm-reel-cover" onClick={()=>!anySpinning&&spinAll()}>
-              <span className=”sm-reel-cover-title”>Click &ldquo;SPIN IDEA&rdquo; to start</span>
+              <span className="sm-reel-cover-title">{'Click "SPIN IDEA" to start'}</span>
               <span className="sm-reel-cover-sub">Spin the reels for a fresh startup idea</span>
             </div>
           )}
