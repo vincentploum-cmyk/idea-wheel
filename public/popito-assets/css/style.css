@@ -670,7 +670,9 @@ p{letter-spacing: 0;}
 }
 .right__trigger{
 	border-left: 4px solid #000;
-	overflow: hidden;
+	overflow: visible;
+	flex-shrink: 0;
+	width: 240px;
 }
 .right__trigger a{
 	min-height: 100%;
@@ -685,13 +687,14 @@ p{letter-spacing: 0;}
 	display: flex;
 	-ms-align-items: center;
 	align-items: center;
-	padding: 10px 50px;
+	justify-content: center;
+	padding: 10px 32px;
 	font-family: var(--hff);
 	font-size: 18px;
 	font-weight: 600;
 	text-transform: uppercase;
 	position: relative;
-	width: max-content;
+	width: 100%;
 	text-align: center;
 }
 .popito_fn_nav .search{

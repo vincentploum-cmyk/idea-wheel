@@ -11,10 +11,10 @@ const PACK_DESCRIPTIONS = {
 
 const PACK_FEATURES = {
   starter: [
-    '5 spin credits for your own concepts',
-    '1 credit per spin — idea + first-pass verdict',
-    '2 credits for the full blueprint (research + MVP plan)',
-    'Credits never expire',
+    '5 credits for your own concepts',
+    'Spinning is free — credits go toward deeper work',
+    '1 credit for deep market research',
+    '2 credits for the full MVP blueprint',
   ],
   pro: [
     '1 researched starting point',

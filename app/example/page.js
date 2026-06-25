@@ -159,9 +159,6 @@ export default function ExamplePage() {
       <div className="popito_fn_pagetitle">
         <div className="container">
           <div className="pagetitle">
-            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12, opacity: 0.45 }}>
-              Live example
-            </p>
             <h1 className="fn__title">
               Here's exactly what you get.
             </h1>
@@ -222,7 +219,7 @@ export default function ExamplePage() {
 
             {/* ── Step 2: First-pass verdict (free) ───────────── */}
             <section>
-              <p style={sectionTitle}>Step 2 — First-pass verdict · Included with spin</p>
+              <p style={sectionTitle}>Step 2 — First-pass verdict · Free</p>
               <h2 style={h2Style}>Signal check before you spend a credit.</h2>
               <p style={{ opacity: 0.6, fontSize: 14, marginBottom: 24 }}>
                 Every spin generates a free verdict. Strong signal = worth researching deeper.
@@ -280,7 +277,7 @@ export default function ExamplePage() {
 
             {/* ── Step 3: Deep research (1 credit) ────────────── */}
             <section>
-              <p style={sectionTitle}>Step 3 — Full blueprint · 2 credits</p>
+              <p style={sectionTitle}>Step 3 — Deep research · 1 credit</p>
               <h2 style={h2Style}>Real demand signals. Not a Wikipedia summary.</h2>
               <p style={{ opacity: 0.6, fontSize: 14, marginBottom: 24 }}>
                 IdeaReels searches Reddit, community forums, and product review sites for evidence of real, recurring demand — then quantifies it.
@@ -299,13 +296,13 @@ export default function ExamplePage() {
                 </p>
 
                 {/* Locked section */}
-                <Lock cta="Get the full blueprint for your idea — 2 credits" />
+                <Lock cta="Get deep research for your idea — 1 credit" />
               </div>
             </section>
 
             {/* ── Step 4: MVP Blueprint (2 credits) ───────────── */}
             <section>
-              <p style={sectionTitle}>Step 4 — Technical MVP plan · Included in blueprint</p>
+              <p style={sectionTitle}>Step 4 — MVP blueprint · 2 credits</p>
               <h2 style={h2Style}>Four specialists. One blueprint. Ready to build.</h2>
               <p style={{ opacity: 0.6, fontSize: 14, marginBottom: 24 }}>
                 Four AI agents produce the blueprint in parallel: product scope, go-to-market strategy, technical architecture, and a prototype plan.
