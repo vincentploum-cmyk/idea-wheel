@@ -5,7 +5,7 @@ import TrustBar from '@/components/TrustBar';
 import { BLOG_POSTS } from '@/lib/blog-posts';
 
 export const metadata = {
-  title: 'Blog — AI Startup Validation, Market Research & MVP Planning | IdeaReels',
+  title: 'Blog — Startup Validation, Market Research & MVP Planning',
   description: 'Practical guides on startup idea validation, AI market research, MVP planning, and how solo founders are building faster. Written for vibe coders and solo founders.',
   alternates: { canonical: 'https://ideareels.io/blog' },
   openGraph: {

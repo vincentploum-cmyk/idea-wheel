@@ -8,7 +8,7 @@ const WebVitals = dynamic(() => import('@/components/WebVitals'), { ssr: false }
 export const metadata = {
   metadataBase: new URL('https://ideareels.io'),
   title: {
-    default: 'IdeaReels — #1 AI Startup Idea Validation & MVP Blueprint Tool',
+    default: 'IdeaReels — AI Startup Idea Validation & MVP Blueprint',
     template: '%s | IdeaReels',
   },
   description: 'Stop building the wrong thing. IdeaReels validates your startup idea with AI market research and produces a full technical MVP blueprint in under 5 minutes. From $3.99.',
@@ -38,14 +38,14 @@ export const metadata = {
     url: 'https://ideareels.io',
     siteName: 'IdeaReels',
     locale: 'en_US',
-    images: [{ width: 1200, height: 630, alt: 'IdeaReels — AI Startup Idea Validation & MVP Blueprints' }],
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels — AI Startup Idea Validation & MVP Blueprints' }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@ideareels',
     title: 'IdeaReels — Validate Your Startup Idea with AI Market Research',
     description: 'Stop building the wrong thing. AI market research + MVP blueprint in under 5 minutes, from $3.99.',
-    images: [{ width: 1200, height: 630 }],
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels — AI Startup Idea Validation & MVP Blueprints' }],
   },
   // robots.txt is handled exclusively by app/robots.js — no meta robots tag here
   verification: { google: '7-zPuvRs0wD-bV9Mr_dDdu4vcjW2o3XrZzVGJuqDyd0' },

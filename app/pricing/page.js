@@ -4,8 +4,20 @@ import TrustBar from '@/components/TrustBar';
 
 export const metadata = {
   title: 'Pricing — IdeaReels: AI Market Research Starting at $3.99',
-  description: 'Buy AI market research and a full MVP blueprint before you commit to building. Starter credits from $3.99 — never expire, no subscription. Purchase today and validate your idea in 5 minutes.',
+  description: 'AI market research + MVP blueprint before you build. Credits from $3.99 — no subscription, never expire. Validate your startup idea in under 5 minutes.',
   alternates: { canonical: 'https://ideareels.io/pricing' },
+  openGraph: {
+    title: 'IdeaReels Pricing — Startup Validation from $3.99',
+    description: 'AI market research + MVP blueprint. One-time credits from $3.99, no subscription, never expire.',
+    url: 'https://ideareels.io/pricing',
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels Pricing' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'IdeaReels Pricing — Startup Validation from $3.99',
+    description: 'AI market research + MVP blueprint. One-time credits from $3.99, no subscription, never expire.',
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630 }],
+  },
 };
 
 const jsonLd = {

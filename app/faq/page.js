@@ -7,6 +7,18 @@ export const metadata = {
   title: 'FAQ — IdeaReels: Market Research & MVP Blueprint Tool',
   description: 'Answers to common questions about IdeaReels — how AI market validation works, what credits do, and how to go from concept to technical MVP blueprint.',
   alternates: { canonical: 'https://ideareels.io/faq' },
+  openGraph: {
+    title: 'IdeaReels FAQ — How Startup Idea Validation Works',
+    description: 'How AI market validation works, what credits do, and how to get from concept to MVP blueprint.',
+    url: 'https://ideareels.io/faq',
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels FAQ' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'IdeaReels FAQ — How Startup Idea Validation Works',
+    description: 'How AI market validation works, what credits do, and how to get from concept to MVP blueprint.',
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630 }],
+  },
 };
 
 export default function FaqPage() {

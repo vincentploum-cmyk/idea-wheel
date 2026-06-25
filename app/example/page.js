@@ -3,9 +3,36 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import TrustBar from '@/components/TrustBar';
 
 export const metadata = {
-  title: 'See a Full IdeaReels Example — Spin to Blueprint in 5 Minutes',
-  description: 'See exactly what IdeaReels produces: a real spin result, first-pass market verdict, deep research excerpts, and a technical MVP blueprint — for a freelance UX design invoicing tool.',
+  title: 'IdeaReels Example — Spin to Blueprint in 5 Minutes',
+  description: 'See exactly what IdeaReels produces: a real spin result, AI market verdict, deep research, and a full MVP blueprint — step by step, before you buy.',
   alternates: { canonical: 'https://ideareels.io/example' },
+  openGraph: {
+    title: 'IdeaReels Example — See the Full Output Before You Buy',
+    description: 'A real spin result, AI market verdict, deep research, and MVP blueprint — see every step before committing.',
+    url: 'https://ideareels.io/example',
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels — Full Example Output' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'IdeaReels Example — See the Full Output Before You Buy',
+    description: 'A real spin result, AI market verdict, deep research, and MVP blueprint — see every step.',
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630 }],
+  },
+};
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: 'How to Validate a Startup Idea with IdeaReels',
+  description: 'A walkthrough of the full IdeaReels output: spin a startup idea combination, get an AI market verdict, read deep research, and receive a technical MVP blueprint — in under 5 minutes.',
+  url: 'https://ideareels.io/example',
+  totalTime: 'PT5M',
+  step: [
+    { '@type': 'HowToStep', name: 'Spin the idea wheel', text: 'Select B2B or Consumer mode and spin three reels to generate a startup idea combination.' },
+    { '@type': 'HowToStep', name: 'Get your market verdict', text: 'IdeaReels scores the combination for viability and returns a first-pass market verdict in seconds.' },
+    { '@type': 'HowToStep', name: 'Read the deep research', text: 'Unlock AI-generated market research covering demand signals, competition, audience, and moat potential.' },
+    { '@type': 'HowToStep', name: 'Receive your MVP blueprint', text: 'Get a full technical MVP blueprint with feature set, stack recommendations, and build sequence.' },
+  ],
 };
 
 /* ─── Shared style tokens ──────────────────────────────────────── */
@@ -127,6 +154,7 @@ function BlueprintLock() {
 export default function ExamplePage() {
   return (
     <PopitoShell>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Header */}
       <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '48px 0 28px' }}>

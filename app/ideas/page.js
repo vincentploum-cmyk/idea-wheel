@@ -7,9 +7,21 @@ import { getAllCatalogData, getUnlockCounts } from '@/lib/catalog-store';
 import { IDEA_EXAMPLES } from '@/lib/idea-examples';
 
 export const metadata = {
-  title: 'Startup Ideas Library — IdeaReels',
-  description: 'Unlock pre-validated startup ideas with complete AI market research, competitor analysis, and technical MVP blueprints. Buy a Pro or Power pack to access ideas ready to build today.',
+  title: 'Startup Ideas Library — Pre-Validated with AI Market Research',
+  description: 'Browse pre-validated startup ideas with AI market research, competitor analysis, and technical MVP blueprints included. B2B and consumer tracks, scored for viability.',
   alternates: { canonical: 'https://ideareels.io/ideas' },
+  openGraph: {
+    title: 'Startup Ideas Library — Pre-Validated with AI Market Research',
+    description: 'Browse pre-validated startup ideas with AI market research and MVP blueprints. Every idea scored for viability.',
+    url: 'https://ideareels.io/ideas',
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels Startup Ideas Library' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Startup Ideas Library — Pre-Validated with AI Market Research',
+    description: 'Browse pre-validated startup ideas with AI market research and MVP blueprints. Every idea scored for viability.',
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630 }],
+  },
 };
 
 export const revalidate = 3600;
@@ -36,12 +48,22 @@ export default async function IdeasPage() {
     ideaUnlocks = Object.fromEntries(checks);
   }
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Pre-Validated Startup Ideas Library',
+    description: 'Curated startup ideas with AI market research, competitor analysis, and technical MVP blueprints. Scored for viability across B2B and Consumer tracks.',
+    url: 'https://ideareels.io/ideas',
+    numberOfItems: 5339,
+  };
+
   return (
     <PopitoShell>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="popito_fn_pagetitle">
         <div className="container">
           <div className="pagetitle">
-            <h1 className="fn__title">Ideas from the engine</h1>
+            <h1 className="fn__title">Startup Ideas Library</h1>
             <p className="fn__desc">Pre-validated startup ideas with AI market research and MVP blueprints included. Each one targets a specific problem, real demand, and a clear angle for building.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
