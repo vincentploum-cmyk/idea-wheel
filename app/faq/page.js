@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import PopitoShell from '@/components/popito/PopitoShell';
+import TrustBar from '@/components/TrustBar';
 import { FAQS } from '@/lib/content';
 
 export const metadata = {
@@ -26,11 +27,19 @@ export default function FaqPage() {
           <div className="pagetitle">
             <h1 className="fn__title">Frequently Asked Questions</h1>
             <p className="fn__desc">Common questions about AI startup idea validation, how credits work, what's in an MVP blueprint, and whether IdeaReels is right for your stage.</p>
+            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, color: '#111', opacity: 0.55, marginTop: 12, letterSpacing: '0.04em' }}>
+              How it works &nbsp;·&nbsp; Credits &amp; pricing &nbsp;·&nbsp; What you get &nbsp;·&nbsp; Privacy &amp; data
+            </p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
         </div>
       </div>
+      <TrustBar items={[
+        { label: 'Plain English answers', sub: 'No marketing speak' },
+        { label: 'Still stuck?', sub: 'Contact us — real humans reply' },
+        { label: 'Spinning is free', sub: 'No credit card needed' },
+      ]} />
       <div className="popito_fn_membership_page">
         <div className="container" style={{ padding: '60px 20px 60px', maxWidth: 720, margin: '0 auto' }}>
           {FAQS.map((faq) => (

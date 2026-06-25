@@ -1,5 +1,6 @@
 import PopitoShell from '@/components/popito/PopitoShell';
 import PricingPageClient from './pricing-page-client';
+import TrustBar from '@/components/TrustBar';
 
 export const metadata = {
   title: 'Pricing — IdeaReels: AI Market Research Starting at $3.99',
@@ -81,29 +82,20 @@ export default function PricingPage({ searchParams }) {
           <div className="pagetitle">
             <h1 className="fn__title">Pricing that matches how builders buy</h1>
             <p className="fn__desc">AI startup idea validation and full MVP blueprints from $3.99. No subscription — buy credits when you need them, use them at your own pace.</p>
+            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, color: '#111', opacity: 0.55, marginTop: 12, letterSpacing: '0.04em' }}>
+              One-time purchase &nbsp;·&nbsp; No account to browse &nbsp;·&nbsp; Results in under 5 minutes &nbsp;·&nbsp; Credits never expire
+            </p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
         </div>
       </div>
 
-      {/* Cost of inaction bar */}
-      <div style={{ background: '#FFE000', borderTop: '3px solid #111', borderBottom: '3px solid #111', padding: '16px 0' }}>
-        <div className="container">
-          <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap', textAlign: 'center' }}>
-            {[
-              { label: 'Spinning is free', sub: 'No credit card required' },
-              { label: 'Credits never expire', sub: 'Buy when you need them' },
-              { label: 'Secure checkout', sub: 'Via Stripe' },
-            ].map(({ label, sub }) => (
-              <div key={label}>
-                <div style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 15, color: '#111' }}>{label}</div>
-                <div style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 12, color: '#111', opacity: 0.6 }}>{sub}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <TrustBar items={[
+        { label: 'Spinning is free', sub: 'No credit card required' },
+        { label: 'Credits never expire', sub: 'Buy when you need them' },
+        { label: 'Secure checkout', sub: 'Via Stripe' },
+      ]} />
 
       <PricingPageClient searchParams={searchParams} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />

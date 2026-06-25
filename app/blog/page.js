@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import PopitoShell from '@/components/popito/PopitoShell';
+import TrustBar from '@/components/TrustBar';
 import { BLOG_POSTS } from '@/lib/blog-posts';
 
 export const metadata = {
@@ -44,11 +45,19 @@ export default function BlogPage() {
           <div className="pagetitle">
             <h1 className="fn__title">The IdeaReels Blog</h1>
             <p className="fn__desc">Startup idea validation, AI market research, and MVP planning — practical guides for solo founders and vibe coders who want to build the right thing faster.</p>
+            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, color: '#111', opacity: 0.55, marginTop: 12, letterSpacing: '0.04em' }}>
+              Founder playbooks &nbsp;·&nbsp; AI &amp; startups &nbsp;·&nbsp; Tools &amp; workflows &nbsp;·&nbsp; No paywalls
+            </p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
         </div>
       </div>
+      <TrustBar items={[
+        { label: 'Free to read', sub: 'No account needed' },
+        { label: 'Practical only', sub: 'No fluff, no filler' },
+        { label: 'For solo founders', sub: 'And vibe coders' },
+      ]} />
 
       <div className="popito_fn_membership_page">
         <section style={{ padding: '8px 0 60px' }}>

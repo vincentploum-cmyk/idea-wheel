@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import PopitoShell from '@/components/popito/PopitoShell';
+import TrustBar from '@/components/TrustBar';
 
 export const metadata = {
   title: 'See a Full IdeaReels Example — Spin to Blueprint in 5 Minutes',
@@ -140,10 +141,18 @@ export default function ExamplePage() {
             <p className="fn__desc" style={{ maxWidth: 500 }}>
               A real spin result, market verdict, deep research, and full MVP blueprint — produced in under 5 minutes.
             </p>
+            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, color: '#111', opacity: 0.55, marginTop: 12, letterSpacing: '0.04em' }}>
+              Real output &nbsp;·&nbsp; Not a mock &nbsp;·&nbsp; Every section explained &nbsp;·&nbsp; See before you buy
+            </p>
             <span className="wings" />
           </div>
         </div>
       </div>
+      <TrustBar items={[
+        { label: 'Full walkthrough', sub: 'Spin → research → blueprint' },
+        { label: 'No account needed', sub: 'Browse freely' },
+        { label: 'Under 5 minutes', sub: 'From idea to blueprint' },
+      ]} />
 
       <div className="popito_fn_membership_page" style={{ paddingBottom: 80 }}>
         <div className="container">
