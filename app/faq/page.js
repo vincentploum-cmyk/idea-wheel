@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import PopitoShell from '@/components/popito/PopitoShell';
-import TrustBar from '@/components/TrustBar';
 import { FAQS } from '@/lib/content';
 
 export const metadata = {
@@ -39,6 +38,7 @@ export default function FaqPage() {
           <div className="pagetitle">
             <h1 className="fn__title">Frequently Asked Questions</h1>
             <p className="fn__desc">Common questions about AI startup idea validation, how credits work, what's in an MVP blueprint, and whether IdeaReels is right for your stage.</p>
+            <p className="fn__desc" style={{ marginTop: 12, opacity: 0.7 }}>If you&apos;re deciding whether to buy, start with the credits and blueprint questions. If you&apos;re already a user and something isn&apos;t working, the troubleshooting section covers the most common issues. Still stuck — the contact page goes straight to a human.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>

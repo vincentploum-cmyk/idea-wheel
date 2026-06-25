@@ -1,6 +1,5 @@
 import PopitoShell from '@/components/popito/PopitoShell';
 import IdeasClient from './ideas-client';
-import TrustBar from '@/components/TrustBar';
 import { createClient } from '@/lib/supabase-server';
 import { hasUnlockedIdea, getIdeaCreditBalance } from '@/lib/credits';
 import { getAllCatalogData, getUnlockCounts } from '@/lib/catalog-store';
@@ -65,16 +64,12 @@ export default async function IdeasPage() {
           <div className="pagetitle">
             <h1 className="fn__title">Startup Ideas Library</h1>
             <p className="fn__desc">Pre-validated startup ideas with AI market research and MVP blueprints included. Each one targets a specific problem, real demand, and a clear angle for building.</p>
+            <p className="fn__desc" style={{ marginTop: 12, opacity: 0.7 }}>Every idea in this library has been scored for viability — we only surface combinations that clear a 75+ threshold across industry fit, workflow friction, and market specificity. Browse by B2B or Consumer track, or use the wheel to generate your own.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
         </div>
       </div>
-      <TrustBar items={[
-        { label: 'Scored for viability', sub: 'Every idea rated 75+' },
-        { label: 'B2B & Consumer', sub: 'Two distinct tracks' },
-        { label: 'Blueprint included', sub: 'Technical MVP plan' },
-      ]} />
       <IdeasClient
         user={user}
         catalogData={catalogData}

@@ -248,6 +248,14 @@ img, svg { display: block; max-width: 100%; }
   background-color: #000 !important;
 }
 
+/* Sticky nav */
+#popito_fn_header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

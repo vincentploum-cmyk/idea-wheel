@@ -1,6 +1,5 @@
 import PopitoShell from '@/components/popito/PopitoShell';
 import PricingPageClient from './pricing-page-client';
-import TrustBar from '@/components/TrustBar';
 
 export const metadata = {
   title: 'Pricing — IdeaReels: AI Market Research Starting at $3.99',
@@ -94,17 +93,12 @@ export default function PricingPage({ searchParams }) {
           <div className="pagetitle">
             <h1 className="fn__title">Pricing that matches how builders buy</h1>
             <p className="fn__desc">AI startup idea validation and full MVP blueprints from $3.99. No subscription — buy credits when you need them, use them at your own pace.</p>
+            <p className="fn__desc" style={{ marginTop: 12, opacity: 0.7 }}>Credits never expire and work across every idea you spin. One credit unlocks the full research and blueprint for a single idea — market verdict, competitor landscape, demand signals, and a technical build plan. Most founders use 2–3 credits to find the one they want to build.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
         </div>
       </div>
-
-      <TrustBar items={[
-        { label: 'Spinning is free', sub: 'No credit card required' },
-        { label: 'Credits never expire', sub: 'Buy when you need them' },
-        { label: 'Secure checkout', sub: 'Via Stripe' },
-      ]} />
 
       <PricingPageClient searchParams={searchParams} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
