@@ -77,10 +77,10 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
                 </div>
               </div>
             </div>
-            <div className="right__trigger">
+            <div className="right__trigger" style={{ width: 260, flexShrink: 0, overflow: 'visible' }}>
               {user
-                ? <Link href="/profile">My Account</Link>
-                : <Link href="/auth/login">Sign in / Register</Link>}
+                ? <Link href="/profile" style={{ width: '100%', justifyContent: 'center' }}>My Account</Link>
+                : <Link href="/auth/login" style={{ width: '100%', justifyContent: 'center' }}>Sign in / Register</Link>}
             </div>
           </div>
         </div>
