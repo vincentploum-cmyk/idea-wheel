@@ -206,15 +206,18 @@ img, svg { display: block; max-width: 100%; }
 }
 
 /* Fixed width prevents the nav from reflowing when auth state changes.
-   overflow: visible overrides the template's overflow:hidden that clips the text. */
+   overflow: visible !important overrides template style.css overflow:hidden. */
 .right__trigger {
-  min-width: 220px;
+  min-width: 220px !important;
   flex-shrink: 0;
-  overflow: visible;
+  overflow: visible !important;
+  width: auto !important;
 }
 .right__trigger a {
   justify-content: center;
-  width: 100%;
+  width: 100% !important;
+  padding-left: 32px !important;
+  padding-right: 32px !important;
 }
 
 /* ── Page title consistency ───────────────────────────── */
