@@ -2676,7 +2676,7 @@ const CSS = `
   box-shadow:5px 5px 0 #111;
   overflow:hidden;
 }
-.sm-live-sentence p { margin:0; font-size:13px; line-height:1.4; color:#111; font-family:'Nunito',sans-serif; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sm-live-sentence p { margin:0; font-size:13px; line-height:1.6; color:#111; font-family:'Nunito',sans-serif; font-weight:900; }
 .sm-live-sentence .sm-slot {
   display:inline-block;
   font-weight:900;
