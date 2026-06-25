@@ -205,14 +205,16 @@ img, svg { display: block; max-width: 100%; }
   letter-spacing: 0.04em;
 }
 
-/* Fixed width prevents the nav from reflowing when auth state changes
-   "Sign in / Register" is wider than "My Account" — lock it to the wider text */
+/* Fixed width prevents the nav from reflowing when auth state changes.
+   overflow: visible overrides the template's overflow:hidden that clips the text. */
 .right__trigger {
   min-width: 220px;
   flex-shrink: 0;
+  overflow: visible;
 }
 .right__trigger a {
   justify-content: center;
+  width: 100%;
 }
 
 /* ── Page title consistency ───────────────────────────── */
