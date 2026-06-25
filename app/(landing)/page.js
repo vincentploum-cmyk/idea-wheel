@@ -106,13 +106,13 @@ export default async function LandingPage() {
   return (
     <PopitoShell>
       {/* Hero */}
-      <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '40px 0 20px', display: 'flex', alignItems: 'center' }}>
+      <div className="popito_fn_pagetitle" style={{ display: 'flex', alignItems: 'center' }}>
         <div className="container">
           <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto' }}>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
               For solo founders, vibe coders &amp; indie hackers
             </p>
-            <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.08, marginBottom: 16, textWrap: 'balance' }}>
+            <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.1, marginBottom: 14, textWrap: 'balance' }}>
               The startup idea generator that tells you if it&apos;s worth building.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 560, margin: '0 auto 20px' }}>

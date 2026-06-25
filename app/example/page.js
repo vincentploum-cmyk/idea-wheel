@@ -156,13 +156,13 @@ export default function ExamplePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Header */}
-      <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '48px 0 28px' }}>
+      <div className="popito_fn_pagetitle">
         <div className="container">
           <div className="pagetitle">
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12, opacity: 0.45 }}>
               Live example
             </p>
-            <h1 className="fn__title" style={{ fontSize: 'clamp(2rem,5vw,3rem)', lineHeight: 1.1, marginBottom: 14 }}>
+            <h1 className="fn__title">
               Here's exactly what you get.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 500 }}>

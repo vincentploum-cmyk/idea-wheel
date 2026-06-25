@@ -10,13 +10,13 @@ export const metadata = {
 export default function ContactPage() {
   return (
     <PopitoShell>
-      <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '48px 0 32px' }}>
+      <div className="popito_fn_pagetitle">
         <div className="container">
-          <div className="pagetitle" style={{ maxWidth: 560 }}>
+          <div className="pagetitle">
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12, opacity: 0.5 }}>
               Get in touch
             </p>
-            <h1 className="fn__title" style={{ fontSize: 'clamp(2rem,5vw,3rem)', lineHeight: 1.1, marginBottom: 12 }}>
+            <h1 className="fn__title">
               We read every message.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 440 }}>

@@ -223,7 +223,7 @@ img, svg { display: block; max-width: 100%; }
   min-height: 0 !important;
 }
 .popito_fn_pagetitle .pagetitle {
-  padding: 48px 0 40px;
+  padding: 48px 0 32px;
 }
 .popito_fn_pagetitle .fn__title {
   font-family: "Nunito", sans-serif;
