@@ -31,7 +31,7 @@ const jsonLd = {
       item: {
         '@type': 'Product',
         name: 'Starter Pack — 5 Credits',
-        description: '5 credits to evaluate your own startup concepts with AI market research and a full technical MVP blueprint. 1 credit for deep research, 2 credits for the full blueprint.',
+        description: '5 spin credits to evaluate your own startup concepts. 1 credit per spin (generates idea + first-pass verdict). 2 credits for the full blueprint (market research + technical MVP plan).',
         url: 'https://ideareels.io/pricing',
         brand: { '@type': 'Brand', name: 'IdeaReels' },
         offers: {
@@ -93,7 +93,7 @@ export default function PricingPage({ searchParams }) {
           <div className="pagetitle">
             <h1 className="fn__title">No subscription. Pay per idea.</h1>
             <p className="fn__desc">AI market research and a full MVP blueprint from $3.99. Buy credits when you need them, use them at your own pace — they never expire and there is no recurring charge.</p>
-            <p className="fn__desc" style={{ marginTop: 12, opacity: 0.7 }}>Credits never expire and work across every idea you spin. One credit unlocks the full research and blueprint for a single idea — market verdict, competitor landscape, demand signals, and a technical build plan. Most founders use 2–3 credits to find the one they want to build.</p>
+            <p className="fn__desc" style={{ marginTop: 12, opacity: 0.7 }}>Spin an idea for 1 credit. Get the full blueprint — market research, competitor landscape, demand signals, and a technical build plan — for 2 more credits. Most founders test 2–3 ideas before finding the one worth building.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>

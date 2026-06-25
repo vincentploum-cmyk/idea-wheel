@@ -7,10 +7,10 @@ import { createClient } from '@/lib/supabase-server';
 
 const PACK_FEATURES = {
   starter: [
-    '5 credits — spin ideas and run blueprints',
-    '1 credit for deep research',
-    '2 credits for the full blueprint',
-    'First-pass verdict before you spend more',
+    '5 spin credits for your own concepts',
+    '1 credit per spin — idea + first-pass verdict',
+    '2 credits for the full blueprint (research + MVP plan)',
+    'Credits never expire',
   ],
   pro: [
     'Unlock 1 pre-researched idea from the library',
