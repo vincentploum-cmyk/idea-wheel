@@ -48,9 +48,21 @@ const TESTIMONIALS = [
 ];
 
 export const metadata = {
-  title: 'AI Market Research & MVP Blueprints for Solo Builders',
-  description: 'Stop building the wrong thing. IdeaReels gives you AI-powered market research and a full technical MVP blueprint in minutes — before you write a single line of code.',
+  title: 'Startup Idea Generator with AI Market Research & MVP Blueprint',
+  description: 'IdeaReels is a startup idea generator for solo founders, vibe coders, and indie hackers. Spin an idea, get AI market research and a full MVP blueprint in under 5 minutes. From $3.99, no subscription.',
   alternates: { canonical: 'https://ideareels.io' },
+  openGraph: {
+    title: 'Startup Idea Generator with AI Market Research & MVP Blueprint',
+    description: 'Spin a startup idea, get AI market research and a full MVP blueprint in under 5 minutes. Built for solo founders and vibe coders. No subscription.',
+    url: 'https://ideareels.io',
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels — Startup Idea Generator' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Startup Idea Generator with AI Market Research & MVP Blueprint',
+    description: 'Spin a startup idea, get AI market research and a full MVP blueprint in under 5 minutes. No subscription.',
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630 }],
+  },
 };
 
 export default async function LandingPage() {
@@ -98,13 +110,13 @@ export default async function LandingPage() {
         <div className="container">
           <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto' }}>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
-              Built for AI builders and vibe coders
+              For solo founders, vibe coders &amp; indie hackers
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.08, marginBottom: 16, textWrap: 'balance' }}>
-              Out of ideas?<br />Spin one. Know if it's worth building.
+              The startup idea generator that tells you if it&apos;s worth building.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 560, margin: '0 auto 20px' }}>
-              Frame the opportunity, research the market, and define your MVP — so you know exactly what to build before you commit a single day.
+              Spin three reels to generate a specific startup idea, then get AI market research and a full technical MVP blueprint — in under 5 minutes, from $3.99, no subscription.
             </p>
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
               {user ? (
