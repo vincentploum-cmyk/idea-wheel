@@ -27,9 +27,6 @@ export default function FaqPage() {
           <div className="pagetitle">
             <h1 className="fn__title">Frequently Asked Questions</h1>
             <p className="fn__desc">Common questions about AI startup idea validation, how credits work, what's in an MVP blueprint, and whether IdeaReels is right for your stage.</p>
-            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, color: '#111', opacity: 0.55, marginTop: 12, letterSpacing: '0.04em' }}>
-              How it works &nbsp;·&nbsp; Credits &amp; pricing &nbsp;·&nbsp; What you get &nbsp;·&nbsp; Privacy &amp; data
-            </p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>

@@ -141,9 +141,6 @@ export default function ExamplePage() {
             <p className="fn__desc" style={{ maxWidth: 500 }}>
               A real spin result, market verdict, deep research, and full MVP blueprint — produced in under 5 minutes.
             </p>
-            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, color: '#111', opacity: 0.55, marginTop: 12, letterSpacing: '0.04em' }}>
-              Real output &nbsp;·&nbsp; Not a mock &nbsp;·&nbsp; Every section explained &nbsp;·&nbsp; See before you buy
-            </p>
             <span className="wings" />
           </div>
         </div>

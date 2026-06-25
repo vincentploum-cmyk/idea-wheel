@@ -82,9 +82,6 @@ export default function PricingPage({ searchParams }) {
           <div className="pagetitle">
             <h1 className="fn__title">Pricing that matches how builders buy</h1>
             <p className="fn__desc">AI startup idea validation and full MVP blueprints from $3.99. No subscription — buy credits when you need them, use them at your own pace.</p>
-            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, color: '#111', opacity: 0.55, marginTop: 12, letterSpacing: '0.04em' }}>
-              One-time purchase &nbsp;·&nbsp; No account to browse &nbsp;·&nbsp; Results in under 5 minutes &nbsp;·&nbsp; Credits never expire
-            </p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
