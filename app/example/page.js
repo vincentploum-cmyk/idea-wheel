@@ -158,7 +158,7 @@ export default function ExamplePage() {
       {/* Header */}
       <div className="popito_fn_pagetitle" style={{ minHeight: 0, padding: '48px 0 28px' }}>
         <div className="container">
-          <div className="pagetitle" style={{ maxWidth: 640 }}>
+          <div className="pagetitle">
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12, opacity: 0.45 }}>
               Live example
             </p>
