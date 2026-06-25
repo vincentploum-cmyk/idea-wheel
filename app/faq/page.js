@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import PopitoShell from '@/components/popito/PopitoShell';
+import TrustBar from '@/components/TrustBar';
 import { FAQS } from '@/lib/content';
 
 export const metadata = {

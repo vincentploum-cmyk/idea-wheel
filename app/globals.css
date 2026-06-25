@@ -205,6 +205,16 @@ img, svg { display: block; max-width: 100%; }
   letter-spacing: 0.04em;
 }
 
+/* Fixed width prevents the nav from reflowing when auth state changes
+   "Sign in / Register" is wider than "My Account" — lock it to the wider text */
+.right__trigger {
+  min-width: 220px;
+  flex-shrink: 0;
+}
+.right__trigger a {
+  justify-content: center;
+}
+
 /* ── Page title consistency ───────────────────────────── */
 /* Template default is 72px + uppercase — override to match brand scale */
 .popito_fn_pagetitle {
@@ -256,12 +266,36 @@ img, svg { display: block; max-width: 100%; }
   background: #fff;
 }
 
+/* View Transitions — navigation-level crossfade, no JS needed.
+   Keeps transform/opacity on the compositor; never triggers layout. */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: 120ms ease-out both fade-out;
+}
+::view-transition-new(root) {
+  animation: 160ms ease-out both fade-in;
+}
+
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
   }
 }
 
