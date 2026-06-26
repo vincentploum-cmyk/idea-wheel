@@ -105,13 +105,17 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
 
-        {/* Critical template CSS — blocking so above-fold content renders correctly */}
+        {/* Critical template CSS — blocking so above-fold content renders correctly.
+           responsive.css carries the mobile breakpoints (hides the desktop header,
+           shows the hamburger nav below 1040px), so it must load for screen — not be
+           deferred. The old media="print" onLoad="this.media='all'" swap never fired
+           because React drops string onLoad handlers, leaving these stuck on print
+           and breaking the mobile layout. */}
         <link rel="preload" as="style" href="/popito-assets/css/style.css" />
         <link rel="stylesheet" href="/popito-assets/css/style.css" />
-        {/* Non-critical template CSS — loaded after paint to cut render-blocking time */}
-        <link rel="stylesheet" href="/popito-assets/css/base.css" media="print" onLoad="this.media='all'" />
-        <link rel="stylesheet" href="/popito-assets/css/plugins.css" media="print" onLoad="this.media='all'" />
-        <link rel="stylesheet" href="/popito-assets/css/responsive.css" media="print" onLoad="this.media='all'" />
+        <link rel="stylesheet" href="/popito-assets/css/base.css" />
+        <link rel="stylesheet" href="/popito-assets/css/plugins.css" />
+        <link rel="stylesheet" href="/popito-assets/css/responsive.css" />
 
         {/* Global schema: WebSite + Organization */}
         <script
