@@ -148,10 +148,7 @@ export default async function LandingPage() {
             <p className="fn__desc" style={{ maxWidth: 580, margin: '0 auto 10px' }}>
               Spin an idea, get real demand signals from Reddit, Google Trends, and community data, then walk away with a technical MVP blueprint your developer can build from — in under 5 minutes. Not an AI opinion. Sourced data.
             </p>
-            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, opacity: 0.55, margin: '0 auto 20px', maxWidth: 480 }}>
-              Free account, no card required. Go deeper only when the signal is strong.
-            </p>
-            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12, marginTop: 20 }}>
               {user ? (
                 <Link href="/wheel" className="fn__btn"><span>Get your next verdict</span></Link>
               ) : (
