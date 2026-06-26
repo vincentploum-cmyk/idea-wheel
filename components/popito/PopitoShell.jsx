@@ -45,9 +45,9 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
       style={yellowBg ? { background: '#FFE000' } : undefined}
     >
       <PromoBanner
-        text="Validate your startup idea in 5 min — AI market research + MVP blueprint from $3.99."
-        linkLabel="Start now →"
-        linkHref="/pricing"
+        text="Get your free first verdict, then unlock the research and MVP blueprint only when the signal is strong."
+        linkLabel="Get started free →"
+        linkHref={user ? '/wheel' : '/auth/register'}
       />
 
       <div className="popito_fn_searchbox">
@@ -163,11 +163,11 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
               <div className="middle_right">
                 <div className="footer_subscribe">
                   <div className="subscribe_title">
-                    <h3>Ready to find a buildable idea?</h3>
+                    <h3>Ready to get a real market verdict?</h3>
                   </div>
                   <div className="subscribe_form">
                     <div className="form">
-                      <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn medium"><span>{user ? 'Spin now' : 'Get started'}</span></Link>
+                      <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn medium"><span>{user ? 'Run your next verdict' : 'Get your free first verdict'}</span></Link>
                     </div>
                     <div className="icon">
                       <img src="/popito-assets/svg/arrow-curly.svg" alt="" className="fn__svg" />

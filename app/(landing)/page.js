@@ -47,6 +47,36 @@ const TESTIMONIALS = [
   },
 ];
 
+const PROOF_PILLARS = [
+  {
+    title: 'A verdict with evidence behind it',
+    desc: 'Every strong idea starts with visible signals: demand, competitors, willingness to pay, and the communities already talking about the problem.',
+  },
+  {
+    title: 'A free first verdict',
+    desc: 'Start with a free account, get the first market read, and only spend credits when the signal is strong enough to deserve deeper work.',
+  },
+  {
+    title: 'A blueprint you can hand off tonight',
+    desc: 'When an idea clears the bar, IdeaReels turns it into product scope, technical steps, and launch direction a builder can actually execute.',
+  },
+];
+
+const OUTPUT_PREVIEW = [
+  {
+    label: 'Market verdict',
+    lines: ['Demand signal: Strong', 'Why now: active buyer pain in plain sight', 'Decision: worth deeper research'],
+  },
+  {
+    label: 'Signals checked',
+    lines: ['Community demand and pain language', 'Competitor pressure and whitespace', 'Willingness-to-pay evidence'],
+  },
+  {
+    label: 'Blueprint handoff',
+    lines: ['What to build first', 'What to cut from V1', 'Recommended stack and launch path'],
+  },
+];
+
 export const metadata = {
   title: 'Startup Idea Generator with AI Market Research & MVP Blueprint',
   description: 'IdeaReels is a startup idea generator for solo founders, vibe coders, and indie hackers. Spin an idea, get AI market research and a full MVP blueprint in under 5 minutes. From $3.99, no subscription.',
@@ -113,20 +143,21 @@ export default async function LandingPage() {
               For solo founders, vibe coders &amp; indie hackers
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.1, marginBottom: 14, textWrap: 'balance' }}>
-              The startup idea generator that tells you if it&apos;s worth building.
+              Bring an idea, or spin one.<br />Get the market verdict before you build.
             </h1>
-            <p className="fn__desc" style={{ maxWidth: 560, margin: '0 auto 20px' }}>
-              Spin three reels to generate a specific startup idea, then get AI market research and a full technical MVP blueprint — in under 5 minutes, from $3.99, no subscription.
+            <p className="fn__desc" style={{ maxWidth: 660, margin: '0 auto 20px' }}>
+              IdeaReels checks demand signals, competitors, and willingness-to-pay evidence, then turns the winners into a technical MVP blueprint you can hand to a developer tonight.
             </p>
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
               {user ? (
-                <Link href="/wheel" className="fn__btn"><span>Get started!</span></Link>
+                <Link href="/wheel" className="fn__btn"><span>Get your next verdict</span></Link>
               ) : (
-                <Link href="/pricing" className="fn__btn"><span>Get started!</span></Link>
+                <Link href="/auth/register" className="fn__btn"><span>Get your free first verdict</span></Link>
               )}
+              <Link href="/example" className="fn__btn medium"><span>See a real output</span></Link>
             </div>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, opacity: 0.5, margin: 0 }}>
-              Market research + MVP blueprint from $3.99. Credits never expire.
+              Free account, no card required. Go deeper only when the signal is strong.
             </p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
@@ -139,8 +170,9 @@ export default async function LandingPage() {
         <div className="container">
           <div style={{ display: 'flex', gap: 'clamp(20px,5vw,40px)', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
             {[
+              { num: 'Free', label: 'first market verdict' },
               { num: '< 5 min', label: 'idea to blueprint' },
-              { num: '$3.99',  label: 'to get started' },
+              { num: '3 signal layers',  label: 'demand, competition, WTP' },
               { num: '4 AI agents', label: 'on every blueprint' },
             ].map(({ num, label }) => (
               <div key={label} style={{ textAlign: 'center' }}>
@@ -154,15 +186,39 @@ export default async function LandingPage() {
 
       <div className="popito_fn_membership_page">
 
+        {/* Trust wedge */}
+        <section style={{ padding: '26px 0 8px' }}>
+          <div className="container">
+            <div style={{ textAlign: 'center', marginBottom: 28, maxWidth: 760, marginInline: 'auto' }}>
+              <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', marginBottom: 8, textWrap: 'balance' }}>
+                More useful than a vague AI opinion
+              </h2>
+              <p style={{ opacity: 0.65, margin: 0 }}>
+                The category is full of confident-sounding verdicts. IdeaReels is built to show the signal, then turn the winners into a real build plan.
+              </p>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 24 }}>
+              {PROOF_PILLARS.map((pillar) => (
+                <div key={pillar.title} className="fn__bold_item" style={{ padding: '28px 24px' }}>
+                  <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 17, marginBottom: 8 }}>
+                    {pillar.title}
+                  </h3>
+                  <p style={{ opacity: 0.68, lineHeight: 1.65, fontSize: 14, margin: 0 }}>{pillar.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* How it works */}
         <section id="how-it-works" style={{ padding: '48px 0' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 36 }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', marginBottom: 8, textWrap: 'balance' }}>
-                The founder diligence you should do before you commit
+                The builder workflow before you commit real time
               </h2>
               <p style={{ opacity: 0.6, maxWidth: 520, margin: '0 auto' }}>
-                Most builders skip this. IdeaReels does it in 5 minutes.
+                Most founders skip this and build on instinct. IdeaReels compresses it into one sitting.
               </p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 24, marginBottom: 28 }}>
@@ -192,11 +248,37 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        {/* Output preview */}
+        <section style={{ padding: '0 0 48px' }}>
+          <div className="container">
+            <div style={{ textAlign: 'center', marginBottom: 28, maxWidth: 760, marginInline: 'auto' }}>
+              <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', marginBottom: 8, textWrap: 'balance' }}>
+                What you see before you spend more
+              </h2>
+              <p style={{ opacity: 0.65, margin: 0 }}>
+                The first verdict is meant to be useful on its own. When the signal is strong, the deeper research and blueprint pick up from there.
+              </p>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 24 }}>
+              {OUTPUT_PREVIEW.map((card) => (
+                <div key={card.label} className="fn__bold_item" style={{ padding: '26px 24px' }}>
+                  <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.55, margin: '0 0 10px' }}>
+                    {card.label}
+                  </p>
+                  <ul style={{ margin: 0, paddingLeft: 18, opacity: 0.72, lineHeight: 1.8, fontSize: 14 }}>
+                    {card.lines.map((line) => <li key={line}>{line}</li>)}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Testimonials */}
         <section style={{ padding: '0 0 48px' }}>
           <div className="container">
             <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', textAlign: 'center', marginBottom: 32, textWrap: 'balance' }}>
-              What founders say
+              What builders did after the verdict
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 24 }}>
               {TESTIMONIALS.map((t) => (
@@ -237,10 +319,10 @@ export default async function LandingPage() {
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 32, maxWidth: 640, marginInline: 'auto' }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', marginBottom: 8, textWrap: 'balance' }}>
-                Pay only when the signal says go
+                Start free. Pay only when the signal says go.
               </h2>
               <p style={{ opacity: 0.65 }}>
-                No subscription. Credits never expire. Buy once, use whenever.
+                First verdict first. No subscription. Credits never expire.
               </p>
             </div>
             <div className="fn__pricing_tables">
@@ -313,13 +395,13 @@ export default async function LandingPage() {
           <div className="container">
             <div className="fn__bold_item" style={{ padding: '48px 40px', background: '#FFE000', textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(1.6rem,3vw,2.2rem)', margin: '0 0 12px', lineHeight: 1.15, textWrap: 'balance' }}>
-                Assumptions cost weeks.<br />Research costs $3.99.
+                Stop building on assumptions.<br />Get the verdict first.
               </h2>
               <p style={{ fontSize: 15, lineHeight: 1.65, opacity: 0.7, margin: '0 0 24px', maxWidth: 420, marginInline: 'auto' }}>
-                Market research + MVP blueprint in under 5 minutes. No subscription.
+                Start with the free first verdict, then unlock the deeper research and blueprint only when the idea deserves it.
               </p>
-              <Link href="/pricing" className="fn__btn"><span>Get credits — from $3.99</span></Link>
-              <p style={{ marginTop: 14, fontSize: 12, opacity: 0.55 }}>Credits never expire · Secure checkout via Stripe</p>
+              <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn"><span>{user ? 'Run your next verdict' : 'Get your free first verdict'}</span></Link>
+              <p style={{ marginTop: 14, fontSize: 12, opacity: 0.55 }}>No card required to start · Credits never expire · Secure checkout via Stripe</p>
             </div>
           </div>
         </section>
