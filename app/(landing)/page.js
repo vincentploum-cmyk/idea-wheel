@@ -140,13 +140,16 @@ export default async function LandingPage() {
         <div className="container">
           <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto' }}>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
-              For solo founders, vibe coders &amp; indie hackers
+              For vibe coders, indie hackers &amp; solo founders
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.1, marginBottom: 14, textWrap: 'balance' }}>
-              Bring an idea, or spin one.<br />Get the market verdict before you build.
+              Assumptions cost weeks.<br />Research costs $3.99.
             </h1>
-            <p className="fn__desc" style={{ maxWidth: 660, margin: '0 auto 20px' }}>
-              IdeaReels checks demand signals, competitors, and willingness-to-pay evidence, then turns the winners into a technical MVP blueprint you can hand to a developer tonight.
+            <p className="fn__desc" style={{ maxWidth: 580, margin: '0 auto 10px' }}>
+              Spin an idea, get real demand signals from Reddit, Google Trends, and community data, then walk away with a technical MVP blueprint your developer can build from — in under 5 minutes. Not an AI opinion. Sourced data.
+            </p>
+            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, opacity: 0.55, margin: '0 auto 20px', maxWidth: 480 }}>
+              Free account, no card required. Go deeper only when the signal is strong.
             </p>
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
               {user ? (
@@ -157,7 +160,7 @@ export default async function LandingPage() {
               <Link href="/example" className="fn__btn medium"><span>See a real output</span></Link>
             </div>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, opacity: 0.5, margin: 0 }}>
-              Free account, no card required. Go deeper only when the signal is strong.
+              Free account, no card required · Go deeper from $3.99 · Credits never expire
             </p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
@@ -215,7 +218,7 @@ export default async function LandingPage() {
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 36 }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', marginBottom: 8, textWrap: 'balance' }}>
-                The builder workflow before you commit real time
+                Validate the idea. Get the dev brief. Ship it tonight.
               </h2>
               <p style={{ opacity: 0.6, maxWidth: 520, margin: '0 auto' }}>
                 Most founders skip this and build on instinct. IdeaReels compresses it into one sitting.
@@ -241,6 +244,9 @@ export default async function LandingPage() {
               ))}
             </div>
           <div style={{ textAlign: 'center' }}>
+              <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 14, opacity: 0.7, marginBottom: 14 }}>
+                Most builders go from idea to dev-ready brief in one sitting.
+              </p>
               <Link href="/example" className="fn__creative_link" style={{ fontSize: 14 }}>
                 See a full example — spin to blueprint<span className="suffix">//</span>
               </Link>
@@ -395,7 +401,7 @@ export default async function LandingPage() {
           <div className="container">
             <div className="fn__bold_item" style={{ padding: '48px 40px', background: '#FFE000', textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(1.6rem,3vw,2.2rem)', margin: '0 0 12px', lineHeight: 1.15, textWrap: 'balance' }}>
-                Stop building on assumptions.<br />Get the verdict first.
+                The dev brief your next idea deserves.<br />Ready in under 5 minutes.
               </h2>
               <p style={{ fontSize: 15, lineHeight: 1.65, opacity: 0.7, margin: '0 0 24px', maxWidth: 420, marginInline: 'auto' }}>
                 Start with the free first verdict, then unlock the deeper research and blueprint only when the idea deserves it.
