@@ -2444,10 +2444,11 @@ const CSS = `
 .sm-cabinet::before, .sm-cabinet::after {
   content:'';
   position:absolute;
-  width:10px; height:10px;
+  width:12px; height:12px;
   background:#FFE000;
   border-radius:50%;
-  top:16px;
+  top:18px;
+  box-shadow:0 0 0 2px rgba(255,224,0,0.25);
 }
 .sm-cabinet::before { left:16px; }
 .sm-cabinet::after  { right:16px; }
@@ -2463,10 +2464,10 @@ const CSS = `
 }
 .sm-modebtn {
   font-family:var(--font-body); font-size:14px; font-weight:900;
-  color:#666;
+  color:#aaa;
   height:40px; line-height:34px;
   padding:0 22px; border-radius:8px;
-  border:2px solid #2a2a2a; background:#1a1a1a;
+  border:2px solid #333; background:#1a1a1a;
   cursor:pointer;
   position:relative; overflow:hidden;
   letter-spacing:.06em; text-transform:uppercase;
@@ -2474,7 +2475,7 @@ const CSS = `
 }
 .sm-modebtn::after { display:none; }
 .sm-modebtn span { position:relative; z-index:2; }
-.sm-modebtn:hover:not(:disabled) { border-color:#444; color:#ccc; }
+.sm-modebtn:hover:not(:disabled) { border-color:#555; color:#eee; }
 .sm-modebtn.on { background:#FFE000; color:#111; border-color:#FFE000; font-weight:900; }
 .sm-modebtn.on:hover:not(:disabled) { background:#FFE000; color:#111; }
 .sm-modebtn:disabled { opacity:.35; cursor:default; }
@@ -2604,7 +2605,7 @@ const CSS = `
 .sm-reel-cover-sub {
   font-family:'Nunito', sans-serif;
   font-size:11px; font-weight:700;
-  color:#444;
+  color:rgba(255,255,255,0.38);
   letter-spacing:.1em;
   text-transform:uppercase;
   margin-top:6px;
@@ -2676,7 +2677,7 @@ const CSS = `
   box-shadow:5px 5px 0 #111;
   overflow:hidden;
 }
-.sm-live-sentence p { margin:0; font-size:13px; line-height:1.6; color:#111; font-family:'Nunito',sans-serif; font-weight:900; }
+.sm-live-sentence p { margin:0; font-size:15px; line-height:1.6; color:#111; font-family:'Nunito',sans-serif; font-weight:900; }
 .sm-live-sentence .sm-slot {
   display:inline-block;
   font-weight:900;
@@ -2689,8 +2690,8 @@ const CSS = `
   line-height:1.4;
 }
 .sm-live-sentence .sm-slot-empty {
-  display:inline-block; width:72px; height:10px; border-radius:999px;
-  background:rgba(0,0,0,0.08); border:1px solid rgba(0,0,0,0.10);
+  display:inline-block; width:72px; height:12px; border-radius:999px;
+  background:rgba(255,224,0,0.25); border:2px solid rgba(255,224,0,0.4);
   vertical-align:middle; margin:0 4px;
   animation:smpulse 1.4s ease-in-out infinite;
 }
