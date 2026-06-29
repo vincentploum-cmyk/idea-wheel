@@ -1430,28 +1430,37 @@ export default function IdeaWheel() {
                 <button className={`su-own-mode-tab${ownMode === 'consumer' ? ' active' : ''}`} onClick={() => { setOwnMode('consumer'); setOwnField1(''); setOwnField2(''); }}>Consumer</button>
               </div>
 
-              {/* Structured sentence */}
-              <div className="su-own-sentence">
-                <span className="su-own-prefix">
-                  {ownMode === 'b2b' ? 'I want to build an agent that' : 'I want to make an app that'}
-                </span>
-                <input
-                  className="su-own-field su-own-field--wide"
-                  placeholder={ownMode === 'b2b' ? 'automates invoice processing' : 'tracks daily habits'}
-                  value={ownField1}
-                  onChange={e => setOwnField1(e.target.value)}
-                />
-                <span className="su-own-prefix">
-                  {ownMode === 'b2b' ? 'in the' : 'for'}
-                </span>
-                <input
-                  className="su-own-field"
-                  placeholder={ownMode === 'b2b' ? 'legal services' : 'busy professionals'}
-                  value={ownField2}
-                  onChange={e => setOwnField2(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' && ownField1.trim() && ownField2.trim()) handleOwnIdea(); }}
-                />
-                {ownMode === 'b2b' && <span className="su-own-prefix">industry</span>}
+              {/* Stacked inputs */}
+              <div className="su-own-fields">
+                <div className="su-own-field-group">
+                  <label className="su-own-label">
+                    {ownMode === 'b2b' ? 'What does it do?' : 'What does it do?'}
+                  </label>
+                  <div className="su-own-input-wrap">
+                    <span className="su-own-adorn">{ownMode === 'b2b' ? 'An agent that' : 'An app that'}</span>
+                    <input
+                      className="su-own-input"
+                      placeholder={ownMode === 'b2b' ? 'automates invoice processing for law firms' : 'tracks daily habits and sends nudges'}
+                      value={ownField1}
+                      onChange={e => setOwnField1(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="su-own-field-group">
+                  <label className="su-own-label">
+                    {ownMode === 'b2b' ? 'Target industry or buyer' : 'Target audience'}
+                  </label>
+                  <div className="su-own-input-wrap">
+                    <span className="su-own-adorn">{ownMode === 'b2b' ? 'For' : 'For'}</span>
+                    <input
+                      className="su-own-input"
+                      placeholder={ownMode === 'b2b' ? 'legal services, HR teams, e-commerce ops…' : 'busy professionals, students, parents…'}
+                      value={ownField2}
+                      onChange={e => setOwnField2(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter' && ownField1.trim() && ownField2.trim()) handleOwnIdea(); }}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div style={{textAlign:'center', marginTop:28}}>
@@ -2153,24 +2162,30 @@ const CSS = `
 .su-own-mode-tab:hover { border-color:#bbb; color:var(--ink); }
 .su-own-mode-tab.active { background:#111; color:#fff; border-color:#111; }
 
-/* Structured sentence */
-.su-own-sentence {
-  display:flex; flex-wrap:wrap; align-items:center;
-  gap:10px 10px; padding:20px 24px;
-  background:#fff; border:2px solid #e5e5e5; border-radius:14px;
-  font-family:var(--font-display); font-size:17px; font-weight:700; color:var(--ink);
-  line-height:1.4;
+/* Stacked inputs */
+.su-own-fields { display:flex; flex-direction:column; gap:16px; }
+.su-own-field-group { display:flex; flex-direction:column; gap:6px; }
+.su-own-label {
+  font-family:var(--font-display); font-size:11px; font-weight:900;
+  letter-spacing:.08em; text-transform:uppercase; color:#888;
 }
-.su-own-prefix { white-space:nowrap; }
-.su-own-field {
-  font-family:var(--font-display); font-size:17px; font-weight:700; color:var(--ink);
-  border:none; border-bottom:2.5px solid #FFE000; background:transparent;
-  outline:none; padding:2px 4px; min-width:120px; width:160px;
-  transition:border-color .15s;
+.su-own-input-wrap {
+  display:flex; align-items:center; gap:0;
+  background:#fff; border:2px solid #e5e5e5; border-radius:10px;
+  overflow:hidden; transition:border-color .15s;
 }
-.su-own-field--wide { width:220px; }
-.su-own-field:focus { border-bottom-color:#111; }
-.su-own-field::placeholder { color:#bbb; font-weight:600; }
+.su-own-input-wrap:focus-within { border-color:#111; }
+.su-own-adorn {
+  font-family:var(--font-display); font-size:14px; font-weight:900;
+  color:#aaa; white-space:nowrap; padding:12px 10px 12px 14px;
+  border-right:2px solid #e5e5e5; background:#fafafa;
+}
+.su-own-input {
+  font-family:var(--font-display); font-size:15px; font-weight:700; color:var(--ink);
+  border:none; background:transparent; outline:none;
+  padding:12px 14px; width:100%; min-width:0;
+}
+.su-own-input::placeholder { color:#ccc; font-weight:600; }
 .su-wheel-stage { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:start; }
 @media(max-width:700px){ .su-wheel-stage { grid-template-columns:1fr; } }
 .su-wheel-wrap { position:relative; width:320px; height:320px; margin:0 auto; }
