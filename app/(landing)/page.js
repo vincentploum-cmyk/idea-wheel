@@ -47,20 +47,6 @@ const TESTIMONIALS = [
   },
 ];
 
-const PROOF_PILLARS = [
-  {
-    title: 'Evidence you can verify — not an AI opinion',
-    desc: 'Real demand signals from Reddit, Google Trends, and community data. Not a confidence score generated from training data. You can check the sources.',
-  },
-  {
-    title: 'Your first verdict is free',
-    desc: 'No credit card. No commitment. Get your first market read free — then decide if the signal is strong enough to go deeper.',
-  },
-  {
-    title: 'A detailed blueprint, ready to build from tonight',
-    desc: 'When an idea clears the bar, you get product scope, technical architecture, and launch direction — specific enough to hand to a developer or start building yourself.',
-  },
-];
 
 const OUTPUT_PREVIEW = [
   {
@@ -197,30 +183,6 @@ export default async function LandingPage() {
       </div>
 
       <div className="popito_fn_membership_page">
-
-        {/* Trust wedge */}
-        <section style={{ padding: '26px 0 8px' }}>
-          <div className="container">
-            <div style={{ textAlign: 'center', marginBottom: 28, maxWidth: 760, marginInline: 'auto' }}>
-              <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', marginBottom: 8, textWrap: 'balance' }}>
-                More useful than a vague AI opinion
-              </h2>
-              <p style={{ opacity: 0.65, margin: 0 }}>
-                IdeaReels is built to show the signal, then turn the winners into a real build plan.
-              </p>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 24 }}>
-              {PROOF_PILLARS.map((pillar) => (
-                <div key={pillar.title} className="fn__bold_item" style={{ padding: '28px 24px' }}>
-                  <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 17, marginBottom: 8 }}>
-                    {pillar.title}
-                  </h3>
-                  <p style={{ opacity: 0.68, lineHeight: 1.65, fontSize: 14, margin: 0 }}>{pillar.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* How it works */}
         <section id="how-it-works" style={{ padding: '48px 0' }}>
