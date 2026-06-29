@@ -163,7 +163,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
               <div className="middle_right">
                 <div className="footer_subscribe">
                   <div className="subscribe_title">
-                    <h3>Ready to get a real market verdict?</h3>
+                    <h3>Spin / Score your idea!</h3>
                   </div>
                   <div className="subscribe_form">
                     <div className="form">
