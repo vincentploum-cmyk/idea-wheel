@@ -707,6 +707,11 @@ export default function IdeaWheel() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiBurstId, setConfettiBurstId] = useState(0);
 
+  // "I have an idea" mode
+  const [inputMode, setInputMode] = useState('generate'); // 'generate' | 'own'
+  const [ownIdeaText, setOwnIdeaText] = useState('');
+  const [pendingOwnValidate, setPendingOwnValidate] = useState(false);
+
   // blueprint state  — pipeline stages: null | 1-4 | "done"
   const [bpStage, setBpStage]   = useState(null);
   const [bpPct, setBpPct]       = useState(0);   // smooth, creeping progress %
@@ -870,6 +875,26 @@ export default function IdeaWheel() {
       return `${m_prefix(currentIdea)} ${currentIdea.freeformIdea}. ${currentIdea.tagline || ''} ${currentIdea.blurb || ''}`.trim();
     }
     return `${currentIdea.title}: ${currentIdea.tagline} ${currentIdea.blurb}`;
+  };
+
+  const handleOwnIdea = () => {
+    const trimmed = ownIdeaText.trim();
+    if (!trimmed) return;
+    setSessionId(""); setComp(null); setValidateErr("");
+    setDeepResearch(null); setDeepErr("");
+    setDesign(null); setGtm(null); setInfra(null); setProto(null);
+    setBpStage(null); setBpErr("");
+    setSaveState(null); setSavedIdeaId(null);
+    setIdea({
+      freeformIdea: trimmed,
+      title: trimmed.length > 50 ? trimmed.slice(0, 47) + '…' : trimmed,
+      tagline: '',
+      blurb: trimmed,
+      modeName: 'Custom',
+      label: 'Custom',
+      connector: 'for',
+    });
+    setPendingOwnValidate(true);
   };
 
   const handleSpin = (segment) => {
@@ -1205,6 +1230,15 @@ export default function IdeaWheel() {
   const bpRunning = bpStage !== null && bpStage !== "done";
   const bpDone    = bpStage === "done";
 
+  // Auto-run validation after "I have an idea" submission sets the idea in state.
+  useEffect(() => {
+    if (pendingOwnValidate && idea && !validating) {
+      setPendingOwnValidate(false);
+      runValidate();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingOwnValidate, idea]);
+
   // Fire the deferred blueprint generation from a profile deep-link, once the
   // idea + comp it loaded are in state (so runBlueprint sees them).
   useEffect(() => {
@@ -1350,8 +1384,45 @@ export default function IdeaWheel() {
       {/* ── WHEEL (slot machine reels) ── */}
       {screen === "wheel" && (
         <section className="su-screen su-wheel-screen">
-          <div className="su-eyebrow su-step-eyebrow">Step 1 · Generate idea</div>
-          <SlotMachine onResult={handleSpin} onModeChange={handleModeChange} snapTo={reelSnap}/>
+
+          {/* ── MODE TABS ── */}
+          <div className="su-input-tabs">
+            <button className={`su-input-tab${inputMode === 'generate' ? ' active' : ''}`} onClick={() => setInputMode('generate')}>
+              Generate an idea
+            </button>
+            <button className={`su-input-tab${inputMode === 'own' ? ' active' : ''}`} onClick={() => setInputMode('own')}>
+              I have an idea
+            </button>
+          </div>
+
+          {inputMode === 'generate' ? (
+            <>
+              <div className="su-eyebrow su-step-eyebrow">Step 1 · Generate idea</div>
+              <SlotMachine onResult={handleSpin} onModeChange={handleModeChange} snapTo={reelSnap}/>
+            </>
+          ) : (
+            <div className="su-own-idea-section">
+              <div className="su-eyebrow su-step-eyebrow">Step 1 · Describe your idea</div>
+              <div className="su-own-idea-wrap">
+                <textarea
+                  className="su-own-idea-input"
+                  placeholder="e.g. An app that automates invoice processing for small law firms, using AI to extract data and sync with their billing software."
+                  value={ownIdeaText}
+                  onChange={e => setOwnIdeaText(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && ownIdeaText.trim()) handleOwnIdea(); }}
+                  rows={4}
+                />
+                <p className="su-own-idea-hint">Describe your concept in 1–3 sentences. The more specific, the better the market research.</p>
+                <button
+                  className="su-btn su-btn-primary su-btn-lg"
+                  disabled={!ownIdeaText.trim() || validating || pendingOwnValidate}
+                  onClick={handleOwnIdea}
+                >
+                  {validating || pendingOwnValidate ? 'Analysing…' : 'Analyse my idea'}
+                </button>
+              </div>
+            </div>
+          )}
           {/* Validate button + inline results */}
           {idea && (
             <div className="sm-validate-section">
@@ -1984,6 +2055,33 @@ const CSS = `
 
 /* wheel */
 .su-wheel-screen .su-screen-head { margin-bottom:36px; }
+
+/* ── INPUT MODE TABS ── */
+.su-input-tabs {
+  display:flex; justify-content:center; gap:8px;
+  margin-bottom:28px;
+}
+.su-input-tab {
+  font-family:var(--font-display); font-size:14px; font-weight:700; letter-spacing:-.01em;
+  padding:10px 22px; border-radius:var(--r-pill);
+  border:2px solid #e5e5e5; background:#fff; color:var(--ink-2);
+  cursor:pointer; transition:all .15s;
+}
+.su-input-tab:hover { border-color:#bbb; color:var(--ink); }
+.su-input-tab.active { background:#111; color:#fff; border-color:#111; }
+
+/* ── OWN IDEA INPUT ── */
+.su-own-idea-section { max-width:640px; margin:0 auto; }
+.su-own-idea-wrap { display:flex; flex-direction:column; gap:12px; margin-top:12px; }
+.su-own-idea-input {
+  width:100%; box-sizing:border-box;
+  font-family:var(--font-body,sans-serif); font-size:15px; line-height:1.6; color:var(--ink);
+  padding:16px 18px; border-radius:12px; border:2px solid #e5e5e5; background:#fff;
+  resize:vertical; outline:none; transition:border-color .15s;
+}
+.su-own-idea-input:focus { border-color:#111; }
+.su-own-idea-input::placeholder { color:#aaa; }
+.su-own-idea-hint { font-size:12px; color:var(--muted); margin:0; }
 .su-wheel-stage { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:start; }
 @media(max-width:700px){ .su-wheel-stage { grid-template-columns:1fr; } }
 .su-wheel-wrap { position:relative; width:320px; height:320px; margin:0 auto; }
