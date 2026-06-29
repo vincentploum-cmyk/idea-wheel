@@ -148,16 +148,28 @@ export default async function LandingPage() {
             <p className="fn__desc" style={{ maxWidth: 600, margin: '0 auto 10px' }}>
               Most startup validators return a confidence score with nothing behind it — the same output you&apos;d get from asking ChatGPT. IdeaReels shows real demand signals from Reddit, Google Trends, and community data, then hands you a technical MVP blueprint your developer can build from. Evidence, not guesswork.
             </p>
-            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12, marginTop: 20 }}>
+            {!user && (
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                background: '#FFE000', border: '2.5px solid #111',
+                borderRadius: 8, padding: '8px 16px', marginTop: 20,
+                boxShadow: '3px 3px 0 #111',
+              }}>
+                <span style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 14, color: '#111', letterSpacing: '0.01em' }}>
+                  Your first market verdict is free — no credit card, no commitment.
+                </span>
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12, marginTop: 14 }}>
               {user ? (
                 <Link href="/wheel" className="fn__btn"><span>Get your next verdict</span></Link>
               ) : (
-                <Link href="/auth/register" className="fn__btn"><span>Get your free first verdict</span></Link>
+                <Link href="/auth/register" className="fn__btn"><span>Try it free</span></Link>
               )}
               <Link href="/example" className="fn__btn medium"><span>See a real output</span></Link>
             </div>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, opacity: 0.5, margin: 0 }}>
-              Free account, no card required · Go deeper from $3.99 · Credits never expire
+              Go deeper from $3.99 · Credits never expire · No subscription
             </p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
