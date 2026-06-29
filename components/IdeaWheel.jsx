@@ -1437,7 +1437,7 @@ export default function IdeaWheel() {
                     {ownMode === 'b2b' ? 'What does it do?' : 'What does it do?'}
                   </label>
                   <div className="su-own-input-wrap">
-                    <span className="su-own-adorn">{ownMode === 'b2b' ? 'An agent / website that' : 'An agent / website that'}</span>
+                    <span className="su-own-adorn">An agent / website / app that</span>
                     <input
                       className="su-own-input"
                       placeholder={ownMode === 'b2b' ? 'automates invoice processing for law firms' : 'tracks daily habits and sends nudges'}
