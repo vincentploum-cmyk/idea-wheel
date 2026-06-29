@@ -162,10 +162,10 @@ export default function ExamplePage() {
             <h1 className="fn__title">
               Here's exactly what you get.
             </h1>
-            <p className="fn__desc" style={{ maxWidth: 500 }}>
+            <p className="fn__desc">
               A real spin result, market verdict, deep research, and full MVP blueprint — produced in under 5 minutes.
             </p>
-            <p className="fn__desc" style={{ maxWidth: 560, marginTop: 12, opacity: 0.7 }}>
+            <p className="fn__desc" style={{ marginTop: 12, opacity: 0.7 }}>
               This page walks through every section you get when you unlock an idea: the viability score, the market research brief, competitor landscape, demand signals, and the technical MVP blueprint with stack recommendations. Nothing is mocked up — this is real output from the engine.
             </p>
             <span className="wings" />
