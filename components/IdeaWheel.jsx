@@ -1414,11 +1414,11 @@ export default function IdeaWheel() {
                 />
                 <p className="su-own-idea-hint">Describe your concept in 1–3 sentences. The more specific, the better the market research.</p>
                 <button
-                  className="su-btn su-btn-primary su-btn-lg"
+                  className="sm-spin"
                   disabled={!ownIdeaText.trim() || validating || pendingOwnValidate}
                   onClick={handleOwnIdea}
                 >
-                  {validating || pendingOwnValidate ? 'Analysing…' : 'Analyze my idea'}
+                  <span>{validating || pendingOwnValidate ? 'Analyzing…' : 'Analyze!'}</span>
                 </button>
               </div>
             </div>
