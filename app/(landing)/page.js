@@ -143,10 +143,10 @@ export default async function LandingPage() {
               For vibe coders, indie hackers &amp; solo founders
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.1, marginBottom: 14, textWrap: 'balance' }}>
-              If you got a vague score,<br />you didn&apos;t get research.
+              Market evidence makes ideas credible.<br />A blueprint makes them buildable.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 600, margin: '0 auto 10px' }}>
-              Most startup validators return a confidence score with nothing behind it — the same output you&apos;d get from asking ChatGPT. IdeaReels shows real demand signals from Reddit, Google Trends, and community data, then hands you a technical MVP blueprint your developer can build from. Evidence, not guesswork.
+              IdeaReels pulls real demand signals from Reddit, Google Trends, and community data — then hands you a detailed technical blueprint to start. In under 5 minutes.
             </p>
             {!user && (
               <div style={{
