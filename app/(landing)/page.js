@@ -49,16 +49,16 @@ const TESTIMONIALS = [
 
 const PROOF_PILLARS = [
   {
-    title: 'A verdict with evidence behind it',
-    desc: 'Every strong idea starts with visible signals: demand, competitors, willingness to pay, and the communities already talking about the problem.',
+    title: 'Evidence you can verify — not an AI opinion',
+    desc: 'Real demand signals from Reddit, Google Trends, and community data. Not a confidence score generated from training data. You can check the sources.',
   },
   {
-    title: 'A free first verdict',
-    desc: 'Start with a free account, get the first market read, and only spend credits when the signal is strong enough to deserve deeper work.',
+    title: 'Your first verdict is free',
+    desc: 'No credit card. No commitment. Get your first market read free — then decide if the signal is strong enough to go deeper.',
   },
   {
-    title: 'A blueprint you can hand off tonight',
-    desc: 'When an idea clears the bar, IdeaReels turns it into product scope, technical steps, and launch direction a builder can actually execute.',
+    title: 'A detailed blueprint, ready to build from tonight',
+    desc: 'When an idea clears the bar, you get product scope, technical architecture, and launch direction — specific enough to hand to a developer or start building yourself.',
   },
 ];
 
