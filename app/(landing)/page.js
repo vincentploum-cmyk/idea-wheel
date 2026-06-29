@@ -398,10 +398,10 @@ export default async function LandingPage() {
           <div className="container">
             <div className="fn__bold_item" style={{ padding: '48px 40px', background: '#FFE000', textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(1.6rem,3vw,2.2rem)', margin: '0 0 12px', lineHeight: 1.15, textWrap: 'balance' }}>
-                The dev brief your next idea deserves.<br />Ready in under 5 minutes.
+                Already have an idea?<br />$3.99 to know if it&apos;s worth your time.
               </h2>
               <p style={{ fontSize: 15, lineHeight: 1.65, opacity: 0.7, margin: '0 0 24px', maxWidth: 420, marginInline: 'auto' }}>
-                Start with the free first verdict, then unlock the deeper research and blueprint only when the idea deserves it.
+                Bring your concept. IdeaReels stress-tests it against real market data and hands you a dev-ready blueprint — in under 5 minutes.
               </p>
               <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn"><span>{user ? 'Run your next verdict' : 'Get your free first verdict'}</span></Link>
               <p style={{ marginTop: 14, fontSize: 12, opacity: 0.55 }}>No card required to start · Credits never expire · Secure checkout via Stripe</p>
