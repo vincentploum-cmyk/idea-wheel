@@ -707,10 +707,24 @@ export default function IdeaWheel() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiBurstId, setConfettiBurstId] = useState(0);
 
-  // "I have an idea" mode
+  // "Score my idea" mode
   const [inputMode, setInputMode] = useState('generate'); // 'generate' | 'own'
   const [ownIdeaText, setOwnIdeaText] = useState('');
   const [pendingOwnValidate, setPendingOwnValidate] = useState(false);
+
+  // Swap page-level headline/subline when mode changes
+  useEffect(() => {
+    const title = document.querySelector('.fn__title');
+    const desc  = document.querySelector('.fn__desc');
+    if (!title || !desc) return;
+    if (inputMode === 'own') {
+      title.textContent = 'Already have an idea? Get it scored.';
+      desc.textContent  = 'Describe your concept, get a market score and competitor analysis, and walk away with a technical MVP blueprint.';
+    } else {
+      title.textContent = 'Validate the idea. Get the dev brief.';
+      desc.textContent  = 'Spin an idea, run the market research, and walk away with a technical MVP blueprint you can hand to a developer tonight.';
+    }
+  }, [inputMode]);
 
   // blueprint state  — pipeline stages: null | 1-4 | "done"
   const [bpStage, setBpStage]   = useState(null);
@@ -1402,10 +1416,6 @@ export default function IdeaWheel() {
             </>
           ) : (
             <div className="su-own-idea-section">
-              <div className="su-own-idea-hero">
-                <h2 className="su-own-idea-headline">Already have an idea? Get it scored.</h2>
-                <p className="su-own-idea-sub">Describe your concept and get a market score, competitor analysis, and MVP blueprint in minutes.</p>
-              </div>
               <div className="su-eyebrow su-step-eyebrow">Step 1 · Describe your idea</div>
               <div className="su-own-idea-wrap">
                 <textarea
@@ -1417,13 +1427,15 @@ export default function IdeaWheel() {
                   rows={4}
                 />
                 <p className="su-own-idea-hint">Describe your concept in 1–3 sentences. The more specific, the better the market research.</p>
-                <button
-                  className="sm-spin"
-                  disabled={!ownIdeaText.trim() || validating || pendingOwnValidate}
-                  onClick={handleOwnIdea}
-                >
-                  <span>{validating || pendingOwnValidate ? 'Analyzing…' : 'Analyze!'}</span>
-                </button>
+                <div style={{textAlign:'center'}}>
+                  <button
+                    className="sm-spin"
+                    disabled={!ownIdeaText.trim() || validating || pendingOwnValidate}
+                    onClick={handleOwnIdea}
+                  >
+                    <span>{validating || pendingOwnValidate ? 'Analyzing…' : 'Analyze!'}</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
