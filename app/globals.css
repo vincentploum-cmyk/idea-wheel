@@ -291,6 +291,12 @@ img, svg { display: block; max-width: 100%; }
   from { opacity: 0; }
 }
 
+/* Tighten main nav so all 6 items fit without clipping */
+.popito_fn_header .popito_fn_main_nav > li > a {
+  font-size: 16px;
+  padding: 0 13px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
