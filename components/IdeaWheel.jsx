@@ -1469,7 +1469,7 @@ export default function IdeaWheel() {
                   disabled={!ownField1.trim() || !ownField2.trim() || validating || pendingOwnValidate}
                   onClick={handleOwnIdea}
                 >
-                  <span>{validating || pendingOwnValidate ? 'Analyzing…' : 'Analyze!'}</span>
+                  <span>{validating || pendingOwnValidate ? 'Analyzing…' : 'Get my score!'}</span>
                 </button>
               </div>
             </div>
