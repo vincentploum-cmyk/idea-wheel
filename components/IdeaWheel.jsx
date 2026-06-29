@@ -1388,7 +1388,7 @@ export default function IdeaWheel() {
           {/* ── MODE TABS ── */}
           <div className="su-input-tabs">
             <button className={`su-input-tab${inputMode === 'generate' ? ' active' : ''}`} onClick={() => setInputMode('generate')}>
-              Generate an idea
+              Spin an idea
             </button>
             <button className={`su-input-tab${inputMode === 'own' ? ' active' : ''}`} onClick={() => setInputMode('own')}>
               I have an idea
