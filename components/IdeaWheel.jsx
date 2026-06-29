@@ -1639,9 +1639,33 @@ export default function IdeaWheel() {
                     ) : (
                       <>
                         <div className="su-v-cta-row">
-                          <button className="su-btn su-btn-yellow su-btn-lg" onClick={() => { setComp(null); setIdea(null); setSaveState(null); setSavedIdeaId(null); }}>Spin again</button>
-                          <button className="su-linkbtn" onClick={goBlueprint}>Build it anyway · {BLUEPRINT_COST} credits</button>
+                          <button className="su-btn su-btn-yellow su-btn-lg" onClick={() => { setComp(null); setIdea(null); setSaveState(null); setSavedIdeaId(null); }}>
+                            {inputMode === 'own' ? 'Try another idea' : 'Spin again'}
+                          </button>
+                          <button className="su-linkbtn" onClick={goBlueprint}>Get the blueprint · {BLUEPRINT_COST} credits</button>
                         </div>
+                        {!deepLoading && !deepResearch && (
+                          <div className="su-v-cta-row" style={{marginTop:10}}>
+                            <button className="su-btn su-btn-primary su-btn-lg" onClick={runDeepResearch}>
+                              Deep research
+                              <span className="su-credit-badge">{DEEP_RESEARCH_COST} credit</span>
+                            </button>
+                            <button className="su-creditpill" onClick={() => setShowPricing(true)}>
+                              <span className="su-creditnum">{credits}</span>
+                              <span className="su-creditlbl">credits</span>
+                            </button>
+                          </div>
+                        )}
+                        {deepLoading && (
+                          <div className="su-scan su-glass su-v-deep-progress" style={{marginTop:12}}>
+                            <div className="su-scan-head">
+                              <span className="su-scan-text">Digging through Reddit, forums &amp; communities…</span>
+                              <span className="su-scan-pct">{deepPct}%</span>
+                            </div>
+                            <div className="su-scan-bar su-scan-bar--progress"><div className="su-scan-fill su-scan-fill--progress" style={{transform:`scaleX(${deepPct/100})`}}/></div>
+                          </div>
+                        )}
+                        {deepErr && <p className="su-err">{deepErr} <button className="su-retry" onClick={runDeepResearch}>Retry</button></p>}
                         <div className="su-save-row">
                           {saveState === 'saved' ? (
                             <span className="su-save-confirm">
@@ -1653,6 +1677,7 @@ export default function IdeaWheel() {
                             </button>
                           )}
                         </div>
+                        <div className="su-v-hint">Deep research {DEEP_RESEARCH_COST} credit · blueprint {BLUEPRINT_COST} credits · you have {credits}</div>
                       </>
                     ))}
                   </div>
