@@ -1417,7 +1417,7 @@ export default function IdeaWheel() {
 
           {inputMode === 'generate' ? (
             <>
-              <div className="su-eyebrow su-step-eyebrow">Step 1 · Generate idea</div>
+              <div className="su-eyebrow su-step-eyebrow">Step 1 · Spin idea</div>
               <SlotMachine onResult={handleSpin} onModeChange={handleModeChange} snapTo={reelSnap}/>
             </>
           ) : (
