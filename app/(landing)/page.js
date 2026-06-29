@@ -377,7 +377,9 @@ export default async function LandingPage() {
               <p style={{ fontSize: 15, lineHeight: 1.65, opacity: 0.7, margin: '0 0 24px', maxWidth: 420, marginInline: 'auto' }}>
                 Bring your concept. IdeaReels stress-tests it against real market data and hands you a dev-ready blueprint — in under 5 minutes.
               </p>
-              <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn"><span>{user ? 'Run your next verdict' : 'Get your free first verdict'}</span></Link>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn"><span>{user ? 'Run your next verdict' : 'Get your free first verdict'}</span></Link>
+              </div>
               <p style={{ marginTop: 14, fontSize: 12, opacity: 0.55 }}>No card required to start · Credits never expire · Secure checkout via Stripe</p>
             </div>
           </div>
