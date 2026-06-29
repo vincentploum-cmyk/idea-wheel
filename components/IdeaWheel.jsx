@@ -1437,7 +1437,7 @@ export default function IdeaWheel() {
                     {ownMode === 'b2b' ? 'What does it do?' : 'What does it do?'}
                   </label>
                   <div className="su-own-input-wrap">
-                    <span className="su-own-adorn">{ownMode === 'b2b' ? 'An agent that' : 'An app that'}</span>
+                    <span className="su-own-adorn">{ownMode === 'b2b' ? 'An agent / website that' : 'An agent / website that'}</span>
                     <input
                       className="su-own-input"
                       placeholder={ownMode === 'b2b' ? 'automates invoice processing for law firms' : 'tracks daily habits and sends nudges'}
@@ -2167,18 +2167,17 @@ const CSS = `
 .su-own-field-group { display:flex; flex-direction:column; gap:6px; }
 .su-own-label {
   font-family:var(--font-display); font-size:11px; font-weight:900;
-  letter-spacing:.08em; text-transform:uppercase; color:#888;
+  letter-spacing:.08em; text-transform:uppercase; color:#111;
 }
 .su-own-input-wrap {
   display:flex; align-items:center; gap:0;
-  background:#fff; border:2px solid #e5e5e5; border-radius:10px;
-  overflow:hidden; transition:border-color .15s;
+  background:#fff; border:2.5px solid #111; border-radius:10px;
+  box-shadow:3px 3px 0 #111; overflow:hidden;
 }
-.su-own-input-wrap:focus-within { border-color:#111; }
 .su-own-adorn {
   font-family:var(--font-display); font-size:14px; font-weight:900;
-  color:#aaa; white-space:nowrap; padding:12px 10px 12px 14px;
-  border-right:2px solid #e5e5e5; background:#fafafa;
+  color:#111; white-space:nowrap; padding:12px 10px 12px 14px;
+  border-right:2.5px solid #111; background:#fff;
 }
 .su-own-input {
   font-family:var(--font-display); font-size:15px; font-weight:700; color:var(--ink);
