@@ -709,7 +709,9 @@ export default function IdeaWheel() {
 
   // "Score my idea" mode
   const [inputMode, setInputMode] = useState('generate'); // 'generate' | 'own'
-  const [ownIdeaText, setOwnIdeaText] = useState('');
+  const [ownMode, setOwnMode]     = useState('b2b');      // 'b2b' | 'consumer'
+  const [ownField1, setOwnField1] = useState('');         // what it does
+  const [ownField2, setOwnField2] = useState('');         // industry / audience
   const [pendingOwnValidate, setPendingOwnValidate] = useState(false);
 
   // Swap page-level headline/subline when mode changes
@@ -892,21 +894,25 @@ export default function IdeaWheel() {
   };
 
   const handleOwnIdea = () => {
-    const trimmed = ownIdeaText.trim();
-    if (!trimmed) return;
+    const f1 = ownField1.trim();
+    const f2 = ownField2.trim();
+    if (!f1 || !f2) return;
+    const sentence = ownMode === 'b2b'
+      ? `I want to build an agent that ${f1} in the ${f2} industry`
+      : `I want to make an app that ${f1} for ${f2}`;
     setSessionId(""); setComp(null); setValidateErr("");
     setDeepResearch(null); setDeepErr("");
     setDesign(null); setGtm(null); setInfra(null); setProto(null);
     setBpStage(null); setBpErr("");
     setSaveState(null); setSavedIdeaId(null);
     setIdea({
-      freeformIdea: trimmed,
-      title: trimmed.length > 50 ? trimmed.slice(0, 47) + '…' : trimmed,
+      freeformIdea: sentence,
+      title: f1.length > 50 ? f1.slice(0, 47) + '…' : f1,
       tagline: '',
-      blurb: trimmed,
-      modeName: 'Custom',
-      label: 'Custom',
-      connector: 'for',
+      blurb: sentence,
+      modeName: ownMode === 'b2b' ? 'B2B' : 'Consumer',
+      label: ownMode === 'b2b' ? 'B2B' : 'Consumer',
+      connector: ownMode === 'b2b' ? 'in the' : 'for',
     });
     setPendingOwnValidate(true);
   };
@@ -1417,25 +1423,45 @@ export default function IdeaWheel() {
           ) : (
             <div className="su-own-idea-section">
               <div className="su-eyebrow su-step-eyebrow">Step 1 · Describe your idea</div>
-              <div className="su-own-idea-wrap">
-                <textarea
-                  className="su-own-idea-input"
-                  placeholder="e.g. An app that automates invoice processing for small law firms, using AI to extract data and sync with their billing software."
-                  value={ownIdeaText}
-                  onChange={e => setOwnIdeaText(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && ownIdeaText.trim()) handleOwnIdea(); }}
-                  rows={4}
+
+              {/* B2B / Consumer toggle */}
+              <div className="su-own-mode-tabs">
+                <button className={`su-own-mode-tab${ownMode === 'b2b' ? ' active' : ''}`} onClick={() => { setOwnMode('b2b'); setOwnField1(''); setOwnField2(''); }}>B2B</button>
+                <button className={`su-own-mode-tab${ownMode === 'consumer' ? ' active' : ''}`} onClick={() => { setOwnMode('consumer'); setOwnField1(''); setOwnField2(''); }}>Consumer</button>
+              </div>
+
+              {/* Structured sentence */}
+              <div className="su-own-sentence">
+                <span className="su-own-prefix">
+                  {ownMode === 'b2b' ? 'I want to build an agent that' : 'I want to make an app that'}
+                </span>
+                <input
+                  className="su-own-field su-own-field--wide"
+                  placeholder={ownMode === 'b2b' ? 'automates invoice processing' : 'tracks daily habits'}
+                  value={ownField1}
+                  onChange={e => setOwnField1(e.target.value)}
                 />
-                <p className="su-own-idea-hint">Describe your concept in 1–3 sentences. The more specific, the better the market research.</p>
-                <div style={{textAlign:'center'}}>
-                  <button
-                    className="sm-spin"
-                    disabled={!ownIdeaText.trim() || validating || pendingOwnValidate}
-                    onClick={handleOwnIdea}
-                  >
-                    <span>{validating || pendingOwnValidate ? 'Analyzing…' : 'Analyze!'}</span>
-                  </button>
-                </div>
+                <span className="su-own-prefix">
+                  {ownMode === 'b2b' ? 'in the' : 'for'}
+                </span>
+                <input
+                  className="su-own-field"
+                  placeholder={ownMode === 'b2b' ? 'legal services' : 'busy professionals'}
+                  value={ownField2}
+                  onChange={e => setOwnField2(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && ownField1.trim() && ownField2.trim()) handleOwnIdea(); }}
+                />
+                {ownMode === 'b2b' && <span className="su-own-prefix">industry</span>}
+              </div>
+
+              <div style={{textAlign:'center', marginTop:28}}>
+                <button
+                  className="sm-spin"
+                  disabled={!ownField1.trim() || !ownField2.trim() || validating || pendingOwnValidate}
+                  onClick={handleOwnIdea}
+                >
+                  <span>{validating || pendingOwnValidate ? 'Analyzing…' : 'Analyze!'}</span>
+                </button>
               </div>
             </div>
           )}
@@ -2112,23 +2138,39 @@ const CSS = `
 .su-input-tab.active { background:#111; color:#fff; border-color:#111; }
 
 /* ── OWN IDEA INPUT ── */
-.su-own-idea-section { max-width:640px; margin:0 auto; }
-.su-own-idea-hero { text-align:center; margin-bottom:28px; }
-.su-own-idea-headline {
-  font-family:var(--font-display); font-size:clamp(26px,4vw,36px); font-weight:800;
-  letter-spacing:-.02em; line-height:1.1; color:var(--ink); margin:0 0 10px;
+.su-own-idea-section { max-width:680px; margin:0 auto; }
+
+/* B2B / Consumer mini-toggle */
+.su-own-mode-tabs {
+  display:flex; justify-content:center; gap:6px; margin:16px 0 24px;
 }
-.su-own-idea-sub { font-size:15px; color:var(--ink-2); margin:0; line-height:1.6; }
-.su-own-idea-wrap { display:flex; flex-direction:column; gap:12px; margin-top:12px; }
-.su-own-idea-input {
-  width:100%; box-sizing:border-box;
-  font-family:var(--font-body,sans-serif); font-size:15px; line-height:1.6; color:var(--ink);
-  padding:16px 18px; border-radius:12px; border:2px solid #e5e5e5; background:#fff;
-  resize:vertical; outline:none; transition:border-color .15s;
+.su-own-mode-tab {
+  font-family:var(--font-display); font-size:13px; font-weight:700; letter-spacing:.04em;
+  text-transform:uppercase; padding:7px 20px; border-radius:var(--r-pill);
+  border:2px solid #e5e5e5; background:#fff; color:var(--ink-2);
+  cursor:pointer; transition:all .15s;
 }
-.su-own-idea-input:focus { border-color:#111; }
-.su-own-idea-input::placeholder { color:#aaa; }
-.su-own-idea-hint { font-size:12px; color:var(--muted); margin:0; }
+.su-own-mode-tab:hover { border-color:#bbb; color:var(--ink); }
+.su-own-mode-tab.active { background:#111; color:#fff; border-color:#111; }
+
+/* Structured sentence */
+.su-own-sentence {
+  display:flex; flex-wrap:wrap; align-items:center;
+  gap:10px 10px; padding:20px 24px;
+  background:#fff; border:2px solid #e5e5e5; border-radius:14px;
+  font-family:var(--font-display); font-size:17px; font-weight:700; color:var(--ink);
+  line-height:1.4;
+}
+.su-own-prefix { white-space:nowrap; }
+.su-own-field {
+  font-family:var(--font-display); font-size:17px; font-weight:700; color:var(--ink);
+  border:none; border-bottom:2.5px solid #FFE000; background:transparent;
+  outline:none; padding:2px 4px; min-width:120px; width:160px;
+  transition:border-color .15s;
+}
+.su-own-field--wide { width:220px; }
+.su-own-field:focus { border-bottom-color:#111; }
+.su-own-field::placeholder { color:#bbb; font-weight:600; }
 .su-wheel-stage { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:start; }
 @media(max-width:700px){ .su-wheel-stage { grid-template-columns:1fr; } }
 .su-wheel-wrap { position:relative; width:320px; height:320px; margin:0 auto; }
