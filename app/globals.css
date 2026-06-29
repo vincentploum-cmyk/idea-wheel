@@ -297,6 +297,75 @@ img, svg { display: block; max-width: 100%; }
   padding: 0 13px;
 }
 
+/* ── Mobile layout fixes ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Container: reduce side padding so content isn't squeezed */
+  .container {
+    padding: 0 20px;
+  }
+
+  /* Promo banner: less side padding, allow wrap gracefully */
+  #popito_fn_header ~ div[style*="FFE000"],
+  .promo-banner {
+    padding-left: 16px;
+    padding-right: 40px; /* keep room for close button */
+  }
+
+  /* Hero desc: smaller font so it doesn't wrap as aggressively */
+  .popito_fn_pagetitle .fn__desc {
+    font-size: 18px;
+  }
+
+  /* Bottom CTA: reduce side padding */
+  .fn__bold_item[style*="FFE000"] {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  /* Buttons: reduce horizontal padding so they fit on narrow screens */
+  .fn__btn {
+    padding: 0 28px;
+    font-size: 15px;
+  }
+
+  /* Stats bar numbers */
+  .fn__stats-num {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Already sets container to 10px in responsive.css — override to 16px for readability */
+  .container {
+    padding: 0 16px;
+  }
+
+  /* Promo banner: shorten to just the link on very small screens */
+  .promo-banner-text {
+    display: none;
+  }
+
+  /* Hero H1: floor at 1.9rem on tiny screens */
+  .popito_fn_pagetitle .fn__title {
+    font-size: clamp(1.9rem, 8vw, 2.6rem) !important;
+  }
+
+  /* Hero free badge: allow it to wrap naturally */
+  .popito_fn_pagetitle .fn__desc {
+    font-size: 16px;
+  }
+
+  /* Section H2s: floor at 1.5rem */
+  section h2 {
+    font-size: clamp(1.5rem, 6vw, 2rem) !important;
+  }
+
+  /* Bottom CTA box */
+  .fn__bold_item[style*="FFE000"] {
+    padding: 28px 16px !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

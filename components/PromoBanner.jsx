@@ -9,13 +9,13 @@ export default function PromoBanner({ text, linkLabel, linkHref }) {
     <div style={{
       background: '#FFE000',
       borderBottom: '2px solid #111',
-      padding: '12px 48px',
+      padding: '10px 48px',
       textAlign: 'center',
       position: 'relative',
       fontFamily: 'Nunito, sans-serif',
       fontWeight: 700,
-      fontSize: 13,
-      letterSpacing: '0.08em',
+      fontSize: 'clamp(10px, 2.5vw, 13px)',
+      letterSpacing: '0.06em',
       textTransform: 'uppercase',
       color: '#111',
     }}>
