@@ -206,7 +206,7 @@ export default async function LandingPage() {
                 More useful than a vague AI opinion
               </h2>
               <p style={{ opacity: 0.65, margin: 0 }}>
-                The category is full of confident-sounding verdicts. IdeaReels is built to show the signal, then turn the winners into a real build plan.
+                IdeaReels is built to show the signal, then turn the winners into a real build plan.
               </p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 24 }}>
