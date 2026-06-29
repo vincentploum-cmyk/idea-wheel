@@ -1391,7 +1391,7 @@ export default function IdeaWheel() {
               Spin an idea
             </button>
             <button className={`su-input-tab${inputMode === 'own' ? ' active' : ''}`} onClick={() => setInputMode('own')}>
-              I have an idea
+              Score my idea
             </button>
           </div>
 
@@ -1402,6 +1402,10 @@ export default function IdeaWheel() {
             </>
           ) : (
             <div className="su-own-idea-section">
+              <div className="su-own-idea-hero">
+                <h2 className="su-own-idea-headline">Already have an idea? Get it scored.</h2>
+                <p className="su-own-idea-sub">Describe your concept and get a market score, competitor analysis, and MVP blueprint in minutes.</p>
+              </div>
               <div className="su-eyebrow su-step-eyebrow">Step 1 · Describe your idea</div>
               <div className="su-own-idea-wrap">
                 <textarea
@@ -2097,6 +2101,12 @@ const CSS = `
 
 /* ── OWN IDEA INPUT ── */
 .su-own-idea-section { max-width:640px; margin:0 auto; }
+.su-own-idea-hero { text-align:center; margin-bottom:28px; }
+.su-own-idea-headline {
+  font-family:var(--font-display); font-size:clamp(26px,4vw,36px); font-weight:800;
+  letter-spacing:-.02em; line-height:1.1; color:var(--ink); margin:0 0 10px;
+}
+.su-own-idea-sub { font-size:15px; color:var(--ink-2); margin:0; line-height:1.6; }
 .su-own-idea-wrap { display:flex; flex-direction:column; gap:12px; margin-top:12px; }
 .su-own-idea-input {
   width:100%; box-sizing:border-box;
