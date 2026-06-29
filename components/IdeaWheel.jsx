@@ -1418,7 +1418,7 @@ export default function IdeaWheel() {
                   disabled={!ownIdeaText.trim() || validating || pendingOwnValidate}
                   onClick={handleOwnIdea}
                 >
-                  {validating || pendingOwnValidate ? 'Analysing…' : 'Analyse my idea'}
+                  {validating || pendingOwnValidate ? 'Analysing…' : 'Analyze my idea'}
                 </button>
               </div>
             </div>
