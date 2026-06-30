@@ -297,6 +297,24 @@ img, svg { display: block; max-width: 100%; }
   padding: 0 13px;
 }
 
+/* ── Button press feedback ───────────────────────────────────── */
+/* fn__btn: the neobrutalist CTA button used site-wide */
+.fn__btn {
+  transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.fn__btn:active {
+  transform: scale(0.97);
+}
+/* sm-spin: the primary spin/analyze button in the wheel */
+.sm-spin:active {
+  transform: scale(0.97) !important;
+}
+
+/* Gate hover-only transforms behind pointer:fine to avoid touch false-positives */
+@media (hover: hover) and (pointer: fine) {
+  .fn__creative_link:hover { opacity: 0.75; }
+}
+
 /* ── Mobile layout fixes ─────────────────────────────────────── */
 @media (max-width: 768px) {
   /* Container: reduce side padding so content isn't squeezed */
