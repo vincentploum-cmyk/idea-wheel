@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import PopitoShell from '@/components/popito/PopitoShell';
+import { createClient } from '@/lib/supabase-server';
 
 export const metadata = {
   title: 'IdeaReels Example — Spin to Blueprint in 5 Minutes',
@@ -110,7 +111,7 @@ function Lock({ cta = 'Get this for your own idea — from $3.99' }) {
         flexDirection: 'column', gap: 12, paddingTop: 40,
       }}>
         <div style={{ ...label(), marginBottom: 0 }}>Full research locked</div>
-        <Link href="/pricing" className="fn__btn" style={{ marginTop: 4 }}>
+        <Link href="/auth/register" className="fn__btn" style={{ marginTop: 4 }}>
           <span>{cta}</span>
         </Link>
         <p style={{ fontSize: 12, opacity: 0.45, fontFamily: 'Nunito, sans-serif', margin: 0 }}>
@@ -150,7 +151,10 @@ function BlueprintLock() {
 
 /* ─── Page ──────────────────────────────────────────────────────── */
 
-export default function ExamplePage() {
+export default async function ExamplePage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <PopitoShell>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -295,8 +299,21 @@ export default function ExamplePage() {
                   Google Trends shows <strong>"freelance UX contract template"</strong> up 180% year-over-year. <strong>"Design invoice template"</strong> generates 22,000+ monthly searches with low-competition scores across major keyword tools — organic acquisition is viable from day one.
                 </p>
 
-                {/* Locked section */}
-                <Lock cta="Register for free to unlock now!" />
+                {/* Locked section — only for guests */}
+                {!user && <Lock cta="Register for free to unlock now!" />}
+                {user && (
+                  <>
+                    <p style={{ ...bodyText, marginTop: 14 }}>
+                      The dominant player controls 38% of the addressable market through brand recognition alone, not product superiority. Their NPS scores in designer communities average 31 — well below the 50+ threshold that signals loyalty. Three of their top five complaints on G2 and Capterra map directly to gaps this product would fill.
+                    </p>
+                    <p style={{ ...bodyText, marginTop: 14 }}>
+                      Willingness-to-pay evidence from 47 Reddit threads and two creator community Discord servers puts the sweet spot at $18–29/month for a tool that handles the full cycle. Bonsai's latest price increase to $32/month created an active migration window — multiple posts in the past 90 days explicitly asking for alternatives.
+                    </p>
+                    <p style={{ ...bodyText, marginTop: 14 }}>
+                      TAM: 1.2M freelance designers in English-speaking markets. SAM: 280K who bill $5K+/month and would pay for professional tooling. SOM target in year one: 2,000 paying users at $22 ARPU = $44K MRR.
+                    </p>
+                  </>
+                )}
               </div>
             </section>
 
@@ -319,7 +336,17 @@ export default function ExamplePage() {
                   <p style={bodyText}>
                     The MVP is a focused web app with four capabilities: <strong>proposal builder, e-signature contract, milestone-based invoicing, and revision tracker.</strong> Everything else is phase two.
                   </p>
-                  <BlueprintLock />
+                  {!user && <BlueprintLock />}
+                  {user && (
+                    <ul style={{ margin: '14px 0 0', paddingLeft: 20, lineHeight: 2, fontSize: 14 }}>
+                      <li>Proposal builder: title, scope, deliverables, timeline, price — PDF export</li>
+                      <li>Milestone-based invoice generator with Stripe payment link</li>
+                      <li>E-signature via Documenso (open-source, self-hostable fallback)</li>
+                      <li>Revision tracker: log client requests against the original contract scope</li>
+                      <li>Client portal: read-only view of active contracts and invoice status</li>
+                      <li>Cut for MVP: recurring billing, team seats, integrations (phase two)</li>
+                    </ul>
+                  )}
                 </div>
 
                 {/* 02 Go-to-market */}
@@ -331,7 +358,16 @@ export default function ExamplePage() {
                   <p style={bodyText}>
                     The fastest path to first 50 customers is a freemium tier targeting designers who are actively looking for a Bonsai alternative following the March 2024 price increase. The positioning hook: <em>built for designers, not agencies.</em>
                   </p>
-                  <BlueprintLock />
+                  {!user && <BlueprintLock />}
+                  {user && (
+                    <ul style={{ margin: '14px 0 0', paddingLeft: 20, lineHeight: 2, fontSize: 14 }}>
+                      <li>Launch channel: r/UXDesign and r/freelance — announce the free tier, no pitch</li>
+                      <li>Positioning: "Bonsai alternative built for designers, not agencies"</li>
+                      <li>First 50 users: direct DM campaign to active posters in Bonsai complaint threads</li>
+                      <li>Content strategy: SEO on "freelance UX contract template" (22K/mo, low competition)</li>
+                      <li>Pricing: free tier (1 active project) → $18/mo Pro (unlimited)</li>
+                    </ul>
+                  )}
                 </div>
 
                 {/* 03 Technical architecture */}
@@ -343,7 +379,16 @@ export default function ExamplePage() {
                   <p style={bodyText}>
                     Recommended stack: <strong>Next.js + Supabase + Stripe</strong> for payments and invoicing, <strong>Documenso</strong> for e-signatures (open-source, self-hostable). Deployable in a weekend by a solo builder.
                   </p>
-                  <BlueprintLock />
+                  {!user && <BlueprintLock />}
+                  {user && (
+                    <ul style={{ margin: '14px 0 0', paddingLeft: 20, lineHeight: 2, fontSize: 14 }}>
+                      <li>Frontend: Next.js App Router + Tailwind</li>
+                      <li>Auth + DB: Supabase (auth, postgres, file storage for PDFs)</li>
+                      <li>Payments: Stripe (one-time and subscription billing)</li>
+                      <li>E-signature: Documenso (self-hosted) or HelloSign API fallback</li>
+                      <li>Deploy: Vercel (frontend) + Supabase cloud (backend) — zero DevOps</li>
+                    </ul>
+                  )}
                 </div>
 
                 {/* 04 Prototype plan */}
@@ -355,7 +400,15 @@ export default function ExamplePage() {
                   <p style={bodyText}>
                     Smallest version that earns real feedback: <strong>proposal builder + basic invoice, no e-signature.</strong> Target 10 beta users from the UX community in the first two weeks using a waitlist tweet and a direct message campaign in r/UXDesign.
                   </p>
-                  <BlueprintLock />
+                  {!user && <BlueprintLock />}
+                  {user && (
+                    <ul style={{ margin: '14px 0 0', paddingLeft: 20, lineHeight: 2, fontSize: 14 }}>
+                      <li>Week 1–2: proposal builder + invoice — ship it, get 10 beta signups</li>
+                      <li>Week 3–4: add e-signature, revision tracker — activate beta users</li>
+                      <li>Week 5–6: client portal, PDF export — first paid conversions</li>
+                      <li>Success signal: 3 users send a real proposal within 7 days of signup</li>
+                    </ul>
+                  )}
                 </div>
 
               </div>
@@ -368,15 +421,19 @@ export default function ExamplePage() {
                   Your turn
                 </p>
                 <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(1.5rem,3vw,2rem)', lineHeight: 1.15, margin: '0 0 12px' }}>
-                  Now run this for your own idea.
+                  {user ? 'Now run this for your own idea.' : 'Register free and run this for your own idea.'}
                 </h2>
                 <p style={{ fontSize: 15, opacity: 0.7, margin: '0 0 24px', maxWidth: 400, marginInline: 'auto', lineHeight: 1.65 }}>
-                  Spin the reels, get the free verdict, and go deeper if the signal is there. From $3.99.
+                  {user ? 'Spin the reels, get the free verdict, and go deeper if the signal is there. From $3.99.' : 'Create a free account to spin ideas, get your first market verdict free, and unlock research when the signal is strong.'}
                 </p>
                 <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <Link href="/pricing" className="fn__btn"><span>Get started</span></Link>
+                  <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn">
+                    <span>{user ? 'Go to the wheel' : 'Register for free'}</span>
+                  </Link>
                 </div>
-                <p style={{ marginTop: 14, fontSize: 12, opacity: 0.55 }}>Credits never expire · No subscription · Secure checkout via Stripe</p>
+                <p style={{ marginTop: 14, fontSize: 12, opacity: 0.55 }}>
+                  {user ? 'Credits never expire · No subscription · Secure checkout via Stripe' : 'No credit card required · First verdict is free'}
+                </p>
               </div>
             </section>
 
