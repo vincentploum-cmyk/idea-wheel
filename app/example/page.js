@@ -296,7 +296,7 @@ export default function ExamplePage() {
                 </p>
 
                 {/* Locked section */}
-                <Lock cta="Get deep research for your idea — 1 credit" />
+                <Lock cta="Register for free to unlock now!" />
               </div>
             </section>
 
