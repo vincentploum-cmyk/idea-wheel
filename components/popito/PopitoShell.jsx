@@ -45,8 +45,8 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta, noB
       style={yellowBg ? { background: '#FFE000' } : undefined}
     >
       {!noBanner && <PromoBanner
-        text="Get your free first verdict, then unlock the research and MVP blueprint only when the signal is strong."
-        linkLabel="Get started free →"
+        text="Score your idea for free. Unlock deep research and a technical blueprint only when the signal is strong."
+        linkLabel="Try it free →"
         linkHref={user ? '/wheel' : '/auth/register'}
       />}
 
