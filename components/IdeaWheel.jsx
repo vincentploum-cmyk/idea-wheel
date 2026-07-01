@@ -1471,6 +1471,9 @@ export default function IdeaWheel() {
                 >
                   <span>{validating || pendingOwnValidate ? 'Analyzing…' : 'Get my score!'}</span>
                 </button>
+                <p style={{marginTop:12, fontSize:12, color:'#888', fontFamily:'var(--font-body)', fontWeight:500}}>
+                  🔒 Your idea is never stored or shared — it's only used to run your analysis.
+                </p>
               </div>
             </div>
           )}
