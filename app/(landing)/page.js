@@ -129,10 +129,10 @@ export default async function LandingPage() {
               For vibe coders, indie hackers &amp; solo founders
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.1, marginBottom: 14, textWrap: 'balance' }}>
-              Market evidence makes ideas credible.<br />A blueprint makes them buildable.
+              Spin a fresh idea or score<br />the one you already have.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 600, margin: '0 auto 10px' }}>
-              IdeaReels pulls real demand signals from Reddit, Google Trends, and community data — then hands you a detailed technical blueprint to start. In under 5 minutes.
+              IdeaReels generates startup ideas and scores them against real market data — Reddit signals, Google Trends, and community demand. Get a free market score in under 5 minutes.
             </p>
             {!user && (
               <div style={{
@@ -142,17 +142,13 @@ export default async function LandingPage() {
                 boxShadow: '3px 3px 0 #111',
               }}>
                 <span style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 14, color: '#111', letterSpacing: '0.01em' }}>
-                  Your first market verdict is free — no credit card, no commitment.
+                  Your first market score is free — no credit card, no commitment.
                 </span>
               </div>
             )}
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12, marginTop: 14 }}>
-              {user ? (
-                <Link href="/wheel" className="fn__btn"><span>Get your next verdict</span></Link>
-              ) : (
-                <Link href="/auth/register" className="fn__btn"><span>Try it free</span></Link>
-              )}
-              <Link href="/example" className="fn__btn medium"><span>See a real output</span></Link>
+              <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn"><span>Spin an idea</span></Link>
+              <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn medium"><span>Score your idea</span></Link>
             </div>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, opacity: 0.5, margin: 0 }}>
               Go deeper from $3.99 · Credits never expire · No subscription
