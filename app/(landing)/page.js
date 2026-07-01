@@ -372,10 +372,10 @@ export default async function LandingPage() {
           <div className="container">
             <div className="fn__bold_item" style={{ padding: '48px 40px', background: '#FFE000', textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(1.6rem,3vw,2.2rem)', margin: '0 0 12px', lineHeight: 1.15, textWrap: 'balance' }}>
-                Already have an idea?<br />$3.99 to know if it&apos;s worth your time.
+                Score your idea free.<br />Go deeper for $3.99.
               </h2>
               <p style={{ fontSize: 15, lineHeight: 1.65, opacity: 0.7, margin: '0 0 24px', maxWidth: 420, marginInline: 'auto' }}>
-                Bring your concept. IdeaReels stress-tests it against real market data and hands you a dev-ready blueprint — in under 5 minutes.
+                Get a free market score on any concept. Buy credits when you want the full deep research and technical blueprint.
               </p>
               <div style={{ display: 'flex', justifyContent: 'center' }}>
                 <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn"><span>{user ? 'Run your next verdict' : 'Get your free first verdict'}</span></Link>
