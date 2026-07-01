@@ -167,7 +167,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta, noB
                   </div>
                   <div className="subscribe_form">
                     <div className="form">
-                      <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn medium"><span>{user ? 'Run your next verdict' : 'Get your free first verdict'}</span></Link>
+                      <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn medium"><span>Spin / Score your idea!</span></Link>
                     </div>
                     <div className="icon">
                       <img src="/popito-assets/svg/arrow-curly.svg" alt="" className="fn__svg" />
