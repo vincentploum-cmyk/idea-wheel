@@ -4,29 +4,29 @@ import { useMemo, useState } from 'react';
 import { CREDIT_PACKAGES, CREDIT_PACKAGE_BY_KEY } from '@/lib/pricing';
 
 const PACK_DESCRIPTIONS = {
-  starter: 'The default path if you want to evaluate and build your own concepts.',
-  pro: 'A shortcut pack for builders who want one researched starting point instead of starting from a blank page.',
-  power: 'The best fit if you want two strong starting points and the freedom to compare them before you commit.',
+  starter: '5 credits to spin, score, and go deeper on your own ideas.',
+  pro: '10 credits — more room to explore, validate, and get blueprints.',
+  power: '25 credits — best value for builders who want to move fast.',
 };
 
 const PACK_FEATURES = {
   starter: [
-    '5 credits for your own concepts',
+    '5 credits to spin and score ideas',
     'Spinning is free — credits go toward deeper work',
     '1 credit for deep market research',
     '2 credits for the full MVP blueprint',
   ],
   pro: [
-    '1 researched starting point',
-    'Skip the blank page and start from a stronger opportunity',
-    'Designed for faster decision-making',
-    'Good when you want a faster path into execution',
+    '10 credits to spin and score ideas',
+    '1 credit for deep market research',
+    '2 credits for the full MVP blueprint',
+    'Best for builders who want to go deeper',
   ],
   power: [
-    '2 researched starting points',
-    'Compare two directions quickly',
-    'Choose the stronger path before you commit',
-    'Best when you want optionality',
+    '25 credits to spin and score ideas',
+    '1 credit for deep market research',
+    '2 credits for the full MVP blueprint',
+    'Best value — explore, validate, and build',
   ],
 };
 

@@ -7,22 +7,22 @@ import { createClient } from '@/lib/supabase-server';
 
 const PACK_FEATURES = {
   starter: [
-    '5 credits for your own concepts',
+    '5 credits to spin and score ideas',
     'Spinning is free — credits go toward deeper work',
     '1 credit for deep market research',
     '2 credits for the full MVP blueprint',
   ],
   pro: [
-    'Unlock 1 pre-researched idea from the library',
-    'Skip the spin — go straight to the blueprint',
-    'Best for builders who want to move tonight',
-    'Includes deep research',
+    '10 credits to spin and score ideas',
+    '1 credit for deep market research',
+    '2 credits for the full MVP blueprint',
+    'Best for builders who want to go deeper',
   ],
   power: [
-    'Unlock 2 pre-researched ideas from the library',
-    'Compare two strong directions fast',
-    'Choose the one worth pursuing',
-    'Best for builders who want optionality',
+    '25 credits to spin and score ideas',
+    '1 credit for deep market research',
+    '2 credits for the full MVP blueprint',
+    'Best value — explore, validate, and build',
   ],
 };
 
@@ -292,10 +292,10 @@ export default async function LandingPage() {
             </div>
             <div className="fn__pricing_tables">
               <div className="pt_content">
-                <ul className="pt_list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 28, listStyle: 'none', padding: 0, margin: 0 }}>
+                <ul className="pt_list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 28, listStyle: 'none', padding: 0, margin: 0, alignItems: 'stretch' }}>
                   {CREDIT_PACKAGES.map((pkg) => (
-                    <li key={pkg.key} className="pt_list_item" style={{ display: 'block', width: 'auto', padding: 0 }}>
-                      <div className={`fn__pricing_table_item fn__bold_item${pkg.highlight ? ' active' : ''}`}>
+                    <li key={pkg.key} className="pt_list_item" style={{ display: 'flex', width: 'auto', padding: 0 }}>
+                      <div className={`fn__pricing_table_item fn__bold_item${pkg.highlight ? ' active' : ''}`} style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                         <div className="item_header">
                           <div className="plan"><span>{pkg.label}</span></div>
                           <div className="pricing" style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'nowrap' }}>
@@ -314,7 +314,7 @@ export default async function LandingPage() {
                             ))}
                           </ul>
                         </div>
-                        <div className="item_footer">
+                        <div className="item_footer" style={{ marginTop: 'auto' }}>
                           <Link href="/pricing" className="fn__btn medium">
                             <span>
                               {pkg.key === 'starter' ? 'Buy credits — $3.99' :
