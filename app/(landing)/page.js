@@ -122,7 +122,7 @@ export default async function LandingPage() {
   return (
     <PopitoShell>
       {/* Hero */}
-      <div className="popito_fn_pagetitle" style={{ display: 'flex', alignItems: 'center' }}>
+      <div className="popito_fn_pagetitle" style={{ display: 'flex', alignItems: 'center', paddingBottom: 0 }}>
         <div className="container">
           <div className="pagetitle" style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto' }}>
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
@@ -181,7 +181,7 @@ export default async function LandingPage() {
       <div className="popito_fn_membership_page">
 
         {/* How it works */}
-        <section id="how-it-works" style={{ padding: '48px 0' }}>
+        <section id="how-it-works" style={{ padding: '32px 0' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 36 }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', marginBottom: 8, textWrap: 'balance' }}>
