@@ -720,11 +720,11 @@ export default function IdeaWheel() {
     const desc  = document.querySelector('.fn__desc');
     if (!title || !desc) return;
     if (inputMode === 'own') {
-      title.textContent = 'Already have an idea? Get it scored.';
-      desc.textContent  = 'Describe your concept, get a market score and competitor analysis, and walk away with a technical MVP blueprint.';
+      title.textContent = 'Score your own idea.';
+      desc.textContent  = 'Describe your concept and get a free market score. Buy credits for the full deep research and technical blueprint.';
     } else {
-      title.textContent = 'Validate the idea. Get the dev brief.';
-      desc.textContent  = 'Spin an idea, run the market research, and walk away with a technical MVP blueprint you can hand to a developer tonight.';
+      title.textContent = 'Spin for a new idea or validate your own.';
+      desc.textContent  = 'Run real market research on any concept — then get a clear technical blueprint to start building tonight.';
     }
   }, [inputMode]);
 
