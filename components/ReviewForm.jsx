@@ -190,14 +190,16 @@ export default function ReviewForm() {
         )}
       </div>
 
-      <button
-        type="submit"
-        className="fn__btn"
-        disabled={status === 'sending' || form.quote.trim().length < 20}
-        style={{ opacity: (status === 'sending' || form.quote.trim().length < 20) ? 0.5 : 1 }}
-      >
-        <span>{status === 'sending' ? 'Submitting…' : 'Submit review →'}</span>
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <button
+          type="submit"
+          className="fn__btn"
+          disabled={status === 'sending' || form.quote.trim().length < 20}
+          style={{ opacity: (status === 'sending' || form.quote.trim().length < 20) ? 0.5 : 1 }}
+        >
+          <span>{status === 'sending' ? 'Submitting…' : 'Submit review →'}</span>
+        </button>
+      </div>
     </form>
   );
 }
