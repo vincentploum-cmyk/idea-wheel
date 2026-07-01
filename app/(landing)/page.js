@@ -129,10 +129,10 @@ export default async function LandingPage() {
               For vibe coders, indie hackers &amp; solo founders
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.1, marginBottom: 14, textWrap: 'balance' }}>
-              Spin a fresh idea or score<br />the one you already have.
+              Spin a fresh idea or check<br />how your idea scores.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 600, margin: '0 auto 10px' }}>
-              IdeaReels generates startup ideas and scores them against real market data — Reddit signals, Google Trends, and community demand. Get a free market score in under 5 minutes.
+              IdeaReels generates ideas and scores them intelligently against real market data — Reddit signals, Google Trends, and community demand. Already have an idea? Get a free market score and a detailed blueprint to help you on your way in under 5 minutes.
             </p>
             {!user && (
               <div style={{
@@ -185,7 +185,7 @@ export default async function LandingPage() {
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 36 }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', marginBottom: 8, textWrap: 'balance' }}>
-                Validate the idea. Get the dev brief. Ship it tonight.
+                Spin an idea, validate it and get the blueprint to start today!
               </h2>
               <p style={{ opacity: 0.6, maxWidth: 520, margin: '0 auto' }}>
                 Most founders skip this and build on instinct. IdeaReels compresses it into one sitting.
@@ -210,14 +210,6 @@ export default async function LandingPage() {
                 </div>
               ))}
             </div>
-          <div style={{ textAlign: 'center' }}>
-              <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 14, opacity: 0.7, marginBottom: 14 }}>
-                Most builders go from idea to dev-ready brief in one sitting.
-              </p>
-              <Link href="/example" className="fn__creative_link" style={{ fontSize: 14 }}>
-                See a full example — spin to blueprint<span className="suffix">//</span>
-              </Link>
-            </div>
           </div>
         </section>
 
@@ -226,7 +218,7 @@ export default async function LandingPage() {
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 28, maxWidth: 760, marginInline: 'auto' }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', marginBottom: 8, textWrap: 'balance' }}>
-                What you see before you spend more
+                We'll score ideas based on real market data
               </h2>
               <p style={{ opacity: 0.65, margin: 0 }}>
                 The first verdict is meant to be useful on its own. When the signal is strong, the deeper research and blueprint pick up from there.
