@@ -372,13 +372,13 @@ export default async function LandingPage() {
           <div className="container">
             <div className="fn__bold_item" style={{ padding: '48px 40px', background: '#FFE000', textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
               <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(1.6rem,3vw,2.2rem)', margin: '0 0 12px', lineHeight: 1.15, textWrap: 'balance' }}>
-                Score your idea free.<br />Go deeper for $3.99.
+                Already have an idea?<br />Let us score it for free!
               </h2>
               <p style={{ fontSize: 15, lineHeight: 1.65, opacity: 0.7, margin: '0 0 24px', maxWidth: 420, marginInline: 'auto' }}>
                 Get a free market score on any concept. Buy credits when you want the full deep research and technical blueprint.
               </p>
               <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn"><span>{user ? 'Run your next verdict' : 'Get your free first verdict'}</span></Link>
+                <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn"><span>Score your idea now!</span></Link>
               </div>
               <p style={{ marginTop: 14, fontSize: 12, opacity: 0.55 }}>No card required to start · Credits never expire · Secure checkout via Stripe</p>
             </div>
