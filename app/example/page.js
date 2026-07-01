@@ -156,7 +156,7 @@ export default async function ExamplePage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
-    <PopitoShell>
+    <PopitoShell noBanner>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Header */}

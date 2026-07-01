@@ -34,7 +34,7 @@ function LogoMark({ height = 44 }) {
 }
 
 
-export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
+export default async function PopitoShell({ children, yellowBg, noFooterCta, noBanner }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -44,11 +44,11 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta }) {
       data-bg-decor={yellowBg ? undefined : 'enable'}
       style={yellowBg ? { background: '#FFE000' } : undefined}
     >
-      <PromoBanner
+      {!noBanner && <PromoBanner
         text="Get your free first verdict, then unlock the research and MVP blueprint only when the signal is strong."
         linkLabel="Get started free →"
         linkHref={user ? '/wheel' : '/auth/register'}
-      />
+      />}
 
       <div className="popito_fn_searchbox">
         <div className="search_content">
