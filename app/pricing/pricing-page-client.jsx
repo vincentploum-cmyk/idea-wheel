@@ -80,8 +80,7 @@ export default function PricingPageClient({ searchParams }) {
       <section id="price">
         <div className="container">
           <div style={{ maxWidth: 760, margin: '0 auto 32px', textAlign: 'center' }}>
-            <p style={{ fontSize: 14, opacity: 0.75, margin: '0 0 8px' }}>Sign in to save your work, then buy credits only when you want deeper research or the full blueprint.</p>
-            <p style={{ fontSize: 13, opacity: 0.55, margin: 0 }}>Starter is for your own concepts. Pro and Power are shortcut packs for researched starting points.</p>
+            <p style={{ fontSize: 14, opacity: 0.75, margin: 0 }}>Sign in to save your work, then buy credits only when you want deeper research or the full blueprint.</p>
           </div>
 
           {statusMessage && (
