@@ -2799,11 +2799,11 @@ const CSS = `
   text-align:center;
   cursor:pointer;
   border-radius:0;
-  background:#111;
+  background:#fff;
 }
 @keyframes sm-cover-pulse {
   0%,100% { opacity:1; }
-  50%      { opacity:.65; }
+  50%      { opacity:.55; }
 }
 .sm-reel-cover-emoji { display:none; }
 .sm-reel-cover-title {
@@ -2812,7 +2812,7 @@ const CSS = `
   font-size:clamp(22px, 5vw, 34px);
   letter-spacing:.12em;
   text-transform:uppercase;
-  color:#FFE000;
+  color:#111;
   background:none;
   border:none;
   border-radius:0;
@@ -2823,7 +2823,7 @@ const CSS = `
 .sm-reel-cover-sub {
   font-family:'Nunito', sans-serif;
   font-size:11px; font-weight:700;
-  color:rgba(255,255,255,0.38);
+  color:rgba(0,0,0,0.38);
   letter-spacing:.1em;
   text-transform:uppercase;
   margin-top:6px;
