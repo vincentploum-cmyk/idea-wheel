@@ -3,7 +3,7 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import { createClient } from '@/lib/supabase-server';
 
 export const metadata = {
-  title: 'IdeaReels Example — Spin to Blueprint in 5 Minutes',
+  title: 'Example — Spin to Blueprint in 5 Minutes',
   description: 'See exactly what IdeaReels produces: a real spin result, AI market verdict, deep research, and a full MVP blueprint — step by step, before you buy.',
   alternates: { canonical: 'https://ideareels.io/example' },
   openGraph: {
