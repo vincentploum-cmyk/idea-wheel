@@ -40,17 +40,21 @@ export default function Loading() {
         >
           …
         </div>
-        <h1
+        {/* Not a heading: this fallback is streamed into the SSR HTML, and an
+            <h1> here becomes the first heading crawlers see on every page. */}
+        <p
+          role="status"
           style={{
             margin: '0 0 10px',
             fontFamily: 'var(--font-display)',
+            fontWeight: 700,
             fontSize: 'clamp(28px, 5vw, 36px)',
             lineHeight: 1.08,
             letterSpacing: '-0.03em',
           }}
         >
           Loading IdeaReels
-        </h1>
+        </p>
         <p
           style={{
             margin: 0,

@@ -2,7 +2,7 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import PricingPageClient from './pricing-page-client';
 
 export const metadata = {
-  title: 'Pricing — IdeaReels: AI Market Research Starting at $3.99',
+  title: 'Pricing — AI Market Research from $3.99',
   description: 'AI market research + MVP blueprint before you build. Credits from $3.99 — no subscription, never expire. Validate your startup idea in under 5 minutes.',
   alternates: { canonical: 'https://ideareels.io/pricing' },
   openGraph: {

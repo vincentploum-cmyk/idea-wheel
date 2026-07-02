@@ -12,6 +12,7 @@ export const metadata = {
     description: 'Practical guides on startup idea validation, AI market research, and MVP planning for solo builders.',
     type: 'website',
     url: 'https://ideareels.io/blog',
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels Blog' }],
   },
 };
 

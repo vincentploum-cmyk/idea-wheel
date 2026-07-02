@@ -12,7 +12,7 @@ export async function generateMetadata({ params }) {
   const post = getBlogPost(params.slug);
   if (!post) return {};
   return {
-    title: `${post.title} | IdeaReels Blog`,
+    title: post.title,
     description: post.description,
     alternates: { canonical: `https://ideareels.io/blog/${post.slug}` },
     openGraph: {

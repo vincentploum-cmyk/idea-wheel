@@ -2,8 +2,9 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import OfferPricingClient from './offer-pricing-client';
 
 export const metadata = {
-  title: 'Limited Time Offer — 50% Off Shortcut Packs | IdeaReels',
+  title: 'Limited Time Offer — 50% Off Shortcut Packs',
   description: 'Sign up and get 50% off the Pro and Power shortcut packs for a limited time.',
+  alternates: { canonical: 'https://ideareels.io/pricing/offer' },
 };
 
 export default function OfferPricingPage({ searchParams }) {
@@ -15,7 +16,7 @@ export default function OfferPricingPage({ searchParams }) {
             <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12, opacity: 0.5 }}>
               Limited time offer
             </p>
-            <h3 className="fn__title">50% off Pro &amp; Power</h3>
+            <h1 className="fn__title">50% off Pro &amp; Power</h1>
             <p className="fn__desc">
               Create an account, evaluate the workflow properly, then use the shortcut packs at half price if you want a researched starting point.
             </p>

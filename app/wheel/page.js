@@ -20,7 +20,7 @@ export default async function WheelPage() {
       <div className="popito_fn_pagetitle">
         <div className="container">
           <div className="pagetitle">
-            <h3 className="fn__title">Spin for a new idea or validate your own.</h3>
+            <h1 className="fn__title">Spin for a new idea or validate your own.</h1>
             <p className="fn__desc">Run real market research on any concept — then get a clear technical blueprint to start building tonight.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>

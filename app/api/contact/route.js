@@ -15,11 +15,17 @@ export async function POST(request) {
       return new Response(null, { status: 400 });
     }
     const db = getAdmin();
-    await db.from('contact_messages').insert({
+    // Supabase returns errors instead of throwing — without this check a
+    // failed insert would still tell the visitor "Message received".
+    const { error } = await db.from('contact_messages').insert({
       name: name.trim().slice(0, 200),
       email: email.trim().slice(0, 200),
       message: message.trim().slice(0, 4000),
     });
+    if (error) {
+      console.error('contact_messages insert failed:', error.message);
+      return new Response(null, { status: 500 });
+    }
     return new Response(null, { status: 204 });
   } catch {
     return new Response(null, { status: 500 });

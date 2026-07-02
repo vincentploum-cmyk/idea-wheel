@@ -2,7 +2,7 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import ContactForm from '@/components/ContactForm';
 
 export const metadata = {
-  title: 'Contact | IdeaReels',
+  title: 'Contact — Support & Feedback',
   description: 'Get in touch with the IdeaReels team. Report a bug, share feedback, or ask a question.',
   alternates: { canonical: 'https://ideareels.io/contact' },
 };

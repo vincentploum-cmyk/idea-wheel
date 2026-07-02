@@ -13,20 +13,20 @@ describe('CREDIT_PACKS', () => {
     expect(pack.type).toBe('spin');
   });
 
-  test('pro pack: 1 idea credit at $9.99', () => {
+  test('pro pack: 10 spin credits at $9.99', () => {
     const pack = CREDIT_PACKS.find(p => p.id === 'pro');
     expect(pack).toBeDefined();
-    expect(pack.ideaCredits).toBe(1);
+    expect(pack.credits).toBe(10);
     expect(pack.price_cents).toBe(999);
-    expect(pack.type).toBe('idea');
+    expect(pack.type).toBe('spin');
   });
 
-  test('power pack: 2 idea credits at $19.99', () => {
+  test('power pack: 25 spin credits at $19.99', () => {
     const pack = CREDIT_PACKS.find(p => p.id === 'power');
     expect(pack).toBeDefined();
-    expect(pack.ideaCredits).toBe(2);
+    expect(pack.credits).toBe(25);
     expect(pack.price_cents).toBe(1999);
-    expect(pack.type).toBe('idea');
+    expect(pack.type).toBe('spin');
   });
 
   test('all packs have required fields', () => {

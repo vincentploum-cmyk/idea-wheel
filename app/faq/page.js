@@ -4,7 +4,7 @@ import TrustBar from '@/components/TrustBar';
 import { FAQS } from '@/lib/content';
 
 export const metadata = {
-  title: 'FAQ — IdeaReels: Market Research & MVP Blueprint Tool',
+  title: 'FAQ — Startup Idea Validation & Credits',
   description: 'Answers to common questions about IdeaReels — how AI market validation works, what credits do, and how to go from concept to technical MVP blueprint.',
   alternates: { canonical: 'https://ideareels.io/faq' },
   openGraph: {
