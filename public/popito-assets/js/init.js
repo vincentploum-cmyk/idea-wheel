@@ -8,6 +8,10 @@
 jQuery.fn.isInViewportPopito = function() {
 	"use strict";
 	var element 		= jQuery(this);
+	// Guard: callers pass selectors whose markup may not exist on this page
+	// (e.g. .popito_fn_totop) — offset() is undefined on an empty set and
+	// threw on every scroll event.
+	if (!element.length || !element.offset()) { return -99999; }
     var elementTop 		= element.offset().top;
     var elementBottom 	= elementTop + element.outerHeight();
 

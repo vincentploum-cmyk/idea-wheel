@@ -87,31 +87,22 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         {/* CWV: Preconnect to critical third-party origins */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://js.stripe.com" />
         <link rel="dns-prefetch" href="https://ywroiurslbnnqecwmkbs.supabase.co" />
 
-        {/* Preload Nunito so the brand font lands before LCP element paints */}
-        <link
-          rel="preload"
-          as="style"
-          href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Roboto:wght@400;700&display=swap"
-        />
-        {/* Load only the weights we actually use: Nunito 700/800/900, Roboto 400/700 */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Roboto:wght@400;700&display=swap"
-          rel="stylesheet"
-        />
+        {/* Fonts are self-hosted (see @font-face in globals.css).
+            Preload the two files needed for above-the-fold text. */}
+        <link rel="preload" as="font" type="font/woff2" href="/fonts/nunito-var-latin.woff2" crossOrigin="anonymous" />
+        <link rel="preload" as="font" type="font/woff2" href="/fonts/roboto-var-latin.woff2" crossOrigin="anonymous" />
 
-        {/* Critical template CSS — blocking so above-fold content renders correctly */}
-        <link rel="preload" as="style" href="/popito-assets/css/style.css" />
+        {/* Template CSS. NOTE: string onLoad handlers are silently dropped by
+            React server components — a media="print" async-load trick does NOT
+            work here and left these stylesheets permanently disabled in prod.
+            style.css (core) + responsive.css (mobile breakpoints) load normally;
+            base.css and plugins.css targeted markup this app never renders. */}
         <link rel="stylesheet" href="/popito-assets/css/style.css" />
-        {/* Non-critical template CSS — loaded after paint to cut render-blocking time */}
-        <link rel="stylesheet" href="/popito-assets/css/base.css" media="print" onLoad="this.media='all'" />
-        <link rel="stylesheet" href="/popito-assets/css/plugins.css" media="print" onLoad="this.media='all'" />
-        <link rel="stylesheet" href="/popito-assets/css/responsive.css" media="print" onLoad="this.media='all'" />
+        <link rel="stylesheet" href="/popito-assets/css/responsive.css" />
 
         {/* Global schema: WebSite + Organization */}
         <script
@@ -127,9 +118,13 @@ export default function RootLayout({ children }) {
         {children}
         <CookieBanner />
         <WebVitals />
+        {/* jquery + init power the sticky header, search toggle, and fn__svg
+            inlining. plugins.js (owl/swiper/marquee, 185KB) was never
+            instantiated on markup this app renders — removed.
+            NOTE: popito-assets are cached for 30 days (next.config headers) —
+            bump the ?v= query whenever one of these files changes. */}
         <Script src="/popito-assets/js/jquery.js" strategy="afterInteractive" />
-        <Script src="/popito-assets/js/plugins.js" strategy="afterInteractive" />
-        <Script src="/popito-assets/js/init.js" strategy="afterInteractive" />
+        <Script src="/popito-assets/js/init.js?v=2" strategy="afterInteractive" />
       </body>
     </html>
   );

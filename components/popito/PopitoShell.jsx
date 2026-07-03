@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
 import PromoBanner from '@/components/PromoBanner';
 import NavLinks from './NavLinks';
+import MobileNav from './MobileNav';
 
 function LogoMark({ height = 44 }) {
   const fontSize = Math.round(height * 0.52);
@@ -107,22 +108,13 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta, noB
         </div>
       </div>
 
-      <div className="popito_fn_mobnav">
-        <div className="mob_top">
-          <div className="logo">
-            <div className="fn_logo">
-              <Link href="/" style={{ display: 'inline-block', lineHeight: 0 }}>
-                <LogoMark height={38} />
-              </Link>
-            </div>
-          </div>
-          <div className="right__trigger">
-            <button aria-label="Open menu">
-              <span className="hamb"><span /></span>
-            </button>
-          </div>
-        </div>
-        <div className="mob_bot">
+      <MobileNav
+        logo={
+          <Link href="/" style={{ display: 'inline-block', lineHeight: 0 }}>
+            <LogoMark height={38} />
+          </Link>
+        }
+        menu={
           <ul className="mobile_menu">
             <NavLinks mobile />
             <li>
@@ -131,8 +123,8 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta, noB
                 : <Link href="/auth/login"><span><span>Sign In</span><span className="suffix">//</span></span></Link>}
             </li>
           </ul>
-        </div>
-      </div>
+        }
+      />
 
       <main className="popito_fn_content">
         {children}

@@ -1,10 +1,5 @@
 const nextConfig = {
   reactStrictMode: true,
-  // Trust Render's reverse proxy headers so X-Forwarded-Host is used
-  // This ensures request.url reflects the real public URL, not localhost
-  experimental: {
-    trustHostHeader: true,
-  },
   images: {
     remotePatterns: [
       {
@@ -16,6 +11,27 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [400, 640, 768, 1024, 1200, 1600],
     imageSizes: [72, 128, 256, 400],
+  },
+  async headers() {
+    const security = [
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+    ];
+    return [
+      { source: '/:path*', headers: security },
+      // Font files never change — safe to cache forever
+      {
+        source: '/fonts/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      // Template assets change rarely; 30 days + revalidation grace
+      {
+        source: '/popito-assets/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=86400' }],
+      },
+    ];
   },
   // Performance budget — targets match Google CWV "Good" thresholds
   // Measured via /api/vitals (web-vitals client component on every page)
