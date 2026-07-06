@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CREDIT_PACKAGES } from '@/lib/pricing';
+import { CheckIcon } from '@/components/popito/icons';
 
 const PACK_DESCRIPTIONS = {
   starter: 'Best if you want to evaluate and build your own concepts.',
@@ -109,7 +110,7 @@ export default function OfferPricingClient() {
                           <ul>
                             {(PACK_FEATURES[pkg.key] || []).map((feature) => (
                               <li key={feature}>
-                                <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" />
+                                <CheckIcon />
                                 <span className="text">{feature}</span>
                               </li>
                             ))}

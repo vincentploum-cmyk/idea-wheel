@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { CREDIT_PACKAGES, CREDIT_PACKAGE_BY_KEY } from '@/lib/pricing';
+import { CheckIcon } from '@/components/popito/icons';
 
 const PACK_DESCRIPTIONS = {
   starter: '5 credits to spin, score, and go deeper on your own ideas.',
@@ -123,7 +124,7 @@ export default function PricingPageClient({ searchParams }) {
                           <ul>
                             {features.map((f) => (
                               <li key={f}>
-                                <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" width="16" height="16" />
+                                <CheckIcon width={16} height={16} />
                                 <span className="text">{f}</span>
                               </li>
                             ))}

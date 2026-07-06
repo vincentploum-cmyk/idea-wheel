@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase-server';
 import PromoBanner from '@/components/PromoBanner';
 import NavLinks from './NavLinks';
 import MobileNav from './MobileNav';
+import StickyChrome from './StickyChrome';
+import { ArrowCurlyIcon } from './icons';
 
 function LogoMark({ height = 44 }) {
   const fontSize = Math.round(height * 0.52);
@@ -51,15 +53,10 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta, noB
         linkHref={user ? '/wheel' : '/auth/register'}
       />}
 
-      <div className="popito_fn_searchbox">
-        <div className="search_content">
-          <div className="searchbox">
-            <input type="search" name="search" placeholder="Search…" aria-label="Search" autoComplete="off" />
-            <img src="/popito-assets/svg/search.svg" alt="" className="fn__svg" />
-          </div>
-          <div className="search_result"><ul /></div>
-        </div>
-      </div>
+      {/* Search overlay removed: the template's search had no trigger in this
+          port's header and its engine grepped static template HTML files that
+          don't exist in this app — it was unreachable and non-functional. */}
+      <StickyChrome />
 
       <header id="popito_fn_header">
         <div className="popito_fn_header">
@@ -165,7 +162,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta, noB
                       <Link href={user ? '/wheel' : '/auth/register'} className="fn__btn medium"><span>Spin / Score your idea!</span></Link>
                     </div>
                     <div className="icon">
-                      <img src="/popito-assets/svg/arrow-curly.svg" alt="" className="fn__svg" />
+                      <ArrowCurlyIcon />
                     </div>
                   </div>
                 </div>

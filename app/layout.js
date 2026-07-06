@@ -1,5 +1,4 @@
 import './globals.css';
-import Script from 'next/script';
 import dynamic from 'next/dynamic';
 
 const CookieBanner = dynamic(() => import('@/components/CookieBanner'), { ssr: false });
@@ -118,13 +117,10 @@ export default function RootLayout({ children }) {
         {children}
         <CookieBanner />
         <WebVitals />
-        {/* jquery + init power the sticky header, search toggle, and fn__svg
-            inlining. plugins.js (owl/swiper/marquee, 185KB) was never
-            instantiated on markup this app renders — removed.
-            NOTE: popito-assets are cached for 30 days (next.config headers) —
-            bump the ?v= query whenever one of these files changes. */}
-        <Script src="/popito-assets/js/jquery.js" strategy="afterInteractive" />
-        <Script src="/popito-assets/js/init.js?v=2" strategy="afterInteractive" />
+        {/* The template's jQuery stack (jquery.js + init.js + plugins.js) is
+            fully retired: sticky nav → StickyChrome, mobile menu → MobileNav,
+            fn__svg inlining → components/popito/icons.jsx; everything else
+            targeted markup this app never renders. */}
       </body>
     </html>
   );

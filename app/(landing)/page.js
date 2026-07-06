@@ -4,6 +4,7 @@ import ReviewForm from '@/components/ReviewForm';
 import { LANDING_STEPS, FAQS } from '@/lib/content';
 import { CREDIT_PACKAGES } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase-server';
+import { CheckIcon } from '@/components/popito/icons';
 
 const PACK_FEATURES = {
   starter: [
@@ -308,7 +309,7 @@ export default async function LandingPage() {
                           <ul>
                             {(PACK_FEATURES[pkg.key] || []).map((feature) => (
                               <li key={feature}>
-                                <img src="/popito-assets/svg/check.svg" alt="" className="fn__svg" width="16" height="16" loading="lazy" />
+                                <CheckIcon width={16} height={16} />
                                 <span className="text">{feature}</span>
                               </li>
                             ))}
