@@ -58,153 +58,6 @@ function lighten(hex, t) {
   return `rgb(${r},${g},${b})`;
 }
 
-/* ─── TEASER REEL DATA ───────────────────────────────────────────── */
-// Validated combos — all three columns advance together so every visible
-// combination is always coherent. Add more rows freely; never mix columns.
-const TEASER_COMBOS = [
-  ['Automates',    'invoice processing',      'Accounting firms'],
-  ['Tracks',       'compliance reporting',     'Healthcare'],
-  ['Manages',      'client onboarding',        'Legal services'],
-  ['Streamlines',  'contract management',      'Insurance'],
-  ['Simplifies',   'staff scheduling',         'Construction'],
-  ['Optimizes',    'inventory management',     'Shopify sellers'],
-  ['Coaches',      'daily habits',             'busy professionals'],
-  ['Improves',     'mental health',            'remote workers'],
-  ['Plans',        'meal planning',            'new parents'],
-  ['Builds',       'fitness routines',         'athletes'],
-  ['Reduces',      'reorder forecasting',      'Amazon sellers'],
-  ['Prevents',     'certification tracking',   'Field service teams'],
-  ['Reconciles',   'peak-event inventory',     'Funded startups'],
-  ['Diagnoses',    'listing issues',           'Amazon sellers'],
-  ['Fixes',        'board reporting',          'Small businesses'],
-  ['Organizes',    'job status updates',       'Auto repair shops'],
-  ['Centralizes',  'document management',      'Property management'],
-  ['Monitors',     'equipment maintenance',    'Manufacturing'],
-  ['Accelerates',  'quote generation',         'Staffing agencies'],
-  ['Handles',      'customer follow-ups',      'Service businesses'],
-];
-const REEL_COLORS = ['#E63946','#2A9D8F','#264653'];
-const REEL_LABELS = ['ACTION','WORKFLOW','FOR'];
-
-/* ─── AUTO-CYCLING TEASER REEL ──────────────────────────────────── */
-// All three reels share a single offset so they always show a valid combo.
-function TeaserReels() {
-  const [offset, setOffset] = useState(0);
-  const ITEM_H = 56;
-  useEffect(() => {
-    const id = setInterval(() => setOffset(o => o + 1), 2000);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <div className="tr-root">
-      <div className="tr-reels">
-        {[0, 1, 2].map((col) => {
-          const bank = TEASER_COMBOS.map(row => row[col]);
-          const idx = offset % bank.length;
-          const items = [...bank, ...bank, ...bank];
-          return (
-            <div key={col} className="tr-col">
-              <div className="tr-label" style={{ color: REEL_COLORS[col] }}>{REEL_LABELS[col]}</div>
-              <div className="tr-window">
-                <div className="tr-strip" style={{
-                  transform: `translateY(${-(idx + bank.length) * ITEM_H + ITEM_H}px)`,
-                  transition: 'transform 0.55s cubic-bezier(0.16,1,0.3,1)',
-                }}>
-                  {items.map((word, i) => (
-                    <div className="tr-item" key={i} style={{ height: ITEM_H }}>{word}</div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ─── SVG WHEEL ──────────────────────────────────────────────────── */
-function Wheel({ onResult }) {
-  const N = SEGMENTS.length;
-  const seg = 360 / N;
-  const C = 200, R = 192;
-  const [rotation, setRotation] = useState(0);
-  const [spinning, setSpinning] = useState(false);
-  const [landed, setLanded] = useState(null);
-  const rotRef = useRef(0);
-
-  const spin = () => {
-    if (spinning) return;
-    setSpinning(true); setLanded(null);
-    const i = Math.floor(Math.random() * N);
-    const centerDeg = i * seg;
-    const targetMod = ((-centerDeg) % 360 + 360) % 360;
-    const curMod = ((rotRef.current % 360) + 360) % 360;
-    let delta = targetMod - curMod; if (delta < 0) delta += 360;
-    const turns = 5 + Math.floor(Math.random() * 2);
-    const next = rotRef.current + delta + 360 * turns;
-    rotRef.current = next;
-    setRotation(next);
-    setTimeout(() => { setSpinning(false); setLanded(i); onResult(SEGMENTS[i]); }, 4600);
-  };
-
-  return (
-    <div className="su-wheel-wrap">
-      <div className="su-wheel-pointer">
-        <svg width="42" height="50" viewBox="0 0 46 54" fill="none">
-          <path d="M23 50 L6 14 A20 20 0 0 1 40 14 Z" fill="#fff" stroke="#e5e5e5" strokeWidth="1.5"/>
-          <circle cx="23" cy="18" r="6" fill="#FFE000" stroke="#111" strokeWidth="1.5"/>
-        </svg>
-      </div>
-      <div className="su-wheel-shadow"/>
-      <svg className="su-wheel-svg" viewBox="0 0 400 400"
-        style={{ transform:`rotate(${rotation}deg)`,
-          transition: spinning ? `transform 4.6s cubic-bezier(.12,.74,.16,1)` : "none" }}>
-        <defs>
-          {SEGMENTS.map((s,i) => (
-            <linearGradient key={i} id={`sg${i}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor={lighten(s.color, 0.16)}/>
-              <stop offset="1" stopColor={s.color}/>
-            </linearGradient>
-          ))}
-          <radialGradient id="gloss" cx="0.5" cy="0.3" r="0.75">
-            <stop offset="0" stopColor="#fff" stopOpacity="0.30"/>
-            <stop offset="0.55" stopColor="#fff" stopOpacity="0.04"/>
-            <stop offset="1" stopColor="#fff" stopOpacity="0"/>
-          </radialGradient>
-        </defs>
-        <circle cx={C} cy={C} r={R+2} fill="#fff"/>
-        {SEGMENTS.map((s,i) => {
-          const start = i*seg - seg/2, end = i*seg + seg/2;
-          const win = landed === i;
-          return (
-            <g key={s.id} style={{ transformOrigin:`${C}px ${C}px`,
-              transform: win ? "scale(1.012)" : "scale(1)", transition:"transform .5s ease" }}>
-              <path d={slicePath(C,C,R,start,end)} fill={`url(#sg${i})`} stroke="#fff" strokeWidth="2.5"/>
-            </g>
-          );
-        })}
-        <circle cx={C} cy={C} r={R} fill="url(#gloss)" pointerEvents="none"/>
-        {SEGMENTS.map((s,i) => (
-          <g key={s.id} transform={`rotate(${i*seg} ${C} ${C})`}>
-            <text x={C} y={60} textAnchor="middle"
-              fontFamily="Nunito,sans-serif" fontWeight="700" fontSize="17" fill="#fff">{s.label}</text>
-          </g>
-        ))}
-        <circle cx={C} cy={C} r={R} fill="none" stroke="rgba(80,20,110,.08)" strokeWidth="2"/>
-      </svg>
-      <button className={`su-wheel-hub ${spinning?"is-spinning":""}`} onClick={spin} disabled={spinning}>
-        <span className="su-hub-inner">
-          {spinning
-            ? <span className="su-hub-dots"><i/><i/><i/></span>
-            : <><span className="su-hub-spark">✦</span><span className="su-hub-label">SPIN</span></>}
-        </span>
-      </button>
-    </div>
-  );
-}
-
 /* ─── SCORE RING ─────────────────────────────────────────────────── */
 function ScoreRing({ value, size = 128, label }) {
   const [v, setV] = useState(0);
@@ -465,6 +318,7 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
   const m = modeConfigs[mode] || CLIENT_DEFAULT_MODE_CONFIGS[mode];
   const banks = m.banks;
   const weights = m.weights || banks.map((bank) => bank.map(() => 1));
+  const repeatedBanks = useMemo(() => banks.map(bank => Array.from({length: REPEATS}, () => bank).flat()), [banks]);
 
   useEffect(() => {
     const saved = landedByMode.current[mode];
@@ -626,7 +480,7 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
           <div className="sm-payline-bar" aria-hidden="true" />
           <div className="sm-reels">
             {banks.map((bank,w) => {
-              const repeated = Array.from({length:REPEATS},()=>bank).flat();
+              const repeated = repeatedBanks[w];
               return (
                 <div className="sm-col" key={mode+w} style={{'--accent':REEL_TINTS[w]}}>
                   <div className="sm-window">
@@ -1301,105 +1155,13 @@ export default function IdeaWheel() {
     return () => clearInterval(id);
   }, [bpRunning, bpDone, bpErr, bpCompletedCount]);
 
-  /* Scoped utilitarian proof: only the landing screen gets the new product-tool
-     language. Toggling a body class lets the scoped CSS suppress the global
-     cloud-blob background for landing without touching other screens. */
-  useEffect(() => {
-    const onLanding = screen === "landing";
-    document.body.classList.toggle("util-landing", onLanding);
-    return () => document.body.classList.remove("util-landing");
-  }, [screen]);
-
   /* ── SCREENS ── */
   return (
-    <div className={`su-root${screen === "landing" ? " su-root--util" : ""}`}>
-      {mounted && <style>{CSS}</style>}
-
-      {/* ── LANDING ── */}
-      {screen === "landing" && (
-        <section className="su-screen su-landing">
-          <div className="su-landing-inner">
-
-            <div className="su-util-eyebrow">Idea validation engine</div>
-            <h1 className="su-display su-landing-h1">
-              <span style={{ display:"block" }}>Do the work you would want done</span>
-              <span className="su-grad-text" style={{ display:"block" }}>before making the case to investors.</span>
-            </h1>
-            <p className="su-landing-sub">
-              Start with a strong concept, run the market research, and get the technical MVP blueprint so you know what to build and how to build it fast.
-            </p>
-
-            <div className="su-landing-cta">
-              <div className="su-landing-cta-row">
-                <button className="su-btn su-btn-primary su-btn-lg" onClick={() => authUser ? goTo("wheel") : window.location.assign("/profile")}>
-                  Get started
-                </button>
-                <button className="su-btn su-btn-ghost su-btn-lg" onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior:"smooth", block:"start" })}>
-                  See how it works
-                </button>
-              </div>
-            </div>
-
-            {/* How it works */}
-            <div className="su-hiw" id="how-it-works">
-              <div className="su-hiw-label">How it works</div>
-              <div className="su-hiw-steps">
-                <div className="su-hiw-step">
-                  <div className="su-hiw-num">1</div>
-                  <div>
-                    <div className="su-hiw-t">Start with a concept worth testing</div>
-                    <div className="su-hiw-d">Combine proven actions, real workflows, and target industries to uncover a concrete startup concept, not vague inspiration.</div>
-                  </div>
-                </div>
-                <div className="su-hiw-connector" aria-hidden />
-                <div className="su-hiw-step">
-                  <div className="su-hiw-num">2</div>
-                  <div>
-                    <div className="su-hiw-t">Do the market homework before you commit</div>
-                    <div className="su-hiw-d">Every concept gets a market check with competitor analysis, market size, and demand signals, so you get a clear build, caution, or avoid verdict before you sink time into it.</div>
-                  </div>
-                </div>
-                <div className="su-hiw-connector" aria-hidden />
-                <div className="su-hiw-step">
-                  <div className="su-hiw-num">3</div>
-                  <div>
-                    <div className="su-hiw-t">Get the technical MVP blueprint</div>
-                    <div className="su-hiw-d">Extended market research costs 1 credit and the full blueprint costs 2. Each blueprint gives you product scope, launch strategy, infrastructure choices, and technical steps to build fast.</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* steps — above teaser */}
-            {/* reviews */}
-            <div className="su-reviews">
-              <div className="su-reviews-label">What founders are saying</div>
-              <div className="su-reviews-grid">
-                {[
-                  { name:"Sarah K.", role:"Founder, SaaS", text:"I spun 12 ideas in 20 minutes. The market check killed 9 of them before I wasted a single hour. That's the point.", stars:5 },
-                  { name:"Marcus L.", role:"Operator", text:"The infrastructure breakdown alone saved me 3 hours of research. Every service I needed, with setup steps and cost estimates.", stars:5 },
-                  { name:"Priya M.", role:"Product Manager", text:"I was skeptical about AI ideation tools. This one validates before it builds. That's the difference. The avoid verdict on my first idea was genuinely useful.", stars:5 },
-                ].map((r,i) => (
-                  <div className="su-review-card" key={i}>
-                    <div className="su-review-stars">{"★".repeat(r.stars)}</div>
-                    <p className="su-review-text">"{r.text}"</p>
-                    <div className="su-review-author">
-                      <div className="su-review-avatar">{r.name[0]}</div>
-                      <div>
-                        <div className="su-review-name">{r.name}</div>
-                        <div className="su-review-role">{r.role}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-
-
-          </div>
-        </section>
-      )}
+    <div className="su-root">
+      {/* dangerouslySetInnerHTML keeps the CSS raw on the server: React
+         entity-escapes text children of <style>, which the browser never
+         decodes inside a raw-text element. */}
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
       {/* ── WHEEL (slot machine reels) ── */}
       {screen === "wheel" && (
@@ -1433,12 +1195,13 @@ export default function IdeaWheel() {
               {/* Stacked inputs */}
               <div className="su-own-fields">
                 <div className="su-own-field-group">
-                  <label className="su-own-label">
+                  <label className="su-own-label" htmlFor="own-field-1">
                     {ownMode === 'b2b' ? 'What does it do?' : 'What does it do?'}
                   </label>
                   <div className="su-own-input-wrap">
                     <span className="su-own-adorn">An agent / website / app that</span>
                     <input
+                      id="own-field-1"
                       className="su-own-input"
                       placeholder={ownMode === 'b2b' ? 'automates invoice processing for law firms' : 'tracks daily habits and sends nudges'}
                       value={ownField1}
@@ -1447,12 +1210,13 @@ export default function IdeaWheel() {
                   </div>
                 </div>
                 <div className="su-own-field-group">
-                  <label className="su-own-label">
+                  <label className="su-own-label" htmlFor="own-field-2">
                     {ownMode === 'b2b' ? 'Target industry or buyer' : 'Target audience'}
                   </label>
                   <div className="su-own-input-wrap">
                     <span className="su-own-adorn">{ownMode === 'b2b' ? 'For' : 'For'}</span>
                     <input
+                      id="own-field-2"
                       className="su-own-input"
                       placeholder={ownMode === 'b2b' ? 'legal services, HR teams, e-commerce ops…' : 'busy professionals, students, parents…'}
                       value={ownField2}
@@ -1959,7 +1723,7 @@ export default function IdeaWheel() {
           <div className="su-modal" onClick={e=>e.stopPropagation()}>
             <div className="su-modal-head">
               <span>Get credits</span>
-              <button onClick={() => setShowPricing(false)}>✕</button>
+              <button aria-label="Close" onClick={() => setShowPricing(false)}>✕</button>
             </div>
             <p className="su-modal-sub">Extended market research costs 1 credit; the full blueprint costs 2.</p>
             {checkoutErr && <p className="su-err">{checkoutErr}</p>}
@@ -1984,11 +1748,6 @@ export default function IdeaWheel() {
     </div>
   );
 }
-
-const CHIP_POS = [
-  {x:7,y:19},{x:80,y:13},{x:14,y:62},{x:86,y:56},
-  {x:4,y:41},{x:90,y:35},{x:6,y:84},{x:89,y:82},
-];
 
 /* ─── CSS ────────────────────────────────────────────────────────── */
 const CSS = `
@@ -2058,15 +1817,6 @@ const CSS = `
 .su-landing-sub { font-size:17px; color:var(--muted); margin:0 auto 18px; line-height:1.6; max-width:620px; }
 .su-landing-cta { display:flex; flex-direction:column; align-items:center; gap:12px; margin:18px 0 8px; }
 .su-landing-cta-row { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
-
-/* proof bar */
-.su-proof-bar { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-bottom:28px; }
-.su-proof-chip {
-  display:inline-flex; align-items:center; gap:6px;
-  padding:6px 14px; border-radius:var(--r-pill);
-  background:rgba(255,255,255,0.72); backdrop-filter:blur(8px);
-  border:1px solid var(--line); font-size:12px; font-weight:600; color:var(--ink-2);
-}
 
 /* value grid */
 .su-value-grid {
@@ -2234,29 +1984,6 @@ const CSS = `
 .su-hub-dots i:nth-child(3){ animation-delay:.3s; }
 @keyframes sudots { 0%,100%{opacity:.3;transform:scale(.7)} 50%{opacity:1;transform:scale(1)} }
 
-/* result card */
-.su-result-card {
-  background:rgba(255,255,255,0.78); backdrop-filter:blur(12px);
-  border:1px solid var(--line); border-radius:var(--r-xl);
-  padding:28px; box-shadow:var(--sh-md);
-  opacity:0; transform:translateY(8px);
-  transition:opacity .3s var(--ease-out), transform .3s var(--ease-out);
-}
-.su-result-card.in { opacity:1; transform:translateY(0); }
-.su-result-empty { display:flex; align-items:center; gap:16px; }
-.su-result-empty-ring {
-  width:44px; height:44px; border-radius:50%; border:2px dashed var(--line-2);
-  display:grid; place-items:center; font-size:18px;
-  color:var(--muted);
-}
-.su-result-empty-t { font-weight:700; font-size:14px; color:var(--ink); }
-.su-result-empty-d { font-size:12px; color:var(--muted); margin-top:3px; }
-.su-result-domain { margin-bottom:12px; }
-.su-result-title { font-size:28px; color:var(--ink); margin:8px 0 6px; }
-.su-result-tagline { font-size:14px; font-weight:600; color:var(--ink-2); margin:0 0 8px; line-height:1.5; }
-.su-result-blurb { font-size:13px; color:var(--muted); margin:0 0 20px; line-height:1.6; }
-.su-result-actions { display:flex; gap:10px; flex-wrap:wrap; }
-
 /* card */
 .su-card {
   background:#fff;
@@ -2268,8 +1995,7 @@ const CSS = `
 /* scan */
 .su-scan { padding:20px 24px; margin-bottom:32px; }
 .su-scan-bar { height:3px; border-radius:3px; background:var(--line); overflow:hidden; margin-bottom:12px; position:relative; }
-.su-scan-fill { position:absolute; top:0; left:0; height:100%; width:40%; border-radius:3px; background:#111; animation:suscan 1.6s ease-in-out infinite; }
-@keyframes suscan { 0%{left:-40%} 100%{left:100%} }
+.su-scan-fill { position:absolute; top:0; left:0; height:100%; width:40%; border-radius:3px; background:#111; }
 .su-scan-text { font-size:14px; color:var(--muted); font-weight:500; letter-spacing:-.01em; }
 
 /* determinate progress variant — real % bar for the market scan */
@@ -2595,20 +2321,6 @@ const CSS = `
   margin:6px 0 6px 16px;
 }
 
-/* ── combinations bar ─────────────────────────────────────────────── */
-.su-combos-bar {
-  margin-top:32px; padding:16px 24px;
-  background:rgba(255,255,255,0.68); backdrop-filter:blur(10px);
-  border:1px solid var(--line); border-radius:var(--r-xl);
-  display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap;
-}
-.su-combos-num {
-  font-family:var(--font-display); font-size:28px; font-weight:800;
-  color:var(--ink);
-  letter-spacing:-.02em; flex-shrink:0;
-}
-.su-combos-text { font-size:14px; color:var(--muted); font-weight:500; line-height:1.4; }
-
 /* ── reviews ──────────────────────────────────────────────────────── */
 .su-reviews { margin-top:52px; width:100%; max-width:980px; }
 .su-reviews-label {
@@ -2921,77 +2633,6 @@ const CSS = `
 }
 @keyframes iwIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
-/* ── laptop mockup ────────────────────────────────────────────────── */
-/* monitor */
-.su-laptop {
-  margin:40px auto 0; max-width:620px; width:100%;
-  display:flex; flex-direction:column; align-items:center;
-  filter:drop-shadow(0 32px 64px rgba(80,20,120,0.22));
-}
-.su-laptop-screen {
-  width:100%; position:relative;
-  background:#1a1a2e;
-  border:12px solid #2a2a3e;
-  border-bottom:16px solid #2a2a3e;
-  border-radius:18px 18px 6px 6px;
-  overflow:hidden;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.06),
-    0 0 0 1px #111;
-}
-/* subtle screen glare */
-.su-laptop-screen::after {
-  content:'';
-  position:absolute; top:0; left:0; right:0; height:35%;
-  background:linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
-  pointer-events:none; z-index:10; border-radius:6px 6px 0 0;
-}
-/* bottom bezel bar with brand dot */
-.su-laptop-screen::before {
-  content:'';
-  position:absolute; bottom:0; left:0; right:0; height:16px;
-  background:#2a2a3e;
-  pointer-events:none; z-index:10;
-}
-/* stand neck */
-.su-monitor-neck {
-  width:0; height:0;
-  border-left:28px solid transparent;
-  border-right:28px solid transparent;
-  border-top:32px solid #2a2a3e;
-}
-/* stand base */
-.su-monitor-foot {
-  width:160px; height:10px;
-  background:linear-gradient(180deg, #2a2a3e 0%, #1a1a2e 100%);
-  border-radius:0 0 8px 8px;
-  box-shadow:0 2px 8px rgba(0,0,0,0.3);
-}
-.su-laptop-chrome {
-  background:#f5f4f8; border-bottom:1px solid #e8e4f0;
-  padding:9px 14px; display:flex; gap:6px; align-items:center;
-}
-.su-laptop-chrome span { width:10px; height:10px; border-radius:50%; }
-.su-laptop-chrome span:nth-child(1){background:#ff5f57}
-.su-laptop-chrome span:nth-child(2){background:#febc2e}
-.su-laptop-chrome span:nth-child(3){background:#28c840}
-.su-laptop-body { padding:20px 20px 16px; }
-.su-laptop-modebar { display:flex; gap:8px; margin-bottom:16px; justify-content:center; }
-.su-laptop-mode { font-size:12px; font-weight:700; padding:6px 16px; border-radius:99px; border:1.5px solid var(--line); color:var(--muted); }
-.su-laptop-mode.on { background:#111; color:#fff; border-color:transparent; }
-.su-laptop-reels { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
-.su-laptop-col { display:flex; flex-direction:column; gap:6px; }
-.su-laptop-label { font-size:9px; font-weight:800; letter-spacing:.2em; text-transform:uppercase; text-align:center; }
-.su-laptop-reel { position:relative; border-radius:10px; overflow:hidden; background:var(--bg-2); border:1.5px solid var(--line-2); }
-.su-laptop-reel-item { padding:10px 6px; text-align:center; font-size:11px; font-weight:700; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--line); letter-spacing:.02em; line-height:1.2; }
-.su-laptop-reel-item.active { color:var(--ink); background:rgba(255,255,255,0.9); font-weight:800; }
-.su-laptop-reel-item:last-child { border-bottom:none; }
-.su-laptop-reel-fade { position:absolute; left:0; right:0; height:18px; pointer-events:none; z-index:2; }
-.su-laptop-reel-fade--top { top:0; background:linear-gradient(to bottom,var(--bg-2),transparent); }
-.su-laptop-reel-fade--bottom { bottom:0; background:linear-gradient(to top,var(--bg-2),transparent); }
-.su-laptop-sentence { font-size:12px; color:var(--muted); text-align:center; padding:10px 8px; background:rgba(255,255,255,0.6); border:1px solid var(--line); border-radius:10px; margin-bottom:12px; line-height:1.6; }
-.su-laptop-btn { display:flex; align-items:center; justify-content:center; background:#111; color:#fff; border-radius:12px; padding:11px; font-size:13px; font-weight:700; }
-
 /* responsive */
 @media(max-width:640px){
   .su-nav { padding:16px 16px 0; }
@@ -3024,91 +2665,4 @@ const CSS = `
   .su-bp-footer { padding:20px; }
   .su-disclaimer-links { gap:14px; }
 }
-
-/* ══ UTILITARIAN LANDING (scoped proof) ════════════════════════════════
-   A product-tool design language (Linear/Vercel feel) scoped to the landing
-   screen only via .su-root--util. Flat neutral surfaces, hairline borders,
-   small radii, monospace labels, one restrained accent — no gradients,
-   glass, glows, or pastel. Nothing here touches the other screens. */
-.su-root--util {
-  --u-bg:#FAFAF9; --u-surface:#FFFFFF;
-  --u-ink:#16151A; --u-muted:#6E6D78; --u-faint:#9A99A4;
-  --u-line:#E8E7EC; --u-line-2:#DBDAE1;
-  --u-accent:#5B5BF5;
-  --u-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
-  background:var(--u-bg);
-}
-body.util-landing { background:#FAFAF9; }
-body.util-landing .oc-blob { opacity:0 !important; }
-
-/* nav */
-.su-root--util .su-brand-idea { color:var(--u-ink); }
-.su-root--util .su-brand-reels {
-  background:none; -webkit-background-clip:border-box; background-clip:border-box;
-  -webkit-text-fill-color:var(--u-accent); color:var(--u-accent);
-}
-.su-root--util .su-nav-link { color:var(--u-muted); font-weight:600; }
-.su-root--util .su-nav-link:hover { color:var(--u-ink); background:#F1F0F4; }
-.su-root--util .su-nav-link--cta {
-  background:var(--u-ink); color:#fff; border-radius:7px; box-shadow:none; padding:8px 16px;
-}
-.su-root--util .su-nav-link--cta:hover { filter:none; background:#000; transform:none; }
-
-/* hero */
-.su-util-eyebrow {
-  font-family:var(--u-mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase;
-  color:var(--u-muted); margin:0 0 18px; display:inline-flex; align-items:center; gap:8px;
-}
-.su-util-eyebrow::before {
-  content:""; width:6px; height:6px; border-radius:2px; background:var(--u-accent); display:inline-block;
-}
-.su-root--util .su-landing-h1 {
-  color:var(--u-ink); letter-spacing:-.03em; line-height:1.04;
-  font-size:clamp(40px,5.4vw,64px);
-}
-.su-root--util .su-grad-text {
-  background:none; -webkit-text-fill-color:var(--u-accent); color:var(--u-accent);
-}
-.su-root--util .su-landing-sub { color:var(--u-muted); }
-
-/* buttons */
-.su-root--util .su-btn { border-radius:7px; letter-spacing:0; }
-.su-root--util .su-btn-primary {
-  background:var(--u-ink); color:#fff; border-color:var(--u-ink); box-shadow:none;
-}
-.su-root--util .su-btn-primary:hover { filter:none; background:#000; box-shadow:none; transform:none; }
-.su-root--util .su-btn-ghost {
-  background:var(--u-surface); color:var(--u-ink); border-color:var(--u-line-2); box-shadow:none;
-}
-.su-root--util .su-btn-ghost:hover { background:#F1F0F4; border-color:var(--u-muted); color:var(--u-ink); }
-
-/* how it works */
-.su-root--util .su-hiw-label,
-.su-root--util .su-reviews-label {
-  font-family:var(--u-mono); font-weight:500; letter-spacing:.06em; color:var(--u-muted); font-size:12px;
-}
-.su-root--util .su-hiw-num {
-  border-radius:7px; background:var(--u-surface); border:1px solid var(--u-line-2);
-  color:var(--u-ink); font-family:var(--u-mono); font-weight:500;
-}
-.su-root--util .su-hiw-t { color:var(--u-ink); }
-.su-root--util .su-hiw-d { color:var(--u-muted); }
-.su-root--util .su-hiw-connector { background:var(--u-line-2); }
-
-/* reviews */
-.su-root--util .su-review-card {
-  background:var(--u-surface); border:1px solid var(--u-line); border-radius:10px; box-shadow:none;
-}
-.su-root--util .su-review-stars { color:#E0A800; }
-.su-root--util .su-review-text { color:var(--u-ink); }
-.su-root--util .su-review-avatar {
-  background:var(--u-ink); border-radius:8px; font-family:var(--u-mono); font-weight:500;
-}
-.su-root--util .su-review-name { color:var(--u-ink); }
-.su-root--util .su-review-role { color:var(--u-muted); font-family:var(--u-mono); font-size:11px; }
-
-/* footer */
-.su-root--util .su-landing-footer { border-top:1px solid var(--u-line); color:var(--u-faint); }
-.su-root--util .su-landing-footer-link { color:var(--u-muted); }
-.su-root--util .su-landing-footer-link:hover { color:var(--u-ink); }
 `;
