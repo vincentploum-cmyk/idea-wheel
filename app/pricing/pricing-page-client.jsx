@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CREDIT_PACKAGES, CREDIT_PACKAGE_BY_KEY } from '@/lib/pricing';
 import { CheckIcon } from '@/components/popito/icons';
 
@@ -121,7 +121,11 @@ export default function PricingPageClient({ searchParams }) {
         body: JSON.stringify({ packId: pkg.key }),
       });
       const data = await res.json();
-      if (data.code === 'AUTH_REQUIRED') { window.location.href = '/auth/login'; return; }
+      if (data.code === 'AUTH_REQUIRED') {
+        // Carry the purchase intent through auth so checkout resumes after sign-in
+        window.location.href = `/auth/login?next=${encodeURIComponent(`/pricing?buy=${pkg.key}`)}`;
+        return;
+      }
       if (!res.ok || data.error || !data.url) throw new Error(data.error || 'Unable to start checkout');
       window.location.assign(data.url);
     } catch (err) {
@@ -129,6 +133,23 @@ export default function PricingPageClient({ searchParams }) {
       setLoadingKey(null);
     }
   }
+
+  // Resume a purchase that was interrupted by sign-in (?buy=<pack> set by the
+  // AUTH_REQUIRED redirect above and carried through the auth round-trip).
+  const buyKey = typeof searchParams?.buy === 'string' ? searchParams.buy : '';
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (!buyKey || autoStarted.current || sessionId || success || canceled) return;
+    const pkg = CREDIT_PACKAGES.find(p => p.key === buyKey);
+    if (!pkg) return;
+    autoStarted.current = true;
+    // Strip ?buy so back/refresh doesn't restart checkout
+    const url = new URL(window.location.href);
+    url.searchParams.delete('buy');
+    window.history.replaceState({}, '', url);
+    startCheckout(pkg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buyKey]);
 
   return (
     <div className="popito_fn_membership_page">

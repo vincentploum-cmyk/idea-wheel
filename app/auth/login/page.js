@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
 import BrandLogo from '@/components/BrandLogo';
+import { safeNextPath } from '@/lib/safe-next';
 
 export default function LoginPage() {
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideareels.io';
@@ -12,13 +13,23 @@ export default function LoginPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
+  // ?next= carries the page the user was on (e.g. a pending purchase on
+  // /pricing) through the auth round-trip instead of dropping them on /profile.
+  const [nextPath, setNextPath] = useState('');
+
+  useEffect(() => {
+    setNextPath(safeNextPath(new URLSearchParams(window.location.search).get('next') || ''));
+  }, []);
+
+  const callbackUrl = `${siteUrl}/auth/callback${nextPath ? `?next=${encodeURIComponent(nextPath)}` : ''}`;
+  const nextQS = nextPath ? `?next=${encodeURIComponent(nextPath)}` : '';
 
   const sendMagicLink = async (e) => {
     e.preventDefault();
     setLoading(true); setErr('');
     const { error } = await getClient().auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${siteUrl}/auth/callback` },
+      options: { emailRedirectTo: callbackUrl },
     });
     if (error) { setErr(error.message); setLoading(false); }
     else { setSent(true); setLoading(false); }
@@ -28,7 +39,7 @@ export default function LoginPage() {
     setErr('');
     const { error } = await getClient().auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${siteUrl}/auth/callback` },
+      options: { redirectTo: callbackUrl },
     });
     if (error) setErr(error.message);
   };
@@ -44,7 +55,7 @@ export default function LoginPage() {
               </Link>
             </div>
             <div className="right__trigger">
-              <Link href="/auth/register">Create account</Link>
+              <Link href={`/auth/register${nextQS}`}>Create account</Link>
             </div>
           </div>
         </div>
@@ -120,7 +131,7 @@ export default function LoginPage() {
                       <>
                         <h1 className="fn__title">Welcome Back!</h1>
                         <p className="fn__desc">
-                          Don&apos;t have an account? <Link className="fn__creative_link" href="/auth/register">Sign Up</Link>
+                          Don&apos;t have an account? <Link className="fn__creative_link" href={`/auth/register${nextQS}`}>Sign Up</Link>
                         </p>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
                           <button onClick={() => signInWithOAuth('google')} className="fn__main_button" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>

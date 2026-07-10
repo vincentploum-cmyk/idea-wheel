@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CREDIT_PACKAGES } from '@/lib/pricing';
 import { CheckIcon } from '@/components/popito/icons';
 
@@ -34,7 +34,7 @@ const PACK_FEATURES = {
   ],
 };
 
-export default function OfferPricingClient() {
+export default function OfferPricingClient({ searchParams }) {
   const [loadingKey, setLoadingKey] = useState(null);
   const [error, setError] = useState('');
 
@@ -46,10 +46,14 @@ export default function OfferPricingClient() {
       const res = await fetch('/api/credits/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packId: pkg.key, offer: !!override }),
+        body: JSON.stringify({ packId: pkg.key, offer: !!override, cancelPath: '/pricing/offer' }),
       });
       const data = await res.json();
-      if (data.code === 'AUTH_REQUIRED') { window.location.href = '/auth/login'; return; }
+      if (data.code === 'AUTH_REQUIRED') {
+        // Carry the purchase intent through auth so checkout resumes after sign-in
+        window.location.href = `/auth/login?next=${encodeURIComponent(`/pricing/offer?buy=${pkg.key}`)}`;
+        return;
+      }
       if (!res.ok || data.error || !data.url) throw new Error(data.error || 'Unable to start checkout');
       window.location.assign(data.url);
     } catch (err) {
@@ -57,6 +61,23 @@ export default function OfferPricingClient() {
       setLoadingKey(null);
     }
   }
+
+  // Resume a purchase that was interrupted by sign-in (?buy=<pack> set by the
+  // AUTH_REQUIRED redirect above and carried through the auth round-trip).
+  const buyKey = typeof searchParams?.buy === 'string' ? searchParams.buy : '';
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (!buyKey || autoStarted.current) return;
+    const pkg = CREDIT_PACKAGES.find(p => p.key === buyKey);
+    if (!pkg) return;
+    autoStarted.current = true;
+    // Strip ?buy so back/refresh doesn't restart checkout
+    const url = new URL(window.location.href);
+    url.searchParams.delete('buy');
+    window.history.replaceState({}, '', url);
+    startCheckout(pkg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buyKey]);
 
   return (
     <div className="popito_fn_membership_page">

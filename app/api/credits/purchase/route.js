@@ -44,7 +44,9 @@ export async function POST(request) {
   let session;
   try {
     session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      // No payment_method_types restriction — Stripe shows every method enabled
+      // in the dashboard (Apple Pay, Link, Cash App, Bancontact, Klarna, …),
+      // picked dynamically per buyer. Card-only was suppressing all wallets.
       mode: 'payment',
       client_reference_id: user.id,
       line_items: [{ price_data: {
@@ -57,6 +59,9 @@ export async function POST(request) {
       // so fulfillment doesn't depend on the webhook alone.
       success_url: `${siteUrl}/pricing?credits=success&pack=${pack.id}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}${CANCEL_PATH_ALLOWLIST.includes(cancelPath) ? cancelPath : '/pricing'}`,
+      custom_text: {
+        submit: { message: 'One-time payment — no subscription. Credits never expire.' },
+      },
     });
   } catch (err) {
     console.error('stripe checkout create failed:', err.message);

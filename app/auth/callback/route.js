@@ -5,7 +5,11 @@ import { cookies } from 'next/headers';
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/profile?welcome=1';
+  const rawNext = searchParams.get('next') || '';
+  // Internal paths only — reject anything that could turn into an open redirect
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.includes('\\')
+    ? rawNext
+    : '/profile?welcome=1';
 
   // Always use the canonical site URL — never trust request.url origin
   // which can be localhost on Render's internal network
