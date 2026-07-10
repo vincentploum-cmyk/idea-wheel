@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CREDIT_PACKAGES, CREDIT_PACKAGE_BY_KEY } from '@/lib/pricing';
 import { CheckIcon } from '@/components/popito/icons';
 
@@ -38,8 +38,62 @@ export default function PricingPageClient({ searchParams }) {
   const canceled = searchParams?.canceled === '1' || searchParams?.credits === 'canceled';
   const packageKey = searchParams?.package || searchParams?.pack || '';
   const packageConfig = CREDIT_PACKAGE_BY_KEY[packageKey] || null;
+  const sessionId = typeof searchParams?.session_id === 'string' ? searchParams.session_id : '';
+
+  // With a session_id we verify payment server-side instead of trusting the URL:
+  // 'confirming' → 'confirmed' | 'unpaid' | 'failed'
+  const [confirmState, setConfirmState] = useState(sessionId ? 'confirming' : null);
+  const [confirmData, setConfirmData] = useState(null);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/credits/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId }),
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        if (data.code === 'AUTH_REQUIRED') { window.location.href = '/auth/login'; return; }
+        if (res.ok && data.ok) { setConfirmData(data); setConfirmState('confirmed'); }
+        else if (res.ok && data.ok === false) setConfirmState('unpaid');
+        else setConfirmState('failed');
+      } catch {
+        if (!cancelled) setConfirmState('failed');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [sessionId]);
 
   const statusMessage = useMemo(() => {
+    if (confirmState === 'confirming') return {
+      tone: 'neutral',
+      title: 'Finalizing your purchase…',
+      text: 'Confirming your payment with Stripe. This only takes a moment.',
+    };
+    if (confirmState === 'confirmed') {
+      const isIdea = confirmData?.type === 'idea';
+      return {
+        tone: 'success',
+        title: `${confirmData?.credits} ${isIdea ? `idea unlock${confirmData?.credits === 1 ? '' : 's'}` : 'credits'} added`,
+        text: isIdea
+          ? 'Head to the Ideas library when you want to unlock one.'
+          : `Your balance is now ${confirmData?.balance} credit${confirmData?.balance === 1 ? '' : 's'} — ready for the next concept you want to evaluate.`,
+      };
+    }
+    if (confirmState === 'unpaid') return {
+      tone: 'neutral',
+      title: 'Payment not completed',
+      text: 'This checkout was not paid, so nothing was charged. Pick a pack whenever you are ready.',
+    };
+    if (confirmState === 'failed') return {
+      tone: 'neutral',
+      title: 'Confirming your payment…',
+      text: 'We could not verify your payment yet. If you were charged, your credits will appear within a few minutes — refresh this page or contact support if they do not.',
+    };
     if (success && packageConfig) {
       return {
         tone: 'success',
@@ -55,7 +109,7 @@ export default function PricingPageClient({ searchParams }) {
       text: 'Nothing was charged. Come back when you want to continue the analysis.',
     };
     return null;
-  }, [success, canceled, packageConfig]);
+  }, [confirmState, confirmData, success, canceled, packageConfig]);
 
   async function startCheckout(pkg) {
     setLoadingKey(pkg.key);
