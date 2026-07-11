@@ -26,6 +26,11 @@ const nextConfig = {
         source: '/fonts/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
+      // Pre-optimized blog images are content-stable; 30 days + revalidation grace
+      {
+        source: '/blog-img/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=86400' }],
+      },
       // Template assets change rarely; 30 days + revalidation grace
       {
         source: '/popito-assets/:path*',

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import Image from 'next/image';
+import BlogImage from '@/components/BlogImage';
 import PopitoShell from '@/components/popito/PopitoShell';
 import { BLOG_POSTS } from '@/lib/blog-posts';
 
@@ -60,13 +60,11 @@ export default function BlogPage() {
                 <Link key={post.slug} href={`/blog/${post.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <article className="fn__bold_item" style={{ overflow: 'hidden', padding: 0, transition: 'transform 0.15s', display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <div style={{ position: 'relative', aspectRatio: '16/9', overflow: 'hidden' }}>
-                      <Image
-                        src={post.image}
+                      <BlogImage
+                        imageId={post.imageId}
                         alt={post.imageAlt}
-                        fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1100px) 50vw, 370px"
                         priority={i === 0}
-                        style={{ objectFit: 'cover' }}
                       />
                       <span style={{
                         position: 'absolute', top: 12, left: 12, zIndex: 1,

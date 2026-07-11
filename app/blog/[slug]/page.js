@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
+import BlogImage from '@/components/BlogImage';
 import PopitoShell from '@/components/popito/PopitoShell';
 import { BLOG_POSTS, getBlogPost } from '@/lib/blog-posts';
 
@@ -208,13 +208,11 @@ export default function BlogPostPage({ params }) {
         {/* Hero image */}
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
           <div style={{ position: 'relative', width: '100%', maxHeight: 420, aspectRatio: '16/7', borderTop: '3px solid #111', overflow: 'hidden' }}>
-            <Image
-              src={post.image}
+            <BlogImage
+              imageId={post.imageId}
               alt={post.imageAlt}
-              fill
               priority
               sizes="(max-width: 800px) 100vw, 800px"
-              style={{ objectFit: 'cover' }}
             />
           </div>
         </div>
@@ -249,7 +247,7 @@ export default function BlogPostPage({ params }) {
                   {otherPosts.map((p) => (
                     <Link key={p.slug} href={`/blog/${p.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                       <div className="fn__bold_item" style={{ padding: '16px 20px', display: 'flex', gap: 16, alignItems: 'center' }}>
-                        <Image src={p.image} alt={p.imageAlt} width={72} height={52} loading="lazy" style={{ objectFit: 'cover', borderRadius: 6, border: '2px solid #111', flexShrink: 0 }} />
+                        <BlogImage thumb imageId={p.imageId} alt={p.imageAlt} style={{ objectFit: 'cover', borderRadius: 6, border: '2px solid #111', flexShrink: 0 }} />
                         <div>
                           <p style={{ margin: '0 0 4px', fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 15, lineHeight: 1.25 }}>{p.title}</p>
                           <p style={{ margin: 0, fontSize: 12, opacity: 0.5, fontFamily: 'Nunito, sans-serif', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{p.readTime}</p>

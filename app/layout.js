@@ -86,7 +86,6 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         {/* CWV: Preconnect to critical third-party origins */}
-        <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://js.stripe.com" />
         <link rel="dns-prefetch" href="https://ywroiurslbnnqecwmkbs.supabase.co" />
 
