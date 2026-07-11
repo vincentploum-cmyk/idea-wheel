@@ -164,15 +164,17 @@ export default function PricingPageClient({ searchParams }) {
               padding: '16px 20px',
               marginBottom: 32,
               borderRadius: 8,
-              background: statusMessage.tone === 'success' ? '#f0fdf4' : '#f8f8f8',
-              border: `1px solid ${statusMessage.tone === 'success' ? '#86efac' : '#e5e5e5'}`,
+              background: statusMessage.tone === 'success' ? '#FFE000' : '#fff',
+              border: '2px solid #111',
+              boxShadow: '3px 3px 0 #111',
+              color: '#111',
             }}>
               <strong>{statusMessage.title}</strong><br />
               <span style={{ fontSize: 14, opacity: 0.75 }}>{statusMessage.text}</span>
             </div>
           )}
           {error && (
-            <div aria-live="polite" style={{ padding: '16px 20px', marginBottom: 32, borderRadius: 8, background: '#fef2f2', border: '1px solid #fca5a5', color: '#b91c1c', fontSize: 14 }}>
+            <div aria-live="polite" style={{ padding: '16px 20px', marginBottom: 32, borderRadius: 8, background: '#fff', border: '2px solid #111', boxShadow: '3px 3px 0 #111', color: '#b91c1c', fontSize: 14, fontWeight: 700 }}>
               {error}
             </div>
           )}

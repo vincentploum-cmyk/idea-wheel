@@ -84,7 +84,7 @@ export default function OfferPricingClient({ searchParams }) {
       <section id="price">
         <div className="container">
           {error && (
-            <div style={{ padding: '16px 20px', marginBottom: 32, borderRadius: 8, background: '#fef2f2', border: '1px solid #fca5a5', color: '#b91c1c', fontSize: 14 }}>
+            <div style={{ padding: '16px 20px', marginBottom: 32, borderRadius: 8, background: '#fff', border: '2px solid #111', boxShadow: '3px 3px 0 #111', color: '#b91c1c', fontSize: 14, fontWeight: 700 }}>
               {error}
             </div>
           )}
