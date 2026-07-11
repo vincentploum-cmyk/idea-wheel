@@ -5,6 +5,8 @@ export const metadata = {
   title: 'Limited Time Offer — 50% Off Shortcut Packs',
   description: 'Sign up and get 50% off the Pro and Power shortcut packs for a limited time.',
   alternates: { canonical: 'https://ideareels.io/pricing/offer' },
+  // Promo landing for campaigns only — near-duplicate of /pricing, keep out of search
+  robots: { index: false, follow: true },
 };
 
 export default function OfferPricingPage({ searchParams }) {
