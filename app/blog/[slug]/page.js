@@ -70,6 +70,43 @@ function renderBody(body) {
           {line.slice(3)}
         </h2>
       );
+    } else if (line.startsWith('|')) {
+      // Pipe table: header row, |---| separator row (skipped), then data rows
+      const tableStart = i;
+      const rows = [];
+      while (i < lines.length && lines[i].startsWith('|')) {
+        const isSeparator = /^\|[\s:|-]+$/.test(lines[i].trim() + '') && lines[i].includes('---');
+        if (!isSeparator) rows.push(lines[i].split('|').slice(1, -1).map((c) => c.trim()));
+        i++;
+      }
+      i--;
+      const [header, ...dataRows] = rows;
+      elements.push(
+        <div key={tableStart} style={{ overflowX: 'auto', margin: '24px 0' }}>
+          <table style={{ borderCollapse: 'collapse', width: '100%', fontFamily: 'Roboto, sans-serif', fontSize: 14, border: '2px solid #111' }}>
+            <thead>
+              <tr>
+                {(header || []).map((cell, ci) => (
+                  <th key={ci} style={{ background: '#FFE000', border: '1px solid #111', padding: '10px 12px', textAlign: 'left', fontFamily: 'Nunito, sans-serif', fontWeight: 900 }}>
+                    {renderInlineLinks(cell)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {dataRows.map((row, ri) => (
+                <tr key={ri} style={{ background: ri % 2 ? '#fafafa' : '#fff' }}>
+                  {row.map((cell, ci) => (
+                    <td key={ci} style={{ border: '1px solid #111', padding: '10px 12px', verticalAlign: 'top', lineHeight: 1.5 }}>
+                      {renderInlineLinks(cell)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
     } else if (line === '---') {
       elements.push(<hr key={i} style={{ border: 'none', borderTop: '2px solid #111', margin: '36px 0', opacity: 0.12 }} />);
     } else if (line.startsWith('**') && line.endsWith('**')) {
@@ -111,7 +148,7 @@ export default function BlogPostPage({ params }) {
     description: post.description,
     image: post.image,
     datePublished: post.date,
-    author: { '@type': 'Organization', name: 'IdeaReels', url: 'https://ideareels.io' },
+    author: { '@type': 'Person', name: 'Vincent Ploum', jobTitle: 'Founder', worksFor: { '@type': 'Organization', name: 'IdeaReels' }, url: 'https://ideareels.io' },
     publisher: { '@type': 'Organization', name: 'IdeaReels', url: 'https://ideareels.io' },
     mainEntityOfPage: { '@type': 'WebPage', '@id': `https://ideareels.io/blog/${post.slug}` },
   };
@@ -152,9 +189,20 @@ export default function BlogPostPage({ params }) {
             <p style={{ fontSize: 18, lineHeight: 1.6, opacity: 0.65, margin: '0 0 20px', maxWidth: 620 }}>
               {post.description}
             </p>
-            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, opacity: 0.5, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 32px' }}>
-              {formatDate(post.date)} · {post.readTime}
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '0 0 32px', flexWrap: 'wrap' }}>
+              <span aria-hidden="true" style={{
+                width: 36, height: 36, borderRadius: '50%',
+                background: '#FFE000', border: '2px solid #111',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 14, color: '#111',
+              }}>VP</span>
+              <span style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, opacity: 0.65 }}>
+                By <strong style={{ fontWeight: 900 }}>Vincent Ploum</strong>, founder of IdeaReels
+              </span>
+              <span style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, opacity: 0.5, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                {formatDate(post.date)} · {post.readTime}
+              </span>
+            </div>
           </div>
         </div>
         {/* Hero image */}

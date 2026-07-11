@@ -27,24 +27,23 @@ const PACK_FEATURES = {
   ],
 };
 
-const TESTIMONIALS = [
+// Honest early-stage framing: scenario cards, not invented testimonials.
+// Swap in real, verifiable quotes (linked tweets / PH reviews) as they come in.
+const USE_CASES = [
   {
-    quote: "First spin flagged zero real competitors in the niche I picked. Bought credits that night, had the blueprint by morning. Shipped the MVP that weekend. No wasted days.",
-    name: 'Marcus D.',
-    role: 'Solo founder',
-    badge: 'Starter pack',
+    title: 'Kill weak ideas in one evening',
+    text: 'Score the three ideas you keep circling. The research shows which one has real community demand — and which two would have eaten your next four months.',
+    badge: 'Validate',
   },
   {
-    quote: "I handed the blueprint straight to my developer. He said it was the clearest brief he’d ever gotten from a non-technical founder. Working prototype was live in under two weeks.",
-    name: 'Sophie T.',
-    role: 'Solo founder',
-    badge: 'Pro pack',
+    title: 'Turn a verdict into a build plan',
+    text: 'When the signal is strong, the blueprint tells you what to build first, what to cut from V1, and which stack gets you live fastest — a brief you can hand to a developer or an AI coding agent.',
+    badge: 'Blueprint',
   },
   {
-    quote: "Sunday night ritual now. Spin a few ideas, see what the research says, kill the weak ones fast. At $3.99 a pack it’s cheaper than the coffee I used to drink while convincing myself bad ideas were good.",
-    name: 'Ryan K.',
-    role: 'Vibe coder',
-    badge: 'Starter pack',
+    title: 'Start from proof, not a blank page',
+    text: 'No idea yet? Spin one from live market signals, or browse the ideas library — every concept comes with the demand evidence attached.',
+    badge: 'Generate',
   },
 ];
 
@@ -130,7 +129,7 @@ export default async function LandingPage() {
               For vibe coders, indie hackers &amp; solo founders
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.1, marginBottom: 14, textWrap: 'balance' }}>
-              Spin a fresh idea or check<br />how your idea scores.
+              Spin a fresh startup idea —<br />or validate the one you have.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 600, margin: '0 auto 10px' }}>
               IdeaReels generates ideas and scores them intelligently against real market data — Reddit signals, Google Trends, and community demand. Already have an idea? Get a free market score and a detailed blueprint to help you on your way in under 5 minutes.
@@ -244,26 +243,18 @@ export default async function LandingPage() {
         <section style={{ padding: '0 0 48px' }}>
           <div className="container">
             <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', textAlign: 'center', marginBottom: 32, textWrap: 'balance' }}>
-              What builders did after the verdict
+              How builders use IdeaReels
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 24 }}>
-              {TESTIMONIALS.map((t) => (
-                <div key={t.name} className="fn__bold_item" style={{ padding: '26px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {USE_CASES.map((t) => (
+                <div key={t.title} className="fn__bold_item" style={{ padding: '26px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <span style={{ display: 'inline-block', background: '#FFE000', border: '2px solid #111', borderRadius: 4, padding: '2px 10px', fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#111', alignSelf: 'flex-start' }}>
                     {t.badge}
                   </span>
-                  <p style={{ fontSize: 15, lineHeight: 1.75, opacity: 0.85, margin: 0, fontStyle: 'italic' }}>
-                    &ldquo;{t.quote}&rdquo;
+                  <p style={{ margin: 0, fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16 }}>{t.title}</p>
+                  <p style={{ fontSize: 15, lineHeight: 1.75, opacity: 0.85, margin: 0 }}>
+                    {t.text}
                   </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 'auto' }}>
-                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#FFE000', border: '2.5px solid #111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 15, color: '#111', flexShrink: 0 }}>
-                      {t.name[0]}
-                    </div>
-                    <div>
-                      <p style={{ margin: 0, fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 14 }}>{t.name}</p>
-                      <p style={{ margin: 0, fontSize: 12, opacity: 0.55 }}>{t.role}</p>
-                    </div>
-                  </div>
                 </div>
               ))}
             </div>
