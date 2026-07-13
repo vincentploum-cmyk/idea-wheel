@@ -30,33 +30,34 @@ export async function POST(request) {
 
     const db = getAdmin();
 
-    // One review credit per user — check before inserting
-    let creditGranted = false;
-    if (userId) {
-      const { data: prior } = await db
-        .from('reviews')
-        .select('id')
-        .eq('user_id', userId)
-        .limit(1);
-
-      if (!prior?.length) {
-        creditGranted = true;
-      }
-    }
-
-    await db.from('reviews').insert({
+    // Store the review. Log failures instead of silently swallowing them.
+    const { error: insertError } = await db.from('reviews').insert({
       name: name.trim().slice(0, 100),
       role: role?.trim().slice(0, 100) || null,
       quote: quote.trim().slice(0, 1000),
       user_id: userId,
       approved: false,
     });
+    if (insertError) console.error('reviews insert failed:', insertError.message);
 
-    if (creditGranted) {
-      await addCredits(userId, REVIEW_CREDIT_REWARD, 'review_bonus');
+    // One review-bonus per user. Check the CREDITS ledger (not the reviews table)
+    // so a failed review insert can't be replayed to farm repeat grants, and rely
+    // on the credits_review_bonus_idem index + addCredits idempotency for the race.
+    let creditsGranted = 0;
+    if (userId) {
+      const { data: prior } = await db
+        .from('credits')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('reason', 'review_bonus')
+        .limit(1);
+      if (!prior?.length) {
+        const grant = await addCredits(userId, REVIEW_CREDIT_REWARD, 'review_bonus');
+        if (grant.ok && !grant.duplicate) creditsGranted = REVIEW_CREDIT_REWARD;
+      }
     }
 
-    return Response.json({ ok: true, creditsGranted: creditGranted ? REVIEW_CREDIT_REWARD : 0 });
+    return Response.json({ ok: true, creditsGranted });
   } catch (err) {
     console.error('reviews POST:', err);
     return Response.json({ error: 'server_error' }, { status: 500 });

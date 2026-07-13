@@ -22,7 +22,9 @@ export async function POST() {
   if (already) return Response.json({ ok: true, alreadyUnlocked: true });
 
   const result = await deductCredits(user.id, 1, 'ideas_unlock');
-  if (!result.ok) return Response.json({ error: result.reason, balance: result.balance }, { status: 402 });
+  if (!result.ok && !result.duplicate) return Response.json({ error: result.reason, balance: result.balance }, { status: 402 });
+  // duplicate = a concurrent request already recorded this unlock (idempotency index)
+  if (result.duplicate) return Response.json({ ok: true, alreadyUnlocked: true });
 
   return Response.json({ ok: true, newBalance: result.newBalance });
 }

@@ -26,22 +26,21 @@ export async function POST(request) {
   if (!idea) return Response.json({ error: 'unknown idea' }, { status: 404 });
 
   // Idempotent: if already unlocked, re-deliver the content without charging again.
-  const already = await hasUnlockedIdea(user.id, slug);
-  let balance;
-  if (already) {
-    balance = await getBalance(user.id);
-  } else {
+  let already = await hasUnlockedIdea(user.id, slug);
+  if (!already) {
     // Charge the user's regular credit balance — the currency the packs actually sell.
     const charge = await deductCredits(user.id, CREDIT_COSTS.ideaUnlock, `catalog_unlock_${slug}`);
-    if (!charge.ok) {
+    if (!charge.ok && !charge.duplicate) {
       return Response.json({ error: 'insufficient_credits', balance: charge.balance ?? 0 }, { status: 402 });
     }
-    balance = charge.newBalance;
+    // duplicate = a concurrent request already recorded this unlock (idempotency
+    // index) — treat as already unlocked, don't double-charge.
+    if (charge.duplicate) already = true;
   }
 
   // Entitled — deliver the full research + blueprint (read via the service-role client)
   // so the page never has to ship it to locked visitors.
   const content = await getCatalogIdea(slug).catch(() => null);
 
-  return Response.json({ ok: true, alreadyUnlocked: already, balance, content });
+  return Response.json({ ok: true, alreadyUnlocked: already, balance: await getBalance(user.id), content });
 }

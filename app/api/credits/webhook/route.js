@@ -20,11 +20,16 @@ export async function POST(request) {
     return new Response(`Webhook error: ${err.message}`, { status: 400 });
   }
 
-  if (event.type === 'checkout.session.completed') {
-    // Grant errors throw → 500 → Stripe retries the delivery. A session with no
-    // usable metadata is acknowledged with 200 so Stripe stops retrying it.
+  // 'completed' fires for immediate payments; 'async_payment_succeeded' fires when
+  // a delayed method (Klarna, bank debit) finally settles. Fulfill on both.
+  if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
+    // Grant errors throw → 500 → Stripe retries the delivery. Terminal outcomes are
+    // acknowledged with 200 so Stripe stops retrying: missing metadata / unknown pack
+    // can't be fixed by retrying, and 'unpaid' is the normal async case — the later
+    // async_payment_succeeded event will fulfill once payment clears.
     const result = await fulfillCheckoutSession(event.data.object);
-    if (!result.ok && result.reason !== 'missing_metadata') {
+    const terminal = ['missing_metadata', 'unpaid', 'unknown_pack'];
+    if (!result.ok && !terminal.includes(result.reason)) {
       console.error('webhook fulfillment failed:', result.reason, event.data.object.id);
       return new Response(`Fulfillment error: ${result.reason}`, { status: 500 });
     }
