@@ -2,24 +2,23 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import PopitoShell from '@/components/popito/PopitoShell';
 import { CheckIcon } from '@/components/popito/icons';
-import { ALTERNATIVES_PAGES, getAlternativesPage } from '@/lib/alternatives-data';
-import { getVersusBySourceSlug } from '@/lib/versus-data';
+import { VERSUS_PAGES, getVersusPage } from '@/lib/versus-data';
 
 export async function generateStaticParams() {
-  return ALTERNATIVES_PAGES.map((p) => ({ slug: p.slug }));
+  return VERSUS_PAGES.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }) {
-  const page = getAlternativesPage(params.slug);
+  const page = getVersusPage(params.slug);
   if (!page) return {};
   return {
     title: page.title,
     description: page.metaDescription,
-    alternates: { canonical: `https://ideareels.io/alternatives/${page.slug}` },
+    alternates: { canonical: `https://ideareels.io/versus/${page.slug}` },
     openGraph: {
       title: page.title,
       description: page.metaDescription,
-      url: `https://ideareels.io/alternatives/${page.slug}`,
+      url: `https://ideareels.io/versus/${page.slug}`,
       images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: page.title }],
     },
   };
@@ -45,7 +44,6 @@ function InlineLinks({ text }) {
   return out;
 }
 
-// Plain text for JSON-LD: [label](url) → label
 function stripMd(text) {
   return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
 }
@@ -53,12 +51,24 @@ function stripMd(text) {
 const h2Style = { fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 'clamp(20px,3vw,26px)', margin: '48px 0 16px', letterSpacing: '-0.01em' };
 const pStyle = { fontSize: 16, lineHeight: 1.8, opacity: 0.85, margin: '0 0 16px' };
 
-export default function AlternativesPage({ params }) {
-  const page = getAlternativesPage(params.slug);
+function GlanceCard({ name, pricing, oneLiner, ours }) {
+  return (
+    <div className="fn__bold_item" style={{ padding: '20px 22px', background: ours ? '#FFE000' : '#fff', flex: '1 1 260px' }}>
+      <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16, margin: '0 0 6px' }}>
+        {name}
+        {ours && <span style={{ fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', marginLeft: 10, border: '2px solid #111', borderRadius: 4, padding: '1px 8px' }}>Our product</span>}
+      </p>
+      <p style={{ fontSize: 14.5, lineHeight: 1.65, opacity: 0.85, margin: '0 0 10px' }}>{oneLiner}</p>
+      <p style={{ fontSize: 13, fontWeight: 700, opacity: 0.6, margin: 0, fontFamily: 'Nunito, sans-serif' }}>{pricing}</p>
+    </div>
+  );
+}
+
+export default function VersusPage({ params }) {
+  const page = getVersusPage(params.slug);
   if (!page) notFound();
 
-  const c = page.competitorSummary;
-  const versus = getVersusBySourceSlug(page.slug);
+  const them = page.them;
 
   const faqJsonLd = {
     '@context': 'https://schema.org',
@@ -75,8 +85,7 @@ export default function AlternativesPage({ params }) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ideareels.io' },
-      { '@type': 'ListItem', position: 2, name: 'Alternatives', item: 'https://ideareels.io/alternatives' },
-      { '@type': 'ListItem', position: 3, name: page.title, item: `https://ideareels.io/alternatives/${page.slug}` },
+      { '@type': 'ListItem', position: 2, name: page.title, item: `https://ideareels.io/versus/${page.slug}` },
     ],
   };
 
@@ -101,57 +110,27 @@ export default function AlternativesPage({ params }) {
               <p key={i} style={pStyle}><InlineLinks text={para} /></p>
             ))}
             <p style={{ ...pStyle, fontSize: 13.5, opacity: 0.55 }}>
-              Disclosure: IdeaReels is our product. Pricing for other tools was checked in July 2026 and may have changed — every tool is linked so you can verify.
+              Disclosure: IdeaReels is our product. {them.name}&apos;s pricing was checked in July 2026 and may have changed — it&apos;s linked below so you can verify.
             </p>
-            {versus && (
-              <p style={{ ...pStyle, fontSize: 14.5, opacity: 0.75 }}>
-                Just weighing the two of us?{' '}
-                <Link href={`/versus/${versus.slug}`} style={{ color: '#111', fontWeight: 700, textDecoration: 'underline', textDecorationColor: '#FFE000', textUnderlineOffset: 3 }}>
-                  See the IdeaReels vs {c.name} head-to-head →
-                </Link>
-              </p>
-            )}
 
-            <h2 style={h2Style}>What {c.name} does well — and where it falls short</h2>
-            <div className="fn__bold_item" style={{ padding: '24px 26px', marginBottom: 8 }}>
-              <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16, margin: '0 0 6px' }}>
-                <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ color: '#111', textDecoration: 'underline', textDecorationColor: '#FFE000', textUnderlineOffset: 3 }}>{c.name}</a>
-                <span style={{ fontWeight: 700, opacity: 0.6 }}> · {c.pricing}</span>
-              </p>
-              <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 13, margin: '14px 0 6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Strengths</p>
-              {c.strengths.map((s, i) => (
-                <p key={i} style={{ fontSize: 14.5, lineHeight: 1.65, opacity: 0.8, margin: '0 0 6px', display: 'flex', gap: 8 }}>
-                  <CheckIcon width={13} height={13} /> <span>{s}</span>
-                </p>
-              ))}
-              <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 13, margin: '14px 0 6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Where it falls short</p>
-              {c.weaknesses.map((w, i) => (
-                <p key={i} style={{ fontSize: 14.5, lineHeight: 1.65, opacity: 0.8, margin: '0 0 6px' }}>— {w}</p>
-              ))}
+            <h2 style={h2Style}>At a glance</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+              <GlanceCard name="IdeaReels" pricing={page.us.pricing} oneLiner={page.us.oneLiner} ours />
+              <GlanceCard
+                name={<a href={them.url} target="_blank" rel="noopener noreferrer" style={{ color: '#111', textDecoration: 'underline', textDecorationColor: '#FFE000', textUnderlineOffset: 3 }}>{them.name}</a>}
+                pricing={them.pricing}
+                oneLiner={them.oneLiner}
+              />
             </div>
 
-            <h2 style={h2Style}>The alternatives, compared</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {page.alternatives.map((alt) => (
-                <div key={alt.name} className="fn__bold_item" style={{ padding: '22px 24px', background: alt.ours ? '#FFE000' : '#fff' }}>
-                  <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16, margin: '0 0 4px' }}>
-                    <a href={alt.url} target={alt.ours ? undefined : '_blank'} rel={alt.ours ? undefined : 'noopener noreferrer'} style={{ color: '#111', textDecoration: 'underline', textDecorationColor: alt.ours ? '#111' : '#FFE000', textUnderlineOffset: 3 }}>{alt.name}</a>
-                    {alt.ours && <span style={{ fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', marginLeft: 10, border: '2px solid #111', borderRadius: 4, padding: '1px 8px' }}>Our product</span>}
-                  </p>
-                  <p style={{ fontSize: 13.5, fontWeight: 700, opacity: 0.65, margin: '0 0 10px', fontFamily: 'Nunito, sans-serif' }}>{alt.pricing} · Best for: {alt.bestFor}</p>
-                  <p style={{ fontSize: 14.5, lineHeight: 1.7, opacity: 0.85, margin: 0 }}><InlineLinks text={alt.note} /></p>
-                </div>
-              ))}
-            </div>
-
-            <h2 style={h2Style}>IdeaReels vs {c.name}, feature by feature</h2>
+            <h2 style={h2Style}>Feature by feature</h2>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ borderCollapse: 'collapse', width: '100%', fontFamily: 'Roboto, sans-serif', fontSize: 14, border: '2px solid #111' }}>
                 <thead>
                   <tr>
                     <th style={{ background: '#fff', border: '1px solid #111', padding: '10px 12px', textAlign: 'left', fontFamily: 'Nunito, sans-serif', fontWeight: 900 }}></th>
                     <th style={{ background: '#FFE000', border: '1px solid #111', padding: '10px 12px', textAlign: 'left', fontFamily: 'Nunito, sans-serif', fontWeight: 900 }}>IdeaReels</th>
-                    <th style={{ background: '#fff', border: '1px solid #111', padding: '10px 12px', textAlign: 'left', fontFamily: 'Nunito, sans-serif', fontWeight: 900 }}>{c.name}</th>
+                    <th style={{ background: '#fff', border: '1px solid #111', padding: '10px 12px', textAlign: 'left', fontFamily: 'Nunito, sans-serif', fontWeight: 900 }}>{them.name}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -166,10 +145,37 @@ export default function AlternativesPage({ params }) {
               </table>
             </div>
 
+            <h2 style={h2Style}>Which should you pick?</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+              <div className="fn__bold_item" style={{ padding: '20px 22px', background: '#FFE000', flex: '1 1 300px' }}>
+                <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 15, margin: '0 0 12px' }}>Choose IdeaReels if…</p>
+                {page.pickIdeaReelsIf.map((b, i) => (
+                  <p key={i} style={{ fontSize: 14.5, lineHeight: 1.6, opacity: 0.9, margin: '0 0 8px', display: 'flex', gap: 8 }}>
+                    <CheckIcon width={13} height={13} /> <span><InlineLinks text={b} /></span>
+                  </p>
+                ))}
+              </div>
+              <div className="fn__bold_item" style={{ padding: '20px 22px', background: '#fff', flex: '1 1 300px' }}>
+                <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 15, margin: '0 0 12px' }}>Choose {them.name} if…</p>
+                {page.pickThemIf.map((b, i) => (
+                  <p key={i} style={{ fontSize: 14.5, lineHeight: 1.6, opacity: 0.85, margin: '0 0 8px' }}>— <InlineLinks text={b} /></p>
+                ))}
+              </div>
+            </div>
+
             <h2 style={h2Style}>The verdict</h2>
             {page.verdict.map((para, i) => (
               <p key={i} style={pStyle}><InlineLinks text={para} /></p>
             ))}
+
+            {page.sourceSlug && (
+              <p style={{ ...pStyle, fontSize: 14.5, opacity: 0.75 }}>
+                Comparing more than two tools?{' '}
+                <Link href={`/alternatives/${page.sourceSlug}`} style={{ color: '#111', fontWeight: 700, textDecoration: 'underline', textDecorationColor: '#FFE000', textUnderlineOffset: 3 }}>
+                  See the full {them.name} alternatives roundup →
+                </Link>
+              </p>
+            )}
 
             <h2 style={h2Style}>Frequently asked questions</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -183,7 +189,7 @@ export default function AlternativesPage({ params }) {
 
             <div className="fn__bold_item" style={{ marginTop: 44, padding: '30px 34px', background: '#FFE000', textAlign: 'center' }}>
               <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 21, margin: '0 0 10px' }}>
-                Try the free score before you pick anything.
+                Try the free score before you pick.
               </h3>
               <p style={{ margin: '0 0 18px', opacity: 0.75, fontSize: 15 }}>
                 Your first market score is free — see the demand signals for yourself, then decide.

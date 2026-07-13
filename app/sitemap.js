@@ -1,5 +1,6 @@
 import { BLOG_POSTS } from '@/lib/blog-posts';
 import { ALTERNATIVES_PAGES } from '@/lib/alternatives-data';
+import { VERSUS_PAGES } from '@/lib/versus-data';
 
 export default function sitemap() {
   const blogUrls = BLOG_POSTS.map((post) => ({
@@ -12,6 +13,13 @@ export default function sitemap() {
   const alternativesUrls = ALTERNATIVES_PAGES.map((page) => ({
     url: `https://ideareels.io/alternatives/${page.slug}`,
     lastModified: new Date('2026-07-10'),
+    changeFrequency: 'monthly',
+    priority: 0.75,
+  }));
+
+  const versusUrls = VERSUS_PAGES.map((page) => ({
+    url: `https://ideareels.io/versus/${page.slug}`,
+    lastModified: new Date('2026-07-13'),
     changeFrequency: 'monthly',
     priority: 0.75,
   }));
@@ -31,6 +39,7 @@ export default function sitemap() {
     { url: 'https://ideareels.io/privacy',                      lastModified: new Date('2026-07-02'), changeFrequency: 'yearly',  priority: 0.2 },
     { url: 'https://ideareels.io/terms',                        lastModified: new Date('2026-07-02'), changeFrequency: 'yearly',  priority: 0.2 },
     ...alternativesUrls,
+    ...versusUrls,
     ...blogUrls,
   ];
 }
