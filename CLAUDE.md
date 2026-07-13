@@ -6,8 +6,8 @@ This repository is the canonical local source of truth for IdeaWheel.
 
 - Local repo: `/Users/vincent/.openclaw/workspace/projects/idea-wheel`
 - GitHub: `https://github.com/vincentploum-cmyk/idea-wheel`
-- Production: `https://idea-wheel-sigma.vercel.app`
-- Vercel project: `idea-wheel`
+- Production: `https://ideareels.io` (Cloudflare in front — DNS, CDN cache, redirects, bot rules)
+- Hosting: Render (Node web service, auto-builds from GitHub `main`; config in `render.yaml`)
 
 ## Do not use this old path for normal development
 
@@ -23,10 +23,9 @@ For any production-facing change:
 2. Run local verification.
 3. Commit changes.
 4. Push to GitHub `main`.
-5. Prefer the GitHub -> Vercel auto-deploy path.
+5. Render auto-builds and deploys `main` (~2-3 min).
 
-Do not treat `tmp/idea-wheel-vercel-deploy` as the canonical repo.
-That directory is only a fallback deployment snapshot if recovery work is unavoidable.
+`main` is the only source for deploys — do not deploy from a snapshot or scratch directory; recover into a clean repo first if the working tree is corrupted.
 
 ## Local commands
 
@@ -67,26 +66,34 @@ Before pushing changes that affect the UI or routing:
 
 ## Deployment rules
 
+Production is hosted on **Render**, with **Cloudflare** in front (DNS, CDN cache, redirects, bot rules).
+
 Preferred path:
-- commit and push to GitHub
-- let Vercel auto-deploy
+- commit and push to GitHub `main`
+- Render auto-builds and deploys `main` (~2-3 min); build/start config lives in `render.yaml`
+
+Cloudflare notes:
+- Cloudflare edge-caches static assets. When editing `public/popito-assets/*`, bump a `?v=` query on the reference so the new file is fetched; otherwise purge the Cloudflare cache to clear stale assets.
+- AI-crawler / bot access is controlled in Cloudflare (Security -> Bots), not just `robots.txt`. In the Crawlers tab, "Block Crawler" ON = blocked.
+- Spoofed-UA `curl` probes may return 403 (Cloudflare impersonation protection) — verify crawlability with a real fetcher, not curl.
 
 Fallback path only if absolutely necessary:
-- use `vercel --prod` from a clean working copy
+- trigger a manual deploy from the Render dashboard
 - if a local repo has filesystem deadlock issues, recover into a clean repo first instead of deploying from a corrupted tree
 
 ## Environment variables
 
 Keep secrets out of git.
-Expected env comes from Vercel for production.
+Expected env comes from Render for production (dashboard env / `render.yaml`).
 Common vars include:
 
-- `ANTHROPIC_API_KEY`
+- `OPENAI_API_KEY` (the pipeline/score routes call OpenAI, not Anthropic)
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_SITE_URL`
+- `RESEND_API_KEY` (contact-form owner notifications)
 - Stripe vars when checkout is made truly live
 
 ## Known live caveats
