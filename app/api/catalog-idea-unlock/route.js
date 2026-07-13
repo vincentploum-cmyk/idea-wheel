@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { spendIdeaCredit, hasUnlockedIdea } from '../../../lib/credits';
+import { deductCredits, hasUnlockedIdea, getBalance, CREDIT_COSTS } from '../../../lib/credits';
 import { IDEA_EXAMPLES } from '../../../lib/idea-examples';
 import { getCatalogIdea } from '../../../lib/catalog-store';
 
@@ -25,19 +25,23 @@ export async function POST(request) {
   const idea = IDEA_EXAMPLES.find(i => i.slug === slug);
   if (!idea) return Response.json({ error: 'unknown idea' }, { status: 404 });
 
-  const result = await spendIdeaCredit(user.id, slug);
-  if (!result.ok && !result.alreadyUnlocked) {
-    return Response.json({ error: result.reason, balance: result.balance }, { status: 402 });
+  // Idempotent: if already unlocked, re-deliver the content without charging again.
+  const already = await hasUnlockedIdea(user.id, slug);
+  let balance;
+  if (already) {
+    balance = await getBalance(user.id);
+  } else {
+    // Charge the user's regular credit balance — the currency the packs actually sell.
+    const charge = await deductCredits(user.id, CREDIT_COSTS.ideaUnlock, `catalog_unlock_${slug}`);
+    if (!charge.ok) {
+      return Response.json({ error: 'insufficient_credits', balance: charge.balance ?? 0 }, { status: 402 });
+    }
+    balance = charge.newBalance;
   }
 
-  // The user is now entitled — deliver the full research + blueprint here so the
-  // page never has to ship it to locked visitors. Read via the service-role client.
+  // Entitled — deliver the full research + blueprint (read via the service-role client)
+  // so the page never has to ship it to locked visitors.
   const content = await getCatalogIdea(slug).catch(() => null);
 
-  return Response.json({
-    ok: true,
-    alreadyUnlocked: result.alreadyUnlocked ?? false,
-    balance: result.balance,
-    content,
-  });
+  return Response.json({ ok: true, alreadyUnlocked: already, balance, content });
 }

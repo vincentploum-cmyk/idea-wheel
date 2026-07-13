@@ -6,6 +6,9 @@ import { IDEA_EXAMPLES } from '@/lib/idea-examples';
 
 const SCORE_COLOR = (s) => s >= 80 ? '#15803D' : s >= 65 ? '#B45309' : '#B91C1C';
 const PREMIUM_SCORE = 80;
+// Cost to unlock one catalog idea, in regular credits. Mirrors the server's
+// CREDIT_COSTS.ideaUnlock (server is authoritative; this is display/gating only).
+const UNLOCK_COST = 1;
 
 // ── Small components ────────────────────────────────────────────────────────
 
@@ -264,13 +267,13 @@ function BlueprintContent({ blueprint }) {
 
 // ── Per-idea unlock CTA ───────────────────────────────────────────────────────
 
-function IdeaUnlockCTA({ slug, ideaCreditBalance, user, onUnlocked }) {
+function IdeaUnlockCTA({ slug, creditBalance, user, onUnlocked }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleUnlock = async () => {
     if (!user) { window.location.href = `/auth/login?next=/ideas`; return; }
-    if (ideaCreditBalance < 1) { window.location.href = '/pricing'; return; }
+    if (creditBalance < UNLOCK_COST) { window.location.href = '/pricing'; return; }
     setLoading(true); setError('');
     try {
       const res = await fetch('/api/catalog-idea-unlock', {
@@ -280,7 +283,7 @@ function IdeaUnlockCTA({ slug, ideaCreditBalance, user, onUnlocked }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        if (data.error === 'insufficient_idea_credits') {
+        if (res.status === 402 || data.error === 'insufficient_credits') {
           window.location.href = '/pricing';
         } else {
           setError(data.error || 'Something went wrong.');
@@ -295,7 +298,7 @@ function IdeaUnlockCTA({ slug, ideaCreditBalance, user, onUnlocked }) {
     }
   };
 
-  const hasCredits = ideaCreditBalance > 0;
+  const hasCredits = creditBalance >= UNLOCK_COST;
 
   return (
     <div style={{ marginTop: 20 }}>
@@ -319,12 +322,12 @@ function IdeaUnlockCTA({ slug, ideaCreditBalance, user, onUnlocked }) {
             : !user
               ? 'Sign in to unlock'
               : !hasCredits
-                ? 'Get Pro to unlock →'
-                : `Unlock this idea · 1 credit`}
+                ? 'Get credits to unlock →'
+                : `Unlock this idea · ${UNLOCK_COST} credit${UNLOCK_COST !== 1 ? 's' : ''}`}
         </button>
         {hasCredits && (
           <span style={{ fontSize: 12, color: '#111', opacity: 0.5 }}>
-            {ideaCreditBalance} idea credit{ideaCreditBalance !== 1 ? 's' : ''} remaining
+            {creditBalance} credit{creditBalance !== 1 ? 's' : ''} remaining
           </span>
         )}
       </div>
@@ -340,7 +343,7 @@ function IdeaUnlockCTA({ slug, ideaCreditBalance, user, onUnlocked }) {
 
 // ── Idea card ────────────────────────────────────────────────────────────────
 
-function IdeaCard({ item, index, catalogEntry, isUnlocked, ideaCreditBalance, unlockCount, user, onUnlocked }) {
+function IdeaCard({ item, index, catalogEntry, isUnlocked, creditBalance, unlockCount, user, onUnlocked }) {
   const isPremium = item.score >= PREMIUM_SCORE;
   const research = catalogEntry?.research || null;
   const blueprint = catalogEntry?.blueprint || null;
@@ -448,7 +451,7 @@ function IdeaCard({ item, index, catalogEntry, isUnlocked, ideaCreditBalance, un
           {isPremium && !isUnlocked && (
             <IdeaUnlockCTA
               slug={item.slug}
-              ideaCreditBalance={ideaCreditBalance}
+              creditBalance={creditBalance}
               user={user}
               onUnlocked={onUnlocked}
             />
@@ -477,9 +480,9 @@ function IdeaCard({ item, index, catalogEntry, isUnlocked, ideaCreditBalance, un
 
 // ── Root client component ────────────────────────────────────────────────────
 
-export default function IdeasClient({ user, catalogData: initialCatalog = {}, ideaUnlocks: initialUnlocks = {}, ideaCreditBalance: initialBalance = 0, unlockCounts = {} }) {
+export default function IdeasClient({ user, catalogData: initialCatalog = {}, ideaUnlocks: initialUnlocks = {}, creditBalance: initialBalance = 0, unlockCounts = {} }) {
   const [ideaUnlocks, setIdeaUnlocks] = useState(initialUnlocks);
-  const [ideaCreditBalance, setIdeaCreditBalance] = useState(initialBalance);
+  const [creditBalance, setCreditBalance] = useState(initialBalance);
   // Locked ideas arrive with teaser only; the full research/blueprint is merged
   // in here once /api/catalog-idea-unlock delivers it to the entitled user.
   const [catalogData, setCatalogData] = useState(initialCatalog);
@@ -489,7 +492,7 @@ export default function IdeasClient({ user, catalogData: initialCatalog = {}, id
 
   const handleUnlocked = (slug, content, alreadyUnlocked) => {
     setIdeaUnlocks(prev => ({ ...prev, [slug]: true }));
-    if (!alreadyUnlocked) setIdeaCreditBalance(prev => Math.max(0, prev - 1));
+    if (!alreadyUnlocked) setCreditBalance(prev => Math.max(0, prev - UNLOCK_COST));
     if (content) setCatalogData(prev => ({ ...prev, [slug]: content }));
   };
 
@@ -507,7 +510,7 @@ export default function IdeasClient({ user, catalogData: initialCatalog = {}, id
                 index={IDEA_EXAMPLES.indexOf(item)}
                 catalogEntry={catalogData[item.slug]}
                 isUnlocked={false}
-                ideaCreditBalance={ideaCreditBalance}
+                creditBalance={creditBalance}
                 unlockCount={0}
                 user={user}
                 onUnlocked={handleUnlocked}
@@ -522,7 +525,7 @@ export default function IdeasClient({ user, catalogData: initialCatalog = {}, id
                 index={IDEA_EXAMPLES.indexOf(item)}
                 catalogEntry={catalogData[item.slug]}
                 isUnlocked={!!ideaUnlocks[item.slug]}
-                ideaCreditBalance={ideaCreditBalance}
+                creditBalance={creditBalance}
                 unlockCount={unlockCounts[item.slug] ?? 0}
                 user={user}
                 onUnlocked={handleUnlocked}

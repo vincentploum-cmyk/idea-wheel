@@ -1,7 +1,7 @@
 import PopitoShell from '@/components/popito/PopitoShell';
 import IdeasClient from './ideas-client';
 import { createClient } from '@/lib/supabase-server';
-import { hasUnlockedIdea, getIdeaCreditBalance } from '@/lib/credits';
+import { hasUnlockedIdea, getBalance } from '@/lib/credits';
 import { getAllCatalogData, getUnlockCounts } from '@/lib/catalog-store';
 import { IDEA_EXAMPLES } from '@/lib/idea-examples';
 
@@ -38,9 +38,9 @@ export default async function IdeasPage() {
 
   // Per-idea unlock state for this user
   let ideaUnlocks = {};
-  let ideaCreditBalance = 0;
+  let creditBalance = 0;
   if (user) {
-    ideaCreditBalance = await getIdeaCreditBalance(user.id).catch(() => 0);
+    creditBalance = await getBalance(user.id).catch(() => 0);
     const checks = await Promise.all(
       premiumSlugs.map(async slug => [slug, await hasUnlockedIdea(user.id, slug).catch(() => false)])
     );
@@ -87,7 +87,7 @@ export default async function IdeasPage() {
         user={user}
         catalogData={catalogData}
         ideaUnlocks={ideaUnlocks}
-        ideaCreditBalance={ideaCreditBalance}
+        creditBalance={creditBalance}
         unlockCounts={unlockCounts}
       />
     </PopitoShell>
