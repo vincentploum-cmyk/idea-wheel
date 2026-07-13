@@ -82,12 +82,19 @@ const orgJsonLd = {
 };
 
 export default function RootLayout({ children }) {
+  // Derive the Supabase origin from env so the prefetch can't go stale after a
+  // project migration (a hardcoded ref previously pointed at an old project).
+  const supabaseOrigin = (() => {
+    try { return process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin : null; }
+    catch { return null; }
+  })();
+
   return (
     <html lang="en">
       <head>
         {/* CWV: Preconnect to critical third-party origins */}
         <link rel="dns-prefetch" href="https://js.stripe.com" />
-        <link rel="dns-prefetch" href="https://ywroiurslbnnqecwmkbs.supabase.co" />
+        {supabaseOrigin && <link rel="dns-prefetch" href={supabaseOrigin} />}
 
         {/* Fonts are self-hosted (see @font-face in globals.css).
             Preload the two files needed for above-the-fold text. */}
