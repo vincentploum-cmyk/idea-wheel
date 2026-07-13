@@ -31,7 +31,7 @@ export default async function IdeasPage() {
 
   const premiumSlugs = IDEA_EXAMPLES.filter(i => i.score >= 80).map(i => i.slug);
 
-  const [catalogData, unlockCounts] = await Promise.all([
+  const [fullCatalog, unlockCounts] = await Promise.all([
     getAllCatalogData().catch(() => ({})),
     getUnlockCounts(premiumSlugs).catch(() => ({})),
   ]);
@@ -45,6 +45,19 @@ export default async function IdeasPage() {
       premiumSlugs.map(async slug => [slug, await hasUnlockedIdea(user.id, slug).catch(() => false)])
     );
     ideaUnlocks = Object.fromEntries(checks);
+  }
+
+  // Never ship the paid research/blueprint of a LOCKED idea to the browser.
+  // Locked premium ideas get only the public teaser line (all that the locked
+  // card renders); full content is delivered by /api/catalog-idea-unlock once
+  // the user is entitled. Unlocked ideas get their full content as before.
+  const catalogData = {};
+  for (const slug of premiumSlugs) {
+    const entry = fullCatalog[slug];
+    if (!entry) continue;
+    catalogData[slug] = ideaUnlocks[slug]
+      ? entry
+      : { research: { teaserLine: entry.research?.teaserLine ?? '' } };
   }
 
   const jsonLd = {

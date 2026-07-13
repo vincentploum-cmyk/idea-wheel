@@ -4,22 +4,14 @@ import { cookies } from 'next/headers';
 import { buildRetrievalContext } from '../../../../lib/moat-retrieval';
 import { CREDIT_COSTS } from '../../../../lib/credits';
 
-// Max 5 blueprint requests per user per minute
-const buildRateLimitMap = new Map();
-function checkBuildRateLimit(userId) {
-  const now = Date.now();
-  const windowMs = 60_000;
-  const max = 5;
-  const entry = buildRateLimitMap.get(userId) || { count: 0, windowStart: now };
-  if (now - entry.windowStart > windowMs) { entry.count = 0; entry.windowStart = now; }
-  entry.count += 1;
-  buildRateLimitMap.set(userId, entry);
-  return entry.count <= max;
-}
+// Max 5 blueprint requests per user per minute (durable, cross-instance —
+// see lib/rate-limit.js).
+const BUILD_RATE_LIMIT = { limit: 5, windowSeconds: 60 };
 import { addCredits, deductCredits } from '../../../../lib/credits';
 import { ensureSessionId, getBlueprintCharge, recordBlueprint, recordOutcome, saveBlueprintCharge } from '../../../../lib/moat-store';
 import { withPlainEnglish } from '../../../../lib/clarity';
 import { attachBlueprint, saveBlueprintProgress } from '../../../../lib/saved-ideas';
+import { checkRateLimit } from '../../../../lib/rate-limit';
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
 
@@ -692,7 +684,7 @@ export async function POST(request) {
   if (!user) {
     return NextResponse.json({ error: 'not_authenticated' }, { status: 401 });
   }
-  if (!checkBuildRateLimit(user.id)) {
+  if (!(await checkRateLimit(`build:${user.id}`, BUILD_RATE_LIMIT))) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
   }
 

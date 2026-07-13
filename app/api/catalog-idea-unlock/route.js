@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { spendIdeaCredit, hasUnlockedIdea } from '../../../lib/credits';
 import { IDEA_EXAMPLES } from '../../../lib/idea-examples';
+import { getCatalogIdea } from '../../../lib/catalog-store';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -29,5 +30,14 @@ export async function POST(request) {
     return Response.json({ error: result.reason, balance: result.balance }, { status: 402 });
   }
 
-  return Response.json({ ok: true, alreadyUnlocked: result.alreadyUnlocked ?? false, balance: result.balance });
+  // The user is now entitled — deliver the full research + blueprint here so the
+  // page never has to ship it to locked visitors. Read via the service-role client.
+  const content = await getCatalogIdea(slug).catch(() => null);
+
+  return Response.json({
+    ok: true,
+    alreadyUnlocked: result.alreadyUnlocked ?? false,
+    balance: result.balance,
+    content,
+  });
 }

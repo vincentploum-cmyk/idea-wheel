@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { buildRetrievalContext } from '../../../../lib/moat-retrieval';
 import { ensureSessionId, recordValidation } from '../../../../lib/moat-store';
+import { checkRateLimit } from '../../../../lib/rate-limit';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -15,21 +16,9 @@ async function getUser() {
   return user;
 }
 
-// Simple in-memory rate limiter: max 10 validations per user per minute.
-const rateLimitMap = new Map();
-function checkRateLimit(userId) {
-  const now = Date.now();
-  const windowMs = 60_000;
-  const max = 10;
-  const entry = rateLimitMap.get(userId) || { count: 0, windowStart: now };
-  if (now - entry.windowStart > windowMs) {
-    entry.count = 0;
-    entry.windowStart = now;
-  }
-  entry.count += 1;
-  rateLimitMap.set(userId, entry);
-  return entry.count <= max;
-}
+// Rate limit: max 10 validations per user per minute (durable, cross-instance —
+// see lib/rate-limit.js).
+const RATE_LIMIT = { limit: 10, windowSeconds: 60 };
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
 const MODEL = 'gpt-4o-mini';
@@ -470,7 +459,7 @@ export async function POST(request) {
   if (!user) {
     return NextResponse.json({ error: 'not_authenticated' }, { status: 401 });
   }
-  if (!checkRateLimit(user.id)) {
+  if (!(await checkRateLimit(`validate:${user.id}`, RATE_LIMIT))) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
   }
 

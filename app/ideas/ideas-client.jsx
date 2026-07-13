@@ -287,7 +287,7 @@ function IdeaUnlockCTA({ slug, ideaCreditBalance, user, onUnlocked }) {
         }
         return;
       }
-      onUnlocked(slug);
+      onUnlocked(slug, data.content, data.alreadyUnlocked);
     } catch {
       setError('Something went wrong. Try again.');
     } finally {
@@ -477,16 +477,20 @@ function IdeaCard({ item, index, catalogEntry, isUnlocked, ideaCreditBalance, un
 
 // ── Root client component ────────────────────────────────────────────────────
 
-export default function IdeasClient({ user, catalogData = {}, ideaUnlocks: initialUnlocks = {}, ideaCreditBalance: initialBalance = 0, unlockCounts = {} }) {
+export default function IdeasClient({ user, catalogData: initialCatalog = {}, ideaUnlocks: initialUnlocks = {}, ideaCreditBalance: initialBalance = 0, unlockCounts = {} }) {
   const [ideaUnlocks, setIdeaUnlocks] = useState(initialUnlocks);
   const [ideaCreditBalance, setIdeaCreditBalance] = useState(initialBalance);
+  // Locked ideas arrive with teaser only; the full research/blueprint is merged
+  // in here once /api/catalog-idea-unlock delivers it to the entitled user.
+  const [catalogData, setCatalogData] = useState(initialCatalog);
 
   const freeIdeas    = IDEA_EXAMPLES.filter(i => i.score < PREMIUM_SCORE);
   const premiumIdeas = IDEA_EXAMPLES.filter(i => i.score >= PREMIUM_SCORE);
 
-  const handleUnlocked = (slug) => {
+  const handleUnlocked = (slug, content, alreadyUnlocked) => {
     setIdeaUnlocks(prev => ({ ...prev, [slug]: true }));
-    setIdeaCreditBalance(prev => Math.max(0, prev - 1));
+    if (!alreadyUnlocked) setIdeaCreditBalance(prev => Math.max(0, prev - 1));
+    if (content) setCatalogData(prev => ({ ...prev, [slug]: content }));
   };
 
   return (
