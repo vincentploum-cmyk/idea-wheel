@@ -963,7 +963,7 @@ Search the web for the most current direct competitors, their pricing, recent (2
             infra,
             protoSpec: spec,
             eval: prototypeEval,
-            prototypeHtml: typeof prototypeHtml === 'string' ? prototypeHtml.slice(0, 16000) : '',
+            prototypeHtml: typeof prototypeHtml === 'string' ? prototypeHtml.slice(0, 100000) : '',
           },
           // Credit was already recorded at the designer stage (saveBlueprintProgress);
           // don't count it again here.

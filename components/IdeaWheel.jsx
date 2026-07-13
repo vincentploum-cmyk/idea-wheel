@@ -368,6 +368,118 @@ function ProtoFrame({ html }) {
     title="prototype"/>;
 }
 
+/* ─── COMPLETE PLAN — printable document (browser "Save as PDF") ───────── */
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+function planSlug(name) {
+  return (name || 'prototype').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'prototype';
+}
+function buildPlanDocument({ design, gtm, comp, infra, idea }) {
+  const e = escHtml;
+  const name = design?.name || 'Your startup';
+  const sentence = (idea?.action && idea?.workflow && idea?.industry)
+    ? `An agent that ${String(idea.action).toLowerCase()} ${idea.workflow} in the ${idea.industry} industry.`
+    : (design?.tagline || '');
+  let dateStr = '';
+  try { dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }); } catch { /* noop */ }
+
+  const plain = (o) => {
+    if (!o) return '';
+    const summary = o.plainSummary ? `<div class="plain">${e(o.plainSummary)}</div>` : '';
+    const takes = (o.takeaways || []).length ? `<ul class="takes">${o.takeaways.map((t) => `<li>${e(t)}</li>`).join('')}</ul>` : '';
+    return summary + takes;
+  };
+  const list = (arr, ordered) => (arr || []).length
+    ? `<${ordered ? 'ol' : 'ul'} class="list">${arr.map((x) => `<li>${e(x)}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>` : '';
+
+  const sections = [];
+  const sec = (num, title, body) => { if (body && body.trim()) sections.push(`<section class="sec"><div class="sechead"><span class="secnum">${num}</span><h2>${e(title)}</h2></div>${body}</section>`); };
+
+  if (design) sec('01', 'Niche & Problem', plain(design) + (design.niche ? `<p>${e(design.niche)}</p>` : ''));
+  if (design) sec('02', 'Product concept',
+    `<p class="big">${e(design.name)}</p>` +
+    (design.tagline ? `<p class="lead">${e(design.tagline)}</p>` : '') +
+    (design.differentiator ? `<p>${e(design.differentiator)}</p>` : '') +
+    (design.coreFeatures?.length ? `<div class="label">MVP scope</div>${list(design.coreFeatures)}` : ''));
+  if (gtm) sec('03', 'Target user',
+    plain(gtm) +
+    (gtm.persona ? `<p class="lead">${e(gtm.persona)}</p>` : '') +
+    (gtm.whereToFind ? `<p><span class="label-inline">Where to find them:</span> ${e(gtm.whereToFind)}</p>` : '') +
+    (gtm.whyNow ? `<div class="label">Why now</div><p>${e(gtm.whyNow)}</p>` : ''));
+  if (comp) sec('04', 'Competitor & gap',
+    (comp.marketSize ? `<p class="big">${e(comp.marketSize)}</p>` : '') +
+    (comp.gap ? `<p>${e(comp.gap)}</p>` : '') +
+    ((comp.players || []).length ? `<div class="label">Key players</div><ul class="list">${comp.players.slice(0, 3).map((p) => `<li><strong>${e(p.name)}</strong> — ${e(p.weakness)}</li>`).join('')}</ul>` : ''));
+  if (gtm?.pricing) sec('05', 'Pricing idea',
+    `<p class="big">${e(gtm.pricing.price)}</p>` +
+    (gtm.pricing.rationale ? `<p>${e(gtm.pricing.rationale)}</p>` : '') +
+    (gtm.pricing.trial ? `<p class="muted">${e(gtm.pricing.trial)}</p>` : '') +
+    ((gtm.revenueGoal || gtm.buildTime) ? `<div class="kpis"><div class="kpi"><b>${e(gtm.revenueGoal || '—')}</b><small>30-day target</small></div><div class="kpi"><b>${e(gtm.buildTime || '—')}</b><small>to build V1</small></div></div>` : '') +
+    (gtm.firstFiveCustomers?.length ? `<div class="label">First 5 customers</div>${list(gtm.firstFiveCustomers, true)}` : ''));
+  if (design?.landingAngle) sec('06', 'Landing page angle', `<p class="quote">"${e(design.landingAngle)}"</p>`);
+  if (infra) sec('07', 'Infrastructure',
+    plain(infra) +
+    ((infra.services || []).length ? `<div class="label">Services</div><div class="chips">${infra.services.map((s) => `<span class="chip">${e(s.name)}</span>`).join('')}</div>` : '') +
+    (infra.buildOrder ? `<p>${e(infra.buildOrder)}</p>` : '') +
+    (infra.monthlyCost ? `<div class="costs">${Object.entries(infra.monthlyCost).map(([k, v]) => `<div class="cost"><b>${e(v)}</b><small>${k === 'dev' ? 'Dev' : k === 'at100users' ? '100 users' : '1K users'}</small></div>`).join('')}</div>` : ''));
+  if (gtm?.cursorPrompt) sec('08', 'First prompt for Cursor / Claude / Codex', `<pre class="code">${e(gtm.cursorPrompt)}</pre>`);
+
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${e(name)} — Complete plan</title>
+<style>
+  @page { size: A4; margin: 16mm; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #111; font-size: 12pt; line-height: 1.55; }
+  .cover { min-height: 62vh; display: flex; flex-direction: column; justify-content: center; padding: 8mm 0 12mm; border-bottom: 4px solid #111; page-break-after: always; }
+  .kicker { font-weight: 900; letter-spacing: .18em; text-transform: uppercase; font-size: 11pt; color: #111; background: #FFE000; display: inline-block; padding: 4px 12px; border: 2px solid #111; align-self: flex-start; }
+  .cover h1 { font-size: 34pt; font-weight: 900; letter-spacing: -.02em; margin: 16px 0 6px; }
+  .cover .sub { font-size: 14pt; color: #333; margin: 0 0 18px; max-width: 85%; }
+  .cover .meta { font-size: 10.5pt; color: #666; margin-top: auto; }
+  .brand { font-weight: 900; color: #111; }
+  .sec { page-break-inside: avoid; margin: 0 0 9mm; }
+  .sechead { display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #111; padding-bottom: 5px; margin-bottom: 9px; }
+  .secnum { font-weight: 900; font-size: 11pt; background: #111; color: #FFE000; border-radius: 5px; padding: 2px 8px; }
+  .sec h2 { font-size: 15pt; font-weight: 900; margin: 0; letter-spacing: -.01em; }
+  .sec p { margin: 0 0 8px; }
+  .big { font-size: 17pt; font-weight: 900; margin: 0 0 4px; }
+  .lead { font-size: 13pt; font-weight: 600; }
+  .quote { font-style: italic; font-size: 14pt; line-height: 1.7; }
+  .muted { color: #666; font-style: italic; }
+  .plain { background: #FDF3C7; border: 2px solid #E8D480; border-radius: 8px; padding: 9px 12px; margin: 0 0 9px; }
+  .label { font-weight: 900; text-transform: uppercase; letter-spacing: .08em; font-size: 9.5pt; color: #666; margin: 12px 0 5px; }
+  .label-inline { font-weight: 900; text-transform: uppercase; letter-spacing: .06em; font-size: 9pt; color: #666; }
+  ul.list, ol.list, ul.takes { margin: 4px 0 8px; padding-left: 20px; }
+  ul.list li, ol.list li, ul.takes li { margin: 3px 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { border: 2px solid #111; border-radius: 5px; padding: 2px 9px; font-weight: 700; font-size: 10pt; }
+  .costs, .kpis { display: flex; gap: 10px; margin-top: 10px; }
+  .cost, .kpi { border: 2px solid #111; border-radius: 8px; padding: 8px 14px; text-align: center; }
+  .cost b, .kpi b { display: block; font-size: 14pt; font-weight: 900; }
+  .cost small, .kpi small { color: #666; font-size: 8.5pt; text-transform: uppercase; letter-spacing: .05em; }
+  pre.code { background: #111; color: #eaeaea; border-radius: 8px; padding: 12px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 9.5pt; line-height: 1.5; white-space: pre-wrap; word-break: break-word; page-break-inside: avoid; }
+  .close { page-break-before: always; text-align: center; padding-top: 30mm; }
+  .close .big2 { font-size: 26pt; font-weight: 900; letter-spacing: -.02em; }
+  .close p { color: #444; margin-top: 10px; }
+  .close .note { background: #FDF3C7; border: 2px solid #E8D480; border-radius: 8px; padding: 10px 14px; display: inline-block; margin-top: 16px; font-size: 11pt; }
+  .close .foot { margin-top: 26px; font-weight: 900; }
+</style></head><body>
+  <div class="cover">
+    <span class="kicker">The complete plan</span>
+    <h1>${e(name)}</h1>
+    <p class="sub">${e(sentence)}</p>
+    <div class="meta"><span class="brand">IdeaReels</span> · ideareels.io${dateStr ? ' · ' + e(dateStr) : ''}</div>
+  </div>
+  ${sections.join('\n')}
+  <div class="close">
+    <div class="big2">That's a company in three spins.</div>
+    <p>Your full build plan — product, market, infrastructure, and the first Cursor prompt — is above.</p>
+    <div class="note">Your interactive prototype is saved separately as <b>${e(planSlug(name))}-prototype.html</b> — open it in any browser.</div>
+    <div class="foot">Built with IdeaReels · ideareels.io</div>
+  </div>
+</body></html>`;
+}
+
 /* ─── SLOT MACHINE DATA ──────────────────────────────────────────── */
 // Rule: every action must pair naturally with every workflow in the same bank.
 // Sentence: "I want to build an agent that [action] [workflow] in [industry]"
@@ -1284,6 +1396,43 @@ export default function IdeaWheel() {
   // ease toward the top of the current band while it runs, then continue from
   // the next band as stages complete.
   const bpCompletedCount = [design, gtm, infra, proto].filter(Boolean).length;
+
+  // Save the interactive prototype as a standalone, runnable .html file.
+  const downloadPrototype = () => {
+    if (!proto) return;
+    const blob = new Blob([proto], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${planSlug(design?.name)}-prototype.html`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+
+  // Open the complete plan as a print-optimized document → browser "Save as PDF".
+  const downloadPlan = () => {
+    const doc = buildPlanDocument({ design, gtm, comp, infra, idea });
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+    document.body.appendChild(iframe);
+    let printed = false;
+    const doPrint = () => {
+      if (printed) return;
+      printed = true;
+      try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch { /* noop */ }
+    };
+    const cw = iframe.contentWindow;
+    cw.document.open();
+    cw.document.write(doc);
+    cw.document.close();
+    cw.onafterprint = () => setTimeout(() => { try { iframe.remove(); } catch { /* noop */ } }, 800);
+    iframe.onload = () => setTimeout(doPrint, 300);
+    setTimeout(doPrint, 600); // fallback: document.write may not fire onload in every browser
+    setTimeout(() => { try { iframe.remove(); } catch { /* noop */ } }, 60000); // hard cleanup
+  };
   useEffect(() => {
     if (bpDone) { setBpPct(100); return; }
     if (!bpRunning) { setBpPct(0); return; }
@@ -1922,9 +2071,12 @@ export default function IdeaWheel() {
               {proto && (
                 <div className="su-card su-bp-card su-bp-card--proto">
                   <div className="su-bp-head"><span className="su-bp-num">09</span><h3 className="su-bp-title">Prototype</h3></div>
-                  <button className="su-proto-toggle" onClick={()=>setProtoOpen(v=>!v)}>
-                    {protoOpen?"Hide":"Show"} live prototype
-                  </button>
+                  <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                    <button className="su-proto-toggle" onClick={()=>setProtoOpen(v=>!v)}>
+                      {protoOpen?"Hide":"Show"} live prototype
+                    </button>
+                    <button className="su-proto-toggle" onClick={downloadPrototype}>Download .html</button>
+                  </div>
                   {protoOpen && (
                     <div className="su-proto-wrap">
                       <div className="su-proto-chrome">
@@ -1946,7 +2098,8 @@ export default function IdeaWheel() {
                 <div className="su-bp-footer-d">Not feeling it? Spin another idea and compare.</div>
               </div>
               <div className="su-bp-footer-actions">
-                <button className="su-btn su-btn-yellow" onClick={() => { goTo("wheel"); setIdea(null); }}>Spin again</button>
+                <button className="su-btn su-btn-yellow su-btn-lg" onClick={downloadPlan}>Download the complete plan (PDF)</button>
+                <button className="su-btn su-btn-ghost" onClick={() => { goTo("wheel"); setIdea(null); }}>Spin again</button>
               </div>
             </div>
           )}
