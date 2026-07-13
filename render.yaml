@@ -9,19 +9,50 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: NEXT_PUBLIC_APP_URL
+
+      # AI provider — the pipeline (validate / build / deep-research), /api/score,
+      # the cron opportunity-scan, and the admin seed route all call OpenAI.
+      # (ANTHROPIC_API_KEY is NOT used by the running service; only the local
+      # one-off scripts/seed-catalog.mjs needs it.)
+      - key: OPENAI_API_KEY
         sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
+
+      # Supabase
       - key: NEXT_PUBLIC_SUPABASE_URL
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+
+      # Stripe (live checkout + webhook)
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+      # Site URLs
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
       - key: NEXT_PUBLIC_SITE_URL
         sync: false
+
+      # Contact-form owner notifications (Resend). Without RESEND_API_KEY the
+      # form still accepts messages but no email is sent to the owner.
+      - key: RESEND_API_KEY
+        sync: false
+
+      # Bearer secrets that gate internal endpoints. If unset, the matching route
+      # returns 401 (feature stays locked), so leaving them blank is safe.
+      - key: SEED_SECRET        # POST /api/admin/seed-catalog
+        sync: false
+      - key: CRON_SECRET        # POST /api/cron/opportunity-scan
+        sync: false
+
+    # Optional overrides — the code has safe defaults, set only to change them:
+    #   CONTACT_NOTIFY_TO      (default vincentploum@gmail.com)
+    #   CONTACT_NOTIFY_FROM    (default "IdeaReels Contact <onboarding@resend.dev>")
+    #   OPPORTUNITY_BANK_TABLE (default "opportunity_bank")
+    #   OPPORTUNITY_BANK_PATH  (default: repo data/opportunity-bank.jsonl)
+    #   MOAT_DATA_DIR          (default: <cwd>/data/moat)
+    # Do NOT set VERCEL here — the code uses its absence to choose Render paths.
