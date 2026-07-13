@@ -309,9 +309,9 @@ export default async function LandingPage() {
                         <div className="item_footer" style={{ marginTop: 'auto' }}>
                           <Link href="/pricing" className="fn__btn medium">
                             <span>
-                              {pkg.key === 'starter' ? 'Buy credits — $3.99' :
-                               pkg.key === 'pro'     ? 'Buy Pro pack — $9.99' :
-                                                       'Buy Power pack — $19.99'}
+                              {pkg.key === 'starter' ? 'Buy credits' :
+                               pkg.key === 'pro'     ? 'Buy Pro pack' :
+                                                       'Buy Power pack'}
                             </span>
                           </Link>
                         </div>

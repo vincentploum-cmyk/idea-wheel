@@ -207,6 +207,27 @@ img, svg { display: block; max-width: 100%; }
    on the container but not on the child span, which breaks with inline-flex display */
 .fn__btn span { white-space: nowrap; }
 
+/* Pricing CTA buttons must ALWAYS show their full label on a single line — never
+   wrap, never ellipsis-truncate — on every viewport. The template's .fn__btn sets
+   text-overflow:ellipsis + overflow:hidden + max-width:100%, which clipped
+   "Buy Power pack — $19.99" to "Buy Power…" inside the narrow (min 260px) pricing
+   cards. Make the button fill the card, trim the oversized 50px side padding, and
+   drop the ellipsis so the label is never cut. */
+.item_footer .fn__btn {
+  width: 100%;
+  max-width: 100%;
+  padding-left: 14px;
+  padding-right: 14px;
+  font-size: 15px;
+  letter-spacing: 0;
+  white-space: nowrap;
+  text-overflow: clip;
+}
+.item_footer .fn__btn span { white-space: nowrap; }
+@media (max-width: 400px) {
+  .item_footer .fn__btn { font-size: 14px; }
+}
+
 ::selection { background: rgba(255,224,0,0.55); color: #111; }
 
 :focus-visible {
