@@ -1,0 +1,11 @@
+{
+  "name": "idea-wheel-integration-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Heavier integration tests that need a real Postgres (embedded-postgres). Kept in its own package so the Postgres binary is NOT downloaded during the production build — the root `npm install` (which Render runs) never sees these deps. Run via `npm run test:races` from the repo root.",
+  "dependencies": {
+    "embedded-postgres": "18.4.0-beta.17",
+    "pg": "^8.22.0"
+  }
+}

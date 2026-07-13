@@ -10,7 +10,8 @@
     "palette:audit": "node migrate-palette.js",
     "palette:print": "node migrate-palette.js --json",
     "opportunity-bank:sync": "node scripts/sync-opportunity-bank.mjs",
-    "test": "jest"
+    "test": "jest",
+    "test:races": "npm --prefix test/integration install --silent --no-audit --no-fund && node test/integration/credit-races.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
