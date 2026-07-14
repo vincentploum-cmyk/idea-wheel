@@ -85,17 +85,20 @@ The free scan already produced this read: ${JSON.stringify({
 
 Now go deeper. Search Reddit, Hacker News, Product Hunt, niche forums, and community threads where REAL people discuss this problem. Find evidence of genuine, painful, recurring demand — not vendor marketing. Quote the kind of thing people actually say. Look for what they currently cobble together, what they hate about it, and whether they pay for solutions.
 
+The quick score above is a fast first-pass heuristic — it leans heavily on how crowded the market looks. Your job is to REFINE that score with real community evidence and explain any change, not to hand back a contradictory second opinion out of nowhere.
+
 Return ONLY a JSON object (no fences):
 {
   "demandLevel": "strong | mixed | weak — how real and painful is the demand in communities?",
+  "revisedScore": "<integer 0-100> the build/caution/avoid score AFTER this deeper evidence — REVISE the quick score above: nudge it up when you find real unmet demand, down when the pain is thin or already well-served. Refine it; do not ignore it.",
   "demandSignals": ["3-5 concrete findings, each citing where (e.g. 'r/smallbusiness threads repeatedly complain that…')"],
   "voiceOfCustomer": ["2-3 short paraphrased quotes of how people describe the pain"],
   "communities": ["3-5 specific subreddits/forums/communities where this audience gathers"],
   "wedge": "the sharpest wedge the community evidence points to",
   "willingnessToPay": "1-2 sentences on whether people pay for solutions today and roughly how much",
-  "verdict": "2-3 sentences: does the deeper evidence strengthen or weaken this idea, and why?"
+  "verdict": "2-3 sentences that EXPLICITLY reconcile with the quick score: say whether the deeper evidence confirms or revises it, and WHY. e.g. 'The quick score was cautious because the market looks crowded, but community threads show real unmet demand for X — so the deeper read is more positive.' Never contradict the quick score without explaining the reason for the difference."
 }
-Be specific and honest. If the deeper search shows little real demand, say so.
+Be specific and honest. If the deeper search shows little real demand, say so — and keep revisedScore low to match.
 Write every field in plain, jargon-free language a non-technical founder can read at a glance — short sentences, no buzzwords. If you must use a niche term, explain it in a few words.`;
 }
 
@@ -123,10 +126,16 @@ export async function POST(request) {
       parsed = parse(research.text);
     } catch {
       const repair = await call(
-        `Convert the text below into ONE valid JSON object with keys demandLevel, demandSignals[], voiceOfCustomer[], communities[], wedge, willingnessToPay, verdict. JSON only.\n\n${research.text.slice(0, 12000)}`,
+        `Convert the text below into ONE valid JSON object with keys demandLevel, revisedScore, demandSignals[], voiceOfCustomer[], communities[], wedge, willingnessToPay, verdict. JSON only.\n\n${research.text.slice(0, 12000)}`,
         { searchUses: 1, maxTokens: 1600 }
       );
       parsed = parse(repair.text);
+    }
+
+    // Normalize the revised score to a clamped integer (or null if absent/invalid).
+    if (parsed) {
+      const rs = Number(parsed.revisedScore);
+      parsed.revisedScore = Number.isFinite(rs) ? Math.max(0, Math.min(100, Math.round(rs))) : null;
     }
 
     // Additional readability check on the deep web-search outcome: attach a

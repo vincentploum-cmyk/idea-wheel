@@ -1789,6 +1789,11 @@ export default function IdeaWheel() {
                       <div className="su-v-signals-head">
                         Extended market research
                         {deepResearch.demandLevel && <span className={`su-deep-tag su-deep-tag--${/strong/i.test(deepResearch.demandLevel)?'good':/weak/i.test(deepResearch.demandLevel)?'bad':'warn'}`}>{deepResearch.demandLevel} demand</span>}
+                        {Number.isFinite(deepResearch.revisedScore) && (
+                          <span className={`su-deep-tag su-deep-tag--${deepResearch.revisedScore>=70?'good':deepResearch.revisedScore>=45?'warn':'bad'}`}>
+                            Score {deepResearch.revisedScore}{Number.isFinite(score) && deepResearch.revisedScore !== score ? ` · was ${score}` : ''}
+                          </span>
+                        )}
                       </div>
                       {(deepResearch.plainSummary || (deepResearch.takeaways||[]).length > 0) && (
                         <PlainEnglish summary={deepResearch.plainSummary} takeaways={deepResearch.takeaways} compact />
