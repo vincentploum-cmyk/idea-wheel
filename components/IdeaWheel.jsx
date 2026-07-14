@@ -394,7 +394,7 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     ? `<${ordered ? 'ol' : 'ul'} class="list">${arr.map((x) => `<li>${e(x)}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>` : '';
 
   const sections = [];
-  const sec = (num, title, body) => { if (body && body.trim()) sections.push(`<section class="sec"><div class="sechead"><span class="secnum">${num}</span><h2>${e(title)}</h2></div>${body}</section>`); };
+  const sec = (num, title, body, cls = '') => { if (body && body.trim()) sections.push(`<section class="sec ${cls}"><div class="sechead"><span class="secnum">${num}</span><h2>${e(title)}</h2></div>${body}</section>`); };
 
   if (design) sec('01', 'Niche & Problem', plain(design) + (design.niche ? `<p>${e(design.niche)}</p>` : ''));
   if (design) sec('02', 'Product concept',
@@ -418,11 +418,23 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     ((gtm.revenueGoal || gtm.buildTime) ? `<div class="kpis"><div class="kpi"><b>${e(gtm.revenueGoal || '—')}</b><small>30-day target</small></div><div class="kpi"><b>${e(gtm.buildTime || '—')}</b><small>to build V1</small></div></div>` : '') +
     (gtm.firstFiveCustomers?.length ? `<div class="label">First 5 customers</div>${list(gtm.firstFiveCustomers, true)}` : ''));
   if (design?.landingAngle) sec('06', 'Landing page angle', `<p class="quote">"${e(design.landingAngle)}"</p>`);
-  if (infra) sec('07', 'Infrastructure',
-    plain(infra) +
-    ((infra.services || []).length ? `<div class="label">Services</div><div class="chips">${infra.services.map((s) => `<span class="chip">${e(s.name)}</span>`).join('')}</div>` : '') +
-    (infra.buildOrder ? `<p>${e(infra.buildOrder)}</p>` : '') +
-    (infra.monthlyCost ? `<div class="costs">${Object.entries(infra.monthlyCost).map(([k, v]) => `<div class="cost"><b>${e(v)}</b><small>${k === 'dev' ? 'Dev' : k === 'at100users' ? '100 users' : '1K users'}</small></div>`).join('')}</div>` : ''));
+  if (infra) {
+    const svc = (infra.services || []).map((s) => {
+      const meta = [s.freeTier, s.setupTime ? `~${s.setupTime}` : ''].filter(Boolean).map((m) => e(m)).join(' · ');
+      const steps = (s.setupSteps || []).length ? `<ol class="list">${s.setupSteps.map((st) => `<li>${e(st)}</li>`).join('')}</ol>` : '';
+      const doc = s.docsUrl ? `<div class="doclink">Official setup guide: ${e(s.docsUrl)}</div>` : '';
+      return `<div class="svc"><div class="svchead"><b>${e(s.name)}</b>${meta ? ` <span class="svcmeta">${meta}</span>` : ''}</div>${s.purpose ? `<p class="muted">${e(s.purpose)}</p>` : ''}${steps}${doc}</div>`;
+    }).join('');
+    sec('07', 'Setup runbook',
+      plain(infra) + svc +
+      ((infra.envVars || []).length ? `<div class="label">Environment variables</div><pre class="code">${e((infra.envVars || []).join('\n'))}</pre>` : '') +
+      ((infra.deploySteps || []).length ? `<div class="label">Deploy</div>${list(infra.deploySteps, true)}` : '') +
+      (infra.schema ? `<div class="label">Data model</div><p>${e(infra.schema)}</p>` : '') +
+      (infra.aiWiring ? `<div class="label">AI wiring</div><p>${e(infra.aiWiring)}</p>` : '') +
+      (infra.buildOrder ? `<div class="label">Build order</div><p>${e(infra.buildOrder)}</p>` : '') +
+      (infra.monthlyCost ? `<div class="costs">${Object.entries(infra.monthlyCost).map(([k, v]) => `<div class="cost"><b>${e(v)}</b><small>${k === 'dev' ? 'Dev' : k === 'at100users' ? '100 users' : '1K users'}</small></div>`).join('')}</div>` : ''),
+      'sec--long');
+  }
   if (gtm?.cursorPrompt) sec('08', 'First prompt for Cursor / Claude / Codex', `<pre class="code">${e(gtm.cursorPrompt)}</pre>`);
 
   return `<!doctype html><html><head><meta charset="utf-8"><title>${e(name)} — Complete plan</title>
@@ -438,7 +450,12 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
   .cover .meta { font-size: 10.5pt; color: #666; margin-top: auto; }
   .brand { font-weight: 900; color: #111; }
   .sec { page-break-inside: avoid; margin: 0 0 9mm; }
-  .sechead { display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #111; padding-bottom: 5px; margin-bottom: 9px; }
+  .sec--long { page-break-inside: auto; }
+  .sechead { display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #111; padding-bottom: 5px; margin-bottom: 9px; page-break-after: avoid; }
+  .svc { border: 1px solid #ccc; border-radius: 8px; padding: 9px 12px; margin: 8px 0; page-break-inside: avoid; }
+  .svchead { margin-bottom: 3px; }
+  .svcmeta { color: #666; font-size: 9.5pt; font-weight: 400; }
+  .doclink { color: #444; font-size: 9pt; margin-top: 5px; word-break: break-all; }
   .secnum { font-weight: 900; font-size: 11pt; background: #111; color: #FFE000; border-radius: 5px; padding: 2px 8px; }
   .sec h2 { font-size: 15pt; font-weight: 900; margin: 0; letter-spacing: -.01em; }
   .sec p { margin: 0 0 8px; }
@@ -2034,18 +2051,55 @@ export default function IdeaWheel() {
                 </div>
               )}
 
-              {/* 7. Infra */}
+              {/* 7. Setup runbook */}
               {infra && (
-                <div className="su-card su-bp-card">
-                  <div className="su-bp-head"><span className="su-bp-num">07</span><h3 className="su-bp-title">Infrastructure</h3></div>
+                <div className="su-card su-bp-card su-bp-card--full">
+                  <div className="su-bp-head"><span className="su-bp-num">07</span><h3 className="su-bp-title">Setup runbook</h3></div>
                   {(infra.plainSummary || (infra.takeaways||[]).length > 0) && (
                     <PlainEnglish summary={infra.plainSummary} takeaways={infra.takeaways} compact />
                   )}
-                  {(infra.services||[]).length>0 && <>
-                    <div className="su-bp-list-label">Services</div>
-                    <div className="su-bp-chips">{(infra.services||[]).map((s,i)=><span className="su-chip" key={i}>{s.name}</span>)}</div>
+
+                  {/* Per-service, step-by-step getting started */}
+                  {(infra.services||[]).map((s,i)=>(
+                    <div key={i} style={{border:'1px solid var(--line,#e5e5e5)',borderRadius:10,padding:'12px 14px',marginTop:10}}>
+                      <div style={{display:'flex',alignItems:'baseline',gap:10,flexWrap:'wrap'}}>
+                        <span style={{fontWeight:800,fontSize:15}}>{s.name}</span>
+                        {s.freeTier && <span style={{fontSize:11,color:'var(--muted)'}}>{s.freeTier}</span>}
+                        {s.setupTime && <span style={{fontSize:11,color:'var(--muted)'}}>~{s.setupTime}</span>}
+                      </div>
+                      {s.purpose && <p className="su-bp-summary" style={{margin:'3px 0 7px'}}>{s.purpose}</p>}
+                      {(s.setupSteps||[]).length>0 && (
+                        <ol className="su-bp-list su-bp-list--ol">{s.setupSteps.map((st,j)=><li key={j}>{st}</li>)}</ol>
+                      )}
+                      {s.docsUrl && <a href={s.docsUrl} target="_blank" rel="noopener noreferrer" style={{display:'inline-block',marginTop:4,fontSize:12,fontWeight:700,color:'var(--ink)',textDecoration:'underline'}}>Official setup guide →</a>}
+                    </div>
+                  ))}
+
+                  {(infra.envVars||[]).length>0 && <>
+                    <div className="su-bp-list-label" style={{marginTop:14}}>Environment variables</div>
+                    <pre className="su-bp-cursor-prompt">{(infra.envVars||[]).join('\n')}</pre>
                   </>}
-                  {infra.buildOrder && <p className="su-bp-summary" style={{marginTop:10,color:'var(--ink)'}}>{infra.buildOrder}</p>}
+
+                  {(infra.deploySteps||[]).length>0 && <>
+                    <div className="su-bp-list-label">Deploy</div>
+                    <ol className="su-bp-list su-bp-list--ol">{(infra.deploySteps||[]).map((st,i)=><li key={i}>{st}</li>)}</ol>
+                  </>}
+
+                  {infra.schema && <>
+                    <div className="su-bp-list-label">Data model</div>
+                    <p className="su-bp-summary" style={{color:'var(--ink)'}}>{infra.schema}</p>
+                  </>}
+
+                  {infra.aiWiring && <>
+                    <div className="su-bp-list-label">AI wiring</div>
+                    <p className="su-bp-summary" style={{color:'var(--ink)'}}>{infra.aiWiring}</p>
+                  </>}
+
+                  {infra.buildOrder && <>
+                    <div className="su-bp-list-label">Build order</div>
+                    <p className="su-bp-summary" style={{color:'var(--ink)'}}>{infra.buildOrder}</p>
+                  </>}
+
                   {infra.monthlyCost && (
                     <div className="su-bp-costs">
                       {Object.entries(infra.monthlyCost).map(([k,v],i) => (

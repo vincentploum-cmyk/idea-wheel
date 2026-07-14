@@ -471,26 +471,33 @@ Return ONLY JSON with the same schema as before.`;
 }
 
 function infraPrompt(design, gtm, comp, retrieval) {
-  return `You are a senior software architect advising a solo vibe coder. Give them the exact technical setup for this product, and make the architecture reinforce the moat.
+  return `You are a senior engineer writing the GETTING-STARTED RUNBOOK for a solo, possibly non-technical builder. They PAID for this — it must be concrete enough to actually follow and get the product live, not a summary. No hand-waving: name the exact service, the exact console section to click, and the real gotchas that block people. Recommend Render for hosting unless another host is clearly better for this product.
 
 Validation package:
 ${JSON.stringify({ ...compactComp(comp), retrieval: compactRetrieval(retrieval) }, null, 2)}
 Design: ${JSON.stringify(compactDesign(design), null, 2)}
 GTM: ${JSON.stringify(compactGtm(gtm), null, 2)}
 
+For EVERY service, write 5-9 concrete, correctly-SEQUENCED setupSteps a first-timer can follow — start with creating the account, then the specific configuration, and call out the gotchas that actually block people. Examples of the depth required:
+- SMS / Twilio: you must register an A2P 10DLC Brand, then a Campaign under it, and get them approved BEFORE you can send any SMS to US numbers; then buy a number, attach it to a Messaging Service, and set the inbound webhook URL.
+- Payments / Stripe: create the product + price, copy the test then live API keys, and add a webhook endpoint with its signing secret so paid events actually reach your app.
+- Email: verify your sending domain (add the SPF/DKIM DNS records) or your messages land in spam.
+- Auth: set the exact redirect / callback URLs or login silently fails.
+Name the exact console path (e.g. "Console → Messaging → Regulatory Compliance"), and put the official setup doc URL in "docsUrl" so they can follow the exact clicks (which change over time).
+
 Return ONLY JSON:
 {
-  "services": [{"name":"...","purpose":"...","url":"https://...","freeTier":"...","setupTime":"X min","setupSteps":["Step 1...","Step 2..."]}],
-  "envVars": ["VAR_NAME=your_value  # what it does"],
+  "services": [{"name":"...","purpose":"one line: what it does for THIS product","url":"https://...","docsUrl":"https://official-setup-doc...","freeTier":"...","setupTime":"X min","setupSteps":["1. Create an account at ... and verify ...","2. In <exact console path>, ...","..."]}],
+  "envVars": ["VAR_NAME=your_value  # what it is + where to copy it from"],
   "schema": "Tables in plain English: users (id, email, plan) | table2 (fields)",
   "entities": ["entity 1","entity 2","entity 3"],
   "aiWiring": "Which model, system prompt structure, agent loop pattern",
   "memoryLoop": "how the product accumulates feedback or workflow history over time",
-  "deploySteps": ["1. Push to GitHub","2. Vercel → New Project → Import","3. Add env vars in Vercel Settings","4. Deploy"],
-  "monthlyCost": {"dev":"$0","at100users":"$X/mo (math)","at1000users":"$Y/mo (math)"},
-  "buildOrder": "Day 1: auth + schema. Day 2: core feature. Day 3: payments. Day 4: AI agent. Day 5: launch."
+  "deploySteps": ["1. Push your code to a GitHub repo.","2. On Render: New → Web Service → connect that repo.","3. Set the Build Command and Start Command.","4. Add every env var under Environment.","5. Click Create Web Service — Render builds and gives you a live URL.","6. Add your custom domain under Settings → Custom Domains and set the DNS records it shows you."],
+  "monthlyCost": {"dev":"$0","at100users":"$X/mo (show the math)","at1000users":"$Y/mo (show the math)"},
+  "buildOrder": "Day 1: ... Day 2: ... (specific to this product)"
 }
-This is read by a solo builder who may not be technical. For each service and step, add a short plain-English note on what it is and why it's needed.
+Every step must be specific to THIS product, not generic filler. Plain English — assume they have never used these tools. Prefer real free tiers so they can start at $0.
 
 ${PROSE_RULES}`;
 }
