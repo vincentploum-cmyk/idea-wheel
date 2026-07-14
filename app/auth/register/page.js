@@ -22,6 +22,12 @@ export default function RegisterPage() {
   }, []);
 
   const callbackUrl = `${siteUrl}/auth/callback${nextPath ? `?next=${encodeURIComponent(nextPath)}` : ''}`;
+  // Magic links get an extra confirm-click gate: Hotmail/Outlook prefetch
+  // links in emails to scan them, which burns a single-use code before the
+  // user ever clicks. Routing through /auth/confirm requires a real click
+  // before the code is redeemed. OAuth doesn't need this — that redirect
+  // never travels through an email.
+  const magicLinkRedirect = `${siteUrl}/auth/confirm${nextPath ? `?next=${encodeURIComponent(nextPath)}` : ''}`;
   const nextQS = nextPath ? `?next=${encodeURIComponent(nextPath)}` : '';
 
   const sendMagicLink = async (e) => {
@@ -29,7 +35,7 @@ export default function RegisterPage() {
     setLoading(true); setErr('');
     const { error } = await getClient().auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: callbackUrl },
+      options: { emailRedirectTo: magicLinkRedirect },
     });
     if (error) {
       console.error('magic link send failed:', error.message);
