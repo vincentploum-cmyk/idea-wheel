@@ -228,6 +228,15 @@ img, svg { display: block; max-width: 100%; }
   .item_footer .fn__btn { font-size: 14px; }
 }
 
+/* Sign in / sign up: the template's base input[type=email] rule has no width,
+   so it renders at its intrinsic size — much narrower than the full-width
+   OAuth/submit buttons stacked above and below it. Match them. */
+.popito_fn_sign_in_page .email,
+.popito_fn_sign_up_page .email {
+  width: 100%;
+  max-width: 100%;
+}
+
 ::selection { background: rgba(255,224,0,0.55); color: #111; }
 
 :focus-visible {
