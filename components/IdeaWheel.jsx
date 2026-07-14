@@ -305,6 +305,22 @@ function cleanValidationText(text = '') {
     .trim();
 }
 
+// Render text that may contain markdown links [label](url) as real links, so
+// deep-research citations don't show as raw markdown like ([producthunt.com](https://…)).
+function LinkedText({ text }) {
+  const str = String(text ?? '');
+  const parts = str.split(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g);
+  if (parts.length === 1) return str;
+  const out = [];
+  for (let i = 0; i < parts.length; i += 3) {
+    if (parts[i]) out.push(parts[i]);
+    if (parts[i + 2]) out.push(
+      <a key={i} href={parts[i + 2]} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>{parts[i + 1]}</a>
+    );
+  }
+  return <>{out}</>;
+}
+
 function splitValidationBullets(text = '', max = 3) {
   const clean = cleanValidationText(text)
     // Split only on contrastive joins ("…, but …"), never on ", and" — that
@@ -1778,18 +1794,18 @@ export default function IdeaWheel() {
                         <PlainEnglish summary={deepResearch.plainSummary} takeaways={deepResearch.takeaways} compact />
                       )}
                       {(deepResearch.demandSignals||[]).length > 0 && (
-                        <ul className="su-v-bullets">{deepResearch.demandSignals.slice(0,5).map((s,i)=><li key={i}>{cleanValidationText(s)}</li>)}</ul>
+                        <ul className="su-v-bullets">{deepResearch.demandSignals.slice(0,5).map((s,i)=><li key={i}><LinkedText text={cleanValidationText(s)} /></li>)}</ul>
                       )}
                       {(deepResearch.voiceOfCustomer||[]).length > 0 && (
                         <div className="su-v-deep-quotes">
-                          {deepResearch.voiceOfCustomer.slice(0,3).map((q,i)=><blockquote key={i} className="su-v-deep-quote">&ldquo;{cleanValidationText(q)}&rdquo;</blockquote>)}
+                          {deepResearch.voiceOfCustomer.slice(0,3).map((q,i)=><blockquote key={i} className="su-v-deep-quote">&ldquo;<LinkedText text={cleanValidationText(q)} />&rdquo;</blockquote>)}
                         </div>
                       )}
                       {(deepResearch.communities||[]).length > 0 && (
                         <div className="su-v-deep-row"><span className="su-v-l">Where they gather</span> <span className="su-v-deep-communities">{deepResearch.communities.slice(0,5).map(c=>cleanValidationText(c)).join(' · ')}</span></div>
                       )}
-                      {deepResearch.willingnessToPay && <div className="su-v-deep-row"><span className="su-v-l">Willingness to pay</span> <span>{cleanValidationText(deepResearch.willingnessToPay)}</span></div>}
-                      {deepResearch.wedge && <div className="su-v-deep-row"><span className="su-v-l">Sharpest wedge</span> <span>{cleanValidationText(deepResearch.wedge)}</span></div>}
+                      {deepResearch.willingnessToPay && <div className="su-v-deep-row"><span className="su-v-l">Willingness to pay</span> <span><LinkedText text={cleanValidationText(deepResearch.willingnessToPay)} /></span></div>}
+                      {deepResearch.wedge && <div className="su-v-deep-row"><span className="su-v-l">Sharpest wedge</span> <span><LinkedText text={cleanValidationText(deepResearch.wedge)} /></span></div>}
                     </div>
                   )}
 

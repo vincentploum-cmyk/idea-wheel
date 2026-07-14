@@ -471,19 +471,22 @@ Return ONLY JSON with the same schema as before.`;
 }
 
 function infraPrompt(design, gtm, comp, retrieval) {
-  return `You are a senior engineer writing the GETTING-STARTED RUNBOOK for a solo, possibly non-technical builder. They PAID for this — it must be concrete enough to actually follow and get the product live, not a summary. No hand-waving: name the exact service, the exact console section to click, and the real gotchas that block people. Recommend Render for hosting unless another host is clearly better for this product.
+  return `You are a senior engineer writing the GETTING-STARTED RUNBOOK for a solo, possibly non-technical builder. They PAID for this — it must be concrete enough to actually follow and get the product live, not a summary. No hand-waving: name the exact service, the exact console section to click, and the real gotchas that block people. Use Render for hosting — never Vercel — and keep it consistent everywhere.
 
 Validation package:
 ${JSON.stringify({ ...compactComp(comp), retrieval: compactRetrieval(retrieval) }, null, 2)}
 Design: ${JSON.stringify(compactDesign(design), null, 2)}
 GTM: ${JSON.stringify(compactGtm(gtm), null, 2)}
 
-For EVERY service, write 5-9 concrete, correctly-SEQUENCED setupSteps a first-timer can follow — start with creating the account, then the specific configuration, and call out the gotchas that actually block people. Examples of the depth required:
-- SMS / Twilio: you must register an A2P 10DLC Brand, then a Campaign under it, and get them approved BEFORE you can send any SMS to US numbers; then buy a number, attach it to a Messaging Service, and set the inbound webhook URL.
-- Payments / Stripe: create the product + price, copy the test then live API keys, and add a webhook endpoint with its signing secret so paid events actually reach your app.
-- Email: verify your sending domain (add the SPF/DKIM DNS records) or your messages land in spam.
-- Auth: set the exact redirect / callback URLs or login silently fails.
-Name the exact console path (e.g. "Console → Messaging → Regulatory Compliance"), and put the official setup doc URL in "docsUrl" so they can follow the exact clicks (which change over time).
+For EVERY service, write 5-9 concrete, correctly-SEQUENCED setupSteps a first-timer can follow — start with creating the account, then the specific configuration, and call out the gotchas that actually block people.
+
+HARD REQUIREMENTS — when the relevant service is in your stack you MUST include these exact steps; skipping them is a failure:
+- SMS (Twilio or any SMS provider): you MUST include registering an A2P 10DLC Brand, THEN a Campaign under it, and note both must be APPROVED before any SMS can be sent to US numbers — place these BEFORE the buy-a-number / messaging-service / webhook steps. A phone number alone cannot send US SMS.
+- Payments (Stripe): you MUST include adding a webhook endpoint AND copying its signing secret into an env var (STRIPE_WEBHOOK_SECRET) so paid events can be verified.
+- Email: you MUST include verifying the sending domain by adding the SPF/DKIM DNS records, or mail lands in spam.
+- Auth: you MUST include setting the exact redirect / callback URLs.
+- Hosting: use Render as the host and NOTHING else — do NOT list Vercel. The hosting service card AND deploySteps must both be Render, consistently.
+Every service that needs a secret MUST have a matching entry in envVars. Name the exact console path (e.g. "Console → Messaging → Regulatory Compliance"), and put the official setup doc URL in "docsUrl" so they can follow the exact clicks (which change over time).
 
 Return ONLY JSON:
 {
@@ -856,7 +859,7 @@ Search the web for the most current direct competitors, their pricing, recent (2
       }
 
       case 'infrastructure': {
-        const infraCall = await call(infraPrompt(design, gtm, comp, retrieval), { model: MODELS.scout, maxTokens: 1800 });
+        const infraCall = await call(infraPrompt(design, gtm, comp, retrieval), { model: MODELS.scout, maxTokens: 3500 });
         const infraParsed = await parseJSON(infraCall.text, 'infrastructure stage');
         // Plain-English readability check on this (most technical) paid deliverable.
         const infraResult = await withPlainEnglish('Infrastructure & tech setup', infraParsed.value);
