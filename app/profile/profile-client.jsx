@@ -165,7 +165,11 @@ export default function ProfileClient({ user, error, welcome }) {
       email,
       options: { emailRedirectTo: `${siteUrl}/auth/callback` },
     });
-    if (error) { setErr(error.message); setLoading(false); }
+    if (error) {
+      console.error('magic link send failed:', error.message);
+      setErr("We couldn't email your magic link just now. Use Google or GitHub above — they're instant — or try again in a minute.");
+      setLoading(false);
+    }
     else { setSent(true); setLoading(false); }
   };
 

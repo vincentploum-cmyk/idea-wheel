@@ -31,7 +31,11 @@ export default function RegisterPage() {
       email,
       options: { emailRedirectTo: callbackUrl },
     });
-    if (error) { setErr(error.message); setLoading(false); }
+    if (error) {
+      console.error('magic link send failed:', error.message);
+      setErr("We couldn't email your magic link just now. Use Google or GitHub above — they're instant — or try again in a minute.");
+      setLoading(false);
+    }
     else { setSent(true); setLoading(false); }
   };
 
