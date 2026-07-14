@@ -297,10 +297,10 @@ Search the web for real competing products, SaaS tools, AI startups, and establi
 
 Return ONLY a JSON object (no fences):
 {
-  "marketSize": "estimated addressable market or scale signal",
+  "marketSize": "a CONCRETE number with its basis — a dollar figure with year/trend if you can find one (e.g. '$1.2B in 2024, growing ~8%/yr'), OR a specific count of the buyers (e.g. 'about 30,000 US marketing agencies'). Never write 'figures not available' — always give a real number or a concrete proxy count.",
   "landscape": "2-3 crisp, easy-to-read sentences summarizing the state of this market",
-  "players": [{"name":"...","targetCustomer":"...","pricing":"...","coverage":"one plain sentence on how this player addresses (or ignores) this exact idea","weakness":"..."}],
-  "gap": "specific unaddressed pain, or 'No clear gap' if market is well-served",
+  "players": [{"name":"...","targetCustomer":"...","pricing":"...","coverage":"one plain sentence on how this player addresses (or ignores) THIS exact idea","weakness":"the SPECIFIC thing a new product could beat them on for THIS exact workflow — concrete and different for each player. Never a generic 'can be pricey' or 'complex for small teams'."}],
+  "gap": "the specific unaddressed pain, named concretely (which task, which buyer), or 'No clear gap' if the market is well-served",
   "premiseFit": "realistic | weak | nonexistent — does the named workflow/problem genuinely exist for THIS industry?",
   "premiseNote": "if weak or nonexistent: one plain sentence naming the mismatch (e.g. 'Law firms rarely run equipment-maintenance operations, so this problem barely exists for them.'). else empty string.",
   "verdict": "one punchy sentence on the opportunity or lack of it",
@@ -318,6 +318,8 @@ WRITING RULES (apply to marketSize, landscape, gap, verdict, verdictReasoning, p
 - Each sentence must stand alone as its own clear point — these render as bullet points, so do not run ideas together with semicolons or long clauses.
 - Ban these words and their cousins: "tier-1", "incumbent", "commoditized", "whitespace", "wedge" (in scout fields), "synergy", "leverage", "robust", "holistic", "ecosystem", "vertical", "horizontal", "TAM", "GTM", "B2B SaaS". If you need one of these ideas, say it in plain words (e.g. "the big players already do this", "no real opening", "an underserved group").
 - Explain any company or acronym in plain terms the first time (e.g. "AppFolio (property-management software)").
+- marketSize MUST contain a real number — a market value (with a year) or a count of the buyers. If no published figure exists, estimate the number of buyers and label it an estimate. Never "not readily available", "unknown", or "hard to size".
+- Each competitor "weakness" must be specific to THIS idea and different from the others — name the exact task or buyer they under-serve, not a generic complaint.
 - No marketing fluff. State facts a busy non-technical founder understands in one read.`;
 }
 

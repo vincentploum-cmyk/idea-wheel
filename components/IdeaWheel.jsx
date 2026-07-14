@@ -581,6 +581,27 @@ function pickWeightedIndex(weights = []) {
 
 const CLIENT_DEFAULT_MODE_CONFIGS = DEFAULT_MODE_CONFIGS;
 
+// Key for a landed idea combination — used to guarantee a user never gets the
+// same (action · workflow · industry) twice.
+const comboKey = (action, workflow, industry) => `${action}|${workflow}|${industry}`;
+
+// Enumerate every VALID combo for a mode (respecting pairMap + workflowIndustryMap),
+// so the wheel can fall back to an unseen one when weighted picks keep landing on
+// combos the user has already had.
+function enumerateValidCombos(m) {
+  const [actions, workflows, industries] = m.banks;
+  const combos = [];
+  for (const action of actions) {
+    const wfs = (m.pairMap?.[action] || workflows).filter((w) => workflows.includes(w));
+    for (const workflow of wfs) {
+      const inds = (m.workflowIndustryMap?.[workflow] || industries).filter((i) => industries.includes(i));
+      const list = inds.length ? inds : industries;
+      for (const industry of list) combos.push({ action, workflow, industry });
+    }
+  }
+  return combos;
+}
+
 function SlotMachine({ onResult, onModeChange, snapTo }) {
   const [mode, setMode] = useState('b2b');
   const [modeConfigs, setModeConfigs] = useState(CLIENT_DEFAULT_MODE_CONFIGS);
@@ -589,6 +610,7 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
   const targetRef = useRef([0,0,0]);
   const commitRef = useRef(false);   // only a deliberate "Generate idea" spin commits a new idea
   const landedByMode = useRef({});   // persist spun result per mode so switching back restores it
+  const seenCombosRef = useRef(new Set()); // combo keys this user has already landed on — never repeat
   const [landed, setLanded] = useState(['','','']);
   const [spinning, setSpinning] = useState([false,false,false]);
   const [hasSpun, setHasSpun] = useState(false);
@@ -605,6 +627,16 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // Load the combos this user has already landed on, so spins never repeat one.
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/spins')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => { if (!cancelled && Array.isArray(data?.combos)) seenCombosRef.current = new Set(data.combos); })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, []);
 
   const m = modeConfigs[mode] || CLIENT_DEFAULT_MODE_CONFIGS[mode];
@@ -719,21 +751,45 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
     setSpinning(s => { const n=[...s]; n[w]=false; return n; });
   };
 
+  // One weighted pick that respects pairMap / workflowIndustryMap.
+  const pickCombo = () => {
+    const aIdx = selectIndex(0);
+    const action = banks[0][aIdx];
+    const allowedWorkflows = (m.pairMap?.[action] || banks[1]).filter((wf) => banks[1].includes(wf));
+    const wIdx = selectIndex(1, allowedWorkflows, m.pairWeights?.[action]);
+    const workflow = banks[1][wIdx];
+    const allowedIndustries = (m.workflowIndustryMap?.[workflow] || banks[2]).filter((ind) => banks[2].includes(ind));
+    const iIdx = selectIndex(2, allowedIndustries.length ? allowedIndustries : banks[2], m.workflowIndustryWeights?.[workflow]);
+    return { aIdx, wIdx, iIdx, action, workflow, industry: banks[2][iIdx] };
+  };
+
   const spinAll = () => {
     if (anySpinning) return;
     setHasSpun(true);
     commitRef.current = true;   // this spin (and only this) will commit the resulting idea
-    const actionIdx = selectIndex(0);
-    const action = banks[0][actionIdx];
-    const allowedWorkflows = (m.pairMap?.[action] || banks[1]).filter((workflow) => banks[1].includes(workflow));
-    const workflowIdx = selectIndex(1, allowedWorkflows, m.pairWeights?.[action]);
-    const workflow = banks[1][workflowIdx];
-    const allowedIndustries = (m.workflowIndustryMap?.[workflow] || banks[2]).filter((ind) => banks[2].includes(ind));
-    const industryIdx = selectIndex(2, allowedIndustries.length ? allowedIndustries : banks[2], m.workflowIndustryWeights?.[workflow]);
 
-    spinWheelTo(0, actionIdx, 3000);
-    spinWheelTo(1, workflowIdx, 3600);
-    spinWheelTo(2, industryIdx, 4200);
+    const seen = seenCombosRef.current;
+    // Prefer a weighted pick the user hasn't seen; retry a few times.
+    let choice = null;
+    for (let attempt = 0; attempt < 14; attempt += 1) {
+      const c = pickCombo();
+      if (!seen.has(comboKey(c.action, c.workflow, c.industry))) { choice = c; break; }
+    }
+    if (!choice) {
+      // Weighted picks kept hitting seen combos — pick directly from the unseen valid set.
+      const unseen = enumerateValidCombos(m).filter((c) => !seen.has(comboKey(c.action, c.workflow, c.industry)));
+      if (unseen.length) {
+        const c = unseen[Math.floor(Math.random() * unseen.length)];
+        choice = { aIdx: banks[0].indexOf(c.action), wIdx: banks[1].indexOf(c.workflow), iIdx: banks[2].indexOf(c.industry), ...c };
+      } else {
+        // Every valid combo already seen (effectively never happens) — allow a repeat.
+        choice = pickCombo();
+      }
+    }
+
+    spinWheelTo(0, choice.aIdx, 3000);
+    spinWheelTo(1, choice.wIdx, 3600);
+    spinWheelTo(2, choice.iIdx, 4200);
   };
 
   const complete = landed.every(Boolean);
@@ -745,6 +801,12 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
     if (complete && !anySpinning && commitRef.current && onResult) {
       commitRef.current = false;
       landedByMode.current[mode] = [...landed];
+      // Record this combo so it never comes up again for the user.
+      const key = comboKey(landed[0], landed[1], landed[2]);
+      if (!seenCombosRef.current.has(key)) {
+        seenCombosRef.current.add(key);
+        fetch('/api/spins', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comboKey: key }) }).catch(() => {});
+      }
       onResult(buildGeneratorIdea(m, landed[0], landed[1], landed[2]));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1714,7 +1776,9 @@ export default function IdeaWheel() {
                   ? { label: "Get that Blueprint!", tone: "good" }
                   : score >= 61
                     ? { label: "This idea has potential", tone: "warn" }
-                    : { label: "Don't waste your time", tone: "bad" };
+                    : score >= 40
+                      ? { label: "Crowded — but there may be an angle", tone: "warn" }
+                      : { label: "Steep climb from here", tone: "bad" };
                 const premise = cleanValidationText(comp.premiseNote || "");
                 const verdictLines = splitValidationBullets(comp.verdictReasoning || comp.verdict, 3);
                 // Funnel: 61-79 → deep research first (1cr); 80+ → blueprint (2cr) with research optional.
