@@ -11,6 +11,7 @@ import { addCredits, deductCredits } from '../../../../lib/credits';
 import { ensureSessionId, getBlueprintCharge, getValidationEligibility, recordBlueprint, recordOutcome, saveBlueprintCharge } from '../../../../lib/moat-store';
 import { SCORE_POLICY } from '../../../../lib/score-policy';
 import { computeCostModel, parseMoney } from '../../../../lib/cost-model';
+import { getCandidateEligibility } from '../../../../lib/idea-candidates';
 import { withPlainEnglish } from '../../../../lib/clarity';
 import { attachBlueprint, saveBlueprintProgress } from '../../../../lib/saved-ideas';
 import { checkRateLimit } from '../../../../lib/rate-limit';
@@ -804,17 +805,28 @@ export async function POST(request) {
       // authoritative enforcement of "only qualified ideas get a blueprint"; the
       // client CTA is a courtesy. Runs BEFORE any credit is charged, and only at
       // the designer stage (later stages continue an already-authorized charge).
-      const eligibility = await getValidationEligibility(validationId, {
+      let eligibility = await getValidationEligibility(validationId, {
         minScore: SCORE_POLICY.blueprintMin,
         requiredVersion: SCORE_POLICY.version,
       });
+      // Durable fallback: if the per-validation record can't be found (cache hit,
+      // or pipeline_validations not durably stored / wiped on redeploy), fall back
+      // to the idea_candidates pool, which durably holds the canonical score,
+      // version, and eligibility. Only for structured ideas (freeform has no combo).
+      if (!eligibility.eligible && eligibility.reason === 'validation_not_found' && action && workflow && industry) {
+        const fromPool = await getCandidateEligibility(modeName, workflow, industry, {
+          minScore: SCORE_POLICY.blueprintMin,
+          requiredVersion: SCORE_POLICY.version,
+        });
+        if (fromPool.found) eligibility = fromPool;
+      }
       if (!eligibility.eligible) {
         return NextResponse.json({
           error: 'idea_not_eligible',
           reason: eligibility.reason,
           score: eligibility.score,
           minimumRequired: SCORE_POLICY.blueprintMin,
-        }, { status: eligibility.reason === 'validation_not_found' ? 404 : 422 });
+        }, { status: eligibility.reason.includes('not_found') ? 404 : 422 });
       }
 
       const debit = await deductCredits(user.id, blueprintCost, 'blueprint_started', {
