@@ -10,6 +10,7 @@ const BUILD_RATE_LIMIT = { limit: 5, windowSeconds: 60 };
 import { addCredits, deductCredits } from '../../../../lib/credits';
 import { ensureSessionId, getBlueprintCharge, getValidationEligibility, recordBlueprint, recordOutcome, saveBlueprintCharge } from '../../../../lib/moat-store';
 import { SCORE_POLICY } from '../../../../lib/score-policy';
+import { computeCostModel, parseMoney } from '../../../../lib/cost-model';
 import { withPlainEnglish } from '../../../../lib/clarity';
 import { attachBlueprint, saveBlueprintProgress } from '../../../../lib/saved-ideas';
 import { checkRateLimit } from '../../../../lib/rate-limit';
@@ -332,30 +333,8 @@ function compactInfra(infra) {
 // printed total can't be a fabricated number. Each line's monthly cost is
 // recomputed as quantity × unitCost (we ignore any model-supplied line total),
 // then summed. Returns null if there are no usable line items.
-function computeCostModel(infra) {
-  const items = Array.isArray(infra?.costItems) ? infra.costItems : [];
-  const priced = items
-    .map((it) => {
-      const quantity = Number(it?.quantity);
-      const unitCost = Number(it?.unitCost);
-      if (!Number.isFinite(quantity) || !Number.isFinite(unitCost)) return null;
-      return {
-        service: String(it?.service || '').slice(0, 60),
-        quantity,
-        unit: String(it?.unit || '').slice(0, 40),
-        unitCost,
-        monthlyCost: Math.round(quantity * unitCost * 100) / 100,
-      };
-    })
-    .filter(Boolean);
-  if (!priced.length) return null;
-  const monthlyTotal = Math.round(priced.reduce((sum, it) => sum + it.monthlyCost, 0) * 100) / 100;
-  return {
-    usageAssumptions: infra?.usageAssumptions && typeof infra.usageAssumptions === 'object' ? infra.usageAssumptions : null,
-    items: priced,
-    monthlyTotal,
-  };
-}
+// computeCostModel lives in lib/cost-model.js (owns provider pricing formulas,
+// e.g. Stripe's %-fee, and enforces hosting/DB floors) so it can be unit-tested.
 
 function compactSpec(spec) {
   return {
@@ -379,7 +358,8 @@ const PROSE_RULES = `WRITING RULES — apply to EVERY prose field a founder read
 - Each list item is ONE concrete action or fact in plain words, max ~20 words. Never write multi-sentence paragraphs inside a bullet.
 - Ban buzzwords: synergy, leverage, robust, holistic, ecosystem, paradigm, seamless, best-in-class, "B2B SaaS". Say the plain-word version instead.
 - Spell out company names/acronyms in plain terms the first time (e.g. "AppFolio (property-management software)").
-- Output clean prose only — never include citation markup like <cite …> or bracketed reference numbers.`;
+- Output clean prose only — never include citation markup like <cite …> or bracketed reference numbers.
+- This is a PROPOSAL for something not yet built — never state unproven capability as fact. Ban "proprietary", "guarantee(s)", "guaranteeing", "high precision", "exceptionally difficult to imitate", "cutting-edge", "revolutionize". Use hedged language instead: "proposed", "aims to", "designed to", "could", "human-reviewed". A moat is "a potential switching cost", not a fact.`;
 
 function designerPrompt(agentDesc, comp, retrieval) {
   return `Design a lean, differentiated AI product that is harder to copy than a generic wrapper.
@@ -484,6 +464,10 @@ Return ONLY JSON:
   "cursorPrompt": "The exact first prompt to paste into Cursor, Claude, or Codex to start building this product. Should include: what to build, tech stack, first screen/feature to implement, and the core AI behavior. 150-200 words."
 }
 ${PROSE_RULES}
+REALISM RULES (a pre-launch product with no customers yet):
+- Pick ONE ICP segment and stay consistent — do not drift between "small", "mid-sized", and a specific employee band in the same plan.
+- Week 1 must be discovery: interview real buyers and map their current workflow. Do NOT run paid ads in week 1.
+- Do NOT reference case studies, testimonials, or pilot results before a pilot exists (there is none in week 1). Early weeks secure design partners and measure results; ads come only after the positioning is shown to convert.
 (The cursorPrompt is the ONE exception — it may stay technical since it's pasted into a builder/AI tool.)`;
 }
 
@@ -535,17 +519,19 @@ HARD REQUIREMENTS — when the relevant service is in your stack you MUST includ
 - SMS (Twilio or any SMS provider): you MUST include registering an A2P 10DLC Brand, THEN a Campaign under it, and note both must be APPROVED before any SMS can be sent to US numbers — place these BEFORE the buy-a-number / messaging-service / webhook steps. A phone number alone cannot send US SMS.
 - Payments (Stripe): you MUST include adding a webhook endpoint AND copying its signing secret into an env var (STRIPE_WEBHOOK_SECRET) so paid events can be verified.
 - Email: you MUST include verifying the sending domain by adding the SPF/DKIM DNS records, or mail lands in spam.
-- Auth: you MUST include setting the exact redirect / callback URLs.
+- Auth: you MUST include setting the exact redirect / callback URLs. When an auth PROVIDER (Auth0/Clerk/Supabase Auth) handles login, the app MUST NOT store passwords — the users table stores the provider's user id (e.g. auth0_user_id), never a password column.
 - Hosting: use Render as the host and NOTHING else — do NOT list Vercel. The hosting service card AND deploySteps must both be Render, consistently.
+- FOUNDATION (always required): you MUST include a real relational DATABASE (name one, e.g. Supabase Postgres) AND, if the product stores user files/documents, an encrypted OBJECT STORAGE service (e.g. Cloudflare R2 or S3) with signed upload/download URLs. If the product reads/inspects documents, also include a document parser/OCR step and note malware scanning. Never leave the product with no database or storage.
+- OPERATIONS (always required): include error monitoring (e.g. Sentry) and an audit-log entity. Note backups for the database.
 Every service that needs a secret MUST have a matching entry in envVars. Name the exact console path (e.g. "Console → Messaging → Regulatory Compliance"), and put the official setup doc URL in "docsUrl" so they can follow the exact clicks (which change over time).
 
 Return ONLY JSON:
 {
   "services": [{"name":"...","purpose":"one line: what it does for THIS product","url":"https://...","docsUrl":"https://official-setup-doc...","freeTier":"...","setupTime":"X min","setupSteps":["1. Create an account at ... and verify ...","2. In <exact console path>, ...","..."]}],
   "envVars": ["VAR_NAME=your_value  # what it is + where to copy it from"],
-  "schema": "The REAL data model as entities with key fields and relationships, plain English. List EVERY entity a working multi-tenant version needs — not just users. Show ownership/tenancy and links, e.g. 'organizations (id, name, plan) → members (user_id, org_id, role) → <domain entities> → audit_events (...)'. Aim for 6-12 entities for a real B2B app.",
-  "entities": ["one line per core entity with its key fields, 6-12 entities — include tenancy (organizations/members), the core domain objects, and an audit/log entity"],
-  "aiWiring": "Which model, system prompt structure, agent loop pattern",
+  "schema": "The REAL data model as entities with key fields and relationships, plain English. List EVERY entity a working multi-tenant version needs — not just users. Show ownership/tenancy and links, e.g. 'organizations (id, name, plan) → members (user_id, org_id, role) → <domain entities> → audit_events (...)'. Aim for 6-12 entities. NEVER put a password column on users when an auth provider is used — store the provider id (auth0_user_id) instead. Include roles/permissions, and an audit_log entity.",
+  "entities": ["one line per core entity with its key fields, 6-12 entities — include tenancy (organizations/members), roles/permissions, the core domain objects, and an audit/log entity. Users reference the auth provider id, never a password"],
+  "aiWiring": "Which model (recommend a CURRENT model like GPT-4o mini or Claude Haiku — never legacy GPT-3.5-turbo), how PDFs/files become text (OCR/parser), what 'complete' means, the confidence threshold, and when a human reviews. Name the sensitive fields (tax IDs, bank data) that always need review.",
   "memoryLoop": "how the product accumulates feedback or workflow history over time",
   "deploySteps": ["1. Push your code to a GitHub repo.","2. On Render: New → Web Service → connect that repo.","3. Set the Build Command and Start Command.","4. Add every env var under Environment.","5. Click Create Web Service — Render builds and gives you a live URL.","6. Add your custom domain under Settings → Custom Domains and set the DNS records it shows you."],
   "usageAssumptions": {"customers": 100, "activeUsersPerCustomer": 4, "aiCallsPerUserPerMonth": 40, "smsPerCustomerPerMonth": 0, "storageGb": 20},
@@ -995,7 +981,7 @@ Search for the most current information available as of ${today}. Prioritise dev
         const infraResult = await withPlainEnglish('Infrastructure & tech setup', infraStage.result);
         // Recompute the cost total in code from the structured line items so the
         // printed figure is arithmetic, not a number the model made up.
-        const costModel = computeCostModel(infraStage.result);
+        const costModel = computeCostModel(infraStage.result, { monthlyPrice: parseMoney(gtm?.pricing?.price) });
         if (costModel) infraResult.costModel = costModel;
 
         await saveBlueprintProgress({

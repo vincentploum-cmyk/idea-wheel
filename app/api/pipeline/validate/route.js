@@ -302,7 +302,7 @@ Return ONLY a JSON object (no fences):
 {
   "marketSize": "a CONCRETE number with its basis — a dollar figure with year/trend if you can find one (e.g. '$1.2B in 2024, growing ~8%/yr'), OR a specific count of the buyers (e.g. 'about 30,000 US marketing agencies'). Never write 'figures not available' — always give a real number or a concrete proxy count.",
   "landscape": "2-3 crisp, easy-to-read sentences summarizing the state of this market",
-  "players": [{"name":"...","targetCustomer":"...","pricing":"...","coverage":"one plain sentence on how this player addresses (or ignores) THIS exact idea","weakness":"the SPECIFIC thing a new product could beat them on for THIS exact workflow — concrete and different for each player. Never a generic 'can be pricey' or 'complex for small teams'."}],
+  "players": [{"name":"...","sourceUrl":"the real official product URL you actually saw in search — omit this field entirely if you are not certain it exists; never invent a URL","targetCustomer":"...","pricing":"...","coverage":"one plain sentence on how this player addresses (or ignores) THIS exact idea","weakness":"the SPECIFIC thing a new product could beat them on for THIS exact workflow — concrete and different for each player. Never a generic 'can be pricey' or 'complex for small teams'."}],
   "gap": "the specific unaddressed pain, named concretely (which task, which buyer), or 'No clear gap' if the market is well-served",
   "premiseFit": "realistic | weak | nonexistent — does the named workflow/problem genuinely exist for THIS industry?",
   "premiseNote": "if weak or nonexistent: one plain sentence naming the mismatch (e.g. 'Law firms rarely run equipment-maintenance operations, so this problem barely exists for them.'). else empty string.",
@@ -314,7 +314,7 @@ Return ONLY a JSON object (no fences):
   "pivotHint": "if avoid or warning: one adjacent idea with whitespace. else empty string.",
   "plainSummary": "2-3 plain-English sentences a non-technical person fully understands: is this worth building, who already does it, and where the opening is. No jargon, no buzzwords."
 }
-List up to 5 players, SORTED from largest/most-established to smallest. If premiseFit is "nonexistent", you MUST set verdictType to "avoid". Default to avoid when in doubt. CRITICAL SCOPE CHECK: this product must be SOFTWARE sold to others, not a business to operate.
+List up to 5 players, SORTED from largest/most-established to smallest. Name only REAL products you can verify from search — prefer well-known established platforms in this space over obscure names. If you are not confident a product exists, leave it out rather than guessing; do not pad the list with invented or unverifiable companies. If premiseFit is "nonexistent", you MUST set verdictType to "avoid". Default to avoid when in doubt. CRITICAL SCOPE CHECK: this product must be SOFTWARE sold to others, not a business to operate.
 
 WRITING RULES (apply to marketSize, landscape, gap, verdict, verdictReasoning, premiseNote, plainSummary and every player "coverage"/"weakness"):
 - Write at an 8th-grade reading level. Short, everyday words. Short sentences (aim under 18 words each).
@@ -444,6 +444,7 @@ function buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval,
     pricing: stripCitationNoise(p?.pricing),
     coverage: stripCitationNoise(p?.coverage),
     weakness: stripCitationNoise(p?.weakness),
+    sourceUrl: (typeof p?.sourceUrl === 'string' && /^https?:\/\//.test(p.sourceUrl)) ? p.sourceUrl : '',
   }));
   return {
     ...scout,

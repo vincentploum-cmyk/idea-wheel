@@ -1,5 +1,10 @@
 const nextConfig = {
   reactStrictMode: true,
+  // Expose the deploy commit to the client so the blueprint PDF can stamp exactly
+  // which code produced it (Render sets RENDER_GIT_COMMIT at build time).
+  env: {
+    NEXT_PUBLIC_COMMIT_SHA: (process.env.RENDER_GIT_COMMIT || process.env.NEXT_PUBLIC_COMMIT_SHA || '').slice(0, 7),
+  },
   images: {
     remotePatterns: [
       {

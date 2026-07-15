@@ -452,7 +452,7 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     const players = (comp.players || []).slice(0, 4);
     const matrix = players.length
       ? `<div class="label">Competitor matrix</div><table class="ctable"><thead><tr><th>Player</th><th>Who they serve</th><th>What they miss here</th></tr></thead><tbody>${
-          players.map((p) => `<tr><td><strong>${e(p.name)}</strong></td><td>${e(p.targetCustomer || p.coverage || '—')}</td><td>${e(p.weakness || '—')}</td></tr>`).join('')
+          players.map((p) => `<tr><td><strong>${e(p.name)}</strong>${p.sourceUrl ? `<br><a href="${e(p.sourceUrl)}" class="src">${e(p.sourceUrl.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, ''))}</a>` : '<br><span class="src">source unverified</span>'}</td><td>${e(p.targetCustomer || p.coverage || '—')}</td><td>${e(p.weakness || '—')}</td></tr>`).join('')
         }</tbody></table>`
       : '';
     sec('Competitor & gap',
@@ -475,7 +475,7 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     const svc = (infra.services || []).map((s) => {
       const meta = [s.freeTier, s.setupTime ? `~${s.setupTime}` : ''].filter(Boolean).map((m) => e(m)).join(' · ');
       const steps = (s.setupSteps || []).length ? `<ol class="list">${s.setupSteps.map((st) => `<li>${e(stripNum(st))}</li>`).join('')}</ol>` : '';
-      const doc = s.docsUrl ? `<div class="doclink">Official setup guide: ${e(s.docsUrl)}</div>` : '';
+      const doc = s.docsUrl ? `<div class="doclink">Official setup guide: <a href="${e(s.docsUrl)}">${e(s.docsUrl)}</a></div>` : '';
       return `<div class="svc"><div class="svchead"><b>${e(s.name)}</b>${meta ? ` <span class="svcmeta">${meta}</span>` : ''}</div>${s.purpose ? `<p class="muted">${e(s.purpose)}</p>` : ''}${steps}${doc}</div>`;
     }).join('');
     sec('Setup runbook',
@@ -492,7 +492,8 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
           const ua = cm.usageAssumptions;
           const uaLine = ua ? `<p class="muted">Assumes ${Object.entries(ua).filter(([, v]) => Number(v) > 0).map(([k, v]) => `${e(String(v))} ${e(k.replace(/([A-Z])/g, ' $1').toLowerCase())}`).join(', ')}.</p>` : '';
           const rows = cm.items.map((it) => `<tr><td>${e(it.service)}</td><td>${e(String(it.quantity))} ${e(it.unit)}</td><td>$${e(String(it.unitCost))}</td><td>$${e(String(it.monthlyCost))}</td></tr>`).join('');
-          return `<div class="label">Operating cost (calculated)</div>${uaLine}<table class="ctable"><thead><tr><th>Service</th><th>Volume</th><th>Unit cost</th><th>Monthly</th></tr></thead><tbody>${rows}<tr><td colspan="3"><strong>Total / month</strong></td><td><strong>$${e(String(cm.monthlyTotal))}</strong></td></tr></tbody></table>`;
+          const notes = (cm.notes || []).length ? `<ul class="list">${cm.notes.map((n) => `<li>${e(n)}</li>`).join('')}</ul>` : '';
+          return `<div class="label">Operating cost — estimate (calculated in code)</div>${uaLine}<table class="ctable"><thead><tr><th>Service</th><th>Volume</th><th>Unit cost</th><th>Monthly</th></tr></thead><tbody>${rows}<tr><td colspan="3"><strong>Estimated total / month</strong></td><td><strong>$${e(String(cm.monthlyTotal))}</strong></td></tr></tbody></table>${notes}<p class="muted">Estimate only — usage-based costs (AI tokens, SMS, storage) vary with real traffic; verify current provider pricing before committing.</p>`;
         }
         return infra.monthlyCost ? `<div class="costs">${Object.entries(infra.monthlyCost).map(([k, v]) => `<div class="cost"><b>${e(v)}</b><small>${k === 'dev' ? 'Dev' : k === 'at100users' ? '100 users' : '1K users'}</small></div>`).join('')}</div>` : '';
       })(),
@@ -584,6 +585,8 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
   table.ctable { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 10pt; }
   table.ctable th, table.ctable td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; vertical-align: top; }
   table.ctable th { background: #f3f3f3; font-weight: 900; font-size: 9pt; text-transform: uppercase; letter-spacing: .04em; }
+  a { color: #1155cc; }
+  .src { font-size: 8.5pt; color: #666; font-weight: 400; word-break: break-all; }
   .brand { font-weight: 900; color: #111; }
   .sec { page-break-inside: avoid; margin: 0 0 9mm; }
   .sec--long { page-break-inside: auto; }
@@ -630,6 +633,7 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     <p>Your full build plan — product, market, and infrastructure${hasCursorPrompt ? ', and the first Cursor prompt,' : ''} — is above.</p>
     <div class="note">Your interactive prototype is saved separately as <b>${e(planSlug(name))}-prototype.html</b> — open it in any browser.</div>
     <div class="foot">Built with IdeaReels · ideareels.io</div>
+    <p class="muted" style="font-size:8.5pt;margin-top:8px">Score model ${e(SCORE_POLICY.version)}${(typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_COMMIT_SHA) ? ` · build ${e(process.env.NEXT_PUBLIC_COMMIT_SHA)}` : ''}${dateStr ? ` · generated ${e(dateStr)}` : ''}</p>
   </div>
 </body></html>`;
 }
