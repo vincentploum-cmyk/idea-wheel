@@ -8,7 +8,8 @@ import { CREDIT_COSTS } from '../../../../lib/credits';
 // see lib/rate-limit.js).
 const BUILD_RATE_LIMIT = { limit: 5, windowSeconds: 60 };
 import { addCredits, deductCredits } from '../../../../lib/credits';
-import { ensureSessionId, getBlueprintCharge, recordBlueprint, recordOutcome, saveBlueprintCharge } from '../../../../lib/moat-store';
+import { ensureSessionId, getBlueprintCharge, getValidationEligibility, recordBlueprint, recordOutcome, saveBlueprintCharge } from '../../../../lib/moat-store';
+import { SCORE_POLICY } from '../../../../lib/score-policy';
 import { withPlainEnglish } from '../../../../lib/clarity';
 import { attachBlueprint, saveBlueprintProgress } from '../../../../lib/saved-ideas';
 import { checkRateLimit } from '../../../../lib/rate-limit';
@@ -322,7 +323,37 @@ function compactInfra(infra) {
     memoryLoop: shortText(infra?.memoryLoop, 220),
     deploySteps: shortList(infra?.deploySteps, 6, 100),
     monthlyCost: infra?.monthlyCost,
+    costModel: infra?.costModel,
     buildOrder: shortText(infra?.buildOrder, 220),
+  };
+}
+
+// Compute the cost model IN CODE from the model's structured line items, so the
+// printed total can't be a fabricated number. Each line's monthly cost is
+// recomputed as quantity × unitCost (we ignore any model-supplied line total),
+// then summed. Returns null if there are no usable line items.
+function computeCostModel(infra) {
+  const items = Array.isArray(infra?.costItems) ? infra.costItems : [];
+  const priced = items
+    .map((it) => {
+      const quantity = Number(it?.quantity);
+      const unitCost = Number(it?.unitCost);
+      if (!Number.isFinite(quantity) || !Number.isFinite(unitCost)) return null;
+      return {
+        service: String(it?.service || '').slice(0, 60),
+        quantity,
+        unit: String(it?.unit || '').slice(0, 40),
+        unitCost,
+        monthlyCost: Math.round(quantity * unitCost * 100) / 100,
+      };
+    })
+    .filter(Boolean);
+  if (!priced.length) return null;
+  const monthlyTotal = Math.round(priced.reduce((sum, it) => sum + it.monthlyCost, 0) * 100) / 100;
+  return {
+    usageAssumptions: infra?.usageAssumptions && typeof infra.usageAssumptions === 'object' ? infra.usageAssumptions : null,
+    items: priced,
+    monthlyTotal,
   };
 }
 
@@ -517,12 +548,49 @@ Return ONLY JSON:
   "aiWiring": "Which model, system prompt structure, agent loop pattern",
   "memoryLoop": "how the product accumulates feedback or workflow history over time",
   "deploySteps": ["1. Push your code to a GitHub repo.","2. On Render: New → Web Service → connect that repo.","3. Set the Build Command and Start Command.","4. Add every env var under Environment.","5. Click Create Web Service — Render builds and gives you a live URL.","6. Add your custom domain under Settings → Custom Domains and set the DNS records it shows you."],
-  "monthlyCost": {"dev":"$0","at100users":"$X/mo (show the math)","at1000users":"$Y/mo (show the math)"},
+  "usageAssumptions": {"customers": 100, "activeUsersPerCustomer": 4, "aiCallsPerUserPerMonth": 40, "smsPerCustomerPerMonth": 0, "storageGb": 20},
+  "costItems": [{"service":"OpenAI","quantity":16000,"unit":"requests","unitCost":0.002}],
   "buildOrder": "Day 1: ... Day 2: ... (specific to this product)"
 }
+For usageAssumptions: pick realistic numbers for THIS product and set unused fields to 0. For costItems: ONE line per paid service at the "customers" scale above, with quantity, unit, and unitCost (real provider price). Do NOT include a monthly total — the total is calculated in code from quantity × unitCost. Include the free-tier/dev services at unitCost 0.
 Every step must be specific to THIS product, not generic filler. Plain English — assume they have never used these tools. Prefer real free tiers so they can start at $0.
 
 ${PROSE_RULES}`;
+}
+
+function infraCritiquePrompt(design, infra) {
+  return `You are the infrastructure critic for IdeaWheel. Judge whether this setup runbook is secure, current, affordable, and complete enough for a solo builder to actually ship on.
+
+Product: ${JSON.stringify(compactDesign(design))}
+Infra draft: ${JSON.stringify(compactInfra(infra))}
+
+Return ONLY JSON:
+{
+  "scores": {
+    "security": 0,
+    "dataModelCompleteness": 0,
+    "providerAccuracy": 0,
+    "costCredibility": 0,
+    "deploymentCompleteness": 0,
+    "operationalReadiness": 0,
+    "overall": 0
+  },
+  "needsRevision": true,
+  "issues": ["up to 5 concrete gaps — e.g. missing multi-tenant isolation, no audit log, Stripe webhook secret missing, cost math not shown, no backups/monitoring"],
+  "rewriteBrief": "one paragraph telling the next pass exactly what to add or fix"
+}
+Score 0-100. Mark needsRevision true when security, the data model (tenancy/roles/audit), provider accuracy, or cost credibility are weak.`;
+}
+
+function infraRewritePrompt(design, gtm, comp, infra, critique, retrieval) {
+  return `Rewrite the infrastructure runbook to fix the critique. Keep the EXACT same JSON schema as before.
+
+${infraPrompt(design, gtm, comp, retrieval)}
+
+Current infra draft: ${JSON.stringify(infra, null, 2)}
+Critique to address: ${JSON.stringify(critique, null, 2)}
+
+Return ONLY the corrected JSON with the same keys.`;
 }
 
 function protoSpecPrompt(design, gtm, comp, infra, retrieval) {
@@ -730,6 +798,25 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Invalid blueprint credit cost' }, { status: 400 });
       }
 
+      // Server-side qualification gate. The blueprint may only be built for an
+      // idea that has an eligible, current-version score of >= 60 — verified from
+      // the STORED validation record, never the client-supplied comp. This is the
+      // authoritative enforcement of "only qualified ideas get a blueprint"; the
+      // client CTA is a courtesy. Runs BEFORE any credit is charged, and only at
+      // the designer stage (later stages continue an already-authorized charge).
+      const eligibility = await getValidationEligibility(validationId, {
+        minScore: SCORE_POLICY.blueprintMin,
+        requiredVersion: SCORE_POLICY.version,
+      });
+      if (!eligibility.eligible) {
+        return NextResponse.json({
+          error: 'idea_not_eligible',
+          reason: eligibility.reason,
+          score: eligibility.score,
+          minimumRequired: SCORE_POLICY.blueprintMin,
+        }, { status: eligibility.reason === 'validation_not_found' ? 404 : 422 });
+      }
+
       const debit = await deductCredits(user.id, blueprintCost, 'blueprint_started', {
         validationId,
         sessionId,
@@ -781,9 +868,10 @@ export async function POST(request) {
         // times out, we still design from the retrieval/validation context.
         let deepResearch = '';
         try {
+          const today = new Date().toISOString().slice(0, 10);
           const research = await call(
             `Do fresh competitive research before we design this product: "${agentDesc}".
-Search the web for the most current direct competitors, their pricing, recent (2024-2025) launches, and any market shifts. Return 6-10 tight bullet points of concrete, specific facts — real names, prices and numbers. No preamble, bullets only.`,
+Search for the most current information available as of ${today}. Prioritise developments from the last 18 months. Find direct competitors, their pricing, recent launches, and any market shifts. Return 6-10 tight bullet points of concrete, specific facts — real names, prices and numbers. No preamble, bullets only.`,
             { model: MODELS.scout, maxTokens: 1200, webSearch: true, searchUses: 8 }
           );
           deepResearch = (research.text || '').trim().slice(0, 2500);
@@ -879,10 +967,22 @@ Search the web for the most current direct competitors, their pricing, recent (2
       }
 
       case 'infrastructure': {
-        const infraCall = await call(infraPrompt(design, gtm, comp, retrieval), { model: MODELS.scout, maxTokens: 3500 });
-        const infraParsed = await parseJSON(infraCall.text, 'infrastructure stage');
+        // Infra now gets the same critic-and-rewrite loop as design/GTM — an
+        // independent pass on security, data-model completeness, provider
+        // accuracy, and cost credibility, with a rewrite when it falls short.
+        const infraStage = await runJsonStage({
+          prompt: infraPrompt(design, gtm, comp, retrieval),
+          model: MODELS.scout,
+          maxTokens: 3500,
+          critiquePrompt: (draft) => infraCritiquePrompt(design, draft),
+          rewritePrompt: (draft, critique) => infraRewritePrompt(design, gtm, comp, draft, critique, retrieval),
+        });
         // Plain-English readability check on this (most technical) paid deliverable.
-        const infraResult = await withPlainEnglish('Infrastructure & tech setup', infraParsed.value);
+        const infraResult = await withPlainEnglish('Infrastructure & tech setup', infraStage.result);
+        // Recompute the cost total in code from the structured line items so the
+        // printed figure is arithmetic, not a number the model made up.
+        const costModel = computeCostModel(infraStage.result);
+        if (costModel) infraResult.costModel = costModel;
 
         await saveBlueprintProgress({
           userId: user.id,
@@ -905,8 +1005,9 @@ Search the web for the most current direct competitors, their pricing, recent (2
 
         return NextResponse.json({
           result: infraResult,
-          usage: mergeUsage(infraCall.usage, infraParsed.usage),
-          cost_usd: (infraCall.costUsd || 0) + (infraParsed.costUsd || 0),
+          critique: infraStage.critique,
+          usage: infraStage.usage,
+          cost_usd: infraStage.costUsd,
           sessionId,
           chargeToken: charge.id,
         });

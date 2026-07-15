@@ -423,8 +423,14 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     `<p class="big">${e(design.name)}</p>` +
     (design.tagline ? `<p class="lead">${e(design.tagline)}</p>` : '') +
     (design.differentiator ? `<p>${e(design.differentiator)}</p>` : '') +
-    (design.coreFeatures?.length ? `<div class="label">MVP scope</div>${list(design.coreFeatures)}` : ''));
+    (design.coreFeatures?.length ? `<div class="label">MVP scope</div>${list(design.coreFeatures)}` : '') +
+    (design.userFlow ? `<div class="label">User flow</div><p>${e(design.userFlow)}</p>` : '') +
+    (design.buildSpec ? `<div class="label">Build spec</div><p>${e(design.buildSpec)}</p>` : ''));
   if (design?.productLogic) sec('How it works', `<p>${e(design.productLogic)}</p>`);
+  if (design?.dataMoat || design?.defensibilityPlan || infra?.memoryLoop) sec('Defensibility & learning loop',
+    (design?.dataMoat ? `<div class="label">Data moat</div><p>${e(design.dataMoat)}</p>` : '') +
+    (design?.defensibilityPlan ? `<div class="label">90-day defensibility</div><p>${e(design.defensibilityPlan)}</p>` : '') +
+    (infra?.memoryLoop ? `<div class="label">Memory loop</div><p>${e(infra.memoryLoop)}</p>` : ''));
   if (gtm) {
     const icp = gtm.icp && typeof gtm.icp === 'object' ? gtm.icp : null;
     const icpRow = (label, val) => (val ? `<div class="qrow"><span>${e(label)}</span><b>${e(val)}</b></div>` : '');
@@ -457,6 +463,10 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     (gtm.pricing.trial ? `<p class="muted">${e(gtm.pricing.trial)}</p>` : '') +
     ((gtm.revenueGoal || gtm.buildTime) ? `<div class="kpis"><div class="kpi"><b>${e(gtm.revenueGoal || '—')}</b><small>30-day target</small></div><div class="kpi"><b>${e(gtm.buildTime || '—')}</b><small>to build V1</small></div></div>` : '') +
     (gtm.firstFiveCustomers?.length ? `<div class="label">First 5 customers</div>${list(gtm.firstFiveCustomers, true)}` : ''));
+  if (gtm && ((gtm.channels || []).length || (gtm.plan || []).length)) sec('Go-to-market plan',
+    ((gtm.channels || []).length ? `<div class="label">Channels</div><ul class="list">${gtm.channels.slice(0, 5).map((c) => `<li><strong>${e(c.name || '')}</strong> — ${e(c.tactic || '')}${c.timeline ? ` <span class="muted">(${e(c.timeline)})</span>` : ''}</li>`).join('')}</ul>` : '') +
+    ((gtm.plan || []).length ? `<div class="label">First 4 weeks</div>${(gtm.plan).slice(0, 4).map((w) => `<p><strong>Week ${e(String(w.week || ''))}: ${e(w.theme || '')}</strong></p>${list(w.actions)}`).join('')}` : ''),
+    'sec--long');
   if (design?.landingAngle) sec('Landing page angle', `<p class="quote">"${e(design.landingAngle)}"</p>`);
   if (infra) {
     const svc = (infra.services || []).map((s) => {
@@ -470,11 +480,25 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
       ((infra.envVars || []).length ? `<div class="label">Environment variables</div><pre class="code">${e((infra.envVars || []).join('\n'))}</pre>` : '') +
       ((infra.deploySteps || []).length ? `<div class="label">Deploy</div>${list(infra.deploySteps, true)}` : '') +
       (infra.schema ? `<div class="label">Data model</div><p>${e(infra.schema)}</p>` : '') +
+      ((infra.entities || []).length ? `<div class="label">Entities</div>${list(infra.entities)}` : '') +
       (infra.aiWiring ? `<div class="label">AI wiring</div><p>${e(infra.aiWiring)}</p>` : '') +
       (infra.buildOrder ? `<div class="label">Build order</div><p>${e(infra.buildOrder)}</p>` : '') +
-      (infra.monthlyCost ? `<div class="costs">${Object.entries(infra.monthlyCost).map(([k, v]) => `<div class="cost"><b>${e(v)}</b><small>${k === 'dev' ? 'Dev' : k === 'at100users' ? '100 users' : '1K users'}</small></div>`).join('')}</div>` : ''),
+      (() => {
+        const cm = infra.costModel;
+        if (cm && Array.isArray(cm.items) && cm.items.length) {
+          const ua = cm.usageAssumptions;
+          const uaLine = ua ? `<p class="muted">Assumes ${Object.entries(ua).filter(([, v]) => Number(v) > 0).map(([k, v]) => `${e(String(v))} ${e(k.replace(/([A-Z])/g, ' $1').toLowerCase())}`).join(', ')}.</p>` : '';
+          const rows = cm.items.map((it) => `<tr><td>${e(it.service)}</td><td>${e(String(it.quantity))} ${e(it.unit)}</td><td>$${e(String(it.unitCost))}</td><td>$${e(String(it.monthlyCost))}</td></tr>`).join('');
+          return `<div class="label">Operating cost (calculated)</div>${uaLine}<table class="ctable"><thead><tr><th>Service</th><th>Volume</th><th>Unit cost</th><th>Monthly</th></tr></thead><tbody>${rows}<tr><td colspan="3"><strong>Total / month</strong></td><td><strong>$${e(String(cm.monthlyTotal))}</strong></td></tr></tbody></table>`;
+        }
+        return infra.monthlyCost ? `<div class="costs">${Object.entries(infra.monthlyCost).map(([k, v]) => `<div class="cost"><b>${e(v)}</b><small>${k === 'dev' ? 'Dev' : k === 'at100users' ? '100 users' : '1K users'}</small></div>`).join('')}</div>` : '';
+      })(),
       'sec--long');
   }
+  const evidence = (comp?.evidence || []).filter((x) => x && String(x).trim()).slice(0, 8);
+  if (evidence.length) sec('Research & evidence',
+    `<p class="muted">The market read above was built from these findings (competitors, pricing, and demand signals gathered during the analysis).</p>${list(evidence)}`);
+
   const hasCursorPrompt = Boolean(gtm?.cursorPrompt && gtm.cursorPrompt.trim());
   if (hasCursorPrompt) sec('First prompt for Cursor / Claude / Codex', `<pre class="code">${e(gtm.cursorPrompt)}</pre>`);
 
@@ -492,12 +516,15 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
   const confidence = comp?.judge?.confidence ? String(comp.judge.confidence) : '';
   const strengths = [comp?.gap, comp?.moat].filter((x) => x && String(x).trim()).slice(0, 2);
   const risks = (comp?.skeptic?.fatalRisks || []).filter(Boolean).slice(0, 2);
+  const mustProve = (comp?.judge?.mustProveNext || []).filter(Boolean).slice(0, 3);
+  const evidenceCount = (comp?.evidence || []).filter(Boolean).length;
   const qualRows = [
     `<div class="qrow"><span>Viability score</span><b>${hasScore ? `${Math.round(scoreNum)}/100` : '—'}</b></div>`,
     `<div class="qrow"><span>Status</span><b>${e(statusLabel)}</b></div>`,
-    `<div class="qrow"><span>Visibility threshold</span><b>${SCORE_POLICY.visibleMin}+</b></div>`,
-    `<div class="qrow"><span>Score version</span><b>${e(SCORE_POLICY.version)}</b></div>`,
+    `<div class="qrow"><span>Minimum required</span><b>${SCORE_POLICY.blueprintMin}</b></div>`,
+    `<div class="qrow"><span>Score model</span><b>${e(SCORE_POLICY.version)}</b></div>`,
     confidence ? `<div class="qrow"><span>Confidence</span><b>${e(confidence)}</b></div>` : '',
+    evidenceCount ? `<div class="qrow"><span>Evidence reviewed</span><b>${evidenceCount} point${evidenceCount > 1 ? 's' : ''}</b></div>` : '',
     dateStr ? `<div class="qrow"><span>Scored</span><b>${e(dateStr)}</b></div>` : '',
   ].filter(Boolean).join('');
   const BREAKDOWN_LABELS = {
@@ -519,6 +546,7 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
       ${breakdownHtml}
       ${strengths.length ? `<div class="qlabel">Why it passed</div><ul class="qlist">${strengths.map((s) => `<li>${e(s)}</li>`).join('')}</ul>` : ''}
       ${risks.length ? `<div class="qlabel">Where it could still fail</div><ul class="qlist">${risks.map((s) => `<li>${e(s)}</li>`).join('')}</ul>` : ''}
+      ${mustProve.length ? `<div class="qlabel">Must prove next</div><ul class="qlist">${mustProve.map((s) => `<li>${e(s)}</li>`).join('')}</ul>` : ''}
       ${comp?.safety?.notice ? `<div class="qsafety">⚠️ ${e(comp.safety.notice)}</div>` : ''}
     </div>`;
 
@@ -1490,7 +1518,13 @@ export default function IdeaWheel() {
       if (!d) {
         setBpStage(1);
         const r = await api({ ...base, stage:"designer" });
-        if (r.error) { if (/not enough credits/i.test(r.error)) setShowPricing(true); throw new Error(r.error); }
+        if (r.error) {
+          if (/not enough credits/i.test(r.error)) setShowPricing(true);
+          if (r.error === 'idea_not_eligible') {
+            throw new Error(`This idea scored ${r.score ?? 'below the bar'} and needs at least ${r.minimumRequired ?? SCORE_POLICY.blueprintMin} to build a blueprint. Refine the premise and re-run the market check.`);
+          }
+          throw new Error(r.error);
+        }
         chargeToken = r.chargeToken || "";
         setBpChargeToken(chargeToken);
         if (typeof r.balance === 'number') setCredits(r.balance);
@@ -2041,12 +2075,15 @@ export default function IdeaWheel() {
                       </>
                     ) : (
                       <>
+                        {/* Below the 60 bar: NO blueprint path. Only try again,
+                            or dig deeper to understand why (deep research can't
+                            unlock the blueprint — the score must clear 60 first). */}
                         <div className="su-v-cta-row">
                           <button className="su-btn su-btn-yellow su-btn-lg" onClick={() => { setComp(null); setIdea(null); setSaveState(null); setSavedIdeaId(null); }}>
                             {inputMode === 'own' ? 'Try another idea' : 'Spin again'}
                           </button>
-                          <button className="su-linkbtn" onClick={goBlueprint}>Get the blueprint · {BLUEPRINT_COST} credits</button>
                         </div>
+                        <p className="su-v-hint" style={{marginTop:8}}>This idea scored below {SCORE_POLICY.blueprintMin}, so it doesn’t qualify for a blueprint yet. Refine the premise and re-run, or dig into why below.</p>
                         {!deepLoading && !deepResearch && (
                           <div className="su-v-cta-row" style={{marginTop:10}}>
                             <button className="su-btn su-btn-primary su-btn-lg" onClick={runDeepResearch}>

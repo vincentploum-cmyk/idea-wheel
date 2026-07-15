@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import { SCORE_POLICY, hasPotential, meetsCatalog, isPremium } from '../lib/score-policy.js';
+import { SCORE_POLICY, hasPotential, meetsCatalog, isPremium, isBlueprintEligible } from '../lib/score-policy.js';
 
 // The audit's exact boundary matrix: 59 out, 60 in, 61 in, null/NaN never in.
 describe('hasPotential — visibility boundary (>= 60)', () => {
@@ -10,6 +10,30 @@ describe('hasPotential — visibility boundary (>= 60)', () => {
   test('undefined is never visible', () => { expect(hasPotential(undefined)).toBe(false); });
   test('NaN is never visible', () => { expect(hasPotential(NaN)).toBe(false); });
   test('non-numeric string is never visible', () => { expect(hasPotential('high')).toBe(false); });
+});
+
+// The audit's exact blueprint-eligibility matrix. This is the single predicate
+// the client CTA and the server build gate both use.
+describe('isBlueprintEligible — the blueprint gate', () => {
+  test.each([
+    [59, false],
+    [60, true],
+    [61, true],
+    [80, true],
+    [null, false],
+    [undefined, false],
+    [NaN, false],
+    ['70', true],   // numeric string coerces
+    ['high', false],
+  ])('score %p → eligible %p', (score, expected) => {
+    expect(isBlueprintEligible(score)).toBe(expected);
+  });
+
+  test('the blueprint gate equals the visibility gate', () => {
+    for (const s of [0, 40, 59, 60, 61, 75, 80, 100]) {
+      expect(isBlueprintEligible(s)).toBe(hasPotential(s));
+    }
+  });
 });
 
 describe('catalog and premium thresholds', () => {

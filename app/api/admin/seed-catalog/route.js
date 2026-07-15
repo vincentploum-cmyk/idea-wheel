@@ -233,7 +233,7 @@ CRITICAL: No citation tags, no HTML. Plain English only. Return ONLY valid JSON:
     "exact community 3",
     "exact community 4"
   ],
-  "whyNow": "one specific macro event, regulation, or technology shift in 2024-2025 that makes this urgent right now — not generic AI hype",
+  "whyNow": "one specific macro event, regulation, or technology shift in the last 18 months that makes this urgent right now — not generic AI hype",
   "cursorPrompt": "The exact first prompt to paste into Cursor, Claude, or Codex to start building this product. Should include: what to build, tech stack, first screen/feature to implement, and the core AI behavior. 150-200 words."
 }`, { model: 'gpt-4o', maxTokens: 2800 });
   const gtm = deepStrip(parseJSON(gtmText));
