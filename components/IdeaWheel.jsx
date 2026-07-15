@@ -410,30 +410,31 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     ? `<${ordered ? 'ol' : 'ul'} class="list">${arr.map((x) => `<li>${e(x)}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>` : '';
 
   const sections = [];
-  const sec = (num, title, body, cls = '') => { if (body && body.trim()) sections.push(`<section class="sec ${cls}"><div class="sechead"><span class="secnum">${num}</span><h2>${e(title)}</h2></div>${body}</section>`); };
+  let secN = 0;
+  const sec = (title, body, cls = '') => { if (body && body.trim()) { secN += 1; sections.push(`<section class="sec ${cls}"><div class="sechead"><span class="secnum">${String(secN).padStart(2, '0')}</span><h2>${e(title)}</h2></div>${body}</section>`); } };
 
-  if (design) sec('01', 'Niche & Problem', plain(design) + (design.niche ? `<p>${e(design.niche)}</p>` : ''));
-  if (design) sec('02', 'Product concept',
+  if (design) sec('Niche & Problem', plain(design) + (design.niche ? `<p>${e(design.niche)}</p>` : ''));
+  if (design) sec('Product concept',
     `<p class="big">${e(design.name)}</p>` +
     (design.tagline ? `<p class="lead">${e(design.tagline)}</p>` : '') +
     (design.differentiator ? `<p>${e(design.differentiator)}</p>` : '') +
     (design.coreFeatures?.length ? `<div class="label">MVP scope</div>${list(design.coreFeatures)}` : ''));
-  if (gtm) sec('03', 'Target user',
+  if (gtm) sec('Target user',
     plain(gtm) +
     (gtm.persona ? `<p class="lead">${e(gtm.persona)}</p>` : '') +
     (gtm.whereToFind ? `<p><span class="label-inline">Where to find them:</span> ${e(gtm.whereToFind)}</p>` : '') +
     (gtm.whyNow ? `<div class="label">Why now</div><p>${e(gtm.whyNow)}</p>` : ''));
-  if (comp) sec('04', 'Competitor & gap',
+  if (comp) sec('Competitor & gap',
     (comp.marketSize ? `<p class="big">${e(comp.marketSize)}</p>` : '') +
     (comp.gap ? `<p>${e(comp.gap)}</p>` : '') +
     ((comp.players || []).length ? `<div class="label">Key players</div><ul class="list">${comp.players.slice(0, 3).map((p) => `<li><strong>${e(p.name)}</strong> — ${e(p.weakness)}</li>`).join('')}</ul>` : ''));
-  if (gtm?.pricing) sec('05', 'Pricing idea',
+  if (gtm?.pricing) sec('Pricing idea',
     `<p class="big">${e(gtm.pricing.price)}</p>` +
     (gtm.pricing.rationale ? `<p>${e(gtm.pricing.rationale)}</p>` : '') +
     (gtm.pricing.trial ? `<p class="muted">${e(gtm.pricing.trial)}</p>` : '') +
     ((gtm.revenueGoal || gtm.buildTime) ? `<div class="kpis"><div class="kpi"><b>${e(gtm.revenueGoal || '—')}</b><small>30-day target</small></div><div class="kpi"><b>${e(gtm.buildTime || '—')}</b><small>to build V1</small></div></div>` : '') +
     (gtm.firstFiveCustomers?.length ? `<div class="label">First 5 customers</div>${list(gtm.firstFiveCustomers, true)}` : ''));
-  if (design?.landingAngle) sec('06', 'Landing page angle', `<p class="quote">"${e(design.landingAngle)}"</p>`);
+  if (design?.landingAngle) sec('Landing page angle', `<p class="quote">"${e(design.landingAngle)}"</p>`);
   if (infra) {
     const svc = (infra.services || []).map((s) => {
       const meta = [s.freeTier, s.setupTime ? `~${s.setupTime}` : ''].filter(Boolean).map((m) => e(m)).join(' · ');
@@ -441,7 +442,7 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
       const doc = s.docsUrl ? `<div class="doclink">Official setup guide: ${e(s.docsUrl)}</div>` : '';
       return `<div class="svc"><div class="svchead"><b>${e(s.name)}</b>${meta ? ` <span class="svcmeta">${meta}</span>` : ''}</div>${s.purpose ? `<p class="muted">${e(s.purpose)}</p>` : ''}${steps}${doc}</div>`;
     }).join('');
-    sec('07', 'Setup runbook',
+    sec('Setup runbook',
       plain(infra) + svc +
       ((infra.envVars || []).length ? `<div class="label">Environment variables</div><pre class="code">${e((infra.envVars || []).join('\n'))}</pre>` : '') +
       ((infra.deploySteps || []).length ? `<div class="label">Deploy</div>${list(infra.deploySteps, true)}` : '') +
@@ -451,7 +452,8 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
       (infra.monthlyCost ? `<div class="costs">${Object.entries(infra.monthlyCost).map(([k, v]) => `<div class="cost"><b>${e(v)}</b><small>${k === 'dev' ? 'Dev' : k === 'at100users' ? '100 users' : '1K users'}</small></div>`).join('')}</div>` : ''),
       'sec--long');
   }
-  if (gtm?.cursorPrompt) sec('08', 'First prompt for Cursor / Claude / Codex', `<pre class="code">${e(gtm.cursorPrompt)}</pre>`);
+  const hasCursorPrompt = Boolean(gtm?.cursorPrompt && gtm.cursorPrompt.trim());
+  if (hasCursorPrompt) sec('First prompt for Cursor / Claude / Codex', `<pre class="code">${e(gtm.cursorPrompt)}</pre>`);
 
   return `<!doctype html><html><head><meta charset="utf-8"><title>${e(name)} — Complete plan</title>
 <style>
@@ -506,7 +508,7 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
   ${sections.join('\n')}
   <div class="close">
     <div class="big2">That's a company in three spins.</div>
-    <p>Your full build plan — product, market, infrastructure, and the first Cursor prompt — is above.</p>
+    <p>Your full build plan — product, market, and infrastructure${hasCursorPrompt ? ', and the first Cursor prompt,' : ''} — is above.</p>
     <div class="note">Your interactive prototype is saved separately as <b>${e(planSlug(name))}-prototype.html</b> — open it in any browser.</div>
     <div class="foot">Built with IdeaReels · ideareels.io</div>
   </div>

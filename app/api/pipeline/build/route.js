@@ -821,7 +821,7 @@ Search the web for the most current direct competitors, their pricing, recent (2
         const launchStage = await runJsonStage({
           prompt: gtmPrompt(agentDesc, comp, design, retrieval),
           model: MODELS.gtm,
-          maxTokens: 2200,
+          maxTokens: 3200,
           critiquePrompt: (draft) => gtmCritiquePrompt(design, draft, comp),
           rewritePrompt: (draft, critique) => gtmRewritePrompt(agentDesc, design, draft, comp, critique),
         });

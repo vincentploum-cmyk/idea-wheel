@@ -220,25 +220,33 @@ CRITICAL: No citation tags, no HTML. Plain English only. Return ONLY valid JSON:
     "exact community 3",
     "exact community 4"
   ],
-  "whyNow": "one specific macro event, regulation, or technology shift in 2024-2025 that makes this urgent right now — not generic AI hype"
-}`, { model: 'gpt-4o', maxTokens: 2000 });
+  "whyNow": "one specific macro event, regulation, or technology shift in 2024-2025 that makes this urgent right now — not generic AI hype",
+  "cursorPrompt": "The exact first prompt to paste into Cursor, Claude, or Codex to start building this product. Should include: what to build, tech stack, first screen/feature to implement, and the core AI behavior. 150-200 words."
+}`, { model: 'gpt-4o', maxTokens: 2800 });
   const gtm = deepStrip(parseJSON(gtmText));
 
   // Stage 3 — Infrastructure
-  const infraText = await call(`Technical blueprint for a solo founder building this as a lean SaaS.
+  const infraText = await call(`You are a senior engineer writing the GETTING-STARTED RUNBOOK for a solo, possibly non-technical builder. They PAID for this — it must be concrete enough to actually follow and get the product live, not a summary. No hand-waving: name the exact service, the exact console section to click, and the real gotchas that block people. Use Render for hosting — never Vercel — and keep it consistent everywhere.
 
 PRODUCT: "${design.name}" — ${design.tagline}
 CORE FEATURES: ${(design.coreFeatures || []).join(' | ')}
 AI BEHAVIOR: ${design.differentiator}
+
+HARD REQUIREMENTS — when the relevant service is in your stack you MUST include these exact steps; skipping them is a failure:
+- SMS (Twilio or any SMS provider): you MUST include registering an A2P 10DLC Brand, THEN a Campaign under it, and note both must be APPROVED before any SMS can be sent to US numbers — place these BEFORE the buy-a-number / messaging-service / webhook steps. A phone number alone cannot send US SMS.
+- Payments (Stripe): you MUST include adding a webhook endpoint AND copying its signing secret into an env var (STRIPE_WEBHOOK_SECRET) so paid events can be verified.
+- Email: you MUST include verifying the sending domain by adding the SPF/DKIM DNS records, or mail lands in spam.
+- Auth: you MUST include setting the exact redirect / callback URLs.
+- Hosting: use Render as the host and NOTHING else — do NOT list Vercel. The stack, deploySteps, and everywhere else must all say Render, consistently.
 
 CRITICAL: No citation tags, no HTML. Plain English only. Return ONLY valid JSON:
 {
   "stack": ["specific tool 1 with version or variant", "specific tool 2", "..."],
   "buildTime": "realistic estimate with day breakdown — e.g. '8 days: 2 days schema, 3 days core AI, 2 days payments, 1 day polish'",
   "schema": "every key table with fields — e.g. 'users (id, email, org_id, plan) | jobs (id, user_id, status, ai_output)'",
-  "aiWiring": "exactly which Claude model, the system prompt direction, and the 3-5 step AI loop that makes the core feature work",
+  "aiWiring": "exactly which model, the system prompt direction, and the 3-5 step AI loop that makes the core feature work",
   "deploySteps": [
-    "step 1: what exactly to do and why",
+    "step 1: what exactly to do and why — e.g. push to GitHub, then on Render: New -> Web Service -> connect that repo",
     "step 2",
     "step 3",
     "step 4",
@@ -246,12 +254,11 @@ CRITICAL: No citation tags, no HTML. Plain English only. Return ONLY valid JSON:
   ],
   "monthlyCost": {
     "dev": "$0 or near-zero breakdown",
-    "at100users": "$X/mo — line by line: Supabase $X, Anthropic API $X, etc.",
+    "at100users": "$X/mo — line by line: Render $X, OpenAI API $X, etc.",
     "at1000users": "$Y/mo — line by line"
   },
-  "buildOrder": "Day-by-day plan. Day 1: what specifically. Day 2: what specifically. Through launch day.",
-  "cursorPrompt": "The exact prompt to paste into Cursor or Claude Code to start building. Must include: product name and what it does, tech stack, the first two screens to build, and step-by-step description of the core AI feature. 150-180 words. Technical and precise — this goes straight into an AI code editor."
-}`, { maxTokens: 2000 });
+  "buildOrder": "Day-by-day plan. Day 1: what specifically. Day 2: what specifically. Through launch day."
+}`, { maxTokens: 2600 });
   const infra = deepStrip(parseJSON(infraText));
 
   return { design, gtm, infra };
