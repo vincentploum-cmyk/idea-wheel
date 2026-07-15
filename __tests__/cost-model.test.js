@@ -46,6 +46,27 @@ describe('computeCostModel — the audit flagship (Stripe % fee)', () => {
   });
 });
 
+describe('computeCostModel — payment line + nonzero floors', () => {
+  test('adds a payment line when the model omits Stripe from cost items', () => {
+    const infra = {
+      usageAssumptions: { customers: 100 },
+      costItems: [
+        { service: 'OpenAI', quantity: 16000, unit: 'requests', unitCost: 0.002 },
+        { service: 'Supabase', quantity: 1, unit: 'db', unitCost: 0 },      // free-tier optimism
+        { service: 'Render', quantity: 1, unit: 'workspace', unitCost: 25 },
+      ],
+    };
+    const cm = computeCostModel(infra, { monthlyPrice: 300 });
+    const pay = cm.items.find((i) => /payment|stripe/i.test(i.service));
+    expect(pay).toBeTruthy();
+    expect(pay.monthlyCost).toBe(900); // 100 × ($300 × 2.9% + $0.30)
+    // Supabase $0 raised to the $20 baseline
+    expect(cm.items.find((i) => /supabase|database/i.test(i.service)).monthlyCost).toBe(20);
+    // 32 + 900 + 20(bumped) + 25 = 977
+    expect(cm.monthlyTotal).toBe(977);
+  });
+});
+
 describe('computeCostModel — enforced floors', () => {
   test('adds hosting + database baselines when the model omits them', () => {
     const cm = computeCostModel({ usageAssumptions: { customers: 50 }, costItems: [{ service: 'OpenAI', quantity: 1000, unit: 'req', unitCost: 0.002 }] }, { monthlyPrice: 100 });
