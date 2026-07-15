@@ -278,8 +278,10 @@ function compactDesign(design) {
   return {
     name: shortText(design?.name, 60),
     tagline: shortText(design?.tagline, 120),
+    problemEvidence: shortList(design?.problemEvidence, 4, 140),
     differentiator: shortText(design?.differentiator, 180),
     coreFeatures: shortList(design?.coreFeatures, 5, 100),
+    productLogic: shortText(design?.productLogic, 400),
     userFlow: shortText(design?.userFlow, 200),
     buildSpec: shortText(design?.buildSpec, 500),
     dataMoat: shortText(design?.dataMoat, 180),
@@ -290,6 +292,14 @@ function compactDesign(design) {
 function compactGtm(gtm) {
   return {
     revenueGoal: shortText(gtm?.revenueGoal, 80),
+    icp: gtm?.icp && typeof gtm.icp === 'object' ? {
+      buyer: shortText(gtm.icp.buyer, 90),
+      user: shortText(gtm.icp.user, 90),
+      segment: shortText(gtm.icp.segment, 140),
+      trigger: shortText(gtm.icp.trigger, 120),
+      budgetAuthority: shortText(gtm.icp.budgetAuthority, 120),
+      disqualifier: shortText(gtm.icp.disqualifier, 120),
+    } : null,
     persona: shortText(gtm?.persona, 120),
     whereToFind: shortText(gtm?.whereToFind, 220),
     firstFiveCustomers: shortList(gtm?.firstFiveCustomers, 5, 140),
@@ -355,15 +365,17 @@ Return ONLY JSON:
   "name": "product name, 2-3 words max",
   "tagline": "one-liner — what it does and for whom",
   "niche": "one sentence: the specific niche and the exact pain being solved",
+  "problemEvidence": ["2-4 QUANTIFIED evidence points that prove the pain is real and worth paying to fix: how often it happens, hours or dollars it costs, how many businesses/people face it. Use a real number or a clearly-labelled estimate in each — never a vague claim like 'it's a big problem'."],
   "differentiator": "specific wedge, not generic AI language",
   "coreFeatures": ["feature 1","feature 2","feature 3"],
+  "productLogic": "How the product actually DECIDES, step by step — deterministic rules FIRST (the safe, must-always-hold logic), THEN where AI classifies or drafts, THEN the human check for the risky/low-confidence cases. This is the logic, not a feature list. 3-5 short steps.",
   "userFlow": "trigger to value in 2-3 sentences",
   "buildSpec": "detailed UI spec with the one magical interaction",
   "landingAngle": "the headline + subheadline for the product's landing page — hook the visitor in 2 lines",
   "dataMoat": "what proprietary workflow memory or feedback loop compounds over time",
   "defensibilityPlan": "how this becomes harder to copy after 90 days"
 }
-A non-technical founder should understand every field instantly.
+A non-technical founder should understand every field instantly. Do not fabricate precise statistics — if you estimate, say "(estimate)".
 
 ${PROSE_RULES}`;
 }
@@ -416,6 +428,14 @@ ${JSON.stringify({
 Return ONLY JSON:
 {
   "revenueGoal": "first-month target with math e.g. $2,400 = 8 × $300/mo",
+  "icp": {
+    "buyer": "who approves the purchase — the exact role",
+    "user": "who uses it day to day — the exact role (often NOT the buyer)",
+    "segment": "the ONE narrow segment to start with, with a size band (e.g. 'US dental practices with 2-5 chairs, ~30k of them')",
+    "trigger": "the event that makes them start looking for this right now",
+    "budgetAuthority": "who holds the budget and roughly how much they can spend without sign-off",
+    "disqualifier": "who this is explicitly NOT for — the segment to ignore so the ICP stays narrow"
+  },
   "persona": "the ideal first customer's role, in ONE plain sentence",
   "whereToFind": "3-4 named communities (subreddits, Slack groups, LinkedIn groups), as a short comma-separated list — no long explanation",
   "firstFiveCustomers": ["5 tactics. Each is ONE sentence naming the exact place + the angle. Max ~22 words each."],
@@ -492,8 +512,8 @@ Return ONLY JSON:
 {
   "services": [{"name":"...","purpose":"one line: what it does for THIS product","url":"https://...","docsUrl":"https://official-setup-doc...","freeTier":"...","setupTime":"X min","setupSteps":["1. Create an account at ... and verify ...","2. In <exact console path>, ...","..."]}],
   "envVars": ["VAR_NAME=your_value  # what it is + where to copy it from"],
-  "schema": "Tables in plain English: users (id, email, plan) | table2 (fields)",
-  "entities": ["entity 1","entity 2","entity 3"],
+  "schema": "The REAL data model as entities with key fields and relationships, plain English. List EVERY entity a working multi-tenant version needs — not just users. Show ownership/tenancy and links, e.g. 'organizations (id, name, plan) → members (user_id, org_id, role) → <domain entities> → audit_events (...)'. Aim for 6-12 entities for a real B2B app.",
+  "entities": ["one line per core entity with its key fields, 6-12 entities — include tenancy (organizations/members), the core domain objects, and an audit/log entity"],
   "aiWiring": "Which model, system prompt structure, agent loop pattern",
   "memoryLoop": "how the product accumulates feedback or workflow history over time",
   "deploySteps": ["1. Push your code to a GitHub repo.","2. On Render: New → Web Service → connect that repo.","3. Set the Build Command and Start Command.","4. Add every env var under Environment.","5. Click Create Web Service — Render builds and gives you a live URL.","6. Add your custom domain under Settings → Custom Domains and set the DNS records it shows you."],

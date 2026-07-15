@@ -166,6 +166,16 @@ function BlueprintContent({ blueprint }) {
               <p style={{ fontSize: 13, lineHeight: 1.7, color: '#111', opacity: 0.85, margin: '0 0 12px' }}>
                 <strong>What makes it different:</strong> {design.differentiator}
               </p>
+              {Array.isArray(design.problemEvidence) && design.problemEvidence.length > 0 && (
+                <>
+                  <SectionLabel>Evidence the pain is real</SectionLabel>
+                  <ul style={{ margin: '0 0 12px', paddingLeft: 18 }}>
+                    {design.problemEvidence.map((x, i) => (
+                      <li key={i} style={{ fontSize: 13, lineHeight: 1.7, color: '#111', opacity: 0.8, marginBottom: 3 }}>{x}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
               {Array.isArray(design.coreFeatures) && (
                 <>
                   <SectionLabel>Core features</SectionLabel>
@@ -175,6 +185,11 @@ function BlueprintContent({ blueprint }) {
                     ))}
                   </ul>
                 </>
+              )}
+              {design.productLogic && (
+                <p style={{ fontSize: 13, lineHeight: 1.7, color: '#111', opacity: 0.8, margin: '0 0 8px' }}>
+                  <strong>How it works:</strong> {design.productLogic}
+                </p>
               )}
               <p style={{ fontSize: 13, lineHeight: 1.7, color: '#111', opacity: 0.8, margin: '0 0 8px' }}>
                 <strong>User flow:</strong> {design.userFlow}
@@ -191,6 +206,15 @@ function BlueprintContent({ blueprint }) {
           {gtm && (
             <div style={{ background: 'rgba(0,0,0,0.04)', borderRadius: 8, padding: '16px 18px', marginBottom: 12 }}>
               <SectionLabel>Go-to-market plan</SectionLabel>
+              {gtm.icp && typeof gtm.icp === 'object' && (
+                <div style={{ marginBottom: 12 }}>
+                  {[['Buyer', gtm.icp.buyer], ['User', gtm.icp.user], ['Segment', gtm.icp.segment], ['Trigger', gtm.icp.trigger], ['Budget', gtm.icp.budgetAuthority], ['Not for', gtm.icp.disqualifier]].filter(([, v]) => v).map(([k, v]) => (
+                    <p key={k} style={{ fontSize: 13, lineHeight: 1.7, color: '#111', opacity: 0.8, margin: '0 0 2px' }}>
+                      <strong style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.7 }}>{k}: </strong>{v}
+                    </p>
+                  ))}
+                </div>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
                 <div>
                   <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.45, margin: '0 0 4px' }}>Revenue goal</p>

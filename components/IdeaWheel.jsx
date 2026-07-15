@@ -415,21 +415,42 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
   let secN = 0;
   const sec = (title, body, cls = '') => { if (body && body.trim()) { secN += 1; sections.push(`<section class="sec ${cls}"><div class="sechead"><span class="secnum">${String(secN).padStart(2, '0')}</span><h2>${e(title)}</h2></div>${body}</section>`); } };
 
-  if (design) sec('Niche & Problem', plain(design) + (design.niche ? `<p>${e(design.niche)}</p>` : ''));
+  if (design) sec('Niche & Problem',
+    plain(design) +
+    (design.niche ? `<p>${e(design.niche)}</p>` : '') +
+    (design.problemEvidence?.length ? `<div class="label">Evidence the pain is real</div>${list(design.problemEvidence)}` : ''));
   if (design) sec('Product concept',
     `<p class="big">${e(design.name)}</p>` +
     (design.tagline ? `<p class="lead">${e(design.tagline)}</p>` : '') +
     (design.differentiator ? `<p>${e(design.differentiator)}</p>` : '') +
     (design.coreFeatures?.length ? `<div class="label">MVP scope</div>${list(design.coreFeatures)}` : ''));
-  if (gtm) sec('Target user',
-    plain(gtm) +
-    (gtm.persona ? `<p class="lead">${e(gtm.persona)}</p>` : '') +
-    (gtm.whereToFind ? `<p><span class="label-inline">Where to find them:</span> ${e(gtm.whereToFind)}</p>` : '') +
-    (gtm.whyNow ? `<div class="label">Why now</div><p>${e(gtm.whyNow)}</p>` : ''));
-  if (comp) sec('Competitor & gap',
-    (comp.marketSize ? `<p class="big">${e(comp.marketSize)}</p>` : '') +
-    (comp.gap ? `<p>${e(comp.gap)}</p>` : '') +
-    ((comp.players || []).length ? `<div class="label">Key players</div><ul class="list">${comp.players.slice(0, 3).map((p) => `<li><strong>${e(p.name)}</strong> — ${e(p.weakness)}</li>`).join('')}</ul>` : ''));
+  if (design?.productLogic) sec('How it works', `<p>${e(design.productLogic)}</p>`);
+  if (gtm) {
+    const icp = gtm.icp && typeof gtm.icp === 'object' ? gtm.icp : null;
+    const icpRow = (label, val) => (val ? `<div class="qrow"><span>${e(label)}</span><b>${e(val)}</b></div>` : '');
+    const icpBlock = icp ? `<div class="label">Ideal customer</div><div class="qgrid">${
+      icpRow('Buyer', icp.buyer) + icpRow('User', icp.user) + icpRow('Segment', icp.segment) +
+      icpRow('Trigger', icp.trigger) + icpRow('Budget', icp.budgetAuthority) + icpRow('Not for', icp.disqualifier)
+    }</div>` : '';
+    sec('Target user',
+      plain(gtm) +
+      icpBlock +
+      (gtm.persona ? `<p class="lead">${e(gtm.persona)}</p>` : '') +
+      (gtm.whereToFind ? `<p><span class="label-inline">Where to find them:</span> ${e(gtm.whereToFind)}</p>` : '') +
+      (gtm.whyNow ? `<div class="label">Why now</div><p>${e(gtm.whyNow)}</p>` : ''));
+  }
+  if (comp) {
+    const players = (comp.players || []).slice(0, 4);
+    const matrix = players.length
+      ? `<div class="label">Competitor matrix</div><table class="ctable"><thead><tr><th>Player</th><th>Who they serve</th><th>What they miss here</th></tr></thead><tbody>${
+          players.map((p) => `<tr><td><strong>${e(p.name)}</strong></td><td>${e(p.targetCustomer || p.coverage || '—')}</td><td>${e(p.weakness || '—')}</td></tr>`).join('')
+        }</tbody></table>`
+      : '';
+    sec('Competitor & gap',
+      (comp.marketSize ? `<p class="big">${e(comp.marketSize)}</p>` : '') +
+      (comp.gap ? `<p>${e(comp.gap)}</p>` : '') +
+      matrix);
+  }
   if (gtm?.pricing) sec('Pricing idea',
     `<p class="big">${e(gtm.pricing.price)}</p>` +
     (gtm.pricing.rationale ? `<p>${e(gtm.pricing.rationale)}</p>` : '') +
@@ -479,10 +500,23 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     confidence ? `<div class="qrow"><span>Confidence</span><b>${e(confidence)}</b></div>` : '',
     dateStr ? `<div class="qrow"><span>Scored</span><b>${e(dateStr)}</b></div>` : '',
   ].filter(Boolean).join('');
+  const BREAKDOWN_LABELS = {
+    evidenceStrength: 'Evidence', painFrequency: 'Pain', willingnessToPay: 'Pays',
+    marketSpecificity: 'Market fit', competitiveOpening: 'Opening', customerReachability: 'Reach',
+    retention: 'Retention', feasibility: 'Feasibility',
+  };
+  const breakdown = comp?.scoreBreakdown && typeof comp.scoreBreakdown === 'object' ? comp.scoreBreakdown : null;
+  const breakdownHtml = breakdown
+    ? `<div class="qlabel">Score breakdown</div><div class="qbreak">${Object.entries(BREAKDOWN_LABELS)
+        .filter(([k]) => breakdown[k])
+        .map(([k, label]) => `<span class="qb"><b>${e(String(breakdown[k].value))}</b>/${e(String(breakdown[k].max))} ${e(label)}</span>`)
+        .join('')}</div>`
+    : '';
   const qualBlock =
     `<div class="qual ${qualified ? 'qual--ok' : 'qual--review'}">
       <div class="qualhead">${qualified ? 'Qualified opportunity' : 'Needs manual review'}</div>
       <div class="qgrid">${qualRows}</div>
+      ${breakdownHtml}
       ${strengths.length ? `<div class="qlabel">Why it passed</div><ul class="qlist">${strengths.map((s) => `<li>${e(s)}</li>`).join('')}</ul>` : ''}
       ${risks.length ? `<div class="qlabel">Where it could still fail</div><ul class="qlist">${risks.map((s) => `<li>${e(s)}</li>`).join('')}</ul>` : ''}
       ${comp?.safety?.notice ? `<div class="qsafety">⚠️ ${e(comp.safety.notice)}</div>` : ''}
@@ -513,6 +547,12 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
   ul.qlist { margin: 2px 0 0; padding-left: 18px; font-size: 10.5pt; }
   ul.qlist li { margin: 2px 0; }
   .qsafety { margin-top: 10px; background: #FEF2F2; border: 2px solid #DC2626; border-radius: 8px; padding: 8px 12px; font-size: 10pt; line-height: 1.5; }
+  .qbreak { display: flex; flex-wrap: wrap; gap: 5px; }
+  .qb { border: 1px solid #ccc; border-radius: 5px; padding: 2px 8px; font-size: 9.5pt; }
+  .qb b { font-weight: 800; }
+  table.ctable { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 10pt; }
+  table.ctable th, table.ctable td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; vertical-align: top; }
+  table.ctable th { background: #f3f3f3; font-weight: 900; font-size: 9pt; text-transform: uppercase; letter-spacing: .04em; }
   .brand { font-weight: 900; color: #111; }
   .sec { page-break-inside: avoid; margin: 0 0 9mm; }
   .sec--long { page-break-inside: auto; }
@@ -2122,6 +2162,10 @@ export default function IdeaWheel() {
                     <PlainEnglish summary={design.plainSummary} takeaways={design.takeaways} compact />
                   )}
                   <p className="su-bp-summary" style={{fontSize:14,color:'var(--ink)'}}>{design.niche}</p>
+                  {(design.problemEvidence||[]).length > 0 && <>
+                    <div className="su-bp-list-label" style={{marginTop:12}}>Evidence the pain is real</div>
+                    <ul className="su-bp-list">{design.problemEvidence.map((x,i)=><li key={i}>{x}</li>)}</ul>
+                  </>}
                 </div>
               )}
 
@@ -2134,6 +2178,10 @@ export default function IdeaWheel() {
                   <p className="su-bp-summary">{design.differentiator}</p>
                   <div className="su-bp-list-label">MVP scope</div>
                   <ul className="su-bp-list">{(design.coreFeatures||[]).map((f,i)=><li key={i}>{f}</li>)}</ul>
+                  {design.productLogic && <>
+                    <div className="su-bp-list-label" style={{marginTop:12}}>How it works</div>
+                    <p className="su-bp-summary" style={{color:'var(--ink)'}}>{design.productLogic}</p>
+                  </>}
                 </div>
               )}
 
@@ -2143,6 +2191,13 @@ export default function IdeaWheel() {
                   <div className="su-bp-head"><span className="su-bp-num">03</span><h3 className="su-bp-title">Target user</h3></div>
                   {(gtm.plainSummary || (gtm.takeaways||[]).length > 0) && (
                     <PlainEnglish summary={gtm.plainSummary} takeaways={gtm.takeaways} compact />
+                  )}
+                  {gtm.icp && typeof gtm.icp === 'object' && (
+                    <div style={{margin:'8px 0 12px', display:'grid', gridTemplateColumns:'1fr', gap:4}}>
+                      {[['Buyer',gtm.icp.buyer],['User',gtm.icp.user],['Segment',gtm.icp.segment],['Trigger',gtm.icp.trigger],['Budget',gtm.icp.budgetAuthority],['Not for',gtm.icp.disqualifier]].filter(([,v])=>v).map(([k,v])=>(
+                        <p key={k} className="su-bp-summary" style={{margin:0}}><strong style={{fontSize:11,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--muted)'}}>{k}: </strong>{v}</p>
+                      ))}
+                    </div>
                   )}
                   <p className="su-bp-summary" style={{fontSize:14,color:'var(--ink)',fontWeight:600}}>{gtm.persona}</p>
                   {gtm.whereToFind && <p className="su-bp-summary"><strong style={{fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--muted)'}}>Where to find them: </strong>{gtm.whereToFind}</p>}

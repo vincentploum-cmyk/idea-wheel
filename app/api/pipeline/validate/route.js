@@ -5,7 +5,8 @@ import { buildRetrievalContext } from '../../../../lib/moat-retrieval';
 import { ensureSessionId, recordValidation } from '../../../../lib/moat-store';
 import { checkRateLimit } from '../../../../lib/rate-limit';
 import { classifyIdeaRisk, safetyNoticeFor } from '../../../../lib/idea-safety';
-import { recordCandidate } from '../../../../lib/idea-candidates';
+import { recordCandidate, getCachedCandidate } from '../../../../lib/idea-candidates';
+import { computeDeterministicScore, legacyDimensions } from '../../../../lib/scoring';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -387,7 +388,7 @@ ${FOUNDER_VOICE}`;
 }
 
 function evalPrompt(agentDesc, scout, skeptic, judge) {
-  return `You are a benchmark evaluator for IdeaWheel. Grade whether this validation is strong enough to drive a serious blueprint.
+  return `You are a benchmark evaluator for IdeaWheel. Do NOT invent an overall score — that is computed downstream. Your job is to EXTRACT evidence into fixed-weight components and to flag hard gates. Be strict: award points only for what the scout/skeptic/judge actually support. When evidence is thin, score low.
 
 Idea: "${agentDesc}"
 SCOUT: ${JSON.stringify(compactScout(scout))}
@@ -396,25 +397,36 @@ JUDGE: ${JSON.stringify(compactJudge(judge))}
 
 Return ONLY JSON:
 {
-  "scores": {
-    "evidenceCoverage": 0,
-    "wedgeClarity": 0,
-    "defensibility": 0,
-    "specificity": 0,
-    "overall": 0
+  "components": {
+    "evidenceStrength": 0,       // 0-20: how real/verifiable is the demand evidence (named products, quotes, figures)?
+    "painFrequency": 0,          // 0-15: how often and how badly does this pain bite the buyer?
+    "willingnessToPay": 0,       // 0-15: is there evidence anyone will actually pay (existing budgets/tools)?
+    "marketSpecificity": 0,      // 0-10: is the buyer/user specific and named (not "everyone")?
+    "competitiveOpening": 0,     // 0-15: is there a genuine gap the incumbents leave open?
+    "customerReachability": 0,   // 0-10: can a founder realistically get in front of these buyers?
+    "retention": 0,              // 0-10: repeat use / staying power once adopted?
+    "feasibility": 0             // 0-5: build + regulatory feasibility for a small team
+  },
+  "gates": {
+    "insufficientEvidence": false,      // true if there is no real evidence of demand
+    "noIdentifiableBuyer": false,       // true if no specific person/role would buy or use it
+    "illegalOrExploitative": false,     // true if the concept is illegal or exploitative
+    "fabricatedOrContradictory": false  // true if the findings are made up or contradict each other
   },
   "shipReady": true,
   "failReasons": ["only if something is weak"],
   "improvementBrief": "one paragraph for the downstream build pipeline"
 }
-Scores must be integers from 0-100.`;
+Each component is an integer within its stated range. Do not exceed the max for any component.`;
 }
 
 function buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval, validationId) {
   const premiseBroken = scout.premiseFit === 'nonexistent';
-  // A premise mismatch (e.g. equipment maintenance for a law firm) overrides
-  // any optimistic verdict — there is no real problem to solve.
-  const decision = premiseBroken ? 'avoid' : (judge.decision || scout.verdictType || 'warning');
+  const det = evalResult?.deterministic || null;
+  // A premise mismatch (e.g. equipment maintenance for a law firm) OR a hard
+  // rubric gate (no evidence, no buyer, illegal, fabricated) overrides any
+  // optimistic verdict — there is no viable idea to advance.
+  const decision = (premiseBroken || det?.gated) ? 'avoid' : (judge.decision || scout.verdictType || 'warning');
   // Only surface the premise note when the problem genuinely barely exists for
   // this industry. When the premise is realistic, the model sometimes fills it
   // with a verdict-like sentence that just duplicates the verdict below — so
@@ -438,7 +450,10 @@ function buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval,
     marketSize: stripCitationNoise(scout.marketSize),
     landscape: stripCitationNoise(scout.landscape),
     players: cleanPlayers,
-    score: premiseBroken ? Math.min(evalResult?.scores?.overall ?? 30, 35) : (evalResult?.scores?.overall || null),
+    score: premiseBroken ? Math.min(evalResult?.scores?.overall ?? 30, 35) : (evalResult?.scores?.overall ?? null),
+    scoreBreakdown: det?.breakdown || null,
+    scoreGates: det?.gatesTriggered || [],
+    scoreVersion: det?.rubricVersion || null,
     verdictType: decision,
     verdict: stripCitationNoise(scout.verdict),
     premiseFit: scout.premiseFit,
@@ -500,6 +515,27 @@ export async function POST(request) {
         try { controller.enqueue(encoder.encode(`${JSON.stringify(obj)}\n`)); } catch {}
       };
       try {
+        // Cache short-circuit: if this exact canonical idea (workflow+industry,
+        // action folded into copy) was already validated under the current score
+        // version and is still fresh, reuse it and skip the paid pipeline. Only
+        // for structured combos — a freeform idea has no canonical key.
+        if (!sanitised && action && workflow && industry) {
+          const cached = await getCachedCandidate(modeName, workflow, industry);
+          if (cached?.comp) {
+            send({ t: 'stage', key: 'retrieval', label: `Found a recent market check for this exact idea — reusing it…` });
+            send({ t: 'stage', key: 'eval', status: 'done', label: 'Putting your report together…' });
+            // Bump popularity; no re-score (same version, same result).
+            recordCandidate({
+              mode: modeName, action, workflow, industry,
+              score: cached.comp.score, safetyLevel: cached.comp.safety?.level || 'standard',
+              title: cached.comp.title, summary: cached.comp.plainSummary || cached.comp.verdict, gap: cached.comp.gap,
+              comp: cached.comp, agentDesc: cached.comp.agentDesc,
+            }).catch(() => {});
+            send({ t: 'result', sessionId, comp: cached.comp, cached: true, cost: { input_tokens: 0, output_tokens: 0, cost_usd: 0 } });
+            return;
+          }
+        }
+
         send({ t: 'stage', key: 'retrieval', label: `Framing the idea for ${sector}…` });
         const retrieval = await buildRetrievalContext({ modeName, industry, action, workflow });
 
@@ -540,6 +576,15 @@ export async function POST(request) {
         const evalParsed = await parseJSON(evalCall.text, 'validation eval');
         const evalResult = evalParsed.value;
 
+        // Deterministic overall: the model extracted components; the score is
+        // computed here so it is reproducible and the hard gates are enforced
+        // in code, not left to the model's discretion.
+        const det = computeDeterministicScore(evalResult.components, evalResult.gates);
+        evalResult.deterministic = det;
+        // Overwrite scores with the code-derived overall + legacy dimensions the
+        // adaptive generator reads (getOverallScore / dimensionLift).
+        evalResult.scores = { ...legacyDimensions(det.breakdown), overall: det.overall };
+
         const usage = mergeUsage(
           scoutCall.usage, scoutParsed.usage,
           skepticCall.usage, skepticParsed.usage,
@@ -573,6 +618,7 @@ export async function POST(request) {
             mode: modeName, action, workflow, industry,
             score: comp.score, safetyLevel: safety.level,
             title: comp.title, summary: comp.plainSummary || comp.verdict, gap: comp.gap,
+            comp, agentDesc,
           }).catch(() => {});
         }
 

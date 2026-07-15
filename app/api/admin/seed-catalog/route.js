@@ -171,6 +171,10 @@ CRITICAL: No citation tags, no HTML, no markup. Plain English only. Return ONLY 
 {
   "name": "product name (2-3 words)",
   "tagline": "one line: what it does and who it's for",
+  "problemEvidence": [
+    "2-4 QUANTIFIED evidence points that prove the pain is real and worth paying for: how often it happens, hours or dollars it costs, how many face it. A real number or clearly-labelled '(estimate)' in each — never a vague claim.",
+    "..."
+  ],
   "differentiator": "the ONE thing that makes this hard to copy — specific mechanism, not vague AI language",
   "coreFeatures": [
     "feature 1 — one concrete sentence describing exactly what it does",
@@ -178,6 +182,7 @@ CRITICAL: No citation tags, no HTML, no markup. Plain English only. Return ONLY 
     "feature 3",
     "feature 4"
   ],
+  "productLogic": "How the product actually DECIDES, step by step: deterministic rules FIRST, THEN where AI classifies/drafts, THEN the human check for risky/low-confidence cases. The logic, not a feature list. 3-5 short steps.",
   "userFlow": "sign-up to first real value in 2-3 plain sentences — name the actual screens",
   "wowMoment": "the exact moment a prospect sees the product and says 'I need this' — name the specific trigger and the specific output",
   "dataMoat": "what compound data or workflow memory builds up over time that a copycat can never replicate from day one"
@@ -195,6 +200,14 @@ GAP: ${research.gap}
 
 CRITICAL: No citation tags, no HTML. Plain English only. Return ONLY valid JSON:
 {
+  "icp": {
+    "buyer": "who approves the purchase — the exact role",
+    "user": "who uses it day to day — the exact role (often NOT the buyer)",
+    "segment": "the ONE narrow segment to start with, with a size band (e.g. 'US dental practices with 2-5 chairs, ~30k of them')",
+    "trigger": "the event that makes them start looking for this right now",
+    "budgetAuthority": "who holds the budget and roughly how much they can spend without sign-off",
+    "disqualifier": "who this is explicitly NOT for — the segment to ignore so the ICP stays narrow"
+  },
   "persona": "exact first-customer profile: their job title, company size, and the specific pain they wake up thinking about",
   "revenueGoal": "month-one target with arithmetic — e.g. '$2,800 = 7 customers × $400/mo'",
   "pricing": {
@@ -243,7 +256,7 @@ CRITICAL: No citation tags, no HTML. Plain English only. Return ONLY valid JSON:
 {
   "stack": ["specific tool 1 with version or variant", "specific tool 2", "..."],
   "buildTime": "realistic estimate with day breakdown — e.g. '8 days: 2 days schema, 3 days core AI, 2 days payments, 1 day polish'",
-  "schema": "every key table with fields — e.g. 'users (id, email, org_id, plan) | jobs (id, user_id, status, ai_output)'",
+  "schema": "The REAL data model — every entity a working multi-tenant version needs, with key fields and relationships. Show tenancy and links, e.g. 'organizations (id, name, plan) → members (user_id, org_id, role) → <domain entities> → audit_events (...)'. Aim for 6-12 entities, not just users.",
   "aiWiring": "exactly which model, the system prompt direction, and the 3-5 step AI loop that makes the core feature work",
   "deploySteps": [
     "step 1: what exactly to do and why — e.g. push to GitHub, then on Render: New -> Web Service -> connect that repo",

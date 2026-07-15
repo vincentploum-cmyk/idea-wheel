@@ -21,6 +21,10 @@ create table if not exists public.idea_candidates (
   title             text,
   summary           text,
   gap               text,
+  -- The full validation result for this canonical idea, reused as a durable
+  -- cross-user cache so a repeat spin of the same combo skips the paid pipeline.
+  comp              jsonb,
+  agent_desc        text,
   viability_score   smallint check (viability_score is null or viability_score between 0 and 100),
   score_version     text,
   safety_level      text not null default 'standard',
@@ -36,6 +40,12 @@ create table if not exists public.idea_candidates (
     or (viability_score is not null and score_version is not null and scored_at is not null)
   )
 );
+
+-- Idempotent: these two columns were added after the first version of this file.
+-- The ALTERs make re-running safe whether the table is new or already exists
+-- (create-table-if-not-exists alone would not add them to an existing table).
+alter table public.idea_candidates add column if not exists comp jsonb;
+alter table public.idea_candidates add column if not exists agent_desc text;
 
 create index if not exists idea_candidates_surface_idx
   on public.idea_candidates (mode, eligibility_status, viability_score desc);
