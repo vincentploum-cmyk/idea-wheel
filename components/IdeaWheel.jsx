@@ -503,6 +503,11 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
   if (evidence.length) sec('Research & evidence',
     `<p class="muted">The market read above was built from these findings (competitors, pricing, and demand signals gathered during the analysis).</p>${list(evidence)}`);
 
+  const sources = (comp?.sources || []).filter((s) => s && s.url);
+  if (sources.length) sec('Sources',
+    `<p class="muted">Real URLs returned by the market-research search. "Verified" means the page resolved live when the report was generated — checked in code, not claimed by the model.</p>` +
+    `<ul class="list">${sources.map((s) => `<li><a href="${e(s.url)}">${e(s.title || s.url.replace(/^https?:\/\/(www\.)?/, ''))}</a> <span class="src">${s.verified ? '✓ verified' : '⚠ unverified'}</span><br><span class="src">${e(s.url)}</span></li>`).join('')}</ul>`);
+
   const hasCursorPrompt = Boolean(gtm?.cursorPrompt && gtm.cursorPrompt.trim());
   if (hasCursorPrompt) sec('First prompt for Cursor / Claude / Codex', `<pre class="code">${e(gtm.cursorPrompt)}</pre>`);
 
@@ -521,14 +526,15 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
   const strengths = [comp?.gap, comp?.moat].filter((x) => x && String(x).trim()).slice(0, 2);
   const risks = (comp?.skeptic?.fatalRisks || []).filter(Boolean).slice(0, 2);
   const mustProve = (comp?.judge?.mustProveNext || []).filter(Boolean).slice(0, 3);
-  const evidenceCount = (comp?.evidence || []).filter(Boolean).length;
+  const srcSummary = comp?.sourceSummary || { total: 0, verified: 0 };
   const qualRows = [
     `<div class="qrow"><span>Viability score</span><b>${hasScore ? `${Math.round(scoreNum)}/100` : '—'}</b></div>`,
     `<div class="qrow"><span>Status</span><b>${e(statusLabel)}</b></div>`,
     `<div class="qrow"><span>Minimum required</span><b>${SCORE_POLICY.blueprintMin}</b></div>`,
     `<div class="qrow"><span>Score model</span><b>${e(SCORE_POLICY.version)}</b></div>`,
     confidence ? `<div class="qrow"><span>Confidence</span><b>${e(confidence)}</b></div>` : '',
-    evidenceCount ? `<div class="qrow"><span>Evidence reviewed</span><b>${evidenceCount} point${evidenceCount > 1 ? 's' : ''}</b></div>` : '',
+    srcSummary.total ? `<div class="qrow"><span>Sources reviewed</span><b>${srcSummary.total}</b></div>` : '',
+    srcSummary.total ? `<div class="qrow"><span>Verified (resolve live)</span><b>${srcSummary.verified}/${srcSummary.total}</b></div>` : '',
     dateStr ? `<div class="qrow"><span>Scored</span><b>${e(dateStr)}</b></div>` : '',
   ].filter(Boolean).join('');
   const BREAKDOWN_LABELS = {

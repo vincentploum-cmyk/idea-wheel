@@ -7,6 +7,7 @@ import { checkRateLimit } from '../../../../lib/rate-limit';
 import { classifyIdeaRisk, safetyNoticeFor } from '../../../../lib/idea-safety';
 import { recordCandidate, getCachedCandidate } from '../../../../lib/idea-candidates';
 import { computeDeterministicScore, legacyDimensions } from '../../../../lib/scoring';
+import { verifySources, summarizeSources } from '../../../../lib/source-verify';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -64,13 +65,24 @@ async function call(prompt, { maxTokens = 1800, webSearch = false, searchUses = 
   const data = await res.json();
 
   let text;
+  const citations = [];
   if (webSearch) {
-    text = (data.output || [])
+    const parts = (data.output || [])
       .filter(o => o.type === 'message')
       .flatMap(o => o.content || [])
-      .filter(c => c.type === 'output_text')
-      .map(c => c.text)
-      .join('');
+      .filter(c => c.type === 'output_text');
+    text = parts.map(c => c.text).join('');
+    // Capture the REAL source URLs the search returned (url_citation annotations).
+    // These are retrieved, not model-invented — the basis for verified sourcing.
+    const seen = new Set();
+    for (const part of parts) {
+      for (const ann of (part.annotations || [])) {
+        if (ann?.type === 'url_citation' && ann.url && !seen.has(ann.url)) {
+          seen.add(ann.url);
+          citations.push({ url: ann.url, title: String(ann.title || '').slice(0, 160) });
+        }
+      }
+    }
   } else {
     text = data.choices?.[0]?.message?.content || '';
   }
@@ -79,7 +91,7 @@ async function call(prompt, { maxTokens = 1800, webSearch = false, searchUses = 
     input_tokens: data.usage?.input_tokens ?? data.usage?.prompt_tokens ?? 0,
     output_tokens: data.usage?.output_tokens ?? data.usage?.completion_tokens ?? 0,
   };
-  return { text, usage };
+  return { text, usage, citations };
 }
 
 function stripJsonFences(text) {
@@ -544,6 +556,10 @@ export async function POST(request) {
         const scoutCall = await call(scoutPrompt(agentDesc, modeName, retrieval), { webSearch: true, maxTokens: 2200 });
         const scoutParsed = await parseJSON(scoutCall.text, 'validation scout');
         const scout = scoutParsed.value;
+        // Verify the REAL source URLs the search returned actually resolve, so the
+        // "evidence reviewed" count is checkable, not a claim. Never blocks the run.
+        let sources = [];
+        try { sources = await verifySources(scoutCall.citations, { limit: 8, timeoutMs: 4000 }); } catch {}
         const players = (Array.isArray(scout.players) ? scout.players : [])
           .map((p) => stripCitationNoise(p?.name)).filter(Boolean).slice(0, 4);
         send({
@@ -602,6 +618,8 @@ export async function POST(request) {
         });
 
         const comp = buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval, validationRow.id);
+        comp.sources = sources;
+        comp.sourceSummary = summarizeSources(sources);
 
         // Safety runs on a separate axis from the score — a strong market read
         // never clears a clinical/health-sensitive concern. Attach the notice so
