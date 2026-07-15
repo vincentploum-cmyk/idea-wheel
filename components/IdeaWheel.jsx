@@ -452,11 +452,16 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     const players = (comp.players || []).slice(0, 4);
     const matrix = players.length
       ? `<div class="label">Competitor matrix</div><table class="ctable"><thead><tr><th>Player</th><th>Who they serve</th><th>What they miss here</th></tr></thead><tbody>${
-          players.map((p) => `<tr><td><strong>${e(p.name)}</strong>${p.sourceUrl ? `<br><a href="${e(p.sourceUrl)}" class="src">${e(p.sourceUrl.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, ''))}</a>` : '<br><span class="src">source unverified</span>'}</td><td>${e(p.targetCustomer || p.coverage || '—')}</td><td>${e(p.weakness || '—')}</td></tr>`).join('')
+          players.map((p) => `<tr><td><strong>${e(p.name)}</strong>${(p.sourceUrl && p.sourceVerified) ? `<br><a href="${e(p.sourceUrl)}" class="src">✓ ${e(p.sourceUrl.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, ''))}</a>` : '<br><span class="src">⚠ source unverified</span>'}</td><td>${e(p.targetCustomer || p.coverage || '—')}</td><td>${e(p.weakness || '—')}</td></tr>`).join('')
         }</tbody></table>`
       : '';
+    const marketSizeLine = comp.marketSize
+      ? `<p class="big">${e(comp.marketSize)}</p>` + (comp.marketSizeSource
+          ? `<p class="src">Source: <a href="${e(comp.marketSizeSource)}">${e(comp.marketSizeSource.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, ''))}</a> (verified)</p>`
+          : `<p class="src">⚠ Unverified estimate — no live source found for this figure.</p>`)
+      : '';
     sec('Competitor & gap',
-      (comp.marketSize ? `<p class="big">${e(comp.marketSize)}</p>` : '') +
+      marketSizeLine +
       (comp.gap ? `<p>${e(comp.gap)}</p>` : '') +
       matrix);
   }

@@ -313,6 +313,7 @@ Search the web for real competing products, SaaS tools, AI startups, and establi
 Return ONLY a JSON object (no fences):
 {
   "marketSize": "a CONCRETE number with its basis — a dollar figure with year/trend if you can find one (e.g. '$1.2B in 2024, growing ~8%/yr'), OR a specific count of the buyers (e.g. 'about 30,000 US marketing agencies'). Never write 'figures not available' — always give a real number or a concrete proxy count.",
+  "marketSizeSource": "the exact URL of the page this market-size figure came from — a real URL you saw in search. Omit this field if the number is your own estimate rather than from a specific source.",
   "landscape": "2-3 crisp, easy-to-read sentences summarizing the state of this market",
   "players": [{"name":"...","sourceUrl":"the real official product URL you actually saw in search — omit this field entirely if you are not certain it exists; never invent a URL","targetCustomer":"...","pricing":"...","coverage":"one plain sentence on how this player addresses (or ignores) THIS exact idea","weakness":"the SPECIFIC thing a new product could beat them on for THIS exact workflow — concrete and different for each player. Never a generic 'can be pricey' or 'complex for small teams'."}],
   "gap": "the specific unaddressed pain, named concretely (which task, which buyer), or 'No clear gap' if the market is well-served",
@@ -556,10 +557,27 @@ export async function POST(request) {
         const scoutCall = await call(scoutPrompt(agentDesc, modeName, retrieval), { webSearch: true, maxTokens: 2200 });
         const scoutParsed = await parseJSON(scoutCall.text, 'validation scout');
         const scout = scoutParsed.value;
-        // Verify the REAL source URLs the search returned actually resolve, so the
-        // "evidence reviewed" count is checkable, not a claim. Never blocks the run.
+        // Verify every real URL — search citations, each competitor's own page, and
+        // the market-size source — by actually fetching them. A link that doesn't
+        // resolve is marked unverified in code, not taken on the model's word.
+        // Never blocks the run.
         let sources = [];
-        try { sources = await verifySources(scoutCall.citations, { limit: 8, timeoutMs: 4000 }); } catch {}
+        let verifiedMap = new Map();
+        try {
+          const isUrl = (u) => typeof u === 'string' && /^https?:\/\//.test(u);
+          const playersArr = Array.isArray(scout.players) ? scout.players : [];
+          const extraUrls = [scout.marketSizeSource, ...playersArr.map((p) => p?.sourceUrl)]
+            .filter(isUrl).map((url) => ({ url, title: '' }));
+          const verified = await verifySources([...(scoutCall.citations || []), ...extraUrls], { limit: 16, timeoutMs: 4000 });
+          verifiedMap = new Map(verified.map((s) => [s.url, s.verified]));
+          // Real sources for the Sources section = the search citations that resolved.
+          const citationUrls = new Set((scoutCall.citations || []).map((c) => c.url));
+          sources = verified.filter((s) => citationUrls.has(s.url));
+          // Mark each competitor: verified only if its own page actually resolves.
+          for (const p of playersArr) {
+            if (p && typeof p === 'object') p.sourceVerified = isUrl(p.sourceUrl) ? !!verifiedMap.get(p.sourceUrl) : false;
+          }
+        } catch {}
         const players = (Array.isArray(scout.players) ? scout.players : [])
           .map((p) => stripCitationNoise(p?.name)).filter(Boolean).slice(0, 4);
         send({
@@ -620,6 +638,10 @@ export async function POST(request) {
         const comp = buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval, validationRow.id);
         comp.sources = sources;
         comp.sourceSummary = summarizeSources(sources);
+        // Bind the market-size number to its source: keep the link only if it
+        // actually resolves, else flag the figure as an unverified estimate.
+        comp.marketSizeVerified = scout.marketSizeSource ? !!verifiedMap.get(scout.marketSizeSource) : false;
+        comp.marketSizeSource = comp.marketSizeVerified ? scout.marketSizeSource : '';
 
         // Safety runs on a separate axis from the score — a strong market read
         // never clears a clinical/health-sensitive concern. Attach the notice so
