@@ -480,7 +480,24 @@ function IdeaCard({ item, index, catalogEntry, isUnlocked, creditBalance, unlock
 
 // ── Root client component ────────────────────────────────────────────────────
 
-export default function IdeasClient({ user, catalogData: initialCatalog = {}, ideaUnlocks: initialUnlocks = {}, creditBalance: initialBalance = 0, unlockCounts = {} }) {
+function VettedIdea({ item }) {
+  const modeLabel = item.mode === 'consumer' ? 'Consumer' : 'B2B';
+  const title = item.title || `${item.workflow} for ${item.industry}`;
+  return (
+    <div style={{ border: '2px solid #111', borderRadius: 12, padding: '18px 20px', background: '#fff', boxShadow: '4px 4px 0 #111' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{ minWidth: 0 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', opacity: 0.55 }}>{modeLabel} · {item.industry}</span>
+          <h3 style={{ margin: '4px 0 0', fontSize: 18, fontWeight: 800, textTransform: 'capitalize' }}>{title}</h3>
+        </div>
+        <span style={{ flexShrink: 0, fontWeight: 900, fontSize: 15, color: '#111', background: '#FFE000', border: '2px solid #111', borderRadius: 6, padding: '3px 9px' }}>{item.viability_score}</span>
+      </div>
+      {item.summary && <p style={{ margin: '10px 0 0', fontSize: 14, lineHeight: 1.55, opacity: 0.8 }}>{item.summary}</p>}
+    </div>
+  );
+}
+
+export default function IdeasClient({ user, catalogData: initialCatalog = {}, ideaUnlocks: initialUnlocks = {}, creditBalance: initialBalance = 0, unlockCounts = {}, vetted = [] }) {
   const [ideaUnlocks, setIdeaUnlocks] = useState(initialUnlocks);
   const [creditBalance, setCreditBalance] = useState(initialBalance);
   // Locked ideas arrive with teaser only; the full research/blueprint is merged
@@ -531,6 +548,18 @@ export default function IdeasClient({ user, catalogData: initialCatalog = {}, id
                 onUnlocked={handleUnlocked}
               />
             ))}
+
+            {/* Community-vetted: canonical ideas real founders have validated at
+                60+. Grows as people use the wheel; hidden until there are any. */}
+            {vetted.length > 0 && (
+              <div style={{ marginTop: 24 }}>
+                <h2 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 6px' }}>Vetted by founders</h2>
+                <p style={{ fontSize: 14, opacity: 0.65, margin: '0 0 18px' }}>Every idea here scored 60+ in a real market check run by someone on IdeaReels — no idea appears until it clears the bar.</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {vetted.map((item) => <VettedIdea key={item.combo_key} item={item} />)}
+                </div>
+              </div>
+            )}
 
             {/* Bottom CTA */}
             <div style={{

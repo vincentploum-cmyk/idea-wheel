@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase-server';
 import { hasUnlockedIdea, getBalance } from '@/lib/credits';
 import { getAllCatalogData, getUnlockCounts } from '@/lib/catalog-store';
 import { IDEA_EXAMPLES } from '@/lib/idea-examples';
+import { listVettedCandidates } from '@/lib/idea-candidates';
 
 export const metadata = {
   title: 'Startup Ideas Library — Pre-Validated with AI Market Research',
@@ -31,9 +32,12 @@ export default async function IdeasPage() {
 
   const premiumSlugs = IDEA_EXAMPLES.filter(i => i.score >= 80).map(i => i.slug);
 
-  const [fullCatalog, unlockCounts] = await Promise.all([
+  const [fullCatalog, unlockCounts, vetted] = await Promise.all([
     getAllCatalogData().catch(() => ({})),
     getUnlockCounts(premiumSlugs).catch(() => ({})),
+    // The pre-scored pool (Option C): canonical ideas real users have validated
+    // at 60+. Empty until the idea-candidates migration runs and validations flow.
+    listVettedCandidates({ limit: 12 }).catch(() => []),
   ]);
 
   // Per-idea unlock state for this user
@@ -89,6 +93,7 @@ export default async function IdeasPage() {
         ideaUnlocks={ideaUnlocks}
         creditBalance={creditBalance}
         unlockCounts={unlockCounts}
+        vetted={vetted}
       />
     </PopitoShell>
   );

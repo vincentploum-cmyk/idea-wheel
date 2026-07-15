@@ -5,6 +5,7 @@ import { buildRetrievalContext } from '../../../../lib/moat-retrieval';
 import { ensureSessionId, recordValidation } from '../../../../lib/moat-store';
 import { checkRateLimit } from '../../../../lib/rate-limit';
 import { classifyIdeaRisk, safetyNoticeFor } from '../../../../lib/idea-safety';
+import { recordCandidate } from '../../../../lib/idea-candidates';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -562,6 +563,17 @@ export async function POST(request) {
         const safety = classifyIdeaRisk({ action, workflow, industry, freeformIdea: sanitised, modeName });
         if (safety.level !== 'standard') {
           comp.safety = { level: safety.level, reasons: safety.reasons, notice: safetyNoticeFor(safety.level) };
+        }
+
+        // Feed the canonical pre-scored pool (Option C). Only structured combos
+        // qualify — a freeform idea has no canonical workflow/industry to key on.
+        // Fire-and-forget so a pool write never blocks or fails the response.
+        if (action && workflow && industry) {
+          recordCandidate({
+            mode: modeName, action, workflow, industry,
+            score: comp.score, safetyLevel: safety.level,
+            title: comp.title, summary: comp.plainSummary || comp.verdict, gap: comp.gap,
+          }).catch(() => {});
         }
 
         send({ t: 'stage', key: 'eval', status: 'done', label: 'Putting your report together…' });
