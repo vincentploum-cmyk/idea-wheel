@@ -2,8 +2,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
+import { SCORE_POLICY } from '@/lib/score-policy';
 
-const SCORE_COLOR = (s) => s >= 80 ? '#15803D' : s >= 61 ? '#B45309' : '#B91C1C';
+const SCORE_COLOR = (s) => s >= SCORE_POLICY.premiumMin ? '#15803D' : s >= SCORE_POLICY.visibleMin ? '#B45309' : '#B91C1C';
 
 function StatusBadge({ idea }) {
   if (idea.blueprint_status === 'complete') {

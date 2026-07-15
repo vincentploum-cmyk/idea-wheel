@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import { buildAdaptiveGeneratorConfig } from '../lib/generator-config.js';
+import { buildAdaptiveGeneratorConfig, DEFAULT_MODE_CONFIGS } from '../lib/generator-config.js';
 
 // No training data — pure defaults
 const config = buildAdaptiveGeneratorConfig();
@@ -78,4 +78,32 @@ describe('B2B combinations', () => {
       }
     }
   });
+});
+
+// Fail-closed: every workflow a user can actually LAND ON (i.e. reachable through
+// some action's pairMap) must have an explicit curated audience/industry map. A
+// missing entry is what made the wheel silently fall back to the ENTIRE audience
+// bank — the audit's central consumer-quality defect. This test regresses if any
+// reachable workflow loses its map.
+describe('Workflow→industry map completeness (no silent fallback)', () => {
+  for (const modeKey of ['b2b', 'consumer']) {
+    const defaults = DEFAULT_MODE_CONFIGS[modeKey];
+    const reachable = new Set(Object.values(defaults.pairMap).flat());
+
+    test(`[${modeKey}] every reachable workflow has a non-empty industry map`, () => {
+      const missing = [...reachable].filter(
+        (wf) => !Array.isArray(defaults.workflowIndustryMap[wf]) || defaults.workflowIndustryMap[wf].length === 0
+      );
+      expect(missing).toEqual([]);
+    });
+
+    test(`[${modeKey}] every mapped industry exists in the industry bank`, () => {
+      const bank = new Set(defaults.banks[2]);
+      for (const [wf, industries] of Object.entries(defaults.workflowIndustryMap)) {
+        for (const ind of industries) {
+          expect({ wf, ind, inBank: bank.has(ind) }).toEqual({ wf, ind, inBank: true });
+        }
+      }
+    });
+  }
 });

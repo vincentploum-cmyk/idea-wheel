@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from "react"
 import { CREDIT_PACKAGES } from "@/lib/pricing";
 import { createClient } from "@/lib/supabase-browser";
 import { DEFAULT_MODE_CONFIGS, buildGeneratorIdea } from "@/lib/generator-config";
+import { SCORE_POLICY, hasPotential, isPremium } from "@/lib/score-policy";
+import { classifyIdeaRisk } from "@/lib/idea-safety";
 
 /* ─── IDEA SEGMENTS ──────────────────────────────────────────────── */
 const SEGMENTS = [
@@ -455,6 +457,37 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
   const hasCursorPrompt = Boolean(gtm?.cursorPrompt && gtm.cursorPrompt.trim());
   if (hasCursorPrompt) sec('First prompt for Cursor / Claude / Codex', `<pre class="code">${e(gtm.cursorPrompt)}</pre>`);
 
+  // Qualification block — the audit's #1 blueprint point: never hand someone a
+  // "complete plan" without showing whether the idea actually cleared the bar,
+  // on what score, and with what caveats. Built from the same server score.
+  const rawScore = comp?.score;
+  const scoreNum = Number(rawScore);
+  // null coerces to 0 via Number(), so guard it explicitly — a missing score is
+  // "not scored", never a real 0.
+  const hasScore = rawScore !== null && rawScore !== undefined && Number.isFinite(scoreNum);
+  const qualified = hasScore && scoreNum >= SCORE_POLICY.visibleMin;
+  const statusLabel = !hasScore ? 'Manual review — not scored'
+    : qualified ? 'Qualified' : `Manual review — below the ${SCORE_POLICY.visibleMin} bar`;
+  const confidence = comp?.judge?.confidence ? String(comp.judge.confidence) : '';
+  const strengths = [comp?.gap, comp?.moat].filter((x) => x && String(x).trim()).slice(0, 2);
+  const risks = (comp?.skeptic?.fatalRisks || []).filter(Boolean).slice(0, 2);
+  const qualRows = [
+    `<div class="qrow"><span>Viability score</span><b>${hasScore ? `${Math.round(scoreNum)}/100` : '—'}</b></div>`,
+    `<div class="qrow"><span>Status</span><b>${e(statusLabel)}</b></div>`,
+    `<div class="qrow"><span>Visibility threshold</span><b>${SCORE_POLICY.visibleMin}+</b></div>`,
+    `<div class="qrow"><span>Score version</span><b>${e(SCORE_POLICY.version)}</b></div>`,
+    confidence ? `<div class="qrow"><span>Confidence</span><b>${e(confidence)}</b></div>` : '',
+    dateStr ? `<div class="qrow"><span>Scored</span><b>${e(dateStr)}</b></div>` : '',
+  ].filter(Boolean).join('');
+  const qualBlock =
+    `<div class="qual ${qualified ? 'qual--ok' : 'qual--review'}">
+      <div class="qualhead">${qualified ? 'Qualified opportunity' : 'Needs manual review'}</div>
+      <div class="qgrid">${qualRows}</div>
+      ${strengths.length ? `<div class="qlabel">Why it passed</div><ul class="qlist">${strengths.map((s) => `<li>${e(s)}</li>`).join('')}</ul>` : ''}
+      ${risks.length ? `<div class="qlabel">Where it could still fail</div><ul class="qlist">${risks.map((s) => `<li>${e(s)}</li>`).join('')}</ul>` : ''}
+      ${comp?.safety?.notice ? `<div class="qsafety">⚠️ ${e(comp.safety.notice)}</div>` : ''}
+    </div>`;
+
   return `<!doctype html><html><head><meta charset="utf-8"><title>${e(name)} — Complete plan</title>
 <style>
   @page { size: A4; margin: 16mm; }
@@ -466,6 +499,20 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
   .cover h1 { font-size: 34pt; font-weight: 900; letter-spacing: -.02em; margin: 16px 0 6px; }
   .cover .sub { font-size: 14pt; color: #333; margin: 0 0 18px; max-width: 85%; }
   .cover .meta { font-size: 10.5pt; color: #666; margin-top: auto; }
+  .qual { border: 3px solid #111; border-radius: 10px; padding: 12px 16px; margin: 6px 0 18px; background: #fff; }
+  .qual--ok { border-color: #15803D; }
+  .qual--review { border-color: #CA8A04; }
+  .qualhead { font-weight: 900; text-transform: uppercase; letter-spacing: .08em; font-size: 11pt; margin-bottom: 8px; }
+  .qual--ok .qualhead { color: #15803D; }
+  .qual--review .qualhead { color: #B45309; }
+  .qgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; }
+  .qrow { display: flex; justify-content: space-between; gap: 10px; font-size: 10.5pt; border-bottom: 1px dotted #ccc; padding: 2px 0; }
+  .qrow span { color: #666; }
+  .qrow b { font-weight: 800; text-align: right; }
+  .qlabel { font-weight: 900; text-transform: uppercase; letter-spacing: .07em; font-size: 9pt; color: #666; margin: 10px 0 3px; }
+  ul.qlist { margin: 2px 0 0; padding-left: 18px; font-size: 10.5pt; }
+  ul.qlist li { margin: 2px 0; }
+  .qsafety { margin-top: 10px; background: #FEF2F2; border: 2px solid #DC2626; border-radius: 8px; padding: 8px 12px; font-size: 10pt; line-height: 1.5; }
   .brand { font-weight: 900; color: #111; }
   .sec { page-break-inside: avoid; margin: 0 0 9mm; }
   .sec--long { page-break-inside: auto; }
@@ -503,6 +550,7 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     <span class="kicker">The complete plan</span>
     <h1>${e(name)}</h1>
     <p class="sub">${e(sentence)}</p>
+    ${qualBlock}
     <div class="meta"><span class="brand">IdeaReels</span> · ideareels.io${dateStr ? ' · ' + e(dateStr) : ''}</div>
   </div>
   ${sections.join('\n')}
@@ -1718,7 +1766,7 @@ export default function IdeaWheel() {
                   <span>{validating || pendingOwnValidate ? 'Analyzing…' : 'Get my score!'}</span>
                 </button>
                 <p style={{marginTop:12, fontSize:12, color:'#888', fontFamily:'var(--font-body)', fontWeight:500}}>
-                  🔒 Your idea is never stored or shared — it's only used to run your analysis.
+                  🔒 Private to your account. We save it so it shows in your history — never sold, never public without your say-so.
                 </p>
               </div>
             </div>
@@ -1773,10 +1821,10 @@ export default function IdeaWheel() {
 
               {comp && !validating && (() => {
                 const score = comp.score ?? 0;
-                const potential = score >= 61;                 // gates gap, key players, blueprint-forward CTA
-                const advice = score >= 80
+                const potential = hasPotential(score);          // gates gap, key players, blueprint-forward CTA (>= 60)
+                const advice = isPremium(score)
                   ? { label: "Get that Blueprint!", tone: "good" }
-                  : score >= 61
+                  : potential
                     ? { label: "This idea has potential", tone: "warn" }
                     : score >= 40
                       ? { label: "Crowded — but there may be an angle", tone: "warn" }
@@ -1784,10 +1832,18 @@ export default function IdeaWheel() {
                 const premise = cleanValidationText(comp.premiseNote || "");
                 const verdictLines = splitValidationBullets(comp.verdictReasoning || comp.verdict, 3);
                 // Funnel: 61-79 → deep research first (1cr); 80+ → blueprint (2cr) with research optional.
-                const deepPrimary = potential && !deepResearch && score < 80;
+                const deepPrimary = potential && !deepResearch && !isPremium(score);
                 const goBlueprint = () => { goTo("blueprint"); if (!bpDone && !bpRunning) runBlueprint(); };
                 return (
                 <div style={{marginTop:24}}>
+                {comp.safety?.notice && (
+                  <div style={{marginTop:8, marginBottom:8, padding:'14px 16px', background: comp.safety.level === 'clinical_high_risk' ? '#FEF2F2' : '#FEFCE8', border: `2px solid ${comp.safety.level === 'clinical_high_risk' ? '#DC2626' : '#CA8A04'}`, borderRadius:8, fontSize:13, lineHeight:1.55, fontFamily:'var(--font-body)', color:'#1a1a1a', fontWeight:500}}>
+                    <strong style={{display:'block', marginBottom:4}}>
+                      {comp.safety.level === 'clinical_high_risk' ? '⚠️ Health-sensitive idea — safety check needed' : 'ℹ️ Heads up'}
+                    </strong>
+                    {comp.safety.notice}
+                  </div>
+                )}
                 <div className="su-validate-grid" style={{marginTop:16}}>
                   {/* 0 — Plain-English lead: the whole market read in one digestible bite */}
                   {comp.plainSummary && (

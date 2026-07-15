@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { buildRetrievalContext } from '../../../../lib/moat-retrieval';
 import { ensureSessionId, recordValidation } from '../../../../lib/moat-store';
 import { checkRateLimit } from '../../../../lib/rate-limit';
+import { classifyIdeaRisk, safetyNoticeFor } from '../../../../lib/idea-safety';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -554,6 +555,14 @@ export async function POST(request) {
         });
 
         const comp = buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval, validationRow.id);
+
+        // Safety runs on a separate axis from the score — a strong market read
+        // never clears a clinical/health-sensitive concern. Attach the notice so
+        // the validation screen and the blueprint surface it.
+        const safety = classifyIdeaRisk({ action, workflow, industry, freeformIdea: sanitised, modeName });
+        if (safety.level !== 'standard') {
+          comp.safety = { level: safety.level, reasons: safety.reasons, notice: safetyNoticeFor(safety.level) };
+        }
 
         send({ t: 'stage', key: 'eval', status: 'done', label: 'Putting your report together…' });
         send({

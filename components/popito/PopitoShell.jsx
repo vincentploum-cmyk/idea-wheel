@@ -154,7 +154,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta, noB
                   <div className="subscribe_title">
                     <h3>Your ideas stay private.</h3>
                     <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: '6px 0 0', lineHeight: 1.55, maxWidth: 320 }}>
-                      IdeaReels never stores or shares the ideas you enter. Your concept is used only to run your analysis — nothing is saved on our end.
+                      Your ideas are private to your account. We save the ideas you generate, research, and blueprint so you get history and can pick up where you left off — and we never sell them or make them public without your say-so.
                     </p>
                   </div>
                   <div className="subscribe_form">
