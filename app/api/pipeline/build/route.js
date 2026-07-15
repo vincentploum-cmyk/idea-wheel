@@ -281,6 +281,8 @@ function compactDesign(design) {
   return {
     name: shortText(design?.name, 60),
     tagline: shortText(design?.tagline, 120),
+    niche: shortText(design?.niche, 200),
+    landingAngle: shortText(design?.landingAngle, 200),
     problemEvidence: shortList(design?.problemEvidence, 4, 140),
     differentiator: shortText(design?.differentiator, 180),
     coreFeatures: shortList(design?.coreFeatures, 5, 100),
@@ -312,6 +314,9 @@ function compactGtm(gtm) {
     stack: shortList(gtm?.stack, 8, 40),
     buildTime: shortText(gtm?.buildTime, 80),
     whyNow: shortText(gtm?.whyNow, 180),
+    // cursorPrompt MUST survive compaction — the rewrite stage feeds this back as
+    // the draft, and dropping it here silently loses the build prompt from the plan.
+    cursorPrompt: gtm?.cursorPrompt || undefined,
   };
 }
 
