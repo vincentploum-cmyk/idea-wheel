@@ -408,8 +408,11 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     const takes = (o.takeaways || []).length ? `<ul class="takes">${o.takeaways.map((t) => `<li>${e(t)}</li>`).join('')}</ul>` : '';
     return summary + takes;
   };
+  // Models often prefix steps with their own "1. " — strip it so an <ol> doesn't
+  // render "1. 1." (the audit's duplicated-numbering defect).
+  const stripNum = (s) => String(s || '').replace(/^\s*\d+[.)]\s*/, '');
   const list = (arr, ordered) => (arr || []).length
-    ? `<${ordered ? 'ol' : 'ul'} class="list">${arr.map((x) => `<li>${e(x)}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>` : '';
+    ? `<${ordered ? 'ol' : 'ul'} class="list">${arr.map((x) => `<li>${e(ordered ? stripNum(x) : x)}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>` : '';
 
   const sections = [];
   let secN = 0;
@@ -471,7 +474,7 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
   if (infra) {
     const svc = (infra.services || []).map((s) => {
       const meta = [s.freeTier, s.setupTime ? `~${s.setupTime}` : ''].filter(Boolean).map((m) => e(m)).join(' · ');
-      const steps = (s.setupSteps || []).length ? `<ol class="list">${s.setupSteps.map((st) => `<li>${e(st)}</li>`).join('')}</ol>` : '';
+      const steps = (s.setupSteps || []).length ? `<ol class="list">${s.setupSteps.map((st) => `<li>${e(stripNum(st))}</li>`).join('')}</ol>` : '';
       const doc = s.docsUrl ? `<div class="doclink">Official setup guide: ${e(s.docsUrl)}</div>` : '';
       return `<div class="svc"><div class="svchead"><b>${e(s.name)}</b>${meta ? ` <span class="svcmeta">${meta}</span>` : ''}</div>${s.purpose ? `<p class="muted">${e(s.purpose)}</p>` : ''}${steps}${doc}</div>`;
     }).join('');

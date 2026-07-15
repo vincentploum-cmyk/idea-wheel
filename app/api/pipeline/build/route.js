@@ -442,7 +442,7 @@ Validation: ${JSON.stringify({ gap: comp.gap, moat: comp.moat, judge: comp.judge
 Current design: ${JSON.stringify(design, null, 2)}
 Critique: ${JSON.stringify(critique, null, 2)}
 
-Return ONLY JSON with the exact same schema as before.`;
+Return ONLY the corrected JSON with the schema's keys at the TOP LEVEL. Do NOT nest it under any wrapper key (no "Current design", no "result").`;
 }
 
 function gtmPrompt(agentDesc, comp, design, retrieval) {
@@ -518,7 +518,7 @@ Current GTM: ${JSON.stringify(compactGtm(gtm), null, 2)}
 Validation: ${JSON.stringify(compactComp(comp), null, 2)}
 Critique: ${JSON.stringify(critique, null, 2)}
 
-Return ONLY JSON with the same schema as before.`;
+Return ONLY the corrected JSON with the schema's keys at the TOP LEVEL. Do NOT nest it under any wrapper key (no "Current GTM", no "result").`;
 }
 
 function infraPrompt(design, gtm, comp, retrieval) {
@@ -590,7 +590,7 @@ ${infraPrompt(design, gtm, comp, retrieval)}
 Current infra draft: ${JSON.stringify(infra, null, 2)}
 Critique to address: ${JSON.stringify(critique, null, 2)}
 
-Return ONLY the corrected JSON with the same keys.`;
+Return ONLY the corrected JSON with the schema's keys at the TOP LEVEL. Do NOT nest it under any wrapper key (no "Current infra", no "result").`;
 }
 
 function protoSpecPrompt(design, gtm, comp, infra, retrieval) {
@@ -723,10 +723,24 @@ ${prototypeHtml.slice(0, 18000)}
 Return improved full self-contained HTML starting with <!DOCTYPE html>. No markdown.`;
 }
 
+// Defensive: rewrite stages sometimes echo the prompt's label as a wrapper key,
+// e.g. {"Current GTM": {...the real object...}}. A real stage result always has
+// several top-level keys, so an object with exactly one key whose value is an
+// object is that failure — unwrap it back to the inner object.
+function unwrapWrapper(obj) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+  const keys = Object.keys(obj);
+  if (keys.length === 1) {
+    const inner = obj[keys[0]];
+    if (inner && typeof inner === 'object' && !Array.isArray(inner)) return inner;
+  }
+  return obj;
+}
+
 async function runJsonStage({ prompt, model, maxTokens, critiquePrompt, rewritePrompt }) {
   const primary = await call(prompt, { model, maxTokens });
   const primaryParsed = await parseJSON(primary.text, `${model} primary stage`);
-  let parsed = primaryParsed.value;
+  let parsed = unwrapWrapper(primaryParsed.value);
   let totalUsage = mergeUsage(primary.usage, primaryParsed.usage);
   let totalCostUsd = primary.costUsd || 0;
   totalCostUsd += primaryParsed.costUsd || 0;
@@ -743,7 +757,7 @@ async function runJsonStage({ prompt, model, maxTokens, critiquePrompt, rewriteP
     if (critique.needsRevision || (critique.scores?.overall || 100) < 78) {
       const rewriteCall = await call(rewritePrompt(parsed, critique), { model, maxTokens });
       const rewriteParsed = await parseJSON(rewriteCall.text, `${model} rewrite stage`);
-      parsed = rewriteParsed.value;
+      parsed = unwrapWrapper(rewriteParsed.value);
       totalUsage = mergeUsage(totalUsage, rewriteCall.usage, rewriteParsed.usage);
       totalCostUsd += rewriteCall.costUsd || 0;
       totalCostUsd += rewriteParsed.costUsd || 0;
