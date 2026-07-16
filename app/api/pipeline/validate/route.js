@@ -630,7 +630,10 @@ export async function POST(request) {
           const seenCite = new Set();
           const allCitations = [...(scoutCall.citations || []), ...sweepCitations, ...reported]
             .filter((c) => c && c.url && !seenCite.has(c.url) && seenCite.add(c.url));
-          const verified = await verifySources([...allCitations, ...extraUrls], { limit: 20, timeoutMs: 4000 });
+          // Competitor URLs often repeat the reported sources — dedupe across both
+          // so a page is fetched (and listed) once.
+          const extraDeduped = extraUrls.filter((c) => !seenCite.has(c.url) && seenCite.add(c.url));
+          const verified = await verifySources([...allCitations, ...extraDeduped], { limit: 24, timeoutMs: 4000 });
           verifiedMap = new Map(verified.map((s) => [s.url, s.verified]));
           // Real sources for the Sources section = the search citations that resolved.
           const citationUrls = new Set(allCitations.map((c) => c.url));
@@ -638,6 +641,18 @@ export async function POST(request) {
           // Mark each competitor: verified only if its own page actually resolves.
           for (const p of playersArr) {
             if (p && typeof p === 'object') p.sourceVerified = isUrl(p.sourceUrl) ? !!verifiedMap.get(p.sourceUrl) : false;
+          }
+          // A sweep player often arrives without its own sourceUrl even though we
+          // verified its site among the sources. Match by name → hostname so it
+          // links to the page we actually confirmed (e.g. EbixCOI → ebixcoi.com).
+          const normName = (n) => String(n || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const hostOf = (u) => { try { return normName(new URL(u).hostname); } catch { return ''; } };
+          for (const p of playersArr) {
+            if (!p || typeof p !== 'object' || p.sourceVerified) continue;
+            const key = normName(p.name);
+            if (key.length < 4) continue;
+            const hit = verified.find((v) => v.verified && hostOf(v.url).includes(key));
+            if (hit) { p.sourceUrl = hit.url; p.sourceVerified = true; }
           }
           // CONTENT-verify the market-size figure: the number must actually appear
           // on its source page — not just that the page loads.

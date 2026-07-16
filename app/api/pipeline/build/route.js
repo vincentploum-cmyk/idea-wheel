@@ -982,6 +982,20 @@ Search for the most current information available as of ${today}. Prioritise dev
         // Plain-English readability check on this paid deliverable.
         const launchResult = await withPlainEnglish('Launch & go-to-market plan', launchStage.result);
 
+        // Reconcile the revenue goal against the price the plan actually sets.
+        // Models routinely state "$4,500 = 15 × $300/mo" while pricing the product
+        // at $450 — recompute the arithmetic in code so the plan can't contradict
+        // itself. Keeps the model's customer count, fixes the price and the total.
+        try {
+          const price = parseMoney(launchResult?.pricing?.price);
+          const m = String(launchResult?.revenueGoal || '').match(/(\d+)\s*[×x]\s*\$?[\d,.]+/i);
+          const count = m ? Number(m[1]) : NaN;
+          if (Number.isFinite(price) && price > 0 && Number.isFinite(count) && count > 0) {
+            const total = Math.round(count * price);
+            launchResult.revenueGoal = `$${total.toLocaleString('en-US')} = ${count} × $${price}/mo`;
+          }
+        } catch {}
+
         await saveBlueprintProgress({
           userId: user.id,
           validationId,

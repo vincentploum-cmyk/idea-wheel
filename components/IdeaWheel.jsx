@@ -464,7 +464,9 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
       (gtm.whyNow ? `<div class="label">Why now</div><p>${e(gtm.whyNow)}</p>` : ''));
   }
   if (comp) {
-    const players = (comp.players || []).slice(0, 4);
+    // Show up to 8 — the completeness sweep's extra finds are the whole point of
+    // running it, so don't truncate them out of the matrix.
+    const players = (comp.players || []).slice(0, 8);
     const matrix = players.length
       ? `<div class="label">Competitor matrix</div><table class="ctable"><thead><tr><th>Player</th><th>Who they serve</th><th>What they miss here</th></tr></thead><tbody>${
           players.map((p) => `<tr><td><strong>${e(p.name)}</strong>${(p.sourceUrl && p.sourceVerified) ? `<br><a href="${e(p.sourceUrl)}" class="src">✓ ${e(p.sourceUrl.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, ''))}</a>` : '<br><span class="src">⚠ source unverified</span>'}</td><td>${e(p.targetCustomer || p.coverage || '—')}</td><td>${e(p.weakness || '—')}</td></tr>`).join('')
@@ -523,7 +525,12 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
   if (evidence.length) sec('Research & evidence',
     `<p class="muted">The market read above was built from these findings (competitors, pricing, and demand signals gathered during the analysis).</p>${list(evidence)}`);
 
-  const sources = (comp?.sources || []).filter((s) => s && s.url);
+  // Dedupe by URL — the same page can arrive from both the model's reported
+  // sources and a competitor's own link. Verified wins over unverified.
+  const sources = Object.values((comp?.sources || []).filter((s) => s && s.url).reduce((acc, s) => {
+    if (!acc[s.url] || (s.verified && !acc[s.url].verified)) acc[s.url] = s;
+    return acc;
+  }, {}));
   if (sources.length) sec('Sources',
     `<p class="muted">Real URLs returned by the market-research search. "Verified" means the page resolved live when the report was generated — checked in code, not claimed by the model.</p>` +
     `<ul class="list">${sources.map((s) => `<li><a href="${e(s.url)}">${e(s.title || s.url.replace(/^https?:\/\/(www\.)?/, ''))}</a> <span class="src">${s.verified ? '✓ verified' : '⚠ unverified'}</span><br><span class="src">${e(s.url)}</span></li>`).join('')}</ul>`);
