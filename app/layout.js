@@ -77,8 +77,19 @@ const orgJsonLd = {
   name: 'IdeaReels',
   url: 'https://ideareels.io',
   logo: 'https://ideareels.io/ideareels-logo.svg',
-  sameAs: [],
-  contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', url: 'https://ideareels.io/faq' },
+  description: 'AI startup-idea generator and validator. Spin an idea, get an AI market verdict, unlock a full MVP blueprint.',
+  foundingDate: '2026',
+  // Populate this array with real social profile URLs (X/Twitter, LinkedIn,
+  // GitHub org, Product Hunt maker) as they go live. Google uses sameAs to
+  // connect the brand to its accounts in the knowledge panel; wrong URLs are
+  // worse than none.
+  sameAs: (process.env.NEXT_PUBLIC_ORG_SAMEAS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => /^https?:\/\//i.test(s)),
+  contactPoint: [
+    { '@type': 'ContactPoint', contactType: 'customer support', email: 'hello@ideareels.io', url: 'https://ideareels.io/contact', availableLanguage: ['English'] },
+  ],
 };
 
 export default function RootLayout({ children }) {

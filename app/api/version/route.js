@@ -7,7 +7,7 @@ import { RUBRIC_VERSION } from '../../../lib/scoring';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  return Response.json({
+  const body = {
     commit: process.env.RENDER_GIT_COMMIT || process.env.NEXT_PUBLIC_COMMIT_SHA || 'unknown',
     branch: process.env.RENDER_GIT_BRANCH || 'unknown',
     scorePolicy: {
@@ -25,5 +25,8 @@ export async function GET() {
       clientSuppliedScoreIgnored: true,
     },
     generatedAt: new Date().toISOString(),
+  };
+  return Response.json(body, {
+    headers: { 'Cache-Control': 'no-store, must-revalidate' },
   });
 }
