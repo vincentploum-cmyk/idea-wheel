@@ -9,6 +9,7 @@ import { recordCandidate, getCachedCandidate } from '../../../../lib/idea-candid
 import { computeDeterministicScore, legacyDimensions } from '../../../../lib/scoring';
 import { verifySources, summarizeSources, verifyClaim, verifyClaimsAgainstSources } from '../../../../lib/source-verify';
 import { logError } from '../../../../lib/error-log';
+import { markStart, markEnd } from '../../../../lib/metrics';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -550,6 +551,8 @@ export async function POST(request) {
       const send = (obj) => {
         try { controller.enqueue(encoder.encode(`${JSON.stringify(obj)}\n`)); } catch {}
       };
+      const timing = markStart('validate');
+      let timingStatus = 'ok';
       try {
         // Cache short-circuit: if this exact canonical idea (workflow+industry,
         // action folded into copy) was already validated under the current score
@@ -799,6 +802,7 @@ export async function POST(request) {
           cost: { input_tokens: usage.input_tokens, output_tokens: usage.output_tokens, cost_usd: costUsd },
         });
       } catch (err) {
+        timingStatus = 'error';
         await logError({
           scope: 'api:validate',
           error: err,
@@ -808,6 +812,7 @@ export async function POST(request) {
         });
         send({ t: 'error', error: 'Market check failed. Please try again.' });
       } finally {
+        markEnd(timing, { userId: user?.id, sessionId }, timingStatus);
         try { controller.close(); } catch {}
       }
     },

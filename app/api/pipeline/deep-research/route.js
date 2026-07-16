@@ -4,6 +4,7 @@ import { getBalance, deductCredits } from '../../../../lib/credits';
 import { clarify } from '../../../../lib/clarity';
 import { saveResearchedIdea } from '../../../../lib/saved-ideas';
 import { logError } from '../../../../lib/error-log';
+import { markStart, markEnd } from '../../../../lib/metrics';
 
 const DEEP_RESEARCH_COST = 1;
 
@@ -109,6 +110,8 @@ export async function POST(request) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Please sign in.', code: 'AUTH_REQUIRED' }, { status: 401 });
 
+  const timing = markStart('deep_research');
+  let timingStatus = 'ok';
   const { action, workflow, industry, connector, modeName, freeformIdea, comp, sessionId: rawSessionId } = await request.json();
   if (!freeformIdea && (!action || !workflow || !industry)) {
     return NextResponse.json({ error: 'Missing: action, workflow, industry (or freeformIdea)' }, { status: 400 });
@@ -167,8 +170,11 @@ export async function POST(request) {
       payload: { demandLevel: parsed?.demandLevel },
     }).catch(() => {});
 
+    markEnd(timing, { userId: user?.id, sessionId }, timingStatus);
     return NextResponse.json({ sessionId, research: parsed, balance: newBalance });
   } catch (err) {
+    timingStatus = 'error';
+    markEnd(timing, { userId: user?.id, sessionId }, timingStatus);
     await logError({
       scope: 'api:deep-research',
       error: err,

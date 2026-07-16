@@ -17,6 +17,7 @@ import { withPlainEnglish } from '../../../../lib/clarity';
 import { attachBlueprint, saveBlueprintProgress } from '../../../../lib/saved-ideas';
 import { checkRateLimit } from '../../../../lib/rate-limit';
 import { logError } from '../../../../lib/error-log';
+import { markStart, markEnd } from '../../../../lib/metrics';
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
 
@@ -774,6 +775,8 @@ async function runJsonStage({ prompt, model, maxTokens, critiquePrompt, rewriteP
 
 export async function POST(request) {
   const body = await request.json();
+  const timing = markStart(`build:${body?.stage || 'unknown'}`);
+  let timingStatus = 'ok';
   const {
     action,
     workflow,
@@ -810,6 +813,10 @@ export async function POST(request) {
   // Server-side cost — never trust client-supplied creditCost
   const blueprintCost = CREDIT_COSTS.blueprint;
   let charge = null;
+  const finishOk = (payload, init) => {
+    markEnd(timing, { userId: user?.id, sessionId, meta: { stage } }, 'ok');
+    return NextResponse.json(payload, init);
+  };
 
   try {
     if (stage === 'designer') {
@@ -849,7 +856,7 @@ export async function POST(request) {
         // Defensive: `reason` can be absent on a malformed helper result — never
         // let a missing string throw the 500 that hides the real ineligibility.
         const reason = eligibility.reason || 'ineligible';
-        return NextResponse.json({
+        return finishOk({
           error: 'idea_not_eligible',
           reason,
           score: eligibility.score ?? null,
@@ -894,7 +901,7 @@ export async function POST(request) {
           });
         }
       } else if (!debit.ok) {
-        return NextResponse.json({
+        return finishOk({
           error: debit.reason === 'insufficient_credits' ? 'Not enough credits for this blueprint.' : 'Unable to charge credits for this blueprint.',
           balance: debit.balance ?? null,
         }, { status: debit.reason === 'insufficient_credits' ? 402 : 400 });
@@ -997,7 +1004,7 @@ Search for the most current information available as of ${today}. Prioritise dev
           payload: { design: designerResult, critique: designerStage.critique },
         });
 
-        return NextResponse.json({
+        return finishOk({
           result: designerResult,
           critique: designerStage.critique,
           usage: designerStage.usage,
@@ -1064,7 +1071,7 @@ Search for the most current information available as of ${today}. Prioritise dev
           payload: { gtm: launchResult, critique: launchStage.critique },
         });
 
-        return NextResponse.json({
+        return finishOk({
           result: launchResult,
           critique: launchStage.critique,
           usage: launchStage.usage,
@@ -1111,7 +1118,7 @@ Search for the most current information available as of ${today}. Prioritise dev
           payload: { infra: infraResult },
         });
 
-        return NextResponse.json({
+        return finishOk({
           result: infraResult,
           critique: infraStage.critique,
           usage: infraStage.usage,
@@ -1224,7 +1231,7 @@ Search for the most current information available as of ${today}. Prioritise dev
           },
         });
 
-        return NextResponse.json({
+        return finishOk({
           result: prototypeHtml,
           protoSpec: spec,
           eval: prototypeEval,
@@ -1240,6 +1247,7 @@ Search for the most current information available as of ${today}. Prioritise dev
         return NextResponse.json({ error: `Unknown stage: ${stage}` }, { status: 400 });
     }
   } catch (err) {
+    timingStatus = 'error';
     if (charge?.status === 'authorized') {
       try {
         await addCredits(user.id, charge.amount, 'blueprint_refund', {
@@ -1271,6 +1279,7 @@ Search for the most current information available as of ${today}. Prioritise dev
       route: '/api/pipeline/build',
       meta: { validationId, sessionId, stage, refunded: charge?.status === 'authorized' },
     });
+    markEnd(timing, { userId: user?.id, sessionId, meta: { stage } }, timingStatus);
     return NextResponse.json({ error: 'Blueprint generation failed. Please try again.' }, { status: 500 });
   }
 }
