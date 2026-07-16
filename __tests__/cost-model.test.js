@@ -67,6 +67,23 @@ describe('computeCostModel — payment line + nonzero floors', () => {
   });
 });
 
+describe('computeCostModel — known metered rates correct $0 lines', () => {
+  test('Twilio at $0 is repriced at the real per-segment rate', () => {
+    const infra = {
+      usageAssumptions: { customers: 100 },
+      costItems: [
+        { service: 'Twilio', quantity: 1000, unit: 'messages', unitCost: 0 },
+        { service: 'Render', quantity: 1, unit: 'ws', unitCost: 25 },
+        { service: 'Neon Postgres', quantity: 1, unit: 'db', unitCost: 20 },
+      ],
+    };
+    const cm = computeCostModel(infra, { monthlyPrice: 0 }); // no payment line (price 0)
+    const twilio = cm.items.find((i) => /twilio/i.test(i.service));
+    expect(twilio.unitCost).toBe(0.0083);
+    expect(twilio.monthlyCost).toBe(8.3); // 1000 × 0.0083
+  });
+});
+
 describe('computeCostModel — enforced floors', () => {
   test('adds hosting + database baselines when the model omits them', () => {
     const cm = computeCostModel({ usageAssumptions: { customers: 50 }, costItems: [{ service: 'OpenAI', quantity: 1000, unit: 'req', unitCost: 0.002 }] }, { monthlyPrice: 100 });

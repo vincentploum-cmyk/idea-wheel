@@ -1,7 +1,8 @@
 import { describe, test, expect } from '@jest/globals';
-import { verifySource, verifySources, summarizeSources } from '../lib/source-verify.js';
+import { verifySource, verifySources, summarizeSources, verifyClaim, claimNeedles } from '../lib/source-verify.js';
 
 const fakeFetch = (status) => async () => ({ status });
+const fakeFetchBody = (status, body) => async () => ({ status, text: async () => body });
 
 describe('verifySource', () => {
   test('200 resolves → verified', async () => {
@@ -24,6 +25,37 @@ describe('verifySource', () => {
   test('network throw → unreachable, not verified', async () => {
     const throwing = async () => { throw new Error('boom'); };
     expect((await verifySource('https://example.com', { fetchImpl: throwing })).verified).toBe(false);
+  });
+});
+
+describe('claimNeedles', () => {
+  test('pulls significant numbers, drops tiny/noisy ones', () => {
+    expect(claimNeedles('$1.2 billion in 2024, growing ~8%/yr')).toEqual(['1.2', '2024']);
+    expect(claimNeedles('about 30,000 US firms')).toEqual(['30000']);
+    expect(claimNeedles('a handful')).toEqual([]);
+  });
+});
+
+describe('verifyClaim — content-level verification', () => {
+  test('number present on the page → contentMatch', async () => {
+    const html = '<html><body><h1>Market</h1><p>The market was $1.2 billion in 2024.</p></body></html>';
+    const r = await verifyClaim('https://example.com', '$1.2 billion in 2024', { fetchImpl: fakeFetchBody(200, html) });
+    expect(r.reachable).toBe(true);
+    expect(r.contentMatch).toBe(true);
+  });
+  test('page loads but the number is absent → no contentMatch', async () => {
+    const r = await verifyClaim('https://example.com', '$1.2 billion', { fetchImpl: fakeFetchBody(200, '<p>unrelated page about cats</p>') });
+    expect(r.reachable).toBe(true);
+    expect(r.contentMatch).toBe(false);
+  });
+  test('unreachable page → not reachable, no match', async () => {
+    const r = await verifyClaim('https://example.com', '$1.2 billion', { fetchImpl: fakeFetch(404) });
+    expect(r.reachable).toBe(false);
+    expect(r.contentMatch).toBe(false);
+  });
+  test('matches across comma formatting (30,000 vs 30000)', async () => {
+    const r = await verifyClaim('https://example.com', 'about 30,000 firms', { fetchImpl: fakeFetchBody(200, '<p>there are 30,000 firms</p>') });
+    expect(r.contentMatch).toBe(true);
   });
 });
 

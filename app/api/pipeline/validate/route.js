@@ -7,7 +7,7 @@ import { checkRateLimit } from '../../../../lib/rate-limit';
 import { classifyIdeaRisk, safetyNoticeFor } from '../../../../lib/idea-safety';
 import { recordCandidate, getCachedCandidate } from '../../../../lib/idea-candidates';
 import { computeDeterministicScore, legacyDimensions } from '../../../../lib/scoring';
-import { verifySources, summarizeSources } from '../../../../lib/source-verify';
+import { verifySources, summarizeSources, verifyClaim } from '../../../../lib/source-verify';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -563,10 +563,11 @@ export async function POST(request) {
         // Never blocks the run.
         let sources = [];
         let verifiedMap = new Map();
+        let marketSizeContentVerified = false;
         try {
           const isUrl = (u) => typeof u === 'string' && /^https?:\/\//.test(u);
           const playersArr = Array.isArray(scout.players) ? scout.players : [];
-          const extraUrls = [scout.marketSizeSource, ...playersArr.map((p) => p?.sourceUrl)]
+          const extraUrls = [...playersArr.map((p) => p?.sourceUrl)]
             .filter(isUrl).map((url) => ({ url, title: '' }));
           const verified = await verifySources([...(scoutCall.citations || []), ...extraUrls], { limit: 16, timeoutMs: 4000 });
           verifiedMap = new Map(verified.map((s) => [s.url, s.verified]));
@@ -576,6 +577,14 @@ export async function POST(request) {
           // Mark each competitor: verified only if its own page actually resolves.
           for (const p of playersArr) {
             if (p && typeof p === 'object') p.sourceVerified = isUrl(p.sourceUrl) ? !!verifiedMap.get(p.sourceUrl) : false;
+          }
+          // CONTENT-verify the market-size figure: the number must actually appear
+          // on its source page — not just that the page loads.
+          if (isUrl(scout.marketSizeSource)) {
+            try {
+              const claim = await verifyClaim(scout.marketSizeSource, scout.marketSize, { timeoutMs: 5000 });
+              marketSizeContentVerified = !!claim.contentMatch;
+            } catch {}
           }
         } catch {}
         const players = (Array.isArray(scout.players) ? scout.players : [])
@@ -614,6 +623,17 @@ export async function POST(request) {
         // Deterministic overall: the model extracted components; the score is
         // computed here so it is reproducible and the hard gates are enforced
         // in code, not left to the model's discretion.
+        // Evidence-verification signal: how much external evidence actually
+        // resolved. If NOTHING verifies (no reachable source and the market-size
+        // figure isn't on its page), the evidence can't be "strong" — gently cap
+        // evidenceStrength. Deliberately gentle + only at zero, because bot-walled
+        // real sites (Cloudflare 403) can false-negative; we never harshly tank a
+        // score on a noisy signal, we just refuse to call unbacked claims strong.
+        const verifiedEvidenceCount = summarizeSources(sources).verified + (marketSizeContentVerified ? 1 : 0);
+        if (verifiedEvidenceCount === 0 && evalResult.components && Number(evalResult.components.evidenceStrength) > 10) {
+          evalResult.components.evidenceStrength = 10;
+          evalResult.evidenceCapped = true;
+        }
         const det = computeDeterministicScore(evalResult.components, evalResult.gates);
         evalResult.deterministic = det;
         // Overwrite scores with the code-derived overall + legacy dimensions the
@@ -638,10 +658,11 @@ export async function POST(request) {
         const comp = buildFinalComp(agentDesc, scout, skeptic, judge, evalResult, retrieval, validationRow.id);
         comp.sources = sources;
         comp.sourceSummary = summarizeSources(sources);
-        // Bind the market-size number to its source: keep the link only if it
-        // actually resolves, else flag the figure as an unverified estimate.
-        comp.marketSizeVerified = scout.marketSizeSource ? !!verifiedMap.get(scout.marketSizeSource) : false;
-        comp.marketSizeSource = comp.marketSizeVerified ? scout.marketSizeSource : '';
+        // Bind the market-size number to its source: keep the link only if the
+        // FIGURE actually appears on the page, else flag it an unverified estimate.
+        comp.marketSizeVerified = marketSizeContentVerified;
+        comp.marketSizeSource = marketSizeContentVerified ? scout.marketSizeSource : '';
+        comp.evidenceCapped = Boolean(evalResult.evidenceCapped);
 
         // Safety runs on a separate axis from the score — a strong market read
         // never clears a clinical/health-sensitive concern. Attach the notice so

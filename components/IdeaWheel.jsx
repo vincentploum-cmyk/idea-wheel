@@ -415,8 +415,9 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     ? `<${ordered ? 'ol' : 'ul'} class="list">${arr.map((x) => `<li>${e(ordered ? stripNum(x) : x)}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>` : '';
 
   const sections = [];
+  const tocEntries = [];
   let secN = 0;
-  const sec = (title, body, cls = '') => { if (body && body.trim()) { secN += 1; sections.push(`<section class="sec ${cls}"><div class="sechead"><span class="secnum">${String(secN).padStart(2, '0')}</span><h2>${e(title)}</h2></div>${body}</section>`); } };
+  const sec = (title, body, cls = '') => { if (body && body.trim()) { secN += 1; tocEntries.push({ n: secN, title }); sections.push(`<section class="sec ${cls}"><div class="sechead"><span class="secnum">${String(secN).padStart(2, '0')}</span><h2>${e(title)}</h2></div>${body}</section>`); } };
 
   if (design) sec('Niche & Problem',
     plain(design) +
@@ -562,12 +563,18 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
       ${strengths.length ? `<div class="qlabel">Why it passed</div><ul class="qlist">${strengths.map((s) => `<li>${e(s)}</li>`).join('')}</ul>` : ''}
       ${risks.length ? `<div class="qlabel">Where it could still fail</div><ul class="qlist">${risks.map((s) => `<li>${e(s)}</li>`).join('')}</ul>` : ''}
       ${mustProve.length ? `<div class="qlabel">Must prove next</div><ul class="qlist">${mustProve.map((s) => `<li>${e(s)}</li>`).join('')}</ul>` : ''}
+      ${comp?.evidenceCapped ? `<div class="qsafety" style="background:#FEFCE8;border-color:#CA8A04">⚠️ No external source resolved live during the check, so the evidence score was capped — treat the numbers below as unverified estimates until confirmed.</div>` : ''}
       ${comp?.safety?.notice ? `<div class="qsafety">⚠️ ${e(comp.safety.notice)}</div>` : ''}
     </div>`;
 
   return `<!doctype html><html><head><meta charset="utf-8"><title>${e(name)} — Complete plan</title>
 <style>
-  @page { size: A4; margin: 16mm; }
+  @page { size: A4; margin: 16mm; @bottom-right { content: counter(page); font-size: 9pt; color: #999; } }
+  .label, .qlabel, .sechead { break-after: avoid; page-break-after: avoid; }
+  .toc { page-break-after: always; padding-top: 4mm; }
+  .toc .toclabel { font-weight: 900; text-transform: uppercase; letter-spacing: .1em; font-size: 11pt; border-bottom: 2px solid #111; padding-bottom: 6px; margin-bottom: 10px; }
+  .tocrow { display: flex; gap: 10px; padding: 4px 0; font-size: 11pt; border-bottom: 1px dotted #ddd; }
+  .tocnum { font-weight: 900; color: #999; min-width: 24px; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #111; font-size: 12pt; line-height: 1.55; }
@@ -638,6 +645,7 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     ${qualBlock}
     <div class="meta"><span class="brand">IdeaReels</span> · ideareels.io${dateStr ? ' · ' + e(dateStr) : ''}</div>
   </div>
+  ${tocEntries.length > 3 ? `<div class="toc"><div class="toclabel">Contents</div>${tocEntries.map((t) => `<div class="tocrow"><span class="tocnum">${String(t.n).padStart(2, '0')}</span><span class="toctitle">${e(t.title)}</span></div>`).join('')}</div>` : ''}
   ${sections.join('\n')}
   <div class="close">
     <div class="big2">That's a company in three spins.</div>
