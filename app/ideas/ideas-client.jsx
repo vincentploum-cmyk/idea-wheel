@@ -309,6 +309,8 @@ function IdeaUnlockCTA({ slug, creditBalance, user, onUnlocked }) {
       if (!res.ok) {
         if (res.status === 402 || data.error === 'insufficient_credits') {
           window.location.href = '/pricing';
+        } else if (res.status === 409 || data.error === 'content_not_ready') {
+          setError('This idea’s full research is being prepared. Check back shortly — you were not charged.');
         } else {
           setError(data.error || 'Something went wrong.');
         }

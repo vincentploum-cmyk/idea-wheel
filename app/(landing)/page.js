@@ -8,22 +8,22 @@ import { CheckIcon } from '@/components/popito/icons';
 
 const PACK_FEATURES = {
   starter: [
-    '5 credits to spin and score ideas',
-    'Spinning is free — credits go toward deeper work',
+    'Spinning is free — credits are only for deeper work',
     '1 credit for deep market research',
     '2 credits for the full MVP blueprint',
+    '5 credits total',
   ],
   pro: [
-    '10 credits to spin and score ideas',
+    'Spinning is free — credits are only for deeper work',
     '1 credit for deep market research',
     '2 credits for the full MVP blueprint',
-    'Best for builders who want to go deeper',
+    '10 credits total',
   ],
   power: [
-    '25 credits to spin and score ideas',
+    'Spinning is free — credits are only for deeper work',
     '1 credit for deep market research',
     '2 credits for the full MVP blueprint',
-    'Best value — explore, validate, and build',
+    '25 credits total — best value',
   ],
 };
 

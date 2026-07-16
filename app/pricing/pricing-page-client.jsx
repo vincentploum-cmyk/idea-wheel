@@ -5,29 +5,29 @@ import { CREDIT_PACKAGES, CREDIT_PACKAGE_BY_KEY } from '@/lib/pricing';
 import { CheckIcon } from '@/components/popito/icons';
 
 const PACK_DESCRIPTIONS = {
-  starter: '5 credits to spin, score, and go deeper on your own ideas.',
-  pro: '10 credits — more room to explore, validate, and get blueprints.',
-  power: '25 credits — best value for builders who want to move fast.',
+  starter: '5 credits for deep research and full blueprints. Spinning and the first score stay free.',
+  pro: '10 credits for deep research and full blueprints. Spinning and the first score stay free.',
+  power: '25 credits for deep research and full blueprints. Best value for builders shipping fast.',
 };
 
 const PACK_FEATURES = {
   starter: [
-    '5 credits to spin and score ideas',
-    'Spinning is free — credits go toward deeper work',
+    'Spinning is free — credits are only for deeper work',
     '1 credit for deep market research',
     '2 credits for the full MVP blueprint',
+    '5 credits total',
   ],
   pro: [
-    '10 credits to spin and score ideas',
+    'Spinning is free — credits are only for deeper work',
     '1 credit for deep market research',
     '2 credits for the full MVP blueprint',
-    'Best for builders who want to go deeper',
+    '10 credits total',
   ],
   power: [
-    '25 credits to spin and score ideas',
+    'Spinning is free — credits are only for deeper work',
     '1 credit for deep market research',
     '2 credits for the full MVP blueprint',
-    'Best value — explore, validate, and build',
+    '25 credits total — best value',
   ],
 };
 

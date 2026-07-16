@@ -27,6 +27,16 @@ export async function POST(request) {
 
   // Idempotent: if already unlocked, re-deliver the content without charging again.
   let already = await hasUnlockedIdea(user.id, slug);
+
+  // Only charge if we can actually deliver content. A card can appear in
+  // IDEA_EXAMPLES before its catalog_ideas row exists (new entry awaiting a
+  // seed-catalog run); charging first and returning null would take money for
+  // nothing. Fail 409 so the client can show "coming soon" rather than debit.
+  const content = await getCatalogIdea(slug).catch(() => null);
+  if (!already && !content) {
+    return Response.json({ error: 'content_not_ready', slug }, { status: 409 });
+  }
+
   if (!already) {
     // Charge the user's regular credit balance — the currency the packs actually sell.
     const charge = await deductCredits(user.id, CREDIT_COSTS.ideaUnlock, `catalog_unlock_${slug}`);
@@ -37,10 +47,6 @@ export async function POST(request) {
     // index) — treat as already unlocked, don't double-charge.
     if (charge.duplicate) already = true;
   }
-
-  // Entitled — deliver the full research + blueprint (read via the service-role client)
-  // so the page never has to ship it to locked visitors.
-  const content = await getCatalogIdea(slug).catch(() => null);
 
   return Response.json({ ok: true, alreadyUnlocked: already, balance: await getBalance(user.id), content });
 }
