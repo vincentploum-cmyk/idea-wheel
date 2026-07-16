@@ -332,6 +332,15 @@ function IdeaUnlockCTA({ slug, creditBalance, user, onUnlocked }) {
         <button
           onClick={handleUnlock}
           disabled={loading}
+          aria-label={
+            loading
+              ? 'Unlocking'
+              : !user
+                ? 'Sign in to unlock this idea’s research and blueprint'
+                : !hasCredits
+                  ? 'Get credits to unlock this idea'
+                  : `Unlock this idea for ${UNLOCK_COST} credit${UNLOCK_COST !== 1 ? 's' : ''}. Includes deep research and full blueprint.`
+          }
           style={{
             background: hasCredits ? '#FFE000' : '#111',
             color: hasCredits ? '#111' : '#FFE000',
@@ -361,7 +370,7 @@ function IdeaUnlockCTA({ slug, creditBalance, user, onUnlocked }) {
         Includes deep research + full blueprint: product design, GTM plan, tech setup & Cursor prompt
       </p>
       {error && (
-        <p style={{ fontSize: 12, color: '#b91c1c', margin: '8px 0 0' }}>{error}</p>
+        <p role="alert" style={{ fontSize: 12, color: '#b91c1c', margin: '8px 0 0' }}>{error}</p>
       )}
     </div>
   );

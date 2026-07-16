@@ -214,15 +214,19 @@ function ScoreRing({ value, size = 128, label }) {
   const gid = useMemo(() => "sr" + Math.random().toString(36).slice(2,7), []);
   useEffect(() => { const t = setTimeout(() => setV(value), 300); return () => clearTimeout(t); }, [value]);
   return (
-    <div style={{ position:"relative", width:size, height:size, flexShrink:0 }}>
-      <svg width={size} height={size}>
+    <div
+      style={{ position:"relative", width:size, height:size, flexShrink:0 }}
+      role="img"
+      aria-label={`${label || 'Score'}: ${value} out of 100`}
+    >
+      <svg width={size} height={size} aria-hidden="true" focusable="false">
         <circle cx={size/2} cy={size/2} r={r} stroke="#e8e8e8" strokeWidth="11" fill="none"/>
         <circle cx={size/2} cy={size/2} r={r} stroke="#FFE000" strokeWidth="11" fill="none"
           strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c-(c*v)/100}
           transform={`rotate(-90 ${size/2} ${size/2})`}
           style={{ transition:"stroke-dashoffset 1.3s cubic-bezier(.16,1,.3,1)" }}/>
       </svg>
-      <div style={{ position:"absolute", inset:0, display:"grid", placeItems:"center", textAlign:"center" }}>
+      <div style={{ position:"absolute", inset:0, display:"grid", placeItems:"center", textAlign:"center" }} aria-hidden="true">
         <div>
           <div className="su-ring-num">{Math.round(v)}</div>
           <div className="su-ring-label">{label}</div>
@@ -1008,13 +1012,13 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
           </div>
         </div>
 
-        <div className="sm-reels-wrap">
+        <div className="sm-reels-wrap" role="group" aria-label="Startup idea slot-machine reels">
           <div className="sm-payline-bar" aria-hidden="true" />
           <div className="sm-reels">
             {banks.map((bank,w) => {
               const repeated = Array.from({length:REPEATS},()=>bank).flat();
               return (
-                <div className="sm-col" key={mode+w} style={{'--accent':REEL_TINTS[w]}}>
+                <div className="sm-col" key={mode+w} style={{'--accent':REEL_TINTS[w]}} aria-hidden="true">
                   <div className="sm-window">
                     <div className={`sm-strip${spinning[w]?' is-spinning':''}`} ref={stripRefs[w]} onTransitionEnd={()=>onSettle(w)} >
                       {repeated.map((word,i)=>(
@@ -1032,21 +1036,32 @@ function SlotMachine({ onResult, onModeChange, snapTo }) {
           {/* Before the first spin, cover the reels so no words are pre-populated,
               and show a clear call-to-action banner across the generator. */}
           {!hasSpun && (
-            <div className="sm-reel-cover" onClick={()=>!anySpinning&&spinAll()}>
-              <span className="sm-reel-cover-title">SPIN!</span>
-              <span className="sm-reel-cover-sub">tap to discover your next idea</span>
-            </div>
+            <button
+              type="button"
+              className="sm-reel-cover"
+              onClick={()=>!anySpinning&&spinAll()}
+              disabled={anySpinning}
+              aria-label="Spin the reels to discover your next startup idea"
+            >
+              <span className="sm-reel-cover-title" aria-hidden="true">SPIN!</span>
+              <span className="sm-reel-cover-sub" aria-hidden="true">tap to discover your next idea</span>
+            </button>
           )}
         </div>
 
         <div className="sm-base">
-          <button className="sm-spin" onClick={spinAll} disabled={anySpinning}>
+          <button
+            className="sm-spin"
+            onClick={spinAll}
+            disabled={anySpinning}
+            aria-label={anySpinning ? 'Reels spinning, please wait' : 'Spin the reels to generate a new idea'}
+          >
             <span>{anySpinning ? 'Spinning…' : 'SPIN!'}</span>
           </button>
         </div>
       </div>
 
-      <div className="sm-live-sentence">
+      <div className="sm-live-sentence" aria-live="polite" aria-atomic="true">
         <p>
           <span style={{color:'#111'}}>{prefix} </span>
           {landed[0] ? <span className="sm-slot">{liveVerb}</span> : <span className="sm-slot-empty"/>}
@@ -1988,7 +2003,11 @@ export default function IdeaWheel() {
                   )}
 
                   {/* 1 — Quick take */}
-                  <div className="su-card su-v-score">
+                  <div
+                    className="su-card su-v-score"
+                    role="region"
+                    aria-label={`Market score ${score} out of 100. ${advice.label}.`}
+                  >
                     <ScoreRing value={score} label="Score"/>
                     <div className="su-v-score-side">
                       <span className={`su-chip su-chip--${advice.tone}`}>{advice.label}</span>

@@ -213,6 +213,7 @@ export default function PricingPageClient({ searchParams }) {
                             disabled={loadingKey !== null}
                             onClick={() => startCheckout(pkg)}
                             style={{ cursor: loadingKey ? 'wait' : 'pointer' }}
+                            aria-label={`Buy ${pkg.label}: ${pkg.unitLabel} for ${pkg.price}`}
                           >
                             <span>{loadingKey === pkg.key ? 'Redirecting…' : pkg.type === 'spin' ? 'Get credits' : 'Buy shortcut pack'}</span>
                           </button>

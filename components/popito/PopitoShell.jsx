@@ -123,7 +123,8 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta, noB
         }
       />
 
-      <main className="popito_fn_content">
+      <a href="#main-content" className="skip-to-content">Skip to main content</a>
+      <main id="main-content" className="popito_fn_content" tabIndex={-1}>
         {children}
       </main>
 

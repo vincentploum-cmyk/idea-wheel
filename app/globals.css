@@ -245,6 +245,45 @@ img, svg { display: block; max-width: 100%; }
   border-radius: 6px;
 }
 
+/* Skip link — invisible until focused via keyboard Tab from the very top of the page */
+.skip-to-content {
+  position: absolute;
+  left: 12px;
+  top: -100px;
+  z-index: 9999;
+  background: #FFE000;
+  color: #111;
+  border: 2px solid #111;
+  box-shadow: 3px 3px 0 #111;
+  padding: 10px 16px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 900;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: top 0.15s ease;
+}
+.skip-to-content:focus,
+.skip-to-content:focus-visible {
+  top: 12px;
+  outline: none;
+}
+/* Focused <main> via skip link — hide the default outline since focus is programmatic */
+main[tabindex="-1"]:focus { outline: none; }
+
+/* Slot-machine "SPIN!" cover was a div; now a button. Reset native button chrome
+   so it renders identical to the prior overlay. */
+button.sm-reel-cover {
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  border: 0;
+  cursor: pointer;
+  width: 100%;
+  padding: 0;
+  text-align: center;
+}
+button.sm-reel-cover:disabled { cursor: default; }
+
 /* Hero two-column → single column on narrow viewports */
 @media (max-width: 720px) {
   .hero-grid { grid-template-columns: 1fr !important; }
