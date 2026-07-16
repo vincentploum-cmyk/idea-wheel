@@ -188,6 +188,61 @@ export default function ProfileClient({ user, error, welcome }) {
     location.reload();
   };
 
+  const [dangerBusy, setDangerBusy] = useState(null); // 'export' | 'delete' | null
+  const [dangerErr, setDangerErr] = useState('');
+
+  const exportData = async () => {
+    setDangerBusy('export'); setDangerErr('');
+    try {
+      const res = await fetch('/api/account/export');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setDangerErr(data.error || `Export failed (${res.status})`);
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ideareels-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setDangerErr('Export failed. Please try again.');
+    } finally {
+      setDangerBusy(null);
+    }
+  };
+
+  const deleteAccount = async () => {
+    if (!user?.email) return;
+    const typed = window.prompt(
+      `This permanently deletes your account, ideas, research, and blueprints.\n\nTo confirm, type:\n\nDELETE ${user.email}`
+    );
+    if (typed !== `DELETE ${user.email}`) {
+      if (typed !== null) setDangerErr('Confirmation did not match. Nothing was deleted.');
+      return;
+    }
+    setDangerBusy('delete'); setDangerErr('');
+    try {
+      const res = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: `DELETE ${user.email}` }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        setDangerErr(data.error || `Deletion failed (${res.status}). ${data.detail || ''}`);
+        return;
+      }
+      window.location.assign(data.next || '/goodbye');
+    } catch (e) {
+      setDangerErr('Deletion failed. Please try again or email hello@ideareels.io.');
+    } finally {
+      setDangerBusy(null);
+    }
+  };
+
   const handleDelete = (id) => setIdeas(prev => prev.filter(i => i.id !== id));
 
   const fmtDate = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -352,6 +407,51 @@ export default function ProfileClient({ user, error, welcome }) {
           </div>
         </div>
 
+        {/* Data controls — GDPR / CCPA surface promised in the Privacy Policy. */}
+        <div className="fn__account_details fn__bold_item" style={{ marginTop: 32 }}>
+          <div className="details_item">
+            <div className="details_subtitle">
+              <h3 className="title">Your data</h3>
+            </div>
+            <div style={{ paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <button
+                  onClick={exportData}
+                  disabled={dangerBusy !== null}
+                  className="fn__btn"
+                  aria-label="Download a JSON copy of all your account data"
+                >
+                  <span>{dangerBusy === 'export' ? 'Preparing…' : 'Download my data'}</span>
+                </button>
+                <span style={{ fontSize: 13, opacity: 0.6 }}>
+                  A JSON file with your account, saved ideas, purchases, and credit history.
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <button
+                  onClick={deleteAccount}
+                  disabled={dangerBusy !== null}
+                  aria-label="Permanently delete this account and its data"
+                  style={{
+                    background: '#DC2626', color: '#fff',
+                    border: '2px solid #111', borderRadius: 8,
+                    boxShadow: '3px 3px 0 #111',
+                    padding: '10px 18px', fontFamily: 'Nunito, sans-serif',
+                    fontWeight: 900, cursor: dangerBusy ? 'wait' : 'pointer',
+                  }}
+                >
+                  {dangerBusy === 'delete' ? 'Deleting…' : 'Delete my account'}
+                </button>
+                <span style={{ fontSize: 13, opacity: 0.6 }}>
+                  Permanent. Payment records are anonymized and kept 7 years for tax purposes.
+                </span>
+              </div>
+              {dangerErr && (
+                <p role="alert" style={{ color: '#b91c1c', fontSize: 13, margin: 0 }}>{dangerErr}</p>
+              )}
+            </div>
+          </div>
+        </div>
 
       </div>
     </div>
