@@ -15,10 +15,16 @@ beforeAll(async () => {
   await fs.mkdir(TMP_DIR, { recursive: true });
   const rows = [
     { id: 'v-alice', user_id: 'alice', eval: { scores: { overall: 70 }, deterministic: { rubricVersion: 'v2.0' } }, scout: {} },
-    { id: 'v-legacy', eval: { scores: { overall: 70 }, deterministic: { rubricVersion: 'v2.0' } }, scout: {} }, // pre-migration row (no user_id)
+    { id: 'v-legacy', eval: { scores: { overall: 70 }, deterministic: { rubricVersion: 'v2.0' } }, scout: {} }, // pre-migration row (no user_id) — MUST reject after migration
     { id: 'v-stale', user_id: 'alice', eval: { scores: { overall: 70 }, deterministic: { rubricVersion: 'v1.0' } }, scout: {} },
     { id: 'v-broken', user_id: 'alice', eval: { scores: { overall: 90 }, deterministic: { rubricVersion: 'v2.0' } }, scout: { premiseFit: 'nonexistent' } },
     { id: 'v-low', user_id: 'alice', eval: { scores: { overall: 55 }, deterministic: { rubricVersion: 'v2.0' } }, scout: {} },
+    { id: 'v-59', user_id: 'alice', eval: { scores: { overall: 59 }, deterministic: { rubricVersion: 'v2.0' } }, scout: {} },
+    { id: 'v-60', user_id: 'alice', eval: { scores: { overall: 60 }, deterministic: { rubricVersion: 'v2.0' } }, scout: {} },
+    { id: 'v-61', user_id: 'alice', eval: { scores: { overall: 61 }, deterministic: { rubricVersion: 'v2.0' } }, scout: {} },
+    { id: 'v-80', user_id: 'alice', eval: { scores: { overall: 80 }, deterministic: { rubricVersion: 'v2.0' } }, scout: {} },
+    { id: 'v-null', user_id: 'alice', eval: { scores: { overall: null }, deterministic: { rubricVersion: 'v2.0' } }, scout: {} },
+    { id: 'v-nan', user_id: 'alice', eval: { scores: { overall: 'not-a-number' }, deterministic: { rubricVersion: 'v2.0' } }, scout: {} },
   ];
   await fs.writeFile(path.join(TMP_DIR, 'validations.jsonl'), rows.map((r) => JSON.stringify(r)).join('\n') + '\n');
   await fs.writeFile(path.join(TMP_DIR, 'blueprint-charges.jsonl'),
@@ -50,9 +56,39 @@ describe('getValidationEligibility — ownership (auditor #1)', () => {
     expect(r.reason).toBe('missing_validation_id');
   });
 
-  test('legacy row (no user_id) is pass-through so existing users keep working', async () => {
+  test('legacy null-owner row FAILS CLOSED (returned as not_found — never usable by any user)', async () => {
     const r = await getValidationEligibility('v-legacy', { ...OPTS, userId: 'alice' });
-    expect(r.eligible).toBe(true);
+    expect(r.eligible).toBe(false);
+    expect(r.reason).toBe('validation_not_found');
+  });
+
+  test('legacy null-owner row also rejected for a different user (no bypass)', async () => {
+    const r = await getValidationEligibility('v-legacy', { ...OPTS, userId: 'bob' });
+    expect(r.eligible).toBe(false);
+    expect(r.reason).toBe('validation_not_found');
+  });
+
+  test('caller without a userId is rejected (ownership required)', async () => {
+    const r = await getValidationEligibility('v-alice', { ...OPTS });
+    expect(r.eligible).toBe(false);
+    expect(r.reason).toBe('validation_not_found');
+  });
+});
+
+// The auditor's requested boundary matrix, preserved permanently.
+describe('getValidationEligibility — threshold and version matrix (auditor)', () => {
+  test.each([
+    ['v-59', false, 'below_threshold'],
+    ['v-60', true, 'eligible'],
+    ['v-61', true, 'eligible'],
+    ['v-80', true, 'eligible'],
+    ['v-stale', false, 'stale_score_version'],  // 70 / v1.0
+    ['v-null', false, 'unscored'],
+    ['v-nan', false, 'unscored'],
+  ])('%s → eligible=%p, reason=%p', async (id, eligible, reason) => {
+    const r = await getValidationEligibility(id, { ...OPTS, userId: 'alice' });
+    expect(r.eligible).toBe(eligible);
+    expect(r.reason).toBe(reason);
   });
 });
 

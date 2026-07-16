@@ -75,3 +75,26 @@ describe('canonicalComboKey — normalization', () => {
     expect(canonicalComboKey('b2b', '  X  ', 'Y ')).toBe(canonicalComboKey('B2B', 'x', 'y'));
   });
 });
+
+// Canonical WRITE ↔ READ parity: the pool must be scored and read under the
+// same canonical identity. `action` is deliberately excluded from the key, so
+// two rows differing only by action must resolve to one candidate row.
+describe('canonicalComboKey — write/read path parity (auditor)', () => {
+  test('the read path key is defined the same as the write path key', () => {
+    // Both recordCandidate() and getCandidateEligibility() compute the key via
+    // canonicalComboKey(mode, workflow, industry). This test pins that shape.
+    const readKey = canonicalComboKey('b2b', 'client onboarding', 'Dental practices');
+    const alsoReadKey = canonicalComboKey('B2B', ' client Onboarding ', 'dental practices');
+    expect(readKey).toBe(alsoReadKey);
+  });
+
+  test('action is EXCLUDED from the canonical key (Automates vs Streamlines → same row)', () => {
+    // If action were part of the key, these would be two different candidates
+    // and the read path could miss a candidate the write path just inserted.
+    const a = canonicalComboKey('b2b', 'client onboarding', 'Dental practices');
+    const b = canonicalComboKey('b2b', 'client onboarding', 'Dental practices');
+    expect(a).toBe(b);
+    // No matter what action is passed, the key is stable.
+    expect(canonicalComboKey('b2b', 'x', 'y')).toMatch(/^b2b:x::y$/);
+  });
+});

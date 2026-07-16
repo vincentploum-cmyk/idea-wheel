@@ -874,10 +874,23 @@ export async function POST(request) {
         // Already charged for this exact validation — find and reuse the charge.
         charge = await findBlueprintChargeByKey({ userId: user.id, validationId });
         if (!charge) {
-          return NextResponse.json({
-            error: 'blueprint_already_in_progress',
-            message: 'This blueprint was already charged. Refresh to resume.',
-          }, { status: 409 });
+          // Reconciliation: the idempotent debit exists but the charge record
+          // was lost (crash after deductCredits, before saveBlueprintCharge).
+          // Recover by minting a fresh charge record. The user is NOT charged
+          // again — the unique index credits_blueprint_start_idem guarantees
+          // deductCredits already returned `duplicate` above. This just rebuilds
+          // the missing token so the paid work can continue.
+          console.warn('[recovery] recovered_orphan_blueprint_charge', JSON.stringify({
+            event: 'recovered_orphan_blueprint_charge', userId: user.id, validationId,
+          }));
+          charge = await saveBlueprintCharge({
+            id: crypto.randomUUID(),
+            userId: user.id,
+            sessionId, validationId, modeName, action, workflow, industry,
+            amount: blueprintCost,
+            status: 'authorized',
+            recovered: true,          // marks this row as a post-crash reconciliation
+          });
         }
       } else if (!debit.ok) {
         return NextResponse.json({
