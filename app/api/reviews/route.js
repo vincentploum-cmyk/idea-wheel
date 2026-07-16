@@ -1,5 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { addCredits } from '@/lib/credits';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { verifyTurnstile } from '@/lib/turnstile';
+import { honeypotTripped, submittedTooFast, looksLikeSpam } from '@/lib/spam-heuristics';
+import { logError } from '@/lib/error-log';
 
 function getAdmin() {
   return createClient(
@@ -13,9 +17,26 @@ const REVIEW_CREDIT_REWARD = 3;
 
 export async function POST(request) {
   try {
-    const { name, role, quote } = await request.json();
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const rl = await checkRateLimit(`reviews:${ip}`, { limit: 3, windowSeconds: 3600 });
+    if (!rl.ok) return Response.json({ error: 'rate_limited' }, { status: 429 });
+
+    const body = await request.json();
+    const { name, role, quote, turnstileToken } = body || {};
     if (!name?.trim() || !quote?.trim() || quote.trim().length < 20) {
       return Response.json({ error: 'invalid_input' }, { status: 400 });
+    }
+
+    // Silent bot drops — a review from a bot is dead weight and can't earn
+    // credits (userId is required for the grant).
+    if (honeypotTripped(body)) return Response.json({ ok: true, creditsGranted: 0 });
+    if (submittedTooFast(body)) return Response.json({ ok: true, creditsGranted: 0 });
+    if (looksLikeSpam(quote) || looksLikeSpam(name)) return Response.json({ ok: true, creditsGranted: 0 });
+
+    const ts = await verifyTurnstile(turnstileToken, ip);
+    if (!ts.ok) {
+      await logError({ scope: 'api:reviews:turnstile', error: `turnstile: ${ts.reason}`, severity: 'warning' });
+      return Response.json({ error: 'verification_failed' }, { status: 403 });
     }
 
     // Resolve authenticated user from Bearer token
@@ -38,7 +59,14 @@ export async function POST(request) {
       user_id: userId,
       approved: false,
     });
-    if (insertError) console.error('reviews insert failed:', insertError.message);
+    if (insertError) {
+      await logError({
+        scope: 'api:reviews:insert',
+        error: insertError.message,
+        userId: userId || undefined,
+        route: '/api/reviews',
+      });
+    }
 
     // One review-bonus per user. Check the CREDITS ledger (not the reviews table)
     // so a failed review insert can't be replayed to farm repeat grants, and rely
@@ -59,7 +87,7 @@ export async function POST(request) {
 
     return Response.json({ ok: true, creditsGranted });
   } catch (err) {
-    console.error('reviews POST:', err);
+    await logError({ scope: 'api:reviews', error: err, route: '/api/reviews' });
     return Response.json({ error: 'server_error' }, { status: 500 });
   }
 }
