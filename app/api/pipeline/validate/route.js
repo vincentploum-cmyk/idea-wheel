@@ -323,11 +323,14 @@ Return ONLY a JSON object (no fences):
   "verdictType": "build if genuine whitespace. warning if competitive but a wedge exists. avoid if 3+ well-funded players dominate with no real gap.",
   "verdictReasoning": "2-3 honest sentences referencing specific players",
   "evidence": ["5 short evidence bullets referencing real products or pricing"],
+  "sources": [{"url":"a real page URL you actually opened in search and used for the findings above","title":"the page title"}],
   "retrievalFit": "1-2 sentences on whether the idea matches the workflow archetype from the retrieval context",
   "pivotHint": "if avoid or warning: one adjacent idea with whitespace. else empty string.",
   "plainSummary": "2-3 plain-English sentences a non-technical person fully understands: is this worth building, who already does it, and where the opening is. No jargon, no buzzwords."
 }
-List up to 5 players, SORTED from largest/most-established to smallest. Name only REAL products you can verify from search — prefer well-known established platforms in this space over obscure names. If you are not confident a product exists, leave it out rather than guessing; do not pad the list with invented or unverifiable companies. If premiseFit is "nonexistent", you MUST set verdictType to "avoid". Default to avoid when in doubt. CRITICAL SCOPE CHECK: this product must be SOFTWARE sold to others, not a business to operate.
+List up to 5 players, SORTED from largest/most-established to smallest. Name only REAL products you can verify from search — prefer well-known established platforms in this space over obscure names. If you are not confident a product exists, leave it out rather than guessing; do not pad the list with invented or unverifiable companies.
+
+SOURCES: populate "sources" with the REAL pages you actually opened during this search and used for the findings above (up to 8). Use exact URLs as they appeared in the search results — never construct, guess, or shorten a URL. If you used no page for a claim, leave that page out. An empty list is better than an invented one. If premiseFit is "nonexistent", you MUST set verdictType to "avoid". Default to avoid when in doubt. CRITICAL SCOPE CHECK: this product must be SOFTWARE sold to others, not a business to operate.
 
 WRITING RULES (apply to marketSize, landscape, gap, verdict, verdictReasoning, premiseNote, plainSummary and every player "coverage"/"weakness"):
 - Write at an 8th-grade reading level. Short, everyday words. Short sentences (aim under 18 words each).
@@ -351,7 +354,8 @@ Focus on the LEADING products a buyer in this market would already be evaluating
 Already found (do NOT repeat any of these): ${known.length ? known.join(', ') : 'none'}
 
 Return ONLY a JSON object (no fences):
-{"players":[{"name":"...","sourceUrl":"the real official product URL you actually saw in search — omit this field entirely if you are not certain","targetCustomer":"who they serve","pricing":"pricing if you can find it, else empty string","coverage":"one plain sentence on how they address THIS exact job","weakness":"the SPECIFIC thing they under-serve for THIS exact workflow"}]}
+{"players":[{"name":"...","sourceUrl":"the real official product URL you actually saw in search — omit this field entirely if you are not certain","targetCustomer":"who they serve","pricing":"pricing if you can find it, else empty string","coverage":"one plain sentence on how they address THIS exact job","weakness":"the SPECIFIC thing they under-serve for THIS exact workflow"}],
+ "sources":[{"url":"a real page URL you actually opened in this search","title":"the page title"}]}
 
 List up to 4 REAL, verifiable products missing from the list above. If there genuinely are none, return {"players":[]}. Never invent a product or a URL. Plain English, no jargon.`;
 }
@@ -579,6 +583,7 @@ export async function POST(request) {
         // first pass missed, so we never claim an opening just because the search
         // was shallow. Merged in and verified like any other competitor.
         let sweepCitations = [];
+        let sweepReportedSources = [];
         let sweepUsage = { input_tokens: 0, output_tokens: 0 };
         try {
           const knownNames = (Array.isArray(scout.players) ? scout.players : [])
@@ -588,6 +593,7 @@ export async function POST(request) {
           sweepUsage = sweepCall.usage || sweepUsage;
           const sweepParsed = await parseJSON(sweepCall.text, 'competitor sweep');
           const extra = Array.isArray(sweepParsed.value?.players) ? sweepParsed.value.players : [];
+          sweepReportedSources = Array.isArray(sweepParsed.value?.sources) ? sweepParsed.value.sources : [];
           const seen = new Set(knownNames.map((n) => n.toLowerCase()));
           const merged = [...(Array.isArray(scout.players) ? scout.players : [])];
           for (const p of extra) {
@@ -611,7 +617,19 @@ export async function POST(request) {
           const playersArr = Array.isArray(scout.players) ? scout.players : [];
           const extraUrls = [...playersArr.map((p) => p?.sourceUrl)]
             .filter(isUrl).map((url) => ({ url, title: '' }));
-          const allCitations = [...(scoutCall.citations || []), ...sweepCitations];
+          // Sources come from two places: url_citation annotations (only present
+          // when the model writes cited prose — empty for our JSON-only prompts)
+          // AND the "sources" array the model reports in its JSON. Merge both and
+          // dedupe; every one is then fetch-checked, so a made-up URL can't pass.
+          const reported = [
+            ...(Array.isArray(scout.sources) ? scout.sources : []),
+            ...(Array.isArray(sweepReportedSources) ? sweepReportedSources : []),
+          ]
+            .filter((s) => s && isUrl(s.url))
+            .map((s) => ({ url: s.url, title: String(s.title || '').slice(0, 160) }));
+          const seenCite = new Set();
+          const allCitations = [...(scoutCall.citations || []), ...sweepCitations, ...reported]
+            .filter((c) => c && c.url && !seenCite.has(c.url) && seenCite.add(c.url));
           const verified = await verifySources([...allCitations, ...extraUrls], { limit: 20, timeoutMs: 4000 });
           verifiedMap = new Map(verified.map((s) => [s.url, s.verified]));
           // Real sources for the Sources section = the search citations that resolved.
