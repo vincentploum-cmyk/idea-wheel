@@ -146,6 +146,9 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta, noB
                   <li className="menu-item">
                     <Link href="/contact"><span className="text">Contact</span><span className="suffix">//</span></Link>
                   </li>
+                  <li className="menu-item">
+                    <Link href="/status"><span className="text">System status</span><span className="suffix">//</span></Link>
+                  </li>
                 </ul>
               </div>
             </div>
