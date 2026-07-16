@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { fulfillCheckoutSession } from '@/lib/fulfillment';
 import { getBalance, getIdeaCreditBalance } from '@/lib/credits';
+import { logError } from '@/lib/error-log';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -56,7 +57,11 @@ export async function POST(request) {
       balance,
     });
   } catch (err) {
-    console.error('confirm error:', err.message);
+    await logError({
+      scope: 'api:credits-confirm',
+      error: err,
+      route: '/api/credits/confirm',
+    });
     return Response.json({ error: 'We could not verify your payment yet. If you were charged, your credits will appear shortly.' }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { deductCredits, hasUnlockedIdea, getBalance, CREDIT_COSTS } from '../../../lib/credits';
 import { IDEA_EXAMPLES } from '../../../lib/idea-examples';
 import { getCatalogIdea } from '../../../lib/catalog-store';
+import { logError } from '../../../lib/error-log';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -32,7 +33,11 @@ export async function POST(request) {
   // IDEA_EXAMPLES before its catalog_ideas row exists (new entry awaiting a
   // seed-catalog run); charging first and returning null would take money for
   // nothing. Fail 409 so the client can show "coming soon" rather than debit.
-  const content = await getCatalogIdea(slug).catch(() => null);
+  const content = await getCatalogIdea(slug).catch((err) => {
+    // Log so we notice if the service-role fetch is failing (missing key, RLS bug).
+    logError({ scope: 'api:catalog-unlock', error: err, userId: user.id, route: '/api/catalog-idea-unlock', meta: { slug } });
+    return null;
+  });
   if (!already && !content) {
     return Response.json({ error: 'content_not_ready', slug }, { status: 409 });
   }

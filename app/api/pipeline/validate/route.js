@@ -8,6 +8,7 @@ import { classifyIdeaRisk, safetyNoticeFor } from '../../../../lib/idea-safety';
 import { recordCandidate, getCachedCandidate } from '../../../../lib/idea-candidates';
 import { computeDeterministicScore, legacyDimensions } from '../../../../lib/scoring';
 import { verifySources, summarizeSources, verifyClaim, verifyClaimsAgainstSources } from '../../../../lib/source-verify';
+import { logError } from '../../../../lib/error-log';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -798,7 +799,13 @@ export async function POST(request) {
           cost: { input_tokens: usage.input_tokens, output_tokens: usage.output_tokens, cost_usd: costUsd },
         });
       } catch (err) {
-        console.error('[validate]', err?.message);
+        await logError({
+          scope: 'api:validate',
+          error: err,
+          userId: user?.id,
+          route: '/api/pipeline/validate',
+          meta: { sessionId },
+        });
         send({ t: 'error', error: 'Market check failed. Please try again.' });
       } finally {
         try { controller.close(); } catch {}

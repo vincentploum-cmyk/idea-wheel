@@ -16,6 +16,7 @@ import { verifyClaimsAgainstSources } from '../../../../lib/source-verify';
 import { withPlainEnglish } from '../../../../lib/clarity';
 import { attachBlueprint, saveBlueprintProgress } from '../../../../lib/saved-ideas';
 import { checkRateLimit } from '../../../../lib/rate-limit';
+import { logError } from '../../../../lib/error-log';
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
 
@@ -1254,10 +1255,22 @@ Search for the most current information available as of ${today}. Prioritise dev
           error: err.message,
         });
       } catch (refundErr) {
-        console.error('[pipeline/build/refund]', refundErr.message);
+        await logError({
+          scope: 'api:build:refund',
+          error: refundErr,
+          userId: user?.id,
+          route: '/api/pipeline/build',
+          meta: { chargeId: charge?.id, validationId, stage },
+        });
       }
     }
-    console.error(`[pipeline/${stage}]`, err.message);
+    await logError({
+      scope: `api:build:${stage || 'unknown'}`,
+      error: err,
+      userId: user?.id,
+      route: '/api/pipeline/build',
+      meta: { validationId, sessionId, stage, refunded: charge?.status === 'authorized' },
+    });
     return NextResponse.json({ error: 'Blueprint generation failed. Please try again.' }, { status: 500 });
   }
 }

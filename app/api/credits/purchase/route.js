@@ -3,6 +3,7 @@ import { CREDIT_PACKS } from '@/lib/credits';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
+import { logError } from '@/lib/error-log';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -64,7 +65,13 @@ export async function POST(request) {
       },
     });
   } catch (err) {
-    console.error('stripe checkout create failed:', err.message);
+    await logError({
+      scope: 'api:credits-purchase',
+      error: err,
+      userId: user?.id,
+      route: '/api/credits/purchase',
+      meta: { packId: pack?.id },
+    });
     return Response.json({ error: 'Could not start checkout. Please try again in a moment.' }, { status: 500 });
   }
 

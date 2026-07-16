@@ -3,6 +3,7 @@ import { ensureSessionId, recordOutcome } from '../../../../lib/moat-store';
 import { getBalance, deductCredits } from '../../../../lib/credits';
 import { clarify } from '../../../../lib/clarity';
 import { saveResearchedIdea } from '../../../../lib/saved-ideas';
+import { logError } from '../../../../lib/error-log';
 
 const DEEP_RESEARCH_COST = 1;
 
@@ -168,7 +169,13 @@ export async function POST(request) {
 
     return NextResponse.json({ sessionId, research: parsed, balance: newBalance });
   } catch (err) {
-    console.error('[deep-research]', err.message);
+    await logError({
+      scope: 'api:deep-research',
+      error: err,
+      userId: user?.id,
+      route: '/api/pipeline/deep-research',
+      meta: { sessionId },
+    });
     return NextResponse.json({ error: 'Deep research failed. Please try again.' }, { status: 500 });
   }
 }

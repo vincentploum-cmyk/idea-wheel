@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { fulfillCheckoutSession } from '@/lib/fulfillment';
+import { logError } from '@/lib/error-log';
 
 let _stripe = null;
 function getStripe() {
@@ -17,6 +18,13 @@ export async function POST(request) {
   try {
     event = getStripe().webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
+    await logError({
+      scope: 'api:stripe-webhook',
+      error: err,
+      route: '/api/credits/webhook',
+      severity: 'warning',
+      meta: { stage: 'signature_verify', hasSig: !!sig },
+    });
     return new Response(`Webhook error: ${err.message}`, { status: 400 });
   }
 
@@ -30,7 +38,12 @@ export async function POST(request) {
     const result = await fulfillCheckoutSession(event.data.object);
     const terminal = ['missing_metadata', 'unpaid', 'unknown_pack'];
     if (!result.ok && !terminal.includes(result.reason)) {
-      console.error('webhook fulfillment failed:', result.reason, event.data.object.id);
+      await logError({
+        scope: 'api:stripe-webhook',
+        error: `fulfillment failed: ${result.reason}`,
+        route: '/api/credits/webhook',
+        meta: { sessionId: event.data.object.id, eventType: event.type, reason: result.reason },
+      });
       return new Response(`Fulfillment error: ${result.reason}`, { status: 500 });
     }
   }
