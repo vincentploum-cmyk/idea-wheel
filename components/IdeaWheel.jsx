@@ -419,10 +419,24 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
   let secN = 0;
   const sec = (title, body, cls = '') => { if (body && body.trim()) { secN += 1; tocEntries.push({ n: secN, title }); sections.push(`<section class="sec ${cls}"><div class="sechead"><span class="secnum">${String(secN).padStart(2, '0')}</span><h2>${e(title)}</h2></div>${body}</section>`); } };
 
+  // Each pain claim carries its verification: a real source link when the figure
+  // was found on a fetched page, otherwise plainly marked an unverified estimate.
+  const evidenceList = (d) => {
+    const items = (d.problemEvidence || []).filter(Boolean);
+    const ver = Array.isArray(d.evidenceVerified) ? d.evidenceVerified : null;
+    if (!ver) return list(items);
+    return `<ul class="list">${items.map((x) => {
+      const m = ver.find((v) => v.claim === x);
+      const badge = (m && m.verified && m.sourceUrl)
+        ? ` <a href="${e(m.sourceUrl)}" class="src">✓ source</a>`
+        : ' <span class="src">⚠ unverified estimate</span>';
+      return `<li>${e(x)}${badge}</li>`;
+    }).join('')}</ul>`;
+  };
   if (design) sec('Niche & Problem',
     plain(design) +
     (design.niche ? `<p>${e(design.niche)}</p>` : '') +
-    (design.problemEvidence?.length ? `<div class="label">Evidence the pain is real</div>${list(design.problemEvidence)}` : ''));
+    (design.problemEvidence?.length ? `<div class="label">Evidence the pain is real</div>${evidenceList(design)}` : ''));
   if (design) sec('Product concept',
     `<p class="big">${e(design.name)}</p>` +
     (design.tagline ? `<p class="lead">${e(design.tagline)}</p>` : '') +

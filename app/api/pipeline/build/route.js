@@ -12,6 +12,7 @@ import { ensureSessionId, getBlueprintCharge, getValidationEligibility, recordBl
 import { SCORE_POLICY } from '../../../../lib/score-policy';
 import { computeCostModel, parseMoney } from '../../../../lib/cost-model';
 import { getCandidateEligibility } from '../../../../lib/idea-candidates';
+import { verifyClaimsAgainstSources } from '../../../../lib/source-verify';
 import { withPlainEnglish } from '../../../../lib/clarity';
 import { attachBlueprint, saveBlueprintProgress } from '../../../../lib/saved-ideas';
 import { checkRateLimit } from '../../../../lib/rate-limit';
@@ -89,13 +90,24 @@ async function call(prompt, { model, maxTokens = 1000, webSearch = false, search
   const data = await res.json();
 
   let text;
+  const citations = [];
   if (webSearch) {
-    text = (data.output || [])
+    const parts = (data.output || [])
       .filter(o => o.type === 'message')
       .flatMap(o => o.content || [])
-      .filter(c => c.type === 'output_text')
-      .map(c => c.text)
-      .join('');
+      .filter(c => c.type === 'output_text');
+    text = parts.map(c => c.text).join('');
+    // Capture the REAL source URLs the search returned, so design-stage claims
+    // can be bound to (and checked against) actual pages.
+    const seen = new Set();
+    for (const part of parts) {
+      for (const ann of (part.annotations || [])) {
+        if (ann?.type === 'url_citation' && ann.url && !seen.has(ann.url)) {
+          seen.add(ann.url);
+          citations.push({ url: ann.url, title: String(ann.title || '').slice(0, 160) });
+        }
+      }
+    }
   } else {
     text = data.choices?.[0]?.message?.content || '';
   }
@@ -104,7 +116,7 @@ async function call(prompt, { model, maxTokens = 1000, webSearch = false, search
     input_tokens: data.usage?.input_tokens ?? data.usage?.prompt_tokens ?? 0,
     output_tokens: data.usage?.output_tokens ?? data.usage?.completion_tokens ?? 0,
   };
-  return { text, usage, model, costUsd: calcCost(model, usage.input_tokens, usage.output_tokens) };
+  return { text, usage, citations, model, costUsd: calcCost(model, usage.input_tokens, usage.output_tokens) };
 }
 
 function stripJsonFences(text) {
@@ -884,6 +896,7 @@ export async function POST(request) {
         // Deep web research feeds the paid blueprint. Defensive: if it fails or
         // times out, we still design from the retrieval/validation context.
         let deepResearch = '';
+        let researchCitations = [];
         try {
           const today = new Date().toISOString().slice(0, 10);
           const research = await call(
@@ -892,6 +905,7 @@ Search for the most current information available as of ${today}. Prioritise dev
             { model: MODELS.scout, maxTokens: 1200, webSearch: true, searchUses: 8 }
           );
           deepResearch = (research.text || '').trim().slice(0, 2500);
+          researchCitations = research.citations || [];
         } catch {
           deepResearch = '';
         }
@@ -907,6 +921,20 @@ Search for the most current information available as of ${today}. Prioritise dev
 
         // Plain-English readability check on this paid deliverable.
         const designerResult = await withPlainEnglish('Product design', designerStage.result);
+
+        // Bind each pain-evidence claim to a real source: fetch the research pages
+        // and check whether the claim's number actually appears on one. Unbacked
+        // figures are marked as estimates rather than presented as facts.
+        try {
+          const claims = (designerResult?.problemEvidence || []).filter(Boolean);
+          if (claims.length && researchCitations.length) {
+            designerResult.evidenceVerified = await verifyClaimsAgainstSources(
+              claims,
+              researchCitations.map((c) => c.url),
+              { limit: 6, timeoutMs: 5000 }
+            );
+          }
+        } catch {}
 
         // Persist progress so the idea is already in the user's shortlist and
         // resumable even if they navigate away now. The credit (charged at this

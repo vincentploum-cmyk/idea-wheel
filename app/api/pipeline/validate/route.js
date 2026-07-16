@@ -339,6 +339,23 @@ WRITING RULES (apply to marketSize, landscape, gap, verdict, verdictReasoning, p
 - No marketing fluff. State facts a busy non-technical founder understands in one read.`;
 }
 
+// Completeness sweep: the scout's first search can miss the obvious incumbents
+// and then claim an opening that isn't there (the audit's exact failure — citing
+// unverifiable names while omitting the leading platforms). This second pass
+// hunts specifically for the established products a real buyer would already be
+// evaluating, excluding what we already found.
+function competitorSweepPrompt(agentDesc, known) {
+  return `Search the web for the ESTABLISHED, well-known platforms that already serve this job: "${agentDesc}".
+
+Focus on the LEADING products a buyer in this market would already be evaluating — the obvious incumbents and category leaders, not obscure startups.
+Already found (do NOT repeat any of these): ${known.length ? known.join(', ') : 'none'}
+
+Return ONLY a JSON object (no fences):
+{"players":[{"name":"...","sourceUrl":"the real official product URL you actually saw in search — omit this field entirely if you are not certain","targetCustomer":"who they serve","pricing":"pricing if you can find it, else empty string","coverage":"one plain sentence on how they address THIS exact job","weakness":"the SPECIFIC thing they under-serve for THIS exact workflow"}]}
+
+List up to 4 REAL, verifiable products missing from the list above. If there genuinely are none, return {"players":[]}. Never invent a product or a URL. Plain English, no jargon.`;
+}
+
 // Every prose field below is shown directly to the founder, so it must read
 // like advice from a person — never expose the internal pipeline roles or the
 // in-house jargon the models like to reach for.
@@ -557,6 +574,31 @@ export async function POST(request) {
         const scoutCall = await call(scoutPrompt(agentDesc, modeName, retrieval), { webSearch: true, maxTokens: 2200 });
         const scoutParsed = await parseJSON(scoutCall.text, 'validation scout');
         const scout = scoutParsed.value;
+
+        // Completeness sweep — a second search for the established players the
+        // first pass missed, so we never claim an opening just because the search
+        // was shallow. Merged in and verified like any other competitor.
+        let sweepCitations = [];
+        let sweepUsage = { input_tokens: 0, output_tokens: 0 };
+        try {
+          const knownNames = (Array.isArray(scout.players) ? scout.players : [])
+            .map((p) => String(p?.name || '').trim()).filter(Boolean);
+          const sweepCall = await call(competitorSweepPrompt(agentDesc, knownNames), { webSearch: true, maxTokens: 900 });
+          sweepCitations = sweepCall.citations || [];
+          sweepUsage = sweepCall.usage || sweepUsage;
+          const sweepParsed = await parseJSON(sweepCall.text, 'competitor sweep');
+          const extra = Array.isArray(sweepParsed.value?.players) ? sweepParsed.value.players : [];
+          const seen = new Set(knownNames.map((n) => n.toLowerCase()));
+          const merged = [...(Array.isArray(scout.players) ? scout.players : [])];
+          for (const p of extra) {
+            const key = String(p?.name || '').toLowerCase().trim();
+            if (!key || seen.has(key)) continue;
+            seen.add(key);
+            merged.push({ ...p, foundBySweep: true });
+          }
+          scout.players = merged.slice(0, 8);
+        } catch {}
+
         // Verify every real URL — search citations, each competitor's own page, and
         // the market-size source — by actually fetching them. A link that doesn't
         // resolve is marked unverified in code, not taken on the model's word.
@@ -569,10 +611,11 @@ export async function POST(request) {
           const playersArr = Array.isArray(scout.players) ? scout.players : [];
           const extraUrls = [...playersArr.map((p) => p?.sourceUrl)]
             .filter(isUrl).map((url) => ({ url, title: '' }));
-          const verified = await verifySources([...(scoutCall.citations || []), ...extraUrls], { limit: 16, timeoutMs: 4000 });
+          const allCitations = [...(scoutCall.citations || []), ...sweepCitations];
+          const verified = await verifySources([...allCitations, ...extraUrls], { limit: 20, timeoutMs: 4000 });
           verifiedMap = new Map(verified.map((s) => [s.url, s.verified]));
           // Real sources for the Sources section = the search citations that resolved.
-          const citationUrls = new Set((scoutCall.citations || []).map((c) => c.url));
+          const citationUrls = new Set(allCitations.map((c) => c.url));
           sources = verified.filter((s) => citationUrls.has(s.url));
           // Mark each competitor: verified only if its own page actually resolves.
           for (const p of playersArr) {
@@ -642,6 +685,7 @@ export async function POST(request) {
 
         const usage = mergeUsage(
           scoutCall.usage, scoutParsed.usage,
+          sweepUsage,
           skepticCall.usage, skepticParsed.usage,
           judgeCall.usage, judgeParsed.usage,
           evalCall.usage, evalParsed.usage,

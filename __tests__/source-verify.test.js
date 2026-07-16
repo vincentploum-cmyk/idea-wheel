@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import { verifySource, verifySources, summarizeSources, verifyClaim, claimNeedles } from '../lib/source-verify.js';
+import { verifySource, verifySources, summarizeSources, verifyClaim, claimNeedles, verifyClaimsAgainstSources } from '../lib/source-verify.js';
 
 const fakeFetch = (status) => async () => ({ status });
 const fakeFetchBody = (status, body) => async () => ({ status, text: async () => body });
@@ -56,6 +56,38 @@ describe('verifyClaim — content-level verification', () => {
   test('matches across comma formatting (30,000 vs 30000)', async () => {
     const r = await verifyClaim('https://example.com', 'about 30,000 firms', { fetchImpl: fakeFetchBody(200, '<p>there are 30,000 firms</p>') });
     expect(r.contentMatch).toBe(true);
+  });
+});
+
+describe('verifyClaimsAgainstSources — claim→source binding', () => {
+  // One page mentions 36,000; the other is unrelated.
+  const byUrl = {
+    'https://a.com': '<p>firms lose about 36,000 dollars a year to manual onboarding</p>',
+    'https://b.com': '<p>nothing numeric of interest here</p>',
+  };
+  const fetchImpl = async (url) => ({ status: 200, text: async () => byUrl[url] ?? '' });
+
+  test('binds a claim to the page that actually contains its number', async () => {
+    const out = await verifyClaimsAgainstSources(
+      ['Costs an estimate of $36,000/year per firm', '80% of firms report delays'],
+      ['https://a.com', 'https://b.com'],
+      { fetchImpl }
+    );
+    expect(out[0]).toEqual({ claim: 'Costs an estimate of $36,000/year per firm', verified: true, sourceUrl: 'https://a.com' });
+    // 80 appears nowhere → unverified, no source
+    expect(out[1].verified).toBe(false);
+    expect(out[1].sourceUrl).toBe('');
+  });
+
+  test('claims with no numbers are never auto-verified', async () => {
+    const out = await verifyClaimsAgainstSources(['onboarding is painful'], ['https://a.com'], { fetchImpl });
+    expect(out[0].verified).toBe(false);
+  });
+
+  test('unreachable sources verify nothing', async () => {
+    const dead = async () => ({ status: 500, text: async () => '' });
+    const out = await verifyClaimsAgainstSources(['$36,000 per firm'], ['https://a.com'], { fetchImpl: dead });
+    expect(out[0].verified).toBe(false);
   });
 });
 
