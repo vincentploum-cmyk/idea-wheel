@@ -97,3 +97,24 @@ describe('computeCostModel — enforced floors', () => {
     expect(cm.items.filter((i) => /postgres|database/i.test(i.service)).length).toBe(1);
   });
 });
+
+// The audit's pricing contradiction: "$4,500 = 15 × $300" printed next to a
+// $450/mo price. Reconciliation must derive the formula from the real price.
+describe('pricing reconciliation (deterministic)', () => {
+  const reconcile = (priceStr, goalStr) => {
+    const price = parseMoney(priceStr);
+    const goal = parseMoney(goalStr);
+    if (!(price > 0 && goal > 0)) return null;
+    const customers = Math.max(1, Math.round(goal / price));
+    return { customers, total: Math.round(customers * price) };
+  };
+  test('$450/mo with a $4,500 goal reconciles to 10 customers, not 15 × $300', () => {
+    expect(reconcile('$450/mo', '$4,500')).toEqual({ customers: 10, total: 4500 });
+  });
+  test('$300/mo with a $4,500 goal reconciles to 15 customers', () => {
+    expect(reconcile('$300/mo', '$4,500')).toEqual({ customers: 15, total: 4500 });
+  });
+  test('never yields zero customers', () => {
+    expect(reconcile('$999/mo', '$100').customers).toBe(1);
+  });
+});

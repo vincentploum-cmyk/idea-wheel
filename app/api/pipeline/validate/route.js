@@ -7,7 +7,7 @@ import { checkRateLimit } from '../../../../lib/rate-limit';
 import { classifyIdeaRisk, safetyNoticeFor } from '../../../../lib/idea-safety';
 import { recordCandidate, getCachedCandidate } from '../../../../lib/idea-candidates';
 import { computeDeterministicScore, legacyDimensions } from '../../../../lib/scoring';
-import { verifySources, summarizeSources, verifyClaim } from '../../../../lib/source-verify';
+import { verifySources, summarizeSources, verifyClaim, verifyClaimsAgainstSources } from '../../../../lib/source-verify';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -315,7 +315,7 @@ Return ONLY a JSON object (no fences):
   "marketSize": "a CONCRETE number with its basis — a dollar figure with year/trend if you can find one (e.g. '$1.2B in 2024, growing ~8%/yr'), OR a specific count of the buyers (e.g. 'about 30,000 US marketing agencies'). Never write 'figures not available' — always give a real number or a concrete proxy count.",
   "marketSizeSource": "the exact URL of the page this market-size figure came from — a real URL you saw in search. Omit this field if the number is your own estimate rather than from a specific source.",
   "landscape": "2-3 crisp, easy-to-read sentences summarizing the state of this market",
-  "players": [{"name":"...","sourceUrl":"the real official product URL you actually saw in search — omit this field entirely if you are not certain it exists; never invent a URL","targetCustomer":"...","pricing":"...","coverage":"one plain sentence on how this player addresses (or ignores) THIS exact idea","weakness":"the SPECIFIC thing a new product could beat them on for THIS exact workflow — concrete and different for each player. Never a generic 'can be pricey' or 'complex for small teams'."}],
+  "players": [{"name":"...","sourceUrl":"the real official product URL you actually saw in search — omit this field entirely if you are not certain it exists; never invent a URL","targetCustomer":"...","pricing":"...","coverage":"one plain sentence on how this player addresses (or ignores) THIS exact idea","weakness":"What they under-serve for THIS exact workflow — concrete and different for each player. NEVER infer a missing feature from absence of evidence. Only write 'Lacks X' / 'No X' if you actually SAW evidence of the absence. If you simply did not find it, you MUST word it as 'Not found in reviewed materials: X'. If you have no evidence either way, write 'Unknown — needs demo/sales confirmation'. Never a generic 'can be pricey' or 'complex for small teams'."}],
   "gap": "the specific unaddressed pain, named concretely (which task, which buyer), or 'No clear gap' if the market is well-served",
   "premiseFit": "realistic | weak | nonexistent — does the named workflow/problem genuinely exist for THIS industry?",
   "premiseNote": "if weak or nonexistent: one plain sentence naming the mismatch (e.g. 'Law firms rarely run equipment-maintenance operations, so this problem barely exists for them.'). else empty string.",
@@ -612,6 +612,7 @@ export async function POST(request) {
         let sources = [];
         let verifiedMap = new Map();
         let marketSizeContentVerified = false;
+        let claimChecks = [];
         try {
           const isUrl = (u) => typeof u === 'string' && /^https?:\/\//.test(u);
           const playersArr = Array.isArray(scout.players) ? scout.players : [];
@@ -662,6 +663,18 @@ export async function POST(request) {
               marketSizeContentVerified = !!claim.contentMatch;
             } catch {}
           }
+          // CLAIM-level check: a page resolving is NOT proof of the claim. Fetch
+          // the verified sources once and confirm each quantitative evidence
+          // statement's figure actually appears in one of them. Only these count
+          // as proven evidence for scoring.
+          try {
+            const verifiedUrls = verified.filter((s) => s.verified).map((s) => s.url);
+            claimChecks = await verifyClaimsAgainstSources(
+              (Array.isArray(scout.evidence) ? scout.evidence : []).filter(Boolean),
+              verifiedUrls,
+              { limit: 6, timeoutMs: 5000 }
+            );
+          } catch {}
         } catch {}
         const players = (Array.isArray(scout.players) ? scout.players : [])
           .map((p) => stripCitationNoise(p?.name)).filter(Boolean).slice(0, 4);
@@ -705,11 +718,24 @@ export async function POST(request) {
         // evidenceStrength. Deliberately gentle + only at zero, because bot-walled
         // real sites (Cloudflare 403) can false-negative; we never harshly tank a
         // score on a noisy signal, we just refuse to call unbacked claims strong.
-        const verifiedEvidenceCount = summarizeSources(sources).verified + (marketSizeContentVerified ? 1 : 0);
-        if (verifiedEvidenceCount === 0 && evalResult.components && Number(evalResult.components.evidenceStrength) > 10) {
-          evalResult.components.evidenceStrength = 10;
-          evalResult.evidenceCapped = true;
+        // A resolving URL is a transport check, NOT proof of the claim. Score
+        // evidence on CLAIMS whose figure was actually found in a source. With no
+        // proven claim, the evidence is a qualitative hypothesis — it cannot earn
+        // a strong evidence score, and the pain MAGNITUDE can't be maxed either.
+        const provenClaims = claimChecks.filter((c) => c.verified).length + (marketSizeContentVerified ? 1 : 0);
+        const capComponent = (key, max) => {
+          if (evalResult.components && Number(evalResult.components[key]) > max) {
+            evalResult.components[key] = max;
+            evalResult.evidenceCapped = true;
+          }
+        };
+        if (provenClaims === 0) {
+          capComponent('evidenceStrength', 8);   // of 20
+          capComponent('painFrequency', 10);     // of 15 — magnitude unproven
+        } else if (provenClaims < 3) {
+          capComponent('evidenceStrength', 14);  // partial corroboration
         }
+        evalResult.provenClaims = provenClaims;
         const det = computeDeterministicScore(evalResult.components, evalResult.gates);
         evalResult.deterministic = det;
         // Overwrite scores with the code-derived overall + legacy dimensions the
@@ -740,6 +766,8 @@ export async function POST(request) {
         comp.marketSizeVerified = marketSizeContentVerified;
         comp.marketSizeSource = marketSizeContentVerified ? scout.marketSizeSource : '';
         comp.evidenceCapped = Boolean(evalResult.evidenceCapped);
+        comp.evidenceVerification = claimChecks;
+        comp.provenClaims = Number(evalResult.provenClaims) || 0;
 
         // Safety runs on a separate axis from the score — a strong market read
         // never clears a clinical/health-sensitive concern. Attach the notice so

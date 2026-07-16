@@ -981,6 +981,17 @@ Search for the most current information available as of ${today}. Prioritise dev
 
         // Plain-English readability check on this paid deliverable.
         const launchResult = await withPlainEnglish('Launch & go-to-market plan', launchStage.result);
+        // Deterministic pricing reconciliation. Models routinely state a revenue
+        // goal whose arithmetic contradicts their own price (e.g. "$4,500 = 15 ×
+        // $300/mo" printed next to a $450/mo price). Recompute the formula from
+        // the actual price so the numbers can't disagree on the page.
+        const listPrice = parseMoney(launchResult?.pricing?.price);
+        const goal = parseMoney(launchResult?.revenueGoal);
+        if (Number.isFinite(listPrice) && listPrice > 0 && Number.isFinite(goal) && goal > 0) {
+          const customers = Math.max(1, Math.round(goal / listPrice));
+          const reconciled = Math.round(customers * listPrice);
+          launchResult.revenueGoal = `$${reconciled.toLocaleString('en-US')} = ${customers} × $${listPrice.toLocaleString('en-US')}/mo`;
+        }
 
         // Reconcile the revenue goal against the price the plan actually sets.
         // Models routinely state "$4,500 = 15 × $300/mo" while pricing the product

@@ -521,9 +521,20 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
       })(),
       'sec--long');
   }
+  // Per-claim verification: mark each finding as CONFIRMED (its figure was found
+  // in a source we fetched) or an unconfirmed estimate. A resolving URL alone is
+  // never presented as proof.
+  const claimMap = new Map((comp?.evidenceVerification || []).map((c) => [String(c.claim), c]));
   const evidence = (comp?.evidence || []).filter((x) => x && String(x).trim()).slice(0, 8);
   if (evidence.length) sec('Research & evidence',
-    `<p class="muted">The market read above was built from these findings (competitors, pricing, and demand signals gathered during the analysis).</p>${list(evidence)}`);
+    `<p class="muted">Findings behind the market read. "Confirmed" means the figure was located in a source we fetched; everything else is an unconfirmed estimate and was not scored as proven evidence.</p>` +
+    `<ul class="list">${evidence.map((x) => {
+      const c = claimMap.get(String(x));
+      const badge = c?.verified
+        ? `<span class="src">✓ confirmed${c.sourceUrl ? ` — <a href="${e(c.sourceUrl)}">${e(c.sourceUrl.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, ''))}</a>` : ''}</span>`
+        : `<span class="src">⚠ unconfirmed estimate</span>`;
+      return `<li>${e(x)}<br>${badge}</li>`;
+    }).join('')}</ul>`);
 
   // Dedupe by URL — the same page can arrive from both the model's reported
   // sources and a competitor's own link. Verified wins over unverified.
@@ -532,8 +543,10 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     return acc;
   }, {}));
   if (sources.length) sec('Sources',
-    `<p class="muted">Real URLs returned by the market-research search. "Verified" means the page resolved live when the report was generated — checked in code, not claimed by the model.</p>` +
-    `<ul class="list">${sources.map((s) => `<li><a href="${e(s.url)}">${e(s.title || s.url.replace(/^https?:\/\/(www\.)?/, ''))}</a> <span class="src">${s.verified ? '✓ verified' : '⚠ unverified'}</span><br><span class="src">${e(s.url)}</span></li>`).join('')}</ul>`);
+    `<p class="muted">Numbered register of every source behind this report. "Resolved" means the page loaded when this report was generated — a transport check only. It does NOT mean the page proves a claim; see Research &amp; evidence for which figures were actually confirmed in a source.</p>` +
+    `<table class="ctable"><thead><tr><th>ID</th><th>Source</th><th>Resolved</th></tr></thead><tbody>${
+      sources.map((s, i) => `<tr><td><strong>S${String(i + 1).padStart(2, '0')}</strong></td><td><a href="${e(s.url)}">${e(s.title || s.url.replace(/^https?:\/\/(www\.)?/, ''))}</a><br><span class="src">${e(s.url)}</span></td><td>${s.verified ? '✓' : '⚠'}</td></tr>`).join('')
+    }</tbody></table>`);
 
   const hasCursorPrompt = Boolean(gtm?.cursorPrompt && gtm.cursorPrompt.trim());
   if (hasCursorPrompt) sec('First prompt for Cursor / Claude / Codex', `<pre class="code">${e(gtm.cursorPrompt)}</pre>`);
@@ -560,8 +573,9 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     `<div class="qrow"><span>Minimum required</span><b>${SCORE_POLICY.blueprintMin}</b></div>`,
     `<div class="qrow"><span>Score model</span><b>${e(SCORE_POLICY.version)}</b></div>`,
     confidence ? `<div class="qrow"><span>Confidence</span><b>${e(confidence)}</b></div>` : '',
-    srcSummary.total ? `<div class="qrow"><span>Sources reviewed</span><b>${srcSummary.total}</b></div>` : '',
-    srcSummary.total ? `<div class="qrow"><span>Verified (resolve live)</span><b>${srcSummary.verified}/${srcSummary.total}</b></div>` : '',
+    srcSummary.total ? `<div class="qrow"><span>Sources (register S01–S${String(srcSummary.total).padStart(2, '0')})</span><b>${srcSummary.total}</b></div>` : '',
+    srcSummary.total ? `<div class="qrow"><span>Pages that resolved</span><b>${srcSummary.verified}/${srcSummary.total}</b></div>` : '',
+    `<div class="qrow"><span>Claims confirmed in a source</span><b>${Number(comp?.provenClaims) || 0}</b></div>`,
     dateStr ? `<div class="qrow"><span>Scored</span><b>${e(dateStr)}</b></div>` : '',
   ].filter(Boolean).join('');
   const BREAKDOWN_LABELS = {
