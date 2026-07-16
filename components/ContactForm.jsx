@@ -1,6 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 const inputStyle = {
   width: '100%',
@@ -28,8 +30,38 @@ const labelStyle = {
 };
 
 export default function ContactForm() {
-  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [form, setForm] = useState({ name: '', email: '', message: '', website: '' });
   const [status, setStatus] = useState('idle');
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const formLoadedAt = useRef(Date.now());
+  const turnstileRef = useRef(null);
+
+  // Load Cloudflare Turnstile if a site key is provided. No-op otherwise.
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY) return;
+    const existing = document.querySelector('script[data-turnstile]');
+    if (!existing) {
+      const s = document.createElement('script');
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      s.async = true; s.defer = true;
+      s.setAttribute('data-turnstile', 'true');
+      document.head.appendChild(s);
+    }
+    const renderWhenReady = () => {
+      if (!turnstileRef.current) return;
+      if (window.turnstile) {
+        window.turnstile.render(turnstileRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          callback: (token) => setTurnstileToken(token),
+          'expired-callback': () => setTurnstileToken(''),
+          'error-callback': () => setTurnstileToken(''),
+        });
+      } else {
+        setTimeout(renderWhenReady, 250);
+      }
+    };
+    renderWhenReady();
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -38,7 +70,11 @@ export default function ContactForm() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          formLoadedAt: formLoadedAt.current,
+          turnstileToken,
+        }),
       });
       setStatus(res.ok ? 'sent' : 'error');
     } catch {
@@ -101,6 +137,24 @@ export default function ContactForm() {
             style={{ ...inputStyle, resize: 'vertical', minHeight: 120 }}
           />
         </div>
+        {/* Honeypot: hidden from real users; naive bots fill it and get silently
+            dropped by the server. Not a substitute for Turnstile — just a cheap
+            first line. */}
+        <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', top: 'auto', width: 1, height: 1, overflow: 'hidden' }}>
+          <label htmlFor="contact-website">Website (leave empty)</label>
+          <input
+            id="contact-website"
+            type="text"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            value={form.website}
+            onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
+          />
+        </div>
+        {TURNSTILE_SITE_KEY && (
+          <div ref={turnstileRef} style={{ minHeight: 65 }} aria-label="Human verification" />
+        )}
         <div aria-live="polite">
           {status === 'error' && (
             <p style={{ color: '#B91C1C', fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, margin: 0 }}>

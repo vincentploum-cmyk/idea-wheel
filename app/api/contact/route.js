@@ -1,4 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { verifyTurnstile } from '@/lib/turnstile';
+import { honeypotTripped, submittedTooFast, looksLikeSpam } from '@/lib/spam-heuristics';
+import { logError } from '@/lib/error-log';
 
 function getAdmin() {
   return createClient(
@@ -8,9 +12,6 @@ function getAdmin() {
   );
 }
 
-// Email the site owner about a new contact message via Resend's HTTP API.
-// No-op unless RESEND_API_KEY is set. Notification failure must never fail
-// the request — the message is already safely in contact_messages.
 async function notifyOwner({ name, email, message }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return;
@@ -19,9 +20,6 @@ async function notifyOwner({ name, email, message }) {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        // resend.dev sandbox sender works without domain verification but only
-        // delivers to the Resend account owner's address — set
-        // CONTACT_NOTIFY_FROM to a verified-domain sender to lift that limit.
         from: process.env.CONTACT_NOTIFY_FROM || 'IdeaReels Contact <onboarding@resend.dev>',
         to: [process.env.CONTACT_NOTIFY_TO || 'vincentploum@gmail.com'],
         reply_to: email,
@@ -30,38 +28,73 @@ async function notifyOwner({ name, email, message }) {
       }),
     });
     if (!res.ok) {
-      console.error('contact notification failed:', res.status, (await res.text()).slice(0, 300));
+      await logError({
+        scope: 'api:contact:notify',
+        error: `resend ${res.status}: ${(await res.text()).slice(0, 300)}`,
+        severity: 'warning',
+      });
     }
   } catch (err) {
-    console.error('contact notification failed:', err.message);
+    await logError({ scope: 'api:contact:notify', error: err, severity: 'warning' });
   }
 }
 
 export async function POST(request) {
   try {
-    const { name, email, message } = await request.json();
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    // 5 messages / hour / IP — high enough that a legit follow-up isn't blocked.
+    const rl = await checkRateLimit(`contact:${ip}`, { limit: 5, windowSeconds: 3600 });
+    if (!rl.ok) return Response.json({ error: 'rate_limited' }, { status: 429 });
+
+    const body = await request.json();
+    const { name, email, message, turnstileToken } = body || {};
+
+    // Cheap heuristic guards. Return 204 (silent success) on bot-shaped input
+    // so we don't tell bots which heuristic tripped them.
+    if (honeypotTripped(body)) return new Response(null, { status: 204 });
+    if (submittedTooFast(body)) return new Response(null, { status: 204 });
+    if (looksLikeSpam(message) || looksLikeSpam(name)) return new Response(null, { status: 204 });
+
     if (!name?.trim() || !email?.trim() || !message?.trim()) {
-      return new Response(null, { status: 400 });
+      return Response.json({ error: 'invalid_input' }, { status: 400 });
     }
+
+    // Turnstile if configured. Fails closed.
+    const ts = await verifyTurnstile(turnstileToken, ip);
+    if (!ts.ok) {
+      await logError({
+        scope: 'api:contact:turnstile',
+        error: `turnstile rejected: ${ts.reason || 'unknown'}`,
+        severity: 'warning',
+        meta: { codes: ts.codes || [], ip },
+      });
+      return Response.json({ error: 'verification_failed' }, { status: 403 });
+    }
+
     const db = getAdmin();
-    // Supabase returns errors instead of throwing — without this check a
-    // failed insert would still tell the visitor "Message received".
     const { error } = await db.from('contact_messages').insert({
       name: name.trim().slice(0, 200),
       email: email.trim().slice(0, 200),
       message: message.trim().slice(0, 4000),
     });
     if (error) {
-      console.error('contact_messages insert failed:', error.message);
-      return new Response(null, { status: 500 });
+      await logError({
+        scope: 'api:contact:insert',
+        error: error.message,
+        route: '/api/contact',
+        meta: { ip },
+      });
+      return Response.json({ error: 'storage_failed' }, { status: 500 });
     }
+
     await notifyOwner({
       name: name.trim().slice(0, 200),
       email: email.trim().slice(0, 200),
       message: message.trim().slice(0, 4000),
     });
     return new Response(null, { status: 204 });
-  } catch {
-    return new Response(null, { status: 500 });
+  } catch (err) {
+    await logError({ scope: 'api:contact', error: err, route: '/api/contact' });
+    return Response.json({ error: 'internal_error' }, { status: 500 });
   }
 }
