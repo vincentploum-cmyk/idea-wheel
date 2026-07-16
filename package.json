@@ -11,7 +11,9 @@
     "palette:print": "node migrate-palette.js --json",
     "opportunity-bank:sync": "node scripts/sync-opportunity-bank.mjs",
     "test": "jest",
-    "test:races": "npm --prefix test/integration install --silent --no-audit --no-fund && node test/integration/credit-races.mjs"
+    "test:races": "npm --prefix test/integration install --silent --no-audit --no-fund && node test/integration/credit-races.mjs",
+    "test:e2e": "npm --prefix test/e2e install --silent --no-audit --no-fund && npx --prefix test/e2e playwright install chromium webkit && npx --prefix test/e2e playwright test -c test/e2e/playwright.config.mjs",
+    "audit:blueprints": "node scripts/blueprint-audit.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

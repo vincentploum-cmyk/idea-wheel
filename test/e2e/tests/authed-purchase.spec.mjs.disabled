@@ -1,0 +1,34 @@
+// SKETCH — enable when STRIPE_TEST_SECRET_KEY + a test-user storageState.json exist.
+//
+// Rename to .spec.mjs to activate. Requires a staging deploy on Stripe test-mode
+// keys; running against LIVE prod would try to charge a real card.
+
+import { test, expect } from '@playwright/test';
+
+test.use({ storageState: 'test/e2e/.state/test-user.json' });
+
+test('authed user can buy the Starter pack and generate a blueprint', async ({ page }) => {
+  test.skip(!process.env.STRIPE_TEST_SECRET_KEY, 'requires Stripe test-mode env');
+
+  await page.goto('/pricing');
+  await page.getByRole('button', { name: /buy starter/i }).click();
+
+  // Stripe Checkout page — fill test card.
+  await page.waitForURL(/checkout\.stripe\.com/);
+  await page.getByLabel('Card number').fill('4242 4242 4242 4242');
+  await page.getByLabel('Expiration').fill('12 / 34');
+  await page.getByLabel('CVC').fill('123');
+  await page.getByLabel('Name on card').fill('IdeaReels Test');
+  await page.getByLabel(/country/i).selectOption('US');
+  await page.getByLabel(/zip/i).fill('94103');
+  await page.getByRole('button', { name: /pay/i }).click();
+
+  // Land back on /pricing?session_id=… and see 5 credits granted.
+  await page.waitForURL(/\/pricing.*session_id=/);
+  await expect(page.getByText(/5 credit/i).first()).toBeVisible();
+
+  // Now spin something known-eligible and build the blueprint.
+  await page.goto('/wheel');
+  await page.getByRole('button', { name: /spin/i }).click();
+  // ... etc.
+});

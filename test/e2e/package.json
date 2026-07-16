@@ -1,0 +1,10 @@
+{
+  "name": "idea-wheel-e2e-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Playwright E2E smoke tests hitting the production or staging URL. Kept in its own package so Playwright's browser binaries are NOT downloaded during the production build (Render runs the root `npm install` only). Run via `npm run test:e2e` from the repo root.",
+  "devDependencies": {
+    "@playwright/test": "^1.48.2"
+  }
+}
