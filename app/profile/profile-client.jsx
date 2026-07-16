@@ -337,45 +337,57 @@ export default function ProfileClient({ user, error, welcome }) {
     <div className="popito_fn_account_page">
       <div className="container">
 
-        {/* Welcome confirmation banner */}
+        {/* Welcome confirmation banner — first landing after signup. Guides
+            straight to the value action (spinning) instead of leaving them on
+            an empty profile page wondering what to do. */}
         {showWelcome && (
           <div style={{
             background: '#FFE000',
-            border: '2px solid #111',
+            border: '3px solid #111',
             borderRadius: 10,
-            boxShadow: '3px 3px 0 #111',
-            padding: '20px 24px',
+            boxShadow: '4px 4px 0 #111',
+            padding: '24px 28px',
             marginBottom: 28,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 16,
-            flexWrap: 'wrap',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <span style={{ fontSize: 24 }}>✓</span>
-              <div>
-                <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16, margin: '0 0 2px', color: '#111' }}>
-                  You&apos;re signed in
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <span aria-hidden="true" style={{ fontSize: 28 }}>👋</span>
+              <div style={{ flex: '1 1 260px', minWidth: 220 }}>
+                <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 18, margin: '0 0 4px', color: '#111' }}>
+                  You&apos;re in — welcome to IdeaReels.
                 </p>
-                <p style={{ fontSize: 13, color: '#111', opacity: 0.65, margin: 0 }}>
-                  Welcome to IdeaReels. Your account is ready.
+                <p style={{ fontSize: 14, color: '#111', opacity: 0.75, margin: 0, lineHeight: 1.5 }}>
+                  Spinning and your first market verdict are <strong>free</strong>. Ready to see what the machine finds?
                 </p>
               </div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <Link
+                  href="/wheel"
+                  onClick={() => setShowWelcome(false)}
+                  style={{
+                    background: '#111', color: '#FFE000',
+                    border: '2px solid #111', borderRadius: 6,
+                    padding: '12px 22px',
+                    fontFamily: 'Nunito, sans-serif', fontWeight: 900,
+                    fontSize: 14, textDecoration: 'none',
+                    boxShadow: '2px 2px 0 #111',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Spin an idea →
+                </Link>
+                <button
+                  onClick={() => setShowWelcome(false)}
+                  style={{
+                    background: 'transparent', color: '#111',
+                    border: 'none', padding: '10px 8px',
+                    fontFamily: 'Nunito, sans-serif', fontWeight: 700,
+                    fontSize: 13, cursor: 'pointer', textDecoration: 'underline',
+                  }}
+                >
+                  Later
+                </button>
+              </div>
             </div>
-            <button
-              onClick={() => setShowWelcome(false)}
-              style={{
-                background: '#111', color: '#FFE000',
-                border: '2px solid #111', borderRadius: 6,
-                padding: '8px 18px',
-                fontFamily: 'Nunito, sans-serif', fontWeight: 900,
-                fontSize: 13, cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Got it
-            </button>
           </div>
         )}
 
