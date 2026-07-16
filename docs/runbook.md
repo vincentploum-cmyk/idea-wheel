@@ -108,7 +108,22 @@ Sequence, easiest first:
 4. Supabase SQL: `select * from credits_ledger where reason like 'purchase_%' and metadata->>'stripe_session_id' = '<cs_live_id>';` — was a grant recorded?
 5. Also: `select * from error_events where scope='api:stripe-webhook' and meta->>'sessionId' = '<cs_live_id>';`
 6. If ledger row exists → they DO have credits; the UI might not have refreshed. Have them reload `/pricing?session_id=<cs_live_id>` (that route re-verifies + fetches balance).
-7. If ledger row is missing AND error_events has a matching failure → figure out why the webhook failed (bad secret? terminal reason?). Manually grant with SQL: use `deduct_credits` inverse pattern (or `select fulfillment_by_hand(...)`). Log what you did.
+7. If ledger row is missing AND error_events has a matching failure → figure out why the webhook failed (bad secret? terminal reason?). Manually grant via the admin refund endpoint (never raw SQL — the endpoint enforces idempotency + audits):
+
+   ```
+   curl -X POST https://ideareels.io/api/admin/refund \
+     -H "Authorization: Bearer $SEED_SECRET" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "userId": "<uuid from Supabase auth.users>",
+       "amount": 5,
+       "reason": "manual_grant_ticket_<id>",
+       "note": "webhook failed at <session_id>; customer confirmed charge on Stripe dashboard"
+     }'
+   ```
+
+   Response includes `granted`, `duplicate` (was this reason already used?), and `newBalance`. If `duplicate: true` came back, the grant was already applied — don't call again with a different reason.
+
 8. Reply to the customer inside 24h.
 
 **Never** grant credits based only on a customer's word — always verify against Stripe.
