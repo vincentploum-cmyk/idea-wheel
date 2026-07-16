@@ -10,6 +10,7 @@ import { computeDeterministicScore, legacyDimensions } from '../../../../lib/sco
 import { verifySources, summarizeSources, verifyClaim, verifyClaimsAgainstSources } from '../../../../lib/source-verify';
 import { logError } from '../../../../lib/error-log';
 import { markStart, markEnd } from '../../../../lib/metrics';
+import { getPreferences } from '../../../../lib/user-preferences';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -553,6 +554,9 @@ export async function POST(request) {
       };
       const timing = markStart('validate');
       let timingStatus = 'ok';
+      // Fetch once so we don't hit the pref table twice per stream.
+      const prefs = user ? await getPreferences(user.id) : { catalogOptOut: false };
+      const catalogOptOut = !!prefs.catalogOptOut;
       try {
         // Cache short-circuit: if this exact canonical idea (workflow+industry,
         // action folded into copy) was already validated under the current score
@@ -569,6 +573,7 @@ export async function POST(request) {
               score: cached.comp.score, safetyLevel: cached.comp.safety?.level || 'standard',
               title: cached.comp.title, summary: cached.comp.plainSummary || cached.comp.verdict, gap: cached.comp.gap,
               comp: cached.comp, agentDesc: cached.comp.agentDesc,
+              catalogOptOut,
             }).catch(() => {});
             send({ t: 'result', sessionId, comp: cached.comp, cached: true, cost: { input_tokens: 0, output_tokens: 0, cost_usd: 0 } });
             return;
@@ -791,6 +796,7 @@ export async function POST(request) {
             score: comp.score, safetyLevel: safety.level,
             title: comp.title, summary: comp.plainSummary || comp.verdict, gap: comp.gap,
             comp, agentDesc,
+            catalogOptOut,
           }).catch(() => {});
         }
 

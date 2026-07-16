@@ -245,6 +245,37 @@ export default function ProfileClient({ user, error, welcome }) {
 
   const handleDelete = (id) => setIdeas(prev => prev.filter(i => i.id !== id));
 
+  const [prefs, setPrefs] = useState(null);
+  const [prefsBusy, setPrefsBusy] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const res = await fetch('/api/account/preferences');
+        if (res.ok) {
+          const data = await res.json();
+          setPrefs(data.prefs || null);
+        }
+      } catch {}
+    })();
+  }, [user]);
+  const togglePref = async (key, value) => {
+    setPrefsBusy(true);
+    try {
+      const res = await fetch('/api/account/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [key]: value }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPrefs(data.prefs);
+      }
+    } finally {
+      setPrefsBusy(false);
+    }
+  };
+
   const fmtDate = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const blueprintCount = ideas.filter(i => i.blueprint_status === 'complete').length;
 
@@ -413,7 +444,23 @@ export default function ProfileClient({ user, error, welcome }) {
             <div className="details_subtitle">
               <h3 className="title">Your data</h3>
             </div>
-            <div style={{ paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Catalog opt-out — Terms + Privacy both commit to this. */}
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={!!prefs?.catalogOptOut}
+                  disabled={prefs === null || prefsBusy}
+                  onChange={(e) => togglePref('catalogOptOut', e.target.checked)}
+                  style={{ marginTop: 4, width: 18, height: 18, accentColor: '#111' }}
+                />
+                <span>
+                  <strong style={{ display: 'block', fontSize: 14 }}>Keep my ideas out of the public catalog</strong>
+                  <span style={{ display: 'block', fontSize: 13, opacity: 0.65, marginTop: 2, lineHeight: 1.5 }}>
+                    When on, ideas you validate won’t contribute to the anonymized “vetted by founders” section on /ideas — even if they clear the score threshold.
+                  </span>
+                </span>
+              </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 <button
                   onClick={exportData}

@@ -65,18 +65,18 @@ const OUTPUT_PREVIEW = [
 
 export const metadata = {
   title: 'Startup Idea Generator with AI Market Research & MVP Blueprint',
-  description: 'IdeaReels is a startup idea generator for solo founders, vibe coders, and indie hackers. Spin an idea, get AI market research and a full MVP blueprint in under 5 minutes. From $3.99, no subscription.',
+  description: 'IdeaReels is a startup idea generator for solo founders, vibe coders, and indie hackers. Spin an idea, get AI market research and a full MVP blueprint in minutes, not weeks. From $3.99, no subscription.',
   alternates: { canonical: 'https://ideareels.io' },
   openGraph: {
     title: 'Startup Idea Generator with AI Market Research & MVP Blueprint',
-    description: 'Spin a startup idea, get AI market research and a full MVP blueprint in under 5 minutes. Built for solo founders and vibe coders. No subscription.',
+    description: 'Spin a startup idea, get AI market research and a full MVP blueprint in minutes, not weeks. Built for solo founders and vibe coders. No subscription.',
     url: 'https://ideareels.io',
     images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels — Startup Idea Generator' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Startup Idea Generator with AI Market Research & MVP Blueprint',
-    description: 'Spin a startup idea, get AI market research and a full MVP blueprint in under 5 minutes. No subscription.',
+    description: 'Spin a startup idea, get AI market research and a full MVP blueprint in minutes, not weeks. No subscription.',
     images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630 }],
   },
 };
@@ -132,7 +132,7 @@ export default async function LandingPage() {
               Spin a fresh startup idea —<br />or validate the one you have.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 600, margin: '0 auto 10px' }}>
-              IdeaReels generates ideas and scores them intelligently against real market data — Reddit signals, Google Trends, and community demand. Already have an idea? Get a free market score and a detailed blueprint to help you on your way in under 5 minutes.
+              IdeaReels generates ideas and scores them intelligently against real market data — Reddit signals, Google Trends, and community demand. Already have an idea? Get a free market score and a detailed blueprint to help you on your way in minutes, not weeks.
             </p>
             {!user && (
               <div style={{

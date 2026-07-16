@@ -58,7 +58,7 @@ export default function OgImage() {
               maxWidth: 900,
             }}
           >
-            AI market research + MVP blueprint in under 5 minutes.
+            AI market research + MVP blueprint in minutes, not weeks.
           </div>
           <div style={{ fontSize: 28, color: '#aaaaaa', fontWeight: 400, letterSpacing: '-0.3px' }}>
             Built for vibe coders and solo founders.

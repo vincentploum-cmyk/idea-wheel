@@ -24,7 +24,7 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'HowTo',
   name: 'How to Validate a Startup Idea with IdeaReels',
-  description: 'A walkthrough of the full IdeaReels output: spin a startup idea combination, get an AI market verdict, read deep research, and receive a technical MVP blueprint — in under 5 minutes.',
+  description: 'A walkthrough of the full IdeaReels output: spin a startup idea combination, get an AI market verdict, read deep research, and receive a technical MVP blueprint — in minutes, not weeks.',
   url: 'https://ideareels.io/example',
   totalTime: 'PT5M',
   step: [
@@ -167,7 +167,7 @@ export default async function ExamplePage() {
               Here's exactly what you get.
             </h1>
             <p className="fn__desc">
-              A real spin result, market verdict, deep research, and full MVP blueprint — produced in under 5 minutes.
+              A real spin result, market verdict, deep research, and full MVP blueprint — produced in minutes, not weeks.
             </p>
             <p className="fn__desc" style={{ marginTop: 12, opacity: 0.7 }}>
               This page walks through every section you get when you unlock an idea: the viability score, the market research brief, competitor landscape, demand signals, and the technical MVP blueprint with stack recommendations. Nothing is mocked up — this is real output from the engine.

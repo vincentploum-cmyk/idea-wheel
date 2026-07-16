@@ -10,7 +10,7 @@ export const metadata = {
     default: 'IdeaReels — AI Startup Idea Validation & MVP Blueprint',
     template: '%s | IdeaReels',
   },
-  description: 'Stop building the wrong thing. IdeaReels validates your startup idea with AI market research and produces a full technical MVP blueprint in under 5 minutes. From $3.99.',
+  description: 'Stop building the wrong thing. IdeaReels validates your startup idea with AI market research and produces a full technical MVP blueprint in minutes, not weeks. From $3.99.',
   keywords: [
     'startup idea generator',
     'startup idea generator for solo founders',
@@ -33,7 +33,7 @@ export const metadata = {
   publisher: 'IdeaReels',
   openGraph: {
     title: 'IdeaReels — AI Startup Idea Validation & MVP Blueprints from $3.99',
-    description: 'Validate your startup idea with AI market research and get a full technical MVP blueprint in under 5 minutes. Built for vibe coders and solo founders.',
+    description: 'Validate your startup idea with AI market research and get a full technical MVP blueprint in minutes, not weeks. Built for vibe coders and solo founders.',
     type: 'website',
     url: 'https://ideareels.io',
     siteName: 'IdeaReels',
@@ -44,7 +44,7 @@ export const metadata = {
     card: 'summary_large_image',
     site: '@ideareels',
     title: 'IdeaReels — Validate Your Startup Idea with AI Market Research',
-    description: 'Stop building the wrong thing. AI market research + MVP blueprint in under 5 minutes, from $3.99.',
+    description: 'Stop building the wrong thing. AI market research + MVP blueprint in minutes, not weeks, from $3.99.',
     images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels — AI Startup Idea Validation & MVP Blueprints' }],
   },
   // robots.txt is handled exclusively by app/robots.js — no meta robots tag here
