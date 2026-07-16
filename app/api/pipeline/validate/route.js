@@ -752,6 +752,7 @@ export async function POST(request) {
         const costUsd = calcCost(usage.input_tokens, usage.output_tokens);
 
         const validationRow = await recordValidation({
+          userId: user.id,                  // stored so the blueprint gate can enforce ownership later
           sessionId, modeName, action, workflow, industry, agentDesc,
           retrieval, scout, skeptic, judge, eval: evalResult,
           verdictType: judge.decision || scout.verdictType || 'warning',

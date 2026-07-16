@@ -8,7 +8,7 @@ import { CREDIT_COSTS } from '../../../../lib/credits';
 // see lib/rate-limit.js).
 const BUILD_RATE_LIMIT = { limit: 5, windowSeconds: 60 };
 import { addCredits, deductCredits } from '../../../../lib/credits';
-import { ensureSessionId, getBlueprintCharge, getValidationEligibility, recordBlueprint, recordOutcome, saveBlueprintCharge } from '../../../../lib/moat-store';
+import { ensureSessionId, findBlueprintChargeByKey, getBlueprintCharge, getValidationEligibility, recordBlueprint, recordOutcome, saveBlueprintCharge } from '../../../../lib/moat-store';
 import { SCORE_POLICY } from '../../../../lib/score-policy';
 import { computeCostModel, parseMoney } from '../../../../lib/cost-model';
 import { getCandidateEligibility } from '../../../../lib/idea-candidates';
@@ -823,30 +823,45 @@ export async function POST(request) {
       // client CTA is a courtesy. Runs BEFORE any credit is charged, and only at
       // the designer stage (later stages continue an already-authorized charge).
       let eligibility = await getValidationEligibility(validationId, {
+        userId: user.id,                             // OWNERSHIP: reject other users' validationIds as not_found
         minScore: SCORE_POLICY.blueprintMin,
         requiredVersion: SCORE_POLICY.version,
       });
       // Durable fallback: if the per-validation record can't be found (cache hit,
       // or pipeline_validations not durably stored / wiped on redeploy), fall back
       // to the idea_candidates pool, which durably holds the canonical score,
-      // version, and eligibility. Only for structured ideas (freeform has no combo).
+      // version, safety level, and eligibility_status. Only for structured ideas
+      // (freeform has no canonical combo). Never treats found:true alone as
+      // qualification — the helper's `eligible` flag is what we check.
       if (!eligibility.eligible && eligibility.reason === 'validation_not_found' && action && workflow && industry) {
-        const fromPool = await getCandidateEligibility(modeName, workflow, industry, {
+        const fromPool = await getCandidateEligibility({
+          mode: modeName,
+          action,
+          workflow,
+          industry,
           minScore: SCORE_POLICY.blueprintMin,
           requiredVersion: SCORE_POLICY.version,
         });
         if (fromPool.found) eligibility = fromPool;
       }
       if (!eligibility.eligible) {
+        // Defensive: `reason` can be absent on a malformed helper result — never
+        // let a missing string throw the 500 that hides the real ineligibility.
+        const reason = eligibility.reason || 'ineligible';
         return NextResponse.json({
           error: 'idea_not_eligible',
-          reason: eligibility.reason,
-          score: eligibility.score,
+          reason,
+          score: eligibility.score ?? null,
           minimumRequired: SCORE_POLICY.blueprintMin,
-        }, { status: eligibility.reason.includes('not_found') ? 404 : 422 });
+        }, { status: reason.includes('not_found') ? 404 : 422 });
       }
 
-      const debit = await deductCredits(user.id, blueprintCost, 'blueprint_started', {
+      // Idempotency: keying the credits reason on validationId (backed by the
+      // unique index credits_blueprint_start_idem) means a concurrent or retried
+      // designer call can't double-debit. On duplicate we reuse the existing
+      // charge instead of minting a new token.
+      const idempotencyReason = `blueprint_started:${validationId}`;
+      const debit = await deductCredits(user.id, blueprintCost, idempotencyReason, {
         validationId,
         sessionId,
         modeName,
@@ -855,26 +870,35 @@ export async function POST(request) {
         industry,
       });
 
-      if (!debit.ok) {
+      if (debit.duplicate) {
+        // Already charged for this exact validation — find and reuse the charge.
+        charge = await findBlueprintChargeByKey({ userId: user.id, validationId });
+        if (!charge) {
+          return NextResponse.json({
+            error: 'blueprint_already_in_progress',
+            message: 'This blueprint was already charged. Refresh to resume.',
+          }, { status: 409 });
+        }
+      } else if (!debit.ok) {
         return NextResponse.json({
           error: debit.reason === 'insufficient_credits' ? 'Not enough credits for this blueprint.' : 'Unable to charge credits for this blueprint.',
           balance: debit.balance ?? null,
         }, { status: debit.reason === 'insufficient_credits' ? 402 : 400 });
+      } else {
+        charge = await saveBlueprintCharge({
+          id: crypto.randomUUID(),
+          userId: user.id,
+          sessionId,
+          validationId,
+          modeName,
+          action,
+          workflow,
+          industry,
+          amount: blueprintCost,
+          status: 'authorized',
+          balanceAfter: debit.newBalance ?? null,
+        });
       }
-
-      charge = await saveBlueprintCharge({
-        id: crypto.randomUUID(),
-        userId: user.id,
-        sessionId,
-        validationId,
-        modeName,
-        action,
-        workflow,
-        industry,
-        amount: blueprintCost,
-        status: 'authorized',
-        balanceAfter: debit.newBalance ?? null,
-      });
     } else {
       if (!chargeToken) {
         return NextResponse.json({ error: 'Missing blueprint charge token' }, { status: 400 });
