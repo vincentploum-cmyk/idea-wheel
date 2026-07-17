@@ -113,7 +113,17 @@ function ResearchPanel({ research }) {
             {(research.signals || []).map((s, i) => {
               // Signals used to be plain strings; freshly-seeded rows carry
               // {text, sourceIndex} objects. Handle both shapes.
-              const text = typeof s === 'string' ? s : s?.text;
+              const rawText = typeof s === 'string' ? s : s?.text;
+              // The model sometimes leaves inline markdown citations like
+              // "([domain.com](https://…))" inside signal text even though the
+              // same URL is already in the sources list. Strip that noise at
+              // render time so we don't have to re-seed.
+              const text = typeof rawText === 'string'
+                ? rawText
+                    .replace(/\s*\(?\[[^\]]+\]\(https?:\/\/[^)]+\)\)?/g, '')
+                    .replace(/\s{2,}/g, ' ')
+                    .trim()
+                : rawText;
               const idx = typeof s === 'object' && Number.isInteger(s?.sourceIndex) ? s.sourceIndex : -1;
               const sources = Array.isArray(research.sources) ? research.sources : [];
               const src = idx >= 0 && idx < sources.length ? sources[idx] : null;
