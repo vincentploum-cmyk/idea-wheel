@@ -120,9 +120,12 @@ async function generateResearch(idea) {
 IDEA: "${idea.title}" — ${idea.description}
 WHAT IT DOES: ${agentDesc}
 
-Search the web thoroughly. Find:
+TOPICAL RELEVANCE RULE — READ THIS TWICE:
+Every claim, statistic, quote, competitor, and source you cite MUST be about "${agentDesc}" — specifically. Do NOT reach for generic B2B tropes (OSHA fines, GDPR penalties, "digital transformation" market sizes) unless "${agentDesc}" is LITERALLY about that topic. A statistic about worker-certification fines has no place in a dental-intake brief. A statistic about SaaS churn has no place in a construction-site brief. Every signal must contain a keyword from the workflow or industry above — if it does not, DELETE that signal and find a real one that does.
+
+Search the web thoroughly and prefer sources that discuss "${idea.workflow}" or "${idea.industry}" specifically. Find:
 - Real, named competing products with their actual pricing
-- Concrete evidence the pain exists (Reddit threads, forum posts, OSHA/regulatory data, industry stats)
+- Concrete evidence THIS pain (${idea.workflow}) exists (Reddit threads, forum posts, industry stats native to ${idea.industry})
 - The specific gap none of the existing tools fill
 - Real risk factors that could kill this startup
 
@@ -130,12 +133,13 @@ CRITICAL OUTPUT RULES:
 1. Return ONLY valid JSON. No markdown fences.
 2. NEVER include citation tags, HTML tags, <cite>, <source>, bracketed numbers like [1] or [2,3], or any markup in your output. Write plain sentences only.
 3. Every string must be clean plain English — imagine printing it on a page and showing it to a customer.
+4. Every entry in "signals" must explicitly name "${idea.workflow}" or "${idea.industry}" (or a synonym a domain expert would accept). A signal that could apply verbatim to a completely different industry is a BAD signal — replace it.
 
 JSON schema:
 {
-  "marketSize": "one sentence with a real number or growth stat — e.g. '$2.1B market growing 16% per year'",
-  "teaserLine": "THE SINGLE MOST COMPELLING MARKET FACT you found — a specific dollar figure, penalty, stat, or user pain that makes a founder say 'this market is real'. Max 18 words. This is the first thing a non-paying visitor sees — make it land like a punch. BAD EXAMPLE: 'Stop teams from losing certifications.' GOOD EXAMPLE: 'OSHA fined US employers $185M last year — expired worker certs are the #1 trigger.'",
-  "landscape": "3 punchy sentences on the market today. Name the real players, their real price points, and exactly where they stop short. No fluff.",
+  "marketSize": "one sentence with a real number or growth stat SPECIFICALLY about ${idea.industry} or ${idea.workflow} — e.g. 'The dental-practice-management software market is projected to reach $2.1B by 2026, growing 16% annually.'",
+  "teaserLine": "THE SINGLE MOST COMPELLING MARKET FACT you found ABOUT THIS SPECIFIC IDEA — a dollar figure, stat, or user pain that a founder considering ${agentDesc} would find punchy. Max 18 words. Must name the workflow or industry. GOOD PATTERN: '<industry> operators lose <hours or $> on <workflow> — <supporting evidence>'. BAD PATTERN: any statistic that could equally headline a totally unrelated idea.",
+  "landscape": "3 punchy sentences on the ${idea.industry} market for ${idea.workflow} today. Name the real players, their real price points, and exactly where they stop short. No fluff.",
   "players": [
     {
       "name": "exact product/company name",
@@ -146,11 +150,11 @@ JSON schema:
   ],
   "gap": "the exact, specific pain no existing tool solves — one sharp sentence referencing real tools by name",
   "signals": [
-    "A real quote or stat from Reddit/forums/industry data proving people suffer this pain today",
-    "A regulatory or compliance event that makes this urgent (fine, law change, etc.)",
-    "A market size or growth stat with a source name",
-    "A pricing or adoption signal showing people already pay for partial solutions",
-    "A competitor weakness signal — something a real user complained about publicly"
+    "A quote or stat from a ${idea.industry} practitioner or a ${idea.industry}/${idea.workflow} community (Reddit, forum, association) proving this specific pain — must mention the workflow or industry by name",
+    "A market-size or growth stat for the ${idea.industry} software / tooling / services market — never a generic 'digital transformation' number",
+    "A pricing or adoption signal showing ${idea.industry} operators already pay for partial solutions to ${idea.workflow}",
+    "A competitor weakness signal — a real complaint about a named ${idea.industry} tool, tied to the ${idea.workflow} gap",
+    "One of: (a) a recent regulatory / compliance event that materially affects ${idea.industry} operations, ONLY IF it directly touches ${idea.workflow}; OR (b) a workflow-specific efficiency stat (hours spent, error rate, cost per event) native to ${idea.industry}. If a compliance signal does not directly touch ${idea.workflow}, use (b)."
   ],
   "signalSources": [
     "For EACH signal above, a real URL you actually consulted (from your web search) that supports the specific claim. Same order as the signals array. If you truly cannot find one, put an empty string — never invent a URL. Example: 'https://www.osha.gov/enforcement/2024-fines' — plain URL only, no markup, no brackets.",
