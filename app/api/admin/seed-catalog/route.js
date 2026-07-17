@@ -69,14 +69,28 @@ async function call(prompt, { model = 'gpt-4o-mini', maxTokens = 2000, webSearch
   const data = await res.json();
 
   if (webSearch) {
-    return (data.output || [])
+    // Extract both the text AND the url_citation annotations. The old code
+    // threw away the URLs, which is why the catalog signals had no visible
+    // citations even though the search tool returned them. Callers that don't
+    // care about citations can still just use the .text field.
+    const parts = (data.output || [])
       .filter(o => o.type === 'message')
       .flatMap(o => o.content || [])
-      .filter(c => c.type === 'output_text')
-      .map(c => c.text)
-      .join('');
+      .filter(c => c.type === 'output_text');
+    const text = parts.map(c => c.text).join('');
+    const seen = new Set();
+    const citations = [];
+    for (const part of parts) {
+      for (const ann of (part.annotations || [])) {
+        if (ann?.type === 'url_citation' && ann.url && !seen.has(ann.url)) {
+          seen.add(ann.url);
+          citations.push({ url: ann.url, title: String(ann.title || '').slice(0, 200) });
+        }
+      }
+    }
+    return { text, citations };
   }
-  return data.choices?.[0]?.message?.content || '';
+  return { text: data.choices?.[0]?.message?.content || '', citations: [] };
 }
 
 function parseJSON(text) {
@@ -138,6 +152,10 @@ JSON schema:
     "A pricing or adoption signal showing people already pay for partial solutions",
     "A competitor weakness signal — something a real user complained about publicly"
   ],
+  "signalSources": [
+    "For EACH signal above, a real URL you actually consulted (from your web search) that supports the specific claim. Same order as the signals array. If you truly cannot find one, put an empty string — never invent a URL. Example: 'https://www.osha.gov/enforcement/2024-fines' — plain URL only, no markup, no brackets.",
+    "..."
+  ],
   "risks": [
     "Risk 1: one concrete reason this could fail — reference a specific competitor or market dynamic",
     "Risk 2: a distribution or pricing risk",
@@ -151,7 +169,47 @@ JSON schema:
 List up to 5 players, largest to smallest. Output plain text only — zero HTML or citation markup anywhere.`;
 
   const raw = await call(prompt, { webSearch: true, maxTokens: 3000 });
-  return deepStrip(parseJSON(raw));
+  const research = deepStrip(parseJSON(raw.text));
+
+  // Build a unified sources list from BOTH the model's signalSources array and
+  // the url_citation annotations the search tool actually returned. Prefer
+  // annotations (they came directly from a real search) but keep model-supplied
+  // URLs the annotations missed, so a signal never renders without a link if
+  // one was reachable.
+  const sources = [];
+  const seenUrls = new Set();
+  for (const c of (raw.citations || [])) {
+    if (c.url && !seenUrls.has(c.url)) {
+      seenUrls.add(c.url);
+      sources.push({ url: c.url, title: c.title || '' });
+    }
+  }
+  const signalSources = Array.isArray(research.signalSources) ? research.signalSources : [];
+  for (const url of signalSources) {
+    if (typeof url === 'string' && /^https?:\/\//i.test(url) && !seenUrls.has(url)) {
+      seenUrls.add(url);
+      sources.push({ url, title: '' });
+    }
+  }
+
+  // Wire signals to sources by index — the prompt asks for parallel arrays.
+  // If a source URL is missing/blank, the signal renders without a link
+  // (labelled "unsourced" in the UI so the visitor knows).
+  const signals = Array.isArray(research.signals) ? research.signals : [];
+  const wiredSignals = signals.map((text, i) => {
+    const url = typeof signalSources[i] === 'string' ? signalSources[i] : '';
+    const sourceIndex = url && seenUrls.has(url)
+      ? sources.findIndex(s => s.url === url)
+      : -1;
+    return { text, sourceIndex };
+  });
+
+  return {
+    ...research,
+    signals: wiredSignals,      // now objects, not strings — renderer switches on shape
+    sources,                     // the citation list itself
+    signalSources: undefined,    // internal, don't ship to UI
+  };
 }
 
 // ── Blueprint pipeline ────────────────────────────────────────────────────────
@@ -187,7 +245,7 @@ CRITICAL: No citation tags, no HTML, no markup. Plain English only. Return ONLY 
   "wowMoment": "the exact moment a prospect sees the product and says 'I need this' — name the specific trigger and the specific output",
   "dataMoat": "what compound data or workflow memory builds up over time that a copycat can never replicate from day one"
 }`, { model: 'gpt-4o', maxTokens: 1400 });
-  const design = deepStrip(parseJSON(designText));
+  const design = deepStrip(parseJSON(designText.text));
 
   // Stage 2 — GTM strategy
   const gtmText = await call(`Go-to-market plan. Every answer must be specific enough to execute tomorrow.
@@ -236,7 +294,7 @@ CRITICAL: No citation tags, no HTML. Plain English only. Return ONLY valid JSON:
   "whyNow": "one specific macro event, regulation, or technology shift in the last 18 months that makes this urgent right now — not generic AI hype",
   "cursorPrompt": "The exact first prompt to paste into Cursor, Claude, or Codex to start building this product. Should include: what to build, tech stack, first screen/feature to implement, and the core AI behavior. 150-200 words."
 }`, { model: 'gpt-4o', maxTokens: 2800 });
-  const gtm = deepStrip(parseJSON(gtmText));
+  const gtm = deepStrip(parseJSON(gtmText.text));
 
   // Stage 3 — Infrastructure
   const infraText = await call(`You are a senior engineer writing the GETTING-STARTED RUNBOOK for a solo, possibly non-technical builder. They PAID for this — it must be concrete enough to actually follow and get the product live, not a summary. No hand-waving: name the exact service, the exact console section to click, and the real gotchas that block people. Use Render for hosting — never Vercel — and keep it consistent everywhere.
@@ -272,7 +330,7 @@ CRITICAL: No citation tags, no HTML. Plain English only. Return ONLY valid JSON:
   },
   "buildOrder": "Day-by-day plan. Day 1: what specifically. Day 2: what specifically. Through launch day."
 }`, { maxTokens: 2600 });
-  const infra = deepStrip(parseJSON(infraText));
+  const infra = deepStrip(parseJSON(infraText.text));
 
   return { design, gtm, infra };
 }

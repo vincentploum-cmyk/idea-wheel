@@ -110,10 +110,62 @@ function ResearchPanel({ research }) {
 
           <SectionLabel>Market signals</SectionLabel>
           <ul style={{ margin: '0 0 16px', paddingLeft: 18 }}>
-            {(research.signals || []).map((s, i) => (
-              <li key={i} style={{ fontSize: 13, lineHeight: 1.7, color: '#111', opacity: 0.8, marginBottom: 4 }}>{s}</li>
-            ))}
+            {(research.signals || []).map((s, i) => {
+              // Signals used to be plain strings; freshly-seeded rows carry
+              // {text, sourceIndex} objects. Handle both shapes.
+              const text = typeof s === 'string' ? s : s?.text;
+              const idx = typeof s === 'object' && Number.isInteger(s?.sourceIndex) ? s.sourceIndex : -1;
+              const sources = Array.isArray(research.sources) ? research.sources : [];
+              const src = idx >= 0 && idx < sources.length ? sources[idx] : null;
+              const hasCitation = !!src?.url;
+              return (
+                <li key={i} style={{ fontSize: 13, lineHeight: 1.7, color: '#111', opacity: 0.8, marginBottom: 4 }}>
+                  {text}
+                  {hasCitation ? (
+                    <sup>
+                      {' '}<a
+                        href={src.url}
+                        target="_blank"
+                        rel="noopener noreferrer nofollow"
+                        aria-label={`Source ${idx + 1}: ${src.title || src.url}`}
+                        style={{ color: '#0369A1', textDecoration: 'none', fontWeight: 700 }}
+                      >[{idx + 1}]</a>
+                    </sup>
+                  ) : (typeof s === 'object' && (
+                    <sup style={{ marginLeft: 4, color: '#B45309', fontSize: 10 }} title="No verified source">⚠</sup>
+                  ))}
+                </li>
+              );
+            })}
           </ul>
+
+          {Array.isArray(research.sources) && research.sources.length > 0 && (
+            <>
+              <SectionLabel>Sources</SectionLabel>
+              <ol style={{ margin: '0 0 16px', paddingLeft: 20 }}>
+                {research.sources.map((src, i) => {
+                  let label = src.title;
+                  if (!label) {
+                    // Never let a malformed URL crash the boundary.
+                    try { label = new URL(src.url).hostname; }
+                    catch { label = src.url; }
+                  }
+                  return (
+                    <li key={i} style={{ fontSize: 12, lineHeight: 1.6, color: '#111', opacity: 0.75, marginBottom: 4, wordBreak: 'break-word' }}>
+                      <a
+                        href={src.url}
+                        target="_blank"
+                        rel="noopener noreferrer nofollow"
+                        style={{ color: '#0369A1', textDecoration: 'underline' }}
+                      >
+                        {label}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ol>
+            </>
+          )}
 
           <SectionLabel>Risks to watch</SectionLabel>
           <ul style={{ margin: '0 0 16px', paddingLeft: 18 }}>
