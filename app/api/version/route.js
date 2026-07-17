@@ -24,6 +24,14 @@ export async function GET() {
       requiresCurrentScoreVersion: true,
       clientSuppliedScoreIgnored: true,
     },
+    // Optional features: booleans reflect whether the required env vars are
+    // present, NOT whether the underlying provider is healthy. Public and safe
+    // to expose (no secrets — just yes/no).
+    features: {
+      turnstile: !!process.env.TURNSTILE_SECRET_KEY,
+      resend: !!process.env.RESEND_API_KEY,
+      errorLog: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    },
     generatedAt: new Date().toISOString(),
   };
   return Response.json(body, {
