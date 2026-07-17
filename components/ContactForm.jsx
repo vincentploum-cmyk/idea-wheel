@@ -76,7 +76,13 @@ export default function ContactForm() {
           turnstileToken,
         }),
       });
-      setStatus(res.ok ? 'sent' : 'error');
+      if (res.ok) {
+        setStatus('sent');
+      } else if (res.status === 429) {
+        setStatus('rate_limited');
+      } else {
+        setStatus('error');
+      }
     } catch {
       setStatus('error');
     }
@@ -159,6 +165,11 @@ export default function ContactForm() {
           {status === 'error' && (
             <p style={{ color: '#B91C1C', fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, margin: 0 }}>
               Something went wrong. Try again or email us at <a href="mailto:hello@ideareels.io" style={{ color: '#B91C1C' }}>hello@ideareels.io</a>
+            </p>
+          )}
+          {status === 'rate_limited' && (
+            <p style={{ color: '#B45309', fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 13, margin: 0 }}>
+              You&apos;ve sent a few messages recently. Please wait an hour before sending another, or email us directly at <a href="mailto:hello@ideareels.io" style={{ color: '#B45309' }}>hello@ideareels.io</a>.
             </p>
           )}
         </div>

@@ -42,8 +42,10 @@ async function notifyOwner({ name, email, message }) {
 export async function POST(request) {
   try {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    // 5 messages / hour / IP — high enough that a legit follow-up isn't blocked.
-    const rl = await checkRateLimit(`contact:${ip}`, { limit: 5, windowSeconds: 3600 });
+    // 15 messages / hour / IP — enough headroom for a real user who
+    // mistypes an email and resubmits a few times, tight enough to shed
+    // bot volume.
+    const rl = await checkRateLimit(`contact:${ip}`, { limit: 15, windowSeconds: 3600 });
     if (!rl.ok) return Response.json({ error: 'rate_limited' }, { status: 429 });
 
     const body = await request.json();
