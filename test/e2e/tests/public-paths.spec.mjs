@@ -43,12 +43,27 @@ test.describe('Public paths', () => {
     expect(body).toMatch(/stored privately in your account/i);
   });
 
-  test('terms page renders and shows beta counsel notice', async ({ page }) => {
+  test('terms page renders with counsel-reviewed content and NY governing law', async ({ page }) => {
     await page.goto('/terms');
     await expect(page.getByText(/terms of service/i).first()).toBeVisible();
-    // The beta banner is a stable regression guard; if it disappears without
-    // LEGAL_COUNSEL_REVIEWED being flipped, something is wrong.
-    await expect(page.getByText(/beta notice|counsel/i).first()).toBeVisible();
+    // Counsel-reviewed state: the beta banner must be GONE and the New York
+    // governing-law clause must be present. If either regresses, something
+    // is wrong.
+    await expect(page.getByText(/beta notice/i)).toHaveCount(0);
+    await expect(page.getByText(/state of new york/i).first()).toBeVisible();
+    // Cross-check against the auditor's known checklist: Vincent Ploum named
+    // as operator, hello@ideareels.io contact.
+    await expect(page.getByText(/vincent ploum/i).first()).toBeVisible();
+  });
+
+  test('privacy page renders with counsel-reviewed content', async ({ page }) => {
+    await page.goto('/privacy');
+    await expect(page.getByText(/beta notice/i)).toHaveCount(0);
+    await expect(page.getByText(/vincent ploum/i).first()).toBeVisible();
+    // Regression guard for the original launch-blocker fix.
+    const body = await page.locator('body').innerText();
+    expect(body).not.toMatch(/does not store or retain any idea/i);
+    expect(body).toMatch(/stored privately in your account/i);
   });
 
   test('rate-my-startup-idea tool page renders', async ({ page }) => {
@@ -65,13 +80,22 @@ test.describe('Public paths', () => {
     expect(body.service).toBe('ideareels');
   });
 
-  test('version endpoint returns current commit and score policy', async ({ request }) => {
+  test('version endpoint returns current commit, score policy, and feature flags', async ({ request }) => {
     const res = await request.get('/api/version');
     expect(res.status()).toBe(200);
     const body = await res.json();
     expect(body.commit).toBeTruthy();
     expect(body.scorePolicy.blueprintMin).toBe(60);
+    expect(body.scorePolicy.visibleMin).toBe(60);
+    expect(body.scorePolicy.version).toBe('v2.0');
     expect(body.enforcement.serverSideBlueprintGate).toBe(true);
+    expect(body.enforcement.requiresCurrentScoreVersion).toBe(true);
+    expect(body.enforcement.clientSuppliedScoreIgnored).toBe(true);
+    // Feature flags: all three should be on in production. If any flips to
+    // false, the corresponding env var was dropped from Render.
+    expect(body.features.turnstile).toBe(true);
+    expect(body.features.resend).toBe(true);
+    expect(body.features.errorLog).toBe(true);
   });
 });
 
