@@ -52,7 +52,14 @@ export const metadata = {
   alternates: { canonical: 'https://ideareels.io' },
   other: { 'theme-color': '#FFE000' },
   icons: {
+    // Manual entries are required alongside apple: Next 13+ only auto-emits
+    // <link rel="icon"> when the icons field is not manually declared. Once we
+    // add ANY icons key, we have to declare all of them explicitly.
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
     apple: '/apple-touch-icon.png',
+    shortcut: '/icon.svg',
   },
 };
 
