@@ -55,11 +55,13 @@ export const metadata = {
     // Manual entries are required alongside apple: Next 13+ only auto-emits
     // <link rel="icon"> when the icons field is not manually declared. Once we
     // add ANY icons key, we have to declare all of them explicitly.
+    // ?v=2 busts the year-long immutable cache after the black-bg → yellow-bg
+    // repaint. Bump the version if the icon changes again.
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon.svg?v=2', type: 'image/svg+xml' },
     ],
     apple: '/apple-touch-icon.png',
-    shortcut: '/icon.svg',
+    shortcut: '/icon.svg?v=2',
   },
 };
 
