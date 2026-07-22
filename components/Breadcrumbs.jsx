@@ -2,9 +2,11 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { BREADCRUMB_TITLES_BY_PATH } from '@/lib/breadcrumb-titles';
 
 // Segments that need special casing beyond title-case-from-kebab.
-// Only add here what the auto-transform would get wrong.
+// Includes brand casings so /versus/ideareels-vs-dimeadozen renders as
+// 'IdeaReels vs DimeADozen' rather than 'Ideareels Vs Dimeadozen'.
 const LABEL_MAP = {
   faq: 'FAQ',
   b2b: 'B2B',
@@ -16,6 +18,12 @@ const LABEL_MAP = {
   admin: 'Admin',
   auth: 'Auth',
   status: 'System status',
+  // Brand names — case-preserved for both native and competitor products.
+  ideareels: 'IdeaReels',
+  dimeadozen: 'DimeADozen',
+  ideabrowser: 'IdeaBrowser',
+  validatorai: 'ValidatorAI',
+  alternatives: 'alternatives',
 };
 
 // Paths where breadcrumbs would add friction, not value.
@@ -54,9 +62,28 @@ export default function Breadcrumbs() {
 
   const crumbs = [{ label: 'Home', href: '/' }];
   let acc = '';
-  for (const seg of segments) {
+  for (let i = 0; i < segments.length; i += 1) {
+    const seg = segments[i];
     acc += `/${seg}`;
-    crumbs.push({ label: humanise(seg), href: acc });
+    // Prefer an explicit full-path label (blog post titles, tool titles) when
+    // we have one — it's the most human-readable version. Falls back to the
+    // per-segment brand + auto-titlecase map otherwise. Some entries in the
+    // ALTERNATIVES/VERSUS routes end in '-alternatives' where the leading
+    // brand segment carries the whole meaning; join the parts so
+    // 'validatorai-alternatives' becomes 'ValidatorAI alternatives'.
+    const fullPathTitle = BREADCRUMB_TITLES_BY_PATH[acc];
+    let label;
+    if (fullPathTitle) {
+      label = fullPathTitle;
+    } else if (seg.endsWith('-alternatives') || seg.includes('-vs-')) {
+      label = seg
+        .split('-')
+        .map((w) => LABEL_MAP[w] || (w ? w[0].toUpperCase() + w.slice(1) : ''))
+        .join(' ');
+    } else {
+      label = humanise(seg);
+    }
+    crumbs.push({ label, href: acc });
   }
 
   // BreadcrumbList JSON-LD for Google search-result breadcrumbs. Every entry
