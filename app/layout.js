@@ -7,7 +7,7 @@ const WebVitals = dynamic(() => import('@/components/WebVitals'), { ssr: false }
 export const metadata = {
   metadataBase: new URL('https://ideareels.io'),
   title: {
-    default: 'IdeaReels — AI Startup Idea Validation & MVP Blueprint',
+    default: 'IdeaReels: AI Startup Idea Validation & MVP Blueprint',
     template: '%s | IdeaReels',
   },
   description: 'Stop building the wrong thing. IdeaReels validates your startup idea with AI market research and produces a full technical MVP blueprint in minutes, not weeks. From $3.99.',
@@ -32,20 +32,20 @@ export const metadata = {
   creator: 'IdeaReels',
   publisher: 'IdeaReels',
   openGraph: {
-    title: 'IdeaReels — AI Startup Idea Validation & MVP Blueprints from $3.99',
+    title: 'IdeaReels: AI Startup Idea Validation & MVP Blueprints from $3.99',
     description: 'Validate your startup idea with AI market research and get a full technical MVP blueprint in minutes, not weeks. Built for vibe coders and solo founders.',
     type: 'website',
     url: 'https://ideareels.io',
     siteName: 'IdeaReels',
     locale: 'en_US',
-    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels — AI Startup Idea Validation & MVP Blueprints' }],
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels: AI Startup Idea Validation & MVP Blueprints' }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@ideareels',
-    title: 'IdeaReels — Validate Your Startup Idea with AI Market Research',
+    title: 'IdeaReels: Validate Your Startup Idea with AI Market Research',
     description: 'Stop building the wrong thing. AI market research + MVP blueprint in minutes, not weeks, from $3.99.',
-    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels — AI Startup Idea Validation & MVP Blueprints' }],
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels: AI Startup Idea Validation & MVP Blueprints' }],
   },
   // robots.txt is handled exclusively by app/robots.js — no meta robots tag here
   verification: { google: '7-zPuvRs0wD-bV9Mr_dDdu4vcjW2o3XrZzVGJuqDyd0' },

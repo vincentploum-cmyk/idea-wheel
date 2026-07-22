@@ -3,12 +3,12 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import { CheckIcon } from '@/components/popito/icons';
 
 export const metadata = {
-  title: 'Rate My Startup Idea — Free AI Score in 60 Seconds',
+  title: 'Rate My Startup Idea: Free AI Score in 60 Seconds',
   description:
-    'Paste your startup idea and get a free AI market score built from live Reddit demand signals, Google Trends, and competitor data. No credit card — your first score is free.',
+    'Paste your startup idea and get a free AI market score built from live Reddit demand signals, Google Trends, and competitor data. No credit card. Your first score is free.',
   alternates: { canonical: 'https://ideareels.io/tools/rate-my-startup-idea' },
   openGraph: {
-    title: 'Rate My Startup Idea — Free AI Score in 60 Seconds',
+    title: 'Rate My Startup Idea: Free AI Score in 60 Seconds',
     description:
       'Get a free AI market score for your startup idea from live Reddit signals, Google Trends, and competitor data. No credit card required.',
     url: 'https://ideareels.io/tools/rate-my-startup-idea',
@@ -19,7 +19,7 @@ export const metadata = {
 const SCORE_SIGNALS = [
   {
     title: 'Community demand',
-    text: 'We scan live Reddit threads in your niche for pain language, workaround posts, and buying intent — the signals that show people actually want the problem solved.',
+    text: 'We scan live Reddit threads in your niche for pain language, workaround posts, and buying intent: the signals that show people actually want the problem solved.',
   },
   {
     title: 'Trend trajectory',
@@ -31,18 +31,18 @@ const SCORE_SIGNALS = [
   },
   {
     title: 'Willingness to pay',
-    text: 'Review sites, community threads, and pricing chatter reveal whether this audience spends money on software — before you bet months on it.',
+    text: 'Review sites, community threads, and pricing chatter reveal whether this audience spends money on software, before you bet months on it.',
   },
 ];
 
 const FAQ = [
   {
     q: 'Is the startup idea score really free?',
-    a: 'Yes. Your first market score is free — you sign up with an email (or Google/GitHub), paste your idea, and get the verdict. No credit card. Paid credits only come in if you want the deeper research report or the full MVP blueprint afterward.',
+    a: 'Yes. Your first market score is free. Sign up with an email (or Google/GitHub), paste your idea, and get the verdict. No credit card. Paid credits only come in if you want the deeper research report or the full MVP blueprint afterward.',
   },
   {
     q: 'What does the score actually measure?',
-    a: 'Four things: live community demand (from Reddit), trend direction (from Google Trends), competitive pressure, and willingness-to-pay evidence. The output is a verdict — strong signal, weak signal, or crowded market — with the reasoning shown.',
+    a: 'Four things: live community demand (from Reddit), trend direction (from Google Trends), competitive pressure, and willingness-to-pay evidence. The output is a verdict (strong signal, weak signal, or crowded market) with the reasoning shown.',
   },
   {
     q: 'How is this different from asking ChatGPT to rate my idea?',
@@ -85,10 +85,10 @@ export default function RateMyStartupIdeaPage() {
       <div className="popito_fn_pagetitle">
         <div className="container">
           <div className="pagetitle">
-            <h1 className="fn__title">Rate my startup idea — free AI score in 60 seconds.</h1>
+            <h1 className="fn__title">Rate my startup idea. Free AI score in 60 seconds.</h1>
             <p className="fn__desc">
               Paste your idea and get an honest market verdict built from live Reddit demand signals, Google Trends,
-              and competitor data. Your first score is free — no credit card, no subscription.
+              and competitor data. Your first score is free, no credit card and no subscription.
             </p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
@@ -135,7 +135,7 @@ export default function RateMyStartupIdeaPage() {
               An honest score, not a pep talk
             </h2>
             <p style={{ fontSize: 16, lineHeight: 1.8, opacity: 0.85, margin: '0 0 14px' }}>
-              Most idea validators — and most chats with ChatGPT — tell you your idea is promising, because being
+              Most idea validators (and most chats with ChatGPT) tell you your idea is promising, because being
               encouraging is easy. A useful validator has to be willing to say &ldquo;the demand signal is weak, here is
               why, move on.&rdquo; That is what the score is for: killing the ideas that would have eaten your next four
               months, so you can put real effort behind the one worth building.
@@ -145,7 +145,7 @@ export default function RateMyStartupIdeaPage() {
               <Link href="/example" style={{ color: '#111', fontWeight: 700, textDecoration: 'underline', textDecorationColor: '#FFE000', textUnderlineOffset: 3 }}>
                 full sample report
               </Link>{' '}
-              — real demand signals, market sizing, and the MVP blueprint — or learn the manual process in our guide to{' '}
+              {' '}(real demand signals, market sizing, and the MVP blueprint), or learn the manual process in our guide to{' '}
               <Link href="/blog/how-to-validate-a-startup-idea" style={{ color: '#111', fontWeight: 700, textDecoration: 'underline', textDecorationColor: '#FFE000', textUnderlineOffset: 3 }}>
                 validating a startup idea before you write code
               </Link>.
@@ -172,7 +172,7 @@ export default function RateMyStartupIdeaPage() {
                 Find out if your idea is worth building.
               </h3>
               <p style={{ margin: '0 0 20px', opacity: 0.75, fontSize: 15 }}>
-                Free first score. Go deeper only when the signal says go — credits from $3.99, no subscription.
+                Free first score. Go deeper only when the signal says go. Credits from $3.99, no subscription.
               </p>
               <Link href="/auth/register?next=%2Fwheel" className="fn__btn"><span>Score my idea free</span></Link>
             </div>

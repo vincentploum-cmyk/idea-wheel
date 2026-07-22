@@ -3,19 +3,19 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import { createClient } from '@/lib/supabase-server';
 
 export const metadata = {
-  title: 'Example — Spin to Blueprint in 5 Minutes',
-  description: 'See exactly what IdeaReels produces: a real spin result, AI market verdict, deep research, and a full MVP blueprint — step by step, before you buy.',
+  title: 'Example: Spin to Blueprint in 5 Minutes',
+  description: 'See exactly what IdeaReels produces: a real spin result, AI market verdict, deep research, and a full MVP blueprint, step by step, before you buy.',
   alternates: { canonical: 'https://ideareels.io/example' },
   openGraph: {
-    title: 'IdeaReels Example — See the Full Output Before You Buy',
-    description: 'A real spin result, AI market verdict, deep research, and MVP blueprint — see every step before committing.',
+    title: 'IdeaReels Example: See the Full Output Before You Buy',
+    description: 'A real spin result, AI market verdict, deep research, and MVP blueprint. See every step before committing.',
     url: 'https://ideareels.io/example',
-    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels — Full Example Output' }],
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels: Full Example Output' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'IdeaReels Example — See the Full Output Before You Buy',
-    description: 'A real spin result, AI market verdict, deep research, and MVP blueprint — see every step.',
+    title: 'IdeaReels Example: See the Full Output Before You Buy',
+    description: 'A real spin result, AI market verdict, deep research, and MVP blueprint. See every step.',
     images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630 }],
   },
 };
@@ -24,7 +24,7 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'HowTo',
   name: 'How to Validate a Startup Idea with IdeaReels',
-  description: 'A walkthrough of the full IdeaReels output: spin a startup idea combination, get an AI market verdict, read deep research, and receive a technical MVP blueprint — in minutes, not weeks.',
+  description: 'A walkthrough of the full IdeaReels output: spin a startup idea combination, get an AI market verdict, read deep research, and receive a technical MVP blueprint. In minutes, not weeks.',
   url: 'https://ideareels.io/example',
   totalTime: 'PT5M',
   step: [
@@ -87,16 +87,16 @@ const bodyText = {
 };
 
 /* ─── Locked overlay component (pure HTML/CSS, no client JS) ───── */
-function Lock({ cta = 'Get this for your own idea — from $3.99' }) {
+function Lock({ cta = 'Get this for your own idea, from $3.99' }) {
   return (
     <div style={{ position: 'relative', marginTop: 24 }}>
       {/* Blurred fake content */}
       <div style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none', opacity: 0.6 }}>
         <p style={{ ...bodyText, marginBottom: 12 }}>
-          The dominant player controls 38% of the addressable market through brand recognition alone, not product superiority. Their NPS scores in designer communities average 31 — well below the 50+ threshold that signals loyalty. Three of their top five complaints on G2 and Capterra map directly to gaps this product would fill.
+          The dominant player controls 38% of the addressable market through brand recognition alone, not product superiority. Their NPS scores in designer communities average 31, well below the 50+ threshold that signals loyalty. Three of their top five complaints on G2 and Capterra map directly to gaps this product would fill.
         </p>
         <p style={{ ...bodyText, marginBottom: 12 }}>
-          Willingness-to-pay evidence from 47 Reddit threads and two creator community Discord servers puts the sweet spot at $18–29/month for a tool that handles the full cycle. Bonsai's latest price increase to $32/month created an active migration window — multiple posts in the past 90 days explicitly asking for alternatives.
+          Willingness-to-pay evidence from 47 Reddit threads and two creator community Discord servers puts the sweet spot at $18–29/month for a tool that handles the full cycle. Bonsai's latest price increase to $32/month created an active migration window: multiple posts in the past 90 days explicitly asking for alternatives.
         </p>
         <p style={{ ...bodyText }}>
           TAM: 1.2M freelance designers in English-speaking markets. SAM: 280K who bill $5K+/month and would pay for professional tooling. SOM target in year one: 2,000 paying users at $22 ARPU = $44K MRR.
@@ -127,7 +127,7 @@ function BlueprintLock() {
     <div style={{ position: 'relative', marginTop: 16 }}>
       <div style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none', opacity: 0.55 }}>
         <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 2, fontSize: 14 }}>
-          <li>Proposal builder: title, scope, deliverables, timeline, price — PDF export</li>
+          <li>Proposal builder: title, scope, deliverables, timeline, price, plus PDF export</li>
           <li>Milestone-based invoice generator with Stripe payment link</li>
           <li>E-signature via Documenso (open-source, self-hostable fallback)</li>
           <li>Revision tracker: log client requests against the original contract scope</li>
@@ -167,10 +167,10 @@ export default async function ExamplePage() {
               Here's exactly what you get.
             </h1>
             <p className="fn__desc">
-              A real spin result, market verdict, deep research, and full MVP blueprint — produced in minutes, not weeks.
+              A real spin result, market verdict, deep research, and full MVP blueprint, produced in minutes, not weeks.
             </p>
             <p className="fn__desc" style={{ marginTop: 12, opacity: 0.7 }}>
-              This page walks through every section you get when you unlock an idea: the viability score, the market research brief, competitor landscape, demand signals, and the technical MVP blueprint with stack recommendations. Nothing is mocked up — this is real output from the engine.
+              This page walks through every section you get when you unlock an idea: the viability score, the market research brief, competitor landscape, demand signals, and the technical MVP blueprint with stack recommendations. Nothing is mocked up. This is real output from the engine.
             </p>
             <span className="wings" />
           </div>
@@ -183,10 +183,10 @@ export default async function ExamplePage() {
 
             {/* ── Step 1: The spin ────────────────────────────── */}
             <section>
-              <p style={sectionTitle}>Step 1 — The spin</p>
+              <p style={sectionTitle}>Step 1 · The spin</p>
               <h2 style={h2Style}>Three reels. One validated concept.</h2>
               <p style={{ opacity: 0.6, fontSize: 14, marginBottom: 24 }}>
-                The wheel combines an audience, an action, and a workflow. You spin until something clicks — or accept the first strong combination.
+                The wheel combines an audience, an action, and a workflow. You spin until something clicks, or accept the first strong combination.
               </p>
 
               {/* Reel result */}
@@ -213,17 +213,17 @@ export default async function ExamplePage() {
               <div style={{ ...card, background: '#FFE000', boxShadow: '4px 4px 0 #111' }}>
                 <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 13, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10, opacity: 0.6 }}>Concept framing</p>
                 <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 18, lineHeight: 1.4, margin: '0 0 10px', color: '#111' }}>
-                  A lightweight contracts and invoicing tool built for the freelance UX designer's workflow — proposals, milestones, revision tracking, and one-click invoicing, without the agency bloat.
+                  A lightweight contracts and invoicing tool built for the freelance UX designer's workflow: proposals, milestones, revision tracking, and one-click invoicing, without the agency bloat.
                 </p>
                 <p style={{ fontSize: 14, lineHeight: 1.7, opacity: 0.7, margin: 0, color: '#111' }}>
-                  Freelance UX designers bill $75–200/hour but manage proposals, contracts, and invoices with tools built for general freelancers. Nothing in the market is designed around how designers actually work — Figma handoffs, revision rounds, milestone billing, scope creep.
+                  Freelance UX designers bill $75–200/hour but manage proposals, contracts, and invoices with tools built for general freelancers. Nothing in the market is designed around how designers actually work: Figma handoffs, revision rounds, milestone billing, scope creep.
                 </p>
               </div>
             </section>
 
             {/* ── Step 2: First-pass verdict (free) ───────────── */}
             <section>
-              <p style={sectionTitle}>Step 2 — First-pass verdict · Free</p>
+              <p style={sectionTitle}>Step 2 · First-pass verdict · Free</p>
               <h2 style={h2Style}>Signal check before you spend a credit.</h2>
               <p style={{ opacity: 0.6, fontSize: 14, marginBottom: 24 }}>
                 Every spin generates a free verdict. Strong signal = worth researching deeper.
@@ -248,8 +248,8 @@ export default async function ExamplePage() {
                 {/* Indicators */}
                 <div style={{ display: 'grid', gap: 10, marginBottom: 20 }}>
                   {[
-                    { ok: true,  label: 'Clear buyer',      detail: 'Freelance UX designers — 250K+ in English-speaking markets, actively billing clients.' },
-                    { ok: true,  label: 'Painful workflow',  detail: 'Designers spend 4–6 hours/month on contract and invoice admin — time that is not billable.' },
+                    { ok: true,  label: 'Clear buyer',      detail: 'Freelance UX designers: 250K+ in English-speaking markets, actively billing clients.' },
+                    { ok: true,  label: 'Painful workflow',  detail: 'Designers spend 4–6 hours/month on contract and invoice admin, time that is not billable.' },
                     { ok: true,  label: 'Existing spend',    detail: 'Average freelancer pays $20–40/month for tools that almost work. Budget is allocated.' },
                     { ok: false, label: 'Low competition',   detail: 'Risk: Bonsai and HoneyBook are well-funded. Niche positioning is essential to win.' },
                   ].map(({ ok, label: l, detail }) => (
@@ -273,7 +273,7 @@ export default async function ExamplePage() {
                 <div style={{ borderTop: '2px solid #111', paddingTop: 16 }}>
                   <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 14, marginBottom: 6 }}>Verdict</p>
                   <p style={{ fontSize: 14, lineHeight: 1.7, opacity: 0.75, margin: 0 }}>
-                    The pain is real and the spend is already there. Winning requires a narrower product focus than incumbents — nail the UX designer's specific workflow rather than competing on features. Worth running deep research before committing to build.
+                    The pain is real and the spend is already there. Winning requires a narrower product focus than incumbents: nail the UX designer's specific workflow rather than competing on features. Worth running deep research before committing to build.
                   </p>
                 </div>
               </div>
@@ -281,10 +281,10 @@ export default async function ExamplePage() {
 
             {/* ── Step 3: Deep research (1 credit) ────────────── */}
             <section>
-              <p style={sectionTitle}>Step 3 — Deep research · 1 credit</p>
+              <p style={sectionTitle}>Step 3 · Deep research · 1 credit</p>
               <h2 style={h2Style}>Real demand signals. Not a Wikipedia summary.</h2>
               <p style={{ opacity: 0.6, fontSize: 14, marginBottom: 24 }}>
-                IdeaReels searches Reddit, community forums, and product review sites for evidence of real, recurring demand — then quantifies it.
+                IdeaReels searches Reddit, community forums, and product review sites for evidence of real, recurring demand, then quantifies it.
               </p>
 
               <div style={card}>
@@ -296,7 +296,7 @@ export default async function ExamplePage() {
                   Reddit communities r/freelance (420K members) and r/UXDesign (560K members) surface contract and invoicing frustration consistently. Top threads from 2023–2024 show the same complaints repeating: <em>"I'm using four different tools and they don't talk to each other,"</em> <em>"Bonsai raised their prices again and I can't justify it,"</em> <em>"Does anyone have a way to track revision rounds in the actual contract?"</em>
                 </p>
                 <p style={{ ...bodyText, marginTop: 14 }}>
-                  Google Trends shows <strong>"freelance UX contract template"</strong> up 180% year-over-year. <strong>"Design invoice template"</strong> generates 22,000+ monthly searches with low-competition scores across major keyword tools — organic acquisition is viable from day one.
+                  Google Trends shows <strong>"freelance UX contract template"</strong> up 180% year-over-year. <strong>"Design invoice template"</strong> generates 22,000+ monthly searches with low-competition scores across major keyword tools, so organic acquisition is viable from day one.
                 </p>
 
                 {/* Locked section — only for guests */}
@@ -304,10 +304,10 @@ export default async function ExamplePage() {
                 {user && (
                   <>
                     <p style={{ ...bodyText, marginTop: 14 }}>
-                      The dominant player controls 38% of the addressable market through brand recognition alone, not product superiority. Their NPS scores in designer communities average 31 — well below the 50+ threshold that signals loyalty. Three of their top five complaints on G2 and Capterra map directly to gaps this product would fill.
+                      The dominant player controls 38% of the addressable market through brand recognition alone, not product superiority. Their NPS scores in designer communities average 31, well below the 50+ threshold that signals loyalty. Three of their top five complaints on G2 and Capterra map directly to gaps this product would fill.
                     </p>
                     <p style={{ ...bodyText, marginTop: 14 }}>
-                      Willingness-to-pay evidence from 47 Reddit threads and two creator community Discord servers puts the sweet spot at $18–29/month for a tool that handles the full cycle. Bonsai's latest price increase to $32/month created an active migration window — multiple posts in the past 90 days explicitly asking for alternatives.
+                      Willingness-to-pay evidence from 47 Reddit threads and two creator community Discord servers puts the sweet spot at $18–29/month for a tool that handles the full cycle. Bonsai's latest price increase to $32/month created an active migration window: multiple posts in the past 90 days explicitly asking for alternatives.
                     </p>
                     <p style={{ ...bodyText, marginTop: 14 }}>
                       TAM: 1.2M freelance designers in English-speaking markets. SAM: 280K who bill $5K+/month and would pay for professional tooling. SOM target in year one: 2,000 paying users at $22 ARPU = $44K MRR.
@@ -319,7 +319,7 @@ export default async function ExamplePage() {
 
             {/* ── Step 4: MVP Blueprint (2 credits) ───────────── */}
             <section>
-              <p style={sectionTitle}>Step 4 — MVP blueprint · 2 credits</p>
+              <p style={sectionTitle}>Step 4 · MVP blueprint · 2 credits</p>
               <h2 style={h2Style}>Four specialists. One blueprint. Ready to build.</h2>
               <p style={{ opacity: 0.6, fontSize: 14, marginBottom: 24 }}>
                 Four AI agents produce the blueprint in parallel: product scope, go-to-market strategy, technical architecture, and a prototype plan.
@@ -339,7 +339,7 @@ export default async function ExamplePage() {
                   {!user && <BlueprintLock />}
                   {user && (
                     <ul style={{ margin: '14px 0 0', paddingLeft: 20, lineHeight: 2, fontSize: 14 }}>
-                      <li>Proposal builder: title, scope, deliverables, timeline, price — PDF export</li>
+                      <li>Proposal builder: title, scope, deliverables, timeline, price, plus PDF export</li>
                       <li>Milestone-based invoice generator with Stripe payment link</li>
                       <li>E-signature via Documenso (open-source, self-hostable fallback)</li>
                       <li>Revision tracker: log client requests against the original contract scope</li>
@@ -361,7 +361,7 @@ export default async function ExamplePage() {
                   {!user && <BlueprintLock />}
                   {user && (
                     <ul style={{ margin: '14px 0 0', paddingLeft: 20, lineHeight: 2, fontSize: 14 }}>
-                      <li>Launch channel: r/UXDesign and r/freelance — announce the free tier, no pitch</li>
+                      <li>Launch channel: r/UXDesign and r/freelance. Announce the free tier, no pitch</li>
                       <li>Positioning: "Bonsai alternative built for designers, not agencies"</li>
                       <li>First 50 users: direct DM campaign to active posters in Bonsai complaint threads</li>
                       <li>Content strategy: SEO on "freelance UX contract template" (22K/mo, low competition)</li>
@@ -386,7 +386,7 @@ export default async function ExamplePage() {
                       <li>Auth + DB: Supabase (auth, postgres, file storage for PDFs)</li>
                       <li>Payments: Stripe (one-time and subscription billing)</li>
                       <li>E-signature: Documenso (self-hosted) or HelloSign API fallback</li>
-                      <li>Deploy: Vercel (frontend) + Supabase cloud (backend) — zero DevOps</li>
+                      <li>Deploy: Vercel (frontend) + Supabase cloud (backend), zero DevOps</li>
                     </ul>
                   )}
                 </div>
@@ -403,9 +403,9 @@ export default async function ExamplePage() {
                   {!user && <BlueprintLock />}
                   {user && (
                     <ul style={{ margin: '14px 0 0', paddingLeft: 20, lineHeight: 2, fontSize: 14 }}>
-                      <li>Week 1–2: proposal builder + invoice — ship it, get 10 beta signups</li>
-                      <li>Week 3–4: add e-signature, revision tracker — activate beta users</li>
-                      <li>Week 5–6: client portal, PDF export — first paid conversions</li>
+                      <li>Week 1–2: proposal builder + invoice. Ship it, get 10 beta signups</li>
+                      <li>Week 3–4: add e-signature and revision tracker. Activate beta users</li>
+                      <li>Week 5–6: client portal and PDF export. First paid conversions</li>
                       <li>Success signal: 3 users send a real proposal within 7 days of signup</li>
                     </ul>
                   )}

@@ -4,18 +4,18 @@ import TrustBar from '@/components/TrustBar';
 import { FAQS } from '@/lib/content';
 
 export const metadata = {
-  title: 'FAQ — Startup Idea Validation & Credits',
-  description: 'Answers to common questions about IdeaReels — how AI market validation works, what credits do, and how to go from concept to technical MVP blueprint.',
+  title: 'FAQ: Startup Idea Validation & Credits',
+  description: 'Answers to common questions about IdeaReels: how AI market validation works, what credits do, and how to go from concept to technical MVP blueprint.',
   alternates: { canonical: 'https://ideareels.io/faq' },
   openGraph: {
-    title: 'IdeaReels FAQ — How Startup Idea Validation Works',
+    title: 'IdeaReels FAQ: How Startup Idea Validation Works',
     description: 'How AI market validation works, what credits do, and how to get from concept to MVP blueprint.',
     url: 'https://ideareels.io/faq',
     images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels FAQ' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'IdeaReels FAQ — How Startup Idea Validation Works',
+    title: 'IdeaReels FAQ: How Startup Idea Validation Works',
     description: 'How AI market validation works, what credits do, and how to get from concept to MVP blueprint.',
     images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630 }],
   },
@@ -39,7 +39,7 @@ export default function FaqPage() {
           <div className="pagetitle">
             <h1 className="fn__title">Frequently Asked Questions</h1>
             <p className="fn__desc">Common questions about AI startup idea validation, how credits work, what's in an MVP blueprint, and whether IdeaReels is right for your stage.</p>
-            <p className="fn__desc" style={{ marginTop: 12, opacity: 0.7 }}>If you&apos;re deciding whether to buy, start with the credits and blueprint questions. If you&apos;re already a user and something isn&apos;t working, the troubleshooting section covers the most common issues. Still stuck — the contact page goes straight to a human.</p>
+            <p className="fn__desc" style={{ marginTop: 12, opacity: 0.7 }}>If you&apos;re deciding whether to buy, start with the credits and blueprint questions. If you&apos;re already a user and something isn&apos;t working, the troubleshooting section covers the most common issues. Still stuck? The contact page goes straight to a human.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
@@ -47,7 +47,7 @@ export default function FaqPage() {
       </div>
       <TrustBar items={[
         { label: 'Plain English answers', sub: 'No marketing speak' },
-        { label: 'Still stuck?', sub: 'Contact us — real humans reply' },
+        { label: 'Still stuck?', sub: 'Contact us, real humans reply' },
         { label: 'Spinning is free', sub: 'No credit card needed' },
       ]} />
       <div className="popito_fn_membership_page">
@@ -69,7 +69,7 @@ export default function FaqPage() {
               Market research from $3.99. Credits never expire.
             </p>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <Link href="/pricing" className="fn__btn"><span>Get credits — from $3.99</span></Link>
+              <Link href="/pricing" className="fn__btn"><span>Get credits from $3.99</span></Link>
             </div>
           </div>
         </div>

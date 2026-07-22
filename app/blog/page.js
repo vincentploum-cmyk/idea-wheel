@@ -4,11 +4,11 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import { BLOG_POSTS } from '@/lib/blog-posts';
 
 export const metadata = {
-  title: 'Blog — Startup Validation, Market Research & MVP Planning',
+  title: 'Blog: Startup Validation, Market Research & MVP Planning',
   description: 'Practical guides on startup idea validation, AI market research, MVP planning, and how solo founders are building faster. Written for vibe coders and solo founders.',
   alternates: { canonical: 'https://ideareels.io/blog' },
   openGraph: {
-    title: 'IdeaReels Blog — Startup Validation & AI Tools for Founders',
+    title: 'IdeaReels Blog: Startup Validation & AI Tools for Founders',
     description: 'Practical guides on startup idea validation, AI market research, and MVP planning for solo builders.',
     type: 'website',
     url: 'https://ideareels.io/blog',
@@ -44,8 +44,8 @@ export default function BlogPage() {
         <div className="container">
           <div className="pagetitle">
             <h1 className="fn__title">The IdeaReels Blog</h1>
-            <p className="fn__desc">Startup idea validation, AI market research, and MVP planning — practical guides for solo founders and vibe coders who want to build the right thing faster.</p>
-            <p className="fn__desc" style={{ marginTop: 12, opacity: 0.7 }}>We write about the specific problems founders run into before they build: how to read demand signals, what makes a market defensible, how to scope an MVP that ships. No theory, no fluff — just the stuff that changes what you build next.</p>
+            <p className="fn__desc">Startup idea validation, AI market research, and MVP planning. Practical guides for solo founders and vibe coders who want to build the right thing faster.</p>
+            <p className="fn__desc" style={{ marginTop: 12, opacity: 0.7 }}>We write about the specific problems founders run into before they build: how to read demand signals, what makes a market defensible, how to scope an MVP that ships. No theory, no fluff, just the stuff that changes what you build next.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>
@@ -109,7 +109,7 @@ export default function BlogPage() {
           AI market research + full MVP blueprint from $3.99. Credits never expire.
         </p>
         <p style={{ margin: '0 0 24px', opacity: 0.55, fontSize: 13 }}>No subscription. Buy only when the signal is worth pursuing.</p>
-        <Link href="/pricing" className="fn__btn"><span>Get credits — from $3.99</span></Link>
+        <Link href="/pricing" className="fn__btn"><span>Get credits from $3.99</span></Link>
       </div>
     </PopitoShell>
   );

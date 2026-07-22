@@ -101,7 +101,7 @@ export default function AlternativesPage({ params }) {
               <p key={i} style={pStyle}><InlineLinks text={para} /></p>
             ))}
             <p style={{ ...pStyle, fontSize: 13.5, opacity: 0.55 }}>
-              Disclosure: IdeaReels is our product. Pricing for other tools was checked in July 2026 and may have changed — every tool is linked so you can verify.
+              Disclosure: IdeaReels is our product. Pricing for other tools was checked in July 2026 and may have changed. Every tool is linked so you can verify.
             </p>
             {versus && (
               <p style={{ ...pStyle, fontSize: 14.5, opacity: 0.75 }}>
@@ -112,7 +112,7 @@ export default function AlternativesPage({ params }) {
               </p>
             )}
 
-            <h2 style={h2Style}>What {c.name} does well — and where it falls short</h2>
+            <h2 style={h2Style}>What {c.name} does well, and where it falls short</h2>
             <div className="fn__bold_item" style={{ padding: '24px 26px', marginBottom: 8 }}>
               <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16, margin: '0 0 6px' }}>
                 <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ color: '#111', textDecoration: 'underline', textDecorationColor: '#FFE000', textUnderlineOffset: 3 }}>{c.name}</a>
@@ -126,7 +126,7 @@ export default function AlternativesPage({ params }) {
               ))}
               <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 13, margin: '14px 0 6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Where it falls short</p>
               {c.weaknesses.map((w, i) => (
-                <p key={i} style={{ fontSize: 14.5, lineHeight: 1.65, opacity: 0.8, margin: '0 0 6px' }}>— {w}</p>
+                <p key={i} style={{ fontSize: 14.5, lineHeight: 1.65, opacity: 0.8, margin: '0 0 6px' }}>· {w}</p>
               ))}
             </div>
 
@@ -186,7 +186,7 @@ export default function AlternativesPage({ params }) {
                 Try the free score before you pick anything.
               </h3>
               <p style={{ margin: '0 0 18px', opacity: 0.75, fontSize: 15 }}>
-                Your first market score is free — see the demand signals for yourself, then decide.
+                Your first market score is free. See the demand signals for yourself, then decide.
               </p>
               <Link href="/tools/rate-my-startup-idea" className="fn__btn"><span>Rate my startup idea</span></Link>
             </div>

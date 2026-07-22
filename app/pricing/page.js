@@ -2,18 +2,18 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import PricingPageClient from './pricing-page-client';
 
 export const metadata = {
-  title: 'Pricing — AI Market Research from $3.99',
-  description: 'AI market research + MVP blueprint before you build. Credits from $3.99 — no subscription, never expire. Validate your startup idea in under 5 minutes.',
+  title: 'Pricing: AI Market Research from $3.99',
+  description: 'AI market research + MVP blueprint before you build. Credits from $3.99. No subscription, never expire. Validate your startup idea in under 5 minutes.',
   alternates: { canonical: 'https://ideareels.io/pricing' },
   openGraph: {
-    title: 'IdeaReels Pricing — Startup Validation from $3.99',
+    title: 'IdeaReels Pricing: Startup Validation from $3.99',
     description: 'AI market research + MVP blueprint. One-time credits from $3.99, no subscription, never expire.',
     url: 'https://ideareels.io/pricing',
     images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels Pricing' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'IdeaReels Pricing — Startup Validation from $3.99',
+    title: 'IdeaReels Pricing: Startup Validation from $3.99',
     description: 'AI market research + MVP blueprint. One-time credits from $3.99, no subscription, never expire.',
     images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630 }],
   },
@@ -30,7 +30,7 @@ const jsonLd = {
       position: 1,
       item: {
         '@type': 'Product',
-        name: 'Starter Pack — 5 Credits',
+        name: 'Starter Pack: 5 Credits',
         description: '5 credits for your own startup concepts. Spinning is free. 1 credit for deep market research, 2 credits for the full MVP blueprint.',
         url: 'https://ideareels.io/pricing',
         brand: { '@type': 'Brand', name: 'IdeaReels' },
@@ -49,7 +49,7 @@ const jsonLd = {
       position: 2,
       item: {
         '@type': 'Product',
-        name: 'Pro Pack — 1 Idea Unlock',
+        name: 'Pro Pack: 1 Idea Unlock',
         description: 'Unlock 1 pre-validated startup idea from the IdeaReels library, including deep market research and a full technical MVP blueprint.',
         url: 'https://ideareels.io/pricing',
         brand: { '@type': 'Brand', name: 'IdeaReels' },
@@ -68,7 +68,7 @@ const jsonLd = {
       position: 3,
       item: {
         '@type': 'Product',
-        name: 'Power Pack — 2 Idea Unlocks',
+        name: 'Power Pack: 2 Idea Unlocks',
         description: 'Unlock 2 pre-validated startup ideas from the IdeaReels library. Compare two strong directions with full market research and MVP blueprints before committing to build.',
         url: 'https://ideareels.io/pricing',
         brand: { '@type': 'Brand', name: 'IdeaReels' },
@@ -92,7 +92,7 @@ export default function PricingPage({ searchParams }) {
         <div className="container">
           <div className="pagetitle">
             <h1 className="fn__title">No subscription. Pay per idea.</h1>
-            <p className="fn__desc">AI market research and a full MVP blueprint from $3.99. Buy credits when you need them, use them at your own pace — they never expire and there is no recurring charge.</p>
+            <p className="fn__desc">AI market research and a full MVP blueprint from $3.99. Buy credits when you need them, use them at your own pace. They never expire and there is no recurring charge.</p>
             <p className="fn__desc" style={{ marginTop: 12, opacity: 0.7 }}>Spinning is free. Credits go toward deeper work: 1 credit for deep market research, 2 credits for the full MVP blueprint. Most founders use 2–3 credits to find the idea worth building.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>

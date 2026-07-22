@@ -168,7 +168,7 @@ export default function ProfileClient({ user, error, welcome }) {
     });
     if (error) {
       console.error('magic link send failed:', error.message);
-      setErr("We couldn't email your magic link just now. Use Google or GitHub above — they're instant — or try again in a minute.");
+      setErr("We couldn't email your magic link just now. Use Google or GitHub above (they're instant), or try again in a minute.");
       setLoading(false);
     }
     else { setSent(true); setLoading(false); }
@@ -353,7 +353,7 @@ export default function ProfileClient({ user, error, welcome }) {
               <span aria-hidden="true" style={{ fontSize: 28 }}>👋</span>
               <div style={{ flex: '1 1 260px', minWidth: 220 }}>
                 <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 18, margin: '0 0 4px', color: '#111' }}>
-                  You&apos;re in — welcome to IdeaReels.
+                  You&apos;re in. Welcome to IdeaReels.
                 </p>
                 <p style={{ fontSize: 14, color: '#111', opacity: 0.75, margin: 0, lineHeight: 1.5 }}>
                   Spinning and your first market verdict are <strong>free</strong>. Ready to see what the machine finds?
@@ -469,7 +469,7 @@ export default function ProfileClient({ user, error, welcome }) {
                 <span>
                   <strong style={{ display: 'block', fontSize: 14 }}>Keep my ideas out of the public catalog</strong>
                   <span style={{ display: 'block', fontSize: 13, opacity: 0.65, marginTop: 2, lineHeight: 1.5 }}>
-                    When on, ideas you validate won’t contribute to the anonymized “vetted by founders” section on /ideas — even if they clear the score threshold.
+                    When on, ideas you validate won’t contribute to the anonymized “vetted by founders” section on /ideas, even if they clear the score threshold.
                   </span>
                 </span>
               </label>

@@ -72,7 +72,7 @@ export default function StatusClient() {
           </li>
         </ul>
         <p style={{ marginTop: 20, fontSize: 12, opacity: 0.5 }}>
-          AI (OpenAI) and payments (Stripe) status is not shown here — check
+          AI (OpenAI) and payments (Stripe) status is not shown here. Check
           their status pages directly if a feature is misbehaving.
         </p>
       </div>
@@ -82,9 +82,9 @@ export default function StatusClient() {
           Details
         </h2>
         <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '8px 16px', fontSize: 13, margin: 0 }}>
-          <dt style={{ fontWeight: 700 }}>HTTP</dt><dd style={{ margin: 0 }}>{state.health?.httpStatus ?? '—'}</dd>
-          <dt style={{ fontWeight: 700 }}>Commit</dt><dd style={{ margin: 0, fontFamily: 'monospace' }}>{state.health?.commit || '—'}</dd>
-          <dt style={{ fontWeight: 700 }}>Checked at</dt><dd style={{ margin: 0 }}>{state.health?.ts ? new Date(state.health.ts).toLocaleString() : '—'}</dd>
+          <dt style={{ fontWeight: 700 }}>HTTP</dt><dd style={{ margin: 0 }}>{state.health?.httpStatus ?? '–'}</dd>
+          <dt style={{ fontWeight: 700 }}>Commit</dt><dd style={{ margin: 0, fontFamily: 'monospace' }}>{state.health?.commit || '–'}</dd>
+          <dt style={{ fontWeight: 700 }}>Checked at</dt><dd style={{ margin: 0 }}>{state.health?.ts ? new Date(state.health.ts).toLocaleString() : '–'}</dd>
           <dt style={{ fontWeight: 700 }}>Raw</dt><dd style={{ margin: 0 }}>
             <Link href="/api/health" style={{ textDecoration: 'underline' }}>/api/health</Link>
           </dd>

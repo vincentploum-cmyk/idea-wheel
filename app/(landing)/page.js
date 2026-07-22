@@ -8,22 +8,22 @@ import { CheckIcon } from '@/components/popito/icons';
 
 const PACK_FEATURES = {
   starter: [
-    'Spinning is free — credits are only for deeper work',
+    'Spinning is free. Credits are only for deeper work',
     '1 credit for deep market research',
     '2 credits for the full MVP blueprint',
     '5 credits total',
   ],
   pro: [
-    'Spinning is free — credits are only for deeper work',
+    'Spinning is free. Credits are only for deeper work',
     '1 credit for deep market research',
     '2 credits for the full MVP blueprint',
     '10 credits total',
   ],
   power: [
-    'Spinning is free — credits are only for deeper work',
+    'Spinning is free. Credits are only for deeper work',
     '1 credit for deep market research',
     '2 credits for the full MVP blueprint',
-    '25 credits total — best value',
+    '25 credits total (best value)',
   ],
 };
 
@@ -32,17 +32,17 @@ const PACK_FEATURES = {
 const USE_CASES = [
   {
     title: 'Kill weak ideas in one evening',
-    text: 'Score the three ideas you keep circling. The research shows which one has real community demand — and which two would have eaten your next four months.',
+    text: 'Score the three ideas you keep circling. The research shows which one has real community demand, and which two would have eaten your next four months.',
     badge: 'Validate',
   },
   {
     title: 'Turn a verdict into a build plan',
-    text: 'When the signal is strong, the blueprint tells you what to build first, what to cut from V1, and which stack gets you live fastest — a brief you can hand to a developer or an AI coding agent.',
+    text: 'When the signal is strong, the blueprint tells you what to build first, what to cut from V1, and which stack gets you live fastest. A brief you can hand to a developer or an AI coding agent.',
     badge: 'Blueprint',
   },
   {
     title: 'Start from proof, not a blank page',
-    text: 'No idea yet? Spin one from live market signals, or browse the ideas library — every concept comes with the demand evidence attached.',
+    text: 'No idea yet? Spin one from live market signals, or browse the ideas library. Every concept comes with the demand evidence attached.',
     badge: 'Generate',
   },
 ];
@@ -71,7 +71,7 @@ export const metadata = {
     title: 'Startup Idea Generator with AI Market Research & MVP Blueprint',
     description: 'Spin a startup idea, get AI market research and a full MVP blueprint in minutes, not weeks. Built for solo founders and vibe coders. No subscription.',
     url: 'https://ideareels.io',
-    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels — Startup Idea Generator' }],
+    images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels Startup Idea Generator' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -129,10 +129,10 @@ export default async function LandingPage() {
               For vibe coders, indie hackers &amp; solo founders
             </p>
             <h1 className="fn__title" style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', lineHeight: 1.1, marginBottom: 14, textWrap: 'balance' }}>
-              Spin a fresh startup idea —<br />or validate the one you have.
+              Spin a fresh startup idea,<br />or validate the one you have.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 600, margin: '0 auto 10px' }}>
-              IdeaReels generates ideas and scores them intelligently against real market data — Reddit signals, Google Trends, and community demand. Already have an idea? Get a free market score and a detailed blueprint to help you on your way in minutes, not weeks.
+              IdeaReels generates ideas and scores them intelligently against real market data: Reddit signals, Google Trends, and community demand. Already have an idea? Get a free market score and a detailed blueprint to help you on your way in minutes, not weeks.
             </p>
             {!user && (
               <div style={{
@@ -142,7 +142,7 @@ export default async function LandingPage() {
                 boxShadow: '3px 3px 0 #111',
               }}>
                 <span style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 14, color: '#111', letterSpacing: '0.01em' }}>
-                  Your first market score is free — no credit card, no commitment.
+                  Your first market score is free. No credit card, no commitment.
                 </span>
               </div>
             )}

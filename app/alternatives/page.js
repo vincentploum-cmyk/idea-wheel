@@ -5,7 +5,7 @@ import { ALTERNATIVES_PAGES } from '@/lib/alternatives-data';
 export const metadata = {
   title: 'Startup Validation Tool Comparisons & Alternatives',
   description:
-    'Honest, price-checked comparisons of AI startup idea validation tools — ValidatorAI, DimeADozen, IdeaBrowser and more — with the best alternatives for indie budgets.',
+    'Honest, price-checked comparisons of AI startup idea validation tools (ValidatorAI, DimeADozen, IdeaBrowser and more) with the best alternatives for indie budgets.',
   alternates: { canonical: 'https://ideareels.io/alternatives' },
 };
 
@@ -17,7 +17,7 @@ export default function AlternativesIndexPage() {
           <div className="pagetitle">
             <h1 className="fn__title">Validation tool comparisons.</h1>
             <p className="fn__desc">
-              Honest, price-checked looks at the popular AI idea-validation tools — what each does well, where it falls
+              Honest, price-checked looks at the popular AI idea-validation tools: what each does well, where it falls
               short, and which alternative fits an indie budget. IdeaReels is our product; we say so on every page.
             </p>
             <span className="wings" />

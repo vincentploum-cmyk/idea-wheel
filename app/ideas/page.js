@@ -7,18 +7,18 @@ import { IDEA_EXAMPLES } from '@/lib/idea-examples';
 import { listVettedCandidates } from '@/lib/idea-candidates';
 
 export const metadata = {
-  title: 'Startup Ideas Library — Pre-Validated with AI Market Research',
+  title: 'Startup Ideas Library: Pre-Validated with AI Market Research',
   description: 'Browse pre-validated startup ideas with AI market research, competitor analysis, and technical MVP blueprints included. B2B and consumer tracks, scored for viability.',
   alternates: { canonical: 'https://ideareels.io/ideas' },
   openGraph: {
-    title: 'Startup Ideas Library — Pre-Validated with AI Market Research',
+    title: 'Startup Ideas Library: Pre-Validated with AI Market Research',
     description: 'Browse pre-validated startup ideas with AI market research and MVP blueprints. Every idea scored for viability.',
     url: 'https://ideareels.io/ideas',
     images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels Startup Ideas Library' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Startup Ideas Library — Pre-Validated with AI Market Research',
+    title: 'Startup Ideas Library: Pre-Validated with AI Market Research',
     description: 'Browse pre-validated startup ideas with AI market research and MVP blueprints. Every idea scored for viability.',
     images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630 }],
   },
@@ -81,7 +81,7 @@ export default async function IdeasPage() {
           <div className="pagetitle">
             <h1 className="fn__title">Startup Ideas Library</h1>
             <p className="fn__desc">Pre-validated startup ideas with AI market research and MVP blueprints included. Each one targets a specific problem, real demand, and a clear angle for building.</p>
-            <p className="fn__desc" style={{ marginTop: 12, opacity: 0.7 }}>Every idea in this library has been scored for viability — we only surface combinations that clear a 75+ threshold across industry fit, workflow friction, and market specificity. It spans both B2B and consumer ideas, or you can use the wheel to generate your own.</p>
+            <p className="fn__desc" style={{ marginTop: 12, opacity: 0.7 }}>Every idea in this library has been scored for viability. We only surface combinations that clear a 75+ threshold across industry fit, workflow friction, and market specificity. It spans both B2B and consumer ideas, or you can use the wheel to generate your own.</p>
             <span className="wings" />
             <span className="raleway"><span /><span /><span /><span /><span /></span>
           </div>

@@ -110,7 +110,7 @@ export default function VersusPage({ params }) {
               <p key={i} style={pStyle}><InlineLinks text={para} /></p>
             ))}
             <p style={{ ...pStyle, fontSize: 13.5, opacity: 0.55 }}>
-              Disclosure: IdeaReels is our product. {them.name}&apos;s pricing was checked in July 2026 and may have changed — it&apos;s linked below so you can verify.
+              Disclosure: IdeaReels is our product. {them.name}&apos;s pricing was checked in July 2026 and may have changed. It&apos;s linked below so you can verify.
             </p>
 
             <h2 style={h2Style}>At a glance</h2>
@@ -158,7 +158,7 @@ export default function VersusPage({ params }) {
               <div className="fn__bold_item" style={{ padding: '20px 22px', background: '#fff', flex: '1 1 300px' }}>
                 <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 15, margin: '0 0 12px' }}>Choose {them.name} if…</p>
                 {page.pickThemIf.map((b, i) => (
-                  <p key={i} style={{ fontSize: 14.5, lineHeight: 1.6, opacity: 0.85, margin: '0 0 8px' }}>— <InlineLinks text={b} /></p>
+                  <p key={i} style={{ fontSize: 14.5, lineHeight: 1.6, opacity: 0.85, margin: '0 0 8px' }}>· <InlineLinks text={b} /></p>
                 ))}
               </div>
             </div>
@@ -192,7 +192,7 @@ export default function VersusPage({ params }) {
                 Try the free score before you pick.
               </h3>
               <p style={{ margin: '0 0 18px', opacity: 0.75, fontSize: 15 }}>
-                Your first market score is free — see the demand signals for yourself, then decide.
+                Your first market score is free. See the demand signals for yourself, then decide.
               </p>
               <Link href="/tools/rate-my-startup-idea" className="fn__btn"><span>Rate my startup idea</span></Link>
             </div>

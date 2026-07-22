@@ -12,22 +12,22 @@ const PACK_DESCRIPTIONS = {
 
 const PACK_FEATURES = {
   starter: [
-    'Spinning is free — credits are only for deeper work',
+    'Spinning is free. Credits are only for deeper work',
     '1 credit for deep market research',
     '2 credits for the full MVP blueprint',
     '5 credits total',
   ],
   pro: [
-    'Spinning is free — credits are only for deeper work',
+    'Spinning is free. Credits are only for deeper work',
     '1 credit for deep market research',
     '2 credits for the full MVP blueprint',
     '10 credits total',
   ],
   power: [
-    'Spinning is free — credits are only for deeper work',
+    'Spinning is free. Credits are only for deeper work',
     '1 credit for deep market research',
     '2 credits for the full MVP blueprint',
-    '25 credits total — best value',
+    '25 credits total (best value)',
   ],
 };
 
@@ -81,7 +81,7 @@ export default function PricingPageClient({ searchParams }) {
         title: `${confirmData?.credits} ${isIdea ? `idea unlock${confirmData?.credits === 1 ? '' : 's'}` : 'credits'} added`,
         text: isIdea
           ? 'Head to the Ideas library when you want to unlock one.'
-          : `Your balance is now ${confirmData?.balance} credit${confirmData?.balance === 1 ? '' : 's'} — ready for the next concept you want to evaluate.`,
+          : `Your balance is now ${confirmData?.balance} credit${confirmData?.balance === 1 ? '' : 's'}, ready for the next concept you want to evaluate.`,
       };
     }
     if (confirmState === 'unpaid') return {
@@ -92,7 +92,7 @@ export default function PricingPageClient({ searchParams }) {
     if (confirmState === 'failed') return {
       tone: 'neutral',
       title: 'Confirming your payment…',
-      text: 'We could not verify your payment yet. If you were charged, your credits will appear within a few minutes — refresh this page or contact support if they do not.',
+      text: 'We could not verify your payment yet. If you were charged, your credits will appear within a few minutes. Refresh this page or contact support if they do not.',
     };
     if (success && packageConfig) {
       return {

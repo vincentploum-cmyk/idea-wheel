@@ -46,7 +46,7 @@ export default function CookieBanner() {
         margin: 0, flex: 1, minWidth: 220,
         fontFamily: 'inherit', fontSize: 13, color: '#141414', lineHeight: 1.55,
       }}>
-        We use only the cookies IdeaReels needs to work — a sign-in session and rate limits.
+        We use only the cookies IdeaReels needs to work: a sign-in session and rate limits.
         No advertising, no cross-site trackers. See our <a href="/privacy" style={{ color: '#141414', fontWeight: 700, textDecoration: 'underline' }}>Privacy Policy</a>.
       </p>
       <button

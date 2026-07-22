@@ -372,7 +372,7 @@ function IdeaUnlockCTA({ slug, creditBalance, user, onUnlocked }) {
         if (res.status === 402 || data.error === 'insufficient_credits') {
           window.location.href = '/pricing';
         } else if (res.status === 409 || data.error === 'content_not_ready') {
-          setError('This idea’s full research is being prepared. Check back shortly — you were not charged.');
+          setError('This idea’s full research is being prepared. Check back shortly; you were not charged.');
         } else {
           setError(data.error || 'Something went wrong.');
         }
@@ -651,7 +651,7 @@ export default function IdeasClient({ user, catalogData: initialCatalog = {}, id
             {vetted.length > 0 && (
               <div style={{ marginTop: 24 }}>
                 <h2 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 6px' }}>Vetted by founders</h2>
-                <p style={{ fontSize: 14, opacity: 0.65, margin: '0 0 18px' }}>Every idea here scored 60+ in a real market check run by someone on IdeaReels — no idea appears until it clears the bar.</p>
+                <p style={{ fontSize: 14, opacity: 0.65, margin: '0 0 18px' }}>Every idea here scored 60+ in a real market check run by someone on IdeaReels. No idea appears until it clears the bar.</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {vetted.map((item) => <VettedIdea key={item.combo_key} item={item} />)}
                 </div>

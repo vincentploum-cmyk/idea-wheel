@@ -115,7 +115,7 @@ function renderBody(body) {
           {line.slice(2, -2)}
         </p>
       );
-    } else if (line.match(/^\*\*(.+?)\*\* —/)) {
+    } else if (line.match(/^\*\*(.+?)\*\*[:.]/)) {
       const parts = line.split(/\*\*(.+?)\*\*/);
       elements.push(
         <p key={i} style={{ margin: '16px 0 8px', lineHeight: 1.7, fontSize: 16 }}>

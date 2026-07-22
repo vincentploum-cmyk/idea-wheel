@@ -2,7 +2,7 @@ import PopitoShell from '@/components/popito/PopitoShell';
 import ContactForm from '@/components/ContactForm';
 
 export const metadata = {
-  title: 'Contact — Support & Feedback',
+  title: 'Contact: Support & Feedback',
   description: 'Get in touch with the IdeaReels team. Report a bug, share feedback, or ask a question.',
   alternates: { canonical: 'https://ideareels.io/contact' },
 };
@@ -20,7 +20,7 @@ export default function ContactPage() {
               We read every message.
             </h1>
             <p className="fn__desc" style={{ maxWidth: 440 }}>
-              Bug to report, idea to share, or just want to talk startup validation — send it over.
+              Bug to report, idea to share, or just want to talk startup validation? Send it over.
             </p>
             <span className="wings" />
           </div>

@@ -11,35 +11,35 @@ const SEGMENTS = [
   { id: "health",    label: "Health",     color: "#E63946",
     title: "VitalLoop",
     tagline: "At-home metabolic coaching from a finger-prick and a phone camera.",
-    blurb: "A $39/mo membership that turns a monthly at-home blood panel into a living, AI-personalized nutrition and habit plan — closing the loop between lab work and daily life." },
+    blurb: "A $39/mo membership that turns a monthly at-home blood panel into a living, AI-personalized nutrition and habit plan, closing the loop between lab work and daily life." },
   { id: "climate",   label: "Climate",    color: "#F4A261",
     title: "Cumulus",
     tagline: "A marketplace for verified carbon credits from small regenerative farms.",
-    blurb: "Pairs satellite + soil-sensor verification with a clean buying experience so mid-market companies can fund real, local soil carbon — not sketchy offsets." },
+    blurb: "Pairs satellite + soil-sensor verification with a clean buying experience so mid-market companies can fund real, local soil carbon, not sketchy offsets." },
   { id: "fintech",   label: "Fintech",    color: "#2A9D8F",
     title: "Float",
     tagline: "Zero-fee instant payroll advances for gig and shift workers.",
-    blurb: "Workers tap earned-but-unpaid wages instantly; employers pay a flat platform fee. No predatory interest, no tips, no overdraft — just access to money already earned." },
+    blurb: "Workers tap earned-but-unpaid wages instantly; employers pay a flat platform fee. No predatory interest, no tips, no overdraft. Just access to money already earned." },
   { id: "creator",   label: "Creator",    color: "#264653",
     title: "Encore",
     tagline: "Turn a podcast or video back-catalog into a searchable, sellable course.",
-    blurb: "Point Encore at years of episodes; it restructures them into a navigable, searchable curriculum creators can sell — unlocking the value buried in the archive." },
+    blurb: "Point Encore at years of episodes; it restructures them into a navigable, searchable curriculum creators can sell, unlocking the value buried in the archive." },
   { id: "ai",        label: "AI Tools",   color: "#E9C46A",
     title: "Bench",
     tagline: "An AI ops analyst that watches your dashboards and pings you before things break.",
-    blurb: "Connect your data tools; Bench learns what 'normal' looks like, flags anomalies in plain English, and drafts the Slack message you'd send — your always-on analyst." },
+    blurb: "Connect your data tools; Bench learns what 'normal' looks like, flags anomalies in plain English, and drafts the Slack message you'd send. Your always-on analyst." },
   { id: "edu",       label: "Education",  color: "#F4A261",
     title: "Cohortly",
     tagline: "Tiny, high-touch cohort classes taught by working domain experts.",
-    blurb: "A platform for 8-person, 3-week cohorts where practitioners teach the exact skill they do daily — accountability and access, not another video library." },
+    blurb: "A platform for 8-person, 3-week cohorts where practitioners teach the exact skill they do daily. Accountability and access, not another video library." },
   { id: "logistics", label: "Logistics",  color: "#457B9D",
     title: "Lastmile",
     tagline: "Shared same-day delivery that finally makes sense for indie retailers.",
-    blurb: "Pools deliveries across nearby small shops into shared driver routes — giving independents same-day shipping at a price big-box logistics keeps for themselves." },
+    blurb: "Pools deliveries across nearby small shops into shared driver routes, giving independents same-day shipping at a price big-box logistics keeps for themselves." },
   { id: "social",    label: "Social",     color: "#1D3557",
     title: "Campfire",
     tagline: "Small-group audio rooms built for hobby communities, not influencers.",
-    blurb: "Cozy, recurring 12-person audio rooms organized around niche hobbies — the warmth of a group call with the discoverability of a community, minus the broadcast noise." },
+    blurb: "Cozy, recurring 12-person audio rooms organized around niche hobbies. The warmth of a group call with the discoverability of a community, minus the broadcast noise." },
 ];
 
 /* ─── HELPERS ────────────────────────────────────────────────────── */
@@ -473,13 +473,13 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     const players = (comp.players || []).slice(0, 8);
     const matrix = players.length
       ? `<div class="label">Competitor matrix</div><table class="ctable"><thead><tr><th>Player</th><th>Who they serve</th><th>What they miss here</th></tr></thead><tbody>${
-          players.map((p) => `<tr><td><strong>${e(p.name)}</strong>${(p.sourceUrl && p.sourceVerified) ? `<br><a href="${e(p.sourceUrl)}" class="src">✓ ${e(p.sourceUrl.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, ''))}</a>` : '<br><span class="src">⚠ source unverified</span>'}</td><td>${e(p.targetCustomer || p.coverage || '—')}</td><td>${e(p.weakness || '—')}</td></tr>`).join('')
+          players.map((p) => `<tr><td><strong>${e(p.name)}</strong>${(p.sourceUrl && p.sourceVerified) ? `<br><a href="${e(p.sourceUrl)}" class="src">✓ ${e(p.sourceUrl.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, ''))}</a>` : '<br><span class="src">⚠ source unverified</span>'}</td><td>${e(p.targetCustomer || p.coverage || '–')}</td><td>${e(p.weakness || '–')}</td></tr>`).join('')
         }</tbody></table>`
       : '';
     const marketSizeLine = comp.marketSize
       ? `<p class="big">${e(comp.marketSize)}</p>` + (comp.marketSizeSource
           ? `<p class="src">Source: <a href="${e(comp.marketSizeSource)}">${e(comp.marketSizeSource.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, ''))}</a> (verified)</p>`
-          : `<p class="src">⚠ Unverified estimate — no live source found for this figure.</p>`)
+          : `<p class="src">⚠ Unverified estimate. No live source found for this figure.</p>`)
       : '';
     sec('Competitor & gap',
       marketSizeLine +
@@ -490,10 +490,10 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     `<p class="big">${e(gtm.pricing.price)}</p>` +
     (gtm.pricing.rationale ? `<p>${e(gtm.pricing.rationale)}</p>` : '') +
     (gtm.pricing.trial ? `<p class="muted">${e(gtm.pricing.trial)}</p>` : '') +
-    ((gtm.revenueGoal || gtm.buildTime) ? `<div class="kpis"><div class="kpi"><b>${e(gtm.revenueGoal || '—')}</b><small>30-day target</small></div><div class="kpi"><b>${e(gtm.buildTime || '—')}</b><small>to build V1</small></div></div>` : '') +
+    ((gtm.revenueGoal || gtm.buildTime) ? `<div class="kpis"><div class="kpi"><b>${e(gtm.revenueGoal || '–')}</b><small>30-day target</small></div><div class="kpi"><b>${e(gtm.buildTime || '–')}</b><small>to build V1</small></div></div>` : '') +
     (gtm.firstFiveCustomers?.length ? `<div class="label">First 5 customers</div>${list(gtm.firstFiveCustomers, true)}` : ''));
   if (gtm && ((gtm.channels || []).length || (gtm.plan || []).length)) sec('Go-to-market plan',
-    ((gtm.channels || []).length ? `<div class="label">Channels</div><ul class="list">${gtm.channels.slice(0, 5).map((c) => `<li><strong>${e(c.name || '')}</strong> — ${e(c.tactic || '')}${c.timeline ? ` <span class="muted">(${e(c.timeline)})</span>` : ''}</li>`).join('')}</ul>` : '') +
+    ((gtm.channels || []).length ? `<div class="label">Channels</div><ul class="list">${gtm.channels.slice(0, 5).map((c) => `<li><strong>${e(c.name || '')}</strong>: ${e(c.tactic || '')}${c.timeline ? ` <span class="muted">(${e(c.timeline)})</span>` : ''}</li>`).join('')}</ul>` : '') +
     ((gtm.plan || []).length ? `<div class="label">First 4 weeks</div>${(gtm.plan).slice(0, 4).map((w) => `<p><strong>Week ${e(String(w.week || ''))}: ${e(w.theme || '')}</strong></p>${list(w.actions)}`).join('')}` : ''),
     'sec--long');
   if (design?.landingAngle) sec('Landing page angle', `<p class="quote">"${e(design.landingAngle)}"</p>`);
@@ -519,7 +519,7 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
           const uaLine = ua ? `<p class="muted">Assumes ${Object.entries(ua).filter(([, v]) => Number(v) > 0).map(([k, v]) => `${e(String(v))} ${e(k.replace(/([A-Z])/g, ' $1').toLowerCase())}`).join(', ')}.</p>` : '';
           const rows = cm.items.map((it) => `<tr><td>${e(it.service)}</td><td>${e(String(it.quantity))} ${e(it.unit)}</td><td>$${e(String(it.unitCost))}</td><td>$${e(String(it.monthlyCost))}</td></tr>`).join('');
           const notes = (cm.notes || []).length ? `<ul class="list">${cm.notes.map((n) => `<li>${e(n)}</li>`).join('')}</ul>` : '';
-          return `<div class="label">Operating cost — estimate (calculated in code)</div>${uaLine}<table class="ctable"><thead><tr><th>Service</th><th>Volume</th><th>Unit cost</th><th>Monthly</th></tr></thead><tbody>${rows}<tr><td colspan="3"><strong>Estimated total / month</strong></td><td><strong>$${e(String(cm.monthlyTotal))}</strong></td></tr></tbody></table>${notes}<p class="muted">Estimate only — usage-based costs (AI tokens, SMS, storage) vary with real traffic; verify current provider pricing before committing.</p>`;
+          return `<div class="label">Operating cost estimate (calculated in code)</div>${uaLine}<table class="ctable"><thead><tr><th>Service</th><th>Volume</th><th>Unit cost</th><th>Monthly</th></tr></thead><tbody>${rows}<tr><td colspan="3"><strong>Estimated total / month</strong></td><td><strong>$${e(String(cm.monthlyTotal))}</strong></td></tr></tbody></table>${notes}<p class="muted">Estimate only. Usage-based costs (AI tokens, SMS, storage) vary with real traffic; verify current provider pricing before committing.</p>`;
         }
         return infra.monthlyCost ? `<div class="costs">${Object.entries(infra.monthlyCost).map(([k, v]) => `<div class="cost"><b>${e(v)}</b><small>${k === 'dev' ? 'Dev' : k === 'at100users' ? '100 users' : '1K users'}</small></div>`).join('')}</div>` : '';
       })(),
@@ -535,7 +535,7 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     `<ul class="list">${evidence.map((x) => {
       const c = claimMap.get(String(x));
       const badge = c?.verified
-        ? `<span class="src">✓ confirmed${c.sourceUrl ? ` — <a href="${e(c.sourceUrl)}">${e(c.sourceUrl.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, ''))}</a>` : ''}</span>`
+        ? `<span class="src">✓ confirmed${c.sourceUrl ? ` · <a href="${e(c.sourceUrl)}">${e(c.sourceUrl.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, ''))}</a>` : ''}</span>`
         : `<span class="src">⚠ unconfirmed estimate</span>`;
       return `<li>${e(x)}<br>${badge}</li>`;
     }).join('')}</ul>`);
@@ -547,7 +547,7 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
     return acc;
   }, {}));
   if (sources.length) sec('Sources',
-    `<p class="muted">Numbered register of every source behind this report. "Resolved" means the page loaded when this report was generated — a transport check only. It does NOT mean the page proves a claim; see Research &amp; evidence for which figures were actually confirmed in a source.</p>` +
+    `<p class="muted">Numbered register of every source behind this report. "Resolved" means the page loaded when this report was generated: a transport check only. It does NOT mean the page proves a claim; see Research &amp; evidence for which figures were actually confirmed in a source.</p>` +
     `<table class="ctable"><thead><tr><th>ID</th><th>Source</th><th>Resolved</th></tr></thead><tbody>${
       sources.map((s, i) => `<tr><td><strong>S${String(i + 1).padStart(2, '0')}</strong></td><td><a href="${e(s.url)}">${e(s.title || s.url.replace(/^https?:\/\/(www\.)?/, ''))}</a><br><span class="src">${e(s.url)}</span></td><td>${s.verified ? '✓' : '⚠'}</td></tr>`).join('')
     }</tbody></table>`);
@@ -564,15 +564,15 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
   // "not scored", never a real 0.
   const hasScore = rawScore !== null && rawScore !== undefined && Number.isFinite(scoreNum);
   const qualified = hasScore && scoreNum >= SCORE_POLICY.visibleMin;
-  const statusLabel = !hasScore ? 'Manual review — not scored'
-    : qualified ? 'Qualified' : `Manual review — below the ${SCORE_POLICY.visibleMin} bar`;
+  const statusLabel = !hasScore ? 'Manual review (not scored)'
+    : qualified ? 'Qualified' : `Manual review (below the ${SCORE_POLICY.visibleMin} bar)`;
   const confidence = comp?.judge?.confidence ? String(comp.judge.confidence) : '';
   const strengths = [comp?.gap, comp?.moat].filter((x) => x && String(x).trim()).slice(0, 2);
   const risks = (comp?.skeptic?.fatalRisks || []).filter(Boolean).slice(0, 2);
   const mustProve = (comp?.judge?.mustProveNext || []).filter(Boolean).slice(0, 3);
   const srcSummary = comp?.sourceSummary || { total: 0, verified: 0 };
   const qualRows = [
-    `<div class="qrow"><span>Viability score</span><b>${hasScore ? `${Math.round(scoreNum)}/100` : '—'}</b></div>`,
+    `<div class="qrow"><span>Viability score</span><b>${hasScore ? `${Math.round(scoreNum)}/100` : '–'}</b></div>`,
     `<div class="qrow"><span>Status</span><b>${e(statusLabel)}</b></div>`,
     `<div class="qrow"><span>Minimum required</span><b>${SCORE_POLICY.blueprintMin}</b></div>`,
     `<div class="qrow"><span>Score model</span><b>${e(SCORE_POLICY.version)}</b></div>`,
@@ -602,11 +602,11 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
       ${strengths.length ? `<div class="qlabel">Why it passed</div><ul class="qlist">${strengths.map((s) => `<li>${e(s)}</li>`).join('')}</ul>` : ''}
       ${risks.length ? `<div class="qlabel">Where it could still fail</div><ul class="qlist">${risks.map((s) => `<li>${e(s)}</li>`).join('')}</ul>` : ''}
       ${mustProve.length ? `<div class="qlabel">Must prove next</div><ul class="qlist">${mustProve.map((s) => `<li>${e(s)}</li>`).join('')}</ul>` : ''}
-      ${comp?.evidenceCapped ? `<div class="qsafety" style="background:#FEFCE8;border-color:#CA8A04">⚠️ No external source resolved live during the check, so the evidence score was capped — treat the numbers below as unverified estimates until confirmed.</div>` : ''}
+      ${comp?.evidenceCapped ? `<div class="qsafety" style="background:#FEFCE8;border-color:#CA8A04">⚠️ No external source resolved live during the check, so the evidence score was capped. Treat the numbers below as unverified estimates until confirmed.</div>` : ''}
       ${comp?.safety?.notice ? `<div class="qsafety">⚠️ ${e(comp.safety.notice)}</div>` : ''}
     </div>`;
 
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${e(name)} — Complete plan</title>
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${e(name)} · Complete plan</title>
 <style>
   @page { size: A4; margin: 16mm; @bottom-right { content: counter(page); font-size: 9pt; color: #999; } }
   .label, .qlabel, .sechead { break-after: avoid; page-break-after: avoid; }
@@ -688,8 +688,8 @@ function buildPlanDocument({ design, gtm, comp, infra, idea }) {
   ${sections.join('\n')}
   <div class="close">
     <div class="big2">That's a company in three spins.</div>
-    <p>Your full build plan — product, market, and infrastructure${hasCursorPrompt ? ', and the first Cursor prompt,' : ''} — is above.</p>
-    <div class="note">Your interactive prototype is saved separately as <b>${e(planSlug(name))}-prototype.html</b> — open it in any browser.</div>
+    <p>Your full build plan (product, market, and infrastructure${hasCursorPrompt ? ', plus the first Cursor prompt' : ''}) is above.</p>
+    <div class="note">Your interactive prototype is saved separately as <b>${e(planSlug(name))}-prototype.html</b>. Open it in any browser.</div>
     <div class="foot">Built with IdeaReels · ideareels.io</div>
     <p class="muted" style="font-size:8.5pt;margin-top:8px">Score model ${e(SCORE_POLICY.version)}${(typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_COMMIT_SHA) ? ` · build ${e(process.env.NEXT_PUBLIC_COMMIT_SHA)}` : ''}${dateStr ? ` · generated ${e(dateStr)}` : ''}</p>
   </div>
@@ -1125,7 +1125,7 @@ export default function IdeaWheel() {
       desc.textContent  = 'Describe your concept and get a free market score. Buy credits for the full deep research and technical blueprint.';
     } else {
       title.textContent = 'Spin for a new idea or validate your own.';
-      desc.textContent  = 'Run real market research on any concept — then get a clear technical blueprint to start building tonight.';
+      desc.textContent  = 'Run real market research on any concept, then get a clear technical blueprint to start building tonight.';
     }
   }, [inputMode]);
 
@@ -1916,7 +1916,7 @@ export default function IdeaWheel() {
                   <span>{validating || pendingOwnValidate ? 'Analyzing…' : 'Get my score!'}</span>
                 </button>
                 <p style={{marginTop:12, fontSize:12, color:'#888', fontFamily:'var(--font-body)', fontWeight:500}}>
-                  🔒 Private to your account. We save it so it shows in your history — never sold, never public without your say-so.
+                  🔒 Private to your account. We save it so it shows in your history. Never sold, never public without your say-so.
                 </p>
               </div>
             </div>
@@ -1937,7 +1937,7 @@ export default function IdeaWheel() {
               {validating && (
                 <div className="su-scan su-glass su-research" style={{marginTop:24}}>
                   <div className="su-scan-head">
-                    <span className="su-scan-text">Researching your idea — live</span>
+                    <span className="su-scan-text">Researching your idea, live</span>
                     <span className="su-scan-pct">{scanPct}%</span>
                   </div>
                   <div className="su-scan-bar su-scan-bar--progress">
@@ -1977,7 +1977,7 @@ export default function IdeaWheel() {
                   : potential
                     ? { label: "This idea has potential", tone: "warn" }
                     : score >= 40
-                      ? { label: "Crowded — but there may be an angle", tone: "warn" }
+                      ? { label: "Crowded, but there may be an angle", tone: "warn" }
                       : { label: "Steep climb from here", tone: "bad" };
                 const premise = cleanValidationText(comp.premiseNote || "");
                 const verdictLines = splitValidationBullets(comp.verdictReasoning || comp.verdict, 3);
@@ -1989,7 +1989,7 @@ export default function IdeaWheel() {
                 {comp.safety?.notice && (
                   <div style={{marginTop:8, marginBottom:8, padding:'14px 16px', background: comp.safety.level === 'clinical_high_risk' ? '#FEF2F2' : '#FEFCE8', border: `2px solid ${comp.safety.level === 'clinical_high_risk' ? '#DC2626' : '#CA8A04'}`, borderRadius:8, fontSize:13, lineHeight:1.55, fontFamily:'var(--font-body)', color:'#1a1a1a', fontWeight:500}}>
                     <strong style={{display:'block', marginBottom:4}}>
-                      {comp.safety.level === 'clinical_high_risk' ? '⚠️ Health-sensitive idea — safety check needed' : 'ℹ️ Heads up'}
+                      {comp.safety.level === 'clinical_high_risk' ? '⚠️ Health-sensitive idea: safety check needed' : 'ℹ️ Heads up'}
                     </strong>
                     {comp.safety.notice}
                   </div>
@@ -2142,11 +2142,11 @@ export default function IdeaWheel() {
                           <div className="su-save-row">
                             {saveState === 'saved' ? (
                               <span className="su-save-confirm">
-                                ✓ Saved — <a href="/profile" style={{color:'inherit',textDecoration:'underline'}}>view in profile</a>
+                                ✓ Saved. <a href="/profile" style={{color:'inherit',textDecoration:'underline'}}>View in profile</a>
                               </span>
                             ) : (
                               <button className="su-linkbtn su-save-btn" onClick={saveIdea} disabled={saveState === 'saving'}>
-                                {saveState === 'saving' ? 'Saving…' : saveState === 'error' ? `Save failed (${saveError}) — retry` : '↓ Save idea to profile'}
+                                {saveState === 'saving' ? 'Saving…' : saveState === 'error' ? `Save failed (${saveError}). Retry` : '↓ Save idea to profile'}
                               </button>
                             )}
                           </div>
@@ -2189,11 +2189,11 @@ export default function IdeaWheel() {
                         <div className="su-save-row">
                           {saveState === 'saved' ? (
                             <span className="su-save-confirm">
-                              ✓ Saved — <a href="/profile" style={{color:'inherit',textDecoration:'underline'}}>view in profile</a>
+                              ✓ Saved. <a href="/profile" style={{color:'inherit',textDecoration:'underline'}}>View in profile</a>
                             </span>
                           ) : (
                             <button className="su-linkbtn su-save-btn" onClick={saveIdea} disabled={saveState === 'saving'}>
-                              {saveState === 'saving' ? 'Saving…' : saveState === 'error' ? `Save failed (${saveError}) — retry` : '↓ Save idea to profile'}
+                              {saveState === 'saving' ? 'Saving…' : saveState === 'error' ? `Save failed (${saveError}). Retry` : '↓ Save idea to profile'}
                             </button>
                           )}
                         </div>
@@ -2238,7 +2238,7 @@ export default function IdeaWheel() {
               <div className="su-scan su-glass su-bp-progress">
                 <div className="su-scan-head">
                   <span className="su-scan-text">
-                    {bpDone ? "Blueprint complete" : paused ? "Paused — resume to finish" : `Step ${activeIdx + 1} of 4 · ${stages[activeIdx].doing}…`}
+                    {bpDone ? "Blueprint complete" : paused ? "Paused. Resume to finish" : `Step ${activeIdx + 1} of 4 · ${stages[activeIdx].doing}…`}
                   </span>
                   <span className="su-scan-pct">{pct}%</span>
                 </div>
@@ -2333,7 +2333,7 @@ export default function IdeaWheel() {
                   {comp.gap && <p className="su-bp-summary" style={{color:'var(--ink)'}}>{cleanValidationText(comp.gap)}</p>}
                   {(comp.players||[]).length>0 && <>
                     <div className="su-bp-list-label">Key players</div>
-                    <ul className="su-bp-list">{(comp.players||[]).slice(0,3).map((pl,i)=><li key={i}><strong>{cleanValidationText(pl.name)}</strong> — {cleanValidationText(pl.weakness)}</li>)}</ul>
+                    <ul className="su-bp-list">{(comp.players||[]).slice(0,3).map((pl,i)=><li key={i}><strong>{cleanValidationText(pl.name)}</strong>: {cleanValidationText(pl.weakness)}</li>)}</ul>
                   </>}
                 </div>
               )}

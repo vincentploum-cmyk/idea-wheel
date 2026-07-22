@@ -69,7 +69,7 @@ export default function ReviewForm() {
       <div className="fn__bold_item" style={{ padding: '32px 28px', textAlign: 'center', maxWidth: 540, margin: '0 auto' }}>
         <div style={{ fontSize: 32, marginBottom: 10 }}>✓</div>
         <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 20, marginBottom: 8 }}>
-          Review received — thank you!
+          Review received, thank you!
         </h3>
         {creditsGranted > 0 && (
           <p style={{
@@ -107,7 +107,7 @@ export default function ReviewForm() {
           Sign in to leave a review
         </h3>
         <p style={{ opacity: 0.65, fontSize: 14, marginBottom: 20 }}>
-          Share your experience and earn 3 free credits — enough to run a full deep research spin.
+          Share your experience and earn 3 free credits, enough to run a full deep research spin.
         </p>
         <Link href="/auth/login" className="fn__btn"><span>Sign in →</span></Link>
       </div>
