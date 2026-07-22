@@ -5,6 +5,7 @@ import NavLinks from './NavLinks';
 import MobileNav from './MobileNav';
 import StickyChrome from './StickyChrome';
 import { ArrowCurlyIcon } from './icons';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 function LogoMark({ height = 44 }) {
   const fontSize = Math.round(height * 0.52);
@@ -124,6 +125,7 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta, noB
       />
 
       <a href="#main-content" className="skip-to-content">Skip to main content</a>
+      <Breadcrumbs />
       <main id="main-content" className="popito_fn_content" tabIndex={-1}>
         {children}
       </main>
