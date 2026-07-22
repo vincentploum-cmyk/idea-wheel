@@ -23,8 +23,14 @@ const LABEL_MAP = {
   dimeadozen: 'DimeADozen',
   ideabrowser: 'IdeaBrowser',
   validatorai: 'ValidatorAI',
-  alternatives: 'alternatives',
 };
+
+// Word map used ONLY inside the split-and-join path for slugs like
+// 'validatorai-alternatives' — keeps the tail lowercase so the phrase reads
+// as "ValidatorAI alternatives" rather than "ValidatorAI Alternatives".
+// The standalone /alternatives segment still takes the LABEL_MAP fallback
+// which title-cases it.
+const IN_PHRASE_LOWERCASE = new Set(['alternatives', 'vs']);
 
 // Paths where breadcrumbs would add friction, not value.
 const HIDE_ON = [
@@ -78,7 +84,11 @@ export default function Breadcrumbs() {
     } else if (seg.endsWith('-alternatives') || seg.includes('-vs-')) {
       label = seg
         .split('-')
-        .map((w) => LABEL_MAP[w] || (w ? w[0].toUpperCase() + w.slice(1) : ''))
+        .map((w) => {
+          if (LABEL_MAP[w]) return LABEL_MAP[w];
+          if (IN_PHRASE_LOWERCASE.has(w)) return w;
+          return w ? w[0].toUpperCase() + w.slice(1) : '';
+        })
         .join(' ');
     } else {
       label = humanise(seg);
