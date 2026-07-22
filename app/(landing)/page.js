@@ -265,7 +265,7 @@ export default async function LandingPage() {
         <section style={{ padding: '0 0 56px' }}>
           <div className="container">
             <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', textAlign: 'center', marginBottom: 28, textWrap: 'balance' }}>
-              Tried it? Tell other founders.
+              Tried it? Tell others.
             </h2>
             <ReviewForm />
           </div>
