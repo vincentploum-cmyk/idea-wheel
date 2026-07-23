@@ -33,7 +33,7 @@ export default function sitemap() {
     { url: 'https://ideareels.io/ideas',                        lastModified: new Date('2026-06-25'), changeFrequency: 'weekly',  priority: 0.85 },
     { url: 'https://ideareels.io/example',                      lastModified: new Date('2026-06-25'), changeFrequency: 'monthly', priority: 0.8 },
     { url: 'https://ideareels.io/alternatives',                 lastModified: new Date('2026-07-10'), changeFrequency: 'monthly', priority: 0.7 },
-    { url: 'https://ideareels.io/blog',                         lastModified: new Date('2026-07-10'), changeFrequency: 'weekly',  priority: 0.75 },
+    { url: 'https://ideareels.io/blog',                         lastModified: new Date('2026-07-23'), changeFrequency: 'weekly',  priority: 0.75 },
     { url: 'https://ideareels.io/faq',                          lastModified: new Date('2026-06-25'), changeFrequency: 'monthly', priority: 0.65 },
     { url: 'https://ideareels.io/contact',                      lastModified: new Date('2026-06-25'), changeFrequency: 'yearly',  priority: 0.4 },
     { url: 'https://ideareels.io/privacy',                      lastModified: new Date('2026-07-16'), changeFrequency: 'yearly',  priority: 0.2 },
