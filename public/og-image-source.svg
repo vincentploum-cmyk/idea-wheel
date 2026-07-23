@@ -1,0 +1,67 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="88" y1="72" x2="1118" y2="566" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF6AE"/>
+      <stop offset="0.55" stop-color="#FFE000"/>
+      <stop offset="1" stop-color="#FFC700"/>
+    </linearGradient>
+    <linearGradient id="card" x1="716" y1="148" x2="1058" y2="498" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFDF0"/>
+      <stop offset="1" stop-color="#FFF4A8"/>
+    </linearGradient>
+    <filter id="shadow" x="62" y="54" width="1076" height="556" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="18"/>
+      <feGaussianBlur stdDeviation="18"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.0784314 0 0 0 0 0.0784314 0 0 0 0 0.0784314 0 0 0 0.14 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_1" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="#FFF9CC"/>
+  <rect x="32" y="32" width="1136" height="566" rx="40" fill="url(#bg)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="98" y="90" width="1004" height="484" rx="34" fill="#141414"/>
+    <rect x="114" y="106" width="972" height="452" rx="26" fill="#FFFDF4"/>
+  </g>
+
+  <rect x="152" y="148" width="250" height="58" rx="29" fill="#FFE000" stroke="#141414" stroke-width="4"/>
+  <text x="277" y="186" text-anchor="middle" fill="#141414" font-family="Nunito, Arial, sans-serif" font-size="30" font-weight="900" letter-spacing="0.8">
+    Idea ★ Reels
+  </text>
+
+  <text x="152" y="282" fill="#141414" font-family="Nunito, Arial, sans-serif" font-size="72" font-weight="900">
+    <tspan x="152" dy="0">Startup ideas</tspan>
+    <tspan x="152" dy="82">with real signal.</tspan>
+  </text>
+
+  <text x="152" y="426" fill="#303030" font-family="Roboto, Arial, sans-serif" font-size="34" font-weight="500">
+    <tspan x="152" dy="0">AI market research, validation, and MVP blueprints</tspan>
+    <tspan x="152" dy="50">for solo founders. From $3.99. No subscription.</tspan>
+  </text>
+
+  <rect x="738" y="154" width="296" height="338" rx="28" fill="url(#card)" stroke="#141414" stroke-width="4"/>
+  <rect x="770" y="188" width="106" height="18" rx="9" fill="#141414" fill-opacity="0.16"/>
+  <rect x="770" y="222" width="198" height="18" rx="9" fill="#141414" fill-opacity="0.1"/>
+  <rect x="770" y="270" width="232" height="106" rx="20" fill="#141414"/>
+  <text x="886" y="316" text-anchor="middle" fill="#FFE000" font-family="Nunito, Arial, sans-serif" font-size="26" font-weight="900">
+    82
+  </text>
+  <text x="886" y="346" text-anchor="middle" fill="#FFF8BF" font-family="Roboto, Arial, sans-serif" font-size="18" font-weight="700">
+    VIABILITY SCORE
+  </text>
+  <text x="886" y="404" text-anchor="middle" fill="#141414" font-family="Roboto, Arial, sans-serif" font-size="22" font-weight="700">
+    Demand signal strong
+  </text>
+  <text x="886" y="436" text-anchor="middle" fill="#4D4D4D" font-family="Roboto, Arial, sans-serif" font-size="18" font-weight="500">
+    Blueprint ready in minutes
+  </text>
+
+  <rect x="718" y="468" width="338" height="58" rx="29" fill="#141414"/>
+  <text x="887" y="506" text-anchor="middle" fill="#FFF8BF" font-family="Nunito, Arial, sans-serif" font-size="28" font-weight="900">
+    ideareels.io
+  </text>
+</svg>

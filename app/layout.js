@@ -47,7 +47,15 @@ export const metadata = {
     description: 'Stop building the wrong thing. AI market research + MVP blueprint in minutes, not weeks, from $3.99.',
     images: [{ url: 'https://ideareels.io/og-image.png', width: 1200, height: 630, alt: 'IdeaReels: AI Startup Idea Validation & MVP Blueprints' }],
   },
-  // robots.txt is handled exclusively by app/robots.js — no meta robots tag here
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+    },
+  },
   verification: { google: '7-zPuvRs0wD-bV9Mr_dDdu4vcjW2o3XrZzVGJuqDyd0' },
   alternates: { canonical: 'https://ideareels.io' },
   other: { 'theme-color': '#FFE000' },
