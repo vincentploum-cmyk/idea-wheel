@@ -17,6 +17,15 @@ services:
       - key: OPENAI_API_KEY
         sync: false
 
+      # Model + tool overrides. The code ships working defaults; set these ONLY
+      # to recover from an OpenAI-side change WITHOUT a deploy:
+      #   OPENAI_MODEL_FAST       cheap/high-volume tier (default gpt-4o-mini)
+      #   OPENAI_MODEL_DEEP       paid-deliverable tier  (default gpt-4o)
+      #   OPENAI_WEB_SEARCH_TOOL  pin the web-search tool name; when unset the
+      #                           code tries "web_search" and falls back to
+      #                           "web_search_preview"
+      # Diagnose with: OPENAI_API_KEY=... node scripts/openai-doctor.mjs
+
       # Supabase
       - key: NEXT_PUBLIC_SUPABASE_URL
         sync: false

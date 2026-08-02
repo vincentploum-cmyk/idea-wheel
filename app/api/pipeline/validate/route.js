@@ -11,6 +11,13 @@ import { verifySources, summarizeSources, verifyClaim, verifyClaimsAgainstSource
 import { logError } from '../../../../lib/error-log';
 import { markStart, markEnd } from '../../../../lib/metrics';
 import { getPreferences } from '../../../../lib/user-preferences';
+import {
+  MODELS,
+  pricingFor,
+  WEB_SEARCH_TOOL_TYPES,
+  classifyOpenAiError,
+  openAiError,
+} from '../../../../lib/openai-config';
 
 async function getUser() {
   const cookieStore = await cookies();
@@ -28,8 +35,8 @@ async function getUser() {
 const RATE_LIMIT = { limit: 10, windowSeconds: 60 };
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
-const MODEL = 'gpt-4o-mini';
-const PRICING = { input: 0.15, output: 0.60 };
+const MODEL = MODELS.fast;
+const PRICING = pricingFor(MODEL);
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -39,7 +46,7 @@ function calcCost(inp, out) {
   return (inp * PRICING.input + out * PRICING.output) / 1_000_000;
 }
 
-async function call(prompt, { maxTokens = 1800, webSearch = false, searchUses = 3, attempt = 0 } = {}) {
+async function call(prompt, { maxTokens = 1800, webSearch = false, searchUses = 3, attempt = 0, toolIndex = 0 } = {}) {
   if (!OPENAI_KEY) throw new Error('OPENAI_API_KEY not set');
 
   let res;
@@ -47,7 +54,11 @@ async function call(prompt, { maxTokens = 1800, webSearch = false, searchUses = 
     res = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_KEY}` },
-      body: JSON.stringify({ model: MODEL, tools: [{ type: 'web_search_preview' }], input: prompt }),
+      body: JSON.stringify({
+        model: MODEL,
+        tools: [{ type: WEB_SEARCH_TOOL_TYPES[toolIndex] }],
+        input: prompt,
+      }),
     });
   } else {
     res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -57,14 +68,28 @@ async function call(prompt, { maxTokens = 1800, webSearch = false, searchUses = 
     });
   }
 
-  if (res.status === 429 && attempt < 2) {
-    const retryAfterHeader = Number(res.headers.get('retry-after') || 0);
-    const retryMs = retryAfterHeader > 0 ? retryAfterHeader * 1000 : 8000 * (attempt + 1);
-    await sleep(retryMs);
-    return call(prompt, { maxTokens, webSearch, searchUses, attempt: attempt + 1 });
+  if (!res.ok) {
+    const text = await res.text();
+    const info = classifyOpenAiError(res.status, text);
+
+    // The web-search tool was renamed; if this name is rejected, retry under
+    // the next known name rather than failing the whole market check.
+    if (webSearch && info.kind === 'tool_unsupported' && toolIndex + 1 < WEB_SEARCH_TOOL_TYPES.length) {
+      return call(prompt, { maxTokens, webSearch, searchUses, attempt, toolIndex: toolIndex + 1 });
+    }
+
+    // Back off only on genuinely transient failures. `insufficient_quota`
+    // arrives as a 429 but is a billing state — retrying just burns 24s.
+    if (info.retryable && attempt < 2) {
+      const retryAfterHeader = Number(res.headers.get('retry-after') || 0);
+      const retryMs = retryAfterHeader > 0 ? retryAfterHeader * 1000 : 8000 * (attempt + 1);
+      await sleep(retryMs);
+      return call(prompt, { maxTokens, webSearch, searchUses, attempt: attempt + 1, toolIndex });
+    }
+
+    throw openAiError(res.status, text);
   }
 
-  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
   const data = await res.json();
 
   let text;
@@ -809,14 +834,24 @@ export async function POST(request) {
         });
       } catch (err) {
         timingStatus = 'error';
+        // `err.openai` is set by openAiError(); it names the failure class
+        // (insufficient_quota / model_not_found / tool_unsupported / …) so the
+        // cause is legible in `error_events` and on /api/admin/errors without
+        // anyone having to re-read a raw upstream body.
+        const info = err?.openai || null;
         await logError({
           scope: 'api:validate',
           error: err,
           userId: user?.id,
           route: '/api/pipeline/validate',
-          meta: { sessionId },
+          meta: {
+            sessionId,
+            ...(info && { openaiKind: info.kind, operatorNote: info.operator, model: MODEL }),
+          },
         });
-        send({ t: 'error', error: 'Market check failed. Please try again.' });
+        // Tell the user which kind of wait they're in for. Still no upstream
+        // detail — classifyOpenAiError's `user` strings are vetted for that.
+        send({ t: 'error', error: info?.user || 'Market check failed. Please try again.' });
       } finally {
         markEnd(timing, { userId: user?.id, sessionId }, timingStatus);
         try { controller.close(); } catch {}

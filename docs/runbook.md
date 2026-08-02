@@ -14,8 +14,45 @@ Last updated: 2026-07-16.
 | Users report "sign-in link expired" | Supabase → Auth → Logs | Resend → Emails → search their address |
 | Users report "charged but no credits" | Stripe → Payments (find intent) | `error_events` where `scope='api:stripe-webhook'` |
 | Blueprint generation fails | `error_events` where `scope like 'api:build:%'` | Render → Logs (OpenAI 429/500?) |
+| Market research fails ("Market check failed") | `node scripts/openai-doctor.mjs` | `error_events.meta->>'openaiKind'` |
 | /ideas card unlock 402 or 500 | `error_events` where `scope='api:catalog-unlock'` | Confirm `SEED_SECRET` re-seed ran for that slug |
 | Spike in 5xx | `error_events` last 15 min, group by scope | Render → Deploys (roll back if recent) |
+
+---
+
+## Playbook 0 — any AI step is failing
+
+Market research, deep research and blueprints all go through OpenAI, so one
+upstream change takes them all down at once. Do NOT guess between the causes —
+run the doctor, which reproduces the exact four calls the pipeline makes:
+
+```bash
+OPENAI_API_KEY=<the Render value> node scripts/openai-doctor.mjs
+```
+
+It exits 0 when everything the pipeline needs works, and otherwise prints the
+single thing to fix. The three outcomes and their remedies:
+
+| Doctor says | Cause | Fix |
+|---|---|---|
+| `ACCOUNT IS OUT OF CREDIT` | Billing / quota | Top up OpenAI. **No code change helps.** |
+| `<model> is not in your account's model list` | Model retired | Set `OPENAI_MODEL_FAST` / `OPENAI_MODEL_DEEP` on Render to a current model, restart. No deploy needed. |
+| `No web-search tool name is accepted` | Tool renamed upstream | Set `OPENAI_WEB_SEARCH_TOOL` on Render to the current name. |
+| `API key rejected (401)` | Bad/revoked key | Rotate `OPENAI_API_KEY`. |
+
+Already-recorded failures name their own cause — every OpenAI error is
+classified before it is logged:
+
+```bash
+curl -s -H "Authorization: Bearer $SEED_SECRET" \
+  "https://ideareels.io/api/admin/errors?hours=24&scope=api:validate" \
+  | jq -r '.events[] | "\(.created_at)  \(.meta.openaiKind)  \(.meta.operatorNote)"'
+```
+
+`openaiKind` is one of `insufficient_quota`, `model_not_found`,
+`tool_unsupported`, `invalid_api_key`, `rate_limited`, `server_error`,
+`unknown`. Only `rate_limited` and `server_error` are worth waiting out; the
+rest need the action above.
 
 ---
 

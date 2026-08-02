@@ -18,19 +18,23 @@ import { attachBlueprint, saveBlueprintProgress } from '../../../../lib/saved-id
 import { checkRateLimit } from '../../../../lib/rate-limit';
 import { logError } from '../../../../lib/error-log';
 import { markStart, markEnd } from '../../../../lib/metrics';
+import {
+  MODELS as MODEL_TIERS,
+  pricingFor,
+  WEB_SEARCH_TOOL_TYPES,
+  classifyOpenAiError,
+  openAiError,
+} from '../../../../lib/openai-config';
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
 
+// Stage → tier. Which concrete model backs a tier is set in lib/openai-config.js
+// and overridable per-environment, so a model retirement is an env change.
 const MODELS = {
-  scout: 'gpt-4o-mini',
-  designer: 'gpt-4o',
-  gtm: 'gpt-4o',
-  builder: 'gpt-4o',
-};
-
-const PRICING = {
-  'gpt-4o-mini': { input: 0.15, output: 0.60 },
-  'gpt-4o':      { input: 2.50, output: 10.00 },
+  scout: MODEL_TIERS.fast,
+  designer: MODEL_TIERS.deep,
+  gtm: MODEL_TIERS.deep,
+  builder: MODEL_TIERS.deep,
 };
 
 async function getUser() {
@@ -49,7 +53,7 @@ function sleep(ms) {
 }
 
 function calcCost(model, inp, out) {
-  const p = PRICING[model] || PRICING['gpt-4o'];
+  const p = pricingFor(model);
   return (inp * p.input + out * p.output) / 1_000_000;
 }
 
@@ -63,7 +67,7 @@ function mergeUsage(...usages) {
   );
 }
 
-async function call(prompt, { model, maxTokens = 1000, webSearch = false, searchUses = 8, attempt = 0 }) {
+async function call(prompt, { model, maxTokens = 1000, webSearch = false, searchUses = 8, attempt = 0, toolIndex = 0 }) {
   if (!OPENAI_KEY) throw new Error('OPENAI_API_KEY not set');
 
   let res;
@@ -71,7 +75,11 @@ async function call(prompt, { model, maxTokens = 1000, webSearch = false, search
     res = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_KEY}` },
-      body: JSON.stringify({ model, tools: [{ type: 'web_search_preview' }], input: prompt }),
+      body: JSON.stringify({
+        model,
+        tools: [{ type: WEB_SEARCH_TOOL_TYPES[toolIndex] }],
+        input: prompt,
+      }),
     });
   } else {
     res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -81,14 +89,26 @@ async function call(prompt, { model, maxTokens = 1000, webSearch = false, search
     });
   }
 
-  if (res.status === 429 && attempt < 2) {
-    const retryAfterHeader = Number(res.headers.get('retry-after') || 0);
-    const retryMs = retryAfterHeader > 0 ? retryAfterHeader * 1000 : 8000 * (attempt + 1);
-    await sleep(retryMs);
-    return call(prompt, { model, maxTokens, webSearch, searchUses, attempt: attempt + 1 });
+  if (!res.ok) {
+    const text = await res.text();
+    const info = classifyOpenAiError(res.status, text);
+
+    // Web-search tool renamed — retry under the next known name.
+    if (webSearch && info.kind === 'tool_unsupported' && toolIndex + 1 < WEB_SEARCH_TOOL_TYPES.length) {
+      return call(prompt, { model, maxTokens, webSearch, searchUses, attempt, toolIndex: toolIndex + 1 });
+    }
+
+    // Retry only what a retry can fix — a quota 429 is a billing state.
+    if (info.retryable && attempt < 2) {
+      const retryAfterHeader = Number(res.headers.get('retry-after') || 0);
+      const retryMs = retryAfterHeader > 0 ? retryAfterHeader * 1000 : 8000 * (attempt + 1);
+      await sleep(retryMs);
+      return call(prompt, { model, maxTokens, webSearch, searchUses, attempt: attempt + 1, toolIndex });
+    }
+
+    throw openAiError(res.status, text);
   }
 
-  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
   const data = await res.json();
 
   let text;

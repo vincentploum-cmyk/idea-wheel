@@ -5,6 +5,12 @@ import { clarify } from '../../../../lib/clarity';
 import { saveResearchedIdea } from '../../../../lib/saved-ideas';
 import { logError } from '../../../../lib/error-log';
 import { markStart, markEnd } from '../../../../lib/metrics';
+import {
+  MODELS,
+  WEB_SEARCH_TOOL_TYPES,
+  classifyOpenAiError,
+  openAiError,
+} from '../../../../lib/openai-config';
 
 const DEEP_RESEARCH_COST = 1;
 
@@ -22,22 +28,33 @@ async function getUser() {
 }
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
-const MODEL = 'gpt-4o-mini';
+const MODEL = MODELS.fast;
 
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-async function call(prompt, { maxTokens = 2000, searchUses = 8, attempt = 0 } = {}) {
+async function call(prompt, { maxTokens = 2000, searchUses = 8, attempt = 0, toolIndex = 0 } = {}) {
   if (!OPENAI_KEY) throw new Error('OPENAI_API_KEY not set');
   const res = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_KEY}` },
-    body: JSON.stringify({ model: MODEL, tools: [{ type: 'web_search_preview' }], input: prompt }),
+    body: JSON.stringify({
+      model: MODEL,
+      tools: [{ type: WEB_SEARCH_TOOL_TYPES[toolIndex] }],
+      input: prompt,
+    }),
   });
-  if (res.status === 429 && attempt < 2) {
-    await sleep(8000 * (attempt + 1));
-    return call(prompt, { maxTokens, searchUses, attempt: attempt + 1 });
+  if (!res.ok) {
+    const text = await res.text();
+    const info = classifyOpenAiError(res.status, text);
+    if (info.kind === 'tool_unsupported' && toolIndex + 1 < WEB_SEARCH_TOOL_TYPES.length) {
+      return call(prompt, { maxTokens, searchUses, attempt, toolIndex: toolIndex + 1 });
+    }
+    if (info.retryable && attempt < 2) {
+      await sleep(8000 * (attempt + 1));
+      return call(prompt, { maxTokens, searchUses, attempt: attempt + 1, toolIndex });
+    }
+    throw openAiError(res.status, text);
   }
-  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
   const data = await res.json();
   const text = (data.output || [])
     .filter(o => o.type === 'message')

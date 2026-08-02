@@ -11,6 +11,7 @@
  */
 
 import { getAllCatalogData, upsertCatalogIdea } from '../../../../lib/catalog-store';
+import { MODELS, WEB_SEARCH_TOOL_TYPES } from '../../../../lib/openai-config';
 import { IDEA_EXAMPLES } from '../../../../lib/idea-examples';
 
 const KEY = process.env.OPENAI_API_KEY;
@@ -46,7 +47,7 @@ function deepStrip(val) {
   return val;
 }
 
-async function call(prompt, { model = 'gpt-4o-mini', maxTokens = 2000, webSearch = false } = {}, attempt = 0) {
+async function call(prompt, { model = MODELS.fast, maxTokens = 2000, webSearch = false } = {}, attempt = 0) {
   if (!KEY) throw new Error('OPENAI_API_KEY not set');
 
   let res;
@@ -54,7 +55,7 @@ async function call(prompt, { model = 'gpt-4o-mini', maxTokens = 2000, webSearch
     res = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${KEY}` },
-      body: JSON.stringify({ model, tools: [{ type: 'web_search_preview' }], input: prompt }),
+      body: JSON.stringify({ model, tools: [{ type: WEB_SEARCH_TOOL_TYPES[0] }], input: prompt }),
     });
   } else {
     res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -248,7 +249,7 @@ CRITICAL: No citation tags, no HTML, no markup. Plain English only. Return ONLY 
   "userFlow": "sign-up to first real value in 2-3 plain sentences — name the actual screens",
   "wowMoment": "the exact moment a prospect sees the product and says 'I need this' — name the specific trigger and the specific output",
   "dataMoat": "what compound data or workflow memory builds up over time that a copycat can never replicate from day one"
-}`, { model: 'gpt-4o', maxTokens: 1400 });
+}`, { model: MODELS.deep, maxTokens: 1400 });
   const design = deepStrip(parseJSON(designText.text));
 
   // Stage 2 — GTM strategy
@@ -297,7 +298,7 @@ CRITICAL: No citation tags, no HTML. Plain English only. Return ONLY valid JSON:
   ],
   "whyNow": "one specific macro event, regulation, or technology shift in the last 18 months that makes this urgent right now — not generic AI hype",
   "cursorPrompt": "The exact first prompt to paste into Cursor, Claude, or Codex to start building this product. Should include: what to build, tech stack, first screen/feature to implement, and the core AI behavior. 150-200 words."
-}`, { model: 'gpt-4o', maxTokens: 2800 });
+}`, { model: MODELS.deep, maxTokens: 2800 });
   const gtm = deepStrip(parseJSON(gtmText.text));
 
   // Stage 3 — Infrastructure

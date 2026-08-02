@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { syncOpportunityBankToSupabase } from '@/lib/opportunity-bank';
 import { DEFAULT_MODE_CONFIGS } from '@/lib/generator-config';
+import { MODELS } from '@/lib/openai-config';
 
 const OPENAI_KEY  = process.env.OPENAI_API_KEY;
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -55,7 +56,7 @@ async function callOpenAI(prompt) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_KEY}` },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: MODELS.fast,
       max_tokens: 4096,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
