@@ -271,9 +271,12 @@ img, svg { display: block; max-width: 100%; }
 main[tabindex="-1"]:focus { outline: none; }
 
 /* Slot-machine "SPIN!" cover was a div; now a button. Reset native button chrome
-   so it renders identical to the prior overlay. */
+   so it renders identical to the prior overlay.
+   Deliberately NO `background` here: this selector (0,1,1) outranks the curtain's
+   own `.sm-reel-cover { background:#fff }` in IdeaWheel.jsx (0,1,0), so declaring
+   one wins the cascade and makes the cover see-through — the un-spun reel words
+   then read straight through it. Guarded by __tests__/reel-cover.test.js. */
 button.sm-reel-cover {
-  background: transparent;
   color: inherit;
   font: inherit;
   border: 0;
