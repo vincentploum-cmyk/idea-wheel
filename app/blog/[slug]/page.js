@@ -115,12 +115,17 @@ function renderBody(body) {
           {line.slice(2, -2)}
         </p>
       );
-    } else if (line.match(/^\*\*(.+?)\*\*[:.]/)) {
-      const parts = line.split(/\*\*(.+?)\*\*/);
+    } else if (line.match(/^\*\*([^*]+)\*\*[:.]?\s/)) {
+      // Accepts both "**Label.** rest" (period inside the bold — the dominant
+      // style in older posts, which previously fell through and rendered
+      // literal asterisks) and "**Label**. rest".
+      const m = line.match(/^\*\*([^*]+)\*\*(.*)$/);
       elements.push(
         <p key={i} style={{ margin: '16px 0 8px', lineHeight: 1.7, fontSize: 16 }}>
-          <strong style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900 }}>{parts[1]}</strong>
-          {parts[2]}
+          {/* The label itself can contain markdown links (e.g. "**[G2](…) and
+              [Capterra](…) reviews.**"), so it needs the same link pass. */}
+          <strong style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900 }}>{renderInlineLinks(m[1])}</strong>
+          {renderInlineLinks(m[2])}
         </p>
       );
     } else if (line.trim() !== '') {
@@ -153,15 +158,10 @@ export default function BlogPostPage({ params }) {
     mainEntityOfPage: { '@type': 'WebPage', '@id': `https://ideareels.io/blog/${post.slug}` },
   };
 
-  const breadcrumbJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ideareels.io' },
-      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://ideareels.io/blog' },
-      { '@type': 'ListItem', position: 3, name: post.title, item: `https://ideareels.io/blog/${post.slug}` },
-    ],
-  };
+  // BreadcrumbList is intentionally NOT emitted here: <Breadcrumbs/> in
+  // PopitoShell already emits one for this route, and two trails with
+  // different names for the same path make Google's SERP breadcrumb pick
+  // unpredictable.
 
   return (
     <PopitoShell>
@@ -262,7 +262,6 @@ export default function BlogPostPage({ params }) {
         </section>
       </div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
     </PopitoShell>
   );
 }

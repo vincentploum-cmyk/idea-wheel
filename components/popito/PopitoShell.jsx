@@ -137,6 +137,12 @@ export default async function PopitoShell({ children, yellowBg, noFooterCta, noB
               <div className="menu">
                 <ul className="footer_nav">
                   <li className="menu-item">
+                    <Link href="/ai-startup-ideas"><span className="text">AI Startup Ideas</span><span className="suffix">//</span></Link>
+                  </li>
+                  <li className="menu-item">
+                    <Link href="/what-to-build-with-ai"><span className="text">What to Build with AI</span><span className="suffix">//</span></Link>
+                  </li>
+                  <li className="menu-item">
                     <Link href="/privacy"><span className="text">Privacy Policy</span><span className="suffix">//</span></Link>
                   </li>
                   <li className="menu-item">

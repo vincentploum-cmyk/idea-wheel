@@ -12,6 +12,12 @@ export const metadata = {
   },
   description: 'Stop building the wrong thing. IdeaReels validates your startup idea with AI market research and produces a full technical MVP blueprint in minutes, not weeks. From $3.99.',
   keywords: [
+    'AI startup ideas',
+    'startup ideas with AI',
+    'what to build with AI',
+    'AI business ideas',
+    'AI app ideas',
+    'AI project ideas',
     'startup idea generator',
     'startup idea generator for solo founders',
     'startup idea generator with market research',

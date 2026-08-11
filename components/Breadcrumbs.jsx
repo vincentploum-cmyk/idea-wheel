@@ -10,6 +10,8 @@ import { BREADCRUMB_TITLES_BY_PATH } from '@/lib/breadcrumb-titles';
 const LABEL_MAP = {
   faq: 'FAQ',
   b2b: 'B2B',
+  ai: 'AI',
+  saas: 'SaaS',
   vs: 'vs',
   versus: 'Compare',
   offer: 'Special offer',

@@ -109,8 +109,11 @@ export default async function LandingPage() {
         ],
       },
       {
+        // Only the four FAQs visibly rendered on this page — Google requires
+        // marked-up Q&As to be visible on the source page; the full set lives
+        // on /faq, which renders (and marks up) everything.
         '@type': 'FAQPage',
-        mainEntity: FAQS.map((faq) => ({
+        mainEntity: FAQS.slice(0, 4).map((faq) => ({
           '@type': 'Question',
           name: faq.q,
           acceptedAnswer: { '@type': 'Answer', text: faq.a },
@@ -343,6 +346,37 @@ export default async function LandingPage() {
               <div style={{ textAlign: 'center', marginTop: 24 }}>
                 <Link href="/faq" className="fn__creative_link">See all questions<span className="suffix">//</span></Link>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Founder guides: sitewide entry points for the idea-generation content */}
+        <section style={{ padding: '0 0 48px' }}>
+          <div className="container">
+            <div style={{ textAlign: 'center', marginBottom: 24, maxWidth: 640, marginInline: 'auto' }}>
+              <h2 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.4rem)', marginBottom: 8, textWrap: 'balance' }}>
+                Not sure what to build yet?
+              </h2>
+              <p style={{ opacity: 0.65, margin: 0 }}>
+                Start with the free guides. They name who pays and why for every idea worth taking seriously, and you can score any of them against live market data in a minute.
+              </p>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 24, maxWidth: 960, margin: '0 auto' }}>
+              {[
+                { href: '/ai-startup-ideas', title: 'AI startup ideas worth building', text: '15 concrete ideas across boring industries, vertical copilots, and data plays, with the wedge spelled out for each.' },
+                { href: '/what-to-build-with-ai', title: 'What to build with AI', text: 'The decision guide: four filters that separate paid products from ignored demos, and 12 projects from weekend build to startup.' },
+                { href: '/ideas', title: 'Pre-validated ideas library', text: 'Browse concepts that already went through AI market research, with the demand evidence attached.' },
+              ].map((g) => (
+                <Link key={g.href} href={g.href} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div className="fn__bold_item" style={{ padding: '24px 24px', height: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <h3 style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 17, margin: 0 }}>{g.title}</h3>
+                    <p style={{ opacity: 0.65, lineHeight: 1.65, fontSize: 14, margin: 0 }}>{g.text}</p>
+                    <span style={{ marginTop: 'auto', paddingTop: 4, fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 13, color: '#111', letterSpacing: '0.04em' }}>
+                      Read the guide <span style={{ opacity: 0.4 }}>//</span>
+                    </span>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
         </section>
