@@ -14,6 +14,7 @@ Last updated: 2026-07-16.
 | Users report "sign-in link expired" | Supabase → Auth → Logs | Resend → Emails → search their address |
 | Users report "charged but no credits" | Stripe → Payments (find intent) | `error_events` where `scope='api:stripe-webhook'` |
 | Blueprint generation fails | `error_events` where `scope like 'api:build:%'` | Render → Logs (OpenAI 429/500?) |
+| Any client render fallback screen | `error_events` where `meta->>'kind'` in (`global-error`, `wheel-error`, `blueprint-render`) | The message names the field — a render threw, not the pipeline |
 | Market research fails ("Market check failed") | `node scripts/openai-doctor.mjs` | `error_events.meta->>'openaiKind'` |
 | /ideas card unlock 402 or 500 | `error_events` where `scope='api:catalog-unlock'` | Confirm `SEED_SECRET` re-seed ran for that slug |
 | Spike in 5xx | `error_events` last 15 min, group by scope | Render → Deploys (roll back if recent) |
@@ -183,6 +184,23 @@ Sequence, easiest first:
    - **JSON parse fail** — model returned malformed output; the retry-repair loop should have caught it. If it didn't, that's a real regression — look at the raw output in the logged `meta`.
 3. Verify refunds: `select * from credits_ledger where reason='blueprint_refund' and created_at > now() - interval '6 hours'` — every failed authorized charge should have a matching refund.
 
+**If the user saw a fallback screen rather than an inline error, it is NOT this
+playbook.** A pipeline failure always renders inline on the blueprint screen with
+a Resume button. A fallback screen means a render threw, and which one they saw
+says how far it got:
+
+| What the user saw | `meta->>'kind'` | Caught by |
+|---|---|---|
+| "This blueprint could not be displayed" card, rest of the page intact | `blueprint-render` | `components/ErrorBoundary.jsx` around the blueprint grid |
+| "This screen hit a snag." | `wheel-error` | `app/wheel/error.js` |
+| "Something broke." (whole app gone) | `global-error` | `app/global-error.js` — nothing on /wheel should reach this any more |
+
+"Objects are not valid as a React child" in any of them means a stage came back
+with an object where the schema promised text. `lib/blueprint-shape.js`
+normalizes those, so a new occurrence means a field the normalizer does not yet
+cover: add it to the matching `*_TEXT` / `*_LIST` list (or to `toArray` handling
+if the UI calls `.map()` on it) and to `__tests__/blueprint-shape.test.js`.
+
 ### Playbook 5 — Rolling back a bad deploy
 
 1. Render → Services → ideareels → Deploys.
@@ -228,3 +246,4 @@ Append every real incident here — even the tiny ones.
 - 2026-07-12 — /ideas server component shipped full locked-idea blueprints in the RSC payload. Anon users could see paid content. **Fix:** RLS on `catalog_ideas`, teaser-only for locked, `/api/catalog-idea-unlock` returns full content on entitlement (commit 9cfc1d0). **Learning:** RSC payloads are just HTML — treat every field as "can the visitor see this."
 - 2026-07-13 — Non-atomic check-then-write on unlock/purchase/review_bonus enabled double-grants under concurrency. **Fix:** partial unique indexes + `isUniqueViolation()` graceful-duplicate path + `test:races` regression suite (commit 5a4a189).
 - 2026-07-15 — Score 60 excluded from blueprint gate (was `>=61`), plus the gate was advisory not enforced. **Fix:** shared `lib/score-policy.js` (visibleMin=60 inclusive, blueprintMin=60, version-locked), server-side gate in `/api/pipeline/build` designer stage, 422 before deductCredits (commit 94d0d98). **Learning:** boundary tests earn their keep.
+- 2026-08-11 — Running a blueprint showed the full-page "Something broke." fallback. Root cause: blueprint stages are raw model JSON and the screen renders those fields directly, so when a stage drifted off-schema (`coreFeatures` as `[{name, description}]`, `pricing.price` as `{amount, currency}`, `setupSteps` as `[{step}]`) React threw "Objects are not valid as a React child"; with no route-level boundary it escaped to `app/global-error.js`. Reproduced against a production build: 10 of 12 plausible drift shapes took the page down; every pipeline *failure* path degraded correctly to an inline error, so failures were never the cause. **Fix:** `lib/blueprint-shape.js` normalizes each stage, applied server-side before persisting and client-side on receive/load (commit TBD). **Learning:** validation output is coerced through `cleanValidationText()` everywhere and never crashed; the blueprint screen was the one paid surface rendering model JSON raw. Model output is untrusted input — coerce it at the boundary, not by hoping the schema holds.

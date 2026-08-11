@@ -25,6 +25,7 @@ import {
   classifyOpenAiError,
   openAiError,
 } from '../../../../lib/openai-config';
+import { normalizeDesign, normalizeGtm, normalizeInfra } from '../../../../lib/blueprint-shape';
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
 
@@ -985,7 +986,11 @@ Search for the most current information available as of ${today}. Prioritise dev
         });
 
         // Plain-English readability check on this paid deliverable.
-        const designerResult = await withPlainEnglish('Product design', designerStage.result);
+        // Normalized last, so nothing downstream (evidence binding, the saved
+        // idea, the client) ever sees an object where the schema promised text.
+        const designerResult = normalizeDesign(
+          await withPlainEnglish('Product design', designerStage.result)
+        );
 
         // Bind each pain-evidence claim to a real source: fetch the research pages
         // and check whether the claim's number actually appears on one. Unbacked
@@ -1044,8 +1049,11 @@ Search for the most current information available as of ${today}. Prioritise dev
           rewritePrompt: (draft, critique) => gtmRewritePrompt(agentDesc, design, draft, comp, critique),
         });
 
-        // Plain-English readability check on this paid deliverable.
-        const launchResult = await withPlainEnglish('Launch & go-to-market plan', launchStage.result);
+        // Plain-English readability check on this paid deliverable. Normalized
+        // before the pricing math below, which needs a parseable price string.
+        const launchResult = normalizeGtm(
+          await withPlainEnglish('Launch & go-to-market plan', launchStage.result)
+        );
         // Deterministic pricing reconciliation. Models routinely state a revenue
         // goal whose arithmetic contradicts their own price (e.g. "$4,500 = 15 ×
         // $300/mo" printed next to a $450/mo price). Recompute the formula from
@@ -1113,9 +1121,13 @@ Search for the most current information available as of ${today}. Prioritise dev
           rewritePrompt: (draft, critique) => infraRewritePrompt(design, gtm, comp, draft, critique, retrieval),
         });
         // Plain-English readability check on this (most technical) paid deliverable.
-        const infraResult = await withPlainEnglish('Infrastructure & tech setup', infraStage.result);
+        const infraResult = normalizeInfra(
+          await withPlainEnglish('Infrastructure & tech setup', infraStage.result)
+        );
         // Recompute the cost total in code from the structured line items so the
-        // printed figure is arithmetic, not a number the model made up.
+        // printed figure is arithmetic, not a number the model made up. Fed the
+        // raw stage result: costItems/usageAssumptions are numbers, not prose,
+        // and normalization deliberately leaves them alone.
         const costModel = computeCostModel(infraStage.result, { monthlyPrice: parseMoney(gtm?.pricing?.price) });
         if (costModel) infraResult.costModel = costModel;
 
