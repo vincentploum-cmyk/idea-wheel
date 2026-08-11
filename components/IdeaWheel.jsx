@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase-browser";
 import { DEFAULT_MODE_CONFIGS, buildGeneratorIdea } from "@/lib/generator-config";
 import { SCORE_POLICY, hasPotential, isPremium } from "@/lib/score-policy";
 import { classifyIdeaRisk } from "@/lib/idea-safety";
+import { normalizeDesign, normalizeGtm, normalizeInfra } from "@/lib/blueprint-shape";
 
 /* ─── IDEA SEGMENTS ──────────────────────────────────────────────── */
 const SEGMENTS = [
@@ -1237,18 +1238,21 @@ export default function IdeaWheel() {
         const bp = saved.blueprint;
         const status = saved.blueprint_status;
 
+        // Normalized on the way in: blueprints saved before the build route
+        // started normalizing can still hold objects where the UI expects text,
+        // and rendering one of those raw is what produced "Something broke."
         if ((wantView || status === 'complete') && bp) {
-          setDesign(bp.design || null);
-          setGtm(bp.gtm || null);
-          setInfra(bp.infra || null);
-          setProto(bp.prototypeHtml || null);
+          setDesign(normalizeDesign(bp.design) || null);
+          setGtm(normalizeGtm(bp.gtm) || null);
+          setInfra(normalizeInfra(bp.infra) || null);
+          setProto(typeof bp.prototypeHtml === 'string' ? bp.prototypeHtml : null);
           setBpStage('done');
           goTo('blueprint');
         } else if (status === 'generating' && bp?.design) {
-          setDesign(bp.design || null);
-          setGtm(bp.gtm || null);
-          setInfra(bp.infra || null);
-          setProto(bp.prototypeHtml || null);
+          setDesign(normalizeDesign(bp.design) || null);
+          setGtm(normalizeGtm(bp.gtm) || null);
+          setInfra(normalizeInfra(bp.infra) || null);
+          setProto(typeof bp.prototypeHtml === 'string' ? bp.prototypeHtml : null);
           if (bp.chargeToken) setBpChargeToken(bp.chargeToken);
           setPendingResume(true);
           goTo('blueprint');
@@ -1604,28 +1608,28 @@ export default function IdeaWheel() {
         chargeToken = r.chargeToken || "";
         setBpChargeToken(chargeToken);
         if (typeof r.balance === 'number') setCredits(r.balance);
-        d = r.result; setDesign(d);
+        d = normalizeDesign(r.result); setDesign(d);
       }
       // Stage 2 – launch
       setBpStage(2);
       if (!g) {
         const r = await api({ ...base, stage:"launch", design: d, chargeToken });
         if (r.error) throw new Error(r.error);
-        g = r.result; setGtm(g);
+        g = normalizeGtm(r.result); setGtm(g);
       }
       // Stage 3 – infrastructure
       setBpStage(3);
       if (!inf) {
         const r = await api({ ...base, stage:"infrastructure", design: d, gtm: g, chargeToken });
         if (r.error) throw new Error(r.error);
-        inf = r.result; setInfra(inf);
+        inf = normalizeInfra(r.result); setInfra(inf);
       }
       // Stage 4 – prototype
       setBpStage(4);
       if (!pr) {
         const r = await api({ ...base, stage:"builder", design: d, gtm: g, infra: inf, chargeToken });
         if (r.error) throw new Error(r.error);
-        pr = r.result; setProto(pr);
+        pr = typeof r.result === 'string' ? r.result : ''; setProto(pr);
       }
       setBpStage("done");
     } catch(e) {

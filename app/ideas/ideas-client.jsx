@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { IDEA_EXAMPLES } from '@/lib/idea-examples';
+import { normalizeBlueprint } from '@/lib/blueprint-shape';
 
 const SCORE_COLOR = (s) => s >= 80 ? '#15803D' : s >= 65 ? '#B45309' : '#B91C1C';
 const PREMIUM_SCORE = 80;
@@ -196,7 +197,9 @@ function ResearchPanel({ research }) {
 function BlueprintContent({ blueprint }) {
   const [show, setShow] = useState(false);
   if (!blueprint) return null;
-  const { design, gtm, infra } = blueprint;
+  // Seeded catalog blueprints are model JSON too, and this renders them raw.
+  // Same normalization as the paid blueprint screen, for the same reason.
+  const { design, gtm, infra } = normalizeBlueprint(blueprint);
 
   return (
     <div style={{ marginTop: 12 }}>
