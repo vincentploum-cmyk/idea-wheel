@@ -214,6 +214,48 @@ describe('drifted shapes are made renderable', () => {
   });
 });
 
+describe('values the UI calls .map() on are forced into arrays', () => {
+  // `(x || []).map(...)` does not protect against these: an object or a string
+  // is truthy, so the fallback never fires and `.map is not a function` throws.
+  test('infra.services as a keyed object becomes an array', () => {
+    const out = normalizeInfra({ services: { supabase: { name: 'Supabase', setupSteps: ['1. Sign up.'] } } });
+    expect(Array.isArray(out.services)).toBe(true);
+    expect(out.services[0].name).toBe('Supabase');
+  });
+
+  test('infra.services as a bare string becomes a one-service array', () => {
+    const out = normalizeInfra({ services: 'Supabase' });
+    expect(out.services).toEqual([{ name: 'Supabase', setupSteps: [] }]);
+  });
+
+  test('gtm.channels and gtm.plan as keyed objects become arrays', () => {
+    const out = normalizeGtm({
+      channels: { community: { name: 'Community', tactic: 'Answer threads' } },
+      plan: { w1: { week: 1, theme: 'Discovery', actions: ['Interview buyers'] } },
+    });
+    expect(Array.isArray(out.channels)).toBe(true);
+    expect(Array.isArray(out.plan)).toBe(true);
+    expect(out.plan[0].actions).toEqual(['Interview buyers']);
+  });
+
+  test('design.evidenceVerified as a keyed object becomes an array', () => {
+    const out = normalizeDesign({ evidenceVerified: { a: { claim: '400 a month', verified: true } } });
+    expect(Array.isArray(out.evidenceVerified)).toBe(true);
+    expect(out.evidenceVerified[0].claim).toBe('400 a month');
+  });
+
+  test('infra.monthlyCost as an array of objects still renders', () => {
+    const out = normalizeInfra({ monthlyCost: [{ amount: 0 }, { amount: 132 }] });
+    expect(() => assertRenderable(Object.values(out.monthlyCost), 'monthlyCost')).not.toThrow();
+  });
+
+  test('absent keys are not invented', () => {
+    expect('services' in normalizeInfra({ schema: 'x' })).toBe(false);
+    expect('channels' in normalizeGtm({ persona: 'x' })).toBe(false);
+    expect('evidenceVerified' in normalizeDesign({ name: 'x' })).toBe(false);
+  });
+});
+
 describe('normalizeInfra leaves the cost inputs alone', () => {
   test('costItems, usageAssumptions and costModel keep their numbers', () => {
     const infra = {

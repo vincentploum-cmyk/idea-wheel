@@ -6,6 +6,7 @@ import { DEFAULT_MODE_CONFIGS, buildGeneratorIdea } from "@/lib/generator-config
 import { SCORE_POLICY, hasPotential, isPremium } from "@/lib/score-policy";
 import { classifyIdeaRisk } from "@/lib/idea-safety";
 import { normalizeDesign, normalizeGtm, normalizeInfra } from "@/lib/blueprint-shape";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 /* ─── IDEA SEGMENTS ──────────────────────────────────────────────── */
 const SEGMENTS = [
@@ -2272,6 +2273,29 @@ export default function IdeaWheel() {
             </p>
           )}
 
+          {/* The cards below render model-generated content. It is normalized on
+              both sides (lib/blueprint-shape.js), but a field nobody anticipated
+              must not be able to take the whole app down with it — the founder
+              has already paid. Contained here, the progress bar, the download
+              buttons and the rest of the screen survive. */}
+          <ErrorBoundary
+            scope="blueprint-render"
+            resetKey={bpCompletedCount}
+            fallback={
+              <div className="su-card su-bp-card su-bp-card--full" style={{ marginBottom: 32 }}>
+                <div className="su-bp-head"><span className="su-bp-num">!</span><h3 className="su-bp-title">This blueprint could not be displayed</h3></div>
+                <p className="su-bp-summary" style={{ color: 'var(--ink)' }}>
+                  The plan itself is fine and saved to your idea. Something in it
+                  would not draw on screen, and the error has been logged. Download
+                  the document below, or open the idea from your profile.
+                </p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+                  <button className="su-proto-toggle" onClick={downloadPlan}>Download the complete plan (PDF)</button>
+                  <a className="su-proto-toggle" href="/profile" style={{ textDecoration: 'none' }}>My ideas</a>
+                </div>
+              </div>
+            }
+          >
           {(design || gtm || infra || proto) && (
             <div className="su-bp-grid">
               {/* Product */}
@@ -2463,6 +2487,7 @@ export default function IdeaWheel() {
               )}
             </div>
           )}
+          </ErrorBoundary>
 
           {bpDone && (
             <div className="su-bp-footer">
