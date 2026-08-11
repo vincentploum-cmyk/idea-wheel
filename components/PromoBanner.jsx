@@ -14,7 +14,7 @@ export default function PromoBanner({ text, linkLabel, linkHref }) {
       position: 'relative',
       fontFamily: 'Nunito, sans-serif',
       fontWeight: 700,
-      fontSize: 'clamp(10px, 2.5vw, 13px)',
+      fontSize: 'clamp(12px, 2.5vw, 13px)',
       letterSpacing: '0.06em',
       textTransform: 'uppercase',
       color: '#111',
