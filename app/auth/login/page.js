@@ -57,7 +57,7 @@ export default function LoginPage() {
       <main className="nhlx-center nhlx-glow">
         <div className="nhlx-panel">
           <span className="nhlx-eyebrow">Sign in</span>
-          <h1 style={{ marginTop: 14 }}>Open the model</h1>
+          <h1>Open the model</h1>
           <p>Access is limited to the model owner. Use the email on the access list.</p>
 
           {sent ? (

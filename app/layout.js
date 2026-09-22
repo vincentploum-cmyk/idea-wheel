@@ -1,8 +1,5 @@
-import '@fontsource/chakra-petch/400.css';
-import '@fontsource/chakra-petch/500.css';
-import '@fontsource/chakra-petch/600.css';
-import '@fontsource/chakra-petch/700.css';
-import '@fontsource/days-one/400.css';
+import '@fontsource-variable/outfit';
+import '@fontsource-variable/inter';
 import './globals.css';
 
 export const metadata = {
@@ -18,7 +15,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: '#0b0e13',
+  themeColor: '#fbfcfd',
   width: 'device-width',
   initialScale: 1,
 };

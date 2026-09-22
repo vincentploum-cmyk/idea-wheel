@@ -15,5 +15,5 @@ export function slotLabel(slot) {
 }
 
 export function teamLogo(abbr) {
-  return /^[A-Z]{3}$/.test(abbr || '') ? `https://assets.nhle.com/logos/nhl/svg/${abbr}_dark.svg` : '';
+  return /^[A-Z]{3}$/.test(abbr || '') ? `https://assets.nhle.com/logos/nhl/svg/${abbr}_light.svg` : '';
 }

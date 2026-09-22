@@ -35,7 +35,7 @@ function RunCard({ run, active, busy, onLoad, onDelete }) {
       <div className="nhlx-run-meta">
         <span>Slate <b>{run.slateDate || '—'}</b></span>
         <span>Saved <b>{fmtDate(run.createdAt)}</b></span>
-        {run.files?.boxScores && <span style={{ color: 'var(--danger)' }}>Box scores attached</span>}
+        {run.files?.boxScores && <span className="nhlx-run-flag">Box scores attached</span>}
       </div>
       <div className="nhlx-run-title">
         {games.length} game{games.length === 1 ? '' : 's'} · {run.playerCount ?? '—'} players
@@ -244,12 +244,13 @@ export default function NhlApp({ email }) {
       />
 
       <main>
-        <section className="nhlx-glow" id="model">
+        <section className="nhlx-bench" id="model">
           <div className="nhlx-wrap">
             <div className="nhlx-bench-head">
               <div>
                 <span className="nhlx-eyebrow">Model 3.0 workbench</span>
-                <h1 style={{ marginTop: 16 }}>Tonight&apos;s <span>slate</span></h1>
+                <h1>Tonight&apos;s <span>slate</span></h1>
+                <p>Upload the matchup files, run the model, and the slate saves to your history automatically.</p>
               </div>
               <div className="nhlx-counters">
                 {counters.map(([v, l]) => (
@@ -268,11 +269,11 @@ export default function NhlApp({ email }) {
           </div>
         </section>
 
-        <section className="nhlx-section" id="history">
+        <section className="nhlx-section nhlx-history" id="history">
           <div className="nhlx-wrap">
             <div className="nhlx-history-head">
               <div>
-                <span className="nhlx-eyebrow">Supabase</span>
+                <span className="nhlx-eyebrow">Saved in Supabase</span>
                 <h2 className="nhlx-h2">Run <span>history</span></h2>
               </div>
               <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" onClick={refresh} disabled={busy}>

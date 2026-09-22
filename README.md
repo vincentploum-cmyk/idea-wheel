@@ -7,7 +7,7 @@ audited against box scores later.
 
 - **Stack:** Next.js 14 (App Router) · React 18 · SheetJS · Supabase (auth + Storage)
 - **Hosting:** Render (auto-deploys `main`), Cloudflare in front
-- **Theme:** adapted from the Pubzi esports template (Envato) — `app/globals.css`
+- **Theme:** adapted from the Flowbit SaaS template (Envato), light and low-contrast-fatigue — `app/globals.css`
 
 ## Access
 
@@ -19,7 +19,7 @@ model or its API. Everyone else sees the landing page or an "access restricted" 
 | Path | What |
 |---|---|
 | `app/page.js` | Gate: landing (signed out) · locked (not admin) · workbench (admin) |
-| `components/nhl/NhlModel.jsx` | The model (ported from `Desktop/NHL/nhl-project/nhl-predictor/src/App.jsx`), dark reskin, logic unchanged |
+| `components/nhl/NhlModel.jsx` | The model (ported from `Desktop/NHL/nhl-project/nhl-predictor/src/App.jsx`), Flowbit restyle, logic unchanged |
 | `components/nhl/NhlApp.jsx` | Workbench shell: auto-save, run history, reopen/attach/delete |
 | `app/api/nhl/runs/**` | Admin-only API over Supabase Storage |
 | `lib/nhl-store.js` | Storage layer; bucket `nhl-model`, `runs/<id>/{manifest.json,results.json,inputs/<slot>}` |
@@ -30,7 +30,7 @@ No SQL migration is required: the private bucket is created on first save.
 
 The model logic lives in `components/nhl/NhlModel.jsx` above the `NHL_UPLOAD_SLOTS`
 export. When you change the local app, port the changed functions into that file
-(colors there are already mapped to the dark theme).
+(colors there are already mapped to the Flowbit palette).
 
 ## Local development
 

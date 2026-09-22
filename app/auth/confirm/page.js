@@ -25,7 +25,7 @@ export default function ConfirmSignInPage() {
       <main className="nhlx-center nhlx-glow">
         <div className="nhlx-panel">
           <span className="nhlx-eyebrow">One more click</span>
-          <h1 style={{ marginTop: 14 }}>Confirm it&apos;s you</h1>
+          <h1>Confirm it&apos;s you</h1>
           <p>Some email providers scan links automatically, so the model needs one real click to finish signing you in.</p>
           <a href={href || '#'} className="nhlx-btn" style={{ marginTop: 26, width: '100%' }} aria-disabled={!href}>
             Finish signing in
