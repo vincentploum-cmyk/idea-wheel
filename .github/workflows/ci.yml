@@ -22,57 +22,35 @@ jobs:
           cache: 'npm'
       - run: npm ci --no-audit --no-fund
       - run: npm test
-      # Next build validates JSX + imports + type-shape.
-      # env vars are placeholders; build only needs them present, not valid.
       - name: Build
         run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
           SUPABASE_SERVICE_ROLE_KEY: placeholder
-          STRIPE_SECRET_KEY: sk_test_placeholder
-          STRIPE_WEBHOOK_SECRET: whsec_placeholder
-          OPENAI_API_KEY: placeholder
 
   smoke:
-    name: E2E smoke (post-deploy)
+    name: Post-deploy smoke
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: test
-    timeout-minutes: 15
+    timeout-minutes: 12
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      # Wait for Render to have deployed this commit before smoking.
-      - name: Wait for deploy
+      - name: Wait for Render to serve this commit
         run: |
-          for i in $(seq 1 30); do
-            live=$(curl -s https://ideareels.io/api/version | grep -oE '"commit":"[a-f0-9]+' | cut -d'"' -f4 | head -c 7)
-            want=$(echo "${GITHUB_SHA}" | head -c 7)
+          want=$(echo "${GITHUB_SHA}" | head -c 12)
+          for i in $(seq 1 40); do
+            live=$(curl -s https://ideareels.io/api/health | grep -oE '"commit":"[a-f0-9]+' | cut -d'"' -f4)
             echo "attempt $i: live=$live want=$want"
-            if [ "$live" = "$want" ]; then
-              echo "deploy caught up"
-              exit 0
-            fi
+            [ "$live" = "$want" ] && exit 0
             sleep 15
           done
-          echo "deploy did not catch up in time — running smoke anyway"
-      - name: Install Playwright + browsers
-        working-directory: test/e2e
+          echo "deploy did not catch up in time"; exit 1
+      - name: Smoke public paths
         run: |
-          npm install --no-audit --no-fund
-          npx playwright install --with-deps chromium
-      - name: Run public-path smoke
-        working-directory: test/e2e
-        env:
-          E2E_BASE_URL: https://ideareels.io
-        run: npx playwright test -c playwright.config.mjs --project=chromium
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report
-          path: test/e2e/playwright-report
-          retention-days: 14
+          set -e
+          check() { code=$(curl -s -o /dev/null -w '%{http_code}' "https://ideareels.io$1"); echo "$1 -> $code"; [ "$code" = "$2" ]; }
+          check / 200
+          check /auth/login 200
+          check /api/health 200
+          check /api/nhl/runs 401

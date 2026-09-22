@@ -1,4 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <rect width="128" height="128" rx="24" fill="#FFE000"/>
-  <path d="M64 27 L73.88 53.41 L102.04 54.64 L79.98 72.19 L87.51 99.36 L64 83.8 L40.49 99.36 L48.02 72.19 L25.96 54.64 L54.12 53.41 Z" fill="#111111" stroke="#111111" stroke-width="6" stroke-linejoin="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="M16 0H64V64H0V16Z" fill="#cbfe1c"/><text x="33" y="42" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="22" fill="#0b0e13">NHL</text></svg>

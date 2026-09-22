@@ -9,7 +9,7 @@ export async function GET(request) {
   // Internal paths only — reject anything that could turn into an open redirect
   const next = rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.includes('\\')
     ? rawNext
-    : '/profile?welcome=1';
+    : '/';
 
   // Always use the canonical site URL — never trust request.url origin
   // which can be localhost on Render's internal network
@@ -34,5 +34,5 @@ export async function GET(request) {
     if (!error) return NextResponse.redirect(`${siteUrl}${next}`);
   }
 
-  return NextResponse.redirect(`${siteUrl}/profile?error=auth`);
+  return NextResponse.redirect(`${siteUrl}/auth/login?error=auth`);
 }

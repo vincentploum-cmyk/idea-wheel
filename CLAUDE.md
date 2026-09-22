@@ -1,110 +1,29 @@
 # CLAUDE.md
 
-This repository is the canonical local source of truth for IdeaWheel.
+This repo is the NHL Model 3.0 site served at https://ideareels.io
+(it replaced the former IdeaReels startup-idea product; that code is in git history
+before the "Replace IdeaReels with NHL Model 3.0" commit).
 
 ## Canonical locations
 
 - Local repo: `/Users/vincent/.openclaw/workspace/projects/idea-wheel`
 - GitHub: `https://github.com/vincentploum-cmyk/idea-wheel`
-- Production: `https://ideareels.io` (Cloudflare in front — DNS, CDN cache, redirects, bot rules)
-- Hosting: Render (Node web service, auto-builds from GitHub `main`; config in `render.yaml`)
+- Production: `https://ideareels.io` (Cloudflare in front)
+- Hosting: Render web service, auto-builds from GitHub `main` (`render.yaml`)
+- Model source of truth for new logic: `~/Desktop/NHL/nhl-project/nhl-predictor/src/App.jsx`
 
-## Do not use this old path for normal development
+## Workflow
 
-- `/Users/vincent/Documents/Projects/idea-wheel`
+1. Edit files in this repo.
+2. `npm test` and `npm run build`.
+3. Check `/` at 1440 and 390 widths (landing signed out; workbench via
+   `NHL_DEV_USER_EMAIL=... NHL_STORE_DRIVER=fs npm run dev`).
+4. Commit, push `main`; Render deploys in ~2-3 min. CI smoke checks `/`, `/auth/login`,
+   `/api/health` (commit match) and that `/api/nhl/runs` returns 401 when signed out.
 
-That older repo hit macOS file-provider and `.git` deadlock corruption. Treat it as deprecated unless explicitly doing recovery work.
+## Rules
 
-## Required workflow
-
-For any production-facing change:
-
-1. Edit files in this repo only.
-2. Run local verification.
-3. Commit changes.
-4. Push to GitHub `main`.
-5. Render auto-builds and deploys `main` (~2-3 min).
-
-`main` is the only source for deploys — do not deploy from a snapshot or scratch directory; recover into a clean repo first if the working tree is corrupted.
-
-## Local commands
-
-Install deps:
-
-```bash
-npm install
-```
-
-Run dev server:
-
-```bash
-npm run dev
-```
-
-Build:
-
-```bash
-npm run build
-```
-
-Start production build locally:
-
-```bash
-npm run start
-```
-
-## Verification expectations
-
-Before pushing changes that affect the UI or routing:
-
-- run `npm run build`
-- verify the homepage loads without runtime errors
-- verify mobile layout on narrow widths when changing the main UI
-- check `/pricing` if pricing or checkout surfaces changed
-- check `/api/stripe/checkout` if checkout logic changed
-- check `/api/pipeline/validate`, `/api/pipeline/build`, and `/api/score` if pipeline logic changed
-
-## Deployment rules
-
-Production is hosted on **Render**, with **Cloudflare** in front (DNS, CDN cache, redirects, bot rules).
-
-Preferred path:
-- commit and push to GitHub `main`
-- Render auto-builds and deploys `main` (~2-3 min); build/start config lives in `render.yaml`
-
-Cloudflare notes:
-- Cloudflare edge-caches static assets. When editing `public/popito-assets/*`, bump a `?v=` query on the reference so the new file is fetched; otherwise purge the Cloudflare cache to clear stale assets.
-- AI-crawler / bot access is controlled in Cloudflare (Security -> Bots), not just `robots.txt`. In the Crawlers tab, "Block Crawler" ON = blocked.
-- Spoofed-UA `curl` probes may return 403 (Cloudflare impersonation protection) — verify crawlability with a real fetcher, not curl.
-
-Fallback path only if absolutely necessary:
-- trigger a manual deploy from the Render dashboard
-- if a local repo has filesystem deadlock issues, recover into a clean repo first instead of deploying from a corrupted tree
-
-## Environment variables
-
-Keep secrets out of git.
-Expected env comes from Render for production (dashboard env / `render.yaml`).
-Common vars include:
-
-- `OPENAI_API_KEY` (the pipeline/score routes call OpenAI, not Anthropic)
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `NEXT_PUBLIC_APP_URL`
-- `NEXT_PUBLIC_SITE_URL`
-- `RESEND_API_KEY` (contact-form owner notifications)
-- Stripe vars when checkout is made truly live
-
-## Known live caveats
-
-- Stripe production checkout still needs real production credentials
-- Some pipeline flows may still need hardening around provider output / billing edge cases
-- Mobile UI should be judged from real screenshots, not just code diffs
-
-## Working style
-
-- Do not make subtle mobile-only changes and call them done
-- For major UI passes, verify on real phone widths like 360, 375, and 390
-- Prefer obvious, user-visible improvements over tiny polish that does not read in screenshots
-- If production is currently healthy, avoid risky unrelated refactors
+- The model is admin-only (`NHL_ADMIN_EMAILS`). Every `/api/nhl/*` route must call `requireNhlAdmin()`.
+- Keep the model's math untouched when restyling; port logic changes from the local app.
+- Secrets stay out of git (Render env + `.env.local`).
+- Site is `noindex` by design (robots.txt disallow + X-Robots-Tag).

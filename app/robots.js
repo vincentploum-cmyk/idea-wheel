@@ -1,22 +1,4 @@
+// Private tool — nothing here should be crawled.
 export default function robots() {
-  return {
-    rules: [
-      {
-        userAgent: '*',
-        allow: '/',
-        disallow: [
-          '/api/',
-          '/auth/',
-          '/profile/',
-          '/*?next=*',
-          '/*?canceled=*',
-          '/*?success=*',
-          '/*?package=*',
-          '/*?pack=*',
-          '/*?credits=*',
-        ],
-      },
-    ],
-    sitemap: 'https://ideareels.io/sitemap.xml',
-  };
+  return { rules: [{ userAgent: '*', disallow: '/' }] };
 }

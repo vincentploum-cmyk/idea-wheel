@@ -6,27 +6,13 @@ services:
     plan: free
     buildCommand: npm install && npm run build
     startCommand: npm start
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
 
-      # AI provider — the pipeline (validate / build / deep-research), /api/score,
-      # the cron opportunity-scan, and the admin seed route all call OpenAI.
-      # (ANTHROPIC_API_KEY is NOT used by the running service; only the local
-      # one-off scripts/seed-catalog.mjs needs it.)
-      - key: OPENAI_API_KEY
-        sync: false
-
-      # Model + tool overrides. The code ships working defaults; set these ONLY
-      # to recover from an OpenAI-side change WITHOUT a deploy:
-      #   OPENAI_MODEL_FAST       cheap/high-volume tier (default gpt-4o-mini)
-      #   OPENAI_MODEL_DEEP       paid-deliverable tier  (default gpt-4o)
-      #   OPENAI_WEB_SEARCH_TOOL  pin the web-search tool name; when unset the
-      #                           code tries "web_search" and falls back to
-      #                           "web_search_preview"
-      # Diagnose with: OPENAI_API_KEY=... node scripts/openai-doctor.mjs
-
-      # Supabase
+      # Supabase — auth (magic link / Google / GitHub) + Storage for model runs.
+      # The private "nhl-model" bucket is created automatically on first save.
       - key: NEXT_PUBLIC_SUPABASE_URL
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -34,34 +20,12 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
 
-      # Stripe (live checkout + webhook)
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-
-      # Site URLs
+      # Canonical site URL used for auth redirects.
       - key: NEXT_PUBLIC_APP_URL
         sync: false
       - key: NEXT_PUBLIC_SITE_URL
         sync: false
 
-      # Contact-form owner notifications (Resend). Without RESEND_API_KEY the
-      # form still accepts messages but no email is sent to the owner.
-      - key: RESEND_API_KEY
-        sync: false
-
-      # Bearer secrets that gate internal endpoints. If unset, the matching route
-      # returns 401 (feature stays locked), so leaving them blank is safe.
-      - key: SEED_SECRET        # POST /api/admin/seed-catalog
-        sync: false
-      - key: CRON_SECRET        # POST /api/cron/opportunity-scan
-        sync: false
-
-    # Optional overrides — the code has safe defaults, set only to change them:
-    #   CONTACT_NOTIFY_TO      (default vincentploum@gmail.com)
-    #   CONTACT_NOTIFY_FROM    (default "IdeaReels Contact <onboarding@resend.dev>")
-    #   OPPORTUNITY_BANK_TABLE (default "opportunity_bank")
-    #   OPPORTUNITY_BANK_PATH  (default: repo data/opportunity-bank.jsonl)
-    #   MOAT_DATA_DIR          (default: <cwd>/data/moat)
-    # Do NOT set VERCEL here — the code uses its absence to choose Render paths.
+    # Optional overrides (safe defaults in code):
+    #   NHL_ADMIN_EMAILS  comma-separated allow-list (default vincentploum@gmail.com)
+    #   NHL_MODEL_BUCKET  storage bucket name (default nhl-model)

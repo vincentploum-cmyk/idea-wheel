@@ -19,14 +19,6 @@ export async function middleware(request) {
     }
   );
 
-  // Preserve existing redirects
-  const { pathname, search } = request.nextUrl;
-  if (pathname === '/Pricing') {
-    const url = request.nextUrl.clone();
-    url.pathname = '/pricing'; url.search = search;
-    return NextResponse.redirect(url, 308);
-  }
-
   // Refresh session — required by @supabase/ssr
   await supabase.auth.getUser();
   return supabaseResponse;

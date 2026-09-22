@@ -1,5 +1,5 @@
 {
-  "name": "idea-wheel",
+  "name": "nhl-model",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,36 +7,25 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "palette:audit": "node migrate-palette.js",
-    "palette:print": "node migrate-palette.js --json",
-    "opportunity-bank:sync": "node scripts/sync-opportunity-bank.mjs",
-    "test": "jest",
-    "test:races": "npm --prefix test/integration install --silent --no-audit --no-fund && node test/integration/credit-races.mjs",
-    "test:e2e": "npm --prefix test/e2e install --silent --no-audit --no-fund && npx --prefix test/e2e playwright install chromium webkit && npx --prefix test/e2e playwright test -c test/e2e/playwright.config.mjs",
-    "audit:blueprints": "node scripts/blueprint-audit.mjs"
+    "test": "jest"
   },
   "dependencies": {
+    "@fontsource/chakra-petch": "^5.3.0",
+    "@fontsource/days-one": "^5.3.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.107.0",
-    "lucide-react": "^1.17.0",
     "next": "14.2.35",
     "react": "^18.3.1",
-    "react-bootstrap": "^2.10.10",
     "react-dom": "^18.3.1",
-    "react-fast-marquee": "^1.6.5",
-    "react-icons": "^5.6.0",
-    "stripe": "^22.2.0",
-    "web-vitals": "^5.3.0"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@babel/core": "^8.0.1",
     "@babel/preset-env": "^8.0.2",
     "@jest/globals": "^30.4.1",
-    "@tailwindcss/postcss": "^4",
     "babel-jest": "^30.4.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
-    "jest": "^30.4.2",
-    "tailwindcss": "^4"
+    "jest": "^30.4.2"
   }
 }

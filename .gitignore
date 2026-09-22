@@ -42,3 +42,6 @@ logs/keep-alive*.log
 *.tsbuildinfo
 next-env.d.ts
 .env.local
+
+# local NHL dev storage
+.nhl-data

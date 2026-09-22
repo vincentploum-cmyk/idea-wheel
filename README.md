@@ -1,28 +1,50 @@
-# Spinup
+# NHL Model 3.0 · Shot Supply Engine
 
-> Spin the wheel. Ship the company.
+Private NHL player-prop probability model served at **https://ideareels.io**.
+Upload the night's matchup workbooks, run the model in the browser, and every
+run is saved to Supabase with its input files so any slate can be reopened and
+audited against box scores later.
 
-An interactive idea generator: spin a wheel to land on a startup frontier, validate the
-market, and reveal a full blueprint (product, go-to-market, infrastructure, prototype).
+- **Stack:** Next.js 14 (App Router) · React 18 · SheetJS · Supabase (auth + Storage)
+- **Hosting:** Render (auto-deploys `main`), Cloudflare in front
+- **Theme:** adapted from the Pubzi esports template (Envato) — `app/globals.css`
 
-## Run it
-It's a static site — no build step. Just open `index.html`, or serve the folder:
+## Access
+
+Only emails in `NHL_ADMIN_EMAILS` (default `vincentploum@gmail.com`) can use the
+model or its API. Everyone else sees the landing page or an "access restricted" panel.
+
+## Layout
+
+| Path | What |
+|---|---|
+| `app/page.js` | Gate: landing (signed out) · locked (not admin) · workbench (admin) |
+| `components/nhl/NhlModel.jsx` | The model (ported from `Desktop/NHL/nhl-project/nhl-predictor/src/App.jsx`), dark reskin, logic unchanged |
+| `components/nhl/NhlApp.jsx` | Workbench shell: auto-save, run history, reopen/attach/delete |
+| `app/api/nhl/runs/**` | Admin-only API over Supabase Storage |
+| `lib/nhl-store.js` | Storage layer; bucket `nhl-model`, `runs/<id>/{manifest.json,results.json,inputs/<slot>}` |
+
+No SQL migration is required: the private bucket is created on first save.
+
+## Updating the model
+
+The model logic lives in `components/nhl/NhlModel.jsx` above the `NHL_UPLOAD_SLOTS`
+export. When you change the local app, port the changed functions into that file
+(colors there are already mapped to the dark theme).
+
+## Local development
 
 ```bash
-python3 -m http.server 8000   # then visit http://localhost:8000
+npm install
+# Real Supabase (needs .env.local with the three Supabase vars):
+npm run dev
+# Offline: skip auth and store runs in ./.nhl-data
+NHL_DEV_USER_EMAIL=vincentploum@gmail.com NHL_STORE_DRIVER=fs npm run dev
 ```
 
-## Host it free on GitHub Pages
-1. Push this folder to a GitHub repo.
-2. Repo **Settings → Pages → Build and deployment → Source: Deploy from a branch**.
-3. Pick branch `main` and folder `/ (root)`, then **Save**.
-4. Your site goes live at `https://<your-username>.github.io/<repo-name>/`.
+Both dev switches are ignored in production builds.
 
-## Files
-- `index.html` / `Spinup.html` — entry point (identical; `index.html` is what Pages serves)
-- `styles.css`, `screens.css` — design tokens + screen styles
-- `data.js` — the idea dataset
-- `components.jsx`, `wheel.jsx`, `screens.jsx`, `app.jsx` — React UI (compiled in-browser via Babel)
-- `tweaks-panel.jsx` — the live Tweaks panel
-
-React, ReactDOM, and Babel load from a CDN, so an internet connection is needed on first load.
+```bash
+npm test        # unit tests
+npm run build   # production build
+```
