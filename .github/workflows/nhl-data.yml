@@ -1,0 +1,32 @@
+name: NHL data refresh
+
+# Pulls finished games (box scores + play-by-play) and NHL.com projected
+# lineups into Supabase so the model's inputs build themselves.
+on:
+  schedule:
+    - cron: '0 13 * * *'   # ~9:00 ET  yesterday's results + morning lineups
+    - cron: '0 17 * * *'   # ~13:00 ET lineup updates
+    - cron: '30 21 * * *'  # ~17:30 ET pre-game lineups
+    - cron: '30 4 * * *'   # ~00:30 ET late finals
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Slate date (YYYY-MM-DD, ET). Blank = today.'
+        required: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Refresh
+        run: |
+          set -e
+          DATE="${{ github.event.inputs.date }}"
+          [ -z "$DATE" ] && DATE=$(TZ=America/New_York date +%F)
+          # The late run belongs to the previous ET day.
+          if [ "$(date -u +%H)" = "04" ] && [ -z "${{ github.event.inputs.date }}" ]; then DATE=$(TZ=America/New_York date -d 'yesterday' +%F); fi
+          echo "Refreshing $DATE"
+          code=$(curl -sS -o resp.json -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?date=$DATE")
+          cat resp.json; echo
+          [ "$code" = "200" ] || [ "$code" = "429" ]

@@ -21,6 +21,13 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
 4. Commit, push `main`; Render deploys in ~2-3 min. CI smoke checks `/`, `/auth/login`,
    `/api/health` (commit match) and that `/api/nhl/runs` returns 401 when signed out.
 
+## Automation
+
+- `lib/nhl-data/*` pulls NHL API data into Supabase Storage and builds the model's
+  input workbooks in the model's existing formats. Never change the model's
+  parsers to fit the automation; change the builders instead.
+- Scheduled by `.github/workflows/nhl-data.yml`; Mac folder sync in `tools/mac-sync`.
+
 ## Rules
 
 - The model is admin-only (`NHL_ADMIN_EMAILS`). Every `/api/nhl/*` route must call `requireNhlAdmin()`.

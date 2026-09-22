@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import SiteHeader from './SiteHeader';
 import SignOutButton from './SignOutButton';
 import { teamLogo, slotLabel } from './run-summary';
+import AutomationPanel from './AutomationPanel';
 
 // The model is ~10k lines plus SheetJS; load it on the client only.
 const NhlModel = dynamic(() => import('./NhlModel'), {
@@ -93,6 +94,7 @@ export default function NhlApp({ email }) {
   const [save, setSave] = useState({ state: 'idle', text: '' });
   const [busy, setBusy] = useState(false);
   const [latest, setLatest] = useState(null);
+  const [autoSlots, setAutoSlots] = useState(null);
   const activeRunRef = useRef(null);
   activeRunRef.current = activeRunId;
   const prevFilesRef = useRef({});
@@ -181,6 +183,7 @@ export default function NhlApp({ email }) {
         }),
       );
       replayingRef.current = true;
+      setAutoSlots(null);
       setActiveRunId(run.id);
       setLoadRequest({ files: Object.fromEntries(entries), runId: run.id, at: Date.now() });
       document.getElementById('model')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -189,6 +192,14 @@ export default function NhlApp({ email }) {
     } finally {
       setBusy(false);
     }
+  }, []);
+
+  const loadAuto = useCallback(({ files, run, runId, meta, autoSlots: auto }) => {
+    replayingRef.current = true;
+    setAutoSlots(auto || null);
+    if (runId) setActiveRunId(runId);
+    else if (run) setActiveRunId(null);
+    setLoadRequest({ files, run, runId, meta, at: Date.now() });
   }, []);
 
   const deleteRun = useCallback(async (run) => {
@@ -259,8 +270,11 @@ export default function NhlApp({ email }) {
               </div>
             </div>
 
+            <AutomationPanel runs={runs} onLoad={loadAuto} busy={busy} />
+
             <NhlModel
               loadRequest={loadRequest}
+              autoSlots={autoSlots}
               onRunComplete={onRunComplete}
               onFileAdded={onFileAdded}
               onFilesChange={onFilesChange}

@@ -9861,13 +9861,13 @@ function readBinaryString(file) {
   });
 }
 
-function UploadCard({ slot, file, onFile, disabled }) {
+function UploadCard({ slot, file, onFile, disabled, auto }) {
   const [over, setOver] = useState(false);
   const inputId = `nhlx-upload-${slot.key}`;
   return (
     <label
       htmlFor={inputId}
-      className={`nhlx-upload${file ? " is-filled" : ""}${over ? " is-over" : ""}`}
+      className={`nhlx-upload${file ? " is-filled" : ""}${over ? " is-over" : ""}${auto ? " is-auto" : ""}`}
       style={{ "--slot-accent": slot.accent }}
       onDragOver={(e) => { e.preventDefault(); setOver(true); }}
       onDragLeave={() => setOver(false)}
@@ -9878,7 +9878,7 @@ function UploadCard({ slot, file, onFile, disabled }) {
         if (f && !disabled) onFile(slot.key, f);
       }}
     >
-      <span className="nhlx-upload-tag">{slot.required ? "Required" : "Optional"}</span>
+      <span className="nhlx-upload-tag">{auto ? "Auto · NHL data" : slot.required ? "Required" : "Optional"}</span>
       <span className="nhlx-upload-title">{slot.title}</span>
       <span className="nhlx-upload-sub">{slot.sub}</span>
       <span className="nhlx-upload-drop">
@@ -9915,7 +9915,7 @@ const CORE_SLOTS = new Set(["season", "l5", "hist", "playerStats", "lineups", "p
 // onRunComplete({ files, results, matchups, runId }) — fired after each run.
 // onFileAdded(slot, file) — fired when an input is added after a run.
 
-export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdded, onFilesChange, statusSlot = null }) {
+export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdded, onFilesChange, statusSlot = null, autoSlots = null }) {
   const [files, setFiles] = useState({});
   const [actualResults, setActualResults] = useState({});
   const [rankingsData, setRankingsData] = useState(null);
@@ -10006,7 +10006,7 @@ export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdde
       setGameLabels(games.map((g) => g.label));
       setHasHist(!!(histProfiles && (histProfiles.profiles || histProfiles)));
       setHasPace(!!paceData);
-      onRunComplete?.({ files: fs, results: projected, summary: summarizeRun(fs, projected, games), runId: override?.runId || null });
+      onRunComplete?.({ files: fs, results: projected, summary: { ...summarizeRun(fs, projected, games), ...(override?.meta || {}) }, runId: override?.runId || null });
     } catch (e) {
       const msg = e instanceof Error ? e.message : typeof e === "string" ? e : JSON.stringify(e);
       setError(`Error: ${msg || "Unknown error — check console"}`);
@@ -10020,6 +10020,7 @@ export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdde
   useEffect(() => {
     if (!loadRequest?.files) return;
     const fs = loadRequest.files;
+    filesRef.current = fs;
     setFiles(fs);
     onFilesChange?.(fs);
     setRankingsData(null);
@@ -10027,7 +10028,12 @@ export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdde
     setActiveView("dashboard");
     if (fs.rankings) parseSideFile("rankings", fs.rankings);
     if (fs.boxScores) parseSideFile("boxScores", fs.boxScores);
-    run({ files: fs, runId: loadRequest.runId });
+    if (loadRequest.run === false) {
+      setResults(null);
+      setMatchups([]);
+      return;
+    }
+    run({ files: fs, runId: loadRequest.runId, meta: loadRequest.meta });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadRequest]);
 
@@ -10051,7 +10057,7 @@ export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdde
 
       <div className="nhlx-upload-grid">
         {NHL_UPLOAD_SLOTS.map((slot) => (
-          <UploadCard key={slot.key} slot={slot} file={files[slot.key]} onFile={onFile} disabled={loading} />
+          <UploadCard key={slot.key} slot={slot} file={files[slot.key]} onFile={onFile} disabled={loading} auto={!!(autoSlots && autoSlots[slot.key] && files[slot.key] === autoSlots[slot.key])} />
         ))}
       </div>
 

@@ -26,6 +26,33 @@ model or its API. Everyone else sees the landing page or an "access restricted" 
 
 No SQL migration is required: the private bucket is created on first save.
 
+## Automatic inputs
+
+The model still does every calculation in the browser; automation only
+produces its input workbooks, in the exact formats the parsers already read.
+
+| Input | Source | How it arrives |
+|---|---|---|
+| Season + L5 matchups | PropFinder export | Mac folder sync (`tools/mac-sync`) uploads `NHL-Goal-Matchups-*.xlsx` saved in `~/Desktop/NHL` |
+| Lineups | NHL.com game previews (forge API) | scheduled refresh |
+| Box scores | NHL API box score + play-by-play | scheduled refresh (next morning) |
+| Historical profiles | stored skater games, last 365 days | built on demand |
+| Home/away stats | stored skater games (last 82) incl. iCF/iFF/iSCF/iHDCF | built on demand |
+| Defense rankings | latest PropFinder "Defense (Last 10)" block per team | updated on each matchup upload |
+| Pace | not automated (upload manually if wanted) | — |
+
+- Schedule: `.github/workflows/nhl-data.yml` calls `POST /api/nhl/data/refresh`
+  four times a day (anonymous calls are throttled to one per 15 min; the admin
+  UI can refresh any time).
+- Storage (bucket `nhl-model`): `data/games/<date>.json`, `data/rows/<season>.json`,
+  `data/lineups/<date>.json`, `data/slates/<date>/{season,l5}.xlsx`,
+  `data/defense/latest.json`.
+- iSCF / iHDCF are a Natural Stat Trick-style approximation from shot
+  location (see `lib/nhl-data/game.js`), not NST's exact numbers.
+- Lineups are only auto-loaded once every game on the slate has a preview,
+  because the model drops players missing from the lineup file.
+- Backfill past seasons from the UI: Automatic inputs → Folder sync and data tools.
+
 ## Updating the model
 
 The model logic lives in `components/nhl/NhlModel.jsx` above the `NHL_UPLOAD_SLOTS`
