@@ -9927,6 +9927,7 @@ export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdde
   const [activeView, setActiveView] = useState("dashboard");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showInputs, setShowInputs] = useState(false);
   const filesRef = useRef(files);
   filesRef.current = files;
   const resultsRef = useRef(results);
@@ -10003,6 +10004,7 @@ export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdde
       const projected = buildProjections(games, histProfiles, playerHomeAway, lineupData, paceData);
 
       setResults(projected);
+      setShowInputs(false);
       setGameLabels(games.map((g) => g.label));
       setHasHist(!!(histProfiles && (histProfiles.profiles || histProfiles)));
       setHasPace(!!paceData);
@@ -10038,6 +10040,7 @@ export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdde
   }, [loadRequest]);
 
   const canRun = !!(files.season && files.l5);
+  const loadedCount = NHL_UPLOAD_SLOTS.filter((x) => files[x.key]).length;
   const hasAudit = Object.keys(actualResults || {}).length > 0;
 
   const views = [
@@ -10055,17 +10058,33 @@ export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdde
     <div className="nhlx-model">
       <style>{css}</style>
 
-      <div className="nhlx-upload-grid">
-        {NHL_UPLOAD_SLOTS.map((slot) => (
-          <UploadCard key={slot.key} slot={slot} file={files[slot.key]} onFile={onFile} disabled={loading} auto={!!(autoSlots && autoSlots[slot.key] && files[slot.key] === autoSlots[slot.key])} />
-        ))}
-      </div>
+      <details
+        className="nhlx-inputs"
+        open={showInputs}
+        onToggle={(e) => setShowInputs(e.currentTarget.open)}
+      >
+        <summary className="nhlx-inputs-summary">
+          <span className="nhlx-inputs-title">Model inputs</span>
+          <span className="nhlx-inputs-count">{loadedCount}/{NHL_UPLOAD_SLOTS.length} loaded</span>
+          <span className="nhlx-inputs-chips">
+            {NHL_UPLOAD_SLOTS.map((slot) => (
+              <span key={slot.key} className={`nhlx-inputs-chip${files[slot.key] ? " is-on" : ""}`}>{slot.title}</span>
+            ))}
+          </span>
+          <span className="nhlx-inputs-toggle">{showInputs ? "Hide" : "Show / replace files"}</span>
+        </summary>
+        <div className="nhlx-upload-grid">
+          {NHL_UPLOAD_SLOTS.map((slot) => (
+            <UploadCard key={slot.key} slot={slot} file={files[slot.key]} onFile={onFile} disabled={loading} auto={!!(autoSlots && autoSlots[slot.key] && files[slot.key] === autoSlots[slot.key])} />
+          ))}
+        </div>
+      </details>
 
       {error && <div className="nhlx-alert" role="alert">⚠ {error}</div>}
 
       <div className="nhlx-run-row">
-        <button type="button" className="nhlx-btn nhlx-btn-run" onClick={() => run()} disabled={loading || !canRun}>
-          {loading ? "Computing…" : "Run Prop Model"}
+        <button type="button" className={results ? "nhlx-btn nhlx-btn-ghost nhlx-btn-sm" : "nhlx-btn nhlx-btn-run"} onClick={() => run()} disabled={loading || !canRun}>
+          {loading ? "Computing…" : results ? "Re-run model" : "Run Prop Model"}
         </button>
         {statusSlot}
       </div>

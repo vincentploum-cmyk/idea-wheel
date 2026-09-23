@@ -243,7 +243,7 @@ export default function NhlApp({ email }) {
       <SiteHeader
         nav={(
           <>
-            <a href="#model">Model</a>
+            <a href="#model">Best bets</a>
             <a href="#history">Run history</a>
             <a href="#database">Database</a>
           </>
@@ -261,9 +261,9 @@ export default function NhlApp({ email }) {
           <div className="nhlx-wrap">
             <div className="nhlx-bench-head">
               <div>
-                <span className="nhlx-eyebrow">Model 3.0 workbench</span>
-                <h1>Tonight&apos;s <span>slate</span></h1>
-                <p>Upload the matchup files, run the model, and the slate saves to your history automatically.</p>
+                <span className="nhlx-eyebrow">Model 3.0</span>
+                <h1>Today&apos;s <span>best bets</span></h1>
+                <p>NHL data loads itself. Add the two PropFinder files and the model ranks the plays.</p>
               </div>
               <div className="nhlx-counters">
                 {counters.map(([v, l]) => (

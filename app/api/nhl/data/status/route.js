@@ -1,6 +1,7 @@
 import { authorize, todayET, addDays, DATE_RE, syncTokenInfo } from '@/lib/nhl-data/util';
 import { readJson } from '@/lib/nhl-store';
-import { gamesPath, lineupsPath } from '@/lib/nhl-data/ingest';
+import { gamesPath, lineupsPath, rowsPath } from '@/lib/nhl-data/ingest';
+import { listNames } from '@/lib/nhl-store';
 import { slateMetaPath } from '@/lib/nhl-data/matchups';
 
 export const runtime = 'nodejs';
@@ -24,6 +25,9 @@ export async function GET(request) {
     syncTokenInfo(),
   ]);
 
+  // History / home-away stats can be built once any season of games is stored.
+  const rowSeasons = (await listNames('data/rows').catch(() => [])).filter((n) => /^\d{8}\.json$/.test(n));
+  const hasRows = rowSeasons.length > 0;
   const lineupGames = (lineups?.games || []).filter((g) => g.rows?.length).length;
   return Response.json({
     date,
@@ -33,8 +37,8 @@ export async function GET(request) {
       l5: slate?.files?.l5 || null,
       lineups: lineupGames ? { games: lineupGames, of: lineups.games.length, complete: lineupGames === lineups.games.length, fetchedAt: lineups.fetchedAt } : null,
       boxScores: gamesSame?.games?.length ? { games: gamesSame.games.length, fetchedAt: gamesSame.fetchedAt } : null,
-      hist: gamesPrev || last ? { asOf: date } : null,
-      playerStats: gamesPrev || last ? { asOf: date } : null,
+      hist: hasRows ? { asOf: date } : null,
+      playerStats: hasRows ? { asOf: date } : null,
       rankings: defense && Object.keys(defense.teams || {}).length >= 2
         ? { teams: Object.keys(defense.teams).length, updatedAt: defense.updatedAt } : null,
     },
