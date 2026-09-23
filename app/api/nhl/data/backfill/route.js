@@ -1,4 +1,4 @@
-import { ingestGames } from '@/lib/nhl-data/ingest';
+import { ingestGames, ingestLineups } from '@/lib/nhl-data/ingest';
 import { authorize, DATE_RE } from '@/lib/nhl-data/util';
 
 export const runtime = 'nodejs';
@@ -12,7 +12,8 @@ export async function POST(request) {
   const date = new URL(request.url).searchParams.get('date');
   if (!DATE_RE.test(date || '')) return Response.json({ error: 'bad date' }, { status: 400 });
   try {
-    return Response.json({ ok: true, result: await ingestGames(date) });
+    const [games, lineups] = await Promise.all([ingestGames(date), ingestLineups(date).catch((e) => ({ error: e.message }))]);
+    return Response.json({ ok: true, result: { ...games, lineups } });
   } catch (err) {
     return Response.json({ ok: false, error: err.message }, { status: 502 });
   }

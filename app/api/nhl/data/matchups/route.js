@@ -13,6 +13,7 @@ export async function POST(request) {
     return Response.json({ error: 'expected multipart form data' }, { status: 400 });
   }
   const date = form.get('date');
+  const importMode = form.get('mode') === 'import';
   if (date && !DATE_RE.test(String(date))) return Response.json({ error: 'bad date' }, { status: 400 });
   const files = form.getAll('file').filter((f) => f && typeof f.arrayBuffer === 'function');
   if (!files.length) return Response.json({ error: 'no files' }, { status: 400 });
@@ -20,7 +21,7 @@ export async function POST(request) {
   for (const f of files) {
     try {
       const buffer = Buffer.from(await f.arrayBuffer());
-      results.push({ file: f.name, ...(await ingestMatchupFile({ buffer, fileName: f.name, date: date || null, source: auth.via })) });
+      results.push({ file: f.name, ...(await ingestMatchupFile({ buffer, fileName: f.name, date: date || null, source: importMode ? 'import' : auth.via })) });
     } catch (err) {
       results.push({ file: f.name, error: err.message });
     }

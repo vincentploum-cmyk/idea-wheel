@@ -6,6 +6,7 @@ import SiteHeader from './SiteHeader';
 import SignOutButton from './SignOutButton';
 import { teamLogo, slotLabel } from './run-summary';
 import AutomationPanel from './AutomationPanel';
+import DatabasePanel from './DatabasePanel';
 
 // The model is ~10k lines plus SheetJS; load it on the client only.
 const NhlModel = dynamic(() => import('./NhlModel'), {
@@ -244,6 +245,7 @@ export default function NhlApp({ email }) {
           <>
             <a href="#model">Model</a>
             <a href="#history">Run history</a>
+            <a href="#database">Database</a>
           </>
         )}
         right={(
@@ -313,6 +315,14 @@ export default function NhlApp({ email }) {
                 ))}
               </div>
             )}
+          </div>
+        </section>
+        <section className="nhlx-section" id="database">
+          <div className="nhlx-wrap">
+            <span className="nhlx-eyebrow">Supabase</span>
+            <h2 className="nhlx-h2">Teams &amp; <span>players</span></h2>
+            <p className="nhlx-lede">Every NHL team and player, refreshed from the official rosters each morning. Edit anything the NHL feed hasn&apos;t caught up with yet.</p>
+            <div style={{ marginTop: 28 }}><DatabasePanel /></div>
           </div>
         </section>
       </main>

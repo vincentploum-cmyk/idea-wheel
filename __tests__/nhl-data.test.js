@@ -63,3 +63,59 @@ describe('team names', () => {
     expect(teamAbbrFromText('nonsense')).toBeNull();
   });
 });
+
+import { diffPlayers, applyOverrides } from '../lib/nhl-data/rosters';
+
+describe('roster database', () => {
+  const prev = {
+    1: { id: 1, name: 'A One', team: 'TOR', pos: 'C', number: 11 },
+    2: { id: 2, name: 'B Two', team: 'MTL', pos: 'D', number: 2 },
+    3: { id: 3, name: 'C Three', team: 'BOS', pos: 'LW', number: 33 },
+  };
+  const next = {
+    1: { id: 1, name: 'A One', team: 'TOR', pos: 'RW', number: 11 },
+    2: { id: 2, name: 'B Two', team: 'NYR', pos: 'D', number: 2 },
+    4: { id: 4, name: 'D Four', team: 'SEA', pos: 'C', number: 44 },
+  };
+
+  test('logs trades, position changes, additions and removals', () => {
+    const c = diffPlayers(prev, next, 'now');
+    expect(c).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 1, type: 'pos-changed', from: 'C', to: 'RW' }),
+      expect.objectContaining({ id: 2, type: 'moved', from: 'MTL', to: 'NYR' }),
+      expect.objectContaining({ id: 4, type: 'added', to: 'SEA' }),
+      expect.objectContaining({ id: 3, type: 'removed', from: 'BOS' }),
+    ]));
+    expect(c).toHaveLength(4);
+  });
+
+  test('overrides win and can add unknown players', () => {
+    const out = applyOverrides(next, { 2: { team: 'MTL', note: 'trade not official yet' }, 99: { name: 'New Guy', team: 'UTA', pos: 'C' } });
+    expect(out[2]).toMatchObject({ team: 'MTL', note: 'trade not official yet', overridden: true });
+    expect(out[99]).toMatchObject({ name: 'New Guy', team: 'UTA', pos: 'C', overridden: true });
+    expect(out[1].overridden).toBeUndefined();
+  });
+});
+
+import { matchNames, normName } from '../lib/nhl-data/names';
+
+describe('name matching', () => {
+  const players = {
+    1: { id: 1, name: 'Tim Stützle', team: 'OTT' },
+    2: { id: 2, name: 'Matthew Tkachuk', team: 'FLA' },
+    3: { id: 3, name: 'Brady Tkachuk', team: 'OTT' },
+    4: { id: 4, name: 'Mitchell Marner', team: 'VGK' },
+  };
+  test('diacritics match silently, nicknames map to the PropFinder spelling', () => {
+    const { display, unmatched } = matchNames(players, {
+      'Tim Stutzle': { team: 'OTT' },
+      'Matt Tkachuk': { team: 'FLA' },
+      'Brady Tkachuk': { team: 'OTT' },
+      'Mitch Marner': { team: 'VGK' },
+      'Nobody Here': { team: 'TOR' },
+    });
+    expect(display).toEqual({ 2: 'Matt Tkachuk', 4: 'Mitch Marner' });
+    expect(unmatched.map((u) => u.name)).toEqual(['Nobody Here']);
+    expect(normName('J.T. Miller C')).toBe('jt miller');
+  });
+});
