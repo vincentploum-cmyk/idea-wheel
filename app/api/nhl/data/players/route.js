@@ -2,6 +2,7 @@ import { authorize } from '@/lib/nhl-data/util';
 import { readJson } from '@/lib/nhl-store';
 import { loadPlayers, setOverride, TEAMS_PATH, CHANGES_PATH } from '@/lib/nhl-data/rosters';
 import { rowsPath } from '@/lib/nhl-data/ingest';
+import { PRE_PLAYERS } from '@/lib/nhl-data/preseason';
 import { matchNames, SOURCE_NAMES_PATH } from '@/lib/nhl-data/names';
 
 export const runtime = 'nodejs';
@@ -17,13 +18,14 @@ export async function GET(request) {
   const auth = await authorize(request);
   if (!auth.ok) return auth.response;
   const seasons = seasonIds();
-  const [teamsFile, ref, changes, lastRoster, lastRefresh, sourceNames, ...rowFiles] = await Promise.all([
+  const [teamsFile, ref, changes, lastRoster, lastRefresh, sourceNames, pre, ...rowFiles] = await Promise.all([
     readJson(TEAMS_PATH),
     loadPlayers(),
     readJson(CHANGES_PATH),
     readJson('data/meta/last-roster-update.json'),
     readJson('data/meta/last-refresh.json'),
     readJson(SOURCE_NAMES_PATH),
+    readJson(PRE_PLAYERS),
     ...seasons.map((s) => readJson(rowsPath(s))),
   ]);
 
@@ -50,11 +52,13 @@ export async function GET(request) {
     birthDate: p.birthDate ?? null, headshot: p.headshot ?? null, games: gamesByPlayer[p.id] || 0,
     overridden: !!p.overridden, excluded: !!p.excluded, note: p.note || null,
     onRoster: p.onRoster !== false, lastGame: p.lastGame || null,
+    preseason: pre?.players?.[p.id] ? { gp: pre.players[p.id].gp, last: pre.players[p.id].lastGame, team: pre.players[p.id].team, toi: pre.players[p.id].lastToi } : null,
   })).sort((a, b) => (a.team || '').localeCompare(b.team || '') || a.name.localeCompare(b.name));
 
   const teams = (teamsFile?.teams || []).slice().sort((a, b) => (a.name || '').localeCompare(b.name || '')).map((t) => ({
     ...t,
     players: players.filter((p) => p.team === t.abbrev && !p.excluded).length,
+    preseasonDressed: players.filter((p) => p.team === t.abbrev && p.preseason?.gp).length,
     gamesStored: gamesByTeam[t.abbrev] || 0,
   }));
 
@@ -71,6 +75,7 @@ export async function GET(request) {
     players,
     changes: (changes?.changes || []).slice(0, 200),
     coverage,
+    preseasonUpdatedAt: pre?.updatedAt || null,
   }, { headers: { 'Cache-Control': 'no-store' } });
 }
 

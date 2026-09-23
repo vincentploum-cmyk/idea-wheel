@@ -67,6 +67,7 @@ export default function DatabasePanel() {
   const [team, setTeam] = useState('');
   const [pos, setPos] = useState('');
   const [showOff, setShowOff] = useState(false);
+  const [preOnly, setPreOnly] = useState(false);
   const [editing, setEditing] = useState(null);
   const [linking, setLinking] = useState(null);
   const [linkQ, setLinkQ] = useState('');
@@ -101,6 +102,26 @@ export default function DatabasePanel() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const loadPreseason = async () => {
+    setBusy(true);
+    const today = new Date();
+    const start = new Date(Date.UTC(today.getUTCFullYear(), 8, 15)); // Sep 15
+    const dates = [];
+    for (let d = start; d <= today; d = new Date(d.getTime() + 86400000)) dates.push(d.toISOString().slice(0, 10));
+    let games = 0;
+    for (let i = 0; i < dates.length; i++) {
+      setMsg(`Loading preseason games… ${dates[i]} (${i + 1}/${dates.length})`);
+      try {
+        const res = await fetch(`/api/nhl/data/backfill?preseason=1&date=${dates[i]}`, { method: 'POST' });
+        const j = await res.json();
+        games += j.result?.ingested || 0;
+      } catch {}
+    }
+    setMsg(`Preseason updated: ${games} new game${games === 1 ? '' : 's'} loaded.`);
+    await load();
+    setBusy(false);
   };
 
   const rebuild = async () => {
@@ -160,11 +181,12 @@ export default function DatabasePanel() {
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return players.filter((p) => (showOff || p.onRoster || p.overridden)
+      && (!preOnly || p.preseason)
       && (!team || p.team === team)
       && (!pos || p.pos === pos)
       && (!needle || p.name.toLowerCase().includes(needle) || (p.propfinderName || '').toLowerCase().includes(needle) || String(p.id) === needle));
-  }, [players, q, team, pos, showOff]);
-  useEffect(() => { setPage(1); }, [q, team, pos, showOff]);
+  }, [players, q, team, pos, showOff, preOnly]);
+  useEffect(() => { setPage(1); }, [q, team, pos, showOff, preOnly]);
 
   const onRoster = players.filter((p) => p.onRoster).length;
   const linkCands = useMemo(() => {
@@ -202,6 +224,7 @@ export default function DatabasePanel() {
           </div>
           <div className="nhlx-auto-actions">
             <button type="button" className="nhlx-btn nhlx-btn-sm" disabled={busy} onClick={updateRosters}>Update rosters now</button>
+            <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy} onClick={loadPreseason}>Update preseason games</button>
             <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy} onClick={rebuild} title="Recompute season indexes, defense rankings and PropFinder names from the stored source files">Rebuild indexes</button>
             <label className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ cursor: 'pointer' }}>
               Import PropFinder files
@@ -228,7 +251,7 @@ export default function DatabasePanel() {
             <img src={t.logo || logo(t.abbrev)} alt="" width="36" height="36" />
             <span>
               <b>{t.name}</b>
-              <small>{t.players} players · {t.gamesStored} games{t.division ? ` · ${t.division}` : ''}</small>
+              <small>{t.players} on roster{t.preseasonDressed ? ` · ${t.preseasonDressed} dressed in preseason` : ''} · {t.gamesStored} games</small>
             </span>
           </button>
         ))}
@@ -246,6 +269,7 @@ export default function DatabasePanel() {
           <option value="">All positions</option>
           {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
+        <label className="nhlx-db-check"><input type="checkbox" checked={preOnly} onChange={(e) => setPreOnly(e.target.checked)} /> Dressed in preseason</label>
         <label className="nhlx-db-check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Include players not on a roster</label>
         <span className="nhlx-auto-meta">{filtered.length} players</span>
       </div>
@@ -253,7 +277,7 @@ export default function DatabasePanel() {
       <div className="nhlx-db-table-wrap">
         <table className="nhlx-db-table">
           <thead>
-            <tr><th>Player</th><th>Team</th><th>Pos</th><th>#</th><th>Games stored</th><th>Status</th><th /></tr>
+            <tr><th>Player</th><th>Team</th><th>Pos</th><th>#</th><th>Games stored</th><th>Preseason</th><th>Status</th><th /></tr>
           </thead>
           <tbody>
             {filtered.slice(0, page * PAGE).map((p) => (
@@ -287,6 +311,7 @@ export default function DatabasePanel() {
                 <td>{p.pos || '—'}</td>
                 <td>{p.number ?? '—'}</td>
                 <td>{p.games}</td>
+                <td>{p.preseason ? `${p.preseason.gp} GP · last ${p.preseason.last?.slice(5)}${p.preseason.team && p.preseason.team !== p.team ? ` (${p.preseason.team})` : ''}` : '—'}</td>
                 <td>
                   {p.excluded ? <span className="nhlx-chip nhlx-chip-amber">Left out</span>
                     : p.overridden ? <span className="nhlx-chip nhlx-chip-violet">Edited</span>
