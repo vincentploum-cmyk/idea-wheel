@@ -34,6 +34,8 @@ describe('game records', () => {
     expect(toiMinutes('')).toBe(0);
     expect(locationValue(85, 0)).toBe(3);
     expect(locationValue(-50, 18)).toBe(2);
+    expect(locationValue(60, 8)).toBe(2);
+    expect(locationValue(80, 12)).toBe(2);
     expect(locationValue(20, 30)).toBe(1);
     expect(Object.keys(shotMetrics([]))).toHaveLength(0);
   });

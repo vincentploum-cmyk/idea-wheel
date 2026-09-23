@@ -16,7 +16,8 @@ export async function POST(request) {
     if (new URL(request.url).searchParams.get('preseason') === '1') {
       return Response.json({ ok: true, result: await ingestPreseason(date) });
     }
-    const [games, lineups] = await Promise.all([ingestGames(date), ingestLineups(date).catch((e) => ({ error: e.message }))]);
+    const force = new URL(request.url).searchParams.get('force') === '1';
+    const [games, lineups] = await Promise.all([ingestGames(date, { force }), force ? null : ingestLineups(date).catch((e) => ({ error: e.message }))]);
     return Response.json({ ok: true, result: { ...games, lineups } });
   } catch (err) {
     return Response.json({ ok: false, error: err.message }, { status: 502 });
