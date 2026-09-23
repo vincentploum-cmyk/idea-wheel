@@ -103,6 +103,22 @@ export default function DatabasePanel() {
     }
   };
 
+  const rebuild = async () => {
+    setBusy(true);
+    setMsg('Rebuilding indexes from the stored games and PropFinder files…');
+    try {
+      const res = await fetch('/api/nhl/data/rebuild', { method: 'POST' });
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error);
+      setMsg(`Rebuilt: ${j.games.games} games (${j.games.players} players), ${j.slates.slates} PropFinder slates, ${j.slates.defenseTeams} defense tables.`);
+      await load();
+    } catch (e) {
+      setMsg(`Rebuild failed: ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const importFiles = async (fileList) => {
     const files = [...fileList].filter((f) => /^NHL-Goal-Matchups-.*\.xlsx$/i.test(f.name));
     if (!files.length) { setMsg('No NHL-Goal-Matchups-*.xlsx files in that selection.'); return; }
@@ -186,6 +202,7 @@ export default function DatabasePanel() {
           </div>
           <div className="nhlx-auto-actions">
             <button type="button" className="nhlx-btn nhlx-btn-sm" disabled={busy} onClick={updateRosters}>Update rosters now</button>
+            <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy} onClick={rebuild} title="Recompute season indexes, defense rankings and PropFinder names from the stored source files">Rebuild indexes</button>
             <label className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ cursor: 'pointer' }}>
               Import PropFinder files
               <input type="file" multiple accept=".xlsx" style={{ display: 'none' }} onChange={(e) => { importFiles(e.target.files); e.target.value = ''; }} />
