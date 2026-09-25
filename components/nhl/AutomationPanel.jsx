@@ -143,7 +143,6 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
 
   const slots = status?.slots || {};
   const disabled = busy || parentBusy;
-  const needsFiles = status && !(slots.season && slots.l5);
 
   const shiftDate = (n) => {
     const d = new Date(`${date || status?.date}T12:00:00Z`);
@@ -178,10 +177,25 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
     }
   };
 
-  const readyCount = AUTO_SLOTS.filter((s) => slots[s.key] && (s.key !== 'lineups' || slots[s.key].complete)).length;
   const prettyDate = (date || status?.date)
     ? new Date(`${date || status.date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })
     : '';
+
+  const auto = ['lineups', 'hist', 'playerStats', 'rankings'];
+  const autoReady = auto.filter((k) => slots[k] && (k !== 'lineups' || slots[k].complete)).length;
+  const lineupState = !slots.lineups ? 'No projected lineups yet (NHL.com posts them on game-day morning).'
+    : slots.lineups.complete ? `${slots.lineups.games}/${slots.lineups.of} games have a projected lineup.`
+      : `${slots.lineups.games}/${slots.lineups.of} games have a lineup so far; the model waits for all of them.`;
+  const filesReady = !!(slots.season && slots.l5);
+  const fileRow = (key, label, hint) => (
+    <div key={key} className={`nhlx-gd-file${slots[key] ? ' is-ready' : ''}`}>
+      <span className="nhlx-auto-dot" aria-hidden />
+      <div>
+        <div className="nhlx-auto-label">{label}</div>
+        <div className="nhlx-auto-meta">{slots[key] ? `${slots[key].name} · received ${fmt(slots[key].receivedAt)}` : hint}</div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="nhlx-today">
@@ -190,8 +204,8 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
           <div className="nhlx-today-date">{prettyDate}</div>
           <div className="nhlx-auto-sub">
             {!status ? 'Checking today’s data…'
-              : needsFiles ? `Waiting for: ${AUTO_SLOTS.filter((s) => !(slots[s.key] && (s.key !== 'lineups' || slots[s.key].complete)) && s.key !== 'boxScores').map((s) => s.label).join(', ')}.`
-                : `All inputs ready${slots.boxScores ? ', including final box scores' : ''}.`}
+              : filesReady ? `Both PropFinder files are in${autoReady === auto.length ? ' and the NHL data is ready' : ''}.`
+                : 'One thing to do on game day: drop the two PropFinder files below. Everything else loads itself.'}
             {status?.lastRefresh ? ` NHL data refreshed ${fmt(status.lastRefresh)}.` : ''}
           </div>
         </div>
@@ -206,28 +220,67 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
           />
           <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={disabled || !date} onClick={() => shiftDate(1)} aria-label="Next day">›</button>
           <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={disabled || !date} onClick={refreshNow}>
-            Refresh data
+            Refresh NHL data
           </button>
         </div>
       </div>
 
-      {needsFiles && (
-        <label
-          className={`nhlx-drop${dragOver ? ' is-over' : ''}`}
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={(e) => { e.preventDefault(); setDragOver(false); uploadMatchups(e.dataTransfer.files); }}
-        >
-          <span className="nhlx-drop-icon" aria-hidden>↓</span>
-          <span className="nhlx-drop-title">Drop today’s two PropFinder files here</span>
-          <span className="nhlx-drop-sub">
-            Season + L5 matchups, together, in any order. The NHL data loads by itself, and the model runs as soon as these land.
-            {slots.season && !slots.l5 ? ' (Season file received, still need L5.)' : ''}
-            {!slots.season && slots.l5 ? ' (L5 file received, still need Season.)' : ''}
-          </span>
-          <input type="file" multiple accept=".xlsx" style={{ display: 'none' }} disabled={disabled} onChange={(e) => { uploadMatchups(e.target.files); e.target.value = ''; }} />
-        </label>
-      )}
+      <ol className="nhlx-gd">
+        <li className={`nhlx-gd-step${autoReady === auto.length ? ' is-done' : autoReady ? ' is-partial' : ''}`}>
+          <span className="nhlx-gd-num">1</span>
+          <div>
+            <div className="nhlx-gd-title">NHL data <em>automatic</em></div>
+            <p className="nhlx-auto-meta">
+              Lineups, history, home/away splits and box scores come from the NHL by themselves (9:00, 13:00 and 17:30 ET).
+              {' '}{status ? lineupState : ''}
+              {status && !slots.hist ? ' No stored games yet: run a backfill under “Data sources” once.' : ''}
+            </p>
+          </div>
+        </li>
+        <li className={`nhlx-gd-step${filesReady ? ' is-done' : slots.season || slots.l5 ? ' is-partial' : ''}`}>
+          <span className="nhlx-gd-num">2</span>
+          <div>
+            <div className="nhlx-gd-title">Your two PropFinder files <em>you upload</em></div>
+            <p className="nhlx-auto-meta">
+              In PropFinder export today’s NHL goal matchups twice: <b>Season</b> and <b>Last 5</b>. Keep the file names PropFinder gives them
+              (<code>NHL-Goal-Matchups-{date || 'YYYY-MM-DD'}.xlsx</code>); the date in the name picks the slate, the contents tell Season from L5.
+              Drop both here, or save them in <code>Desktop/NHL</code> on your Mac and the sync uploads them.
+            </p>
+            <div className="nhlx-gd-files">
+              {fileRow('season', 'Season matchups', 'Missing · the “Season” export')}
+              {fileRow('l5', 'L5 matchups', 'Missing · the “Last 5 games” export')}
+            </div>
+            {!filesReady && (
+              <label
+                className={`nhlx-drop${dragOver ? ' is-over' : ''}`}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => { e.preventDefault(); setDragOver(false); uploadMatchups(e.dataTransfer.files); }}
+              >
+                <span className="nhlx-drop-icon" aria-hidden>↓</span>
+                <span className="nhlx-drop-title">{slots.season || slots.l5 ? 'Drop the other file here' : 'Drop both .xlsx files here'}</span>
+                <span className="nhlx-drop-sub">or click to choose them · any order, together or one at a time</span>
+                <input type="file" multiple accept=".xlsx" style={{ display: 'none' }} disabled={disabled} onChange={(e) => { uploadMatchups(e.target.files); e.target.value = ''; }} />
+              </label>
+            )}
+            {filesReady && (
+              <label className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ cursor: 'pointer', marginTop: 10 }}>
+                Replace a file
+                <input type="file" multiple accept=".xlsx" style={{ display: 'none' }} disabled={disabled} onChange={(e) => { uploadMatchups(e.target.files); e.target.value = ''; }} />
+              </label>
+            )}
+          </div>
+        </li>
+        <li className={`nhlx-gd-step${filesReady ? ' is-done' : ''}`}>
+          <span className="nhlx-gd-num">3</span>
+          <div>
+            <div className="nhlx-gd-title">Run <em>automatic</em></div>
+            <p className="nhlx-auto-meta">
+              The model runs the moment both files are in and saves the run to history. Results appear below; after the games, box scores attach themselves for grading.
+            </p>
+          </div>
+        </li>
+      </ol>
 
       {msg && <p className="nhlx-auto-msg" role="status">{msg}</p>}
 

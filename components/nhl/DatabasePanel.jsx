@@ -369,8 +369,28 @@ function DatabasePanel() {
 
   const rowProps = { teams, editing, setEditing, saveOverride };
 
+  const incomplete = teams.filter((t) => !t.complete);
+  const missingTeams = 32 - teams.length;
+
   return (
     <div className="nhlx-db">
+      <div className={`nhlx-complete${incomplete.length || missingTeams > 0 ? ' is-warn' : ' is-ok'}`} role="status">
+        <b>
+          {missingTeams > 0 ? `${teams.length} of 32 teams loaded`
+            : incomplete.length ? `${incomplete.length} team${incomplete.length === 1 ? '' : 's'} need attention`
+              : 'All 32 teams complete'}
+        </b>
+        <span>
+          {missingTeams > 0 ? ' · click “Update rosters now” below.'
+            : incomplete.length ? ` · ${incomplete.map((t) => `${t.abbrev}: ${t.issues.join(', ')}`).join(' · ')}`
+              : ` · every roster has 12+ forwards, 6+ defensemen and 2 goalies, and every PropFinder name matches. Last check ${fmt(db.lastRoster?.at)}.`}
+        </span>
+        {(incomplete.length > 0 || missingTeams > 0) && (
+          <button type="button" className="nhlx-btn nhlx-btn-sm" disabled={busy} onClick={updateRosters}>Update rosters now</button>
+        )}
+      </div>
+      {msg && <p className="nhlx-auto-msg" role="status">{msg}</p>}
+
       <div className="nhlx-db-teams" role="tablist" aria-label="Teams">
         {teams.map((t) => (
           <button
@@ -378,13 +398,14 @@ function DatabasePanel() {
             key={t.abbrev}
             role="tab"
             aria-selected={team === t.abbrev}
-            className={`nhlx-db-team${team === t.abbrev ? ' is-active' : ''}`}
+            className={`nhlx-db-team${team === t.abbrev ? ' is-active' : ''}${t.complete ? '' : ' is-warn'}`}
             onClick={() => setTeam(team === t.abbrev ? '' : t.abbrev)}
+            title={t.complete ? `${t.forwards} F · ${t.defense} D · ${t.goalies} G` : t.issues.join(', ')}
           >
             <TeamLogo abbr={t.abbrev} size={34} />
             <span>
               <b>{t.name}</b>
-              <small>{t.players} players</small>
+              <small>{t.complete ? `${t.forwards} F · ${t.defense} D · ${t.goalies} G` : `⚠ ${t.issues[0]}`}</small>
             </span>
           </button>
         ))}
@@ -398,7 +419,8 @@ function DatabasePanel() {
             <div>
               <h3 className="nhlx-db-roster-title">{selected.full || selected.name}</h3>
               <p className="nhlx-auto-meta">
-                {selected.players} on roster
+                {selected.forwards} F · {selected.defense} D · {selected.goalies} G
+                {selected.complete ? '' : ` · ⚠ ${selected.issues.join(', ')}`}
                 {leftOut ? ` · ${leftOut} left out` : ''}
                 {selected.preseasonDressed ? ` · ${selected.preseasonDressed} dressed in preseason` : ''}
                 {` · ${selected.gamesStored} games stored`}
