@@ -1,5 +1,5 @@
-import '@fontsource-variable/outfit';
-import '@fontsource-variable/inter';
+import '@fontsource-variable/schibsted-grotesk';
+import '@fontsource-variable/source-sans-3';
 import './globals.css';
 
 export const metadata = {
@@ -15,7 +15,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: [{ media: '(prefers-color-scheme: light)', color: '#fbfcfd' }, { media: '(prefers-color-scheme: dark)', color: '#0e0d17' }],
+  themeColor: [{ media: '(prefers-color-scheme: light)', color: '#f9fafc' }, { media: '(prefers-color-scheme: dark)', color: '#14161f' }],
   width: 'device-width',
   initialScale: 1,
 };

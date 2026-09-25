@@ -40,6 +40,12 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   `globals.css`). `NhlModel.jsx` carries inline light colours, so it renders inside a
   `.nhlx-light` island; keep new UI on the tokens, never hard-coded tints.
 
+## Design
+
+- Design context, brand words, palette and type rules live in `.impeccable.md`; read it
+  before any visual change. Tokens only (`globals.css`), no hard-coded tints, no nested
+  cards, no gradient text, no side-stripe borders.
+
 ## Rules
 
 - The model is admin-only (`NHL_ADMIN_EMAILS`). Every `/api/nhl/*` route must call `requireNhlAdmin()`.

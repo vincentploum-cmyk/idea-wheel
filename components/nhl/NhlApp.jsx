@@ -266,20 +266,6 @@ export default function NhlApp({ email }) {
     }
   }, []);
 
-  const counters = useMemo(() => {
-    if (latest) {
-      return [
-        [latest.games.length, 'Games tonight'],
-        [latest.playerCount ?? '—', 'Players projected'],
-        [runs ? runs.length : '—', 'Saved runs'],
-      ];
-    }
-    return [
-      ['4', 'Prop markets'],
-      ['8', 'Input feeds'],
-      [runs ? runs.length : '—', 'Saved runs'],
-    ];
-  }, [latest, runs]);
 
   const status = useMemo(() => (save.text ? (
     <span className={`nhlx-status nhlx-status-${save.state === 'err' ? 'err' : save.state === 'busy' ? 'busy' : 'ok'}`} role="status">
@@ -351,12 +337,7 @@ export default function NhlApp({ email }) {
               <div>
                 <span className="nhlx-eyebrow">Model 3.0</span>
                 <h1>Today&apos;s <span>best bets</span></h1>
-                <p>NHL data loads itself. Add the two PropFinder files and the model ranks the plays.</p>
-              </div>
-              <div className="nhlx-counters">
-                {counters.map(([v, l]) => (
-                  <div className="nhlx-counter" key={l}><b>{v}</b><span>{l}</span></div>
-                ))}
+                <p>{latest ? `${latest.games.length} games · ${latest.playerCount ?? '—'} players projected` : 'NHL data loads itself. Add the two PropFinder files and the model ranks the plays.'}</p>
               </div>
             </div>
 
