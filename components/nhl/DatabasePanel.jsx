@@ -1,8 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 const POSITIONS = ['C', 'LW', 'RW', 'D', 'G'];
+const GROUP_OF = { C: 'Forwards', LW: 'Forwards', RW: 'Forwards', D: 'Defense', G: 'Goalies' };
+const GROUPS = ['Forwards', 'Defense', 'Goalies'];
 const PAGE = 150;
 
 function fmt(iso) {
@@ -10,13 +12,37 @@ function fmt(iso) {
   return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
-const logo = (abbr) => `https://assets.nhle.com/logos/nhl/svg/${abbr}_light.svg`;
-
 function changeText(c) {
   if (c.type === 'added') return `joined ${c.to}`;
   if (c.type === 'removed') return `left ${c.from} roster`;
   if (c.type === 'moved') return `${c.from} → ${c.to}`;
   return `${c.type.replace('-changed', '')}: ${c.from ?? '—'} → ${c.to ?? '—'}`;
+}
+
+function preseasonText(p) {
+  if (!p.preseason) return '—';
+  const away = p.preseason.team && p.preseason.team !== p.team ? ` (${p.preseason.team})` : '';
+  return `${p.preseason.gp} GP · last ${p.preseason.last?.slice(5)}${away}`;
+}
+
+function StatusChip({ p }) {
+  if (p.excluded) return <span className="nhlx-chip nhlx-chip-amber">Left out</span>;
+  if (p.overridden) return <span className="nhlx-chip nhlx-chip-violet">Edited</span>;
+  if (p.onRoster) return <span className="nhlx-chip nhlx-chip-blue">On roster</span>;
+  return <span className="nhlx-chip">Last game {p.lastGame || '—'}</span>;
+}
+
+function PlayerName({ p }) {
+  return (
+    <div className="nhlx-db-player">
+      {p.headshot ? <img src={p.headshot} alt="" width="32" height="32" loading="lazy" /> : <span className="nhlx-db-avatar" />}
+      <span>
+        <b>{p.name}</b>
+        {p.propfinderName && p.propfinderName !== p.name && <small>PropFinder: {p.propfinderName}</small>}
+        {p.note && <small>{p.note}</small>}
+      </span>
+    </div>
+  );
 }
 
 function PlayerEditor({ player, teams, onSave, onClear, onCancel }) {
@@ -58,7 +84,66 @@ function PlayerEditor({ player, teams, onSave, onClear, onCancel }) {
   );
 }
 
-export default function DatabasePanel() {
+// One player row, shared by the team roster and the search table.
+function PlayerRow({ p, teams, editing, setEditing, saveOverride, showTeam }) {
+  return (
+    <tr className={p.excluded ? 'is-excluded' : ''}>
+      <td>
+        <PlayerName p={p} />
+        {editing === p.id && (
+          <PlayerEditor
+            player={p}
+            teams={teams}
+            onSave={(f) => saveOverride(p.id, {
+              team: f.team !== p.team ? f.team : undefined,
+              pos: f.pos !== p.pos ? f.pos : undefined,
+              name: f.name || undefined,
+              note: f.note,
+              excluded: f.excluded,
+            })}
+            onClear={() => saveOverride(p.id, { clear: true })}
+            onCancel={() => setEditing(null)}
+          />
+        )}
+      </td>
+      {showTeam && <td>{p.team || '—'}</td>}
+      <td>{p.pos || '—'}</td>
+      <td>{p.number ?? '—'}</td>
+      <td>{p.games}</td>
+      <td>{preseasonText(p)}</td>
+      <td><StatusChip p={p} /></td>
+      <td><button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" onClick={() => setEditing(editing === p.id ? null : p.id)}>Edit</button></td>
+    </tr>
+  );
+}
+
+function PlayerTable({ rows, showTeam, ...rowProps }) {
+  return (
+    <table className="nhlx-db-table">
+      <thead>
+        <tr><th>Player</th>{showTeam && <th>Team</th>}<th>Pos</th><th>#</th><th>Games stored</th><th>Preseason</th><th>Status</th><th /></tr>
+      </thead>
+      <tbody>
+        {rows.map((p) => <PlayerRow key={p.id} p={p} showTeam={showTeam} {...rowProps} />)}
+      </tbody>
+    </table>
+  );
+}
+
+const byNumber = (a, b) => (a.number ?? 999) - (b.number ?? 999) || a.name.localeCompare(b.name);
+
+// Collapsed sections render nothing, so a closed table doesn't re-render on every keystroke.
+function Section({ title, children }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details className="nhlx-db-details" open={open} onToggle={(e) => setOpen(e.currentTarget.open)}>
+      <summary>{title}</summary>
+      {open && children}
+    </details>
+  );
+}
+
+function DatabasePanel() {
   const [db, setDb] = useState(null);
   const [err, setErr] = useState('');
   const [msg, setMsg] = useState('');
@@ -188,6 +273,16 @@ export default function DatabasePanel() {
   }, [players, q, team, pos, showOff, preOnly]);
   useEffect(() => { setPage(1); }, [q, team, pos, showOff, preOnly]);
 
+  const selected = teams.find((t) => t.abbrev === team) || null;
+  // Roster rows grouped by position; excluded players stay listed (dimmed) so they can be re-included.
+  const roster = useMemo(() => {
+    if (!selected) return [];
+    const buckets = Object.fromEntries(GROUPS.map((g) => [g, []]));
+    for (const p of players) if (p.team === selected.abbrev && p.onRoster) buckets[GROUP_OF[p.pos] || 'Forwards'].push(p);
+    return GROUPS.map((g) => [g, buckets[g].sort(byNumber)]).filter(([, rows]) => rows.length);
+  }, [players, selected]);
+  const leftOut = roster.reduce((n, [, rows]) => n + rows.filter((p) => p.excluded).length, 0);
+
   const onRoster = players.filter((p) => p.onRoster).length;
   const linkCands = useMemo(() => {
     const n = linkQ.trim().toLowerCase();
@@ -199,175 +294,164 @@ export default function DatabasePanel() {
     return <div className="nhlx-empty">{err || 'Loading the database…'}</div>;
   }
 
+  const rowProps = { teams, editing, setEditing, saveOverride };
+
   return (
     <div className="nhlx-db">
-      <div className="nhlx-counters">
-        <div className="nhlx-counter"><b>{teams.length}</b><span>Teams</span></div>
-        <div className="nhlx-counter"><b>{onRoster}</b><span>Players on rosters</span></div>
-        <div className="nhlx-counter"><b>{players.length - onRoster}</b><span>Other players seen</span></div>
-        {db.coverage.map((c) => (
-          <div className="nhlx-counter" key={c.season}>
-            <b>{c.games}</b>
-            <span>{c.season.slice(0, 4)}-{c.season.slice(6)} games stored</span>
-          </div>
-        ))}
-        <div className="nhlx-counter"><b>{db.propfinder.names - db.propfinder.unmatched.length}/{db.propfinder.names}</b><span>PropFinder names matched</span></div>
-      </div>
-
-      <div className="nhlx-auto nhlx-db-actions">
-        <div className="nhlx-auto-head">
-          <div>
-            <div className="nhlx-auto-title">Keep the database current</div>
-            <div className="nhlx-auto-sub">
-              Rosters refresh every morning. Last update {fmt(db.lastRoster?.at)}; last game refresh {fmt(db.lastRefresh)}.
-            </div>
-          </div>
-          <div className="nhlx-auto-actions">
-            <button type="button" className="nhlx-btn nhlx-btn-sm" disabled={busy} onClick={updateRosters}>Update rosters now</button>
-            <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy} onClick={loadPreseason}>Update preseason games</button>
-            <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy} onClick={rebuild} title="Recompute season indexes, defense rankings and PropFinder names from the stored source files">Rebuild indexes</button>
-            <label className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ cursor: 'pointer' }}>
-              Import PropFinder files
-              <input type="file" multiple accept=".xlsx" style={{ display: 'none' }} onChange={(e) => { importFiles(e.target.files); e.target.value = ''; }} />
-            </label>
-            <label className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ cursor: 'pointer' }}>
-              Import a whole folder
-              <input type="file" webkitdirectory="" directory="" multiple style={{ display: 'none' }} onChange={(e) => { importFiles(e.target.files); e.target.value = ''; }} />
-            </label>
-          </div>
-        </div>
-        {msg && <p className="nhlx-auto-msg" role="status">{msg}</p>}
-        {imp && (
-          <p className="nhlx-auto-msg" role="status">
-            Import: {imp.done}/{imp.total} files, {imp.ok} stored{imp.failed.length ? `, ${imp.failed.length} not recognised` : ''}.
-          </p>
-        )}
-      </div>
-
-      <h3 className="nhlx-db-h3">Teams</h3>
-      <div className="nhlx-db-teams">
+      <div className="nhlx-db-teams" role="tablist" aria-label="Teams">
         {teams.map((t) => (
-          <button type="button" key={t.abbrev} className={`nhlx-db-team${team === t.abbrev ? ' is-active' : ''}`} onClick={() => setTeam(team === t.abbrev ? '' : t.abbrev)}>
-            <img src={t.logo || logo(t.abbrev)} alt="" width="36" height="36" />
+          <button
+            type="button"
+            key={t.abbrev}
+            role="tab"
+            aria-selected={team === t.abbrev}
+            className={`nhlx-db-team${team === t.abbrev ? ' is-active' : ''}`}
+            onClick={() => setTeam(team === t.abbrev ? '' : t.abbrev)}
+          >
+            <img src={t.logo} alt="" width="34" height="34" />
             <span>
               <b>{t.name}</b>
-              <small>{t.players} on roster{t.preseasonDressed ? ` · ${t.preseasonDressed} dressed in preseason` : ''} · {t.gamesStored} games</small>
+              <small>{t.players} players</small>
             </span>
           </button>
         ))}
-        {!teams.length && <div className="nhlx-empty">No teams yet. Click “Update rosters now”.</div>}
+        {!teams.length && <div className="nhlx-empty">No teams yet. Open “Keep the database current” below and click “Update rosters now”.</div>}
       </div>
 
-      <h3 className="nhlx-db-h3">Players</h3>
-      <div className="nhlx-auto-actions nhlx-db-filters">
-        <input className="nhlx-input nhlx-input-sm" placeholder="Search name or NHL id" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search players" />
-        <select className="nhlx-input nhlx-input-sm" value={team} onChange={(e) => setTeam(e.target.value)} aria-label="Team">
-          <option value="">All teams</option>
-          {teams.map((t) => <option key={t.abbrev} value={t.abbrev}>{t.abbrev} · {t.name}</option>)}
-        </select>
-        <select className="nhlx-input nhlx-input-sm" value={pos} onChange={(e) => setPos(e.target.value)} aria-label="Position">
-          <option value="">All positions</option>
-          {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-        </select>
-        <label className="nhlx-db-check"><input type="checkbox" checked={preOnly} onChange={(e) => setPreOnly(e.target.checked)} /> Dressed in preseason</label>
-        <label className="nhlx-db-check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Include players not on a roster</label>
-        <span className="nhlx-auto-meta">{filtered.length} players</span>
-      </div>
+      {selected ? (
+        <div className="nhlx-db-roster">
+          <div className="nhlx-db-roster-head">
+            <img src={selected.logo} alt="" width="56" height="56" />
+            <div>
+              <h3 className="nhlx-db-roster-title">{selected.full || selected.name}</h3>
+              <p className="nhlx-auto-meta">
+                {selected.players} on roster
+                {leftOut ? ` · ${leftOut} left out` : ''}
+                {selected.preseasonDressed ? ` · ${selected.preseasonDressed} dressed in preseason` : ''}
+                {` · ${selected.gamesStored} games stored`}
+              </p>
+            </div>
+            <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ marginLeft: 'auto' }} onClick={() => setTeam('')}>All teams</button>
+          </div>
+          {roster.map(([label, rows]) => (
+            <div key={label} className="nhlx-db-group">
+              <h4 className="nhlx-db-h4">{label} <span>{rows.length}</span></h4>
+              <div className="nhlx-db-table-wrap">
+                <PlayerTable rows={rows} showTeam={false} {...rowProps} />
+              </div>
+            </div>
+          ))}
+          {!roster.length && <div className="nhlx-empty">No players stored for this team yet.</div>}
+        </div>
+      ) : (
+        <p className="nhlx-auto-meta" style={{ marginTop: 18 }}>
+          {teams.length} teams · {onRoster} players on rosters · {players.length - onRoster} other players seen. Pick a team above to see its roster.
+        </p>
+      )}
 
-      <div className="nhlx-db-table-wrap">
-        <table className="nhlx-db-table">
-          <thead>
-            <tr><th>Player</th><th>Team</th><th>Pos</th><th>#</th><th>Games stored</th><th>Preseason</th><th>Status</th><th /></tr>
-          </thead>
-          <tbody>
-            {filtered.slice(0, page * PAGE).map((p) => (
-              <tr key={p.id} className={p.excluded ? 'is-excluded' : ''}>
-                <td>
-                  <div className="nhlx-db-player">
-                    {p.headshot ? <img src={p.headshot} alt="" width="32" height="32" loading="lazy" /> : <span className="nhlx-db-avatar" />}
-                    <span>
-                      <b>{p.name}</b>
-                      {p.propfinderName && p.propfinderName !== p.name && <small>PropFinder: {p.propfinderName}</small>}
-                      {p.note && <small>{p.note}</small>}
+      <Section title="Search all players">
+        <div className="nhlx-auto-actions nhlx-db-filters">
+          <input className="nhlx-input nhlx-input-sm" placeholder="Search name or NHL id" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search players" />
+          <select className="nhlx-input nhlx-input-sm" value={team} onChange={(e) => setTeam(e.target.value)} aria-label="Team">
+            <option value="">All teams</option>
+            {teams.map((t) => <option key={t.abbrev} value={t.abbrev}>{t.abbrev} · {t.name}</option>)}
+          </select>
+          <select className="nhlx-input nhlx-input-sm" value={pos} onChange={(e) => setPos(e.target.value)} aria-label="Position">
+            <option value="">All positions</option>
+            {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <label className="nhlx-db-check"><input type="checkbox" checked={preOnly} onChange={(e) => setPreOnly(e.target.checked)} /> Dressed in preseason</label>
+          <label className="nhlx-db-check"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Include players not on a roster</label>
+          <span className="nhlx-auto-meta">{filtered.length} players</span>
+        </div>
+        <div className="nhlx-db-table-wrap">
+          <PlayerTable rows={filtered.slice(0, page * PAGE)} showTeam {...rowProps} />
+          {filtered.length > page * PAGE && (
+            <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ margin: '14px auto', display: 'flex' }} onClick={() => setPage((n) => n + 1)}>
+              Show more
+            </button>
+          )}
+        </div>
+      </Section>
+
+      <Section title="Keep the database current">
+        <div className="nhlx-counters">
+          {db.coverage.map((c) => (
+            <div className="nhlx-counter" key={c.season}>
+              <b>{c.games}</b>
+              <span>{c.season.slice(0, 4)}-{c.season.slice(6)} games stored</span>
+            </div>
+          ))}
+          <div className="nhlx-counter"><b>{db.propfinder.names - db.propfinder.unmatched.length}/{db.propfinder.names}</b><span>PropFinder names matched</span></div>
+        </div>
+        <div className="nhlx-auto nhlx-db-actions">
+          <div className="nhlx-auto-head">
+            <div className="nhlx-auto-sub">
+              Rosters refresh every morning. Last update {fmt(db.lastRoster?.at)}; last game refresh {fmt(db.lastRefresh)}.
+            </div>
+            <div className="nhlx-auto-actions">
+              <button type="button" className="nhlx-btn nhlx-btn-sm" disabled={busy} onClick={updateRosters}>Update rosters now</button>
+              <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy} onClick={loadPreseason}>Update preseason games</button>
+              <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy} onClick={rebuild} title="Recompute season indexes, defense rankings and PropFinder names from the stored source files">Rebuild indexes</button>
+              <label className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ cursor: 'pointer' }}>
+                Import PropFinder files
+                <input type="file" multiple accept=".xlsx" style={{ display: 'none' }} onChange={(e) => { importFiles(e.target.files); e.target.value = ''; }} />
+              </label>
+              <label className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ cursor: 'pointer' }}>
+                Import a whole folder
+                <input type="file" webkitdirectory="" directory="" multiple style={{ display: 'none' }} onChange={(e) => { importFiles(e.target.files); e.target.value = ''; }} />
+              </label>
+            </div>
+          </div>
+          {msg && <p className="nhlx-auto-msg" role="status">{msg}</p>}
+          {imp && (
+            <p className="nhlx-auto-msg" role="status">
+              Import: {imp.done}/{imp.total} files, {imp.ok} stored{imp.failed.length ? `, ${imp.failed.length} not recognised` : ''}.
+            </p>
+          )}
+        </div>
+
+        <div className="nhlx-db-cols">
+          <div>
+            <h3 className="nhlx-db-h3">PropFinder names without a match ({db.propfinder.unmatched.length})</h3>
+            <p className="nhlx-auto-meta">The model joins files on player name. Link these to the right NHL player so generated files use the same spelling.</p>
+            <div className="nhlx-db-list">
+              {db.propfinder.unmatched.slice(0, 60).map((u) => (
+                <div key={u.name} className="nhlx-db-row">
+                  <span><b>{u.name}</b> <small>{u.team || '?'} · {u.pos || '?'} · last seen {u.lastSeen || '—'}</small></span>
+                  {linking === u.name ? (
+                    <span className="nhlx-db-link">
+                      <input className="nhlx-input nhlx-input-sm" autoFocus placeholder="Find NHL player" value={linkQ} onChange={(e) => setLinkQ(e.target.value)} />
+                      {linkCands.map((c) => (
+                        <button type="button" key={c.id} className="nhlx-run-file" onClick={() => saveOverride(c.id, { name: u.name })}>
+                          {c.name} · {c.team}
+                        </button>
+                      ))}
                     </span>
-                  </div>
-                  {editing === p.id && (
-                    <PlayerEditor
-                      player={p}
-                      teams={teams}
-                      onSave={(f) => saveOverride(p.id, {
-                        team: f.team !== p.team ? f.team : undefined,
-                        pos: f.pos !== p.pos ? f.pos : undefined,
-                        name: f.name || undefined,
-                        note: f.note,
-                        excluded: f.excluded,
-                      })}
-                      onClear={() => saveOverride(p.id, { clear: true })}
-                      onCancel={() => setEditing(null)}
-                    />
+                  ) : (
+                    <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" onClick={() => { setLinking(u.name); setLinkQ(u.name.split(' ').slice(-1)[0]); }}>Link</button>
                   )}
-                </td>
-                <td>{p.team || '—'}</td>
-                <td>{p.pos || '—'}</td>
-                <td>{p.number ?? '—'}</td>
-                <td>{p.games}</td>
-                <td>{p.preseason ? `${p.preseason.gp} GP · last ${p.preseason.last?.slice(5)}${p.preseason.team && p.preseason.team !== p.team ? ` (${p.preseason.team})` : ''}` : '—'}</td>
-                <td>
-                  {p.excluded ? <span className="nhlx-chip nhlx-chip-amber">Left out</span>
-                    : p.overridden ? <span className="nhlx-chip nhlx-chip-violet">Edited</span>
-                      : p.onRoster ? <span className="nhlx-chip nhlx-chip-blue">On roster</span>
-                        : <span className="nhlx-chip">Last game {p.lastGame || '—'}</span>}
-                </td>
-                <td><button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" onClick={() => setEditing(editing === p.id ? null : p.id)}>Edit</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filtered.length > page * PAGE && (
-          <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ margin: '14px auto', display: 'flex' }} onClick={() => setPage((n) => n + 1)}>
-            Show more
-          </button>
-        )}
-      </div>
-
-      <div className="nhlx-db-cols">
-        <div>
-          <h3 className="nhlx-db-h3">PropFinder names without a match ({db.propfinder.unmatched.length})</h3>
-          <p className="nhlx-auto-meta">The model joins files on player name. Link these to the right NHL player so generated files use the same spelling.</p>
-          <div className="nhlx-db-list">
-            {db.propfinder.unmatched.slice(0, 60).map((u) => (
-              <div key={u.name} className="nhlx-db-row">
-                <span><b>{u.name}</b> <small>{u.team || '?'} · {u.pos || '?'} · last seen {u.lastSeen || '—'}</small></span>
-                {linking === u.name ? (
-                  <span className="nhlx-db-link">
-                    <input className="nhlx-input nhlx-input-sm" autoFocus placeholder="Find NHL player" value={linkQ} onChange={(e) => setLinkQ(e.target.value)} />
-                    {linkCands.map((c) => (
-                      <button type="button" key={c.id} className="nhlx-run-file" onClick={() => saveOverride(c.id, { name: u.name })}>
-                        {c.name} · {c.team}
-                      </button>
-                    ))}
-                  </span>
-                ) : (
-                  <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" onClick={() => { setLinking(u.name); setLinkQ(u.name.split(' ').slice(-1)[0]); }}>Link</button>
-                )}
-              </div>
-            ))}
-            {!db.propfinder.unmatched.length && <p className="nhlx-auto-meta">Every PropFinder name matches an NHL player.</p>}
+                </div>
+              ))}
+              {!db.propfinder.unmatched.length && <p className="nhlx-auto-meta">Every PropFinder name matches an NHL player.</p>}
+            </div>
+          </div>
+          <div>
+            <h3 className="nhlx-db-h3">Recent roster changes</h3>
+            <div className="nhlx-db-list">
+              {db.changes.slice(0, 60).map((c, i) => (
+                <div key={`${c.id}-${c.at}-${i}`} className="nhlx-db-row">
+                  <span><b>{c.name}</b> <small>{changeText(c)}</small></span>
+                  <small>{fmt(c.at)}</small>
+                </div>
+              ))}
+              {!db.changes.length && <p className="nhlx-auto-meta">No changes logged yet. They appear here after each roster update.</p>}
+            </div>
           </div>
         </div>
-        <div>
-          <h3 className="nhlx-db-h3">Recent roster changes</h3>
-          <div className="nhlx-db-list">
-            {db.changes.slice(0, 60).map((c, i) => (
-              <div key={`${c.id}-${c.at}-${i}`} className="nhlx-db-row">
-                <span><b>{c.name}</b> <small>{changeText(c)}</small></span>
-                <small>{fmt(c.at)}</small>
-              </div>
-            ))}
-            {!db.changes.length && <p className="nhlx-auto-meta">No changes logged yet. They appear here after each roster update.</p>}
-          </div>
-        </div>
-      </div>
+      </Section>
     </div>
   );
 }
+
+export default memo(DatabasePanel);

@@ -14,6 +14,4 @@ export function slotLabel(slot) {
   return SLOT_LABELS[slot] || slot;
 }
 
-export function teamLogo(abbr) {
-  return /^[A-Z]{3}$/.test(abbr || '') ? `https://assets.nhle.com/logos/nhl/svg/${abbr}_light.svg` : '';
-}
+export { teamLogo } from '@/lib/nhl-data/teams';

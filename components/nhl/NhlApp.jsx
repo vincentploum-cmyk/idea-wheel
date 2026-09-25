@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import SiteHeader from './SiteHeader';
 import SignOutButton from './SignOutButton';
@@ -8,11 +8,41 @@ import { teamLogo, slotLabel } from './run-summary';
 import AutomationPanel from './AutomationPanel';
 import DatabasePanel from './DatabasePanel';
 
+const TABS = [
+  ['teams', 'Teams & players'],
+  ['model', 'Best bets'],
+  ['history', 'Run history'],
+];
+const TAB_KEYS = TABS.map(([key]) => key);
+
+// The URL hash is the tab state, so tabs deep-link and back/forward work.
+function tabFromHash() {
+  const key = window.location.hash.slice(1);
+  return TAB_KEYS.includes(key) ? key : TAB_KEYS[0];
+}
+
+// Tabs visited this page load; a visited panel stays mounted so the model
+// keeps its loaded files when you switch away.
+const visited = new Set();
+function subscribeHash(cb) {
+  const onChange = () => { visited.add(tabFromHash()); cb(); };
+  onChange();
+  window.addEventListener('hashchange', onChange);
+  return () => window.removeEventListener('hashchange', onChange);
+}
+const visitedKey = () => [...visited].sort().join(',');
+
+function useHashTab() {
+  const tab = useSyncExternalStore(subscribeHash, tabFromHash, () => TAB_KEYS[0]);
+  const seen = useSyncExternalStore(subscribeHash, visitedKey, () => '');
+  return [tab, (key) => key === tab || seen.split(',').includes(key)];
+}
+
 // The model is ~10k lines plus SheetJS; load it on the client only.
-const NhlModel = dynamic(() => import('./NhlModel'), {
+const NhlModel = memo(dynamic(() => import('./NhlModel'), {
   ssr: false,
   loading: () => <div className="nhlx-empty">Loading model…</div>,
-});
+}));
 
 const MAX_RESULTS_BYTES = 12 * 1024 * 1024;
 
@@ -96,6 +126,7 @@ export default function NhlApp({ email }) {
   const [busy, setBusy] = useState(false);
   const [latest, setLatest] = useState(null);
   const [autoSlots, setAutoSlots] = useState(null);
+  const [tab, mounted] = useHashTab();
   const activeRunRef = useRef(null);
   activeRunRef.current = activeRunId;
   const prevFilesRef = useRef({});
@@ -187,7 +218,7 @@ export default function NhlApp({ email }) {
       setAutoSlots(null);
       setActiveRunId(run.id);
       setLoadRequest({ files: Object.fromEntries(entries), runId: run.id, at: Date.now() });
-      document.getElementById('model')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.location.hash = 'model';
     } catch (err) {
       setSave({ state: 'err', text: `Could not load run: ${err.message}` });
     } finally {
@@ -232,22 +263,15 @@ export default function NhlApp({ email }) {
     ];
   }, [latest, runs]);
 
-  const status = save.text ? (
+  const status = useMemo(() => (save.text ? (
     <span className={`nhlx-status nhlx-status-${save.state === 'err' ? 'err' : save.state === 'busy' ? 'busy' : 'ok'}`} role="status">
       {save.text}
     </span>
-  ) : null;
+  ) : null), [save]);
 
   return (
     <>
       <SiteHeader
-        nav={(
-          <>
-            <a href="#model">Best bets</a>
-            <a href="#history">Run history</a>
-            <a href="#database">Database</a>
-          </>
-        )}
         right={(
           <>
             <span className="nhlx-user">{email}</span>
@@ -257,7 +281,34 @@ export default function NhlApp({ email }) {
       />
 
       <main>
-        <section className="nhlx-bench" id="model">
+        <div className="nhlx-wrap nhlx-tabbar">
+          <div className="nhlx-tabs" role="tablist" aria-label="Sections">
+            {TABS.map(([key, label]) => (
+              <a
+                key={key}
+                href={`#${key}`}
+                role="tab"
+                id={`tab-${key}`}
+                aria-selected={tab === key}
+                aria-controls={key}
+                className={`nhlx-tab${tab === key ? ' is-active' : ''}`}
+              >
+                {label}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <section className="nhlx-section nhlx-tabpanel" id="teams" role="tabpanel" aria-labelledby="tab-teams" hidden={tab !== 'teams'}>
+          <div className="nhlx-wrap">
+            <span className="nhlx-eyebrow">Supabase</span>
+            <h2 className="nhlx-h2">Teams &amp; <span>players</span></h2>
+            <p className="nhlx-lede">Pick a team to see who is on its roster. Rosters refresh from the NHL each morning; edit anything the feed hasn&apos;t caught up with yet.</p>
+            <div style={{ marginTop: 28 }}><DatabasePanel /></div>
+          </div>
+        </section>
+
+        <section className="nhlx-bench nhlx-tabpanel" id="model" role="tabpanel" aria-labelledby="tab-model" hidden={tab !== 'model'}>
           <div className="nhlx-wrap">
             <div className="nhlx-bench-head">
               <div>
@@ -272,20 +323,23 @@ export default function NhlApp({ email }) {
               </div>
             </div>
 
-            <AutomationPanel runs={runs} onLoad={loadAuto} busy={busy} />
-
-            <NhlModel
-              loadRequest={loadRequest}
-              autoSlots={autoSlots}
-              onRunComplete={onRunComplete}
-              onFileAdded={onFileAdded}
-              onFilesChange={onFilesChange}
-              statusSlot={status}
-            />
+            {mounted('model') && (
+              <>
+                <AutomationPanel runs={runs} onLoad={loadAuto} busy={busy} />
+                <NhlModel
+                  loadRequest={loadRequest}
+                  autoSlots={autoSlots}
+                  onRunComplete={onRunComplete}
+                  onFileAdded={onFileAdded}
+                  onFilesChange={onFilesChange}
+                  statusSlot={status}
+                />
+              </>
+            )}
           </div>
         </section>
 
-        <section className="nhlx-section nhlx-history" id="history">
+        <section className="nhlx-section nhlx-history nhlx-tabpanel" id="history" role="tabpanel" aria-labelledby="tab-history" hidden={tab !== 'history'}>
           <div className="nhlx-wrap">
             <div className="nhlx-history-head">
               <div>
@@ -315,14 +369,6 @@ export default function NhlApp({ email }) {
                 ))}
               </div>
             )}
-          </div>
-        </section>
-        <section className="nhlx-section" id="database">
-          <div className="nhlx-wrap">
-            <span className="nhlx-eyebrow">Supabase</span>
-            <h2 className="nhlx-h2">Teams &amp; <span>players</span></h2>
-            <p className="nhlx-lede">Every NHL team and player, refreshed from the official rosters each morning. Edit anything the NHL feed hasn&apos;t caught up with yet.</p>
-            <div style={{ marginTop: 28 }}><DatabasePanel /></div>
           </div>
         </section>
       </main>

@@ -4,6 +4,7 @@ import { loadPlayers, setOverride, TEAMS_PATH, CHANGES_PATH } from '@/lib/nhl-da
 import { rowsPath } from '@/lib/nhl-data/ingest';
 import { PRE_PLAYERS } from '@/lib/nhl-data/preseason';
 import { matchNames, SOURCE_NAMES_PATH } from '@/lib/nhl-data/names';
+import { teamLogo } from '@/lib/nhl-data/teams';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -57,7 +58,8 @@ export async function GET(request) {
 
   const teams = (teamsFile?.teams || []).slice().sort((a, b) => (a.name || '').localeCompare(b.name || '')).map((t) => ({
     ...t,
-    players: players.filter((p) => p.team === t.abbrev && !p.excluded).length,
+    logo: teamLogo(t.abbrev),
+    players: players.filter((p) => p.team === t.abbrev && p.onRoster && !p.excluded).length,
     preseasonDressed: players.filter((p) => p.team === t.abbrev && p.preseason?.gp).length,
     gamesStored: gamesByTeam[t.abbrev] || 0,
   }));

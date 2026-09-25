@@ -56,7 +56,7 @@ p { margin: 0; }
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 ::selection { background: var(--primary-soft); color: var(--heading); }
 
-#model, #history, #how, #database, #nhlx-results { scroll-margin-top: 88px; }
+#model, #history, #how, #teams, #nhlx-results { scroll-margin-top: 88px; }
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 .nhlx-btn {
@@ -415,6 +415,12 @@ p { margin: 0; }
 
 .nhlx-view { overflow-x: auto; }
 
+/* ── Top-level tabs (Teams & players / Best bets / Run history) ─────────── */
+.nhlx-tabbar { padding-top: 24px; }
+.nhlx-tabbar .nhlx-tabs { margin-bottom: 0; }
+.nhlx-tabbar .nhlx-tab { font-size: 15px; padding: 10px 20px; }
+.nhlx-tabpanel { padding-top: 32px; }
+
 /* ── Run history ─────────────────────────────────────────────────────────── */
 .nhlx-history { background: var(--bg-soft); border-top: 1px solid var(--line); }
 .nhlx-history-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
@@ -472,7 +478,6 @@ p { margin: 0; }
   margin-bottom: 18px;
 }
 .nhlx-auto-head { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; justify-content: space-between; }
-.nhlx-auto-title { font-family: var(--font-display); font-weight: 600; font-size: 19px; color: var(--heading); }
 .nhlx-auto-sub { font-size: 14px; color: var(--muted); margin-top: 2px; }
 .nhlx-auto-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .nhlx-input-sm { height: 40px; padding: 0 12px; font-size: 14px; border-radius: 100px; }
@@ -499,9 +504,17 @@ p { margin: 0; }
 .nhlx-auto-item.is-partial .nhlx-auto-dot { background: var(--warning); }
 
 /* ── Database ────────────────────────────────────────────────────────────── */
-.nhlx-db .nhlx-counters { margin-bottom: 18px; }
 .nhlx-db-h3 { font-size: 20px; margin: 30px 0 12px; }
-.nhlx-db-teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.nhlx-db-teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.nhlx-db-roster { margin-top: 24px; }
+.nhlx-db-roster-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+.nhlx-db-roster-title { font-size: 26px; }
+.nhlx-db-group { margin-top: 18px; }
+.nhlx-db-h4 { font-size: 15px; margin: 0 0 8px; }
+.nhlx-db-h4 span { color: var(--muted); font-weight: 500; margin-left: 6px; }
+.nhlx-db-details { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 18px; }
+.nhlx-db-details > summary { cursor: pointer; font-family: var(--font-display); font-weight: 600; font-size: 19px; color: var(--heading); }
+.nhlx-db-details > * + * { margin-top: 16px; }
 .nhlx-db-team {
   display: flex; align-items: center; gap: 10px; text-align: left;
   padding: 10px 12px; border-radius: 14px;
@@ -510,9 +523,8 @@ p { margin: 0; }
 }
 .nhlx-db-team:hover { border-color: var(--line-strong); box-shadow: var(--shadow); }
 .nhlx-db-team.is-active { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
-.nhlx-db-team b { display: block; color: var(--heading); font-size: 14px; }
-.nhlx-db-team small { color: var(--muted); font-size: 12px; }
-.nhlx-db-filters { margin-bottom: 12px; }
+.nhlx-db-team b { display: block; color: var(--heading); font-size: 13px; line-height: 1.25; }
+.nhlx-db-team small { display: block; color: var(--muted); font-size: 12px; line-height: 1.3; margin-top: 2px; }
 .nhlx-db-filters .nhlx-input { min-width: 160px; }
 .nhlx-db-check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
 .nhlx-db-table-wrap { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow-x: auto; box-shadow: var(--shadow); }
@@ -541,7 +553,6 @@ p { margin: 0; }
   .nhlx-db-editor { min-width: 0; }
   .nhlx-db-link { max-width: 100%; }
 }
-.nhlx-db-team small { display: block; line-height: 1.4; margin-top: 2px; }
 
 /* ── Today bar + drop zone ───────────────────────────────────────────────── */
 .nhlx-today {
@@ -585,7 +596,7 @@ p { margin: 0; }
 .nhlx-inputs-chip { font-size: 12px; padding: 2px 9px; border-radius: 100px; background: var(--bg-soft); color: #9a9cab; }
 .nhlx-inputs-chip.is-on { background: #ecfdf3; color: var(--success); }
 .nhlx-inputs-toggle { font-size: 13px; font-weight: 600; color: var(--primary); margin-left: auto; }
-.nhlx-bench-head { padding: 32px 0 20px; }
+.nhlx-bench-head { padding: 0 0 20px; }
 .nhlx-bench-head h1 { font-size: clamp(30px, 3.4vw, 42px); }
 .nhlx-bench-head .nhlx-counter { padding: 10px 16px; min-width: 130px; }
 .nhlx-bench-head .nhlx-counter b { font-size: 24px; }
