@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Headshot, TeamLogo } from './media';
+import { usePlayerCard } from './PlayerCard';
 
 const LEADER_TABS = [['points', 'Points'], ['goals', 'Goals'], ['assists', 'Assists'], ['shots', 'Shots']];
 
@@ -43,6 +44,7 @@ function Standings({ conferences }) {
 }
 
 function Leaders({ leaders, tab }) {
+  const open = usePlayerCard();
   const list = leaders[tab] || [];
   if (!list.length) return <p className="nhlx-auto-meta">{tab === 'shots' ? 'Shot leaders appear once games are stored for this season.' : 'No leaders stored yet.'}</p>;
   const isShots = tab === 'shots';
@@ -56,7 +58,7 @@ function Leaders({ leaders, tab }) {
           {list.map((p, i) => (
             <tr key={p.id}>
               <td>{i + 1}</td>
-              <td><div className="nhlx-db-player"><Headshot id={p.id} size={32} /><span><b>{p.name}</b></span></div></td>
+              <td><div className="nhlx-db-player is-click" onClick={() => open({ id: p.id })}><Headshot id={p.id} size={32} /><span><b>{p.name}</b></span></div></td>
               <td><div className="nhlx-db-player"><TeamLogo abbr={p.team} size={22} /><span>{p.team}</span></div></td>
               <td>{p.pos}</td>
               {isShots ? <><td>{p.gp}</td><td><b>{p.sog}</b></td><td>{p.sogPerGame.toFixed(2)}</td><td>{p.g}</td></> : <td><b>{p.value}</b></td>}

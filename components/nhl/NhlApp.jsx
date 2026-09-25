@@ -9,6 +9,7 @@ import AutomationPanel from './AutomationPanel';
 import DatabasePanel from './DatabasePanel';
 import MatchupsPanel from './MatchupsPanel';
 import LeaguePanel from './LeaguePanel';
+import { PlayerCardHost } from './PlayerCard';
 
 const TABS = [
   ['teams', 'Teams & players'],
@@ -274,7 +275,7 @@ export default function NhlApp({ email }) {
   ) : null), [save]);
 
   return (
-    <>
+    <PlayerCardHost>
       <SiteHeader
         right={(
           <>
@@ -400,6 +401,6 @@ export default function NhlApp({ email }) {
           <span>Runs and input files are stored in Supabase Storage</span>
         </div>
       </footer>
-    </>
+    </PlayerCardHost>
   );
 }
