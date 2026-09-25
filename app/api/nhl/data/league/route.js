@@ -8,6 +8,17 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 const STALE_MS = 6 * 3600 * 1000;
+const RETRY_MS = 10 * 60 * 1000;
+let lastAttempt = 0;
+let inFlight = null;
+
+// Stale tables refresh in the background, at most every 10 minutes, so a page
+// load never waits on the NHL (an explicit ?refresh=1 still waits).
+function refreshInBackground() {
+  if (inFlight || Date.now() - lastAttempt < RETRY_MS) return;
+  lastAttempt = Date.now();
+  inFlight = refreshLeague().catch((err) => console.warn('[nhl-data] league refresh failed:', err.message)).finally(() => { inFlight = null; });
+}
 
 // The current season, or last season until this one has stored games.
 async function latestRows(now = new Date()) {
@@ -27,8 +38,10 @@ export async function GET(request) {
   let { standings, leaders } = await loadLeague();
   let refreshed = null;
   const stale = !standings?.updatedAt || Date.now() - Date.parse(standings.updatedAt) > STALE_MS;
-  if (force || stale) {
+  if (force) {
     try { refreshed = await refreshLeague(); ({ standings, leaders } = await loadLeague()); } catch (err) { refreshed = { error: err.message }; }
+  } else if (stale) {
+    refreshInBackground();
   }
   const { season, rows } = await latestRows();
   return Response.json({

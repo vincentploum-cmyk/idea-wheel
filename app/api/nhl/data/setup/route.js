@@ -50,9 +50,12 @@ export async function GET(request) {
   const curGames = count(curRows);
 
   // 5-6. Today
-  let schedule = [];
-  try { schedule = await fetchSchedule(today); } catch {}
-  const gamesToday = schedule.length || (lineups?.games || []).length;
+  // Today's game count: the stored lineup / position files answer instantly;
+  // the NHL is only asked (briefly) when neither exists yet.
+  let gamesToday = (lineups?.games || []).length || Object.keys(positions?.games || {}).length;
+  if (!gamesToday) {
+    try { gamesToday = (await fetchSchedule(today, { quick: true })).length; } catch {}
+  }
   const withLineup = (lineups?.games || []).filter((g) => g.rows?.length).length;
   const frozen = Object.values(positions?.games || {}).filter((g) => g.frozen).length;
 

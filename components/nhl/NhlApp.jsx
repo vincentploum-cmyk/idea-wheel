@@ -309,7 +309,7 @@ export default function NhlApp({ email }) {
             <span className="nhlx-eyebrow">Setup</span>
             <h2 className="nhlx-h2">Start <span>here</span></h2>
             <p className="nhlx-lede">Eight steps, in order, from an empty database to tonight’s matchups. Each one checks itself; come back any day to see what still needs a click.</p>
-            <div style={{ marginTop: 28 }}>{mounted('start') && <SetupPanel onStatus={setSetup} />}</div>
+            <div style={{ marginTop: 28 }}>{mounted('start') && <SetupPanel onStatus={setSetup} initial={setup} />}</div>
           </div>
         </section>
 
