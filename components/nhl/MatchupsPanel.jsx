@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Headshot, TeamLogo, rankClass } from './media';
 import { usePlayerCard, FormChip } from './PlayerCard';
+import { oppClass } from './MoneyPuck';
 
 const POS = ['LW', 'C', 'RW', 'D'];
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
@@ -16,7 +17,23 @@ function EdgeChip({ v }) {
 }
 
 /** What `side.opp` allows to each position when it plays at `defVenue`. */
-function DefenseCard({ side, teamCount }) {
+function MpLine({ mp, opp, venue }) {
+  if (!mp?.situations?.['5on5']?.[opp]) return null;
+  const ven = venue === 'A' ? 'H' : 'A';
+  const v = mp.byVenue?.['5on5']?.[ven]?.[opp];
+  const t = v || mp.situations['5on5'][opp];
+  const r = v ? (mp.venueRanks?.['5on5']?.[ven]?.[opp] || {}) : (mp.ranks?.['5on5']?.[opp] || {});
+  const n = v ? Object.keys(mp.byVenue['5on5'][ven]).length : Object.keys(mp.situations['5on5']).length;
+  const cell = (k, label, d) => <span className={`nhlx-mp-pill ${oppClass(r[k], n)}`}>{label} <b>{num(t[k], d)}</b>{r[k] ? <i>#{r[k]}</i> : null}</span>;
+  return (
+    <div className="nhlx-mp-line">
+      <small>5-on-5 {v ? (ven === 'H' ? 'at home' : 'away') : 'season'} · MoneyPuck{v ? '' : ' (no venue split yet)'} · {t.gp} GP</small>
+      <div>{cell('xga60', 'xGA/60', 2)}{cell('sa60', 'SA/60', 1)}{cell('hdsa60', 'HD agst/60', 1)}{cell('cfPct', 'CF%', 1)}</div>
+    </div>
+  );
+}
+
+function DefenseCard({ side, teamCount, mp }) {
   const defVenue = side.venue === 'A' ? 'home' : 'away';
   return (
     <div className="nhlx-defcard">
@@ -51,6 +68,7 @@ function DefenseCard({ side, teamCount }) {
         </tbody>
       </table>
       <small className="nhlx-auto-meta">{side.defense.All?.season?.gp || 0} games at {defVenue} this season</small>
+      <MpLine mp={mp} opp={side.opp} venue={side.venue} />
     </div>
   );
 }
@@ -212,7 +230,7 @@ export default function MatchupsPanel() {
                     <small>{s.venue === 'H' ? 'home' : 'away'} · positions from {s.source === 'lineup' ? 'the projected lineup' : 'the roster (no lineup yet)'}</small>
                   </div>
                   <div className="nhlx-mu-grid">
-                    <DefenseCard side={s} teamCount={slate.teamCount} />
+                    <DefenseCard side={s} teamCount={slate.teamCount} mp={slate.moneypuck} />
                     {s.skaters.length ? <SkaterTable skaters={s.skaters} teamCount={slate.teamCount} /> : <p className="nhlx-auto-meta">No skaters match the filter.</p>}
                   </div>
                 </div>

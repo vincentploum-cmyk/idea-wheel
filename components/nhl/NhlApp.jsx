@@ -11,6 +11,7 @@ import MatchupsPanel from './MatchupsPanel';
 import LeaguePanel from './LeaguePanel';
 import { PlayerCardHost } from './PlayerCard';
 import SetupPanel from './SetupPanel';
+import ThemeToggle from './ThemeToggle';
 
 const TABS = [
   ['start', 'Start here'],
@@ -292,6 +293,7 @@ export default function NhlApp({ email }) {
         right={(
           <>
             <span className="nhlx-user">{email}</span>
+            <ThemeToggle />
             <SignOutButton />
           </>
         )}
@@ -320,7 +322,7 @@ export default function NhlApp({ email }) {
           <div className="nhlx-wrap">
             <span className="nhlx-eyebrow">Setup</span>
             <h2 className="nhlx-h2">Start <span>here</span></h2>
-            <p className="nhlx-lede">Seven steps, in order, from an empty database to tonight’s matchups. Each one checks itself; come back any day to see what still needs a click.</p>
+            <p className="nhlx-lede">Eight steps, in order, from an empty database to tonight’s matchups. Each one checks itself; come back any day to see what still needs a click.</p>
             <div style={{ marginTop: 28 }}>{mounted('start') && <SetupPanel onStatus={setSetup} />}</div>
           </div>
         </section>
@@ -361,14 +363,16 @@ export default function NhlApp({ email }) {
             {mounted('model') && (
               <>
                 <AutomationPanel runs={runs} onLoad={loadAuto} busy={busy} />
-                <NhlModel
-                  loadRequest={loadRequest}
-                  autoSlots={autoSlots}
-                  onRunComplete={onRunComplete}
-                  onFileAdded={onFileAdded}
-                  onFilesChange={onFilesChange}
-                  statusSlot={status}
-                />
+                <div className="nhlx-light">
+                  <NhlModel
+                    loadRequest={loadRequest}
+                    autoSlots={autoSlots}
+                    onRunComplete={onRunComplete}
+                    onFileAdded={onFileAdded}
+                    onFilesChange={onFilesChange}
+                    statusSlot={status}
+                  />
+                </div>
               </>
             )}
           </div>

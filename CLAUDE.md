@@ -34,6 +34,11 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   (`lib/nhl-data/defense.js`) are descriptive views over the stored rows; the model's
   own math stays in `NhlModel.jsx`. Logos/headshots are copied into `data/media/*` and
   served by `/api/nhl/data/media`; standings/leaders live in `data/league/*`.
+- MoneyPuck team metrics (`lib/nhl-data/moneypuck.js`, `data/moneypuck/*`) feed the team
+  page, Matchups defense cards and League; credit MoneyPuck.com wherever shown.
+- Theme: dark by default (`<html data-theme>`, toggle in the header, tokens in
+  `globals.css`). `NhlModel.jsx` carries inline light colours, so it renders inside a
+  `.nhlx-light` island; keep new UI on the tokens, never hard-coded tints.
 
 ## Rules
 
