@@ -2,6 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Headshot, TeamLogo, rankClass } from './media';
+import { usePlayerCard } from './PlayerCard';
 
 const POSITIONS = ['C', 'LW', 'RW', 'D', 'G'];
 const GROUP_OF = { C: 'Forwards', LW: 'Forwards', RW: 'Forwards', D: 'Defense', G: 'Goalies' };
@@ -34,8 +35,9 @@ function StatusChip({ p }) {
 }
 
 function PlayerName({ p }) {
+  const open = usePlayerCard();
   return (
-    <div className="nhlx-db-player">
+    <div className="nhlx-db-player is-click" onClick={() => open({ id: p.id })} title="Open player profile">
       <Headshot id={p.id} size={32} />
       <span>
         <b>{p.name}</b>

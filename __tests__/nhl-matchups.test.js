@@ -93,3 +93,30 @@ describe('league tables', () => {
     expect(top[0]).toMatchObject({ id: 1, gp: 2, sog: 12, sogPerGame: 6 });
   });
 });
+
+describe('player profile', () => {
+  const { playerProfile, formTag, hitRate } = require('../lib/nhl-data/profile');
+  const mk = (i, g, sog, venue = i % 2 ? 'H' : 'A', opp = i % 3 ? 'OTT' : 'MTL') => row(`2026-01-${String(i + 1).padStart(2, '0')}`, 100 + i, 1, 'ANA', opp, venue, 'LW', g, sog);
+  test('hit rates count games over the line', () => {
+    const list = [{ sog: 3 }, { sog: 2 }, { sog: 5 }];
+    expect(hitRate(list, 'sog', 2.5)).toEqual({ hits: 2, gp: 3, rate: 0.67 });
+  });
+  test('form: five straight 4+ shot games is hot, no goals in five is cold', () => {
+    const hot = Array.from({ length: 5 }, (_, i) => mk(i, 0, 4));
+    expect(formTag(hot, hot)).toMatchObject({ shots: 'Hot', goals: 'Cold' });
+    const cold = Array.from({ length: 5 }, (_, i) => mk(i, 1, 1));
+    expect(formTag(cold, cold)).toMatchObject({ shots: 'Cold', goals: 'Hot' });
+  });
+  test('profile splits by venue and opponent and reports lines', () => {
+    const rows = Array.from({ length: 12 }, (_, i) => mk(i, i % 4 === 0 ? 1 : 0, 2 + (i % 3)));
+    const p = playerProfile(rows, { opp: 'MTL', venue: 'H' });
+    expect(p.gp).toBe(12);
+    expect(p.stats.l5.gp).toBe(5);
+    expect(p.stats.h2h.gp).toBe(4);
+    expect(p.stats.tonight.gp).toBe(6);
+    expect(p.hits.goals[0.5].season).toEqual({ hits: 3, gp: 12, rate: 0.25 });
+    expect(p.hits.shots[2.5].season.hits).toBe(8);
+    expect(p.games[p.games.length - 1].pts).toBe(0);
+    expect(['Hot', 'Cold', 'Neutral']).toContain(p.form.shots);
+  });
+});

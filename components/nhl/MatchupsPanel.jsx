@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Headshot, TeamLogo, rankClass } from './media';
+import { usePlayerCard, FormChip } from './PlayerCard';
 
 const POS = ['LW', 'C', 'RW', 'D'];
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
@@ -55,13 +56,14 @@ function DefenseCard({ side, teamCount }) {
 }
 
 function SkaterRows({ skaters, showTeam, teamCount }) {
+  const open = usePlayerCard();
   return skaters.map((p) => (
-    <tr key={`${p.team}-${p.name}`} className={p.inLineup ? '' : 'is-muted'}>
+    <tr key={`${p.team}-${p.name}`} className={`${p.inLineup ? '' : 'is-muted'}${p.id ? ' is-click' : ''}`} onClick={() => p.id && open({ id: p.id, opp: p.opp, venue: p.venue })}>
       <td>
         <div className="nhlx-db-player">
           <Headshot id={p.id} size={30} />
           <span>
-            <b>{p.name}</b>
+            <b>{p.name} <FormChip tag={p.form?.shots} small /></b>
             <small>{showTeam ? `${p.team} ${p.venue === 'H' ? 'vs' : '@'} ${p.opp} · ` : ''}{p.pos}{p.line ? ` · L${p.line}` : p.inLineup ? '' : ' · not in lineup'}</small>
           </span>
         </div>
@@ -75,6 +77,7 @@ function SkaterRows({ skaters, showTeam, teamCount }) {
       <td><b>{num(p.projSog)}</b></td>
       <td><b>{num(p.projG, 2)}</b></td>
       <td>{p.hit?.s3 != null ? `${Math.round(p.hit.s3 * 100)}%` : '—'}</td>
+      <td><FormChip tag={p.form?.goals} small /></td>
     </tr>
   ));
 }
@@ -92,6 +95,7 @@ function SkaterTable({ skaters, showTeam = false, teamCount }) {
             <th title="Player's SOG/G × opponent's shot ratio">Proj SOG</th>
             <th title="Player's G/G × opponent's goal ratio">Proj G</th>
             <th title="How often the player had 3+ shots over the window">3+ rate</th>
+            <th title="Goal form over the last 5 games">Goals</th>
           </tr>
         </thead>
         <tbody><SkaterRows skaters={skaters} showTeam={showTeam} teamCount={teamCount} /></tbody>
