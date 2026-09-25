@@ -27,6 +27,13 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   input workbooks in the model's existing formats. Never change the model's
   parsers to fit the automation; change the builders instead.
 - Scheduled by `.github/workflows/nhl-data.yml`; Mac folder sync in `tools/mac-sync`.
+- Signed-in page = five hash tabs (`#teams`, `#matchups`, `#model`, `#league`, `#history`).
+  Positions are frozen per game before puck drop (`lib/nhl-data/positions.js`,
+  `data/positions/<date>.json`) and the stored skater rows carry that position. The
+  Matchups tab (`lib/nhl-data/slate.js`) and the per-team defense card
+  (`lib/nhl-data/defense.js`) are descriptive views over the stored rows; the model's
+  own math stays in `NhlModel.jsx`. Logos/headshots are copied into `data/media/*` and
+  served by `/api/nhl/data/media`; standings/leaders live in `data/league/*`.
 
 ## Rules
 

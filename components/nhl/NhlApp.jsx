@@ -7,10 +7,14 @@ import SignOutButton from './SignOutButton';
 import { teamLogo, slotLabel } from './run-summary';
 import AutomationPanel from './AutomationPanel';
 import DatabasePanel from './DatabasePanel';
+import MatchupsPanel from './MatchupsPanel';
+import LeaguePanel from './LeaguePanel';
 
 const TABS = [
   ['teams', 'Teams & players'],
+  ['matchups', 'Matchups'],
   ['model', 'Best bets'],
+  ['league', 'League'],
   ['history', 'Run history'],
 ];
 const TAB_KEYS = TABS.map(([key]) => key);
@@ -308,6 +312,15 @@ export default function NhlApp({ email }) {
           </div>
         </section>
 
+        <section className="nhlx-section nhlx-tabpanel" id="matchups" role="tabpanel" aria-labelledby="tab-matchups" hidden={tab !== 'matchups'}>
+          <div className="nhlx-wrap">
+            <span className="nhlx-eyebrow">Tonight</span>
+            <h2 className="nhlx-h2">Matchups by <span>position</span></h2>
+            <p className="nhlx-lede">Who is shooting into a soft spot tonight: every skater’s frozen position against what the opposing defense allows to that position at this venue.</p>
+            <div style={{ marginTop: 28 }}>{mounted('matchups') && <MatchupsPanel />}</div>
+          </div>
+        </section>
+
         <section className="nhlx-bench nhlx-tabpanel" id="model" role="tabpanel" aria-labelledby="tab-model" hidden={tab !== 'model'}>
           <div className="nhlx-wrap">
             <div className="nhlx-bench-head">
@@ -336,6 +349,14 @@ export default function NhlApp({ email }) {
                 />
               </>
             )}
+          </div>
+        </section>
+
+        <section className="nhlx-section nhlx-tabpanel" id="league" role="tabpanel" aria-labelledby="tab-league" hidden={tab !== 'league'}>
+          <div className="nhlx-wrap">
+            <span className="nhlx-eyebrow">NHL</span>
+            <h2 className="nhlx-h2">Standings &amp; <span>top scorers</span></h2>
+            <div style={{ marginTop: 28 }}>{mounted('league') && <LeaguePanel />}</div>
           </div>
         </section>
 

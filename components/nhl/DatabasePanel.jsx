@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { Headshot, TeamLogo, rankClass } from './media';
 
 const POSITIONS = ['C', 'LW', 'RW', 'D', 'G'];
 const GROUP_OF = { C: 'Forwards', LW: 'Forwards', RW: 'Forwards', D: 'Defense', G: 'Goalies' };
@@ -35,7 +36,7 @@ function StatusChip({ p }) {
 function PlayerName({ p }) {
   return (
     <div className="nhlx-db-player">
-      {p.headshot ? <img src={p.headshot} alt="" width="32" height="32" loading="lazy" /> : <span className="nhlx-db-avatar" />}
+      <Headshot id={p.id} size={32} />
       <span>
         <b>{p.name}</b>
         {p.propfinderName && p.propfinderName !== p.name && <small>PropFinder: {p.propfinderName}</small>}
@@ -130,6 +131,53 @@ function PlayerTable({ rows, showTeam, ...rowProps }) {
   );
 }
 
+const DEF_POS = ['LW', 'C', 'RW', 'D'];
+const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
+
+/** What this team allows per game to each position, at home and away. */
+function TeamDefense({ abbr, defense }) {
+  if (!defense) return <p className="nhlx-auto-meta">Loading defense table…</p>;
+  const t = defense.season.teams[abbr];
+  if (!t || !t.ALL.All.gp) return <p className="nhlx-auto-meta">No stored games for {abbr} yet, so nothing to rank.</p>;
+  const n = defense.season.teamCount;
+  const cell = (venue, pos, k, d = 1) => {
+    const v = t[venue][pos];
+    const r = defense.season.ranks[abbr]?.[venue]?.[pos]?.[k];
+    return <td key={`${venue}${pos}${k}`} className={rankClass(r, n)}>{v.gp ? num(v[k], d) : '—'}{r ? <i>#{r}</i> : null}</td>;
+  };
+  return (
+    <div className="nhlx-defcard nhlx-defcard-wide">
+      <div className="nhlx-defcard-head">
+        <div>
+          <b>How {abbr} defends each position</b>
+          <small>Allowed per game this season · rank 1 = most permissive of {n} · {t.H.All.gp} home, {t.A.All.gp} away games</small>
+        </div>
+      </div>
+      <table className="nhlx-deftable">
+        <thead>
+          <tr><th rowSpan="2">Pos</th><th colSpan="3">At home</th><th colSpan="3">Away</th><th colSpan="2">Last 10</th></tr>
+          <tr><th>SOG</th><th>Goals</th><th>Chances</th><th>SOG</th><th>Goals</th><th>Chances</th><th>SOG</th><th>Goals</th></tr>
+        </thead>
+        <tbody>
+          {DEF_POS.map((pos) => {
+            const l = defense.l10.teams[abbr]?.ALL?.[pos];
+            const lr = defense.l10.ranks[abbr]?.ALL?.[pos] || {};
+            return (
+              <tr key={pos}>
+                <td><b>{pos}</b></td>
+                {cell('H', pos, 'sog')}{cell('H', pos, 'g', 2)}{cell('H', pos, 'iscf')}
+                {cell('A', pos, 'sog')}{cell('A', pos, 'g', 2)}{cell('A', pos, 'iscf')}
+                <td className={rankClass(lr.sog, n)}>{l?.gp ? num(l.sog) : '—'}{lr.sog ? <i>#{lr.sog}</i> : null}</td>
+                <td className={rankClass(lr.g, n)}>{l?.gp ? num(l.g, 2) : '—'}{lr.g ? <i>#{lr.g}</i> : null}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 const byNumber = (a, b) => (a.number ?? 999) - (b.number ?? 999) || a.name.localeCompare(b.name);
 
 // Collapsed sections render nothing, so a closed table doesn't re-render on every keystroke.
@@ -158,6 +206,7 @@ function DatabasePanel() {
   const [linkQ, setLinkQ] = useState('');
   const [page, setPage] = useState(1);
   const [imp, setImp] = useState(null);
+  const [defense, setDefense] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -171,6 +220,30 @@ function DatabasePanel() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // The defense table is only needed once a team is picked; fetch it once.
+  useEffect(() => {
+    if (!team || defense) return;
+    let live = true;
+    fetch('/api/nhl/data/defense', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (live && j) setDefense(j); }).catch(() => {});
+    return () => { live = false; };
+  }, [team, defense]);
+
+  const fetchMedia = async () => {
+    setBusy(true);
+    setMsg('Copying logos and player photos from the NHL…');
+    try {
+      const res = await fetch('/api/nhl/data/media', { method: 'POST' });
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error);
+      const r = j.result;
+      setMsg(`Media: ${r.downloaded} files copied this run, ${r.remaining} still missing (${r.logos} logos, ${r.headshots} photos stored)${r.failed.length ? `; failed: ${r.failed.slice(0, 5).join(', ')}` : ''}.`);
+    } catch (e) {
+      setMsg(`Media copy failed: ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const updateRosters = async () => {
     setBusy(true);
@@ -308,7 +381,7 @@ function DatabasePanel() {
             className={`nhlx-db-team${team === t.abbrev ? ' is-active' : ''}`}
             onClick={() => setTeam(team === t.abbrev ? '' : t.abbrev)}
           >
-            <img src={t.logo} alt="" width="34" height="34" />
+            <TeamLogo abbr={t.abbrev} size={34} />
             <span>
               <b>{t.name}</b>
               <small>{t.players} players</small>
@@ -321,7 +394,7 @@ function DatabasePanel() {
       {selected ? (
         <div className="nhlx-db-roster">
           <div className="nhlx-db-roster-head">
-            <img src={selected.logo} alt="" width="56" height="56" />
+            <TeamLogo abbr={selected.abbrev} size={56} />
             <div>
               <h3 className="nhlx-db-roster-title">{selected.full || selected.name}</h3>
               <p className="nhlx-auto-meta">
@@ -333,6 +406,7 @@ function DatabasePanel() {
             </div>
             <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ marginLeft: 'auto' }} onClick={() => setTeam('')}>All teams</button>
           </div>
+          <TeamDefense abbr={selected.abbrev} defense={defense} />
           {roster.map(([label, rows]) => (
             <div key={label} className="nhlx-db-group">
               <h4 className="nhlx-db-h4">{label} <span>{rows.length}</span></h4>
@@ -393,6 +467,7 @@ function DatabasePanel() {
               <button type="button" className="nhlx-btn nhlx-btn-sm" disabled={busy} onClick={updateRosters}>Update rosters now</button>
               <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy} onClick={loadPreseason}>Update preseason games</button>
               <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy} onClick={rebuild} title="Recompute season indexes, defense rankings and PropFinder names from the stored source files">Rebuild indexes</button>
+              <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy} onClick={fetchMedia} title="Copy team logos and player photos into Supabase so they never depend on the NHL's CDN">Fetch logos &amp; photos</button>
               <label className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ cursor: 'pointer' }}>
                 Import PropFinder files
                 <input type="file" multiple accept=".xlsx" style={{ display: 'none' }} onChange={(e) => { importFiles(e.target.files); e.target.value = ''; }} />
