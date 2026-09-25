@@ -56,7 +56,7 @@ p { margin: 0; }
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 ::selection { background: var(--primary-soft); color: var(--heading); }
 
-#model, #history, #how, #teams, #matchups, #league, #nhlx-results { scroll-margin-top: 88px; }
+#model, #history, #how, #start, #teams, #matchups, #league, #nhlx-results { scroll-margin-top: 88px; }
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 .nhlx-btn {
@@ -734,3 +734,18 @@ td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
   .nhlx-modal-card { padding: 18px 14px; }
   .nhlx-pc-form { margin-left: 0; }
 }
+
+/* ── Start here ────────────────────────────────────────────────────────── */
+.nhlx-tab-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--warning); margin-left: 6px; vertical-align: 2px; }
+.nhlx-setup-list { max-width: 900px; }
+.nhlx-setup-step { display: flex; gap: 14px; padding: 16px 18px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.nhlx-setup-step > div { min-width: 0; flex: 1; }
+.nhlx-setup-step.is-done { background: #f6fdf8; border-color: #cdeed8; }
+.nhlx-setup-step.is-done .nhlx-gd-num { background: var(--success); border-color: var(--success); color: #fff; }
+.nhlx-setup-step.is-running .nhlx-gd-num { background: var(--warning); border-color: var(--warning); color: #fff; }
+.nhlx-setup-step .nhlx-auto-actions { margin-top: 10px; }
+.nhlx-setup-step .nhlx-auto-meta { font-size: 14px; line-height: 1.55; }
+.nhlx-setup-step .nhlx-auto-meta code { font-size: 12px; background: var(--bg-soft); padding: 1px 6px; border-radius: 6px; border: 1px solid var(--line); }
+.nhlx-gd-title em.is-ok { color: var(--success); border-color: #bfe8cb; }
+.nhlx-gd-title em.is-todo { color: var(--warning); border-color: #fcd34d; }
+.nhlx-complete a.nhlx-btn { margin-left: auto; }
