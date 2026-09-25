@@ -33,7 +33,7 @@ async function handle(request) {
     return Response.json({ ok: true, result }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
     console.error('[nhl-data] refresh failed:', err);
-    return Response.json({ ok: false, error: err.message }, { status: 502 });
+    return Response.json({ ok: false, error: err.message }, { status: 500 });
   }
 }
 
