@@ -103,6 +103,12 @@ export default function SetupPanel({ onStatus }) {
     say('league', `Done: ${j.conferences.reduce((c, x) => c + x.divisions.reduce((d, y) => d + y.teams.length, 0), 0)} teams, leaders updated.`);
   });
 
+  const moneypuck = (games) => run('moneypuck', async () => {
+    say('moneypuck', games ? 'Pulling MoneyPuck season summary and all 32 game logs…' : 'Pulling the MoneyPuck season summary…');
+    const j = await post(`/api/nhl/data/moneypuck${games ? '?games=1' : ''}`);
+    say('moneypuck', `Done: ${j.result.teams} teams${j.result.gameRows != null ? `, ${j.result.gameRows} game rows for home/away splits` : ''}${j.result.failed?.length ? `; failed: ${j.result.failed.join(', ')}` : ''}.`);
+  });
+
   const today = () => run('today', async () => {
     say('today', 'Pulling today’s lineups, yesterday’s results and freezing positions…');
     const j = await post(`/api/nhl/data/refresh?date=${s.today}`);
@@ -185,7 +191,21 @@ export default function SetupPanel({ onStatus }) {
           {log.league && <p className="nhlx-auto-msg">{log.league}</p>}
         </Step>
 
-        <Step num={5} title={`Today’s NHL data (${s.today})`} done={st.today.done} running={busy === 'today'}>
+        <Step num={5} title="MoneyPuck team data" done={st.moneypuck.done} running={busy === 'moneypuck'}>
+          <p className="nhlx-auto-meta">
+            Expected goals, shot quality and possession per team and situation from MoneyPuck.com, shown on team pages, Matchups and League.
+            {' '}{st.moneypuck.teams ? `${st.moneypuck.teams} teams for ${st.moneypuck.year}-${String((st.moneypuck.year || 0) + 1).slice(2)}, updated ${fmt(st.moneypuck.updatedAt)}.` : 'Not loaded yet.'}
+            {' '}{st.moneypuck.splits ? `Home/away splits from ${n(st.moneypuck.splits.rows)} game rows, ${fmt(st.moneypuck.splits.updatedAt)}.` : 'No home/away splits yet.'}
+            {' '}The summary refreshes every morning; the game logs every Sunday.
+          </p>
+          <div className="nhlx-auto-actions">
+            <button type="button" className="nhlx-btn nhlx-btn-sm" disabled={!!busy} onClick={() => moneypuck(false)}>Load team data</button>
+            <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={!!busy} onClick={() => moneypuck(true)}>Load with home/away splits</button>
+          </div>
+          {log.moneypuck && <p className="nhlx-auto-msg">{log.moneypuck}</p>}
+        </Step>
+
+        <Step num={6} title={`Today’s NHL data (${s.today})`} done={st.today.done} running={busy === 'today'}>
           <p className="nhlx-auto-meta">
             {st.today.games === 0 ? 'No NHL games today, nothing to load.'
               : `${st.today.games} game${st.today.games === 1 ? '' : 's'} today · ${st.today.withLineup} with a projected lineup · ${st.today.frozen} with positions frozen.`}
@@ -196,7 +216,7 @@ export default function SetupPanel({ onStatus }) {
           {log.today && <p className="nhlx-auto-msg">{log.today}</p>}
         </Step>
 
-        <Step num={6} title="Today’s PropFinder files" done={st.propfinder.done} running={busy === 'propfinder'}>
+        <Step num={7} title="Today’s PropFinder files" done={st.propfinder.done} running={busy === 'propfinder'}>
           <p className="nhlx-auto-meta">
             {st.propfinder.games === 0 ? 'No games today.' : <>
               The one thing you upload: PropFinder’s <b>Season</b> and <b>Last 5</b> exports for today (<code>NHL-Goal-Matchups-{s.today}.xlsx</code>).
@@ -216,7 +236,7 @@ export default function SetupPanel({ onStatus }) {
           {log.propfinder && <p className="nhlx-auto-msg">{log.propfinder}</p>}
         </Step>
 
-        <Step num={7} title="Mac folder sync" done={st.sync.done} optional>
+        <Step num={8} title="Mac folder sync" done={st.sync.done} optional>
           <p className="nhlx-auto-meta">
             {st.sync.done ? `Token created ${fmt(st.sync.createdAt)}: files saved in Desktop/NHL on your Mac upload themselves.` : 'Skip the upload step on game days: create a sync token under Best bets → Data sources, and files saved in Desktop/NHL upload themselves.'}
           </p>

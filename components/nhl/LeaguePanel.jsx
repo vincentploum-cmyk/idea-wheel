@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Headshot, TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
+import { MoneyPuckTable } from './MoneyPuck';
 
 const LEADER_TABS = [['points', 'Points'], ['goals', 'Goals'], ['assists', 'Assists'], ['shots', 'Shots']];
 
@@ -114,6 +115,7 @@ export default function LeaguePanel() {
         </div>
       </div>
       <Leaders leaders={data.leaders} tab={tab} />
+      <MoneyPuckTable />
     </div>
   );
 }

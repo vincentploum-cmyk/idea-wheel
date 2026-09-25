@@ -3,6 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Headshot, TeamLogo, rankClass } from './media';
 import { usePlayerCard } from './PlayerCard';
+import { TeamMoneyPuck } from './MoneyPuck';
 
 const POSITIONS = ['C', 'LW', 'RW', 'D', 'G'];
 const GROUP_OF = { C: 'Forwards', LW: 'Forwards', RW: 'Forwards', D: 'Defense', G: 'Goalies' };
@@ -209,6 +210,7 @@ function DatabasePanel() {
   const [page, setPage] = useState(1);
   const [imp, setImp] = useState(null);
   const [defense, setDefense] = useState(null);
+  const [mp, setMp] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -228,6 +230,7 @@ function DatabasePanel() {
     if (!team || defense) return;
     let live = true;
     fetch('/api/nhl/data/defense', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (live && j) setDefense(j); }).catch(() => {});
+    fetch('/api/nhl/data/moneypuck', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (live && j) setMp(j); }).catch(() => {});
     return () => { live = false; };
   }, [team, defense]);
 
@@ -431,6 +434,7 @@ function DatabasePanel() {
             <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ marginLeft: 'auto' }} onClick={() => setTeam('')}>All teams</button>
           </div>
           <TeamDefense abbr={selected.abbrev} defense={defense} />
+          <TeamMoneyPuck abbr={selected.abbrev} mp={mp} />
           {roster.map(([label, rows]) => (
             <div key={label} className="nhlx-db-group">
               <h4 className="nhlx-db-h4">{label} <span>{rows.length}</span></h4>

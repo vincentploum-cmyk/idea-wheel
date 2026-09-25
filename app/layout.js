@@ -15,14 +15,18 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: '#fbfcfd',
+  themeColor: [{ media: '(prefers-color-scheme: light)', color: '#fbfcfd' }, { media: '(prefers-color-scheme: dark)', color: '#0e0d17' }],
   width: 'device-width',
   initialScale: 1,
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
+      <head>
+        {/* Apply the saved theme before first paint (dark by default). */}
+        <script dangerouslySetInnerHTML={{ __html: "try{var t=localStorage.getItem('nhlx-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}" }} />
+      </head>
       <body>{children}</body>
     </html>
   );
