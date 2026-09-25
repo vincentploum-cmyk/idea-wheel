@@ -10,8 +10,10 @@ const n = (v) => Number(v || 0).toLocaleString();
 
 async function post(url) {
   const res = await fetch(url, { method: 'POST' });
-  const j = await res.json().catch(() => ({}));
-  if (!res.ok || j.ok === false) throw new Error(j.error || j.detail || `${res.status}`);
+  const text = await res.text();
+  let j = {};
+  try { j = JSON.parse(text); } catch {}
+  if (!res.ok || j.ok === false) throw new Error(j.error || j.detail || `${res.status} ${res.statusText}${text && !text.startsWith('<') ? ` · ${text.slice(0, 160)}` : ' (no details came back from the server)'}`);
   return j;
 }
 

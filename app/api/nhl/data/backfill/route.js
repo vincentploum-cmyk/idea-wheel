@@ -22,6 +22,6 @@ export async function POST(request) {
     const [games, lineups] = await Promise.all([ingestGames(date, { force }), skipLineups ? null : ingestLineups(date).catch((e) => ({ error: e.message }))]);
     return Response.json({ ok: true, result: { ...games, lineups } });
   } catch (err) {
-    return Response.json({ ok: false, error: err.message }, { status: 502 });
+    return Response.json({ ok: false, error: err.message }, { status: 500 });
   }
 }

@@ -32,6 +32,6 @@ export async function POST(request) {
   try {
     return Response.json({ ok: true, result: await syncMedia({ limit: 300 }) });
   } catch (err) {
-    return Response.json({ ok: false, error: err.message }, { status: 502 });
+    return Response.json({ ok: false, error: err.message }, { status: 500 });
   }
 }

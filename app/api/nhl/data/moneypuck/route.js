@@ -22,6 +22,6 @@ export async function POST(request) {
   try {
     return Response.json({ ok: true, result: await refreshMoneyPuck({ year: Number(url.searchParams.get('year')) || mpYear(), games: url.searchParams.get('games') === '1' }) });
   } catch (err) {
-    return Response.json({ ok: false, error: err.message }, { status: 502 });
+    return Response.json({ ok: false, error: err.message }, { status: 500 });
   }
 }
