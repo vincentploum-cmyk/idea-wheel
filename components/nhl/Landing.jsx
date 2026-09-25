@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import SiteHeader from './SiteHeader';
+import { teamLogo as logo } from '@/lib/nhl-data/teams';
 
 const TEAMS = [
   ['BOS', 'Bruins'], ['BUF', 'Sabres'], ['DET', 'Red Wings'], ['FLA', 'Panthers'], ['MTL', 'Canadiens'],
@@ -25,8 +26,6 @@ const STEPS = [
     body: 'Every run is stored with its input files. Reopen any slate later, attach the box scores and grade the calls in Audit View.',
   },
 ];
-
-const logo = (abbr) => `https://assets.nhle.com/logos/nhl/svg/${abbr}_light.svg`;
 
 function TeamStrip() {
   const row = [...TEAMS, ...TEAMS];

@@ -56,7 +56,7 @@ p { margin: 0; }
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 ::selection { background: var(--primary-soft); color: var(--heading); }
 
-#model, #history, #how, #database, #nhlx-results { scroll-margin-top: 88px; }
+#model, #history, #how, #teams, #matchups, #league, #nhlx-results { scroll-margin-top: 88px; }
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 .nhlx-btn {
@@ -415,6 +415,12 @@ p { margin: 0; }
 
 .nhlx-view { overflow-x: auto; }
 
+/* ── Top-level tabs (Teams & players / Best bets / Run history) ─────────── */
+.nhlx-tabbar { padding-top: 24px; }
+.nhlx-tabbar .nhlx-tabs { margin-bottom: 0; }
+.nhlx-tabbar .nhlx-tab { font-size: 15px; padding: 10px 20px; }
+.nhlx-tabpanel { padding-top: 32px; }
+
 /* ── Run history ─────────────────────────────────────────────────────────── */
 .nhlx-history { background: var(--bg-soft); border-top: 1px solid var(--line); }
 .nhlx-history-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
@@ -472,7 +478,6 @@ p { margin: 0; }
   margin-bottom: 18px;
 }
 .nhlx-auto-head { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; justify-content: space-between; }
-.nhlx-auto-title { font-family: var(--font-display); font-weight: 600; font-size: 19px; color: var(--heading); }
 .nhlx-auto-sub { font-size: 14px; color: var(--muted); margin-top: 2px; }
 .nhlx-auto-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .nhlx-input-sm { height: 40px; padding: 0 12px; font-size: 14px; border-radius: 100px; }
@@ -499,9 +504,17 @@ p { margin: 0; }
 .nhlx-auto-item.is-partial .nhlx-auto-dot { background: var(--warning); }
 
 /* ── Database ────────────────────────────────────────────────────────────── */
-.nhlx-db .nhlx-counters { margin-bottom: 18px; }
 .nhlx-db-h3 { font-size: 20px; margin: 30px 0 12px; }
-.nhlx-db-teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.nhlx-db-teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.nhlx-db-roster { margin-top: 24px; }
+.nhlx-db-roster-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+.nhlx-db-roster-title { font-size: 26px; }
+.nhlx-db-group { margin-top: 18px; }
+.nhlx-db-h4 { font-size: 15px; margin: 0 0 8px; }
+.nhlx-db-h4 span { color: var(--muted); font-weight: 500; margin-left: 6px; }
+.nhlx-db-details { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 18px; }
+.nhlx-db-details > summary { cursor: pointer; font-family: var(--font-display); font-weight: 600; font-size: 19px; color: var(--heading); }
+.nhlx-db-details > * + * { margin-top: 16px; }
 .nhlx-db-team {
   display: flex; align-items: center; gap: 10px; text-align: left;
   padding: 10px 12px; border-radius: 14px;
@@ -510,9 +523,8 @@ p { margin: 0; }
 }
 .nhlx-db-team:hover { border-color: var(--line-strong); box-shadow: var(--shadow); }
 .nhlx-db-team.is-active { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
-.nhlx-db-team b { display: block; color: var(--heading); font-size: 14px; }
-.nhlx-db-team small { color: var(--muted); font-size: 12px; }
-.nhlx-db-filters { margin-bottom: 12px; }
+.nhlx-db-team b { display: block; color: var(--heading); font-size: 13px; line-height: 1.25; }
+.nhlx-db-team small { display: block; color: var(--muted); font-size: 12px; line-height: 1.3; margin-top: 2px; }
 .nhlx-db-filters .nhlx-input { min-width: 160px; }
 .nhlx-db-check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
 .nhlx-db-table-wrap { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow-x: auto; box-shadow: var(--shadow); }
@@ -541,7 +553,6 @@ p { margin: 0; }
   .nhlx-db-editor { min-width: 0; }
   .nhlx-db-link { max-width: 100%; }
 }
-.nhlx-db-team small { display: block; line-height: 1.4; margin-top: 2px; }
 
 /* ── Today bar + drop zone ───────────────────────────────────────────────── */
 .nhlx-today {
@@ -585,7 +596,7 @@ p { margin: 0; }
 .nhlx-inputs-chip { font-size: 12px; padding: 2px 9px; border-radius: 100px; background: var(--bg-soft); color: #9a9cab; }
 .nhlx-inputs-chip.is-on { background: #ecfdf3; color: var(--success); }
 .nhlx-inputs-toggle { font-size: 13px; font-weight: 600; color: var(--primary); margin-left: auto; }
-.nhlx-bench-head { padding: 32px 0 20px; }
+.nhlx-bench-head { padding: 0 0 20px; }
 .nhlx-bench-head h1 { font-size: clamp(30px, 3.4vw, 42px); }
 .nhlx-bench-head .nhlx-counter { padding: 10px 16px; min-width: 130px; }
 .nhlx-bench-head .nhlx-counter b { font-size: 24px; }
@@ -598,4 +609,47 @@ p { margin: 0; }
   .nhlx-today { padding: 16px; }
   .nhlx-today-head .nhlx-auto-actions { width: 100%; }
   .nhlx-today-head .nhlx-input-sm { flex: 1; min-width: 0; }
+}
+
+/* ── Matchups / League ─────────────────────────────────────────────────── */
+.nhlx-mu-top { margin-top: 24px; }
+.nhlx-mu-top-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.nhlx-mu-top-head h3 { font-size: 22px; }
+.nhlx-mu-top-head .nhlx-tabs { margin-bottom: 0; }
+.nhlx-mu-game { margin-top: 28px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 20px 22px; box-shadow: var(--shadow); }
+.nhlx-mu-game-head { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 20px; color: var(--heading); }
+.nhlx-mu-game-head small { font-family: var(--font-ui); font-size: 13px; color: var(--muted); margin-left: 6px; }
+.nhlx-mu-side { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+.nhlx-mu-side-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--heading); }
+.nhlx-mu-side-head small { color: var(--muted); font-size: 13px; }
+.nhlx-mu-grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; }
+.nhlx-mu-table td, .nhlx-mu-table th { white-space: nowrap; }
+.nhlx-mu-table td small { color: var(--muted); font-size: 12px; margin-left: 4px; }
+.nhlx-mu-table tr.is-muted td { opacity: 0.55; }
+.nhlx-defcard { background: var(--bg-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+.nhlx-defcard-wide { margin: 8px 0 20px; background: var(--card); }
+.nhlx-defcard-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.nhlx-defcard-head b { display: block; color: var(--heading); font-size: 14px; }
+.nhlx-defcard-head small { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; }
+.nhlx-deftable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.nhlx-deftable th { text-align: left; font-weight: 600; font-size: 11px; color: var(--muted); padding: 5px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.nhlx-deftable td { padding: 6px; border-bottom: 1px solid var(--line); color: var(--heading); white-space: nowrap; }
+.nhlx-deftable tr:last-child td { border-bottom: 0; }
+.nhlx-deftable i, .nhlx-mu-table i { font-style: normal; font-size: 11px; color: var(--muted); margin-left: 3px; }
+td.is-soft { background: #ecfdf3; color: #15803d; border-radius: 6px; }
+td.is-tough { background: #fef2f2; color: #b91c1c; border-radius: 6px; }
+td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
+.nhlx-edge { display: inline-block; min-width: 46px; text-align: center; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 100px; background: var(--bg-soft); color: var(--muted); }
+.nhlx-edge.is-soft { background: #dcfce7; color: #15803d; }
+.nhlx-edge.is-tough { background: #fee2e2; color: #b91c1c; }
+.nhlx-lg-confs { display: grid; grid-template-columns: repeat(auto-fit, minmax(560px, 1fr)); gap: 0 32px; margin-top: 8px; }
+.nhlx-lg-div { margin-top: 12px; }
+.nhlx-lg-table td, .nhlx-lg-table th { white-space: nowrap; padding: 8px 10px; }
+.nhlx-lg-table th:first-child { font-size: 14px; color: var(--heading); }
+.nhlx-lg-table td.is-pos { color: var(--success); }
+.nhlx-lg-table td.is-neg { color: var(--danger); }
+.nhlx-lg-leaders td, .nhlx-lg-leaders th { white-space: nowrap; }
+@media (max-width: 991px) {
+  .nhlx-mu-grid { grid-template-columns: 1fr; }
+  .nhlx-lg-confs { grid-template-columns: 1fr; }
 }
