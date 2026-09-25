@@ -34,8 +34,8 @@ function Step({ num, title, done, running, optional, children }) {
   );
 }
 
-export default function SetupPanel({ onStatus }) {
-  const [s, setS] = useState(null);
+export default function SetupPanel({ onStatus, initial = null }) {
+  const [s, setS] = useState(initial);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState('');
   const [log, setLog] = useState({});
@@ -53,7 +53,7 @@ export default function SetupPanel({ onStatus }) {
       setErr(`Couldn’t check the setup: ${e.message}`);
     }
   }, [onStatus]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (!initial) load(); }, [load, initial]);
 
   const say = (k, text) => setLog((l) => ({ ...l, [k]: text }));
   const run = async (k, fn) => {

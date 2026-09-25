@@ -18,7 +18,7 @@ export async function GET(request) {
   if (!['logo', 'headshot'].includes(kind) || !/^[A-Z0-9]{1,12}$/i.test(id)) return Response.json({ error: 'bad request' }, { status: 400 });
   const stored = await readMedia(kind, id);
   if (stored) {
-    return new Response(stored.blob, { headers: { 'Content-Type': stored.type, 'Cache-Control': 'private, max-age=604800' } });
+    return new Response(stored.blob, { headers: { 'Content-Type': stored.type, 'Cache-Control': 'private, max-age=2592000, immutable' } });
   }
   let fallback = kind === 'logo' ? teamLogo(id.toUpperCase()) : (await loadPlayers()).players[id]?.headshot;
   if (!fallback) return new Response(null, { status: 404 });
