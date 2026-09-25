@@ -17,7 +17,9 @@ export async function POST(request) {
       return Response.json({ ok: true, result: await ingestPreseason(date) });
     }
     const force = new URL(request.url).searchParams.get('force') === '1';
-    const [games, lineups] = await Promise.all([ingestGames(date, { force }), force ? null : ingestLineups(date).catch((e) => ({ error: e.message }))]);
+    // lineups=0 skips the NHL.com preview lookup (old dates have none; a season backfill is much faster without it).
+    const skipLineups = force || new URL(request.url).searchParams.get('lineups') === '0';
+    const [games, lineups] = await Promise.all([ingestGames(date, { force }), skipLineups ? null : ingestLineups(date).catch((e) => ({ error: e.message }))]);
     return Response.json({ ok: true, result: { ...games, lineups } });
   } catch (err) {
     return Response.json({ ok: false, error: err.message }, { status: 502 });
