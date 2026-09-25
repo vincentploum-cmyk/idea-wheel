@@ -56,17 +56,35 @@ export async function GET(request) {
     preseason: pre?.players?.[p.id] ? { gp: pre.players[p.id].gp, last: pre.players[p.id].lastGame, team: pre.players[p.id].team, toi: pre.players[p.id].lastToi } : null,
   })).sort((a, b) => (a.team || '').localeCompare(b.team || '') || a.name.localeCompare(b.name));
 
-  const teams = (teamsFile?.teams || []).slice().sort((a, b) => (a.name || '').localeCompare(b.name || '')).map((t) => ({
-    ...t,
-    logo: teamLogo(t.abbrev),
-    players: players.filter((p) => p.team === t.abbrev && p.onRoster && !p.excluded).length,
-    preseasonDressed: players.filter((p) => p.team === t.abbrev && p.preseason?.gp).length,
-    gamesStored: gamesByTeam[t.abbrev] || 0,
-  }));
-
   const matched = matchNames(ref.players, sourceNames?.names || {});
   const display = matched.display;
   players.forEach((p) => { if (display[p.id]) p.propfinderName = display[p.id]; });
+
+  // A team is complete when it can dress a full lineup: 12 F, 6 D, 2 G on
+  // the roster, its last roster fetch worked, and PropFinder names resolve.
+  const failedFetch = new Set(lastRoster?.failed || []);
+  const unmatchedByTeam = {};
+  for (const u of matched.unmatched) if (u.team) unmatchedByTeam[u.team] = (unmatchedByTeam[u.team] || 0) + 1;
+  const teams = (teamsFile?.teams || []).slice().sort((a, b) => (a.name || '').localeCompare(b.name || '')).map((t) => {
+    const mine = players.filter((p) => p.team === t.abbrev && p.onRoster && !p.excluded);
+    const f = mine.filter((p) => ['C', 'LW', 'RW'].includes(p.pos)).length;
+    const d = mine.filter((p) => p.pos === 'D').length;
+    const g = mine.filter((p) => p.pos === 'G').length;
+    const issues = [];
+    if (failedFetch.has(t.abbrev)) issues.push('last roster fetch failed');
+    if (f < 12) issues.push(`only ${f} forwards`);
+    if (d < 6) issues.push(`only ${d} defensemen`);
+    if (g < 2) issues.push(`only ${g} goalie${g === 1 ? '' : 's'}`);
+    if (unmatchedByTeam[t.abbrev]) issues.push(`${unmatchedByTeam[t.abbrev]} PropFinder name${unmatchedByTeam[t.abbrev] === 1 ? '' : 's'} unmatched`);
+    return {
+      ...t,
+      logo: teamLogo(t.abbrev),
+      players: mine.length,
+      forwards: f, defense: d, goalies: g, issues, complete: issues.length === 0,
+      preseasonDressed: players.filter((p) => p.team === t.abbrev && p.preseason?.gp).length,
+      gamesStored: gamesByTeam[t.abbrev] || 0,
+    };
+  });
 
   return Response.json({
     updatedAt: ref.updatedAt,
