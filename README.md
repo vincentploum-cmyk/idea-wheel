@@ -34,7 +34,7 @@ produces its input workbooks, in the exact formats the parsers already read.
 | Input | Source | How it arrives |
 |---|---|---|
 | Season + L5 matchups | PropFinder export | Mac folder sync (`tools/mac-sync`) uploads `NHL-Goal-Matchups-*.xlsx` saved in `~/Desktop/NHL` |
-| Lineups | NHL.com game previews (forge API); before a preview exists, the beat writers' lines from gamedaytweets.com (`lib/nhl-data/gamedaytweets.js`) | scheduled refresh |
+| Lineups | Beat writers' game-day lines from gamedaytweets.com (`lib/nhl-data/gamedaytweets.js`), else NHL.com game previews (forge API) | scheduled refresh, incl. 19:15 / 22:15 ET warm-up runs |
 | Box scores | NHL API box score + play-by-play | scheduled refresh (next morning) |
 | Historical profiles | stored skater games, last 365 days | built on demand |
 | Home/away stats | stored skater games (last 82) incl. iCF/iFF/iSCF/iHDCF | built on demand |
