@@ -25,7 +25,7 @@ export function usePropfinder() {
 
 function teamMeta(t, against) {
   const n = t.count || Object.keys(t.teams).length;
-  return `${seasonLabel(t.season)} regular season${t.window ? ` · ${t.window}` : ''} · rank 1 = ${against ? 'most allowed (softest defense)' : 'highest'} of ${n} · as of ${day(t.asOf)} · data from PropFinder`;
+  return `${seasonLabel(t.season)} regular season${t.window ? ` · ${t.window}` : ''}${t.windowGames ? ' (rolling)' : ''} · rank 1 = ${against ? 'most allowed (softest defense)' : 'highest'} of ${n} · as of ${day(t.asOf)} · data from PropFinder`;
 }
 
 /**
@@ -80,8 +80,14 @@ export function TeamPropfinder({ abbr, pf }) {
 export function PropfinderTeamTable({ pf }) {
   const [sort, setSort] = useState('sog');
   const [side, setSide] = useState('teams');
+  const [win, setWin] = useState('season');
   const against = side !== 'teams';
-  const t = side.startsWith('opp-') ? pf?.opponentsByPos?.[side.slice(4)] : pf?.[side];
+  // Against views can switch to a recent-games window when such exports were imported.
+  const windows = [['season', 'Season'], ...Object.keys(pf?.opponentsByWindow || pf?.opponentsByPosWindow || {}).map((k) => [k, `Last ${k.slice(1)}`])];
+  const w = against && win !== 'season' ? win : null;
+  const t = side.startsWith('opp-')
+    ? (w ? pf?.opponentsByPosWindow?.[w]?.[side.slice(4)] : pf?.opponentsByPos?.[side.slice(4)])
+    : (w && side === 'opponents' ? pf?.opponentsByWindow?.[w] : pf?.[side]);
   const rows = useMemo(() => {
     if (!t?.teams) return [];
     const col = TEAM_COLS.find(([k]) => k === sort) || TEAM_COLS[0];
@@ -98,13 +104,22 @@ export function PropfinderTeamTable({ pf }) {
           <h3>Team season stats · PropFinder</h3>
           <p className="nhlx-auto-meta">{t ? teamMeta(t, against) : 'Not loaded yet.'} · click a column to sort</p>
         </div>
-        {available.length > 1 && (
-          <div className="nhlx-tabs" role="tablist">
-            {available.map(([key, label]) => (
-              <button key={key} type="button" role="tab" aria-selected={side === key} className={`nhlx-tab${side === key ? ' is-active' : ''}`} onClick={() => setSide(key)}>{label}</button>
-            ))}
-          </div>
-        )}
+        <div className="nhlx-auto-actions">
+          {against && windows.length > 1 && (
+            <div className="nhlx-tabs" role="tablist" aria-label="Window">
+              {windows.map(([key, label]) => (
+                <button key={key} type="button" role="tab" aria-selected={win === key} className={`nhlx-tab${win === key ? ' is-active' : ''}`} onClick={() => setWin(key)}>{label}</button>
+              ))}
+            </div>
+          )}
+          {available.length > 1 && (
+            <div className="nhlx-tabs" role="tablist" aria-label="Table">
+              {available.map(([key, label]) => (
+                <button key={key} type="button" role="tab" aria-selected={side === key} className={`nhlx-tab${side === key ? ' is-active' : ''}`} onClick={() => setSide(key)}>{label}</button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       {rows.length ? (
         <div className="nhlx-db-table-wrap">

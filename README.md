@@ -40,7 +40,7 @@ produces its input workbooks, in the exact formats the parsers already read.
 | Home/away stats | stored skater games (last 82) incl. iCF/iFF/iSCF/iHDCF | built on demand |
 | Defense rankings | latest PropFinder "Defense (Last 10)" block per team | updated on each matchup upload |
 | Pace | not automated (upload manually if wanted) | — |
-| PropFinder season stats | its Skater Stats / Team Stats CSV exports (`nhl-skater-stats-*.csv` season or last-N, `nhl-team-stats-Team-*.csv` for, `nhl-team-stats-Opponent-*.csv` against; add `-lw` / `-c` / `-rw` / `-d` to the file name of a per-position opponent export) | Mac folder sync or "Import PropFinder files"; shown on the team card, League and the player card (the final 2025-26 exports are bundled in `lib/nhl-data/seed/`) |
+| PropFinder season stats | its Skater Stats / Team Stats CSV exports (`nhl-skater-stats-*.csv` season or last-N, `nhl-team-stats-Team-*.csv` for, `nhl-team-stats-Opponent-*.csv` against; add `-lw` / `-c` / `-rw` / `-d` to the file name of a per-position opponent export; a "Last 10" or "Last 5" Window export is stored as its own table and feeds the rink's L10 / L5 toggle) | Mac folder sync or "Import PropFinder files"; shown on the team card, League and the player card (the final 2025-26 exports are bundled in `lib/nhl-data/seed/`) |
 
 - Schedule: `.github/workflows/nhl-data.yml` calls `POST /api/nhl/data/refresh`
   four times a day (anonymous calls are throttled to one per 15 min; the admin

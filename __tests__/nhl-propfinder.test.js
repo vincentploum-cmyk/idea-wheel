@@ -68,6 +68,14 @@ describe('propfinder csv', () => {
     expect(inspectPropfinderCsv(opp, 'nhl-team-stats-Opponent-2025-2026-09-30d.csv').position).toBe('D');
     expect(inspectPropfinderCsv(opp, 'nhl-team-stats-Opponent-2025-2026-09-30_all.csv').position).toBe('All');
     expect(inspectPropfinderCsv(opp, 'nhl-team-stats-Opponent-2025-2026-09-30.csv').position).toBe('All');
+    expect(inspectPropfinderCsv(opp, 'x-2025-2026-09-30.csv').windowGames).toBeNull();
+    expect(inspectPropfinderCsv(opp.replace('Window,Full Season', 'Window,Last 10 Games'), 'nhl-team-stats-Opponent-2025-2026-09-30-d.csv')).toMatchObject({ position: 'D', windowGames: 10 });
+    expect(inspectPropfinderCsv(opp.replace('Window,Full Season', 'Window,L5'), 'x-2025-2026-09-30-c.csv').windowGames).toBe(5);
+    // Hand-named exports: "nhl-team-stats-Opponent-2025-L10-2026-09-30_D_L10.csv".
+    const l10 = inspectPropfinderCsv(opp.replace('Window,Full Season', 'Window,Last 10'), 'nhl-team-stats-Opponent-2025-L10-2026-09-30_D_L10.csv');
+    expect(l10).toMatchObject({ statsType: 'opponent', position: 'D', windowGames: 10, season: 2025, date: '2026-09-30' });
+    expect(inspectPropfinderCsv(opp.replace('Window,Full Season', 'Window,Last 10'), 'nhl-team-stats-Opponent-2025-L10-2026-09-30_all_l10.csv').position).toBe('All');
+    expect(fileInfo('nhl-team-stats-Opponent-2025-L10-2026-09-30_RW_L10.csv')).toEqual({ season: 2025, date: '2026-09-30' });
   });
   test('a 5-on-5 or totals export is refused instead of mixed in', () => {
     expect(inspectPropfinderCsv(SKATERS.replace('Strength,All', 'Strength,5v5'), 'x-2025-2026-09-30.csv').error).toMatch(/Strength/);
@@ -96,10 +104,14 @@ describe('propfinder csv', () => {
     const teams = parsed.find((p) => p.kind === 'teams' && p.statsType === 'team');
     const opponents = parsed.find((p) => p.kind === 'teams' && p.statsType === 'opponent' && p.position === 'All');
     const l5 = parsed.find((p) => p.kind === 'skaters' && p.windowGames === 5);
-    const byPos = parsed.filter((p) => p.kind === 'teams' && p.statsType === 'opponent' && p.position !== 'All');
+    const byPos = parsed.filter((p) => p.kind === 'teams' && p.statsType === 'opponent' && p.position !== 'All' && !p.windowGames);
     expect(l5.players.length).toBeGreaterThan(100);
     expect(byPos.map((p) => p.position).sort()).toEqual(['C', 'D', 'LW', 'RW']);
     expect(byPos.every((p) => p.teams.length === 32 && !p.error)).toBe(true);
+    // Last-10 tables: the Kings allowed the 3rd-most shots to D over their last 10 (green on Colorado's rink).
+    const dL10 = parsed.find((p) => p.kind === 'teams' && p.statsType === 'opponent' && p.position === 'D' && p.windowGames === 10);
+    expect(dL10.teams.find((t) => t.abbr === 'LAK').ranks.sog).toBe(3);
+    expect(parsed.filter((p) => p.windowGames === 10 && p.statsType === 'opponent').map((p) => p.position).sort()).toEqual(['All', 'C', 'D', 'LW', 'RW']);
     expect(PROPFINDER_SEED.season).toBe(2025);
     expect(skaters).toMatchObject({ season: 2025, date: '2026-09-30', error: null });
     expect(skaters.players.length).toBeGreaterThan(100);
