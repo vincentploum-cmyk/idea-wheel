@@ -55,9 +55,12 @@ describe('defense by position', () => {
     expect(d.ranks.ANA.ALL.LW.sog).toBe(2);
     expect(d.league.ALL.LW.sog).toBe(4);
   });
-  test('lastN keeps only the newest team-games', () => {
+  test('lastN keeps only the newest team-games, per venue', () => {
     const d = defenseByPosition(rows, { lastN: 1 });
     expect(d.teams.OTT.ALL.LW).toMatchObject({ gp: 1, sog: 7 });
+    // OTT's newest game was away; its last home game is still game 1 (5 SOG allowed to LW).
+    expect(d.teams.OTT.H.LW).toMatchObject({ gp: 1, sog: 5 });
+    expect(d.teams.OTT.A.LW).toMatchObject({ gp: 1, sog: 7 });
   });
   test('player baselines average the window with venue splits and hit rates', () => {
     const b = playerBaselines(rows, { window: 20 });
