@@ -808,3 +808,9 @@ td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
 .nhlx-mp-table td, .nhlx-mp-table th { white-space: nowrap; }
 .nhlx-mp-table th.is-sorted { color: var(--primary); }
 .nhlx-mp-table i { font-style: normal; font-size: 11px; color: var(--muted); margin-left: 3px; }
+
+/* Position log */
+.nhlx-poslog { margin-top: 14px; border-top: 0; padding-top: 0; }
+.nhlx-poslog > summary { font-size: 16px; }
+.nhlx-poslog .nhlx-tabs { margin: 12px 0; }
+.nhlx-poslog td.is-diff { color: var(--warn-fg); }

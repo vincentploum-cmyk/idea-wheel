@@ -120,3 +120,22 @@ describe('player profile', () => {
     expect(['Hot', 'Cold', 'Neutral']).toContain(p.form.shots);
   });
 });
+
+describe('position sources', () => {
+  const { applyFrozenPositions } = require('../lib/nhl-data/positions');
+  const { toRow, rowObj } = require('../lib/nhl-data/ingest');
+  test('applied positions are tagged lineup, the rest box, and rows carry both', () => {
+    const snap = { games: { 9: { teams: { BOS: { players: { 'david pastrnak': { name: 'David Pastrnak', pos: 'LW', line: 1 } } } } } } };
+    const game = { id: 9, date: '2026-01-05', skaters: [
+      { id: 1, name: 'David Pastrnak', team: 'BOS', opp: 'NYR', venue: 'H', pos: 'RW', sog: 5, g: 1, a: 0, toi: 18, hits: 0, blk: 0, icf: 7, iff: 6, isf: 5, iscf: 3, ihdcf: 1, result: 'W' },
+      { id: 2, name: 'Charlie McAvoy', team: 'BOS', opp: 'NYR', venue: 'H', pos: 'D', sog: 2, g: 0, a: 1, toi: 22, hits: 0, blk: 0, icf: 3, iff: 3, isf: 2, iscf: 0, ihdcf: 0, result: 'W' },
+    ] };
+    expect(applyFrozenPositions([game], snap)).toBe(1);
+    expect(game.skaters[0]).toMatchObject({ pos: 'LW', boxPos: 'RW', posSource: 'lineup' });
+    expect(game.skaters[1]).toMatchObject({ pos: 'D', boxPos: 'D', posSource: 'box' });
+    const r = rowObj(toRow(game, game.skaters[0]));
+    expect(r).toMatchObject({ pos: 'LW', posSrc: 'lineup', boxPos: 'RW', opp: 'NYR', venue: 'H', sog: 5 });
+    // Older rows without the new columns still parse.
+    expect(rowObj(toRow(game, game.skaters[1]).slice(0, 20)).posSrc).toBeUndefined();
+  });
+});

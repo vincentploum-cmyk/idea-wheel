@@ -83,14 +83,14 @@ export default function SetupPanel({ onStatus, initial = null }) {
     say('media', `Copied ${n(total)} files; click again for the rest.`);
   });
 
-  const history = (range, key) => run('history', async () => {
+  const history = (range, key, force = false) => run('history', async () => {
     const list = dates(range.from, range.to);
     let games = 0;
     for (let i = 0; i < list.length; i++) {
       if (cancel.current) { say('history', `Stopped at ${list[i]} · ${n(games)} games added. Click again to continue; loaded days are skipped.`); return; }
       say('history', `Loading ${key} games… ${list[i]} (${i + 1}/${list.length}) · ${n(games)} new so far`);
       try {
-        const j = await post(`/api/nhl/data/backfill?date=${list[i]}&lineups=0`);
+        const j = await post(`/api/nhl/data/backfill?date=${list[i]}&lineups=0${force ? '&force=1' : ''}`);
         games += j.result?.ingested || 0;
       } catch (e) { /* a bad day never stops the season */ }
     }
@@ -182,8 +182,10 @@ export default function SetupPanel({ onStatus, initial = null }) {
           <div className="nhlx-auto-actions">
             <button type="button" className="nhlx-btn nhlx-btn-sm" disabled={!!busy} onClick={() => history(H.previous, `${H.previous.season.slice(0, 4)}-${H.previous.season.slice(6)}`)}>Load last season</button>
             <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={!!busy} onClick={() => history(H.current, 'this season')}>Load this season so far</button>
+            <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={!!busy} onClick={() => history(H.previous, `${H.previous.season.slice(0, 4)}-${H.previous.season.slice(6)} (positions redone)`, true)} title="Re-reads every loaded game of last season and fetches its NHL.com projected lineup, so each skater carries his pre-game position instead of the box-score code. Slow: about an hour.">Redo positions for loaded games</button>
             {busy === 'history' && <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" onClick={() => { cancel.current = true; }}>Stop</button>}
           </div>
+          <p className="nhlx-auto-meta">Every game is stored with each skater’s pre-game position (from the NHL.com projected lineup, frozen at puck drop or fetched afterwards) next to his box score; open any finished game in Matchups → Position log to see what fed the defense tables.</p>
           {log.history && <p className="nhlx-auto-msg">{log.history}</p>}
         </Step>
 
