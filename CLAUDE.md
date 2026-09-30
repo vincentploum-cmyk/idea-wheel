@@ -32,7 +32,8 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   `data/positions/<date>.json`; games never snapshotted get the NHL.com preview at ingest)
   and the stored skater rows carry that position plus its source (`posSrc`, `boxPos`). The
   Matchups tab (`lib/nhl-data/slate.js`; each game drawn as two rinks in
-  `components/nhl/Rink.jsx`, zones tinted by the opponent's SOG-allowed rank per position,
+  `components/nhl/Rink.jsx`, ice bands tinted by the opponent's SOG-allowed rank per position
+  for the window picked above the rink — home / away / L5 / L10, defaulting to tonight's venue —
   chips carrying the slate's projected SOG and goals) and the per-team defense card
   (`lib/nhl-data/defense.js`) are descriptive views over the stored rows; the model's
   own math stays in `NhlModel.jsx`. Logos/headshots are copied into `data/media/*` and

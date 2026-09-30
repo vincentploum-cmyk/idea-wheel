@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
 
@@ -137,14 +137,17 @@ function Chip({ p, x, y, minGp }) {
   );
 }
 
-function BandLabel({ pos, side, teamCount, x, y }) {
-  const d = side.defense?.[pos];
+// The toggle above each rink: which window of the opponent's defense tints the ice.
+const WINDOWS = [['home', 'Home'], ['away', 'Away'], ['l5', 'L5'], ['l10', 'L10']];
+const WINDOW_TEXT = { home: 'at home', away: 'away', l5: 'over its last 5 games', l10: 'over its last 10 games' };
+
+function BandLabel({ pos, d, opp, view, teamCount, x, y }) {
   const r = d?.rank || {};
   const s = d?.season;
   const n = d?.teamCount || teamCount;
   const tone = zoneTone(r.sog, n);
-  const from = d?.source === 'propfinder' ? ` · PropFinder ${d.seasonLabel} (last season, until ${side.opp} has 10 games at this venue)` : ' · this season\'s stored games';
-  const title = s?.gp ? `${side.opp} allows ${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'}) per game to ${pos} · rank 1 = most permissive of ${n}${from}` : `No defense data for ${side.opp} yet`;
+  const from = d?.source === 'propfinder' ? ` · PropFinder ${d.seasonLabel} (last season, until ${opp} has enough stored games)` : ` · this season's stored games (${s?.gp ?? 0})`;
+  const title = s?.gp ? `${opp} allows ${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'}) per game to ${pos} ${WINDOW_TEXT[view]} · rank 1 = most permissive of ${n}${from}` : `No defense data for ${opp} ${WINDOW_TEXT[view]} yet`;
   return (
     <div className={`nhlx-rk-zone is-${tone}`} style={{ left: `${x}%`, top: `${pct(y)}%` }} title={title}>
       <b>{pos}</b>{s?.gp ? <span>#{r.sog ?? '–'} SOG · #{r.g ?? '–'} G{d?.source === 'propfinder' ? <i title={`PropFinder ${d.seasonLabel}`}>PF</i> : null}</span> : <span>no data</span>}
@@ -155,8 +158,12 @@ function BandLabel({ pos, side, teamCount, x, y }) {
 /** One side of a game: `side` is an entry of a slate game's `sides`. */
 export function Rink({ side, teamCount, posFilter = '', minGp = 1 }) {
   const { placed, extras } = useMemo(() => layoutSide(side.skaters), [side.skaters]);
-  const tones = Object.fromEntries(ZONES.map((z) => [z, posFilter && posFilter !== z ? 'none' : zoneTone(side.defense?.[z]?.rank?.sog, side.defense?.[z]?.teamCount || teamCount)]));
-  const defVenue = side.venue === 'A' ? 'home' : 'away';
+  // Default window = where the opponent actually plays tonight (its home table when we're away).
+  const defaultView = side.venue === 'A' ? 'home' : 'away';
+  const [view, setView] = useState(null);
+  const v = view || defaultView;
+  const defAt = (pos) => side.defense?.[pos]?.windows?.[v] ?? (v === defaultView ? side.defense?.[pos] : null) ?? null;
+  const tones = Object.fromEntries(ZONES.map((z) => [z, posFilter && posFilter !== z ? 'none' : zoneTone(defAt(z)?.rank?.sog, defAt(z)?.teamCount || teamCount)]));
   const clipId = `rink-${side.team}-${side.opp}`;
   const open = usePlayerCard();
   return (
@@ -165,13 +172,23 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1 }) {
         <TeamLogo abbr={side.team} size={28} />
         <div>
           <b>{side.team} <small>{side.venue === 'H' ? 'home' : 'away'} · attacking upwards</small></b>
-          <small>Ice tinted by what {side.opp} allows at {defVenue} to each position (rank 1 = most permissive of {teamCount}) · lines from {side.source === 'lineup' ? 'the NHL.com projected lineup' : side.source === 'gamedaytweets' ? <>the beat writers via GameDayTweets{side.sourceMeta?.handle ? <> (<a href={side.sourceMeta.url || 'https://www.gamedaytweets.com/lines'} target="_blank" rel="noopener noreferrer">@{side.sourceMeta.handle}</a>{side.sourceMeta.date ? `, ${side.sourceMeta.date}` : ''})</> : null}</> : 'the roster, ordered by projected shots (no lines yet)'}</small>
+          <small>Ice tinted by what {side.opp} allows {WINDOW_TEXT[v]} to each position (rank 1 = most permissive) · lines from {side.source === 'lineup' ? 'the NHL.com projected lineup' : side.source === 'gamedaytweets' ? <>the beat writers via GameDayTweets{side.sourceMeta?.handle ? <> (<a href={side.sourceMeta.url || 'https://www.gamedaytweets.com/lines'} target="_blank" rel="noopener noreferrer">@{side.sourceMeta.handle}</a>{side.sourceMeta.date ? `, ${side.sourceMeta.date}` : ''})</> : null}</> : 'the roster, ordered by projected shots (no lines yet)'}</small>
+        </div>
+      </div>
+      <div className="nhlx-rk-toggle">
+        <small>{side.opp} allows</small>
+        <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label={`Window of ${side.opp}'s defense`}>
+          {WINDOWS.map(([k, l]) => (
+            <button key={k} type="button" role="tab" aria-selected={v === k} className={`nhlx-tab${v === k ? ' is-active' : ''}`} onClick={() => setView(k)} title={k === defaultView ? `Tonight's venue for ${side.opp}` : undefined}>
+              {l}{k === defaultView ? <i aria-label="tonight's venue">•</i> : null}
+            </button>
+          ))}
         </div>
       </div>
       <div className={`nhlx-rk${posFilter ? ` is-filter-${posFilter.toLowerCase()}` : ''}`}>
         <RinkMarkings clipId={clipId} tones={tones} />
-        {F_POS.map((z) => <BandLabel key={z} pos={z} side={side} teamCount={teamCount} x={F_X[z]} y={6} />)}
-        <BandLabel pos="D" side={side} teamCount={teamCount} x={50} y={100} />
+        {F_POS.map((z) => <BandLabel key={z} pos={z} d={defAt(z)} opp={side.opp} view={v} teamCount={teamCount} x={F_X[z]} y={6} />)}
+        <BandLabel pos="D" d={defAt('D')} opp={side.opp} view={v} teamCount={teamCount} x={50} y={100} />
         {F_Y.map((y, i) => <div key={`l${i}`} className="nhlx-rk-tag" style={{ top: `${pct(y - 8.3)}%` }}>Line {i + 1}</div>)}
         {D_Y.map((y, i) => <div key={`d${i}`} className="nhlx-rk-tag" style={{ top: `${pct(y - 8.3)}%` }}>Pair {i + 1}</div>)}
         {placed.map(({ p, x, y }) => <Chip key={`${p.team}-${p.name}`} p={p} x={x} y={y} minGp={minGp} />)}
