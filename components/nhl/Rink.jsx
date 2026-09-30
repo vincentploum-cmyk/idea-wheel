@@ -19,6 +19,17 @@ const D_Y = [118, 143, 168];                   // defense pair centres
 const D_X = [31, 69];
 const pct = (ft) => ft / 2;                    // 200 ft → 100 %
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
+const et = (iso) => (iso ? `${new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })} ET` : null);
+
+/** "lines from … · NHL.com lineup updated 5:30 PM ET · captured 7:20 PM ET". */
+function SourceLine({ side }) {
+  const m = side.sourceMeta || {};
+  const gdt = m.handle ? <>the beat writers via GameDayTweets (<a href={m.url || 'https://www.gamedaytweets.com/lines'} target="_blank" rel="noopener noreferrer">@{m.handle}</a>{m.at ? `, ${et(m.at)}` : m.date ? `, ${m.date}` : ''})</> : null;
+  const nhl = m.nhlUpdated ? `NHL.com lineup updated ${et(m.nhlUpdated)}` : null;
+  if (side.source === 'gamedaytweets') return <>lines from {gdt}{nhl ? ` · ${nhl}` : ''}{m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}</>;
+  if (side.source === 'lineup') return <>lines from the NHL.com projected lineup{nhl ? ` (updated ${et(m.nhlUpdated)})` : ''}{gdt ? <> · older tweet from {gdt}</> : ''}{m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}</>;
+  return <>lines from the roster, ordered by projected shots (no lines yet{m.capturedAt ? `, last checked ${et(m.capturedAt)}` : ''})</>;
+}
 
 /** League rank (1 = most permissive) → 'soft' | 'mid' | 'tough' | 'none'. */
 export function zoneTone(rank, teams) {
@@ -172,7 +183,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1 }) {
         <TeamLogo abbr={side.team} size={28} />
         <div>
           <b>{side.team} <small>{side.venue === 'H' ? 'home' : 'away'} · attacking upwards</small></b>
-          <small>Ice tinted by what {side.opp} allows {WINDOW_TEXT[v]} to each position (rank 1 = most permissive) · lines from {side.source === 'lineup' ? 'the NHL.com projected lineup' : side.source === 'gamedaytweets' ? <>the beat writers via GameDayTweets{side.sourceMeta?.handle ? <> (<a href={side.sourceMeta.url || 'https://www.gamedaytweets.com/lines'} target="_blank" rel="noopener noreferrer">@{side.sourceMeta.handle}</a>{side.sourceMeta.date ? `, ${side.sourceMeta.date}` : ''})</> : null}</> : 'the roster, ordered by projected shots (no lines yet)'}</small>
+          <small>Ice tinted by what {side.opp} allows {WINDOW_TEXT[v]} to each position (rank 1 = most permissive) · <SourceLine side={side} /></small>
         </div>
       </div>
       <div className="nhlx-rk-toggle">

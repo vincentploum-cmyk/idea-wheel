@@ -14,7 +14,7 @@ async function handle(request) {
   const url = new URL(request.url);
   const auth = await authorize(request, { allowToken: true });
   const date = url.searchParams.get('date') || todayET();
-  const only = url.searchParams.get('only'); // games | lineups | (default) daily
+  const only = url.searchParams.get('only'); // games | lineups (&due=<minutes>: only games starting within that window) | (default) daily
   if (!DATE_RE.test(date)) return Response.json({ error: 'bad date' }, { status: 400 });
 
   if (!auth.ok) {
@@ -28,7 +28,7 @@ async function handle(request) {
   try {
     let result;
     if (only === 'games') result = await ingestGames(date, { force: url.searchParams.get('force') === '1' });
-    else if (only === 'lineups') result = await ingestLineups(date);
+    else if (only === 'lineups') result = await ingestLineups(date, { dueWithinMin: Number(url.searchParams.get('due')) || null });
     else result = await dailyRefresh(date);
     return Response.json({ ok: true, result }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {

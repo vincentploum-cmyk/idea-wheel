@@ -1,5 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
-import { parseLinesPage, parseTweetDate, parseLineTweet, splitNames, rosterMatcher, latestTeamLines, linesToPlayers, decodeEntities } from '../lib/nhl-data/gamedaytweets';
+import { parseLinesPage, parseTweetDate, parseLineTweet, splitNames, rosterMatcher, latestTeamLines, linesToPlayers, decodeEntities, tweetTime } from '../lib/nhl-data/gamedaytweets';
+import { dueGames } from '../lib/nhl-data/ingest';
 import { NYR_PAGE } from './fixtures/gamedaytweets';
 
 const P = (id, name, pos) => ({ id, name, pos, team: 'NYR' });
@@ -22,6 +23,20 @@ describe('gamedaytweets page', () => {
     expect(tweets[0].text.split('\n')[1]).toBe('Bjorkstrand-Miller-Dorofeyev');
     expect(tweets[2].text).toContain('Lafrenière');
     expect(tweets[1].text).toContain("I'm wondering");
+  });
+  test('a tweet id carries its posting time (snowflake)', () => {
+    // Andrew Gross's Islanders warm-up tweet, shown on the page as 7:13 PM ET on Sep 30, 2026.
+    const at = tweetTime('2105356143518273856');
+    expect(at.slice(0, 10)).toBe('2026-09-30');
+    expect(parseLinesPage(NYR_PAGE)[0].at).toBe(at);
+    expect(tweetTime('nope')).toBeNull();
+    expect(new Date(tweetTime('2105079538430746826')).toISOString() < at).toBe(true); // Sep 29 < Sep 30
+  });
+  test('dueGames picks games starting within the window', () => {
+    const now = Date.parse('2026-10-01T22:30:00Z');
+    const sched = [{ id: 1, startTimeUTC: '2026-10-01T23:00:00Z' }, { id: 2, startTimeUTC: '2026-10-02T02:00:00Z' }, { id: 3, startTimeUTC: '2026-10-01T22:00:00Z' }];
+    expect(dueGames(sched, 150, now).map((g) => g.id)).toEqual([1]);
+    expect(dueGames(sched, 240, now).map((g) => g.id)).toEqual([1, 2]);
   });
   test('dates and entities', () => {
     expect(parseTweetDate('Sep 30, 2026')).toBe('2026-09-30');
