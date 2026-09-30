@@ -151,7 +151,7 @@ export function PropfinderSkaterTable({ pf }) {
   const [all, setAll] = useState(false);
   const [win, setWin] = useState('skaters');
   const s = pf?.[win];
-  const windows = [['skaters', 'Season'], ['skatersL5', 'Last 5']].filter(([k]) => pf?.[k]?.players);
+  const windows = [['skaters', 'Season'], ['skatersL5', 'Last 5'], ['skatersL5Home', 'Last 5 home'], ['skatersL5Away', 'Last 5 away']].filter(([k]) => pf?.[k]?.players);
   const cols = SKATER_COLS.filter(([k]) => s?.players?.some((p) => p[k] != null));
   const rows = useMemo(() => {
     if (!s?.players) return [];
@@ -164,7 +164,7 @@ export function PropfinderSkaterTable({ pf }) {
         <div>
           <h3>Skater season rates · PropFinder</h3>
           <p className="nhlx-auto-meta">
-            {s ? `${s.windowGames ? `last ${s.windowGames} games` : seasonLabel(s.season)} · all strengths, per game · ${s.count} skaters (${s.matched} matched to NHL players) · as of ${day(s.asOf)} · data from PropFinder` : 'Not loaded yet.'} · click a column to sort
+            {s ? `${s.windowGames ? `last ${s.windowGames}${s.split === 'H' ? ' home' : s.split === 'A' ? ' away' : ''} games` : seasonLabel(s.season)} · all strengths, per game · ${s.count} skaters (${s.matched} matched to NHL players) · as of ${day(s.asOf)} · data from PropFinder` : 'Not loaded yet.'} · click a column to sort
           </p>
         </div>
         <div className="nhlx-auto-actions">
