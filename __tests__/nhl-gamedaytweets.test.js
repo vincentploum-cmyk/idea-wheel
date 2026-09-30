@@ -25,7 +25,7 @@ describe('gamedaytweets page', () => {
     expect(tweets[1].text).toContain("I'm wondering");
   });
   test('a tweet id carries its posting time (snowflake)', () => {
-    // Andrew Gross's Islanders warm-up tweet, shown on the page as 7:13 PM ET on Sep 30, 2026.
+    // Colin Stephenson's Rangers practice tweet from the fixture page: Sep 30, 2026, early afternoon ET.
     const at = tweetTime('2105356143518273856');
     expect(at.slice(0, 10)).toBe('2026-09-30');
     expect(parseLinesPage(NYR_PAGE)[0].at).toBe(at);
