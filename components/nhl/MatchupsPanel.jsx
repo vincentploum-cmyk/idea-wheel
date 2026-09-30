@@ -202,7 +202,7 @@ export default function MatchupsPanel() {
       const j = await res.json();
       if (!res.ok || !j.ok) throw new Error(j.error || j.reason || `${res.status}`);
       const r = j.result || {};
-      setLineMsg(`Lines updated: ${r.gamedaytweets ?? 0} team${r.gamedaytweets === 1 ? '' : 's'} from GameDayTweets, ${r.withLineups ?? 0} of ${r.scheduled ?? 0} games with an NHL.com lineup.`);
+      setLineMsg(`Lines updated at ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })} ET: ${r.gamedaytweets ?? 0} team${r.gamedaytweets === 1 ? '' : 's'} from GameDayTweets, ${r.withLineups ?? 0} of ${r.scheduled ?? 0} games with an NHL.com lineup${r.positions?.frozen ? `, ${r.positions.frozen} game${r.positions.frozen === 1 ? '' : 's'} frozen` : ''}. Each rink says when its source last changed.`);
       await load(date);
     } catch (e) {
       setLineMsg(`Couldn’t update the lines: ${e.message}`);
