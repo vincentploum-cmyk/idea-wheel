@@ -141,11 +141,13 @@ function BandLabel({ pos, side, teamCount, x, y }) {
   const d = side.defense?.[pos];
   const r = d?.rank || {};
   const s = d?.season;
-  const tone = zoneTone(r.sog, teamCount);
-  const title = s?.gp ? `${side.opp} allows ${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'}) per game to ${pos} · rank 1 = most permissive of ${teamCount}` : `No defense data for ${side.opp} yet`;
+  const n = d?.teamCount || teamCount;
+  const tone = zoneTone(r.sog, n);
+  const from = d?.source === 'propfinder' ? ` · PropFinder ${d.seasonLabel} (last season, until ${side.opp} has 10 games at this venue)` : ' · this season\'s stored games';
+  const title = s?.gp ? `${side.opp} allows ${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'}) per game to ${pos} · rank 1 = most permissive of ${n}${from}` : `No defense data for ${side.opp} yet`;
   return (
     <div className={`nhlx-rk-zone is-${tone}`} style={{ left: `${x}%`, top: `${pct(y)}%` }} title={title}>
-      <b>{pos}</b>{s?.gp ? <span>#{r.sog ?? '–'} SOG · #{r.g ?? '–'} G</span> : <span>no data</span>}
+      <b>{pos}</b>{s?.gp ? <span>#{r.sog ?? '–'} SOG · #{r.g ?? '–'} G{d?.source === 'propfinder' ? <i title={`PropFinder ${d.seasonLabel}`}>PF</i> : null}</span> : <span>no data</span>}
     </div>
   );
 }
@@ -153,7 +155,7 @@ function BandLabel({ pos, side, teamCount, x, y }) {
 /** One side of a game: `side` is an entry of a slate game's `sides`. */
 export function Rink({ side, teamCount, posFilter = '', minGp = 1 }) {
   const { placed, extras } = useMemo(() => layoutSide(side.skaters), [side.skaters]);
-  const tones = Object.fromEntries(ZONES.map((z) => [z, posFilter && posFilter !== z ? 'none' : zoneTone(side.defense?.[z]?.rank?.sog, teamCount)]));
+  const tones = Object.fromEntries(ZONES.map((z) => [z, posFilter && posFilter !== z ? 'none' : zoneTone(side.defense?.[z]?.rank?.sog, side.defense?.[z]?.teamCount || teamCount)]));
   const defVenue = side.venue === 'A' ? 'home' : 'away';
   const clipId = `rink-${side.team}-${side.opp}`;
   const open = usePlayerCard();
@@ -163,7 +165,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1 }) {
         <TeamLogo abbr={side.team} size={28} />
         <div>
           <b>{side.team} <small>{side.venue === 'H' ? 'home' : 'away'} · attacking upwards</small></b>
-          <small>Ice tinted by what {side.opp} allows at {defVenue} to each position (rank 1 = most permissive of {teamCount}) · lines from {side.source === 'lineup' ? 'the projected lineup' : 'the roster, ordered by projected shots (no lineup yet)'}</small>
+          <small>Ice tinted by what {side.opp} allows at {defVenue} to each position (rank 1 = most permissive of {teamCount}) · lines from {side.source === 'lineup' ? 'the NHL.com projected lineup' : side.source === 'gamedaytweets' ? <>the beat writers via GameDayTweets{side.sourceMeta?.handle ? <> (<a href={side.sourceMeta.url || 'https://www.gamedaytweets.com/lines'} target="_blank" rel="noopener noreferrer">@{side.sourceMeta.handle}</a>{side.sourceMeta.date ? `, ${side.sourceMeta.date}` : ''})</> : null}</> : 'the roster, ordered by projected shots (no lines yet)'}</small>
         </div>
       </div>
       <div className={`nhlx-rk${posFilter ? ` is-filter-${posFilter.toLowerCase()}` : ''}`}>

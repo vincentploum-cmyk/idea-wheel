@@ -845,6 +845,7 @@ td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
   padding: 0.5cqw 2cqw; border-radius: 100px; background: color-mix(in oklab, var(--card) 88%, transparent); border: 1px solid var(--line);
   font-size: max(10px, 2.5cqw); color: var(--muted); }
 .nhlx-rk-zone b { font-family: var(--font-display); font-weight: 700; font-size: max(11px, 3cqw); color: var(--heading); letter-spacing: 0.04em; }
+.nhlx-rk-zone i { font-style: normal; font-size: max(8px, 1.9cqw); letter-spacing: 0.08em; margin-left: 0.6cqw; padding: 0 0.7cqw; border-radius: 3px; background: color-mix(in oklab, var(--heading) 10%, transparent); color: var(--muted) !important; }
 .nhlx-rk-zone.is-soft { border-color: color-mix(in oklab, var(--ok-fg) 50%, transparent); } .nhlx-rk-zone.is-soft b, .nhlx-rk-zone.is-soft span { color: var(--ok-fg); }
 .nhlx-rk-zone.is-mid { border-color: color-mix(in oklab, var(--warning) 55%, transparent); } .nhlx-rk-zone.is-mid b, .nhlx-rk-zone.is-mid span { color: var(--warn-fg); }
 .nhlx-rk-zone.is-tough { border-color: color-mix(in oklab, var(--bad-fg) 50%, transparent); } .nhlx-rk-zone.is-tough b, .nhlx-rk-zone.is-tough span { color: var(--bad-fg); }

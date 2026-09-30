@@ -199,12 +199,12 @@ function Card({ req, onClose }) {
                       </tr>
                     );
                   })}
-                  {p.propfinder && (
-                    <tr>
-                      <td><b>PropFinder {p.propfinder.season}-{String(p.propfinder.season + 1).slice(2)}</b><small style={{ display: 'block', fontWeight: 400 }}>all strengths · as of {p.propfinder.asOf}{p.propfinder.status ? ` · ${p.propfinder.status}` : ''}</small></td>
-                      {STAT_COLS.map(([c]) => <td key={c}>{c === 'gp' ? p.propfinder.gp : num(p.propfinder[c], c === 'toi' ? 1 : 2)}</td>)}
+                  {[['propfinder', (r) => `PropFinder ${r.season}-${String(r.season + 1).slice(2)}`], ['propfinderL5', () => 'PropFinder last 5']].map(([k, label]) => p[k] && (
+                    <tr key={k}>
+                      <td><b>{label(p[k])}</b><small style={{ display: 'block', fontWeight: 400 }}>all strengths · as of {p[k].asOf}{p[k].status ? ` · ${p[k].status}` : ''}</small></td>
+                      {STAT_COLS.map(([c]) => <td key={c}>{c === 'gp' ? p[k].gp : num(p[k][c], c === 'toi' ? 1 : 2)}</td>)}
                     </tr>
-                  )}
+                  ))}
                 </tbody>
               </table>
             </div>

@@ -57,9 +57,22 @@ describe('propfinder csv', () => {
     expect(info.players[0]).toMatchObject({ name: 'Nathan MacKinnon', pos: 'C', gp: 80, toi: 22.26, g: 0.66, sog: 4.38, isf: 4.38, icf: 7.49, iff: 5.86, iscf: 3.61, ihdcf: 1.24 });
     expect(info.players[1]).toMatchObject({ name: 'Mackie Samoskevich', status: 'IR', sog: 2.09 });
   });
+  test('a "Count Window" of 5 is a last-five table with the season from the export date', () => {
+    const info = inspectPropfinderCsv(SKATERS.replace('Count Window,2025', 'Count Window,5'), 'nhl-skater-stats-All-All-All-5-2026-09-30.csv');
+    expect(info).toMatchObject({ kind: 'skaters', windowGames: 5, season: 2026, date: '2026-09-30', error: null });
+    expect(info.players[0].gp).toBe(80);
+  });
+  test('per-position opponent exports carry the position from the file name', () => {
+    const opp = TEAMS.replace('Stats Type,Team', 'Stats Type,Opponent');
+    expect(inspectPropfinderCsv(opp, 'nhl-team-stats-Opponent-2025-2026-09-30-lw.csv')).toMatchObject({ statsType: 'opponent', position: 'LW', season: 2025, date: '2026-09-30' });
+    expect(inspectPropfinderCsv(opp, 'nhl-team-stats-Opponent-2025-2026-09-30d.csv').position).toBe('D');
+    expect(inspectPropfinderCsv(opp, 'nhl-team-stats-Opponent-2025-2026-09-30_all.csv').position).toBe('All');
+    expect(inspectPropfinderCsv(opp, 'nhl-team-stats-Opponent-2025-2026-09-30.csv').position).toBe('All');
+  });
   test('a 5-on-5 or totals export is refused instead of mixed in', () => {
     expect(inspectPropfinderCsv(SKATERS.replace('Strength,All', 'Strength,5v5'), 'x-2025-2026-09-30.csv').error).toMatch(/Strength/);
     expect(inspectPropfinderCsv(SKATERS.replace('Rate,Per Game', 'Rate,Total'), 'x-2025-2026-09-30.csv').error).toMatch(/Rate/);
+    expect(inspectPropfinderCsv(SKATERS.replace('Split,All', 'Split,Home'), 'x-2025-2026-09-30.csv').error).toMatch(/Split/);
     expect(inspectPropfinderCsv('a,b\n1,2\n', 'x.csv')).toMatchObject({ kind: null });
   });
   test('team export → values and PropFinder ranks per team', () => {
@@ -81,7 +94,12 @@ describe('propfinder csv', () => {
     const parsed = PROPFINDER_SEED.files.map((f) => inspectPropfinderCsv(f.text, f.name));
     const skaters = parsed.find((p) => p.kind === 'skaters');
     const teams = parsed.find((p) => p.kind === 'teams' && p.statsType === 'team');
-    const opponents = parsed.find((p) => p.kind === 'teams' && p.statsType === 'opponent');
+    const opponents = parsed.find((p) => p.kind === 'teams' && p.statsType === 'opponent' && p.position === 'All');
+    const l5 = parsed.find((p) => p.kind === 'skaters' && p.windowGames === 5);
+    const byPos = parsed.filter((p) => p.kind === 'teams' && p.statsType === 'opponent' && p.position !== 'All');
+    expect(l5.players.length).toBeGreaterThan(100);
+    expect(byPos.map((p) => p.position).sort()).toEqual(['C', 'D', 'LW', 'RW']);
+    expect(byPos.every((p) => p.teams.length === 32 && !p.error)).toBe(true);
     expect(PROPFINDER_SEED.season).toBe(2025);
     expect(skaters).toMatchObject({ season: 2025, date: '2026-09-30', error: null });
     expect(skaters.players.length).toBeGreaterThan(100);

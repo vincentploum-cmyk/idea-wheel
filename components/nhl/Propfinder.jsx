@@ -39,7 +39,10 @@ function Cell({ row, ranks, k, d, dir, n, against }) {
 /** One team's PropFinder season lines: what it produced and what it allowed. */
 export function TeamPropfinder({ abbr, pf }) {
   if (!pf) return null;
-  const rows = SIDES.map(([key, label]) => [key, label, pf[key]]).filter(([, , t]) => t?.teams?.[abbr]);
+  const rows = [
+    ...SIDES.map(([key, label]) => [key, label, pf[key]]),
+    ...['LW', 'C', 'RW', 'D'].map((pos) => [`opp-${pos}`, `Allows to ${pos}`, pf.opponentsByPos?.[pos]]),
+  ].filter(([, , t]) => t?.teams?.[abbr]);
   if (!rows.length) return <p className="nhlx-auto-meta">No PropFinder team stats for {abbr} yet — import an nhl-team-stats CSV below.</p>;
   const first = rows[0][2];
   return (
@@ -62,7 +65,7 @@ export function TeamPropfinder({ abbr, pf }) {
                 <tr key={key}>
                   <td><b>{label}</b></td>
                   <td>{row.gp ?? '—'}</td>
-                  {TEAM_COLS.map(([k, , d, dir]) => <Cell key={k} row={row} ranks={ranks} k={k} d={d} dir={dir} n={n} against={key === 'opponents'} />)}
+                  {TEAM_COLS.map(([k, , d, dir]) => <Cell key={k} row={row} ranks={ranks} k={k} d={d} dir={dir} n={n} against={key !== 'teams'} />)}
                 </tr>
               );
             })}
@@ -77,8 +80,8 @@ export function TeamPropfinder({ abbr, pf }) {
 export function PropfinderTeamTable({ pf }) {
   const [sort, setSort] = useState('sog');
   const [side, setSide] = useState('teams');
-  const against = side === 'opponents';
-  const t = pf?.[side];
+  const against = side !== 'teams';
+  const t = side.startsWith('opp-') ? pf?.opponentsByPos?.[side.slice(4)] : pf?.[side];
   const rows = useMemo(() => {
     if (!t?.teams) return [];
     const col = TEAM_COLS.find(([k]) => k === sort) || TEAM_COLS[0];
@@ -87,7 +90,7 @@ export function PropfinderTeamTable({ pf }) {
     return Object.entries(t.teams).sort((a, b) => dir * ((a[1][sort] ?? -Infinity) - (b[1][sort] ?? -Infinity)) || a[0].localeCompare(b[0]));
   }, [t, sort, against]);
   const n = t?.count || rows.length;
-  const available = SIDES.filter(([key]) => pf?.[key]?.teams);
+  const available = [...SIDES.filter(([key]) => pf?.[key]?.teams), ...['LW', 'C', 'RW', 'D'].filter((p) => pf?.opponentsByPos?.[p]?.teams).map((p) => [`opp-${p}`, `vs ${p}`])];
   return (
     <div className="nhlx-pf">
       <div className="nhlx-mu-top-head" style={{ marginTop: 36 }}>
@@ -131,7 +134,9 @@ export function PropfinderSkaterTable({ pf }) {
   const [pos, setPos] = useState('');
   const [sort, setSort] = useState('sog');
   const [all, setAll] = useState(false);
-  const s = pf?.skaters;
+  const [win, setWin] = useState('skaters');
+  const s = pf?.[win];
+  const windows = [['skaters', 'Season'], ['skatersL5', 'Last 5']].filter(([k]) => pf?.[k]?.players);
   const cols = SKATER_COLS.filter(([k]) => s?.players?.some((p) => p[k] != null));
   const rows = useMemo(() => {
     if (!s?.players) return [];
@@ -144,13 +149,22 @@ export function PropfinderSkaterTable({ pf }) {
         <div>
           <h3>Skater season rates · PropFinder</h3>
           <p className="nhlx-auto-meta">
-            {s ? `${seasonLabel(s.season)} · all strengths, per game · ${s.count} skaters (${s.matched} matched to NHL players) · as of ${day(s.asOf)} · data from PropFinder` : 'Not loaded yet.'} · click a column to sort
+            {s ? `${s.windowGames ? `last ${s.windowGames} games` : seasonLabel(s.season)} · all strengths, per game · ${s.count} skaters (${s.matched} matched to NHL players) · as of ${day(s.asOf)} · data from PropFinder` : 'Not loaded yet.'} · click a column to sort
           </p>
         </div>
-        <div className="nhlx-tabs" role="tablist">
-          {POS_TABS.map(([k, l]) => (
-            <button key={k} type="button" role="tab" aria-selected={pos === k} className={`nhlx-tab${pos === k ? ' is-active' : ''}`} onClick={() => setPos(k)}>{l}</button>
-          ))}
+        <div className="nhlx-auto-actions">
+          {windows.length > 1 && (
+            <div className="nhlx-tabs" role="tablist" aria-label="Window">
+              {windows.map(([k, l]) => (
+                <button key={k} type="button" role="tab" aria-selected={win === k} className={`nhlx-tab${win === k ? ' is-active' : ''}`} onClick={() => setWin(k)}>{l}</button>
+              ))}
+            </div>
+          )}
+          <div className="nhlx-tabs" role="tablist" aria-label="Position">
+            {POS_TABS.map(([k, l]) => (
+              <button key={k} type="button" role="tab" aria-selected={pos === k} className={`nhlx-tab${pos === k ? ' is-active' : ''}`} onClick={() => setPos(k)}>{l}</button>
+            ))}
+          </div>
         </div>
       </div>
       {rows.length ? (
