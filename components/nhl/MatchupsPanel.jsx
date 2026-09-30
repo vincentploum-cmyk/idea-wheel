@@ -192,6 +192,25 @@ export default function MatchupsPanel() {
   }, []);
   useEffect(() => { load(''); }, [load]);
 
+  // Pull the beat writers' lines (GameDayTweets) and NHL.com's lineups for this date right now.
+  const [lineMsg, setLineMsg] = useState('');
+  const refreshLines = async () => {
+    setBusy(true);
+    setLineMsg('Reading GameDayTweets and NHL.com lineups…');
+    try {
+      const res = await fetch(`/api/nhl/data/refresh?only=lineups&date=${date}`, { method: 'POST' });
+      const j = await res.json();
+      if (!res.ok || !j.ok) throw new Error(j.error || j.reason || `${res.status}`);
+      const r = j.result || {};
+      setLineMsg(`Lines updated: ${r.gamedaytweets ?? 0} team${r.gamedaytweets === 1 ? '' : 's'} from GameDayTweets, ${r.withLineups ?? 0} of ${r.scheduled ?? 0} games with an NHL.com lineup.`);
+      await load(date);
+    } catch (e) {
+      setLineMsg(`Couldn’t update the lines: ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const shift = (n) => {
     const d = new Date(`${date}T12:00:00Z`);
     d.setUTCDate(d.getUTCDate() + n);
@@ -230,8 +249,10 @@ export default function MatchupsPanel() {
           <select className="nhlx-input nhlx-input-sm" value={minGp} onChange={(e) => setMinGp(Number(e.target.value))} aria-label="Minimum games">
             {[1, 5, 10].map((n) => <option key={n} value={n}>{n}+ GP</option>)}
           </select>
+          <button type="button" className="nhlx-btn nhlx-btn-sm" disabled={busy || !date} onClick={refreshLines} title="Read the beat writers' lines on GameDayTweets and NHL.com's projected lineups for this date now">Refresh lines</button>
         </div>
       </div>
+      {lineMsg && <p className="nhlx-auto-msg" role="status">{lineMsg}</p>}
 
       {err && <div className="nhlx-alert">⚠ {err}</div>}
       {!slate && !err && <div className="nhlx-empty">Loading tonight’s matchups…</div>}

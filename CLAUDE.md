@@ -33,7 +33,8 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   and the stored skater rows carry that position plus its source (`posSrc`, `boxPos`). The
   Matchups tab (`lib/nhl-data/slate.js`; each game drawn as two rinks in
   `components/nhl/Rink.jsx`, ice bands tinted by the opponent's SOG-allowed rank per position
-  for the window picked above the rink — home / away / L5 / L10, defaulting to tonight's venue —
+  for the window picked above the rink — home / away / L5 / L10 / L5 home / L5 away, defaulting to
+  tonight's venue —
   chips carrying the slate's projected SOG and goals) and the per-team defense card
   (`lib/nhl-data/defense.js`) are descriptive views over the stored rows; the model's
   own math stays in `NhlModel.jsx`. Logos/headshots are copied into `data/media/*` and
@@ -41,7 +42,8 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching) for every slate team; a
   game-day tweet beats the NHL.com preview, otherwise the preview, then an older tweet, then
-  the roster. Evening workflow runs (19:15 / 22:15 ET) re-read lineups for warm-up lines.
+  the roster. Evening workflow runs (19:15 / 22:15 ET) re-read lineups for warm-up lines, and the
+  Matchups tab's "Refresh lines" button does the same on demand.
 - PropFinder CSV exports (skater per-game rates for the season or last N games, team stats for and
   against with ranks, opponent stats per position tagged by a `-lw/-c/-rw/-d` file-name suffix) are imported by
   `lib/nhl-data/propfinder.js` into `data/propfinder/*` (one snapshot per season; the

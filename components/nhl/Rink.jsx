@@ -138,8 +138,8 @@ function Chip({ p, x, y, minGp }) {
 }
 
 // The toggle above each rink: which window of the opponent's defense tints the ice.
-const WINDOWS = [['home', 'Home'], ['away', 'Away'], ['l5', 'L5'], ['l10', 'L10']];
-const WINDOW_TEXT = { home: 'at home', away: 'away', l5: 'over its last 5 games', l10: 'over its last 10 games' };
+const WINDOWS = [['home', 'Home'], ['away', 'Away'], ['l5', 'L5'], ['l10', 'L10'], ['l5home', 'L5 home'], ['l5away', 'L5 away']];
+const WINDOW_TEXT = { home: 'at home', away: 'away', l5: 'over its last 5 games', l10: 'over its last 10 games', l5home: 'over its last 5 home games', l5away: 'over its last 5 away games' };
 
 function BandLabel({ pos, d, opp, view, teamCount, x, y }) {
   const r = d?.rank || {};

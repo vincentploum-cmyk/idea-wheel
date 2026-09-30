@@ -83,7 +83,8 @@ export function PropfinderTeamTable({ pf }) {
   const [win, setWin] = useState('season');
   const against = side !== 'teams';
   // Against views can switch to a recent-games window when such exports were imported.
-  const windows = [['season', 'Season'], ...Object.keys(pf?.opponentsByWindow || pf?.opponentsByPosWindow || {}).map((k) => [k, `Last ${k.slice(1)}`])];
+  const winLabel = (k) => `Last ${k.match(/\d+/)[0]}${k.endsWith('home') ? ' home' : k.endsWith('away') ? ' away' : ''}`;
+  const windows = [['season', 'Season'], ...[...new Set([...Object.keys(pf?.opponentsByWindow || {}), ...Object.keys(pf?.opponentsByPosWindow || {})])].map((k) => [k, winLabel(k)])];
   const w = against && win !== 'season' ? win : null;
   const t = side.startsWith('opp-')
     ? (w ? pf?.opponentsByPosWindow?.[w]?.[side.slice(4)] : pf?.opponentsByPos?.[side.slice(4)])
