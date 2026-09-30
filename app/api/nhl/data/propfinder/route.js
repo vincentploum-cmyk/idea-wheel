@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request) {
   const auth = await authorize(request);
   if (!auth.ok) return auth.response;
-  const [{ skaters, skatersL5, teams, opponents, opponentsByPos }, ref] = await Promise.all([loadPropfinder(), loadPlayers()]);
+  const [{ skaters, skatersL5, teams, opponents, opponentsByPos, opponentsByPosWindow, opponentsByWindow }, ref] = await Promise.all([loadPropfinder(), loadPlayers()]);
   return Response.json({
     source: 'PropFinder',
     skaterCols: SKATER_COLS,
@@ -22,5 +22,7 @@ export async function GET(request) {
     teams,
     opponents,
     opponentsByPos,
+    opponentsByPosWindow,
+    opponentsByWindow,
   }, { headers: { 'Cache-Control': 'no-store' } });
 }
