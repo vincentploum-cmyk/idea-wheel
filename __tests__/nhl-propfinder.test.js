@@ -80,7 +80,11 @@ describe('propfinder csv', () => {
   test('a 5-on-5 or totals export is refused instead of mixed in', () => {
     expect(inspectPropfinderCsv(SKATERS.replace('Strength,All', 'Strength,5v5'), 'x-2025-2026-09-30.csv').error).toMatch(/Strength/);
     expect(inspectPropfinderCsv(SKATERS.replace('Rate,Per Game', 'Rate,Total'), 'x-2025-2026-09-30.csv').error).toMatch(/Rate/);
-    expect(inspectPropfinderCsv(SKATERS.replace('Split,All', 'Split,Home'), 'x-2025-2026-09-30.csv').error).toMatch(/Split/);
+    expect(inspectPropfinderCsv(SKATERS.replace('Split,All', 'Split,Neutral'), 'x-2025-2026-09-30.csv').error).toMatch(/Split/);
+    const home = inspectPropfinderCsv(SKATERS.replace('Split,All', 'Split,Home').replace('Count Window,2025', 'Count Window,5'), 'nhl-skater-stats-All-All-Home-5-2026-09-30_home_last_5.csv');
+    expect(home).toMatchObject({ kind: 'skaters', split: 'H', windowGames: 5, season: 2026, date: '2026-09-30', error: null });
+    expect(inspectPropfinderCsv(SKATERS.replace('Split,All', 'Split,Away'), 'x-2025-2026-09-30.csv').split).toBe('A');
+    expect(inspectPropfinderCsv(SKATERS, 'x-2025-2026-09-30.csv').split).toBeNull();
     expect(inspectPropfinderCsv('a,b\n1,2\n', 'x.csv')).toMatchObject({ kind: null });
   });
   test('team export → values and PropFinder ranks per team', () => {
@@ -103,7 +107,11 @@ describe('propfinder csv', () => {
     const skaters = parsed.find((p) => p.kind === 'skaters');
     const teams = parsed.find((p) => p.kind === 'teams' && p.statsType === 'team');
     const opponents = parsed.find((p) => p.kind === 'teams' && p.statsType === 'opponent' && p.position === 'All');
-    const l5 = parsed.find((p) => p.kind === 'skaters' && p.windowGames === 5);
+    const l5 = parsed.find((p) => p.kind === 'skaters' && p.windowGames === 5 && !p.split);
+    const l5Home = parsed.find((p) => p.kind === 'skaters' && p.windowGames === 5 && p.split === 'H');
+    const l5Away = parsed.find((p) => p.kind === 'skaters' && p.windowGames === 5 && p.split === 'A');
+    expect(l5Home.players.length).toBeGreaterThan(100);
+    expect(l5Away.players.find((p) => p.name === 'Quinton Byfield')).toMatchObject({ pos: 'C', sog: 4.4, g: 0.8 });
     const byPos = parsed.filter((p) => p.kind === 'teams' && p.statsType === 'opponent' && p.position !== 'All' && !p.windowGames);
     expect(l5.players.length).toBeGreaterThan(100);
     expect(byPos.map((p) => p.position).sort()).toEqual(['C', 'D', 'LW', 'RW']);

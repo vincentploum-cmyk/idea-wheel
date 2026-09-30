@@ -7,6 +7,8 @@ on:
     - cron: '0 13 * * *'   # ~9:00 ET  yesterday's results + morning lineups
     - cron: '0 17 * * *'   # ~13:00 ET lineup updates
     - cron: '30 21 * * *'  # ~17:30 ET pre-game lineups
+    - cron: '15 23 * * *'  # ~19:15 ET warm-up lines (east) — lineups only
+    - cron: '15 2 * * *'   # ~22:15 ET warm-up lines (west) — lineups only
     - cron: '30 4 * * *'   # ~00:30 ET late finals
   workflow_dispatch:
     inputs:
@@ -26,7 +28,10 @@ jobs:
           [ -z "$DATE" ] && DATE=$(TZ=America/New_York date +%F)
           # The late run belongs to the previous ET day.
           if [ "$(date -u +%H)" = "04" ] && [ -z "${{ github.event.inputs.date }}" ]; then DATE=$(TZ=America/New_York date -d 'yesterday' +%F); fi
-          echo "Refreshing $DATE"
-          code=$(curl -sS -o resp.json -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?date=$DATE")
+          # The evening runs only re-read lineups (beat-writer warm-up lines) for the ET day.
+          ONLY=""
+          case "$(date -u +%H)" in 23|02) ONLY="&only=lineups"; [ "$(date -u +%H)" = "02" ] && DATE=$(TZ=America/New_York date +%F);; esac
+          echo "Refreshing $DATE $ONLY"
+          code=$(curl -sS -o resp.json -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?date=$DATE$ONLY")
           cat resp.json; echo
           [ "$code" = "200" ] || [ "$code" = "429" ]

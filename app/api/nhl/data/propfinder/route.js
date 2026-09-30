@@ -1,5 +1,5 @@
 import { authorize } from '@/lib/nhl-data/util';
-import { loadPropfinder, skatersWithIds } from '@/lib/nhl-data/propfinder';
+import { loadPropfinder, skatersWithIds, SKATER_TABLES } from '@/lib/nhl-data/propfinder';
 import { loadPlayers } from '@/lib/nhl-data/rosters';
 import { SKATER_COLS, TEAM_COLS } from '@/lib/nhl-data/propfinder-csv';
 
@@ -12,13 +12,12 @@ export const dynamic = 'force-dynamic';
 export async function GET(request) {
   const auth = await authorize(request);
   if (!auth.ok) return auth.response;
-  const [{ skaters, skatersL5, teams, opponents, opponentsByPos, opponentsByPosWindow, opponentsByWindow }, ref] = await Promise.all([loadPropfinder(), loadPlayers()]);
+  const [{ teams, opponents, opponentsByPos, opponentsByPosWindow, opponentsByWindow, ...skaterTables }, ref] = await Promise.all([loadPropfinder(), loadPlayers()]);
   return Response.json({
     source: 'PropFinder',
     skaterCols: SKATER_COLS,
     teamCols: TEAM_COLS,
-    skaters: skatersWithIds(skaters, ref.players),
-    skatersL5: skatersWithIds(skatersL5, ref.players),
+    ...Object.fromEntries(Object.keys(SKATER_TABLES).map((k) => [k, skatersWithIds(skaterTables[k], ref.players)])),
     teams,
     opponents,
     opponentsByPos,

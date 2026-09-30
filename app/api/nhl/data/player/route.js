@@ -34,5 +34,7 @@ export async function GET(request) {
     // PropFinder's own season rates for the same player (null until an export names them).
     propfinder: skaterFor(pf.skaters, { name, team }),
     propfinderL5: skaterFor(pf.skatersL5, { name, team }),
+    propfinderL5Home: skaterFor(pf.skatersL5Home, { name, team }),
+    propfinderL5Away: skaterFor(pf.skatersL5Away, { name, team }),
   }, { headers: { 'Cache-Control': 'no-store' } });
 }
