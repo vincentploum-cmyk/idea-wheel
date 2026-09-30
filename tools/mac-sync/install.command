@@ -51,5 +51,5 @@ echo "Running a first sync. macOS will ask whether \"NHL Sync\" may access your 
 open -W -a "$APP"
 tail -n 5 "$HOME/Library/Logs/nhl-sync.log" 2>/dev/null || true
 echo
-echo "Done. PropFinder matchup files saved in Desktop/NHL (or its Match days folders) now upload automatically."
+echo "Done. PropFinder matchup workbooks and skater/team stats CSV exports saved in Desktop/NHL (or its Match days folders) now upload automatically."
 echo "Log: ~/Library/Logs/nhl-sync.log   Uninstall: double-click uninstall.command"

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Headshot, TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { MoneyPuckTable } from './MoneyPuck';
+import { PropfinderSkaterTable, PropfinderTeamTable, usePropfinder } from './Propfinder';
 
 const LEADER_TABS = [['points', 'Points'], ['goals', 'Goals'], ['assists', 'Assists'], ['shots', 'Shots']];
 
@@ -76,6 +77,7 @@ export default function LeaguePanel() {
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState('points');
+  const pf = usePropfinder();
 
   const load = useCallback(async (refresh = false) => {
     setBusy(true);
@@ -115,6 +117,8 @@ export default function LeaguePanel() {
         </div>
       </div>
       <Leaders leaders={data.leaders} tab={tab} />
+      <PropfinderTeamTable pf={pf} />
+      <PropfinderSkaterTable pf={pf} />
       <MoneyPuckTable />
     </div>
   );

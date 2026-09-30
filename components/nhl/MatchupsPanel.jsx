@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Headshot, TeamLogo, rankClass } from './media';
 import { usePlayerCard, FormChip } from './PlayerCard';
 import { oppClass } from './MoneyPuck';
+import { Rink, RinkLegend } from './Rink';
 
 const POS = ['LW', 'C', 'RW', 'D'];
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
@@ -199,6 +200,8 @@ export default function MatchupsPanel() {
     if (!slate) return [];
     return slate.games.map((g) => ({
       ...g,
+      // The rinks show every skater and dim the rest; the tables filter.
+      rinkSides: g.sides,
       sides: g.sides.map((s) => ({ ...s, skaters: s.skaters.filter((p) => (!pos || p.pos === pos) && (p.gp || 0) >= minGp) })),
     }));
   }, [slate, pos, minGp]);
@@ -263,20 +266,27 @@ export default function MatchupsPanel() {
                 <TeamLogo abbr={g.home} size={34} />
                 <small>{fmtTime(g.startTimeUTC)}{g.frozen ? ' · positions frozen' : ''}</small>
               </div>
+              <div className="nhlx-rink-pair">
+                {g.rinkSides.map((s) => <Rink key={s.team} side={s} teamCount={slate.teamCount} posFilter={pos} minGp={minGp} />)}
+              </div>
+              <RinkLegend />
               {g.log && <PositionLog game={g} />}
-              {g.sides.map((s) => (
-                <div key={s.team} className="nhlx-mu-side">
-                  <div className="nhlx-mu-side-head">
-                    <TeamLogo abbr={s.team} size={22} />
-                    <b>{s.team} skaters</b>
-                    <small>{s.venue === 'H' ? 'home' : 'away'} · positions from {s.source === 'lineup' ? 'the projected lineup' : 'the roster (no lineup yet)'}</small>
+              <details className="nhlx-db-details nhlx-mu-details">
+                <summary>Defense tables and all skaters</summary>
+                {g.sides.map((s) => (
+                  <div key={s.team} className="nhlx-mu-side">
+                    <div className="nhlx-mu-side-head">
+                      <TeamLogo abbr={s.team} size={22} />
+                      <b>{s.team} skaters</b>
+                      <small>{s.venue === 'H' ? 'home' : 'away'} · positions from {s.source === 'lineup' ? 'the projected lineup' : 'the roster (no lineup yet)'}</small>
+                    </div>
+                    <div className="nhlx-mu-grid">
+                      <DefenseCard side={s} teamCount={slate.teamCount} mp={slate.moneypuck} />
+                      {s.skaters.length ? <SkaterTable skaters={s.skaters} teamCount={slate.teamCount} /> : <p className="nhlx-auto-meta">No skaters match the filter.</p>}
+                    </div>
                   </div>
-                  <div className="nhlx-mu-grid">
-                    <DefenseCard side={s} teamCount={slate.teamCount} mp={slate.moneypuck} />
-                    {s.skaters.length ? <SkaterTable skaters={s.skaters} teamCount={slate.teamCount} /> : <p className="nhlx-auto-meta">No skaters match the filter.</p>}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </details>
             </article>
           ))}
         </>

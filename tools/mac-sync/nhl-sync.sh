@@ -1,7 +1,8 @@
 #!/bin/bash
-# NHL Model folder sync: uploads new PropFinder matchup workbooks
-# (NHL-Goal-Matchups-*.xlsx) saved anywhere in ~/Desktop/NHL (including the
-# "Match days" subfolders) to ideareels.io. Installed by install.command;
+# NHL Model folder sync: uploads new PropFinder files — matchup workbooks
+# (NHL-Goal-Matchups-*.xlsx) and the skater / team stats exports
+# (nhl-skater-stats-*.csv, nhl-team-stats-*.csv) — saved anywhere in ~/Desktop/NHL
+# (including the "Match days" subfolders) to ideareels.io. Installed by install.command;
 # launchd runs it when the folder changes and every 5 minutes.
 set -u
 CONF="$HOME/.config/nhl-model"
@@ -26,7 +27,7 @@ if ! ls "$WATCH_DIR" >/dev/null 2>&1; then
   exit 0
 fi
 
-find "$WATCH_DIR" -maxdepth 3 -type f -name 'NHL-Goal-Matchups-*.xlsx' -not -name '~$*' -not -path '*/.*' -mtime -3 -print0 2>/dev/null |
+find "$WATCH_DIR" -maxdepth 3 -type f \( -name 'NHL-Goal-Matchups-*.xlsx' -o -name 'nhl-skater-stats-*.csv' -o -name 'nhl-team-stats-*.csv' \) -not -name '~$*' -not -path '*/.*' -mtime -3 -print0 2>/dev/null |
 while IFS= read -r -d '' f; do
   name="$(basename "$f")"
   key="$name|$(stat -f %m "$f")|$(stat -f %z "$f")"
