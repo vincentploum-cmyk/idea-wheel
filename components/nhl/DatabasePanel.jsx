@@ -4,6 +4,9 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Headshot, TeamLogo, rankClass } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { TeamMoneyPuck } from './MoneyPuck';
+import { TeamPropfinder } from './Propfinder';
+
+const PF_FILE = /^(NHL-Goal-Matchups-.*\.xlsx|nhl-(?:skater|team)-stats-.*\.csv)$/i;
 
 const POSITIONS = ['C', 'LW', 'RW', 'D', 'G'];
 const GROUP_OF = { C: 'Forwards', LW: 'Forwards', RW: 'Forwards', D: 'Defense', G: 'Goalies' };
@@ -211,6 +214,7 @@ function DatabasePanel() {
   const [imp, setImp] = useState(null);
   const [defense, setDefense] = useState(null);
   const [mp, setMp] = useState(null);
+  const [pf, setPf] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -221,6 +225,7 @@ function DatabasePanel() {
     } catch (e) {
       setErr(`Couldn’t load the database: ${e.message}`);
     }
+    fetch('/api/nhl/data/propfinder', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j) setPf(j); }).catch(() => {});
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -304,8 +309,8 @@ function DatabasePanel() {
   };
 
   const importFiles = async (fileList) => {
-    const files = [...fileList].filter((f) => /^NHL-Goal-Matchups-.*\.xlsx$/i.test(f.name));
-    if (!files.length) { setMsg('No NHL-Goal-Matchups-*.xlsx files in that selection.'); return; }
+    const files = [...fileList].filter((f) => PF_FILE.test(f.name));
+    if (!files.length) { setMsg('No PropFinder files in that selection (NHL-Goal-Matchups-*.xlsx, nhl-skater-stats-*.csv or nhl-team-stats-*.csv).'); return; }
     // Clean names first so they win over "_with_expected"-style variants.
     files.sort((a, b) => a.name.length - b.name.length);
     setImp({ done: 0, total: files.length, ok: 0, failed: [] });
@@ -434,6 +439,7 @@ function DatabasePanel() {
             <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ marginLeft: 'auto' }} onClick={() => setTeam('')}>All teams</button>
           </div>
           <TeamDefense abbr={selected.abbrev} defense={defense} />
+          <TeamPropfinder abbr={selected.abbrev} pf={pf} />
           <TeamMoneyPuck abbr={selected.abbrev} mp={mp} />
           {roster.map(([label, rows]) => (
             <div key={label} className="nhlx-db-group">
@@ -485,6 +491,8 @@ function DatabasePanel() {
             </div>
           ))}
           <div className="nhlx-counter"><b>{db.propfinder.names - db.propfinder.unmatched.length}/{db.propfinder.names}</b><span>PropFinder names matched</span></div>
+          {pf?.skaters && <div className="nhlx-counter"><b>{pf.skaters.count}</b><span>PropFinder skater rates {pf.skaters.season}-{String(pf.skaters.season + 1).slice(2)} · as of {pf.skaters.asOf}</span></div>}
+          {pf?.teams && <div className="nhlx-counter"><b>{pf.teams.count}</b><span>PropFinder team stats {pf.teams.season}-{String(pf.teams.season + 1).slice(2)} · as of {pf.teams.asOf}</span></div>}
         </div>
         <div className="nhlx-auto nhlx-db-actions">
           <div className="nhlx-auto-head">
@@ -498,7 +506,7 @@ function DatabasePanel() {
               <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy} onClick={fetchMedia} title="Copy team logos and player photos into Supabase so they never depend on the NHL's CDN">Fetch logos &amp; photos</button>
               <label className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ cursor: 'pointer' }}>
                 Import PropFinder files
-                <input type="file" multiple accept=".xlsx" style={{ display: 'none' }} onChange={(e) => { importFiles(e.target.files); e.target.value = ''; }} />
+                <input type="file" multiple accept=".xlsx,.csv" style={{ display: 'none' }} onChange={(e) => { importFiles(e.target.files); e.target.value = ''; }} />
               </label>
               <label className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ cursor: 'pointer' }}>
                 Import a whole folder

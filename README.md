@@ -40,13 +40,14 @@ produces its input workbooks, in the exact formats the parsers already read.
 | Home/away stats | stored skater games (last 82) incl. iCF/iFF/iSCF/iHDCF | built on demand |
 | Defense rankings | latest PropFinder "Defense (Last 10)" block per team | updated on each matchup upload |
 | Pace | not automated (upload manually if wanted) | — |
+| PropFinder season stats | its Skater Stats / Team Stats CSV exports (`nhl-skater-stats-*.csv`, `nhl-team-stats-*.csv`) | Mac folder sync or "Import PropFinder files"; shown on the team card, League and the player card (the final 2025-26 exports are bundled in `lib/nhl-data/seed/`) |
 
 - Schedule: `.github/workflows/nhl-data.yml` calls `POST /api/nhl/data/refresh`
   four times a day (anonymous calls are throttled to one per 15 min; the admin
   UI can refresh any time).
 - Storage (bucket `nhl-model`): `data/games/<date>.json`, `data/rows/<season>.json`,
   `data/lineups/<date>.json`, `data/slates/<date>/{season,l5}.xlsx`,
-  `data/defense/latest.json`.
+  `data/defense/latest.json`, `data/propfinder/{skaters,teams}-<year>.json`.
 - iSCF / iHDCF are a Natural Stat Trick-style approximation from shot
   location (see `lib/nhl-data/game.js`), not NST's exact numbers.
 - Lineups are only auto-loaded once every game on the slate has a preview,
