@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Headshot, TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
 
-// One team's skaters on a rink, grouped into the four position zones (LW, C,
-// RW up front; D at the back). Each zone is tinted by what tonight's opponent
-// allows to that position at this venue: green = permissive third of the
-// league, amber = middle, red = stingiest third. Every chip carries the
-// player's projected shots and goals from the slate (player rate × defense ratio).
+// One team's skaters on a rink seen from behind their own goal: LW, C and RW
+// left to right in the attacking half, D behind them, goal lines horizontal.
+// Each zone is tinted by what tonight's opponent allows to that position at
+// this venue: green = permissive third of the league, amber = middle, red =
+// stingiest third. Every chip carries the player's projected shots and goals
+// from the slate (player rate × defense ratio).
 export const ZONES = ['LW', 'C', 'RW', 'D'];
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
 
@@ -37,14 +38,14 @@ function useSize(ref) {
 }
 
 /**
- * Rink markings in pixels for the measured box. `a` runs 0 (own goal) → 1
- * (attacking goal): to the right on a wide rink, up on a tall one.
+ * Rink markings in pixels for the measured box. `a` runs 0 (own goal, bottom)
+ * → 1 (attacking goal, top); `c` runs left → right.
  */
-function RinkLines({ w, h, horizontal }) {
+function RinkLines({ w, h }) {
   if (!w || !h) return null;
-  const L = horizontal ? w : h;
-  const S = horizontal ? h : w;
-  const pt = (a, c) => (horizontal ? [a * L, c * S] : [c * S, (1 - a) * L]);
+  const L = h;
+  const S = w;
+  const pt = (a, c) => [c * S, (1 - a) * L];
   const line = (a, cls) => { const [x1, y1] = pt(a, 0); const [x2, y2] = pt(a, 1); return <line key={`${a}-${cls}`} x1={x1} y1={y1} x2={x2} y2={y2} className={cls} />; };
   const circle = (a, c, r, cls) => { const [cx, cy] = pt(a, c); return <circle key={`${a}-${c}-${cls}`} cx={cx} cy={cy} r={r} className={cls} />; };
   const R = 0.075 * L; // 15 ft on a 200 ft rink
@@ -52,10 +53,8 @@ function RinkLines({ w, h, horizontal }) {
   const crease = (a) => {
     const [gx, gy] = pt(a, 0.5);
     const r = 0.03 * L;
-    const dir = (a < 0.5 ? 1 : -1) * (horizontal ? 1 : -1);
-    const d = horizontal
-      ? `M${gx},${gy - r} A${r},${r} 0 0 ${dir > 0 ? 1 : 0} ${gx},${gy + r}`
-      : `M${gx - r},${gy} A${r},${r} 0 0 ${dir > 0 ? 0 : 1} ${gx + r},${gy}`;
+    const dir = a < 0.5 ? -1 : 1;
+    const d = `M${gx - r},${gy} A${r},${r} 0 0 ${dir > 0 ? 0 : 1} ${gx + r},${gy}`;
     return <path key={`crease-${a}`} d={d} className="nhlx-rink-crease" />;
   };
   return (
@@ -126,7 +125,8 @@ function Zone({ pos, side, teamCount, skaters, minGp, dim, compact }) {
 export function Rink({ side, teamCount, posFilter = '', minGp = 1 }) {
   const ref = useRef(null);
   const { w, h } = useSize(ref);
-  const horizontal = w === 0 || w >= 560;
+  // Narrow rinks (a phone) show last names in the forward lanes.
+  const compact = w > 0 && w < 560;
   const defVenue = side.venue === 'A' ? 'home' : 'away';
   const byPos = Object.fromEntries(ZONES.map((z) => [z, side.skaters.filter((p) => p.pos === z)]));
   return (
@@ -135,18 +135,17 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1 }) {
         <TeamLogo abbr={side.team} size={26} />
         <div>
           <b>{side.team} <small>{side.venue === 'H' ? 'home' : 'away'}</small></b>
-          <small>Attacking {horizontal ? 'to the right' : 'upwards'} · zones show what {side.opp} allows at {defVenue} to each position · rank 1 = most permissive of {teamCount} · positions from {side.source === 'lineup' ? 'the projected lineup' : 'the roster (no lineup yet)'}</small>
+          <small>Attacking upwards · zones show what {side.opp} allows at {defVenue} to each position · rank 1 = most permissive of {teamCount} · positions from {side.source === 'lineup' ? 'the projected lineup' : 'the roster (no lineup yet)'}</small>
         </div>
       </div>
       <div
         ref={ref}
-        className={`nhlx-rink${horizontal ? '' : ' is-vertical'}`}
-        style={{ borderRadius: horizontal ? '14% / 33%' : '33% / 14%' }}
+        className="nhlx-rink"
       >
-        <RinkLines w={w} h={h} horizontal={horizontal} />
+        <RinkLines w={w} h={h} />
         <div className="nhlx-rink-zones">
           {ZONES.map((z) => (
-            <Zone key={z} pos={z} side={side} teamCount={teamCount} skaters={byPos[z]} minGp={minGp} dim={!!posFilter && posFilter !== z} compact={!horizontal && z !== 'D'} />
+            <Zone key={z} pos={z} side={side} teamCount={teamCount} skaters={byPos[z]} minGp={minGp} dim={!!posFilter && posFilter !== z} compact={compact && z !== 'D'} />
           ))}
         </div>
       </div>
