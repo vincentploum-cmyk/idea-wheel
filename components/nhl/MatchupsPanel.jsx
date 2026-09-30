@@ -170,7 +170,6 @@ export default function MatchupsPanel() {
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
   const [pos, setPos] = useState('');
-  const [top, setTop] = useState('shots');
   const [minGp, setMinGp] = useState(5);
 
   const load = useCallback(async (d) => {
@@ -206,11 +205,6 @@ export default function MatchupsPanel() {
     }));
   }, [slate, pos, minGp]);
 
-  const topList = useMemo(() => {
-    if (!slate) return [];
-    return slate.top[top].filter((p) => !pos || p.pos === pos);
-  }, [slate, top, pos]);
-
   const pretty = date ? new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' }) : '';
 
   return (
@@ -242,24 +236,8 @@ export default function MatchupsPanel() {
 
       {slate && slate.games.length > 0 && (
         <>
-          <div className="nhlx-mu-top">
-            <div className="nhlx-mu-top-head">
-              <h3>Best matchups tonight</h3>
-              <div className="nhlx-tabs" role="tablist">
-                {[['shots', 'Shots'], ['goals', 'Goals']].map(([k, l]) => (
-                  <button key={k} type="button" role="tab" aria-selected={top === k} className={`nhlx-tab${top === k ? ' is-active' : ''}`} onClick={() => setTop(k)}>{l}</button>
-                ))}
-              </div>
-            </div>
-            {topList.length ? (
-              <SkaterTable skaters={topList} showTeam teamCount={slate.teamCount} />
-            ) : (
-              <p className="nhlx-auto-meta">Nothing to rank yet: players need at least 5 stored games and a defense table for the opponent.</p>
-            )}
-          </div>
-
-          {filtered.map((g) => (
-            <article key={g.id} className="nhlx-mu-game" id={`game-${g.id}`}>
+          {filtered.map((g, i) => (
+            <article key={g.id} className={`nhlx-mu-game${i === 0 ? ' is-first' : ''}`} id={`game-${g.id}`}>
               <div className="nhlx-mu-game-head">
                 <TeamLogo abbr={g.away} size={34} />
                 <b>{g.away} @ {g.home}</b>
