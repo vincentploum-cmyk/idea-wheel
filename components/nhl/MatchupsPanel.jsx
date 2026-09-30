@@ -58,8 +58,8 @@ function DefenseCard({ side, teamCount, mp }) {
             const rl10 = d?.l10Rank || {};
             return (
               <tr key={pos}>
-                <td><b>{pos}</b></td>
-                <td className={rankClass(r.sog, teamCount)}>{s?.gp ? `${num(s.sog)} ` : '—'}{r.sog ? <i>#{r.sog}</i> : null}</td>
+                <td><b>{pos}</b>{d?.source === 'propfinder' ? <i title={`PropFinder ${d.seasonLabel}`}> PF</i> : null}</td>
+                <td className={rankClass(r.sog, d?.teamCount || teamCount)}>{s?.gp ? `${num(s.sog)} ` : '—'}{r.sog ? <i>#{r.sog}</i> : null}</td>
                 <td className={rankClass(r.g, teamCount)}>{s?.gp ? `${num(s.g, 2)} ` : '—'}{r.g ? <i>#{r.g}</i> : null}</td>
                 <td className={rankClass(r.iscf, teamCount)}>{s?.gp ? `${num(s.iscf)} ` : '—'}{r.iscf ? <i>#{r.iscf}</i> : null}</td>
                 <td className={rankClass(rl10.sog, teamCount)}>{l10?.gp ? `${num(l10.sog)} ` : '—'}{rl10.sog ? <i>#{rl10.sog}</i> : null}</td>
@@ -68,7 +68,10 @@ function DefenseCard({ side, teamCount, mp }) {
           })}
         </tbody>
       </table>
-      <small className="nhlx-auto-meta">{side.defense.All?.season?.gp || 0} games at {defVenue} this season</small>
+      <small className="nhlx-auto-meta">
+        {side.defense.All?.season?.gp || 0} games at {defVenue} this season
+        {POS.some((p) => side.defense[p]?.source === 'propfinder') ? ` · positions marked PF use PropFinder ${POS.map((p) => side.defense[p]?.seasonLabel).find(Boolean)} (last season) until 10 games are stored` : ''}
+      </small>
       <MpLine mp={mp} opp={side.opp} venue={side.venue} />
     </div>
   );

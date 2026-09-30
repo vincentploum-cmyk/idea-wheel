@@ -12,13 +12,15 @@ export const dynamic = 'force-dynamic';
 export async function GET(request) {
   const auth = await authorize(request);
   if (!auth.ok) return auth.response;
-  const [{ skaters, teams, opponents }, ref] = await Promise.all([loadPropfinder(), loadPlayers()]);
+  const [{ skaters, skatersL5, teams, opponents, opponentsByPos }, ref] = await Promise.all([loadPropfinder(), loadPlayers()]);
   return Response.json({
     source: 'PropFinder',
     skaterCols: SKATER_COLS,
     teamCols: TEAM_COLS,
     skaters: skatersWithIds(skaters, ref.players),
+    skatersL5: skatersWithIds(skatersL5, ref.players),
     teams,
     opponents,
+    opponentsByPos,
   }, { headers: { 'Cache-Control': 'no-store' } });
 }

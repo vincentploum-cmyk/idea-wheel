@@ -32,16 +32,21 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   `data/positions/<date>.json`; games never snapshotted get the NHL.com preview at ingest)
   and the stored skater rows carry that position plus its source (`posSrc`, `boxPos`). The
   Matchups tab (`lib/nhl-data/slate.js`; each game drawn as two rinks in
-  `components/nhl/Rink.jsx`, zones tinted by the opponent's SOG-allowed rank per position,
+  `components/nhl/Rink.jsx`, ice bands tinted by the opponent's SOG-allowed rank per position
+  for the window picked above the rink — home / away / L5 / L10, defaulting to tonight's venue —
   chips carrying the slate's projected SOG and goals) and the per-team defense card
   (`lib/nhl-data/defense.js`) are descriptive views over the stored rows; the model's
   own math stays in `NhlModel.jsx`. Logos/headshots are copied into `data/media/*` and
   served by `/api/nhl/data/media`; standings/leaders live in `data/league/*`.
-- PropFinder CSV exports (skater per-game rates, team stats for and against with ranks) are imported by
+- Lineups: NHL.com preview first; before it exists, `lib/nhl-data/gamedaytweets.js` reads the
+  beat writers' lines from gamedaytweets.com/lines?team=XXX (roster-aware name matching).
+- PropFinder CSV exports (skater per-game rates for the season or last N games, team stats for and
+  against with ranks, opponent stats per position tagged by a `-lw/-c/-rw/-d` file-name suffix) are imported by
   `lib/nhl-data/propfinder.js` into `data/propfinder/*` (one snapshot per season; the
   bundled `lib/nhl-data/seed/propfinder-<year>.js` is the fallback, regenerated with
   `node tools/propfinder-seed.mjs <season> <csv…>`). They are descriptive views, not model
-  inputs.
+  inputs; the slate's defense edges fall back to the per-position opponent tables while a
+  team has fewer than 10 stored games at a venue.
 - MoneyPuck team metrics (`lib/nhl-data/moneypuck.js`, `data/moneypuck/*`) feed the team
   page, Matchups defense cards and League; credit MoneyPuck.com wherever shown.
 - Theme: dark by default (`<html data-theme>`, toggle in the header, tokens in

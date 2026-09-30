@@ -823,6 +823,11 @@ td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
 .nhlx-rk-head > div > b { display: block; color: var(--heading); font-size: 15px; }
 .nhlx-rk-head > div > b small { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 4px; }
 .nhlx-rk-head > div > small { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; }
+.nhlx-rk-toggle { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; }
+.nhlx-rk-toggle > small { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.nhlx-rk-tabs { margin-bottom: 0; }
+.nhlx-rk-tabs .nhlx-tab { padding: 4px 10px; font-size: 12.5px; }
+.nhlx-rk-tabs .nhlx-tab i { font-style: normal; margin-left: 3px; color: var(--primary); }
 .nhlx-rk { position: relative; aspect-ratio: 85 / 200; }
 .nhlx-rk-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .nhlx-rk-ice { fill: var(--bg-soft); }
@@ -845,6 +850,7 @@ td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
   padding: 0.5cqw 2cqw; border-radius: 100px; background: color-mix(in oklab, var(--card) 88%, transparent); border: 1px solid var(--line);
   font-size: max(10px, 2.5cqw); color: var(--muted); }
 .nhlx-rk-zone b { font-family: var(--font-display); font-weight: 700; font-size: max(11px, 3cqw); color: var(--heading); letter-spacing: 0.04em; }
+.nhlx-rk-zone i { font-style: normal; font-size: max(8px, 1.9cqw); letter-spacing: 0.08em; margin-left: 0.6cqw; padding: 0 0.7cqw; border-radius: 3px; background: color-mix(in oklab, var(--heading) 10%, transparent); color: var(--muted) !important; }
 .nhlx-rk-zone.is-soft { border-color: color-mix(in oklab, var(--ok-fg) 50%, transparent); } .nhlx-rk-zone.is-soft b, .nhlx-rk-zone.is-soft span { color: var(--ok-fg); }
 .nhlx-rk-zone.is-mid { border-color: color-mix(in oklab, var(--warning) 55%, transparent); } .nhlx-rk-zone.is-mid b, .nhlx-rk-zone.is-mid span { color: var(--warn-fg); }
 .nhlx-rk-zone.is-tough { border-color: color-mix(in oklab, var(--bad-fg) 50%, transparent); } .nhlx-rk-zone.is-tough b, .nhlx-rk-zone.is-tough span { color: var(--bad-fg); }
