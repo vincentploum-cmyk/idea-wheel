@@ -68,6 +68,9 @@ describe('propfinder csv', () => {
     expect(inspectPropfinderCsv(opp, 'nhl-team-stats-Opponent-2025-2026-09-30d.csv').position).toBe('D');
     expect(inspectPropfinderCsv(opp, 'nhl-team-stats-Opponent-2025-2026-09-30_all.csv').position).toBe('All');
     expect(inspectPropfinderCsv(opp, 'nhl-team-stats-Opponent-2025-2026-09-30.csv').position).toBe('All');
+    expect(inspectPropfinderCsv(opp, 'x-2025-2026-09-30.csv').windowGames).toBeNull();
+    expect(inspectPropfinderCsv(opp.replace('Window,Full Season', 'Window,Last 10 Games'), 'nhl-team-stats-Opponent-2025-2026-09-30-d.csv')).toMatchObject({ position: 'D', windowGames: 10 });
+    expect(inspectPropfinderCsv(opp.replace('Window,Full Season', 'Window,L5'), 'x-2025-2026-09-30-c.csv').windowGames).toBe(5);
   });
   test('a 5-on-5 or totals export is refused instead of mixed in', () => {
     expect(inspectPropfinderCsv(SKATERS.replace('Strength,All', 'Strength,5v5'), 'x-2025-2026-09-30.csv').error).toMatch(/Strength/);
