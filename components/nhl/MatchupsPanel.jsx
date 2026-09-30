@@ -100,6 +100,47 @@ function SkaterRows({ skaters, showTeam, teamCount }) {
   ));
 }
 
+/** Finished game: every skater's pre-game position, box line, and the defense bucket it fed. */
+function PositionLog({ game }) {
+  const open = usePlayerCard();
+  const [team, setTeam] = useState(game.away);
+  const rows = game.log.skaters.filter((s) => s.team === team);
+  const lineup = rows.filter((s) => s.posSource !== 'box').length;
+  return (
+    <details className="nhlx-db-details nhlx-poslog">
+      <summary>Position log · final {game.away} {game.log.score.away} – {game.home} {game.log.score.home}</summary>
+      <p className="nhlx-auto-meta">
+        Each row is one skater in this game at the position he was frozen at before puck drop; his shots and goals count against the opponent’s
+        <b> {rows[0]?.bucket.venue === 'H' ? 'home' : 'away'}</b> defense for that position. {lineup}/{rows.length} positions came from the projected lineup{lineup < rows.length ? `, ${rows.length - lineup} from the box-score roster code` : ''}.
+      </p>
+      <div className="nhlx-tabs" role="tablist">
+        {[game.away, game.home].map((t) => (
+          <button key={t} type="button" role="tab" aria-selected={team === t} className={`nhlx-tab${team === t ? ' is-active' : ''}`} onClick={() => setTeam(t)}>{t} skaters</button>
+        ))}
+      </div>
+      <div className="nhlx-db-table-wrap">
+        <table className="nhlx-db-table nhlx-mu-table">
+          <thead>
+            <tr><th>Player</th><th title="Position frozen before the game">Pos</th><th title="Position code in the NHL box score">Box</th><th>Source</th><th>TOI</th><th>G</th><th>A</th><th>SOG</th><th>iCF</th><th>iSCF</th><th>Counts against</th></tr>
+          </thead>
+          <tbody>
+            {rows.map((s) => (
+              <tr key={`${s.team}-${s.id}`} className={s.id ? 'is-click' : ''} onClick={() => s.id && open({ id: s.id, opp: s.opp, venue: s.venue })}>
+                <td><div className="nhlx-db-player"><Headshot id={s.id} size={26} /><span><b>{s.name}</b></span></div></td>
+                <td><b>{s.pos}</b></td>
+                <td className={s.boxPos !== s.pos ? 'is-diff' : ''}>{s.boxPos}</td>
+                <td><span className={`nhlx-chip ${s.posSource === 'box' ? '' : 'nhlx-chip-blue'}`}>{s.posSource === 'box' ? 'box score' : 'lineup'}</span></td>
+                <td>{num(s.toi)}</td><td>{s.g}</td><td>{s.a}</td><td><b>{s.sog}</b></td><td>{s.icf}</td><td>{s.iscf}</td>
+                <td className="nhlx-auto-meta">{s.bucket.team} {s.bucket.venue === 'H' ? 'home' : 'away'} vs {s.bucket.pos}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  );
+}
+
 function SkaterTable({ skaters, showTeam = false, teamCount }) {
   return (
     <div className="nhlx-db-table-wrap">
@@ -222,6 +263,7 @@ export default function MatchupsPanel() {
                 <TeamLogo abbr={g.home} size={34} />
                 <small>{fmtTime(g.startTimeUTC)}{g.frozen ? ' · positions frozen' : ''}</small>
               </div>
+              {g.log && <PositionLog game={g} />}
               {g.sides.map((s) => (
                 <div key={s.team} className="nhlx-mu-side">
                   <div className="nhlx-mu-side-head">
