@@ -34,6 +34,8 @@
   --ok-bg: oklch(95% 0.04 150); --ok-line: oklch(85% 0.08 150); --ok-fg: oklch(42% 0.13 150);
   --bad-bg: oklch(95% 0.03 25); --bad-line: oklch(85% 0.09 25); --bad-fg: oklch(47% 0.19 25);
   --warn-bg: oklch(96% 0.05 80); --warn-line: oklch(85% 0.12 80); --warn-fg: oklch(50% 0.13 65);
+  /* Rink bands (Matchups): PropFinder's shot-zone green / red, solid on the ice. */
+  --rink-soft: oklch(58% 0.13 150); --rink-mid: oklch(64% 0.035 80); --rink-tough: oklch(55% 0.17 25); --rink-ink: oklch(99% 0.003 235);
   --info-bg: oklch(94% 0.04 240); --info-fg: oklch(45% 0.12 245);
   --hot-bg: oklch(94% 0.06 50); --hot-fg: oklch(52% 0.17 45);
   --mark-over: oklch(65% 0.16 150); --mark-under: oklch(62% 0.2 25);
@@ -65,6 +67,7 @@
   --ok-bg: oklch(25% 0.05 150); --ok-line: oklch(36% 0.08 150); --ok-fg: oklch(78% 0.15 150);
   --bad-bg: oklch(26% 0.06 25); --bad-line: oklch(38% 0.1 25); --bad-fg: oklch(76% 0.16 25);
   --warn-bg: oklch(27% 0.05 75); --warn-line: oklch(40% 0.09 75); --warn-fg: oklch(84% 0.14 80);
+  --rink-soft: oklch(47% 0.11 150); --rink-mid: oklch(40% 0.03 80); --rink-tough: oklch(45% 0.15 25); --rink-ink: oklch(97% 0.005 235);
   --info-bg: oklch(26% 0.05 240); --info-fg: oklch(80% 0.1 235);
   --hot-bg: oklch(28% 0.06 45); --hot-fg: oklch(80% 0.15 50);
   --mark-over: oklch(70% 0.16 150); --mark-under: oklch(68% 0.19 25);
@@ -82,6 +85,8 @@
   --ok-bg: oklch(95% 0.04 150); --ok-line: oklch(85% 0.08 150); --ok-fg: oklch(42% 0.13 150);
   --bad-bg: oklch(95% 0.03 25); --bad-line: oklch(85% 0.09 25); --bad-fg: oklch(47% 0.19 25);
   --warn-bg: oklch(96% 0.05 80); --warn-line: oklch(85% 0.12 80); --warn-fg: oklch(50% 0.13 65);
+  /* Rink bands (Matchups): PropFinder's shot-zone green / red, solid on the ice. */
+  --rink-soft: oklch(58% 0.13 150); --rink-mid: oklch(64% 0.035 80); --rink-tough: oklch(55% 0.17 25); --rink-ink: oklch(99% 0.003 235);
   --info-bg: oklch(94% 0.04 240); --info-fg: oklch(45% 0.12 245); --hot-bg: oklch(94% 0.06 50); --hot-fg: oklch(52% 0.17 45);
   color-scheme: light; color: var(--body); background: var(--card); border-radius: var(--radius-lg); border: 1px solid var(--line);
 }
@@ -832,28 +837,28 @@ td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
 .nhlx-rk-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .nhlx-rk-ice { fill: var(--bg-soft); }
 .nhlx-rk-board { fill: none; stroke: var(--line-strong); stroke-width: 1.2; }
-.nhlx-rk-red-line { fill: none; stroke: var(--danger); stroke-width: 0.3; opacity: 0.6; }
+.nhlx-rk-red-line { fill: none; stroke: var(--rink-ink); stroke-width: 0.3; opacity: 0.45; }
 .nhlx-rk-red-line.is-thin { stroke-width: 0.2; }
 .nhlx-rk-red-line.is-goal { stroke-width: 0.45; }
-.nhlx-rk-red-fill { fill: var(--danger); opacity: 0.6; }
-.nhlx-rk-blue-line { fill: none; stroke: var(--primary); stroke-width: 0.3; opacity: 0.7; }
-.nhlx-rk-blue-fill { fill: var(--primary); opacity: 0.7; }
-.nhlx-rk-crease { fill: color-mix(in oklab, var(--primary) 25%, transparent); stroke: var(--danger); stroke-width: 0.3; opacity: 0.7; }
+.nhlx-rk-red-fill { fill: var(--rink-ink); opacity: 0.5; }
+.nhlx-rk-blue-line { fill: none; stroke: var(--rink-ink); stroke-width: 0.3; opacity: 0.55; }
+.nhlx-rk-blue-fill { fill: var(--rink-ink); opacity: 0.7; }
+.nhlx-rk-crease { fill: color-mix(in oklab, var(--rink-ink) 25%, transparent); stroke: var(--rink-ink); stroke-width: 0.3; opacity: 0.6; }
 /* Matchup bands over the ice: colour is the signal (green permissive, amber middle, red stingy). */
 .nhlx-rk-band { fill: transparent; }
-.nhlx-rk-band.is-soft { fill: color-mix(in oklab, var(--ok-fg) 20%, transparent); }
-.nhlx-rk-band.is-mid { fill: color-mix(in oklab, var(--warning) 18%, transparent); }
-.nhlx-rk-band.is-tough { fill: color-mix(in oklab, var(--bad-fg) 20%, transparent); }
-.nhlx-rk-band-line { fill: none; stroke: var(--line-strong); stroke-width: 0.25; stroke-dasharray: 1.2 1.2; opacity: 0.6; }
+.nhlx-rk-band.is-soft { fill: var(--rink-soft); }
+.nhlx-rk-band.is-mid { fill: var(--rink-mid); }
+.nhlx-rk-band.is-tough { fill: var(--rink-tough); }
+.nhlx-rk-band-line { fill: none; stroke: var(--rink-ink); stroke-width: 0.25; stroke-dasharray: 1.2 1.2; opacity: 0.35; }
 /* Everything on the ice is positioned in % of the rink and sized in container units. */
 .nhlx-rk-zone { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: baseline; gap: 1.2cqw; white-space: nowrap;
   padding: 0.5cqw 2cqw; border-radius: 100px; background: color-mix(in oklab, var(--card) 88%, transparent); border: 1px solid var(--line);
   font-size: max(10px, 2.5cqw); color: var(--muted); }
 .nhlx-rk-zone b { font-family: var(--font-display); font-weight: 700; font-size: max(11px, 3cqw); color: var(--heading); letter-spacing: 0.04em; }
 .nhlx-rk-zone i { font-style: normal; font-size: max(8px, 1.9cqw); letter-spacing: 0.08em; margin-left: 0.6cqw; padding: 0 0.7cqw; border-radius: 3px; background: color-mix(in oklab, var(--heading) 10%, transparent); color: var(--muted) !important; }
-.nhlx-rk-zone.is-soft { border-color: color-mix(in oklab, var(--ok-fg) 50%, transparent); } .nhlx-rk-zone.is-soft b, .nhlx-rk-zone.is-soft span { color: var(--ok-fg); }
+.nhlx-rk-zone.is-soft { border-color: color-mix(in oklab, var(--rink-soft) 70%, var(--rink-ink)); } .nhlx-rk-zone.is-soft b, .nhlx-rk-zone.is-soft span { color: var(--ok-fg); }
 .nhlx-rk-zone.is-mid { border-color: color-mix(in oklab, var(--warning) 55%, transparent); } .nhlx-rk-zone.is-mid b, .nhlx-rk-zone.is-mid span { color: var(--warn-fg); }
-.nhlx-rk-zone.is-tough { border-color: color-mix(in oklab, var(--bad-fg) 50%, transparent); } .nhlx-rk-zone.is-tough b, .nhlx-rk-zone.is-tough span { color: var(--bad-fg); }
+.nhlx-rk-zone.is-tough { border-color: color-mix(in oklab, var(--rink-tough) 70%, var(--rink-ink)); } .nhlx-rk-zone.is-tough b, .nhlx-rk-zone.is-tough span { color: var(--bad-fg); }
 .nhlx-rk-tag { position: absolute; left: 50%; transform: translate(-50%, -50%); white-space: nowrap; padding: 0.3cqw 1.8cqw; border-radius: 100px;
   background: color-mix(in oklab, var(--card) 92%, transparent); border: 1px solid var(--line); color: var(--muted);
   font-family: var(--font-display); font-weight: 600; font-size: max(9px, 2.4cqw); letter-spacing: 0.12em; text-transform: uppercase; }
@@ -874,9 +879,9 @@ td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
 .nhlx-rk-extra.is-static { cursor: default; text-decoration: none; }
 .nhlx-rk-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 14px; }
 .nhlx-rk-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; }
-.nhlx-rk-legend i.is-soft { background: color-mix(in oklab, var(--ok-fg) 45%, transparent); }
-.nhlx-rk-legend i.is-mid { background: color-mix(in oklab, var(--warning) 45%, transparent); }
-.nhlx-rk-legend i.is-tough { background: color-mix(in oklab, var(--bad-fg) 45%, transparent); }
+.nhlx-rk-legend i.is-soft { background: var(--rink-soft); }
+.nhlx-rk-legend i.is-mid { background: var(--rink-mid); }
+.nhlx-rk-legend i.is-tough { background: var(--rink-tough); }
 .nhlx-mu-details { margin-top: 22px; padding-top: 14px; }
 .nhlx-mu-details > summary { font-size: 16px; }
 @media (max-width: 1000px) {
