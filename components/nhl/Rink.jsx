@@ -1,16 +1,23 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { Headshot, TeamLogo } from './media';
+import { useMemo } from 'react';
+import { TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
 
-// One team's skaters on a rink seen from behind their own goal: LW, C and RW
-// left to right in the attacking half, D behind them, goal lines horizontal.
-// Each zone is tinted by what tonight's opponent allows to that position at
-// this venue: green = permissive third of the league, amber = middle, red =
-// stingiest third. Every chip carries the player's projected shots and goals
-// from the slate (player rate × defense ratio).
+// Tactical board: one team's whole lineup on a full vertical rink (85 × 200 ft,
+// attacking goal at the top). Forward lines stack in the attacking half with
+// LW, C and RW left to right; defense pairs sit in the defending half. Four
+// bands of ice (LW, C, RW lanes and the D half) are tinted by what tonight's
+// opponent allows to that position at this venue: green = permissive third of
+// the league, amber = middle, red = stingiest third. Every chip carries the
+// slate's projected shots and goals (player rate × defense ratio).
 export const ZONES = ['LW', 'C', 'RW', 'D'];
+const F_POS = ['LW', 'C', 'RW'];
+const F_X = { LW: 19, C: 50, RW: 81 };       // % of rink width
+const F_Y = [20, 43, 66, 89];                  // forward line centres, feet from the top
+const D_Y = [118, 143, 168];                   // defense pair centres
+const D_X = [31, 69];
+const pct = (ft) => ft / 2;                    // 200 ft → 100 %
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
 
 /** League rank (1 = most permissive) → 'soft' | 'mid' | 'tough' | 'none'. */
@@ -22,144 +29,173 @@ export function zoneTone(rank, teams) {
   return 'mid';
 }
 
-function useSize(ref) {
-  const [size, setSize] = useState({ w: 0, h: 0 });
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || typeof ResizeObserver === 'undefined') return undefined;
-    const ro = new ResizeObserver(([e]) => {
-      const { width, height } = e.contentRect;
-      setSize((s) => (Math.abs(s.w - width) < 1 && Math.abs(s.h - height) < 1 ? s : { w: width, h: height }));
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [ref]);
-  return size;
-}
+/** Last name only; the chip's title carries the full name. */
+const shortName = (name) => {
+  const parts = String(name || '').trim().split(' ');
+  return parts.length > 1 ? parts.slice(1).join(' ') : name;
+};
+
+const byLine = (a, b) => (a.line || 9) - (b.line || 9) || (b.shotScore || 0) - (a.shotScore || 0) || a.name.localeCompare(b.name);
 
 /**
- * Rink markings in pixels for the measured box. `a` runs 0 (own goal, bottom)
- * → 1 (attacking goal, top); `c` runs left → right.
+ * Place skaters on the board: forwards into 4 line rows per lane, defense into
+ * 3 pairs. A skater's frozen/projected line wins; roster-only players (no line)
+ * fill the remaining slots by projected shots. Whoever is left goes under the rink.
  */
-function RinkLines({ w, h }) {
-  if (!w || !h) return null;
-  const L = h;
-  const S = w;
-  const pt = (a, c) => [c * S, (1 - a) * L];
-  const line = (a, cls) => { const [x1, y1] = pt(a, 0); const [x2, y2] = pt(a, 1); return <line key={`${a}-${cls}`} x1={x1} y1={y1} x2={x2} y2={y2} className={cls} />; };
-  const circle = (a, c, r, cls) => { const [cx, cy] = pt(a, c); return <circle key={`${a}-${c}-${cls}`} cx={cx} cy={cy} r={r} className={cls} />; };
-  const R = 0.075 * L; // 15 ft on a 200 ft rink
-  const dots = [[0.155, 0.26], [0.155, 0.74], [0.845, 0.26], [0.845, 0.74]];
-  const crease = (a) => {
-    const [gx, gy] = pt(a, 0.5);
-    const r = 0.03 * L;
-    const dir = a < 0.5 ? -1 : 1;
-    const d = `M${gx - r},${gy} A${r},${r} 0 0 ${dir > 0 ? 0 : 1} ${gx + r},${gy}`;
-    return <path key={`crease-${a}`} d={d} className="nhlx-rink-crease" />;
-  };
+export function layoutSide(skaters) {
+  const placed = [];
+  const extras = [];
+  for (const pos of F_POS) {
+    const list = skaters.filter((p) => p.pos === pos).sort(byLine);
+    const rows = new Array(F_Y.length).fill(null);
+    for (const p of list) {
+      let r = p.line && p.line <= rows.length && !rows[p.line - 1] ? p.line - 1 : rows.indexOf(null);
+      if (r < 0) { extras.push(p); continue; }
+      rows[r] = p;
+      placed.push({ p, x: F_X[pos], y: F_Y[r] });
+    }
+  }
+  const d = skaters.filter((p) => p.pos === 'D').sort(byLine);
+  const slots = new Array(D_Y.length * 2).fill(null); // pair-major: [p1L, p1R, p2L, p2R, ...]
+  for (const p of d) {
+    let k = -1;
+    if (p.line && p.line <= D_Y.length) k = [2 * (p.line - 1), 2 * (p.line - 1) + 1].find((i) => !slots[i]) ?? -1;
+    if (k < 0) k = slots.indexOf(null);
+    if (k < 0) { extras.push(p); continue; }
+    slots[k] = p;
+    placed.push({ p, x: D_X[k % 2], y: D_Y[Math.floor(k / 2)] });
+  }
+  return { placed, extras: extras.sort(byLine) };
+}
+
+/** NHL rink markings in feet, drawn vertically (viewBox 85 × 200, attacking goal at the top). */
+function RinkMarkings({ clipId, tones }) {
+  const circle = (cx, cy) => (
+    <g key={`${cx}-${cy}`}>
+      <circle cx={cx} cy={cy} r="15" className="nhlx-rk-red-line" />
+      <circle cx={cx} cy={cy} r="1" className="nhlx-rk-red-fill" />
+      <path d={`M${cx - 15} ${cy - 3}h-2M${cx - 15} ${cy + 3}h-2M${cx + 15} ${cy - 3}h2M${cx + 15} ${cy + 3}h2`} className="nhlx-rk-red-line" />
+      <path d={`M${cx - 0.75} ${cy - 2}v-4M${cx - 0.75} ${cy + 2}v4M${cx + 0.75} ${cy - 2}v-4M${cx + 0.75} ${cy + 2}v4`} className="nhlx-rk-red-line is-thin" />
+    </g>
+  );
   return (
-    <svg className="nhlx-rink-lines" width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
-      {line(0.055, 'nhlx-rink-goal')}
-      {line(0.945, 'nhlx-rink-goal')}
-      {line(0.375, 'nhlx-rink-blue')}
-      {line(0.625, 'nhlx-rink-blue')}
-      {line(0.5, 'nhlx-rink-red')}
-      {circle(0.5, 0.5, R, 'nhlx-rink-circle')}
-      {circle(0.5, 0.5, 2.5, 'nhlx-rink-dot')}
-      {dots.map(([a, c]) => circle(a, c, R, 'nhlx-rink-circle'))}
-      {dots.map(([a, c]) => circle(a, c, 2.5, 'nhlx-rink-dot'))}
-      {crease(0.055)}
-      {crease(0.945)}
+    <svg className="nhlx-rk-svg" viewBox="0 0 85 200" aria-hidden="true">
+      <defs><clipPath id={clipId}><rect width="85" height="200" rx="28" /></clipPath></defs>
+      <rect width="85" height="200" rx="28" className="nhlx-rk-ice" />
+      <g clipPath={`url(#${clipId})`}>
+        {/* Matchup bands: the three forward lanes over the attacking half, the D half below. */}
+        <rect x="0" y="0" width="28.33" height="100" className={`nhlx-rk-band is-${tones.LW}`} />
+        <rect x="28.33" y="0" width="28.34" height="100" className={`nhlx-rk-band is-${tones.C}`} />
+        <rect x="56.67" y="0" width="28.33" height="100" className={`nhlx-rk-band is-${tones.RW}`} />
+        <rect x="0" y="100" width="85" height="100" className={`nhlx-rk-band is-${tones.D}`} />
+        <path d="M28.33 0V100M56.67 0V100M0 100H85" className="nhlx-rk-band-line" />
+        {/* Trapezoids, goal lines, blue lines, centre line. */}
+        <path d="M31.5 11L28.5 0M53.5 11L56.5 0M31.5 189L28.5 200M53.5 189L56.5 200" className="nhlx-rk-red-line" />
+        <rect x="0" y="10.8" width="85" height="0.35" className="nhlx-rk-red-fill" />
+        <rect x="0" y="188.85" width="85" height="0.35" className="nhlx-rk-red-fill" />
+        <rect x="0" y="74.5" width="85" height="1" className="nhlx-rk-blue-fill" />
+        <rect x="0" y="124.5" width="85" height="1" className="nhlx-rk-blue-fill" />
+        <rect x="0" y="99.5" width="85" height="1" className="nhlx-rk-red-fill" />
+        <circle cx="42.5" cy="100" r="15" className="nhlx-rk-blue-line" />
+        <circle cx="42.5" cy="100" r="0.6" className="nhlx-rk-blue-fill" />
+        {[[20.5, 31], [64.5, 31], [20.5, 169], [64.5, 169]].map(([x, y]) => circle(x, y))}
+        {[[20.5, 80], [64.5, 80], [20.5, 120], [64.5, 120]].map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1" className="nhlx-rk-red-fill" />)}
+        {/* Creases and goal frames. */}
+        <path d="M36.5 11A6 6 0 0 0 48.5 11Z" className="nhlx-rk-crease" />
+        <path d="M36.5 189A6 6 0 0 1 48.5 189Z" className="nhlx-rk-crease" />
+        <rect x="39.5" y="7.7" width="6" height="3.1" rx="1" className="nhlx-rk-red-line is-goal" />
+        <rect x="39.5" y="189.2" width="6" height="3.1" rx="1" className="nhlx-rk-red-line is-goal" />
+      </g>
+      <rect width="85" height="200" rx="28" className="nhlx-rk-board" />
     </svg>
   );
 }
 
-const lastName = (name) => { const parts = String(name || '').trim().split(' '); return parts.length > 1 ? parts.slice(1).join(' ') : name; };
-
-function Chip({ p, minGp, compact }) {
+function Chip({ p, x, y, minGp }) {
   const open = usePlayerCard();
   const thin = (p.gp || 0) < minGp;
   const title = `${p.name} · ${p.pos}${p.line ? ` L${p.line}` : ''} · ${p.gp || 0} GP · ${num(p.sog)} SOG/G, ${num(p.g, 2)} G/G`
     + (p.shotEdge != null ? ` · shot edge ${p.shotEdge > 0 ? '+' : ''}${p.shotEdge}%` : '')
-    + (p.goalEdge != null ? ` · goal edge ${p.goalEdge > 0 ? '+' : ''}${p.goalEdge}%` : '');
+    + (p.goalEdge != null ? ` · goal edge ${p.goalEdge > 0 ? '+' : ''}${p.goalEdge}%` : '')
+    + (p.inLineup ? '' : ' · not in the projected lineup');
   return (
     <button
       type="button"
-      className={`nhlx-rink-chip${p.inLineup ? '' : ' is-out'}${p.id ? '' : ' is-static'}`}
+      className={`nhlx-rk-chip${p.inLineup ? '' : ' is-out'}${p.id ? '' : ' is-static'}`}
+      style={{ left: `${x}%`, top: `${pct(y)}%` }}
       title={title}
       onClick={() => p.id && open({ id: p.id, opp: p.opp, venue: p.venue })}
     >
-      <Headshot id={p.id} size={22} />
-      <span className="nhlx-rink-name">{p.line ? <em>L{p.line}</em> : null}{compact ? lastName(p.name) : p.name}</span>
-      {thin || p.projSog == null ? (
-        <span className="nhlx-rink-nums is-none" title={thin ? `Fewer than ${minGp} stored games` : 'No stored games'}>—</span>
-      ) : (
-        <span className="nhlx-rink-nums"><b>{num(p.projSog)}</b><i>SOG</i><b>{num(p.projG, 2)}</b><i>G</i></span>
-      )}
+      <span className="nhlx-rk-num">{p.number ?? p.pos}</span>
+      <span className="nhlx-rk-meta">
+        <b className="nhlx-rk-name">{shortName(p.name)}</b>
+        {thin || p.projSog == null
+          ? <span className="nhlx-rk-stat"><em>{p.pos}</em> · {p.gp ? `${p.gp} GP` : 'no games'}</span>
+          : <span className="nhlx-rk-stat"><em>{num(p.projSog)}</em> SOG · <em>{num(p.projG, 2)}</em> G</span>}
+      </span>
     </button>
   );
 }
 
-function Zone({ pos, side, teamCount, skaters, minGp, dim, compact }) {
+function BandLabel({ pos, side, teamCount, x, y }) {
   const d = side.defense?.[pos];
-  const s = d?.season;
   const r = d?.rank || {};
+  const s = d?.season;
   const tone = zoneTone(r.sog, teamCount);
-  const list = [...skaters].sort((a, b) => (a.line || 9) - (b.line || 9) || (b.shotScore || 0) - (a.shotScore || 0));
+  const title = s?.gp ? `${side.opp} allows ${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'}) per game to ${pos} · rank 1 = most permissive of ${teamCount}` : `No defense data for ${side.opp} yet`;
   return (
-    <div className={`nhlx-rink-zone is-${pos.toLowerCase()} is-${tone}${dim ? ' is-dim' : ''}`}>
-      <div className="nhlx-rink-zone-head">
-        <b>{pos}</b>
-        {s?.gp ? (
-          <small>{side.opp} allows <b>{num(s.sog)}</b> SOG{r.sog ? <i>#{r.sog}</i> : null} · <b>{num(s.g, 2)}</b> G{r.g ? <i>#{r.g}</i> : null}</small>
-        ) : <small>no defense data for {side.opp} yet</small>}
-      </div>
-      <div className="nhlx-rink-chips">
-        {list.length ? list.map((p) => <Chip key={`${p.team}-${p.name}`} p={p} minGp={minGp} compact={compact} />) : <span className="nhlx-auto-meta">—</span>}
-      </div>
+    <div className={`nhlx-rk-zone is-${tone}`} style={{ left: `${x}%`, top: `${pct(y)}%` }} title={title}>
+      <b>{pos}</b>{s?.gp ? <span>#{r.sog ?? '–'} SOG · #{r.g ?? '–'} G</span> : <span>no data</span>}
     </div>
   );
 }
 
 /** One side of a game: `side` is an entry of a slate game's `sides`. */
 export function Rink({ side, teamCount, posFilter = '', minGp = 1 }) {
-  const ref = useRef(null);
-  const { w, h } = useSize(ref);
-  // Narrow rinks (a phone) show last names in the forward lanes.
-  const compact = w > 0 && w < 560;
+  const { placed, extras } = useMemo(() => layoutSide(side.skaters), [side.skaters]);
+  const tones = Object.fromEntries(ZONES.map((z) => [z, posFilter && posFilter !== z ? 'none' : zoneTone(side.defense?.[z]?.rank?.sog, teamCount)]));
   const defVenue = side.venue === 'A' ? 'home' : 'away';
-  const byPos = Object.fromEntries(ZONES.map((z) => [z, side.skaters.filter((p) => p.pos === z)]));
+  const clipId = `rink-${side.team}-${side.opp}`;
+  const open = usePlayerCard();
   return (
-    <section className="nhlx-rink-card" aria-label={`${side.team} on the rink`}>
-      <div className="nhlx-rink-head">
-        <TeamLogo abbr={side.team} size={26} />
+    <section className="nhlx-rk-card" aria-label={`${side.team} lineup on the rink`}>
+      <div className="nhlx-rk-head">
+        <TeamLogo abbr={side.team} size={28} />
         <div>
-          <b>{side.team} <small>{side.venue === 'H' ? 'home' : 'away'}</small></b>
-          <small>Attacking upwards · zones show what {side.opp} allows at {defVenue} to each position · rank 1 = most permissive of {teamCount} · positions from {side.source === 'lineup' ? 'the projected lineup' : 'the roster (no lineup yet)'}</small>
+          <b>{side.team} <small>{side.venue === 'H' ? 'home' : 'away'} · attacking upwards</small></b>
+          <small>Ice tinted by what {side.opp} allows at {defVenue} to each position (rank 1 = most permissive of {teamCount}) · lines from {side.source === 'lineup' ? 'the projected lineup' : 'the roster, ordered by projected shots (no lineup yet)'}</small>
         </div>
       </div>
-      <div
-        ref={ref}
-        className="nhlx-rink"
-      >
-        <RinkLines w={w} h={h} />
-        <div className="nhlx-rink-zones">
-          {ZONES.map((z) => (
-            <Zone key={z} pos={z} side={side} teamCount={teamCount} skaters={byPos[z]} minGp={minGp} dim={!!posFilter && posFilter !== z} compact={compact && z !== 'D'} />
+      <div className={`nhlx-rk${posFilter ? ` is-filter-${posFilter.toLowerCase()}` : ''}`}>
+        <RinkMarkings clipId={clipId} tones={tones} />
+        {F_POS.map((z) => <BandLabel key={z} pos={z} side={side} teamCount={teamCount} x={F_X[z]} y={6} />)}
+        <BandLabel pos="D" side={side} teamCount={teamCount} x={50} y={100} />
+        {F_Y.map((y, i) => <div key={`l${i}`} className="nhlx-rk-tag" style={{ top: `${pct(y - 8.3)}%` }}>Line {i + 1}</div>)}
+        {D_Y.map((y, i) => <div key={`d${i}`} className="nhlx-rk-tag" style={{ top: `${pct(y - 8.3)}%` }}>Pair {i + 1}</div>)}
+        {placed.map(({ p, x, y }) => <Chip key={`${p.team}-${p.name}`} p={p} x={x} y={y} minGp={minGp} />)}
+      </div>
+      {extras.length > 0 && (
+        <p className="nhlx-rk-extras nhlx-auto-meta">
+          <b>Also on the roster:</b>{' '}
+          {extras.map((p, i) => (
+            <span key={`${p.team}-${p.name}`}>
+              {i ? ', ' : ''}
+              <button type="button" className={`nhlx-rk-extra${p.id ? '' : ' is-static'}`} onClick={() => p.id && open({ id: p.id, opp: p.opp, venue: p.venue })}>{p.name}</button> {p.pos}{p.projSog != null && (p.gp || 0) >= minGp ? ` ${num(p.projSog)} SOG` : ''}
+            </span>
           ))}
-        </div>
-      </div>
+        </p>
+      )}
     </section>
   );
 }
 
 export function RinkLegend() {
   return (
-    <p className="nhlx-rink-legend nhlx-auto-meta">
+    <p className="nhlx-rk-legend nhlx-auto-meta">
       <span><i className="is-soft" /> favourable: the opponent allows the most shots to that position (top third)</span>
       <span><i className="is-mid" /> neutral</span>
       <span><i className="is-tough" /> stingy: bottom third</span>
-      <span>numbers on a player = projected SOG and goals tonight (own rate × opponent ratio)</span>
+      <span>on each player: projected SOG and goals tonight (own rate × opponent ratio); click for the player card</span>
     </p>
   );
 }

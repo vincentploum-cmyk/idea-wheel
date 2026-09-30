@@ -815,74 +815,63 @@ td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
 .nhlx-poslog .nhlx-tabs { margin: 12px 0; }
 .nhlx-poslog td.is-diff { color: var(--warn-fg); }
 
-/* ── Matchups · rink view ─────────────────────────────────────────────────── */
-.nhlx-rink-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 18px; align-items: start; }
-.nhlx-rink-card { min-width: 0; }
-.nhlx-rink-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.nhlx-rink-head > div > b { display: block; color: var(--heading); font-size: 15px; }
-.nhlx-rink-head > div > b small { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 4px; }
-.nhlx-rink-head > div > small { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; }
-/* Portrait rink: attacking goal at the top, own goal at the bottom (board radius 28 ft of 85 × 200). */
-.nhlx-rink { position: relative; background: var(--bg-soft); border: 1.5px solid var(--line-strong); border-radius: 33% / 14%; overflow: hidden; min-height: 300px; }
-.nhlx-rink-lines { position: absolute; inset: 0; pointer-events: none; }
-.nhlx-rink-lines line { stroke-width: 2; }
-.nhlx-rink-goal { stroke: var(--danger); opacity: 0.35; stroke-width: 1.5 !important; }
-.nhlx-rink-blue { stroke: var(--primary); opacity: 0.45; stroke-width: 6 !important; }
-.nhlx-rink-red { stroke: var(--danger); opacity: 0.45; stroke-width: 5 !important; }
-.nhlx-rink-circle { fill: none; stroke: var(--danger); opacity: 0.3; stroke-width: 1.5; }
-.nhlx-rink-dot { fill: var(--danger); opacity: 0.4; }
-.nhlx-rink-crease { fill: color-mix(in oklab, var(--primary) 22%, transparent); stroke: var(--danger); stroke-width: 1.5; opacity: 0.5; }
-/* Forwards across the attacking half (LW | C | RW), defense in a row behind them. */
-.nhlx-rink-zones { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto; gap: 6px; padding: 36px 16px 30px; min-height: 300px; }
-.nhlx-rink-zone { min-width: 0; padding: 8px 8px 10px; border-radius: var(--radius); border: 1px solid transparent; }
-.nhlx-rink-zone.is-lw { grid-column: 1; grid-row: 1; }
-.nhlx-rink-zone.is-c { grid-column: 2; grid-row: 1; }
-.nhlx-rink-zone.is-rw { grid-column: 3; grid-row: 1; }
-.nhlx-rink-zone.is-d { grid-column: 1 / span 3; grid-row: 2; padding: 8px 10px 10px; }
-.nhlx-rink-zone.is-soft { background: color-mix(in oklab, var(--ok-fg) 16%, transparent); border-color: color-mix(in oklab, var(--ok-fg) 40%, transparent); }
-.nhlx-rink-zone.is-mid { background: color-mix(in oklab, var(--warning) 16%, transparent); border-color: color-mix(in oklab, var(--warning) 42%, transparent); }
-.nhlx-rink-zone.is-tough { background: color-mix(in oklab, var(--bad-fg) 16%, transparent); border-color: color-mix(in oklab, var(--bad-fg) 40%, transparent); }
-.nhlx-rink-zone.is-none { background: color-mix(in oklab, var(--card) 55%, transparent); border-color: var(--line); }
-.nhlx-rink-zone.is-dim { opacity: 0.3; }
-.nhlx-rink-zone-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin-bottom: 8px; }
-.nhlx-rink-zone-head > b { font-family: var(--font-display); font-size: 15px; color: var(--heading); }
-.nhlx-rink-zone-head > small { color: var(--muted); font-size: 12px; }
-.nhlx-rink-zone-head > small b { color: var(--heading); font-weight: 600; }
-.nhlx-rink-zone-head i { font-style: normal; font-size: 11px; color: var(--muted); margin-left: 2px; }
-.nhlx-rink-zone.is-soft .nhlx-rink-zone-head > small b, .nhlx-rink-zone.is-soft .nhlx-rink-zone-head i { color: var(--ok-fg); }
-.nhlx-rink-zone.is-tough .nhlx-rink-zone-head > small b, .nhlx-rink-zone.is-tough .nhlx-rink-zone-head i { color: var(--bad-fg); }
-.nhlx-rink-zone.is-mid .nhlx-rink-zone-head > small b, .nhlx-rink-zone.is-mid .nhlx-rink-zone-head i { color: var(--warn-fg); }
-.nhlx-rink-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.nhlx-rink-zone:not(.is-d) .nhlx-rink-chips { flex-direction: column; align-items: stretch; }
-.nhlx-rink-chip { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; min-width: 0; padding: 4px 8px 4px 5px; border: 1px solid var(--line); border-radius: 100px; background: var(--card); color: var(--heading); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
-.nhlx-rink-chip:hover { border-color: var(--primary); }
-.nhlx-rink-chip.is-static { cursor: default; }
-.nhlx-rink-chip.is-out { opacity: 0.5; }
-.nhlx-rink-chip img, .nhlx-rink-chip .nhlx-db-avatar { flex: none; }
-/* In the forward lanes the numbers sit under the name so long names keep their room. */
-.nhlx-rink-zone:not(.is-d) .nhlx-rink-chip { flex-wrap: wrap; gap: 2px 7px; padding: 5px 8px 5px 6px; border-radius: var(--radius); }
-.nhlx-rink-zone:not(.is-d) .nhlx-rink-name { flex: 1 1 0; }
-.nhlx-rink-zone:not(.is-d) .nhlx-rink-nums { flex: 0 0 100%; margin-left: 0; padding-left: 29px; }
-.nhlx-rink-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-.nhlx-rink-name em { font-style: normal; font-weight: 500; font-size: 11px; color: var(--muted); margin-right: 5px; }
-.nhlx-rink-nums { flex: none; margin-left: auto; display: inline-flex; align-items: baseline; gap: 2px; font-variant-numeric: tabular-nums; }
-.nhlx-rink-nums b { font-weight: 700; }
-.nhlx-rink-nums i { font-style: normal; font-size: 10px; color: var(--muted); margin-right: 6px; }
-.nhlx-rink-nums i:last-child { margin-right: 0; }
-.nhlx-rink-nums.is-none { color: var(--muted); }
-.nhlx-rink-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; }
-.nhlx-rink-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; }
-.nhlx-rink-legend i.is-soft { background: color-mix(in oklab, var(--ok-fg) 45%, transparent); }
-.nhlx-rink-legend i.is-mid { background: color-mix(in oklab, var(--warning) 45%, transparent); }
-.nhlx-rink-legend i.is-tough { background: color-mix(in oklab, var(--bad-fg) 45%, transparent); }
+/* ── Matchups · rink view (tactical board) ───────────────────────────────── */
+.nhlx-rink-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 18px; align-items: start; }
+.nhlx-rk-card { min-width: 0; max-width: 480px; margin: 0 auto; width: 100%; container-type: inline-size; }
+.nhlx-rk-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.nhlx-rk-head > div > b { display: block; color: var(--heading); font-size: 15px; }
+.nhlx-rk-head > div > b small { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 4px; }
+.nhlx-rk-head > div > small { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; }
+.nhlx-rk { position: relative; aspect-ratio: 85 / 200; }
+.nhlx-rk-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.nhlx-rk-ice { fill: var(--bg-soft); }
+.nhlx-rk-board { fill: none; stroke: var(--line-strong); stroke-width: 1.2; }
+.nhlx-rk-red-line { fill: none; stroke: var(--danger); stroke-width: 0.3; opacity: 0.6; }
+.nhlx-rk-red-line.is-thin { stroke-width: 0.2; }
+.nhlx-rk-red-line.is-goal { stroke-width: 0.45; }
+.nhlx-rk-red-fill { fill: var(--danger); opacity: 0.6; }
+.nhlx-rk-blue-line { fill: none; stroke: var(--primary); stroke-width: 0.3; opacity: 0.7; }
+.nhlx-rk-blue-fill { fill: var(--primary); opacity: 0.7; }
+.nhlx-rk-crease { fill: color-mix(in oklab, var(--primary) 25%, transparent); stroke: var(--danger); stroke-width: 0.3; opacity: 0.7; }
+/* Matchup bands over the ice: colour is the signal (green permissive, amber middle, red stingy). */
+.nhlx-rk-band { fill: transparent; }
+.nhlx-rk-band.is-soft { fill: color-mix(in oklab, var(--ok-fg) 20%, transparent); }
+.nhlx-rk-band.is-mid { fill: color-mix(in oklab, var(--warning) 18%, transparent); }
+.nhlx-rk-band.is-tough { fill: color-mix(in oklab, var(--bad-fg) 20%, transparent); }
+.nhlx-rk-band-line { fill: none; stroke: var(--line-strong); stroke-width: 0.25; stroke-dasharray: 1.2 1.2; opacity: 0.6; }
+/* Everything on the ice is positioned in % of the rink and sized in container units. */
+.nhlx-rk-zone { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: baseline; gap: 1.2cqw; white-space: nowrap;
+  padding: 0.5cqw 2cqw; border-radius: 100px; background: color-mix(in oklab, var(--card) 88%, transparent); border: 1px solid var(--line);
+  font-size: max(10px, 2.5cqw); color: var(--muted); }
+.nhlx-rk-zone b { font-family: var(--font-display); font-weight: 700; font-size: max(11px, 3cqw); color: var(--heading); letter-spacing: 0.04em; }
+.nhlx-rk-zone.is-soft { border-color: color-mix(in oklab, var(--ok-fg) 50%, transparent); } .nhlx-rk-zone.is-soft b, .nhlx-rk-zone.is-soft span { color: var(--ok-fg); }
+.nhlx-rk-zone.is-mid { border-color: color-mix(in oklab, var(--warning) 55%, transparent); } .nhlx-rk-zone.is-mid b, .nhlx-rk-zone.is-mid span { color: var(--warn-fg); }
+.nhlx-rk-zone.is-tough { border-color: color-mix(in oklab, var(--bad-fg) 50%, transparent); } .nhlx-rk-zone.is-tough b, .nhlx-rk-zone.is-tough span { color: var(--bad-fg); }
+.nhlx-rk-tag { position: absolute; left: 50%; transform: translate(-50%, -50%); white-space: nowrap; padding: 0.3cqw 1.8cqw; border-radius: 100px;
+  background: color-mix(in oklab, var(--card) 92%, transparent); border: 1px solid var(--line); color: var(--muted);
+  font-family: var(--font-display); font-weight: 600; font-size: max(9px, 2.4cqw); letter-spacing: 0.12em; text-transform: uppercase; }
+.nhlx-rk-chip { position: absolute; transform: translate(-50%, -50%); width: 30cqw; display: flex; align-items: center; gap: 1.1cqw;
+  padding: 1.1cqw 1.3cqw; border-radius: max(6px, 1.8cqw); border: 1px solid var(--line); background: var(--card); color: var(--heading);
+  font: inherit; text-align: left; cursor: pointer; box-shadow: 0 1px 2px color-mix(in oklab, var(--heading) 12%, transparent); }
+.nhlx-rk-chip:hover { border-color: var(--primary); }
+.nhlx-rk-chip.is-static { cursor: default; }
+.nhlx-rk-chip.is-out { opacity: 0.55; }
+.nhlx-rk-num { flex: none; min-width: 4.8cqw; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: max(13px, 4.6cqw); line-height: 1; color: var(--primary); font-variant-numeric: tabular-nums; }
+.nhlx-rk-meta { min-width: 0; display: flex; flex-direction: column; }
+.nhlx-rk-name { font-family: var(--font-display); font-weight: 700; font-size: max(11px, 3.1cqw); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em; }
+.nhlx-rk-stat { font-size: max(9.5px, 2.4cqw); line-height: 1.3; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nhlx-rk-stat em { font-style: normal; font-weight: 700; color: var(--heading); }
+.nhlx-rk-extras { margin-top: 10px; line-height: 1.6; }
+.nhlx-rk-extras b { color: var(--heading); font-weight: 600; }
+.nhlx-rk-extra { all: unset; cursor: pointer; color: var(--heading); font-weight: 600; text-decoration: underline dotted; text-underline-offset: 2px; }
+.nhlx-rk-extra.is-static { cursor: default; text-decoration: none; }
+.nhlx-rk-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 14px; }
+.nhlx-rk-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; }
+.nhlx-rk-legend i.is-soft { background: color-mix(in oklab, var(--ok-fg) 45%, transparent); }
+.nhlx-rk-legend i.is-mid { background: color-mix(in oklab, var(--warning) 45%, transparent); }
+.nhlx-rk-legend i.is-tough { background: color-mix(in oklab, var(--bad-fg) 45%, transparent); }
 .nhlx-mu-details { margin-top: 22px; padding-top: 14px; }
 .nhlx-mu-details > summary { font-size: 16px; }
 @media (max-width: 1000px) {
   .nhlx-rink-pair { grid-template-columns: 1fr; }
-}
-@media (max-width: 560px) {
-  .nhlx-rink-zone:not(.is-d) { padding: 8px 6px; }
-  .nhlx-rink-zone:not(.is-d) .nhlx-rink-chip img, .nhlx-rink-zone:not(.is-d) .nhlx-rink-chip .nhlx-db-avatar { display: none; }
-  .nhlx-rink-zone:not(.is-d) .nhlx-rink-nums { padding-left: 0; }
-  .nhlx-rink-zone:not(.is-d) .nhlx-rink-zone-head > small { font-size: 11.5px; }
 }

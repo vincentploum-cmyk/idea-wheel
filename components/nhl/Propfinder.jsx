@@ -9,6 +9,8 @@ import { SKATER_COLS, TEAM_COLS, seasonLabel } from '@/lib/nhl-data/propfinder-c
 const num = (v, d) => (v == null ? '—' : Number(v).toFixed(d));
 const day = (iso) => (iso ? new Date(`${iso.slice(0, 10)}T12:00:00Z`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
 const POS_TABS = [['', 'All'], ['C', 'C'], ['LW', 'LW'], ['RW', 'RW'], ['D', 'D']];
+// Team stats come in two exports: what the team produced ("for") and what it allowed ("against").
+const SIDES = [['teams', 'For'], ['opponents', 'Against']];
 
 /** Fetches /api/nhl/data/propfinder once per mount. */
 export function usePropfinder() {
@@ -21,34 +23,49 @@ export function usePropfinder() {
   return pf;
 }
 
-function teamMeta(t) {
-  return `${seasonLabel(t.season)} regular season${t.window ? ` · ${t.window}` : ''} · rank 1 = highest of ${t.count || Object.keys(t.teams).length} · as of ${day(t.asOf)} · data from PropFinder`;
+function teamMeta(t, against) {
+  const n = t.count || Object.keys(t.teams).length;
+  return `${seasonLabel(t.season)} regular season${t.window ? ` · ${t.window}` : ''} · rank 1 = ${against ? 'most allowed (softest defense)' : 'highest'} of ${n} · as of ${day(t.asOf)} · data from PropFinder`;
 }
 
-/** One team's PropFinder season line with its league ranks. */
+/**
+ * Rank-tinted cell. "For" rows: green = the team is strong. "Against" rows are read
+ * from the shooter's side, as on the defense cards: green = the team allows a lot.
+ */
+function Cell({ row, ranks, k, d, dir, n, against }) {
+  return <MpCell v={row[k]} d={d} rank={ranks[k]} n={n} invert={!against && dir === 'low'} />;
+}
+
+/** One team's PropFinder season lines: what it produced and what it allowed. */
 export function TeamPropfinder({ abbr, pf }) {
-  const t = pf?.teams;
   if (!pf) return null;
-  if (!t?.teams?.[abbr]) return <p className="nhlx-auto-meta">No PropFinder team stats for {abbr} yet — import an nhl-team-stats CSV below.</p>;
-  const row = t.teams[abbr];
-  const ranks = t.ranks?.[abbr] || {};
-  const n = t.count || Object.keys(t.teams).length;
+  const rows = SIDES.map(([key, label]) => [key, label, pf[key]]).filter(([, , t]) => t?.teams?.[abbr]);
+  if (!rows.length) return <p className="nhlx-auto-meta">No PropFinder team stats for {abbr} yet — import an nhl-team-stats CSV below.</p>;
+  const first = rows[0][2];
   return (
     <div className="nhlx-defcard nhlx-defcard-wide">
       <div className="nhlx-defcard-head">
         <div>
           <b>Team season stats · PropFinder</b>
-          <small>{teamMeta(t)}</small>
+          <small>{teamMeta(first, false).replace(' · rank 1 = highest', ' · "For" rank 1 = highest, "Against" rank 1 = most allowed')}</small>
         </div>
       </div>
       <div className="nhlx-db-table-wrap" style={{ boxShadow: 'none' }}>
         <table className="nhlx-deftable">
-          <thead><tr><th>GP</th>{TEAM_COLS.map(([k, l]) => <th key={k}>{l}</th>)}</tr></thead>
+          <thead><tr><th></th><th>GP</th>{TEAM_COLS.map(([k, l]) => <th key={k}>{l}</th>)}</tr></thead>
           <tbody>
-            <tr>
-              <td>{row.gp ?? '—'}</td>
-              {TEAM_COLS.map(([k, , d, dir]) => <MpCell key={k} v={row[k]} d={d} rank={ranks[k]} n={n} invert={dir === 'low'} />)}
-            </tr>
+            {rows.map(([key, label, t]) => {
+              const row = t.teams[abbr];
+              const ranks = t.ranks?.[abbr] || {};
+              const n = t.count || Object.keys(t.teams).length;
+              return (
+                <tr key={key}>
+                  <td><b>{label}</b></td>
+                  <td>{row.gp ?? '—'}</td>
+                  {TEAM_COLS.map(([k, , d, dir]) => <Cell key={k} row={row} ranks={ranks} k={k} d={d} dir={dir} n={n} against={key === 'opponents'} />)}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -56,24 +73,35 @@ export function TeamPropfinder({ abbr, pf }) {
   );
 }
 
-/** League-wide PropFinder team table, sortable; best-for-the-team on top. */
+/** League-wide PropFinder team table, sortable, with a For / Against switch. */
 export function PropfinderTeamTable({ pf }) {
   const [sort, setSort] = useState('sog');
-  const t = pf?.teams;
+  const [side, setSide] = useState('teams');
+  const against = side === 'opponents';
+  const t = pf?.[side];
   const rows = useMemo(() => {
     if (!t?.teams) return [];
     const col = TEAM_COLS.find(([k]) => k === sort) || TEAM_COLS[0];
-    const dir = col[3] === 'low' ? 1 : -1;
+    // "For": best on top (high values first, giveaways last). "Against": most allowed on top.
+    const dir = !against && col[3] === 'low' ? 1 : -1;
     return Object.entries(t.teams).sort((a, b) => dir * ((a[1][sort] ?? -Infinity) - (b[1][sort] ?? -Infinity)) || a[0].localeCompare(b[0]));
-  }, [t, sort]);
+  }, [t, sort, against]);
   const n = t?.count || rows.length;
+  const available = SIDES.filter(([key]) => pf?.[key]?.teams);
   return (
     <div className="nhlx-pf">
       <div className="nhlx-mu-top-head" style={{ marginTop: 36 }}>
         <div>
           <h3>Team season stats · PropFinder</h3>
-          <p className="nhlx-auto-meta">{t ? teamMeta(t) : 'Not loaded yet.'} · click a column to sort</p>
+          <p className="nhlx-auto-meta">{t ? teamMeta(t, against) : 'Not loaded yet.'} · click a column to sort</p>
         </div>
+        {available.length > 1 && (
+          <div className="nhlx-tabs" role="tablist">
+            {available.map(([key, label]) => (
+              <button key={key} type="button" role="tab" aria-selected={side === key} className={`nhlx-tab${side === key ? ' is-active' : ''}`} onClick={() => setSide(key)}>{label}</button>
+            ))}
+          </div>
+        )}
       </div>
       {rows.length ? (
         <div className="nhlx-db-table-wrap">
@@ -86,7 +114,7 @@ export function PropfinderTeamTable({ pf }) {
                 <tr key={abbr}>
                   <td><div className="nhlx-db-player"><TeamLogo abbr={abbr} size={24} /><span><b>{abbr}</b><small>{row.name}</small></span></div></td>
                   <td>{row.gp ?? '—'}</td>
-                  {TEAM_COLS.map(([k, , d, dir]) => <MpCell key={k} v={row[k]} d={d} rank={t.ranks?.[abbr]?.[k]} n={n} invert={dir === 'low'} />)}
+                  {TEAM_COLS.map(([k, , d, dir]) => <Cell key={k} row={row} ranks={t.ranks?.[abbr] || {}} k={k} d={d} dir={dir} n={n} against={against} />)}
                 </tr>
               ))}
             </tbody>
