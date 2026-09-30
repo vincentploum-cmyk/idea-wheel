@@ -37,7 +37,7 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   (`lib/nhl-data/defense.js`) are descriptive views over the stored rows; the model's
   own math stays in `NhlModel.jsx`. Logos/headshots are copied into `data/media/*` and
   served by `/api/nhl/data/media`; standings/leaders live in `data/league/*`.
-- PropFinder CSV exports (skater per-game rates, team stats with ranks) are imported by
+- PropFinder CSV exports (skater per-game rates, team stats for and against with ranks) are imported by
   `lib/nhl-data/propfinder.js` into `data/propfinder/*` (one snapshot per season; the
   bundled `lib/nhl-data/seed/propfinder-<year>.js` is the fallback, regenerated with
   `node tools/propfinder-seed.mjs <season> <csv…>`). They are descriptive views, not model

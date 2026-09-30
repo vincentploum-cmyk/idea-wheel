@@ -70,11 +70,18 @@ describe('propfinder csv', () => {
     expect(info.teams[0].values).toMatchObject({ g: 3.63, shPct: 10.8, pkPct: 84.6, hdg: 0.6, gv: 15.79 });
     expect(info.teams[0].ranks).toMatchObject({ g: 1, shPct: 19, pkPct: 1, hit: 31 });
     expect(inspectPropfinderCsv(TEAMS.replace('Avalanche', 'Whalers'), 'x-2025-2026-01-01.csv').error).toMatch(/Whalers/);
+    expect(info.statsType).toBe('team');
+  });
+  test('the Opponent export is the same table as what each team allowed', () => {
+    const info = inspectPropfinderCsv(TEAMS.replace('Stats Type,Team', 'Stats Type,Opponent'), 'nhl-team-stats-Opponent-2025-2026-09-30.csv');
+    expect(info).toMatchObject({ kind: 'teams', statsType: 'opponent', season: 2025, error: null });
+    expect(info.teams[0].values.g).toBe(3.63);
   });
   test('the bundled 2025-26 exports parse cleanly', () => {
     const parsed = PROPFINDER_SEED.files.map((f) => inspectPropfinderCsv(f.text, f.name));
     const skaters = parsed.find((p) => p.kind === 'skaters');
-    const teams = parsed.find((p) => p.kind === 'teams');
+    const teams = parsed.find((p) => p.kind === 'teams' && p.statsType === 'team');
+    const opponents = parsed.find((p) => p.kind === 'teams' && p.statsType === 'opponent');
     expect(PROPFINDER_SEED.season).toBe(2025);
     expect(skaters).toMatchObject({ season: 2025, date: '2026-09-30', error: null });
     expect(skaters.players.length).toBeGreaterThan(100);
@@ -82,6 +89,9 @@ describe('propfinder csv', () => {
     expect(teams).toMatchObject({ season: 2025, error: null });
     expect(teams.teams).toHaveLength(32);
     expect(new Set(teams.teams.map((t) => t.abbr)).size).toBe(32);
+    expect(opponents).toMatchObject({ season: 2025, error: null });
+    expect(opponents.teams).toHaveLength(32);
+    expect(opponents.teams.find((t) => t.abbr === 'COL').ranks.g).toBe(32); // fewest goals allowed
   });
 });
 

@@ -492,7 +492,7 @@ function DatabasePanel() {
           ))}
           <div className="nhlx-counter"><b>{db.propfinder.names - db.propfinder.unmatched.length}/{db.propfinder.names}</b><span>PropFinder names matched</span></div>
           {pf?.skaters && <div className="nhlx-counter"><b>{pf.skaters.count}</b><span>PropFinder skater rates {pf.skaters.season}-{String(pf.skaters.season + 1).slice(2)} · as of {pf.skaters.asOf}</span></div>}
-          {pf?.teams && <div className="nhlx-counter"><b>{pf.teams.count}</b><span>PropFinder team stats {pf.teams.season}-{String(pf.teams.season + 1).slice(2)} · as of {pf.teams.asOf}</span></div>}
+          {pf?.teams && <div className="nhlx-counter"><b>{pf.teams.count}</b><span>PropFinder team stats {pf.teams.season}-{String(pf.teams.season + 1).slice(2)}{pf.opponents ? ' · for & against' : ''} · as of {pf.teams.asOf}</span></div>}
         </div>
         <div className="nhlx-auto nhlx-db-actions">
           <div className="nhlx-auto-head">
