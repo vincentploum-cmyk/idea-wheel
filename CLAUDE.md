@@ -36,6 +36,9 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   `components/nhl/Rink.jsx`, ice bands tinted by the opponent's SOG-allowed rank per position
   for the window picked above the rink — home / away / L5 / L10 / L5 home / L5 away, defaulting to
   tonight's venue —
+  above each rink the opponent's PropFinder defense table (`propfinderDefenseTabs` in
+  `lib/nhl-data/propfinder.js`, drawn by `PropfinderDefense` in `components/nhl/Propfinder.jsx`:
+  All/C/LW/RW/D rows, season tabs then L5 / L10 / L15, per game or total, PropFinder's ranks, sortable),
   chips carrying the latest saved model run's λ shots / goals for the slate date from
   `lib/nhl-data/model-runs.js`, or a matchup read when no run exists; finished games show the
   box score) and the per-team defense card

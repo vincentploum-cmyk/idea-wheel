@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
+import { PropfinderDefense } from './Propfinder';
 
 // Tactical board: one team's whole lineup on a full vertical rink (85 × 200 ft,
 // attacking goal at the top). Forward lines stack in the attacking half with
@@ -21,14 +22,14 @@ const pct = (ft) => ft / 2;                    // 200 ft → 100 %
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
 const et = (iso) => (iso ? `${new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })} ET` : null);
 
-/** "lines from … · NHL.com lineup updated 5:30 PM ET · captured 7:20 PM ET". */
-function SourceLine({ side }) {
+/** "lines from … · NHL.com lineup updated 5:30 PM ET · captured 7:20 PM ET" (the card's hover title). */
+function sourceText(side) {
   const m = side.sourceMeta || {};
-  const gdt = m.handle ? <>the beat writers via GameDayTweets (<a href={m.url || 'https://www.gamedaytweets.com/lines'} target="_blank" rel="noopener noreferrer">@{m.handle}</a>{m.at ? `, ${et(m.at)}` : m.date ? `, ${m.date}` : ''})</> : null;
+  const gdt = m.handle ? `the beat writers via GameDayTweets (@${m.handle}${m.at ? `, ${et(m.at)}` : m.date ? `, ${m.date}` : ''})` : null;
   const nhl = m.nhlUpdated ? `NHL.com lineup updated ${et(m.nhlUpdated)}` : null;
-  if (side.source === 'gamedaytweets') return <>lines from {gdt}{nhl ? ` · ${nhl}` : ''}{m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}</>;
-  if (side.source === 'lineup') return <>lines from the NHL.com projected lineup{nhl ? ` (updated ${et(m.nhlUpdated)})` : ''}{gdt ? <> · older tweet from {gdt}</> : ''}{m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}</>;
-  return <>lines from the roster, ordered by projected shots (no lines yet{m.capturedAt ? `, last checked ${et(m.capturedAt)}` : ''})</>;
+  if (side.source === 'gamedaytweets') return `lines from ${gdt}${nhl ? ` · ${nhl}` : ''}${m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}`;
+  if (side.source === 'lineup') return `lines from the NHL.com projected lineup${nhl ? ` (updated ${et(m.nhlUpdated)})` : ''}${gdt ? ` · older tweet from ${gdt}` : ''}${m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}`;
+  return `lines from the roster, ordered by projected shots (no lines yet${m.capturedAt ? `, last checked ${et(m.capturedAt)}` : ''})`;
 }
 
 /** League rank (1 = most permissive) → 'soft' | 'mid' | 'tough' | 'none'. */
@@ -179,6 +180,8 @@ function BandLabel({ pos, d, opp, view, teamCount, x, y }) {
 
 /** One side of a game: `side` is an entry of a slate game's `sides`. */
 export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, modelRun = null }) {
+  // Kept for the card's title (hover): where the chip numbers and the lines come from.
+  const numSrc = modelRun ? `Numbers on the chips: the model, ${modelRun.source === 'auto' ? 'run automatically' : 'run'} ${et(modelRun.createdAt)}${modelRun.players ? ` (${modelRun.players} players)` : ''}.` : 'No model run for this slate yet: chips show a matchup read (own SOG/G × opponent ratio).';
   const { placed, extras } = useMemo(() => layoutSide(side.skaters), [side.skaters]);
   // Finished game: this team's box-score rows, by player id and by name.
   const actual = useMemo(() => {
@@ -198,15 +201,15 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
   const clipId = `rink-${side.team}-${side.opp}`;
   const open = usePlayerCard();
   return (
-    <section className="nhlx-rk-card" aria-label={`${side.team} lineup on the rink`}>
+    <section className="nhlx-rk-card" aria-label={`${side.team} lineup on the rink`} title={`${numSrc} Ice tinted by what ${side.opp} allows ${WINDOW_TEXT[v]} to each position (rank 1 = most permissive) · ${sourceText(side)}`}>
       <div className="nhlx-rk-head">
         <TeamLogo abbr={side.team} size={28} />
         <div>
           <b>{side.team} <small>{side.venue === 'H' ? 'home' : 'away'}{score ? ` · final ${score[0]}–${score[1]} vs ${side.opp} · chips show the game's shots, goals, assists` : ' · attacking upwards'}</small></b>
-          <small className="nhlx-rk-numsrc">{modelRun ? <>Numbers on the chips: <b>the model</b>, {modelRun.source === 'auto' ? 'run automatically' : 'run'} {et(modelRun.createdAt)}{modelRun.players ? ` (${modelRun.players} players)` : ''}{score ? ', after "m"' : ''}.</> : <>No model run for this slate yet: chips show a matchup read (own SOG/G × opponent ratio){score ? ', after "p"' : ''}. The model runs itself once the PropFinder matchup files and the lines are in.</>}</small>
-          <small>Ice tinted by what {side.opp} allows {WINDOW_TEXT[v]} to each position (rank 1 = most permissive) · <SourceLine side={side} /></small>
+          {/* The chips' source and the lines' source stay in the title attribute: the head shows only the team. */}
         </div>
       </div>
+      {side.propfinder ? <PropfinderDefense abbr={side.opp} data={side.propfinder} posFilter={posFilter} /> : null}
       <div className="nhlx-rk-toggle">
         <small>{side.opp} allows</small>
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label={`Window of ${side.opp}'s defense`}>

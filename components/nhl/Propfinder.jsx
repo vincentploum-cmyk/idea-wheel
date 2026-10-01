@@ -5,6 +5,7 @@ import { Headshot, TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { MpCell } from './MoneyPuck';
 import { SKATER_COLS, TEAM_COLS, seasonLabel } from '@/lib/nhl-data/propfinder-csv';
+import { teamName } from '@/lib/nhl-data/teams';
 
 const num = (v, d) => (v == null ? '—' : Number(v).toFixed(d));
 const day = (iso) => (iso ? new Date(`${iso.slice(0, 10)}T12:00:00Z`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
@@ -214,6 +215,87 @@ export function PropfinderSkaterTable({ pf }) {
           )}
         </>
       ) : <div className="nhlx-empty">No PropFinder skater stats stored yet. Import an nhl-skater-stats-*.csv export on the Teams tab.</div>}
+    </div>
+  );
+}
+
+/** PropFinder's own colouring, read from the shooter's side: rank 1 = most allowed. */
+const defTone = (rank, n) => (!rank || !n ? '' : rank <= Math.ceil(n / 3) ? 'is-soft' : rank > n - Math.ceil(n / 3) ? 'is-tough' : 'is-mid');
+const DEF_POS = ['All', 'C', 'LW', 'RW', 'D'];
+
+/**
+ * The defense table above a rink, in PropFinder's format: what `abbr` allowed per game
+ * (or in total) to every position, one tab per season / recent-games window (the current
+ * season selected), each cell carrying PropFinder's league rank; a column header sorts
+ * the position rows (All stays on top). `data` is a slate side's `propfinder`.
+ */
+export function PropfinderDefense({ abbr, data, posFilter = '' }) {
+  const tabs = data?.tabs || [];
+  const [tabKey, setTabKey] = useState(null);
+  const [total, setTotal] = useState(false);
+  const [sort, setSort] = useState(null);
+  const tab = tabs.find((t) => t.key === tabKey) || [...tabs].reverse().find((t) => t.kind === 'season') || tabs[0];
+  if (!tab) return null;
+  const cols = data.cols.filter(([k]) => DEF_POS.some((pos) => tab.rows[pos]?.[k] != null));
+  const n = tab.count;
+  const order = sort ? ['All', ...DEF_POS.slice(1).filter((p) => tab.rows[p]).sort((a, b) => (tab.rows[b][sort] ?? -Infinity) - (tab.rows[a][sort] ?? -Infinity))] : DEF_POS;
+  const cell = (row, k) => {
+    const v = row[k];
+    if (v == null) return <td key={k}><span className="nhlx-pfd-val">—</span></td>;
+    const r = row.ranks?.[k];
+    return (
+      <td key={k} className={defTone(r, n)}>
+        <span className="nhlx-pfd-val">{total ? Math.round(v * (row.gp || 0)) : Number(v).toFixed(2)}</span>
+        {r ? <span className="nhlx-pfd-rank">#{r}</span> : null}
+      </td>
+    );
+  };
+  const when = tab.kind === 'season' ? `${tab.label} season` : `last ${tab.windowGames}${tab.split === 'H' ? ' home' : tab.split === 'A' ? ' away' : ''} games`;
+  return (
+    <div className="nhlx-pfd" aria-label={`${abbr} defense, PropFinder`}>
+      <div className="nhlx-pfd-head" title={`What ${teamName(abbr) || abbr} allowed ${total ? 'in total' : 'per game'} to each position · ${when}${tab.rows.All?.gp ? ` · ${tab.rows.All.gp} GP` : ''} · rank 1 = most allowed of ${n} · data from PropFinder`}>
+        <TeamLogo abbr={abbr} size={22} />
+        <b>{teamName(abbr) || abbr} defense</b>
+        <label className="nhlx-pfd-switch">
+          <span className={total ? '' : 'is-on'}>Per game</span>
+          <input type="checkbox" role="switch" checked={total} aria-checked={total} aria-label="Show totals instead of per game" onChange={(e) => setTotal(e.target.checked)} />
+          <i aria-hidden="true" />
+          <span className={total ? 'is-on' : ''}>Total</span>
+        </label>
+      </div>
+      {tabs.length > 1 && (
+        <div className="nhlx-tabs nhlx-rk-tabs nhlx-pfd-tabs" role="tablist" aria-label={`Window of ${abbr}'s PropFinder table`}>
+          {tabs.map((t) => (
+            <button key={t.key} type="button" role="tab" aria-selected={tab.key === t.key} className={`nhlx-tab${tab.key === t.key ? ' is-active' : ''}`} onClick={() => setTabKey(t.key)}>{t.label}</button>
+          ))}
+        </div>
+      )}
+      <div className="nhlx-pfd-wrap">
+        <table className="nhlx-pfd-table">
+          <thead>
+            <tr>
+              <th>Position</th>
+              {cols.map(([k, l]) => (
+                <th key={k} className={sort === k ? 'is-sorted' : ''}>
+                  <button type="button" onClick={() => setSort(sort === k ? null : k)} title={sort === k ? 'Back to position order' : `Sort positions by ${l}`}>{total ? l.replace('/G', '') : l}{sort === k ? <i aria-hidden="true">↓</i> : null}</button>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {order.map((pos) => {
+              const row = tab.rows[pos];
+              if (!row) return null;
+              return (
+                <tr key={pos} className={posFilter && pos !== 'All' && pos !== posFilter ? 'is-muted' : ''}>
+                  <td><b>{pos}</b></td>
+                  {cols.map(([k]) => cell(row, k))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

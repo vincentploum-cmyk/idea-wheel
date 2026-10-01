@@ -275,13 +275,14 @@ export default function MatchupsPanel() {
               </div>
               {g.verdicts && Object.values(g.verdicts).some(Boolean) && (
                 <div className="nhlx-mu-verdicts">
+                  {/* Above each rink: the read on the defense its skaters face (the away rink carries the home team's). */}
                   {g.sides.map((s) => {
-                    const v = g.verdicts[s.team];
+                    const v = g.verdicts[s.opp];
                     return (
                       <div key={s.team} className="nhlx-mu-verdict">
                         <div className="nhlx-mu-verdict-head">
-                          <TeamLogo abbr={s.team} size={22} />
-                          <b>{s.team}</b>
+                          <TeamLogo abbr={s.opp} size={22} />
+                          <b>{s.opp}</b>
                           {v ? <span className={`nhlx-edge ${v.tier === 'leaky' ? 'is-soft' : v.tier === 'tight' ? 'is-tough' : ''}`}>{v.headline}</span> : <small>No read yet</small>}
                         </div>
                         {v && (
