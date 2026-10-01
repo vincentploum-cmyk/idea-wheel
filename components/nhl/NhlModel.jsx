@@ -5,52 +5,11 @@
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import * as XLSX from "xlsx";
-import { TEAM_SHORT, buildProjections, clamp, normShort, normTeam, normalizeName, normalizePlayerName, parseBoxScoresWorkbook, parseHistoricalProfiles, parseLineups, parseMatchups, parsePaceWorkbook, parsePlayerHomeAway, parseRankingsFile, poissonAtLeast, summarizeRun } from "./model-core";
+import { TEAM_LOGO_ABBR, TEAM_SHORT, buildProjections, clamp, normShort, normTeam, normalizeName, normalizePlayerName, parseBoxScoresWorkbook, parseHistoricalProfiles, parseLineups, parseMatchups, parsePaceWorkbook, parsePlayerHomeAway, parseRankingsFile, poissonAtLeast, summarizeRun } from "./model-core";
 export { summarizeRun };
 
 
 
-const TEAM_LOGO_ABBR = {
-  toronto: "TOR",
-  rangers: "NYR",
-  florida: "FLA",
-  panthers: "FLA",
-  cbj: "CBJ",
-  mammoth: "UTA",
-  utah: "UTA",
-  flyers: "PHI",
-  sabres: "BUF",
-  penguins: "PIT",
-  lightning: "TBL",
-  jets: "WPG",
-  bruins: "BOS",
-  nashville: "NSH",
-  predators: "NSH",
-  senators: "OTT",
-  flames: "CGY",
-  islanders: "NYI",
-  kings: "LAK",
-  oilers: "EDM",
-  canucks: "VAN",
-  capitals: "WSH",
-  hurricanes: "CAR",
-  ducks: "ANA",
-  sharks: "SJS",
-  devils: "NJD",
-  blackhawks: "CHI",
-  chicago: "CHI",
-  avalanche: "COL",
-  colorado: "COL",
-  "red wings": "DET",
-  detroit: "DET",
-  kraken: "SEA",
-  stars: "DAL",
-  blues: "STL",
-  canadiens: "MTL",
-  wild: "MIN",
-  vegas: "VGK",
-  "golden knights": "VGK",
-};
 
 function teamLogoUrl(teamKey) {
   const abbr = TEAM_LOGO_ABBR[normTeam(teamKey || "")];
@@ -3911,15 +3870,6 @@ export const NHL_UPLOAD_SLOTS = [
   { key: "rankings", title: "Defense Rankings", sub: "NHL-Defense-Rankings-2026.xlsx", accent: "#7c3aed" },
   { key: "boxScores", title: "Box Scores", sub: "Box Scores *.xlsx · unlocks Audit View", accent: "#dc2626" },
 ];
-
-function teamAbbr(name) {
-  return TEAM_LOGO_ABBR[normTeam(name || "")] || null;
-}
-
-function splitGameLabel(label) {
-  const m = String(label || "").split(/\s+(?:@|vs\.?|v\.?|at|-|–)\s+/i);
-  return m.length === 2 ? m : [null, null];
-}
 
 // Compact, JSON-safe description of a run for Run History.
 

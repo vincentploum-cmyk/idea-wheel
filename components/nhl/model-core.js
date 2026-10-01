@@ -5908,6 +5908,59 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
   return sorted;
 }
 
+// Team key (normTeam) → NHL abbreviation, for run summaries and logos.
+const TEAM_LOGO_ABBR = {
+  toronto: "TOR",
+  rangers: "NYR",
+  florida: "FLA",
+  panthers: "FLA",
+  cbj: "CBJ",
+  mammoth: "UTA",
+  utah: "UTA",
+  flyers: "PHI",
+  sabres: "BUF",
+  penguins: "PIT",
+  lightning: "TBL",
+  jets: "WPG",
+  bruins: "BOS",
+  nashville: "NSH",
+  predators: "NSH",
+  senators: "OTT",
+  flames: "CGY",
+  islanders: "NYI",
+  kings: "LAK",
+  oilers: "EDM",
+  canucks: "VAN",
+  capitals: "WSH",
+  hurricanes: "CAR",
+  ducks: "ANA",
+  sharks: "SJS",
+  devils: "NJD",
+  blackhawks: "CHI",
+  chicago: "CHI",
+  avalanche: "COL",
+  colorado: "COL",
+  "red wings": "DET",
+  detroit: "DET",
+  kraken: "SEA",
+  stars: "DAL",
+  blues: "STL",
+  canadiens: "MTL",
+  wild: "MIN",
+  vegas: "VGK",
+  "golden knights": "VGK",
+};
+
+function teamAbbr(name) {
+  return TEAM_LOGO_ABBR[normTeam(name || "")] || null;
+}
+
+/** "Penguins @ Flyers" → ["Penguins", "Flyers"]; anything else → [null, null]. */
+function splitGameLabel(label) {
+  const m = String(label || "").split(/\s+(?:@|vs\.?|v\.?|at|-|–)\s+/i);
+  return m.length === 2 ? m : [null, null];
+}
+
 function summarizeRun(files, results, games) {
   const rows = Array.isArray(results) ? results : [];
   const dateFrom = (f) => (f?.name || "").match(/(20\d{2})[-_.](\d{2})[-_.](\d{2})/);
@@ -5942,6 +5995,7 @@ function summarizeRun(files, results, games) {
 
 export {
   PLAYER_NAME_ALIASES,
+  TEAM_LOGO_ABBR,
   POSITIONS,
   TEAM_ALIASES,
   TEAM_SHORT,
