@@ -10,6 +10,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Node sizes its heap from the instance's memory and stops far below the 512 MB
+      # the free instance has; the automatic model run needs ~250 MB of heap.
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=384
 
       # Supabase — auth (magic link / Google / GitHub) + Storage for model runs.
       # The private "nhl-model" bucket is created automatically on first save.
