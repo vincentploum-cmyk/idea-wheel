@@ -34,7 +34,7 @@ function slotDetail(key, v) {
 /** "Last automatic run started 11:43 PM: saved (291 players)." or how far a dead one got. */
 function attemptText(a) {
   const when = fmt(a.startedAt);
-  if (a.finishedAt && a.runId) return `Last automatic run started ${when}: saved${a.players ? ` (${a.players} players)` : ''}.`;
+  if (a.finishedAt && a.runId) return `Last automatic run started ${when}: saved${a.players ? ` (${a.players} players)` : ''}${a.peakRssMb ? `, peak memory ${a.peakRssMb} MB` : ''}.`;
   if (a.finishedAt) return `Last automatic run started ${when}: ${a.error ? `failed (${a.error})` : `skipped (${a.skipped || 'no reason recorded'})`}.`;
   const last = a.stages?.[a.stages.length - 1];
   return `Last automatic run started ${when} did not finish${last ? `; it got as far as "${last.name}" at ${last.rssMb} MB` : ' before its first step'}. The process was probably restarted; it is retried on the next deploy or when the lines change.`;
