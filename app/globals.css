@@ -668,6 +668,16 @@ p { margin: 0; }
 .nhlx-mu-game.is-first { margin-top: 20px; padding-top: 0; border-top: 0; }
 .nhlx-mu-game-head { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 20px; color: var(--heading); }
 .nhlx-mu-game-head small { font-family: var(--font-ui); font-size: 13px; color: var(--muted); margin-left: 6px; }
+.nhlx-mu-score { font-family: var(--font-display); font-weight: 700; color: var(--heading); font-variant-numeric: tabular-nums; }
+/* The read under a fixture: one column per team, plain text with the tone on the headline and on each line's marker. */
+.nhlx-mu-verdicts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 24px; margin-top: 14px; }
+.nhlx-mu-verdict-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--heading); font-weight: 600; }
+.nhlx-mu-verdict-head small { color: var(--muted); font-weight: 400; }
+.nhlx-mu-verdict ul { margin: 8px 0 0; padding-left: 18px; font-size: 14px; line-height: 1.45; color: var(--body); }
+.nhlx-mu-verdict li { margin: 2px 0; }
+.nhlx-mu-verdict li::marker { color: var(--muted); }
+.nhlx-mu-verdict li.is-soft::marker { color: var(--ok-fg); }
+.nhlx-mu-verdict li.is-tough::marker { color: var(--bad-fg); }
 .nhlx-mu-side { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
 .nhlx-mu-side-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--heading); }
 .nhlx-mu-side-head small { color: var(--muted); font-size: 13px; }
@@ -894,4 +904,5 @@ td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
 .nhlx-mu-details > summary { font-size: 16px; }
 @media (max-width: 1000px) {
   .nhlx-rink-pair { grid-template-columns: 1fr; }
+  .nhlx-mu-verdicts { grid-template-columns: 1fr; }
 }

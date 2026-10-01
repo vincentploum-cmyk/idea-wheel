@@ -266,8 +266,34 @@ export default function MatchupsPanel() {
                 <TeamLogo abbr={g.away} size={34} />
                 <b>{g.away} @ {g.home}</b>
                 <TeamLogo abbr={g.home} size={34} />
-                <small>{fmtTime(g.startTimeUTC)}{g.frozen ? ' · positions frozen' : ''}</small>
+                <small>
+                  {g.log?.score
+                    ? <>Final · <b className="nhlx-mu-score">{g.away} {g.log.score.away} – {g.home} {g.log.score.home}</b>{g.startTimeUTC ? ` · ${fmtTime(g.startTimeUTC)}` : ''}</>
+                    : fmtTime(g.startTimeUTC)}
+                  {g.frozen ? ' · positions frozen' : ''}
+                </small>
               </div>
+              {g.verdicts && Object.values(g.verdicts).some(Boolean) && (
+                <div className="nhlx-mu-verdicts">
+                  {g.sides.map((s) => {
+                    const v = g.verdicts[s.team];
+                    return (
+                      <div key={s.team} className="nhlx-mu-verdict">
+                        <div className="nhlx-mu-verdict-head">
+                          <TeamLogo abbr={s.team} size={22} />
+                          <b>{s.team}</b>
+                          {v ? <span className={`nhlx-edge ${v.tier === 'leaky' ? 'is-soft' : v.tier === 'tight' ? 'is-tough' : ''}`}>{v.headline}</span> : <small>No read yet</small>}
+                        </div>
+                        {v && (
+                          <ul>
+                            {v.lines.map((l) => <li key={l.key} className={l.tone || undefined}>{l.text}</li>)}
+                          </ul>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               <div className="nhlx-rink-pair">
                 {g.rinkSides.map((s) => <Rink key={s.team} side={s} teamCount={slate.teamCount} posFilter={pos} minGp={minGp} log={g.log} modelRun={slate.modelRun} />)}
               </div>
