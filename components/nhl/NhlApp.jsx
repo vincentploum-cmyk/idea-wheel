@@ -10,11 +10,9 @@ import DatabasePanel from './DatabasePanel';
 import MatchupsPanel from './MatchupsPanel';
 import LeaguePanel from './LeaguePanel';
 import { PlayerCardHost } from './PlayerCard';
-import SetupPanel from './SetupPanel';
 import ThemeToggle from './ThemeToggle';
 
 const TABS = [
-  ['start', 'Start here'],
   ['teams', 'Teams & players'],
   ['matchups', 'Matchups'],
   ['model', 'Best bets'],
@@ -22,11 +20,12 @@ const TABS = [
   ['history', 'Run history'],
 ];
 const TAB_KEYS = TABS.map(([key]) => key);
+const DEFAULT_TAB = 'matchups';
 
 // The URL hash is the tab state, so tabs deep-link and back/forward work.
 function tabFromHash() {
   const key = window.location.hash.slice(1);
-  return TAB_KEYS.includes(key) ? key : TAB_KEYS[0];
+  return TAB_KEYS.includes(key) ? key : DEFAULT_TAB;
 }
 
 // Tabs visited this page load; a visited panel stays mounted so the model
@@ -41,7 +40,7 @@ function subscribeHash(cb) {
 const visitedKey = () => [...visited].sort().join(',');
 
 function useHashTab() {
-  const tab = useSyncExternalStore(subscribeHash, tabFromHash, () => TAB_KEYS[0]);
+  const tab = useSyncExternalStore(subscribeHash, tabFromHash, () => DEFAULT_TAB);
   const seen = useSyncExternalStore(subscribeHash, visitedKey, () => '');
   return [tab, (key) => key === tab || seen.split(',').includes(key)];
 }
@@ -135,16 +134,6 @@ export default function NhlApp({ email }) {
   const [latest, setLatest] = useState(null);
   const [autoSlots, setAutoSlots] = useState(null);
   const [tab, mounted] = useHashTab();
-  const [setup, setSetup] = useState(null);
-  // Land on "Start here" until every sync step is done; after that on Matchups.
-  useEffect(() => {
-    if (window.location.hash) return;
-    fetch('/api/nhl/data/setup', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => {
-      if (!j) return;
-      setSetup(j);
-      if (!window.location.hash) window.location.replace(j.complete ? '#matchups' : '#start');
-    }).catch(() => {});
-  }, []);
   const activeRunRef = useRef(null);
   useEffect(() => { activeRunRef.current = activeRunId; }, [activeRunId]);
   const prevFilesRef = useRef({});
@@ -291,20 +280,11 @@ export default function NhlApp({ email }) {
                 aria-controls={key}
                 className={`nhlx-tab${tab === key ? ' is-active' : ''}`}
               >
-                {label}{key === 'start' && setup && !setup.complete ? <i className="nhlx-tab-dot" aria-label={`${setup.remaining.length} steps left`} /> : null}
+                {label}
               </a>
             ))}
           </div>
         </div>
-
-        <section className="nhlx-section nhlx-tabpanel" id="start" role="tabpanel" aria-labelledby="tab-start" hidden={tab !== 'start'}>
-          <div className="nhlx-wrap">
-            <span className="nhlx-eyebrow">Setup</span>
-            <h2 className="nhlx-h2">Start <span>here</span></h2>
-            <p className="nhlx-lede">Eight steps, in order, from an empty database to tonight’s matchups. Each one checks itself; come back any day to see what still needs a click.</p>
-            <div style={{ marginTop: 28 }}>{mounted('start') && <SetupPanel onStatus={setSetup} initial={setup} />}</div>
-          </div>
-        </section>
 
         <section className="nhlx-section nhlx-tabpanel" id="teams" role="tabpanel" aria-labelledby="tab-teams" hidden={tab !== 'teams'}>
           <div className="nhlx-wrap">

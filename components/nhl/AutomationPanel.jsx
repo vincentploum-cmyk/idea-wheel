@@ -40,6 +40,49 @@ function attemptText(a) {
   return `Last automatic run started ${when} did not finish${last ? `; it got as far as "${last.name}" at ${last.rssMb} MB` : ' before its first step'}. The process was probably restarted; it is retried on the next deploy or when the lines change.`;
 }
 
+async function post(url) {
+  const res = await fetch(url, { method: 'POST' });
+  let j = {};
+  try { j = await res.json(); } catch {}
+  if (!res.ok || j.ok === false) throw new Error(j.error || j.detail || `${res.status} ${res.statusText}`);
+  return j;
+}
+
+const num = (v) => Number(v || 0).toLocaleString();
+
+/** The stored sources the morning run keeps fresh, as one line each, from /api/nhl/data/setup. */
+function healthRows(h) {
+  if (!h) return [];
+  const st = h.steps;
+  const season = (s) => `${s.slice(0, 4)}-${s.slice(6)}`;
+  return [
+    {
+      key: 'rosters', label: 'Rosters', ok: st.rosters.done, action: 'rosters',
+      text: st.rosters.teams
+        ? `${st.rosters.teams} teams, ${num(st.rosters.players)} players · ${fmt(st.rosters.at)}${st.rosters.incomplete.length ? ` · incomplete: ${st.rosters.incomplete.join(', ')}` : ''}${st.rosters.failed.length ? ` · failed: ${st.rosters.failed.join(', ')}` : ''}`
+        : 'Nothing loaded yet',
+    },
+    {
+      key: 'media', label: 'Logos & photos', ok: st.media.done, action: st.media.done ? null : 'media',
+      text: `${num(st.media.logos)} logos, ${num(st.media.headshots)} photos${st.media.remaining ? ` · ${num(st.media.remaining)} still to copy` : ''}`,
+    },
+    {
+      key: 'history', label: 'Game history', ok: st.history.done, action: 'history',
+      text: `${season(st.history.previous.season)}: ${num(st.history.previous.games)} games (a full season is ~1,312) · ${season(st.history.current.season)}: ${num(st.history.current.games)}${st.history.current.last ? ` through ${st.history.current.last}` : ''}`,
+    },
+    {
+      key: 'league', label: 'League tables', ok: st.league.done,
+      text: st.league.teams ? `${st.league.teams} teams · ${fmt(st.league.updatedAt)}` : 'Not loaded yet',
+    },
+    {
+      key: 'moneypuck', label: 'MoneyPuck', ok: st.moneypuck.done, action: 'moneypuck',
+      text: st.moneypuck.teams
+        ? `${st.moneypuck.teams} teams · ${fmt(st.moneypuck.updatedAt)}${st.moneypuck.splits ? ` · home/away splits from ${num(st.moneypuck.splits.rows)} game rows, ${fmt(st.moneypuck.splits.updatedAt)}` : ' · no home/away splits yet'}`
+        : 'Not loaded yet',
+    },
+  ];
+}
+
 async function fetchSlotFile(slot, date) {
   const res = await fetch(`/api/nhl/data/file?slot=${slot}&date=${date}`, { cache: 'no-store' });
   if (!res.ok) return null;
@@ -56,6 +99,10 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
   const [token, setToken] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [backfill, setBackfill] = useState({ from: '', to: '', running: false, done: 0, total: 0, log: '' });
+  const [health, setHealth] = useState(null);
+  const [healthMsg, setHealthMsg] = useState('');
+  const [fixing, setFixing] = useState('');
+  const cancelFix = useRef(false);
   const autoStarted = useRef(false);
   const cancelBackfill = useRef(false);
 
@@ -111,6 +158,7 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
       const j = await res.json();
       if (!res.ok || !j.ok) throw new Error(j.error || `refresh ${res.status}`);
       await loadSlate(date, { runIfReady: false });
+      if (health) loadHealth();
     } catch (err) {
       setMsg(`Refresh failed: ${err.message}`);
       setBusy(false);
@@ -142,6 +190,49 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
     loadStatus(date);
   };
 
+  const loadHealth = useCallback(async () => {
+    try {
+      const res = await fetch('/api/nhl/data/setup', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`${res.status}`);
+      setHealth(await res.json());
+    } catch (err) {
+      setHealthMsg(`Couldn’t check the stored data: ${err.message}`);
+    }
+  }, []);
+
+  // Repairs for a source the morning run should have kept fresh; the morning
+  // run itself is "Refresh NHL data" above.
+  const fix = async (what) => {
+    setFixing(what);
+    cancelFix.current = false;
+    try {
+      if (what === 'rosters') {
+        setHealthMsg('Pulling all 32 rosters from the NHL…');
+        const j = await post('/api/nhl/data/rosters');
+        setHealthMsg(`Rosters: ${j.result.teams} teams, ${num(j.result.players)} players${j.result.failed?.length ? `; failed: ${j.result.failed.join(', ')}` : ''}.`);
+      } else if (what === 'media') {
+        let total = 0;
+        for (let i = 0; i < 12 && !cancelFix.current; i++) {
+          setHealthMsg(`Copying logos and photos… ${num(total)} so far`);
+          const j = await post('/api/nhl/data/media');
+          total += j.result.downloaded;
+          if (j.result.remaining === 0 || j.result.downloaded === 0) {
+            setHealthMsg(`${num(j.result.logos)} logos, ${num(j.result.headshots)} photos stored${j.result.remaining ? `, ${j.result.remaining} could not be fetched` : ''}.`);
+            break;
+          }
+        }
+      } else if (what === 'moneypuck') {
+        setHealthMsg('Pulling the MoneyPuck season summary and all 32 game logs…');
+        const j = await post('/api/nhl/data/moneypuck?games=1');
+        setHealthMsg(`MoneyPuck: ${j.result.teams} teams, ${num(j.result.gameRows)} game rows for home/away splits${j.result.failed?.length ? `; failed: ${j.result.failed.join(', ')}` : ''}.`);
+      }
+    } catch (err) {
+      setHealthMsg(`Failed: ${err.message}`);
+    }
+    setFixing('');
+    loadHealth();
+  };
+
   const runBackfill = async () => {
     const { from, to } = backfill;
     if (!from || !to || from > to) return;
@@ -165,6 +256,7 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
     }
     setBackfill((b) => ({ ...b, running: false, log: `Done. ${games} games added.` }));
     loadStatus(date);
+    loadHealth();
   };
 
   const slots = status?.slots || {};
@@ -333,8 +425,38 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
 
       {msg && <p className="nhlx-auto-msg" role="status">{msg}</p>}
 
-      <details className="nhlx-auto-tools">
+      <details className="nhlx-auto-tools" onToggle={(e) => { if (e.currentTarget.open && !health) loadHealth(); }}>
         <summary>Data sources, folder sync and backfill</summary>
+        <div className="nhlx-auto-label" style={{ marginTop: 14 }}>Stored data</div>
+        <p className="nhlx-auto-meta">
+          Rosters, logos, league tables and MoneyPuck refresh with the morning run (9:17 ET; MoneyPuck game logs on Sundays), finished games are stored the next morning.
+          {' '}“Refresh NHL data” above runs the whole morning job now.
+        </p>
+        {!health && !healthMsg && <p className="nhlx-auto-meta">Checking the stored data…</p>}
+        <div className="nhlx-health">
+          {healthRows(health).map((r) => (
+            <div key={r.key} className={`nhlx-auto-item${r.ok ? ' is-ready' : ' is-partial'}`}>
+              <span className="nhlx-auto-dot" aria-hidden />
+              <div>
+                <div className="nhlx-auto-label">{r.label}</div>
+                <div className="nhlx-auto-meta">{r.text}</div>
+              </div>
+              {r.action === 'history' ? (
+                <div className="nhlx-auto-actions">
+                  <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={backfill.running} onClick={() => setBackfill((b) => ({ ...b, from: health.steps.history.previous.from, to: health.steps.history.previous.to }))}>Last season →</button>
+                  <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={backfill.running} onClick={() => setBackfill((b) => ({ ...b, from: health.steps.history.current.from, to: health.steps.history.current.to }))}>This season →</button>
+                </div>
+              ) : r.action ? (
+                <div className="nhlx-auto-actions">
+                  {fixing === r.action && r.action === 'media'
+                    ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" onClick={() => { cancelFix.current = true; }}>Stop</button>
+                    : <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={!!fixing} onClick={() => fix(r.action)}>{r.action === 'rosters' ? 'Update now' : r.action === 'media' ? 'Copy missing' : 'Load game logs'}</button>}
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+        {healthMsg && <p className="nhlx-auto-msg" role="status">{healthMsg}</p>}
         <div className="nhlx-auto-grid">
           {AUTO_SLOTS.map((s) => (
             <div key={s.key} className={`nhlx-auto-item${slots[s.key] && (s.key !== 'lineups' || slots[s.key].complete) ? ' is-ready' : slots[s.key] ? ' is-partial' : ''}`}>
@@ -365,7 +487,7 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
           </div>
           <div>
             <div className="nhlx-auto-label">Backfill past games</div>
-            <p className="nhlx-auto-meta">Loads finished games and lineups into the database so history and home/away stats have depth.</p>
+            <p className="nhlx-auto-meta">Loads finished games and lineups into the database so history and home/away stats have depth; one day at a time (a season takes 20–30 minutes), days already stored are skipped, stop and continue any time. The “Last season →” and “This season →” buttons above fill in the dates.</p>
             <div className="nhlx-auto-actions">
               <input type="date" className="nhlx-input nhlx-input-sm" value={backfill.from} onChange={(e) => setBackfill((b) => ({ ...b, from: e.target.value }))} aria-label="From" />
               <input type="date" className="nhlx-input nhlx-input-sm" value={backfill.to} onChange={(e) => setBackfill((b) => ({ ...b, to: e.target.value }))} aria-label="To" />
