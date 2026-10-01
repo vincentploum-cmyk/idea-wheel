@@ -24,6 +24,13 @@ describe('gamedaytweets page', () => {
     expect(tweets[2].text).toContain('Lafrenière');
     expect(tweets[1].text).toContain("I'm wondering");
   });
+  test('blocks the page script has already marked for the embed widget still count', () => {
+    // In a browser the newest blocks read class="tweet full-sized-tweet twitter-tweet" and the dash is a literal em dash.
+    const rendered = NYR_PAGE.replace('<blockquote class="tweet full-sized-tweet">', '<blockquote class="tweet full-sized-tweet twitter-tweet">').replace('&mdash;', '—');
+    const tweets = parseLinesPage(rendered);
+    expect(tweets).toHaveLength(3);
+    expect(tweets[0]).toMatchObject({ handle: 'ColinSNewsday', date: '2026-09-30' });
+  });
   test('a tweet id carries its posting time (snowflake)', () => {
     // Colin Stephenson's Rangers practice tweet from the fixture page: Sep 30, 2026, early afternoon ET.
     const at = tweetTime('2105356143518273856');
