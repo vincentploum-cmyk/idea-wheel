@@ -26,6 +26,8 @@ jobs:
           # The late run belongs to the previous ET day.
           if [ "$(date -u +%H)" = "04" ] && [ -z "${{ github.event.inputs.date }}" ]; then DATE=$(TZ=America/New_York date -d 'yesterday' +%F); fi
           echo "Refreshing $DATE"
+          # PropFinder first, as its own request: the pull and the model run each need most of the instance's memory.
+          pf=$(curl -sS -o pf.json -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?date=$DATE&only=propfinder"); echo "propfinder: $pf $(head -c 400 pf.json)"
           code=$(curl -sS -o resp.json -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?date=$DATE")
           cat resp.json; echo
           [ "$code" = "200" ] || [ "$code" = "429" ]
