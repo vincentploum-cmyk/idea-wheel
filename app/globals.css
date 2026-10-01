@@ -912,7 +912,12 @@ td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
 .nhlx-rk-chip.is-out { opacity: 0.55; }
 /* A slot filled from the team's last known lineup (no line for him today yet). */
 .nhlx-rk-chip.is-carried { border-style: dashed; }
-.nhlx-rk-num { flex: none; min-width: 4.8cqw; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: max(13px, 4.6cqw); line-height: 1; color: var(--primary); font-variant-numeric: tabular-nums; }
+/* The player's photo with the jersey number as a small badge on its corner; without a photo the number stands alone. */
+.nhlx-rk-pic { position: relative; flex: none; min-width: 4.8cqw; min-height: max(22px, 7cqw); display: flex; align-items: center; justify-content: center; }
+.nhlx-rk-pic img { width: max(24px, 7.6cqw); height: max(24px, 7.6cqw); border-radius: 50%; object-fit: cover; object-position: top; background: var(--bg-soft); border: 1px solid var(--line); display: block; }
+.nhlx-rk-num { font-family: var(--font-display); font-weight: 800; font-size: max(13px, 4.6cqw); line-height: 1; color: var(--primary); font-variant-numeric: tabular-nums; font-style: normal; }
+.nhlx-rk-pic img + .nhlx-rk-num { position: absolute; right: -0.9cqw; bottom: -0.5cqw; font-size: max(8px, 2.3cqw); line-height: 1; padding: 0.35cqw 0.7cqw; border-radius: 100px; background: var(--card); border: 1px solid var(--line); }
+.nhlx-rk-pic img[style*="display: none"] + .nhlx-rk-num { position: static; font-size: max(13px, 4.6cqw); padding: 0; border: 0; background: none; }
 .nhlx-rk-meta { min-width: 0; display: flex; flex-direction: column; }
 .nhlx-rk-name { font-family: var(--font-display); font-weight: 700; font-size: max(11px, 3.1cqw); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em; }
 .nhlx-rk-stat { font-size: max(9.5px, 2.4cqw); line-height: 1.3; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
