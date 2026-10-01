@@ -2,6 +2,7 @@ import { describe, expect, test } from '@jest/globals';
 import { inspectPropfinderCsv, parsePlayerCell, parseRanked, parseStatsCsv, statKey, fileInfo, seasonYear } from '../lib/nhl-data/propfinder-csv';
 import { nameResolver } from '../lib/nhl-data/names';
 import { PROPFINDER_SEED } from '../lib/nhl-data/seed/propfinder-2025';
+import { seedSnapshots, propfinderDefenseTabs } from '../lib/nhl-data/propfinder';
 
 const SKATERS = `Position,All
 Strength,All
@@ -147,5 +148,34 @@ describe('name resolver', () => {
     expect(resolve('Alex Romanov').id).toBe(1);
     expect(resolve('K. Sherwood')).toBeNull();
     expect(resolve('Nobody Here')).toBeNull();
+  });
+});
+
+describe('propfinder defense tabs (the table above each rink)', () => {
+  const pf = seedSnapshots();
+  test('one tab per stored table: the season, then the recent-games windows', () => {
+    const d = propfinderDefenseTabs(pf, 'LAK');
+    expect(d.cols.map(([k]) => k)).toEqual(['g', 'a', 'sog', 'icf', 'iff', 'iscf']);
+    expect(d.tabs.map((t) => t.key)).toEqual(['season-2025', 'l10']);
+    const season = d.tabs[0];
+    expect(season).toMatchObject({ label: '2025-26', kind: 'season', season: 2025, count: 32 });
+    expect(Object.keys(season.rows)).toEqual(['All', 'LW', 'C', 'RW', 'D']);
+    // The all-positions row comes from the Opponent export, ISCF from its SC column, with PropFinder's ranks.
+    const all = pf.opponents.teams.LAK;
+    expect(season.rows.All).toMatchObject({ gp: all.gp, g: all.g, a: all.a, sog: all.sog, iscf: all.sc, icf: null, iff: null });
+    expect(season.rows.All.ranks).toMatchObject({ g: pf.opponents.ranks.LAK.g, sog: pf.opponents.ranks.LAK.sog, iscf: pf.opponents.ranks.LAK.sc, icf: null });
+    expect(season.rows.C.sog).toBe(pf.opponentsByPos.C.teams.LAK.sog);
+    const l10 = d.tabs[1];
+    expect(l10).toMatchObject({ label: 'L10', kind: 'window', windowGames: 10, split: null });
+    expect(l10.rows.D.ranks.sog).toBe(pf.opponentsByPosWindow.l10.D.ranks.LAK.sog);
+  });
+  test('last season rides along as its own tab when this season differs', () => {
+    const prev = { opponents: { ...pf.opponents, season: 2024 }, opponentsByPos: {} };
+    const d = propfinderDefenseTabs(pf, 'LAK', prev);
+    expect(d.tabs.map((t) => t.key)).toEqual(['season-2025', 'season-2024', 'l10']);
+    expect(d.tabs[1].rows.All.sog).toBe(pf.opponents.teams.LAK.sog);
+    // The same season twice is one tab.
+    expect(propfinderDefenseTabs(pf, 'LAK', pf).tabs.map((t) => t.key)).toEqual(['season-2025', 'l10']);
+    expect(propfinderDefenseTabs(pf, 'XXX')).toBeNull();
   });
 });

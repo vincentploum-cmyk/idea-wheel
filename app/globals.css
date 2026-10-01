@@ -833,6 +833,36 @@ td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
 .nhlx-rk-tabs { margin-bottom: 0; }
 .nhlx-rk-tabs .nhlx-tab { padding: 4px 10px; font-size: 12.5px; }
 .nhlx-rk-tabs .nhlx-tab i { font-style: normal; margin-left: 3px; color: var(--primary); }
+/* The opponent's PropFinder defense table above the ice: per-position allowed, rank in every cell. */
+.nhlx-pfd { margin: 0 0 12px; }
+.nhlx-pfd-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 8px; }
+.nhlx-pfd-head b { color: var(--heading); font-size: 14px; }
+.nhlx-pfd-head small { flex: 1 1 200px; min-width: 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
+.nhlx-pfd-switch { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 12px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.nhlx-pfd-switch span.is-on { color: var(--heading); font-weight: 600; }
+.nhlx-pfd-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.nhlx-pfd-switch i { position: relative; width: 30px; height: 16px; border-radius: 100px; background: var(--line-strong); transition: background-color 0.2s ease; }
+.nhlx-pfd-switch i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--card); transition: transform 0.2s ease; }
+.nhlx-pfd-switch input:checked + i { background: var(--primary); }
+.nhlx-pfd-switch input:checked + i::after { transform: translateX(14px); }
+.nhlx-pfd-switch input:focus-visible + i { box-shadow: 0 0 0 2px var(--primary-soft); }
+.nhlx-pfd-tabs { margin-bottom: 8px; }
+.nhlx-pfd-wrap { border: 1px solid var(--line); border-radius: var(--radius); overflow-x: auto; }
+.nhlx-pfd-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: center; }
+.nhlx-pfd-table th { padding: 6px 4px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); white-space: nowrap; }
+.nhlx-pfd-table th:first-child, .nhlx-pfd-table td:first-child { text-align: left; padding-left: 10px; }
+.nhlx-pfd-table td { padding: 5px 4px; border-bottom: 1px solid var(--line); border-left: 1px solid var(--line); color: var(--heading); white-space: nowrap; }
+.nhlx-pfd-table td:first-child { border-left: 0; }
+.nhlx-pfd-table td:first-child b { font-family: var(--font-display); font-weight: 700; }
+.nhlx-pfd-table tr:last-child td { border-bottom: 0; }
+.nhlx-pfd-table tr.is-muted td { opacity: 0.45; }
+.nhlx-pfd-val { display: block; font-weight: 600; line-height: 1.2; }
+.nhlx-pfd-rank { display: inline-block; margin-top: 2px; padding: 0 5px; border-radius: 4px; font-size: 10.5px; line-height: 15px; font-weight: 600; background: color-mix(in oklab, var(--heading) 8%, transparent); color: var(--muted); }
+.nhlx-pfd-table td.is-soft { background: color-mix(in oklab, var(--ok-bg) 60%, transparent); color: var(--heading); }
+.nhlx-pfd-table td.is-tough { background: color-mix(in oklab, var(--bad-bg) 60%, transparent); color: var(--heading); }
+.nhlx-pfd-table td.is-soft .nhlx-pfd-rank { background: var(--ok-bg); color: var(--ok-fg); }
+.nhlx-pfd-table td.is-tough .nhlx-pfd-rank { background: var(--bad-bg); color: var(--bad-fg); }
+.nhlx-pfd-table td.is-mid .nhlx-pfd-rank { background: var(--warn-bg); color: var(--warn-fg); }
 .nhlx-rk { position: relative; aspect-ratio: 85 / 200; }
 .nhlx-rk-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .nhlx-rk-ice { fill: var(--bg-soft); }

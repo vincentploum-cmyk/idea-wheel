@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
+import { PropfinderDefense } from './Propfinder';
 
 // Tactical board: one team's whole lineup on a full vertical rink (85 × 200 ft,
 // attacking goal at the top). Forward lines stack in the attacking half with
@@ -207,6 +208,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
           <small>Ice tinted by what {side.opp} allows {WINDOW_TEXT[v]} to each position (rank 1 = most permissive) · <SourceLine side={side} /></small>
         </div>
       </div>
+      {side.propfinder ? <PropfinderDefense abbr={side.opp} data={side.propfinder} posFilter={posFilter} /> : null}
       <div className="nhlx-rk-toggle">
         <small>{side.opp} allows</small>
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label={`Window of ${side.opp}'s defense`}>
