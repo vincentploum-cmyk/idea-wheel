@@ -16,5 +16,6 @@ export async function GET(request) {
   const rows = await loadRows(addDays(asOf, 1));
   const season = defenseByPosition(rows);
   const l10 = defenseByPosition(rows, { lastN: 10 });
-  return Response.json({ asOf, games: new Set(rows.map((r) => r.gameId)).size, season, l10 }, { headers: { 'Cache-Control': 'no-store' } });
+  const l5 = defenseByPosition(rows, { lastN: 5 });
+  return Response.json({ asOf, games: new Set(rows.map((r) => r.gameId)).size, season, l10, l5 }, { headers: { 'Cache-Control': 'no-store' } });
 }
