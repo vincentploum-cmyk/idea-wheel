@@ -79,20 +79,13 @@ export default function LeaguePanel() {
   const [tab, setTab] = useState('points');
   const pf = usePropfinder();
 
-  const load = useCallback(async (refresh = false) => {
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/nhl/data/league${refresh ? '?refresh=1' : ''}`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`${res.status}`);
-      setData(await res.json());
-      setErr('');
-    } catch (e) {
-      setErr(`Couldn’t load the league tables: ${e.message}`);
-    } finally {
-      setBusy(false);
-    }
-  }, []);
+  const load = useCallback((refresh = false) => fetch(`/api/nhl/data/league${refresh ? '?refresh=1' : ''}`, { cache: 'no-store' })
+    .then((res) => { if (!res.ok) throw new Error(`${res.status}`); return res.json(); })
+    .then((j) => { setData(j); setErr(''); })
+    .catch((e) => setErr(`Couldn’t load the league tables: ${e.message}`))
+    .finally(() => setBusy(false)), []);
   useEffect(() => { load(); }, [load]);
+  const refresh = () => { setBusy(true); load(true); };
 
   if (!data) return <div className="nhlx-empty">{err || 'Loading standings…'}</div>;
 
@@ -103,7 +96,7 @@ export default function LeaguePanel() {
           <div className="nhlx-today-date">Standings</div>
           <div className="nhlx-auto-sub">From the NHL · updated {fmt(data.updatedAt)}{data.refreshed?.error ? ` · refresh failed: ${data.refreshed.error}` : ''}</div>
         </div>
-        <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy} onClick={() => load(true)}>Refresh from the NHL</button>
+        <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy} onClick={refresh}>Refresh from the NHL</button>
       </div>
       {err && <div className="nhlx-alert">⚠ {err}</div>}
       <Standings conferences={data.conferences} />

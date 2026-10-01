@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   test:
-    name: Unit tests + build
+    name: Lint + unit tests + build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -21,6 +21,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci --no-audit --no-fund
+      - run: npm run lint -- --max-warnings 0
       - run: npm test
       - name: Build
         run: npm run build

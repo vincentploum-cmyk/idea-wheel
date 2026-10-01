@@ -43,18 +43,10 @@ export default function SetupPanel({ onStatus, initial = null }) {
   const [log, setLog] = useState({});
   const cancel = useRef(false);
 
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch('/api/nhl/data/setup', { cache: 'no-store' });
-      if (!res.ok) throw new Error(`${res.status}`);
-      const j = await res.json();
-      setS(j);
-      setErr('');
-      onStatus?.(j);
-    } catch (e) {
-      setErr(`Couldn’t check the setup: ${e.message}`);
-    }
-  }, [onStatus]);
+  const load = useCallback(() => fetch('/api/nhl/data/setup', { cache: 'no-store' })
+    .then((res) => { if (!res.ok) throw new Error(`${res.status}`); return res.json(); })
+    .then((j) => { setS(j); setErr(''); onStatus?.(j); })
+    .catch((e) => setErr(`Couldn’t check the setup: ${e.message}`)), [onStatus]);
   useEffect(() => { if (!initial) load(); }, [load, initial]);
 
   const say = (k, text) => setLog((l) => ({ ...l, [k]: text }));

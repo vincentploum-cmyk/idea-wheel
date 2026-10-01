@@ -811,7 +811,7 @@ function MatchupHistory({ venueProfile, player, venue }) {
         })}
       </div>
       <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center", padding: "10px 14px", background: "#ecfdf5", borderRadius: "8px", border: "1px solid #bbf7d0" }}>
-        <span style={{ fontSize: "21px", fontWeight: 700, color: "#636977", fontFamily: "'Outfit Variable','Outfit',sans-serif", letterSpacing: "0.08em", textTransform: "uppercase" }}>Tonight's Player</span>
+        <span style={{ fontSize: "21px", fontWeight: 700, color: "#636977", fontFamily: "'Outfit Variable','Outfit',sans-serif", letterSpacing: "0.08em", textTransform: "uppercase" }}>Tonight&apos;s Player</span>
         <span style={{ fontSize: "26px", color: "#05011c", fontWeight: 700 }}>{player.name}</span>
         <span style={{ fontSize: "24px", color: "#373449" }}>iFF <strong style={{ color: accent }}>{playerIff}</strong> · TOI <strong style={{ color: accent }}>{playerToi} min</strong> · Def mult <strong style={{ color: accent }}>{player.defMult?.toFixed(3) ?? '—'}</strong> · λ shots <strong style={{ color: accent }}>{player.lambdaS?.toFixed(2) ?? '—'}</strong></span>
         <span style={{ marginLeft: "auto", fontSize: "22px", color: "#636977" }}>Hist avg TOI (all): <strong style={{ color: "#05011c" }}>{fmt(vs.avgT)} min</strong> vs yours <strong style={{ color: Number(player.playerToi) >= Number(vs.avgT || 0) ? "#16a34a" : "#ea580c" }}>{playerToi} min</strong></span>
@@ -1136,6 +1136,36 @@ function PropFinderCheatStrip({ matchup, rankingsData = null }) {
   );
 }
 
+function SortTh({ col, label, title, width, sortCol, sortDir, onToggle }) {
+  return (
+    <th
+      onClick={() => onToggle(col)}
+      title={title || ""}
+      style={{
+        padding: "9px 5px",
+        textAlign: "right",
+        fontSize: "18px",
+        fontWeight: 700,
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        cursor: "pointer",
+        userSelect: "none",
+        whiteSpace: "nowrap",
+        color: sortCol === col ? "#15803d" : "#80828d",
+        borderBottom: "1px solid #e9ecef",
+        fontFamily: "'Outfit Variable','Outfit',sans-serif",
+        width: width || "auto",
+        position: "sticky",
+        top: 0,
+        background: "#f8fafb",
+        zIndex: 8,
+      }}
+    >
+      {label} {sortCol === col ? (sortDir === "desc" ? " ↓" : " ↑") : ""}
+    </th>
+  );
+}
+
 function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
   const [sortCol, setSortCol] = useState("attackScore");
   const [sortDir, setSortDir] = useState("desc");
@@ -1148,7 +1178,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
   const [tooltip, setTooltip] = useState(null);
   const [expandedRow, setExpandedRow] = useState(null);
   const [viewMode, setViewMode] = useState("all"); // "all" | "bygame"
-  const [activeGame, setActiveGame] = useState(null);
+  const [pickedGame, setActiveGame] = useState(null);
   const tableScrollRef = useRef(null);
   const bottomScrollRef = useRef(null);
 
@@ -1161,18 +1191,14 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
   );
 
   const games = useMemo(() => [...new Set(data.map((d) => d.game))], [data]);
+  // By-game view starts on the first game until one is picked.
+  const activeGame = pickedGame ?? games[0] ?? null;
 
   const selectedMatchup = useMemo(() => {
     const selectedGameLabel = viewMode === "bygame" ? activeGame : gameF !== "ALL" ? gameF : null;
     if (!selectedGameLabel) return null;
     return matchups.find((m) => m.label === selectedGameLabel) || null;
   }, [viewMode, activeGame, gameF, matchups]);
-
-  useEffect(() => {
-    if (viewMode === "bygame" && !activeGame && games.length > 0) {
-      setActiveGame(games[0]);
-    }
-  }, [viewMode, activeGame, games]);
 
   const sorted = useMemo(() => {
     let d = data;
@@ -1310,33 +1336,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
     XLSX.writeFile(wb, `nhl_model_export_${datePart}.xlsx`);
   };
 
-  const Th = ({ col, label, title, width }) => (
-    <th
-      onClick={() => toggle(col)}
-      title={title || ""}
-      style={{
-        padding: "9px 5px",
-        textAlign: "right",
-        fontSize: "18px",
-        fontWeight: 700,
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        cursor: "pointer",
-        userSelect: "none",
-        whiteSpace: "nowrap",
-        color: sortCol === col ? "#15803d" : "#80828d",
-        borderBottom: "1px solid #e9ecef",
-        fontFamily: "'Outfit Variable','Outfit',sans-serif",
-        width: width || "auto",
-        position: "sticky",
-        top: 0,
-        background: "#f8fafb",
-        zIndex: 8,
-      }}
-    >
-      {label} {sortCol === col ? (sortDir === "desc" ? " ↓" : " ↑") : ""}
-    </th>
-  );
+  const thProps = { sortCol, sortDir, onToggle: toggle };
 
   return (
     <>
@@ -1666,38 +1666,41 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                   Player {sortCol === "name" ? (sortDir === "desc" ? " ↓" : " ↑") : ""}
                 </th>
 
-                <Th col="team" label="Team" width="90px" />
-                <Th col="pos" label="Pos" width="56px" />
-                <Th col="venue" label="H/A" width="64px" />
-                <Th col="opponent" label="Opp" width="110px" />
-                <Th
+                <SortTh {...thProps} col="team" label="Team" width="90px" />
+                <SortTh {...thProps} col="pos" label="Pos" width="56px" />
+                <SortTh {...thProps} col="venue" label="H/A" width="64px" />
+                <SortTh {...thProps} col="opponent" label="Opp" width="110px" />
+                <SortTh
+                  {...thProps}
                   col="defRank"
                   label="Def Rnk"
                   width="86px"
                   title="Composite rank using Shots, ICF, IFF, ISCF"
                 />
-                <Th
+                <SortTh
+                  {...thProps}
                   col="attackScore"
                   label="Play Score"
                   width="120px"
                   title="Decision score that blends probability, role, confidence, and best-bet strength"
                 />
-                <Th
+                <SortTh
+                  {...thProps}
                   col="attackBadgeRank"
                   label="Play Tier"
                   width="100px"
                   title="Readable tier for the overall play score"
                 />
-                <Th col="oppAvgShots" label="Opp Avg Shots" width="94px" title="Average shots allowed by tonight's opponent over the last 7 venue-matched historical games for this player's current role." />
-                <Th col="oppAvgGoals" label="Opp Avg Goals" width="94px" title="Average goals allowed by tonight's opponent over the last 7 venue-matched historical games for this player's current role." />
-                <Th col="p3s" label="3+" width="74px" />
-                <Th col="p4s" label="4+" width="74px" />
-                <Th col="p5s" label="5+" width="74px" />
-                <Th col="p1p" label="1P" width="74px" />
-                <Th col="p2p" label="2P" width="74px" />
-                <Th col="p1g" label="1G" width="74px" />
-                <Th col="p2g" label="2G" width="74px" />
-                <Th col="p3g" label="3G" width="74px" />
+                <SortTh {...thProps} col="oppAvgShots" label="Opp Avg Shots" width="94px" title="Average shots allowed by tonight's opponent over the last 7 venue-matched historical games for this player's current role." />
+                <SortTh {...thProps} col="oppAvgGoals" label="Opp Avg Goals" width="94px" title="Average goals allowed by tonight's opponent over the last 7 venue-matched historical games for this player's current role." />
+                <SortTh {...thProps} col="p3s" label="3+" width="74px" />
+                <SortTh {...thProps} col="p4s" label="4+" width="74px" />
+                <SortTh {...thProps} col="p5s" label="5+" width="74px" />
+                <SortTh {...thProps} col="p1p" label="1P" width="74px" />
+                <SortTh {...thProps} col="p2p" label="2P" width="74px" />
+                <SortTh {...thProps} col="p1g" label="1G" width="74px" />
+                <SortTh {...thProps} col="p2g" label="2G" width="74px" />
+                <SortTh {...thProps} col="p3g" label="3G" width="74px" />
               </tr>
             </thead>
 
@@ -1980,22 +1983,8 @@ function SummaryCard({ title, body, accent = "#15803d" }) {
 
 
 
-function OverallBestBets({ data }) {
-  const shots = useMemo(() => {
-    return [...data]
-      .filter((r) => r.gateOpen && ((r.p4s || 0) >= 0.40 || (r.p3s || 0) >= 0.60))
-      .sort((a, b) => ((b.p4s || 0) * 100 + (b.p5s || 0) * 60 + (b.attackScore || 0)) - ((a.p4s || 0) * 100 + (a.p5s || 0) * 60 + (a.attackScore || 0)))
-      .slice(0, 5);
-  }, [data]);
-
-  const goals = useMemo(() => {
-    return [...data]
-      .filter((r) => (r.p1g || 0) >= 0.18 || r.goalTag?.label)
-      .sort((a, b) => ((b.p1g || 0) * 100 + (b.p2g || 0) * 70 + (b.attackScore || 0) * 0.35) - ((a.p1g || 0) * 100 + (a.p2g || 0) * 70 + (a.attackScore || 0) * 0.35))
-      .slice(0, 5);
-  }, [data]);
-
-  const Card = ({ title, accent, rows, market }) => (
+function BestBetsCard({ title, accent, rows, market }) {
+  return (
     <div style={{ background: "#ffffff", border: "1px solid #e9e8f3", borderRadius: "16px", padding: "16px" }}>
       <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "28px", fontWeight: 800, color: accent, marginBottom: "10px" }}>{title}</div>
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -2020,11 +2009,28 @@ function OverallBestBets({ data }) {
       </div>
     </div>
   );
+}
+
+function OverallBestBets({ data }) {
+  const shots = useMemo(() => {
+    return [...data]
+      .filter((r) => r.gateOpen && ((r.p4s || 0) >= 0.40 || (r.p3s || 0) >= 0.60))
+      .sort((a, b) => ((b.p4s || 0) * 100 + (b.p5s || 0) * 60 + (b.attackScore || 0)) - ((a.p4s || 0) * 100 + (a.p5s || 0) * 60 + (a.attackScore || 0)))
+      .slice(0, 5);
+  }, [data]);
+
+  const goals = useMemo(() => {
+    return [...data]
+      .filter((r) => (r.p1g || 0) >= 0.18 || r.goalTag?.label)
+      .sort((a, b) => ((b.p1g || 0) * 100 + (b.p2g || 0) * 70 + (b.attackScore || 0) * 0.35) - ((a.p1g || 0) * 100 + (a.p2g || 0) * 70 + (a.attackScore || 0) * 0.35))
+      .slice(0, 5);
+  }, [data]);
+
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "14px", marginBottom: "18px" }}>
-      <Card title="Top 5 Shots Plays" accent="#166534" rows={shots} market="shots" />
-      <Card title="Top 5 Goal Plays" accent="#b45309" rows={goals} market="goals" />
+      <BestBetsCard title="Top 5 Shots Plays" accent="#166534" rows={shots} market="shots" />
+      <BestBetsCard title="Top 5 Goal Plays" accent="#b45309" rows={goals} market="goals" />
     </div>
   );
 }
@@ -2890,7 +2896,7 @@ function DefenseRoleProfiles({ data }) {
             Defense Role Profiles
           </div>
           <div style={{ fontSize: "13px", color: "#636977" }}>
-            Slate-aware and lineup-aware. Uses today's lineup role as the source of truth.
+            Slate-aware and lineup-aware. Uses today&apos;s lineup role as the source of truth.
           </div>
         </div>
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
@@ -3252,7 +3258,7 @@ function BetIdeas({ data }) {
       )}
 
       <div style={{ marginTop: "16px", fontSize: "15px", color: "#80828d", textAlign: "center" }}>
-        ⚠ Model probabilities only. Always verify lines at your sportsbook. Past performance doesn't guarantee future results.
+        ⚠ Model probabilities only. Always verify lines at your sportsbook. Past performance doesn&apos;t guarantee future results.
       </div>
     </div>
   );
@@ -3424,6 +3430,53 @@ function BettingGuide() {
   );
 }
 
+function CheatTable({ headers, rows }) {
+  return (
+    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "18px" }}>
+      <thead>
+        <tr>
+          {headers.map((h) => (
+            <th
+              key={h}
+              style={{
+                textAlign: "left",
+                padding: "10px",
+                borderBottom: "1px solid #e9e8f3",
+                color: "#636977",
+                fontSize: "18px",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+              }}
+            >
+              {h}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, idx) => (
+          <tr key={idx}>
+            {row.map((cell, cIdx) => (
+              <td
+                key={cIdx}
+                style={{
+                  padding: "10px",
+                  borderBottom: "1px solid #fbfcfd",
+                  color: cIdx === 0 ? "#05011c" : "#373449",
+                  fontWeight: cIdx === 0 ? 700 : 500,
+                  verticalAlign: "top",
+                }}
+              >
+                {cell}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 function ModelCheatSheet({ data }) {
   const [cheatTab, setCheatTab] = useState("guide");
 
@@ -3513,50 +3566,6 @@ function ModelCheatSheet({ data }) {
       }
     : null;
 
-  const Table = ({ headers, rows }) => (
-    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "18px" }}>
-      <thead>
-        <tr>
-          {headers.map((h) => (
-            <th
-              key={h}
-              style={{
-                textAlign: "left",
-                padding: "10px",
-                borderBottom: "1px solid #e9e8f3",
-                color: "#636977",
-                fontSize: "18px",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-              }}
-            >
-              {h}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row, idx) => (
-          <tr key={idx}>
-            {row.map((cell, cIdx) => (
-              <td
-                key={cIdx}
-                style={{
-                  padding: "10px",
-                  borderBottom: "1px solid #fbfcfd",
-                  color: cIdx === 0 ? "#05011c" : "#373449",
-                  fontWeight: cIdx === 0 ? 700 : 500,
-                  verticalAlign: "top",
-                }}
-              >
-                {cell}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
 
   return (
     <div style={{ display: "grid", gap: "18px" }}>
@@ -3613,47 +3622,47 @@ function ModelCheatSheet({ data }) {
           <div style={{ display: "grid", gap: "14px" }}>
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
               <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#15803d", marginBottom: "8px" }}>Defense lane thresholds</div>
-              <Table headers={["Metric", "Strong", "Neutral", "Fade"]} rows={defenseRows} />
+              <CheatTable headers={["Metric", "Strong", "Neutral", "Fade"]} rows={defenseRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
               <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#0f766e", marginBottom: "8px" }}>Pace tier logic</div>
-              <Table headers={["Market", "Fast", "Positive", "Slow"]} rows={paceRows} />
+              <CheatTable headers={["Market", "Fast", "Positive", "Slow"]} rows={paceRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
               <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#7c3aed", marginBottom: "8px" }}>Capability styles</div>
-              <Table headers={["Style", "Primary market", "Engine effect", "Read"]} rows={styleRows} />
+              <CheatTable headers={["Style", "Primary market", "Engine effect", "Read"]} rows={styleRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
               <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#15803d", marginBottom: "8px" }}>Shot gate logic</div>
-              <Table headers={["Path", "Trigger", "What it means"]} rows={shotGateRows} />
+              <CheatTable headers={["Path", "Trigger", "What it means"]} rows={shotGateRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
               <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#15803d", marginBottom: "8px" }}>Player floor profiles</div>
-              <Table headers={["Profile", "Elite", "Good", "Average", "Weak"]} rows={floorRows} />
+              <CheatTable headers={["Profile", "Elite", "Good", "Average", "Weak"]} rows={floorRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
               <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#15803d", marginBottom: "8px" }}>4+ / 5+ shot gate</div>
-              <Table headers={["Path", "Threshold", "Use"]} rows={fourPlusRows} />
+              <CheatTable headers={["Path", "Threshold", "Use"]} rows={fourPlusRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
               <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#2563eb", marginBottom: "8px" }}>Hot-role override</div>
-              <Table headers={["Signal", "Rule", "Effect"]} rows={hotRows} />
+              <CheatTable headers={["Signal", "Rule", "Effect"]} rows={hotRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
               <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#b45309", marginBottom: "8px" }}>Goal engine</div>
-              <Table headers={["Component", "Logic", "Why it matters"]} rows={goalRows} />
+              <CheatTable headers={["Component", "Logic", "Why it matters"]} rows={goalRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
               <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#2563eb", marginBottom: "8px" }}>History priority</div>
-              <Table headers={["Layer", "Primary read", "Secondary read", "Note"]} rows={historyRows} />
+              <CheatTable headers={["Layer", "Primary read", "Secondary read", "Note"]} rows={historyRows} />
             </div>
           </div>
 
@@ -3950,9 +3959,9 @@ export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdde
   const [loading, setLoading] = useState(false);
   const [showInputs, setShowInputs] = useState(false);
   const filesRef = useRef(files);
-  filesRef.current = files;
+  useEffect(() => { filesRef.current = files; }, [files]);
   const resultsRef = useRef(results);
-  resultsRef.current = results;
+  useEffect(() => { resultsRef.current = results; }, [results]);
 
   const parseSideFile = useCallback(async (slot, f) => {
     if (slot === "rankings") {
@@ -4039,11 +4048,13 @@ export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdde
     }
   }, [onRunComplete]);
 
-  // Replay a saved slate from Run History.
+  // Replay a saved slate from Run History. `loadRequest` is a one-off command
+  // from the parent (nonce in `at`), so the resets and the run happen here.
   useEffect(() => {
     if (!loadRequest?.files) return;
     const fs = loadRequest.files;
     filesRef.current = fs;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting the workbench for a replayed run is the command itself, not derived state
     setFiles(fs);
     onFilesChange?.(fs);
     setRankingsData(null);
