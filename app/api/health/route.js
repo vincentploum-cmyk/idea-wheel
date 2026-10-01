@@ -10,6 +10,7 @@ export async function GET() {
     commit: (process.env.RENDER_GIT_COMMIT || '').slice(0, 12) || null,
     supabaseConfigured: !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
     propfinderConfigured: !!(process.env.PROPFINDER_EMAIL && process.env.PROPFINDER_PASSWORD),
+    memoryMb: { rss: Math.round(process.memoryUsage().rss / 1e6), heapUsed: Math.round(process.memoryUsage().heapUsed / 1e6) },
     ts: new Date().toISOString(),
   });
 }

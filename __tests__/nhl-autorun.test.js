@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import { lineupRowsFromSnapshot } from '../lib/nhl-data/positions';
-import { coveredTeams, autoRunKey } from '../lib/nhl-data/autorun';
+import { coveredTeams, autoRunKey, attemptBlocks } from '../lib/nhl-data/autorun';
 
 const team = {
   source: 'gamedaytweets',
@@ -31,5 +31,14 @@ describe('automatic model run inputs', () => {
     expect(autoRunKey('2026-10-01', { files: { season: { receivedAt: '2026-10-01T16:00:00Z' }, l5: meta.files.l5 } }, covered)).not.toBe(k1);
     const moved = JSON.parse(JSON.stringify(snap)); moved.games[1].teams.NYR.players.a.line = 2;
     expect(autoRunKey('2026-10-01', meta, coveredTeams(moved))).not.toBe(k1);
+  });
+  test('an unfinished attempt with the same inputs blocks a retry for a day', () => {
+    const now = Date.parse('2026-10-01T05:00:00Z');
+    const open = { date: '2026-10-01', autoKey: 'auto:abc', startedAt: '2026-10-01T04:12:00Z' };
+    expect(attemptBlocks(open, 'auto:abc', now)).toBe(true);
+    expect(attemptBlocks(open, 'auto:other', now)).toBe(false); // the lines or files changed
+    expect(attemptBlocks({ ...open, finishedAt: '2026-10-01T04:13:00Z', error: 'x' }, 'auto:abc', now)).toBe(false);
+    expect(attemptBlocks(open, 'auto:abc', now + 25 * 3600 * 1000)).toBe(false);
+    expect(attemptBlocks(null, 'auto:abc', now)).toBe(false);
   });
 });
