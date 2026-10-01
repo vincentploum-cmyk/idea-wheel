@@ -18,6 +18,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v4
+      - name: Beat writers' lines from GameDayTweets (fetched here, parsed by the site)
+        env:
+          NHL_ACTIONS_TOKEN: ${{ secrets.NHL_ACTIONS_TOKEN }}
+        run: |
+          DATE="${{ github.event.inputs.date }}"
+          [ -z "$DATE" ] && DATE=$(TZ=America/New_York date +%F)
+          tools/gdt-pages.sh "$DATE"
       - name: Refresh
         run: |
           set -e

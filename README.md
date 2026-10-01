@@ -34,7 +34,7 @@ produces its input workbooks, in the exact formats the parsers already read.
 | Input | Source | How it arrives |
 |---|---|---|
 | Season + L5 matchups | PropFinder's API (`lib/nhl-data/propfinder-api.js`), signed in with `PROPFINDER_EMAIL` / `PROPFINDER_PASSWORD` from the server environment; else its `NHL-Goal-Matchups-*.xlsx` exports | pulled every morning (9:00 ET) and whenever lines are read while the slate's files are missing, or "Pull from PropFinder now" on the Model tab; otherwise Mac folder sync (`tools/mac-sync`) uploads the exports saved in `~/Desktop/NHL` |
-| Lineups | Beat writers' game-day lines from gamedaytweets.com (`lib/nhl-data/gamedaytweets.js`), else NHL.com game previews (forge API) | scheduled refresh: hourly 12:05–23:05 ET for games starting within 2½ h, plus "Refresh lines" on the Matchups tab |
+| Lineups | Beat writers' game-day lines from gamedaytweets.com (`lib/nhl-data/gamedaytweets.js`), else NHL.com game previews (forge API), else PropFinder's depth chart from the last pull, else the roster | scheduled refresh: hourly 12:05–23:05 ET for games starting within 2½ h, plus "Refresh lines" on the Matchups tab. gamedaytweets.com refuses the Render server, so the GitHub Actions runner fetches its pages (`tools/gdt-pages.sh`) and posts them to `/api/nhl/data/lineups/gdt` with `NHL_ACTIONS_TOKEN` (the same random string set as a repo secret and in Render's environment) |
 | Box scores | NHL API box score + play-by-play | scheduled refresh (next morning) |
 | Historical profiles | stored skater games, last 365 days | built on demand |
 | Home/away stats | stored skater games (last 82) incl. iCF/iFF/iSCF/iHDCF | built on demand |

@@ -49,6 +49,12 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   gamedaytweets.com/lines?team=XXX (roster-aware name matching) for every slate team; a
   game-day tweet beats the NHL.com preview, otherwise the preview, then an older tweet, then
   the roster; "game-day" is decided by timestamp (tweet id vs the preview's updated time).
+  gamedaytweets.com refuses the Render server (Cloudflare challenge), so both workflows first run
+  `tools/gdt-pages.sh`: the Actions runner fetches the slate teams' pages and posts the HTML to
+  `POST /api/nhl/data/lineups/gdt` (Bearer `NHL_ACTIONS_TOKEN`, a repo secret that must equal the
+  Render env var; `authorize()` accepts it beside the stored sync token), where `ingestGdtPages`
+  parses them against the rosters, merges (never erasing earlier lines), snapshots and auto-runs.
+  Without a tweet or preview the snapshot uses PropFinder's depth chart (`propfinder-depth.json`).
   `nhl-lineups.yml` re-reads lineups hourly 12:05–23:05 ET for games starting within 150 minutes
   (`only=lineups&due=150`), so every game is captured in its last hour and frozen at puck drop;
   the Matchups tab's "Refresh lines" button does the same on demand and each rink shows when
