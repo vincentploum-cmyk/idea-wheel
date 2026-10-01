@@ -49,8 +49,10 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   gamedaytweets.com/lines?team=XXX (roster-aware name matching) for every slate team; a
   game-day tweet beats the NHL.com preview, otherwise the preview, then an older tweet, then
   the roster; "game-day" is decided by timestamp (tweet id vs the preview's updated time).
-  gamedaytweets.com refuses the Render server (Cloudflare challenge), so both workflows first run
-  `tools/gdt-pages.sh`: the Actions runner fetches the slate teams' pages and posts the HTML to
+  gamedaytweets.com challenges cloud addresses (Cloudflare "Just a moment": Render and the GitHub
+  runner alike), so its pages are fetched elsewhere and posted: the Mac sync (`tools/mac-sync/nhl-sync.sh`,
+  hourly, sync token, multipart `date` + one file per team code) and both workflows via
+  `tools/gdt-pages.sh` (plain curl, then `tools/gdt-browser.mjs` with Chrome through playwright-core), to
   `POST /api/nhl/data/lineups/gdt` (Bearer `NHL_ACTIONS_TOKEN`, a repo secret that must equal the
   Render env var; `authorize()` accepts it beside the stored sync token), where `ingestGdtPages`
   parses them against the rosters, merges (never erasing earlier lines), snapshots and auto-runs.

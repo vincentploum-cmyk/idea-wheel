@@ -18,6 +18,15 @@ for t in $TEAMS; do
   sleep 1
 done
 echo "Fetched $n pages for: $(echo $TEAMS | tr '\n' ' ')"
+# Refused as a datacenter address (Cloudflare challenge): try again with a real Chrome.
+missing=$(for t in $TEAMS; do [ -f "$tmp/$t.html" ] || echo "$t"; done)
+if [ -n "$missing" ] && command -v node >/dev/null 2>&1; then
+  echo "Trying a browser for: $(echo $missing | tr '\n' ' ')"
+  ( cd "$(dirname "$0")/.." && [ -d node_modules/playwright-core ] || npm install --no-save --no-audit --no-fund playwright-core >/dev/null 2>&1 )
+  ( cd "$(dirname "$0")/.." && node tools/gdt-browser.mjs "$tmp" $missing ) || true
+  n=$(ls "$tmp"/*.html 2>/dev/null | wc -l | tr -d ' ')
+  echo "After the browser: $n pages"
+fi
 [ "$n" -gt 0 ] || exit 0
 # { date, pages: { ABBR: html } }
 jq -n --arg date "$DATE" '{date: $date, pages: {}}' > "$tmp/body.json"
