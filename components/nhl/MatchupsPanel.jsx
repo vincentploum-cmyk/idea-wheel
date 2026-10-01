@@ -114,8 +114,8 @@ function PositionLog({ game }) {
     <details className="nhlx-db-details nhlx-poslog">
       <summary>Position log · final {game.away} {game.log.score.away} – {game.home} {game.log.score.home}</summary>
       <p className="nhlx-auto-meta">
-        Each row is one skater in this game at the position he was frozen at before puck drop; his shots and goals count against the opponent’s
-        <b> {rows[0]?.bucket.venue === 'H' ? 'home' : 'away'}</b> defense for that position. {lineup}/{rows.length} positions came from the projected lineup{lineup < rows.length ? `, ${rows.length - lineup} from the box-score roster code` : ''}.
+        Each row is one skater in this game at the position and line slot he was frozen at before puck drop (LW1 … RW4, D1 … D3); his shots and goals count against the opponent’s
+        <b> {rows[0]?.bucket.venue === 'H' ? 'home' : 'away'}</b> defense for that position, and are logged per line. {lineup}/{rows.length} positions came from the projected lineup{lineup < rows.length ? `, ${rows.length - lineup} from the box-score roster code (no line)` : ''}.
       </p>
       <div className="nhlx-tabs" role="tablist">
         {[game.away, game.home].map((t) => (
@@ -125,12 +125,13 @@ function PositionLog({ game }) {
       <div className="nhlx-db-table-wrap">
         <table className="nhlx-db-table nhlx-mu-table">
           <thead>
-            <tr><th>Player</th><th title="Position frozen before the game">Pos</th><th title="Position code in the NHL box score">Box</th><th>Source</th><th>TOI</th><th>G</th><th>A</th><th>SOG</th><th>iCF</th><th>iSCF</th><th>Counts against</th></tr>
+            <tr><th>Player</th><th title="Line slot frozen before the game: forward line 1–4, defense pair 1–3">Line</th><th title="Position frozen before the game">Pos</th><th title="Position code in the NHL box score">Box</th><th>Source</th><th>TOI</th><th>G</th><th>A</th><th>SOG</th><th>iCF</th><th>iSCF</th><th>Counts against</th></tr>
           </thead>
           <tbody>
             {rows.map((s) => (
               <tr key={`${s.team}-${s.id}`} className={s.id ? 'is-click' : ''} onClick={() => s.id && open({ id: s.id, opp: s.opp, venue: s.venue })}>
                 <td><div className="nhlx-db-player"><Headshot id={s.id} size={26} /><span><b>{s.name}</b></span></div></td>
+                <td>{s.slot ? <span className="nhlx-chip">{s.slot}</span> : <span className="nhlx-auto-meta">—</span>}</td>
                 <td><b>{s.pos}</b></td>
                 <td className={s.boxPos !== s.pos ? 'is-diff' : ''}>{s.boxPos}</td>
                 <td><span className={`nhlx-chip ${s.posSource === 'box' ? '' : 'nhlx-chip-blue'}`}>{s.posSource === 'box' ? 'box score' : 'lineup'}</span></td>

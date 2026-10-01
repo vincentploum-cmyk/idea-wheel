@@ -34,7 +34,10 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   (`/api/nhl/data/setup`); there is no setup tab.
   Positions are frozen per game before puck drop (`lib/nhl-data/positions.js`,
   `data/positions/<date>.json`; games never snapshotted get the NHL.com preview at ingest)
-  and the stored skater rows carry that position plus its source (`posSrc`, `boxPos`). The
+  and the stored skater rows carry that position plus its source (`posSrc`, `boxPos`) and the
+  frozen line slot (`line`: forward line 1-4 or defense pair 1-3, null for a box-score position),
+  so results are logged per line (LW1, LW2, LW3 …; `defenseBySlot` in `lib/nhl-data/defense.js`,
+  `slots` in `/api/nhl/data/defense`). The
   Matchups tab (`lib/nhl-data/slate.js`; each game drawn as two rinks in
   `components/nhl/Rink.jsx`, ice bands tinted by the opponent's SOG-allowed rank per position
   for the window picked above the rink — home / away / L5 / L10 / L5 home / L5 away, defaulting to

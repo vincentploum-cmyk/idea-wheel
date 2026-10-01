@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import { parseLineupRows, applyFrozenPositions, frozenPos, fillFromLastLineup, lineupToRemember } from '../lib/nhl-data/positions';
-import { defenseByPosition, playerBaselines } from '../lib/nhl-data/defense';
+import { defenseByPosition, defenseBySlot, playerBaselines } from '../lib/nhl-data/defense';
 import { groupStandings, mapStandingRow, shotLeaders } from '../lib/nhl-data/league';
 import { scoreSkater } from '../lib/nhl-data/slate';
 import { lineupRows } from '../lib/nhl-data/lineups';
@@ -61,6 +61,27 @@ describe('defense by position', () => {
     // OTT's newest game was away; its last home game is still game 1 (5 SOG allowed to LW).
     expect(d.teams.OTT.H.LW).toMatchObject({ gp: 1, sog: 5 });
     expect(d.teams.OTT.A.LW).toMatchObject({ gp: 1, sog: 7 });
+  });
+  test('defenseBySlot keeps an LW3 apart from an LW2 and skips rows without a line', () => {
+    const slotRow = (gameId, pid, team, opp, venue, pos, line, sog) => rowObj([`2026-01-0${gameId}`, gameId, pid, `P${pid}`, team, opp, venue, pos, 15, 0, 0, sog, 0, 0, sog + 2, sog + 1, sog, 1, 0, 'W', 'lineup', pos, line]);
+    const rows = [
+      // OTT at home allows 2 SOG to ANA's LW2 and 6 to its LW3; one older row with no line is ignored.
+      slotRow(1, 1, 'ANA', 'OTT', 'A', 'LW', 2, 2), slotRow(1, 2, 'ANA', 'OTT', 'A', 'LW', 3, 6), slotRow(1, 3, 'ANA', 'OTT', 'A', 'D', 1, 3),
+      row('2026-01-01', 1, 4, 'ANA', 'OTT', 'A', 'LW', 0, 9),
+      // Game 2 at OTT again: LW2 4, LW3 2.
+      slotRow(2, 1, 'ANA', 'OTT', 'A', 'LW', 2, 4), slotRow(2, 2, 'ANA', 'OTT', 'A', 'LW', 3, 2),
+    ];
+    const d = defenseBySlot(rows);
+    expect(d.teams.OTT.H.LW2).toMatchObject({ gp: 2, sog: 3 });
+    expect(d.teams.OTT.H.LW3).toMatchObject({ gp: 2, sog: 4 });
+    expect(d.teams.OTT.H.D1).toMatchObject({ gp: 2, sog: 1.5 });
+    expect(d.teams.OTT.H.LW1).toMatchObject({ gp: 2, sog: 0 });
+    // All = every slot (the no-line row's 9 SOG are not counted).
+    expect(d.teams.OTT.H.All.sog).toBe(8.5);
+    expect(d.teams.OTT.A.LW2.gp).toBe(0);
+    expect(defenseBySlot(rows, { lastN: 1 }).teams.OTT.H.LW3.sog).toBe(2);
+    // The per-position table is unchanged by the slot column.
+    expect(defenseByPosition(rows).teams.OTT.H.LW.sog).toBe(11.5);
   });
   test('player baselines average the window with venue splits and hit rates', () => {
     const b = playerBaselines(rows, { window: 20 });
@@ -137,12 +158,30 @@ describe('position sources', () => {
       { id: 2, name: 'Charlie McAvoy', team: 'BOS', opp: 'NYR', venue: 'H', pos: 'D', sog: 2, g: 0, a: 1, toi: 22, hits: 0, blk: 0, icf: 3, iff: 3, isf: 2, iscf: 0, ihdcf: 0, result: 'W' },
     ] };
     expect(applyFrozenPositions([game], snap)).toBe(1);
-    expect(game.skaters[0]).toMatchObject({ pos: 'LW', boxPos: 'RW', posSource: 'lineup' });
-    expect(game.skaters[1]).toMatchObject({ pos: 'D', boxPos: 'D', posSource: 'box' });
+    expect(game.skaters[0]).toMatchObject({ pos: 'LW', boxPos: 'RW', posSource: 'lineup', line: 1 });
+    expect(game.skaters[1]).toMatchObject({ pos: 'D', boxPos: 'D', posSource: 'box', line: null });
     const r = rowObj(toRow(game, game.skaters[0]));
-    expect(r).toMatchObject({ pos: 'LW', posSrc: 'lineup', boxPos: 'RW', opp: 'NYR', venue: 'H', sog: 5 });
+    expect(r).toMatchObject({ pos: 'LW', posSrc: 'lineup', boxPos: 'RW', opp: 'NYR', venue: 'H', sog: 5, line: 1 });
+    expect(rowObj(toRow(game, game.skaters[1])).line).toBeNull();
     // Older rows without the new columns still parse.
     expect(rowObj(toRow(game, game.skaters[1]).slice(0, 20)).posSrc).toBeUndefined();
+    expect(rowObj(toRow(game, game.skaters[1]).slice(0, 22)).line).toBeUndefined();
+  });
+  test('the line slot comes from the snapshot: forward line or defense pair, none for a box-score position', () => {
+    const { frozenSlot, slotLabel } = require('../lib/nhl-data/positions');
+    const snap = { games: { 9: { teams: { BOS: { players: {
+      'david pastrnak': { name: 'David Pastrnak', pos: 'RW', line: 1 },
+      'morgan geekie': { name: 'Morgan Geekie', pos: 'LW', line: 3 },
+      'charlie mcavoy': { name: 'Charlie McAvoy', pos: 'D', line: 2 },
+      'scratch guy': { name: 'Scratch Guy', pos: 'C', line: null, inLineup: false },
+    } } } } } };
+    expect(frozenSlot(snap, 9, 'BOS', 'Morgan Geekie')).toEqual({ pos: 'LW', line: 3 });
+    expect(frozenSlot(snap, 9, 'BOS', 'Charlie McAvoy')).toEqual({ pos: 'D', line: 2 });
+    expect(frozenSlot(snap, 9, 'BOS', 'Scratch Guy')).toBeNull();
+    expect(frozenSlot(snap, 9, 'BOS', 'Nobody')).toBeNull();
+    expect(slotLabel('LW', 3)).toBe('LW3');
+    expect(slotLabel('D', 2)).toBe('D2');
+    expect(slotLabel('C', null)).toBeNull();
   });
 });
 
