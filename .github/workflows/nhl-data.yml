@@ -4,8 +4,9 @@ name: NHL data refresh
 # lineups into Supabase so the model's inputs build themselves.
 on:
   schedule:
-    - cron: '0 13 * * *'   # ~9:00 ET  yesterday's results + morning lineups
-    - cron: '30 4 * * *'   # ~00:30 ET late finals
+    # Uncrowded minutes: GitHub delays schedules at :00 by hours on busy days.
+    - cron: '17 13 * * *'  # ~9:17 ET  yesterday's results + morning lineups
+    - cron: '41 4 * * *'   # ~00:41 ET late finals
     # Hourly pre-game lineup reads live in nhl-lineups.yml.
   workflow_dispatch:
     inputs:
@@ -20,6 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Beat writers' lines from GameDayTweets (fetched here, parsed by the site)
+        continue-on-error: true
         env:
           NHL_ACTIONS_TOKEN: ${{ secrets.NHL_ACTIONS_TOKEN }}
         run: |
@@ -34,8 +36,10 @@ jobs:
           # The late run belongs to the previous ET day.
           if [ "$(date -u +%H)" = "04" ] && [ -z "${{ github.event.inputs.date }}" ]; then DATE=$(TZ=America/New_York date -d 'yesterday' +%F); fi
           echo "Refreshing $DATE"
+          # A 5xx is usually the server restarting for a deploy: one more try after a minute.
+          call() { local c; for attempt in 1 2; do c=$(curl -sS -o "$2" -w '%{http_code}' -X POST --max-time 280 "$1" || echo 000); case "$c" in 5*|000) [ "$attempt" = 1 ] && { echo "server answered $c; retrying in 60 s"; sleep 60; } ;; *) break ;; esac; done; echo "$c"; }
           # PropFinder first, as its own request: the pull and the model run each need most of the instance's memory.
-          pf=$(curl -sS -o pf.json -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?date=$DATE&only=propfinder"); echo "propfinder: $pf $(head -c 400 pf.json)"
-          code=$(curl -sS -o resp.json -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?date=$DATE")
-          cat resp.json; echo
+          pf=$(call "https://ideareels.io/api/nhl/data/refresh?date=$DATE&only=propfinder" pf.json); echo "propfinder: $pf $(head -c 400 pf.json)"
+          code=$(call "https://ideareels.io/api/nhl/data/refresh?date=$DATE" resp.json)
+          head -c 4000 resp.json; echo
           [ "$code" = "200" ] || [ "$code" = "429" ]

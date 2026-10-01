@@ -7,7 +7,9 @@ name: NHL lineups (pre-game)
 # still does only this, never the daily results pull in nhl-data.yml.
 on:
   schedule:
-    - cron: '5 16-23,0-3 * * *'  # 12:05–23:05 ET
+    # Twice an hour at uncrowded minutes: GitHub skips or delays schedules at busy
+    # minutes (:00, :05), and a dropped run must not cost a whole hour of lines.
+    - cron: '23,53 16-23,0-3 * * *'  # 12:23–23:53 ET
   workflow_dispatch:
     inputs:
       due:
@@ -21,6 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Beat writers' lines from GameDayTweets (fetched here, parsed by the site)
+        continue-on-error: true
         env:
           NHL_ACTIONS_TOKEN: ${{ secrets.NHL_ACTIONS_TOKEN }}
         run: tools/gdt-pages.sh "$(TZ=America/New_York date +%F)"
@@ -32,6 +35,10 @@ jobs:
           [ -z "$DUE" ] && [ "${{ github.event_name }}" = "schedule" ] && DUE=150
           Q="date=$DATE&only=lineups"; [ -n "$DUE" ] && Q="$Q&due=$DUE"
           echo "Lineups for $Q"
-          code=$(curl -sS -o resp.json -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?$Q")
-          cat resp.json; echo
+          # A 5xx is usually the server restarting for a deploy: one more try after a minute.
+          for attempt in 1 2; do
+            code=$(curl -sS -o resp.json -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?$Q" || echo 000)
+            head -c 3000 resp.json; echo
+            case "$code" in 5*|000) [ "$attempt" = 1 ] && { echo "server answered $code; retrying in 60 s"; sleep 60; } ;; *) break ;; esac
+          done
           [ "$code" = "200" ] || [ "$code" = "429" ]

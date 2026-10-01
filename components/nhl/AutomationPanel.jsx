@@ -263,7 +263,7 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
           <div>
             <div className="nhlx-gd-title">NHL data <em>automatic</em></div>
             <p className="nhlx-auto-meta">
-              Lineups, history, home/away splits and box scores come from the NHL by themselves (9:00, 13:00 and 17:30 ET).
+              Lineups, history, home/away splits and box scores come from the NHL by themselves (9:17 ET and twice an hour through the game day).
               {' '}{status ? lineupState : ''}
               {status && !slots.hist ? ' No stored games yet: run a backfill under “Data sources” once.' : ''}
             </p>
@@ -275,7 +275,7 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
             <div className="nhlx-gd-title">Your two PropFinder files <em>{pf?.configured ? 'automatic' : 'you upload'}</em></div>
             {pf?.configured ? (
               <p className="nhlx-auto-meta">
-                Pulled from your PropFinder account every morning (9:00 ET) and again whenever lines are read while the files are missing:
+                Pulled from your PropFinder account every morning (9:17 ET) and again whenever lines are read while the files are missing:
                 the season and last-5 skater tables, the team and opponent tables, and the two matchup workbooks for the slate.
                 {' '}{pfLastLine}
               </p>
