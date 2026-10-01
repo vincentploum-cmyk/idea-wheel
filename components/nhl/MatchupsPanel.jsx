@@ -307,7 +307,7 @@ export default function MatchupsPanel() {
                     <div className="nhlx-mu-side-head">
                       <TeamLogo abbr={s.team} size={22} />
                       <b>{s.team} skaters</b>
-                      <small>{s.venue === 'H' ? 'home' : 'away'} · positions from {s.source === 'lineup' ? 'the projected lineup' : 'the roster (no lineup yet)'}</small>
+                      <small>{s.venue === 'H' ? 'home' : 'away'} · positions from {{ lineup: 'the NHL.com projected lineup', gamedaytweets: 'the beat writers’ lines', propfinder: 'PropFinder’s depth chart' }[s.source] || 'the roster (no lineup yet)'}</small>
                     </div>
                     <div className="nhlx-mu-grid">
                       <DefenseCard side={s} teamCount={slate.teamCount} mp={slate.moneypuck} />

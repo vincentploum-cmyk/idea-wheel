@@ -174,3 +174,19 @@ describe('PropFinder sign-in response', () => {
     expect(tokenExpiry('nope')).toBeNull();
   });
 });
+
+describe('PropFinder depth chart as a lineup', () => {
+  test('slots become LW / C / RW by line, D by pair, goalies, with NHL ids', async () => {
+    const { depthChartLines } = await import('../lib/nhl-data/propfinder-api');
+    const lines = depthChartLines(TEAMS.find((t) => t.code === 'PIT'));
+    expect(lines.forwards).toBe(4);
+    expect(lines.pairs).toBe(3);
+    expect(lines.players['sidney crosby']).toEqual({ name: 'Sidney Crosby', pos: 'C', line: 1, id: 8471675 });
+    expect(lines.players['evgeni malkin']).toMatchObject({ pos: 'RW', line: 2 }); // listed at RW2, plays RW
+    expect(lines.players['erik karlsson']).toMatchObject({ pos: 'D', line: 1 });
+    expect(lines.players['samuel girard']).toMatchObject({ pos: 'D', line: 3 });
+    expect(lines.players['arturs silovs']).toMatchObject({ pos: 'G', line: 1 });
+    expect(Object.values(lines.players).filter((p) => p.pos !== 'G')).toHaveLength(17); // 11 F listed (no RW4), 6 D
+    expect(depthChartLines(TEAMS.find((t) => t.code === 'PHI'))).toBeNull(); // fixture carries no chart for PHI
+  });
+});
