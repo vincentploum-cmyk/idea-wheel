@@ -3,6 +3,7 @@ import { readJson } from '@/lib/nhl-store';
 import { gamesPath, lineupsPath, rowsPath } from '@/lib/nhl-data/ingest';
 import { listNames } from '@/lib/nhl-store';
 import { slateMetaPath } from '@/lib/nhl-data/matchups';
+import { propfinderConfigured, PF_PULL_META } from '@/lib/nhl-data/propfinder-api';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,7 @@ export async function GET(request) {
   const date = url.searchParams.get('date') || todayET();
   if (!DATE_RE.test(date)) return Response.json({ error: 'bad date' }, { status: 400 });
 
-  const [slate, lineups, gamesSame, gamesPrev, defense, last, token] = await Promise.all([
+  const [slate, lineups, gamesSame, gamesPrev, defense, last, token, pfPull] = await Promise.all([
     readJson(slateMetaPath(date)),
     readJson(lineupsPath(date)),
     readJson(gamesPath(date)),
@@ -23,6 +24,7 @@ export async function GET(request) {
     readJson('data/defense/latest.json'),
     readJson('data/meta/last-refresh.json'),
     syncTokenInfo(),
+    readJson(PF_PULL_META),
   ]);
 
   // History / home-away stats can be built once any season of games is stored.
@@ -44,5 +46,6 @@ export async function GET(request) {
     },
     lastRefresh: last?.ranAt || null,
     syncToken: token,
+    propfinder: { configured: propfinderConfigured(), last: pfPull || null },
   }, { headers: { 'Cache-Control': 'no-store' } });
 }

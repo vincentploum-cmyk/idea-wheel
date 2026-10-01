@@ -55,6 +55,12 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   (source "auto", deduped by autoKey); the rink shows that run. The model's pure pipeline
   (parsers + `buildProjections`) lives in `components/nhl/model-core.js` so the server can import
   it; `NhlModel.jsx` keeps the UI and imports from it. Port logic changes into model-core.js.
+- PropFinder API (`lib/nhl-data/propfinder-api.js`): with `PROPFINDER_EMAIL` / `PROPFINDER_PASSWORD`
+  in the server env, `dailyRefresh` pulls the slate from api.propfinder.app each morning (and the
+  hourly lineup reads pull when the slate's files are still missing): skater and team tables into
+  `data/propfinder/*` and the season + L5 matchup workbooks through `ingestMatchupFile`, in the
+  exports' exact layouts, then the auto run. Admin button and `POST /api/nhl/data/propfinder/pull`.
+  Keep producing the CSV/workbook shapes the parsers already read; never adapt the parsers to the API.
 - PropFinder CSV exports (skater per-game rates for the season or last N games, team stats for and
   against with ranks, opponent stats per position tagged by a `-lw/-c/-rw/-d` file-name suffix) are imported by
   `lib/nhl-data/propfinder.js` into `data/propfinder/*` (one snapshot per season; the

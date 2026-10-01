@@ -29,3 +29,6 @@ services:
     # Optional overrides (safe defaults in code):
     #   NHL_ADMIN_EMAILS  comma-separated allow-list (default vincentploum@gmail.com)
     #   NHL_MODEL_BUCKET  storage bucket name (default nhl-model)
+    # Optional PropFinder account, for pulling the matchup workbooks and stats tables
+    # from its API instead of uploading the exports (set both in the Render dashboard):
+    #   PROPFINDER_EMAIL / PROPFINDER_PASSWORD

@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Slots the automation can fill, in upload-grid order.
 export const AUTO_SLOTS = [
-  { key: 'season', label: 'Season matchups', source: 'PropFinder · folder sync' },
-  { key: 'l5', label: 'L5 matchups', source: 'PropFinder · folder sync' },
+  { key: 'season', label: 'Season matchups', source: 'PropFinder · API or folder sync' },
+  { key: 'l5', label: 'L5 matchups', source: 'PropFinder · API or folder sync' },
   { key: 'lineups', label: 'Lineups', source: 'NHL.com game previews' },
   { key: 'hist', label: 'Historical profiles', source: 'NHL API box scores' },
   { key: 'playerStats', label: 'Home / away stats', source: 'NHL API play-by-play' },
@@ -108,6 +108,23 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
     }
   };
 
+  const pullPropfinder = async () => {
+    setBusy(true);
+    setMsg('Pulling today’s slate from PropFinder…');
+    try {
+      const res = await fetch(`/api/nhl/data/propfinder/pull?date=${date}`, { method: 'POST' });
+      const j = await res.json();
+      if (!res.ok || !j.ok) throw new Error(j.error || j.result?.error || j.result?.skipped || `pull ${res.status}`);
+      const r = j.result;
+      setBusy(false);
+      await loadSlate(date);
+      setMsg(`PropFinder pulled: ${r.games} games, ${r.players} players, ${r.teamTables} team tables.${j.model?.ran ? ` Model run saved (${j.model.players} players).` : j.model?.skipped ? ` Model not run yet: ${j.model.skipped}.` : ''}`);
+    } catch (err) {
+      setMsg(`PropFinder pull failed: ${err.message}`);
+      setBusy(false);
+    }
+  };
+
   const newToken = async () => {
     if (status?.syncToken && !window.confirm('Create a new sync token? The old one stops working.')) return;
     const res = await fetch('/api/nhl/data/token', { method: 'POST' });
@@ -187,6 +204,11 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
     : slots.lineups.complete ? `${slots.lineups.games}/${slots.lineups.of} games have a projected lineup.`
       : `${slots.lineups.games}/${slots.lineups.of} games have a lineup so far; the model waits for all of them.`;
   const filesReady = !!(slots.season && slots.l5);
+  const pf = status?.propfinder || null;
+  const pfLast = pf?.last;
+  const pfLastLine = !pfLast ? ''
+    : pfLast.ok ? `Last pull ${fmt(pfLast.at)} for ${pfLast.date}: ${pfLast.games} games, ${pfLast.players} players, season ${pfLast.season}-${String((pfLast.season || 0) + 1).slice(2)}.`
+      : `Last pull ${fmt(pfLast.at)} failed: ${pfLast.error || pfLast.skipped}.`;
   const fileRow = (key, label, hint) => (
     <div key={key} className={`nhlx-gd-file${slots[key] ? ' is-ready' : ''}`}>
       <span className="nhlx-auto-dot" aria-hidden />
@@ -205,7 +227,8 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
           <div className="nhlx-auto-sub">
             {!status ? 'Checking today’s data…'
               : filesReady ? `Both PropFinder files are in${autoReady === auto.length ? ' and the NHL data is ready' : ''}.`
-                : 'One thing to do on game day: drop the two PropFinder files below. Everything else loads itself.'}
+                : status?.propfinder?.configured ? 'The PropFinder files for this slate are not in yet; they are pulled each morning, or pull them now below.'
+                  : 'One thing to do on game day: drop the two PropFinder files below. Everything else loads itself.'}
             {status?.lastRefresh ? ` NHL data refreshed ${fmt(status.lastRefresh)}.` : ''}
           </div>
         </div>
@@ -240,12 +263,21 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
         <li className={`nhlx-gd-step${filesReady ? ' is-done' : slots.season || slots.l5 ? ' is-partial' : ''}`}>
           <span className="nhlx-gd-num">2</span>
           <div>
-            <div className="nhlx-gd-title">Your two PropFinder files <em>you upload</em></div>
-            <p className="nhlx-auto-meta">
-              In PropFinder export today’s NHL goal matchups twice: <b>Season</b> and <b>Last 5</b>. Keep the file names PropFinder gives them
-              (<code>NHL-Goal-Matchups-{date || 'YYYY-MM-DD'}.xlsx</code>); the date in the name picks the slate, the contents tell Season from L5.
-              Drop both here, or save them in <code>Desktop/NHL</code> on your Mac and the sync uploads them.
-            </p>
+            <div className="nhlx-gd-title">Your two PropFinder files <em>{pf?.configured ? 'automatic' : 'you upload'}</em></div>
+            {pf?.configured ? (
+              <p className="nhlx-auto-meta">
+                Pulled from your PropFinder account every morning (9:00 ET) and again whenever lines are read while the files are missing:
+                the season and last-5 skater tables, the team and opponent tables, and the two matchup workbooks for the slate.
+                {' '}{pfLastLine}
+              </p>
+            ) : (
+              <p className="nhlx-auto-meta">
+                In PropFinder export today’s NHL goal matchups twice: <b>Season</b> and <b>Last 5</b>. Keep the file names PropFinder gives them
+                (<code>NHL-Goal-Matchups-{date || 'YYYY-MM-DD'}.xlsx</code>); the date in the name picks the slate, the contents tell Season from L5.
+                Drop both here, or save them in <code>Desktop/NHL</code> on your Mac and the sync uploads them.
+                {' '}Set <code>PROPFINDER_EMAIL</code> and <code>PROPFINDER_PASSWORD</code> in the server environment and the site pulls them itself.
+              </p>
+            )}
             <div className="nhlx-gd-files">
               {fileRow('season', 'Season matchups', 'Missing · the “Season” export')}
               {fileRow('l5', 'L5 matchups', 'Missing · the “Last 5 games” export')}
@@ -263,12 +295,19 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
                 <input type="file" multiple accept=".xlsx" style={{ display: 'none' }} disabled={disabled} onChange={(e) => { uploadMatchups(e.target.files); e.target.value = ''; }} />
               </label>
             )}
-            {filesReady && (
-              <label className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ cursor: 'pointer', marginTop: 10 }}>
-                Replace a file
-                <input type="file" multiple accept=".xlsx" style={{ display: 'none' }} disabled={disabled} onChange={(e) => { uploadMatchups(e.target.files); e.target.value = ''; }} />
-              </label>
-            )}
+            <div className="nhlx-auto-actions" style={{ marginTop: 10 }}>
+              {pf?.configured && (
+                <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={disabled || !date} onClick={pullPropfinder}>
+                  {filesReady ? 'Pull again from PropFinder' : 'Pull from PropFinder now'}
+                </button>
+              )}
+              {filesReady && (
+                <label className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ cursor: 'pointer' }}>
+                  Replace a file
+                  <input type="file" multiple accept=".xlsx" style={{ display: 'none' }} disabled={disabled} onChange={(e) => { uploadMatchups(e.target.files); e.target.value = ''; }} />
+                </label>
+              )}
+            </div>
           </div>
         </li>
         <li className={`nhlx-gd-step${filesReady ? ' is-done' : ''}`}>
