@@ -19,8 +19,9 @@ function seasons(now = new Date()) {
   return { current: `${y}${y + 1}`, previous: `${y - 1}${y}`, startYear: y };
 }
 
-// Admin: where the site stands on every setup step, so "Start here" can guide
-// the first sync and show what is still missing on any later day.
+// Admin: where the stored data stands (rosters, media, game history, league,
+// MoneyPuck, today's lineups and PropFinder files), shown as the "Stored data"
+// health rows under Best bets → Data sources.
 export async function GET(request) {
   const auth = await authorize(request);
   if (!auth.ok) return auth.response;

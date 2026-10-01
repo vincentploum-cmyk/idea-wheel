@@ -28,7 +28,10 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   parsers to fit the automation; change the builders instead.
 - Scheduled by `.github/workflows/nhl-data.yml` (daily results + lineups) and
   `nhl-lineups.yml` (hourly pre-game lineup reads); Mac folder sync in `tools/mac-sync`.
-- Signed-in page = five hash tabs (`#teams`, `#matchups`, `#model`, `#league`, `#history`).
+- Signed-in page = five hash tabs (`#teams`, `#matchups`, `#model`, `#league`, `#history`); it opens on
+  Matchups. The stored data (rosters, media, game history, league, MoneyPuck) is kept fresh by the
+  morning run and shown, with repair buttons and the backfill, under Best bets → "Data sources"
+  (`/api/nhl/data/setup`); there is no setup tab.
   Positions are frozen per game before puck drop (`lib/nhl-data/positions.js`,
   `data/positions/<date>.json`; games never snapshotted get the NHL.com preview at ingest)
   and the stored skater rows carry that position plus its source (`posSrc`, `boxPos`). The

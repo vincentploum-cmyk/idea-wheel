@@ -22,7 +22,7 @@ export function MpCell({ v, d, rank, n, invert, neutral }) {
 
 /** One team, all four situations (+ home/away 5v5 when game logs are loaded). */
 export function TeamMoneyPuck({ abbr, mp }) {
-  if (!mp?.teams) return <p className="nhlx-auto-meta">MoneyPuck team data not loaded yet — see Start here.</p>;
+  if (!mp?.teams) return <p className="nhlx-auto-meta">MoneyPuck team data not loaded yet; it comes with the morning run (Best bets → Data sources).</p>;
   const n = mp.teams.teams || 32;
   const sits = Object.keys(mp.teams.situations || {}).filter((s) => mp.teams.situations[s][abbr]);
   if (!sits.length) return <p className="nhlx-auto-meta">No MoneyPuck row for {abbr} yet.</p>;

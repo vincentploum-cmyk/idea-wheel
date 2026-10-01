@@ -119,7 +119,7 @@ p { margin: 0; }
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 ::selection { background: var(--primary-soft); color: var(--heading); }
 
-#model, #history, #how, #start, #teams, #matchups, #league, #nhlx-results { scroll-margin-top: 88px; }
+#model, #history, #how, #teams, #matchups, #league, #nhlx-results { scroll-margin-top: 88px; }
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 .nhlx-btn {
@@ -793,20 +793,16 @@ td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
   .nhlx-pc-form { margin-left: 0; }
 }
 
-/* ── Start here ────────────────────────────────────────────────────────── */
-.nhlx-tab-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--warning); margin-left: 6px; vertical-align: 2px; }
-.nhlx-setup-list { max-width: 900px; }
-.nhlx-setup-step { display: flex; gap: 16px; padding: 18px 0; border-top: 1px solid var(--line); }
-.nhlx-setup-step > div { min-width: 0; flex: 1; }
-.nhlx-setup-step.is-done { background: transparent; }
-.nhlx-setup-step.is-done .nhlx-gd-num { background: var(--success); border-color: var(--success); color: var(--bg); }
-.nhlx-setup-step.is-running .nhlx-gd-num { background: var(--warning); border-color: var(--warning); color: var(--bg); }
-.nhlx-setup-step .nhlx-auto-actions { margin-top: 10px; }
-.nhlx-setup-step .nhlx-auto-meta { font-size: 14px; line-height: 1.55; }
-.nhlx-setup-step .nhlx-auto-meta code { font-size: 12px; background: var(--bg-soft); padding: 1px 6px; border-radius: 6px; border: 1px solid var(--line); }
-.nhlx-gd-title em.is-ok { color: var(--success); border-color: var(--ok-line); }
-.nhlx-gd-title em.is-todo { color: var(--warning); border-color: var(--warn-line); }
-.nhlx-complete a.nhlx-btn { margin-left: auto; }
+/* ── Data sources: stored-data health ──────────────────────────────────── */
+.nhlx-health { display: grid; gap: 8px; margin-top: 12px; }
+.nhlx-health .nhlx-auto-item { align-items: center; }
+.nhlx-health .nhlx-auto-item > div:first-of-type { min-width: 0; flex: 1; }
+.nhlx-health .nhlx-auto-actions { flex: none; }
+.nhlx-health .nhlx-auto-actions .nhlx-btn { margin-top: 0; }
+@media (max-width: 575px) {
+  .nhlx-health .nhlx-auto-item { flex-wrap: wrap; }
+  .nhlx-health .nhlx-auto-actions { width: 100%; padding-left: 20px; }
+}
 
 /* Theme toggle */
 .nhlx-theme { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--card); color: var(--heading); font-size: 17px; display: grid; place-items: center; }
