@@ -56,9 +56,11 @@ produces its input workbooks, in the exact formats the parsers already read.
 
 ## Updating the model
 
-The model logic lives in `components/nhl/NhlModel.jsx` above the `NHL_UPLOAD_SLOTS`
-export. When you change the local app, port the changed functions into that file
-(colors there are already mapped to the Flowbit palette).
+The model's pipeline (parsers and `buildProjections`) lives in `components/nhl/model-core.js`;
+the UI around it in `components/nhl/NhlModel.jsx`. When you change the local app, port the
+changed functions into those files (colors in the UI file are already mapped to the palette).
+The server runs the same pipeline automatically after each lineup capture (`lib/nhl-data/autorun.js`)
+and saves the run, so the Matchups rinks show the model without a manual run.
 
 ## Local development
 

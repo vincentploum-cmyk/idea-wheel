@@ -202,7 +202,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
         <TeamLogo abbr={side.team} size={28} />
         <div>
           <b>{side.team} <small>{side.venue === 'H' ? 'home' : 'away'}{score ? ` · final ${score[0]}–${score[1]} vs ${side.opp} · chips show the game's shots, goals, assists` : ' · attacking upwards'}</small></b>
-          <small className="nhlx-rk-numsrc">{modelRun ? <>Numbers on the chips: <b>the model</b>, run {et(modelRun.createdAt)}{modelRun.players ? ` (${modelRun.players} players)` : ''}{score ? ', after "m"' : ''}.</> : <>No model run saved for this slate yet: chips show a matchup read (own SOG/G × opponent ratio){score ? ', after "p"' : ''}. Run the model on the Model tab to see its projections here.</>}</small>
+          <small className="nhlx-rk-numsrc">{modelRun ? <>Numbers on the chips: <b>the model</b>, {modelRun.source === 'auto' ? 'run automatically' : 'run'} {et(modelRun.createdAt)}{modelRun.players ? ` (${modelRun.players} players)` : ''}{score ? ', after "m"' : ''}.</> : <>No model run for this slate yet: chips show a matchup read (own SOG/G × opponent ratio){score ? ', after "p"' : ''}. The model runs itself once the PropFinder matchup files and the lines are in.</>}</small>
           <small>Ice tinted by what {side.opp} allows {WINDOW_TEXT[v]} to each position (rank 1 = most permissive) · <SourceLine side={side} /></small>
         </div>
       </div>
