@@ -113,6 +113,9 @@ describe('player profile', () => {
   test('profile splits by venue and opponent and reports lines', () => {
     const rows = Array.from({ length: 12 }, (_, i) => mk(i, i % 4 === 0 ? 1 : 0, 2 + (i % 3)));
     const p = playerProfile(rows, { opp: 'MTL', venue: 'H' });
+    // Every game vs tonight's opponent rides along for the card's H2H histogram.
+    expect(p.h2hGames.length).toBe(p.stats.h2h.gp);
+    expect(p.h2hGames.every((g) => g.opp === 'MTL')).toBe(true);
     expect(p.gp).toBe(12);
     expect(p.stats.l5.gp).toBe(5);
     expect(p.stats.h2h.gp).toBe(4);
