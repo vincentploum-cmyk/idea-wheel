@@ -33,14 +33,14 @@ produces its input workbooks, in the exact formats the parsers already read.
 
 | Input | Source | How it arrives |
 |---|---|---|
-| Season + L5 matchups | PropFinder export | Mac folder sync (`tools/mac-sync`) uploads `NHL-Goal-Matchups-*.xlsx` saved in `~/Desktop/NHL` |
+| Season + L5 matchups | PropFinder's API (`lib/nhl-data/propfinder-api.js`), signed in with `PROPFINDER_EMAIL` / `PROPFINDER_PASSWORD` from the server environment; else its `NHL-Goal-Matchups-*.xlsx` exports | pulled every morning (9:00 ET) and whenever lines are read while the slate's files are missing, or "Pull from PropFinder now" on the Model tab; otherwise Mac folder sync (`tools/mac-sync`) uploads the exports saved in `~/Desktop/NHL` |
 | Lineups | Beat writers' game-day lines from gamedaytweets.com (`lib/nhl-data/gamedaytweets.js`), else NHL.com game previews (forge API) | scheduled refresh: hourly 12:05–23:05 ET for games starting within 2½ h, plus "Refresh lines" on the Matchups tab |
 | Box scores | NHL API box score + play-by-play | scheduled refresh (next morning) |
 | Historical profiles | stored skater games, last 365 days | built on demand |
 | Home/away stats | stored skater games (last 82) incl. iCF/iFF/iSCF/iHDCF | built on demand |
 | Defense rankings | latest PropFinder "Defense (Last 10)" block per team | updated on each matchup upload |
 | Pace | not automated (upload manually if wanted) | — |
-| PropFinder season stats | its Skater Stats / Team Stats CSV exports (`nhl-skater-stats-*.csv` season or last-N, all venues or Split Home / Away, `nhl-team-stats-Team-*.csv` for, `nhl-team-stats-Opponent-*.csv` against; add `-lw` / `-c` / `-rw` / `-d` to the file name of a per-position opponent export; a "Last 10" or "Last 5" Window export is stored as its own table and feeds the rink's L10 / L5 toggle) | Mac folder sync or "Import PropFinder files"; shown on the team card, League and the player card (the final 2025-26 exports are bundled in `lib/nhl-data/seed/`) |
+| PropFinder season stats | the same API pull (season and last-5 skater rates for the teams playing; team, opponent and per-position opponent tables for the full season, last 5 and last 10), or its Skater Stats / Team Stats CSV exports (`nhl-skater-stats-*.csv` season or last-N, all venues or Split Home / Away, `nhl-team-stats-Team-*.csv` for, `nhl-team-stats-Opponent-*.csv` against; add `-lw` / `-c` / `-rw` / `-d` to the file name of a per-position opponent export; a "Last 10" or "Last 5" Window export is stored as its own table and feeds the rink's L10 / L5 toggle) | Mac folder sync or "Import PropFinder files"; shown on the team card, League and the player card (the final 2025-26 exports are bundled in `lib/nhl-data/seed/`) |
 
 - Schedule: `.github/workflows/nhl-data.yml` calls `POST /api/nhl/data/refresh`
   four times a day (anonymous calls are throttled to one per 15 min; the admin
@@ -52,6 +52,13 @@ produces its input workbooks, in the exact formats the parsers already read.
   location (see `lib/nhl-data/game.js`), not NST's exact numbers.
 - Lineups are only auto-loaded once every game on the slate has a preview,
   because the model drops players missing from the lineup file.
+- PropFinder API pull: `GET /NHL/teams` (32 teams' stats rows: Team / Opponent × All / LW / C /
+  RW / D × full season / last 5 / 10 / 15) and `GET /NHL/players?teamIds=…&hydrate=stats`
+  (one row per game) for the teams playing; season rates use that season's regular-season
+  games (last season's until a player has one), "last 5" the last five games of any type, team
+  columns are totals / games played ranked 1 = highest; the matchup workbooks are written in the
+  export layout and stored through the same ingest as an upload. It is PropFinder's private
+  API: when it changes, the Model tab shows the failed pull and the folder sync still works.
 - Backfill past seasons from the UI: Automatic inputs → Folder sync and data tools.
 
 ## Updating the model
