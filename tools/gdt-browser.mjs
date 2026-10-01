@@ -16,6 +16,9 @@ const context = await browser.newContext({
   viewport: { width: 1280, height: 900 }, locale: 'en-US',
   ignoreHTTPSErrors: process.env.GDT_INSECURE === '1', // local testing behind an intercepting proxy only
 });
+// Twitter's embed script turns the tweet blockquotes into iframes, which the site's
+// parser cannot read; keep the page as the server sent it.
+await context.route(/platform\.twitter\.com|platform\.x\.com|widgets\.js|cdn\.syndication\.twimg\.com/, (route) => route.abort());
 let ok = 0;
 for (const team of teams) {
   const page = await context.newPage();
