@@ -910,6 +910,8 @@ td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
 .nhlx-rk-chip:hover { border-color: var(--primary); }
 .nhlx-rk-chip.is-static { cursor: default; }
 .nhlx-rk-chip.is-out { opacity: 0.55; }
+/* A slot filled from the team's last known lineup (no line for him today yet). */
+.nhlx-rk-chip.is-carried { border-style: dashed; }
 .nhlx-rk-num { flex: none; min-width: 4.8cqw; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: max(13px, 4.6cqw); line-height: 1; color: var(--primary); font-variant-numeric: tabular-nums; }
 .nhlx-rk-meta { min-width: 0; display: flex; flex-direction: column; }
 .nhlx-rk-name { font-family: var(--font-display); font-weight: 700; font-size: max(11px, 3.1cqw); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em; }

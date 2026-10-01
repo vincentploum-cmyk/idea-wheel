@@ -55,6 +55,9 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   Render env var; `authorize()` accepts it beside the stored sync token), where `ingestGdtPages`
   parses them against the rosters, merges (never erasing earlier lines), snapshots and auto-runs.
   Without a tweet or preview the snapshot uses PropFinder's depth chart (`propfinder-depth.json`).
+  Slots a capture leaves empty (no lineup yet, or a partial one) are filled from the team's last
+  known lineup (`data/lineups/last/<ABBR>.json`, written from each team's own capture) with
+  players still on the roster, marked `carried`; the slate does the same for a game with no snapshot.
   `nhl-lineups.yml` re-reads lineups hourly 12:05–23:05 ET for games starting within 150 minutes
   (`only=lineups&due=150`), so every game is captured in its last hour and frozen at puck drop;
   the Matchups tab's "Refresh lines" button does the same on demand and each rink shows when

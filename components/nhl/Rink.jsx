@@ -28,10 +28,14 @@ function sourceText(side) {
   const gdt = m.handle ? `the beat writers via GameDayTweets (@${m.handle}${m.at ? `, ${et(m.at)}` : m.date ? `, ${m.date}` : ''})` : null;
   const nhl = m.nhlUpdated ? `NHL.com lineup updated ${et(m.nhlUpdated)}` : null;
   if (side.source === 'gamedaytweets') return `lines from ${gdt}${nhl ? ` · ${nhl}` : ''}${m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}`;
-  if (side.source === 'lineup') return `lines from the NHL.com projected lineup${nhl ? ` (updated ${et(m.nhlUpdated)})` : ''}${gdt ? ` · older tweet from ${gdt}` : ''}${m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}`;
-  if (side.source === 'propfinder') return `lines from PropFinder’s depth chart${m.pfAt ? ` (pulled ${et(m.pfAt)})` : ''} · no beat-writer or NHL.com lines yet${m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}`;
+  if (side.source === 'lineup') return `lines from the NHL.com projected lineup${nhl ? ` (updated ${et(m.nhlUpdated)})` : ''}${gdt ? ` · older tweet from ${gdt}` : ''}${m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}${carriedText(side)}`;
+  if (side.source === 'propfinder') return `lines from PropFinder’s depth chart${m.pfAt ? ` (pulled ${et(m.pfAt)})` : ''} · no beat-writer or NHL.com lines yet${m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}${carriedText(side)}`;
+  if (side.carried) return `no lines yet: ${carriedText(side).slice(3)}${m.capturedAt ? ` · last checked ${et(m.capturedAt)}` : ''}`;
   return `lines from the roster, ordered by projected shots (no lines yet${m.capturedAt ? `, last checked ${et(m.capturedAt)}` : ''})`;
 }
+
+/** " · 3 slots carried from the last known lineup (2026-09-30)". */
+const carriedText = (side) => (side.carried ? ` · ${side.carried.count} slot${side.carried.count === 1 ? '' : 's'} carried from the last known lineup${side.carried.date ? ` (${side.carried.date})` : ''}` : '');
 
 /** League rank (1 = most permissive) → 'soft' | 'mid' | 'tough' | 'none'. */
 export function zoneTone(rank, teams) {
@@ -136,11 +140,11 @@ function Chip({ p, x, y, minGp, actual, played }) {
   const title = `${p.name} · ${p.pos}${p.line ? ` L${p.line}` : ''} · ${p.gp || 0} GP · ${num(p.sog)} SOG/G, ${num(p.g, 2)} G/G${modelText}${p.projSog != null ? ` · matchup read ${num(p.projSog)} SOG, ${num(p.projG, 2)} G` : ''}${result}`
     + (p.shotEdge != null ? ` · shot edge ${p.shotEdge > 0 ? '+' : ''}${p.shotEdge}%` : '')
     + (p.goalEdge != null ? ` · goal edge ${p.goalEdge > 0 ? '+' : ''}${p.goalEdge}%` : '')
-    + (p.inLineup ? '' : ' · not in the projected lineup');
+    + (p.carried ? ` · carried from the last known lineup${p.carriedFrom ? ` (${p.carriedFrom})` : ''}` : p.inLineup ? '' : ' · not in the projected lineup');
   return (
     <button
       type="button"
-      className={`nhlx-rk-chip${p.inLineup ? '' : ' is-out'}${p.id ? '' : ' is-static'}`}
+      className={`nhlx-rk-chip${p.inLineup ? '' : ' is-out'}${p.carried ? ' is-carried' : ''}${p.id ? '' : ' is-static'}`}
       style={{ left: `${x}%`, top: `${pct(y)}%` }}
       title={title}
       onClick={() => p.id && open({ id: p.id, opp: p.opp, venue: p.venue })}
