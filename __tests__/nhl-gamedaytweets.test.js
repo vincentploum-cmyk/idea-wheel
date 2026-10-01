@@ -98,3 +98,13 @@ describe('line parsing', () => {
     expect(latestTeamLines(NYR_PAGE, NYR, { since: '2026-10-01' })).toBeNull();
   });
 });
+
+describe('merging lineup reads', () => {
+  test('a read that found nothing never erases lines captured earlier', async () => {
+    const { mergeGdt } = await import('../lib/nhl-data/ingest');
+    const prev = { NYR: { players: { a: 1 }, matched: 20 }, BUF: { none: true } };
+    const fresh = { NYR: { error: 'gamedaytweets answered 403 for NYR' }, BUF: { players: { b: 1 } }, CBJ: { none: true } };
+    expect(mergeGdt(prev, fresh)).toEqual({ NYR: prev.NYR, BUF: fresh.BUF, CBJ: fresh.CBJ });
+    expect(mergeGdt(null, fresh)).toEqual(fresh);
+  });
+});

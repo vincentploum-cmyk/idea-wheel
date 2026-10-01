@@ -34,3 +34,6 @@ services:
     # Optional PropFinder account, for pulling the matchup workbooks and stats tables
     # from its API instead of uploading the exports (set both in the Render dashboard):
     #   PROPFINDER_EMAIL / PROPFINDER_PASSWORD
+    # Token the GitHub Actions workflows send when posting GameDayTweets pages
+    # (any random string of 20+ characters; the same value is the repo secret):
+    #   NHL_ACTIONS_TOKEN
