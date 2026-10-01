@@ -34,8 +34,8 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   and the stored skater rows carry that position plus its source (`posSrc`, `boxPos`). The
   Matchups tab (`lib/nhl-data/slate.js`; each game drawn as two rinks in
   `components/nhl/Rink.jsx`, ice bands tinted by the opponent's SOG-allowed rank per position
-  for the window picked above the rink — home / away / L5 / L10 / L5 home / L5 away, defaulting to
-  tonight's venue —
+  for the window picked above the rink — home / away / L5 / L10 / L5 home / L5 away from the stored
+  games, or "PropFinder" to follow the PropFinder table's selected tab; defaulting to tonight's venue —
   above each rink the opponent's PropFinder defense table (`propfinderDefenseTabs` in
   `lib/nhl-data/propfinder.js`, drawn by `PropfinderDefense` in `components/nhl/Propfinder.jsx`:
   All/C/LW/RW/D rows, season tabs then L5 / L10 / L15, per game or total, PropFinder's ranks, sortable),

@@ -223,18 +223,27 @@ export function PropfinderSkaterTable({ pf }) {
 const defTone = (rank, n) => (!rank || !n ? '' : rank <= Math.ceil(n / 3) ? 'is-soft' : rank > n - Math.ceil(n / 3) ? 'is-tough' : 'is-mid');
 const DEF_POS = ['All', 'C', 'LW', 'RW', 'D'];
 
+/** The tab `key` names, else the current season's tab, else the first one. */
+export const defenseTabFor = (tabs, key) => tabs.find((t) => t.key === key) || [...tabs].reverse().find((t) => t.kind === 'season') || tabs[0] || null;
+
+/** "2025 season" / "last 5 home games": the window one defense tab covers. */
+export const defenseTabWhen = (tab) => (tab.kind === 'season' ? `${tab.label} season` : `last ${tab.windowGames}${tab.split === 'H' ? ' home' : tab.split === 'A' ? ' away' : ''} games`);
+
 /**
  * The defense table above a rink, in PropFinder's format: what `abbr` allowed per game
  * (or in total) to every position, one tab per season / recent-games window (the current
  * season selected), each cell carrying PropFinder's league rank; a column header sorts
- * the position rows (All stays on top). `data` is a slate side's `propfinder`.
+ * the position rows (All stays on top). `data` is a slate side's `propfinder`. The rink
+ * can own the selected tab (`tabKey` + `onTabKey`) so its PropFinder window follows it.
  */
-export function PropfinderDefense({ abbr, data, posFilter = '' }) {
+export function PropfinderDefense({ abbr, data, posFilter = '', tabKey: controlledKey, onTabKey }) {
   const tabs = data?.tabs || [];
-  const [tabKey, setTabKey] = useState(null);
+  const [ownKey, setOwnKey] = useState(null);
   const [total, setTotal] = useState(false);
   const [sort, setSort] = useState(null);
-  const tab = tabs.find((t) => t.key === tabKey) || [...tabs].reverse().find((t) => t.kind === 'season') || tabs[0];
+  const tabKey = onTabKey ? controlledKey : ownKey;
+  const setTabKey = onTabKey || setOwnKey;
+  const tab = defenseTabFor(tabs, tabKey);
   if (!tab) return null;
   const cols = data.cols.filter(([k]) => DEF_POS.some((pos) => tab.rows[pos]?.[k] != null));
   const n = tab.count;
@@ -250,7 +259,7 @@ export function PropfinderDefense({ abbr, data, posFilter = '' }) {
       </td>
     );
   };
-  const when = tab.kind === 'season' ? `${tab.label} season` : `last ${tab.windowGames}${tab.split === 'H' ? ' home' : tab.split === 'A' ? ' away' : ''} games`;
+  const when = defenseTabWhen(tab);
   return (
     <div className="nhlx-pfd" aria-label={`${abbr} defense, PropFinder`}>
       <div className="nhlx-pfd-head" title={`What ${teamName(abbr) || abbr} allowed ${total ? 'in total' : 'per game'} to each position · ${when}${tab.rows.All?.gp ? ` · ${tab.rows.All.gp} GP` : ''} · rank 1 = most allowed of ${n} · data from PropFinder`}>

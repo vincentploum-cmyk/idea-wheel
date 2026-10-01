@@ -3,14 +3,16 @@
 import { useMemo, useState } from 'react';
 import { TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
-import { PropfinderDefense } from './Propfinder';
+import { PropfinderDefense, defenseTabFor, defenseTabWhen } from './Propfinder';
 
 // Tactical board: one team's whole lineup on a full vertical rink (85 × 200 ft,
 // attacking goal at the top). Forward lines stack in the attacking half with
 // LW, C and RW left to right; defense pairs sit in the defending half. Four
 // bands of ice (LW, C, RW lanes and the D half) are tinted by what tonight's
 // opponent allows to that position at this venue: green = permissive third of
-// the league, amber = middle, red = stingiest third. Every chip carries the
+// the league, amber = middle, red = stingiest third. The toggle above the rink
+// picks the window; "PropFinder" tints by the PropFinder table's selected tab
+// instead of our stored games, so the ice reads the same as that table. Every chip carries the
 // slate's projected shots and goals (player rate × defense ratio).
 export const ZONES = ['LW', 'C', 'RW', 'D'];
 const F_POS = ['LW', 'C', 'RW'];
@@ -166,19 +168,29 @@ function Chip({ p, x, y, minGp, actual, played }) {
 }
 
 // The toggle above each rink: which window of the opponent's defense tints the ice.
+// The stored-game windows first; "PropFinder" (when the table exists) follows the table's tab.
 const WINDOWS = [['home', 'Home'], ['away', 'Away'], ['l5', 'L5'], ['l10', 'L10'], ['l5home', 'L5 home'], ['l5away', 'L5 away']];
+const PF_WINDOW = ['propfinder', 'PropFinder'];
 const WINDOW_TEXT = { home: 'at home', away: 'away', l5: 'over its last 5 games', l10: 'over its last 10 games', l5home: 'over its last 5 home games', l5away: 'over its last 5 away games' };
 
-function BandLabel({ pos, d, opp, view, teamCount, x, y }) {
+/** One position of the PropFinder table's tab, in the shape the rink's stored-game windows use. */
+function propfinderWindow(tab, pos) {
+  const row = tab?.rows?.[pos];
+  if (!row?.gp) return null;
+  return { season: { gp: row.gp, sog: row.sog, g: row.g }, rank: { sog: row.ranks?.sog ?? null, g: row.ranks?.g ?? null }, source: 'propfinder', seasonLabel: defenseTabWhen(tab), teamCount: tab.count, picked: true };
+}
+
+function BandLabel({ pos, d, opp, when, teamCount, x, y }) {
   const r = d?.rank || {};
   const s = d?.season;
   const n = d?.teamCount || teamCount;
   const tone = zoneTone(r.sog, n);
-  const from = d?.source === 'propfinder' ? ` · PropFinder ${d.seasonLabel} (last season, until ${opp} has enough stored games)` : ` · this season's stored games (${s?.gp ?? 0})`;
-  const title = s?.gp ? `${opp} allows ${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'}) per game to ${pos} ${WINDOW_TEXT[view]} · rank 1 = most permissive of ${n}${from}` : `No defense data for ${opp} ${WINDOW_TEXT[view]} yet`;
+  // A stored-game window borrows PropFinder's table while the venue sample is thin; the PropFinder window is that table by choice.
+  const from = d?.source !== 'propfinder' ? ` · this season's stored games (${s?.gp ?? 0})` : d.picked ? ` · PropFinder, ${d.seasonLabel}` : ` · PropFinder ${d.seasonLabel} (last season, until ${opp} has enough stored games)`;
+  const title = s?.gp ? `${opp} allows ${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'}) per game to ${pos} ${when} · rank 1 = most permissive of ${n}${from}` : `No defense data for ${opp} ${when} yet`;
   return (
     <div className={`nhlx-rk-zone is-${tone}`} style={{ left: `${x}%`, top: `${pct(y)}%` }} title={title}>
-      <b>{pos}</b>{s?.gp ? <span>#{r.sog ?? '–'} SOG · #{r.g ?? '–'} G{d?.source === 'propfinder' ? <i title={`PropFinder ${d.seasonLabel}`}>PF</i> : null}</span> : <span>no data</span>}
+      <b>{pos}</b>{s?.gp ? <span>#{r.sog ?? '–'} SOG · #{r.g ?? '–'} G{d?.source === 'propfinder' && !d.picked ? <i title={`PropFinder ${d.seasonLabel}`}>PF</i> : null}</span> : <span>no data</span>}
     </div>
   );
 }
@@ -201,12 +213,18 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
   const defaultView = side.venue === 'A' ? 'home' : 'away';
   const [view, setView] = useState(null);
   const v = view || defaultView;
-  const defAt = (pos) => side.defense?.[pos]?.windows?.[v] ?? (v === defaultView ? side.defense?.[pos] : null) ?? null;
+  // The PropFinder table's selected tab lives here so the "PropFinder" window can follow it.
+  const pfTabs = side.propfinder?.tabs || [];
+  const [pfTabKey, setPfTabKey] = useState(null);
+  const pfTab = defenseTabFor(pfTabs, pfTabKey);
+  const windows = pfTab ? [...WINDOWS, PF_WINDOW] : WINDOWS;
+  const when = v === 'propfinder' ? `per PropFinder (${defenseTabWhen(pfTab)})` : WINDOW_TEXT[v];
+  const defAt = (pos) => (v === 'propfinder' ? propfinderWindow(pfTab, pos) : side.defense?.[pos]?.windows?.[v] ?? (v === defaultView ? side.defense?.[pos] : null) ?? null);
   const tones = Object.fromEntries(ZONES.map((z) => [z, posFilter && posFilter !== z ? 'none' : zoneTone(defAt(z)?.rank?.sog, defAt(z)?.teamCount || teamCount)]));
   const clipId = `rink-${side.team}-${side.opp}`;
   const open = usePlayerCard();
   return (
-    <section className="nhlx-rk-card" aria-label={`${side.team} lineup on the rink`} title={`${numSrc} Ice tinted by what ${side.opp} allows ${WINDOW_TEXT[v]} to each position (rank 1 = most permissive) · ${sourceText(side)}`}>
+    <section className="nhlx-rk-card" aria-label={`${side.team} lineup on the rink`} title={`${numSrc} Ice tinted by what ${side.opp} allows ${when} to each position (rank 1 = most permissive) · ${sourceText(side)}`}>
       <div className="nhlx-rk-head">
         <TeamLogo abbr={side.team} size={28} />
         <div>
@@ -214,12 +232,12 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
           {/* The chips' source and the lines' source stay in the title attribute: the head shows only the team. */}
         </div>
       </div>
-      {side.propfinder ? <PropfinderDefense abbr={side.opp} data={side.propfinder} posFilter={posFilter} /> : null}
+      {side.propfinder ? <PropfinderDefense abbr={side.opp} data={side.propfinder} posFilter={posFilter} tabKey={pfTab?.key ?? null} onTabKey={setPfTabKey} /> : null}
       <div className="nhlx-rk-toggle">
         <small>{side.opp} allows</small>
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label={`Window of ${side.opp}'s defense`}>
-          {WINDOWS.map(([k, l]) => (
-            <button key={k} type="button" role="tab" aria-selected={v === k} className={`nhlx-tab${v === k ? ' is-active' : ''}`} onClick={() => setView(k)} title={k === defaultView ? `Tonight's venue for ${side.opp}` : undefined}>
+          {windows.map(([k, l]) => (
+            <button key={k} type="button" role="tab" aria-selected={v === k} className={`nhlx-tab${v === k ? ' is-active' : ''}`} onClick={() => setView(k)} title={k === defaultView ? `Tonight's venue for ${side.opp}` : k === 'propfinder' ? `The PropFinder table above, ${defenseTabWhen(pfTab)}: pick its tab to change the window` : undefined}>
               {l}{k === defaultView ? <i aria-label="tonight's venue">•</i> : null}
             </button>
           ))}
@@ -227,8 +245,8 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
       </div>
       <div className={`nhlx-rk${posFilter ? ` is-filter-${posFilter.toLowerCase()}` : ''}`}>
         <RinkMarkings clipId={clipId} tones={tones} />
-        {F_POS.map((z) => <BandLabel key={z} pos={z} d={defAt(z)} opp={side.opp} view={v} teamCount={teamCount} x={F_X[z]} y={6} />)}
-        <BandLabel pos="D" d={defAt('D')} opp={side.opp} view={v} teamCount={teamCount} x={50} y={100} />
+        {F_POS.map((z) => <BandLabel key={z} pos={z} d={defAt(z)} opp={side.opp} when={when} teamCount={teamCount} x={F_X[z]} y={6} />)}
+        <BandLabel pos="D" d={defAt('D')} opp={side.opp} when={when} teamCount={teamCount} x={50} y={100} />
         {F_Y.map((y, i) => <div key={`l${i}`} className="nhlx-rk-tag" style={{ top: `${pct(y - 8.3)}%` }}>Line {i + 1}</div>)}
         {D_Y.map((y, i) => <div key={`d${i}`} className="nhlx-rk-tag" style={{ top: `${pct(y - 8.3)}%` }}>Pair {i + 1}</div>)}
         {placed.map(({ p, x, y }) => <Chip key={`${p.team}-${p.name}`} p={p} x={x} y={y} minGp={minGp} played={!!actual} actual={actualFor(p)} />)}
@@ -254,6 +272,7 @@ export function RinkLegend() {
       <span><i className="is-soft" /> favourable: the opponent allows the most shots to that position (top third)</span>
       <span><i className="is-mid" /> neutral</span>
       <span><i className="is-tough" /> stingy: bottom third</span>
+      <span>the toggle above each rink picks the window: our stored games (home, away, last 5 / 10), or “PropFinder” to tint by the PropFinder table’s selected tab</span>
       <span>on each player: the model’s projected SOG and goals from the latest saved run for this slate (3+ SOG and 1+ G odds in the tooltip), or a matchup read when no run exists; once the game is final, the actual shots, goals and assists with the model’s number after “m”; click for the player card</span>
     </p>
   );
