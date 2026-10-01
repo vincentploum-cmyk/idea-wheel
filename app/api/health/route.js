@@ -9,6 +9,7 @@ export async function GET() {
     service: 'nhl-model',
     commit: (process.env.RENDER_GIT_COMMIT || '').slice(0, 12) || null,
     supabaseConfigured: !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
+    propfinderConfigured: !!(process.env.PROPFINDER_EMAIL && process.env.PROPFINDER_PASSWORD),
     ts: new Date().toISOString(),
   });
 }
