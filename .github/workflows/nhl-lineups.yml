@@ -1,0 +1,32 @@
+name: NHL lineups (pre-game)
+
+# Every hour through the game day, re-read the lines for games starting within
+# the next 150 minutes: the beat writers' tweets on GameDayTweets and NHL.com's
+# projected lineup. The newest wins, the last capture before puck drop is frozen.
+# GitHub often runs schedules late, so this is its own workflow: a delayed run
+# still does only this, never the daily results pull in nhl-data.yml.
+on:
+  schedule:
+    - cron: '5 16-23,0-3 * * *'  # 12:05–23:05 ET
+  workflow_dispatch:
+    inputs:
+      due:
+        description: 'Only games starting within this many minutes (blank = all games today)'
+        required: false
+
+jobs:
+  lineups:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Refresh lineups
+        run: |
+          set -e
+          DATE=$(TZ=America/New_York date +%F)
+          DUE="${{ github.event.inputs.due }}"
+          [ -z "$DUE" ] && [ "${{ github.event_name }}" = "schedule" ] && DUE=150
+          Q="date=$DATE&only=lineups"; [ -n "$DUE" ] && Q="$Q&due=$DUE"
+          echo "Lineups for $Q"
+          code=$(curl -sS -o resp.json -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?$Q")
+          cat resp.json; echo
+          [ "$code" = "200" ] || [ "$code" = "429" ]
