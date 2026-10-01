@@ -262,8 +262,35 @@ export default function MatchupsPanel() {
                 <TeamLogo abbr={g.away} size={34} />
                 <b>{g.away} @ {g.home}</b>
                 <TeamLogo abbr={g.home} size={34} />
-                <small>{fmtTime(g.startTimeUTC)}{g.frozen ? ' · positions frozen' : ''}</small>
+                <small>
+                  {g.log?.score
+                    ? <>Final · <b className="nhlx-mu-score">{g.away} {g.log.score.away} – {g.home} {g.log.score.home}</b>{g.startTimeUTC ? ` · ${fmtTime(g.startTimeUTC)}` : ''}</>
+                    : fmtTime(g.startTimeUTC)}
+                  {g.frozen ? ' · positions frozen' : ''}
+                </small>
               </div>
+              {g.verdicts && Object.values(g.verdicts).some(Boolean) && (
+                <div className="nhlx-mu-verdicts">
+                  {/* Above each rink: the read on the defense its skaters face (the away rink carries the home team's). */}
+                  {g.sides.map((s) => {
+                    const v = g.verdicts[s.opp];
+                    return (
+                      <div key={s.team} className="nhlx-mu-verdict">
+                        <div className="nhlx-mu-verdict-head">
+                          <TeamLogo abbr={s.opp} size={22} />
+                          <b>{s.opp}</b>
+                          {v ? <span className={`nhlx-edge ${v.tier === 'leaky' ? 'is-soft' : v.tier === 'tight' ? 'is-tough' : ''}`}>{v.headline}</span> : <small>No read yet</small>}
+                        </div>
+                        {v && (
+                          <ul>
+                            {v.lines.map((l) => <li key={l.key} className={l.tone || undefined}>{l.text}</li>)}
+                          </ul>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               <div className="nhlx-rink-pair">
                 {g.rinkSides.map((s) => <Rink key={s.team} side={s} teamCount={slate.teamCount} posFilter={pos} minGp={minGp} log={g.log} modelRun={slate.modelRun} />)}
               </div>
@@ -276,7 +303,7 @@ export default function MatchupsPanel() {
                     <div className="nhlx-mu-side-head">
                       <TeamLogo abbr={s.team} size={22} />
                       <b>{s.team} skaters</b>
-                      <small>{s.venue === 'H' ? 'home' : 'away'} · positions from {s.source === 'lineup' ? 'the projected lineup' : 'the roster (no lineup yet)'}</small>
+                      <small>{s.venue === 'H' ? 'home' : 'away'} · positions from {{ lineup: 'the NHL.com projected lineup', gamedaytweets: 'the beat writers’ lines', propfinder: 'PropFinder’s depth chart' }[s.source] || 'the roster (no lineup yet)'}</small>
                     </div>
                     <div className="nhlx-mu-grid">
                       <DefenseCard side={s} teamCount={slate.teamCount} mp={slate.moneypuck} />

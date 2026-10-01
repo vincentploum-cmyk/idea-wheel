@@ -2,8 +2,10 @@
 # NHL Model folder sync: uploads new PropFinder files — matchup workbooks
 # (NHL-Goal-Matchups-*.xlsx) and the skater / team stats exports
 # (nhl-skater-stats-*.csv, nhl-team-stats-*.csv) — saved anywhere in ~/Desktop/NHL
-# (including the "Match days" subfolders) to ideareels.io. Installed by install.command;
-# launchd runs it when the folder changes and every 5 minutes.
+# (including the "Match days" subfolders) to ideareels.io, and once an hour fetches
+# the beat writers' lines pages from gamedaytweets.com for the site (which cloud
+# servers cannot reach). Installed by install.command; launchd runs it when the
+# folder changes and every 5 minutes.
 set -u
 CONF="$HOME/.config/nhl-model"
 WATCH_DIR="${NHL_SYNC_DIR:-$HOME/Desktop/NHL}"
@@ -25,6 +27,40 @@ TOKEN="$(tr -d '[:space:]' < "$TOKEN_FILE")"
 if ! ls "$WATCH_DIR" >/dev/null 2>&1; then
   log "cannot read $WATCH_DIR (allow Desktop access for bash in System Settings > Privacy & Security > Files and Folders)"
   exit 0
+fi
+
+# ── Beat writers' lines ───────────────────────────────────────────────────────
+# gamedaytweets.com refuses cloud servers (Cloudflare challenge) but answers a home
+# connection, so this Mac fetches the slate teams' pages once an hour and posts them
+# to the site, which parses them and runs the model. Independent of the folder.
+LINES_URL="${NHL_LINES_URL:-https://ideareels.io/api/nhl/data/lineups/gdt}"
+LINES_STAMP="$CONF/lines-fetched-at"
+LINES_GAP="${NHL_LINES_GAP_SEC:-3600}"
+now=$(date +%s)
+last=$(cat "$LINES_STAMP" 2>/dev/null || echo 0)
+if [ $((now - last)) -ge "$LINES_GAP" ]; then
+  echo "$now" > "$LINES_STAMP"
+  TODAY=$(TZ=America/New_York date +%F)
+  sched=$(curl -sS --max-time 30 "https://api-web.nhle.com/v1/schedule/$TODAY" 2>/dev/null)
+  # Team codes of today's games, without jq: the abbrevs appear as "abbrev":"XXX" inside the day's block.
+  teams=$(printf '%s' "$sched" | tr -d '\n' | sed -e "s/.*\"date\":\"$TODAY\"//" -e 's/"date":"20[0-9-]*".*//' | grep -oE '"abbrev":"[A-Z]{3}"' | cut -d'"' -f4 | sort -u)
+  if [ -n "$teams" ]; then
+    tmp=$(mktemp -d)
+    args=(-F "date=$TODAY")
+    got=0
+    for t in $teams; do
+      code=$(curl -sS -o "$tmp/$t.html" -w '%{http_code}' --max-time 30 "https://www.gamedaytweets.com/lines?team=$t" 2>/dev/null || echo 000)
+      if [ "$code" = "200" ]; then args+=(-F "$t=@$tmp/$t.html;type=text/html"); got=$((got + 1)); else log "lines: gamedaytweets answered $code for $t"; fi
+      sleep 1
+    done
+    if [ "$got" -gt 0 ]; then
+      resp="$(curl -sS --max-time 290 -w $'\n%{http_code}' -H "Authorization: Bearer $TOKEN" "${args[@]}" "$LINES_URL" 2>&1)"
+      log "lines: posted $got pages -> ${resp##*$'\n'} $(printf '%s' "${resp%$'\n'*}" | head -c 600)"
+    else
+      log "lines: no pages fetched for $TODAY"
+    fi
+    rm -rf "$tmp"
+  fi
 fi
 
 find "$WATCH_DIR" -maxdepth 3 -type f \( -name 'NHL-Goal-Matchups-*.xlsx' -o -name 'nhl-skater-stats-*.csv' -o -name 'nhl-team-stats-*.csv' \) -not -name '~$*' -not -path '*/.*' -mtime -3 -print0 2>/dev/null |

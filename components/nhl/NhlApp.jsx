@@ -311,7 +311,7 @@ export default function NhlApp({ email }) {
             <span className="nhlx-eyebrow">Supabase</span>
             <h2 className="nhlx-h2">Teams &amp; <span>players</span></h2>
             <p className="nhlx-lede">Pick a team to see who is on its roster. Rosters refresh from the NHL each morning; edit anything the feed hasn&apos;t caught up with yet.</p>
-            <div style={{ marginTop: 28 }}><DatabasePanel /></div>
+            <div style={{ marginTop: 28 }}>{mounted('teams') && <DatabasePanel />}</div>
           </div>
         </section>
 

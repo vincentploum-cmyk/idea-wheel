@@ -36,6 +36,9 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   `components/nhl/Rink.jsx`, ice bands tinted by the opponent's SOG-allowed rank per position
   for the window picked above the rink — home / away / L5 / L10 / L5 home / L5 away, defaulting to
   tonight's venue —
+  above each rink the opponent's PropFinder defense table (`propfinderDefenseTabs` in
+  `lib/nhl-data/propfinder.js`, drawn by `PropfinderDefense` in `components/nhl/Propfinder.jsx`:
+  All/C/LW/RW/D rows, season tabs then L5 / L10 / L15, per game or total, PropFinder's ranks, sortable),
   chips carrying the latest saved model run's λ shots / goals for the slate date from
   `lib/nhl-data/model-runs.js`, or a matchup read when no run exists; finished games show the
   box score) and the per-team defense card
@@ -46,6 +49,17 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   gamedaytweets.com/lines?team=XXX (roster-aware name matching) for every slate team; a
   game-day tweet beats the NHL.com preview, otherwise the preview, then an older tweet, then
   the roster; "game-day" is decided by timestamp (tweet id vs the preview's updated time).
+  gamedaytweets.com challenges cloud addresses (Cloudflare "Just a moment": Render and the GitHub
+  runner alike), so its pages are fetched elsewhere and posted: the Mac sync (`tools/mac-sync/nhl-sync.sh`,
+  hourly, sync token, multipart `date` + one file per team code) and both workflows via
+  `tools/gdt-pages.sh` (plain curl, then `tools/gdt-browser.mjs` with Chrome through playwright-core), to
+  `POST /api/nhl/data/lineups/gdt` (Bearer `NHL_ACTIONS_TOKEN`, a repo secret that must equal the
+  Render env var; `authorize()` accepts it beside the stored sync token), where `ingestGdtPages`
+  parses them against the rosters, merges (never erasing earlier lines), snapshots and auto-runs.
+  Without a tweet or preview the snapshot uses PropFinder's depth chart (`propfinder-depth.json`).
+  Slots a capture leaves empty (no lineup yet, or a partial one) are filled from the team's last
+  known lineup (`data/lineups/last/<ABBR>.json`, written from each team's own capture) with
+  players still on the roster, marked `carried`; the slate does the same for a game with no snapshot.
   `nhl-lineups.yml` re-reads lineups hourly 12:05–23:05 ET for games starting within 150 minutes
   (`only=lineups&due=150`), so every game is captured in its last hour and frozen at puck drop;
   the Matchups tab's "Refresh lines" button does the same on demand and each rink shows when

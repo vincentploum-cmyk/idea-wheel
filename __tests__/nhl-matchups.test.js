@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { parseLineupRows, applyFrozenPositions, frozenPos } from '../lib/nhl-data/positions';
+import { parseLineupRows, applyFrozenPositions, frozenPos, fillFromLastLineup, lineupToRemember } from '../lib/nhl-data/positions';
 import { defenseByPosition, playerBaselines } from '../lib/nhl-data/defense';
 import { groupStandings, mapStandingRow, shotLeaders } from '../lib/nhl-data/league';
 import { scoreSkater } from '../lib/nhl-data/slate';
@@ -140,5 +140,45 @@ describe('position sources', () => {
     expect(r).toMatchObject({ pos: 'LW', posSrc: 'lineup', boxPos: 'RW', opp: 'NYR', venue: 'H', sog: 5 });
     // Older rows without the new columns still parse.
     expect(rowObj(toRow(game, game.skaters[1]).slice(0, 20)).posSrc).toBeUndefined();
+  });
+});
+
+describe('last known lineup', () => {
+  const roster = Object.fromEntries(['Jesper Bratt', 'Ondrej Palat', 'Jack Hughes', 'Nico Hischier', 'Timo Meier', 'Dawson Mercer', 'Luke Hughes', 'Dougie Hamilton', 'Brett Pesce', 'New Guy']
+    .map((n, i) => [n.toLowerCase(), { name: n, id: i + 1, team: 'NJD', pos: i < 2 ? 'LW' : i < 4 ? 'C' : i < 6 ? 'RW' : 'D', line: null, inLineup: false }]));
+  const last = { date: '2026-09-30', source: 'lineup', players: {
+    'jesper bratt': { name: 'Jesper Bratt', pos: 'LW', line: 1 }, 'ondrej palat': { name: 'Ondrej Palat', pos: 'LW', line: 2 },
+    'jack hughes': { name: 'Jack Hughes', pos: 'C', line: 1 }, 'nico hischier': { name: 'Nico Hischier', pos: 'C', line: 2 },
+    'timo meier': { name: 'Timo Meier', pos: 'RW', line: 1 }, 'traded away': { name: 'Traded Away', pos: 'RW', line: 2 },
+    'luke hughes': { name: 'Luke Hughes', pos: 'D', line: 1 }, 'dougie hamilton': { name: 'Dougie Hamilton', pos: 'D', line: 1 }, 'brett pesce': { name: 'Brett Pesce', pos: 'D', line: 2 },
+  } };
+  test('no lineup today: every slot the last lineup can fill is filled, by players still on the roster', () => {
+    const { players, carried } = fillFromLastLineup(roster, roster, last);
+    expect(carried).toBe(8); // 9 placed last time, one has left the roster
+    expect(players['ondrej palat']).toMatchObject({ pos: 'LW', line: 2, inLineup: true, carried: true, carriedFrom: '2026-09-30', id: 2, team: 'NJD' });
+    expect(players['traded away']).toBeUndefined();
+    expect(players['new guy']).toMatchObject({ inLineup: false });
+  });
+  test('a partial lineup keeps its own placements and fills only the holes', () => {
+    const today = { ...roster, 'jesper bratt': { ...roster['jesper bratt'], pos: 'LW', line: 1, inLineup: true }, 'ondrej palat': { ...roster['ondrej palat'], pos: 'C', line: 1, inLineup: true } };
+    const { players, carried } = fillFromLastLineup(today, roster, last);
+    // Palat is C1 today, so his old LW2 slot stays open for nobody; Jack Hughes' old C1 is taken.
+    expect(players['ondrej palat']).toMatchObject({ pos: 'C', line: 1 });
+    expect(players['ondrej palat'].carried).toBeUndefined();
+    expect(players['jack hughes']).toMatchObject({ inLineup: false });
+    expect(players['nico hischier']).toMatchObject({ pos: 'C', line: 2, carried: true });
+    expect(players['timo meier']).toMatchObject({ pos: 'RW', line: 1, carried: true });
+    expect(carried).toBe(5); // C2, RW1, D1 ×2, D2
+    expect(fillFromLastLineup(today, roster, null)).toEqual({ players: today, carried: 0 });
+  });
+  test('only a team’s own capture is remembered, never the carried slots or a bare roster', () => {
+    const { players } = fillFromLastLineup(roster, roster, last);
+    expect(lineupToRemember({ source: 'roster', players }, '2026-10-01', 1)).toBeNull();
+    const own = { source: 'gamedaytweets', meta: { capturedAt: 'T' }, players: { ...players, 'new guy': { ...roster['new guy'], pos: 'RW', line: 2, inLineup: true } } };
+    expect(lineupToRemember(own, '2026-10-01', 1)).toBeNull(); // one own placement is not a lineup
+    const full = { source: 'lineup', players: Object.fromEntries(Object.entries(last.players).map(([k, v]) => [k, { ...v, inLineup: true }])) };
+    const kept = lineupToRemember(full, '2026-10-01', 1);
+    expect(kept).toMatchObject({ date: '2026-10-01', gameId: 1, source: 'lineup' });
+    expect(Object.keys(kept.players)).toHaveLength(9);
   });
 });

@@ -2,6 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Headshot, TeamLogo, rankClass } from './media';
+import { defenseTier, TIER_TEXT, TIER_TONE } from '@/lib/nhl-data/verdict';
 import { usePlayerCard } from './PlayerCard';
 import { TeamMoneyPuck } from './MoneyPuck';
 import { TeamPropfinder } from './Propfinder';
@@ -151,9 +152,38 @@ function TeamDefense({ abbr, defense }) {
     const r = defense.season.ranks[abbr]?.[venue]?.[pos]?.[k];
     return <td key={`${venue}${pos}${k}`} className={rankClass(r, n)}>{v.gp ? num(v[k], d) : '—'}{r ? <i>#{r}</i> : null}</td>;
   };
+  // At a glance: shots and goals allowed per game by venue and window, with the tier label.
+  const windows = [['Season', defense.season], ['Last 10', defense.l10], ['Last 5', defense.l5]].filter(([, d]) => d?.teams?.[abbr]);
+  const glance = (d, venue) => {
+    const v = d.teams[abbr]?.[venue]?.All;
+    const r = d.ranks[abbr]?.[venue]?.All || {};
+    const tier = defenseTier(r.sog, d.teamCount);
+    return [
+      <td key={`${venue}sog`} className={rankClass(r.sog, d.teamCount)}>{v?.gp ? num(v.sog) : '—'}{r.sog ? <i>#{r.sog}</i> : null}</td>,
+      <td key={`${venue}g`} className={rankClass(r.g, d.teamCount)}>{v?.gp ? num(v.g, 2) : '—'}{r.g ? <i>#{r.g}</i> : null}</td>,
+      <td key={`${venue}tier`}>{tier ? <span className={`nhlx-edge ${TIER_TONE[tier]}`}>{TIER_TEXT[tier].replace(' defense', '')}</span> : <i>{v?.gp ? '' : 'no games'}</i>}</td>,
+    ];
+  };
   return (
     <div className="nhlx-defcard nhlx-defcard-wide">
       <div className="nhlx-defcard-head">
+        <div>
+          <b>{abbr} defense at a glance</b>
+          <small>Shots and goals allowed per game · rank 1 = most allowed of {n} · leaky = top third, tight = bottom third · last-N windows count that venue’s last N games</small>
+        </div>
+      </div>
+      <table className="nhlx-deftable nhlx-glance">
+        <thead>
+          <tr><th rowSpan="2">Window</th><th colSpan="3">At home</th><th colSpan="3">Away</th><th colSpan="3">All games</th></tr>
+          <tr><th>SOG</th><th>Goals</th><th></th><th>SOG</th><th>Goals</th><th></th><th>SOG</th><th>Goals</th><th></th></tr>
+        </thead>
+        <tbody>
+          {windows.map(([label, d]) => (
+            <tr key={label}><td><b>{label}</b></td>{glance(d, 'H')}{glance(d, 'A')}{glance(d, 'ALL')}</tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="nhlx-defcard-head" style={{ marginTop: 18 }}>
         <div>
           <b>How {abbr} defends each position</b>
           <small>Allowed per game this season · rank 1 = most permissive of {n} · {t.H.All.gp} home, {t.A.All.gp} away games</small>
