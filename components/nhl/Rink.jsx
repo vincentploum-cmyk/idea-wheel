@@ -122,10 +122,12 @@ function RinkMarkings({ clipId, tones }) {
   );
 }
 
-function Chip({ p, x, y, minGp }) {
+function Chip({ p, x, y, minGp, actual, played }) {
   const open = usePlayerCard();
   const thin = (p.gp || 0) < minGp;
-  const title = `${p.name} · ${p.pos}${p.line ? ` L${p.line}` : ''} · ${p.gp || 0} GP · ${num(p.sog)} SOG/G, ${num(p.g, 2)} G/G`
+  // Finished game: the box score at the frozen position, with the projection kept in the title.
+  const result = played ? (actual ? ` · played: ${actual.sog} SOG, ${actual.g} G, ${actual.a} A in ${num(actual.toi)} min` : ' · did not play') : '';
+  const title = `${p.name} · ${p.pos}${p.line ? ` L${p.line}` : ''} · ${p.gp || 0} GP · ${num(p.sog)} SOG/G, ${num(p.g, 2)} G/G${p.projSog != null ? ` · projected ${num(p.projSog)} SOG, ${num(p.projG, 2)} G` : ''}${result}`
     + (p.shotEdge != null ? ` · shot edge ${p.shotEdge > 0 ? '+' : ''}${p.shotEdge}%` : '')
     + (p.goalEdge != null ? ` · goal edge ${p.goalEdge > 0 ? '+' : ''}${p.goalEdge}%` : '')
     + (p.inLineup ? '' : ' · not in the projected lineup');
@@ -140,9 +142,12 @@ function Chip({ p, x, y, minGp }) {
       <span className="nhlx-rk-num">{p.number ?? p.pos}</span>
       <span className="nhlx-rk-meta">
         <b className="nhlx-rk-name">{shortName(p.name)}</b>
-        {thin || p.projSog == null
-          ? <span className="nhlx-rk-stat"><em>{p.pos}</em> · {p.gp ? `${p.gp} GP` : 'no games'}</span>
-          : <span className="nhlx-rk-stat"><em>{num(p.projSog)}</em> SOG · <em>{num(p.projG, 2)}</em> G</span>}
+        {played ? (actual
+          ? <span className={`nhlx-rk-stat is-actual${p.projSog != null && actual.sog >= p.projSog ? ' is-over' : ''}`}><em>{actual.sog}</em> SOG · <em>{actual.g}</em> G{actual.a ? <> · <em>{actual.a}</em> A</> : null}{p.projSog != null ? <i> p {num(p.projSog)}</i> : null}</span>
+          : <span className="nhlx-rk-stat">did not play</span>)
+          : thin || p.projSog == null
+            ? <span className="nhlx-rk-stat"><em>{p.pos}</em> · {p.gp ? `${p.gp} GP` : 'no games'}</span>
+            : <span className="nhlx-rk-stat"><em>{num(p.projSog)}</em> SOG · <em>{num(p.projG, 2)}</em> G</span>}
       </span>
     </button>
   );
@@ -167,8 +172,17 @@ function BandLabel({ pos, d, opp, view, teamCount, x, y }) {
 }
 
 /** One side of a game: `side` is an entry of a slate game's `sides`. */
-export function Rink({ side, teamCount, posFilter = '', minGp = 1 }) {
+export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null }) {
   const { placed, extras } = useMemo(() => layoutSide(side.skaters), [side.skaters]);
+  // Finished game: this team's box-score rows, by player id and by name.
+  const actual = useMemo(() => {
+    if (!log?.skaters) return null;
+    const m = {};
+    for (const r of log.skaters) if (r.team === side.team) { if (r.id != null) m[`id:${r.id}`] = r; m[`nm:${String(r.name).toLowerCase()}`] = r; }
+    return m;
+  }, [log, side.team]);
+  const actualFor = (p) => (actual ? actual[`id:${p.id}`] || actual[`nm:${String(p.name).toLowerCase()}`] || null : null);
+  const score = log?.score ? (side.venue === 'H' ? [log.score.home, log.score.away] : [log.score.away, log.score.home]) : null;
   // Default window = where the opponent actually plays tonight (its home table when we're away).
   const defaultView = side.venue === 'A' ? 'home' : 'away';
   const [view, setView] = useState(null);
@@ -182,7 +196,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1 }) {
       <div className="nhlx-rk-head">
         <TeamLogo abbr={side.team} size={28} />
         <div>
-          <b>{side.team} <small>{side.venue === 'H' ? 'home' : 'away'} · attacking upwards</small></b>
+          <b>{side.team} <small>{side.venue === 'H' ? 'home' : 'away'}{score ? ` · final ${score[0]}–${score[1]} vs ${side.opp} · chips show the game's shots, goals, assists` : ' · attacking upwards'}</small></b>
           <small>Ice tinted by what {side.opp} allows {WINDOW_TEXT[v]} to each position (rank 1 = most permissive) · <SourceLine side={side} /></small>
         </div>
       </div>
@@ -202,7 +216,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1 }) {
         <BandLabel pos="D" d={defAt('D')} opp={side.opp} view={v} teamCount={teamCount} x={50} y={100} />
         {F_Y.map((y, i) => <div key={`l${i}`} className="nhlx-rk-tag" style={{ top: `${pct(y - 8.3)}%` }}>Line {i + 1}</div>)}
         {D_Y.map((y, i) => <div key={`d${i}`} className="nhlx-rk-tag" style={{ top: `${pct(y - 8.3)}%` }}>Pair {i + 1}</div>)}
-        {placed.map(({ p, x, y }) => <Chip key={`${p.team}-${p.name}`} p={p} x={x} y={y} minGp={minGp} />)}
+        {placed.map(({ p, x, y }) => <Chip key={`${p.team}-${p.name}`} p={p} x={x} y={y} minGp={minGp} played={!!actual} actual={actualFor(p)} />)}
       </div>
       {extras.length > 0 && (
         <p className="nhlx-rk-extras nhlx-auto-meta">
@@ -225,7 +239,7 @@ export function RinkLegend() {
       <span><i className="is-soft" /> favourable: the opponent allows the most shots to that position (top third)</span>
       <span><i className="is-mid" /> neutral</span>
       <span><i className="is-tough" /> stingy: bottom third</span>
-      <span>on each player: projected SOG and goals tonight (own rate × opponent ratio); click for the player card</span>
+      <span>on each player: projected SOG and goals tonight (own rate × opponent ratio); once the game is final, the actual shots, goals and assists with the projection after “p”; click for the player card</span>
     </p>
   );
 }
