@@ -46,3 +46,24 @@ describe('automatic model run inputs', () => {
     expect(attemptBlocks(null, 'auto:abc', now)).toBe(false);
   });
 });
+
+describe('lazy workbooks', () => {
+  test('sheets are made on access, and the file written equals the eager one', async () => {
+    const XLSX = await import('xlsx');
+    const { lazyBook, toBuffer } = await import('../lib/nhl-data/build');
+    let made = 0;
+    const rows = { 'C Penguins': () => { made++; return [['Date', 'Player', 'shots'], ['2026-01-01', 'A', 3], ['2026-01-02', 'B', 1]]; }, 'D Flyers with a very long sheet name here': () => { made++; return [['Date', 'Player', 'shots'], ['2026-01-03', 'C', 5]]; } };
+    const lazy = lazyBook(rows);
+    expect(made).toBe(0);
+    expect(lazy.SheetNames).toEqual(['C Penguins', 'D Flyers with a very long sheet']);
+    expect(Object.keys(lazy.Sheets)).toEqual(lazy.SheetNames);
+    const ws = lazy.Sheets['C Penguins'];
+    expect(XLSX.utils.sheet_to_json(ws, { header: 1 })[1]).toEqual(['2026-01-01', 'A', 3]);
+    expect(lazy.Sheets['C Penguins']).toBe(ws); // the last sheet is kept
+    expect(made).toBe(1);
+    const eager = XLSX.utils.book_new();
+    for (const [name, make] of Object.entries(rows)) XLSX.utils.book_append_sheet(eager, XLSX.utils.aoa_to_sheet(make()), name.slice(0, 31));
+    const dump = (buf) => { const wb = XLSX.read(buf, { type: 'buffer' }); return wb.SheetNames.map((sn) => [sn, XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1 })]); };
+    expect(dump(toBuffer(lazy))).toEqual(dump(toBuffer(eager)));
+  });
+});
