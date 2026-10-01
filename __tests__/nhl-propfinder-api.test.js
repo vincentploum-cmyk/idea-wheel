@@ -115,8 +115,9 @@ describe('PropFinder API → team tables', () => {
     const l10 = tables.find((t) => t.statsType === 'opponent' && t.position === 'All' && t.windowGames === 10);
     expect(l10.window).toBe('Last 10');
     expect(l10.teams.find((t) => t.abbr === 'TOR')).toMatchObject({ gp: 10, values: { g: 4.7, a: 8.1, pts: 12.8, sog: 33.7, shPct: 13.9, sc: 31.1, hdc: 10.7, hdg: 1.4 }, ranks: { g: 1, sog: 1, shPct: 6, sc: 3 } });
-    // 1 team + 3 windows + 4 positions × 3 windows = 16 tables, each storable through mergeTeams.
-    expect(tables).toHaveLength(16);
+    // 1 team + 4 windows (season, L5, L10, L15) + 4 positions × 4 windows = 21 tables, each storable through mergeTeams.
+    expect(tables).toHaveLength(21);
+    expect(tables.find((t) => t.statsType === 'opponent' && t.position === 'D' && t.windowGames === 15)).toMatchObject({ window: 'Last 15' });
     const { file } = mergeTeams(null, l10, { fileName: 'api', source: 'propfinder-api', at: '2026-09-30T12:00:00Z' });
     expect(file).toMatchObject({ statsType: 'opponent', position: 'All', windowGames: 10, count: 4 });
     expect(file.ranks.TOR.g).toBe(1);

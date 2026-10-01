@@ -5,6 +5,7 @@ import { Headshot, TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { MpCell } from './MoneyPuck';
 import { SKATER_COLS, TEAM_COLS, seasonLabel } from '@/lib/nhl-data/propfinder-csv';
+import { teamName } from '@/lib/nhl-data/teams';
 
 const num = (v, d) => (v == null ? '—' : Number(v).toFixed(d));
 const day = (iso) => (iso ? new Date(`${iso.slice(0, 10)}T12:00:00Z`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
@@ -224,17 +225,20 @@ const DEF_POS = ['All', 'C', 'LW', 'RW', 'D'];
 
 /**
  * The defense table above a rink, in PropFinder's format: what `abbr` allowed per game
- * (or in total) to every position, one tab per season / recent-games window, each cell
- * carrying PropFinder's league rank. `data` is a slate side's `propfinder`.
+ * (or in total) to every position, one tab per season / recent-games window (the current
+ * season selected), each cell carrying PropFinder's league rank; a column header sorts
+ * the position rows (All stays on top). `data` is a slate side's `propfinder`.
  */
 export function PropfinderDefense({ abbr, data, posFilter = '' }) {
   const tabs = data?.tabs || [];
   const [tabKey, setTabKey] = useState(null);
   const [total, setTotal] = useState(false);
-  const tab = tabs.find((t) => t.key === tabKey) || tabs[0];
+  const [sort, setSort] = useState(null);
+  const tab = tabs.find((t) => t.key === tabKey) || [...tabs].reverse().find((t) => t.kind === 'season') || tabs[0];
   if (!tab) return null;
   const cols = data.cols.filter(([k]) => DEF_POS.some((pos) => tab.rows[pos]?.[k] != null));
   const n = tab.count;
+  const order = sort ? ['All', ...DEF_POS.slice(1).filter((p) => tab.rows[p]).sort((a, b) => (tab.rows[b][sort] ?? -Infinity) - (tab.rows[a][sort] ?? -Infinity))] : DEF_POS;
   const cell = (row, k) => {
     const v = row[k];
     if (v == null) return <td key={k}><span className="nhlx-pfd-val">—</span></td>;
@@ -249,10 +253,9 @@ export function PropfinderDefense({ abbr, data, posFilter = '' }) {
   const when = tab.kind === 'season' ? `${tab.label} season` : `last ${tab.windowGames}${tab.split === 'H' ? ' home' : tab.split === 'A' ? ' away' : ''} games`;
   return (
     <div className="nhlx-pfd" aria-label={`${abbr} defense, PropFinder`}>
-      <div className="nhlx-pfd-head">
+      <div className="nhlx-pfd-head" title={`What ${teamName(abbr) || abbr} allowed ${total ? 'in total' : 'per game'} to each position · ${when}${tab.rows.All?.gp ? ` · ${tab.rows.All.gp} GP` : ''} · rank 1 = most allowed of ${n} · data from PropFinder`}>
         <TeamLogo abbr={abbr} size={22} />
-        <b>{abbr} defense</b>
-        <small>allowed {total ? 'in total' : 'per game'} to each position · {when}{tab.rows.All?.gp ? ` · ${tab.rows.All.gp} GP` : ''} · rank 1 = most allowed of {n} · PropFinder</small>
+        <b>{teamName(abbr) || abbr} defense</b>
         <label className="nhlx-pfd-switch">
           <span className={total ? '' : 'is-on'}>Per game</span>
           <input type="checkbox" role="switch" checked={total} aria-checked={total} aria-label="Show totals instead of per game" onChange={(e) => setTotal(e.target.checked)} />
@@ -270,10 +273,17 @@ export function PropfinderDefense({ abbr, data, posFilter = '' }) {
       <div className="nhlx-pfd-wrap">
         <table className="nhlx-pfd-table">
           <thead>
-            <tr><th>Position</th>{cols.map(([k, l]) => <th key={k}>{total ? l.replace('/G', '') : l}</th>)}</tr>
+            <tr>
+              <th>Position</th>
+              {cols.map(([k, l]) => (
+                <th key={k} className={sort === k ? 'is-sorted' : ''}>
+                  <button type="button" onClick={() => setSort(sort === k ? null : k)} title={sort === k ? 'Back to position order' : `Sort positions by ${l}`}>{total ? l.replace('/G', '') : l}{sort === k ? <i aria-hidden="true">↓</i> : null}</button>
+                </th>
+              ))}
+            </tr>
           </thead>
           <tbody>
-            {DEF_POS.map((pos) => {
+            {order.map((pos) => {
               const row = tab.rows[pos];
               if (!row) return null;
               return (

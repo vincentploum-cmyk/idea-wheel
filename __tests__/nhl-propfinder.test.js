@@ -158,7 +158,7 @@ describe('propfinder defense tabs (the table above each rink)', () => {
     expect(d.cols.map(([k]) => k)).toEqual(['g', 'a', 'sog', 'icf', 'iff', 'iscf']);
     expect(d.tabs.map((t) => t.key)).toEqual(['season-2025', 'l10']);
     const season = d.tabs[0];
-    expect(season).toMatchObject({ label: '2025-26', kind: 'season', season: 2025, count: 32 });
+    expect(season).toMatchObject({ label: '2025', kind: 'season', season: 2025, count: 32 });
     expect(Object.keys(season.rows)).toEqual(['All', 'LW', 'C', 'RW', 'D']);
     // The all-positions row comes from the Opponent export, ISCF from its SC column, with PropFinder's ranks.
     const all = pf.opponents.teams.LAK;
@@ -169,11 +169,11 @@ describe('propfinder defense tabs (the table above each rink)', () => {
     expect(l10).toMatchObject({ label: 'L10', kind: 'window', windowGames: 10, split: null });
     expect(l10.rows.D.ranks.sog).toBe(pf.opponentsByPosWindow.l10.D.ranks.LAK.sog);
   });
-  test('last season rides along as its own tab when this season differs', () => {
+  test('last season comes first as its own tab when this season differs', () => {
     const prev = { opponents: { ...pf.opponents, season: 2024 }, opponentsByPos: {} };
     const d = propfinderDefenseTabs(pf, 'LAK', prev);
-    expect(d.tabs.map((t) => t.key)).toEqual(['season-2025', 'season-2024', 'l10']);
-    expect(d.tabs[1].rows.All.sog).toBe(pf.opponents.teams.LAK.sog);
+    expect(d.tabs.map((t) => t.key)).toEqual(['season-2024', 'season-2025', 'l10']);
+    expect(d.tabs[0].rows.All.sog).toBe(pf.opponents.teams.LAK.sog);
     // The same season twice is one tab.
     expect(propfinderDefenseTabs(pf, 'LAK', pf).tabs.map((t) => t.key)).toEqual(['season-2025', 'l10']);
     expect(propfinderDefenseTabs(pf, 'XXX')).toBeNull();
