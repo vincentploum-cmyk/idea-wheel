@@ -269,7 +269,7 @@ export default function MatchupsPanel() {
                 <small>{fmtTime(g.startTimeUTC)}{g.frozen ? ' · positions frozen' : ''}</small>
               </div>
               <div className="nhlx-rink-pair">
-                {g.rinkSides.map((s) => <Rink key={s.team} side={s} teamCount={slate.teamCount} posFilter={pos} minGp={minGp} log={g.log} />)}
+                {g.rinkSides.map((s) => <Rink key={s.team} side={s} teamCount={slate.teamCount} posFilter={pos} minGp={minGp} log={g.log} modelRun={slate.modelRun} />)}
               </div>
               <RinkLegend />
               {g.log && <PositionLog game={g} />}
