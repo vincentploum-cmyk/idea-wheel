@@ -28,6 +28,11 @@ if [ -n "$missing" ] && command -v node >/dev/null 2>&1; then
   echo "After the browser: $n pages"
 fi
 [ "$n" -gt 0 ] || exit 0
+# What each page holds, for the log: tweet count and the first tweet's header lines.
+for f in "$tmp"/*.html; do
+  t=$(basename "$f" .html)
+  echo "$t: $(grep -c 'full-sized-tweet' "$f") tweet blocks, $(wc -c < "$f") bytes; first: $(grep -A4 -m1 'full-sized-tweet' "$f" | tr -s ' \n' ' ' | head -c 220)"
+done
 # { date, pages: { ABBR: html } }
 jq -n --arg date "$DATE" '{date: $date, pages: {}}' > "$tmp/body.json"
 for f in "$tmp"/*.html; do
