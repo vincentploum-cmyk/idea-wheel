@@ -89,7 +89,11 @@ describe('PropFinder API → team tables', () => {
     const r = teamRow('PIT', pickRow(pit.stats, { season: 2025, type: 'Team', position: 'All' }));
     expect(r.name).toBe('Penguins');
     expect(r.gp).toBe(82);
-    expect(r.values).toEqual({ g: 3.54, a: 6.02, pts: 9.56, sog: 28.57, shPct: 12.4, hit: 17.61, blk: 14.68, tk: 4.95, gv: 16.35, foPct: 48.2, ppPct: 24.1, pkPct: 81.4, sc: 10.82, hdc: 4.4, hdg: 0.46 });
+    expect(r.values).toMatchObject({ g: 3.54, a: 6.02, pts: 9.56, sog: 28.57, shPct: 12.4, hit: 17.61, blk: 14.68, tk: 4.95, gv: 16.35, foPct: 48.2, ppPct: 24.1, pkPct: 81.4, sc: 10.82, hdc: 4.4, hdg: 0.46 });
+    // Attempts for PropFinder's defense table (not in the exports): shots + missed (+ blocked), per game.
+    const row = pickRow(pit.stats, { season: 2025, type: 'Team', position: 'All' });
+    expect(r.values.iff).toBe(+((row.shots + row.missedShots) / 82).toFixed(2));
+    expect(r.values.icf).toBe(+((row.shots + row.missedShots + row.blockedAtt) / 82).toFixed(2));
     // PropFinder's own ranks, as the export prints them…
     expect(r.ranks).toEqual({ g: 3, a: 3, pts: 3, sog: 10, shPct: 3, hit: 30, blk: 11, tk: 7, foPct: 24, ppPct: 7, pkPct: 6, sc: 12, hdc: 16, hdg: 24 });
     // …except giveaways, which the export ranks by value 1 = most (the API's rank runs the other way).
@@ -111,8 +115,9 @@ describe('PropFinder API → team tables', () => {
     const l10 = tables.find((t) => t.statsType === 'opponent' && t.position === 'All' && t.windowGames === 10);
     expect(l10.window).toBe('Last 10');
     expect(l10.teams.find((t) => t.abbr === 'TOR')).toMatchObject({ gp: 10, values: { g: 4.7, a: 8.1, pts: 12.8, sog: 33.7, shPct: 13.9, sc: 31.1, hdc: 10.7, hdg: 1.4 }, ranks: { g: 1, sog: 1, shPct: 6, sc: 3 } });
-    // 1 team + 3 windows + 4 positions × 3 windows = 16 tables, each storable through mergeTeams.
-    expect(tables).toHaveLength(16);
+    // 1 team + 4 windows (season, L5, L10, L15) + 4 positions × 4 windows = 21 tables, each storable through mergeTeams.
+    expect(tables).toHaveLength(21);
+    expect(tables.find((t) => t.statsType === 'opponent' && t.position === 'D' && t.windowGames === 15)).toMatchObject({ window: 'Last 15' });
     const { file } = mergeTeams(null, l10, { fileName: 'api', source: 'propfinder-api', at: '2026-09-30T12:00:00Z' });
     expect(file).toMatchObject({ statsType: 'opponent', position: 'All', windowGames: 10, count: 4 });
     expect(file.ranks.TOR.g).toBe(1);
