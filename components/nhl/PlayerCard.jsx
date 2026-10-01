@@ -104,7 +104,9 @@ function Card({ req, onClose }) {
   const [err, setErr] = useState('');
   const [market, setMarket] = useState('goals');
   const [line, setLine] = useState(0.5);
-  const [span, setSpan] = useState(20);
+  // Which games the histogram draws: the last 5, the last 10, or every game vs tonight's opponent.
+  const [span, setSpan] = useState('l10');
+  const SPANS = [['l5', 'Last 5', 5], ['l10', 'Last 10', 10], ...(req.opp ? [['h2h', `H2H vs ${req.opp}`, null]] : [])];
 
   useEffect(() => {
     let live = true;
@@ -126,7 +128,7 @@ function Card({ req, onClose }) {
 
   const def = MARKETS.find((m) => m[0] === market);
   const statKey = def[2];
-  const games = useMemo(() => (p ? p.games.slice(-span) : []), [p, span]);
+  const games = useMemo(() => (!p ? [] : span === 'h2h' ? p.h2hGames || [] : p.games.slice(-(SPANS.find(([k]) => k === span)?.[2] || 10))), [p, span, req.opp]); // eslint-disable-line react-hooks/exhaustive-deps
   const hits = p?.hits?.[market]?.[line];
 
   return (
@@ -165,9 +167,11 @@ function Card({ req, onClose }) {
                     {def[3].map((l) => <option key={l} value={l}>{l}</option>)}
                   </select>
                 </label>
-                <select className="nhlx-input nhlx-input-sm" value={span} onChange={(e) => setSpan(Number(e.target.value))} aria-label="Games shown">
-                  {[10, 20, 40].map((n) => <option key={n} value={n}>Last {n}</option>)}
-                </select>
+                <div className="nhlx-tabs" role="tablist" aria-label="Games shown">
+                  {SPANS.map(([k, l]) => (
+                    <button key={k} type="button" role="tab" aria-selected={span === k} className={`nhlx-tab${span === k ? ' is-active' : ''}`} onClick={() => setSpan(k)}>{l}</button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -183,7 +187,7 @@ function Card({ req, onClose }) {
             {games.length ? (
               <Histogram games={games} statKey={statKey} line={line} avgValue={p.stats.season?.[statKey]} />
             ) : (
-              <div className="nhlx-empty">No stored games for this player yet.</div>
+              <div className="nhlx-empty">{span === 'h2h' ? `No stored games vs ${req.opp} yet.` : 'No stored games for this player yet.'}</div>
             )}
 
             <div className="nhlx-db-table-wrap" style={{ marginTop: 16 }}>
