@@ -31,6 +31,15 @@ function slotDetail(key, v) {
   return `through ${v.asOf}`;
 }
 
+/** "Last automatic run started 11:43 PM: saved (291 players)." or how far a dead one got. */
+function attemptText(a) {
+  const when = fmt(a.startedAt);
+  if (a.finishedAt && a.runId) return `Last automatic run started ${when}: saved${a.players ? ` (${a.players} players)` : ''}.`;
+  if (a.finishedAt) return `Last automatic run started ${when}: ${a.error ? `failed (${a.error})` : `skipped (${a.skipped || 'no reason recorded'})`}.`;
+  const last = a.stages?.[a.stages.length - 1];
+  return `Last automatic run started ${when} did not finish${last ? `; it got as far as "${last.name}" at ${last.rssMb} MB` : ' before its first step'}. The process was probably restarted; it is retried on the next deploy or when the lines change.`;
+}
+
 async function fetchSlotFile(slot, date) {
   const res = await fetch(`/api/nhl/data/file?slot=${slot}&date=${date}`, { cache: 'no-store' });
   if (!res.ok) return null;
@@ -316,6 +325,7 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
             <div className="nhlx-gd-title">Run <em>automatic</em></div>
             <p className="nhlx-auto-meta">
               The model runs the moment both files are in and saves the run to history. Results appear below; after the games, box scores attach themselves for grading.
+              {status?.autorun ? ` ${attemptText(status.autorun)}` : ''}
             </p>
           </div>
         </li>
