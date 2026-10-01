@@ -202,30 +202,34 @@ function DatabasePanel() {
   const [err, setErr] = useState('');
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
-  const [q, setQ] = useState('');
-  const [team, setTeam] = useState('');
-  const [pos, setPos] = useState('');
-  const [showOff, setShowOff] = useState(false);
-  const [preOnly, setPreOnly] = useState(false);
+  const [q, setQState] = useState('');
+  const [team, setTeamState] = useState('');
+  const [pos, setPosState] = useState('');
+  const [showOff, setShowOffState] = useState(false);
+  const [preOnly, setPreOnlyState] = useState(false);
   const [editing, setEditing] = useState(null);
   const [linking, setLinking] = useState(null);
   const [linkQ, setLinkQ] = useState('');
   const [page, setPage] = useState(1);
+  // Changing a filter restarts the list on its first page.
+  const filterSetter = (set) => (v) => { set(v); setPage(1); };
+  const setQ = filterSetter(setQState);
+  const setTeam = filterSetter(setTeamState);
+  const setPos = filterSetter(setPosState);
+  const setShowOff = filterSetter(setShowOffState);
+  const setPreOnly = filterSetter(setPreOnlyState);
   const [imp, setImp] = useState(null);
   const [defense, setDefense] = useState(null);
   const [mp, setMp] = useState(null);
   const [pf, setPf] = useState(null);
 
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch('/api/nhl/data/players', { cache: 'no-store' });
-      if (!res.ok) throw new Error(`${res.status}`);
-      setDb(await res.json());
-      setErr('');
-    } catch (e) {
-      setErr(`Couldn’t load the database: ${e.message}`);
-    }
+  const load = useCallback(() => {
+    const players = fetch('/api/nhl/data/players', { cache: 'no-store' })
+      .then((res) => { if (!res.ok) throw new Error(`${res.status}`); return res.json(); })
+      .then((j) => { setDb(j); setErr(''); })
+      .catch((e) => setErr(`Couldn’t load the database: ${e.message}`));
     fetch('/api/nhl/data/propfinder', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j) setPf(j); }).catch(() => {});
+    return players;
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -345,7 +349,7 @@ function DatabasePanel() {
   };
 
   const teams = db?.teams || [];
-  const players = db?.players || [];
+  const players = useMemo(() => db?.players || [], [db]);
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return players.filter((p) => (showOff || p.onRoster || p.overridden)
@@ -354,7 +358,6 @@ function DatabasePanel() {
       && (!pos || p.pos === pos)
       && (!needle || p.name.toLowerCase().includes(needle) || (p.propfinderName || '').toLowerCase().includes(needle) || String(p.id) === needle));
   }, [players, q, team, pos, showOff, preOnly]);
-  useEffect(() => { setPage(1); }, [q, team, pos, showOff, preOnly]);
 
   const selected = teams.find((t) => t.abbrev === team) || null;
   // Roster rows grouped by position; excluded players stay listed (dimmed) so they can be re-included.

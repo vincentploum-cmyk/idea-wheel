@@ -146,20 +146,13 @@ export default function NhlApp({ email }) {
     }).catch(() => {});
   }, []);
   const activeRunRef = useRef(null);
-  activeRunRef.current = activeRunId;
+  useEffect(() => { activeRunRef.current = activeRunId; }, [activeRunId]);
   const prevFilesRef = useRef({});
   const replayingRef = useRef(false);
 
-  const refresh = useCallback(async () => {
-    try {
-      const { runs } = await api('/api/nhl/runs');
-      setRuns(runs || []);
-      setHistoryError('');
-    } catch (err) {
-      setHistoryError(err.message);
-      setRuns((r) => r || []);
-    }
-  }, []);
+  const refresh = useCallback(() => api('/api/nhl/runs')
+    .then(({ runs }) => { setRuns(runs || []); setHistoryError(''); })
+    .catch((err) => { setHistoryError(err.message); setRuns((r) => r || []); }), []);
 
   useEffect(() => { refresh(); }, [refresh]);
 

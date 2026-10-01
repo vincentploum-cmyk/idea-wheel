@@ -1,23 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import SiteHeader from '@/components/nhl/SiteHeader';
+import { useLocationSearch } from '@/lib/use-location-search';
 
 // Mail providers (Outlook/Hotmail especially) prefetch links to scan them,
 // which would burn the single-use magic-link code. This page needs one real
 // click before the code is redeemed at /auth/callback.
-export default function ConfirmSignInPage() {
-  const [href, setHref] = useState(null);
+function callbackHref(params) {
+  const code = params.get('code');
+  const next = params.get('next') || '';
+  if (!code) return '/auth/login';
+  const qs = new URLSearchParams({ code });
+  if (next) qs.set('next', next);
+  return `/auth/callback?${qs.toString()}`;
+}
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const next = params.get('next') || '';
-    if (!code) { setHref('/auth/login'); return; }
-    const qs = new URLSearchParams({ code });
-    if (next) qs.set('next', next);
-    setHref(`/auth/callback?${qs.toString()}`);
-  }, []);
+export default function ConfirmSignInPage() {
+  // The link stays disabled until the browser has the query string; it is
+  // never part of the server-rendered HTML, so link scanners can't follow it.
+  const search = useLocationSearch();
+  const href = search === null ? null : callbackHref(new URLSearchParams(search));
 
   return (
     <>

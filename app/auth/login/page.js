@@ -1,23 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import { safeNextPath } from '@/lib/safe-next';
 import SiteHeader from '@/components/nhl/SiteHeader';
+import { useLocationSearch } from '@/lib/use-location-search';
 
 export default function LoginPage() {
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ideareels.io';
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState('');
-  const [nextPath, setNextPath] = useState('');
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setNextPath(safeNextPath(params.get('next') || ''));
-    if (params.get('error')) setErr('That sign-in link expired or was already used. Request a new one.');
-  }, []);
+  const [sendErr, setErr] = useState(null);
+  const params = new URLSearchParams(useLocationSearch() || '');
+  const nextPath = safeNextPath(params.get('next') || '');
+  // A failed magic link lands here with ?error=…; the note shows until the next attempt.
+  const linkErr = params.get('error') ? 'That sign-in link expired or was already used. Request a new one.' : '';
+  const err = sendErr ?? linkErr;
 
   const nextQS = nextPath ? `?next=${encodeURIComponent(nextPath)}` : '';
   // Magic links route through /auth/confirm so mail scanners that prefetch

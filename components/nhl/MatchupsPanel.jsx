@@ -175,22 +175,18 @@ export default function MatchupsPanel() {
   const [pos, setPos] = useState('');
   const [minGp, setMinGp] = useState(5);
 
-  const load = useCallback(async (d) => {
-    setBusy(true);
-    setErr('');
-    try {
-      const res = await fetch(`/api/nhl/data/slate${d ? `?date=${d}` : ''}`, { cache: 'no-store' });
+  const load = useCallback((d) => fetch(`/api/nhl/data/slate${d ? `?date=${d}` : ''}`, { cache: 'no-store' })
+    .then(async (res) => {
       const j = await res.json();
       if (!res.ok) throw new Error(j.detail || j.error || `${res.status}`);
-      setSlate(j);
-      setDate(j.date);
-    } catch (e) {
-      setErr(`Couldn’t load the slate: ${e.message}`);
-    } finally {
-      setBusy(false);
-    }
-  }, []);
+      return j;
+    })
+    .then((j) => { setSlate(j); setDate(j.date); setErr(''); })
+    .catch((e) => setErr(`Couldn’t load the slate: ${e.message}`))
+    .finally(() => setBusy(false)), []);
   useEffect(() => { load(''); }, [load]);
+  // Picking another date from the controls.
+  const pickDate = (d) => { setBusy(true); setErr(''); load(d); };
 
   // Pull the beat writers' lines (GameDayTweets) and NHL.com's lineups for this date right now.
   const [lineMsg, setLineMsg] = useState('');
@@ -214,7 +210,7 @@ export default function MatchupsPanel() {
   const shift = (n) => {
     const d = new Date(`${date}T12:00:00Z`);
     d.setUTCDate(d.getUTCDate() + n);
-    load(d.toISOString().slice(0, 10));
+    pickDate(d.toISOString().slice(0, 10));
   };
 
   const filtered = useMemo(() => {
@@ -240,7 +236,7 @@ export default function MatchupsPanel() {
         </div>
         <div className="nhlx-auto-actions">
           <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !date} onClick={() => shift(-1)} aria-label="Previous day">‹</button>
-          <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && load(e.target.value)} aria-label="Slate date" />
+          <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && pickDate(e.target.value)} aria-label="Slate date" />
           <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !date} onClick={() => shift(1)} aria-label="Next day">›</button>
           <select className="nhlx-input nhlx-input-sm" value={pos} onChange={(e) => setPos(e.target.value)} aria-label="Position">
             <option value="">All positions</option>
