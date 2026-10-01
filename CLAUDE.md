@@ -26,7 +26,8 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
 - `lib/nhl-data/*` pulls NHL API data into Supabase Storage and builds the model's
   input workbooks in the model's existing formats. Never change the model's
   parsers to fit the automation; change the builders instead.
-- Scheduled by `.github/workflows/nhl-data.yml`; Mac folder sync in `tools/mac-sync`.
+- Scheduled by `.github/workflows/nhl-data.yml` (daily results + lineups) and
+  `nhl-lineups.yml` (hourly pre-game lineup reads); Mac folder sync in `tools/mac-sync`.
 - Signed-in page = five hash tabs (`#teams`, `#matchups`, `#model`, `#league`, `#history`).
   Positions are frozen per game before puck drop (`lib/nhl-data/positions.js`,
   `data/positions/<date>.json`; games never snapshotted get the NHL.com preview at ingest)
@@ -43,7 +44,7 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   gamedaytweets.com/lines?team=XXX (roster-aware name matching) for every slate team; a
   game-day tweet beats the NHL.com preview, otherwise the preview, then an older tweet, then
   the roster; "game-day" is decided by timestamp (tweet id vs the preview's updated time).
-  The workflow re-reads lineups hourly 12:05–23:05 ET for games starting within 150 minutes
+  `nhl-lineups.yml` re-reads lineups hourly 12:05–23:05 ET for games starting within 150 minutes
   (`only=lineups&due=150`), so every game is captured in its last hour and frozen at puck drop;
   the Matchups tab's "Refresh lines" button does the same on demand and each rink shows when
   its source last changed.
