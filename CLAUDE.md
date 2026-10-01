@@ -49,7 +49,12 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   `nhl-lineups.yml` re-reads lineups hourly 12:05–23:05 ET for games starting within 150 minutes
   (`only=lineups&due=150`), so every game is captured in its last hour and frozen at puck drop;
   the Matchups tab's "Refresh lines" button does the same on demand and each rink shows when
-  its source last changed.
+  its source last changed. After every lineup capture (and every matchup-file import for a
+  coming slate) `lib/nhl-data/autorun.js` runs the model on the server with the stored
+  PropFinder workbooks + snapshot lineups + built history/home-away inputs and saves the run
+  (source "auto", deduped by autoKey); the rink shows that run. The model's pure pipeline
+  (parsers + `buildProjections`) lives in `components/nhl/model-core.js` so the server can import
+  it; `NhlModel.jsx` keeps the UI and imports from it. Port logic changes into model-core.js.
 - PropFinder CSV exports (skater per-game rates for the season or last N games, team stats for and
   against with ranks, opponent stats per position tagged by a `-lw/-c/-rw/-d` file-name suffix) are imported by
   `lib/nhl-data/propfinder.js` into `data/propfinder/*` (one snapshot per season; the
@@ -72,6 +77,7 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
 ## Rules
 
 - The model is admin-only (`NHL_ADMIN_EMAILS`). Every `/api/nhl/*` route must call `requireNhlAdmin()`.
-- Keep the model's math untouched when restyling; port logic changes from the local app.
+- Keep the model's math untouched when restyling; port logic changes from the local app into
+  `components/nhl/model-core.js` (pipeline) and `NhlModel.jsx` (UI).
 - Secrets stay out of git (Render env + `.env.local`).
 - Site is `noindex` by design (robots.txt disallow + X-Robots-Tag).

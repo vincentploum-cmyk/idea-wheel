@@ -1,6 +1,7 @@
 import { ingestMatchupFile } from '@/lib/nhl-data/matchups';
 import { ingestPropfinderCsv } from '@/lib/nhl-data/propfinder';
-import { authorize, DATE_RE } from '@/lib/nhl-data/util';
+import { authorize, DATE_RE, todayET } from '@/lib/nhl-data/util';
+import { autoRunModel } from '@/lib/nhl-data/autorun';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,5 +34,10 @@ export async function POST(request) {
     }
   }
   const ok = results.some((r) => !r.error);
-  return Response.json({ ok, results }, { status: ok ? 200 : 422 });
+  // A matchup workbook for today or a coming slate: run the model if the lines are already in.
+  const model = {};
+  for (const d of [...new Set(results.filter((r) => !r.error && r.kind && r.date >= todayET()).map((r) => r.date))]) {
+    model[d] = await autoRunModel(d).catch((err) => ({ ran: false, error: String(err?.message || err) }));
+  }
+  return Response.json({ ok, results, model }, { status: ok ? 200 : 422 });
 }
