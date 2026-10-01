@@ -225,8 +225,8 @@ const DEF_POS = ['All', 'C', 'LW', 'RW', 'D'];
 
 /**
  * The defense table above a rink, in PropFinder's format: what `abbr` allowed per game
- * (or in total) to every position, one tab per season / recent-games window (the current
- * season selected), each cell carrying PropFinder's league rank; a column header sorts
+ * (or in total) to every position, one tab per season / recent-games window (L10 selected,
+ * else the current season), each cell carrying PropFinder's league rank; a column header sorts
  * the position rows (All stays on top). `data` is a slate side's `propfinder`.
  */
 export function PropfinderDefense({ abbr, data, posFilter = '' }) {
@@ -234,7 +234,8 @@ export function PropfinderDefense({ abbr, data, posFilter = '' }) {
   const [tabKey, setTabKey] = useState(null);
   const [total, setTotal] = useState(false);
   const [sort, setSort] = useState(null);
-  const tab = tabs.find((t) => t.key === tabKey) || [...tabs].reverse().find((t) => t.kind === 'season') || tabs[0];
+  // Last 10 games by default (the window that reads a defense's current form), then the latest season.
+  const tab = tabs.find((t) => t.key === tabKey) || tabs.find((t) => t.key === 'l10') || [...tabs].reverse().find((t) => t.kind === 'season') || tabs[0];
   if (!tab) return null;
   const cols = data.cols.filter(([k]) => DEF_POS.some((pos) => tab.rows[pos]?.[k] != null));
   const n = tab.count;

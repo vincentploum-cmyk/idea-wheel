@@ -4,6 +4,7 @@ import { describe, expect, test, jest, beforeEach } from '@jest/globals';
 // show which reads the in-process caches save.
 const files = new Map(); // path → JSON string
 const calls = { list: 0, download: 0, upload: 0, remove: 0 };
+let gate = null; // { path, promise }: a download of `path` waits for the promise (simulates a slow read)
 const store = {
   async list(prefix) {
     calls.list += 1;
@@ -14,7 +15,8 @@ const store = {
   async download(path) {
     calls.download += 1;
     if (!files.has(path)) return { data: null, error: new Error('not found') };
-    const text = files.get(path);
+    const text = files.get(path); // what the bucket held when the read started
+    if (gate?.path === path) await gate.promise;
     return { data: { text: async () => text }, error: null };
   },
   async upload(path, body) {
@@ -38,6 +40,7 @@ jest.mock('@supabase/supabase-js', () => ({
 }));
 
 const nhlStore = require('../lib/nhl-store');
+const { loadPlayers, setOverride, PLAYERS_PATH } = require('../lib/nhl-data/rosters');
 
 const manifest = (id, extra = {}) => JSON.stringify({ id, createdAt: `2026-10-0${id[7]}T00:00:00Z`, slateDate: '2026-10-01', hasResults: true, files: {}, ...extra });
 const reset = () => { for (const k of Object.keys(calls)) calls[k] = 0; };
@@ -111,5 +114,66 @@ describe('run storage caches', () => {
     await nhlStore.writeJson('data/x.json', { a: 2 });
     expect(await nhlStore.readJson('data/x.json')).toEqual({ a: 2 });
     expect(calls.download).toBe(2);
+  });
+
+  test('a value mutated in place and written back gets a fresh identity, so identity memos notice', async () => {
+    files.set('data/reference/players.json', JSON.stringify({ updatedAt: 't1', players: { 1: { id: 1, name: 'A One', team: 'NYR', pos: 'LW' } } }));
+    files.set('data/reference/seen-players.json', JSON.stringify({ players: { 9: { id: 9, name: 'Old Guy', team: 'BOS', pos: 'C', lastGame: '2026-01-01' } } }));
+    const a = await loadPlayers();
+    expect(a.players[1]).toMatchObject({ team: 'NYR', onRoster: true });
+    expect(a.players[9]).toMatchObject({ onRoster: false });
+    expect(await loadPlayers()).toBe(a);
+    // The admin edits a player: setOverride mutates the cached overrides file in place and writes it.
+    await setOverride(1, { team: 'FLA' });
+    const b = await loadPlayers();
+    expect(b).not.toBe(a);
+    expect(b.players[1]).toMatchObject({ team: 'FLA', overridden: true });
+    expect(await loadPlayers()).toBe(b);
+    expect(JSON.parse(files.get(PLAYERS_PATH)).players[1].team).toBe('NYR');
+
+    const o = await nhlStore.readJson('data/reference/overrides.json');
+    o.players[1].note = 'traded';
+    await nhlStore.writeJson('data/reference/overrides.json', o);
+    const n = await nhlStore.readJson('data/reference/overrides.json');
+    expect(n).not.toBe(o);
+    expect(n.players[1].note).toBe('traded');
+  });
+
+  test('a write that lands while a read is in flight is not overwritten by the stale read', async () => {
+    files.set('data/meta/x.json', JSON.stringify({ v: 1 }));
+    let release;
+    gate = { path: 'data/meta/x.json', promise: new Promise((r) => { release = r; }) };
+    const slow = nhlStore.readJson('data/meta/x.json');
+    await new Promise((r) => setTimeout(r, 0));
+    await nhlStore.writeJson('data/meta/x.json', { v: 2 });
+    release();
+    expect(await slow).toEqual({ v: 1 });
+    gate = null;
+    expect(await nhlStore.readJson('data/meta/x.json')).toEqual({ v: 2 });
+  });
+
+  test('listings refresh for every ancestor of a written path', async () => {
+    files.set('data/slates/2026-10-01/season.xlsx', 'x');
+    expect(await nhlStore.listNames('data/slates')).toEqual(['2026-10-01']);
+    await nhlStore.writeBlob('data/slates/2026-10-05/season.xlsx', new Blob(['y']), 'application/octet-stream');
+    expect((await nhlStore.listNames('data/slates')).sort()).toEqual(['2026-10-01', '2026-10-05']);
+    expect(await nhlStore.listNames('data/slates/2026-10-05')).toEqual(['season.xlsx']);
+    expect(calls.list).toBe(3);
+    expect(await nhlStore.listNames('data/slates')).toHaveLength(2);
+    expect(calls.list).toBe(3);
+  });
+
+  test('the JSON cache keeps recently used entries over long-unused ones', async () => {
+    for (let i = 0; i < 1000; i++) files.set(`data/fill/${i}.json`, '{}');
+    files.set('data/hot.json', '{"hot":true}');
+    const hot = await nhlStore.readJson('data/hot.json');
+    for (let i = 0; i < 999; i++) await nhlStore.readJson(`data/fill/${i}.json`);
+    expect(await nhlStore.readJson('data/hot.json')).toBe(hot); // touched: moves to the end
+    reset();
+    for (let i = 0; i < 20; i++) await nhlStore.readJson(`data/fill/${900 + i}.json`); // fresh hits, no eviction
+    expect(calls.download).toBe(0);
+    await nhlStore.readJson('data/fill/999.json'); // one new entry evicts the least recently used
+    expect(await nhlStore.readJson('data/hot.json')).toBe(hot);
+    expect(calls.download).toBe(1);
   });
 });
