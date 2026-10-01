@@ -7,14 +7,16 @@ import { TeamLogo } from './media';
 export const MP_COLS = [
   ['xgfPct', 'xGF%', 1], ['cfPct', 'CF%', 1], ['xgf60', 'xGF/60', 2], ['xga60', 'xGA/60', 2],
   ['sf60', 'SF/60', 1], ['sa60', 'SA/60', 1], ['hdsf60', 'HD for/60', 1], ['hdsa60', 'HD agst/60', 1], ['gf60', 'GF/60', 2], ['ga60', 'GA/60', 2],
+  ['pace60', 'Pace/60', 1, 'neutral'],
 ];
 export const SIT_LABEL = { all: 'All situations', '5on5': '5-on-5', '5on4': 'Power play', '4on5': 'Penalty kill' };
 const num = (v, d) => (v == null ? '—' : Number(v).toFixed(d));
 export const oppClass = (rank, n = 32) => (!rank ? '' : rank > n - Math.ceil(n / 3) ? 'is-soft' : rank <= Math.ceil(n / 3) ? 'is-tough' : '');
 
-export function MpCell({ v, d, rank, n, invert }) {
+export function MpCell({ v, d, rank, n, invert, neutral }) {
   // invert: a high rank for the *opponent* is good for the shooter (defense metrics).
-  const cls = invert ? oppClass(rank, n) : (rank && rank <= Math.ceil(n / 3) ? 'is-soft' : rank && rank > n - Math.ceil(n / 3) ? 'is-tough' : '');
+  // neutral: ranked but not good or bad (pace), so no tone.
+  const cls = neutral ? '' : invert ? oppClass(rank, n) : (rank && rank <= Math.ceil(n / 3) ? 'is-soft' : rank && rank > n - Math.ceil(n / 3) ? 'is-tough' : '');
   return <td className={cls}>{num(v, d)}{rank ? <i>#{rank}</i> : null}</td>;
 }
 
@@ -43,7 +45,7 @@ export function TeamMoneyPuck({ abbr, mp }) {
               return (
                 <tr key={sit}>
                   <td><b>{SIT_LABEL[sit] || sit}</b></td><td>{t.gp}</td>
-                  {MP_COLS.map(([k, , d]) => <MpCell key={k} v={t[k]} d={d} rank={r[k]} n={n} />)}
+                  {MP_COLS.map(([k, , d, mode]) => <MpCell key={k} v={t[k]} d={d} rank={r[k]} n={n} neutral={mode === 'neutral'} />)}
                 </tr>
               );
             })}
@@ -54,7 +56,7 @@ export function TeamMoneyPuck({ abbr, mp }) {
               return (
                 <tr key={ven}>
                   <td><b>5-on-5 {ven === 'H' ? 'at home' : 'away'}</b></td><td>{t.gp}</td>
-                  {MP_COLS.map(([k, , d]) => <MpCell key={k} v={t[k]} d={d} rank={r[k]} n={Object.keys(venue[ven]).length} />)}
+                  {MP_COLS.map(([k, , d, mode]) => <MpCell key={k} v={t[k]} d={d} rank={r[k]} n={Object.keys(venue[ven]).length} neutral={mode === 'neutral'} />)}
                 </tr>
               );
             })}
@@ -120,7 +122,7 @@ export function MoneyPuckTable() {
                 <tr key={abbr}>
                   <td><div className="nhlx-db-player"><TeamLogo abbr={abbr} size={24} /><span><b>{abbr}</b></span></div></td>
                   <td>{t.gp}</td>
-                  {MP_COLS.map(([k, , d]) => <MpCell key={k} v={t[k]} d={d} rank={ranks[abbr]?.[k]} n={n} />)}
+                  {MP_COLS.map(([k, , d, mode]) => <MpCell key={k} v={t[k]} d={d} rank={ranks[abbr]?.[k]} n={n} neutral={mode === 'neutral'} />)}
                 </tr>
               ))}
             </tbody>

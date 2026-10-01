@@ -36,6 +36,10 @@ describe('automatic model run inputs', () => {
     const now = Date.parse('2026-10-01T05:00:00Z');
     const open = { date: '2026-10-01', autoKey: 'auto:abc', startedAt: '2026-10-01T04:12:00Z' };
     expect(attemptBlocks(open, 'auto:abc', now)).toBe(true);
+    // A different deploy gets a fresh attempt; the same deploy does not.
+    expect(attemptBlocks({ ...open, build: 'aaa111' }, 'auto:abc', now, 'bbb222')).toBe(false);
+    expect(attemptBlocks({ ...open, build: 'aaa111' }, 'auto:abc', now, 'aaa111')).toBe(true);
+    expect(attemptBlocks({ ...open, build: 'aaa111' }, 'auto:abc', now, null)).toBe(true);
     expect(attemptBlocks(open, 'auto:other', now)).toBe(false); // the lines or files changed
     expect(attemptBlocks({ ...open, finishedAt: '2026-10-01T04:13:00Z', error: 'x' }, 'auto:abc', now)).toBe(false);
     expect(attemptBlocks(open, 'auto:abc', now + 25 * 3600 * 1000)).toBe(false);
