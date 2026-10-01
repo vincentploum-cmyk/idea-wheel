@@ -875,6 +875,11 @@ td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
 .nhlx-rk-stat em { font-style: normal; font-weight: 700; color: var(--heading); }
 .nhlx-rk-stat i { font-style: normal; color: var(--muted); margin-left: 0.6cqw; }
 .nhlx-rk-stat.is-actual em { color: var(--primary); }
+.nhlx-rk-stat.is-model em { color: var(--heading); }
+.nhlx-rk-stat.is-model.is-closed em { color: var(--muted); }
+.nhlx-rk-stat.is-read em { color: var(--muted); }
+.nhlx-rk-numsrc { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+.nhlx-rk-numsrc b { color: var(--heading); font-weight: 600; }
 .nhlx-rk-stat.is-over em:first-child { color: var(--ok-fg); }
 .nhlx-rk-extras { margin-top: 10px; line-height: 1.6; }
 .nhlx-rk-extras b { color: var(--heading); font-weight: 600; }

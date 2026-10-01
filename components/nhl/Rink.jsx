@@ -125,9 +125,12 @@ function RinkMarkings({ clipId, tones }) {
 function Chip({ p, x, y, minGp, actual, played }) {
   const open = usePlayerCard();
   const thin = (p.gp || 0) < minGp;
+  const m = p.model;
+  const pct = (v) => (v == null ? null : `${Math.round(v * 100)}%`);
+  const modelText = m ? ` · model: ${num(m.sog)} SOG, ${num(m.g, 2)} G${m.p3s != null ? `, 3+ SOG ${pct(m.p3s)}` : ''}${m.p1g != null ? `, 1+ G ${pct(m.p1g)}` : ''}${m.gateOpen === false ? ' (gate closed)' : ''}` : '';
   // Finished game: the box score at the frozen position, with the projection kept in the title.
   const result = played ? (actual ? ` · played: ${actual.sog} SOG, ${actual.g} G, ${actual.a} A in ${num(actual.toi)} min` : ' · did not play') : '';
-  const title = `${p.name} · ${p.pos}${p.line ? ` L${p.line}` : ''} · ${p.gp || 0} GP · ${num(p.sog)} SOG/G, ${num(p.g, 2)} G/G${p.projSog != null ? ` · projected ${num(p.projSog)} SOG, ${num(p.projG, 2)} G` : ''}${result}`
+  const title = `${p.name} · ${p.pos}${p.line ? ` L${p.line}` : ''} · ${p.gp || 0} GP · ${num(p.sog)} SOG/G, ${num(p.g, 2)} G/G${modelText}${p.projSog != null ? ` · matchup read ${num(p.projSog)} SOG, ${num(p.projG, 2)} G` : ''}${result}`
     + (p.shotEdge != null ? ` · shot edge ${p.shotEdge > 0 ? '+' : ''}${p.shotEdge}%` : '')
     + (p.goalEdge != null ? ` · goal edge ${p.goalEdge > 0 ? '+' : ''}${p.goalEdge}%` : '')
     + (p.inLineup ? '' : ' · not in the projected lineup');
@@ -143,11 +146,13 @@ function Chip({ p, x, y, minGp, actual, played }) {
       <span className="nhlx-rk-meta">
         <b className="nhlx-rk-name">{shortName(p.name)}</b>
         {played ? (actual
-          ? <span className={`nhlx-rk-stat is-actual${p.projSog != null && actual.sog >= p.projSog ? ' is-over' : ''}`}><em>{actual.sog}</em> SOG · <em>{actual.g}</em> G{actual.a ? <> · <em>{actual.a}</em> A</> : null}{p.projSog != null ? <i> p {num(p.projSog)}</i> : null}</span>
+          ? <span className={`nhlx-rk-stat is-actual${(m?.sog ?? p.projSog) != null && actual.sog >= (m?.sog ?? p.projSog) ? ' is-over' : ''}`}><em>{actual.sog}</em> SOG · <em>{actual.g}</em> G{actual.a ? <> · <em>{actual.a}</em> A</> : null}{m?.sog != null ? <i> m {num(m.sog)}</i> : p.projSog != null ? <i> p {num(p.projSog)}</i> : null}</span>
           : <span className="nhlx-rk-stat">did not play</span>)
-          : thin || p.projSog == null
-            ? <span className="nhlx-rk-stat"><em>{p.pos}</em> · {p.gp ? `${p.gp} GP` : 'no games'}</span>
-            : <span className="nhlx-rk-stat"><em>{num(p.projSog)}</em> SOG · <em>{num(p.projG, 2)}</em> G</span>}
+          : m?.sog != null
+            ? <span className={`nhlx-rk-stat is-model${m.gateOpen === false ? ' is-closed' : ''}`}><em>{num(m.sog)}</em> SOG · <em>{num(m.g, 2)}</em> G</span>
+            : thin || p.projSog == null
+              ? <span className="nhlx-rk-stat"><em>{p.pos}</em> · {p.gp ? `${p.gp} GP` : 'no games'}</span>
+              : <span className="nhlx-rk-stat is-read"><em>{num(p.projSog)}</em> SOG · <em>{num(p.projG, 2)}</em> G</span>}
       </span>
     </button>
   );
@@ -172,7 +177,7 @@ function BandLabel({ pos, d, opp, view, teamCount, x, y }) {
 }
 
 /** One side of a game: `side` is an entry of a slate game's `sides`. */
-export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null }) {
+export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, modelRun = null }) {
   const { placed, extras } = useMemo(() => layoutSide(side.skaters), [side.skaters]);
   // Finished game: this team's box-score rows, by player id and by name.
   const actual = useMemo(() => {
@@ -197,6 +202,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null })
         <TeamLogo abbr={side.team} size={28} />
         <div>
           <b>{side.team} <small>{side.venue === 'H' ? 'home' : 'away'}{score ? ` · final ${score[0]}–${score[1]} vs ${side.opp} · chips show the game's shots, goals, assists` : ' · attacking upwards'}</small></b>
+          <small className="nhlx-rk-numsrc">{modelRun ? <>Numbers on the chips: <b>the model</b>, run {et(modelRun.createdAt)}{modelRun.players ? ` (${modelRun.players} players)` : ''}{score ? ', after "m"' : ''}.</> : <>No model run saved for this slate yet: chips show a matchup read (own SOG/G × opponent ratio){score ? ', after "p"' : ''}. Run the model on the Model tab to see its projections here.</>}</small>
           <small>Ice tinted by what {side.opp} allows {WINDOW_TEXT[v]} to each position (rank 1 = most permissive) · <SourceLine side={side} /></small>
         </div>
       </div>
@@ -239,7 +245,7 @@ export function RinkLegend() {
       <span><i className="is-soft" /> favourable: the opponent allows the most shots to that position (top third)</span>
       <span><i className="is-mid" /> neutral</span>
       <span><i className="is-tough" /> stingy: bottom third</span>
-      <span>on each player: projected SOG and goals tonight (own rate × opponent ratio); once the game is final, the actual shots, goals and assists with the projection after “p”; click for the player card</span>
+      <span>on each player: the model’s projected SOG and goals from the latest saved run for this slate (3+ SOG and 1+ G odds in the tooltip), or a matchup read when no run exists; once the game is final, the actual shots, goals and assists with the model’s number after “m”; click for the player card</span>
     </p>
   );
 }
