@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { TeamLogo } from './media';
+import { TeamLogo, headshotUrl } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { PropfinderDefense } from './Propfinder';
 
@@ -149,7 +149,10 @@ function Chip({ p, x, y, minGp, actual, played }) {
       title={title}
       onClick={() => p.id && open({ id: p.id, opp: p.opp, venue: p.venue })}
     >
-      <span className="nhlx-rk-num">{p.number ?? p.pos}</span>
+      <span className="nhlx-rk-pic">
+        {p.id ? <img src={headshotUrl(p.id)} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : null}
+        <i className="nhlx-rk-num">{p.number ?? p.pos}</i>
+      </span>
       <span className="nhlx-rk-meta">
         <b className="nhlx-rk-name">{shortName(p.name)}</b>
         {played ? (actual
