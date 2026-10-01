@@ -11,7 +11,7 @@ services:
       - key: NODE_ENV
         value: production
       # Node's heap ceiling is set in the start script (package.json): on a 512 MB
-      # instance Node defaults to ~272 MB and the automatic model run needs more.
+      # instance Node defaults to ~272 MB; on the 2 GB Standard instance the cap is 1536 MB.
 
       # Supabase — auth (magic link / Google / GitHub) + Storage for model runs.
       # The private "nhl-model" bucket is created automatically on first save.
