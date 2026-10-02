@@ -172,8 +172,9 @@ function Chip({ p, x, y, minGp, actual, played }) {
 }
 
 // The toggle above each rink: which window of the opponent's defense tints the ice.
-const WINDOWS = [['home', 'Home'], ['away', 'Away'], ['l5', 'L5'], ['l10', 'L10'], ['l5home', 'L5 home'], ['l5away', 'L5 away']];
-const WINDOW_TEXT = { home: 'at home', away: 'away', l5: 'over its last 5 games', l10: 'over its last 10 games', l5home: 'over its last 5 home games', l5away: 'over its last 5 away games' };
+const WINDOWS = [['home', 'Home'], ['away', 'Away'], ['l5', 'L5'], ['l10', 'L10'], ['l5home', 'L5 home'], ['l5away', 'L5 away'], ['h2hhome', 'H2H home'], ['h2haway', 'H2H away']];
+const WINDOW_TEXT = { home: 'at home', away: 'away', l5: 'over its last 5 games', l10: 'over its last 10 games', l5home: 'over its last 5 home games', l5away: 'over its last 5 away games', h2hhome: 'at home against this team (stored meetings, this season and last)', h2haway: 'away against this team (stored meetings, this season and last)' };
+const WINDOW_TITLE = { h2hhome: 'What the opponent allowed in its home games against this team', h2haway: 'What the opponent allowed in its road games against this team' };
 
 function BandLabel({ pos, d, opp, view, windowText = null, teamCount, x, y }) {
   const r = d?.rank || {};
@@ -181,14 +182,16 @@ function BandLabel({ pos, d, opp, view, windowText = null, teamCount, x, y }) {
   const n = d?.teamCount || teamCount;
   const tone = zoneTone(r.sog, n);
   const when = windowText || WINDOW_TEXT[view];
-  const from = d?.source === 'propfinder' ? (d.window ? ` · PropFinder's table, ${d.window}` : ` · PropFinder ${d.seasonLabel} (last season, until ${opp} has enough stored games)`) : ` · this season's stored games (${s?.gp ?? 0})`;
+  const from = d?.source === 'propfinder' ? (d.window ? ` · PropFinder's table, ${d.window}` : ` · PropFinder ${d.seasonLabel} (last season, until ${opp} has enough stored games)`)
+    : d?.source === 'h2h' ? ` · ${s?.gp ?? 0} stored meeting${s?.gp === 1 ? '' : 's'}; the rank is where that sits among the league's season values at this venue`
+      : ` · this season's stored games (${s?.gp ?? 0})`;
   // First goals given up to this position (the season table at tonight's venue; the card's column has the same numbers).
   const fg = d?.firstGoal;
   const fgText = fg?.games ? ` · first goal given up to ${pos} in ${fg.allowed} of ${fg.games} games${fg.rank ? ` (#${fg.rank})` : ''}${Object.keys(fg.bySlot || {}).length ? `: ${Object.entries(fg.bySlot).sort((a, b) => b[1] - a[1]).map(([k, c]) => `${k} ×${c}`).join(', ')}` : ''}` : '';
   const title = s?.gp ? `${opp} allows ${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'}) per game to ${pos} ${when} · rank 1 = most permissive of ${n}${from}${fgText}` : `No defense data for ${opp} ${when} yet`;
   return (
     <div className={`nhlx-rk-zone is-${tone}`} style={{ left: `${x}%`, top: `${pct(y)}%` }} title={title}>
-      <b>{pos}</b>{s?.gp ? <span>#{r.sog ?? '–'} SOG · #{r.g ?? '–'} G{d?.source === 'propfinder' ? <i title={`PropFinder ${d.seasonLabel}`}>PF</i> : null}</span> : <span>no data</span>}
+      <b>{pos}</b>{s?.gp ? <span>#{r.sog ?? '–'} SOG · #{r.g ?? '–'} G{d?.source === 'propfinder' ? <i title={`PropFinder ${d.seasonLabel}`}>PF</i> : d?.source === 'h2h' ? <i title={`${s.gp} stored meeting${s.gp === 1 ? '' : 's'}`}>{s.gp} GP</i> : null}</span> : <span>{view?.startsWith('h2h') ? 'no meetings' : 'no data'}</span>}
     </div>
   );
 }
@@ -246,7 +249,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
             <small>{side.opp} allows</small>
             <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label={`Window of ${side.opp}'s defense`}>
               {WINDOWS.map(([k, l]) => (
-                <button key={k} type="button" role="tab" aria-selected={v === k} className={`nhlx-tab${v === k ? ' is-active' : ''}`} onClick={() => setView(k)} title={k === defaultView ? `Tonight's venue for ${side.opp}` : undefined}>
+                <button key={k} type="button" role="tab" aria-selected={v === k} className={`nhlx-tab${v === k ? ' is-active' : ''}`} onClick={() => setView(k)} title={k === defaultView ? `Tonight's venue for ${side.opp}` : WINDOW_TITLE[k]}>
                   {l}{k === defaultView ? <i aria-label="tonight's venue">•</i> : null}
                 </button>
               ))}

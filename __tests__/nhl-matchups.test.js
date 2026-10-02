@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import { parseLineupRows, applyPositions, snapshotPos, fillFromLastLineup, lineupToRemember } from '../lib/nhl-data/positions';
-import { defenseByPosition, defenseBySlot, firstGoalsAllowed, playerBaselines } from '../lib/nhl-data/defense';
+import { defenseByPosition, defenseBySlot, firstGoalsAllowed, defenseVsTeam, rankAmong, playerBaselines } from '../lib/nhl-data/defense';
 import { groupStandings, mapStandingRow, shotLeaders } from '../lib/nhl-data/league';
 import { scoreSkater, h2hByOpponent, h2hHot } from '../lib/nhl-data/slate';
 import { lineupRows } from '../lib/nhl-data/lineups';
@@ -64,6 +64,22 @@ describe('defense by position', () => {
     expect(d.ranks.OTT.ALL.LW.sog).toBe(1);
     expect(d.ranks.ANA.ALL.LW.sog).toBe(2);
     expect(d.league.ALL.LW.sog).toBe(4);
+  });
+  test('defenseVsTeam: what a team allowed to each position against one opponent, by its venue', () => {
+    // OTT vs ANA only: at home (game 1) 5 SOG to LW; away (game 2) 7 SOG to LW.
+    const h = defenseVsTeam(rows, 'OTT', 'ANA');
+    expect(h.H.LW).toMatchObject({ gp: 1, sog: 5, g: 1 });
+    expect(h.A.LW).toMatchObject({ gp: 1, sog: 7 });
+    expect(h.ALL.LW).toMatchObject({ gp: 2, sog: 6 });
+    expect(h.H.C).toMatchObject({ gp: 1, sog: 2 });
+    expect(defenseVsTeam(rows, 'OTT', 'BOS')).toBeNull();
+    expect(defenseVsTeam(rows, 'OTT', 'ANA')).toBe(h); // memoised per rows array
+    // A value's place among the league's values: 1 = the most.
+    expect(rankAmong(6, [3, 7, 5, null, 6])).toBe(2);
+    expect(rankAmong(8, [3, 7, 5])).toBe(1);
+    expect(rankAmong(1, [3, 7, 5])).toBe(4);
+    expect(rankAmong(null, [3])).toBeNull();
+    expect(rankAmong(3, [])).toBeNull();
   });
   test('lastN keeps only the newest team-games, per venue', () => {
     const d = defenseByPosition(rows, { lastN: 1 });
