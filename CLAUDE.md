@@ -28,8 +28,10 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   parsers to fit the automation; change the builders instead.
 - Scheduled by `.github/workflows/nhl-data.yml` (daily results + lineups) and
   `nhl-lineups.yml` (hourly pre-game lineup reads); Mac folder sync in `tools/mac-sync`.
-- Signed-in page = five hash tabs (`#teams`, `#matchups`, `#model`, `#league`, `#history`); it opens on
-  Matchups. The stored data (rosters, media, game history, league, MoneyPuck) is kept fresh by the
+- Signed-in page = six hash tabs (`#teams`, `#matchups`, `#firstgoal`, `#model`, `#league`, `#history`); it opens on
+  Matchups. The 1st goal tab (`lib/nhl-data/firstgoal.js`, `/api/nhl/data/firstgoal`, `FirstGoalPanel.jsx`) ranks
+  tonight's skaters as first-goal candidates: own first-goal record from the rows' `fg` flag, the opponent's first
+  goals given up to the position and slot at the venue, head to head, and the model's 1+ goal odds (score 0–100). The stored data (rosters, media, game history, league, MoneyPuck) is kept fresh by the
   morning run and shown, with repair buttons and the backfill, under Best bets → "Data sources"
   (`/api/nhl/data/setup`); there is no setup tab.
   Positions are captured per game from the newest lineup dated at or before it

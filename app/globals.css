@@ -703,6 +703,18 @@ p { margin: 0; }
 .nhlx-deftable tr:last-child td { border-bottom: 0; }
 .nhlx-deftable i, .nhlx-mu-table i { font-style: normal; font-size: 11px; color: var(--muted); margin-left: 3px; }
 .nhlx-fg-slots { display: block; font-size: 11px; color: var(--muted); line-height: 1.2; }
+.nhlx-fg-how { max-width: 78ch; margin: 14px 0 12px; line-height: 1.45; }
+.nhlx-fg-table td { white-space: nowrap; }
+.nhlx-fg-table td.is-soft { color: var(--ok-fg); }
+.nhlx-fg-table td.is-tough { color: var(--bad-fg); }
+.nhlx-fg-rank { font-style: normal; font-size: 11px; color: var(--muted); margin-right: 3px; }
+.nhlx-fg-slot { display: block; font-size: 11px; color: var(--muted); }
+.nhlx-fg-score { display: flex; align-items: center; gap: 8px; }
+.nhlx-fg-bar { position: relative; width: 96px; height: 6px; border-radius: 3px; background: var(--bg-soft); overflow: hidden; }
+.nhlx-fg-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--primary); }
+.nhlx-fg-game { margin-top: 18px; }
+.nhlx-fg-actual { margin: 6px 0 8px; font-size: 14px; color: var(--body); }
+@media (max-width: 640px) { .nhlx-fg-bar { width: 56px; } }
 td.is-soft { background: var(--ok-bg); color: var(--ok-fg); }
 td.is-tough { background: var(--bad-bg); color: var(--bad-fg); }
 td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
