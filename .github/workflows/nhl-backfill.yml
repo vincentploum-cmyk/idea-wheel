@@ -1,0 +1,60 @@
+name: NHL backfill (lines + first goals)
+
+# Walks a date range and, for each date, re-reads the stored games' lineups from the
+# NHL.com previews (positions + line slots, re-stamped onto the box scores) and stamps
+# each game's first goal from the play-by-play. Nothing is re-fetched from the box
+# scores; dates without games return at once. Run it once for a past season after a
+# change to what the rows carry.
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 'First date (YYYY-MM-DD, ET)'
+        required: true
+      to:
+        description: 'Last date (YYYY-MM-DD, ET)'
+        required: true
+      modes:
+        description: 'Refresh modes per date, comma-separated (settle = previews → lines, firstgoals = play-by-play → first goal, restamp = stored snapshot only)'
+        required: false
+        default: 'settle,firstgoals'
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Walk the dates
+        env:
+          NHL_ACTIONS_TOKEN: ${{ secrets.NHL_ACTIONS_TOKEN }}
+          FROM: ${{ github.event.inputs.from }}
+          TO: ${{ github.event.inputs.to }}
+          MODES: ${{ github.event.inputs.modes }}
+        run: |
+          set -u
+          [ -n "$NHL_ACTIONS_TOKEN" ] || { echo "NHL_ACTIONS_TOKEN is not set"; exit 1; }
+          # A 5xx or no answer is usually the server restarting for a deploy: one more try after a minute.
+          call() { local c; for attempt in 1 2; do c=$(curl -sS -o resp.json -w '%{http_code}' --max-time 290 -X POST -H "Authorization: Bearer $NHL_ACTIONS_TOKEN" "$1" || echo 000); case "$c" in 5*|000) [ "$attempt" = 1 ] && { echo "  server answered $c; retrying in 60 s"; sleep 60; } ;; *) break ;; esac; done; echo "$c"; }
+          end=$(date -I -d "$TO + 1 day")
+          d="$FROM"
+          dates=0; failed=0
+          while [ "$d" != "$end" ]; do
+            dates=$((dates + 1))
+            for m in $(echo "$MODES" | tr ',' ' '); do
+              code=$(call "https://ideareels.io/api/nhl/data/refresh?date=$d&only=$m")
+              summary=$(python3 -c "
+          import json,sys
+          try: r=json.load(open('resp.json')).get('result')
+          except Exception as e: print('unreadable'); sys.exit()
+          if r is None: print('no stored games'); sys.exit()
+          keys=['scheduled','withLineups','stamped','failed','games','covered','applied','changed']
+          out={k:r[k] for k in keys if k in r}
+          if 'restamp' in r and r['restamp']: out['restamp']={k:v for k,v in r['restamp'].items() if k in ('covered','applied','changed')}
+          print(out)" 2>/dev/null)
+              echo "$d $m: $code $summary"
+              [ "$code" = "200" ] || failed=$((failed + 1))
+            done
+            d=$(date -I -d "$d + 1 day")
+          done
+          echo "Done: $dates dates, $failed failed calls"
+          [ "$failed" -eq 0 ]
