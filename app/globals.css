@@ -695,6 +695,7 @@ p { margin: 0; }
 .nhlx-deftable td { padding: 6px; border-bottom: 1px solid var(--line); color: var(--heading); white-space: nowrap; }
 .nhlx-deftable tr:last-child td { border-bottom: 0; }
 .nhlx-deftable i, .nhlx-mu-table i { font-style: normal; font-size: 11px; color: var(--muted); margin-left: 3px; }
+.nhlx-fg-slots { display: block; font-size: 11px; color: var(--muted); line-height: 1.2; }
 td.is-soft { background: var(--ok-bg); color: var(--ok-fg); }
 td.is-tough { background: var(--bad-bg); color: var(--bad-fg); }
 td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }

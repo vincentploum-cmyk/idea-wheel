@@ -25,6 +25,28 @@ describe('game records', () => {
     expect(by['Cutter Gauthier']).toMatchObject({ icf: 2, iff: 2, iscf: 1, ihdcf: 0 });
   });
 
+  test('the first goal is stamped on the game and the scorer', () => {
+    // Tkachuk (OTT) scores at 1:02 of the first; Gauthier's goal comes in the second.
+    expect(g.firstGoal).toMatchObject({ playerId: 1, name: 'Brady Tkachuk', team: 'OTT', period: 1, time: '01:02' });
+    expect(by['Brady Tkachuk'].fg).toBe(1);
+    expect(by['Cutter Gauthier'].fg).toBe(0);
+    expect(g.skaters.filter((s) => s.fg).length).toBe(1);
+    const { firstGoalOf, stampFirstGoal } = require('../lib/nhl-data/game');
+    // Shootout goals never count; a game without a goal has none.
+    const so = [{ eventId: 1, typeDescKey: 'goal', periodDescriptor: { number: 5, periodType: 'SO' }, timeInPeriod: '00:00', details: { scoringPlayerId: 12 } }];
+    expect(firstGoalOf(so)).toBeNull();
+    const rec = { skaters: [{ id: 12, name: 'X', team: 'ANA', fg: 1 }] };
+    expect(stampFirstGoal(rec, so)).toBeNull();
+    expect(rec).toMatchObject({ firstGoal: null, skaters: [{ fg: 0 }] });
+    // Plays out of order are sorted first.
+    const plays = [{ eventId: 9, typeDescKey: 'goal', periodDescriptor: { number: 2, periodType: 'REG' }, timeInPeriod: '05:00', details: { scoringPlayerId: 12 } }, { eventId: 3, typeDescKey: 'goal', periodDescriptor: { number: 1, periodType: 'REG' }, timeInPeriod: '09:30', details: { scoringPlayerId: 1 } }];
+    expect(firstGoalOf(plays)).toEqual({ playerId: 1, period: 1, time: '09:30' });
+    const { toRow, rowObj } = require('../lib/nhl-data/ingest');
+    expect(rowObj(toRow(g, by['Brady Tkachuk'])).fg).toBe(1);
+    expect(rowObj(toRow(g, by['Leo Carlsson'])).fg).toBe(0);
+    expect(rowObj(toRow(g, { ...by['Leo Carlsson'], fg: undefined })).fg).toBeNull();
+  });
+
   test('non-final games are skipped', () => {
     expect(buildGameRecord({ ...boxscore(), gameState: 'LIVE' }, playByPlay())).toBeNull();
   });

@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import { parseLineupRows, applyPositions, snapshotPos, fillFromLastLineup, lineupToRemember } from '../lib/nhl-data/positions';
-import { defenseByPosition, defenseBySlot, playerBaselines } from '../lib/nhl-data/defense';
+import { defenseByPosition, defenseBySlot, firstGoalsAllowed, playerBaselines } from '../lib/nhl-data/defense';
 import { groupStandings, mapStandingRow, shotLeaders } from '../lib/nhl-data/league';
 import { scoreSkater, h2hByOpponent, h2hHot } from '../lib/nhl-data/slate';
 import { lineupRows } from '../lib/nhl-data/lineups';
@@ -92,6 +92,32 @@ describe('defense by position', () => {
     expect(defenseBySlot(rows, { lastN: 1 }).teams.OTT.H.LW3.sog).toBe(2);
     // The per-position table is unchanged by the slot column.
     expect(defenseByPosition(rows).teams.OTT.H.LW.sog).toBe(11.5);
+  });
+  test('firstGoalsAllowed: who a team gives the first goal to, by venue, position and line', () => {
+    const fgRow = (date, gameId, pid, team, opp, venue, pos, line, fg) => rowObj([date, gameId, pid, `P${pid}`, team, opp, venue, pos, 15, fg, 0, 2, 0, 0, 2, 2, 2, 1, 0, 'W', 'lineup', pos, line, fg]);
+    const rows = [
+      // Game 1 at NJD: NYR's LW1 scores first. Game 2 at NJD: NYR's LW1 again. Game 3 at NJD: NJD scored first (its own C1).
+      fgRow('2026-01-01', 1, 1, 'NYR', 'NJD', 'A', 'LW', 1, 1), fgRow('2026-01-01', 1, 2, 'NYR', 'NJD', 'A', 'C', 1, 0), fgRow('2026-01-01', 1, 9, 'NJD', 'NYR', 'H', 'C', 1, 0),
+      fgRow('2026-01-05', 2, 1, 'NYR', 'NJD', 'A', 'LW', 1, 1), fgRow('2026-01-05', 2, 9, 'NJD', 'NYR', 'H', 'C', 1, 0),
+      fgRow('2026-01-09', 3, 1, 'NYR', 'NJD', 'A', 'LW', 2, 0), fgRow('2026-01-09', 3, 9, 'NJD', 'NYR', 'H', 'C', 1, 1),
+      // Game 4, NJD away at BOS: BOS's D2 scores first. Game 5: stored before the column existed (no fg anywhere) — not counted.
+      fgRow('2026-01-12', 4, 5, 'BOS', 'NJD', 'H', 'D', 2, 1), fgRow('2026-01-12', 4, 9, 'NJD', 'BOS', 'A', 'C', 1, 0),
+      row('2026-01-15', 5, 1, 'NYR', 'NJD', 'A', 'LW', 1, 3), row('2026-01-15', 5, 9, 'NJD', 'NYR', 'H', 'C', 0, 1),
+    ];
+    const f = firstGoalsAllowed(rows);
+    expect(f.teams.NJD.H).toMatchObject({ games: 3, allowed: 2, share: 0.67, bySlot: { LW1: 2 } });
+    expect(f.teams.NJD.H.byPos.LW).toEqual({ n: 2, share: 0.67 });
+    expect(f.teams.NJD.H.byPos.C.n).toBe(0);
+    expect(f.teams.NJD.A).toMatchObject({ games: 1, allowed: 1, bySlot: { D2: 1 } });
+    expect(f.teams.NJD.ALL).toMatchObject({ games: 4, allowed: 3 });
+    // NYR gave up the first goal once at home (game 3, to NJD's C1) and once away (game 4 is NJD vs BOS, not NYR's).
+    expect(f.teams.NYR.A).toMatchObject({ games: 3, allowed: 1, bySlot: { C1: 1 } });
+    expect(f.teams.BOS.H).toMatchObject({ games: 1, allowed: 0 }); // BOS was home for game 4 and scored first itself
+    expect(f.ranks.NJD.H.LW).toBe(1);
+    expect(f.ranks.NYR.A.LW).toBe(1); // the only team with a game at that venue slice ranks first
+    expect(f.league.H.LW).toBeCloseTo(0.335, 1); // NJD 0.67 and BOS 0 at home
+    // Last-N windows take the newest games per venue.
+    expect(firstGoalsAllowed(rows, { lastN: 1 }).teams.NJD.H).toMatchObject({ games: 1, allowed: 0 });
   });
   test('player baselines average the window with venue splits and hit rates', () => {
     const b = playerBaselines(rows, { window: 20 });

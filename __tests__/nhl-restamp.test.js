@@ -4,6 +4,7 @@ const mockStored = new Map();
 jest.mock('../lib/nhl-store', () => ({
   readJson: async (path) => mockStored.get(path) ?? null,
   writeJson: async (path, value) => { mockStored.set(path, value); },
+  memoizeByInputs: (load, compute) => async (...args) => compute(...(await load(...args))),
 }));
 
 const { restampPositions, gamesPath, rowsPath, rowObj, toRow, ROW_FIELDS } = require('../lib/nhl-data/ingest');

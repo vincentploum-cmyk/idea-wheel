@@ -1,4 +1,4 @@
-import { dailyRefresh, ingestGames, ingestLineups, restampPositions } from '@/lib/nhl-data/ingest';
+import { dailyRefresh, ingestGames, ingestLineups, restampPositions, stampFirstGoals } from '@/lib/nhl-data/ingest';
 import { pullPropfinder, propfinderConfigured } from '@/lib/nhl-data/propfinder-api';
 import { authorize, todayET, DATE_RE } from '@/lib/nhl-data/util';
 import { readJson, writeJson } from '@/lib/nhl-store';
@@ -15,7 +15,7 @@ async function handle(request) {
   const url = new URL(request.url);
   const auth = await authorize(request, { allowToken: true });
   const date = url.searchParams.get('date') || todayET();
-  const only = url.searchParams.get('only'); // games | lineups (&due=<minutes>: only games starting within that window) | settle (a played date: previews' last update + re-stamp) | restamp (stored games follow the snapshot) | propfinder | (default) daily
+  const only = url.searchParams.get('only'); // games | lineups (&due=<minutes>: only games starting within that window) | settle (a played date: previews' last update + re-stamp) | restamp (stored games follow the snapshot) | firstgoals (stored games get their first goal) | propfinder | (default) daily
   if (!DATE_RE.test(date)) return Response.json({ error: 'bad date' }, { status: 400 });
 
   if (!auth.ok) {
@@ -35,6 +35,7 @@ async function handle(request) {
     else if (only === 'lineups') result = await ingestLineups(date, { dueWithinMin: Number(url.searchParams.get('due')) || null });
     else if (only === 'settle') result = await ingestLineups(date, { settle: true });
     else if (only === 'restamp') result = await restampPositions(date);
+    else if (only === 'firstgoals') result = await stampFirstGoals(date);
     else if (only === 'propfinder') result = propfinderConfigured() && date >= todayET() ? await pullPropfinder(date) : { ok: false, skipped: propfinderConfigured() ? 'past date' : 'PropFinder credentials are not configured' };
     else result = await dailyRefresh(date);
     return Response.json({ ok: true, result }, { headers: { 'Cache-Control': 'no-store' } });
