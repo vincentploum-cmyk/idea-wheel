@@ -180,7 +180,10 @@ function BandLabel({ pos, d, opp, view, teamCount, x, y }) {
   const n = d?.teamCount || teamCount;
   const tone = zoneTone(r.sog, n);
   const from = d?.source === 'propfinder' ? ` · PropFinder ${d.seasonLabel} (last season, until ${opp} has enough stored games)` : ` · this season's stored games (${s?.gp ?? 0})`;
-  const title = s?.gp ? `${opp} allows ${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'}) per game to ${pos} ${WINDOW_TEXT[view]} · rank 1 = most permissive of ${n}${from}` : `No defense data for ${opp} ${WINDOW_TEXT[view]} yet`;
+  // First goals given up to this position (the season table at tonight's venue; the card's column has the same numbers).
+  const fg = d?.firstGoal;
+  const fgText = fg?.games ? ` · first goal given up to ${pos} in ${fg.allowed} of ${fg.games} games${fg.rank ? ` (#${fg.rank})` : ''}${Object.keys(fg.bySlot || {}).length ? `: ${Object.entries(fg.bySlot).sort((a, b) => b[1] - a[1]).map(([k, c]) => `${k} ×${c}`).join(', ')}` : ''}` : '';
+  const title = s?.gp ? `${opp} allows ${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'}) per game to ${pos} ${WINDOW_TEXT[view]} · rank 1 = most permissive of ${n}${from}${fgText}` : `No defense data for ${opp} ${WINDOW_TEXT[view]} yet`;
   return (
     <div className={`nhlx-rk-zone is-${tone}`} style={{ left: `${x}%`, top: `${pct(y)}%` }} title={title}>
       <b>{pos}</b>{s?.gp ? <span>#{r.sog ?? '–'} SOG · #{r.g ?? '–'} G{d?.source === 'propfinder' ? <i title={`PropFinder ${d.seasonLabel}`}>PF</i> : null}</span> : <span>no data</span>}

@@ -34,6 +34,23 @@ function MpLine({ mp, opp, venue }) {
   );
 }
 
+/** The slots a team's first goals allowed came from, most first: "LW1 ×3, LW2 ×1". */
+export function slotBreakdown(bySlot) {
+  return Object.entries(bySlot || {}).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([k, n]) => `${k} ×${n}`).join(', ');
+}
+
+/** First goals given up to one position: "4/12" with the line slots behind it, ranked like the other columns. */
+function FirstGoalCell({ fg, pos, opp, venue, teamCount }) {
+  if (!fg?.games) return <td>—</td>;
+  const slots = slotBreakdown(fg.bySlot);
+  const title = `${opp} gave up the first goal to ${pos === 'All' ? 'anyone' : pos} in ${fg.allowed} of ${fg.games} games at ${venue} with a first goal on record (${Math.round(fg.share * 100)}%${fg.league != null ? `, league ${Math.round(fg.league * 100)}%` : ''})${slots ? ` · by line: ${slots}` : ''}${fg.rank ? ` · rank ${fg.rank} of ${fg.teamCount}` : ''}`;
+  return (
+    <td className={rankClass(fg.rank, fg.teamCount || teamCount)} title={title}>
+      {fg.allowed}/{fg.games}{fg.rank ? <i>#{fg.rank}</i> : null}{slots ? <small className="nhlx-fg-slots">{slots}</small> : null}
+    </td>
+  );
+}
+
 function DefenseCard({ side, teamCount, mp }) {
   const defVenue = side.venue === 'A' ? 'home' : 'away';
   return (
@@ -47,7 +64,7 @@ function DefenseCard({ side, teamCount, mp }) {
       </div>
       <table className="nhlx-deftable">
         <thead>
-          <tr><th>Pos</th><th>SOG</th><th>Goals</th><th>Chances</th><th>L10 SOG</th></tr>
+          <tr><th>Pos</th><th>SOG</th><th>Goals</th><th>Chances</th><th>L10 SOG</th><th title="First goals of the game given up to this position at this venue, out of the games whose first goal is on record; the line slots they came from">1st goal</th></tr>
         </thead>
         <tbody>
           {POS.map((pos) => {
@@ -63,13 +80,14 @@ function DefenseCard({ side, teamCount, mp }) {
                 <td className={rankClass(r.g, teamCount)}>{s?.gp ? `${num(s.g, 2)} ` : '—'}{r.g ? <i>#{r.g}</i> : null}</td>
                 <td className={rankClass(r.iscf, teamCount)}>{s?.gp ? `${num(s.iscf)} ` : '—'}{r.iscf ? <i>#{r.iscf}</i> : null}</td>
                 <td className={rankClass(rl10.sog, teamCount)}>{l10?.gp ? `${num(l10.sog)} ` : '—'}{rl10.sog ? <i>#{rl10.sog}</i> : null}</td>
+                <FirstGoalCell fg={d?.firstGoal} pos={pos} opp={side.opp} venue={defVenue} teamCount={teamCount} />
               </tr>
             );
           })}
         </tbody>
       </table>
       <small className="nhlx-auto-meta">
-        {side.defense.All?.season?.gp || 0} games at {defVenue} this season
+        {side.defense.All?.season?.gp || 0} games at {defVenue} this season{side.defense.All?.firstGoal?.games ? ` · first goal given up in ${side.defense.All.firstGoal.allowed} of ${side.defense.All.firstGoal.games} (${slotBreakdown(side.defense.All.firstGoal.bySlot) || 'no line on record'})` : ''}
         {POS.some((p) => side.defense[p]?.source === 'propfinder') ? ` · positions marked PF use PropFinder ${POS.map((p) => side.defense[p]?.seasonLabel).find(Boolean)} (last season) until 10 games are stored` : ''}
       </small>
       <MpLine mp={mp} opp={side.opp} venue={side.venue} />
