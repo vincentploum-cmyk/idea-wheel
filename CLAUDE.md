@@ -102,6 +102,16 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   `node tools/propfinder-seed.mjs <season> <csv…>`). They are descriptive views, not model
   inputs; the slate's defense edges fall back to the per-position opponent tables while a
   team has fewer than 10 stored games at a venue.
+- Player card (`components/nhl/PlayerCard.jsx`, data from `/api/nhl/data/player`): laid out as
+  PropFinder's player view — top bar (headshot, position badge, shot form, graph average, average
+  TOI), market tabs carrying the hit rate for the pressed split, the Over + line block, the
+  per-game bar graph (green over / red under, iCF outline with "Total shots", the average pill),
+  the split tiles ('25-'26, H2H, Home/Away, L5, L10, L20; press one to draw its games), the splits
+  table, and on the right the opponent's "Defense Allowed" panel (`DefenseAllowed` in
+  `components/nhl/pf-ui.jsx`: Year / Range / Position dropdowns, per game ↔ total, rank-tinted
+  cells, the by-position rows) fed by `defense` in the player payload (`propfinderDefenseTabs`).
+  The PropFinder-style table pieces (`PfTable`, `SortTh`, `PosBadge`, `Tag`, `UnderlineTabs`,
+  `Sel`) live in `pf-ui.jsx` and dress the slate's skater table and League's PropFinder skaters.
 - MoneyPuck team metrics (`lib/nhl-data/moneypuck.js`, `data/moneypuck/*`) feed the team
   page, Matchups defense cards and League; credit MoneyPuck.com wherever shown.
 - Theme: dark by default (`<html data-theme>`, toggle in the header, tokens in
