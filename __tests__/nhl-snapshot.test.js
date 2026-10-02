@@ -9,6 +9,7 @@ jest.mock('../lib/nhl-store', () => ({
 
 const { snapshotPositions, positionsPath } = require('../lib/nhl-data/positions');
 const { PLAYERS_PATH } = require('../lib/nhl-data/rosters');
+const { lastLineupPath } = require('../lib/nhl-data/positions');
 const { PF_DEPTH_PATH } = require('../lib/nhl-data/propfinder-api');
 
 const players = {
@@ -35,5 +36,17 @@ describe('position snapshot sources', () => {
     mockStored.set(PF_DEPTH_PATH, depth('2026-04-17'));
     await snapshotPositions('2026-04-18', schedule, { games: [], gdt: {} });
     expect(mockStored.get(positionsPath('2026-04-18')).games[1].teams.ANA.source).toBe('propfinder');
+  });
+  test('a last known lineup is carried only when it is dated no later than the game', async () => {
+    mockStored.set(PLAYERS_PATH, { players });
+    mockStored.delete(PF_DEPTH_PATH);
+    const last = (date) => ({ team: 'OTT', ...(date ? { date } : {}), source: 'gamedaytweets', players: { 'brady tkachuk': { name: 'Brady Tkachuk', id: 3, pos: 'LW', line: 1 } } });
+    for (const [file, carried] of [[last('2026-10-01'), 0], [last(null), 0], [last('2026-04-16'), 1]]) {
+      mockStored.set(lastLineupPath('OTT'), file);
+      await snapshotPositions('2026-04-18', schedule, { games: [], gdt: {} });
+      const t = mockStored.get(positionsPath('2026-04-18')).games[1].teams.OTT;
+      expect(t.carried?.count || 0).toBe(carried);
+      expect(!!t.players['brady tkachuk'].carried).toBe(carried === 1);
+    }
   });
 });
