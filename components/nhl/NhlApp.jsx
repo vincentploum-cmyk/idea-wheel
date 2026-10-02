@@ -299,7 +299,7 @@ export default function NhlApp({ email }) {
           <div className="nhlx-wrap">
             <span className="nhlx-eyebrow">Tonight</span>
             <h2 className="nhlx-h2">Matchups by <span>position</span></h2>
-            <p className="nhlx-lede">Who is shooting into a soft spot tonight: every skater’s frozen position against what the opposing defense allows to that position at this venue.</p>
+            <p className="nhlx-lede">Who is shooting into a soft spot tonight: every skater’s lineup position against what the opposing defense allows to that position at this venue.</p>
             <div style={{ marginTop: 28 }}>{mounted('matchups') && <MatchupsPanel />}</div>
           </div>
         </section>

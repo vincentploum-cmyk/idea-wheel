@@ -56,7 +56,7 @@ const byLine = (a, b) => (a.line || 9) - (b.line || 9) || (b.shotScore || 0) - (
 
 /**
  * Place skaters on the board: forwards into 4 line rows per lane, defense into
- * 3 pairs. A skater's frozen/projected line wins; roster-only players (no line)
+ * 3 pairs. A skater's lineup line wins; roster-only players (no line)
  * fill the remaining slots by projected shots. Whoever is left goes under the rink.
  */
 export function layoutSide(skaters) {
@@ -135,7 +135,7 @@ function Chip({ p, x, y, minGp, actual, played }) {
   // Probability as "42%" (not `pct`, which converts rink feet to % and places the chip below).
   const prob = (v) => (v == null ? null : `${Math.round(v * 100)}%`);
   const modelText = m ? ` · model: ${num(m.sog)} SOG, ${num(m.g, 2)} G${m.p3s != null ? `, 3+ SOG ${prob(m.p3s)}` : ''}${m.p1g != null ? `, 1+ G ${prob(m.p1g)}` : ''}${m.gateOpen === false ? ' (gate closed)' : ''}${m.fire ? ' · ON FIRE (1+ point ≥ 50%, 2.0+ iSCF/G, 16+ min)' : ''}` : '';
-  // Finished game: the box score at the frozen position, with the projection kept in the title.
+  // Finished game: the box score at the logged position, with the projection kept in the title.
   const result = played ? (actual ? ` · played: ${actual.sog} SOG, ${actual.g} G, ${actual.a} A in ${num(actual.toi)} min` : ' · did not play') : '';
   const title = `${p.name} · ${p.pos}${p.line ? ` L${p.line}` : ''} · ${p.gp || 0} GP · ${num(p.sog)} SOG/G, ${num(p.g, 2)} G/G${modelText}${p.projSog != null ? ` · matchup read ${num(p.projSog)} SOG, ${num(p.projG, 2)} G` : ''}${result}`
     + (p.shotEdge != null ? ` · shot edge ${p.shotEdge > 0 ? '+' : ''}${p.shotEdge}%` : '')
