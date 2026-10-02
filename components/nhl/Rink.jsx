@@ -134,7 +134,7 @@ function Chip({ p, x, y, minGp, actual, played }) {
   const m = p.model;
   // Probability as "42%" (not `pct`, which converts rink feet to % and places the chip below).
   const prob = (v) => (v == null ? null : `${Math.round(v * 100)}%`);
-  const modelText = m ? ` · model: ${num(m.sog)} SOG, ${num(m.g, 2)} G${m.p3s != null ? `, 3+ SOG ${prob(m.p3s)}` : ''}${m.p1g != null ? `, 1+ G ${prob(m.p1g)}` : ''}${m.gateOpen === false ? ' (gate closed)' : ''}` : '';
+  const modelText = m ? ` · model: ${num(m.sog)} SOG, ${num(m.g, 2)} G${m.p3s != null ? `, 3+ SOG ${prob(m.p3s)}` : ''}${m.p1g != null ? `, 1+ G ${prob(m.p1g)}` : ''}${m.gateOpen === false ? ' (gate closed)' : ''}${m.fire ? ' · ON FIRE (1+ point ≥ 50%, 2.0+ iSCF/G, 16+ min)' : ''}` : '';
   // Finished game: the box score at the logged position, with the projection kept in the title.
   const result = played ? (actual ? ` · played: ${actual.sog} SOG, ${actual.g} G, ${actual.a} A in ${num(actual.toi)} min` : ' · did not play') : '';
   const title = `${p.name} · ${p.pos}${p.line ? ` L${p.line}` : ''} · ${p.gp || 0} GP · ${num(p.sog)} SOG/G, ${num(p.g, 2)} G/G${modelText}${p.projSog != null ? ` · matchup read ${num(p.projSog)} SOG, ${num(p.projG, 2)} G` : ''}${result}`
@@ -154,7 +154,7 @@ function Chip({ p, x, y, minGp, actual, played }) {
         <i className="nhlx-rk-num">{p.number ?? p.pos}</i>
       </span>
       <span className="nhlx-rk-meta">
-        <b className="nhlx-rk-name">{shortName(p.name)}</b>
+        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{shortName(p.name)}</b>
         {played ? (actual
           ? <span className={`nhlx-rk-stat is-actual${(m?.sog ?? p.projSog) != null && actual.sog >= (m?.sog ?? p.projSog) ? ' is-over' : ''}`}><em>{actual.sog}</em> SOG · <em>{actual.g}</em> G{actual.a ? <> · <em>{actual.a}</em> A</> : null}{m?.sog != null ? <i> m {num(m.sog)}</i> : p.projSog != null ? <i> p {num(p.projSog)}</i> : null}</span>
           : <span className="nhlx-rk-stat">did not play</span>)
@@ -258,6 +258,7 @@ export function RinkLegend() {
       <span><i className="is-mid" /> neutral</span>
       <span><i className="is-tough" /> stingy: bottom third</span>
       <span>on each player: the model’s projected SOG and goals from the latest saved run for this slate (3+ SOG and 1+ G odds in the tooltip), or a matchup read when no run exists; once the game is final, the actual shots, goals and assists with the model’s number after “m”; click for the player card</span>
+      <span>🔥 on fire, by the model’s rule: 1+ point at 50% or better, 2.0+ scoring chances per game, 16+ minutes</span>
     </p>
   );
 }

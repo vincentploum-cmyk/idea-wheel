@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import * as XLSX from "xlsx";
-import { TEAM_LOGO_ABBR, TEAM_SHORT, buildProjections, clamp, normShort, normTeam, normalizeName, normalizePlayerName, parseBoxScoresWorkbook, parseHistoricalProfiles, parseLineups, parseMatchups, parsePaceWorkbook, parsePlayerHomeAway, parseRankingsFile, poissonAtLeast, summarizeRun } from "./model-core";
+import { TEAM_LOGO_ABBR, TEAM_SHORT, buildProjections, clamp, isOnFire, normShort, normTeam, normalizeName, normalizePlayerName, parseBoxScoresWorkbook, parseHistoricalProfiles, parseLineups, parseMatchups, parsePaceWorkbook, parsePlayerHomeAway, parseRankingsFile, poissonAtLeast, summarizeRun } from "./model-core";
 export { summarizeRun };
 
 
@@ -1876,7 +1876,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                       <ProbCell p={r.p5s} hist={r.hist.s5} highlight={sortCol === "p5s"} onHover={showTip} onLeave={hideTip} prop="p5s" />
                       <ProbCell p={r.p1p} hist={null} highlight={sortCol === "p1p"} onHover={showTip} onLeave={hideTip} prop="p1p" />
                       <ProbCell p={r.p2p} hist={null} highlight={sortCol === "p2p"} onHover={showTip} onLeave={hideTip} prop="p2p" />
-                      <ProbCell p={r.p1g} hist={r.hist.g1} highlight={sortCol === "p1g"} onHover={showTip} onLeave={hideTip} prop="p1g" fire={r.p1p >= 0.50 && (r.playerIscf ?? 0) >= 2.0 && (r.effectiveToi ?? r.playerToi) >= 16} />
+                      <ProbCell p={r.p1g} hist={r.hist.g1} highlight={sortCol === "p1g"} onHover={showTip} onLeave={hideTip} prop="p1g" fire={isOnFire(r)} />
                       <ProbCell p={r.p2g} hist={r.hist.g2} highlight={sortCol === "p2g"} onHover={showTip} onLeave={hideTip} prop="p2g" />
                       <ProbCell p={r.p3g} hist={null} highlight={sortCol === "p3g"} onHover={showTip} onLeave={hideTip} />
                     </tr>

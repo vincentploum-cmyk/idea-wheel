@@ -507,6 +507,16 @@ function summarizeRecentVenueForm(games) {
   return { n, s3, s4, s5, p1, g1, tag };
 }
 
+/**
+ * The model's "on fire" flame on a result row: a 1+ point probability of at least 50%,
+ * 2.0+ individual scoring chances per game this season, and 16+ minutes of (effective) ice time.
+ */
+const ON_FIRE = { p1p: 0.5, iscf: 2.0, toi: 16 };
+function isOnFire(r) {
+  if (!r) return false;
+  return (r.p1p ?? 0) >= ON_FIRE.p1p && (r.playerIscf ?? 0) >= ON_FIRE.iscf && (r.effectiveToi ?? r.playerToi ?? 0) >= ON_FIRE.toi;
+}
+
 function buildVenueTrendImpact(form) {
   if (!form || !form.n) return { shotMult: 1, pointMult: 1, goalMult: 1, label: "Neutral", reason: "No venue sample" };
   let shotMult = 1;
@@ -6084,6 +6094,7 @@ export {
   safeRatio,
   scorerTierInfo,
   shotTierFromLeak,
+  isOnFire,
   summarizeRecentVenueForm,
   summarizeRun,
   weightedAverage,
