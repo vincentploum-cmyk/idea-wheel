@@ -1024,11 +1024,13 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-pfd-table tr.is-muted td { opacity: 0.45; }
 .nhlx-pfd-val { display: block; font-weight: 600; line-height: 1.2; }
 .nhlx-pfd-rank { display: inline-block; margin-top: 2px; padding: 0 5px; border-radius: 4px; font-size: 10.5px; line-height: 15px; font-weight: 600; background: color-mix(in oklab, var(--heading) 8%, transparent); color: var(--muted); }
-.nhlx-pfd-table td.is-soft { background: color-mix(in oklab, var(--ok-bg) 60%, transparent); color: var(--heading); }
-.nhlx-pfd-table td.is-tough { background: color-mix(in oklab, var(--bad-bg) 60%, transparent); color: var(--heading); }
-.nhlx-pfd-table td.is-soft .nhlx-pfd-rank { background: var(--ok-bg); color: var(--ok-fg); }
-.nhlx-pfd-table td.is-tough .nhlx-pfd-rank { background: var(--bad-bg); color: var(--bad-fg); }
-.nhlx-pfd-table td.is-mid .nhlx-pfd-rank { background: var(--warn-bg); color: var(--warn-fg); }
+/* Cell fills read like PropFinder's: a clear green / amber / red wash behind the value, the rank chip a step stronger. */
+.nhlx-pfd-table td.is-soft { background: color-mix(in oklab, var(--ok-fg) 26%, var(--bg)); color: var(--heading); }
+.nhlx-pfd-table td.is-tough { background: color-mix(in oklab, var(--bad-fg) 26%, var(--bg)); color: var(--heading); }
+.nhlx-pfd-table td.is-mid { background: color-mix(in oklab, var(--warn-fg) 16%, var(--bg)); color: var(--heading); }
+.nhlx-pfd-table td.is-soft .nhlx-pfd-rank { background: color-mix(in oklab, var(--ok-fg) 42%, var(--bg)); color: var(--heading); }
+.nhlx-pfd-table td.is-tough .nhlx-pfd-rank { background: color-mix(in oklab, var(--bad-fg) 42%, var(--bg)); color: var(--heading); }
+.nhlx-pfd-table td.is-mid .nhlx-pfd-rank { background: color-mix(in oklab, var(--warn-fg) 34%, var(--bg)); color: var(--heading); }
 .nhlx-rk { position: relative; aspect-ratio: 85 / 200; }
 .nhlx-rk-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .nhlx-rk-ice { fill: var(--bg-soft); }
