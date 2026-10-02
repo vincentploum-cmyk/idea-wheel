@@ -8,6 +8,7 @@ import { teamLogo, slotLabel } from './run-summary';
 import AutomationPanel from './AutomationPanel';
 import DatabasePanel from './DatabasePanel';
 import MatchupsPanel from './MatchupsPanel';
+import FirstGoalPanel from './FirstGoalPanel';
 import LeaguePanel from './LeaguePanel';
 import { PlayerCardHost } from './PlayerCard';
 import ThemeToggle from './ThemeToggle';
@@ -15,6 +16,7 @@ import ThemeToggle from './ThemeToggle';
 const TABS = [
   ['teams', 'Teams & players'],
   ['matchups', 'Matchups'],
+  ['firstgoal', '1st goal'],
   ['model', 'Best bets'],
   ['league', 'League'],
   ['history', 'Run history'],
@@ -301,6 +303,15 @@ export default function NhlApp({ email }) {
             <h2 className="nhlx-h2">Matchups by <span>position</span></h2>
             <p className="nhlx-lede">Who is shooting into a soft spot tonight: every skater’s lineup position against what the opposing defense allows to that position at this venue.</p>
             <div style={{ marginTop: 28 }}>{mounted('matchups') && <MatchupsPanel />}</div>
+          </div>
+        </section>
+
+        <section className="nhlx-section nhlx-tabpanel" id="firstgoal" role="tabpanel" aria-labelledby="tab-firstgoal" hidden={tab !== 'firstgoal'}>
+          <div className="nhlx-wrap">
+            <span className="nhlx-eyebrow">Tonight</span>
+            <h2 className="nhlx-h2">First <span>goal</span></h2>
+            <p className="nhlx-lede">Who scores a game’s first goal: each skater’s own first-goal record, what the opponent gives up to his position and line at this venue, his head-to-head record, and the model’s 1+ goal odds.</p>
+            <div style={{ marginTop: 28 }}>{mounted('firstgoal') && <FirstGoalPanel />}</div>
           </div>
         </section>
 
