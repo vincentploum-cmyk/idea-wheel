@@ -193,6 +193,8 @@ export default function MatchupsPanel() {
   const [busy, setBusy] = useState(false);
   const [pos, setPos] = useState('');
   const [minGp, setMinGp] = useState(5);
+  // One game from the dropdown at the top, or '' for the whole slate (reset on every date change).
+  const [gameId, setGameId] = useState('');
 
   const load = useCallback((d) => fetch(`/api/nhl/data/slate${d ? `?date=${d}` : ''}`, { cache: 'no-store' })
     .then(async (res) => {
@@ -200,7 +202,7 @@ export default function MatchupsPanel() {
       if (!res.ok) throw new Error(j.detail || j.error || `${res.status}`);
       return j;
     })
-    .then((j) => { setSlate(j); setDate(j.date); setErr(''); })
+    .then((j) => { setSlate(j); setDate(j.date); setErr(''); setGameId(''); })
     .catch((e) => setErr(`Couldn’t load the slate: ${e.message}`))
     .finally(() => setBusy(false)), []);
   useEffect(() => { load(''); }, [load]);
@@ -234,13 +236,13 @@ export default function MatchupsPanel() {
 
   const filtered = useMemo(() => {
     if (!slate) return [];
-    return slate.games.map((g) => ({
+    return slate.games.filter((g) => !gameId || String(g.id) === gameId).map((g) => ({
       ...g,
       // The rinks show every skater and dim the rest; the tables filter.
       rinkSides: g.sides,
       sides: g.sides.map((s) => ({ ...s, skaters: s.skaters.filter((p) => (!pos || p.pos === pos) && (p.gp || 0) >= minGp) })),
     }));
-  }, [slate, pos, minGp]);
+  }, [slate, pos, minGp, gameId]);
 
   const pretty = date ? new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' }) : '';
 
@@ -254,6 +256,12 @@ export default function MatchupsPanel() {
           </div>
         </div>
         <div className="nhlx-auto-actions">
+          <select className="nhlx-input nhlx-input-sm nhlx-mu-gamepick" value={gameId} onChange={(e) => { setGameId(e.target.value); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Game" disabled={!slate?.games?.length}>
+            <option value="">All games{slate?.games?.length ? ` (${slate.games.length})` : ''}</option>
+            {(slate?.games || []).map((g) => (
+              <option key={g.id} value={String(g.id)}>{g.away} @ {g.home}{g.log?.score ? ` · final ${g.log.score.away}–${g.log.score.home}` : g.startTimeUTC ? ` · ${fmtTime(g.startTimeUTC)}` : ''}</option>
+            ))}
+          </select>
           <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !date} onClick={() => shift(-1)} aria-label="Previous day">‹</button>
           <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && pickDate(e.target.value)} aria-label="Slate date" />
           <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !date} onClick={() => shift(1)} aria-label="Next day">›</button>
@@ -272,6 +280,7 @@ export default function MatchupsPanel() {
       {err && <div className="nhlx-alert">⚠ {err}</div>}
       {!slate && !err && <div className="nhlx-empty">Loading tonight’s matchups…</div>}
       {slate && !slate.games.length && <div className="nhlx-empty">No games on this date.</div>}
+      {slate && slate.games.length > 0 && !filtered.length && <div className="nhlx-empty">That game is no longer on this slate.</div>}
 
       {slate && slate.games.length > 0 && (
         <>
