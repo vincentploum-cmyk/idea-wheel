@@ -43,7 +43,11 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   (`settleGdtPages`). The stored skater rows carry the position plus its source (`posSrc`,
   `boxPos`) and the line slot (`line`: forward line 1-4 or defense pair 1-3, null for a
   box-score position), so results are logged per line (LW1, LW2, LW3 …; `defenseBySlot` in
-  `lib/nhl-data/defense.js`, `slots` in `/api/nhl/data/defense`). The
+  `lib/nhl-data/defense.js`, `slots` in `/api/nhl/data/defense`). Each game record carries its
+  first goal (`firstGoal`, scorer's row flagged `fg`; shootouts excluded) and `firstGoalsAllowed`
+  reads first goals given up per defending team by venue, position and line slot (the defense
+  card's "1st goal" column, `firstGoals` in the defense API); games logged without it get it
+  from the play-by-play via `stampFirstGoals` (`ingestGames` with nothing new, `?only=firstgoals`). The
   Matchups tab (`lib/nhl-data/slate.js`; each game drawn as two rinks in
   `components/nhl/Rink.jsx`, ice bands tinted by the opponent's SOG-allowed rank per position
   for the window picked above the rink — home / away / L5 / L10 / L5 home / L5 away, defaulting to
