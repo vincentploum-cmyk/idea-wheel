@@ -844,6 +844,8 @@ td.is-soft i, td.is-tough i { color: inherit; opacity: 0.8; }
 .nhlx-rk-head > div > small { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; }
 .nhlx-rk-toggle { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; }
 .nhlx-rk-toggle > small { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.nhlx-rk-toggle { flex-wrap: wrap; }
+.nhlx-rk-toggle-note { color: var(--muted); font-size: 12px; }
 .nhlx-rk-tabs { margin-bottom: 0; }
 .nhlx-rk-tabs .nhlx-tab { padding: 4px 10px; font-size: 12.5px; }
 .nhlx-rk-tabs .nhlx-tab i { font-style: normal; margin-left: 3px; color: var(--primary); }

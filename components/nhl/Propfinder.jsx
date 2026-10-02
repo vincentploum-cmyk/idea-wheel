@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Headshot, TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { MpCell } from './MoneyPuck';
-import { SKATER_COLS, TEAM_COLS, seasonLabel } from '@/lib/nhl-data/propfinder-csv';
+import { SKATER_COLS, TEAM_COLS, seasonLabel, defaultDefenseTab } from '@/lib/nhl-data/propfinder-csv';
 import { teamName } from '@/lib/nhl-data/teams';
 
 const num = (v, d) => (v == null ? '—' : Number(v).toFixed(d));
@@ -228,14 +228,18 @@ const DEF_POS = ['All', 'C', 'LW', 'RW', 'D'];
  * (or in total) to every position, one tab per season / recent-games window (L10 selected,
  * else the current season), each cell carrying PropFinder's league rank; a column header sorts
  * the position rows (All stays on top). `data` is a slate side's `propfinder`.
+ * With `tabKey` / `onTabChange` the rink owns the selected tab (when the table tints the ice);
+ * `drivesRink` says so in the head.
  */
-export function PropfinderDefense({ abbr, data, posFilter = '' }) {
+export function PropfinderDefense({ abbr, data, posFilter = '', tabKey: controlledKey = undefined, onTabChange = null, drivesRink = false }) {
   const tabs = data?.tabs || [];
-  const [tabKey, setTabKey] = useState(null);
+  const [ownKey, setOwnKey] = useState(null);
   const [total, setTotal] = useState(false);
   const [sort, setSort] = useState(null);
+  const tabKey = controlledKey === undefined ? ownKey : controlledKey;
+  const setTabKey = (k) => { setOwnKey(k); if (onTabChange) onTabChange(k); };
   // Last 10 games by default (the window that reads a defense's current form), then the latest season.
-  const tab = tabs.find((t) => t.key === tabKey) || tabs.find((t) => t.key === 'l10') || [...tabs].reverse().find((t) => t.kind === 'season') || tabs[0];
+  const tab = tabs.find((t) => t.key === tabKey) || defaultDefenseTab(tabs);
   if (!tab) return null;
   const cols = data.cols.filter(([k]) => DEF_POS.some((pos) => tab.rows[pos]?.[k] != null));
   const n = tab.count;
@@ -257,6 +261,7 @@ export function PropfinderDefense({ abbr, data, posFilter = '' }) {
       <div className="nhlx-pfd-head" title={`What ${teamName(abbr) || abbr} allowed ${total ? 'in total' : 'per game'} to each position · ${when}${tab.rows.All?.gp ? ` · ${tab.rows.All.gp} GP` : ''} · rank 1 = most allowed of ${n} · data from PropFinder`}>
         <TeamLogo abbr={abbr} size={22} />
         <b>{teamName(abbr) || abbr} defense</b>
+        {drivesRink ? <span className="nhlx-chip nhlx-chip-blue" title="The selected tab tints the rink below">tints the rink</span> : null}
         <label className="nhlx-pfd-switch">
           <span className={total ? '' : 'is-on'}>Per game</span>
           <input type="checkbox" role="switch" checked={total} aria-checked={total} aria-label="Show totals instead of per game" onChange={(e) => setTotal(e.target.checked)} />

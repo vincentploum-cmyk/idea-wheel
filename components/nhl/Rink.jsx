@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { TeamLogo, headshotUrl } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { PropfinderDefense } from './Propfinder';
+import { defaultDefenseTab, defenseBandFromTab, defenseTabText } from '@/lib/nhl-data/propfinder-csv';
 
 // Tactical board: one team's whole lineup on a full vertical rink (85 × 200 ft,
 // attacking goal at the top). Forward lines stack in the attacking half with
@@ -174,16 +175,17 @@ function Chip({ p, x, y, minGp, actual, played }) {
 const WINDOWS = [['home', 'Home'], ['away', 'Away'], ['l5', 'L5'], ['l10', 'L10'], ['l5home', 'L5 home'], ['l5away', 'L5 away']];
 const WINDOW_TEXT = { home: 'at home', away: 'away', l5: 'over its last 5 games', l10: 'over its last 10 games', l5home: 'over its last 5 home games', l5away: 'over its last 5 away games' };
 
-function BandLabel({ pos, d, opp, view, teamCount, x, y }) {
+function BandLabel({ pos, d, opp, view, windowText = null, teamCount, x, y }) {
   const r = d?.rank || {};
   const s = d?.season;
   const n = d?.teamCount || teamCount;
   const tone = zoneTone(r.sog, n);
-  const from = d?.source === 'propfinder' ? ` · PropFinder ${d.seasonLabel} (last season, until ${opp} has enough stored games)` : ` · this season's stored games (${s?.gp ?? 0})`;
+  const when = windowText || WINDOW_TEXT[view];
+  const from = d?.source === 'propfinder' ? (d.window ? ` · PropFinder's table, ${d.window}` : ` · PropFinder ${d.seasonLabel} (last season, until ${opp} has enough stored games)`) : ` · this season's stored games (${s?.gp ?? 0})`;
   // First goals given up to this position (the season table at tonight's venue; the card's column has the same numbers).
   const fg = d?.firstGoal;
   const fgText = fg?.games ? ` · first goal given up to ${pos} in ${fg.allowed} of ${fg.games} games${fg.rank ? ` (#${fg.rank})` : ''}${Object.keys(fg.bySlot || {}).length ? `: ${Object.entries(fg.bySlot).sort((a, b) => b[1] - a[1]).map(([k, c]) => `${k} ×${c}`).join(', ')}` : ''}` : '';
-  const title = s?.gp ? `${opp} allows ${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'}) per game to ${pos} ${WINDOW_TEXT[view]} · rank 1 = most permissive of ${n}${from}${fgText}` : `No defense data for ${opp} ${WINDOW_TEXT[view]} yet`;
+  const title = s?.gp ? `${opp} allows ${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'}) per game to ${pos} ${when} · rank 1 = most permissive of ${n}${from}${fgText}` : `No defense data for ${opp} ${when} yet`;
   return (
     <div className={`nhlx-rk-zone is-${tone}`} style={{ left: `${x}%`, top: `${pct(y)}%` }} title={title}>
       <b>{pos}</b>{s?.gp ? <span>#{r.sog ?? '–'} SOG · #{r.g ?? '–'} G{d?.source === 'propfinder' ? <i title={`PropFinder ${d.seasonLabel}`}>PF</i> : null}</span> : <span>no data</span>}
@@ -209,12 +211,20 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
   const defaultView = side.venue === 'A' ? 'home' : 'away';
   const [view, setView] = useState(null);
   const v = view || defaultView;
-  const defAt = (pos) => side.defense?.[pos]?.windows?.[v] ?? (v === defaultView ? side.defense?.[pos] : null) ?? null;
+  // What tints the ice: our stored games (the window toggle) or the PropFinder table above
+  // (its selected tab, which the rink then owns).
+  const [tint, setTint] = useState('rink');
+  const [pfKey, setPfKey] = useState(null);
+  const pfTabs = side.propfinder?.tabs || [];
+  const pfTab = pfTabs.find((t) => t.key === pfKey) || defaultDefenseTab(pfTabs);
+  const fromPf = tint === 'propfinder' && !!pfTab;
+  const defAt = (pos) => (fromPf ? defenseBandFromTab(pfTab, pos) : side.defense?.[pos]?.windows?.[v] ?? (v === defaultView ? side.defense?.[pos] : null) ?? null);
+  const windowText = fromPf ? `over ${defenseTabText(pfTab)} (PropFinder)` : WINDOW_TEXT[v];
   const tones = Object.fromEntries(ZONES.map((z) => [z, posFilter && posFilter !== z ? 'none' : zoneTone(defAt(z)?.rank?.sog, defAt(z)?.teamCount || teamCount)]));
   const clipId = `rink-${side.team}-${side.opp}`;
   const open = usePlayerCard();
   return (
-    <section className="nhlx-rk-card" aria-label={`${side.team} lineup on the rink`} title={`${numSrc} Ice tinted by what ${side.opp} allows ${WINDOW_TEXT[v]} to each position (rank 1 = most permissive) · ${sourceText(side)}`}>
+    <section className="nhlx-rk-card" aria-label={`${side.team} lineup on the rink`} title={`${numSrc} Ice tinted by what ${side.opp} allows ${windowText} to each position (rank 1 = most permissive) · ${sourceText(side)}`}>
       <div className="nhlx-rk-head">
         <TeamLogo abbr={side.team} size={28} />
         <div>
@@ -222,21 +232,32 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
           {/* The chips' source and the lines' source stay in the title attribute: the head shows only the team. */}
         </div>
       </div>
-      {side.propfinder ? <PropfinderDefense abbr={side.opp} data={side.propfinder} posFilter={posFilter} /> : null}
+      {side.propfinder ? <PropfinderDefense abbr={side.opp} data={side.propfinder} posFilter={posFilter} tabKey={pfTab?.key ?? null} onTabChange={setPfKey} drivesRink={fromPf} /> : null}
       <div className="nhlx-rk-toggle">
-        <small>{side.opp} allows</small>
-        <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label={`Window of ${side.opp}'s defense`}>
-          {WINDOWS.map(([k, l]) => (
-            <button key={k} type="button" role="tab" aria-selected={v === k} className={`nhlx-tab${v === k ? ' is-active' : ''}`} onClick={() => setView(k)} title={k === defaultView ? `Tonight's venue for ${side.opp}` : undefined}>
-              {l}{k === defaultView ? <i aria-label="tonight's venue">•</i> : null}
-            </button>
-          ))}
+        <small>Tint from</small>
+        <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="What tints the rink">
+          <button type="button" role="tab" aria-selected={!fromPf} className={`nhlx-tab${!fromPf ? ' is-active' : ''}`} onClick={() => setTint('rink')} title="Our stored box scores, by the window on the right">Rink</button>
+          <button type="button" role="tab" aria-selected={fromPf} disabled={!pfTab} className={`nhlx-tab${fromPf ? ' is-active' : ''}`} onClick={() => setTint('propfinder')} title={pfTab ? 'PropFinder\'s table above: its selected tab tints the rink' : 'No PropFinder table for this opponent'}>PropFinder</button>
         </div>
+        {fromPf ? (
+          <small className="nhlx-rk-toggle-note">{side.opp} allows over {defenseTabText(pfTab)} · pick a tab in the table above</small>
+        ) : (
+          <>
+            <small>{side.opp} allows</small>
+            <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label={`Window of ${side.opp}'s defense`}>
+              {WINDOWS.map(([k, l]) => (
+                <button key={k} type="button" role="tab" aria-selected={v === k} className={`nhlx-tab${v === k ? ' is-active' : ''}`} onClick={() => setView(k)} title={k === defaultView ? `Tonight's venue for ${side.opp}` : undefined}>
+                  {l}{k === defaultView ? <i aria-label="tonight's venue">•</i> : null}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
       <div className={`nhlx-rk${posFilter ? ` is-filter-${posFilter.toLowerCase()}` : ''}`}>
         <RinkMarkings clipId={clipId} tones={tones} />
-        {F_POS.map((z) => <BandLabel key={z} pos={z} d={defAt(z)} opp={side.opp} view={v} teamCount={teamCount} x={F_X[z]} y={6} />)}
-        <BandLabel pos="D" d={defAt('D')} opp={side.opp} view={v} teamCount={teamCount} x={50} y={100} />
+        {F_POS.map((z) => <BandLabel key={z} pos={z} d={defAt(z)} opp={side.opp} view={v} windowText={windowText} teamCount={teamCount} x={F_X[z]} y={6} />)}
+        <BandLabel pos="D" d={defAt('D')} opp={side.opp} view={v} windowText={windowText} teamCount={teamCount} x={50} y={100} />
         {F_Y.map((y, i) => <div key={`l${i}`} className="nhlx-rk-tag" style={{ top: `${pct(y - 8.3)}%` }}>Line {i + 1}</div>)}
         {D_Y.map((y, i) => <div key={`d${i}`} className="nhlx-rk-tag" style={{ top: `${pct(y - 8.3)}%` }}>Pair {i + 1}</div>)}
         {placed.map(({ p, x, y }) => <Chip key={`${p.team}-${p.name}`} p={p} x={x} y={y} minGp={minGp} played={!!actual} actual={actualFor(p)} />)}

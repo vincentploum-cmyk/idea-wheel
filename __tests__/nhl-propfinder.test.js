@@ -3,6 +3,7 @@ import { inspectPropfinderCsv, parsePlayerCell, parseRanked, parseStatsCsv, stat
 import { nameResolver } from '../lib/nhl-data/names';
 import { PROPFINDER_SEED } from '../lib/nhl-data/seed/propfinder-2025';
 import { seedSnapshots, propfinderDefenseTabs } from '../lib/nhl-data/propfinder';
+import { defaultDefenseTab, defenseBandFromTab, defenseTabText } from '../lib/nhl-data/propfinder-csv';
 
 const SKATERS = `Position,All
 Strength,All
@@ -168,6 +169,20 @@ describe('propfinder defense tabs (the table above each rink)', () => {
     const l10 = d.tabs[1];
     expect(l10).toMatchObject({ label: 'L10', kind: 'window', windowGames: 10, split: null });
     expect(l10.rows.D.ranks.sog).toBe(pf.opponentsByPosWindow.l10.D.ranks.LAK.sog);
+  });
+  test('a tab becomes a rink band per position, in the slate window shape', () => {
+    const d = propfinderDefenseTabs(pf, 'LAK');
+    expect(defaultDefenseTab(d.tabs).key).toBe('l10');
+    expect(defaultDefenseTab([d.tabs[0]]).key).toBe('season-2025');
+    expect(defaultDefenseTab([])).toBeNull();
+    expect(defenseTabText(d.tabs[0])).toBe('the 2025 season');
+    expect(defenseTabText(d.tabs[1])).toBe('the last 10 games');
+    const band = defenseBandFromTab(d.tabs[1], 'D');
+    expect(band).toMatchObject({ source: 'propfinder', seasonLabel: 'L10', window: 'the last 10 games', teamCount: 32 });
+    expect(band.season.sog).toBe(pf.opponentsByPosWindow.l10.D.teams.LAK.sog);
+    expect(band.rank.sog).toBe(pf.opponentsByPosWindow.l10.D.ranks.LAK.sog);
+    expect(defenseBandFromTab(d.tabs[1], 'XX')).toBeNull();
+    expect(defenseBandFromTab(null, 'D')).toBeNull();
   });
   test('last season comes first as its own tab when this season differs', () => {
     const prev = { opponents: { ...pf.opponents, season: 2024 }, opponentsByPos: {} };
