@@ -83,7 +83,9 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   the Matchups tab's "Refresh lines" button does the same on demand and each rink shows when
   its source last changed. After every lineup capture (and every matchup-file import for a
   coming slate) `lib/nhl-data/autorun.js` runs the model on the server with the stored
-  PropFinder workbooks + snapshot lineups + built history/home-away inputs and saves the run
+  PropFinder workbooks + snapshot lineups + built history/home-away inputs + the pace workbook built from
+  MoneyPuck's team pace (`buildPace` in `lib/nhl-data/build.js`: CF+CA per 60 written per rostered skater in the
+  pace export's layout, so the model's pace parser reads it unchanged; also the Model tab's auto Pace slot) and saves the run
   (source "auto", deduped by autoKey); the rink shows that run. The model's pure pipeline
   (parsers + `buildProjections`) lives in `components/nhl/model-core.js` so the server can import
   it; `NhlModel.jsx` keeps the UI and imports from it. Port logic changes into model-core.js.

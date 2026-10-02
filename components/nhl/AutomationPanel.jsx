@@ -9,6 +9,7 @@ export const AUTO_SLOTS = [
   { key: 'lineups', label: 'Lineups', source: 'NHL.com game previews' },
   { key: 'hist', label: 'Historical profiles', source: 'NHL API box scores' },
   { key: 'playerStats', label: 'Home / away stats', source: 'NHL API play-by-play' },
+  { key: 'pace', label: 'Pace', source: 'MoneyPuck team pace (attempts for + against per 60)' },
   { key: 'rankings', label: 'Defense rankings', source: 'PropFinder defense blocks' },
   { key: 'boxScores', label: 'Box scores', source: 'NHL API (after games end)' },
 ];
@@ -28,6 +29,7 @@ function slotDetail(key, v) {
   }
   if (key === 'boxScores') return `${v.games} games · ${fmt(v.fetchedAt)}`;
   if (key === 'rankings') return `${v.teams} teams · ${fmt(v.updatedAt)}`;
+  if (key === 'pace') return `${v.teams} teams · MoneyPuck ${v.year ? `${v.year}-${String(v.year + 1).slice(2)}` : ''} · ${fmt(v.updatedAt)}`;
   return `through ${v.asOf}`;
 }
 
@@ -299,7 +301,7 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
     ? new Date(`${date || status.date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })
     : '';
 
-  const auto = ['lineups', 'hist', 'playerStats', 'rankings'];
+  const auto = ['lineups', 'hist', 'playerStats', 'pace', 'rankings'];
   const autoReady = auto.filter((k) => slots[k] && (k !== 'lineups' || slots[k].complete)).length;
   const lineupState = !slots.lineups ? 'No projected lineups yet (NHL.com posts them on game-day morning).'
     : slots.lineups.complete ? `${slots.lineups.games}/${slots.lineups.of} games have a projected lineup.`
