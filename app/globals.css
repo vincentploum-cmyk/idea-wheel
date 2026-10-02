@@ -678,6 +678,8 @@ p { margin: 0; }
 .nhlx-mu-verdict li::marker { color: var(--muted); }
 .nhlx-mu-verdict li.is-soft::marker { color: var(--ok-fg); }
 .nhlx-mu-verdict li.is-tough::marker { color: var(--bad-fg); }
+.nhlx-mu-total { margin-top: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.nhlx-mu-total > small { display: block; margin-top: 6px; }
 .nhlx-mu-side { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
 .nhlx-mu-side-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--heading); }
 .nhlx-mu-side-head small { color: var(--muted); font-size: 13px; }

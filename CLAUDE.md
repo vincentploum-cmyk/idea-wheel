@@ -57,7 +57,9 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   All/C/LW/RW/D rows, season tabs then L5 / L10 / L15, per game or total, PropFinder's ranks, sortable),
   chips carrying the latest saved model run's λ shots / goals for the slate date from
   `lib/nhl-data/model-runs.js`, or a matchup read when no run exists; finished games show the
-  box score) and the per-team defense card
+  box score; above each game's team verdicts a game-total read, `gameTotalRead` in
+  `lib/nhl-data/verdict.js`: the stored meetings' totals blended with MoneyPuck's expected
+  goals and pace, high / low half a goal either side of the league average) and the per-team defense card
   (`lib/nhl-data/defense.js`) are descriptive views over the stored rows; the model's
   own math stays in `NhlModel.jsx`. Logos/headshots are copied into `data/media/*` and
   served by `/api/nhl/data/media`; standings/leaders live in `data/league/*`.
