@@ -58,7 +58,7 @@ export async function GET(request) {
     try { gamesToday = (await fetchSchedule(today, { quick: true })).length; } catch {}
   }
   const withLineup = (lineups?.games || []).filter((g) => g.rows?.length).length;
-  const frozen = Object.values(positions?.games || {}).filter((g) => g.frozen).length;
+  const captured = Object.keys(positions?.games || {}).length;
 
   const steps = {
     rosters: {
@@ -88,7 +88,7 @@ export async function GET(request) {
     },
     today: {
       done: gamesToday === 0 || (withLineup === gamesToday && withLineup > 0),
-      games: gamesToday, withLineup, frozen, lastRefresh: refresh?.ranAt || null,
+      games: gamesToday, withLineup, captured, capturedAt: positions?.updatedAt || null, lastRefresh: refresh?.ranAt || null,
     },
     propfinder: {
       done: gamesToday === 0 || !!(slate?.files?.season && slate?.files?.l5),

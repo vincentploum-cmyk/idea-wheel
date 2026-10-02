@@ -98,6 +98,25 @@ describe('line parsing', () => {
     expect(lines.defense).toHaveLength(2);
     expect(lines.defense[1].map((p) => p.name)).toEqual(['Oliver Ekman-Larsson', 'Troy Stecher']);
   });
+  test('latestTeamLines with a cutoff answers for the game, not the next practice', () => {
+    // Sep 29 game at 23:00Z: the Sep 30 practice tweet (17:56Z) is after the game; the warm-ups tweet (23:37Z, inside the window) wins.
+    const got = latestTeamLines(NYR_PAGE, NYR, { since: '2026-09-28', until: '2026-09-30T03:00:00.000Z' });
+    expect(got.meta).toMatchObject({ handle: 'Peter_Baugh', date: '2026-09-29' });
+    expect(got.players['gabe perreault']).toMatchObject({ pos: 'LW', line: 1 });
+    expect(got.players['oliver bjorkstrand']).toMatchObject({ pos: 'LW', line: 2 });
+    // A cutoff before the warm-ups: nothing usable in the window (the Sep 28 tweet is power play only).
+    expect(latestTeamLines(NYR_PAGE, NYR, { since: '2026-09-28', until: '2026-09-29T20:00:00.000Z' })).toBeNull();
+    // Without a cutoff the newest tweet still wins.
+    expect(latestTeamLines(NYR_PAGE, NYR, { since: '2026-09-28' }).meta.date).toBe('2026-09-30');
+  });
+  test("gdtCutoffs: a team's tweets count until four hours after its game starts", () => {
+    const { gdtCutoffs } = require('../lib/nhl-data/ingest');
+    const c = gdtCutoffs([{ away: 'NYR', home: 'NJD', startTimeUTC: '2026-09-29T23:00:00Z' }, { away: 'BOS', home: 'MTL' }]);
+    expect(c.NYR).toBe('2026-09-30T03:00:00.000Z');
+    expect(c.NJD).toBe(c.NYR);
+    expect(c.BOS).toBeNull();
+    expect(c.TOR).toBeUndefined();
+  });
   test('latestTeamLines skips power-play tweets and respects the date floor', () => {
     const got = latestTeamLines(NYR_PAGE, NYR, { since: '2026-09-29' });
     expect(got).toMatchObject({ forwards: 4, pairs: 4, meta: { handle: 'ColinSNewsday', date: '2026-09-30', source: 'gamedaytweets' } });

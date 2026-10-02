@@ -114,8 +114,8 @@ function PositionLog({ game }) {
     <details className="nhlx-db-details nhlx-poslog">
       <summary>Position log · final {game.away} {game.log.score.away} – {game.home} {game.log.score.home}</summary>
       <p className="nhlx-auto-meta">
-        Each row is one skater in this game at the position and line slot he was frozen at before puck drop (LW1 … RW4, D1 … D3); his shots and goals count against the opponent’s
-        <b> {rows[0]?.bucket.venue === 'H' ? 'home' : 'away'}</b> defense for that position, and are logged per line. {lineup}/{rows.length} positions came from the projected lineup{lineup < rows.length ? `, ${rows.length - lineup} from the box-score roster code (no line)` : ''}.
+        Each row is one skater in this game at the position and line slot the latest lineup read gives him (LW1 … RW4, D1 … D3; a read after the game still corrects it); his shots and goals count against the opponent’s
+        <b> {rows[0]?.bucket.venue === 'H' ? 'home' : 'away'}</b> defense for that position, and are logged per line. {lineup}/{rows.length} positions came from the lineup{lineup < rows.length ? `, ${rows.length - lineup} from the box-score roster code (no line)` : ''}.
       </p>
       <div className="nhlx-tabs" role="tablist">
         {[game.away, game.home].map((t) => (
@@ -125,7 +125,7 @@ function PositionLog({ game }) {
       <div className="nhlx-db-table-wrap">
         <table className="nhlx-db-table nhlx-mu-table">
           <thead>
-            <tr><th>Player</th><th title="Line slot frozen before the game: forward line 1–4, defense pair 1–3">Line</th><th title="Position frozen before the game">Pos</th><th title="Position code in the NHL box score">Box</th><th>Source</th><th>TOI</th><th>G</th><th>A</th><th>SOG</th><th>iCF</th><th>iSCF</th><th>Counts against</th></tr>
+            <tr><th>Player</th><th title="Line slot from the lineup read for the game: forward line 1–4, defense pair 1–3">Line</th><th title="Position from the lineup read for the game">Pos</th><th title="Position code in the NHL box score">Box</th><th>Source</th><th>TOI</th><th>G</th><th>A</th><th>SOG</th><th>iCF</th><th>iSCF</th><th>Counts against</th></tr>
           </thead>
           <tbody>
             {rows.map((s) => (
@@ -199,7 +199,7 @@ export default function MatchupsPanel() {
       const j = await res.json();
       if (!res.ok || !j.ok) throw new Error(j.error || j.reason || `${res.status}`);
       const r = j.result || {};
-      setLineMsg(`Lines updated at ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })} ET: ${r.gamedaytweets ?? 0} team${r.gamedaytweets === 1 ? '' : 's'} from GameDayTweets, ${r.withLineups ?? 0} of ${r.scheduled ?? 0} games with an NHL.com lineup${r.positions?.frozen ? `, ${r.positions.frozen} game${r.positions.frozen === 1 ? '' : 's'} frozen` : ''}. ${r.model?.ran ? `Model run saved (${r.model.players} players).` : r.model?.skipped ? `Model not re-run: ${r.model.skipped}.` : r.model?.error ? `Model run failed: ${r.model.error}.` : ''} Each rink says when its source last changed.`);
+      setLineMsg(`Lines updated at ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })} ET: ${r.gamedaytweets ?? 0} team${r.gamedaytweets === 1 ? '' : 's'} from GameDayTweets, ${r.withLineups ?? 0} of ${r.scheduled ?? 0} games with an NHL.com lineup${r.restamp?.changed ? `, ${r.restamp.changed} logged position${r.restamp.changed === 1 ? '' : 's'} corrected` : ''}. ${r.model?.ran ? `Model run saved (${r.model.players} players).` : r.model?.skipped ? `Model not re-run: ${r.model.skipped}.` : r.model?.error ? `Model run failed: ${r.model.error}.` : ''} Each rink says when its source last changed.`);
       await load(date);
     } catch (e) {
       setLineMsg(`Couldn’t update the lines: ${e.message}`);
@@ -232,7 +232,7 @@ export default function MatchupsPanel() {
         <div>
           <div className="nhlx-today-date">{pretty || 'Loading…'}</div>
           <div className="nhlx-auto-sub">
-            {slate ? `${slate.games.length} game${slate.games.length === 1 ? '' : 's'} · defense tables from ${slate.gamesStored} stored games · positions ${slate.games.some((g) => g.frozen) ? 'frozen pre-game' : 'from the projected lineups (frozen at puck drop)'}` : ''}
+            {slate ? `${slate.games.length} game${slate.games.length === 1 ? '' : 's'} · defense tables from ${slate.gamesStored} stored games · positions from the latest lineup read (re-read after the game)` : ''}
           </div>
         </div>
         <div className="nhlx-auto-actions">
@@ -267,7 +267,6 @@ export default function MatchupsPanel() {
                   {g.log?.score
                     ? <>Final · <b className="nhlx-mu-score">{g.away} {g.log.score.away} – {g.home} {g.log.score.home}</b>{g.startTimeUTC ? ` · ${fmtTime(g.startTimeUTC)}` : ''}</>
                     : fmtTime(g.startTimeUTC)}
-                  {g.frozen ? ' · positions frozen' : ''}
                 </small>
               </div>
               {g.verdicts && Object.values(g.verdicts).some(Boolean) && (

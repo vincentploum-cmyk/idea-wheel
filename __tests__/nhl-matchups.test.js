@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { parseLineupRows, applyFrozenPositions, frozenPos, fillFromLastLineup, lineupToRemember } from '../lib/nhl-data/positions';
+import { parseLineupRows, applyPositions, snapshotPos, fillFromLastLineup, lineupToRemember } from '../lib/nhl-data/positions';
 import { defenseByPosition, defenseBySlot, playerBaselines } from '../lib/nhl-data/defense';
 import { groupStandings, mapStandingRow, shotLeaders } from '../lib/nhl-data/league';
 import { scoreSkater } from '../lib/nhl-data/slate';
@@ -7,7 +7,7 @@ import { lineupRows } from '../lib/nhl-data/lineups';
 import { rowObj } from '../lib/nhl-data/ingest';
 import { PREVIEW_MD } from './fixtures/nhl';
 
-describe('frozen positions', () => {
+describe('lineup positions', () => {
   test('lineup rows become LW/C/RW by slot, D by pair, G', () => {
     const teams = parseLineupRows(lineupRows(PREVIEW_MD));
     expect(Object.keys(teams).sort()).toEqual(['ANA', 'OTT']);
@@ -21,14 +21,24 @@ describe('frozen positions', () => {
     expect(teams.ANA['frank vatrano']).toBeUndefined();
   });
 
-  test('a skater keeps the frozen position when the game is stored', () => {
+  test('a stored skater takes the snapshot position; a newer snapshot replaces it or hands back the box code', () => {
     const snap = { games: { 7: { teams: { OTT: { players: { 'brady tkachuk': { name: 'Brady Tkachuk', pos: 'LW', line: 1 } } } } } } };
-    expect(frozenPos(snap, 7, 'OTT', 'Brady Tkachuk')).toBe('LW');
-    expect(frozenPos(snap, 7, 'OTT', 'Nobody')).toBeNull();
+    expect(snapshotPos(snap, 7, 'OTT', 'Brady Tkachuk')).toBe('LW');
+    expect(snapshotPos(snap, 7, 'OTT', 'Nobody')).toBeNull();
     const games = [{ id: 7, skaters: [{ name: 'Brady Tkachuk', team: 'OTT', pos: 'C' }, { name: 'X', team: 'OTT', pos: 'D' }] }];
-    expect(applyFrozenPositions(games, snap)).toBe(1);
-    expect(games[0].skaters[0]).toMatchObject({ pos: 'LW', boxPos: 'C' });
-    expect(games[0].skaters[1].pos).toBe('D');
+    expect(applyPositions(games, snap)).toEqual({ applied: 1, changed: 2 });
+    expect(games[0].skaters[0]).toMatchObject({ pos: 'LW', line: 1, boxPos: 'C', posSource: 'lineup' });
+    expect(games[0].skaters[1]).toMatchObject({ pos: 'D', line: null, posSource: 'box' });
+    // The same snapshot again changes nothing.
+    expect(applyPositions(games, snap)).toEqual({ applied: 1, changed: 0 });
+    // A read after the game moved him to the second line at centre: the stored game follows.
+    const later = { games: { 7: { teams: { OTT: { players: { 'brady tkachuk': { name: 'Brady Tkachuk', pos: 'C', line: 2 }, x: { name: 'X', pos: 'D', line: 3 } } } } } } };
+    expect(applyPositions(games, later)).toEqual({ applied: 2, changed: 2 });
+    expect(games[0].skaters[0]).toMatchObject({ pos: 'C', line: 2, boxPos: 'C', posSource: 'lineup' });
+    expect(games[0].skaters[1]).toMatchObject({ pos: 'D', line: 3, posSource: 'lineup' });
+    // Dropped from the lineup altogether: back to the box-score code, no line.
+    expect(applyPositions(games, { games: { 7: { teams: { OTT: { players: {} } } } } })).toEqual({ applied: 0, changed: 2 });
+    expect(games[0].skaters[0]).toMatchObject({ pos: 'C', line: null, posSource: 'box' });
   });
 });
 
@@ -149,7 +159,7 @@ describe('player profile', () => {
 });
 
 describe('position sources', () => {
-  const { applyFrozenPositions } = require('../lib/nhl-data/positions');
+  const { applyPositions } = require('../lib/nhl-data/positions');
   const { toRow, rowObj } = require('../lib/nhl-data/ingest');
   test('applied positions are tagged lineup, the rest box, and rows carry both', () => {
     const snap = { games: { 9: { teams: { BOS: { players: { 'david pastrnak': { name: 'David Pastrnak', pos: 'LW', line: 1 } } } } } } };
@@ -157,7 +167,7 @@ describe('position sources', () => {
       { id: 1, name: 'David Pastrnak', team: 'BOS', opp: 'NYR', venue: 'H', pos: 'RW', sog: 5, g: 1, a: 0, toi: 18, hits: 0, blk: 0, icf: 7, iff: 6, isf: 5, iscf: 3, ihdcf: 1, result: 'W' },
       { id: 2, name: 'Charlie McAvoy', team: 'BOS', opp: 'NYR', venue: 'H', pos: 'D', sog: 2, g: 0, a: 1, toi: 22, hits: 0, blk: 0, icf: 3, iff: 3, isf: 2, iscf: 0, ihdcf: 0, result: 'W' },
     ] };
-    expect(applyFrozenPositions([game], snap)).toBe(1);
+    expect(applyPositions([game], snap).applied).toBe(1);
     expect(game.skaters[0]).toMatchObject({ pos: 'LW', boxPos: 'RW', posSource: 'lineup', line: 1 });
     expect(game.skaters[1]).toMatchObject({ pos: 'D', boxPos: 'D', posSource: 'box', line: null });
     const r = rowObj(toRow(game, game.skaters[0]));
@@ -168,17 +178,17 @@ describe('position sources', () => {
     expect(rowObj(toRow(game, game.skaters[1]).slice(0, 22)).line).toBeUndefined();
   });
   test('the line slot comes from the snapshot: forward line or defense pair, none for a box-score position', () => {
-    const { frozenSlot, slotLabel } = require('../lib/nhl-data/positions');
+    const { snapshotSlot, slotLabel } = require('../lib/nhl-data/positions');
     const snap = { games: { 9: { teams: { BOS: { players: {
       'david pastrnak': { name: 'David Pastrnak', pos: 'RW', line: 1 },
       'morgan geekie': { name: 'Morgan Geekie', pos: 'LW', line: 3 },
       'charlie mcavoy': { name: 'Charlie McAvoy', pos: 'D', line: 2 },
       'scratch guy': { name: 'Scratch Guy', pos: 'C', line: null, inLineup: false },
     } } } } } };
-    expect(frozenSlot(snap, 9, 'BOS', 'Morgan Geekie')).toEqual({ pos: 'LW', line: 3 });
-    expect(frozenSlot(snap, 9, 'BOS', 'Charlie McAvoy')).toEqual({ pos: 'D', line: 2 });
-    expect(frozenSlot(snap, 9, 'BOS', 'Scratch Guy')).toBeNull();
-    expect(frozenSlot(snap, 9, 'BOS', 'Nobody')).toBeNull();
+    expect(snapshotSlot(snap, 9, 'BOS', 'Morgan Geekie')).toEqual({ pos: 'LW', line: 3 });
+    expect(snapshotSlot(snap, 9, 'BOS', 'Charlie McAvoy')).toEqual({ pos: 'D', line: 2 });
+    expect(snapshotSlot(snap, 9, 'BOS', 'Scratch Guy')).toBeNull();
+    expect(snapshotSlot(snap, 9, 'BOS', 'Nobody')).toBeNull();
     expect(slotLabel('LW', 3)).toBe('LW3');
     expect(slotLabel('D', 2)).toBe('D2');
     expect(slotLabel('C', null)).toBeNull();

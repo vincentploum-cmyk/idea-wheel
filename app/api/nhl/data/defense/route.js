@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // Admin: what every team allows to each position, at home and away, and the same per
-// line slot (LW1 … RW4, D1 … D3) under `slots`, from the games logged with a frozen line.
+// line slot (LW1 … RW4, D1 … D3) under `slots`, from the games logged with a line.
 export async function GET(request) {
   const auth = await authorize(request);
   if (!auth.ok) return auth.response;

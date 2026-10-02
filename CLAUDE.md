@@ -32,12 +32,18 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   Matchups. The stored data (rosters, media, game history, league, MoneyPuck) is kept fresh by the
   morning run and shown, with repair buttons and the backfill, under Best bets → "Data sources"
   (`/api/nhl/data/setup`); there is no setup tab.
-  Positions are frozen per game before puck drop (`lib/nhl-data/positions.js`,
-  `data/positions/<date>.json`; games never snapshotted get the NHL.com preview at ingest)
-  and the stored skater rows carry that position plus its source (`posSrc`, `boxPos`) and the
-  frozen line slot (`line`: forward line 1-4 or defense pair 1-3, null for a box-score position),
-  so results are logged per line (LW1, LW2, LW3 …; `defenseBySlot` in `lib/nhl-data/defense.js`,
-  `slots` in `/api/nhl/data/defense`). The
+  Positions are captured per game from the newest lineup dated at or before it
+  (`lib/nhl-data/positions.js`, `data/positions/<date>.json`; nothing is frozen: every read
+  re-captures every game, a tweet posted more than 4 hours after puck drop belongs to the next
+  game (`gdtCutoffs`), and games never snapshotted get the NHL.com preview at ingest). Stored
+  box scores follow the latest read: `restampPositions` (after every lineup read, `ingestGames`
+  with nothing new, `?only=restamp`) rewrites the day's games and season rows when a position or
+  line changed; the morning run settles yesterday first (`ingestLineups(…, { settle: true })`,
+  `?only=settle`) and posted GameDayTweets pages also settle the previous day's games
+  (`settleGdtPages`). The stored skater rows carry the position plus its source (`posSrc`,
+  `boxPos`) and the line slot (`line`: forward line 1-4 or defense pair 1-3, null for a
+  box-score position), so results are logged per line (LW1, LW2, LW3 …; `defenseBySlot` in
+  `lib/nhl-data/defense.js`, `slots` in `/api/nhl/data/defense`). The
   Matchups tab (`lib/nhl-data/slate.js`; each game drawn as two rinks in
   `components/nhl/Rink.jsx`, ice bands tinted by the opponent's SOG-allowed rank per position
   for the window picked above the rink — home / away / L5 / L10 / L5 home / L5 away, defaulting to
@@ -67,7 +73,7 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   known lineup (`data/lineups/last/<ABBR>.json`, written from each team's own capture) with
   players still on the roster, marked `carried`; the slate does the same for a game with no snapshot.
   `nhl-lineups.yml` re-reads lineups twice an hour 12:23–23:53 ET for games starting within 150 minutes
-  (`only=lineups&due=150`), so every game is captured in its last hour and frozen at puck drop;
+  (`only=lineups&due=150`), so every game is captured in its last hour;
   the Matchups tab's "Refresh lines" button does the same on demand and each rink shows when
   its source last changed. After every lineup capture (and every matchup-file import for a
   coming slate) `lib/nhl-data/autorun.js` runs the model on the server with the stored

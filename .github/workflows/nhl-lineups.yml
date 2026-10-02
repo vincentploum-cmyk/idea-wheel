@@ -2,7 +2,7 @@ name: NHL lineups (pre-game)
 
 # Every hour through the game day, re-read the lines for games starting within
 # the next 150 minutes: the beat writers' tweets on GameDayTweets and NHL.com's
-# projected lineup. The newest wins, the last capture before puck drop is frozen.
+# projected lineup. The newest lines dated at or before each game win; a later read still corrects a logged game.
 # GitHub often runs schedules late, so this is its own workflow: a delayed run
 # still does only this, never the daily results pull in nhl-data.yml.
 on:
