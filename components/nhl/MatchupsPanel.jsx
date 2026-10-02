@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Headshot, TeamLogo, rankClass } from './media';
 import { usePlayerCard, FormChip } from './PlayerCard';
+import { PfTable, PosBadge, SortTh, Tag } from './pf-ui';
 import { oppClass } from './MoneyPuck';
 import { Rink, RinkLegend } from './Rink';
 
@@ -95,27 +96,33 @@ function DefenseCard({ side, teamCount, mp }) {
   );
 }
 
-function SkaterRows({ skaters, showTeam, teamCount }) {
+function SkaterRows({ skaters, showTeam, teamCount, sort }) {
   const open = usePlayerCard();
-  return skaters.map((p) => (
+  const sorted = sort === 'shotScore' ? skaters : [...skaters].sort((a, b) => ((b[sort] ?? -Infinity) - (a[sort] ?? -Infinity)));
+  return sorted.map((p) => (
     <tr key={`${p.team}-${p.name}`} className={`${p.inLineup ? '' : 'is-muted'}${p.id ? ' is-click' : ''}`} onClick={() => p.id && open({ id: p.id, opp: p.opp, venue: p.venue })}>
-      <td>
-        <div className="nhlx-db-player">
+      <td className="is-left">
+        <div className="nhlx-pft-player">
           <Headshot id={p.id} size={30} />
-          <span>
-            <b>{p.name} <FormChip tag={p.form?.shots} small /></b>
-            <small>{showTeam ? `${p.team} ${p.venue === 'H' ? 'vs' : '@'} ${p.opp} · ` : ''}{p.pos}{p.line ? ` · L${p.line}` : p.inLineup ? '' : ' · not in lineup'}</small>
-          </span>
+          <b>{p.name}</b>
+          <PosBadge pos={p.pos} />
+          {p.line ? <Tag>L{p.line}</Tag> : !p.inLineup ? <Tag>no lineup</Tag> : null}
+          {p.carried ? <Tag>carried</Tag> : null}
+          <FormChip tag={p.form?.shots} small />
+          {showTeam ? <small className="nhlx-pft-sub">{p.team} {p.venue === 'H' ? 'vs' : '@'} {p.opp}</small> : null}
         </div>
       </td>
       <td>{p.gp || 0}</td>
-      <td><b>{num(p.sog)}</b>{p.l5Sog != null ? <small> L5 {num(p.l5Sog)}</small> : null}</td>
-      <td>{num(p.g, 2)}</td>
-      <td className={rankClass(p.vs?.sog?.rank, teamCount)}>{p.vs?.sog ? `${num(p.vs.sog.allowed)} ` : '—'}{p.vs?.sog?.rank ? <i>#{p.vs.sog.rank}</i> : null}</td>
+      <td>{p.toi != null ? num(p.toi, 2) : '—'}</td>
+      <td className={sort === 'g' ? 'is-sorted' : ''}>{num(p.g, 2)}</td>
+      <td className={sort === 'sog' ? 'is-sorted' : ''}><b>{num(p.sog, 2)}</b></td>
+      <td>{p.l5Sog != null ? num(p.l5Sog, 2) : '—'}</td>
+      <td>{p.iscf != null ? num(p.iscf, 2) : '—'}</td>
+      <td className={rankClass(p.vs?.sog?.rank, teamCount)}>{p.vs?.sog ? num(p.vs.sog.allowed, 2) : '—'}{p.vs?.sog?.rank ? <span className="nhlx-rank">#{p.vs.sog.rank}</span> : null}</td>
       <td><EdgeChip v={p.shotEdge} /></td>
       <td><EdgeChip v={p.goalEdge} /></td>
-      <td><b>{num(p.projSog)}</b></td>
-      <td><b>{num(p.projG, 2)}</b></td>
+      <td className={sort === 'projSog' ? 'is-sorted' : ''}><b>{num(p.projSog, 2)}</b></td>
+      <td className={sort === 'projG' ? 'is-sorted' : ''}><b>{num(p.projG, 2)}</b></td>
       <td>{p.hit?.s3 != null ? `${Math.round(p.hit.s3 * 100)}%` : '—'}</td>
       <td><FormChip tag={p.form?.goals} small /></td>
     </tr>
@@ -165,24 +172,31 @@ function PositionLog({ game }) {
 }
 
 function SkaterTable({ skaters, showTeam = false, teamCount }) {
+  // Default order is the slate's shot score (volume × matchup); a column header re-sorts.
+  const [sort, setSort] = useState('shotScore');
+  const th = (k, label, title) => <SortTh k={k} label={label} sort={sort} onSort={(c) => setSort(sort === c ? 'shotScore' : c)} title={title} />;
   return (
-    <div className="nhlx-db-table-wrap">
-      <table className="nhlx-db-table nhlx-mu-table">
-        <thead>
-          <tr>
-            <th>Player</th><th>GP</th><th>SOG/G</th><th>G/G</th>
-            <th title="Shots the opponent allows per game to this position at this venue (rank 1 = most)">Opp allows</th>
-            <th title="Opponent's shots allowed to this position vs the league average">Shot edge</th>
-            <th title="Opponent's goals allowed to this position vs the league average">Goal edge</th>
-            <th title="Player's SOG/G × opponent's shot ratio">Proj SOG</th>
-            <th title="Player's G/G × opponent's goal ratio">Proj G</th>
-            <th title="How often the player had 3+ shots over the window">3+ rate</th>
-            <th title="Goal form over the last 5 games">Goals</th>
-          </tr>
-        </thead>
-        <tbody><SkaterRows skaters={skaters} showTeam={showTeam} teamCount={teamCount} /></tbody>
-      </table>
-    </div>
+    <PfTable className="nhlx-mu-skaters">
+      <thead>
+        <tr>
+          <th className="is-left">Player</th>
+          {th('gp', 'GP', 'Games stored at this venue (all games when fewer than 5)')}
+          {th('toi', 'TOI/G')}
+          {th('g', 'Goals/G')}
+          {th('sog', 'S/G')}
+          {th('l5Sog', 'L5 S/G', 'Shots per game over the last 5')}
+          {th('iscf', 'iSCF/G', 'Scoring chances per game')}
+          <th title="Shots the opponent allows per game to this position at this venue (rank 1 = most)">Opp S/G</th>
+          <th title="Opponent's shots allowed to this position vs the league average">Shot edge</th>
+          <th title="Opponent's goals allowed to this position vs the league average">Goal edge</th>
+          {th('projSog', 'Proj S', "Player's S/G × opponent's shot ratio")}
+          {th('projG', 'Proj G', "Player's G/G × opponent's goal ratio")}
+          <th title="How often the player had 3+ shots over the window">3+</th>
+          <th title="Goal form over the last 5 games">Goals</th>
+        </tr>
+      </thead>
+      <tbody><SkaterRows skaters={skaters} showTeam={showTeam} teamCount={teamCount} sort={sort} /></tbody>
+    </PfTable>
   );
 }
 
