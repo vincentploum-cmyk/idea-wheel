@@ -2,7 +2,7 @@ import { describe, expect, test } from '@jest/globals';
 import { parseLineupRows, applyPositions, snapshotPos, fillFromLastLineup, lineupToRemember } from '../lib/nhl-data/positions';
 import { defenseByPosition, defenseBySlot, playerBaselines } from '../lib/nhl-data/defense';
 import { groupStandings, mapStandingRow, shotLeaders } from '../lib/nhl-data/league';
-import { scoreSkater } from '../lib/nhl-data/slate';
+import { scoreSkater, h2hByOpponent, h2hHot } from '../lib/nhl-data/slate';
 import { lineupRows } from '../lib/nhl-data/lineups';
 import { rowObj } from '../lib/nhl-data/ingest';
 import { PREVIEW_MD } from './fixtures/nhl';
@@ -109,6 +109,21 @@ describe('defense by position', () => {
     expect(s.goalEdge).toBe(-50);
     expect(s.shotScore).toBe(3.96);
     expect(scoreSkater(null, 'H')).toBeNull();
+  });
+  test('the head-to-head mark: more than a goal a game on the opponent, or 2+ in the one game stored', () => {
+    const rows = [
+      row('2026-01-01', 1, 1, 'ANA', 'OTT', 'A', 'LW', 2, 5), row('2026-01-10', 2, 1, 'ANA', 'OTT', 'H', 'LW', 1, 3), row('2026-01-20', 3, 1, 'ANA', 'BOS', 'H', 'LW', 2, 4),
+      row('2026-01-01', 1, 2, 'ANA', 'OTT', 'A', 'C', 1, 2), row('2026-01-10', 2, 2, 'ANA', 'OTT', 'H', 'C', 1, 2),
+      row('2026-01-01', 1, 3, 'ANA', 'OTT', 'A', 'RW', 1, 2),
+    ];
+    const h = h2hByOpponent(rows);
+    expect(h['1|OTT']).toEqual({ gp: 2, g: 3, sog: 8 });
+    expect(h['1|BOS']).toEqual({ gp: 1, g: 2, sog: 4 });
+    expect(h2hHot(h['1|OTT'])).toBe(true); // 1.5 G/GP over 2 games
+    expect(h2hHot(h['1|BOS'])).toBe(true); // one game, 2 goals
+    expect(h2hHot(h['2|OTT'])).toBe(false); // exactly a goal a game is not more than one
+    expect(h2hHot(h['3|OTT'])).toBe(false); // one game, one goal
+    expect(h2hHot(h['9|OTT'])).toBe(false); // never faced them
   });
 });
 
