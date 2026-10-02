@@ -156,7 +156,7 @@ function Chip({ p, x, y, minGp, actual, played }) {
         <i className="nhlx-rk-num">{p.number ?? p.pos}</i>
       </span>
       <span className="nhlx-rk-meta">
-        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{p.h2h?.hot ? <span className="nhlx-rk-h2h" role="img" aria-label={`scores on ${p.opp}: ${p.h2h.g} goals in ${p.h2h.gp} games`}>🎯</span> : null}{shortName(p.name)}</b>
+        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{p.h2h?.hot ? <span className="nhlx-rk-h2h" title={`scores on ${p.opp}: ${p.h2h.g} goals in ${p.h2h.gp} games`}>h2h</span> : null}{shortName(p.name)}</b>
         {played ? (actual
           ? <span className={`nhlx-rk-stat is-actual${(m?.sog ?? p.projSog) != null && actual.sog >= (m?.sog ?? p.projSog) ? ' is-over' : ''}`}><em>{actual.sog}</em> SOG · <em>{actual.g}</em> G{actual.a ? <> · <em>{actual.a}</em> A</> : null}{m?.sog != null ? <i> m {num(m.sog)}</i> : p.projSog != null ? <i> p {num(p.projSog)}</i> : null}</span>
           : <span className="nhlx-rk-stat">did not play</span>)
@@ -264,7 +264,7 @@ export function RinkLegend() {
       <span><i className="is-tough" /> stingy: bottom third</span>
       <span>on each player: the model’s projected SOG and goals from the latest saved run for this slate (3+ SOG and 1+ G odds in the tooltip), or a matchup read when no run exists; once the game is final, the actual shots, goals and assists with the model’s number after “m”; click for the player card</span>
       <span>🔥 on fire, by the model’s rule: 1+ point at 50% or better, 2.0+ scoring chances per game, 16+ minutes</span>
-      <span>🎯 scores on this opponent: more than a goal a game against them over 2+ stored games, or 2+ goals in the one game stored (this season and last)</span>
+      <span><i className="nhlx-rk-h2h is-legend">h2h</i> scores on this opponent: more than a goal a game against them over 2+ stored games, or 2+ goals in the one game stored (this season and last)</span>
     </p>
   );
 }
