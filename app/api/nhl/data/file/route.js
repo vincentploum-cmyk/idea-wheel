@@ -1,5 +1,5 @@
 import { authorize, DATE_RE, todayET } from '@/lib/nhl-data/util';
-import { buildBoxScores, buildLineups, buildHistorical, buildPlayerStats, buildRankings, toBuffer } from '@/lib/nhl-data/build';
+import { buildBoxScores, buildLineups, buildHistorical, buildPlayerStats, buildRankings, buildPace, toBuffer } from '@/lib/nhl-data/build';
 import { readSlateFile, slateMetaPath } from '@/lib/nhl-data/matchups';
 import { readJson } from '@/lib/nhl-store';
 
@@ -32,6 +32,7 @@ export async function GET(request) {
         hist: () => buildHistorical(date),
         playerStats: () => buildPlayerStats(date),
         rankings: () => buildRankings(),
+        pace: () => buildPace(date),
       };
       if (!builders[slot]) return Response.json({ error: 'unknown slot' }, { status: 400 });
       const built = await builders[slot]();

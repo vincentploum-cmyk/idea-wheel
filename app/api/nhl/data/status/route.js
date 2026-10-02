@@ -5,6 +5,7 @@ import { listNames } from '@/lib/nhl-store';
 import { slateMetaPath } from '@/lib/nhl-data/matchups';
 import { propfinderConfigured, PF_PULL_META } from '@/lib/nhl-data/propfinder-api';
 import { attemptPath } from '@/lib/nhl-data/autorun';
+import { loadMoneyPuck } from '@/lib/nhl-data/moneypuck';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,7 +18,7 @@ export async function GET(request) {
   const date = url.searchParams.get('date') || todayET();
   if (!DATE_RE.test(date)) return Response.json({ error: 'bad date' }, { status: 400 });
 
-  const [slate, lineups, gamesSame, gamesPrev, defense, last, token, pfPull, attempt] = await Promise.all([
+  const [slate, lineups, gamesSame, gamesPrev, defense, last, token, pfPull, attempt, mp] = await Promise.all([
     readJson(slateMetaPath(date)),
     readJson(lineupsPath(date)),
     readJson(gamesPath(date)),
@@ -27,6 +28,7 @@ export async function GET(request) {
     syncTokenInfo(),
     readJson(PF_PULL_META),
     readJson(attemptPath(date)),
+    loadMoneyPuck().catch(() => ({ teams: null })),
   ]);
 
   // History / home-away stats can be built once any season of games is stored.
@@ -45,6 +47,8 @@ export async function GET(request) {
       playerStats: hasRows ? { asOf: date } : null,
       rankings: defense && Object.keys(defense.teams || {}).length >= 2
         ? { teams: Object.keys(defense.teams).length, updatedAt: defense.updatedAt } : null,
+      // Pace: MoneyPuck's team table (shot attempts for + against per 60), written in the pace workbook's layout.
+      pace: mp.teams?.situations?.all ? { teams: Object.keys(mp.teams.situations.all).length, updatedAt: mp.teams.updatedAt || null, year: mp.teams.year || null } : null,
     },
     lastRefresh: last?.ranAt || null,
     syncToken: token,

@@ -3875,7 +3875,7 @@ export const NHL_UPLOAD_SLOTS = [
   { key: "hist", title: "Historical Profiles", sub: "NHL_Player_History_vs_Teams.xlsx", accent: "#d97706" },
   { key: "playerStats", title: "Home / Away Stats", sub: "Player stats *.xlsx", accent: "#7c3aed" },
   { key: "lineups", title: "Today's Lineups", sub: "Lineups *.xlsx", accent: "#0284c7" },
-  { key: "pace", title: "Pace Stats", sub: "NHL Pace Stats.xlsx", accent: "#0284c7" },
+  { key: "pace", title: "Pace Stats", sub: "MoneyPuck team pace (auto) · or NHL Pace Stats.xlsx", accent: "#0284c7" },
   { key: "rankings", title: "Defense Rankings", sub: "NHL-Defense-Rankings-2026.xlsx", accent: "#7c3aed" },
   { key: "boxScores", title: "Box Scores", sub: "Box Scores *.xlsx · unlocks Audit View", accent: "#dc2626" },
 ];
