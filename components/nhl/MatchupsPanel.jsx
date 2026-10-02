@@ -287,6 +287,19 @@ export default function MatchupsPanel() {
                     : fmtTime(g.startTimeUTC)}
                 </small>
               </div>
+              {g.total && (
+                <div className="nhlx-mu-verdict nhlx-mu-total">
+                  <div className="nhlx-mu-verdict-head">
+                    <b>Game total</b>
+                    <span className={`nhlx-edge ${g.total.tier === 'high' ? 'is-soft' : g.total.tier === 'low' ? 'is-tough' : ''}`}>{g.total.headline}</span>
+                    {g.log?.score ? <small>actual {g.log.score.away + g.log.score.home}</small> : null}
+                  </div>
+                  <ul>
+                    {g.total.lines.map((l) => <li key={l.key} className={l.tone || undefined}>{l.text}</li>)}
+                  </ul>
+                  {g.total.h2h?.games?.length ? <small className="nhlx-auto-meta">Meetings: {g.total.h2h.games.map((m) => `${m.score} (${m.total})`).join(' · ')}. Expected goals and pace © MoneyPuck.com.</small> : <small className="nhlx-auto-meta">Expected goals and pace © MoneyPuck.com.</small>}
+                </div>
+              )}
               {g.verdicts && Object.values(g.verdicts).some(Boolean) && (
                 <div className="nhlx-mu-verdicts">
                   {/* Above each rink: the read on the defense its skaters face (the away rink carries the home team's). */}
