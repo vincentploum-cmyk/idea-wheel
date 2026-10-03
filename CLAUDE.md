@@ -114,6 +114,11 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   cells, the by-position rows) fed by `defense` in the player payload (`propfinderDefenseTabs`).
   The PropFinder-style table pieces (`PfTable`, `SortTh`, `PosBadge`, `Tag`, `UnderlineTabs`,
   `Sel`) live in `pf-ui.jsx` and dress the slate's skater table and League's PropFinder skaters.
+- Team page game log (`components/nhl/TeamGameLog.jsx`, `/api/nhl/data/defense/log?team=XXX`,
+  `gameLogAgainst` in `lib/nhl-data/defense.js`): PropFinder's "RW vs TOR" view — every stored
+  skater-game against the team, newest first, with the skater's line slot (LW1 … RW4, D1 … D3),
+  filtered by slot, venue (@ / vs), the team's result and season; a Shots / Goals toggle with a
+  line colours that column green over, red under, and L5 / L10 badges give the over / under share.
 - MoneyPuck team metrics (`lib/nhl-data/moneypuck.js`, `data/moneypuck/*`) feed the team
   page, Matchups defense cards and League; credit MoneyPuck.com wherever shown.
 - Theme: dark by default (`<html data-theme>`, toggle in the header, tokens in
