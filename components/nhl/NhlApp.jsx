@@ -26,7 +26,8 @@ const DEFAULT_TAB = 'matchups';
 
 // The URL hash is the tab state, so tabs deep-link and back/forward work.
 function tabFromHash() {
-  const key = window.location.hash.slice(1);
+  // `#teams/BUF` is the Teams tab with a team picked (see links.jsx).
+  const key = window.location.hash.slice(1).split('/')[0];
   return TAB_KEYS.includes(key) ? key : DEFAULT_TAB;
 }
 

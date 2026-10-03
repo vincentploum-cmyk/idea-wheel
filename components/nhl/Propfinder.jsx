@@ -5,6 +5,7 @@ import { Headshot, TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { MpCell } from './MoneyPuck';
 import { PfTable, PosBadge, Sel, SortTh, Tag, UnderlineTabs } from './pf-ui';
+import { TeamLink } from './links';
 import { SKATER_COLS, TEAM_COLS, seasonLabel, defaultDefenseTab } from '@/lib/nhl-data/propfinder-csv';
 import { teamName } from '@/lib/nhl-data/teams';
 
@@ -250,8 +251,7 @@ export function PropfinderDefense({ abbr, data, posFilter = '', tabKey: controll
   return (
     <div className="nhlx-pfd" aria-label={`${abbr} defense, PropFinder`}>
       <div className="nhlx-pfd-head" title={`What ${teamName(abbr) || abbr} allowed ${total ? 'in total' : 'per game'} to each position · ${when}${tab.rows.All?.gp ? ` · ${tab.rows.All.gp} GP` : ''} · rank 1 = most allowed of ${n} · data from PropFinder`}>
-        <TeamLogo abbr={abbr} size={22} />
-        <b>{teamName(abbr) || abbr} defense</b>
+        <TeamLink abbr={abbr} logo={22}><b>{teamName(abbr) || abbr} defense</b></TeamLink>
         {drivesRink ? <span className="nhlx-chip nhlx-chip-blue" title="The selected tab tints the rink below">tints the rink</span> : null}
         <label className="nhlx-pfd-switch">
           <span className={total ? '' : 'is-on'}>Per game</span>

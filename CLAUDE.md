@@ -114,6 +114,9 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   cells, the by-position rows) fed by `defense` in the player payload (`propfinderDefenseTabs`).
   The PropFinder-style table pieces (`PfTable`, `SortTh`, `PosBadge`, `Tag`, `UnderlineTabs`,
   `Sel`) live in `pf-ui.jsx` and dress the slate's skater table and League's PropFinder skaters.
+- Team pages deep-link as `#teams/BUF` (`components/nhl/links.jsx`: `teamHref`, `teamFromHash`, `TeamLink`);
+  every team logo / name on Matchups (game head, verdict heads, rink heads, PropFinder defense heads,
+  skater-table heads) is a `TeamLink`, and picking a team on the Teams tab writes the hash.
 - Team page game log (`components/nhl/TeamGameLog.jsx`, `/api/nhl/data/defense/log?team=XXX`,
   `gameLogAgainst` in `lib/nhl-data/defense.js`): PropFinder's "RW vs TOR" view — every stored
   skater-game against the team, newest first, with the skater's line slot (LW1 … RW4, D1 … D3),
