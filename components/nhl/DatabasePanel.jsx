@@ -7,6 +7,7 @@ import { usePlayerCard } from './PlayerCard';
 import { TeamMoneyPuck } from './MoneyPuck';
 import { TeamPropfinder } from './Propfinder';
 import TeamGameLog from './TeamGameLog';
+import { teamFromHash, TeamLink } from './links';
 
 const PF_FILE = /^(NHL-Goal-Matchups-.*\.xlsx|nhl-(?:skater|team)-stats-.*\.csv)$/i;
 
@@ -234,7 +235,7 @@ function DatabasePanel() {
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const [q, setQState] = useState('');
-  const [team, setTeamState] = useState('');
+  const [team, setTeamState] = useState(() => teamFromHash());
   const [pos, setPosState] = useState('');
   const [showOff, setShowOffState] = useState(false);
   const [preOnly, setPreOnlyState] = useState(false);
@@ -245,7 +246,23 @@ function DatabasePanel() {
   // Changing a filter restarts the list on its first page.
   const filterSetter = (set) => (v) => { set(v); setPage(1); };
   const setQ = filterSetter(setQState);
-  const setTeam = filterSetter(setTeamState);
+  // The team rides in the hash (`#teams/BUF`) so other tabs can link straight to a team page.
+  const setTeam = filterSetter((abbr) => {
+    setTeamState(abbr);
+    if (typeof window !== 'undefined' && window.location.hash.startsWith('#teams')) window.history.replaceState(null, '', abbr ? `#teams/${abbr}` : '#teams');
+  });
+  useEffect(() => {
+    const onHash = () => {
+      const abbr = teamFromHash();
+      if (!abbr) return;
+      setTeamState(abbr);
+      setPage(1);
+      // Landing on a team from another tab: bring its page into view once it renders.
+      setTimeout(() => document.querySelector('.nhlx-db-roster')?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50);
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
   const setPos = filterSetter(setPosState);
   const setShowOff = filterSetter(setShowOffState);
   const setPreOnly = filterSetter(setPreOnlyState);

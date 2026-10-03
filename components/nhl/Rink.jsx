@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { TeamLogo, headshotUrl } from './media';
+import { TeamLink } from './links';
 import { usePlayerCard } from './PlayerCard';
 import { PropfinderDefense } from './Propfinder';
 import { defaultDefenseTab, defenseBandFromTab, defenseTabText } from '@/lib/nhl-data/propfinder-csv';
@@ -229,9 +230,9 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
   return (
     <section className="nhlx-rk-card" aria-label={`${side.team} lineup on the rink`} title={`${numSrc} Ice tinted by what ${side.opp} allows ${windowText} to each position (rank 1 = most permissive) · ${sourceText(side)}`}>
       <div className="nhlx-rk-head">
-        <TeamLogo abbr={side.team} size={28} />
+        <TeamLink abbr={side.team} logo={28} />
         <div>
-          <b>{side.team} <small>{side.venue === 'H' ? 'home' : 'away'}{score ? ` · final ${score[0]}–${score[1]} vs ${side.opp} · chips show the game's shots, goals, assists` : ' · attacking upwards'}</small></b>
+          <b><TeamLink abbr={side.team}>{side.team}</TeamLink> <small>{side.venue === 'H' ? 'home' : 'away'}{score ? ` · final ${score[0]}–${score[1]} vs ${side.opp} · chips show the game's shots, goals, assists` : ' · attacking upwards'}</small></b>
           {/* The chips' source and the lines' source stay in the title attribute: the head shows only the team. */}
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Headshot, TeamLogo, rankClass } from './media';
 import { usePlayerCard, FormChip } from './PlayerCard';
 import { PfTable, PosBadge, SortTh, Tag } from './pf-ui';
+import { TeamLink } from './links';
 import { oppClass } from './MoneyPuck';
 import { Rink, RinkLegend } from './Rink';
 
@@ -301,9 +302,9 @@ export default function MatchupsPanel() {
           {filtered.map((g, i) => (
             <article key={g.id} className={`nhlx-mu-game${i === 0 ? ' is-first' : ''}`} id={`game-${g.id}`}>
               <div className="nhlx-mu-game-head">
-                <TeamLogo abbr={g.away} size={34} />
-                <b>{g.away} @ {g.home}</b>
-                <TeamLogo abbr={g.home} size={34} />
+                <TeamLink abbr={g.away} logo={34} />
+                <b><TeamLink abbr={g.away}>{g.away}</TeamLink> @ <TeamLink abbr={g.home}>{g.home}</TeamLink></b>
+                <TeamLink abbr={g.home} logo={34} />
                 <small>
                   {g.log?.score
                     ? <>Final · <b className="nhlx-mu-score">{g.away} {g.log.score.away} – {g.home} {g.log.score.home}</b>{g.startTimeUTC ? ` · ${fmtTime(g.startTimeUTC)}` : ''}</>
@@ -331,8 +332,7 @@ export default function MatchupsPanel() {
                     return (
                       <div key={s.team} className="nhlx-mu-verdict">
                         <div className="nhlx-mu-verdict-head">
-                          <TeamLogo abbr={s.opp} size={22} />
-                          <b>{s.opp}</b>
+                          <TeamLink abbr={s.opp} logo={22}><b>{s.opp}</b></TeamLink>
                           {v ? <span className={`nhlx-edge ${v.tier === 'leaky' ? 'is-soft' : v.tier === 'tight' ? 'is-tough' : ''}`}>{v.headline}</span> : <small>No read yet</small>}
                         </div>
                         {v && (
@@ -355,8 +355,7 @@ export default function MatchupsPanel() {
                 {g.sides.map((s) => (
                   <div key={s.team} className="nhlx-mu-side">
                     <div className="nhlx-mu-side-head">
-                      <TeamLogo abbr={s.team} size={22} />
-                      <b>{s.team} skaters</b>
+                      <TeamLink abbr={s.team} logo={22}><b>{s.team} skaters</b></TeamLink>
                       <small>{s.venue === 'H' ? 'home' : 'away'} · positions from {{ lineup: 'the NHL.com projected lineup', gamedaytweets: 'the beat writers’ lines', propfinder: 'PropFinder’s depth chart' }[s.source] || 'the roster (no lineup yet)'}</small>
                     </div>
                     <div className="nhlx-mu-grid">
