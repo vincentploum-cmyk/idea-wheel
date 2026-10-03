@@ -36,6 +36,7 @@ function CandidateRow({ c, rank }) {
       <td title={`First goals scored over his last ${c.own.gp} stored games with a first goal on record`}>{c.own.gp ? <><b>{c.own.fg}</b> / {c.own.gp} <small className="nhlx-auto-meta">{pct(c.own.rate)}</small></> : <span className="nhlx-auto-meta">no record</span>}</td>
       <LeakCell c={c} />
       <td>{c.h2h ? <>{c.h2h.hot ? <span className="nhlx-rk-h2h is-legend">h2h</span> : null}{c.h2h.g} G in {c.h2h.gp} GP</> : <span className="nhlx-auto-meta">—</span>}</td>
+      <td title={c.h2h ? `${c.h2h.sog} shots in ${c.h2h.gp} meeting${c.h2h.gp === 1 ? '' : 's'} with ${c.opp}, this season and last` : undefined}>{c.h2h ? <>{c.h2h.shotsHot ? <span className="nhlx-rk-h2h is-legend">h2h</span> : null}<b>{c.h2h.spg.toFixed(1)}</b> <small className="nhlx-auto-meta">{c.h2h.sog} in {c.h2h.gp}</small></> : <span className="nhlx-auto-meta">—</span>}</td>
       <td title={c.modelled ? 'The model’s 1+ goal probability from the latest saved run' : 'No model run: 1+ goal odds from the matchup read'}><b>{pct(c.p1g)}</b>{c.modelled ? null : <i className="nhlx-fg-rank">read</i>}{c.model?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire"> 🔥</span> : null}</td>
       <td><div className="nhlx-fg-score"><div className="nhlx-fg-bar"><i style={{ width: `${c.score}%` }} /></div><b>{c.score}</b></div></td>
     </tr>
@@ -57,7 +58,8 @@ function CandidateTable({ list, sort, onSort }) {
             {th('tonight', 'Tonight', 'Sort by opponent')}
             {th('own', 'Own 1st G', 'First goals scored ÷ games, last 100 stored games')}
             {th('leak', 'Opp gives to slot', "First goals the opponent gives up to this position at tonight's venue, and how many came from this line slot")}
-            {th('h2h', 'H2H', 'Goals against this opponent, this season and last')}
+            {th('h2h', 'H2H G', 'Goals against this opponent, this season and last; the badge marks more goals than games')}
+            {th('h2hsog', 'H2H SOG/G', 'Shots on goal per game against this opponent, this season and last; the badge marks 4+ a game over 2+ meetings, or 5+ in the one meeting stored')}
             {th('p1g', '1+ G', '1+ goal probability')}
             {th('score', 'Score', "Combined read, 0–100: the 1+ goal odds and own first-goal rate carry most of it; the opponent's leak to the position and the head-to-head record move it")}
           </tr>

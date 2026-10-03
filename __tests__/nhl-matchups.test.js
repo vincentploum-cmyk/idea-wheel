@@ -2,7 +2,7 @@ import { describe, expect, test } from '@jest/globals';
 import { parseLineupRows, applyPositions, snapshotPos, fillFromLastLineup, lineupToRemember } from '../lib/nhl-data/positions';
 import { defenseByPosition, defenseBySlot, firstGoalsAllowed, defenseVsTeam, rankAmong, playerBaselines } from '../lib/nhl-data/defense';
 import { groupStandings, mapStandingRow, shotLeaders } from '../lib/nhl-data/league';
-import { scoreSkater, h2hByOpponent, h2hHot } from '../lib/nhl-data/slate';
+import { scoreSkater, h2hByOpponent, h2hHot, h2hShotsHot } from '../lib/nhl-data/slate';
 import { lineupRows } from '../lib/nhl-data/lineups';
 import { rowObj } from '../lib/nhl-data/ingest';
 import { PREVIEW_MD } from './fixtures/nhl';
@@ -166,6 +166,12 @@ describe('defense by position', () => {
     expect(h2hHot(h['2|OTT'])).toBe(false); // exactly a goal a game is not more than one
     expect(h2hHot(h['3|OTT'])).toBe(false); // one game, one goal
     expect(h2hHot(h['9|OTT'])).toBe(false); // never faced them
+    // Shots: 4+ a game over 2+ meetings, or 5+ in the one meeting stored.
+    expect(h2hShotsHot(h['1|OTT'])).toBe(true); // 8 in 2
+    expect(h2hShotsHot(h['2|OTT'])).toBe(false); // 4 in 2
+    expect(h2hShotsHot(h['1|BOS'])).toBe(false); // 4 in 1
+    expect(h2hShotsHot({ gp: 1, g: 0, sog: 5 })).toBe(true);
+    expect(h2hShotsHot(null)).toBe(false);
   });
 });
 
