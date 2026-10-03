@@ -6,6 +6,7 @@ import { defenseTier, TIER_TEXT, TIER_TONE } from '@/lib/nhl-data/verdict';
 import { usePlayerCard } from './PlayerCard';
 import { TeamMoneyPuck } from './MoneyPuck';
 import { TeamPropfinder } from './Propfinder';
+import TeamGameLog from './TeamGameLog';
 
 const PF_FILE = /^(NHL-Goal-Matchups-.*\.xlsx|nhl-(?:skater|team)-stats-.*\.csv)$/i;
 
@@ -472,6 +473,7 @@ function DatabasePanel() {
             <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ marginLeft: 'auto' }} onClick={() => setTeam('')}>All teams</button>
           </div>
           <TeamDefense abbr={selected.abbrev} defense={defense} />
+          <TeamGameLog key={selected.abbrev} abbr={selected.abbrev} />
           <TeamPropfinder abbr={selected.abbrev} pf={pf} />
           <TeamMoneyPuck abbr={selected.abbrev} mp={mp} />
           {roster.map(([label, rows]) => (

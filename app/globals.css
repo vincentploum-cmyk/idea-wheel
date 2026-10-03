@@ -894,6 +894,29 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-da-table td.is-tough { background: var(--bad-bg); color: var(--bad-fg); }
 .nhlx-da-table tr.is-active td:first-child b { color: var(--primary); }
 
+/* Team page: the box-score game log vs the team */
+.nhlx-gl { margin: 8px 0 20px; }
+.nhlx-gl-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-bottom: 10px; }
+.nhlx-gl-head h4 { font-size: 17px; color: var(--heading); }
+.nhlx-gl-head .nhlx-auto-meta { margin: 0; flex: 1 1 320px; }
+.nhlx-gl-windows { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.nhlx-gl-win { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; font-size: 12px; }
+.nhlx-gl-win small { font-weight: 700; color: var(--heading); font-size: 11px; }
+.nhlx-gl-win i { font-style: normal; white-space: nowrap; font-weight: 600; padding: 1px 7px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--muted); font-variant-numeric: tabular-nums; }
+.nhlx-gl-win i.is-over { color: var(--ok-fg); border-color: var(--ok-line); }
+.nhlx-gl-win i.is-under { color: var(--bad-fg); border-color: var(--bad-line); }
+.nhlx-gl-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.nhlx-seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden; height: 34px; }
+.nhlx-seg-btn { all: unset; cursor: pointer; display: inline-flex; align-items: center; padding: 0 12px; font-size: 13px; font-weight: 500; color: var(--muted); border-left: 1px solid var(--line-strong); white-space: nowrap; }
+.nhlx-seg-btn:first-child { border-left: 0; }
+.nhlx-seg-btn:hover { color: var(--heading); }
+.nhlx-seg-btn.is-active { color: var(--heading); font-weight: 600; background: var(--primary-soft); box-shadow: inset 0 0 0 1px var(--primary-line); }
+.nhlx-gl-table td.is-over { background: var(--ok-bg); color: var(--ok-fg); font-weight: 700; }
+.nhlx-gl-table td.is-under { background: var(--bad-bg); color: var(--bad-fg); font-weight: 700; }
+.nhlx-gl-table td.is-win { color: var(--success); font-weight: 600; }
+.nhlx-gl-table td.is-loss { color: var(--danger); font-weight: 600; }
+.nhlx-gl-table .nhlx-pft-player img:first-child { border-radius: 0; }
+
 /* PropFinder-style pieces shared by the tables */
 .nhlx-pos { display: inline-block; font-size: 10.5px; font-weight: 700; line-height: 1; padding: 3px 5px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--muted); background: var(--card); letter-spacing: 0.02em; vertical-align: 1px; }
 .nhlx-pos.is-c { color: var(--pos-c); border-color: var(--pos-c); }
