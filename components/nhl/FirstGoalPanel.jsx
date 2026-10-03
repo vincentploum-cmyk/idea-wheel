@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Headshot, TeamLogo, rankClass } from './media';
 import { usePlayerCard } from './PlayerCard';
+import { SortTh } from './pf-ui';
+import { sortCandidates } from '@/lib/nhl-data/firstgoal-sort';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
@@ -40,21 +42,27 @@ function CandidateRow({ c, rank }) {
   );
 }
 
-function CandidateTable({ list, from = 0 }) {
+/** The candidates table: a column header sorts (click again for the score order); the # column keeps the score rank. */
+function CandidateTable({ list, sort, onSort }) {
+  const byScore = useMemo(() => new Map([...list].sort((a, b) => b.score - a.score).map((c, i) => [`${c.team}-${c.name}`, i + 1])), [list]);
+  const rows = useMemo(() => sortCandidates(list, sort), [list, sort]);
+  const th = (k, label, title) => <SortTh k={k} label={label} sort={sort} onSort={(c) => onSort(sort === c ? 'score' : c)} title={title} />;
   return (
     <div className="nhlx-db-table-wrap">
       <table className="nhlx-db-table nhlx-mu-table nhlx-fg-table">
         <thead>
           <tr>
-            <th>#</th><th>Player</th><th>Tonight</th>
-            <th title="First goals scored ÷ games, last 100 stored games">Own 1st G</th>
-            <th title="First goals the opponent gives up to this position at tonight's venue, and how many came from this line slot">Opp gives to slot</th>
-            <th title="Goals against this opponent, this season and last">H2H</th>
-            <th title="1+ goal probability">1+ G</th>
-            <th title="Combined read, 0–100: the 1+ goal odds and own first-goal rate carry most of it; the opponent's leak to the position and the head-to-head record move it">Score</th>
+            <th title="Rank by score">#</th>
+            {th('player', 'Player', 'Sort by name')}
+            {th('tonight', 'Tonight', 'Sort by opponent')}
+            {th('own', 'Own 1st G', 'First goals scored ÷ games, last 100 stored games')}
+            {th('leak', 'Opp gives to slot', "First goals the opponent gives up to this position at tonight's venue, and how many came from this line slot")}
+            {th('h2h', 'H2H', 'Goals against this opponent, this season and last')}
+            {th('p1g', '1+ G', '1+ goal probability')}
+            {th('score', 'Score', "Combined read, 0–100: the 1+ goal odds and own first-goal rate carry most of it; the opponent's leak to the position and the head-to-head record move it")}
           </tr>
         </thead>
-        <tbody>{list.map((c, i) => <CandidateRow key={`${c.team}-${c.name}`} c={c} rank={from + i + 1} />)}</tbody>
+        <tbody>{rows.map((c) => <CandidateRow key={`${c.team}-${c.name}`} c={c} rank={byScore.get(`${c.team}-${c.name}`)} />)}</tbody>
       </table>
     </div>
   );
@@ -72,6 +80,7 @@ export default function FirstGoalPanel() {
   const [busy, setBusy] = useState(false);
   const [view, setView] = useState('slate');
   const [group, setGroup] = useState('');
+  const [sort, setSort] = useState('score');
 
   const load = useCallback((d) => fetch(`/api/nhl/data/firstgoal${d ? `?date=${d}` : ''}`, { cache: 'no-store' })
     .then(async (res) => { const j = await res.json(); if (!res.ok) throw new Error(j.detail || j.error || `${res.status}`); return j; })
@@ -112,7 +121,7 @@ export default function FirstGoalPanel() {
         Each candidate blends his own first-goal record (first goals over his last 100 stored games), what the opponent gives up to his position and line slot at tonight’s venue, his head-to-head goals, and the 1+ goal odds from the latest model run. Score 0–100: the 1+ goal odds and the own rate carry most of it. Click a row for the player card.
       </p>
       {board && !board.games.length ? <div className="nhlx-empty">No games on this date.</div> : null}
-      {board && view === 'slate' && top.length ? <CandidateTable list={top} /> : null}
+      {board && view === 'slate' && top.length ? <CandidateTable list={top} sort={sort} onSort={setSort} /> : null}
       {board && view === 'games' && board.games.map((g) => {
         const list = g.candidates.filter(keep).slice(0, 6);
         return (
@@ -125,7 +134,7 @@ export default function FirstGoalPanel() {
             </div>
             <LeakLine game={g} />
             {g.actual ? <p className="nhlx-fg-actual">First goal: <b>{g.actual.name || 'unknown'}</b> ({g.actual.team}){g.actual.period ? `, ${g.actual.time} of period ${g.actual.period}` : ''}{(() => { const i = g.candidates.findIndex((c) => c.id === g.actual.playerId); return i >= 0 ? ` · was candidate #${i + 1} (score ${g.candidates[i].score})` : ' · not among the candidates'; })()}</p> : g.final ? <p className="nhlx-fg-actual">No first goal on record for this game yet.</p> : null}
-            {list.length ? <CandidateTable list={list} /> : <p className="nhlx-auto-meta">No candidates yet (no lineups).</p>}
+            {list.length ? <CandidateTable list={list} sort={sort} onSort={setSort} /> : <p className="nhlx-auto-meta">No candidates yet (no lineups).</p>}
           </article>
         );
       })}
