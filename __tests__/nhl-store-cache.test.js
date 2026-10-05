@@ -3,14 +3,24 @@ import { describe, expect, test, jest, beforeEach } from '@jest/globals';
 // A fake Supabase Storage bucket that counts every call, so the tests can
 // show which reads the in-process caches save.
 const files = new Map(); // path → JSON string
+const versions = new Map(); // path → upload count, the listing's version mark
 const calls = { list: 0, download: 0, upload: 0, remove: 0 };
 let gate = null; // { path, promise }: a download of `path` waits for the promise (simulates a slow read)
+let listGate = null; // { prefix, promise }: the same for a listing
 const store = {
-  async list(prefix) {
+  async list(prefix, { limit = 100 } = {}) {
     calls.list += 1;
+    if (listGate?.prefix === prefix) await listGate.promise;
     const names = new Set();
     for (const p of files.keys()) if (p.startsWith(`${prefix}/`)) names.add(p.slice(prefix.length + 1).split('/')[0]);
-    return { data: [...names].map((name) => ({ name })), error: null };
+    // Like the bucket: files carry updated_at + eTag + size, folders only a name.
+    const entry = (name) => {
+      const path = `${prefix}/${name}`;
+      return files.has(path)
+        ? { name, updated_at: `v${versions.get(path) || 0}`, metadata: { eTag: `etag-${versions.get(path) || 0}`, size: files.get(path).length } }
+        : { name, updated_at: null, metadata: null };
+    };
+    return { data: [...names].sort().slice(0, limit).map(entry), error: null };
   },
   async download(path) {
     calls.download += 1;
@@ -22,6 +32,7 @@ const store = {
   async upload(path, body) {
     calls.upload += 1;
     files.set(path, await body.text());
+    versions.set(path, (versions.get(path) || 0) + 1);
     return { data: { path }, error: null };
   },
   async remove(paths) {
@@ -44,10 +55,17 @@ const { loadPlayers, setOverride, PLAYERS_PATH } = require('../lib/nhl-data/rost
 
 const manifest = (id, extra = {}) => JSON.stringify({ id, createdAt: `2026-10-0${id[7]}T00:00:00Z`, slateDate: '2026-10-01', hasResults: true, files: {}, ...extra });
 const reset = () => { for (const k of Object.keys(calls)) calls[k] = 0; };
+// Move the store's clock: its caches expire by Date.now().
+const realNow = Date.now;
+let skew = 0;
+const advance = (ms) => { skew += ms; };
+const tick = () => new Promise((r) => setTimeout(r, 0));
 
 describe('run storage caches', () => {
   beforeEach(() => {
+    jest.spyOn(Date, 'now').mockImplementation(() => realNow() + skew);
     files.clear();
+    versions.clear();
     files.set('runs/20250901-120000-aaaaaa/manifest.json', manifest('20250901-120000-aaaaaa'));
     files.set('runs/20250902-120000-bbbbbb/manifest.json', manifest('20250902-120000-bbbbbb'));
     files.set('runs/20250902-120000-bbbbbb/results.json', '[]');
@@ -161,6 +179,106 @@ describe('run storage caches', () => {
     expect(calls.list).toBe(3);
     expect(await nhlStore.listNames('data/slates')).toHaveLength(2);
     expect(calls.list).toBe(3);
+  });
+
+  test('concurrent reads of one path, one listing and one session check share a single call', async () => {
+    advance(11 * 60 * 1000); // everything earlier tests cached has expired
+    files.set('data/shared/a.json', JSON.stringify({ a: 1 }));
+    const [x, y, z] = await Promise.all([nhlStore.readJson('data/shared/a.json'), nhlStore.readJson('data/shared/a.json'), nhlStore.readJson('data/shared/a.json')]);
+    expect(x).toEqual({ a: 1 });
+    expect(y).toBe(x);
+    expect(z).toBe(x);
+    expect(calls.download).toBe(1);
+    const [n1, n2] = await Promise.all([nhlStore.listNames('data/shared'), nhlStore.listNames('data/shared')]);
+    expect(n1).toEqual(['a.json']);
+    expect(n2).toBe(n1);
+    expect(calls.list).toBe(1);
+    // The run list and the slate's run lookup ask for the same manifests at once: each is read once.
+    await Promise.all([nhlStore.listRuns(), nhlStore.findRun((m) => m.slateDate === '2026-10-01')]);
+    expect(calls.download).toBe(3); // the two real manifests
+  });
+
+  test('past its TTL a miss is re-checked through the folder listing, not a download', async () => {
+    advance(11 * 60 * 1000);
+    files.set('data/propfinder/teams-2025.json', JSON.stringify({ season: 2025 }));
+    expect(await nhlStore.readJson('data/propfinder/teams-2026.json')).toBeNull();
+    expect(await nhlStore.readJson('data/propfinder/opponents-2026.json')).toBeNull();
+    expect(calls).toMatchObject({ download: 2, list: 0 });
+    advance(31 * 1000); // misses expire after 30 s
+    expect(await nhlStore.readJson('data/propfinder/teams-2026.json')).toBeNull();
+    expect(await nhlStore.readJson('data/propfinder/opponents-2026.json')).toBeNull();
+    expect(calls).toMatchObject({ download: 2, list: 1 }); // one listing answers every miss in the folder
+    // A read asked to revalidate consults the listing from the start: no download for a name that is not there,
+    // and the listing is reused across the folder's reads.
+    expect(await nhlStore.readJson('data/propfinder/skaters-2026.json', { revalidate: true })).toBeNull();
+    expect(await nhlStore.readJson('data/propfinder/teams-2025.json', { revalidate: true })).toEqual({ season: 2025 });
+    expect(calls).toMatchObject({ download: 3, list: 1 });
+    // The file appears (written through the store): the listing is refreshed and the read sees it.
+    await nhlStore.writeJson('data/propfinder/teams-2026.json', { season: 2026 });
+    advance(31 * 1000);
+    expect(await nhlStore.readJson('data/propfinder/opponents-2026.json')).toBeNull();
+    expect(await nhlStore.readJson('data/propfinder/teams-2026.json')).toEqual({ season: 2026 });
+    expect(calls).toMatchObject({ download: 3, list: 2 });
+  });
+
+  test('a big file past its TTL is kept while the listing shows it unchanged, and re-read when it changed', async () => {
+    advance(11 * 60 * 1000);
+    const big = JSON.stringify({ updatedAt: 'a', rows: Array.from({ length: 20000 }, (_, i) => [`2026-01-0${(i % 9) + 1}`, i, i, `P${i}`]) });
+    files.set('data/rows/20252026.json', big);
+    versions.set('data/rows/20252026.json', 1);
+    const first = await nhlStore.readJson('data/rows/20252026.json', { revalidate: true });
+    expect(first.rows).toHaveLength(20000);
+    expect(calls).toMatchObject({ download: 1, list: 1 }); // the listing first, so the file's version mark is known
+    advance(11 * 60 * 1000); // past the JSON TTL
+    expect(await nhlStore.readJson('data/rows/20252026.json', { revalidate: true })).toBe(first);
+    expect(calls).toMatchObject({ download: 1, list: 2 });
+    advance(11 * 60 * 1000);
+    expect(await nhlStore.readJson('data/rows/20252026.json', { revalidate: true })).toBe(first);
+    expect(calls).toMatchObject({ download: 1, list: 3 });
+    // Written outside this process (a new version mark): downloaded again.
+    files.set('data/rows/20252026.json', JSON.stringify({ updatedAt: 'b', rows: [] }));
+    versions.set('data/rows/20252026.json', 2);
+    advance(11 * 60 * 1000);
+    const next = await nhlStore.readJson('data/rows/20252026.json', { revalidate: true });
+    expect(next.updatedAt).toBe('b');
+    expect(calls).toMatchObject({ download: 2, list: 4 });
+    // A small file is simply re-downloaded past its TTL: the listing would cost as much.
+    files.set('data/small/x.json', '{"v":1}');
+    await nhlStore.readJson('data/small/x.json');
+    advance(11 * 60 * 1000);
+    await nhlStore.readJson('data/small/x.json');
+    expect(calls).toMatchObject({ download: 4, list: 4 });
+  });
+
+  test('a stale entry is dropped by a write that lands while its listing is being checked', async () => {
+    advance(11 * 60 * 1000);
+    files.set('data/rows/20262027.json', JSON.stringify({ updatedAt: 'a', rows: [] }));
+    versions.set('data/rows/20262027.json', 1);
+    const v1 = await nhlStore.readJson('data/rows/20262027.json', { revalidate: true });
+    advance(11 * 60 * 1000);
+    // The revalidating read is in flight (waiting on the listing) when the store writes the file.
+    let release;
+    listGate = { prefix: 'data/rows', promise: new Promise((r) => { release = r; }) };
+    const slow = nhlStore.readJson('data/rows/20262027.json', { revalidate: true });
+    await tick();
+    await nhlStore.writeJson('data/rows/20262027.json', { updatedAt: 'b', rows: [] });
+    release();
+    listGate = null;
+    const got = await slow;
+    expect(got).not.toBe(v1);
+    expect(got.updatedAt).toBe('b');
+    expect((await nhlStore.readJson('data/rows/20262027.json')).updatedAt).toBe('b');
+  });
+
+  test('findRun reads manifests newest first, a batch at a time, and stops at the first match', async () => {
+    advance(11 * 60 * 1000);
+    for (let i = 0; i < 25; i++) files.set(`runs/202509${String(10 + i)}-120000-cccccc/manifest.json`, manifest(`202509${String(10 + i)}-120000-cccccc`, { slateDate: i === 13 ? '2026-10-09' : '2026-10-01', createdAt: `2025-09-${10 + i}T12:00:00Z` }));
+    reset();
+    const run = await nhlStore.findRun((m) => m.slateDate === '2026-10-09', { batch: 10 });
+    expect(run.id).toBe('20250923-120000-cccccc');
+    expect(calls).toMatchObject({ list: 1, download: 20 }); // the newest 10 (no match), then the next 10
+    expect(await nhlStore.findRun((m) => m.slateDate === '2027-01-01', { limit: 5 })).toBeNull();
+    expect(calls.download).toBe(20);
   });
 
   test('the JSON cache keeps recently used entries over long-unused ones', async () => {

@@ -13,6 +13,21 @@ const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { ho
 const signed = (v) => (v == null ? '—' : `${v > 0 ? '+' : ''}${v}%`);
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
 
+/**
+ * A closed disclosure whose body is only rendered once it has been opened: the slate carries
+ * a defense card, a full skater table and (after the game) a position log per game, and
+ * drawing all of them up front for 16 games is most of the page's first render.
+ */
+function LazyDetails({ className, summary, children }) {
+  const [opened, setOpened] = useState(false);
+  return (
+    <details className={className} onToggle={(e) => { if (e.currentTarget.open) setOpened(true); }}>
+      <summary>{summary}</summary>
+      {opened ? children : null}
+    </details>
+  );
+}
+
 function EdgeChip({ v }) {
   if (v == null) return <span className="nhlx-edge">—</span>;
   const cls = v >= 10 ? 'is-soft' : v <= -10 ? 'is-tough' : '';
@@ -132,13 +147,20 @@ function SkaterRows({ skaters, showTeam, teamCount, sort }) {
 
 /** Finished game: every skater's pre-game position, box line, and the defense bucket it fed. */
 function PositionLog({ game }) {
+  return (
+    <LazyDetails className="nhlx-db-details nhlx-poslog" summary={<>Position log · final {game.away} {game.log.score.away} – {game.home} {game.log.score.home}</>}>
+      <PositionLogBody game={game} />
+    </LazyDetails>
+  );
+}
+
+function PositionLogBody({ game }) {
   const open = usePlayerCard();
   const [team, setTeam] = useState(game.away);
   const rows = game.log.skaters.filter((s) => s.team === team);
   const lineup = rows.filter((s) => s.posSource !== 'box').length;
   return (
-    <details className="nhlx-db-details nhlx-poslog">
-      <summary>Position log · final {game.away} {game.log.score.away} – {game.home} {game.log.score.home}</summary>
+    <>
       <p className="nhlx-auto-meta">
         Each row is one skater in this game at the position and line slot the latest lineup read gives him (LW1 … RW4, D1 … D3; a read after the game still corrects it); his shots and goals count against the opponent’s
         <b> {rows[0]?.bucket.venue === 'H' ? 'home' : 'away'}</b> defense for that position, and are logged per line. {lineup}/{rows.length} positions came from the lineup{lineup < rows.length ? `, ${rows.length - lineup} from the box-score roster code (no line)` : ''}.
@@ -168,7 +190,7 @@ function PositionLog({ game }) {
           </tbody>
         </table>
       </div>
-    </details>
+    </>
   );
 }
 
@@ -352,8 +374,7 @@ export default function MatchupsPanel() {
               </div>
               <RinkLegend metric={metric} />
               {g.log && <PositionLog game={g} />}
-              <details className="nhlx-db-details nhlx-mu-details">
-                <summary>Defense tables and all skaters</summary>
+              <LazyDetails className="nhlx-db-details nhlx-mu-details" summary="Defense tables and all skaters">
                 {g.sides.map((s) => (
                   <div key={s.team} className="nhlx-mu-side">
                     <div className="nhlx-mu-side-head">
@@ -366,7 +387,7 @@ export default function MatchupsPanel() {
                     </div>
                   </div>
                 ))}
-              </details>
+              </LazyDetails>
             </article>
           ))}
         </>
