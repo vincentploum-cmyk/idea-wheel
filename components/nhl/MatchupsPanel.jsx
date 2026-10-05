@@ -210,6 +210,8 @@ export default function MatchupsPanel() {
   const [minGp, setMinGp] = useState(5);
   // One game from the dropdown at the top, or '' for the whole slate (reset on every date change).
   const [gameId, setGameId] = useState('');
+  // What tints every rink on the slate: the shots or the goals the opponent allows (one switch, all rinks follow).
+  const [metric, setMetric] = useState('sog');
 
   const load = useCallback((d) => fetch(`/api/nhl/data/slate${d ? `?date=${d}` : ''}`, { cache: 'no-store' })
     .then(async (res) => {
@@ -346,9 +348,9 @@ export default function MatchupsPanel() {
                 </div>
               )}
               <div className="nhlx-rink-pair">
-                {g.rinkSides.map((s) => <Rink key={s.team} side={s} teamCount={slate.teamCount} posFilter={pos} minGp={minGp} log={g.log} modelRun={slate.modelRun} />)}
+                {g.rinkSides.map((s) => <Rink key={s.team} side={s} teamCount={slate.teamCount} posFilter={pos} minGp={minGp} log={g.log} modelRun={slate.modelRun} metric={metric} onMetric={setMetric} />)}
               </div>
-              <RinkLegend />
+              <RinkLegend metric={metric} />
               {g.log && <PositionLog game={g} />}
               <details className="nhlx-db-details nhlx-mu-details">
                 <summary>Defense tables and all skaters</summary>
