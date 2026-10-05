@@ -36,7 +36,7 @@ function CandidateRow({ c, rank }) {
       <td title={`First goals scored over his last ${c.own.gp} stored games with a first goal on record`}>{c.own.gp ? <><b>{c.own.fg}</b> / {c.own.gp} <small className="nhlx-auto-meta">{pct(c.own.rate)}</small></> : <span className="nhlx-auto-meta">no record</span>}</td>
       <LeakCell c={c} />
       <td>{c.h2h ? <>{c.h2h.hot ? <span className="nhlx-rk-h2h is-legend">h2h</span> : null}{c.h2h.g} G in {c.h2h.gp} GP</> : <span className="nhlx-auto-meta">—</span>}</td>
-      <td title={c.h2h ? `${c.h2h.sog} shots in ${c.h2h.gp} meeting${c.h2h.gp === 1 ? '' : 's'} with ${c.opp}, this season and last` : undefined}>{c.h2h ? <>{c.h2h.shotsHot ? <span className="nhlx-rk-h2h is-legend">h2h</span> : null}<b>{c.h2h.spg.toFixed(1)}</b> <small className="nhlx-auto-meta">{c.h2h.sog} in {c.h2h.gp}</small></> : <span className="nhlx-auto-meta">—</span>}</td>
+      <td title={c.h2h ? `${c.h2h.sog} shots in ${c.h2h.gp} meeting${c.h2h.gp === 1 ? '' : 's'} with ${c.opp}, this season and last` : undefined}>{c.h2h ? <>{c.h2h.shotsHot ? <span className="nhlx-rk-h2h is-legend">sog</span> : null}<b>{c.h2h.spg.toFixed(1)}</b> <small className="nhlx-auto-meta">{c.h2h.sog} in {c.h2h.gp}</small></> : <span className="nhlx-auto-meta">—</span>}</td>
       <td title={c.modelled ? 'The model’s 1+ goal probability from the latest saved run' : 'No model run: 1+ goal odds from the matchup read'}><b>{pct(c.p1g)}</b>{c.modelled ? null : <i className="nhlx-fg-rank">read</i>}{c.model?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire"> 🔥</span> : null}</td>
       <td><div className="nhlx-fg-score"><div className="nhlx-fg-bar"><i style={{ width: `${c.score}%` }} /></div><b>{c.score}</b></div></td>
     </tr>
