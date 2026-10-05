@@ -124,6 +124,16 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   skater-game against the team, newest first, with the skater's line slot (LW1 … RW4, D1 … D3),
   filtered by slot, venue (@ / vs), the team's result and season; a Shots / Goals toggle with a
   line colours that column green over, red under, and L5 / L10 badges give the over / under share.
+- Scorecard (`lib/nhl-data/scorecard.js`, `/api/nhl/data/scorecard?from=&to=&rows=1`,
+  `components/nhl/Scorecard.jsx` at the top of the History tab): every stored game is graded
+  against the newest saved run created before its puck drop (`runForGame`; a run saved after the
+  game never counts), players matched by `modelKey`. Per market (3+/4+/5+ SOG, 1+/2+ G, 1+/2+ PT):
+  calls, the model's average probability, hit rate, Brier, calibration buckets, by gate / position /
+  line slot, and the best-bet calls (`bestBetLabel`, now in `model-core.js`); the Model tab's Top 5
+  boards replayed per slate; and the window predictors — own L5 / L10 / L15 / season from the stored
+  rows (full window required) and PropFinder L5 / season as the run saw them (`shotsL5`, `shotsSeason`
+  on the result rows) — scored beside λ on the rows every covered predictor shares (MAE, bias, Poisson
+  3+ SOG / 1+ G Brier). Descriptive only; nothing feeds the model.
 - MoneyPuck team metrics (`lib/nhl-data/moneypuck.js`, `data/moneypuck/*`) feed the team
   page, Matchups defense cards and League; credit MoneyPuck.com wherever shown.
 - Theme: dark by default (`<html data-theme>`, toggle in the header, tokens in
