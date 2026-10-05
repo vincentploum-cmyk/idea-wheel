@@ -51,7 +51,9 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   card's "1st goal" column, `firstGoals` in the defense API); games logged without it get it
   from the play-by-play via `stampFirstGoals` (`ingestGames` with nothing new, `?only=firstgoals`). The
   Matchups tab (`lib/nhl-data/slate.js`; each game drawn as two rinks in
-  `components/nhl/Rink.jsx`, ice bands tinted by the opponent's SOG-allowed rank per position
+  `components/nhl/Rink.jsx`, ice bands tinted by the opponent's SOG-allowed or goals-allowed rank per position (the slate-wide
+  Shots / Goals switch above each rink, `metric` state in `MatchupsPanel`; the band labels, legend and the chips'
+  h2h mark follow it: scorers (`h2hHot`) under Goals, shooters (`h2hShotsHot`) under Shots)
   for the window picked above the rink — home / away / L5 / L10 / L5 home / L5 away, defaulting to
   tonight's venue —
   above each rink the opponent's PropFinder defense table (`propfinderDefenseTabs` in
