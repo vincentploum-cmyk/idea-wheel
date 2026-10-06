@@ -47,6 +47,7 @@ for date in sorted(by_date):
         hist[r.opp].append((date, r.sa, r.ga, r.dvenue, {p: pos_tab[(r.gameId, r.opp, p)] for p in ('C', 'LW', 'RW', 'D') if (r.gameId, r.opp, p) in pos_tab}))
 env = pd.DataFrame(rows).set_index('idx')
 d = d.join(env)
+d.to_csv(sys.argv[1].replace('.csv', '-env.csv'), index=False)
 
 print(f'=== {label}: {len(d)} rows ===')
 # ---------------- 1. reliability: how well does each window predict the opponent's NEXT 10 games?

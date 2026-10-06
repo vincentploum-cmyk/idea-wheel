@@ -274,6 +274,20 @@ position figure (deviance 1.2458 none, 1.2424 last season, 1.2457 L5, 1.2442 L10
 season + position season-to-date; 2024-25 the same order). So: carry last season's shots
 allowed until the opponent has ~15 games, then season-to-date by position.
 
+**This season only.** Through Oct 5 no team has more than 4 games, so L5, L10, L15 and season
+to date are the same number and the window comparison above cannot be run on 2026-27 yet. What
+this season does measure is the noise in a short defensive read. From the 86 team-games, a
+team's shots allowed swings by 4.8 a game from night to night, goals allowed by 2.0, and
+shots allowed per skater at a position by 0.77. That makes the standard error of a team's
+shots-allowed average +/- 2.2 at 5 games, +/- 1.5 at 10, +/- 1.2 at 15, +/- 0.9 at 30 and
++/- 0.5 over a season, against a spread between teams that is a few shots a game; goals
+allowed is +/- 0.9 at 5 games and +/- 0.6 at 10, which is most of the spread between any two
+defenses. So a 5-game read of a defense is roughly half noise, a 15-game read mostly signal,
+and this is the mechanism behind the ranking above. The windows become testable on this
+season's own games in sequence: L5 against season to date once teams pass 6 games (about
+Oct 18), L10 at 11+ (about Nov 1), L15 at 16+ (mid-November); `tools/predictors/run.sh 2026`
+then `env_windows.py` reruns the comparison on 2026-27 alone.
+
 **Rule.** Environment = the opponent's shots allowed per skater at the position, season to
 date (last season's team figure blended in until ~15 games), applied as roughly +10% SOG per
 standard deviation, or ~3% per extra shot allowed per game. L5 / L10 defense reads are the
