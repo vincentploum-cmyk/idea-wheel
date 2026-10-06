@@ -1,6 +1,6 @@
 # What predicts a skater's shots and goals? (2026-27 to date, 2025-26 as the control)
 
-Revision 2: head-to-head re-tested across seasons with a permutation null (section 8).
+Revision 3: head-to-head re-tested across seasons (section 8); environment window test, L5 / L10 / L15 / season (section 9).
 
 Study date: 2026-10-06. Rerun with `tools/predictors/run.sh 2026` (see `tools/predictors/README.md`).
 
@@ -30,8 +30,8 @@ gaps between rows of the same ladder on the same rows.
 | Scored last game | No carry-over. Scorers score again at their own rate, not above it. | Scored 1 last game: P(1+ goal) next 0.22; their last-season rate implies 0.22 (control, n=5,693) |
 | "He had 4 goals against this team" | **A small, real effect, not a driver.** Across seasons, a strong record against an opponent is worth about 1 to 2 points of P(1+ goal) on top of the player's full-season rate. Within a season it is worth nothing beyond chance. Most of the raw correlation is "good scorers score everywhere". | 2024-25 record vs 2025-26 rematches (38,539 games): 4+ goals vs the opponent last season scored in 31.0% of rematches vs 32.7% expected from the full-season rate; H2H term z = 4.6 against a rate that excludes those games, z = 1.5 against one that includes them; permutation p = 0.03. Within 2025-26 (24,662 games): the H2H term equals what shuffled opponent labels produce, p = 0.65 (section 8) |
 | H2H shots | Nothing beyond the player's own SOG rate: within-season p = 0.20 against the shuffle; cross-season coefficient -0.008 once H2H goals are in. | section 8 |
-| Opponent environment for SOG | Real but small: ~3% more SOG per extra shot the opponent allows per game (a 25 vs 29 SA team is ~12%). **Shots allowed to the position** is the best version, once the opponent has ~10 games; before that use last season's team shots allowed. | Coefficients 0.036 (this season), 0.020 to 0.029 (control); position split is the biggest single environment gain in the control (deviance 1.2547 to 1.2463) |
-| Opponent environment for goals | Goals allowed to the position (this season) is the only environment read that moves P(1+ goal); last season's xGA barely does. | Control: deviance 0.6112 to 0.6084 for position GA; opp LS xGA 0.6112 to 0.6112 |
+| Opponent environment for SOG: which window? | **Season-to-date, by position.** Longer is better at every step: L5 < L10 < L15 < L20 < L30 < season, in both seasons, and shots allowed per skater at the position beats the team total at every window. L5 is the weakest read tested. One SD of the position season-to-date read is ~10% of a skater's SOG; the L5 read ~5%. | section 9: deviance 1.2540 (none) / 1.2508 (position L5) / 1.2482 (L10) / 1.2466 (L15) / 1.2425 (season); 2024-25 identical ranking |
+| Opponent environment for goals: which window? | **Season-to-date goals allowed to the position**, and only that. L5 / L10 goals allowed (overall or by position) add nothing; one SD of the position season read is 14 to 18% of a skater's goal rate, the L5 read 3 to 6%. | section 9 |
 | Home ice, back-to-back, rest | Tie-breakers only: home +4% SOG (control), 0% this season; back-to-back -2% (not significant); rest days nothing. | sections 1, 4h |
 | Best goal read tonight | **Last season's xG per game** (or goals per game), then this season's iSCF. Season-to-date goals per game is noise until ~40 games; last season's shooting % is a persistent finishing signal worth keeping. | This season ll1 0.408 (LS xG) vs 0.427 (sTD goals); control full fit z = 7.5 for LS SH% (section 5, 7) |
 | Shooting % this season | Useless now (worse than the intercept) and weak all year. | deviance 0.667 vs 0.643 intercept |
@@ -205,6 +205,82 @@ directions, from the previous season or longer; never from this season's meeting
 a tier change. The scripts: `tools/predictors/h2h_cross.py`, `h2h_perm.py`,
 `h2h_within_fixed.py`.
 
+## 9. Environment: which window?
+
+Opponent shots and goals allowed, overall and per skater at the position, over the opponent's
+last 3 / 5 / 10 / 15 / 20 / 30 games and the season to date, all from games before the row.
+Two scores. First, reliability: how well each window predicts the opponent's own shots allowed
+over its next 10 games. Second, value: the cross-validated gain each window adds to a skater's
+projection on top of his own baseline (season-to-date SOG, last season, iCF, L5 TOI, home),
+skaters with 20+ games and opponents with 30+ games, same rows throughout.
+
+**Reliability of the read itself** (correlation with the opponent's next 10 games):
+
+| Window | shots allowed, 2025-26 | shots allowed, 2024-25 | goals allowed, 2025-26 | goals allowed, 2024-25 |
+|---|---|---|---|---|
+| L3 | 0.33 | | 0.09 | |
+| L5 | 0.40 | 0.32 | 0.09 | 0.19 |
+| L10 | 0.50 | 0.35 | 0.10 | 0.27 |
+| L15 | 0.53 | 0.39 | 0.10 | 0.34 |
+| L20 | 0.54 | | 0.07 | |
+| L30 | 0.57 | | 0.10 | |
+| Season to date | **0.59** | **0.45** | **0.14** | **0.42** |
+
+Shots allowed is a stable team trait that a longer window measures better; goals allowed is
+mostly goaltending noise and is barely predictable from any window shorter than a season.
+
+**Value in the SOG projection** (deviance, lower is better; 24,707 skater-games in 2025-26,
+25,679 in 2024-25):
+
+| Environment read | 2025-26 | 2024-25 | % SOG per SD of the read (2025-26 / 2024-25) |
+|---|---|---|---|
+| none (player only) | 1.2540 | 1.2481 | |
+| team shots allowed, L5 | 1.2514 | 1.2457 | 4.3 / 3.9 |
+| team shots allowed, L10 | 1.2508 | 1.2449 | 4.7 / 4.5 |
+| team shots allowed, L15 | 1.2498 | 1.2454 | 5.3 / 4.2 |
+| team shots allowed, season | 1.2490 | 1.2453 | 5.8 / 4.3 |
+| shots allowed to the position, L5 | 1.2508 | 1.2444 | 4.8 / 5.3 |
+| shots allowed to the position, L10 | 1.2482 | 1.2424 | 6.8 / 6.8 |
+| shots allowed to the position, L15 | 1.2466 | 1.2417 | 7.9 / 7.5 |
+| shots allowed to the position, L20 | 1.2452 | | |
+| shots allowed to the position, L30 | 1.2444 | | |
+| shots allowed to the position, season | **1.2425** | **1.2395** | **11.2 / 9.6** |
+| position L10 + position season | 1.2426 | 1.2393 | |
+| position, at tonight's venue, L10 | 1.2475 | 1.2432 | |
+
+Every step longer is better, in both seasons; the position split is worth more than any
+window choice; venue-matched windows lose to the all-games window of the same length because
+they halve the sample. Adding L10 on top of season-to-date gains nothing, so recent form of the
+defense carries no information the season total lacks.
+
+**Value in the goal projection** (goal core: season-to-date SOG, iSCF, goals, last season xG
+and SH%, home):
+
+| Environment read | 2025-26 | 2024-25 | % goals per SD (2025-26 / 2024-25) |
+|---|---|---|---|
+| none | 0.6203 | 0.5970 | |
+| team goals allowed, L5 / L10 / L15 / season | 0.6201 / 0.6202 / 0.6201 / 0.6202 | 0.5965 / 0.5967 / 0.5963 / 0.5959 | 3.8 / 2.9 / 3.3 / 2.9 and 5.9 / 4.6 / 6.6 / 8.1 |
+| goals allowed to the position, L5 / L10 / L15 | 0.6204 / 0.6202 / 0.6199 | 0.5965 / 0.5962 / 0.5959 | |
+| goals allowed to the position, season | **0.6188** | **0.5948** | **13.7 / 17.5** |
+| shots allowed to the position, season | 0.6187 | 0.5949 | |
+
+For goals the only environment read that moves the projection is the season-to-date figure by
+position (goals or shots allowed to the position, equally). Short windows of goals allowed are
+goalie variance.
+
+**Early season** (opponent with 5 to 15 games, skater 5+): last season's team shots allowed
+beats every this-season window, and the best read is last season's number plus this season's
+position figure (deviance 1.2458 none, 1.2424 last season, 1.2457 L5, 1.2442 L10, 1.2406 last
+season + position season-to-date; 2024-25 the same order). So: carry last season's shots
+allowed until the opponent has ~15 games, then season-to-date by position.
+
+**Rule.** Environment = the opponent's shots allowed per skater at the position, season to
+date (last season's team figure blended in until ~15 games), applied as roughly +10% SOG per
+standard deviation, or ~3% per extra shot allowed per game. L5 / L10 defense reads are the
+noisiest version of a real signal and should not replace the season figure. For goals, the
+same season-to-date position read, ~15% per standard deviation. Script:
+`tools/predictors/env_windows.py <rows.csv> <label>`.
+
 ## 6. What this means for the model and the site
 
 1. **Early-season baseline.** Until a skater has ~18 games, the SOG baseline should be last
@@ -222,11 +298,13 @@ a tier change. The scripts: `tools/predictors/h2h_cross.py`, `h2h_perm.py`,
    tab should read the previous season's (or a multi-season) record, not this season's
    meetings, and enter a verdict as a modifier of a few percent on the goal rate (section 8).
    H2H shots carry nothing. "Scored last game" carries nothing.
-4. **Environment.** Opponent shots allowed to the position is the right defense read, but it
-   needs ~10 opponent games; before that the previous season's team shots allowed per game is
-   the better number. Size: about 3% of a skater's SOG per shot allowed per game. The Matchups
-   rink bands (SOG-allowed rank by position) are the right shape; their weight in a verdict
-   should be a modifier of that size, not a tier change.
+4. **Environment.** Opponent shots allowed to the position, season to date, is the right
+   defense read (section 9); the L5 / L10 variants in the slate (`recent`, `recent5` in
+   `buildSlate`, the L5 / L10 / L15 tabs) are strictly worse than the season figure and add
+   nothing on top of it. Before the opponent has ~15 games, blend in last season's team shots
+   allowed. Size: ~10% of a skater's SOG per standard deviation of the position read, ~3% per
+   shot allowed per game. The Matchups rink bands (SOG-allowed rank by position) are the
+   right shape; their weight in a verdict should be a modifier of that size, not a tier change.
 5. **Goals.** Last season's xG per game plus this season's iSCF, with last season's SH% as the
    finishing term. Season-to-date goals per game and shooting % should carry no weight before
    December.

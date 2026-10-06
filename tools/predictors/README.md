@@ -25,6 +25,7 @@ Output goes to `.nhl-data/predictors/<year>/` (gitignored): `games/<date>.json`,
 | `h2h_cross.py` | Previous season's record vs each opponent -> this season's games vs that opponent: buckets, Poisson with the player's rate excluding those games, the "3+ goals vs the opponent" list. `python3 -I tools/predictors/h2h_cross.py <prev rows.csv> <cur rows.csv> <label>` |
 | `h2h_perm.py` | Permutation null for the cross-season test: shuffles which opponent each of the player's previous-season games was against, so his rate stays and any matchup effect is removed. `… h2h_perm.py <prev rows.csv> <cur rows.csv> <permutations>` |
 | `h2h_within_fixed.py` | Within-season H2H with the H2H games excluded from the season-to-date rate, plus the same permutation null. `… h2h_within_fixed.py <rows.csv> <permutations>` |
+| `env_windows.py` | Which window of the opponent's shots / goals allowed (overall and per skater at the position; L3 to L30 and season to date, venue-matched L5 / L10) predicts the skater's SOG and goals: reliability of each read against the opponent's next 10 games, cross-validated gain on top of the player baseline, effect sizes, and the early-season comparison with last season's figure. `python3 -I tools/predictors/env_windows.py <rows.csv> <label>` |
 | `calib.py` | Out-of-fold calibration tables for the recommended early-season models and the running hot / cold lists against last season's rates. |
 
 Needs node 18+ and python3 with pandas, scipy, statsmodels and scikit-learn
