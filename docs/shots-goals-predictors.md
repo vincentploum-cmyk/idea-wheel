@@ -1,5 +1,7 @@
 # What predicts a skater's shots and goals? (2026-27 to date, 2025-26 as the control)
 
+Revision 2: head-to-head re-tested across seasons with a permutation null (section 8).
+
 Study date: 2026-10-06. Rerun with `tools/predictors/run.sh 2026` (see `tools/predictors/README.md`).
 
 **Data.** Every finished regular-season game of 2026-27 so far: 43 games, 1,548 skater-games,
@@ -26,8 +28,8 @@ gaps between rows of the same ladder on the same rows.
 | "L5 average is x" | L5 is a weak stand-alone and adds almost nothing once the season rate is in. Season-to-date > L10 > L5 > L3 > last game, every time. | Control, skaters with 20+ games: deviance L5 1.340, L10 1.302, season 1.263, season + L5 1.262 (section 7) |
 | Hot hand (big last game) | None. The next game lands on the player's baseline. | Last game 4 SOG: next game 2.02 vs baseline 2.08 (this season), 2.13 vs 2.14 (control). 5+ SOG: +0.6 on n=31 here, +0.1 on n=1,965 in the control |
 | Scored last game | No carry-over. Scorers score again at their own rate, not above it. | Scored 1 last game: P(1+ goal) next 0.22; their last-season rate implies 0.22 (control, n=5,693) |
-| "He had 4 goals against this team" | **No.** Earlier goals against an opponent predict nothing once the player's own rate is known; the rematch comes in slightly *under* his rate. | Control: 2+ prior goals vs the opponent, P(1+ goal) in the rematch 0.248 vs 0.288 from his season rate (n=956); 3+: 0.274 vs 0.321 (n=179); 4+: 0.400 vs 0.436 (n=35). H2H goals z = -0.4 in the model (section 8) |
-| H2H shots | Same: H2H SOG average mirrors the player's own average (4+ H2H: 2.36 actual vs 2.45 season rate) and adds nothing (z = 1.2, coefficient 0.005). | section 8b, 8c |
+| "He had 4 goals against this team" | **A small, real effect, not a driver.** Across seasons, a strong record against an opponent is worth about 1 to 2 points of P(1+ goal) on top of the player's full-season rate. Within a season it is worth nothing beyond chance. Most of the raw correlation is "good scorers score everywhere". | 2024-25 record vs 2025-26 rematches (38,539 games): 4+ goals vs the opponent last season scored in 31.0% of rematches vs 32.7% expected from the full-season rate; H2H term z = 4.6 against a rate that excludes those games, z = 1.5 against one that includes them; permutation p = 0.03. Within 2025-26 (24,662 games): the H2H term equals what shuffled opponent labels produce, p = 0.65 (section 8) |
+| H2H shots | Nothing beyond the player's own SOG rate: within-season p = 0.20 against the shuffle; cross-season coefficient -0.008 once H2H goals are in. | section 8 |
 | Opponent environment for SOG | Real but small: ~3% more SOG per extra shot the opponent allows per game (a 25 vs 29 SA team is ~12%). **Shots allowed to the position** is the best version, once the opponent has ~10 games; before that use last season's team shots allowed. | Coefficients 0.036 (this season), 0.020 to 0.029 (control); position split is the biggest single environment gain in the control (deviance 1.2547 to 1.2463) |
 | Opponent environment for goals | Goals allowed to the position (this season) is the only environment read that moves P(1+ goal); last season's xGA barely does. | Control: deviance 0.6112 to 0.6084 for position GA; opp LS xGA 0.6112 to 0.6112 |
 | Home ice, back-to-back, rest | Tie-breakers only: home +4% SOG (control), 0% this season; back-to-back -2% (not significant); rest days nothing. | sections 1, 4h |
@@ -152,6 +154,57 @@ with goals allowed to the position by the opponent the only environment term tha
 Home ice: +4% in the control, not significant; this season's +42% (p = 0.01) does not replicate
 and is treated as noise.
 
+## 8. Head-to-head, done properly
+
+The first version of this study tested only meetings earlier in the same season and put those
+games inside the season-to-date rate, which biases the test against H2H. Three corrected tests:
+
+**a) Within-season, 2025-26 (24,662 games with 10+ prior games and an earlier meeting; the
+player's rate excludes the games against tonight's opponent).** The H2H goals term fits at
+0.098 (z = 3.0). Shuffling which opponent each prior game was against (which keeps every
+player's rate and removes any matchup effect) gives 0.107 +/- 0.036 (z = 3.3). The real value
+is what chance produces: permutation p = 0.65 for goals, 0.20 for shots.
+
+| Earlier goals vs the opponent this season | n | meetings | P(1+ goal) actual | expected from his rate | diff |
+|---|---|---|---|---|---|
+| 0 | 19,394 | 1.4 | 0.143 | 0.141 | +0.003 |
+| 1 | 4,319 | 1.6 | 0.214 | 0.206 | +0.008 |
+| 2 | 770 | 1.9 | 0.243 | 0.254 | -0.011 |
+| 3 | 144 | 2.1 | 0.243 | 0.283 | -0.040 |
+| 4+ | 35 | 2.4 | 0.400 | 0.303 | +0.097 |
+
+**b) Cross-season, 2024-25 record vs 2025-26 rematches (38,539 games, 20+ GP last season).**
+
+| Goals vs the opponent last season | n | P(1+ goal) actual | expected from his rate (ex those games) | diff |
+|---|---|---|---|---|
+| 0 | 25,687 | 0.133 | 0.133 | -0.001 |
+| 1 | 9,206 | 0.200 | 0.196 | +0.004 |
+| 2 | 2,623 | 0.258 | 0.244 | +0.014 |
+| 3 | 791 | 0.273 | 0.265 | +0.008 |
+| 4+ | 232 | 0.310 | 0.299 | +0.011 |
+
+By how far the H2H rate beat the player's rate elsewhere (2+ meetings): 0.3 to 0.6 goals a game
+above it, +1.7 points (n = 3,163); more than 0.6 above, +1.4 points (n = 1,260); 0.3 or more
+below it, -2.0 points (n = 2,537). The H2H term fits at 0.171 (z = 5.0); the shuffle null gives
+0.116 +/- 0.036, permutation p = 0.03. So there is a matchup-specific residual, and it is small:
+against the full-season rate (which already contains those games) the excess is 0.055 per goal
+a game (z = 1.5), which for a 0.45-goal-a-game scorer with 1.3 goals a game against tonight's
+opponent moves P(1+ goal) from 0.362 to 0.376. H2H SOG adds nothing once H2H goals are in
+(coefficient -0.008).
+
+**c) This season so far (2025-26 record vs 2026-27 games, 1,354 games).** Same direction:
+coefficient 0.365 against the ex-opponent rate (z = 2.2), shuffle null 0.112 +/- 0.195,
+p = 0.08. The 45 skater-games by players with 3+ goals against the opponent last season: 11
+scored (24.4%), expected 29.1% from their rates. Hagel (4 in 3 vs PHI) and Stützle (5 in 4 vs
+BOS) are two of the 11; Crosby (4 vs PHI), Stamkos (4 vs MIN), Tuch (4 vs TBL), Batherson (4
+vs TOR), Necas (4 vs LAK), Thomas (4 vs COL), Bertuzzi (4 vs VGK), Foerster, Zegras and
+Michkov (vs NJD) were blanked.
+
+**Reading.** Use the H2H goal record as a modifier of a few percent on the goal rate, in both
+directions, from the previous season or longer; never from this season's meetings, and never as
+a tier change. The scripts: `tools/predictors/h2h_cross.py`, `h2h_perm.py`,
+`h2h_within_fixed.py`.
+
 ## 6. What this means for the model and the site
 
 1. **Early-season baseline.** Until a skater has ~18 games, the SOG baseline should be last
@@ -166,8 +219,9 @@ and is treated as noise.
 2. **Use attempts as the this-season volume signal.** Season-to-date iCF / iFF, not SOG, and
    not L5; for defensemen iCF is already the better read after two games.
 3. **H2H marks.** `h2hHot` and `h2hShotsHot` on the chips and the H2H columns on the 1st-goal
-   tab describe the player, not the matchup: zero incremental value on 25,000 control rows.
-   Keep them as context, never as a verdict input. The same goes for "scored last game".
+   tab should read the previous season's (or a multi-season) record, not this season's
+   meetings, and enter a verdict as a modifier of a few percent on the goal rate (section 8).
+   H2H shots carry nothing. "Scored last game" carries nothing.
 4. **Environment.** Opponent shots allowed to the position is the right defense read, but it
    needs ~10 opponent games; before that the previous season's team shots allowed per game is
    the better number. Size: about 3% of a skater's SOG per shot allowed per game. The Matchups
