@@ -1,6 +1,7 @@
 # What predicts a skater's shots and goals? (2026-27 to date, 2025-26 as the control)
 
-Revision 4 (2026-10-08): the rink's two environment tints, Rink vs PropFinder, graded against the box scores (section 10).
+Revision 4 (2026-10-08): the rink's two environment tints, Rink vs PropFinder, graded against the box scores (section 10); the 1st goal tab graded against who scored first (section 11).
+Revision 4 (2026-10-08, earlier): the rink's two environment tints, Rink vs PropFinder, graded against the box scores (section 10).
 Revision 3: head-to-head re-tested across seasons (section 8); environment window test, L5 / L10 / L15 / season (section 9).
 
 Study date: 2026-10-06; section 10 on 2026-10-08. Rerun with `tools/predictors/run.sh 2026` (see `tools/predictors/README.md`).
@@ -410,6 +411,41 @@ tiers, roughly one line of odds. For goals, the last-season goals/G tier does th
   pointed the wrong way this season. If the Rink tint stays, its default should be the all-games
   season table, not the venue split.
 - The band's figure can stay a per-game total: within a position it reads the same as per skater.
+
+## 11. The 1st goal tab, graded
+
+The tab's score (`lib/nhl-data/firstgoal.js`: 45% the model's 1+ goal odds, 30% the player's own
+first-goal rate over his last 100 games, 15% the opponent's first-goal leak to his position at
+tonight's venue, 10% head to head) was replayed leak-free for every skater-game of this season
+(55 games) and of 2025-26 (1,311 games), with the player's blended goal rate standing in for the
+model's odds, and the per-game ranking graded against who scored first.
+`tools/predictors/firstgoal_grade.py`.
+
+| Ranking (about 36 skaters a game) | #1 scores first | first scorer in top 3 | in top 5 | #1 scores at all |
+|---|---|---|---|---|
+| chance | 2.8% | 8.3% | 14% | 16% |
+| tab score, this season | 7.3% | 14.5% | 25.5% | 29% |
+| tab score, 2025-26 | 6.6% | 19.6% | 29.9% | 36.5% |
+| goal rate alone, 2025-26 | 6.4% | 18.1% | 31.2% | 36.2% |
+| own first-goal rate alone, 2025-26 | 4.6% | 17.8% | 27.1% | 30.4% |
+| opponent first-goal leak alone, 2025-26 | 2.4% | 7.7% | 12.9% | 15.5% |
+
+The tab's top pick scores first about 2.4 times as often as a random skater and scores at all
+more than twice as often, and the score reads monotonically (2025-26: 0 to 19 scores first 1.0%,
+40 to 49 4.7%, 60 to 69 6.7%, 70+ 5.7%; scores at all 7% to 39%). But all of it is the goal
+rate: in a joint fit of "scored first" on the four parts, the goal-rate term is z = 13.0 and the
+own first-goal rate (z = -0.7), the leak (z = 0.0) and head to head (z = 0.7) add nothing, this
+season the same (1.8 / 0.0 / 0.3 / 1.0). A player's own first-goal record tracks his goal rate
+and no more (20+ flagged games, 2025-26: 0% record scores first 1.4%, 3 to 6% 3.9%, 6 to 10%
+5.7%, 10%+ 4.0%), and the opponent's first-goal leak has no shape at all (ratio under 0.5: 2.3%;
+0.8 to 1.2: 3.1%; 1.6+: 1.9%). First goals are rare enough (one skater in 36) that nothing
+beyond "who scores goals" survives.
+
+**Rule.** The tab is a fair shortlist for *a* goal (its daily top 10 scored in 35% of
+player-games against 14.5% for the rest of the slate) and a weak one for the *first* goal (6%
+vs 2.7%). Rank it by the model's 1+ goal odds and treat the first-goal record, the leak and the
+head-to-head columns as colour, not as inputs; a first-goal price has to clear roughly 15 to 1
+on the tab's best candidate before it is a bet.
 
 ## 6. What this means for the model and the site
 
