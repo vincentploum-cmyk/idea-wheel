@@ -174,6 +174,7 @@ function TeamDefense({ abbr, defense }) {
           <small>Shots and goals allowed per game · rank 1 = most allowed of {n} · leaky = top third, tight = bottom third · last-N windows count that venue’s last N games</small>
         </div>
       </div>
+      <div className="nhlx-deftable-wrap">
       <table className="nhlx-deftable nhlx-glance">
         <thead>
           <tr><th rowSpan="2">Window</th><th colSpan="3">At home</th><th colSpan="3">Away</th><th colSpan="3">All games</th></tr>
@@ -185,12 +186,14 @@ function TeamDefense({ abbr, defense }) {
           ))}
         </tbody>
       </table>
+      </div>
       <div className="nhlx-defcard-head" style={{ marginTop: 18 }}>
         <div>
           <b>How {abbr} defends each position</b>
           <small>Allowed per game this season · rank 1 = most permissive of {n} · {t.H.All.gp} home, {t.A.All.gp} away games</small>
         </div>
       </div>
+      <div className="nhlx-deftable-wrap">
       <table className="nhlx-deftable">
         <thead>
           <tr><th rowSpan="2">Pos</th><th colSpan="3">At home</th><th colSpan="3">Away</th><th colSpan="2">Last 10</th></tr>
@@ -212,6 +215,7 @@ function TeamDefense({ abbr, defense }) {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

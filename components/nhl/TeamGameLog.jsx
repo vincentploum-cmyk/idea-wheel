@@ -105,7 +105,7 @@ export default function TeamGameLog({ abbr }) {
           <PfTable className="nhlx-gl-table">
             <thead>
               <tr>
-                <th className="is-left">Date</th><th>W/L</th><th>H/A</th><th className="is-left">Player</th><th>Line</th><th>TOI</th>
+                <th className="is-left">Date</th><th>W/L</th><th>H/A</th><th className="is-left">Player</th><th className="nhlx-gl-line">Line</th><th>TOI</th>
                 <th className={stat === 'g' ? 'is-sorted' : ''}>Goals</th><th>Ast</th><th>Pts</th>
                 <th className={stat === 'sog' ? 'is-sorted' : ''}>Shots</th><th>Hits</th><th>Blk</th><th>iCF</th><th>iSCF</th>
               </tr>
@@ -116,8 +116,14 @@ export default function TeamGameLog({ abbr }) {
                   <td className="is-left">{mdy(r.date)}</td>
                   <td className={r.result === 'W' ? 'is-win' : r.result === 'L' ? 'is-loss' : ''}>{r.result || '—'}</td>
                   <td>{r.venue}</td>
-                  <td className="is-left"><div className="nhlx-pft-player"><TeamLogo abbr={r.team} size={20} /><Headshot id={r.playerId} size={26} /><b>{r.name}</b><PosBadge pos={r.pos} /></div></td>
-                  <td>{r.slot ? <Tag>{r.slot}</Tag> : <span className="nhlx-auto-meta">—</span>}</td>
+                  {/* On phones the Line column is hidden and the slot sits under the name (`.nhlx-gl-tags`). */}
+                  <td className="is-left">
+                    <div className="nhlx-pft-player">
+                      <TeamLogo abbr={r.team} size={20} /><Headshot id={r.playerId} size={26} />
+                      <span className="nhlx-gl-who"><b>{r.name}</b><span className="nhlx-gl-tags"><PosBadge pos={r.pos} />{r.slot ? <Tag>{r.slot}</Tag> : null}</span></span>
+                    </div>
+                  </td>
+                  <td className="nhlx-gl-line">{r.slot ? <Tag>{r.slot}</Tag> : <span className="nhlx-auto-meta">—</span>}</td>
                   <td>{num(r.toi)}</td>
                   <td className={stat === 'g' ? tone(r) : ''}>{r.g}</td>
                   <td>{r.a}</td>
