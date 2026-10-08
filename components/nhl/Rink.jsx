@@ -22,6 +22,7 @@ const D_Y = [118, 143, 168];                   // defense pair centres
 const D_X = [31, 69];
 const pct = (ft) => ft / 2;                    // 200 ft → 100 %
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
+const NB = '\u00a0';                          // keeps a chip's number with its unit; the stat line may only break after the dot
 const et = (iso) => (iso ? `${new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })} ET` : null);
 
 /** "lines from … · NHL.com lineup updated 5:30 PM ET · captured 7:20 PM ET" (the card's hover title). */
@@ -161,15 +162,15 @@ function Chip({ p, x, y, minGp, actual, played, metric = 'sog' }) {
         <i className="nhlx-rk-num">{p.number ?? p.pos}</i>
       </span>
       <span className="nhlx-rk-meta">
-        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{h2hMark ? <span className="nhlx-rk-h2h" title={h2hTitle}>h2h</span> : null}{shortName(p.name)}</b>
+        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{h2hMark ? <span className="nhlx-rk-h2h" title={h2hTitle}>h2h</span> : null}<span className="nhlx-rk-nm">{shortName(p.name)}</span></b>
         {played ? (actual
-          ? <span className={`nhlx-rk-stat is-actual${(m?.sog ?? p.projSog) != null && actual.sog >= (m?.sog ?? p.projSog) ? ' is-over' : ''}`}><em>{actual.sog}</em> SOG · <em>{actual.g}</em> G{actual.a ? <> · <em>{actual.a}</em> A</> : null}{m?.sog != null ? <i> m {num(m.sog)}</i> : p.projSog != null ? <i> p {num(p.projSog)}</i> : null}</span>
+          ? <span className={`nhlx-rk-stat is-actual${(m?.sog ?? p.projSog) != null && actual.sog >= (m?.sog ?? p.projSog) ? ' is-over' : ''}`}><em>{actual.sog}</em>{NB}SOG{NB}· <em>{actual.g}</em>{NB}G{actual.a ? <>{NB}· <em>{actual.a}</em>{NB}A</> : null}{m?.sog != null ? <i>m{NB}{num(m.sog)}</i> : p.projSog != null ? <i>p{NB}{num(p.projSog)}</i> : null}</span>
           : <span className="nhlx-rk-stat">did not play</span>)
           : m?.sog != null
-            ? <span className={`nhlx-rk-stat is-model${m.gateOpen === false ? ' is-closed' : ''}`}><em>{num(m.sog)}</em> SOG · <em>{num(m.g, 2)}</em> G</span>
+            ? <span className={`nhlx-rk-stat is-model${m.gateOpen === false ? ' is-closed' : ''}`}><em>{num(m.sog)}</em>{NB}SOG{NB}· <em>{num(m.g, 2)}</em>{NB}G</span>
             : thin || p.projSog == null
-              ? <span className="nhlx-rk-stat"><em>{p.pos}</em> · {p.gp ? `${p.gp} GP` : 'no games'}</span>
-              : <span className="nhlx-rk-stat is-read"><em>{num(p.projSog)}</em> SOG · <em>{num(p.projG, 2)}</em> G</span>}
+              ? <span className="nhlx-rk-stat"><em>{p.pos}</em>{NB}· {p.gp ? `${p.gp}${NB}GP` : `no${NB}games`}</span>
+              : <span className="nhlx-rk-stat is-read"><em>{num(p.projSog)}</em>{NB}SOG{NB}· <em>{num(p.projG, 2)}</em>{NB}G</span>}
       </span>
     </button>
   );
