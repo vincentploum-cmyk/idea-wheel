@@ -2,7 +2,7 @@ import { describe, expect, test } from '@jest/globals';
 import { inspectPropfinderCsv, parsePlayerCell, parseRanked, parseStatsCsv, statKey, fileInfo, seasonYear } from '../lib/nhl-data/propfinder-csv';
 import { nameResolver } from '../lib/nhl-data/names';
 import { PROPFINDER_SEED } from '../lib/nhl-data/seed/propfinder-2025';
-import { seedSnapshots, propfinderDefenseTabs } from '../lib/nhl-data/propfinder';
+import { seedSnapshots, propfinderDefenseTabs, storedWindowTables, withStoredWindows } from '../lib/nhl-data/propfinder';
 import { defaultDefenseTab, defenseBandFromTab, defenseTabText } from '../lib/nhl-data/propfinder-csv';
 
 const SKATERS = `Position,All
@@ -192,5 +192,51 @@ describe('propfinder defense tabs (the table above each rink)', () => {
     // The same season twice is one tab.
     expect(propfinderDefenseTabs(pf, 'LAK', pf).tabs.map((t) => t.key)).toEqual(['season-2025', 'l10']);
     expect(propfinderDefenseTabs(pf, 'XXX')).toBeNull();
+  });
+});
+
+describe('recent-games windows rolled from the stored box scores', () => {
+  // One skater-game row per (defending team, game): what `opp` allowed at `venue` of the shooter.
+  const row = (date, gameId, team, opp, venue, pos, g, sog) => ({ date, gameId, playerId: 1, name: 'A B', team, opp, venue, pos, line: 1, toi: 15, g, a: g, sog, hits: 0, blk: 0, icf: sog + 1, iff: sog, isf: sog, iscf: 1, ihdcf: 0, result: 'W' });
+  // NSH: five April games (13 goals, 155 shots allowed), a playoff game, then three October games (9 goals, 97 shots).
+  const april = [['2026-04-07', 0, 43], ['2026-04-09', 4, 27], ['2026-04-11', 1, 22], ['2026-04-13', 3, 23], ['2026-04-16', 5, 40]];
+  const october = [['2026-10-01', 3, 30], ['2026-10-03', 1, 30], ['2026-10-06', 5, 37]];
+  const rows = [
+    ...april.map(([d, g, s], i) => row(d, 2025020800 + i, 'ANA', 'NSH', 'A', 'LW', g, s)),
+    row('2026-04-20', 2025030111, 'ANA', 'NSH', 'A', 'LW', 9, 50),
+    ...october.map(([d, g, s], i) => row(d, 2026020010 + i, 'MIN', 'NSH', 'A', 'LW', g, s)),
+    // Montreal: two games this season only.
+    row('2026-10-01', 2026020020, 'TOR', 'MTL', 'A', 'C', 2, 20), row('2026-10-03', 2026020021, 'TOR', 'MTL', 'A', 'C', 6, 40),
+  ];
+  const pf2026 = { opponents: { season: 2026, teams: {}, ranks: {} }, opponentsByPos: {}, opponentsByWindow: { l5: { season: 2025, teams: { NSH: { gp: 5, g: 2.6, a: 5, sog: 31 } }, ranks: {} } }, opponentsByPosWindow: { l5: { LW: { season: 2025, teams: { NSH: { gp: 5, g: 1.2, sog: 7 } }, ranks: {} } } } };
+
+  test('L5 is the last five regular-season games across the season boundary, like PropFinder', () => {
+    const t = storedWindowTables(rows, 'l5', { season: 2026 });
+    // Apr 13, Apr 16, Oct 1, Oct 3, Oct 6: 17 goals and 160 shots over 5; the playoff game is left out.
+    expect(t.All.teams.NSH).toMatchObject({ gp: 5, g: 3.4, sog: 32, asOf: '2026-10-06' });
+    expect(t.LW.teams.NSH).toMatchObject({ gp: 5, g: 3.4, sog: 32 });
+    expect(t.C.teams.NSH).toMatchObject({ gp: 5, g: 0, sog: 0 }); // a game with no centre shots still counts
+    expect(t.All.teams.MTL).toMatchObject({ gp: 2, g: 4, sog: 30 });
+    expect(t.All.ranks.MTL.g).toBe(1); // 4.00 > 3.40: rank 1 = most allowed
+    expect(t.All.ranks.NSH.g).toBe(2);
+    expect(t.All).toMatchObject({ season: 2026, source: 'stored', windowGames: 5, split: null, count: 2 });
+    expect(storedWindowTables([], 'l5')).toBeNull();
+    expect(storedWindowTables(rows, 'nope')).toBeNull();
+  });
+
+  test('last season\'s pulled window gives way to the rolled one; a current-season window is kept', () => {
+    const d = propfinderDefenseTabs(pf2026, 'NSH', null, { rows });
+    const l5 = d.tabs.find((t) => t.key === 'l5');
+    expect(l5.rows.All).toMatchObject({ gp: 5, g: 3.4, sog: 32 });
+    expect(l5.rows.LW.g).toBe(3.4);
+    expect(l5).toMatchObject({ source: 'stored', season: 2026 });
+    expect(d.tabs.find((t) => t.key === 'l10').rows.All.gp).toBe(8);
+    // Without rows the stale file still shows (as before).
+    expect(propfinderDefenseTabs(pf2026, 'NSH').tabs.find((t) => t.key === 'l5').rows.All.g).toBe(2.6);
+    // PropFinder's own 2026 window wins once it exists.
+    const current = withStoredWindows({ ...pf2026, opponentsByWindow: { l5: { ...pf2026.opponentsByWindow.l5, season: 2026 } } }, rows);
+    expect(current.opponentsByWindow.l5.teams.NSH.g).toBe(2.6);
+    expect(current.opponentsByWindow.l10.teams.NSH.gp).toBe(8);
+    expect(withStoredWindows(pf2026, [])).toBe(pf2026);
   });
 });

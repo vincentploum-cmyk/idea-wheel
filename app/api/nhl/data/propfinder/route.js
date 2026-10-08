@@ -1,5 +1,6 @@
-import { authorize } from '@/lib/nhl-data/util';
-import { loadPropfinder, skatersWithIds, SKATER_TABLES } from '@/lib/nhl-data/propfinder';
+import { authorize, todayET, addDays } from '@/lib/nhl-data/util';
+import { loadRows } from '@/lib/nhl-data/build';
+import { loadPropfinder, withStoredWindows, skatersWithIds, SKATER_TABLES } from '@/lib/nhl-data/propfinder';
 import { loadPlayers } from '@/lib/nhl-data/rosters';
 import { SKATER_COLS, TEAM_COLS } from '@/lib/nhl-data/propfinder-csv';
 
@@ -12,7 +13,9 @@ export const dynamic = 'force-dynamic';
 export async function GET(request) {
   const auth = await authorize(request);
   if (!auth.ok) return auth.response;
-  const [{ teams, opponents, opponentsByPos, opponentsByPosWindow, opponentsByWindow, ...skaterTables }, ref] = await Promise.all([loadPropfinder(), loadPlayers()]);
+  const [pf, rows, ref] = await Promise.all([loadPropfinder(), loadRows(addDays(todayET(), 1)).catch(() => []), loadPlayers()]);
+  // Recent-games windows PropFinder has not published for this season yet come from the stored box scores.
+  const { teams, opponents, opponentsByPos, opponentsByPosWindow, opponentsByWindow, ...skaterTables } = withStoredWindows(pf, rows);
   return Response.json({
     source: 'PropFinder',
     skaterCols: SKATER_COLS,
