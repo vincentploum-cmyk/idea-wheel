@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Headshot, TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { MpCell } from './MoneyPuck';
-import { PfTable, PosBadge, Sel, SortTh, Tag, UnderlineTabs } from './pf-ui';
+import { PfTable, PosBadge, Sel, SortTh, Tag, UnderlineTabs, rankTone } from './pf-ui';
 import { TeamLink } from './links';
 import { SKATER_COLS, TEAM_COLS, seasonLabel, defaultDefenseTab } from '@/lib/nhl-data/propfinder-csv';
 import { teamName } from '@/lib/nhl-data/teams';
@@ -212,7 +212,7 @@ export function PropfinderSkaterTable({ pf }) {
 }
 
 /** PropFinder's own colouring, read from the shooter's side: rank 1 = most allowed. */
-const defTone = (rank, n) => (!rank || !n ? '' : rank <= Math.ceil(n / 3) ? 'is-soft' : rank > n - Math.ceil(n / 3) ? 'is-tough' : 'is-mid');
+const defTone = rankTone;
 const DEF_POS = ['All', 'C', 'LW', 'RW', 'D'];
 
 /**

@@ -62,7 +62,8 @@ export function SortTh({ k, label, sort, onSort, title }) {
 }
 
 /** PropFinder's rank thirds, read from the shooter's side: rank 1 = most allowed. */
-export const rankTone = (rank, n) => (!rank || !n ? '' : rank <= Math.ceil(n / 3) ? 'is-soft' : rank > n - Math.ceil(n / 3) ? 'is-tough' : 'is-mid');
+// PropFinder's bands: ranks 1-11 green (most allowed), 12-22 yellow, 23-32 red of 32.
+export const rankTone = (rank, n) => (!rank || !n ? '' : rank <= Math.ceil(n / 3) ? 'is-soft' : rank > n - Math.floor(n / 3) ? 'is-tough' : 'is-mid');
 
 const POS_OPTS = [['All', 'All'], ['C', 'C'], ['LW', 'LW'], ['RW', 'RW'], ['D', 'D']];
 
@@ -136,8 +137,8 @@ export function DefenseAllowed({ abbr, data, pos: initialPos = 'All' }) {
       </PfTable>
       <div className="nhlx-da-legend">
         <span><i className="is-soft" /> Rank 1–{Math.ceil(n / 3)} (Most Allowed)</span>
-        <span><i className="is-mid" /> Rank {Math.ceil(n / 3) + 1}–{n - Math.ceil(n / 3)} (Ok Matchup)</span>
-        <span><i className="is-tough" /> Rank {n - Math.ceil(n / 3) + 1}–{n} (Least Allowed)</span>
+        <span><i className="is-mid" /> Rank {Math.ceil(n / 3) + 1}–{n - Math.floor(n / 3)} (Ok Matchup)</span>
+        <span><i className="is-tough" /> Rank {n - Math.floor(n / 3) + 1}–{n} (Least Allowed)</span>
       </div>
       <p className="nhlx-da-foot">What {teamName(abbr) || abbr} allowed {total ? 'in total' : 'per game'} · all strengths · data from PropFinder{tab.asOf ? ` · as of ${tab.asOf.slice(0, 10)}` : ''}</p>
     </div>
