@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { TeamLogo, headshotUrl } from './media';
+import { Headshot, TeamLogo, headshotUrl } from './media';
 import { TeamLink } from './links';
 import { usePlayerCard } from './PlayerCard';
 import { PropfinderDefense } from './Propfinder';
@@ -131,7 +131,39 @@ function RinkMarkings({ clipId, tones }) {
   );
 }
 
-function Chip({ p, x, y, minGp, actual, played, metric = 'sog' }) {
+// Above the ice: the model's plays for this team (slate `side.plays`, the Best bets boards'
+// rule), shots first then goals; after the game each carries its hit or miss from the box score.
+function ModelPlays({ side, actualFor }) {
+  const open = usePlayerCard();
+  const plays = side.plays;
+  if (!plays) return null;
+  const list = [...plays.shots, ...plays.goals];
+  const graded = list.map((pl) => {
+    const a = actualFor ? actualFor(pl) : null;
+    return { ...pl, hit: a ? (a[pl.stat] ?? 0) >= pl.min : null };
+  });
+  const scored = graded.filter((g) => g.hit != null);
+  const note = !list.length ? 'No play clears the floor' : scored.length ? `${scored.filter((g) => g.hit).length} of ${scored.length} hit` : `${list.length} clear the floor`;
+  return (
+    <div className="nhlx-plays" title="The model's plays for this team, by the Best bets boards' rule: shots plays need the gate open and 4+ SOG at 40% or 3+ SOG at 60%; goal plays need 1+ G at 18%. Two of each at most; the pill is the play tier from the attack score.">
+      <div className="nhlx-plays-head"><b>Model’s plays · {side.team} vs {side.opp}</b><small className="nhlx-auto-meta">{note}</small></div>
+      {list.length > 0 && (
+        <div className="nhlx-plays-row">
+          {graded.map((pl) => (
+            <button key={`${pl.kind}-${pl.name}`} type="button" className={`nhlx-play${pl.id ? '' : ' is-static'}`} onClick={() => pl.id && open({ id: pl.id, opp: side.opp, venue: side.venue })} title={`${pl.name} · ${pl.market} ${Math.round(pl.prob * 100)}% · play score ${pl.attack ?? '—'} (${pl.tier})`}>
+              <Headshot id={pl.id} size={26} />
+              <span className="nhlx-play-meta"><b>{shortName(pl.name)}</b><span>{pl.market} <em>{Math.round(pl.prob * 100)}%</em></span></span>
+              <span className="nhlx-edge">{pl.tier}</span>
+              {pl.hit != null ? <i className={`nhlx-play-mark ${pl.hit ? 'is-hit' : 'is-miss'}`} aria-label={pl.hit ? 'hit' : 'miss'}>{pl.hit ? '✓' : '✗'}</i> : null}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false }) {
   const open = usePlayerCard();
   const thin = (p.gp || 0) < minGp;
   const m = p.model;
@@ -152,7 +184,7 @@ function Chip({ p, x, y, minGp, actual, played, metric = 'sog' }) {
   return (
     <button
       type="button"
-      className={`nhlx-rk-chip${p.inLineup ? '' : ' is-out'}${p.carried ? ' is-carried' : ''}${p.id ? '' : ' is-static'}`}
+      className={`nhlx-rk-chip${p.inLineup ? '' : ' is-out'}${p.carried ? ' is-carried' : ''}${p.id ? '' : ' is-static'}${picked ? ' is-pick' : ''}`}
       style={{ left: `${x}%`, top: `${pct(y)}%` }}
       title={title}
       onClick={() => p.id && open({ id: p.id, opp: p.opp, venue: p.venue })}
@@ -214,6 +246,9 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
     return m;
   }, [log, side.team]);
   const actualFor = (p) => (actual ? actual[`id:${p.id}`] || actual[`nm:${String(p.name).toLowerCase()}`] || null : null);
+  // The skaters in the plays strip, ringed on the ice.
+  const picked = useMemo(() => new Set([...(side.plays?.shots || []), ...(side.plays?.goals || [])].map((pl) => (pl.id != null ? `id:${pl.id}` : `nm:${String(pl.name).toLowerCase()}`))), [side.plays]);
+  const isPicked = (p) => picked.has(`id:${p.id}`) || picked.has(`nm:${String(p.name).toLowerCase()}`);
   const score = log?.score ? (side.venue === 'H' ? [log.score.home, log.score.away] : [log.score.away, log.score.home]) : null;
   // Default window = where the opponent actually plays tonight (its home table when we're away).
   const defaultView = side.venue === 'A' ? 'home' : 'away';
@@ -234,6 +269,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
   const open = usePlayerCard();
   return (
     <section className="nhlx-rk-card" aria-label={`${side.team} lineup on the rink`} title={`${numSrc} Ice tinted by the ${metricWord} ${side.opp} allows ${windowText} to each position (rank 1 = most permissive) · ${sourceText(side)}`}>
+      <ModelPlays side={side} actualFor={actual ? actualFor : null} />
       <div className="nhlx-rk-head">
         <TeamLink abbr={side.team} logo={28} />
         <div>
@@ -275,7 +311,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
         <BandLabel pos="D" d={defAt('D')} opp={side.opp} view={v} windowText={windowText} teamCount={teamCount} x={50} y={100} metric={metric} />
         {F_Y.map((y, i) => <div key={`l${i}`} className="nhlx-rk-tag" style={{ top: `${pct(y - 8.3)}%` }}>Line {i + 1}</div>)}
         {D_Y.map((y, i) => <div key={`d${i}`} className="nhlx-rk-tag" style={{ top: `${pct(y - 8.3)}%` }}>Pair {i + 1}</div>)}
-        {placed.map(({ p, x, y }) => <Chip key={`${p.team}-${p.name}`} p={p} x={x} y={y} minGp={minGp} played={!!actual} actual={actualFor(p)} metric={metric} />)}
+        {placed.map(({ p, x, y }) => <Chip key={`${p.team}-${p.name}`} p={p} x={x} y={y} minGp={minGp} played={!!actual} actual={actualFor(p)} metric={metric} picked={isPicked(p)} />)}
       </div>
       {extras.length > 0 && (
         <p className="nhlx-rk-extras nhlx-auto-meta">

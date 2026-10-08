@@ -1144,6 +1144,26 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-rk-stat.is-model em { color: var(--heading); }
 .nhlx-rk-stat.is-model.is-closed em { color: var(--muted); }
 .nhlx-rk-stat.is-read em { color: var(--muted); }
+/* Above each rink: the model's plays for this team (the Best bets boards' rule, two shots and two goal plays at most). */
+.nhlx-plays { margin-bottom: 12px; }
+.nhlx-plays-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 6px; }
+.nhlx-plays-head b { font-size: 14px; color: var(--heading); font-weight: 600; }
+.nhlx-plays-head small { margin: 0; }
+.nhlx-plays-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.nhlx-play { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; padding: 4px 8px 4px 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--heading); font: inherit; font-size: 13px; line-height: 1.2; }
+.nhlx-play:hover { border-color: var(--primary); }
+.nhlx-play.is-static { cursor: default; }
+.nhlx-play img, .nhlx-play .nhlx-db-avatar { width: 26px; height: 26px; border-radius: 50%; flex: none; }
+.nhlx-play-meta { display: flex; flex-direction: column; gap: 1px; }
+.nhlx-play-meta b { font-family: var(--font-display); font-weight: 700; font-size: 13px; white-space: nowrap; }
+.nhlx-play-meta span { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nhlx-play-meta em { font-style: normal; font-weight: 700; color: var(--heading); font-size: 13px; }
+.nhlx-play .nhlx-edge { min-width: 0; font-size: 11px; padding: 1px 7px; }
+.nhlx-play-mark { font-style: normal; font-weight: 700; font-size: 13px; }
+.nhlx-play-mark.is-hit { color: var(--ok-fg); }
+.nhlx-play-mark.is-miss { color: var(--bad-fg); }
+/* A skater in the plays strip, ringed on the ice. */
+.nhlx-rk-chip.is-pick { border-color: var(--primary); box-shadow: 0 0 0 1.5px var(--primary); }
 .nhlx-rk-numsrc { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
 .nhlx-rk-numsrc b { color: var(--heading); font-weight: 600; }
 .nhlx-rk-stat.is-over em:first-child { color: var(--ok-fg); }
