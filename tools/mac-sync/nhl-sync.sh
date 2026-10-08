@@ -2,10 +2,10 @@
 # NHL Model folder sync: uploads new PropFinder files — matchup workbooks
 # (NHL-Goal-Matchups-*.xlsx) and the skater / team stats exports
 # (nhl-skater-stats-*.csv, nhl-team-stats-*.csv) — saved anywhere in ~/Desktop/NHL
-# (including the "Match days" subfolders) to ideareels.io, and once an hour fetches
-# the beat writers' lines pages from gamedaytweets.com for the site (which cloud
-# servers cannot reach). Installed by install.command; launchd runs it when the
-# folder changes and every 5 minutes.
+# (including the "Match days" subfolders) to ideareels.io, and fetches the beat
+# writers' lines pages from gamedaytweets.com for the site (which cloud servers cannot
+# reach): once an hour, and every 5 minutes while a game is within its warm-up window.
+# Installed by install.command; launchd runs it when the folder changes and every 5 minutes.
 set -u
 CONF="$HOME/.config/nhl-model"
 WATCH_DIR="${NHL_SYNC_DIR:-$HOME/Desktop/NHL}"
@@ -35,15 +35,26 @@ fi
 # to the site, which parses them and runs the model. Independent of the folder.
 LINES_URL="${NHL_LINES_URL:-https://ideareels.io/api/nhl/data/lineups/gdt}"
 LINES_STAMP="$CONF/lines-fetched-at"
-LINES_GAP="${NHL_LINES_GAP_SEC:-3600}"
+LINES_GAP="${NHL_LINES_GAP_SEC:-3600}"          # between reads on a quiet afternoon
+LINES_GAP_PREGAME="${NHL_LINES_GAP_PREGAME_SEC:-240}"  # inside a warm-up window: every launchd tick (5 min)
 now=$(date +%s)
 last=$(cat "$LINES_STAMP" 2>/dev/null || echo 0)
-if [ $((now - last)) -ge "$LINES_GAP" ]; then
+TODAY=$(TZ=America/New_York date +%F)
+sched=$(curl -sS --max-time 30 "https://api-web.nhle.com/v1/schedule/$TODAY" 2>/dev/null)
+# Today's block of the week: between "date":"<today>" and the next day's "date".
+today_block=$(printf '%s' "$sched" | tr -d '\n' | sed -e "s/.*\"date\":\"$TODAY\"//" -e 's/"date":"20[0-9-]*".*//')
+# The beat writers post warm-up lines 15 to 30 minutes before puck drop: while any game
+# starts within the next 90 minutes (or started in the last 30), read every tick, not hourly.
+gap="$LINES_GAP"
+for t in $(printf '%s' "$today_block" | grep -oE '"startTimeUTC":"[0-9T:Z-]+"' | cut -d'"' -f4); do
+  start=$(date -j -u -f '%Y-%m-%dT%H:%M:%SZ' "$t" +%s 2>/dev/null || date -u -d "$t" +%s 2>/dev/null || echo 0)
+  [ "$start" -gt 0 ] || continue
+  if [ $((start - now)) -le 5400 ] && [ $((now - start)) -le 1800 ]; then gap="$LINES_GAP_PREGAME"; break; fi
+done
+if [ $((now - last)) -ge "$gap" ]; then
   echo "$now" > "$LINES_STAMP"
-  TODAY=$(TZ=America/New_York date +%F)
-  sched=$(curl -sS --max-time 30 "https://api-web.nhle.com/v1/schedule/$TODAY" 2>/dev/null)
   # Team codes of today's games, without jq: the abbrevs appear as "abbrev":"XXX" inside the day's block.
-  teams=$(printf '%s' "$sched" | tr -d '\n' | sed -e "s/.*\"date\":\"$TODAY\"//" -e 's/"date":"20[0-9-]*".*//' | grep -oE '"abbrev":"[A-Z]{3}"' | cut -d'"' -f4 | sort -u)
+  teams=$(printf '%s' "$today_block" | grep -oE '"abbrev":"[A-Z]{3}"' | cut -d'"' -f4 | sort -u)
   if [ -n "$teams" ]; then
     tmp=$(mktemp -d)
     args=(-F "date=$TODAY")

@@ -226,18 +226,45 @@ export default function MatchupsPanel() {
   // Picking another date from the controls.
   const pickDate = (d) => { setBusy(true); setErr(''); load(d); };
 
+  // The newest GameDayTweets page delivery on the slate (every side's snapshot carries when its
+  // team's page was fetched), so the header can say how fresh the beat writers' lines are.
+  const deliveredAt = (s) => (s?.games || []).flatMap((g) => g.sides.map((x) => x.sourceMeta?.gdtFetchedAt || null)).filter(Boolean).sort().pop() || null;
+  const etTime = (iso) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+
   // Pull the beat writers' lines (GameDayTweets) and NHL.com's lineups for this date right now.
+  // The server reads NHL.com itself; the GameDayTweets pages come from a GitHub run it starts
+  // (the site is refused there), so after the refresh the slate is polled until they land.
   const [lineMsg, setLineMsg] = useState('');
   const refreshLines = async () => {
     setBusy(true);
     setLineMsg('Reading GameDayTweets and NHL.com lineups…');
+    const before = deliveredAt(slate);
     try {
-      const res = await fetch(`/api/nhl/data/refresh?only=lineups&date=${date}`, { method: 'POST' });
+      const res = await fetch(`/api/nhl/data/refresh?only=lineups&date=${date}&dispatch=1`, { method: 'POST' });
       const j = await res.json();
       if (!res.ok || !j.ok) throw new Error(j.error || j.reason || `${res.status}`);
       const r = j.result || {};
-      setLineMsg(`Lines updated at ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })} ET: ${r.gamedaytweets ?? 0} team${r.gamedaytweets === 1 ? '' : 's'} from GameDayTweets, ${r.withLineups ?? 0} of ${r.scheduled ?? 0} games with an NHL.com lineup${r.restamp?.changed ? `, ${r.restamp.changed} logged position${r.restamp.changed === 1 ? '' : 's'} corrected` : ''}. ${r.model?.ran ? `Model run saved (${r.model.players} players).` : r.model?.skipped ? `Model not re-run: ${r.model.skipped}.` : r.model?.error ? `Model run failed: ${r.model.error}.` : ''} Each rink says when its source last changed.`);
+      const summary = `${r.gamedaytweets ?? 0} team${r.gamedaytweets === 1 ? '' : 's'} from GameDayTweets, ${r.withLineups ?? 0} of ${r.scheduled ?? 0} games with an NHL.com lineup${r.restamp?.changed ? `, ${r.restamp.changed} logged position${r.restamp.changed === 1 ? '' : 's'} corrected` : ''}. ${r.model?.ran ? `Model run saved (${r.model.players} players).` : r.model?.skipped ? `Model not re-run: ${r.model.skipped}.` : r.model?.error ? `Model run failed: ${r.model.error}.` : ''}`;
+      const dispatch = r.dispatch?.ok
+        ? ' GameDayTweets pages requested from GitHub: they land in about a minute, and the run keeps re-reading through each warm-up window.'
+        : r.dispatch?.skipped ? ` GitHub run not started: ${r.dispatch.skipped}.` : r.dispatch?.error ? ` GitHub run not started: ${r.dispatch.error}.` : '';
+      setLineMsg(`Lines updated at ${etTime(new Date().toISOString())} ET: ${summary}${dispatch} Each rink says when its source last changed.`);
       await load(date);
+      if (r.dispatch?.ok) {
+        // Poll for the delivery (the runner fetches six pages with Chrome, then the site parses them): up to four minutes.
+        setBusy(false);
+        for (let i = 0; i < 12; i++) {
+          await new Promise((ok) => setTimeout(ok, 20000));
+          const fresh = await fetch(`/api/nhl/data/slate?date=${date}`, { cache: 'no-store' }).then((x) => (x.ok ? x.json() : null)).catch(() => null);
+          const at = deliveredAt(fresh);
+          if (fresh && at && at !== before) {
+            setSlate(fresh);
+            setLineMsg(`Beat writers' lines delivered at ${etTime(at)} ET${fresh.games?.length ? ` for ${fresh.games.length} game${fresh.games.length === 1 ? '' : 's'}` : ''}. Each rink says when its source last changed.`);
+            return;
+          }
+        }
+        setLineMsg((m) => `${m} No new GameDayTweets delivery in four minutes: check the "NHL lineups (pre-game)" run on GitHub.`);
+      }
     } catch (e) {
       setLineMsg(`Couldn’t update the lines: ${e.message}`);
     } finally {
@@ -269,7 +296,7 @@ export default function MatchupsPanel() {
         <div>
           <div className="nhlx-today-date">{pretty || 'Loading…'}</div>
           <div className="nhlx-auto-sub">
-            {slate ? `${slate.games.length} game${slate.games.length === 1 ? '' : 's'} · defense tables from ${slate.gamesStored} stored games · positions from the latest lineup read (re-read after the game)` : ''}
+            {slate ? `${slate.games.length} game${slate.games.length === 1 ? '' : 's'} · defense tables from ${slate.gamesStored} stored games · positions from the latest lineup read (re-read after the game)${deliveredAt(slate) ? ` · beat writers' pages delivered ${etTime(deliveredAt(slate))} ET` : ' · no GameDayTweets delivery yet today'}` : ''}
           </div>
         </div>
         <div className="nhlx-auto-actions">
