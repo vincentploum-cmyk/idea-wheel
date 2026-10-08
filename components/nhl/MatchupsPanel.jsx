@@ -246,7 +246,7 @@ export default function MatchupsPanel() {
       const r = j.result || {};
       const summary = `${r.gamedaytweets ?? 0} team${r.gamedaytweets === 1 ? '' : 's'} from GameDayTweets, ${r.withLineups ?? 0} of ${r.scheduled ?? 0} games with an NHL.com lineup${r.restamp?.changed ? `, ${r.restamp.changed} logged position${r.restamp.changed === 1 ? '' : 's'} corrected` : ''}. ${r.model?.ran ? `Model run saved (${r.model.players} players).` : r.model?.skipped ? `Model not re-run: ${r.model.skipped}.` : r.model?.error ? `Model run failed: ${r.model.error}.` : ''}`;
       const dispatch = r.dispatch?.ok
-        ? ' GameDayTweets pages requested from GitHub: they land in about a minute, and the run keeps re-reading through each warm-up window.'
+        ? ' GameDayTweets pages requested from GitHub: they land in about a minute, and the run keeps reading every 15 minutes from an hour before each puck drop until the lineups are in.'
         : r.dispatch?.skipped ? ` GitHub run not started: ${r.dispatch.skipped}.` : r.dispatch?.error ? ` GitHub run not started: ${r.dispatch.error}.` : '';
       setLineMsg(`Lines updated at ${etTime(new Date().toISOString())} ET: ${summary}${dispatch} Each rink says when its source last changed.`);
       await load(date);

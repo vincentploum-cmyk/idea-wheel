@@ -36,14 +36,14 @@ async function handle(request) {
     else if (only === 'lineups') {
       result = await ingestLineups(date, { dueWithinMin: Number(url.searchParams.get('due')) || null });
       // The admin UI's "Refresh lines" also starts the GitHub run that fetches the GameDayTweets
-      // pages this server is refused (and chains through the warm-up window). Never from the
+      // pages this server is refused (and then reads every 15 minutes through each warm-up window). Never from the
       // runner's own token calls, and at most once a minute.
       if (auth.via === 'session' && url.searchParams.get('dispatch') === '1') {
         const marker = 'data/meta/gdt-dispatch.json';
         const last = await readJson(marker);
         if (last?.at && Date.now() - Date.parse(last.at) < 60 * 1000) result.dispatch = { ok: false, skipped: `already requested at ${last.at}` };
         else {
-          result.dispatch = await dispatchLinesWorkflow({ date, due: null, chain: 8 });
+          result.dispatch = await dispatchLinesWorkflow({ date, due: null, chain: 40 });
           if (result.dispatch.ok) await writeJson(marker, { at: result.dispatch.at, date });
         }
       }

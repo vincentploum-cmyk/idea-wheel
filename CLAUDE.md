@@ -73,7 +73,7 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   the roster; "game-day" is decided by timestamp (tweet id vs the preview's updated time).
   gamedaytweets.com challenges cloud addresses (Cloudflare "Just a moment": Render and the GitHub
   runner alike), so its pages are fetched elsewhere and posted: the Mac sync (`tools/mac-sync/nhl-sync.sh`,
-  hourly and every 5 minutes inside a warm-up window, sync token, multipart `date` + one file per team code) and both workflows via
+  hourly and every 15 minutes from an hour before a game until ten minutes after, sync token, multipart `date` + one file per team code) and both workflows via
   `tools/gdt-pages.sh` (plain curl, then `tools/gdt-browser.mjs` with Chrome through playwright-core), to
   `POST /api/nhl/data/lineups/gdt` (Bearer `NHL_ACTIONS_TOKEN`, a repo secret that must equal the
   Render env var; `authorize()` accepts it beside the stored sync token), where `ingestGdtPages`
@@ -82,14 +82,16 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   Slots a capture leaves empty (no lineup yet, or a partial one) are filled from the team's last
   known lineup (`data/lineups/last/<ABBR>.json`, written from each team's own capture) with
   players still on the roster, marked `carried`; the slate does the same for a game with no snapshot.
-  `nhl-lineups.yml` re-reads lineups for games starting within 150 minutes (`only=lineups&due=150`):
-  six cron slots an hour 12:03–23:53 ET (GitHub's cron fires only a few a day: 2 of 24 on 2026-10-07),
-  on demand from the Matchups tab's "Refresh lines" button (`/api/nhl/data/refresh?only=lineups&dispatch=1`
-  → `lib/nhl-data/github-dispatch.js` → `workflow_dispatch`, needs `GITHUB_DISPATCH_TOKEN` on Render; the
-  panel then polls the slate until a new page delivery shows), and by handing itself on: every run that
-  finds a game within 75 minutes of starting (or started within 15) sleeps 7 minutes and dispatches the
-  next hop with the runner's own token (`lib/nhl-data/lines-chain.js`, `tools/lines-chain.mjs`, 8 hops a
-  chain, skipped while another run is queued or running). Each rink shows when its source last changed
+  `nhl-lineups.yml` re-reads lineups (`only=lineups&due=150` on a cron tick) on the rule: from 60 minutes
+  before puck drop, every 15 minutes until the game's lineups are found (`linesFound` in
+  `lib/nhl-data/lines-chain.js`: both teams have a tweet from the two hours before the start; the site reports
+  `gdtAt` per team in the refresh response via `gdtTimes`) or the game is 10 minutes old. GitHub's cron only
+  seeds it (2 of 24 slots fired on 2026-10-07): every run hands itself on with its own token (`tools/lines-chain.mjs`,
+  a wait for the first window, then 15-minute hops; skipped while another run is queued or running; 40 hops a
+  chain), and the Matchups tab's "Refresh lines" button dispatches a run on demand
+  (`/api/nhl/data/refresh?only=lineups&dispatch=1` → `lib/nhl-data/github-dispatch.js` → `workflow_dispatch`,
+  needs `GITHUB_DISPATCH_TOKEN` on Render; the panel then polls the slate until a new page delivery shows).
+  The post-game settle is a separate, unchanged path. Each rink shows when its source last changed
   and the Matchups header when the beat writers' pages last arrived (`sourceMeta.gdtFetchedAt`). After every lineup capture (and every matchup-file import for a
   coming slate) `lib/nhl-data/autorun.js` runs the model on the server with the stored
   PropFinder workbooks + snapshot lineups + built history/home-away inputs + the pace workbook built from
