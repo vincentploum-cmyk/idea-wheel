@@ -12,6 +12,7 @@ import FirstGoalPanel from './FirstGoalPanel';
 import LeaguePanel from './LeaguePanel';
 import { PlayerCardHost } from './PlayerCard';
 import ThemeToggle from './ThemeToggle';
+import Scorecard from './Scorecard';
 
 const TABS = [
   ['teams', 'Teams & players'],
@@ -363,6 +364,7 @@ export default function NhlApp({ email }) {
                 Refresh
               </button>
             </div>
+            {mounted('history') && <Scorecard />}
             {historyError && <div className="nhlx-alert" style={{ marginTop: 20 }}>⚠ {historyError}</div>}
             {runs === null ? (
               <div className="nhlx-empty">Loading saved runs…</div>

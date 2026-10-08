@@ -5765,6 +5765,9 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
           volatilityPenalty: +volatilityPenalty.toFixed(3),
           shotsL5: +(skater.shotsL5 ?? 0),
           goalsL5: +(skater.goalsL5 ?? 0),
+          // PropFinder's season per-game rates as the run saw them (the scorecard's baselines).
+          shotsSeason: +(skater.shotsSeason ?? 0),
+          goalsSeason: +(skater.goalsSeason ?? 0),
           astL5: +(skater.astL5 ?? 0),
           playerToi: +playerToi.toFixed(1),
           effectiveToi: +effectiveToi.toFixed(1),
@@ -5971,6 +5974,61 @@ function splitGameLabel(label) {
   return m.length === 2 ? m : [null, null];
 }
 
+// The market the model would call for a row: the highest probability after the
+// role overlays (RW goal-first, hot role, defense-role market). Shared by the
+// Model tab and the scorecard, so a saved run is graded on the same call it showed.
+function bestBetLabel(r) {
+  let options = [
+    { label: "1+ point", prob: r.p1p || 0, key: "point1" },
+    { label: "Anytime goal", prob: r.p1g || 0, key: "goal" },
+    { label: "4+ shots", prob: r.p4s || 0, key: "shots4" },
+    { label: "3+ shots", prob: r.p3s || 0, key: "shots3" },
+    { label: "5+ shots", prob: r.p5s || 0, key: "shots5" },
+    { label: "2+ points", prob: r.p2p || 0, key: "points2" },
+    { label: "2+ goals", prob: r.p2g || 0, key: "goals2" },
+  ];
+
+  if (r?.pos === 'RW' && r?.rwPrimaryMarket === 'goal' && !r?.rwEliteVolumeForShots) {
+    const bonus = (key) => key === 'goal' ? 0.06 : key === 'point1' ? 0.02 : key.includes('shots') ? -0.08 : 0;
+    options = options.map((o) => ({ ...o, prob: Math.max(0, Math.min(0.999, o.prob + bonus(o.key))) }));
+  }
+
+  if (r?.hotRolePrimaryMarket === 'shots') {
+    const hotRoleBestBetDamp =
+      (r?.environmentScore ?? 0) >= 72 ? 1.00 :
+      (r?.environmentScore ?? 0) >= 60 ? 0.88 :
+      0.72;
+    options = options.map((o) => ({
+      ...o,
+      prob: Math.max(0, Math.min(0.999, o.prob + ((o.key === 'shots4' ? (r?.hotRoleExtreme ? 0.18 : r?.hotRoleStrong ? 0.14 : 0.10) : o.key === 'shots3' ? (r?.hotRoleExtreme ? 0.12 : r?.hotRoleStrong ? 0.10 : 0.08) : o.key === 'shots5' ? (r?.hotRoleExtreme ? 0.10 : r?.hotRoleStrong ? 0.07 : 0.05) : o.key === 'point1' ? -0.09 : o.key === 'goal' ? -0.06 : 0)) * hotRoleBestBetDamp)),
+    }));
+  } else if (r?.hotRolePrimaryMarket === 'goals') {
+    const hotRoleBestBetDamp =
+      (r?.environmentScore ?? 0) >= 72 ? 1.00 :
+      (r?.environmentScore ?? 0) >= 60 ? 0.86 :
+      0.68;
+    options = options.map((o) => ({
+      ...o,
+      prob: Math.max(0, Math.min(0.999, o.prob + ((o.key === 'goal' ? (r?.hotRoleExtreme ? 0.14 : r?.hotRoleStrong ? 0.12 : 0.10) : o.key === 'goals2' ? (r?.hotRoleExtreme ? 0.05 : 0.03) : o.key.includes('shots') ? -0.08 : o.key === 'point1' ? -0.03 : 0)) * hotRoleBestBetDamp)),
+    }));
+  }
+
+  if (r?.defenseRolePrimaryMarket === 'goal') {
+    options = options.map((o) => ({
+      ...o,
+      prob: Math.max(0, Math.min(0.999, o.prob + (o.key === 'goal' ? 0.14 : o.key === 'goals2' ? 0.04 : o.key === 'point1' ? 0.03 : o.key.includes('shots') ? -0.10 : 0))),
+    }));
+  } else if (r?.defenseRolePrimaryMarket === 'points') {
+    options = options.map((o) => ({
+      ...o,
+      prob: Math.max(0, Math.min(0.999, o.prob + (o.key === 'point1' ? 0.10 : o.key === 'points2' ? 0.05 : o.key === 'goal' ? 0.02 : 0))),
+    }));
+  }
+
+  options.sort((a, b) => b.prob - a.prob);
+  return options[0];
+}
+
 function summarizeRun(files, results, games) {
   const rows = Array.isArray(results) ? results : [];
   const dateFrom = (f) => (f?.name || "").match(/(20\d{2})[-_.](\d{2})[-_.](\d{2})/);
@@ -6096,6 +6154,7 @@ export {
   shotTierFromLeak,
   isOnFire,
   summarizeRecentVenueForm,
+  bestBetLabel,
   summarizeRun,
   weightedAverage,
 };

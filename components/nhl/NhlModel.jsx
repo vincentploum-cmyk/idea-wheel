@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import * as XLSX from "xlsx";
-import { TEAM_LOGO_ABBR, TEAM_SHORT, buildProjections, clamp, isOnFire, normShort, normTeam, normalizeName, normalizePlayerName, parseBoxScoresWorkbook, parseHistoricalProfiles, parseLineups, parseMatchups, parsePaceWorkbook, parsePlayerHomeAway, parseRankingsFile, poissonAtLeast, summarizeRun } from "./model-core";
+import { TEAM_LOGO_ABBR, TEAM_SHORT, bestBetLabel, buildProjections, clamp, isOnFire, normShort, normTeam, normalizeName, normalizePlayerName, parseBoxScoresWorkbook, parseHistoricalProfiles, parseLineups, parseMatchups, parsePaceWorkbook, parsePlayerHomeAway, parseRankingsFile, poissonAtLeast, summarizeRun } from "./model-core";
 export { summarizeRun };
 
 
@@ -376,58 +376,6 @@ function includeTopBoardRow(r, market = 'shots') {
     return !!(row.compositeTag?.label === 'PRIMARY TARGET' || row.compositeTag?.label === 'GOAL TARGET' || row.goalTag);
   }
   return (row.p1p || 0) >= 0.42 || row.compositeTag?.label === 'PRIMARY TARGET';
-}
-
-function bestBetLabel(r) {
-  let options = [
-    { label: "1+ point", prob: r.p1p || 0, key: "point1" },
-    { label: "Anytime goal", prob: r.p1g || 0, key: "goal" },
-    { label: "4+ shots", prob: r.p4s || 0, key: "shots4" },
-    { label: "3+ shots", prob: r.p3s || 0, key: "shots3" },
-    { label: "5+ shots", prob: r.p5s || 0, key: "shots5" },
-    { label: "2+ points", prob: r.p2p || 0, key: "points2" },
-    { label: "2+ goals", prob: r.p2g || 0, key: "goals2" },
-  ];
-
-  if (r?.pos === 'RW' && r?.rwPrimaryMarket === 'goal' && !r?.rwEliteVolumeForShots) {
-    const bonus = (key) => key === 'goal' ? 0.06 : key === 'point1' ? 0.02 : key.includes('shots') ? -0.08 : 0;
-    options = options.map((o) => ({ ...o, prob: Math.max(0, Math.min(0.999, o.prob + bonus(o.key))) }));
-  }
-
-  if (r?.hotRolePrimaryMarket === 'shots') {
-    const hotRoleBestBetDamp =
-      (r?.environmentScore ?? 0) >= 72 ? 1.00 :
-      (r?.environmentScore ?? 0) >= 60 ? 0.88 :
-      0.72;
-    options = options.map((o) => ({
-      ...o,
-      prob: Math.max(0, Math.min(0.999, o.prob + ((o.key === 'shots4' ? (r?.hotRoleExtreme ? 0.18 : r?.hotRoleStrong ? 0.14 : 0.10) : o.key === 'shots3' ? (r?.hotRoleExtreme ? 0.12 : r?.hotRoleStrong ? 0.10 : 0.08) : o.key === 'shots5' ? (r?.hotRoleExtreme ? 0.10 : r?.hotRoleStrong ? 0.07 : 0.05) : o.key === 'point1' ? -0.09 : o.key === 'goal' ? -0.06 : 0)) * hotRoleBestBetDamp)),
-    }));
-  } else if (r?.hotRolePrimaryMarket === 'goals') {
-    const hotRoleBestBetDamp =
-      (r?.environmentScore ?? 0) >= 72 ? 1.00 :
-      (r?.environmentScore ?? 0) >= 60 ? 0.86 :
-      0.68;
-    options = options.map((o) => ({
-      ...o,
-      prob: Math.max(0, Math.min(0.999, o.prob + ((o.key === 'goal' ? (r?.hotRoleExtreme ? 0.14 : r?.hotRoleStrong ? 0.12 : 0.10) : o.key === 'goals2' ? (r?.hotRoleExtreme ? 0.05 : 0.03) : o.key.includes('shots') ? -0.08 : o.key === 'point1' ? -0.03 : 0)) * hotRoleBestBetDamp)),
-    }));
-  }
-
-  if (r?.defenseRolePrimaryMarket === 'goal') {
-    options = options.map((o) => ({
-      ...o,
-      prob: Math.max(0, Math.min(0.999, o.prob + (o.key === 'goal' ? 0.14 : o.key === 'goals2' ? 0.04 : o.key === 'point1' ? 0.03 : o.key.includes('shots') ? -0.10 : 0))),
-    }));
-  } else if (r?.defenseRolePrimaryMarket === 'points') {
-    options = options.map((o) => ({
-      ...o,
-      prob: Math.max(0, Math.min(0.999, o.prob + (o.key === 'point1' ? 0.10 : o.key === 'points2' ? 0.05 : o.key === 'goal' ? 0.02 : 0))),
-    }));
-  }
-
-  options.sort((a, b) => b.prob - a.prob);
-  return options[0];
 }
 
 function signalTier(score) {
