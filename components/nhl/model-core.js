@@ -6029,6 +6029,37 @@ function bestBetLabel(r) {
   return options[0];
 }
 
+// The Best bets boards' rule, shared by the Model tab, the scorecard's replay and the strip
+// above each rink on Matchups: a shots play needs the gate open and 4+ SOG ≥ 40% or 3+ SOG
+// ≥ 60%, ranked by its 4+ and 5+ odds and attack score; a goal play needs 1+ G ≥ 18%,
+// ranked by its 1+ and 2+ odds and a slice of attack score.
+const shotsPlayFloor = (r) => !!r?.gateOpen && ((r.p4s || 0) >= 0.40 || (r.p3s || 0) >= 0.60);
+const shotsPlayRank = (r) => (r.p4s || 0) * 100 + (r.p5s || 0) * 60 + (r.attackScore || 0);
+const goalPlayFloor = (r) => (r?.p1g || 0) >= 0.18;
+const goalPlayRank = (r) => (r.p1g || 0) * 100 + (r.p2g || 0) * 70 + (r.attackScore || 0) * 0.35;
+
+/** The top `n` shots plays and goal plays among `rows` (result rows, or anything carrying the same fields). */
+function boardPlays(rows, n = 5) {
+  const list = (rows || []).filter(Boolean);
+  const top = (floor, rank) => list.filter(floor).sort((a, b) => rank(b) - rank(a)).slice(0, n);
+  return { shots: top(shotsPlayFloor, shotsPlayRank), goals: top(goalPlayFloor, goalPlayRank) };
+}
+
+/** The market a play is called on: the shots floor it cleared (4+ first), or 1+ goal. */
+function playMarket(r, kind) {
+  if (kind === 'goals') return { label: '1+ G', prob: r.p1g || 0, stat: 'g', min: 1 };
+  return (r.p4s || 0) >= 0.40 ? { label: '4+ SOG', prob: r.p4s || 0, stat: 'sog', min: 4 } : { label: '3+ SOG', prob: r.p3s || 0, stat: 'sog', min: 3 };
+}
+
+/** The Model tab's play tier, from the row's attack score. */
+function playTier(score) {
+  const v = Number(score || 0);
+  if (v >= 85) return 'Auto';
+  if (v >= 72) return 'Strong';
+  if (v >= 58) return 'Lean';
+  return 'Thin';
+}
+
 function summarizeRun(files, results, games) {
   const rows = Array.isArray(results) ? results : [];
   const dateFrom = (f) => (f?.name || "").match(/(20\d{2})[-_.](\d{2})[-_.](\d{2})/);
@@ -6155,6 +6186,11 @@ export {
   isOnFire,
   summarizeRecentVenueForm,
   bestBetLabel,
+  boardPlays,
+  playMarket,
+  playTier,
+  shotsPlayFloor,
+  goalPlayFloor,
   summarizeRun,
   weightedAverage,
 };

@@ -14,6 +14,11 @@ describe('model run index', () => {
     expect(idx[modelKey('EDM', 'Evan Bouchard')].fire).toBe(false);
     expect(Object.keys(idx)).toHaveLength(2);
   });
+  test('the boards’ inputs ride on the compact row: 5+ SOG, 2+ G and the attack score', () => {
+    const idx = indexModelRows([{ name: 'Tage Thompson', team: 'BUF', p5s: 0.21, p2g: 0.09, attackScore: 77 }]);
+    expect(idx[modelKey('BUF', 'Tage Thompson')]).toMatchObject({ p5s: 0.21, p2g: 0.09, attack: 77 });
+    expect(indexModelRows([{ name: 'X', team: 'BUF' }])[modelKey('BUF', 'X')]).toMatchObject({ p5s: null, p2g: null, attack: null });
+  });
   test('the model’s flame rides on the row: 1+ point ≥ 50%, 2.0+ iSCF/G, 16+ minutes', () => {
     const hot = { name: 'Nathan MacKinnon', team: 'COL', p1p: 0.62, playerIscf: 3.6, effectiveToi: 21.5 };
     expect(isOnFire(hot)).toBe(true);

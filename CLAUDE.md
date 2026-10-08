@@ -62,7 +62,11 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   a window PropFinder's API has not published for the current season is rolled from the stored
   box scores across the season boundary by `withStoredWindows`, the way PropFinder's own L5 counts),
   chips carrying the latest saved model run's λ shots / goals for the slate date from
-  `lib/nhl-data/model-runs.js`, or a matchup read when no run exists; finished games show the
+  `lib/nhl-data/model-runs.js`, or a matchup read when no run exists; at the top of each rink card the model's plays
+  for that team (`sidePlays` in `slate.js`, `ModelPlays` in `Rink.jsx`): the Best bets boards' rule, `boardPlays` in
+  `model-core.js` (shared with the Model tab's boards and the scorecard's replay), two shots plays and two goal plays at
+  most from the saved run, each on the floor it cleared with the attack-score tier, the picked skaters ringed on the ice,
+  hit / miss marks once the box score is in, nothing shown without a run; finished games show the
   box score; above each game's team verdicts a game-total read, `gameTotalRead` in
   `lib/nhl-data/verdict.js`: the stored meetings' totals blended with MoneyPuck's expected
   goals and pace, high / low half a goal either side of the league average) and the per-team defense card

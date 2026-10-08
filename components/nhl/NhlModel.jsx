@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import * as XLSX from "xlsx";
-import { TEAM_LOGO_ABBR, TEAM_SHORT, bestBetLabel, buildProjections, clamp, isOnFire, normShort, normTeam, normalizeName, normalizePlayerName, parseBoxScoresWorkbook, parseHistoricalProfiles, parseLineups, parseMatchups, parsePaceWorkbook, parsePlayerHomeAway, parseRankingsFile, poissonAtLeast, summarizeRun } from "./model-core";
+import { TEAM_LOGO_ABBR, TEAM_SHORT, bestBetLabel, boardPlays, buildProjections, clamp, isOnFire, normShort, normTeam, normalizeName, normalizePlayerName, parseBoxScoresWorkbook, parseHistoricalProfiles, parseLineups, parseMatchups, parsePaceWorkbook, parsePlayerHomeAway, parseRankingsFile, poissonAtLeast, summarizeRun } from "./model-core";
 export { summarizeRun };
 
 
@@ -1966,19 +1966,8 @@ function BestBetsCard({ title, accent, rows, market }) {
 }
 
 function OverallBestBets({ data }) {
-  const shots = useMemo(() => {
-    return [...data]
-      .filter((r) => r.gateOpen && ((r.p4s || 0) >= 0.40 || (r.p3s || 0) >= 0.60))
-      .sort((a, b) => ((b.p4s || 0) * 100 + (b.p5s || 0) * 60 + (b.attackScore || 0)) - ((a.p4s || 0) * 100 + (a.p5s || 0) * 60 + (a.attackScore || 0)))
-      .slice(0, 5);
-  }, [data]);
-
-  const goals = useMemo(() => {
-    return [...data]
-      .filter((r) => (r.p1g || 0) >= 0.18 || r.goalTag?.label)
-      .sort((a, b) => ((b.p1g || 0) * 100 + (b.p2g || 0) * 70 + (b.attackScore || 0) * 0.35) - ((a.p1g || 0) * 100 + (a.p2g || 0) * 70 + (a.attackScore || 0) * 0.35))
-      .slice(0, 5);
-  }, [data]);
+  // The boards' rule lives in model-core (boardPlays), shared with the scorecard and the Matchups rinks.
+  const { shots, goals } = useMemo(() => boardPlays(data, 5), [data]);
 
   // 2+ goal candidates: the model's p2g ladder (≥14% Legit, 10–13% Sprinkle, below 10% noise),
   // sorted by p2g alone so the multi-goal ceiling is read on its own rather than under the 1G rank.
