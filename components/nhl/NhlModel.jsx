@@ -1937,23 +1937,29 @@ function BestBetsCard({ title, accent, rows, market }) {
       <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "28px", fontWeight: 800, color: accent, marginBottom: "10px" }}>{title}</div>
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         {rows.map((r, idx) => {
-          const prob = market === "shots" ? Math.max(r.p4s || 0, r.p3s || 0) : (r.p1g || 0);
+          const prob = market === "shots" ? Math.max(r.p4s || 0, r.p3s || 0) : market === "goals2" ? (r.p2g || 0) : (r.p1g || 0);
+          const headline = market === "shots" ? `${Math.round((r.p4s || 0) * 100)}% 4+` : market === "goals2" ? `${Math.round((r.p2g || 0) * 100)}% 2G` : `${Math.round((r.p1g || 0) * 100)}% 1G`;
+          // 2+ goals is read against the model's own ladder (≥14% Legit, 10–13% Sprinkle), not the generic likely scale.
+          const tail = market === "goals2"
+            ? `${getPropLabel("p2g", r.p2g) || "Below the 10% sprinkle floor"} · 1G ${Math.round((r.p1g || 0) * 100)}% · Pred G ${r.lambdaG != null ? r.lambdaG.toFixed(2) : "—"}`
+            : getLikelyLabel(prob);
           return (
             <div key={`${market}-${r.name}-${idx}`} style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "12px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center" }}>
                 <div style={{ fontSize: "19px", fontWeight: 800, color: "#05011c" }}>{idx + 1}. {r.name} <span style={{ color: "#636977", fontWeight: 600 }}>{r.venue}</span></div>
-                <div style={{ fontSize: "18px", fontWeight: 800, color: accent }}>{market === "shots" ? `${Math.round((r.p4s || 0) * 100)}% 4+` : `${Math.round((r.p1g || 0) * 100)}% 1G`}</div>
+                <div style={{ fontSize: "18px", fontWeight: 800, color: accent }}>{headline}</div>
               </div>
               <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginTop: "6px" }}>
                 <span style={{ padding: "4px 8px", borderRadius: "999px", background: getPlayScoreLabel(r.attackScore).bg, color: getPlayScoreLabel(r.attackScore).fg, fontSize: "16px", fontWeight: 800, fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>
                   Play Score {r.attackScore ?? "—"} · {getPlayScoreLabel(r.attackScore).label}
                 </span>
                 <span style={{ color: "#636977", fontSize: "17px" }}>{r.bestBetLabel || getPrimaryCall(r).replace("Best call: ", "")}</span>
-                <span style={{ color: "#636977", fontSize: "17px" }}>{getLikelyLabel(prob)}</span>
+                <span style={{ color: "#636977", fontSize: "17px" }}>{tail}</span>
               </div>
             </div>
           );
         })}
+        {!rows.length && <div style={{ color: "#636977", fontSize: "17px" }}>No skater clears the floor on this slate.</div>}
       </div>
     </div>
   );
@@ -1974,11 +1980,20 @@ function OverallBestBets({ data }) {
       .slice(0, 5);
   }, [data]);
 
+  // 2+ goal candidates: the model's p2g ladder (≥14% Legit, 10–13% Sprinkle, below 10% noise),
+  // sorted by p2g alone so the multi-goal ceiling is read on its own rather than under the 1G rank.
+  const goals2 = useMemo(() => {
+    return [...data]
+      .filter((r) => (r.p2g || 0) >= 0.10)
+      .sort((a, b) => (b.p2g || 0) - (a.p2g || 0) || (b.p1g || 0) - (a.p1g || 0))
+      .slice(0, 6);
+  }, [data]);
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "14px", marginBottom: "18px" }}>
       <BestBetsCard title="Top 5 Shots Plays" accent="#166534" rows={shots} market="shots" />
       <BestBetsCard title="Top 5 Goal Plays" accent="#b45309" rows={goals} market="goals" />
+      <BestBetsCard title="2+ Goal Candidates" accent="#9a3412" rows={goals2} market="goals2" />
     </div>
   );
 }

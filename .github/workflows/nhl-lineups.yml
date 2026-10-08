@@ -1,39 +1,69 @@
 name: NHL lineups (pre-game)
 
-# Every hour through the game day, re-read the lines for games starting within
-# the next 150 minutes: the beat writers' tweets on GameDayTweets and NHL.com's
-# projected lineup. The newest lines dated at or before each game win; a later read still corrects a logged game.
-# GitHub often runs schedules late, so this is its own workflow: a delayed run
-# still does only this, never the daily results pull in nhl-data.yml.
+# The beat writers' tweets on GameDayTweets (fetched here with Chrome, the site is refused)
+# and NHL.com's projected lineup, for the games of the day. The rule: from 60 minutes before
+# puck drop, read every 15 minutes until the game's lineups are found (both teams have a
+# tweet from the two hours before the start: the warm-up lines) or the game is ten minutes
+# old. The newest lines dated at or before each game win; the post-game settle (yesterday's
+# pages in the morning run) is unchanged.
+#
+# GitHub's cron is a lottery (on 2026-10-07 the twice-hourly schedule fired twice all day, and
+# the 9:37 PM warm-up tweet never reached the site before the 10 PM game), so the schedule
+# only seeds a run: every run hands itself on (tools/lines-chain.mjs decides): a run before
+# the first window sleeps until that window opens, a run inside a window sleeps 15 minutes,
+# then it dispatches the next hop with its own token, until every game has its lineups or is
+# past its window. A hop is skipped while another run is queued or running, so two chains
+# never run side by side. "Refresh lines" on the Matchups tab dispatches a run on demand
+# (GITHUB_DISPATCH_TOKEN on the server). Public repo: the minutes are free.
 on:
   schedule:
-    # Twice an hour at uncrowded minutes: GitHub skips or delays schedules at busy
-    # minutes (:00, :05), and a dropped run must not cost a whole hour of lines.
-    - cron: '23,53 16-23,0-3 * * *'  # 12:23–23:53 ET
+    # Seeds for the chain at uncrowded minutes (GitHub skips or delays busy minutes like :00
+    # and :05); whichever fires first carries the day. 9:03 AM–11:53 PM ET.
+    - cron: '3,33 13-23,0-3 * * *'
   workflow_dispatch:
     inputs:
-      due:
-        description: 'Only games starting within this many minutes (blank = all games today)'
+      date:
+        description: 'Slate date YYYY-MM-DD (blank = today in New York)'
         required: false
+      due:
+        description: 'Only games starting within this many minutes (blank = all games on the date)'
+        required: false
+      chain:
+        description: 'Self-dispatched hops this run may add (0 = none; a hop is a wait for the next window or a 15-minute read inside one)'
+        required: false
+        default: '40'
 
 jobs:
   lineups:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 355   # a hop may wait up to 5 h 40 min for the first window
+    permissions:
+      actions: write   # to dispatch the next hop
+      contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Resolve the date and the window
+        id: when
+        run: |
+          DATE="${{ github.event.inputs.date }}"
+          [ -n "$DATE" ] || DATE=$(TZ=America/New_York date +%F)
+          DUE="${{ github.event.inputs.due }}"
+          # A scheduled run reads NHL.com only for games starting within 150 minutes; a
+          # dispatched run reads what it was asked for (blank = every game on the date).
+          [ -z "$DUE" ] && [ "${{ github.event_name }}" = "schedule" ] && DUE=150
+          CHAIN="${{ github.event.inputs.chain }}"
+          [ -n "$CHAIN" ] || CHAIN=40
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"; echo "due=$DUE" >> "$GITHUB_OUTPUT"; echo "chain=$CHAIN" >> "$GITHUB_OUTPUT"
+          echo "date=$DATE due=${DUE:-all} chain=$CHAIN event=${{ github.event_name }}"
       - name: Beat writers' lines from GameDayTweets (fetched here, parsed by the site)
         continue-on-error: true
         env:
           NHL_ACTIONS_TOKEN: ${{ secrets.NHL_ACTIONS_TOKEN }}
-        run: tools/gdt-pages.sh "$(TZ=America/New_York date +%F)"
+        run: tools/gdt-pages.sh "${{ steps.when.outputs.date }}"
       - name: Refresh lineups
         run: |
           set -e
-          DATE=$(TZ=America/New_York date +%F)
-          DUE="${{ github.event.inputs.due }}"
-          [ -z "$DUE" ] && [ "${{ github.event_name }}" = "schedule" ] && DUE=150
-          Q="date=$DATE&only=lineups"; [ -n "$DUE" ] && Q="$Q&due=$DUE"
+          Q="date=${{ steps.when.outputs.date }}&only=lineups"; [ -n "${{ steps.when.outputs.due }}" ] && Q="$Q&due=${{ steps.when.outputs.due }}"
           echo "Lineups for $Q"
           # A 5xx is usually the server restarting for a deploy: one more try after a minute.
           for attempt in 1 2; do
@@ -42,3 +72,21 @@ jobs:
             case "$code" in 5*|000) [ "$attempt" = 1 ] && { echo "server answered $code; retrying in 60 s"; sleep 60; } ;; *) break ;; esac
           done
           [ "$code" = "200" ] || [ "$code" = "429" ]
+      - name: Hand on through the warm-up windows
+        if: steps.when.outputs.chain != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          next=$(node --no-warnings tools/lines-chain.mjs "${{ steps.when.outputs.date }}" "${{ steps.when.outputs.chain }}" resp.json)
+          echo "$next"
+          case "$next" in sleep=*) ;; *) exit 0 ;; esac
+          sleep_s=$(echo "$next" | sed -E 's/^sleep=([0-9]+).*/\1/'); hops=$(echo "$next" | sed -E 's/.*hops=([0-9]+).*/\1/')
+          # Another run already queued or running (a schedule tick, a refresh from the site) carries the chain instead.
+          others=$(gh run list --workflow nhl-lineups.yml --status queued --json databaseId --jq 'length'; gh run list --workflow nhl-lineups.yml --status in_progress --json databaseId --jq 'length')
+          total=0; for n in $others; do total=$((total + n)); done
+          if [ "$total" -gt 1 ]; then echo "another run is queued or running ($total incl. this one): not dispatching"; exit 0; fi
+          echo "sleeping $sleep_s s, then the next hop ($hops left)"
+          sleep "$sleep_s"
+          gh workflow run nhl-lineups.yml --ref "${{ github.ref_name }}" -f "date=${{ steps.when.outputs.date }}" -f "due=${{ steps.when.outputs.due }}" -f "chain=$hops"
+          echo "dispatched the next hop"

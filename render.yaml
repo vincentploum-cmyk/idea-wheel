@@ -37,3 +37,7 @@ services:
     # Token the GitHub Actions workflows send when posting GameDayTweets pages
     # (any random string of 20+ characters; the same value is the repo secret):
     #   NHL_ACTIONS_TOKEN
+    # Fine-grained GitHub token (this repo, Actions: read and write) so "Refresh lines" can
+    # start the nhl-lineups.yml run that fetches the GameDayTweets pages on demand;
+    # GITHUB_REPO (default vincentploum-cmyk/idea-wheel) and GITHUB_DISPATCH_REF (default main):
+    #   GITHUB_DISPATCH_TOKEN
