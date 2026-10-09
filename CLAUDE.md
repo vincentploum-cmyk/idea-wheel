@@ -174,7 +174,8 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
 
 ## Rules
 
-- The model is admin-only (`NHL_ADMIN_EMAILS`). Every `/api/nhl/*` route must call `requireNhlAdmin()`.
+- The model is admin-only: `NHL_ADMIN_EMAILS` on Render when set, else `DEFAULT_ADMIN_EMAILS` in `lib/nhl-admin.js`
+  (both lists must carry a new person). Every `/api/nhl/*` route must call `requireNhlAdmin()`.
 - Keep the model's math untouched when restyling; port logic changes from the local app into
   `components/nhl/model-core.js` (pipeline) and `NhlModel.jsx` (UI).
 - Secrets stay out of git (Render env + `.env.local`).
