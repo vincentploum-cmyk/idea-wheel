@@ -75,7 +75,7 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   served by `/api/nhl/data/media`; standings/leaders live in `data/league/*`.
 - Tonight's picks (`lib/nhl-data/picks.js` + `picks-pure.js`, `/api/nhl/data/picks`, `components/nhl/PicksPanel.jsx`,
   the list at the top of Best bets): the best shots plays and the best goal plays in every game: every skater over
-  the floor (P(3+ SOG) 50%, P(1+ G) 35%), never fewer than three a table (fill-ins marked `under`), with the break-even price, and the notes
+  the floor (P(3+ SOG) 50%, P(1+ G) 35%), three to four a table (fill-ins marked `under`, the rest on a "next" line; a run row whose 2+ / 3+ / 4+ ladder is inverted is read off its λ), with the break-even price, and the notes
   (softest spots, richest game, environment plays, near-ties, thin games, lineup sources) written from the picks.
   The numbers are the model's: with a run saved for the date, each row is the run's λ and 2+ / 3+ / 4+ SOG and 1+ G
   probabilities (`fromModel`) and only skaters the run projected are listed; the study's plain-rate read (fixed

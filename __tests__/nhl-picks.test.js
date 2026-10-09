@@ -38,7 +38,12 @@ describe('tonight’s picks', () => {
   test('with a saved run the row carries the model’s own numbers, the study’s beside them', () => {
     const study = { lamS: 3.08, p3: 0.59, p4: 0.37, p1g: 0.4 };
     const row = fromModel({ sog: 4.1, g: 0.7, p2s: 0.93, p3s: 0.85, p4s: 0.78, p1g: 0.5 }, study);
-    expect(row).toMatchObject({ lamS: 4.1, lamG: 0.7, p2: 0.93, p3: 0.85, p4: 0.78, p1g: 0.5, study: { p3: 0.59, p4: 0.37, p1g: 0.4 } });
+    expect(row).toMatchObject({ lamS: 4.1, lamG: 0.7, p2: 0.93, p3: 0.85, p4: 0.78, p1g: 0.5, ladder: 'run', study: { p3: 0.59, p4: 0.37, p1g: 0.4 } });
+    // An inverted ladder (2+ below 3+) is read off the λ instead.
+    const odd = fromModel({ sog: 0.16, g: 0.1, p2s: 0.01, p3s: 0.6, p4s: 0.25, p1g: 0.1 });
+    expect(odd.ladder).toBe('lambda');
+    expect(odd.p3).toBeLessThan(0.01);
+    expect(odd.p2).toBeGreaterThanOrEqual(odd.p3);
     // A probability the run did not carry is read off its λ; no shots rate, no row.
     expect(fromModel({ sog: 3, g: 0.4 }).p3).toBeCloseTo(poissonAtLeast(3, 3), 2);
     expect(fromModel({ sog: 3, g: 0.4 }).p1g).toBeCloseTo(1 - Math.exp(-0.4), 2);
@@ -74,11 +79,11 @@ describe('tonight’s picks', () => {
     expect(g.nextShots.map((x) => x.name)).toEqual(['D', 'E', 'F']);
     expect(g.goals.map((x) => [x.name, x.under])).toEqual([['B', false], ['C', false], ['A', true]]);
     expect(g.nextGoals.map((x) => x.name)).toEqual(['D', 'E', 'F']);
-    // Five over the floor: all five.
+    // Five over the floor: the top four, the fifth on the next line.
     const five = pickGame([c('A', 0.7, 0.5), c('B', 0.6, 0.5), c('C', 0.55, 0.5), c('D', 0.52, 0.5), c('E', 0.5, 0.5), c('F', 0.2, 0.1)]);
-    expect(five.shots.map((x) => x.name)).toEqual(['A', 'B', 'C', 'D', 'E']);
+    expect(five.shots.map((x) => x.name)).toEqual(['A', 'B', 'C', 'D']);
     expect(five.shots.every((x) => !x.under)).toBe(true);
-    expect(five.nextShots.map((x) => x.name)).toEqual(['F']);
+    expect(five.nextShots.map((x) => x.name)).toEqual(['E', 'F']);
     // Nobody over the floor: three rows, all under, and the fallback flag for the notes.
     const thin = pickGame([c('A', 0.43, 0.28), c('B', 0.4, 0.2), c('C', 0.3, 0.1), c('D', 0.2, 0.1)]);
     expect(thin.shots.map((x) => x.name)).toEqual(['A', 'B', 'C']);
