@@ -39,6 +39,11 @@
   --info-bg: oklch(94% 0.04 240); --info-fg: oklch(45% 0.12 245);
   --hot-bg: oklch(94% 0.06 50); --hot-fg: oklch(52% 0.17 45);
   --mark-over: oklch(65% 0.16 150); --mark-under: oklch(62% 0.2 25);
+  /* PropFinder's rank tints for its defense tables (cell wash, rank chip, chip ink): the same tints as its dark table, laid over white. */
+  --pf-soft-bg: #edf9f2; --pf-soft-chip: #d3efdd; --pf-soft-fg: #2f7a45;
+  --pf-mid-bg: #fdf8eb; --pf-mid-chip: #faedcc; --pf-mid-fg: #8a6a14;
+  --pf-tough-bg: #fff0f0; --pf-tough-chip: #fed7d8; --pf-tough-fg: #b0303a;
+  --pf-ink: var(--heading);
   --pos-c: oklch(58% 0.14 245); --pos-lw: oklch(56% 0.16 300); --pos-rw: oklch(55% 0.14 150); --pos-d: oklch(62% 0.15 55);
   color-scheme: light;
 }
@@ -72,6 +77,11 @@
   --info-bg: oklch(26% 0.05 240); --info-fg: oklch(80% 0.1 235);
   --hot-bg: oklch(28% 0.06 45); --hot-fg: oklch(80% 0.15 50);
   --mark-over: oklch(70% 0.16 150); --mark-under: oklch(68% 0.19 25);
+  /* PropFinder's rank tints, measured from its dark defense table: cell wash, rank chip, chip ink; values in white. */
+  --pf-soft-bg: #141e19; --pf-soft-chip: #1d3a22; --pf-soft-fg: #5a9460;
+  --pf-mid-bg: #231e12; --pf-mid-chip: #463812; --pf-mid-fg: #ad9247;
+  --pf-tough-bg: #251617; --pf-tough-chip: #512122; --pf-tough-fg: #cc5657;
+  --pf-ink: #ffffff;
   --pos-c: oklch(76% 0.11 240); --pos-lw: oklch(76% 0.13 300); --pos-rw: oklch(76% 0.14 150); --pos-d: oklch(78% 0.13 60);
   color-scheme: dark;
 }
@@ -875,13 +885,13 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-da-cell { display: grid; justify-items: center; gap: 5px; padding: 12px 6px 10px; border-left: 1px solid var(--line); text-align: center; }
 .nhlx-da-cell:nth-child(1 of .nhlx-da-cell) { border-left: 0; }
 .nhlx-da-cell b { font-size: 17px; font-family: var(--font-display); color: var(--heading); font-variant-numeric: tabular-nums; }
-.nhlx-da-cell.is-soft { background: var(--ok-bg); }
-.nhlx-da-cell.is-mid { background: var(--warn-bg); }
-.nhlx-da-cell.is-tough { background: var(--bad-bg); }
+.nhlx-da-cell.is-soft { background: var(--pf-soft-bg); }
+.nhlx-da-cell.is-mid { background: var(--pf-mid-bg); }
+.nhlx-da-cell.is-tough { background: var(--pf-tough-bg); }
 .nhlx-rank { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--muted); background: var(--card); font-variant-numeric: tabular-nums; vertical-align: 1px; }
-.nhlx-da-cell.is-soft .nhlx-rank, td.is-soft .nhlx-rank { color: var(--ok-fg); border-color: var(--ok-line); }
-.nhlx-da-cell.is-mid .nhlx-rank { color: var(--warn-fg); border-color: var(--warn-line); }
-.nhlx-da-cell.is-tough .nhlx-rank, td.is-tough .nhlx-rank { color: var(--bad-fg); border-color: var(--bad-line); }
+.nhlx-da-cell.is-soft .nhlx-rank, td.is-soft .nhlx-rank { color: var(--pf-soft-fg); border-color: transparent; background: var(--pf-soft-chip); }
+.nhlx-da-cell.is-mid .nhlx-rank, td.is-mid .nhlx-rank { color: var(--pf-mid-fg); border-color: transparent; background: var(--pf-mid-chip); }
+.nhlx-da-cell.is-tough .nhlx-rank, td.is-tough .nhlx-rank { color: var(--pf-tough-fg); border-color: transparent; background: var(--pf-tough-chip); }
 .nhlx-mu-skaters .nhlx-rank { margin-left: 5px; }
 .nhlx-da-legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 16px; margin-top: 14px; font-size: 12px; color: var(--muted); }
 .nhlx-da-legend span { display: inline-flex; align-items: center; gap: 6px; }
@@ -892,10 +902,9 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-da-foot { margin-top: 10px; font-size: 12px; color: var(--muted); }
 .nhlx-da-table { margin-top: 8px; }
 .nhlx-da-table .nhlx-rank { margin-left: 6px; }
-.nhlx-da-table td.is-soft { background: var(--ok-bg); color: var(--ok-fg); }
-.nhlx-da-table td.is-mid { background: var(--warn-bg); color: var(--warn-fg); }
-.nhlx-da-table td.is-mid .nhlx-rank { color: var(--warn-fg); border-color: var(--warn-line); }
-.nhlx-da-table td.is-tough { background: var(--bad-bg); color: var(--bad-fg); }
+.nhlx-da-table td.is-soft { background: var(--pf-soft-bg); color: var(--pf-ink); }
+.nhlx-da-table td.is-mid { background: var(--pf-mid-bg); color: var(--pf-ink); }
+.nhlx-da-table td.is-tough { background: var(--pf-tough-bg); color: var(--pf-ink); }
 .nhlx-da-table tr.is-active td:first-child b { color: var(--primary); }
 
 /* Team page: the box-score game log vs the team */
@@ -1068,13 +1077,13 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-pfd-table tr.is-muted td { opacity: 0.45; }
 .nhlx-pfd-val { display: block; font-weight: 600; line-height: 1.2; }
 .nhlx-pfd-rank { display: inline-block; margin-top: 2px; padding: 0 5px; border-radius: 4px; font-size: 10.5px; line-height: 15px; font-weight: 600; background: color-mix(in oklab, var(--heading) 8%, transparent); color: var(--muted); }
-/* Cell fills read like PropFinder's: a clear green / amber / red wash behind the value, the rank chip a step stronger. */
-.nhlx-pfd-table td.is-soft { background: color-mix(in oklab, var(--ok-fg) 26%, var(--bg)); color: var(--heading); }
-.nhlx-pfd-table td.is-tough { background: color-mix(in oklab, var(--bad-fg) 26%, var(--bg)); color: var(--heading); }
-.nhlx-pfd-table td.is-mid { background: color-mix(in oklab, var(--warn-fg) 16%, var(--bg)); color: var(--heading); }
-.nhlx-pfd-table td.is-soft .nhlx-pfd-rank { background: color-mix(in oklab, var(--ok-fg) 42%, var(--bg)); color: var(--heading); }
-.nhlx-pfd-table td.is-tough .nhlx-pfd-rank { background: color-mix(in oklab, var(--bad-fg) 42%, var(--bg)); color: var(--heading); }
-.nhlx-pfd-table td.is-mid .nhlx-pfd-rank { background: color-mix(in oklab, var(--warn-fg) 34%, var(--bg)); color: var(--heading); }
+/* Cell fills are PropFinder's own (the --pf-* tokens): a faint green / yellow / red wash behind a white value, the rank chip a solid step stronger with coloured ink. */
+.nhlx-pfd-table td.is-soft { background: var(--pf-soft-bg); color: var(--pf-ink); }
+.nhlx-pfd-table td.is-tough { background: var(--pf-tough-bg); color: var(--pf-ink); }
+.nhlx-pfd-table td.is-mid { background: var(--pf-mid-bg); color: var(--pf-ink); }
+.nhlx-pfd-table td.is-soft .nhlx-pfd-rank { background: var(--pf-soft-chip); color: var(--pf-soft-fg); }
+.nhlx-pfd-table td.is-tough .nhlx-pfd-rank { background: var(--pf-tough-chip); color: var(--pf-tough-fg); }
+.nhlx-pfd-table td.is-mid .nhlx-pfd-rank { background: var(--pf-mid-chip); color: var(--pf-mid-fg); }
 .nhlx-rk { position: relative; aspect-ratio: 85 / 200; }
 .nhlx-rk-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .nhlx-rk-ice { fill: var(--bg-soft); }
@@ -1135,6 +1144,26 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-rk-stat.is-model em { color: var(--heading); }
 .nhlx-rk-stat.is-model.is-closed em { color: var(--muted); }
 .nhlx-rk-stat.is-read em { color: var(--muted); }
+/* Above each rink: the model's plays for this team (the Best bets boards' rule, two shots and two goal plays at most). */
+.nhlx-plays { margin-bottom: 12px; }
+.nhlx-plays-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 6px; }
+.nhlx-plays-head b { font-size: 14px; color: var(--heading); font-weight: 600; }
+.nhlx-plays-head small { margin: 0; }
+.nhlx-plays-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.nhlx-play { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; padding: 4px 8px 4px 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--heading); font: inherit; font-size: 13px; line-height: 1.2; }
+.nhlx-play:hover { border-color: var(--primary); }
+.nhlx-play.is-static { cursor: default; }
+.nhlx-play img, .nhlx-play .nhlx-db-avatar { width: 26px; height: 26px; border-radius: 50%; flex: none; }
+.nhlx-play-meta { display: flex; flex-direction: column; gap: 1px; }
+.nhlx-play-meta b { font-family: var(--font-display); font-weight: 700; font-size: 13px; white-space: nowrap; }
+.nhlx-play-meta span { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nhlx-play-meta em { font-style: normal; font-weight: 700; color: var(--heading); font-size: 13px; }
+.nhlx-play .nhlx-edge { min-width: 0; font-size: 11px; padding: 1px 7px; }
+.nhlx-play-mark { font-style: normal; font-weight: 700; font-size: 13px; }
+.nhlx-play-mark.is-hit { color: var(--ok-fg); }
+.nhlx-play-mark.is-miss { color: var(--bad-fg); }
+/* A skater in the plays strip, ringed on the ice. */
+.nhlx-rk-chip.is-pick { border-color: var(--primary); box-shadow: 0 0 0 1.5px var(--primary); }
 .nhlx-rk-numsrc { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
 .nhlx-rk-numsrc b { color: var(--heading); font-weight: 600; }
 .nhlx-rk-stat.is-over em:first-child { color: var(--ok-fg); }

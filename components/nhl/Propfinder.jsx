@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Headshot, TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { MpCell } from './MoneyPuck';
-import { PfTable, PosBadge, Sel, SortTh, Tag, UnderlineTabs } from './pf-ui';
+import { PfTable, PosBadge, Sel, SortTh, Tag, UnderlineTabs, rankTone } from './pf-ui';
 import { TeamLink } from './links';
 import { SKATER_COLS, TEAM_COLS, seasonLabel, defaultDefenseTab } from '@/lib/nhl-data/propfinder-csv';
 import { teamName } from '@/lib/nhl-data/teams';
@@ -212,7 +212,7 @@ export function PropfinderSkaterTable({ pf }) {
 }
 
 /** PropFinder's own colouring, read from the shooter's side: rank 1 = most allowed. */
-const defTone = (rank, n) => (!rank || !n ? '' : rank <= Math.ceil(n / 3) ? 'is-soft' : rank > n - Math.ceil(n / 3) ? 'is-tough' : 'is-mid');
+const defTone = rankTone;
 const DEF_POS = ['All', 'C', 'LW', 'RW', 'D'];
 
 /**
@@ -248,9 +248,11 @@ export function PropfinderDefense({ abbr, data, posFilter = '', tabKey: controll
     );
   };
   const when = tab.kind === 'season' ? `${tab.label} season` : `last ${tab.windowGames}${tab.split === 'H' ? ' home' : tab.split === 'A' ? ' away' : ''} games`;
+  // A window rolled from the stored box scores (PropFinder's API has none for this season yet) says so.
+  const from = tab.source === 'stored' ? 'rolled from the stored box scores across the season boundary, as PropFinder counts it' : 'data from PropFinder';
   return (
     <div className="nhlx-pfd" aria-label={`${abbr} defense, PropFinder`}>
-      <div className="nhlx-pfd-head" title={`What ${teamName(abbr) || abbr} allowed ${total ? 'in total' : 'per game'} to each position · ${when}${tab.rows.All?.gp ? ` · ${tab.rows.All.gp} GP` : ''} · rank 1 = most allowed of ${n} · data from PropFinder`}>
+      <div className="nhlx-pfd-head" title={`What ${teamName(abbr) || abbr} allowed ${total ? 'in total' : 'per game'} to each position · ${when}${tab.rows.All?.gp ? ` · ${tab.rows.All.gp} GP` : ''} · rank 1 = most allowed of ${n} · ${from}`}>
         <TeamLink abbr={abbr} logo={22}><b>{teamName(abbr) || abbr} defense</b></TeamLink>
         {drivesRink ? <span className="nhlx-chip nhlx-chip-blue" title="The selected tab tints the rink below">tints the rink</span> : null}
         <label className="nhlx-pfd-switch">

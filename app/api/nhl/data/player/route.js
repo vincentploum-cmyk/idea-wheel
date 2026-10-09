@@ -28,7 +28,7 @@ export async function GET(request) {
   if (oppAbbr) {
     const pfSeason = pf.opponents?.season ?? Object.values(pf.opponentsByPos || {})[0]?.season ?? null;
     const prev = pfSeason && pfSeason >= seasonYear() ? await loadOpponentTables(pfSeason - 1).catch(() => null) : null;
-    defense = propfinderDefenseTabs(pf, oppAbbr, prev);
+    defense = propfinderDefenseTabs(pf, oppAbbr, prev, { rows });
   }
   const name = p?.name || profile.last?.name || String(id);
   const team = p?.team || profile.last?.team || null;

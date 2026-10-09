@@ -2,7 +2,7 @@ import { describe, expect, test } from '@jest/globals';
 import { parseLineupRows, applyPositions, snapshotPos, fillFromLastLineup, lineupToRemember } from '../lib/nhl-data/positions';
 import { defenseByPosition, defenseBySlot, firstGoalsAllowed, defenseVsTeam, rankAmong, playerBaselines } from '../lib/nhl-data/defense';
 import { groupStandings, mapStandingRow, shotLeaders } from '../lib/nhl-data/league';
-import { scoreSkater, h2hByOpponent, h2hHot, h2hShotsHot } from '../lib/nhl-data/slate';
+import { scoreSkater, h2hByOpponent, h2hHot, h2hShotsHot, sidePlays } from '../lib/nhl-data/slate';
 import { lineupRows } from '../lib/nhl-data/lineups';
 import { rowObj } from '../lib/nhl-data/ingest';
 import { PREVIEW_MD } from './fixtures/nhl';
@@ -295,5 +295,28 @@ describe('last known lineup', () => {
     const kept = lineupToRemember(full, '2026-10-01', 1);
     expect(kept).toMatchObject({ date: '2026-10-01', gameId: 1, source: 'lineup' });
     expect(Object.keys(kept.players)).toHaveLength(9);
+  });
+});
+
+describe('the plays strip above a rink (sidePlays)', () => {
+  const sk = (name, model, extra = {}) => ({ id: name.length, name, number: 8, pos: 'LW', inLineup: true, model, ...extra });
+  const skaters = [
+    sk('Alex Ovechkin', { gateOpen: true, p3s: 0.74, p4s: 0.52, p5s: 0.3, p1g: 0.38, p2g: 0.08, attack: 80 }),
+    sk('Tom Wilson', { gateOpen: true, p3s: 0.64, p4s: 0.35, p5s: 0.1, p1g: 0.12, attack: 60 }),
+    sk('Dylan Strome', { gateOpen: true, p3s: 0.5, p4s: 0.3, p1g: 0.24, attack: 55 }),
+    sk('Connor McMichael', { gateOpen: true, p3s: 0.61, p4s: 0.2, p1g: 0.2, attack: 50 }),
+    sk('Pierre-Luc Dubois', { gateOpen: true, p3s: 0.7, p4s: 0.45, p1g: 0.3, attack: 70 }, { inLineup: false }),
+    sk('No model', null),
+  ];
+  test('two shots plays and two goal plays at most, lineup skaters only, each on the floor it cleared', () => {
+    const p = sidePlays(skaters, true);
+    expect(p.shots.map((x) => [x.name, x.market, x.prob, x.tier])).toEqual([['Alex Ovechkin', '4+ SOG', 0.52, 'Strong'], ['Tom Wilson', '3+ SOG', 0.64, 'Lean']]);
+    expect(p.goals.map((x) => [x.name, x.market, x.prob])).toEqual([['Alex Ovechkin', '1+ G', 0.38], ['Dylan Strome', '1+ G', 0.24]]);
+    expect(p.shots[0]).toMatchObject({ id: 13, number: 8, pos: 'LW', kind: 'shots', stat: 'sog', min: 4, attack: 80 });
+    expect(p.goals[1]).toMatchObject({ kind: 'goals', stat: 'g', min: 1, tier: 'Thin' });
+  });
+  test('no run → null (the strip stays off); a run with nothing over the floor → empty lists', () => {
+    expect(sidePlays(skaters, false)).toBeNull();
+    expect(sidePlays([sk('Cold', { gateOpen: false, p4s: 0.9, p1g: 0.1 })], true)).toEqual({ shots: [], goals: [] });
   });
 });
