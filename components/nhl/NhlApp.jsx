@@ -9,6 +9,7 @@ import AutomationPanel from './AutomationPanel';
 import DatabasePanel from './DatabasePanel';
 import MatchupsPanel from './MatchupsPanel';
 import FirstGoalPanel from './FirstGoalPanel';
+import PicksPanel from './PicksPanel';
 import LeaguePanel from './LeaguePanel';
 import { PlayerCardHost } from './PlayerCard';
 import ThemeToggle from './ThemeToggle';
@@ -329,6 +330,7 @@ export default function NhlApp({ email }) {
 
             {mounted('model') && (
               <>
+                <PicksPanel />
                 <AutomationPanel runs={runs} onLoad={loadAuto} busy={busy} />
                 <div className="nhlx-light">
                   <NhlModel

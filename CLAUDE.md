@@ -73,6 +73,13 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   (`lib/nhl-data/defense.js`) are descriptive views over the stored rows; the model's
   own math stays in `NhlModel.jsx`. Logos/headshots are copied into `data/media/*` and
   served by `/api/nhl/data/media`; standings/leaders live in `data/league/*`.
+- Tonight's picks (`lib/nhl-data/picks.js` + `picks-pure.js`, `/api/nhl/data/picks`, `components/nhl/PicksPanel.jsx`,
+  the list at the top of Best bets): the best shots play and the best goal play in every game, every skater over
+  the floor (P(3+ SOG) 50%, P(1+ G) 35%) else the best one marked, with the break-even price, and the notes
+  (softest spots, richest game, environment plays, near-ties, thin games, lineup sources) written from the picks.
+  Fixed Poisson coefficients fitted on 2025-26 (`tools/predictors/picks.py`, log features; the blend is this
+  season into last season's base at n / (n + 18) shots, n / (n + 40) goals; the opponent read is this season's
+  team shots allowed). Descriptive; the model's math is untouched. Study: `docs/shots-goals-predictors.md`.
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching) for every slate team; a
   game-day tweet beats the NHL.com preview, otherwise the preview, then an older tweet, then

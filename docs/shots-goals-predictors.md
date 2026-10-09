@@ -1,8 +1,10 @@
 # What predicts a skater's shots and goals? (2026-27 to date, 2025-26 as the control)
 
+Revision 4 (2026-10-08): the rink's two environment tints, Rink vs PropFinder, graded against the box scores (section 10); the 1st goal tab graded against who scored first (section 11).
+Revision 4 (2026-10-08, earlier): the rink's two environment tints, Rink vs PropFinder, graded against the box scores (section 10).
 Revision 3: head-to-head re-tested across seasons (section 8); environment window test, L5 / L10 / L15 / season (section 9).
 
-Study date: 2026-10-06. Rerun with `tools/predictors/run.sh 2026` (see `tools/predictors/README.md`).
+Study date: 2026-10-06; section 10 on 2026-10-08. Rerun with `tools/predictors/run.sh 2026` (see `tools/predictors/README.md`).
 
 **Data.** Every finished regular-season game of 2026-27 so far: 43 games, 1,548 skater-games,
 617 skaters (Sept 29 to Oct 5; teams have played 2 to 4 games). Each row carries only what was
@@ -294,6 +296,156 @@ standard deviation, or ~3% per extra shot allowed per game. L5 / L10 defense rea
 noisiest version of a real signal and should not replace the season figure. For goals, the
 same season-to-date position read, ~15% per standard deviation. Script:
 `tools/predictors/env_windows.py <rows.csv> <label>`.
+
+## 10. Rink or PropFinder? The two tints graded against the box scores
+
+The Matchups rink can be tinted from our stored rows ("Rink": the opponent at tonight's venue by
+default, or L5 / L10 / L5 home / L5 away / head to head, over this season and last, by lineup
+position) or from PropFinder's opponent table ("PropFinder": last season's full table, this
+season's, or its L5 / L10 / L15, by PropFinder's position). Every one of those reads was rebuilt
+leak-free for this season's 55 games (Sept 29 to Oct 7; 1,980 skater-games, 1,866 with a
+last-season prior) and for the whole of 2025-26 as the control (47,231 skater-games, 2024-25 as
+its "last season"), then scored against what the skater did: the cross-validated gain on top of
+his own baseline (last season blended with this season at n / (n + 18)), and the hit rate of
+2+ / 3+ / 4+ SOG and 1+ goal when the band he sits in shows soft / mid / tough (rank thirds, as
+the rink tints). PropFinder's own last-season numbers and ranks (the bundled 2025-26 exports)
+were scored as a read of their own; everything else is rebuilt from the NHL box scores.
+
+Two corrections to the data first. The NHL box score lists registered positions (six to eight
+"C" a team), while PropFinder and the stored rows use the position played, so every forward was
+relabelled from the play-by-play: the four forwards who took the draws are the centres, the rest
+wingers on their listed side. Rebuilt this way, the last-season table matches PropFinder's cell
+for cell (r = 0.93 on SOG/G by position, 0.94 on goals; the same colour band in 76% of cells, the
+rest within a rank or two: PropFinder's "Full Season" tab includes the playoffs). And the earlier
+section 9 overstated the position read: pooled across positions, "shots allowed per skater at the
+position" carries the attacker's own position level and scores 0.013 of deviance, but within any
+one position the per-game total (what both tints show) and the per-skater figure are worth the
+same, 0.003 to 0.007 (C 0.0068, LW 0.0032, RW 0.0028, D 0.0029). The environment is a tie-breaker
+of a few percent, in every form; the skater's own rate is the signal.
+
+**Scripts.** `tools/predictors/faceoffs.mjs` (draws per game), `relabel.py` (played positions),
+`pf_dump.py` (PropFinder's tables to CSV), `env_source.py` (the comparison; `-envsrc.csv` carries
+every read per row). `README.md` has the commands.
+
+### Shots: the band colour and what followed (control, 2025-26, skaters with a prior)
+
+| Read (rank thirds by SOG allowed to the position) | soft SOG | tough SOG | P(3+) soft | P(3+) tough | gap SOG / P(3+) | CV gain |
+|---|---|---|---|---|---|---|
+| PropFinder this-season tab (season to date, all games) | 1.67 | 1.50 | 24.6% | 20.7% | **+0.17 / +3.9 pts** | 0.0006 (z 5.3) |
+| Team total shots allowed, season to date (no position) | 1.68 | 1.50 | 25.2% | 20.7% | +0.18 / +4.5 | 0.0031 (z 11.5) |
+| Rink default: tonight's venue, two seasons | 1.66 | 1.52 | 24.4% | 21.3% | +0.13 / +3.1 | 0.0000 (z 2.8) |
+| Rink L10 (two seasons) / PropFinder L10 | 1.66 | 1.52 | 24.4% | 21.3% | +0.14 / +3.1 | 0.0005 (z 4.7) |
+| Rink L5 home / away | 1.65 | 1.54 | 24.1% | 21.4% | +0.11 / +2.8 | 0.0005 |
+| PropFinder last-season tab (full) | 1.66 | 1.54 | 24.3% | 21.4% | +0.12 / +3.0 | -0.0001 (z 0.5) |
+| Rink L5 (two seasons) / PropFinder L5 | 1.62 | 1.55 | 23.3% | 21.6% | +0.08 / +1.7 | 0.0002 (z 3.2) |
+| Last season's L10 | 1.62 | 1.56 | 23.3% | 22.0% | +0.06 / +1.4 | -0.0001 |
+
+The season-to-date table separates soft from tough the most; every short window separates less,
+L5 least. By the opponent's games played, no read beats the skater alone until the opponent has
+about 15 games (0 to 4 games: baseline 1.2655, last season 1.2654, rink venue 1.2662; 5 to 9:
+1.2251 / 1.2273 / this season 1.2256; 10 to 14: 1.2767 / 1.2768 / 1.2788), then this season's
+table is the one (15 to 19: 1.2604 / 1.2621 / 1.2601; 20 to 29: 1.2405 / 1.2408 / 1.2394; 50+:
+1.2374 / 1.2376 / 1.2360). The venue split and the two-season blend buy nothing over the plain
+season table.
+
+### This season so far (55 games, opponents with 1 to 4 games)
+
+| Read | soft SOG | tough SOG | P(3+) soft / tough | P(1+ G) soft / tough |
+|---|---|---|---|---|
+| PropFinder this-season tab ("2026"), shots | **1.67** | **1.38** | **25.4% / 17.8%** | 18.2% / 13.0% |
+| Team total shots allowed, this season | 1.69 | 1.39 | 26.3% / 18.8% | 18.2% / 13.8% |
+| Rink default (venue, two seasons) | 1.64 | 1.54 | 23.6% / 22.2% | 18.0% / 15.2% |
+| PropFinder last-season tab, shots | 1.58 | 1.51 | 22.2% / 21.6% | 17.4% / 14.0% |
+| PropFinder last-season L10, shots | 1.61 | 1.46 | 24.3% / 21.1% | 18.8% / 13.4% |
+| Rink L5 (two seasons) | 1.65 | 1.51 | 22.6% / 23.3% | 16.7% / 13.7% |
+| Rink L10 (two seasons) | 1.52 | 1.56 | 19.3% / 24.4% | 17.4% / 15.8% |
+
+This season's own table has read well from its first week (CV gain 0.0019 for the position
+table, 0.0101 for the team total, z 2.5 and 3.8), where the control's first weeks show nothing;
+with 55 games that is a lead to watch, not a rule, and the control's "about 15 games" stands as
+the switch point. The Rink's L5 and L10 windows have pointed the wrong way so far (their "last
+10" is last season's final games plus this season's first).
+
+### Goals
+
+Goals allowed is mostly goaltending noise (section 9), and the band tables agree: no read moves
+P(1+ goal) by more than about a point in the control. The one goal read that holds up in both
+seasons is **last season's goals allowed to the position**: CV gain 0.0024 in the control
+(0.0027 for the rink's two-season venue table by goals), 0.0063 this season for PropFinder's
+last-season tab (0.0052 for its last-season L10; soft 17.4 to 18.8% vs tough 13.4 to 14.0%
+P(1+ goal)). This season's goals-allowed table is harmful so far (-0.0097; its "tough" band
+scored at 48.5% in the .35 to .5 tier, n = 33). Shots allowed to the position does nothing for
+goals.
+
+### The pre-game filter: tier first, band second
+
+Last-season SOG/G tier x band colour of the season-to-date table (control; n per cell 570 to
+7,100):
+
+| LS SOG/G | soft: SOG, P(3+), P(4+) | mid | tough |
+|---|---|---|---|
+| under 1.5 | 1.13, 12%, 4% | 1.10, 11%, 4% | 1.00, 9%, 3% |
+| 1.5 to 2 | 1.82, 27%, 12% | 1.73, 26%, 11% | 1.62, 23%, 9% |
+| 2 to 2.5 | 2.17, 37%, 18% | 2.18, 37%, 19% | 2.02, 33%, 16% |
+| 2.5 to 3 | 2.75, **52%**, 30% | 2.67, 48%, 29% | 2.51, 46%, 26% |
+| 3+ | 3.25, **63%**, 39% | 3.33, 61%, 41% | 3.02, 57%, 35% |
+
+This season, same cut, PropFinder's "2026" tab (n per cell 15 to 290): 2 to 2.5 soft 2.58 SOG and
+47% 3+ vs tough 1.69 and 24%; 2.5 to 3 soft 2.76 and 56% vs tough 2.03 and 41%; 3+ soft 3.54 and
+68% vs tough 3.67 and 60%. The Rink default on the same rows: 2 to 2.5 soft 2.40 / 42% vs tough
+2.20 / 40%; 2.5 to 3 soft 2.83 / 52% vs tough 2.20 / 39%.
+
+Read it as: the tier sets the market (under 2.0 SOG/G last season, no band makes a 3+ shooter:
+27% at best), the band moves it by 4 to 6 points of P(3+) and about 0.15 to 0.25 SOG at the top
+tiers, roughly one line of odds. For goals, the last-season goals/G tier does the work (.35 to
+.5: 31 to 33% to score; .5+: 34 to 39%) and the band is worth 1 to 5 points.
+
+### Rule
+
+- Tint by **PropFinder, Shots**: the current season's tab once the opponent has ~15 games, last
+  season's full tab before that (now). Never L5; L10 only when it agrees with the season table.
+- For goals, **PropFinder, Goals, last season's tab** all season; this season's goals table is
+  noise until well past 20 games and should not colour a goal call.
+- The Rink tint's default window (tonight's venue, two seasons) is a fair read but strictly
+  weaker than the season table it halves; its L5 / L10 are the weakest reads tested and have
+  pointed the wrong way this season. If the Rink tint stays, its default should be the all-games
+  season table, not the venue split.
+- The band's figure can stay a per-game total: within a position it reads the same as per skater.
+
+## 11. The 1st goal tab, graded
+
+The tab's score (`lib/nhl-data/firstgoal.js`: 45% the model's 1+ goal odds, 30% the player's own
+first-goal rate over his last 100 games, 15% the opponent's first-goal leak to his position at
+tonight's venue, 10% head to head) was replayed leak-free for every skater-game of this season
+(55 games) and of 2025-26 (1,311 games), with the player's blended goal rate standing in for the
+model's odds, and the per-game ranking graded against who scored first.
+`tools/predictors/firstgoal_grade.py`.
+
+| Ranking (about 36 skaters a game) | #1 scores first | first scorer in top 3 | in top 5 | #1 scores at all |
+|---|---|---|---|---|
+| chance | 2.8% | 8.3% | 14% | 16% |
+| tab score, this season | 7.3% | 14.5% | 25.5% | 29% |
+| tab score, 2025-26 | 6.6% | 19.6% | 29.9% | 36.5% |
+| goal rate alone, 2025-26 | 6.4% | 18.1% | 31.2% | 36.2% |
+| own first-goal rate alone, 2025-26 | 4.6% | 17.8% | 27.1% | 30.4% |
+| opponent first-goal leak alone, 2025-26 | 2.4% | 7.7% | 12.9% | 15.5% |
+
+The tab's top pick scores first about 2.4 times as often as a random skater and scores at all
+more than twice as often, and the score reads monotonically (2025-26: 0 to 19 scores first 1.0%,
+40 to 49 4.7%, 60 to 69 6.7%, 70+ 5.7%; scores at all 7% to 39%). But all of it is the goal
+rate: in a joint fit of "scored first" on the four parts, the goal-rate term is z = 13.0 and the
+own first-goal rate (z = -0.7), the leak (z = 0.0) and head to head (z = 0.7) add nothing, this
+season the same (1.8 / 0.0 / 0.3 / 1.0). A player's own first-goal record tracks his goal rate
+and no more (20+ flagged games, 2025-26: 0% record scores first 1.4%, 3 to 6% 3.9%, 6 to 10%
+5.7%, 10%+ 4.0%), and the opponent's first-goal leak has no shape at all (ratio under 0.5: 2.3%;
+0.8 to 1.2: 3.1%; 1.6+: 1.9%). First goals are rare enough (one skater in 36) that nothing
+beyond "who scores goals" survives.
+
+**Rule.** The tab is a fair shortlist for *a* goal (its daily top 10 scored in 35% of
+player-games against 14.5% for the rest of the slate) and a weak one for the *first* goal (6%
+vs 2.7%). Rank it by the model's 1+ goal odds and treat the first-goal record, the leak and the
+head-to-head columns as colour, not as inputs; a first-goal price has to clear roughly 15 to 1
+on the tab's best candidate before it is a bet.
 
 ## 6. What this means for the model and the site
 
