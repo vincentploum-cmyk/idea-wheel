@@ -77,9 +77,12 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   the list at the top of Best bets): the best shots plays and the best goal plays in every game: every skater over
   the floor (P(3+ SOG) 50%, P(1+ G) 35%), never fewer than three a table (fill-ins marked `under`), with the break-even price, and the notes
   (softest spots, richest game, environment plays, near-ties, thin games, lineup sources) written from the picks.
-  Fixed Poisson coefficients fitted on 2025-26 (`tools/predictors/picks.py`, log features; the blend is this
-  season into last season's base at n / (n + 18) shots, n / (n + 40) goals; the opponent read is this season's
-  team shots allowed). Descriptive; the model's math is untouched. Study: `docs/shots-goals-predictors.md`.
+  The numbers are the model's: with a run saved for the date, each row is the run's λ and 2+ / 3+ / 4+ SOG and 1+ G
+  probabilities (`fromModel`) and only skaters the run projected are listed; the study's plain-rate read (fixed
+  Poisson coefficients fitted on 2025-26, `tools/predictors/picks.py`, log features; this season blended into last
+  season's base at n / (n + 18) shots, n / (n + 40) goals; the opponent read is this season's team shots allowed)
+  sits beside them as a dimmed `Study` column and stands in when no run exists. The model's math is untouched.
+  Study: `docs/shots-goals-predictors.md`.
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching) for every slate team; a
   game-day tweet beats the NHL.com preview, otherwise the preview, then an older tweet, then

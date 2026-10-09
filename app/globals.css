@@ -1205,6 +1205,7 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-pk-table td.is-lead b { color: var(--primary); }
 .nhlx-pk-table td.is-click { cursor: pointer; }
 .nhlx-pk-table tr.is-under td { opacity: 0.6; }
+.nhlx-pk-table td.nhlx-pk-study { color: var(--muted); }
 .nhlx-pk-table tr.is-under td.is-lead b { color: var(--muted); }
 .nhlx-pk-next { margin: 8px 14px 4px; font-size: 13px; color: var(--muted); }
 .nhlx-pk-notes { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--line-strong); max-width: 78ch; }
