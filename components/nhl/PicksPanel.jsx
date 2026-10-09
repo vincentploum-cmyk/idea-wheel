@@ -32,7 +32,7 @@ function ShotsTable({ g }) {
       <table className="nhlx-db-table nhlx-pk-table">
         <thead>
           <tr>
-            <th>Shots{g.shotsFallback ? <i className="nhlx-fg-rank"> best available, under 50%</i> : null}</th>
+            <th>Shots{g.shotsFallback ? <i className="nhlx-fg-rank"> nobody over 50%: best available</i> : null}</th>
             <th className="is-num is-wide" title="Projected shots on goal">λ</th>
             <th className="is-num is-wide" title="2+ shots: probability and the break-even price">2+</th>
             <th className="is-num" title="3+ shots">3+</th>
@@ -43,7 +43,7 @@ function ShotsTable({ g }) {
         </thead>
         <tbody>
           {g.shots.map((c) => (
-            <tr key={c.id}>
+            <tr key={c.id} className={c.under ? 'is-under' : ''} title={c.under ? 'Under the 50% floor for 3+ shots: listed to make three' : undefined}>
               <Player c={c} />
               <td className="is-num is-wide">{c.lamS.toFixed(2)}</td>
               <Prob p={c.p2} wide /><Prob p={c.p3} lead /><Prob p={c.p4} />
@@ -64,7 +64,7 @@ function GoalsTable({ g }) {
       <table className="nhlx-db-table nhlx-pk-table">
         <thead>
           <tr>
-            <th>Goals{g.goalsFallback ? <i className="nhlx-fg-rank"> best available, under 35%</i> : null}</th>
+            <th>Goals{g.goalsFallback ? <i className="nhlx-fg-rank"> nobody over 35%: best available</i> : null}</th>
             <th className="is-num is-wide" title="Projected goals">λ</th>
             <th className="is-num" title="1+ goal: probability and the break-even price">1+ G</th>
             <th className="is-num" title="Goals a game this season (games), and last season's base">Season / base</th>
@@ -73,7 +73,7 @@ function GoalsTable({ g }) {
         </thead>
         <tbody>
           {g.goals.map((c) => (
-            <tr key={c.id}>
+            <tr key={c.id} className={c.under ? 'is-under' : ''} title={c.under ? 'Under the 35% floor for a goal: listed to make three' : undefined}>
               <Player c={c} />
               <td className="is-num is-wide">{c.lamG.toFixed(2)}</td>
               <Prob p={c.p1g} lead />
@@ -121,7 +121,7 @@ export default function PicksPanel() {
       </div>
       {err ? <div className="nhlx-alert">{err}</div> : null}
       <p className="nhlx-auto-meta nhlx-fg-how">
-        The best shots play and the best goal play in every game, every skater over the floor (50% for 3+ shots, 35% for a goal). The percentage is the chance of the hit; the price under it is the break-even, so the play wants better odds than that. Each number is the skater’s own rate this season blended with last season’s base, his attempts, home ice and what the opponent has allowed this season. Click a player for his card.
+        The best shots plays and the best goal plays in every game: every skater over the floor (50% for 3+ shots, 35% for a goal), and never fewer than three a table; the dimmed rows are under the floor. The percentage is the chance of the hit; the price under it is the break-even, so the play wants better odds than that. Each number is the skater’s own rate this season blended with last season’s base, his attempts, home ice and what the opponent has allowed this season. Click a player for his card.
       </p>
       {board && !board.games.length ? <div className="nhlx-empty">No games on this date.</div> : null}
       {board && board.games.map((g, i) => (
