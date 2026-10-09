@@ -25,7 +25,10 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
 
 - `lib/nhl-data/*` pulls NHL API data into Supabase Storage and builds the model's
   input workbooks in the model's existing formats. Never change the model's
-  parsers to fit the automation; change the builders instead.
+  parsers to fit the automation; change the builders instead. Every builder has a round-trip test
+  through the model's own parser (`__tests__/nhl-pace.test.js`, `nhl-player-stats.test.js`): the
+  home / away workbook once ran one column short of `parsePlayerHomeAway`'s map, which fed a
+  skater's games-played count in as his away shot base and his shots as goals.
 - Scheduled by `.github/workflows/nhl-data.yml` (daily results + lineups) and
   `nhl-lineups.yml` (hourly pre-game lineup reads); Mac folder sync in `tools/mac-sync`.
 - Signed-in page = six hash tabs (`#teams`, `#matchups`, `#firstgoal`, `#model`, `#league`, `#history`); it opens on
@@ -75,7 +78,7 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   served by `/api/nhl/data/media`; standings/leaders live in `data/league/*`.
 - Tonight's picks (`lib/nhl-data/picks.js` + `picks-pure.js`, `/api/nhl/data/picks`, `components/nhl/PicksPanel.jsx`,
   the list at the top of Best bets): the best shots plays and the best goal plays in every game: every skater over
-  the floor (P(3+ SOG) 50%, P(1+ G) 35%), three to four a table (fill-ins marked `under`, the rest on a "next" line; a run row whose 2+ / 3+ / 4+ ladder is inverted is read off its λ), with the break-even price, and the notes
+  the floor (P(3+ SOG) 50%, P(1+ G) 35%), three to four a table (fill-ins marked `under`, the rest on a "next" line; a run row whose 3+ / 4+ pair is inverted is read off its λ; the run carries no 2+, it is read off the λ), with the break-even price, and the notes
   (softest spots, richest game, environment plays, near-ties, thin games, lineup sources) written from the picks.
   The numbers are the model's: with a run saved for the date, each row is the run's λ and 2+ / 3+ / 4+ SOG and 1+ G
   probabilities (`fromModel`) and only skaters the run projected are listed; the study's plain-rate read (fixed

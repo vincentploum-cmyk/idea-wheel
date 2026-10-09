@@ -39,8 +39,12 @@ describe('tonight’s picks', () => {
     const study = { lamS: 3.08, p3: 0.59, p4: 0.37, p1g: 0.4 };
     const row = fromModel({ sog: 4.1, g: 0.7, p2s: 0.93, p3s: 0.85, p4s: 0.78, p1g: 0.5 }, study);
     expect(row).toMatchObject({ lamS: 4.1, lamG: 0.7, p2: 0.93, p3: 0.85, p4: 0.78, p1g: 0.5, ladder: 'run', study: { p3: 0.59, p4: 0.37, p1g: 0.4 } });
-    // An inverted ladder (2+ below 3+) is read off the λ instead.
-    const odd = fromModel({ sog: 0.16, g: 0.1, p2s: 0.01, p3s: 0.6, p4s: 0.25, p1g: 0.1 });
+    // The run carries no 2+: it comes off the λ and never sits below the run's 3+.
+    const noP2 = fromModel({ sog: 4.1, g: 0.7, p3s: 0.85, p4s: 0.78, p1g: 0.5 });
+    expect(noP2).toMatchObject({ p3: 0.85, p4: 0.78, ladder: 'run' });
+    expect(noP2.p2).toBeGreaterThanOrEqual(0.85);
+    // An inverted pair (4+ above 3+) is read off the λ instead.
+    const odd = fromModel({ sog: 0.16, g: 0.1, p3s: 0.2, p4s: 0.25, p1g: 0.1 });
     expect(odd.ladder).toBe('lambda');
     expect(odd.p3).toBeLessThan(0.01);
     expect(odd.p2).toBeGreaterThanOrEqual(odd.p3);
