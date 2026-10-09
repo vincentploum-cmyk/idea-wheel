@@ -56,24 +56,36 @@ describe('tonight’s picks', () => {
   });
   test('every skater over the floor is a pick; below it the best one is marked as a fallback', () => {
     const c = (name, p3, p1g) => ({ id: name, name, p3, p1g, lamS: p3 * 5, lamG: p1g });
-    const g = pickGame([c('A', 0.7, 0.2), c('B', 0.55, 0.4), c('C', 0.4, 0.36), c('D', 0.3, 0.1), c('E', 0.2, 0.05)]);
-    expect(g.shots.map((x) => x.name)).toEqual(['A', 'B']);
+    const g = pickGame([c('A', 0.7, 0.2), c('B', 0.55, 0.4), c('C', 0.4, 0.36), c('D', 0.3, 0.1), c('E', 0.2, 0.05), c('F', 0.1, 0.02)]);
+    // Two over the floor, filled to three with the next best, marked under; then the next three.
+    expect(g.shots.map((x) => [x.name, x.under])).toEqual([['A', false], ['B', false], ['C', true]]);
     expect(g.shotsFallback).toBe(false);
-    expect(g.nextShots.map((x) => x.name)).toEqual(['C', 'D', 'E']);
-    expect(g.goals.map((x) => x.name)).toEqual(['B', 'C']);
-    const thin = pickGame([c('A', 0.43, 0.28), c('B', 0.4, 0.2)]);
-    expect(thin.shots.map((x) => x.name)).toEqual(['A']);
+    expect(g.nextShots.map((x) => x.name)).toEqual(['D', 'E', 'F']);
+    expect(g.goals.map((x) => [x.name, x.under])).toEqual([['B', false], ['C', false], ['A', true]]);
+    expect(g.nextGoals.map((x) => x.name)).toEqual(['D', 'E', 'F']);
+    // Five over the floor: all five.
+    const five = pickGame([c('A', 0.7, 0.5), c('B', 0.6, 0.5), c('C', 0.55, 0.5), c('D', 0.52, 0.5), c('E', 0.5, 0.5), c('F', 0.2, 0.1)]);
+    expect(five.shots.map((x) => x.name)).toEqual(['A', 'B', 'C', 'D', 'E']);
+    expect(five.shots.every((x) => !x.under)).toBe(true);
+    expect(five.nextShots.map((x) => x.name)).toEqual(['F']);
+    // Nobody over the floor: three rows, all under, and the fallback flag for the notes.
+    const thin = pickGame([c('A', 0.43, 0.28), c('B', 0.4, 0.2), c('C', 0.3, 0.1), c('D', 0.2, 0.1)]);
+    expect(thin.shots.map((x) => x.name)).toEqual(['A', 'B', 'C']);
+    expect(thin.shots.every((x) => x.under)).toBe(true);
     expect(thin.shotsFallback).toBe(true);
     expect(thin.goalsFallback).toBe(true);
-    expect(thin.nextShots.map((x) => x.name)).toEqual(['B']);
+    expect(thin.nextShots.map((x) => x.name)).toEqual(['D']);
+    // Fewer than three skaters: what there is.
+    expect(pickGame([c('A', 0.43, 0.28)]).shots.map((x) => x.name)).toEqual(['A']);
     expect(SHOTS_FLOOR).toBe(0.5);
   });
   test('the notes read the picks: soft spots, the richest game, environment plays, near-ties, thin games, lineups', () => {
-    const c = (name, opp, p3, p1g, sog, oppRank) => ({ name, opp, p3, p1g, rates: { sog }, oppRank });
+    const c = (name, opp, p3, p1g, sog, oppRank, under = false) => ({ name, opp, p3, p1g, rates: { sog }, oppRank, under });
     const allowed = { teamCount: 32, teams: { BUF: { sog: 33.1, rank: 32 }, PHI: { sog: 32, rank: 31 }, STL: { sog: 25, rank: 10 }, TBL: { sog: 29, rank: 25 } } };
     const games = [
       { away: 'DAL', home: 'BUF', shots: [c('Tage Thompson', 'BUF', 0.74, 0.48, 3.4, 32), c('Jason Robertson', 'BUF', 0.57, 0.49, 3.6, 32)], goals: [c('Jason Robertson', 'BUF', 0.57, 0.49, 3.6, 32), c('Tage Thompson', 'BUF', 0.74, 0.48, 3.4, 32)], shotsFallback: false, goalsFallback: false },
-      { away: 'PHI', home: 'OTT', shots: [c('Dylan Cozens', 'PHI', 0.56, 0.27, 2.5, 1), c('Tim Stutzle', 'PHI', 0.54, 0.36, 2.42, 1)], goals: [c('Tim Stutzle', 'PHI', 0.54, 0.36, 2.42, 1)], shotsFallback: false, goalsFallback: false },
+      // A fill-in under the floor (Eklund) is neither an environment play nor part of a near-tie.
+      { away: 'PHI', home: 'OTT', shots: [c('Dylan Cozens', 'PHI', 0.56, 0.27, 2.5, 1), c('Tim Stutzle', 'PHI', 0.54, 0.36, 2.42, 1), c('William Eklund', 'PHI', 0.49, 0.2, 2.3, 1, true)], goals: [c('Tim Stutzle', 'PHI', 0.54, 0.36, 2.42, 1)], shotsFallback: false, goalsFallback: false },
       { away: 'SJS', home: 'STL', shots: [c('Dylan Holloway', 'SJS', 0.43, 0.28, 2.75, 20)], goals: [c('Dylan Holloway', 'SJS', 0.43, 0.28, 2.75, 20)], shotsFallback: true, goalsFallback: true },
       { away: 'MIN', home: 'TBL', shots: [c('A', 'TBL', 0.71, 0.48, 3, 25), c('B', 'MIN', 0.7, 0.46, 3.3, 31), c('C', 'MIN', 0.63, 0.56, 3.4, 31)], goals: [c('C', 'MIN', 0.63, 0.56, 3.4, 31), c('D', 'TBL', 0.5, 0.5, 3, 25), c('A', 'TBL', 0.71, 0.48, 3, 25)], shotsFallback: false, goalsFallback: false },
     ];
@@ -86,7 +98,7 @@ describe('tonight’s picks', () => {
     expect(notes[2].text).toContain('Cozens and Stutzle are environment plays: PHI allows the most shots in the league');
     expect(notes[3].text).toContain('A and B (3+ shots)');
     expect(notes[3].text).toContain('Robertson and Thompson (1+ goal)');
-    expect(notes[4].text).toContain('SJS @ STL has no real pick either way: Holloway is listed because something has to be');
+    expect(notes[4].text).toContain('SJS @ STL has no real pick either way: nobody is over 50% for 3+ shots or 35% for a goal, so the rows there are the best available.');
     expect(notes[5].text).toBe("Lineups: beat writers' lines for 6, the roster for 2 of 8 teams, with 1 slot carried from an earlier game. Check scratches before puck drop.");
   });
 });

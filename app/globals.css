@@ -1204,6 +1204,8 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-pk-table td.is-num small { display: block; font-size: 11.5px; color: var(--muted); line-height: 1.2; }
 .nhlx-pk-table td.is-lead b { color: var(--primary); }
 .nhlx-pk-table td.is-click { cursor: pointer; }
+.nhlx-pk-table tr.is-under td { opacity: 0.6; }
+.nhlx-pk-table tr.is-under td.is-lead b { color: var(--muted); }
 .nhlx-pk-next { margin: 8px 14px 4px; font-size: 13px; color: var(--muted); }
 .nhlx-pk-notes { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--line-strong); max-width: 78ch; }
 .nhlx-pk-notes h3 { font-family: var(--font-display); font-weight: 600; font-size: 19px; color: var(--heading); margin: 0 0 10px; }
