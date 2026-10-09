@@ -190,3 +190,18 @@ describe('PropFinder depth chart as a lineup', () => {
     expect(depthChartLines(TEAMS.find((t) => t.code === 'PHI'))).toBeNull(); // fixture carries no chart for PHI
   });
 });
+
+describe('pulled team rows without holes', () => {
+  test('a counting field the API left out is 0; the All row\'s scoring chances come from the positions', () => {
+    const row = teamRow('TOR', { gamesPlayed: 2, shots: 10, missedShots: 4, blockedAtt: 2 });
+    expect(row.values).toMatchObject({ g: 0, a: 0, pts: 0, sog: 5, hit: 0, blk: 0 });
+    expect(row.values.sc).toBeUndefined();
+    const stat = (type, position, extra) => ({ seasonYear: 2026, seasonType: position === 'All' ? '' : 'REG', type, position, gamesPlayed: 1, shots: 10, missedShots: 2, blockedAtt: 1, ...extra });
+    const team = (code, sc) => ({ code, stats: [stat('Opponent', 'All', { goals: 3 }), ...['LW', 'C', 'RW', 'D'].map((p, i) => stat('Opponent', p, { goals: 1, scoringChances: sc[i] }))] });
+    const tables = teamTables([team('TOR', [3, 4, 5, 6]), team('VAN', [1, 1, 1, 1])], { season: 2026, date: '2026-10-09' });
+    const all = tables.find((t) => t.statsType === 'opponent' && t.position === 'All' && !t.windowGames);
+    expect(all.teams.find((t) => t.abbr === 'TOR').values.sc).toBe(18);
+    expect(all.teams.find((t) => t.abbr === 'VAN').values.sc).toBe(4);
+    expect(all.teams.find((t) => t.abbr === 'TOR').ranks.sc).toBe(1);
+  });
+});
