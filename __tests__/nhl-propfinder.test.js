@@ -233,10 +233,41 @@ describe('recent-games windows rolled from the stored box scores', () => {
     expect(d.tabs.find((t) => t.key === 'l10').rows.All.gp).toBe(8);
     // Without rows the stale file still shows (as before).
     expect(propfinderDefenseTabs(pf2026, 'NSH').tabs.find((t) => t.key === 'l5').rows.All.g).toBe(2.6);
-    // PropFinder's own 2026 window wins once it exists.
-    const current = withStoredWindows({ ...pf2026, opponentsByWindow: { l5: { ...pf2026.opponentsByWindow.l5, season: 2026 } } }, rows);
+    // PropFinder's own 2026 window wins once it exists for the whole league …
+    const league = Object.fromEntries(Array.from({ length: 32 }, (_, i) => [`T${i}`, { gp: 5, g: 1 }]));
+    const current = withStoredWindows({ ...pf2026, opponentsByWindow: { l5: { ...pf2026.opponentsByWindow.l5, season: 2026, teams: { ...league, NSH: { gp: 5, g: 2.6 } } } }, opponentsByPosWindow: {} }, rows);
     expect(current.opponentsByWindow.l5.teams.NSH.g).toBe(2.6);
     expect(current.opponentsByWindow.l10.teams.NSH.gp).toBe(8);
+    // … but a 2026 window listing only the few teams with five games already gives way to the rolled one (DET had no L5 tab).
+    const partial = withStoredWindows({ ...pf2026, opponentsByWindow: { l5: { season: 2026, teams: { T1: { gp: 5, g: 1 }, T2: { gp: 5, g: 2 } }, ranks: {} } }, opponentsByPosWindow: {} }, rows);
+    expect(partial.opponentsByWindow.l5.teams.NSH).toMatchObject({ gp: 5, g: 3.4 });
+    expect(partial.opponentsByPosWindow.l5.LW.teams.NSH.g).toBe(3.4);
+    expect(propfinderDefenseTabs({ ...pf2026, opponentsByWindow: { l5: { season: 2026, teams: { T1: { gp: 5, g: 1 } }, ranks: {} } }, opponentsByPosWindow: {} }, 'NSH', null, { rows }).tabs.map((t) => t.key)).toContain('l5');
     expect(withStoredWindows(pf2026, [])).toBe(pf2026);
+  });
+});
+
+describe('defense tabs without holes', () => {
+  // PropFinder's API leaves out a zero (SEA held LW and D to no goals) and the season-only All row's scoring chances.
+  const table = (position, teams, ranks = {}) => ({ season: 2026, position, teams, ranks, count: Object.keys(teams).length });
+  const pf = {
+    opponents: table('All', { SEA: { gp: 4, g: 2.75, a: 4.25, sog: 28, icf: 67.25, iff: 46 }, DET: { gp: 4, g: 3, a: 5, sog: 30, icf: 60, iff: 45 }, BOS: { gp: 4, g: 2, a: 3, sog: 25, icf: 55, iff: 40 } }, { SEA: { g: 2, a: 2, sog: 2, icf: 1, iff: 1 }, DET: { g: 1, a: 1, sog: 1, icf: 2, iff: 2 }, BOS: { g: 3, a: 3, sog: 3, icf: 3, iff: 3 } }),
+    opponentsByPos: {
+      LW: table('LW', { SEA: { gp: 4, a: 1.5, sog: 4.25, icf: 11, iff: 8, sc: 6.25 }, DET: { gp: 4, g: 1, a: 1, sog: 5, icf: 12, iff: 9, sc: 7 }, BOS: { gp: 4, g: 0.5, a: 1, sog: 6, icf: 13, iff: 10, sc: 5 } }, { DET: { g: 1 }, BOS: { g: 2 } }),
+      C: table('C', { SEA: { gp: 4, g: 1.75, a: 1.5, sog: 8, icf: 16.75, iff: 13, sc: 8.75 }, DET: { gp: 4, g: 1, a: 1, sog: 8, icf: 16, iff: 12, sc: 8 }, BOS: { gp: 4, g: 1, a: 1, sog: 8, icf: 16, iff: 12, sc: 8 } }),
+      RW: table('RW', { SEA: { gp: 4, g: 1, a: 0.75, sog: 8, icf: 17.75, iff: 13.25, sc: 8.25 }, DET: { gp: 4, g: 1, a: 1, sog: 8, icf: 16, iff: 12, sc: 8 }, BOS: { gp: 4, g: 1, a: 1, sog: 8, icf: 16, iff: 12, sc: 8 } }),
+      D: table('D', { SEA: { gp: 4, a: 0.5, sog: 7.5, icf: 21.75, iff: 11.75, sc: 6 }, DET: { gp: 4, g: 1, a: 1, sog: 8, icf: 16, iff: 12, sc: 8 }, BOS: { gp: 4, g: 0, a: 1, sog: 8, icf: 16, iff: 12, sc: 8 } }, { DET: { g: 1 }, BOS: { g: 2 } }),
+    },
+  };
+  test('a field the API left out reads 0, ranked by value; the All row sums the positions', () => {
+    const tab = propfinderDefenseTabs(pf, 'SEA').tabs[0];
+    expect(tab.rows.LW.g).toBe(0);
+    expect(tab.rows.LW.ranks.g).toBe(3); // 1 and 0.5 allow more
+    expect(tab.rows.D.g).toBe(0);
+    expect(tab.rows.D.ranks.g).toBe(2); // ties with BOS's 0, behind DET's 1
+    expect(tab.rows.All.iscf).toBe(29.25); // 6.25 + 8.75 + 8.25 + 6
+    expect(tab.rows.All.ranks.iscf).toBe(2); // DET 31 (7 + 8 + 8 + 8), SEA 29.25, BOS 29
+    expect(tab.rows.All.ranks.g).toBe(2); // PropFinder's own rank kept
+    expect(Object.values(tab.rows).every((r) => Object.values(r).every((v) => v !== null))).toBe(true);
   });
 });
