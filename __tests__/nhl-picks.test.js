@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { blendRates, project, poissonAtLeast, fairOdds, shotsAllowed, pickGame, notesFor, seasonYearOf, SHOTS_FLOOR } from '../lib/nhl-data/picks';
+import { blendRates, project, fromModel, poissonAtLeast, fairOdds, shotsAllowed, pickGame, notesFor, seasonYearOf, SHOTS_FLOOR } from '../lib/nhl-data/picks';
 
 const game = (sog, icf = sog * 1.8, g = 0.3, iscf = 1.5) => ({ sog, icf, g, iscf });
 
@@ -34,6 +34,17 @@ describe('tonight’s picks', () => {
     const star = blendRates([], Array.from({ length: 80 }, () => game(4.4, 8, 0.66, 3.6)));
     expect(project(star, { home: false, oppShotsAllowed: 27 }).lamS).toBeLessThan(4.6);
     expect(project(star, { home: false, oppShotsAllowed: 27 }).p1g).toBeGreaterThan(0.4);
+  });
+  test('with a saved run the row carries the model’s own numbers, the study’s beside them', () => {
+    const study = { lamS: 3.08, p3: 0.59, p4: 0.37, p1g: 0.4 };
+    const row = fromModel({ sog: 4.1, g: 0.7, p2s: 0.93, p3s: 0.85, p4s: 0.78, p1g: 0.5 }, study);
+    expect(row).toMatchObject({ lamS: 4.1, lamG: 0.7, p2: 0.93, p3: 0.85, p4: 0.78, p1g: 0.5, study: { p3: 0.59, p4: 0.37, p1g: 0.4 } });
+    // A probability the run did not carry is read off its λ; no shots rate, no row.
+    expect(fromModel({ sog: 3, g: 0.4 }).p3).toBeCloseTo(poissonAtLeast(3, 3), 2);
+    expect(fromModel({ sog: 3, g: 0.4 }).p1g).toBeCloseTo(1 - Math.exp(-0.4), 2);
+    expect(fromModel({ sog: 3, g: 0.4 }).study).toBeNull();
+    expect(fromModel(null, study)).toBeNull();
+    expect(fromModel({ sog: null, p3s: 0.6 }, study)).toBeNull();
   });
   test('poisson tails and break-even prices', () => {
     expect(poissonAtLeast(3, 3)).toBeCloseTo(0.5768, 3);
