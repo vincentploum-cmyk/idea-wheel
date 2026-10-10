@@ -7,7 +7,9 @@ import TeamGameLog from './TeamGameLog';
 import { PlayerCardContext, usePlayerCard } from './player-card-context';
 import { teamName } from '@/lib/nhl-data/teams';
 
-// Any table can open a player's profile: const open = usePlayerCard(); open({ id, opp, venue }).
+// Any table can open a player's profile: const open = usePlayerCard(); open({ id, opp, venue, pos, line }).
+// `pos` / `line` are tonight's lineup position and slot (RW, 1): the card's badge and the
+// opponent's defense panel follow them, with the roster position noted when it differs.
 export { usePlayerCard };
 
 // [key, tab label, prop label, stat key, lines, default line] — PropFinder's market order.
@@ -214,8 +216,9 @@ function Card({ req, onClose }) {
                   {p.team ? <span className="nhlx-pc-avatar-logo"><TeamLogo abbr={p.team} size={18} /></span> : null}
                 </span>
                 <h3>{p.name}</h3>
-                <PosBadge pos={p.pos} />
+                <PosBadge pos={req.pos || p.pos} />
                 {p.number != null ? <span className="nhlx-pc-num">#{p.number}</span> : null}
+                {req.pos ? <span className="nhlx-pc-slot" title={`Tonight's lineup position${p.pos && p.pos !== req.pos ? `; listed as ${p.pos} on the roster` : ''}`}>{req.pos}{req.line || ''} tonight{p.pos && p.pos !== req.pos ? ` · ${p.pos} on the roster` : ''}</span> : null}
               </div>
               <div className="nhlx-pc-stat">
                 <small>Shot form</small>
@@ -306,7 +309,7 @@ function Card({ req, onClose }) {
 
               <section className="nhlx-pc-pane nhlx-pc-right">
                 {req.opp && p.defense ? (
-                  <DefenseAllowed abbr={req.opp} data={p.defense} pos={p.pos} />
+                  <DefenseAllowed abbr={req.opp} data={p.defense} pos={req.pos || p.pos} />
                 ) : (
                   <div className="nhlx-empty">{req.opp ? `No PropFinder defense table for ${req.opp} yet.` : 'Open this player from a slate to see what tonight’s opponent allows.'}</div>
                 )}

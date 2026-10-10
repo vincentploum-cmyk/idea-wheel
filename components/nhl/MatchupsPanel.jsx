@@ -101,7 +101,7 @@ function SkaterRows({ skaters, showTeam, teamCount, sort }) {
   const open = usePlayerCard();
   const sorted = sort === 'shotScore' ? skaters : [...skaters].sort((a, b) => ((b[sort] ?? -Infinity) - (a[sort] ?? -Infinity)));
   return sorted.map((p) => (
-    <tr key={`${p.team}-${p.name}`} className={`${p.inLineup ? '' : 'is-muted'}${p.id ? ' is-click' : ''}`} onClick={() => p.id && open({ id: p.id, opp: p.opp, venue: p.venue })}>
+    <tr key={`${p.team}-${p.name}`} className={`${p.inLineup ? '' : 'is-muted'}${p.id ? ' is-click' : ''}`} onClick={() => p.id && open({ id: p.id, opp: p.opp, venue: p.venue, pos: p.pos, line: p.line })}>
       <td className="is-left">
         <div className="nhlx-pft-player">
           <Headshot id={p.id} size={30} />
@@ -155,7 +155,7 @@ function PositionLog({ game }) {
           </thead>
           <tbody>
             {rows.map((s) => (
-              <tr key={`${s.team}-${s.id}`} className={s.id ? 'is-click' : ''} onClick={() => s.id && open({ id: s.id, opp: s.opp, venue: s.venue })}>
+              <tr key={`${s.team}-${s.id}`} className={s.id ? 'is-click' : ''} onClick={() => s.id && open({ id: s.id, opp: s.opp, venue: s.venue, pos: s.pos, line: s.line })}>
                 <td><div className="nhlx-db-player"><Headshot id={s.id} size={26} /><span><b>{s.name}</b></span></div></td>
                 <td>{s.slot ? <span className="nhlx-chip">{s.slot}</span> : <span className="nhlx-auto-meta">—</span>}</td>
                 <td><b>{s.pos}</b></td>
