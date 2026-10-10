@@ -34,19 +34,22 @@ async function handle(request) {
     let result;
     if (only === 'games') result = await ingestGames(date, { force: url.searchParams.get('force') === '1' });
     else if (only === 'lineups') {
-      result = await ingestLineups(date, { dueWithinMin: Number(url.searchParams.get('due')) || null });
       // The admin UI's "Refresh lines" also starts the GitHub run that fetches the GameDayTweets
       // pages this server is refused (and then reads every 15 minutes through each warm-up window). Never from the
-      // runner's own token calls, and at most once a minute.
+      // runner's own token calls, and at most once a minute. Started first, so the pages are on their
+      // way while NHL.com is read and the model runs (which can outlive the gateway's 100 s).
+      let dispatch = null;
       if (auth.via === 'session' && url.searchParams.get('dispatch') === '1') {
         const marker = 'data/meta/gdt-dispatch.json';
         const last = await readJson(marker);
-        if (last?.at && Date.now() - Date.parse(last.at) < 60 * 1000) result.dispatch = { ok: false, skipped: `already requested at ${last.at}` };
+        if (last?.at && Date.now() - Date.parse(last.at) < 60 * 1000) dispatch = { ok: false, skipped: `already requested at ${last.at}` };
         else {
-          result.dispatch = await dispatchLinesWorkflow({ date, due: null, chain: 40 });
-          if (result.dispatch.ok) await writeJson(marker, { at: result.dispatch.at, date });
+          dispatch = await dispatchLinesWorkflow({ date, due: null, chain: 40 });
+          if (dispatch.ok) await writeJson(marker, { at: dispatch.at, date });
         }
       }
+      result = await ingestLineups(date, { dueWithinMin: Number(url.searchParams.get('due')) || null });
+      if (dispatch) result.dispatch = dispatch;
     }
     else if (only === 'settle') result = await ingestLineups(date, { settle: true });
     else if (only === 'restamp') result = await restampPositions(date);
