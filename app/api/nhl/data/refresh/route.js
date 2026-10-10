@@ -48,6 +48,16 @@ async function handle(request) {
           if (dispatch.ok) await writeJson(marker, { at: dispatch.at, date });
         }
       }
+      // The admin UI asks for the read in the background (`background=1`): the reply comes at once and
+      // the read, the re-stamp and the model run go on in this process (Render keeps it alive), so the
+      // gateway's 100-second limit never cuts the reply. The panel watches the slate for the result.
+      if (auth.via === 'session' && url.searchParams.get('background') === '1') {
+        const startedAt = new Date().toISOString();
+        ingestLineups(date, { dueWithinMin: null })
+          .then((r) => console.log(`[nhl-data] background lineup read for ${date} done: ${r.withLineups}/${r.scheduled} lineups, ${r.gamedaytweets} GDT, model ${r.model?.ran ? 'ran' : r.model?.skipped || r.model?.error || 'n/a'}`))
+          .catch((e) => console.error(`[nhl-data] background lineup read for ${date} failed:`, e));
+        return Response.json({ ok: true, started: true, startedAt, result: { dispatch } }, { headers: { 'Cache-Control': 'no-store' } });
+      }
       result = await ingestLineups(date, { dueWithinMin: Number(url.searchParams.get('due')) || null });
       if (dispatch) result.dispatch = dispatch;
     }
