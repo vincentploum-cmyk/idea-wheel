@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import * as XLSX from 'xlsx';
-import { toiMinutes, gameRates, teamAbbr, activeSeason, skaterWindows, skaterTables, pickRow, teamRow, teamTables, defenseBlocks, matchupWorkbooks, tokenFromLogin, tokenExpiry } from '../lib/nhl-data/propfinder-api';
+import { toiMinutes, gameRates, teamAbbr, activeSeason, skaterWindows, skaterTables, blendedSeasonRates, pickRow, teamRow, teamTables, defenseBlocks, matchupWorkbooks, tokenFromLogin, tokenExpiry } from '../lib/nhl-data/propfinder-api';
 import { mergeSkaters, mergeTeams } from '../lib/nhl-data/propfinder';
 import { inspectMatchups } from '../lib/nhl-data/matchups';
 import { parseMatchups } from '../components/nhl/model-core';
@@ -122,15 +122,50 @@ describe('PropFinder API → team tables', () => {
     expect(file).toMatchObject({ statsType: 'opponent', position: 'All', windowGames: 10, count: 4 });
     expect(file.ranks.TOR.g).toBe(1);
   });
-  test('defense blocks: per-game allowed per position over the last 10, ranked 1 = most', () => {
+  test('defense blocks: this season blended with last season, ranked 1 = most', () => {
     const d = defenseBlocks(TEAMS, { season: 2025 });
-    expect(d.label).toBe('Defense (Last 10 Games)');
-    expect(d.teams.PIT.D).toMatchObject({ gp: 10, g: 0.8, a: 1.7, sog: 7.8, icf: 17.1, iff: 11.8, iscf: 4.4 });
-    expect(d.teams.TOR.All.sog).toBe(33.7);
-    expect(d.ranks.TOR.All.sog).toBe(1);
+    expect(d.label).toBe('Defense (Season)');
+    // PIT vs D: 2025 row 88 gp (640 SOG, 47 G, 131 A, 365 missed, 620 blocked, 423 SC), 2024 row 82 gp (695, 39, 155, 367, 559, 370).
+    const w15 = 88 / (88 + 15); const w40 = 88 / (88 + 40);
+    const r2 = (v) => Math.round(v * 100) / 100;
+    expect(d.teams.PIT.D.gp).toBe(88);
+    expect(d.teams.PIT.D.sog).toBe(r2(w15 * (640 / 88) + (1 - w15) * (695 / 82)));
+    expect(d.teams.PIT.D.iff).toBe(r2(w15 * ((640 + 365) / 88) + (1 - w15) * ((695 + 367) / 82)));
+    expect(d.teams.PIT.D.iscf).toBe(r2(w15 * (423 / 88) + (1 - w15) * (370 / 82)));
+    expect(d.teams.PIT.D.g).toBe(r2(w40 * (47 / 88) + (1 - w40) * (39 / 82)));
+    expect(d.teams.PIT.D.a).toBe(r2(w40 * (131 / 88) + (1 - w40) * (155 / 82)));
     expect(Object.values(d.ranks).map((r) => r.All.sog).sort()).toEqual([1, 2, 3, 4]);
-    // A season without last-10 rows falls back to the season totals and says so.
-    expect(defenseBlocks(TEAMS, { season: 2024 }).label).toBe('Defense (Season)');
+    // A season with no prior rows is this season's alone; a season not played yet carries last season's.
+    expect(defenseBlocks(TEAMS, { season: 2024 }).teams.PIT.D).toMatchObject({ gp: 82, sog: r2(695 / 82), g: r2(39 / 82) });
+    expect(defenseBlocks(TEAMS, { season: 2026 }).teams.PIT.D).toMatchObject({ gp: 88, sog: r2(640 / 88) });
+    // Two games into a season the prior still carries most of the read.
+    const early = TEAMS.map((t) => (t.code !== 'PIT' ? t : { ...t, stats: [...t.stats, { seasonYear: 2026, seasonType: '', type: 'Opponent', position: 'D', gamesPlayed: 2, goals: 6, assists: 8, shots: 30, missedShots: 10, blockedAtt: 12, scoringChances: 14 }] }));
+    const e = defenseBlocks(early, { season: 2026 }).teams.PIT.D;
+    expect(e.gp).toBe(2);
+    expect(e.sog).toBe(r2((2 / 17) * 15 + (15 / 17) * (640 / 88)));
+    expect(e.g).toBe(r2((2 / 42) * 3 + (40 / 42) * (47 / 88)));
+  });
+  test('blended season rates: last season earns its weight back game by game', () => {
+    const game = (season, shots, goals, toi = '18:00') => ({ gameDate: `${season + 1}-01-01T00:00:00Z`, season, seasonType: 'REG', shots, missedShots: 1, blockedAtt: 1, goals, scoringChances: 2, totalTimeOnIce: toi });
+    const prior = Array.from({ length: 20 }, () => game(2025, 2, 0.5, '20:00'));
+    // Two games this season at 6 shots and a goal each, on a 2-shot, half-a-goal prior.
+    const hot = { name: 'Hot Start', stats: [...prior, game(2026, 6, 1, '16:00'), game(2026, 6, 1, '16:00')] };
+    const r = blendedSeasonRates(hot, 2026);
+    expect(r.gp).toBe(2);
+    expect(r.sog).toBeCloseTo((2 / 20) * 6 + (18 / 20) * 2, 2);     // 2.4
+    expect(r.icf).toBeCloseTo((2 / 20) * 8 + (18 / 20) * 4, 2);     // attempts shrink like shots
+    expect(r.g).toBeCloseTo((2 / 42) * 1 + (40 / 42) * 0.5, 2);     // 0.52
+    expect(r.toi).toBeCloseTo((2 / 7) * 16 + (5 / 7) * 20, 2);      // the role moves faster
+    // Twenty games in, this season carries about half of the shots and a third of the goals.
+    const later = { name: 'Later', stats: [...prior, ...Array.from({ length: 20 }, () => game(2026, 4, 0.2))] };
+    expect(blendedSeasonRates(later, 2026).sog).toBeCloseTo((20 / 38) * 4 + (18 / 38) * 2, 2);
+    expect(blendedSeasonRates(later, 2026).g).toBeCloseTo((20 / 60) * 0.2 + (40 / 60) * 0.5, 2);
+    // No game yet this season: last season's rates. Under 10 games last season: this season's alone.
+    expect(blendedSeasonRates({ stats: prior }, 2026)).toMatchObject({ gp: 20, sog: 2, g: 0.5 });
+    expect(blendedSeasonRates({ stats: [...prior.slice(0, 9), game(2026, 6, 1)] }, 2026)).toMatchObject({ gp: 1, sog: 6, g: 1 });
+    expect(blendedSeasonRates({ stats: [] }, 2026)).toBeNull();
+    // Crosby has six 2024 regular-season games in the fixture: no prior, 2025 alone, as the CSV row.
+    expect(blendedSeasonRates(crosby, 2025)).toMatchObject({ gp: 68, sog: 2.34, g: 0.43 });
   });
 });
 
@@ -158,6 +193,10 @@ describe('PropFinder API → matchup workbooks', () => {
     expect(sid.toiSeason).toBeCloseTo(19.24, 1);
     expect(pit.oppDef.team).toBe('Flyers');
     expect(pit.oppDef.posStats.C).toMatchObject({ shotsAllowed: expect.any(Number), ranks: { shots: expect.any(Number) } });
+    // The defense block is the blended season read (PHI vs D in the fixture: 2025 with 2024 behind it).
+    const phi = games[0].skaterBlocks.find((b) => b.team === 'Flyers');
+    expect(phi.oppDef.team).toBe('Penguins');
+    expect(phi.oppDef.posStats.D.shotsAllowed).toBe(defenseBlocks(TEAMS, { season: 2025 }).teams.PIT.D.sog);
     expect(Object.keys(pit.oppDef.posStats).sort()).toEqual(['ALL', 'C', 'D', 'LW', 'RW']);
     expect(pit.players.map((p) => p.name)).not.toContain('Arturs Silovs');
   });

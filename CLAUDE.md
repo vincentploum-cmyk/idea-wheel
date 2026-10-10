@@ -125,6 +125,14 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   `data/propfinder/*` and the season + L5 matchup workbooks through `ingestMatchupFile`, in the
   exports' exact layouts, then the auto run. Admin button and `POST /api/nhl/data/propfinder/pull`.
   Keep producing the CSV/workbook shapes the parsers already read; never adapt the parsers to the API.
+  The season workbook's numbers are blended, not raw (the predictor study's shrinkage, `docs/shots-goals-predictors.md`
+  sections 3 and 9): each skater's "Season" row is this season's regular-season games blended with last season's at
+  n / (n + 18) for shots, attempts and chances, n / (n + 40) for goals, assists and points, n / (n + 5) for TOI
+  (`blendedSeasonRates`; last season's alone until his first game, this season's alone without a 10-game prior), and
+  each "Defense (Season)" block is the team's season to date blended with last season's full figure at n / (n + 15)
+  for shots, attempts and chances and n / (n + 40) for goals and assists (`defenseBlocks`; no L10 window any more).
+  GP is this season's count. The L5 workbook and the stored CSV-shaped tables stay PropFinder's own numbers; a
+  manually uploaded PropFinder export is stored as exported.
 - PropFinder CSV exports (skater per-game rates for the season or last N games, team stats for and
   against with ranks, opponent stats per position tagged by a `-lw/-c/-rw/-d` file-name suffix) are imported by
   `lib/nhl-data/propfinder.js` into `data/propfinder/*` (one snapshot per season; the
