@@ -241,54 +241,40 @@ export default function MatchupsPanel() {
   const refreshLines = async () => {
     setBusy(true);
     setLineMsg('Reading GameDayTweets and NHL.com lineups…');
-    const before = deliveredAt(slate);
     const markBefore = slateMark(slate);
+    // Watch the slate until a capture, a delivery or a run changes it (up to six minutes).
+    const waitForChange = async (intro) => {
+      setLineMsg(`${intro} Waiting for the slate to change…`);
+      setBusy(false);
+      for (let i = 0; i < 18; i++) {
+        await new Promise((ok) => setTimeout(ok, 20000));
+        const fresh = await fetch(`/api/nhl/data/slate?date=${date}`, { cache: 'no-store' }).then((x) => (x.ok ? x.json() : null)).catch(() => null);
+        if (fresh && slateMark(fresh) !== markBefore) {
+          setSlate(fresh);
+          const run = fresh.modelRun?.createdAt && fresh.modelRun.createdAt !== slate?.modelRun?.createdAt ? ` · model run saved ${etTime(fresh.modelRun.createdAt)} ET (${fresh.modelRun.players} players)` : '';
+          const gdt = deliveredAt(fresh);
+          setLineMsg(`Lines updated at ${etTime(new Date().toISOString())} ET${gdt ? ` · beat writers' pages delivered ${etTime(gdt)} ET` : ''}${run}. Each rink says when its source last changed.`);
+          return;
+        }
+      }
+      setLineMsg('No change on the slate in six minutes. Reload the page; if the rinks still show the old time, check the "NHL lineups (pre-game)" run on GitHub.');
+    };
     try {
-      const res = await fetch(`/api/nhl/data/refresh?only=lineups&date=${date}&dispatch=1`, { method: 'POST' });
-      // The reply is JSON from the site, or an HTML page from the gateway when the read outlives its
-      // 100-second limit, or from the host while it restarts for a deploy. The read keeps running on the
-      // server either way, so a non-JSON reply means "still working", not "failed".
+      // The server answers at once and reads in the background (NHL.com, the re-stamp, the model run
+      // can outlive the gateway's 100-second limit); the GitHub run for the GameDayTweets pages is
+      // started first. A non-JSON reply (the gateway's own page, or the host restarting for a deploy)
+      // means the same thing: still working.
+      const res = await fetch(`/api/nhl/data/refresh?only=lineups&date=${date}&dispatch=1&background=1`, { method: 'POST' });
       const text = await res.text();
       let j = null;
       try { j = JSON.parse(text); } catch { j = null; }
-      if (!j) {
-        setLineMsg(`The read is taking longer than the gateway allows (${res.status}); it continues on the server. Waiting for the slate to change…`);
-        setBusy(false);
-        for (let i = 0; i < 18; i++) {
-          await new Promise((ok) => setTimeout(ok, 20000));
-          const fresh = await fetch(`/api/nhl/data/slate?date=${date}`, { cache: 'no-store' }).then((x) => (x.ok ? x.json() : null)).catch(() => null);
-          if (fresh && slateMark(fresh) !== markBefore) {
-            setSlate(fresh);
-            setLineMsg(`Lines updated at ${etTime(new Date().toISOString())} ET${fresh.modelRun?.createdAt ? ` · model run saved ${etTime(fresh.modelRun.createdAt)} ET` : ''}. Each rink says when its source last changed.`);
-            return;
-          }
-        }
-        setLineMsg('No change on the slate in six minutes. Reload the page; if the rinks still show the old time, check the "NHL lineups (pre-game)" run on GitHub.');
-        return;
-      }
+      if (!j) { await waitForChange(`The server did not answer in time (${res.status}); the read continues there.`); return; }
       if (!res.ok || !j.ok) throw new Error(j.error || j.reason || `${res.status}`);
-      const r = j.result || {};
-      const summary = `${r.gamedaytweets ?? 0} team${r.gamedaytweets === 1 ? '' : 's'} from GameDayTweets, ${r.withLineups ?? 0} of ${r.scheduled ?? 0} games with an NHL.com lineup${r.restamp?.changed ? `, ${r.restamp.changed} logged position${r.restamp.changed === 1 ? '' : 's'} corrected` : ''}. ${r.model?.ran ? `Model run saved (${r.model.players} players).` : r.model?.skipped ? `Model not re-run: ${r.model.skipped}.` : r.model?.error ? `Model run failed: ${r.model.error}.` : ''}`;
-      const dispatch = r.dispatch?.ok
+      const d = j.result?.dispatch;
+      const dispatch = d?.ok
         ? ' GameDayTweets pages requested from GitHub: they land in about a minute, and the run keeps reading every 15 minutes from an hour before each puck drop until the lineups are in.'
-        : r.dispatch?.skipped ? ` GitHub run not started: ${r.dispatch.skipped}.` : r.dispatch?.error ? ` GitHub run not started: ${r.dispatch.error}.` : '';
-      setLineMsg(`Lines updated at ${etTime(new Date().toISOString())} ET: ${summary}${dispatch} Each rink says when its source last changed.`);
-      await load(date);
-      if (r.dispatch?.ok) {
-        // Poll for the delivery (the runner fetches six pages with Chrome, then the site parses them): up to four minutes.
-        setBusy(false);
-        for (let i = 0; i < 12; i++) {
-          await new Promise((ok) => setTimeout(ok, 20000));
-          const fresh = await fetch(`/api/nhl/data/slate?date=${date}`, { cache: 'no-store' }).then((x) => (x.ok ? x.json() : null)).catch(() => null);
-          const at = deliveredAt(fresh);
-          if (fresh && at && at !== before) {
-            setSlate(fresh);
-            setLineMsg(`Beat writers' lines delivered at ${etTime(at)} ET${fresh.games?.length ? ` for ${fresh.games.length} game${fresh.games.length === 1 ? '' : 's'}` : ''}. Each rink says when its source last changed.`);
-            return;
-          }
-        }
-        setLineMsg((m) => `${m} No new GameDayTweets delivery in four minutes: check the "NHL lineups (pre-game)" run on GitHub.`);
-      }
+        : d?.skipped ? ` GitHub run not started: ${d.skipped}.` : d?.error ? ` GitHub run not started: ${d.error}.` : '';
+      await waitForChange(`Reading NHL.com's lineups and running the model on the server.${dispatch}`);
     } catch (e) {
       setLineMsg(`Couldn’t update the lines: ${e.message}`);
     } finally {
