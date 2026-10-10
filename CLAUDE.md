@@ -150,7 +150,10 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   the split tiles ('25-'26, H2H, Home/Away, L5, L10, L20; press one to draw its games), the splits
   table, and on the right the opponent's "Defense Allowed" panel (`DefenseAllowed` in
   `components/nhl/pf-ui.jsx`: Year / Range / Position dropdowns, per game ↔ total, rank-tinted
-  cells, the by-position rows) fed by `defense` in the player payload (`propfinderDefenseTabs`).
+  cells, the by-position rows) fed by `defense` in the player payload (`propfinderDefenseTabs`), and under it the
+  team page's game log for that opponent (`TeamGameLog` with `compact`, the same `/api/nhl/data/defense/log`):
+  every stored skater-game at the player's position against the team, opened at tonight's venue, the shots / goals
+  column and line following the card's market tab, the player's own games against them tinted.
   The PropFinder-style table pieces (`PfTable`, `SortTh`, `PosBadge`, `Tag`, `UnderlineTabs`,
   `Sel`) live in `pf-ui.jsx` and dress the slate's skater table and League's PropFinder skaters.
 - Team pages deep-link as `#teams/BUF` (`components/nhl/links.jsx`: `teamHref`, `teamFromHash`, `TeamLink`);
