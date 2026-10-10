@@ -41,9 +41,11 @@ describe('the warm-up chain: every 15 minutes from an hour before puck drop unti
   const warmups = { PIT: '2026-10-07T22:40:00Z', WSH: '2026-10-07T22:38:00Z', EDM: '2026-10-08T01:37:52Z', ANA: '2026-10-08T01:37:31Z' };
   const morning = { PIT: '2026-10-07T16:00:00Z', WSH: '2026-10-07T17:10:00Z', EDM: '2026-10-06T16:29:12Z', ANA: '2026-10-07T17:12:06Z' };
 
-  test('lineups are found when both teams have a tweet from the two hours before the start', () => {
+  test('lineups are found when both teams have a tweet from the 45 minutes before the start', () => {
     expect(linesFound(games[0], warmups)).toBe(true);
     expect(linesFound(games[0], morning)).toBe(false);                 // the morning skate is not the warm-up
+    // An afternoon projected-lines tweet (T-105) is not the warm-up either: the reads go on.
+    expect(linesFound(games[0], { ...warmups, EDM: '2026-10-08T00:15:00Z' })).toBe(false);
     expect(linesFound(games[0], { ...warmups, ANA: morning.ANA })).toBe(false); // one team is not enough
     expect(linesFound(games[0], {})).toBe(false);
   });

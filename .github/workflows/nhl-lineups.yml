@@ -3,7 +3,7 @@ name: NHL lineups (pre-game)
 # The beat writers' tweets on GameDayTweets (fetched here with Chrome, the site is refused)
 # and NHL.com's projected lineup, for the games of the day. The rule: from 60 minutes before
 # puck drop, read every 15 minutes until the game's lineups are found (both teams have a
-# tweet from the two hours before the start: the warm-up lines) or the game is ten minutes
+# tweet from the 45 minutes before the start: the warm-up lines) or the game is ten minutes
 # old. The newest lines dated at or before each game win; the post-game settle (yesterday's
 # pages in the morning run) is unchanged.
 #

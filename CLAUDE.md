@@ -89,7 +89,9 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching) for every slate team; a
   game-day tweet beats the NHL.com preview, otherwise the preview, then an older tweet, then
-  the roster; "game-day" is decided by timestamp (tweet id vs the preview's updated time). A tweet
+  the roster; "game-day" is decided by timestamp (tweet id vs the preview's updated time), and a tweet
+  from the warm-up window (`GDT_FINAL_WORD_MIN`, 90 minutes before puck drop, or after it) beats the
+  preview whatever its updated time. A tweet
   that only confirms the lines ("Same lineup, Swayman in net", "no changes", `confirmsSameLines`)
   stands for the newest lines tweet before it, even past the date floor: the lines are that
   tweet's, the time and link the confirmation's (`meta.confirmed`, `meta.linesFrom`).
@@ -106,7 +108,8 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   players still on the roster, marked `carried`; the slate does the same for a game with no snapshot.
   `nhl-lineups.yml` re-reads lineups (`only=lineups&due=150` on a cron tick) on the rule: from 60 minutes
   before puck drop, every 15 minutes until the game's lineups are found (`linesFound` in
-  `lib/nhl-data/lines-chain.js`: both teams have a tweet from the two hours before the start; the site reports
+  `lib/nhl-data/lines-chain.js`: both teams have a tweet from the 45 minutes before the start, the warm-up window, so an afternoon
+  projected-lines tweet does not stop the reads; the site reports
   `gdtAt` per team in the refresh response via `gdtTimes`) or the game is 10 minutes old. GitHub's cron only
   seeds it (2 of 24 slots fired on 2026-10-07): every run hands itself on with its own token (`tools/lines-chain.mjs`,
   a wait for the first window, then 15-minute hops; skipped while another run is queued or running; 40 hops a

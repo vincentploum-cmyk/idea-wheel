@@ -20,6 +20,21 @@ const depth = (date) => ({ at: `${date}T12:00:00Z`, date, teams: { ANA: { player
 const schedule = [{ id: 1, away: 'ANA', home: 'OTT', state: 'OFF', startTimeUTC: '2026-04-18T23:00:00Z' }];
 
 describe('position snapshot sources', () => {
+  test("a warm-up tweet beats NHL.com's preview whatever the preview's updated time; an afternoon tweet does not", async () => {
+    mockStored.set(PLAYERS_PATH, { players });
+    mockStored.delete(PF_DEPTH_PATH);
+    const nhlGame = { gameId: 1, away: 'ANA', home: 'OTT', updated: '2026-04-18T22:50:00Z', rows: ['Ducks projected lineup', 'Leo Carlsson -- Troy Terry -- X Y'] };
+    const tweet = (at) => ({ ANA: { players: { 'troy terry': { name: 'Troy Terry', id: 1, pos: 'LW', line: 2 } }, meta: { at, date: '2026-04-18', handle: 'w' } } });
+    // Warm-ups at T-25 (7:00 PM start): the tweet wins although NHL.com's page says it updated at T-10.
+    await snapshotPositions('2026-04-18', schedule, { games: [nhlGame], gdt: tweet('2026-04-18T22:35:00Z') });
+    let ana = mockStored.get(positionsPath('2026-04-18')).games[1].teams.ANA;
+    expect(ana.source).toBe('gamedaytweets');
+    expect(ana.players['troy terry']).toMatchObject({ pos: 'LW', line: 2 });
+    // The morning skate (T-8h): NHL.com's later preview wins, as before.
+    await snapshotPositions('2026-04-18', schedule, { games: [nhlGame], gdt: tweet('2026-04-18T15:00:00Z') });
+    ana = mockStored.get(positionsPath('2026-04-18')).games[1].teams.ANA;
+    expect(ana.source).toBe('lineup');
+  });
   test("PropFinder's depth chart never stands in for a game before the day it was pulled", async () => {
     mockStored.set(PLAYERS_PATH, { players });
     mockStored.set(PF_DEPTH_PATH, depth('2026-10-02'));
