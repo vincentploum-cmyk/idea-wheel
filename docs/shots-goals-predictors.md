@@ -449,6 +449,13 @@ on the tab's best candidate before it is a bet.
 
 ## 6. What this means for the model and the site
 
+*Applied 2026-10-10 (items 1 and 4, input side, model math untouched): the PropFinder API builder
+(`lib/nhl-data/propfinder-api.js`) now writes the season matchup workbook with each skater's rates
+blended with last season's at n / (n + 18) for shots, attempts and chances and n / (n + 40) for
+goals, assists and points (`blendedSeasonRates`), and the defense blocks as the team's season to date
+blended with last season's at n / (n + 15) for shots and n / (n + 40) for goals (`defenseBlocks`;
+the L10 window is gone). The L5 workbook and the stored tables stay PropFinder's own numbers.*
+
 1. **Early-season baseline.** Until a skater has ~18 games, the SOG baseline should be last
    season's rate blended with this season's at n / (n + 18); goals at n / (n + 40). The app's
    `playerBaselines` already spans both seasons (`loadRows` returns this season and last, the
