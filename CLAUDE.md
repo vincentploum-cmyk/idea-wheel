@@ -89,7 +89,10 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching) for every slate team; a
   game-day tweet beats the NHL.com preview, otherwise the preview, then an older tweet, then
-  the roster; "game-day" is decided by timestamp (tweet id vs the preview's updated time).
+  the roster; "game-day" is decided by timestamp (tweet id vs the preview's updated time). A tweet
+  that only confirms the lines ("Same lineup, Swayman in net", "no changes", `confirmsSameLines`)
+  stands for the newest lines tweet before it, even past the date floor: the lines are that
+  tweet's, the time and link the confirmation's (`meta.confirmed`, `meta.linesFrom`).
   gamedaytweets.com challenges cloud addresses (Cloudflare "Just a moment": Render and the GitHub
   runner alike), so its pages are fetched elsewhere and posted: the Mac sync (`tools/mac-sync/nhl-sync.sh`,
   hourly and every 15 minutes from an hour before a game until ten minutes after, sync token, multipart `date` + one file per team code) and both workflows via

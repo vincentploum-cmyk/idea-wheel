@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { parseLinesPage, parseTweetDate, parseLineTweet, splitNames, rosterMatcher, latestTeamLines, linesToPlayers, decodeEntities, tweetTime } from '../lib/nhl-data/gamedaytweets';
+import { parseLinesPage, parseTweetDate, parseLineTweet, splitNames, rosterMatcher, latestTeamLines, linesToPlayers, decodeEntities, tweetTime, confirmsSameLines } from '../lib/nhl-data/gamedaytweets';
 import { dueGames } from '../lib/nhl-data/ingest';
 import { NYR_PAGE } from './fixtures/gamedaytweets';
 
@@ -122,6 +122,32 @@ describe('line parsing', () => {
     expect(got).toMatchObject({ forwards: 4, pairs: 4, meta: { handle: 'ColinSNewsday', date: '2026-09-30', source: 'gamedaytweets' } });
     expect(got.matched).toBe(20);
     expect(latestTeamLines(NYR_PAGE, NYR, { since: '2026-10-01' })).toBeNull();
+  });
+});
+
+describe('a tweet that confirms the lines without repeating them', () => {
+  // A page of two tweets: the game-day "same lineup" note, then the previous day's practice lines.
+  const snowflake = (iso) => String((BigInt(Date.parse(iso)) - 1288834974657n) << 22n);
+  const block = (handle, id, dateText, text) => `<blockquote class="tweet full-sized-tweet"><div><a class="handle" href="https://x.com/${handle}">@${handle}</a></div><p><a class="handle" href="https://x.com/${handle}">@${handle}</a>${text.replace(/\n/g, '<br>')}</p><a href="https://x.com/${handle}/status/${id}">${dateText}</a></blockquote>`;
+  const practice = 'Rangers practice lines:\nPerreault-Miller-Bjorkstrand\nCuylle-Zibanejad-Dorofeyev\nLafreniere-Laba-Tolvanen\nKartye-Veleno-Rempe\nGavrikov-Fox\nPettersson-Durzi\nSmits-Schneider';
+  const page = `<html><body>${block('smclaughlin9', snowflake('2026-10-10T15:47:00Z'), 'Oct 10, 2026', 'Sturm: Same lineup, Swayman in net.')}${block('A_Fantucchio', snowflake('2026-10-09T15:49:00Z'), 'Oct 9, 2026', practice)}</body></html>`;
+  test('the phrases that count as a confirmation', () => {
+    for (const t of ['Sturm: Same lineup, Swayman in net.', 'No changes to the lines from Tuesday', 'Lines unchanged.', 'Same group as last game', 'Running it back tonight']) expect(confirmsSameLines(t)).toBe(true);
+    for (const t of ['Perreault-Miller-Bjorkstrand', 'Swayman starts', 'Lines at practice:', 'PP1: Fox, Miller, Zibanejad']) expect(confirmsSameLines(t)).toBe(false);
+  });
+  test('the confirmation stands for the previous lines tweet, with its own time and link', () => {
+    const got = latestTeamLines(page, NYR, { since: '2026-10-10', until: '2026-10-11T03:00:00.000Z' });
+    expect(got).not.toBeNull();
+    expect(got.forwards).toBe(4);
+    expect(got.players['gabe perreault']).toMatchObject({ pos: 'LW', line: 1 });
+    expect(got.players['carter smits']).toMatchObject({ pos: 'D', line: 3 });
+    // Game-day in every way the site reads it: the time, date and link are the confirmation's.
+    expect(got.meta).toMatchObject({ handle: 'smclaughlin9', date: '2026-10-10', at: '2026-10-10T15:47:00.000Z', confirmed: true });
+    expect(got.meta.linesFrom).toMatchObject({ handle: 'A_Fantucchio', date: '2026-10-09' });
+    // Without the confirmation in the window, the floor still applies and the practice tweet is before it.
+    expect(latestTeamLines(page, NYR, { since: '2026-10-10', until: '2026-10-10T15:00:00.000Z' })).toBeNull();
+    // Yesterday's read: the practice lines on their own.
+    expect(latestTeamLines(page, NYR, { since: '2026-10-09', until: '2026-10-10T03:00:00.000Z' }).meta).toMatchObject({ handle: 'A_Fantucchio', date: '2026-10-09' });
   });
 });
 
