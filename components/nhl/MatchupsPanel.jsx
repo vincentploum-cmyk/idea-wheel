@@ -235,13 +235,37 @@ export default function MatchupsPanel() {
   // The server reads NHL.com itself; the GameDayTweets pages come from a GitHub run it starts
   // (the site is refused there), so after the refresh the slate is polled until they land.
   const [lineMsg, setLineMsg] = useState('');
+  // A fingerprint of what a refresh changes on the slate: the run, each side's capture and
+  // the beat writers' delivery. Polled when the request outlives the gateway.
+  const slateMark = (s) => JSON.stringify([s?.modelRun?.createdAt || null, ...(s?.games || []).flatMap((g) => g.sides.map((x) => [x.sourceMeta?.capturedAt || null, x.sourceMeta?.gdtFetchedAt || null]))]);
   const refreshLines = async () => {
     setBusy(true);
     setLineMsg('Reading GameDayTweets and NHL.com lineups…');
     const before = deliveredAt(slate);
+    const markBefore = slateMark(slate);
     try {
       const res = await fetch(`/api/nhl/data/refresh?only=lineups&date=${date}&dispatch=1`, { method: 'POST' });
-      const j = await res.json();
+      // The reply is JSON from the site, or an HTML page from the gateway when the read outlives its
+      // 100-second limit, or from the host while it restarts for a deploy. The read keeps running on the
+      // server either way, so a non-JSON reply means "still working", not "failed".
+      const text = await res.text();
+      let j = null;
+      try { j = JSON.parse(text); } catch { j = null; }
+      if (!j) {
+        setLineMsg(`The read is taking longer than the gateway allows (${res.status}); it continues on the server. Waiting for the slate to change…`);
+        setBusy(false);
+        for (let i = 0; i < 18; i++) {
+          await new Promise((ok) => setTimeout(ok, 20000));
+          const fresh = await fetch(`/api/nhl/data/slate?date=${date}`, { cache: 'no-store' }).then((x) => (x.ok ? x.json() : null)).catch(() => null);
+          if (fresh && slateMark(fresh) !== markBefore) {
+            setSlate(fresh);
+            setLineMsg(`Lines updated at ${etTime(new Date().toISOString())} ET${fresh.modelRun?.createdAt ? ` · model run saved ${etTime(fresh.modelRun.createdAt)} ET` : ''}. Each rink says when its source last changed.`);
+            return;
+          }
+        }
+        setLineMsg('No change on the slate in six minutes. Reload the page; if the rinks still show the old time, check the "NHL lineups (pre-game)" run on GitHub.');
+        return;
+      }
       if (!res.ok || !j.ok) throw new Error(j.error || j.reason || `${res.status}`);
       const r = j.result || {};
       const summary = `${r.gamedaytweets ?? 0} team${r.gamedaytweets === 1 ? '' : 's'} from GameDayTweets, ${r.withLineups ?? 0} of ${r.scheduled ?? 0} games with an NHL.com lineup${r.restamp?.changed ? `, ${r.restamp.changed} logged position${r.restamp.changed === 1 ? '' : 's'} corrected` : ''}. ${r.model?.ran ? `Model run saved (${r.model.players} players).` : r.model?.skipped ? `Model not re-run: ${r.model.skipped}.` : r.model?.error ? `Model run failed: ${r.model.error}.` : ''}`;
