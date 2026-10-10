@@ -150,7 +150,7 @@ function ModelPlays({ side, actualFor }) {
       {list.length > 0 && (
         <div className="nhlx-plays-row">
           {graded.map((pl) => (
-            <button key={`${pl.kind}-${pl.name}`} type="button" className={`nhlx-play${pl.id ? '' : ' is-static'}`} onClick={() => pl.id && open({ id: pl.id, opp: side.opp, venue: side.venue })} title={`${pl.name} · ${pl.market} ${Math.round(pl.prob * 100)}% · play score ${pl.attack ?? '—'} (${pl.tier})`}>
+            <button key={`${pl.kind}-${pl.name}`} type="button" className={`nhlx-play${pl.id ? '' : ' is-static'}`} onClick={() => pl.id && open({ id: pl.id, opp: side.opp, venue: side.venue, pos: pl.pos, line: pl.line })} title={`${pl.name} · ${pl.market} ${Math.round(pl.prob * 100)}% · play score ${pl.attack ?? '—'} (${pl.tier})`}>
               <Headshot id={pl.id} size={26} />
               <span className="nhlx-play-meta"><b>{shortName(pl.name)}</b><span>{pl.market} <em>{Math.round(pl.prob * 100)}%</em></span></span>
               <span className="nhlx-edge">{pl.tier}</span>
@@ -187,7 +187,7 @@ function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false }
       className={`nhlx-rk-chip${p.inLineup ? '' : ' is-out'}${p.carried ? ' is-carried' : ''}${p.id ? '' : ' is-static'}${picked ? ' is-pick' : ''}`}
       style={{ left: `${x}%`, top: `${pct(y)}%` }}
       title={title}
-      onClick={() => p.id && open({ id: p.id, opp: p.opp, venue: p.venue })}
+      onClick={() => p.id && open({ id: p.id, opp: p.opp, venue: p.venue, pos: p.pos, line: p.line })}
     >
       <span className="nhlx-rk-pic">
         {p.id ? <img src={headshotUrl(p.id)} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : null}
@@ -319,7 +319,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
           {extras.map((p, i) => (
             <span key={`${p.team}-${p.name}`}>
               {i ? ', ' : ''}
-              <button type="button" className={`nhlx-rk-extra${p.id ? '' : ' is-static'}`} onClick={() => p.id && open({ id: p.id, opp: p.opp, venue: p.venue })}>{p.name}</button> {p.pos}{p.projSog != null && (p.gp || 0) >= minGp ? ` ${num(p.projSog)} SOG` : ''}
+              <button type="button" className={`nhlx-rk-extra${p.id ? '' : ' is-static'}`} onClick={() => p.id && open({ id: p.id, opp: p.opp, venue: p.venue, pos: p.pos, line: p.line })}>{p.name}</button> {p.pos}{p.projSog != null && (p.gp || 0) >= minGp ? ` ${num(p.projSog)} SOG` : ''}
             </span>
           ))}
         </p>

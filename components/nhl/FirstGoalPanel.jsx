@@ -24,7 +24,7 @@ function LeakCell({ c }) {
 function CandidateRow({ c, rank }) {
   const open = usePlayerCard();
   return (
-    <tr className={c.id ? 'is-click' : ''} onClick={() => c.id && open({ id: c.id, opp: c.opp, venue: c.venue })}>
+    <tr className={c.id ? 'is-click' : ''} onClick={() => c.id && open({ id: c.id, opp: c.opp, venue: c.venue, pos: c.pos, line: c.line })}>
       <td><b>{rank}</b></td>
       <td>
         <div className="nhlx-db-player">

@@ -17,7 +17,7 @@ function Prob({ p, lead = false, wide = false }) {
 function Player({ c }) {
   const open = usePlayerCard();
   return (
-    <td className="is-click" onClick={() => open({ id: c.id, opp: c.opp, venue: c.venue })}>
+    <td className="is-click" onClick={() => open({ id: c.id, opp: c.opp, venue: c.venue, pos: c.pos, line: c.line })}>
       <div className="nhlx-db-player">
         <Headshot id={c.id} size={30} />
         <span><b>{c.name}</b><small>{c.team} · {c.pos}{c.line ? c.line : ''} · {c.venue === 'H' ? 'vs' : 'at'} {c.opp}{c.carried ? ' · carried' : ''}</small></span>
