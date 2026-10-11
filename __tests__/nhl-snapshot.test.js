@@ -7,7 +7,7 @@ jest.mock('../lib/nhl-store', () => ({
   memoizeByInputs: (load, compute) => async (...args) => compute(...(await load(...args))),
 }));
 
-const { snapshotPositions, positionsPath } = require('../lib/nhl-data/positions');
+const { snapshotPositions, positionsPath, slotOnSnapshot } = require('../lib/nhl-data/positions');
 const { PLAYERS_PATH } = require('../lib/nhl-data/rosters');
 const { lastLineupPath } = require('../lib/nhl-data/positions');
 const { PF_DEPTH_PATH } = require('../lib/nhl-data/propfinder-api');
@@ -18,6 +18,20 @@ const players = {
 };
 const depth = (date) => ({ at: `${date}T12:00:00Z`, date, teams: { ANA: { players: { 'troy terry': { name: 'Troy Terry', id: 1, pos: 'RW', line: 1 }, 'leo carlsson': { name: 'Leo Carlsson', id: 2, pos: 'C', line: 1 } } } } });
 const schedule = [{ id: 1, away: 'ANA', home: 'OTT', state: 'OFF', startTimeUTC: '2026-04-18T23:00:00Z' }];
+
+describe('a skater’s slot on the snapshot (the player card’s badge)', () => {
+  test('found by id, then by name, with the team, opponent, venue and source; null off the slate', () => {
+    const file = { date: '2026-10-10', games: { 1: { away: 'BUF', home: 'NYR', teams: {
+      BUF: { source: 'gamedaytweets', players: { 'alex tuch': { name: 'Alex Tuch', id: 7, pos: 'LW', line: 1 }, 'tage thompson': { name: 'Tage Thompson', id: 8, pos: 'C', line: 1, inLineup: false } } },
+      NYR: { source: 'lineup', players: { 'adam fox': { name: 'Adam Fox', id: 9, pos: 'D', line: 1 } } },
+    } } } };
+    expect(slotOnSnapshot(file, { id: 7, name: 'Alex Tuch', team: 'BUF' })).toEqual({ date: '2026-10-10', team: 'BUF', opp: 'NYR', venue: 'A', pos: 'LW', line: 1, source: 'gamedaytweets', inLineup: true });
+    expect(slotOnSnapshot(file, { id: null, name: 'Adam Fox' })).toMatchObject({ team: 'NYR', venue: 'H', pos: 'D', line: 1, source: 'lineup' });
+    expect(slotOnSnapshot(file, { id: 8, name: 'Tage Thompson' }).inLineup).toBe(false);
+    expect(slotOnSnapshot(file, { id: 99, name: 'Nobody' })).toBeNull();
+    expect(slotOnSnapshot(null, { id: 7 })).toBeNull();
+  });
+});
 
 describe('position snapshot sources', () => {
   test("a warm-up tweet beats NHL.com's preview whatever the preview's updated time; an afternoon tweet does not", async () => {

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Headshot, TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
+import { SlateDateContext } from './player-card-context';
 import { fairOdds } from '@/lib/nhl-data/picks-pure';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
@@ -109,6 +110,7 @@ export default function PicksPanel() {
   const pretty = date ? new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' }) : '';
 
   return (
+    <SlateDateContext.Provider value={date}>
     <section className="nhlx-pk" aria-label="Tonight’s picks">
       <div className="nhlx-today-head">
         <div>
@@ -146,5 +148,6 @@ export default function PicksPanel() {
         </div>
       ) : null}
     </section>
+    </SlateDateContext.Provider>
   );
 }

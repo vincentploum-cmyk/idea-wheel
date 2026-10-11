@@ -148,7 +148,9 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   team has fewer than 10 stored games at a venue.
 - Player card (`components/nhl/PlayerCard.jsx`, data from `/api/nhl/data/player`): laid out as
   PropFinder's player view — top bar (headshot, position badge, shot form, graph average, average
-  TOI), market tabs carrying the hit rate for the pressed split, the Over + line block, the
+  TOI; the badge is the night's lineup slot, "LW1 tonight", read from the position snapshot for the
+  panel's slate date (`slotOnSnapshot` → `tonight` in the payload; the panel's date rides on every open()
+  through `SlateDateContext`), the roster position noted when it differs), market tabs carrying the hit rate for the pressed split, the Over + line block, the
   per-game bar graph (green over / red under, iCF outline with "Total shots", the average pill),
   the split tiles ('25-'26, H2H, Home/Away, L5, L10, L20; press one to draw its games), the splits
   table, and on the right the opponent's "Defense Allowed" panel (`DefenseAllowed` in
