@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Headshot, TeamLogo, rankClass } from './media';
 import { usePlayerCard } from './PlayerCard';
+import { SlateDateContext } from './player-card-context';
 import { SortTh } from './pf-ui';
 import { sortCandidates } from '@/lib/nhl-data/firstgoal-sort';
 
@@ -98,6 +99,7 @@ export default function FirstGoalPanel() {
   const pretty = date ? new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' }) : '';
 
   return (
+    <SlateDateContext.Provider value={date}>
     <div className="nhlx-mu">
       <div className="nhlx-today-head">
         <div>
@@ -141,5 +143,6 @@ export default function FirstGoalPanel() {
         );
       })}
     </div>
+    </SlateDateContext.Provider>
   );
 }

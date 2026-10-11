@@ -7,9 +7,10 @@ import TeamGameLog from './TeamGameLog';
 import { PlayerCardContext, usePlayerCard } from './player-card-context';
 import { teamName } from '@/lib/nhl-data/teams';
 
-// Any table can open a player's profile: const open = usePlayerCard(); open({ id, opp, venue, pos, line }).
-// `pos` / `line` are tonight's lineup position and slot (RW, 1): the card's badge and the
-// opponent's defense panel follow them, with the roster position noted when it differs.
+// Any table can open a player's profile: const open = usePlayerCard(); open({ id, opp, venue, pos, line, date }).
+// The card's badge and the opponent's defense panel follow the night's lineup slot (RW, 1):
+// read from the position snapshot for `date` (the panel's slate date, today by default), else
+// the `pos` / `line` the opener passed; the roster position is noted when it differs.
 export { usePlayerCard };
 
 // [key, tab label, prop label, stat key, lines, default line] — PropFinder's market order.
@@ -157,12 +158,15 @@ function Card({ req, onClose }) {
   // Which games the graph draws: the split tile that is pressed.
   const [pickedSpan, setSpan] = useState(req.opp ? 'h2h' : 'l10');
   const [showTotal, setShowTotal] = useState(false);
+  // The night's lineup slot: the snapshot's (read by the server for the panel's date), else the opener's.
+  const tonight = p?.tonight?.pos ? p.tonight : req.pos ? { pos: req.pos, line: req.line ?? null, date: req.date || null, source: null } : null;
 
   useEffect(() => {
     let live = true;
     const q = new URLSearchParams({ id: String(req.id) });
     if (req.opp) q.set('opp', req.opp);
     if (req.venue) q.set('venue', req.venue);
+    if (req.date) q.set('date', req.date);
     fetch(`/api/nhl/data/player?${q}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`))))
       .then((j) => { if (live) setP(j); })
@@ -216,9 +220,9 @@ function Card({ req, onClose }) {
                   {p.team ? <span className="nhlx-pc-avatar-logo"><TeamLogo abbr={p.team} size={18} /></span> : null}
                 </span>
                 <h3>{p.name}</h3>
-                <PosBadge pos={req.pos || p.pos} />
+                <PosBadge pos={tonight?.pos || p.pos} />
                 {p.number != null ? <span className="nhlx-pc-num">#{p.number}</span> : null}
-                {req.pos ? <span className="nhlx-pc-slot" title={`Tonight's lineup position${p.pos && p.pos !== req.pos ? `; listed as ${p.pos} on the roster` : ''}`}>{req.pos}{req.line || ''} tonight{p.pos && p.pos !== req.pos ? ` · ${p.pos} on the roster` : ''}</span> : null}
+                {tonight ? <span className="nhlx-pc-slot" title={`Lineup position for ${tonight.date || 'tonight'}${tonight.source ? ` (${tonight.source === 'gamedaytweets' ? 'beat writers' : tonight.source === 'lineup' ? 'NHL.com' : tonight.source})` : ''}${p.pos && p.pos !== tonight.pos ? `; listed as ${p.pos} on the roster` : ''}`}>{tonight.pos}{tonight.line || ''} tonight{p.pos && p.pos !== tonight.pos ? ` · ${p.pos} on the roster` : ''}</span> : null}
               </div>
               <div className="nhlx-pc-stat">
                 <small>Shot form</small>
@@ -309,7 +313,7 @@ function Card({ req, onClose }) {
 
               <section className="nhlx-pc-pane nhlx-pc-right">
                 {req.opp && p.defense ? (
-                  <DefenseAllowed abbr={req.opp} data={p.defense} pos={req.pos || p.pos} />
+                  <DefenseAllowed abbr={req.opp} data={p.defense} pos={tonight?.pos || p.pos} />
                 ) : (
                   <div className="nhlx-empty">{req.opp ? `No PropFinder defense table for ${req.opp} yet.` : 'Open this player from a slate to see what tonight’s opponent allows.'}</div>
                 )}

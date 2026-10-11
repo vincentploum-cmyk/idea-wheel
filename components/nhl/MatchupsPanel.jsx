@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Headshot, TeamLogo, rankClass } from './media';
 import { usePlayerCard, FormChip } from './PlayerCard';
+import { SlateDateContext } from './player-card-context';
 import { PfTable, PosBadge, SortTh, Tag } from './pf-ui';
 import { TeamLink } from './links';
 import { oppClass } from './MoneyPuck';
@@ -301,6 +302,7 @@ export default function MatchupsPanel() {
   const pretty = date ? new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' }) : '';
 
   return (
+    <SlateDateContext.Provider value={date}>
     <div className="nhlx-mu">
       <div className="nhlx-today-head">
         <div>
@@ -409,5 +411,6 @@ export default function MatchupsPanel() {
         </>
       )}
     </div>
+    </SlateDateContext.Provider>
   );
 }

@@ -1,4 +1,6 @@
-import { authorize, todayET, addDays } from '@/lib/nhl-data/util';
+import { authorize, todayET, addDays, DATE_RE } from '@/lib/nhl-data/util';
+import { readJson } from '@/lib/nhl-store';
+import { positionsPath, slotOnSnapshot } from '@/lib/nhl-data/positions';
 import { loadRows } from '@/lib/nhl-data/build';
 import { loadPlayers } from '@/lib/nhl-data/rosters';
 import { playerProfile } from '@/lib/nhl-data/profile';
@@ -8,7 +10,8 @@ import { seasonYear } from '@/lib/nhl-data/propfinder-csv';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Admin: one player's game log, splits, hit rates and form (?id=&opp=&venue=).
+// Admin: one player's game log, splits, hit rates and form (?id=&opp=&venue=&date=); `tonight` is his
+// lineup slot on the date's position snapshot (today by default), the same read the rink draws.
 export async function GET(request) {
   const auth = await authorize(request);
   if (!auth.ok) return auth.response;
@@ -17,7 +20,8 @@ export async function GET(request) {
   const opp = url.searchParams.get('opp') || null;
   const venue = url.searchParams.get('venue') || null;
   if (!id) return Response.json({ error: 'bad id' }, { status: 400 });
-  const [rows, ref, pf] = await Promise.all([loadRows(addDays(todayET(), 1)), loadPlayers(), loadPropfinder().catch(() => ({ skaters: null }))]);
+  const date = DATE_RE.test(url.searchParams.get('date') || '') ? url.searchParams.get('date') : todayET();
+  const [rows, ref, pf, snapshot] = await Promise.all([loadRows(addDays(todayET(), 1)), loadPlayers(), loadPropfinder().catch(() => ({ skaters: null })), readJson(positionsPath(date)).catch(() => null)]);
   const mine = rows.filter((r) => r.playerId === id);
   const p = ref.players[id] || null;
   const oppAbbr = /^[A-Z]{3}$/.test(opp || '') ? opp : null;
@@ -32,6 +36,7 @@ export async function GET(request) {
   }
   const name = p?.name || profile.last?.name || String(id);
   const team = p?.team || profile.last?.team || null;
+  const tonight = slotOnSnapshot(snapshot, { id, name, team });
   return Response.json({
     id,
     name,
@@ -40,6 +45,7 @@ export async function GET(request) {
     number: p?.number ?? null,
     onRoster: !!p?.onRoster,
     opp: oppAbbr, venue,
+    tonight,
     ...profile,
     defense,
     // PropFinder's own season rates for the same player (null until an export names them).
