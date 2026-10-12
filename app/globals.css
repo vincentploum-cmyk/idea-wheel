@@ -1233,6 +1233,15 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-pk-table tr.is-under td { opacity: 0.6; }
 .nhlx-pk-table td.nhlx-pk-study { color: var(--muted); }
 .nhlx-pk-table tr.is-under td.is-lead b { color: var(--muted); }
+/* Finished game: each probability cell green when the skater reached that market's floor, red when he fell short; the row follows its lead market; DNP dimmed. */
+.nhlx-pk-table td.is-hit { background: var(--ok-bg); }
+.nhlx-pk-table td.is-miss { background: var(--bad-bg); }
+.nhlx-pk-table td.is-hit b, .nhlx-pk-table td.is-hit small { color: var(--ok-fg); }
+.nhlx-pk-table td.is-miss b, .nhlx-pk-table td.is-miss small { color: var(--bad-fg); }
+.nhlx-pk-table tr.is-hit .nhlx-db-player b, .nhlx-pk-table tr.is-hit .nhlx-pk-got b { color: var(--ok-fg); }
+.nhlx-pk-table tr.is-miss .nhlx-db-player b, .nhlx-pk-table tr.is-miss .nhlx-pk-got b { color: var(--bad-fg); }
+.nhlx-pk-table td.nhlx-pk-got b { font-weight: 700; }
+.nhlx-pk-table tr.is-dnp td { opacity: 0.5; }
 .nhlx-pk-next { margin: 8px 14px 4px; font-size: 13px; color: var(--muted); }
 .nhlx-pk-notes { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--line-strong); max-width: 78ch; }
 .nhlx-pk-notes h3 { font-family: var(--font-display); font-weight: 600; font-size: 19px; color: var(--heading); margin: 0 0 10px; }

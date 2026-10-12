@@ -84,7 +84,10 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   probabilities (`fromModel`) and only skaters the run projected are listed; the study's plain-rate read (fixed
   Poisson coefficients fitted on 2025-26, `tools/predictors/picks.py`, log features; this season blended into last
   season's base at n / (n + 18) shots, n / (n + 40) goals; the opponent read is this season's team shots allowed)
-  sits beside them as a dimmed `Study` column and stands in when no run exists. The model's math is untouched.
+  sits beside them as a dimmed `Study` column and stands in when no run exists. A stored game grades the rows
+  (`withActuals` / `hitOf` in `picks-pure.js`: each skater's box-score SOG and goals ride on his row as `actual`,
+  null when he did not play): every probability cell green when he reached that market's floor, red when he fell
+  short, the row on its lead market, a "Got" column with the figure and a tally in the game head. The model's math is untouched.
   Study: `docs/shots-goals-predictors.md`.
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching) for every slate team; a

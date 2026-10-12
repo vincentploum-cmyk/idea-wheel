@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { blendRates, project, fromModel, poissonAtLeast, fairOdds, shotsAllowed, pickGame, notesFor, seasonYearOf, SHOTS_FLOOR } from '../lib/nhl-data/picks';
+import { blendRates, project, fromModel, poissonAtLeast, fairOdds, shotsAllowed, pickGame, notesFor, seasonYearOf, SHOTS_FLOOR, withActuals, hitOf } from '../lib/nhl-data/picks';
 
 const game = (sog, icf = sog * 1.8, g = 0.3, iscf = 1.5) => ({ sog, icf, g, iscf });
 
@@ -120,5 +120,31 @@ describe('tonight’s picks', () => {
     expect(notes[3].text).toContain('Robertson and Thompson (1+ goal)');
     expect(notes[4].text).toContain('SJS @ STL has no real pick either way: nobody is over 50% for 3+ shots or 35% for a goal, so the rows there are the best available.');
     expect(notes[5].text).toBe("Lineups: beat writers' lines for 6, the roster for 2 of 8 teams, with 1 slot carried from an earlier game. Check scratches before puck drop.");
+  });
+});
+
+describe('grading the picks on the box score', () => {
+  const cands = [{ id: 1, name: 'A', p3: 0.6 }, { id: 2, name: 'B', p3: 0.55 }, { id: 3, name: 'C', p3: 0.5 }];
+  test('a stored game puts each skater’s shots and goals on his row; a missing row is DNP (null); before the game nothing is set', () => {
+    const graded = withActuals(cands, [{ id: 1, sog: 4, g: 1 }, { id: 2, sog: '2', g: 0 }, { id: 99, sog: 7, g: 0 }]);
+    expect(graded[0].actual).toEqual({ sog: 4, g: 1 });
+    expect(graded[1].actual).toEqual({ sog: 2, g: 0 });
+    expect(graded[2].actual).toBeNull();
+    expect(withActuals(cands, undefined)[0].actual).toBeUndefined();
+  });
+  test('hitOf reads the market floor off the box score', () => {
+    const [a, b, c] = withActuals(cands, [{ id: 1, sog: 4, g: 1 }, { id: 2, sog: 2, g: 0 }]);
+    expect(hitOf(a, 'sog', 3)).toBe(true);
+    expect(hitOf(a, 'sog', 4)).toBe(true);
+    expect(hitOf(b, 'sog', 3)).toBe(false);
+    expect(hitOf(b, 'sog', 2)).toBe(true);
+    expect(hitOf(b, 'g', 1)).toBe(false);
+    expect(hitOf(c, 'sog', 3)).toBeNull();
+    expect(hitOf(cands[0], 'sog', 3)).toBeNull();
+  });
+  test('pickGame keeps the grade on the rows it picks', () => {
+    const picked = pickGame(withActuals(cands.map((c) => ({ ...c, lamS: 3, p1g: 0.3, lamG: 0.3 })), [{ id: 1, sog: 3, g: 0 }]));
+    expect(picked.shots[0]).toMatchObject({ id: 1, actual: { sog: 3, g: 0 } });
+    expect(picked.shots[1].actual).toBeNull();
   });
 });
