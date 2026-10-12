@@ -138,21 +138,26 @@ function ModelPlays({ side, actualFor }) {
   const plays = side.plays;
   if (!plays) return null;
   const list = [...plays.shots, ...plays.goals];
+  // Finished game (`actualFor` set): each play graded on the box score — hit when the skater
+  // reached the play's floor, miss when he fell short, `dnp` when he has no box-score row.
   const graded = list.map((pl) => {
     const a = actualFor ? actualFor(pl) : null;
-    return { ...pl, hit: a ? (a[pl.stat] ?? 0) >= pl.min : null };
+    const got = a ? (a[pl.stat] ?? 0) : null;
+    return { ...pl, got, hit: a ? got >= pl.min : null, dnp: !!actualFor && !a };
   });
   const scored = graded.filter((g) => g.hit != null);
-  const note = !list.length ? 'No play clears the floor' : scored.length ? `${scored.filter((g) => g.hit).length} of ${scored.length} hit` : `${list.length} clear the floor`;
+  const note = !list.length ? 'No play clears the floor' : scored.length ? `${scored.filter((g) => g.hit).length} of ${scored.length} hit` : actualFor ? 'Not in the box score' : `${list.length} clear the floor`;
+  const unit = (pl) => (pl.stat === 'g' ? 'G' : 'SOG');
+  const outcome = (pl) => (pl.hit == null ? (pl.dnp ? ' · did not play' : '') : ` · ${pl.hit ? 'HIT' : 'MISS'}: ${pl.got} ${unit(pl)}`);
   return (
     <div className="nhlx-plays" title="The model's plays for this team, by the Best bets boards' rule: shots plays need the gate open and 4+ SOG at 40% or 3+ SOG at 60%; goal plays need 1+ G at 18%. Two of each at most; the pill is the play tier from the attack score.">
       <div className="nhlx-plays-head"><b>Model’s plays · {side.team} vs {side.opp}</b><small className="nhlx-auto-meta">{note}</small></div>
       {list.length > 0 && (
         <div className="nhlx-plays-row">
           {graded.map((pl) => (
-            <button key={`${pl.kind}-${pl.name}`} type="button" className={`nhlx-play${pl.id ? '' : ' is-static'}`} onClick={() => pl.id && open({ id: pl.id, opp: side.opp, venue: side.venue, pos: pl.pos, line: pl.line })} title={`${pl.name} · ${pl.market} ${Math.round(pl.prob * 100)}% · play score ${pl.attack ?? '—'} (${pl.tier})`}>
+            <button key={`${pl.kind}-${pl.name}`} type="button" className={`nhlx-play${pl.id ? '' : ' is-static'}${pl.hit == null ? (pl.dnp ? ' is-dnp' : '') : pl.hit ? ' is-hit' : ' is-miss'}`} onClick={() => pl.id && open({ id: pl.id, opp: side.opp, venue: side.venue, pos: pl.pos, line: pl.line })} title={`${pl.name} · ${pl.market} ${Math.round(pl.prob * 100)}% · play score ${pl.attack ?? '—'} (${pl.tier})${outcome(pl)}`}>
               <Headshot id={pl.id} size={26} />
-              <span className="nhlx-play-meta"><b>{shortName(pl.name)}</b><span>{pl.market} <em>{Math.round(pl.prob * 100)}%</em></span></span>
+              <span className="nhlx-play-meta"><b>{shortName(pl.name)}</b><span>{pl.market} <em>{Math.round(pl.prob * 100)}%</em>{pl.hit != null ? <> · <strong className="nhlx-play-got">{pl.got} {unit(pl)}</strong></> : pl.dnp ? <> · DNP</> : null}</span></span>
               <span className="nhlx-edge">{pl.tier}</span>
               {pl.hit != null ? <i className={`nhlx-play-mark ${pl.hit ? 'is-hit' : 'is-miss'}`} aria-label={pl.hit ? 'hit' : 'miss'}>{pl.hit ? '✓' : '✗'}</i> : null}
             </button>
