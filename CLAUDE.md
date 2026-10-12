@@ -69,7 +69,7 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   for that team (`sidePlays` in `slate.js`, `ModelPlays` in `Rink.jsx`): the Best bets boards' rule, `boardPlays` in
   `model-core.js` (shared with the Model tab's boards and the scorecard's replay), two shots plays and two goal plays at
   most from the saved run, each on the floor it cleared with the attack-score tier, the picked skaters ringed on the ice,
-  hit / miss marks once the box score is in, nothing shown without a run; finished games show the
+  each play washed green (hit the floor) or red (fell short) with the box-score figure once the game is stored, dashed and dimmed when the skater has no box-score row, nothing shown without a run; finished games show the
   box score; above each game's team verdicts a game-total read, `gameTotalRead` in
   `lib/nhl-data/verdict.js`: the stored meetings' totals blended with MoneyPuck's expected
   goals and pace, high / low half a goal either side of the league average) and the per-team defense card
@@ -84,7 +84,10 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   probabilities (`fromModel`) and only skaters the run projected are listed; the study's plain-rate read (fixed
   Poisson coefficients fitted on 2025-26, `tools/predictors/picks.py`, log features; this season blended into last
   season's base at n / (n + 18) shots, n / (n + 40) goals; the opponent read is this season's team shots allowed)
-  sits beside them as a dimmed `Study` column and stands in when no run exists. The model's math is untouched.
+  sits beside them as a dimmed `Study` column and stands in when no run exists. A stored game grades the rows
+  (`withActuals` / `hitOf` in `picks-pure.js`: each skater's box-score SOG and goals ride on his row as `actual`,
+  null when he did not play): every probability cell green when he reached that market's floor, red when he fell
+  short, the row on its lead market, a "Got" column with the figure and a tally in the game head. The model's math is untouched.
   Study: `docs/shots-goals-predictors.md`.
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching) for every slate team; a
