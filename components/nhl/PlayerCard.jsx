@@ -155,8 +155,9 @@ function Card({ req, onClose }) {
   const [market, setMarket] = useState('shots');
   // The line picked per market (PropFinder keeps one per tab).
   const [lines, setLines] = useState(() => Object.fromEntries(MARKETS.map(([k, , , , , d]) => [k, d])));
-  // Which games the graph draws: the split tile that is pressed.
-  const [pickedSpan, setSpan] = useState(req.opp ? 'h2h' : 'l10');
+  // Which games the graph draws: the split tile that is pressed. The card opens on the last 5
+  // (his form first; H2H is one tile away when he was opened from a slate).
+  const [pickedSpan, setSpan] = useState('l5');
   const [showTotal, setShowTotal] = useState(false);
   // The night's lineup slot: the snapshot's (read by the server for the panel's date), else the opener's.
   const tonight = p?.tonight?.pos ? p.tonight : req.pos ? { pos: req.pos, line: req.line ?? null, date: req.date || null, source: null } : null;
