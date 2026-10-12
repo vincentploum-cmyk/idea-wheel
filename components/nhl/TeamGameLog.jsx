@@ -11,7 +11,9 @@ import { DEF_SLOTS } from '@/lib/nhl-data/defense';
 // goals column coloured against a line: green over, red under. The player card draws the
 // same log under the opponent's Defense Allowed panel (`compact`): opened on the player's
 // position and tonight's venue, the stat and line following the card's market tab
-// (`stat` / `line` controlled), his own games against that team marked.
+// (`stat` / `line` controlled), his own games against that team marked, and the skaters who
+// shoot and score like him (the server's `like.alike`, `similarProfile` on the blended season
+// rates) washed in violet so their nights against the team read beside his.
 
 const STATS = { sog: { label: 'Shots', lines: [0.5, 1.5, 2.5, 3.5, 4.5], def: 2.5 }, g: { label: 'Goals', lines: [0.5, 1.5], def: 0.5 } };
 const SLOT_OPTS = [['', 'All slots'], ...DEF_SLOTS.map((s) => [s, s]), ['LW', 'All LW'], ['C', 'All C'], ['RW', 'All RW'], ['D', 'All D'], ['box', 'No line (box score)']];
@@ -55,12 +57,12 @@ export default function TeamGameLog({ abbr, compact = false, initial = {}, stat:
   // Keyed by team in the parent, so a new team mounts a fresh log.
   useEffect(() => {
     let live = true;
-    fetch(`/api/nhl/data/defense/log?team=${abbr}`, { cache: 'no-store' })
+    fetch(`/api/nhl/data/defense/log?team=${abbr}${highlightId != null ? `&like=${highlightId}` : ''}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`))))
       .then((j) => { if (live) setData(j); })
       .catch((e) => { if (live) setErr(e.message); });
     return () => { live = false; };
-  }, [abbr]);
+  }, [abbr, highlightId]);
 
   const seasons = useMemo(() => [...new Set((data?.rows || []).map((r) => seasonOf(r.date)))].sort((a, b) => b - a), [data]);
   // The newest season with rows by default; 'all' lifts the filter.
@@ -82,6 +84,12 @@ export default function TeamGameLog({ abbr, compact = false, initial = {}, stat:
   const title = `${who} vs ${abbr}`;
   const tone = (r) => (r[stat] > line ? 'is-over' : 'is-under');
   const counts = data ? `${games} games, ${rows.length} skater-games${avg != null ? ` · ${num(avg, 2)} ${STATS[stat].label.toLowerCase()} per skater` : ''}` : '';
+  // The card's player's profile and the logged skaters who share it (ids as strings in the JSON map).
+  const like = highlightId != null && data?.like?.profile ? data.like : null;
+  const alike = like?.alike || {};
+  const isLike = (r) => !!alike[r.playerId];
+  const likeCount = like ? new Set(rows.filter(isLike).map((r) => r.playerId)).size : 0;
+  const profileText = (p) => `${num(p.sog, 1)} SOG, ${num(p.g, 2)} G per game`;
 
   return (
     <div className={`nhlx-gl${compact ? ' is-compact' : ''}`}>
@@ -95,6 +103,12 @@ export default function TeamGameLog({ abbr, compact = false, initial = {}, stat:
             <span key={k} className="nhlx-gl-win"><small>{k}:</small>{w ? <><i className="is-over">{w.over}% Over</i><i className="is-under">{w.under}% Under</i></> : <i>—</i>}</span>
           ))}
         </div>
+        {like && (
+          <p className="nhlx-gl-like" title={`Shots and goals per game, this season blended with last (n / (n + 18) shots, n / (n + 40) goals), within 15% of his shots and 30% of his goals, read off at least 10 games.`}>
+            <i className="nhlx-gl-like-swatch" aria-hidden="true" />
+            {likeCount ? `${likeCount} skater${likeCount === 1 ? '' : 's'} with a profile like his` : 'No skater here with a profile like his'} · {profileText(like.profile)}
+          </p>
+        )}
       </div>
       <div className="nhlx-gl-controls">
         {!statProp && <Seg label="Stat" items={[['sog', 'Shots'], ['g', 'Goals']]} value={stat} onChange={setStat} />}
@@ -119,7 +133,7 @@ export default function TeamGameLog({ abbr, compact = false, initial = {}, stat:
             </thead>
             <tbody>
               {shown.map((r) => (
-                <tr key={`${r.gameId}-${r.playerId}`} className={`${r.playerId ? 'is-click' : ''}${highlightId != null && r.playerId === highlightId ? ' is-mine' : ''}`} onClick={() => r.playerId && open({ id: r.playerId, opp: abbr, venue: r.venue })}>
+                <tr key={`${r.gameId}-${r.playerId}`} className={`${r.playerId ? 'is-click' : ''}${highlightId != null && r.playerId === highlightId ? ' is-mine' : ''}${isLike(r) ? ' is-like' : ''}`} title={isLike(r) ? `Profile like his: ${profileText(alike[r.playerId])}` : undefined} onClick={() => r.playerId && open({ id: r.playerId, opp: abbr, venue: r.venue })}>
                   <td className="is-left">{mdy(r.date)}</td>
                   <td className={r.result === 'W' ? 'is-win' : r.result === 'L' ? 'is-loss' : ''}>{r.result || '—'}</td>
                   <td>{r.venue}</td>
