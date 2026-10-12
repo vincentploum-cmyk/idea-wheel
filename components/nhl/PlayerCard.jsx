@@ -317,14 +317,15 @@ function Card({ req, onClose }) {
                 ) : (
                   <div className="nhlx-empty">{req.opp ? `No PropFinder defense table for ${req.opp} yet.` : 'Open this player from a slate to see what tonight’s opponent allows.'}</div>
                 )}
-                {/* The box scores of every skater at his position against tonight's opponent (the team page's
-                    log), opened at tonight's venue; shots or goals and the line follow the market tab. */}
+                {/* The box scores of every skater at tonight's position (the lineup slot's position, else the
+                    roster's; the badge and the Defense Allowed panel read the same) against tonight's opponent
+                    (the team page's log), opened at tonight's venue; shots or goals and the line follow the market tab. */}
                 {req.opp ? (
                   <TeamGameLog
-                    key={`${req.opp}-${p.id}`}
+                    key={`${req.opp}-${p.id}-${tonight?.pos || p.pos || ''}`}
                     abbr={req.opp}
                     compact
-                    initial={{ slot: p.pos || '', venue: req.venue || '' }}
+                    initial={{ slot: tonight?.pos || p.pos || '', venue: req.venue || '' }}
                     stat={statKey === 'g' ? 'g' : 'sog'}
                     line={statKey === 'g' ? (lines.goals ?? 0.5) : statKey === 'sog' ? (lines.shots ?? 2.5) : 2.5}
                     highlightId={p.id}
