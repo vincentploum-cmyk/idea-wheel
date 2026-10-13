@@ -90,7 +90,10 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   short, the row on its lead market, a "Got" column with the figure and a tally in the game head. The model's math is untouched.
   Study: `docs/shots-goals-predictors.md`.
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
-  gamedaytweets.com/lines?team=XXX (roster-aware name matching) for every slate team; a
+  gamedaytweets.com/lines?team=XXX (roster-aware name matching: the roster decides a row's group, a pair
+  holds a defenseman and two forwards side by side are a short forward line, three pairs at most, and a
+  shared surname is the player the tweet did not place elsewhere; `applyPositions` keeps the box score's
+  forward / defense group over a lineup slot that contradicts it) for every slate team; a
   game-day tweet beats the NHL.com preview, otherwise the preview, then an older tweet, then
   the roster; "game-day" is decided by timestamp (tweet id vs the preview's updated time), and a tweet
   from the warm-up window (`GDT_FINAL_WORD_MIN`, 90 minutes before puck drop, or after it) beats the

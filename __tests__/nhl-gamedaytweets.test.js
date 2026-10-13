@@ -79,7 +79,7 @@ describe('line parsing', () => {
     const tweets = parseLinesPage(NYR_PAGE);
     const lines = parseLineTweet(tweets[0].text, NYR);
     expect(lines.forwards).toHaveLength(4);
-    expect(lines.defense).toHaveLength(4);
+    expect(lines.defense).toHaveLength(3); // the practice extras pair never gets a slot
     expect(lines.forwards[0].map((p) => p.name)).toEqual(['Oliver Bjorkstrand', 'J.T. Miller', 'Pavel Dorofeyev']);
     expect(lines.defense[2].map((p) => p.id)).toEqual([17, 18]);
     expect(parseLineTweet(tweets[1].text, NYR)).toBeNull();
@@ -97,6 +97,44 @@ describe('line parsing', () => {
     expect(lines.forwards[2][2].id).toBe(13);
     expect(lines.defense).toHaveLength(2);
     expect(lines.defense[1].map((p) => p.name)).toEqual(['Oliver Ekman-Larsson', 'Troy Stecher']);
+  });
+  test('the roster tells a pair from a short forward line; a hyphen-joined pair of surnames is not a first name', () => {
+    // Florida vs Minnesota, 2026-10-10 (@JamesonCoop): Bennett and two Tkachuks on the first line once
+    // read as the pair "Verhaeghe – Bennett-Tkachuk" (Brady, from "Bennett" taken for a first name).
+    const FLA = [P(1, 'Carter Verhaeghe', 'C'), P(2, 'Sam Bennett', 'C'), P(3, 'Matthew Tkachuk', 'LW'), P(4, 'Brady Tkachuk', 'LW'),
+      P(5, 'Eetu Luostarinen', 'LW'), P(6, 'Anton Lundell', 'C'), P(7, 'Sandis Vilmanis', 'RW'), P(8, 'Lars Eller', 'C'), P(9, 'Sam Reinhart', 'RW'),
+      P(10, 'Bokondji Imama', 'LW'), P(11, 'Sam Lafferty', 'C'), P(12, 'Garnet Hathaway', 'RW'),
+      P(13, 'Gustav Forsling', 'D'), P(14, 'Aaron Ekblad', 'D'), P(15, 'Niko Mikkola', 'D'), P(16, 'Seth Jones', 'D'), P(17, 'Dmitry Kulikov', 'D'), P(18, 'Radko Gudas', 'D')];
+    const m = rosterMatcher(FLA);
+    expect(m('Bennett-Tkachuk')).toBeNull();
+    expect(m('B. Tkachuk').id).toBe(4);
+    expect(m('Tkachuk', 'F')).toBeNull();
+    const fla = parseLineTweet('#FlaPanthers lines vs. Wild 👇\nVerhaeghe - Bennett - Tkachuk\nLuostarinen - Lundell - Vilmanis\nB. Tkachuk - Eller - Reinhart\nImama - Lafferty - Hathaway\nForsling - Ekblad\nMikkola - Jones\nKulikov - Gudas\nMarkstrom\nSchmid', FLA);
+    expect(fla.forwards.map((l) => l.map((p) => p.name))).toEqual([
+      ['Carter Verhaeghe', 'Sam Bennett', 'Matthew Tkachuk'], ['Eetu Luostarinen', 'Anton Lundell', 'Sandis Vilmanis'],
+      ['Brady Tkachuk', 'Lars Eller', 'Sam Reinhart'], ['Bokondji Imama', 'Sam Lafferty', 'Garnet Hathaway']]);
+    // The bare "Tkachuk" is the one the tweet did not place elsewhere.
+    expect(fla.forwards[0][2].id).toBe(3);
+    expect(fla.defense.map((l) => l.map((p) => p.id))).toEqual([[13, 14], [15, 16], [17, 18]]);
+    expect(linesToPlayers(fla)['carter verhaeghe']).toMatchObject({ pos: 'LW', line: 1 });
+    expect(linesToPlayers(fla)['seth jones']).toMatchObject({ pos: 'D', line: 2 });
+    // Tampa vs Minnesota, 2026-10-08 (@BenjaminJReport): 11 forwards and 7 defensemen, "Geekie-Viel" the
+    // two-man fourth line, the seventh defenseman on his own; once read as four pairs with Geekie-Viel first.
+    const TBL = [P(1, 'Gage Goncalves', 'C'), P(2, 'Brayden Point', 'C'), P(3, 'Nikita Kucherov', 'RW'), P(4, 'Brandon Hagel', 'LW'), P(5, 'Anthony Cirelli', 'C'),
+      P(6, 'Jake Guentzel', 'LW'), P(7, 'Ilya Mikheyev', 'RW'), P(8, 'Zemgus Girgensons', 'C'), P(9, 'Pontus Holmberg', 'C'), P(10, 'Conor Geekie', 'C'), P(11, 'Jeffrey Viel', 'LW'),
+      P(12, 'J.J. Moser', 'D'), P(13, 'John Carlson', 'D'), P(14, 'Ryan McDonagh', 'D'), P(15, 'Erik Cernak', 'D'), P(16, 'Victor Hedman', 'D'), P(17, 'Max Crozier', 'D'), P(18, 'Charle-Edouard D\'Astous', 'D')];
+    const tbl = parseLineTweet('The #GoBolts warmup lines unchanged as they go 11 & 7, Hildeby gets his first start ⬇️\nGoncalves-Point-Kucherov\nHagel-Cirelli-Guentzel\nMikheyev-Girgensons-Holmberg\nGeekie-Viel\nMoser-Carlson\nMcDonagh-Cernak\nHedman-Crozier\nD\'Astous\n🥅: Hildeby', TBL);
+    expect(tbl.forwards).toHaveLength(4);
+    expect(tbl.forwards[3].map((p) => p.name)).toEqual(['Conor Geekie', 'Jeffrey Viel']);
+    expect(tbl.defense.map((l) => l.map((p) => p.name))).toEqual([['J.J. Moser', 'John Carlson'], ['Ryan McDonagh', 'Erik Cernak'], ['Victor Hedman', 'Max Crozier']]);
+    const players = linesToPlayers(tbl);
+    expect(players['conor geekie']).toMatchObject({ pos: 'LW', line: 4 });
+    expect(players['jeffrey viel']).toMatchObject({ pos: 'C', line: 4 });
+    expect(players['max crozier']).toMatchObject({ pos: 'D', line: 3 });
+    expect(players['charle edouard dastous']).toBeUndefined();
+    // A fourth pair never gets a slot: three pairs at most.
+    const four = parseLineTweet('Goncalves-Point-Kucherov\nHagel-Cirelli-Guentzel\nMikheyev-Girgensons-Holmberg\nMoser-Carlson\nMcDonagh-Cernak\nHedman-Crozier\nD\'Astous-Moser', TBL);
+    expect(four.defense).toHaveLength(3);
   });
   test('latestTeamLines with a cutoff answers for the game, not the next practice', () => {
     // Sep 29 game at 23:00Z: the Sep 30 practice tweet (17:56Z) is after the game; the warm-ups tweet (23:37Z, inside the window) wins.
@@ -119,8 +157,8 @@ describe('line parsing', () => {
   });
   test('latestTeamLines skips power-play tweets and respects the date floor', () => {
     const got = latestTeamLines(NYR_PAGE, NYR, { since: '2026-09-29' });
-    expect(got).toMatchObject({ forwards: 4, pairs: 4, meta: { handle: 'ColinSNewsday', date: '2026-09-30', source: 'gamedaytweets' } });
-    expect(got.matched).toBe(20);
+    expect(got).toMatchObject({ forwards: 4, pairs: 3, meta: { handle: 'ColinSNewsday', date: '2026-09-30', source: 'gamedaytweets' } });
+    expect(got.matched).toBe(18);
     expect(latestTeamLines(NYR_PAGE, NYR, { since: '2026-10-01' })).toBeNull();
   });
 });
