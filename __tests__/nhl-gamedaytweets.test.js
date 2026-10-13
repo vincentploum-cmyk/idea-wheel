@@ -198,3 +198,65 @@ describe('merging lineup reads', () => {
     expect(mergeGdt(null, fresh)).toEqual(fresh);
   });
 });
+
+describe('a tweet that changes some lines without reposting them', () => {
+  const { parseLineChanges, applyLineChanges } = require('../lib/nhl-data/gamedaytweets');
+  const D = (id, name, pos) => ({ id, name, pos, team: 'NJD' });
+  const NJD = [
+    D(1, 'Timo Meier', 'LW'), D(2, 'Nico Hischier', 'C'), D(3, 'Stefan Noesen', 'RW'),
+    D(4, 'Jesper Bratt', 'LW'), D(5, 'Jack Hughes', 'C'), D(6, 'Anthony Mantha', 'RW'),
+    D(7, 'Arseny Gritsyuk', 'LW'), D(8, 'Evgenii Rodrigues', 'C'), D(9, 'Dawson Mercer', 'RW'),
+    D(10, 'Nolan Lombardi', 'LW'), D(11, 'Cody Glass', 'C'), D(12, 'Jesper Boqvist', 'RW'),
+    D(13, 'Luke Hughes', 'D'), D(14, 'Dougie Hamilton', 'D'), D(15, 'Jonas Siegenthaler', 'D'),
+    D(16, 'Brett Pesce', 'D'), D(17, 'Brenden Dillon', 'D'), D(18, 'Simon Nemec', 'D'), D(19, 'Jacob Markstrom', 'G'),
+  ];
+  const snowflake = (iso) => String((BigInt(Date.parse(iso)) - 1288834974657n) << 22n);
+  const block = (handle, id, dateText, text) => `<blockquote class="tweet full-sized-tweet"><div><a class="handle" href="https://x.com/${handle}">@${handle}</a></div><p><a class="handle" href="https://x.com/${handle}">@${handle}</a>${text.replace(/\n/g, '<br>')}</p><a href="https://x.com/${handle}/status/${id}">${dateText}</a></blockquote>`;
+  const full = 'Devils lines at morning skate:\nMeier-Hischier-Noesen\nBratt-Hughes-Mantha\nGritsyuk-Rodrigues-Mercer\nLombardi-Glass-Boqvist\nL. Hughes-Hamilton\nSiegenthaler-Pesce\nDillon-Nemec';
+  const change = '#NJDevils line changes:\n\nArseny Gritsyuk is headed up to the Jack Hughes line with Jesper Bratt tonight.\n\nMercer up with Timo and Nico.\n\nMantha with Rodrigues and Noesen.';
+  const page = `<html><body>${block('amandacstein', snowflake('2026-10-13T21:35:00Z'), 'Oct 13, 2026', change)}${block('amandacstein', snowflake('2026-10-13T15:10:00Z'), 'Oct 13, 2026', full)}</body></html>`;
+
+  test('the sentences become groups of roster players, first names included', () => {
+    const groups = parseLineChanges(change, NJD);
+    expect(groups.map((g) => g.players.map((p) => p.name))).toEqual([
+      ['Arseny Gritsyuk', 'Jack Hughes', 'Jesper Bratt'],
+      ['Dawson Mercer', 'Timo Meier', 'Nico Hischier'],
+      ['Anthony Mantha', 'Evgenii Rodrigues', 'Stefan Noesen'],
+    ]);
+    // No cue, a confirmation, or only the power play: not a change tweet.
+    expect(parseLineChanges('Markstrom starts tonight.', NJD)).toBeNull();
+    expect(parseLineChanges('No changes to the lines tonight.', NJD)).toBeNull();
+    expect(parseLineChanges('Line changes: PP1 with Hughes, Bratt and Meier', NJD)).toBeNull();
+  });
+
+  test('the groups land on the lines they share players with; stayers keep their slots, the vacated slots fill in the order named', () => {
+    const lines = applyLineChanges(parseLineTweet(full, NJD), parseLineChanges(change, NJD));
+    expect(lines.forwards.map((row) => row.map((p) => p.name))).toEqual([
+      ['Timo Meier', 'Nico Hischier', 'Dawson Mercer'],
+      ['Jesper Bratt', 'Jack Hughes', 'Arseny Gritsyuk'],
+      ['Anthony Mantha', 'Evgenii Rodrigues', 'Stefan Noesen'],
+      ['Nolan Lombardi', 'Cody Glass', 'Jesper Boqvist'],
+    ]);
+    expect(lines.defense).toHaveLength(3);
+  });
+
+  test('a lone move is a swap: the newcomer takes the slot and the player he pushed off takes his', () => {
+    const lines = applyLineChanges(parseLineTweet(full, NJD), parseLineChanges('Lineup change: Mercer moves up with Hischier and Meier.', NJD));
+    expect(lines.forwards[0].map((p) => p.name)).toEqual(['Timo Meier', 'Nico Hischier', 'Dawson Mercer']);
+    expect(lines.forwards[2].map((p) => p.name)).toEqual(['Arseny Gritsyuk', 'Evgenii Rodrigues', 'Stefan Noesen']);
+  });
+
+  test('latestTeamLines applies the change tweet to the full lines before it, with the change tweet\'s time and link', () => {
+    const got = latestTeamLines(page, NJD, { since: '2026-10-13', until: '2026-10-14T03:00:00.000Z' });
+    expect(got.players['arseny gritsyuk']).toMatchObject({ pos: 'RW', line: 2 });
+    expect(got.players['dawson mercer']).toMatchObject({ pos: 'RW', line: 1 });
+    expect(got.players['anthony mantha']).toMatchObject({ pos: 'LW', line: 3 });
+    expect(got.players['stefan noesen']).toMatchObject({ pos: 'RW', line: 3 });
+    expect(got.players['luke hughes']).toMatchObject({ pos: 'D', line: 1 });
+    expect(got.forwards).toBe(4);
+    expect(got.meta).toMatchObject({ handle: 'amandacstein', at: '2026-10-13T21:35:00.000Z', changed: 1 });
+    expect(got.meta.linesFrom.at).toBe('2026-10-13T15:10:00.000Z');
+    // Read before the change was posted: the morning lines as they were.
+    expect(latestTeamLines(page, NJD, { since: '2026-10-13', until: '2026-10-13T20:00:00.000Z' }).players['dawson mercer']).toMatchObject({ pos: 'RW', line: 3 });
+  });
+});

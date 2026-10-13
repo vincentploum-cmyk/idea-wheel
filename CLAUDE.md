@@ -100,7 +100,13 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   preview whatever its updated time. A tweet
   that only confirms the lines ("Same lineup, Swayman in net", "no changes", `confirmsSameLines`)
   stands for the newest lines tweet before it, even past the date floor: the lines are that
-  tweet's, the time and link the confirmation's (`meta.confirmed`, `meta.linesFrom`).
+  tweet's, the time and link the confirmation's (`meta.confirmed`, `meta.linesFrom`). A prose
+  change tweet ("line changes: Gritsyuk is headed up to the Jack Hughes line with Bratt. Mercer up
+  with Timo and Nico.", `parseLineChanges`: a change cue plus sentences naming two or three roster
+  players, lone first names included) is applied onto the newest full lines tweet before it
+  (`applyLineChanges`: each group lands on the line it shares players with, stayers keep their
+  slots, newcomers fill the vacated slots in the order named, a lone move swaps); the read
+  carries the change tweet's time and link (`meta.changed`, `meta.linesFrom`).
   gamedaytweets.com challenges cloud addresses (Cloudflare "Just a moment": Render and the GitHub
   runner alike), so its pages are fetched elsewhere and posted: the Mac sync (`tools/mac-sync/nhl-sync.sh`,
   hourly and every 15 minutes from an hour before a game until ten minutes after, sync token, multipart `date` + one file per team code) and both workflows via
