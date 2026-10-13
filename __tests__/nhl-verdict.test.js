@@ -72,9 +72,14 @@ describe('game total read', () => {
     expect(h[0]).toMatchObject({ gameId: 1, home: 'NJD', goals: { NYR: 4, NJD: 3 } });
     expect(h2hTotals(rows, 'NYR', 'PHI')).toEqual([]);
   });
-  test('league average comes from GF/60, with a fallback', () => {
-    expect(leagueGoalsPerGame(mp)).toBeCloseTo(6.2, 1);
+  test('league average is expected goals (xGF/60, both teams), goals without it, 6.1 without a table', () => {
+    expect(leagueGoalsPerGame(mp)).toBeCloseTo(6.1, 1); // ten teams at 3.0, NYR 3.4, NJD 3.2
+    const goalsOnly = { situations: { all: Object.fromEntries(Object.entries(mp.situations.all).map(([t, v]) => [t, { gf60: v.gf60 }])) } };
+    expect(leagueGoalsPerGame(goalsOnly)).toBeCloseTo(6.2, 1);
     expect(leagueGoalsPerGame(null)).toBe(6.1);
+    // A hot-shooting league (goals 10% over xG) no longer reads every game low: the baseline is xG too.
+    const hot = { situations: { all: Object.fromEntries(Object.entries(mp.situations.all).map(([t, v]) => [t, { ...v, gf60: v.xgf60 * 1.1 }])) } };
+    expect(leagueGoalsPerGame(hot)).toBe(leagueGoalsPerGame(mp));
   });
   test('two high-event teams with high-scoring meetings read as a high-scoring game', () => {
     const t = gameTotalRead({ away: 'NYR', home: 'NJD', h2h: h2hTotals(rows, 'NYR', 'NJD'), mp });
