@@ -205,6 +205,10 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
 - The model is admin-only: `NHL_ADMIN_EMAILS` on Render when set, else `DEFAULT_ADMIN_EMAILS` in `lib/nhl-admin.js`
   (both lists must carry a new person). Every `/api/nhl/*` route must call `requireNhlAdmin()`.
 - Keep the model's math untouched when restyling; port logic changes from the local app into
-  `components/nhl/model-core.js` (pipeline) and `NhlModel.jsx` (UI).
+  `components/nhl/model-core.js` (pipeline) and `NhlModel.jsx` (UI). One change went the other
+  way (2026-10-13, port it into `App.jsx`): the published shots odds `p3s` / `p4s` / `p5s` (and `p2s`)
+  are the Poisson tails of the row's `lambdaS`; the shot ladder's figures ride along as
+  `ladderP3s` / `ladderP4s` / `ladderP5s` and still set the attack score and shot tiers
+  (`docs/shots-goals-predictors.md` section 12).
 - Secrets stay out of git (Render env + `.env.local`).
 - Site is `noindex` by design (robots.txt disallow + X-Robots-Tag).

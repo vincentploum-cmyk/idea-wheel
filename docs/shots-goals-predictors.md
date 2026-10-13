@@ -1,5 +1,6 @@
 # What predicts a skater's shots and goals? (2026-27 to date, 2025-26 as the control)
 
+Revision 5 (2026-10-13): the model's own published odds graded on the scorecard export; the shots odds step replaced by the Poisson tail of λ (section 12).
 Revision 4 (2026-10-08): the rink's two environment tints, Rink vs PropFinder, graded against the box scores (section 10); the 1st goal tab graded against who scored first (section 11).
 Revision 4 (2026-10-08, earlier): the rink's two environment tints, Rink vs PropFinder, graded against the box scores (section 10).
 Revision 3: head-to-head re-tested across seasons (section 8); environment window test, L5 / L10 / L15 / season (section 9).
@@ -446,6 +447,50 @@ player-games against 14.5% for the rest of the slate) and a weak one for the *fi
 vs 2.7%). Rank it by the model's 1+ goal odds and treat the first-goal record, the leak and the
 head-to-head columns as colour, not as inputs; a first-goal price has to clear roughly 15 to 1
 on the tab's best candidate before it is a bet.
+
+## 12. The model's own odds, graded (Oct 1-12, 2026)
+
+The scorecard export for Oct 1 to 12 (81 games with a run saved before puck drop, 12 slates,
+2,748 player-games; 67 player-games had no run row) grades the saved runs' published odds against
+the box scores. The Oct 10 change above (the season workbook's blended rates) splits it:
+2,071 rows before, 677 from Oct 10.
+
+**Goals.** Before Oct 10 the goal λ averaged 0.49 against 0.17 actual and P(1+ goal) averaged
+0.42 against a 0.15 hit rate (the anytime-goal best-bet rows: stated 0.51, hit 0.15, n = 605).
+From Oct 10 the λ is 0.12 against 0.155 and P(1+ goal) 0.16 against 0.14: the blend fixed it, and
+the remaining ~20% shortfall is 2.5 standard errors on 677 rows. Nothing to touch until the
+post-change sample reaches ~2,000 rows (early November).
+
+**Shots.** The λ shots (`lambdaS`, the row's expected shots) is the sound part: from Oct 10 its
+Poisson tail scores the same Brier on P(3+ SOG) as the best plain window, own L15 (0.144 both).
+The ladder that turned it into the published P(3+ / 4+ / 5+) was not: Brier 0.169 against 0.159
+for the Poisson tail of the same λ over all rows, worse in every bucket from 40% up, with a fixed
+shape, the same before and after Oct 10:
+
+| 3+ SOG, both periods | n | published | Poisson(λ) | hit |
+|---|---|---|---|---|
+| Published P(3+) at 50% and up | 257 | 0.72 | 0.58 | 0.49 |
+| Board "3+ shots" best bets at 60% and up | 151 | 0.85 | 0.60 | 0.50 |
+| RW1 + RW2 | 313 | 0.27 | 0.30 | 0.38 |
+| Forwards on lines 3 and 4 | 865 | 0.08 | 0.09 | 0.16 |
+| D1 + D2 | 597 | 0.22 | 0.12 | 0.17 |
+| Gate closed | 1,337 | 0.11 | 0.10 | 0.17 |
+
+*Applied 2026-10-13 (`components/nhl/model-core.js`): the published `p3s` / `p4s` / `p5s` (and a new
+`p2s`) are the Poisson tails of the row's λ shots; the ladder's figures stay on the row as
+`ladderP3s` / `ladderP4s` / `ladderP5s` and still drive the attack score and the shot tiers. The
+goal and point odds are untouched.*
+
+**What the Poisson read does not fix.** The λ itself is compressed the wrong way: too low under
+one shot (λ 0.6 → 1.07 actual) and too high above 3.5 (λ 3.7 → 3.0, λ 4.8 → 3.4 before Oct 10;
+3.8 → 3.3 after, n = 12). Every reference rate regresses the same way (own L15 3.7 → 3.4; PropFinder
+season 3.7 → 2.1), so the top of the λ needs shrinkage toward the mean, roughly actual ≈ 0.4 + 0.8 λ
+on the post-change rows. That is a change to the λ, not to the odds step, and the post-change top
+bins hold 12 to 28 rows: fit it when they hold ~100 (late November). Until then the boards' shots
+calls, now Poisson, still overstate at the top: replayed on the export, the boards' rule (gate open,
+P(4+) ≥ 40% or P(3+) ≥ 60%) made 109 calls stated 0.59 that hit 0.39 (31 calls from Oct 10, stated
+0.55, hit 0.45), against 135 calls stated 0.64 that hit 0.44 under the ladder. Honest odds also mean
+fewer calls: P(3+) ≥ 60% is now λ ≥ 3.1 and P(4+) ≥ 40% is λ ≥ 3.7.
 
 ## 6. What this means for the model and the site
 
