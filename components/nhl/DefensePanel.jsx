@@ -149,7 +149,7 @@ export default function DefensePanel() {
   const defense = data?.[span];
   const tables = useMemo(() => (defense ? boardTables(defense, { metric, venue, group }) : null), [defense, metric, venue, group]);
   const byVenue = useMemo(() => (defense ? { ALL: boardTables(defense, { metric, venue: 'ALL', group }), H: boardTables(defense, { metric, venue: 'H', group }), A: boardTables(defense, { metric, venue: 'A', group }) } : null), [defense, metric, group]);
-  const reads = useMemo(() => (byVenue ? matchupReads(data?.tonight || [], byVenue) : []), [byVenue, data]);
+  const reads = useMemo(() => (byVenue ? matchupReads(data?.tonight || [], byVenue, { venueMatched: venue !== 'ALL' }) : []), [byVenue, data, venue]);
   const playing = useMemo(() => new Set((data?.tonight || []).flatMap((g) => [g.away, g.home])), [data]);
   const overview = useMemo(() => (defense ? overviewRows(defense, data?.moneypuck?.teams, { venue }) : []), [defense, data, venue]);
   const thin = defense ? Object.values(defense.teams || {}).filter((t) => (t[venue]?.All?.gp || 0) < 10).length : 0;
@@ -168,7 +168,7 @@ export default function DefensePanel() {
         <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Date" />
       </div>
 
-      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Tonight’s matchups</h3><small>{data.tonight?.length || 0} games on {date} · each shooting side against what its opponent gives up {venue === 'ALL' ? 'at the venue it plays tonight' : VENUES.find(([v]) => v === venue)[1].toLowerCase()} · softest spot first</small></div>
+      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Tonight’s matchups</h3><small>{data.tonight?.length || 0} games on {date} · each shooting side against what its opponent gives up {venue === 'ALL' ? 'over every game' : 'at the venue it defends tonight'} · softest spot first</small></div>
       <Reads reads={reads} keys={keys} digits={digits} metric={metric} active={active} onPick={pick} />
 
       <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>{metric === 'g' ? 'Goals' : 'Shots'} against by position</h3><small>{SPANS.find(([k]) => k === span)[1]} · defender {venue === 'ALL' ? 'anywhere' : venue === 'H' ? 'at home' : 'away'} · per game · rank 1 allows the most, ties share a rank</small></div>

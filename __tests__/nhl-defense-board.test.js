@@ -47,7 +47,9 @@ describe('defense board', () => {
   });
   test("tonight's reads come off the defender's venue table, softest first", () => {
     const tables = { ALL: boardTables(defense), H: boardTables(defense, { venue: 'H' }), A: boardTables(defense, { venue: 'A' }) };
-    const reads = matchupReads([{ id: 9, away: 'BOS', home: 'NJD' }], tables);
+    const all = matchupReads([{ id: 9, away: 'BOS', home: 'NJD' }], tables);
+    expect(all[0].cells.C).toMatchObject({ abbr: 'NJD', value: 3.67, n: 3 }); // every game NJD defended
+    const reads = matchupReads([{ id: 9, away: 'BOS', home: 'NJD' }], tables, { venueMatched: true });
     expect(reads[0]).toMatchObject({ team: 'BOS', opp: 'NJD', venue: 'A', best: { key: 'C', rank: 1 } });
     expect(reads[0].cells.C).toMatchObject({ abbr: 'NJD', value: 5, rank: 1, n: 2 });
     expect(reads[1]).toMatchObject({ team: 'NJD', opp: 'BOS', venue: 'H' });
