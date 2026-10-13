@@ -40,6 +40,25 @@ describe('lineup positions', () => {
     expect(applyPositions(games, { games: { 7: { teams: { OTT: { players: {} } } } } })).toEqual({ applied: 0, changed: 2 });
     expect(games[0].skaters[0]).toMatchObject({ pos: 'C', line: null, posSource: 'box' });
   });
+
+  test('a lineup slot in the other position group than the box score is a misread line: the box code stands', () => {
+    const { snapshotSlot } = require('../lib/nhl-data/positions');
+    // Verhaeghe read as a pair with Tkachuk, a real defenseman read on a fourth pair.
+    const snap = { games: { 7: { teams: { FLA: { players: {
+      'carter verhaeghe': { name: 'Carter Verhaeghe', pos: 'D', line: 1 }, 'seth jones': { name: 'Seth Jones', pos: 'D', line: 4 },
+      'aaron ekblad': { name: 'Aaron Ekblad', pos: 'D', line: 2 }, 'sam reinhart': { name: 'Sam Reinhart', pos: 'RW', line: 3 },
+    } } } } } };
+    const games = [{ id: 7, skaters: [
+      { name: 'Carter Verhaeghe', team: 'FLA', pos: 'C' }, { name: 'Seth Jones', team: 'FLA', pos: 'D' },
+      { name: 'Aaron Ekblad', team: 'FLA', pos: 'D' }, { name: 'Sam Reinhart', team: 'FLA', pos: 'C' },
+    ] }];
+    expect(snapshotSlot(snap, 7, 'FLA', 'Seth Jones')).toEqual({ pos: 'D', line: null });
+    expect(applyPositions(games, snap)).toEqual({ applied: 3, changed: 4 });
+    expect(games[0].skaters[0]).toMatchObject({ pos: 'C', line: null, posSource: 'box', boxPos: 'C' });
+    expect(games[0].skaters[1]).toMatchObject({ pos: 'D', line: null, posSource: 'lineup' });
+    expect(games[0].skaters[2]).toMatchObject({ pos: 'D', line: 2, posSource: 'lineup' });
+    expect(games[0].skaters[3]).toMatchObject({ pos: 'RW', line: 3, posSource: 'lineup', boxPos: 'C' });
+  });
 });
 
 // date, gameId, playerId, name, team, opp, venue, pos, toi, g, a, sog, hits, blk, icf, iff, isf, iscf, ihdcf, result
