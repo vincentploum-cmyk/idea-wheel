@@ -31,8 +31,13 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   skater's games-played count in as his away shot base and his shots as goals.
 - Scheduled by `.github/workflows/nhl-data.yml` (daily results + lineups) and
   `nhl-lineups.yml` (hourly pre-game lineup reads); Mac folder sync in `tools/mac-sync`.
-- Signed-in page = six hash tabs (`#teams`, `#matchups`, `#firstgoal`, `#model`, `#league`, `#history`); it opens on
-  Matchups. The 1st goal tab (`lib/nhl-data/firstgoal.js`, `/api/nhl/data/firstgoal`, `FirstGoalPanel.jsx`) ranks
+- Signed-in page = seven hash tabs (`#teams`, `#matchups`, `#defense`, `#firstgoal`, `#model`, `#league`, `#history`); it opens on
+  Matchups. The Defense tab (`components/nhl/DefensePanel.jsx`, helpers in `lib/nhl-data/defense-board.js`, data from
+  `/api/nhl/data/defense`, which also carries the date's games and MoneyPuck's team rates) is the ShotPropz-style cheat sheet:
+  what every team gives up to each position group (C / LW / RW / D, C / W / D, F / D) in shots or goals per game, season /
+  L10 / L5, by where the defender plays, rank 1 = the most allowed with ties shared, tinted by rank thirds; above the tables
+  tonight's matchups read off the same tables (`matchupReads`, each shooting side's softest spot first), and a team overview
+  (GA / GP, SA / GP from the stored box scores; xGA / 60, high-danger shots against and pace from MoneyPuck), each column ranked. The 1st goal tab (`lib/nhl-data/firstgoal.js`, `/api/nhl/data/firstgoal`, `FirstGoalPanel.jsx`) ranks
   tonight's skaters as first-goal candidates: own first-goal record from the rows' `fg` flag, the opponent's first
   goals given up to the position and slot at the venue, head to head, and the model's 1+ goal odds (score 0–100). The stored data (rosters, media, game history, league, MoneyPuck) is kept fresh by the
   morning run and shown, with repair buttons and the backfill, under Best bets → "Data sources"

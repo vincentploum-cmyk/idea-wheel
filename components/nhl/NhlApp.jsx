@@ -11,6 +11,7 @@ import MatchupsPanel from './MatchupsPanel';
 import FirstGoalPanel from './FirstGoalPanel';
 import PicksPanel from './PicksPanel';
 import LeaguePanel from './LeaguePanel';
+import DefensePanel from './DefensePanel';
 import { PlayerCardHost } from './PlayerCard';
 import ThemeToggle from './ThemeToggle';
 import Scorecard from './Scorecard';
@@ -18,6 +19,7 @@ import Scorecard from './Scorecard';
 const TABS = [
   ['teams', 'Teams & players'],
   ['matchups', 'Matchups'],
+  ['defense', 'Defense'],
   ['firstgoal', '1st goal'],
   ['model', 'Best bets'],
   ['league', 'League'],
@@ -306,6 +308,15 @@ export default function NhlApp({ email }) {
             <h2 className="nhlx-h2">Matchups by <span>position</span></h2>
             <p className="nhlx-lede">Who is shooting into a soft spot tonight: every skater’s lineup position against what the opposing defense allows to that position at this venue.</p>
             <div style={{ marginTop: 28 }}>{mounted('matchups') && <MatchupsPanel />}</div>
+          </div>
+        </section>
+
+        <section className="nhlx-section nhlx-tabpanel" id="defense" role="tabpanel" aria-labelledby="tab-defense" hidden={tab !== 'defense'}>
+          <div className="nhlx-wrap">
+            <span className="nhlx-eyebrow">Rankings</span>
+            <h2 className="nhlx-h2">Defense <span>by position</span></h2>
+            <p className="nhlx-lede">What every team gives up to each position, softest first, and tonight’s matchups read off the same tables. Rank 1 allows the most.</p>
+            <div style={{ marginTop: 28 }}>{mounted('defense') && <DefensePanel />}</div>
           </div>
         </section>
 
