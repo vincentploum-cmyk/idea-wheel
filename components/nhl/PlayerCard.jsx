@@ -34,10 +34,17 @@ const seasonTag = (date) => {
 };
 const mdy = (iso) => (iso ? `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}/${iso.slice(2, 4)}` : '');
 
-export function FormChip({ tag, small }) {
-  if (!tag) return null;
+/**
+ * Hot / cold chip. `kind` names what the read measures ("shots": 3+ / 4+ SOG nights over the
+ * last five; "goals": games with a goal), so a scorer on a cold shooting run reads "Cold
+ * shots" next to "Hot goals", never a bare "Cold". `hideNeutral` draws nothing for Neutral.
+ */
+export function FormChip({ tag, kind, small, hideNeutral }) {
+  if (!tag || (hideNeutral && tag === 'Neutral')) return null;
   const cls = tag === 'Hot' ? 'is-hot' : tag === 'Cold' ? 'is-cold' : '';
-  return <span className={`nhlx-form ${cls}${small ? ' is-small' : ''}`}>{tag === 'Hot' ? '🔥 ' : tag === 'Cold' ? '🧊 ' : ''}{tag}</span>;
+  const what = kind === 'shots' ? ' shots' : kind === 'goals' ? ' goals' : '';
+  const title = kind === 'shots' ? 'Shot form: how often he reached 3+ and 4+ shots over his last five games' : kind === 'goals' ? 'Goal form: games with a goal over his last five, against his usual rate' : undefined;
+  return <span className={`nhlx-form ${cls}${small ? ' is-small' : ''}`} title={title}>{tag === 'Hot' ? '🔥 ' : tag === 'Cold' ? '🧊 ' : ''}{tag}{what}</span>;
 }
 
 /** Hit-rate badge: green from 50% up, red below (PropFinder's colouring). */
@@ -225,9 +232,13 @@ function Card({ req, onClose }) {
                 {p.number != null ? <span className="nhlx-pc-num">#{p.number}</span> : null}
                 {tonight ? <span className="nhlx-pc-slot" title={`Lineup position for ${tonight.date || 'tonight'}${tonight.source ? ` (${tonight.source === 'gamedaytweets' ? 'beat writers' : tonight.source === 'lineup' ? 'NHL.com' : tonight.source})` : ''}${p.pos && p.pos !== tonight.pos ? `; listed as ${p.pos} on the roster` : ''}`}>{tonight.pos}{tonight.line || ''} tonight{p.pos && p.pos !== tonight.pos ? ` · ${p.pos} on the roster` : ''}</span> : null}
               </div>
-              <div className="nhlx-pc-stat">
+              <div className="nhlx-pc-stat" title="How often he reached 3+ and 4+ shots over his last five games">
                 <small>Shot form</small>
                 <b className={p.form.shots === 'Hot' ? 'is-good' : p.form.shots === 'Cold' ? 'is-bad' : ''}>{p.form.shots}</b>
+              </div>
+              <div className="nhlx-pc-stat" title="Games with a goal over his last five, against his usual rate">
+                <small>Goal form</small>
+                <b className={p.form.goals === 'Hot' ? 'is-good' : p.form.goals === 'Cold' ? 'is-bad' : ''}>{p.form.goals || '—'}</b>
               </div>
               <div className="nhlx-pc-stat">
                 <small>Graph avg</small>

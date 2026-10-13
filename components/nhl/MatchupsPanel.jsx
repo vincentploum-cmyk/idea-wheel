@@ -110,7 +110,8 @@ function SkaterRows({ skaters, showTeam, teamCount, sort }) {
           <PosBadge pos={p.pos} />
           {p.line ? <Tag>L{p.line}</Tag> : !p.inLineup ? <Tag>no lineup</Tag> : null}
           {p.carried ? <Tag>carried</Tag> : null}
-          <FormChip tag={p.form?.shots} small />
+          <FormChip tag={p.form?.shots} kind="shots" small hideNeutral />
+          <FormChip tag={p.form?.goals} kind="goals" small hideNeutral />
           {showTeam ? <small className="nhlx-pft-sub">{p.team} {p.venue === 'H' ? 'vs' : '@'} {p.opp}</small> : null}
         </div>
       </td>
@@ -126,7 +127,7 @@ function SkaterRows({ skaters, showTeam, teamCount, sort }) {
       <td className={sort === 'projSog' ? 'is-sorted' : ''}><b>{num(p.projSog, 2)}</b></td>
       <td className={sort === 'projG' ? 'is-sorted' : ''}><b>{num(p.projG, 2)}</b></td>
       <td>{p.hit?.s3 != null ? `${Math.round(p.hit.s3 * 100)}%` : '—'}</td>
-      <td><FormChip tag={p.form?.goals} small /></td>
+      <td><FormChip tag={p.form?.goals} kind="goals" small /></td>
     </tr>
   ));
 }
