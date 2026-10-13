@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TeamLogo } from './media';
 import { PfTable, SortTh, Sel, UnderlineTabs, rankTone } from './pf-ui';
 import { TeamLink } from './links';
-import { todayET } from '@/lib/nhl-data/util';
 import { GROUPS, OVERVIEW_COLS, boardTables, overviewRows, matchupReads } from '@/lib/nhl-data/defense-board';
 
 // The Defense tab: ShotPropz-style cheat sheets from the stored box scores. What every
@@ -17,6 +16,8 @@ const VENUES = [['ALL', 'All'], ['H', 'Home'], ['A', 'Away']];
 const VIEWS = [['all', 'All teams'], ['tonight', 'Playing tonight']];
 const GROUP_OPTS = Object.entries(GROUPS).map(([k, g]) => [k, g.label]);
 const fmt = (v, d) => (v == null ? '—' : Number(v).toFixed(d));
+// Today's date in Eastern time (the slate's day), as YYYY-MM-DD; the server helper lives in a server-only module.
+const todayET = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
 function RankChip({ rank, n }) {
   return rank ? <span className="nhlx-rank" title={`Rank ${rank} of ${n}: 1 allows the most`}>#{rank}</span> : null;
