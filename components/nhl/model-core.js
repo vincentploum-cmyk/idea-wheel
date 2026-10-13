@@ -5672,9 +5672,19 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
         });
 
         // Final hard clamp after all overlays so rendered probabilities can never exceed 100%
-        p3s = clamp(Number.isFinite(Number(p3s)) ? Number(p3s) : 0, 0, 0.999);
-        p4s = clamp(Number.isFinite(Number(p4s)) ? Number(p4s) : 0, 0, 0.999);
-        p5s = clamp(Number.isFinite(Number(p5s)) ? Number(p5s) : 0, 0, 0.999);
+        const ladderP3s = clamp(Number.isFinite(Number(p3s)) ? Number(p3s) : 0, 0, 0.999);
+        const ladderP4s = clamp(Number.isFinite(Number(p4s)) ? Number(p4s) : 0, 0, 0.999);
+        const ladderP5s = clamp(Number.isFinite(Number(p5s)) ? Number(p5s) : 0, 0, 0.999);
+        // The published shots odds are the Poisson tails of the row's λ shots (lineBoostedS).
+        // Graded on 2,748 player-games (Oct 1-12, 2026), the ladder's figures above ran far
+        // past what the box scores returned (at 50%+ they hit 49%; RW1/RW2 under, D1/D2 and
+        // depth forwards off), while the Poisson read of the same λ scored better in every
+        // bucket a bet is made in (Brier 0.159 vs 0.169). The ladder's figures stay on the row
+        // as ladderP3s/P4s/P5s and still drive the attack score and the shot tiers.
+        p3s = clamp(poissonAtLeast(lineBoostedS, 3), 0, 0.999);
+        p4s = clamp(poissonAtLeast(lineBoostedS, 4), 0, 0.999);
+        p5s = clamp(poissonAtLeast(lineBoostedS, 5), 0, 0.999);
+        const p2s = clamp(poissonAtLeast(lineBoostedS, 2), 0, 0.999);
         p1p = clamp(Number.isFinite(Number(p1p)) ? Number(p1p) : 0, 0, 0.999);
         p2p = clamp(Number.isFinite(Number(p2p)) ? Number(p2p) : 0, 0, 0.999);
         p1g = clamp(Number.isFinite(Number(p1g)) ? Number(p1g) : 0, 0, 0.999);
@@ -5888,18 +5898,22 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
             _home: histPos?._home || null,
             _away: histPos?._away || null,
           },
+          p2s: +p2s.toFixed(4),
           p3s: +p3s.toFixed(4),
           p4s: +p4s.toFixed(4),
           p5s: +p5s.toFixed(4),
+          ladderP3s: +ladderP3s.toFixed(4),
+          ladderP4s: +ladderP4s.toFixed(4),
+          ladderP5s: +ladderP5s.toFixed(4),
           p1p: +p1p.toFixed(4),
           p2p: +p2p.toFixed(4),
           p1g: +p1g.toFixed(4),
           p2g: +p2g.toFixed(4),
           p3g: +p3g.toFixed(4),
           attackScore: Math.min(99, Math.round((
-            0.16 * p3s +
-            0.24 * p4s +
-            0.12 * p5s +
+            0.16 * ladderP3s +
+            0.24 * ladderP4s +
+            0.12 * ladderP5s +
             0.24 * p1p +
             0.12 * p2p +
             0.09 * p1g +
