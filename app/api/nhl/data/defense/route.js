@@ -3,6 +3,7 @@ import { loadRows } from '@/lib/nhl-data/build';
 import { defenseByPosition, defenseBySlot, firstGoalsAllowed } from '@/lib/nhl-data/defense';
 import { gamesFor } from '@/lib/nhl-data/slate';
 import { loadMoneyPuck } from '@/lib/nhl-data/moneypuck';
+import { skaterStreaks } from '@/lib/nhl-data/streaks';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,5 +36,7 @@ export async function GET(request) {
     asOf, games: new Set(rows.map((r) => r.gameId)).size, season, l10, l5, slots, firstGoals,
     tonight: (tonight || []).map((g) => ({ id: g.id, away: g.away, home: g.home, startTimeUTC: g.startTimeUTC || null })),
     moneypuck,
+    // Who is running hot (this season's stored games): goal / point / 3+ SOG streaks, the last game, tonight's opponent.
+    streaks: skaterStreaks(rows, { date: asOf, games: tonight || [] }),
   }, { headers: { 'Cache-Control': 'no-store' } });
 }

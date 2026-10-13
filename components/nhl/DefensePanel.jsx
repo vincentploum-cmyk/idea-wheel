@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { TeamLogo } from './media';
+import { TeamLogo, Headshot } from './media';
+import { usePlayerCard } from './PlayerCard';
 import { PfTable, SortTh, Sel, UnderlineTabs, rankTone } from './pf-ui';
 import { TeamLink } from './links';
 import { GROUPS, OVERVIEW_COLS, boardTables, overviewRows, matchupReads } from '@/lib/nhl-data/defense-board';
@@ -87,6 +88,63 @@ function Reads({ reads, keys, digits, metric, active, onPick }) {
   );
 }
 
+const STREAK_TABS = [['goals', 'Goal streaks'], ['points', 'Point streaks'], ['sog3', '3+ shot streaks']];
+const groupKeyFor = (pos, group) => (group === 'pos' ? pos : group === 'cwd' ? (pos === 'LW' || pos === 'RW' ? 'W' : pos) : pos === 'D' ? 'D' : 'F');
+
+/** Who is running hot, with tonight's opponent read off the same tables at his position. */
+function Streaks({ list, tab, onTab, playing, view, byVenue, venue, group, digits, metric }) {
+  const open = usePlayerCard();
+  const rows = useMemo(() => {
+    const l = view === 'tonight' ? list.filter((p) => p.tonight) : list;
+    const key = tab === 'goals' ? (p) => p.goals.streak * 100 + p.goals.l5 : tab === 'points' ? (p) => p.points.streak * 100 + p.points.l5 : (p) => p.sog3.streak * 100 + p.sog3.l5;
+    return [...l].filter((p) => (tab === 'goals' ? p.goals.streak >= 2 : tab === 'points' ? p.points.streak >= 3 : p.sog3.streak >= 3)).sort((a, b) => key(b) - key(a) || a.name.localeCompare(b.name)).slice(0, 40);
+  }, [list, tab, view]);
+  const cellFor = (p) => {
+    if (!p.tonight || !byVenue) return null;
+    const tables = venue === 'ALL' ? byVenue.ALL : byVenue[p.tonight.venue === 'H' ? 'A' : 'H'];
+    const t = tables?.[groupKeyFor(p.pos, group)];
+    const row = t?.rows.find((r) => r.abbr === p.tonight.opp);
+    return row ? { ...row, n: t.n } : null;
+  };
+  return (
+    <div className="nhlx-df-table nhlx-df-streaks">
+      <UnderlineTabs items={STREAK_TABS} value={tab} onChange={onTab} label="Streak" />
+      {!rows.length ? <p className="nhlx-auto-meta">Nobody {view === 'tonight' ? 'playing on this date ' : ''}is on one right now.</p> : (
+        <PfTable className="nhlx-da-table">
+          <thead>
+            <tr>
+              <th className="is-left">Skater</th><th>Slot</th>
+              <th title="Consecutive games with a goal">G streak</th><th title="Consecutive games with a point">Pts streak</th><th title="Consecutive games with 3+ shots on goal">3+ SOG streak</th>
+              <th title="Goals over his last five games">G L5</th><th title="Shots on goal over his last five games">SOG L5</th>
+              <th className="is-left">Last game</th>
+              <th className="is-left" title={`What tonight's opponent gives up to his position per game (${metric === 'g' ? 'goals' : 'shots'}), with its rank`}>Tonight</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((p) => {
+              const c = cellFor(p);
+              return (
+                <tr key={p.id}>
+                  <td className="is-left"><div className="nhlx-db-player is-click" onClick={() => open({ id: p.id })}><Headshot id={p.id} size={30} /><span><b>{p.name}</b><small>{p.team}</small></span></div></td>
+                  <td>{p.pos}{p.line || ''}</td>
+                  <td className={tab === 'goals' ? 'is-sorted' : ''}>{p.goals.streak || '—'}</td>
+                  <td className={tab === 'points' ? 'is-sorted' : ''}>{p.points.streak || '—'}</td>
+                  <td className={tab === 'sog3' ? 'is-sorted' : ''}>{p.sog3.streak || '—'}</td>
+                  <td>{p.goals.l5}</td><td>{p.sog3.l5}</td>
+                  <td className="is-left"><small>{p.last.date.slice(5)} {p.last.venue === 'H' ? 'vs' : '@'} {p.last.opp} · {p.last.g} G {p.last.a} A {p.last.sog} SOG</small></td>
+                  <td className={`is-left ${c ? rankTone(c.rank, c.n) : ''}`}>
+                    {p.tonight ? <span className="nhlx-df-cell">{p.tonight.venue === 'H' ? 'vs' : '@'} <b>{p.tonight.opp}</b>{c ? <><b>{fmt(c.value, digits)}</b><RankChip rank={c.rank} n={c.n} /></> : <small>no games stored</small>}</span> : <small>—</small>}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </PfTable>
+      )}
+    </div>
+  );
+}
+
 /** Every team's defensive figures with a rank per column; sortable. */
 function Overview({ rows, playing, view, active, onPick }) {
   const [sort, setSort] = useState('sog');
@@ -133,6 +191,7 @@ export default function DefensePanel() {
   const [group, setGroup] = useState('pos');
   const [view, setView] = useState('tonight');
   const [active, setActive] = useState('');
+  const [streakTab, setStreakTab] = useState('goals');
   const pick = useCallback((abbr) => setActive((cur) => (cur === abbr ? '' : abbr)), []);
 
   useEffect(() => {
@@ -170,6 +229,9 @@ export default function DefensePanel() {
 
       <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Tonight’s matchups</h3><small>{data.tonight?.length || 0} games on {date} · each shooting side against what its opponent gives up {venue === 'ALL' ? 'over every game' : 'at the venue it defends tonight'} · softest spot first</small></div>
       <Reads reads={reads} keys={keys} digits={digits} metric={metric} active={active} onPick={pick} />
+
+      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Running hot</h3><small>Current streaks from this season’s stored games · the study found no carry-over from a goal last game, so read the streak as colour and the Tonight column as the matchup</small></div>
+      <Streaks list={data.streaks || []} tab={streakTab} onTab={setStreakTab} playing={playing} view={view} byVenue={byVenue} venue={venue} group={group} digits={digits} metric={metric} />
 
       <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>{metric === 'g' ? 'Goals' : 'Shots'} against by position</h3><small>{SPANS.find(([k]) => k === span)[1]} · defender {venue === 'ALL' ? 'anywhere' : venue === 'H' ? 'at home' : 'away'} · per game · rank 1 allows the most, ties share a rank</small></div>
       <div className="nhlx-df-grid">

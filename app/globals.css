@@ -1280,3 +1280,5 @@ body.nhlx-modal-open { overflow: hidden; }
   .nhlx-df-grid { grid-template-columns: 1fr; }
   .nhlx-df-controls .nhlx-input { margin-left: 0; }
 }
+.nhlx-df-streaks .nhlx-ultabs { margin-bottom: 10px; }
+.nhlx-df-streaks .nhlx-db-player small { color: var(--muted); }
