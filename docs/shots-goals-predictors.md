@@ -782,7 +782,9 @@ Ordered by the evidence above; "gain" is deviance against the skater's own rate.
 untouched): the Best bets plain-rate read is the shipped formula above; `positionAllowed` builds the
 blended per-skater position tables from the stored rows; `blendRates` carries TOI; the board's Opp
 column shows the position read and its rank (1 = allows the most to the position) and marks a
-back-to-back. The λ-shrinkage at the top (section 12) is still waiting on rows.
+back-to-back. *Also applied 2026-10-15*: the Defense tab's tables are per skater at the position, its Season span the
+blend above (`blendedDefense` in `lib/nhl-data/defense.js`), so tonight's matchup reads and the "Running hot" Tonight
+cell read the same figure the formula uses. The λ-shrinkage at the top (section 12) is still waiting on rows.
 
 **Rerun** as the season grows (needs the three seasons' games under `.nhl-data/predictors/<year>/games`):
 `tools/predictors/run.sh 2026` fetches, relabels, builds the rows with the previous season as the
