@@ -1265,6 +1265,10 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-df-shooter { all: unset; cursor: pointer; font-weight: 600; color: var(--heading); }
 .nhlx-df-shooter small { margin-left: 2px; font-weight: 500; color: var(--muted); }
 .nhlx-df-shooter:hover { text-decoration: underline; }
+.nhlx-df-poscell { vertical-align: top; }
+.nhlx-df-cellnames { margin-top: 4px; font-size: 11.5px; line-height: 1.45; white-space: normal; max-width: 15em; }
+.nhlx-df-shooters.is-compact .nhlx-df-shooter { font-weight: 500; }
+.nhlx-df-shooters.is-compact .nhlx-df-shooter small { font-size: 10px; }
 .nhlx-df-table .nhlx-pft td { padding: 7px 8px; }
 .nhlx-df-table .nhlx-pft th { padding: 8px 8px; }
 .nhlx-df-table .nhlx-pft td.is-rk { color: var(--muted); font-size: 12px; }
