@@ -178,6 +178,62 @@ function Streaks({ list, tab, onTab, playing, view, byVenue, venue, group, digit
   );
 }
 
+const SPAN_LABEL = { season: 'Season (blended)', l10: 'Last 10', l5: 'Last 5' };
+const pct = (v, d = 1) => (v == null ? '—' : `${(v * 100).toFixed(d)}%`);
+const signed = (v) => (v == null ? '—' : `${v > 0 ? '+' : ''}${(v * 100).toFixed(1)}%`);
+
+/**
+ * The tab's track record: every stored skater-game this season graded against the tables as they
+ * stood that morning. For each span, the soft / mid / tough third of the opponent's table at the
+ * skater's position: what he did against his own rate going in; the softest-spot shooters the same.
+ */
+function TrackRecord({ grade, metric, loading }) {
+  if (loading) return <p className="nhlx-auto-meta">Grading the season’s games against the tables as they stood each morning…</p>;
+  if (!grade?.skaterGames) return <p className="nhlx-auto-meta">Nothing to grade yet: the first stored game of the season grades the next morning.</p>;
+  const floor = metric === 'g' ? '1+ goal' : '3+ SOG';
+  const unit = metric === 'g' ? 'goals' : 'SOG';
+  const all = grade.spans.season[metric].all;
+  const Cell = ({ c, tone }) => (c?.n ? (
+    <td className={tone || ''} title={`${c.n} skater-games: ${c.actual.toFixed(2)} ${unit} a game against ${c.expected.toFixed(2)} from their own rates (${signed(c.lift)}); ${floor} ${pct(c.hit)} against ${pct(c.hitExpected)} expected`}>
+      <span className="nhlx-df-cell"><b>{signed(c.lift)}</b><small>{pct(c.hit, 0)} · {c.n}</small></span>
+    </td>
+  ) : <td><small>—</small></td>);
+  return (
+    <div className="nhlx-df-table nhlx-df-grade">
+      <PfTable className="nhlx-da-table">
+        <thead>
+          <tr>
+            <th className="is-left">Table</th>
+            <th className="is-soft" title="Skaters whose opponent sat in the soft third (rank 1 to 11) at their position that morning">Soft third</th>
+            <th title="The middle third">Mid</th>
+            <th className="is-tough" title="The stingiest third">Tough third</th>
+            <th title="Soft minus tough: how far apart the table pulls the two ends">Spread</th>
+            <th title="The skaters lined up at a shooting side's softest spot, whatever its rank">Softest spot</th>
+          </tr>
+        </thead>
+        <tbody>
+          {['season', 'l10', 'l5'].map((s) => {
+            const g = grade.spans[s][metric]; const t = g.thirds;
+            const spread = t.soft.lift != null && t.tough.lift != null ? t.soft.lift - t.tough.lift : null;
+            return (
+              <tr key={s}>
+                <td className="is-left"><b>{SPAN_LABEL[s]}</b></td>
+                <Cell c={t.soft} tone="is-soft" /><Cell c={t.mid} /><Cell c={t.tough} tone="is-tough" />
+                <td className={spread == null ? '' : spread >= 0.05 ? 'is-soft' : spread <= 0 ? 'is-tough' : 'is-mid'} title="Soft third's lift minus the tough third's: the read works when this is clearly positive"><b>{spread == null ? '—' : `${(spread * 100).toFixed(1)} pts`}</b></td>
+                <Cell c={g.best} />
+              </tr>
+            );
+          })}
+          <tr className="is-league">
+            <td className="is-left">Every skater-game</td>
+            <td colSpan={5}><small>{all.n} graded over {grade.games} games ({grade.from} to {grade.to}): {all.actual.toFixed(2)} {unit} a game against {all.expected.toFixed(2)} from the skaters’ own rates ({signed(all.lift)}); {floor} {pct(all.hit)} against {pct(all.hitExpected)} expected</small></td>
+          </tr>
+        </tbody>
+      </PfTable>
+    </div>
+  );
+}
+
 /** Every team's defensive figures with a rank per column; sortable. */
 function Overview({ rows, playing, view, active, onPick }) {
   const [sort, setSort] = useState('sog');
@@ -225,6 +281,7 @@ export default function DefensePanel() {
   const [view, setView] = useState('tonight');
   const [active, setActive] = useState('');
   const [streakTab, setStreakTab] = useState('goals');
+  const [graded, setGraded] = useState({ date: null, data: null });
   const pick = useCallback((abbr) => setActive((cur) => (cur === abbr ? '' : abbr)), []);
 
   useEffect(() => {
@@ -235,6 +292,17 @@ export default function DefensePanel() {
       .catch((e) => { if (live) setErr(`Couldn’t load the defense tables: ${e.message}`); });
     return () => { live = false; };
   }, [date]);
+
+  useEffect(() => {
+    let live = true;
+    fetch(`/api/nhl/data/defense/grade?to=${date}`, { cache: 'no-store' })
+      .then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.error || r.statusText); return j; })
+      .then((j) => { if (live) setGraded({ date, data: j }); })
+      .catch(() => { if (live) setGraded({ date, data: null }); });
+    return () => { live = false; };
+  }, [date]);
+  const grade = graded.date === date ? graded.data : null;
+  const grading = graded.date !== date;
 
   const digits = metric === 'g' ? 2 : 1;
   const keys = GROUPS[group].keys;
@@ -270,6 +338,9 @@ export default function DefensePanel() {
       <div className="nhlx-df-grid">
         {keys.map((k) => <RankTable key={k} title={`${metric === 'g' ? 'Goals' : 'Shots'} against ${k}`} table={tables?.[k]} digits={digits} playing={playing} view={view} active={active} onPick={pick} />)}
       </div>
+
+      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Track record</h3><small>Every stored skater-game this season through {date}, graded against each table as it stood that morning · the cell is the skaters’ {metric === 'g' ? 'goals' : 'shots'} against their own rate going in (lift), the {metric === 'g' ? '1+ goal' : '3+ SOG'} rate and the count · a table that works pulls the soft third up and the tough third down</small></div>
+      <TrackRecord grade={grade} metric={metric} loading={grading} />
 
       <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Team overview</h3><small>Stored box scores for the span above · MoneyPuck season rates, all situations{data.moneypuck?.updatedAt ? ` (updated ${new Date(data.moneypuck.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})` : ''}</small></div>
       <Overview rows={overview} playing={playing} view={view} active={active} onPick={pick} />
