@@ -66,6 +66,7 @@ function ShotsTable({ g, model }) {
             <th className="is-num" title="4+ shots">4+</th>
             {g.final ? <th className="is-num" title="Shots on goal in the box score">Got</th> : null}
             {model ? <th className="is-num is-wide" title="The study's own rate for 3+ shots, for comparison (the skater's rate, attempts and ice time, home ice, back-to-back, what the opponent allows per skater at his position)">Study 3+</th> : null}
+            {model ? <th className="is-num is-wide" title="The study's own rate for 4+ shots">Study 4+</th> : null}
             <th className="is-num" title="Shots a game this season (games), and last season's base">Season / base</th>
             <th className="is-num is-wide" title="What the opponent allows per skater at his position, shots a game (this season blended into last season's), and its rank among the teams (1 = allows the most to the position)">Opp to pos</th>
           </tr>
@@ -78,6 +79,7 @@ function ShotsTable({ g, model }) {
               <Prob p={c.p2} wide hit={hitOf(c, 'sog', 2)} /><Prob p={c.p3} lead hit={hitOf(c, 'sog', 3)} /><Prob p={c.p4} hit={hitOf(c, 'sog', 4)} />
               {g.final ? <Got c={c} stat="sog" unit="SOG" /> : null}
               {model ? <td className="is-num is-wide nhlx-pk-study">{c.study ? pct(c.study.p3) : '—'}</td> : null}
+              {model ? <td className="is-num is-wide nhlx-pk-study">{c.study ? pct(c.study.p4) : '—'}</td> : null}
               <td className="is-num">{season(c, 'curSog', 'baseSog')}</td>
               <OppPos c={c} k="sog" rank="rankSog" />
             </tr>
