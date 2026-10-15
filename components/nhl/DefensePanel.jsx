@@ -78,11 +78,17 @@ function Shooters({ side, keyName, group, opp, venue, metric }) {
   );
 }
 
-/** Tonight's shooting sides, softest spot first: the defender's figure and rank per group, and the shooters at the softest spot. */
+/**
+ * Tonight's shooting sides, softest spot first: the defender's figure and rank per group, and the shooters
+ * the side has at one position: the softest spot by default, or the cell last clicked on that row.
+ */
 function Reads({ reads, keys, digits, metric, active, onPick, games, group }) {
+  const [picked, setPicked] = useState({});
   if (!reads.length) return <p className="nhlx-auto-meta">No games on this date.</p>;
   const sideOf = (m) => (games || []).find((g) => g.id === m.gameId)?.sides?.find((s) => s.team === m.team) || null;
   const namesAt = (side, k) => shootersAt(side, k, group, metric).map((p) => `${String(p.name).split(' ').slice(-1)[0]} ${p.pos}${p.line || ''}`).join(', ');
+  const rowKey = (m) => `${m.gameId}-${m.team}`;
+  const shownKey = (m) => (picked[rowKey(m)] && keys.includes(picked[rowKey(m)]) ? picked[rowKey(m)] : m.best?.key || null);
   return (
     <div className="nhlx-df-table nhlx-df-reads">
       <PfTable className="nhlx-da-table">
@@ -91,27 +97,35 @@ function Reads({ reads, keys, digits, metric, active, onPick, games, group }) {
             <th className="is-left">Shooters</th>
             <th className="is-left">Against</th>
             {keys.map((k) => <th key={k}>{k}</th>)}
-            <th className="is-left">Softest spot</th>
+            <th className="is-left" title="The softest spot by default; click a position's value to list the shooters there instead">Softest spot · shooters</th>
           </tr>
         </thead>
         <tbody>
           {reads.map((m) => {
             const side = sideOf(m);
+            const shown = shownKey(m);
             return (
-              <tr key={`${m.gameId}-${m.team}`} className={active === m.team || active === m.opp ? 'is-active' : ''}>
+              <tr key={rowKey(m)} className={active === m.team || active === m.opp ? 'is-active' : ''}>
                 <td className="is-left"><TeamLink abbr={m.team} logo={22}><b>{m.team}</b></TeamLink> <small>{m.venue === 'H' ? 'home' : 'away'}</small></td>
                 <td className="is-left"><button type="button" className="nhlx-df-team" onClick={() => onPick(m.opp)}><TeamLogo abbr={m.opp} size={20} />{m.opp}</button></td>
                 {keys.map((k) => {
                   const c = m.cells[k];
                   const who = side ? namesAt(side, k) : '';
                   return (
-                    <td key={k} className={`${c ? rankTone(c.rank, c.n) : ''}${m.best?.key === k ? ' is-best' : ''}`} title={who ? `${m.team} ${k} tonight: ${who}` : undefined}>
-                      {c ? <span className="nhlx-df-cell"><b>{fmt(c.value, digits)}</b><RankChip rank={c.rank} n={c.n} /></span> : <small>—</small>}
+                    <td key={k} className={`${c ? rankTone(c.rank, c.n) : ''}${m.best?.key === k ? ' is-best' : ''}${shown === k ? ' is-shown' : ''}`} title={`${who ? `${m.team} ${k} tonight: ${who}. ` : ''}Click to list the ${k} shooters`}>
+                      <button type="button" className="nhlx-df-cellbtn" onClick={() => setPicked((cur) => ({ ...cur, [rowKey(m)]: k }))} aria-pressed={shown === k}>
+                        {c ? <span className="nhlx-df-cell"><b>{fmt(c.value, digits)}</b><RankChip rank={c.rank} n={c.n} /></span> : <small>—</small>}
+                      </button>
                     </td>
                   );
                 })}
                 <td className="is-left">
-                  {m.best ? <><b>{m.best.key}</b> <small>#{m.best.rank} for {metric === 'g' ? 'goals' : 'shots'}{m.cells[m.best.key]?.gp != null ? ` · ${gpText(m.cells[m.best.key])} gp` : ''}</small><br /><Shooters side={side} keyName={m.best.key} group={group} opp={m.opp} venue={m.venue} metric={metric} /></> : <small>no games stored</small>}
+                  {m.best ? <>
+                    <b>{m.best.key}</b> <small>#{m.best.rank} for {metric === 'g' ? 'goals' : 'shots'}{m.cells[m.best.key]?.gp != null ? ` · ${gpText(m.cells[m.best.key])} gp` : ''}</small>
+                    <br />
+                    {shown && shown !== m.best.key ? <small className="nhlx-auto-meta">{shown} shooters (#{m.cells[shown]?.rank ?? '—'}): </small> : null}
+                    <Shooters side={side} keyName={shown || m.best.key} group={group} opp={m.opp} venue={m.venue} metric={metric} />
+                  </> : <small>no games stored</small>}
                 </td>
               </tr>
             );
@@ -328,7 +342,7 @@ export default function DefensePanel() {
         <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Date" />
       </div>
 
-      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Tonight’s matchups</h3><small>{data.tonight?.length || 0} games on {date} · each shooting side against what its opponent gives up per skater at the position {venue === 'ALL' ? 'over every game' : 'at the venue it defends tonight'} · softest spot first, with the shooters lined up there tonight (hover a cell for the other positions; * = carried from an earlier lineup)</small></div>
+      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Tonight’s matchups</h3><small>{data.tonight?.length || 0} games on {date} · each shooting side against what its opponent gives up per skater at the position {venue === 'ALL' ? 'over every game' : 'at the venue it defends tonight'} · softest spot first, with the shooters lined up there tonight (click any position’s value to list that position’s shooters instead; first line first; * = carried from an earlier lineup)</small></div>
       <Reads reads={reads} keys={keys} digits={digits} metric={metric} active={active} onPick={pick} games={data.tonight || []} group={group} />
 
       <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Running hot</h3><small>Current streaks from this season’s stored games · the study found no carry-over from a goal last game, so read the streak as colour and the Tonight column as the matchup</small></div>

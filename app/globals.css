@@ -1265,6 +1265,9 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-df-shooter { all: unset; cursor: pointer; font-weight: 600; color: var(--heading); }
 .nhlx-df-shooter small { margin-left: 2px; font-weight: 500; color: var(--muted); }
 .nhlx-df-shooter:hover { text-decoration: underline; }
+.nhlx-df-cellbtn { all: unset; cursor: pointer; display: inline-block; padding: 2px 4px; border-radius: 6px; }
+.nhlx-df-cellbtn:hover { outline: 1px solid var(--line-strong); }
+td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .nhlx-df-table .nhlx-pft td { padding: 7px 8px; }
 .nhlx-df-table .nhlx-pft th { padding: 8px 8px; }
 .nhlx-df-table .nhlx-pft td.is-rk { color: var(--muted); font-size: 12px; }
