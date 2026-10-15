@@ -34,8 +34,11 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
 - Signed-in page = seven hash tabs (`#teams`, `#matchups`, `#defense`, `#firstgoal`, `#model`, `#league`, `#history`); it opens on
   Matchups. The Defense tab (`components/nhl/DefensePanel.jsx`, helpers in `lib/nhl-data/defense-board.js`, data from
   `/api/nhl/data/defense`, which also carries the date's games and MoneyPuck's team rates) is the ShotPropz-style cheat sheet:
-  what every team gives up to each position group (C / LW / RW / D, C / W / D, F / D) in shots or goals per game, season /
-  L10 / L5, by where the defender plays, rank 1 = the most allowed with ties shared, tinted by rank thirds; above the tables
+  what every team gives up to each position group (C / LW / RW / D, C / W / D, F / D) in shots or goals **per skater at the
+  position** a game (the study's read, section 13; `per` on every `defenseByPosition` cell, groups weighted by the skaters they
+  carry), the Season span = `blendedDefense`: this season blended into last season's table at games / (games + 15) for shots and
+  games / (games + 40) for goals (GP shows "this + last"), L10 / L5 the newest stored games across the seasons, by where the
+  defender plays, rank 1 = the most allowed with ties shared, tinted by rank thirds; above the tables
   tonight's matchups read off the same tables (`matchupReads`, each shooting side's softest spot first), and a team overview
   (GA / GP, SA / GP from the stored box scores; xGA / 60, high-danger shots against and pace from MoneyPuck), each column ranked;
   between them "Running hot" (`lib/nhl-data/streaks.js`, `streaks` in the defense API): every skater's current goal / point /

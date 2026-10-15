@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { defenseByPosition } from '../lib/nhl-data/defense';
+import { defenseByPosition, blendedDefense } from '../lib/nhl-data/defense';
 import { boardTables, overviewRows, matchupReads, rankDesc } from '../lib/nhl-data/defense-board';
 
 // Three games: NYR at NJD, BOS at NJD, NJD at BOS. One skater per position per side.
@@ -27,10 +27,49 @@ describe('defense board', () => {
     expect(t.C.n).toBe(3);
     expect(t.D.rows[0]).toMatchObject({ abbr: 'BOS', value: 2.5, gp: 2 });
   });
-  test('wings combine: BOS gives up the most to wingers, NJD and NYR tie behind', () => {
+  test('wings combine per skater: BOS gives up the most to wingers, NJD and NYR tie behind', () => {
     const t = boardTables(defense, { metric: 'sog', group: 'cwd' });
-    expect(t.W.rows.map((r) => [r.abbr, r.value, r.rank])).toEqual([['BOS', 5, 1], ['NJD', 4, 2], ['NYR', 4, 2]]);
-    expect(boardTables(defense, { metric: 'sog', group: 'fd' }).F.rows[0]).toMatchObject({ abbr: 'NJD', value: 7.67 });
+    // One LW and one RW a side, so a winger's figure is the two positions' mean: BOS (3 + 2) / 2.
+    expect(t.W.rows.map((r) => [r.abbr, r.value, r.rank])).toEqual([['BOS', 2.5, 1], ['NJD', 2, 2], ['NYR', 2, 2]]);
+    expect(boardTables(defense, { metric: 'sog', group: 'fd' }).F.rows[0]).toMatchObject({ abbr: 'NJD', value: 2.56 });
+  });
+  test('the figure is per skater: two wingers sharing the shots do not double the read', () => {
+    // NJD faces two LWs with 2 shots each in one game, then one LW with 4: 4 a game either night, 2.67 per skater.
+    const two = [
+      ...side('2026-10-01', 1, 'NYR', 'NJD', 'A', { LW: [2, 0] }), row('2026-10-01', 1, 'NYR', 'NJD', 'A', 'LW', 2, 0),
+      ...side('2026-10-03', 2, 'BOS', 'NJD', 'A', { LW: [4, 0] }),
+    ];
+    const d = defenseByPosition(two);
+    expect(d.teams.NJD.ALL.LW).toMatchObject({ gp: 2, sog: 4, skaters: 1.5 });
+    expect(d.teams.NJD.ALL.LW.per.sog).toBeCloseTo(2.667, 3);
+    expect(boardTables(d, { metric: 'sog' }).LW.rows[0]).toMatchObject({ abbr: 'NJD', value: 2.67, gp: 2, base: 0 });
+  });
+  test('the blended season table: this season at games / (games + 15) for shots, games / (games + 40) for goals, over a 10-game base', () => {
+    // Last season: NJD allowed its centres 2 shots and 0.2 goals a game over 20 games; this season 6 and 1 over 2 games.
+    const prev = [];
+    for (let i = 0; i < 20; i++) prev.push(row('2025-11-01', 100 + i, 'BOS', 'NJD', 'A', 'C', 2, i < 4 ? 1 : 0));
+    const cur = [row('2026-10-01', 1, 'NYR', 'NJD', 'A', 'C', 6, 1), row('2026-10-03', 2, 'BOS', 'NJD', 'A', 'C', 6, 1)];
+    const b = blendedDefense([...prev, ...cur], '2026-10-05');
+    const c = b.teams.NJD.ALL.C;
+    expect(c).toMatchObject({ gp: 2, base: 20, skaters: 1 });
+    expect(c.per.sog).toBeCloseTo((2 / 17) * 6 + (15 / 17) * 2, 2);
+    expect(c.per.g).toBeCloseTo((2 / 42) * 1 + (40 / 42) * 0.2, 2);
+    expect(c.sog).toBeCloseTo((2 / 17) * 6 + (15 / 17) * 2, 1);
+    // The shooters were away, so NJD defended at home only: no away table; a team with no record in either season is absent.
+    expect(b.teams.NJD.A.C).toBeUndefined();
+    expect(b.teams.NJD.H.C.gp).toBe(2);
+    expect(b.teams.NYR).toBeUndefined();
+    expect(b.blended).toBe(true);
+    // The board reads the blend and shows the base.
+    expect(boardTables(b, { metric: 'sog' }).C.rows[0]).toMatchObject({ abbr: 'NJD', gp: 2, base: 20, value: 2.47, rank: 1 });
+    // Under a 10-game base last season counts for nothing: this season alone.
+    const thin = blendedDefense([...prev.slice(0, 5), ...cur], '2026-10-05');
+    expect(thin.teams.NJD.ALL.C).toMatchObject({ gp: 2, base: 0 });
+    expect(thin.teams.NJD.ALL.C.per.sog).toBe(6);
+    // Nothing this season yet: last season's table alone, gp 0.
+    const none = blendedDefense(prev, '2026-10-05');
+    expect(none.teams.NJD.ALL.C).toMatchObject({ gp: 0, base: 20 });
+    expect(none.teams.NJD.ALL.C.per.sog).toBe(2);
   });
   test('the venue is where the defender played; a team with no game there is left out', () => {
     const home = boardTables(defense, { metric: 'g', venue: 'H' });

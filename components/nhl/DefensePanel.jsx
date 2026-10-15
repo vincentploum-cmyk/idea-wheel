@@ -12,7 +12,7 @@ import { GROUPS, OVERVIEW_COLS, boardTables, overviewRows, matchupReads } from '
 // tonight's matchups read off the same tables, and a team overview with MoneyPuck's rates.
 
 const METRICS = [['sog', 'Shots'], ['g', 'Goals']];
-const SPANS = [['season', 'Season'], ['l10', 'Last 10'], ['l5', 'Last 5']];
+const SPANS = [['season', 'Season (blended)'], ['l10', 'Last 10'], ['l5', 'Last 5']];
 const VENUES = [['ALL', 'All'], ['H', 'Home'], ['A', 'Away']];
 const VIEWS = [['all', 'All teams'], ['tonight', 'Playing tonight']];
 const GROUP_OPTS = Object.entries(GROUPS).map(([k, g]) => [k, g.label]);
@@ -24,6 +24,9 @@ function RankChip({ rank, n }) {
   return rank ? <span className="nhlx-rank" title={`Rank ${rank} of ${n}: 1 allows the most`}>#{rank}</span> : null;
 }
 
+/** "7 + 82" for a blended season row (this season's games, last season's in the blend), else the games. */
+const gpText = (r) => (r?.base ? `${r.gp} + ${r.base}` : r?.gp ?? '—');
+
 /** One cheat-sheet table: Rk · Team · GP · value, tinted by rank thirds, the league mean at the foot. */
 function RankTable({ title, table, digits, playing, view, active, onPick }) {
   const rows = table?.rows || [];
@@ -31,7 +34,7 @@ function RankTable({ title, table, digits, playing, view, active, onPick }) {
     <div className="nhlx-df-table">
       <h4>{title}</h4>
       <PfTable className="nhlx-da-table">
-        <thead><tr><th>Rk</th><th className="is-left">Team</th><th>GP</th><th>{digits === 1 ? 'SA / GP' : 'GA / GP'}</th></tr></thead>
+        <thead><tr><th>Rk</th><th className="is-left">Team</th><th title="Games this season, + last season's in the blend">GP</th><th title={`${digits === 1 ? 'Shots' : 'Goals'} allowed per skater at the position, a game`}>{digits === 1 ? 'SA / skater' : 'GA / skater'}</th></tr></thead>
         <tbody>
           {rows.map((r) => {
             const dim = view === 'tonight' && playing.size && !playing.has(r.abbr);
@@ -40,7 +43,7 @@ function RankTable({ title, table, digits, playing, view, active, onPick }) {
               <tr key={r.abbr} className={active === r.abbr ? 'is-active' : ''}>
                 <td className="is-rk">{r.rank}</td>
                 <td className="is-left"><button type="button" className="nhlx-df-team" onClick={() => onPick(r.abbr)} title={`Highlight ${r.abbr} in every table`}><TeamLogo abbr={r.abbr} size={20} />{r.abbr}</button></td>
-                <td>{r.gp}</td>
+                <td>{gpText(r)}</td>
                 <td className={`is-val ${rankTone(r.rank, table.n)}`}><b>{fmt(r.value, digits)}</b></td>
               </tr>
             );
@@ -79,7 +82,7 @@ function Reads({ reads, keys, digits, metric, active, onPick }) {
                   </td>
                 );
               })}
-              <td className="is-left">{m.best ? <><b>{m.best.key}</b> <small>#{m.best.rank} for {metric === 'g' ? 'goals' : 'shots'}{m.cells[m.best.key]?.gp != null ? ` · ${m.cells[m.best.key].gp} gp` : ''}</small></> : <small>no games stored</small>}</td>
+              <td className="is-left">{m.best ? <><b>{m.best.key}</b> <small>#{m.best.rank} for {metric === 'g' ? 'goals' : 'shots'}{m.cells[m.best.key]?.gp != null ? ` · ${gpText(m.cells[m.best.key])} gp` : ''}</small></> : <small>no games stored</small>}</td>
             </tr>
           ))}
         </tbody>
@@ -117,7 +120,7 @@ function Streaks({ list, tab, onTab, playing, view, byVenue, venue, group, digit
               <th title="Consecutive games with a goal">G streak</th><th title="Consecutive games with a point">Pts streak</th><th title="Consecutive games with 3+ shots on goal">3+ SOG streak</th>
               <th title="Goals over his last five games">G L5</th><th title="Shots on goal over his last five games">SOG L5</th>
               <th className="is-left">Last game</th>
-              <th className="is-left" title={`What tonight's opponent gives up to his position per game (${metric === 'g' ? 'goals' : 'shots'}), with its rank`}>Tonight</th>
+              <th className="is-left" title={`What tonight's opponent gives up per skater at his position a game (${metric === 'g' ? 'goals' : 'shots'}), with its rank`}>Tonight</th>
             </tr>
           </thead>
           <tbody>
@@ -227,13 +230,13 @@ export default function DefensePanel() {
         <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Date" />
       </div>
 
-      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Tonight’s matchups</h3><small>{data.tonight?.length || 0} games on {date} · each shooting side against what its opponent gives up {venue === 'ALL' ? 'over every game' : 'at the venue it defends tonight'} · softest spot first</small></div>
+      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Tonight’s matchups</h3><small>{data.tonight?.length || 0} games on {date} · each shooting side against what its opponent gives up per skater at the position {venue === 'ALL' ? 'over every game' : 'at the venue it defends tonight'} · softest spot first</small></div>
       <Reads reads={reads} keys={keys} digits={digits} metric={metric} active={active} onPick={pick} />
 
       <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Running hot</h3><small>Current streaks from this season’s stored games · the study found no carry-over from a goal last game, so read the streak as colour and the Tonight column as the matchup</small></div>
       <Streaks list={data.streaks || []} tab={streakTab} onTab={setStreakTab} playing={playing} view={view} byVenue={byVenue} venue={venue} group={group} digits={digits} metric={metric} />
 
-      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>{metric === 'g' ? 'Goals' : 'Shots'} against by position</h3><small>{SPANS.find(([k]) => k === span)[1]} · defender {venue === 'ALL' ? 'anywhere' : venue === 'H' ? 'at home' : 'away'} · per game · rank 1 allows the most, ties share a rank</small></div>
+      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>{metric === 'g' ? 'Goals' : 'Shots'} against by position</h3><small>{SPANS.find(([k]) => k === span)[1]} · defender {venue === 'ALL' ? 'anywhere' : venue === 'H' ? 'at home' : 'away'} · per skater at the position, a game · rank 1 allows the most, ties share a rank</small></div>
       <div className="nhlx-df-grid">
         {keys.map((k) => <RankTable key={k} title={`${metric === 'g' ? 'Goals' : 'Shots'} against ${k}`} table={tables?.[k]} digits={digits} playing={playing} view={view} active={active} onPick={pick} />)}
       </div>
@@ -243,7 +246,7 @@ export default function DefensePanel() {
 
       <div className="nhlx-da-legend"><span><i className="is-soft" />Softest third</span><span><i className="is-mid" />Middle</span><span><i className="is-tough" />Stingiest third</span></div>
       <p className="nhlx-df-note">
-        {data.games} games stored. {thin ? `${thin} teams have fewer than 10 games ${venue === 'ALL' ? 'stored' : venue === 'H' ? 'at home' : 'away'}; their ranks can swing on one night.` : ''} Positions are the lineup slots the box scores were logged under (LW / C / RW by line, D by pair); a group’s figure is the sum of its positions per game. Click a team to follow it through every table. MoneyPuck rates credit MoneyPuck.com.
+        {data.games} games stored. {thin ? `${thin} teams have fewer than 10 games ${venue === 'ALL' ? 'stored' : venue === 'H' ? 'at home' : 'away'}; their ranks can swing on one night.` : ''} Every figure is what the team allows per skater at the position a game, the read the study found twice as sharp as the per-game total. The Season span blends this season into last season’s table at games / (games + 15) for shots and games / (games + 40) for goals (GP reads “this season + last”); Last 10 / Last 5 are the newest stored games across the two seasons and are the noisier read. Positions are the lineup slots the box scores were logged under (LW / C / RW by line, D by pair); a group’s figure weights its positions by the skaters they carry. Click a team to follow it through every table. MoneyPuck rates credit MoneyPuck.com.
       </p>
     </div>
   );
