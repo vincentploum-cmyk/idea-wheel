@@ -90,13 +90,17 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   (softest spots, richest game, environment plays, near-ties, thin games, lineup sources) written from the picks.
   The numbers are the model's: with a run saved for the date, each row is the run's λ and 2+ / 3+ / 4+ SOG and 1+ G
   probabilities (`fromModel`) and only skaters the run projected are listed; the study's plain-rate read (fixed
-  Poisson coefficients fitted on 2025-26, `tools/predictors/picks.py`, log features; this season blended into last
-  season's base at n / (n + 18) shots, n / (n + 40) goals; the opponent read is this season's team shots allowed)
-  sits beside them as a dimmed `Study` column and stands in when no run exists. A stored game grades the rows
+  Poisson coefficients fitted on 2024-25 + 2025-26 by `tools/predictors/replay.py`, log features: the skater's rate,
+  attempts, chances and TOI, this season blended into last season's base at n / (n + 18) shots, n / (n + 40) goals;
+  home ice; back-to-back; and what the opponent allows **per skater at his position**, this season blended into last
+  season's table at games / (games + 15) for shots and games / (games + 40) for goals, `positionAllowed`) sits beside
+  them as a dimmed `Study` column and stands in when no run exists; the board's "Opp to pos" column shows that read
+  and its rank. A stored game grades the rows
   (`withActuals` / `hitOf` in `picks-pure.js`: each skater's box-score SOG and goals ride on his row as `actual`,
   null when he did not play): every probability cell green when he reached that market's floor, red when he fell
   short, the row on its lead market, a "Got" column with the figure and a tally in the game head. The model's math is untouched.
-  Study: `docs/shots-goals-predictors.md`.
+  Study: `docs/shots-goals-predictors.md` (section 13 is the every-angle scan and the replay; `tools/predictors/run.sh <year>`
+  rebuilds it, `explain.py` reads one skater-game).
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching: the roster decides a row's group, a pair
   holds a defenseman and two forwards side by side are a short forward line, three pairs at most, and a

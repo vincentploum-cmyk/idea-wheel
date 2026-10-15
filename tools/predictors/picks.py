@@ -1,4 +1,7 @@
-"""Tonight's best shots and goals pick per game, from the study's rules: the skater's own rate
+"""Superseded (2026-10-15) by the site's Best bets board, lib/nhl-data/picks-pure.js, whose
+coefficients come from tools/predictors/replay.py (section 13). Kept for the record.
+
+Tonight's best shots and goals pick per game, from the study's earlier rules: the skater's own rate
 (this season blended with his previous-season base at n / (n + 18) for shots, n / (n + 40) for
 goals), this season's shot attempts, home ice, and the opponent's shots allowed this season
 (team total and to the position). Poisson rates are fitted on the previous full season's rows

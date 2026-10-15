@@ -44,6 +44,13 @@ function tally(g) {
   return [s ? `${s} shots plays hit` : null, go ? `${go} goal plays hit` : null].filter(Boolean).join(', ');
 }
 
+/** The opponent's read at the skater's position: the blended per-skater figure and its rank (1 = allows the most to the position). */
+function OppPos({ c, k, rank }) {
+  const o = c.oppPos;
+  if (!o || o[k] == null) return <td className="is-num is-wide">—</td>;
+  return <td className="is-num is-wide" title={`${c.opp} allows ${o[k].toFixed(2)} ${k === 'sog' ? 'shots' : 'goals'} per ${c.pos} a game (${o.games} game${o.games === 1 ? '' : 's'} this season blended into last season's ${o.prevGames}); rank ${o[rank] ?? '—'} of the league, 1 = allows the most`}>{o[rank] ? `#${o[rank]}` : '—'}<small>{o[k].toFixed(2)}/{c.pos}{c.b2b ? ' · B2B' : ''}</small></td>;
+}
+
 const season = (c, k, base) => (c.rates ? <><b>{c.rates[k] == null ? '—' : c.rates[k].toFixed(2)}</b> <small>({c.rates.n}) / {c.rates[base] == null ? 'none' : c.rates[base].toFixed(2)}</small></> : <span className="nhlx-auto-meta">no stored games</span>);
 
 function ShotsTable({ g, model }) {
@@ -58,9 +65,9 @@ function ShotsTable({ g, model }) {
             <th className="is-num" title="3+ shots">3+</th>
             <th className="is-num" title="4+ shots">4+</th>
             {g.final ? <th className="is-num" title="Shots on goal in the box score">Got</th> : null}
-            {model ? <th className="is-num is-wide" title="The study's own rate for 3+ shots, for comparison (the skater's rate, attempts, home ice, the opponent's shots allowed)">Study 3+</th> : null}
+            {model ? <th className="is-num is-wide" title="The study's own rate for 3+ shots, for comparison (the skater's rate, attempts and ice time, home ice, back-to-back, what the opponent allows per skater at his position)">Study 3+</th> : null}
             <th className="is-num" title="Shots a game this season (games), and last season's base">Season / base</th>
-            <th className="is-num is-wide" title="Where the opponent ranks for shots allowed a game this season (1 = allows the most)">Opp</th>
+            <th className="is-num is-wide" title="What the opponent allows per skater at his position, shots a game (this season blended into last season's), and its rank among the teams (1 = allows the most to the position)">Opp to pos</th>
           </tr>
         </thead>
         <tbody>
@@ -72,7 +79,7 @@ function ShotsTable({ g, model }) {
               {g.final ? <Got c={c} stat="sog" unit="SOG" /> : null}
               {model ? <td className="is-num is-wide nhlx-pk-study">{c.study ? pct(c.study.p3) : '—'}</td> : null}
               <td className="is-num">{season(c, 'curSog', 'baseSog')}</td>
-              <td className="is-num is-wide">{c.oppRank ? `#${c.oppRank}` : '—'}{c.oppSog ? <small>{c.oppSog.toFixed(1)}/g</small> : null}</td>
+              <OppPos c={c} k="sog" rank="rankSog" />
             </tr>
           ))}
         </tbody>
@@ -92,8 +99,9 @@ function GoalsTable({ g, model }) {
             <th className="is-num is-wide" title="Projected goals">λ</th>
             <th className="is-num" title="1+ goal: probability and the break-even price">1+ G</th>
             {g.final ? <th className="is-num" title="Goals in the box score">Got</th> : null}
-            {model ? <th className="is-num is-wide" title="The study's own rate for 1+ goal, for comparison">Study 1+</th> : null}
+            {model ? <th className="is-num is-wide" title="The study's own rate for 1+ goal, for comparison (the skater's goals, chances and shots, home ice, back-to-back, the opponent's goals allowed per skater at his position)">Study 1+</th> : null}
             <th className="is-num" title="Goals a game this season (games), and last season's base">Season / base</th>
+            <th className="is-num is-wide" title="Goals the opponent allows per skater at his position a game (this season blended into last season's), and its rank among the teams (1 = allows the most to the position)">Opp to pos</th>
           </tr>
         </thead>
         <tbody>
@@ -105,6 +113,7 @@ function GoalsTable({ g, model }) {
               {g.final ? <Got c={c} stat="g" unit="G" /> : null}
               {model ? <td className="is-num is-wide nhlx-pk-study">{c.study ? pct(c.study.p1g) : '—'}</td> : null}
               <td className="is-num">{season(c, 'curG', 'baseG')}</td>
+              <OppPos c={c} k="g" rank="rankG" />
             </tr>
           ))}
         </tbody>
@@ -148,7 +157,7 @@ export default function PicksPanel() {
       </div>
       {err ? <div className="nhlx-alert">{err}</div> : null}
       <p className="nhlx-auto-meta nhlx-fg-how">
-        The best shots plays and the best goal plays in every game: every skater over the floor (50% for 3+ shots, 35% for a goal), and three to four a table (the rest on the “next” line); the dimmed rows are under the floor. The percentage is the chance of the hit; the price under it is the break-even, so the play wants better odds than that. {board?.source === 'model' ? 'The numbers are the model’s, from the latest run saved for the date; the dimmed Study column is the plain-rate read (the skater’s own rate, attempts, home ice, the opponent’s shots allowed) for comparison.' : 'With no run saved for this date the numbers are the plain-rate read: the skater’s own rate this season blended with last season’s base, his attempts, home ice and what the opponent has allowed this season.'} Click a player for his card.
+        The best shots plays and the best goal plays in every game: every skater over the floor (50% for 3+ shots, 35% for a goal), and three to four a table (the rest on the “next” line); the dimmed rows are under the floor. The percentage is the chance of the hit; the price under it is the break-even, so the play wants better odds than that. {board?.source === 'model' ? 'The numbers are the model’s, from the latest run saved for the date; the dimmed Study column is the plain-rate read (the skater’s own rate, attempts and ice time, home ice, back-to-back, what the opponent allows per skater at his position) for comparison.' : 'With no run saved for this date the numbers are the plain-rate read: the skater’s own rate this season blended with last season’s base, his attempts and ice time, home ice, back-to-back, and what the opponent allows per skater at his position (this season blended into last season’s).'} Click a player for his card.
       </p>
       {board && !board.games.length ? <div className="nhlx-empty">No games on this date.</div> : null}
       {board && board.games.map((g, i) => (

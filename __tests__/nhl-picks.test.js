@@ -1,7 +1,7 @@
 import { describe, expect, test } from '@jest/globals';
-import { blendRates, project, fromModel, poissonAtLeast, fairOdds, shotsAllowed, pickGame, notesFor, seasonYearOf, SHOTS_FLOOR, withActuals, hitOf } from '../lib/nhl-data/picks';
+import { blendRates, project, fromModel, poissonAtLeast, fairOdds, shotsAllowed, positionAllowed, isBackToBack, pickGame, notesFor, seasonYearOf, SHOTS_FLOOR, LEAGUE_POS, withActuals, hitOf } from '../lib/nhl-data/picks';
 
-const game = (sog, icf = sog * 1.8, g = 0.3, iscf = 1.5) => ({ sog, icf, g, iscf });
+const game = (sog, icf = sog * 1.8, g = 0.3, iscf = 1.5, toi = 17) => ({ sog, icf, g, iscf, toi });
 
 describe('tonight’s picks', () => {
   test('seasons run July to June', () => {
@@ -16,24 +16,43 @@ describe('tonight’s picks', () => {
     expect(r.sog).toBeCloseTo(3.286, 2);
     expect(r.baseSog).toBe(3);
     expect(r.curSog).toBe(5);
+    // TOI blends at n / (n + 5); the last five games this season are the ice-time read.
+    const t = blendRates([game(3, 5, 0, 1, 20), game(3, 5, 0, 1, 22)], Array.from({ length: 82 }, () => game(3, 5, 0.3, 1.5, 15)));
+    expect(t.toi).toBeCloseTo((2 / 7) * 21 + (5 / 7) * 15, 3);
+    expect(t.toiL5).toBe(21);
+    expect(blendRates([], Array.from({ length: 82 }, () => game(3, 5, 0.3, 1.5, 15))).toiL5).toBe(15);
     // No base and too few games this season: no rate. Five games this season stand alone.
     expect(blendRates(cur, [])).toBeNull();
     expect(blendRates([...cur, game(2), game(3)], []).sog).toBe(4);
   });
   test('the projection is a multiplicative Poisson rate and the tails follow it', () => {
-    const r = blendRates(Array.from({ length: 82 }, () => game(3.4, 6.5, 0.45, 2.3)), Array.from({ length: 82 }, () => game(3.4, 6.5, 0.45, 2.3)));
-    const p = project(r, { home: false, oppShotsAllowed: 30 });
+    const r = blendRates(Array.from({ length: 82 }, () => game(3.4, 6.5, 0.45, 2.3, 19)), Array.from({ length: 82 }, () => game(3.4, 6.5, 0.45, 2.3, 19)));
+    const soft = { sog: 1.95, g: 0.26 }; const tough = { sog: 1.45, g: 0.17 };
+    const p = project(r, { home: false, oppPos: soft, pos: 'C' });
     expect(p.lamS).toBeGreaterThan(3.1);
-    expect(p.lamS).toBeLessThan(3.6);
+    expect(p.lamS).toBeLessThan(3.7);
     expect(p.p3).toBeCloseTo(poissonAtLeast(p.lamS, 3), 2);
     expect(p.p2).toBeGreaterThan(p.p3);
     expect(p.p3).toBeGreaterThan(p.p4);
-    // A softer opponent and home ice lift the rate; the top end does not run away.
-    expect(project(r, { home: true, oppShotsAllowed: 30 }).lamS).toBeGreaterThan(p.lamS);
-    expect(project(r, { home: false, oppShotsAllowed: 24 }).lamS).toBeLessThan(p.lamS);
-    const star = blendRates([], Array.from({ length: 80 }, () => game(4.4, 8, 0.66, 3.6)));
-    expect(project(star, { home: false, oppShotsAllowed: 27 }).lamS).toBeLessThan(4.6);
-    expect(project(star, { home: false, oppShotsAllowed: 27 }).p1g).toBeGreaterThan(0.4);
+    // A softer opponent, home ice and more ice time lift the rate; a back-to-back trims it; the top end does not run away.
+    expect(project(r, { home: true, oppPos: soft, pos: 'C' }).lamS).toBeGreaterThan(p.lamS);
+    expect(project(r, { home: false, oppPos: tough, pos: 'C' }).lamS).toBeLessThan(p.lamS);
+    expect(project(r, { home: false, oppPos: tough, pos: 'C' }).p1g).toBeLessThan(p.p1g);
+    expect(project(r, { home: false, oppPos: soft, pos: 'C', b2b: true }).lamS).toBeLessThan(p.lamS);
+    expect(project(r, { home: false, oppPos: soft, pos: 'C', b2b: true }).lamG).toBeLessThan(p.lamG);
+    expect(project({ ...r, toiL5: 22 }, { home: false, oppPos: soft, pos: 'C' }).lamS).toBeGreaterThan(p.lamS);
+    // One standard deviation of the position read (~0.25 shots per skater) is worth about 10% of the rate.
+    expect(project(r, { home: false, oppPos: { sog: 1.95, g: 0.2 }, pos: 'C' }).lamS / project(r, { home: false, oppPos: { sog: 1.7, g: 0.2 }, pos: 'C' }).lamS).toBeCloseTo(1.1, 1);
+    // Without a read for the opponent the league figure for the position stands in.
+    expect(project(r, { home: false, pos: 'RW' }).lamS).toBeCloseTo(project(r, { home: false, oppPos: LEAGUE_POS.RW, pos: 'RW' }).lamS, 6);
+    const star = blendRates([], Array.from({ length: 80 }, () => game(4.4, 8, 0.66, 3.6, 21)));
+    expect(project(star, { home: false, oppPos: LEAGUE_POS.C, pos: 'C' }).lamS).toBeLessThan(4.6);
+    expect(project(star, { home: false, oppPos: LEAGUE_POS.C, pos: 'C' }).lamS).toBeGreaterThan(3.8);
+    expect(project(star, { home: false, oppPos: LEAGUE_POS.C, pos: 'C' }).p1g).toBeGreaterThan(0.4);
+    // A league-average top-six forward lands near the league's figures.
+    const avg = blendRates([], Array.from({ length: 82 }, () => game(1.73, 3.1, 0.23, 1.2, 16.3)));
+    expect(project(avg, { home: false, oppPos: LEAGUE_POS.C, pos: 'C' }).lamS).toBeCloseTo(1.73, 0);
+    expect(project(avg, { home: false, oppPos: LEAGUE_POS.C, pos: 'C' }).lamG).toBeCloseTo(0.23, 0);
   });
   test('with a saved run the row carries the model’s own numbers, the study’s beside them', () => {
     const study = { lamS: 3.08, p3: 0.59, p4: 0.37, p1g: 0.4 };
@@ -73,6 +92,38 @@ describe('tonight’s picks', () => {
     expect(a.teams.CAR).toEqual({ games: 1, sog: 22, rank: 2 });
     expect(a.league).toBe(27.25);
     expect(a.teamCount).toBe(2);
+  });
+  test('what each team allows per skater at a position, this season blended into last season’s, with ranks', () => {
+    const row = (opp, pos, sog, g, gameId) => ({ opp, pos, sog, g, gameId });
+    // This season: BUF has given C skaters 2.5 shots a game over two games, CAR 1.0 over one.
+    const cur = [row('BUF', 'C', 3, 1, 1), row('BUF', 'C', 2, 0, 1), row('BUF', 'C', 3, 0, 2), row('BUF', 'C', 2, 0, 2), row('CAR', 'C', 1, 0, 3), row('CAR', 'C', 1, 0, 3), row('BUF', 'D', 1, 0, 1)];
+    // Last season: BUF 1.5 to C over 20 games, CAR 2.0 over 20; TOR only last season.
+    const prev = [];
+    for (let i = 0; i < 20; i++) { prev.push(row('BUF', 'C', 1.5, 0.2, 100 + i), row('CAR', 'C', 2, 0.3, 200 + i), row('TOR', 'C', 1.7, 0.25, 300 + i)); }
+    const a = positionAllowed(cur, prev);
+    // BUF C: 2 games → w = 2 / 17: 2.5 * 2/17 + 1.5 * 15/17
+    expect(a.read('BUF', 'C').sog).toBeCloseTo(2.5 * (2 / 17) + 1.5 * (15 / 17), 2);
+    expect(a.read('BUF', 'C').g).toBeCloseTo(0.25 * (2 / 42) + 0.2 * (40 / 42), 3);
+    expect(a.read('BUF', 'C')).toMatchObject({ games: 2, prevGames: 20, curSog: 2.5, prevSog: 1.5 });
+    expect(a.read('CAR', 'C').sog).toBeCloseTo(1 * (1 / 16) + 2 * (15 / 16), 2);
+    // TOR: last season only; BUF D: this season only (no 10-game base last season).
+    expect(a.read('TOR', 'C')).toMatchObject({ games: 0, sog: 1.7, prevSog: 1.7 });
+    expect(a.read('BUF', 'D')).toMatchObject({ games: 1, sog: 1, prevSog: null });
+    expect(a.read('BUF', 'LW')).toBeNull();
+    expect(a.read('NYR', 'C')).toBeNull();
+    // Ranks: 1 = allows the most to the position. CAR 1.94 > BUF 1.62 > ... TOR 1.7 sits between.
+    expect(a.read('CAR', 'C').rankSog).toBe(1);
+    expect(a.read('TOR', 'C').rankSog).toBe(2);
+    expect(a.read('BUF', 'C').rankSog).toBe(3);
+    expect(a.read('CAR', 'C').rankG).toBe(1);
+    expect(a.teamCount).toBe(3);
+  });
+  test('a team is on a back-to-back when its last stored game was the day before', () => {
+    const last = { BUF: '2026-10-14', CAR: '2026-10-13' };
+    expect(isBackToBack(last, 'BUF', '2026-10-15')).toBe(true);
+    expect(isBackToBack(last, 'CAR', '2026-10-15')).toBe(false);
+    expect(isBackToBack(last, 'TOR', '2026-10-15')).toBe(false);
+    expect(isBackToBack(last, 'BUF', '2026-11-01')).toBe(false);
   });
   test('every skater over the floor is a pick; below it the best one is marked as a fallback', () => {
     const c = (name, p3, p1g) => ({ id: name, name, p3, p1g, lamS: p3 * 5, lamG: p1g });

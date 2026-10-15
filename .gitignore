@@ -45,3 +45,4 @@ next-env.d.ts
 
 # local NHL dev storage
 .nhl-data
+__pycache__/
