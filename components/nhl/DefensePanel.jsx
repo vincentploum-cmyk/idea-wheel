@@ -56,9 +56,12 @@ function RankTable({ title, table, digits, playing, view, active, onPick }) {
 }
 
 /** The shooting side's skaters at a group key tonight, clickable to the card: "Thompson C1 · Cozens C2 · …". */
-function Shooters({ side, keyName, group, opp, venue }) {
+function Shooters({ side, keyName, group, opp, venue, metric }) {
   const open = usePlayerCard();
-  const list = shootersAt(side, keyName, group);
+  const list = shootersAt(side, keyName, group, metric);
+  const lam = (p) => (p.lamS == null && p.lamG == null ? '' : metric === 'g'
+    ? ` · the run's λ ${p.lamG != null ? `${p.lamG.toFixed(2)} goals` : ''}${p.lamS != null ? `${p.lamG != null ? ', ' : ''}${p.lamS.toFixed(2)} shots` : ''}`
+    : ` · the run's λ ${p.lamS != null ? `${p.lamS.toFixed(2)} shots` : ''}${p.lamG != null ? `${p.lamS != null ? ', ' : ''}${p.lamG.toFixed(2)} goals` : ''}`);
   if (!side) return <small className="nhlx-auto-meta">no lineup yet</small>;
   if (!list.length) return <small className="nhlx-auto-meta">nobody listed at {keyName}</small>;
   return (
@@ -66,7 +69,7 @@ function Shooters({ side, keyName, group, opp, venue }) {
       {list.map((p, i) => (
         <span key={p.id}>
           {i ? ' · ' : ''}
-          <button type="button" className="nhlx-df-shooter" onClick={() => open({ id: p.id, opp, venue, pos: p.pos, line: p.line })} title={`${p.name}${p.carried ? ' (carried from an earlier lineup)' : ''}${p.lamS != null ? ` · the run's λ ${p.lamS.toFixed(2)} shots${p.lamG != null ? `, ${p.lamG.toFixed(2)} goals` : ''}` : ''}`}>
+          <button type="button" className="nhlx-df-shooter" onClick={() => open({ id: p.id, opp, venue, pos: p.pos, line: p.line })} title={`${p.name}${p.carried ? ' (carried from an earlier lineup)' : ''}${lam(p)}`}>
             {String(p.name).split(' ').slice(-1)[0]}<small>{p.pos === 'D' ? 'D' : p.pos}{p.line || ''}{p.carried ? '*' : ''}</small>
           </button>
         </span>
@@ -79,7 +82,7 @@ function Shooters({ side, keyName, group, opp, venue }) {
 function Reads({ reads, keys, digits, metric, active, onPick, games, group }) {
   if (!reads.length) return <p className="nhlx-auto-meta">No games on this date.</p>;
   const sideOf = (m) => (games || []).find((g) => g.id === m.gameId)?.sides?.find((s) => s.team === m.team) || null;
-  const namesAt = (side, k) => shootersAt(side, k, group).map((p) => `${String(p.name).split(' ').slice(-1)[0]} ${p.pos}${p.line || ''}`).join(', ');
+  const namesAt = (side, k) => shootersAt(side, k, group, metric).map((p) => `${String(p.name).split(' ').slice(-1)[0]} ${p.pos}${p.line || ''}`).join(', ');
   return (
     <div className="nhlx-df-table nhlx-df-reads">
       <PfTable className="nhlx-da-table">
@@ -108,7 +111,7 @@ function Reads({ reads, keys, digits, metric, active, onPick, games, group }) {
                   );
                 })}
                 <td className="is-left">
-                  {m.best ? <><b>{m.best.key}</b> <small>#{m.best.rank} for {metric === 'g' ? 'goals' : 'shots'}{m.cells[m.best.key]?.gp != null ? ` · ${gpText(m.cells[m.best.key])} gp` : ''}</small><br /><Shooters side={side} keyName={m.best.key} group={group} opp={m.opp} venue={m.venue} /></> : <small>no games stored</small>}
+                  {m.best ? <><b>{m.best.key}</b> <small>#{m.best.rank} for {metric === 'g' ? 'goals' : 'shots'}{m.cells[m.best.key]?.gp != null ? ` · ${gpText(m.cells[m.best.key])} gp` : ''}</small><br /><Shooters side={side} keyName={m.best.key} group={group} opp={m.opp} venue={m.venue} metric={metric} /></> : <small>no games stored</small>}
                 </td>
               </tr>
             );

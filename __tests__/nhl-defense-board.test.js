@@ -82,6 +82,10 @@ describe('defense board', () => {
       { id: 4, name: 'Zach Benson', pos: 'LW', line: 2 }, { id: 5, name: 'Rasmus Dahlin', pos: 'D', line: 1 }, { id: 6, name: 'Peyton Krebs', pos: 'C', line: null, lamS: 1 },
     ] };
     expect(shootersAt(side, 'C').map((p) => p.name)).toEqual(['Tage Thompson', 'Josh Norris', 'Peyton Krebs']);
+    // Within a line the run's λ for the metric orders the names: shots under 'sog', goals under 'g'.
+    const tied = { skaters: [{ id: 1, name: 'A', pos: 'RW', line: 1, lamS: 2, lamG: 0.5 }, { id: 2, name: 'B', pos: 'RW', line: 1, lamS: 3, lamG: 0.3 }] };
+    expect(shootersAt(tied, 'RW', 'pos', 'sog').map((p) => p.name)).toEqual(['B', 'A']);
+    expect(shootersAt(tied, 'RW', 'pos', 'g').map((p) => p.name)).toEqual(['A', 'B']);
     expect(shootersAt(side, 'W', 'cwd').map((p) => p.name)).toEqual(['Jack Quinn', 'Zach Benson']);
     expect(shootersAt(side, 'F', 'fd').map((p) => p.name)).toEqual(['Tage Thompson', 'Jack Quinn', 'Josh Norris', 'Zach Benson', 'Peyton Krebs']);
     expect(shootersAt(side, 'D', 'fd').map((p) => p.id)).toEqual([5]);
