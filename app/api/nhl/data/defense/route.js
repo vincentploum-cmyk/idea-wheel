@@ -1,7 +1,7 @@
 import { authorize, DATE_RE, todayET, addDays } from '@/lib/nhl-data/util';
 import { loadRows } from '@/lib/nhl-data/build';
 import { defenseByPosition, defenseBySlot, blendedDefense, firstGoalsAllowed } from '@/lib/nhl-data/defense';
-import { gamesFor } from '@/lib/nhl-data/slate';
+import { gamesFor, buildSlate } from '@/lib/nhl-data/slate';
 import { loadMoneyPuck } from '@/lib/nhl-data/moneypuck';
 import { skaterStreaks } from '@/lib/nhl-data/streaks';
 
@@ -28,7 +28,14 @@ export async function GET(request) {
   // First goals given up, by venue, position and line slot (`firstGoals.season.teams.NJD.H.bySlot.LW1`).
   const firstGoals = { season: firstGoalsAllowed(rows), l10: firstGoalsAllowed(rows, { lastN: 10 }) };
   // The Defense tab: the date's games (for tonight's matchup reads) and MoneyPuck's team rates.
-  const [tonight, mp] = await Promise.all([gamesFor(asOf).catch(() => []), loadMoneyPuck().catch(() => ({ teams: null }))]);
+  const [tonight, mp, slate] = await Promise.all([gamesFor(asOf).catch(() => []), loadMoneyPuck().catch(() => ({ teams: null })), buildSlate(asOf).catch(() => null)]);
+  // Tonight's lineups (the slate's: beat writers' lines, else the preview, else the roster), so the matchup
+  // reads can name the shooters at a defender's softest spot: per game, per side, the skaters in the lineup
+  // with position, line slot and the saved run's λ shots / goals when a run exists.
+  const sidesById = Object.fromEntries((slate?.games || []).map((g) => [g.id, (g.sides || []).map((s) => ({
+    team: s.team, source: s.source || null,
+    skaters: (s.skaters || []).filter((p) => p.inLineup && p.id != null).map((p) => ({ id: p.id, name: p.name, pos: p.pos, line: p.line ?? null, carried: !!p.carried, lamS: p.model?.sog ?? null, lamG: p.model?.g ?? null })),
+  }))]));
   const all = mp?.teams?.situations?.all || {};
   const moneypuck = {
     year: mp?.teams?.year ?? null, updatedAt: mp?.teams?.updatedAt ?? null,
@@ -36,7 +43,7 @@ export async function GET(request) {
   };
   return Response.json({
     asOf, games: new Set(rows.map((r) => r.gameId)).size, season, l10, l5, slots, firstGoals,
-    tonight: (tonight || []).map((g) => ({ id: g.id, away: g.away, home: g.home, startTimeUTC: g.startTimeUTC || null })),
+    tonight: (tonight || []).map((g) => ({ id: g.id, away: g.away, home: g.home, startTimeUTC: g.startTimeUTC || null, sides: sidesById[g.id] || null })),
     moneypuck,
     // Who is running hot (this season's stored games): goal / point / 3+ SOG streaks, the last game, tonight's opponent.
     streaks: skaterStreaks(rows, { date: asOf, games: tonight || [] }),

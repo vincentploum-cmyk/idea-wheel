@@ -5,7 +5,7 @@ import { TeamLogo, Headshot } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { PfTable, SortTh, Sel, UnderlineTabs, rankTone } from './pf-ui';
 import { TeamLink } from './links';
-import { GROUPS, OVERVIEW_COLS, boardTables, overviewRows, matchupReads } from '@/lib/nhl-data/defense-board';
+import { GROUPS, OVERVIEW_COLS, boardTables, overviewRows, matchupReads, groupKeyFor, shootersAt } from '@/lib/nhl-data/defense-board';
 
 // The Defense tab: ShotPropz-style cheat sheets from the stored box scores. What every
 // team gives up to each position group, ranked softest first (1 = the most allowed),
@@ -55,9 +55,31 @@ function RankTable({ title, table, digits, playing, view, active, onPick }) {
   );
 }
 
-/** Tonight's shooting sides, softest spot first: the defender's figure and rank per group. */
-function Reads({ reads, keys, digits, metric, active, onPick }) {
+/** The shooting side's skaters at a group key tonight, clickable to the card: "Thompson C1 · Cozens C2 · …". */
+function Shooters({ side, keyName, group, opp, venue }) {
+  const open = usePlayerCard();
+  const list = shootersAt(side, keyName, group);
+  if (!side) return <small className="nhlx-auto-meta">no lineup yet</small>;
+  if (!list.length) return <small className="nhlx-auto-meta">nobody listed at {keyName}</small>;
+  return (
+    <span className="nhlx-df-shooters">
+      {list.map((p, i) => (
+        <span key={p.id}>
+          {i ? ' · ' : ''}
+          <button type="button" className="nhlx-df-shooter" onClick={() => open({ id: p.id, opp, venue, pos: p.pos, line: p.line })} title={`${p.name}${p.carried ? ' (carried from an earlier lineup)' : ''}${p.lamS != null ? ` · the run's λ ${p.lamS.toFixed(2)} shots${p.lamG != null ? `, ${p.lamG.toFixed(2)} goals` : ''}` : ''}`}>
+            {String(p.name).split(' ').slice(-1)[0]}<small>{p.pos === 'D' ? 'D' : p.pos}{p.line || ''}{p.carried ? '*' : ''}</small>
+          </button>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** Tonight's shooting sides, softest spot first: the defender's figure and rank per group, and the shooters at the softest spot. */
+function Reads({ reads, keys, digits, metric, active, onPick, games, group }) {
   if (!reads.length) return <p className="nhlx-auto-meta">No games on this date.</p>;
+  const sideOf = (m) => (games || []).find((g) => g.id === m.gameId)?.sides?.find((s) => s.team === m.team) || null;
+  const namesAt = (side, k) => shootersAt(side, k, group).map((p) => `${String(p.name).split(' ').slice(-1)[0]} ${p.pos}${p.line || ''}`).join(', ');
   return (
     <div className="nhlx-df-table nhlx-df-reads">
       <PfTable className="nhlx-da-table">
@@ -70,21 +92,27 @@ function Reads({ reads, keys, digits, metric, active, onPick }) {
           </tr>
         </thead>
         <tbody>
-          {reads.map((m) => (
-            <tr key={`${m.gameId}-${m.team}`} className={active === m.team || active === m.opp ? 'is-active' : ''}>
-              <td className="is-left"><TeamLink abbr={m.team} logo={22}><b>{m.team}</b></TeamLink> <small>{m.venue === 'H' ? 'home' : 'away'}</small></td>
-              <td className="is-left"><button type="button" className="nhlx-df-team" onClick={() => onPick(m.opp)}><TeamLogo abbr={m.opp} size={20} />{m.opp}</button></td>
-              {keys.map((k) => {
-                const c = m.cells[k];
-                return (
-                  <td key={k} className={`${c ? rankTone(c.rank, c.n) : ''}${m.best?.key === k ? ' is-best' : ''}`}>
-                    {c ? <span className="nhlx-df-cell"><b>{fmt(c.value, digits)}</b><RankChip rank={c.rank} n={c.n} /></span> : <small>—</small>}
-                  </td>
-                );
-              })}
-              <td className="is-left">{m.best ? <><b>{m.best.key}</b> <small>#{m.best.rank} for {metric === 'g' ? 'goals' : 'shots'}{m.cells[m.best.key]?.gp != null ? ` · ${gpText(m.cells[m.best.key])} gp` : ''}</small></> : <small>no games stored</small>}</td>
-            </tr>
-          ))}
+          {reads.map((m) => {
+            const side = sideOf(m);
+            return (
+              <tr key={`${m.gameId}-${m.team}`} className={active === m.team || active === m.opp ? 'is-active' : ''}>
+                <td className="is-left"><TeamLink abbr={m.team} logo={22}><b>{m.team}</b></TeamLink> <small>{m.venue === 'H' ? 'home' : 'away'}</small></td>
+                <td className="is-left"><button type="button" className="nhlx-df-team" onClick={() => onPick(m.opp)}><TeamLogo abbr={m.opp} size={20} />{m.opp}</button></td>
+                {keys.map((k) => {
+                  const c = m.cells[k];
+                  const who = side ? namesAt(side, k) : '';
+                  return (
+                    <td key={k} className={`${c ? rankTone(c.rank, c.n) : ''}${m.best?.key === k ? ' is-best' : ''}`} title={who ? `${m.team} ${k} tonight: ${who}` : undefined}>
+                      {c ? <span className="nhlx-df-cell"><b>{fmt(c.value, digits)}</b><RankChip rank={c.rank} n={c.n} /></span> : <small>—</small>}
+                    </td>
+                  );
+                })}
+                <td className="is-left">
+                  {m.best ? <><b>{m.best.key}</b> <small>#{m.best.rank} for {metric === 'g' ? 'goals' : 'shots'}{m.cells[m.best.key]?.gp != null ? ` · ${gpText(m.cells[m.best.key])} gp` : ''}</small><br /><Shooters side={side} keyName={m.best.key} group={group} opp={m.opp} venue={m.venue} /></> : <small>no games stored</small>}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </PfTable>
     </div>
@@ -92,7 +120,6 @@ function Reads({ reads, keys, digits, metric, active, onPick }) {
 }
 
 const STREAK_TABS = [['goals', 'Goal streaks'], ['points', 'Point streaks'], ['sog3', '3+ shot streaks']];
-const groupKeyFor = (pos, group) => (group === 'pos' ? pos : group === 'cwd' ? (pos === 'LW' || pos === 'RW' ? 'W' : pos) : pos === 'D' ? 'D' : 'F');
 
 /** Who is running hot, with tonight's opponent read off the same tables at his position. */
 function Streaks({ list, tab, onTab, playing, view, byVenue, venue, group, digits, metric }) {
@@ -230,8 +257,8 @@ export default function DefensePanel() {
         <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Date" />
       </div>
 
-      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Tonight’s matchups</h3><small>{data.tonight?.length || 0} games on {date} · each shooting side against what its opponent gives up per skater at the position {venue === 'ALL' ? 'over every game' : 'at the venue it defends tonight'} · softest spot first</small></div>
-      <Reads reads={reads} keys={keys} digits={digits} metric={metric} active={active} onPick={pick} />
+      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Tonight’s matchups</h3><small>{data.tonight?.length || 0} games on {date} · each shooting side against what its opponent gives up per skater at the position {venue === 'ALL' ? 'over every game' : 'at the venue it defends tonight'} · softest spot first, with the shooters lined up there tonight (hover a cell for the other positions; * = carried from an earlier lineup)</small></div>
+      <Reads reads={reads} keys={keys} digits={digits} metric={metric} active={active} onPick={pick} games={data.tonight || []} group={group} />
 
       <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Running hot</h3><small>Current streaks from this season’s stored games · the study found no carry-over from a goal last game, so read the streak as colour and the Tonight column as the matchup</small></div>
       <Streaks list={data.streaks || []} tab={streakTab} onTab={setStreakTab} playing={playing} view={view} byVenue={byVenue} venue={venue} group={group} digits={digits} metric={metric} />
