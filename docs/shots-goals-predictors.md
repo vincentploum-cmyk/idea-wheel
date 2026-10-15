@@ -1,5 +1,6 @@
 # What predicts a skater's shots and goals? (2026-27 to date, 2025-26 as the control)
 
+Revision 6 (2026-10-15): every angle at once (section 13): venue splits, pace, line slot, the opposing goalie, L5 / L10 / L15, head to head, rest, two-season priors, the opponent's tables per skater at the position and blended across the season boundary; the formulas replayed on this season's 3,852 skater-games and graded; the Best bets plain-rate read refitted (`picks-pure.js`).
 Revision 5 (2026-10-13): the model's own published odds graded on the scorecard export; the shots odds step replaced by the Poisson tail of λ (section 12).
 Revision 4 (2026-10-08): the rink's two environment tints, Rink vs PropFinder, graded against the box scores (section 10); the 1st goal tab graded against who scored first (section 11).
 Revision 4 (2026-10-08, earlier): the rink's two environment tints, Rink vs PropFinder, graded against the box scores (section 10).
@@ -33,9 +34,13 @@ gaps between rows of the same ladder on the same rows.
 | Scored last game | No carry-over. Scorers score again at their own rate, not above it. | Scored 1 last game: P(1+ goal) next 0.22; their last-season rate implies 0.22 (control, n=5,693) |
 | "He had 4 goals against this team" | **A small, real effect, not a driver.** Across seasons, a strong record against an opponent is worth about 1 to 2 points of P(1+ goal) on top of the player's full-season rate. Within a season it is worth nothing beyond chance. Most of the raw correlation is "good scorers score everywhere". | 2024-25 record vs 2025-26 rematches (38,539 games): 4+ goals vs the opponent last season scored in 31.0% of rematches vs 32.7% expected from the full-season rate; H2H term z = 4.6 against a rate that excludes those games, z = 1.5 against one that includes them; permutation p = 0.03. Within 2025-26 (24,662 games): the H2H term equals what shuffled opponent labels produce, p = 0.65 (section 8) |
 | H2H shots | Nothing beyond the player's own SOG rate: within-season p = 0.20 against the shuffle; cross-season coefficient -0.008 once H2H goals are in. | section 8 |
+| Opponent environment for SOG: which read? | **Shots allowed per skater at the position, season to date, blended into last season's table at games / (games + 15).** Beats the team total, every short window, the venue split and the slot read, in both control seasons and this one (section 13). | deviance gain over the skater alone 0.0100 (2025-26) / 0.0060 (2024-25) / 0.0119 (this season), z 14 to 18; the team total 0.0043 / 0.0023 / 0.0030 |
 | Opponent environment for SOG: which window? | **Season-to-date, by position.** Longer is better at every step: L5 < L10 < L15 < L20 < L30 < season, in both seasons, and shots allowed per skater at the position beats the team total at every window. L5 is the weakest read tested. One SD of the position season-to-date read is ~10% of a skater's SOG; the L5 read ~5%. | section 9: deviance 1.2540 (none) / 1.2508 (position L5) / 1.2482 (L10) / 1.2466 (L15) / 1.2425 (season); 2024-25 identical ranking |
 | Opponent environment for goals: which window? | **Season-to-date goals allowed to the position**, and only that. L5 / L10 goals allowed (overall or by position) add nothing; one SD of the position season read is 14 to 18% of a skater's goal rate, the L5 read 3 to 6%. | section 9 |
 | Home ice, back-to-back, rest | Tie-breakers only: home +4% SOG (control), 0% this season; back-to-back -2% (not significant); rest days nothing. | sections 1, 4h |
+| Opponent environment for goals: which read? | **Goals allowed per skater at the position, last season's table blended with this season's at games / (games + 40).** The only goal environment that holds in all three seasons; this season's table alone is noise until past 15 games (section 13). | gain 0.0010 / 0.0019 / 0.0030, z 6.2 / 8.5 / 2.7; the this-season table alone 0.0002 / 0.0005 / -0.0002 |
+| The opposing goalie | A real, small read: last season's save % at z -2 to -3 in every season, 3 to 9% of the goal rate per standard deviation. Not in the site's formula yet (the slate does not carry the confirmed starter). | section 13 |
+| Pace, venue split, slot, days off, two-season prior | Nothing beyond the skater's rate and the position read: each under 0.001 of deviance or the wrong sign in one of the seasons. | section 13 |
 | Best goal read tonight | **Last season's xG per game** (or goals per game), then this season's iSCF. Season-to-date goals per game is noise until ~40 games; last season's shooting % is a persistent finishing signal worth keeping. | This season ll1 0.408 (LS xG) vs 0.427 (sTD goals); control full fit z = 7.5 for LS SH% (section 5, 7) |
 | Shooting % this season | Useless now (worse than the intercept) and weak all year. | deviance 0.667 vs 0.643 intercept |
 
@@ -553,3 +558,233 @@ needs a TOI adjustment (last season's SOG/60 x tonight's expected TOI).
   last season (rookies, call-ups) have no prior; 5% of rows this season.
 - Everything is per skater-game, not per prop line: a 2.5 vs 3.5 SOG line is a different bet
   and the calibration tables (section 2) are the place to read the model's P(k+).
+
+
+## 13. Every angle at once, and the formulas replayed (2026-10-15)
+
+**Question.** With two weeks of box scores, which of the reads the site shows (venue splits, L5 / L10 /
+L15, pace, line slot, the opposing goalie, head to head, rest, the opponent's tables this season and
+last) actually move a skater's shots and goals, by how much, and would a formula built from them have
+had tonight's shooters and scorers before puck drop?
+
+**Data.** 2026-27 through Oct 14: 107 games, 3,852 skater-games, 679 skaters, teams with 5 to 8 games.
+Controls: the whole of 2025-26 (1,312 games, 47,231 skater-games, with 2024-25 as its "last season")
+and the whole of 2024-25 (47,225 skater-games, with 2023-24 as its last season). Forwards relabelled
+to the position played (the faceoff takers are the centres, section 10). Every row carries only what
+was knowable before puck drop; the one exception is the opposing goalie, who is the starter who played
+(standing in for the confirmed goalie the slate carries at puck drop). 204 columns per row,
+`tools/predictors/build_rows.py`; scored by `angles.py` (cross-validated Poisson, grouped by game),
+replayed by `replay.py`, read per row by `explain.py`.
+
+### Shots: the skater's own rate (the control; this season agrees on every line)
+
+| Own read (rows with a prior game and a last-season record, n = 40,811) | deviance | Brier P(3+) |
+|---|---|---|
+| last game | 1.4451 | 0.1705 |
+| L3 / L5 / L10 | 1.3766 / 1.3468 / 1.3163 | 0.1643 / 0.1615 / 0.1582 |
+| season to date | 1.2932 | 0.1557 |
+| last season alone | 1.2830 | 0.1550 |
+| two-season prior (last season 2:1 over the one before) | 1.2828 | 0.1550 |
+| **blend n / (n + 18) of season to date into last season** | **1.2430** | **0.1515** |
+| blend with the two-season prior instead | 1.2564 | 0.1527 |
+| blend + blended attempts (iCF) | 1.2424 | 0.1515 |
+| blend + iCF + TOI, last five games | 1.2414 | 0.1514 |
+| blend + iCF + L5 SOG on top (recent form) | 1.2418 | 0.1515 |
+| blend + iCF + last game's SOG (hot hand) | 1.2423 | 0.1515 |
+| blend + iCF + line slot last game (TOI rank) | 1.2405 | 0.1514 |
+
+The blend is the read; nothing recent adds to it. Recent form, the hot hand, the venue split (own SOG
+at this venue: z +1.0 in the control, +1.5 this season, gain -0.0003 / +0.0015) and days since his last
+game are all inside the blend's noise. Ice time over the last five games is the one role read worth a
+term (z +14 in the full fit): it catches a promotion or a demotion before the shot rate does. The
+two-season prior loses to last season alone in both seasons where it can be tested.
+
+### Shots: the environment, every read on the same rows
+
+Player core = blended SOG + blended iCF + L5 TOI. Skaters with 10+ games and opponents with 15+
+games (every window defined), 2025-26; the 2024-25 figure in brackets; "% per SD" = how much one
+standard deviation of the read moves the rate.
+
+| Environment read added to the core | gain in deviance | z | % SOG per SD |
+|---|---|---|---|
+| **shots allowed per skater at the position, this season blended into last at games / (games + 15)** | **+0.0100 [+0.0060]** | **+14.0 [+10.6]** | **+12.3 [+9.1]** |
+| shots allowed per skater at the position, season to date | +0.0093 [+0.0056] | +13.5 [+10.4] | +11.4 [+8.3] |
+| same, last season's full table | +0.0060 [+0.0041] | +10.8 [+8.8] | +9.1 [+7.9] |
+| team shots allowed, season to date | +0.0043 [+0.0023] | +9.5 | +5.5 |
+| team shots allowed, L15 / L10 / L5 | +0.0040 / +0.0029 / +0.0031 | +9.2 / +8.0 / +8.0 | +5.4 / +4.6 / +4.6 |
+| team shots allowed at tonight's venue | +0.0035 | +8.6 | +5.0 |
+| shots allowed to the position AND his line slot (TOI rank), blended | +0.0024 [+0.0011] | +7.0 | +6.3 |
+| shots allowed to the position per game (PropFinder's figure), season | +0.0009 | +4.8 | +3.2 |
+| shots allowed to the position at tonight's venue | +0.0009 | +4.6 | +2.9 |
+| shots allowed to the position, L15 / L10 / L5 | +0.0010 / +0.0005 / -0.0004 | +4.9 / +4.1 / +2.6 | +3.1 / +2.5 / +1.5 |
+| opponent's games' pace (shots both ways), this season | +0.0006 | +3.7 | +2.2 |
+| home ice | +0.0003 [+0.0002] | +3.2 [+2.9] | +1.8 |
+| game pace this season / last season (MoneyPuck) | +0.0002 / -0.0001 | +2.6 / -0.4 | +1.5 / -0.2 |
+| opponent on a back-to-back / own back-to-back | +0.0002 / -0.0002 | +2.8 / -1.2 | +1.6 / -0.7 |
+| opposing starter, save % last season | -0.0004 [+0.0007] | -0.6 [-3.8] | -0.3 [-2.1] |
+| own venue split, this season / last season's ratio | -0.0003 / -0.0001 | +1.0 / +0.4 | |
+| H2H SOG this season / last season | -0.0001 / -0.0002 | +0.8 / +0.7 | |
+
+Three things fall out. First, **per skater beats per game**: PropFinder's "shots allowed to LWs per
+game" carries how many wingers the opponent happened to face (the relabel puts 3 to 5 a side) and
+scores 0.0009; the same table per skater scores 0.0093. Within each position the ranking holds (D
++0.0030, LW +0.0031, RW +0.0008, C +0.0005 for per skater; per game 0.0030 / 0.0023 / 0.0005 / 0.0005).
+Second, **the blend across the season boundary is the best read at every stage**: in the early rows of
+both controls (skater with 1 to 10 games) last season's table is worth 0.0112 [0.0084] against 0.0036
+[0.0029] for this season's, and the blend 0.0102 [0.0085]; in the deep rows this season's table has
+caught up and the blend still edges it. This season to date (Oct 14): blend +0.0119 (z 5.3), this
+season's table alone +0.0045 (z 3.4), the team total +0.0027. Third, **everything else is a tie-breaker
+or nothing**: pace, the venue split, head to head, rest, the slot (which adds +0.07 of log-rate on top
+of the position read and nothing to the cross-validated score), and the goalie for shots.
+
+Forward selection from the core over the whole pool picks the blended position read first in all three
+seasons and then stops, or adds a TOI-trend term worth 0.0015.
+
+### Goals
+
+| Own read (control, n = 40,811) | deviance | Brier P(1+) |
+|---|---|---|
+| season-to-date goals / L5 goals / L10 goals | 0.6404 / 0.6562 / 0.6468 | 0.1284 / 0.1305 / 0.1292 |
+| last season goals / xG | 0.6182 / 0.6172 | 0.1259 / 0.1260 |
+| blend n / (n + 40) | 0.6029 | 0.1241 |
+| **blend goals + blend SOG + blend iSCF** | **0.6002** | **0.1238** |
+| + last season xG, + last season SH%, + scored last game, + L5 goals (hot streak) | 0.6002 / 0.6003 / 0.6002 / 0.6002 | 0.1238 |
+
+| Environment read added to the goal core | 2025-26: all rows / deep rows | 2024-25: all / deep | z (all rows) |
+|---|---|---|---|
+| **goals allowed per skater at the position, last season blended with this at games / (games + 40)** | **+0.0010 / +0.0007** | **+0.0019 / +0.0009** | **+6.2 [+8.5]** |
+| goals to the position and his slot, blended | +0.0012 / +0.0013 | +0.0019 / +0.0018 | +6.8 [+8.7] |
+| last season's goals to the position (not blended) | +0.0008 / +0.0005 | +0.0018 / +0.0006 | +5.5 [+8.2] |
+| this season's goals to the position | +0.0002 / +0.0005 | | +2.7 / +3.7 |
+| this season's goals to the position, L5 / L10 | / +0.0001 / +0.0001 | | +1.9 / +1.8 |
+| team goals allowed, this season (any window) | 0.0000 | | +0.7 to +1.7 |
+| team goals allowed blended across the seasons | 0.0000 | +0.0009 | +2.0 [+5.9] |
+| MoneyPuck last-season GA / xGA | 0.0000 / +0.0001 | | +1.6 / +2.0 |
+| opposing starter: save % last season | +0.0001 / +0.0001 | 0.0000 | -2.9 [-2.1] |
+| opposing starter: GSAx / 60 last season | +0.0001 / +0.0001 | -0.0001 | -2.8 [-1.8] |
+| back-to-back | +0.0002 | +0.0001 | -2.8 [-3.1]: -3.5% of the goal rate |
+| home ice | +0.0001 / 0.0000 | +0.0004 / +0.0008 | +1.7 [+4.2]: +2% [+5%] |
+| pace, this season / last season | -0.0001 / 0.0000 | | -0.1 / +1.6 |
+| own venue split (goals at this venue last season) | 0.0000 | | -1.3 |
+| H2H goals this season / last season | -0.0001 / 0.0000 | | -1.0 / +0.5 |
+
+This season (3,852 rows, opponents with 1 to 8 games): the blended per-skater goals read gains 0.0030
+(z 2.7), last season's table 0.0035 (z 2.9), the slot blend 0.0039 (z 3.2), MoneyPuck's last-season GA
+0.0032, the goalie's last-season save % 0.0008 (z -2.0), and this season's own goals-to-position table
+-0.0002. So "the Capitals are allowing goals to RWs" is right when it means last season's table: this
+season's six games are goaltending noise, as section 9 said, and the cheat-sheet cut confirms it in
+both controls (opponent's this-season goals-allowed-to-position third, within the slate day, by the
+skater's goal tier: no third beats the skater's own rate by more than a point or two, in either
+direction). The goalie is a real read with a stable sign in every season, worth 3 to 9% of the goal
+rate per standard deviation of his save %; it is not in the site's formula because the slate does not
+yet carry the confirmed starter.
+
+### Replayed on this season: could we have called it?
+
+Every formula fitted on 2025-26 (and again on 2024-25 to check the coefficients) and applied,
+leak-free, to this season's rows. The site's own plain-rate read (`picks-pure.js` as of Oct 14:
+blended SOG + iCF + home + the opponent's team shots allowed this season) replayed with its fixed
+coefficients on its own inputs, on the 3,625 rows it rates.
+
+| Shots formula | deviance | Brier P(3+) | log loss P(3+) |
+|---|---|---|---|
+| site, Oct 14 | 1.2320 | 0.1472 | 0.4590 |
+| same shape refitted | 1.2830 (on 3,225 rows) | 0.1460 | 0.4656 |
+| core + home + team shots allowed blended across seasons | 1.2698 | 0.1456 | 0.4638 |
+| **core + home + per-skater position read blended + back-to-back (shipped)** | **1.2213** | **0.1464** | **0.4555** |
+| + the slot read / + last game's SOG / + L5 SOG | 1.2570 / 1.2546 / 1.2523 (3,173 rows) | | |
+
+| Goals formula | deviance | Brier P(1+) | log loss P(1+) |
+|---|---|---|---|
+| site, Oct 14 | 0.6064 | 0.1217 | 0.3964 |
+| **core + home + per-skater goals-to-position blended + back-to-back (shipped)** | **0.6044** | **0.1213** | **0.3952** |
+| + the opposing starter's save % | 0.6056 → 0.6053 on the MoneyPuck-prior rows | | |
+| + last season xG and SH% / + L5 goals / + H2H goals last season | no gain / no gain / worse | | |
+
+Coefficients of the shipped formulas, fitted on 2025-26 [2024-25] and pooled (the pooled fit is what
+`picks-pure.js` carries; the two seasons agree to the second decimal on every term but the goal
+formula's home ice, +0.04 vs +0.10):
+
+- shots: log λ = -1.44 + 0.39 log(blend SOG) + 0.45 log(blend iCF) + 0.30 log(TOI L5) + 0.034 home
+  + 0.69 log(opp shots allowed per skater at the position, blended) - 0.026 back-to-back
+  [2025-26: 0.39 / 0.46 / 0.31 / 0.036 / 0.78 / -0.027; 2024-25: 0.40 / 0.44 / 0.29 / 0.032 / 0.62 / -0.027]
+- goals: log λ = -1.05 + 0.37 log(blend goals + .05) + 0.44 log(blend iSCF) + 0.40 log(blend SOG)
+  + 0.068 home + 0.44 log(opp goals allowed per skater at the position, blended + .1) - 0.068 back-to-back
+  [2025-26: 0.39 / 0.39 / 0.44 / 0.040 / 0.45 / -0.059; 2024-25: 0.35 / 0.46 / 0.39 / 0.096 / 0.47 / -0.078]
+
+**Calibration this season** (the shipped shots formula; site in brackets): P(3+) stated 0.06 → hit
+0.064 [0.071], 0.145 → 0.163 [0.162], 0.25 → 0.255 [0.249], 0.35 → 0.336 [0.325], 0.45 → 0.438
+[0.468], 0.55 → 0.589 [0.517], 0.65 → 0.689 [0.640]; 11 rows over 0.70 hit 0.455 [20 rows, 0.650].
+By λ band the λ reads straight through 3.5 (λ 3.23 → 3.42 actual, n = 115); the 15 rows over 3.5
+shot 2.9 against 3.65 stated, the same top-end regression section 12 found in the model's λ, still on
+too few rows to fit. Goals: P(1+) 0.06 → 0.057, 0.12 → 0.14, 0.17 → 0.18, 0.22 → 0.21, 0.27 → 0.25,
+0.32 → 0.29, 0.37 → 0.34, 0.43 → 0.45 (the site's bands 0.25 to 0.45 ran 3 to 6 points hot).
+
+**The Best bets board, replayed** (every skater over the floor per game, three to four a table):
+
+| Rule | calls | stated | hit | break-even at the stated price |
+|---|---|---|---|---|
+| 3+ SOG over 50%, site | 217 | 0.603 | 0.576 | -152 |
+| **3+ SOG over 50%, shipped** | **220** | **0.597** | **0.632** | **-148** |
+| 3+ SOG fill-ins under the floor, site / shipped | 120 / 117 | 0.452 / 0.446 | 0.483 / 0.410 | |
+| 1+ goal over 35%, site | 163 | 0.400 | 0.356 | +150 |
+| **1+ goal over 35%, shipped** | **135** | **0.394** | **0.378** | **+154** |
+| the #1 goal row in each game, site / shipped | 107 | 0.394 / 0.381 | 0.374 / 0.402 | |
+
+The slate's top 10 by P(3+) hit 62.5% (stated 59.3%; site 59.4%) and 40.6% for 4+ (stated 37.5%); the
+top 10 by P(1+ goal) scored 35.0% of the time (stated 37.2%; site 36.2%) against a slate rate of 15.2%.
+
+**The literal question.** Of the 131 nights a skater had 5+ shots this season, the formula had him in
+the slate's top 20 shooters 37% of the time, in the top quarter of the slate 75% of the time and in
+the bottom half 8%; their stated P(3+) averaged 0.42 against the slate's 0.22, their P(5+) 0.11
+against 0.04. The share in the top 20 falls with games played (61% for skaters with no prior game this
+season, 53% at 1 to 2, 27% at 3 to 4, 11% at 5 to 6): the early blend is last season's rate, and the
+stars' 5-shot nights are the ones the formula sees coming; by week two the 5-shot nights come from
+further down the slate. Of the 81 multi-goal nights, 31% came from the slate's top 20 scorers and 49%
+from the top 40 (18% of a slate); of all 552 goal-scorer nights, 34% came from the top 40.
+
+Two nights, read with `explain.py`:
+
+- *Jack Hughes, NJD C1 at DET, Oct 13: 8 shots.* Before the game: 3.40 a game this season, 3.74 last,
+  blend 3.66; 21 minutes; Detroit allows 1.30 shots per centre this season (5 games) and 1.56 last
+  season, blend 1.50 (league 1.73: a tough spot); Devils on a back-to-back. λ 3.01, P(3+) 58%, P(5+)
+  19%, P(8+) 1%; #21 of 548 on the slate. A 3+ call, yes; the 8 nobody calls.
+- *Josh Anderson, MTL RW3 at WSH, Oct 14: 3 shots, 2 goals.* 2.00 a game this season, 1.24 last, blend
+  1.43; 13.7 minutes; Washington allows 2.40 shots per RW this season (6 games) against 1.65 last season,
+  blend 1.87 (soft), and 0.30 goals per RW this season against 0.16 last, blend 0.18; Lindgren's .88 last
+  season. λ 1.37 shots (P(3+) 16%), λ 0.15 goals (P(1+) 14%), #32 of 71 scorers on a two-game slate. The
+  soft RW read lifted him about 10%; the formula still had him at one chance in seven, and that is the
+  honest number: a 2.4-shots-per-RW read on six games is half noise (section 9), and the this-season
+  goals-allowed table carries no signal at all. The slate's RWs it did like that night: Tuch (#6 scorer,
+  2 goals), Caufield (#2, blanked).
+
+### What the site should keep and drop
+
+Ordered by the evidence above; "gain" is deviance against the skater's own rate.
+
+- **Keep, and lead with**: the skater's blended rate (section 3) and the opponent's **per-skater**
+  shots and goals allowed **by position**, season to date **blended into last season's table**
+  (gain 0.010 shots, 0.001 to 0.003 goals). The Defense tab's cheat sheets should rank per skater
+  at the position, not per game, and carry last season in the blend until the opponent has ~15
+  games; the Matchups rink bands likewise.
+- **Keep as colour, size as a tie-breaker**: home ice (+2 to 3% shots, +2 to 7% goals), back-to-back
+  (-3% shots, -4 to 7% goals), the line slot (it is in the rate through TOI; the slot-level defense
+  tables add 0.002 at most and nothing on top of the position read).
+- **Drop from the verdicts, show at most as a note**: L5 / L10 / L15 defense windows (0.0005 or less on
+  top of the season table, negative for L5 by position), the venue-split defense tables (strictly
+  weaker than the all-games table they halve), the L5 home / L5 away rink windows, the skater's own
+  venue split, pace (every version: 0.0002 or less), head to head in either season (0.000), the hot
+  hand and scored-last-game chips (0.000), the first-goal record and leak columns (section 11).
+- **Add when the data is there**: the confirmed starter's save % (3 to 9% of the goal rate per SD,
+  the same sign in every season) once the slate carries him.
+
+**Applied 2026-10-15** (`lib/nhl-data/picks-pure.js`, `picks.js`, `PicksPanel.jsx`; the model's math
+untouched): the Best bets plain-rate read is the shipped formula above; `positionAllowed` builds the
+blended per-skater position tables from the stored rows; `blendRates` carries TOI; the board's Opp
+column shows the position read and its rank (1 = allows the most to the position) and marks a
+back-to-back. The λ-shrinkage at the top (section 12) is still waiting on rows.
+
+**Rerun** as the season grows (needs the three seasons' games under `.nhl-data/predictors/<year>/games`):
+`tools/predictors/run.sh 2026` fetches, relabels, builds the rows with the previous season as the
+prior, and runs `angles.py` and `replay.py`; `explain.py <rows-replay.csv> <date> <team> <name>` reads
+one night.
