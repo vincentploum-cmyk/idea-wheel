@@ -39,7 +39,9 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   carry), the Season span = `blendedDefense`: this season blended into last season's table at games / (games + 15) for shots and
   games / (games + 40) for goals (GP shows "this + last"), L10 / L5 the newest stored games across the seasons, by where the
   defender plays, rank 1 = the most allowed with ties shared, tinted by rank thirds; above the tables
-  tonight's matchups read off the same tables (`matchupReads`, each shooting side's softest spot first), and a team overview
+  tonight's matchups read off the same tables (`matchupReads`, each shooting side's softest spot first, with the shooters the
+  slate's lineup has at that spot named and clickable, `shootersAt`; the API's `tonight` games carry `sides[].skaters` from
+  `buildSlate`), and a team overview
   (GA / GP, SA / GP from the stored box scores; xGA / 60, high-danger shots against and pace from MoneyPuck), each column ranked;
   between them "Running hot" (`lib/nhl-data/streaks.js`, `streaks` in the defense API): every skater's current goal / point /
   3+ SOG streak from this season's stored games, his last game and tonight's opponent read off the same tables at his

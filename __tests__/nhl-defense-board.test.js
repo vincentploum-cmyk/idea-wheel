@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import { defenseByPosition, blendedDefense } from '../lib/nhl-data/defense';
-import { boardTables, overviewRows, matchupReads, rankDesc } from '../lib/nhl-data/defense-board';
+import { boardTables, overviewRows, matchupReads, rankDesc, groupKeyFor, shootersAt } from '../lib/nhl-data/defense-board';
 
 // Three games: NYR at NJD, BOS at NJD, NJD at BOS. One skater per position per side.
 const row = (date, gameId, team, opp, venue, pos, sog, g) => ({ date, gameId, team, opp, venue, pos, sog, g, a: 0, icf: sog, iff: sog, iscf: 0, ihdcf: 0 });
@@ -75,6 +75,20 @@ describe('defense board', () => {
     const home = boardTables(defense, { metric: 'g', venue: 'H' });
     expect(home.C.rows.map((r) => r.abbr)).toEqual(['NJD', 'BOS']); // NYR never defended at home
     expect(home.C.rows[0]).toMatchObject({ gp: 2, value: 1 });
+  });
+  test('the shooters at a softest spot come from the side\'s lineup, first line first, grouped the way the tables are', () => {
+    const side = { team: 'BUF', skaters: [
+      { id: 1, name: 'Tage Thompson', pos: 'C', line: 1, lamS: 3.9 }, { id: 2, name: 'Jack Quinn', pos: 'RW', line: 1 }, { id: 3, name: 'Josh Norris', pos: 'C', line: 2, lamS: 2.1 },
+      { id: 4, name: 'Zach Benson', pos: 'LW', line: 2 }, { id: 5, name: 'Rasmus Dahlin', pos: 'D', line: 1 }, { id: 6, name: 'Peyton Krebs', pos: 'C', line: null, lamS: 1 },
+    ] };
+    expect(shootersAt(side, 'C').map((p) => p.name)).toEqual(['Tage Thompson', 'Josh Norris', 'Peyton Krebs']);
+    expect(shootersAt(side, 'W', 'cwd').map((p) => p.name)).toEqual(['Jack Quinn', 'Zach Benson']);
+    expect(shootersAt(side, 'F', 'fd').map((p) => p.name)).toEqual(['Tage Thompson', 'Jack Quinn', 'Josh Norris', 'Zach Benson', 'Peyton Krebs']);
+    expect(shootersAt(side, 'D', 'fd').map((p) => p.id)).toEqual([5]);
+    expect(shootersAt(null, 'C')).toEqual([]);
+    expect(groupKeyFor('RW', 'cwd')).toBe('W');
+    expect(groupKeyFor('D', 'fd')).toBe('D');
+    expect(groupKeyFor('G')).toBeNull();
   });
   test('overview rows rank each column on its own, MoneyPuck figures included', () => {
     const o = overviewRows(defense, { NJD: { xga60: 3.1, pace60: 120 }, BOS: { xga60: 2.4, pace60: 110 } });
