@@ -22,8 +22,8 @@ describe('defense board', () => {
   test('per-position tables: NJD gives up the most to centres, every team listed once', () => {
     const t = boardTables(defense, { metric: 'sog', venue: 'ALL', group: 'pos' });
     // NJD defended three games (two at home, one away): C shots 4, 6 and 1.
-    expect(t.C.rows.map((r) => [r.abbr, r.value, r.rank])).toEqual([['NJD', 3.67, 1], ['BOS', 2.5, 2], ['NYR', 2, 3]]);
-    expect(t.C.league).toBeCloseTo(2.72, 2);
+    expect(t.C.rows.map((r) => [r.abbr, r.value, r.rank])).toEqual([['NJD', 3.667, 1], ['BOS', 2.5, 2], ['NYR', 2, 3]]);
+    expect(t.C.league).toBeCloseTo(2.722, 3);
     expect(t.C.n).toBe(3);
     expect(t.D.rows[0]).toMatchObject({ abbr: 'BOS', value: 2.5, gp: 2 });
   });
@@ -31,7 +31,7 @@ describe('defense board', () => {
     const t = boardTables(defense, { metric: 'sog', group: 'cwd' });
     // One LW and one RW a side, so a winger's figure is the two positions' mean: BOS (3 + 2) / 2.
     expect(t.W.rows.map((r) => [r.abbr, r.value, r.rank])).toEqual([['BOS', 2.5, 1], ['NJD', 2, 2], ['NYR', 2, 2]]);
-    expect(boardTables(defense, { metric: 'sog', group: 'fd' }).F.rows[0]).toMatchObject({ abbr: 'NJD', value: 2.56 });
+    expect(boardTables(defense, { metric: 'sog', group: 'fd' }).F.rows[0]).toMatchObject({ abbr: 'NJD', value: 2.556 });
   });
   test('the figure is per skater: two wingers sharing the shots do not double the read', () => {
     // NJD faces two LWs with 2 shots each in one game, then one LW with 4: 4 a game either night, 2.67 per skater.
@@ -42,7 +42,7 @@ describe('defense board', () => {
     const d = defenseByPosition(two);
     expect(d.teams.NJD.ALL.LW).toMatchObject({ gp: 2, sog: 4, skaters: 1.5 });
     expect(d.teams.NJD.ALL.LW.per.sog).toBeCloseTo(2.667, 3);
-    expect(boardTables(d, { metric: 'sog' }).LW.rows[0]).toMatchObject({ abbr: 'NJD', value: 2.67, gp: 2, base: 0 });
+    expect(boardTables(d, { metric: 'sog' }).LW.rows[0]).toMatchObject({ abbr: 'NJD', value: 2.667, gp: 2, base: 0 });
   });
   test('the blended season table: this season at games / (games + 15) for shots, games / (games + 40) for goals, over a 10-game base', () => {
     // Last season: NJD allowed its centres 2 shots and 0.2 goals a game over 20 games; this season 6 and 1 over 2 games.
@@ -61,7 +61,7 @@ describe('defense board', () => {
     expect(b.teams.NYR).toBeUndefined();
     expect(b.blended).toBe(true);
     // The board reads the blend and shows the base.
-    expect(boardTables(b, { metric: 'sog' }).C.rows[0]).toMatchObject({ abbr: 'NJD', gp: 2, base: 20, value: 2.47, rank: 1 });
+    expect(boardTables(b, { metric: 'sog' }).C.rows[0]).toMatchObject({ abbr: 'NJD', gp: 2, base: 20, value: 2.471, rank: 1 });
     // Under a 10-game base last season counts for nothing: this season alone.
     const thin = blendedDefense([...prev.slice(0, 5), ...cur], '2026-10-05');
     expect(thin.teams.NJD.ALL.C).toMatchObject({ gp: 2, base: 0 });
@@ -105,7 +105,7 @@ describe('defense board', () => {
   test("tonight's reads come off the defender's venue table, softest first", () => {
     const tables = { ALL: boardTables(defense), H: boardTables(defense, { venue: 'H' }), A: boardTables(defense, { venue: 'A' }) };
     const all = matchupReads([{ id: 9, away: 'BOS', home: 'NJD' }], tables);
-    expect(all[0].cells.C).toMatchObject({ abbr: 'NJD', value: 3.67, n: 3 }); // every game NJD defended
+    expect(all[0].cells.C).toMatchObject({ abbr: 'NJD', value: 3.667, n: 3 }); // every game NJD defended
     const reads = matchupReads([{ id: 9, away: 'BOS', home: 'NJD' }], tables, { venueMatched: true });
     expect(reads[0]).toMatchObject({ team: 'BOS', opp: 'NJD', venue: 'A', best: { key: 'C', rank: 1 } });
     expect(reads[0].cells.C).toMatchObject({ abbr: 'NJD', value: 5, rank: 1, n: 2 });

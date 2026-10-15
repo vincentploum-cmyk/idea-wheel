@@ -784,7 +784,14 @@ blended per-skater position tables from the stored rows; `blendRates` carries TO
 column shows the position read and its rank (1 = allows the most to the position) and marks a
 back-to-back. *Also applied 2026-10-15*: the Defense tab's tables are per skater at the position, its Season span the
 blend above (`blendedDefense` in `lib/nhl-data/defense.js`), so tonight's matchup reads and the "Running hot" Tonight
-cell read the same figure the formula uses. The λ-shrinkage at the top (section 12) is still waiting on rows.
+cell read the same figure the formula uses; the tab's "Track record" block grades every stored skater-game of the season
+against each span's table as it stood that morning (`defense-grade.js`, `/api/nhl/data/defense/grade`; ranks on the
+three-decimal per-skater figure, so goals tables no longer tie in bulk). Through Oct 14 (3,625 skater-games): in the
+blended Season table skaters in the soft third shot 0.7% above their own rate and the tough third 7.4% under it, a spread
+of 8.1 points, and scored 0.5% above against 7.4% under, a spread of 7.9; the Last 10 table spread 1.9 points for shots
+and -6.1 for goals, the Last 5 1.7 and -10.5. The softest-spot shooters ran 2.4% under their rates for shots (the spot is
+relative to the side, not a soft third). The λ-shrinkage at the top (section 12) is
+still waiting on rows.
 
 **Rerun** as the season grows (needs the three seasons' games under `.nhl-data/predictors/<year>/games`):
 `tools/predictors/run.sh 2026` fetches, relabels, builds the rows with the previous season as the
