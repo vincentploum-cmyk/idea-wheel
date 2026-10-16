@@ -44,44 +44,25 @@ function tally(g) {
   return [s ? `${s} shots plays hit` : null, go ? `${go} goal plays hit` : null].filter(Boolean).join(', ');
 }
 
-/** The opponent's read at the skater's position: the blended per-skater figure and its rank (1 = allows the most to the position). */
-function OppPos({ c, k, rank }) {
-  const o = c.oppPos;
-  if (!o || o[k] == null) return <td className="is-num is-wide">—</td>;
-  return <td className="is-num is-wide" title={`${c.opp} allows ${o[k].toFixed(2)} ${k === 'sog' ? 'shots' : 'goals'} per ${c.pos} a game (${o.games} game${o.games === 1 ? '' : 's'} this season blended into last season's ${o.prevGames}); rank ${o[rank] ?? '—'} of the league, 1 = allows the most`}>{o[rank] ? `#${o[rank]}` : '—'}<small>{o[k].toFixed(2)}/{c.pos}{c.b2b ? ' · B2B' : ''}</small></td>;
-}
-
-const season = (c, k, base) => (c.rates ? <><b>{c.rates[k] == null ? '—' : c.rates[k].toFixed(2)}</b> <small>({c.rates.n}) / {c.rates[base] == null ? 'none' : c.rates[base].toFixed(2)}</small></> : <span className="nhlx-auto-meta">no stored games</span>);
-
-function ShotsTable({ g, model }) {
+function ShotsTable({ g }) {
   return (
     <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
       <table className="nhlx-db-table nhlx-pk-table">
         <thead>
           <tr>
             <th>Shots{g.shotsFallback ? <i className="nhlx-fg-rank"> nobody over 50%: best available</i> : null}</th>
-            <th className="is-num is-wide" title="Projected shots on goal">λ</th>
-            <th className="is-num is-wide" title="2+ shots: probability and the break-even price">2+</th>
-            <th className="is-num" title="3+ shots">3+</th>
-            <th className="is-num" title="4+ shots">4+</th>
+            <th className="is-num is-wide" title="2+ shots: the chance, and the break-even price under it">2+</th>
+            <th className="is-num" title="3+ shots: the chance, and the break-even price under it">3+</th>
+            <th className="is-num" title="4+ shots: the chance, and the break-even price under it">4+</th>
             {g.final ? <th className="is-num" title="Shots on goal in the box score">Got</th> : null}
-            {model ? <th className="is-num is-wide" title="The study's own rate for 3+ shots, for comparison (the skater's rate, attempts and ice time, home ice, back-to-back, what the opponent allows per skater at his position)">Study 3+</th> : null}
-            {model ? <th className="is-num is-wide" title="The study's own rate for 4+ shots">Study 4+</th> : null}
-            <th className="is-num" title="Shots a game this season (games), and last season's base">Season / base</th>
-            <th className="is-num is-wide" title="What the opponent allows per skater at his position, shots a game (this season blended into last season's), and its rank among the teams (1 = allows the most to the position)">Opp to pos</th>
           </tr>
         </thead>
         <tbody>
           {g.shots.map((c) => (
             <tr key={c.id} className={`${c.under ? 'is-under' : ''}${rowGrade(c, 'sog', 3)}`} title={[c.under ? 'Under the 50% floor for 3+ shots: listed to make three' : null, rowTitle(c, 'sog', 3, 'SOG')].filter(Boolean).join(' · ') || undefined}>
               <Player c={c} />
-              <td className="is-num is-wide">{c.lamS.toFixed(2)}</td>
               <Prob p={c.p2} wide hit={hitOf(c, 'sog', 2)} /><Prob p={c.p3} lead hit={hitOf(c, 'sog', 3)} /><Prob p={c.p4} hit={hitOf(c, 'sog', 4)} />
               {g.final ? <Got c={c} stat="sog" unit="SOG" /> : null}
-              {model ? <td className="is-num is-wide nhlx-pk-study">{c.study ? pct(c.study.p3) : '—'}</td> : null}
-              {model ? <td className="is-num is-wide nhlx-pk-study">{c.study ? pct(c.study.p4) : '—'}</td> : null}
-              <td className="is-num">{season(c, 'curSog', 'baseSog')}</td>
-              <OppPos c={c} k="sog" rank="rankSog" />
             </tr>
           ))}
         </tbody>
@@ -91,31 +72,23 @@ function ShotsTable({ g, model }) {
   );
 }
 
-function GoalsTable({ g, model }) {
+function GoalsTable({ g }) {
   return (
     <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
       <table className="nhlx-db-table nhlx-pk-table">
         <thead>
           <tr>
             <th>Goals{g.goalsFallback ? <i className="nhlx-fg-rank"> nobody over 35%: best available</i> : null}</th>
-            <th className="is-num is-wide" title="Projected goals">λ</th>
-            <th className="is-num" title="1+ goal: probability and the break-even price">1+ G</th>
+            <th className="is-num" title="1+ goal: the chance, and the break-even price under it">1+ G</th>
             {g.final ? <th className="is-num" title="Goals in the box score">Got</th> : null}
-            {model ? <th className="is-num is-wide" title="The study's own rate for 1+ goal, for comparison (the skater's goals, chances and shots, home ice, back-to-back, the opponent's goals allowed per skater at his position)">Study 1+</th> : null}
-            <th className="is-num" title="Goals a game this season (games), and last season's base">Season / base</th>
-            <th className="is-num is-wide" title="Goals the opponent allows per skater at his position a game (this season blended into last season's), and its rank among the teams (1 = allows the most to the position)">Opp to pos</th>
           </tr>
         </thead>
         <tbody>
           {g.goals.map((c) => (
             <tr key={c.id} className={`${c.under ? 'is-under' : ''}${rowGrade(c, 'g', 1)}`} title={[c.under ? 'Under the 35% floor for a goal: listed to make three' : null, rowTitle(c, 'g', 1, 'G')].filter(Boolean).join(' · ') || undefined}>
               <Player c={c} />
-              <td className="is-num is-wide">{c.lamG.toFixed(2)}</td>
               <Prob p={c.p1g} lead hit={hitOf(c, 'g', 1)} />
               {g.final ? <Got c={c} stat="g" unit="G" /> : null}
-              {model ? <td className="is-num is-wide nhlx-pk-study">{c.study ? pct(c.study.p1g) : '—'}</td> : null}
-              <td className="is-num">{season(c, 'curG', 'baseG')}</td>
-              <OppPos c={c} k="g" rank="rankG" />
             </tr>
           ))}
         </tbody>
@@ -148,7 +121,7 @@ export default function PicksPanel() {
         <div>
           <div className="nhlx-today-date">{pretty || 'Loading…'}</div>
           <div className="nhlx-auto-sub">
-            {board ? `${board.games.length} game${board.games.length === 1 ? '' : 's'} · ${board.games.reduce((s, g) => s + g.skaters, 0)} skaters · ${board.source === 'model' ? `the model's numbers from the run saved ${board.modelRun?.createdAt ? new Date(board.modelRun.createdAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : ''} (${board.modelRun?.players ?? '—'} players; skaters it did not project are not listed)${board.studyWeight ? `, blended ${Math.round(board.studyWeight * 100)}% with the study's read` : ''}` : 'no model run for this date: the study\'s rates stand in'}` : ''}
+            {board ? `${board.games.length} game${board.games.length === 1 ? '' : 's'} · ${board.source === 'model' ? `model run saved ${board.modelRun?.createdAt ? fmtTime(board.modelRun.createdAt) : ''}` : 'no model run yet: own rates'}` : ''}
           </div>
         </div>
         <div className="nhlx-auto-actions">
@@ -159,7 +132,7 @@ export default function PicksPanel() {
       </div>
       {err ? <div className="nhlx-alert">{err}</div> : null}
       <p className="nhlx-auto-meta nhlx-fg-how">
-        The best shots plays and the best goal plays in every game: every skater over the floor (50% for 3+ shots, 35% for a goal), and three to four a table (the rest on the “next” line); the dimmed rows are under the floor. The percentage is the chance of the hit; the price under it is the break-even, so the play wants better odds than that. {board?.source === 'model' ? board.studyWeight ? `The numbers are a blend: ${Math.round((1 - board.studyWeight) * 100)}% the model’s λ from the latest run saved for the date, ${Math.round(board.studyWeight * 100)}% the study’s plain-rate λ, the odds read off the blended rate; the dimmed Study column is the study’s own read.` : 'The numbers are the model’s, from the latest run saved for the date; the dimmed Study column is the plain-rate read (the skater’s own rate, attempts and ice time, home ice, back-to-back, what the opponent allows per skater at his position) for comparison.' : 'With no run saved for this date the numbers are the plain-rate read: the skater’s own rate this season blended with last season’s base, his attempts and ice time, home ice, back-to-back, and what the opponent allows per skater at his position (this season blended into last season’s).'} Click a player for his card.
+        The best shots plays and goal plays in every game. The percentage is the chance of the hit, the price under it the break-even; dimmed rows are under the floor. Click a player for his card.
       </p>
       {board && !board.games.length ? <div className="nhlx-empty">No games on this date.</div> : null}
       {board && board.games.map((g, i) => (
@@ -170,7 +143,7 @@ export default function PicksPanel() {
             <TeamLogo abbr={g.home} size={28} />
             <small>{g.final ? <>Final · <b className="nhlx-mu-score">{g.away} {g.score.away} – {g.home} {g.score.home}</b>{tally(g) ? <> · {tally(g)}</> : null}</> : fmtTime(g.startTimeUTC)}</small>
           </div>
-          {g.skaters ? <div className="nhlx-pk-grid"><ShotsTable g={g} model={board.source === 'model'} /><GoalsTable g={g} model={board.source === 'model'} /></div> : <p className="nhlx-auto-meta">{board.source === 'model' ? 'The run projected nobody in this game.' : 'No lineups yet.'}</p>}
+          {g.skaters ? <div className="nhlx-pk-grid"><ShotsTable g={g} /><GoalsTable g={g} /></div> : <p className="nhlx-auto-meta">{board.source === 'model' ? 'The run projected nobody in this game.' : 'No lineups yet.'}</p>}
         </article>
       ))}
       {board?.notes?.length ? (

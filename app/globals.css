@@ -1232,7 +1232,6 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-pk-table td.is-lead b { color: var(--primary); }
 .nhlx-pk-table td.is-click { cursor: pointer; }
 .nhlx-pk-table tr.is-under td { opacity: 0.6; }
-.nhlx-pk-table td.nhlx-pk-study { color: var(--muted); }
 .nhlx-pk-table tr.is-under td.is-lead b { color: var(--muted); }
 /* Finished game: each probability cell green when the skater reached that market's floor, red when he fell short; the row follows its lead market; DNP dimmed. */
 .nhlx-pk-table td.is-hit { background: var(--ok-bg); }
