@@ -211,8 +211,13 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   line slot, and the best-bet calls (`bestBetLabel`, now in `model-core.js`); the Model tab's Top 5
   boards replayed per slate; and the window predictors — own L5 / L10 / L15 / season from the stored
   rows (full window required) and PropFinder L5 / season as the run saw them (`shotsL5`, `shotsSeason`
-  on the result rows) — scored beside λ on the rows every covered predictor shares (MAE, bias, Poisson
-  3+ SOG / 1+ G Brier). Descriptive only; nothing feeds the model.
+  on the result rows) and the study's λ as it stood that morning (`studyRead`: the Best bets plain-rate
+  read rebuilt leak-free from the stored rows before each date) with a half-and-half model + study blend —
+  scored beside λ on the rows every covered predictor shares (MAE, bias, Poisson 3+ SOG / 1+ G Brier).
+  Descriptive only; nothing feeds the model. The board blends only through `NHL_PICKS_STUDY_WEIGHT` on
+  Render (the study's share, `blendProjection` in `picks-pure.js`, `studyWeight` in `picks.js`; unset =
+  the model alone), to be set once that table shows the blend beating the model. The same comparison runs
+  offline on the `?rows=1` export with `tools/predictors/grade_blend.py`.
 - MoneyPuck team metrics (`lib/nhl-data/moneypuck.js`, `data/moneypuck/*`) feed the team
   page, Matchups defense cards and League; credit MoneyPuck.com wherever shown.
 - Theme: dark by default (`<html data-theme>`, toggle in the header, tokens in

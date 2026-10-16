@@ -778,6 +778,24 @@ Ordered by the evidence above; "gain" is deviance against the skater's own rate.
 - **Add when the data is there**: the confirmed starter's save % (3 to 9% of the goal rate per SD,
   the same sign in every season) once the slate carries him.
 
+**Applied 2026-10-16: the proof for a model + study blend, built into the site.** The question is whether
+the Best bets board gets more players right when the model's λ is blended with the study's λ. The saved
+runs live in the site's store, so the proof is the History tab's scorecard (`lib/nhl-data/scorecard.js`):
+beside the model's λ and the windows, every graded skater-game now carries the study's λ as it stood that
+morning (`studyRead`: `blendRates` + `positionAllowed` + `isBackToBack` + `project` over the stored rows
+strictly before the date; nothing leaks) and a half-and-half blend of the two, scored on identical rows
+(MAE, bias, Poisson 3+ SOG / 1+ goal Brier). The board's numbers are blended only through
+`NHL_PICKS_STUDY_WEIGHT` on Render (the study's share, `blendProjection` in `picks-pure.js`; the odds are
+the Poisson tails of the blended λ, both sides kept on the row); it is unset until that table shows the
+blend's Brier and MAE under the model's. Offline the same comparison runs from the scorecard export
+(`?rows=1`) with `tools/predictors/grade_blend.py`: blends at study shares 0 / ¼ / ½ / ¾ / 1, the top 10 /
+20 a slate, the board rule, and a paired bootstrap on the Brier gain. Why a gain is plausible: the two
+reads carry different information (the model its ladder, line and PropFinder inputs; the study the
+per-skater position read and the two-season blend) and averaging two calibrated rates with imperfectly
+correlated errors cannot do worse than the better one by much and usually beats both; why it is not
+assumed: on the replay the study alone and the site's own formula sit within 0.0001 Brier of each other,
+so the blend has to earn its place on the model's own rows.
+
 **Applied 2026-10-15** (`lib/nhl-data/picks-pure.js`, `picks.js`, `PicksPanel.jsx`; the model's math
 untouched): the Best bets plain-rate read is the shipped formula above; `positionAllowed` builds the
 blended per-skater position tables from the stored rows; `blendRates` carries TOI; the board's Opp

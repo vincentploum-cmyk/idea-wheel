@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { blendRates, project, fromModel, poissonAtLeast, fairOdds, shotsAllowed, positionAllowed, isBackToBack, pickGame, notesFor, seasonYearOf, SHOTS_FLOOR, LEAGUE_POS, withActuals, hitOf } from '../lib/nhl-data/picks';
+import { blendRates, project, fromModel, blendProjection, poissonAtLeast, fairOdds, shotsAllowed, positionAllowed, isBackToBack, pickGame, notesFor, seasonYearOf, SHOTS_FLOOR, LEAGUE_POS, withActuals, hitOf } from '../lib/nhl-data/picks';
 
 const game = (sog, icf = sog * 1.8, g = 0.3, iscf = 1.5, toi = 17) => ({ sog, icf, g, iscf, toi });
 
@@ -197,5 +197,23 @@ describe('grading the picks on the box score', () => {
     const picked = pickGame(withActuals(cands.map((c) => ({ ...c, lamS: 3, p1g: 0.3, lamG: 0.3 })), [{ id: 1, sog: 3, g: 0 }]));
     expect(picked.shots[0]).toMatchObject({ id: 1, actual: { sog: 3, g: 0 } });
     expect(picked.shots[1].actual).toBeNull();
+  });
+});
+
+describe('picks: blending the model with the study', () => {
+  const model = fromModel({ sog: 3.0, g: 0.4, p3s: 0.6, p4s: 0.35, p1g: 0.33 });
+  const study = { lamS: 2.0, lamG: 0.2, p3: 0.32, p4: 0.14, p1g: 0.18 };
+  test('λ is the weighted mean, the odds its Poisson tails, both sides kept', () => {
+    const b = blendProjection(model, study, 0.5);
+    expect(b.lamS).toBe(2.5); expect(b.lamG).toBe(0.3); expect(b.blend).toBe(0.5); expect(b.ladder).toBe('blend');
+    expect(b.p3).toBeCloseTo(poissonAtLeast(2.5, 3), 2); expect(b.p4).toBeCloseTo(poissonAtLeast(2.5, 4), 2); expect(b.p1g).toBeCloseTo(1 - Math.exp(-0.3), 2);
+    expect(b.p2).toBeGreaterThanOrEqual(b.p3); expect(b.p3).toBeGreaterThanOrEqual(b.p4);
+    expect(b.model).toMatchObject({ lamS: 3, p3: 0.6 }); expect(b.study).toMatchObject({ lamS: 2, p3: 0.32 });
+    expect(blendProjection(model, study, 1).lamS).toBe(2); expect(blendProjection(model, study, 2).lamS).toBe(2);
+  });
+  test('off without a weight, a study read or a model row', () => {
+    expect(blendProjection(model, study, 0)).toBe(model);
+    expect(blendProjection(model, null, 0.5)).toBe(model);
+    expect(blendProjection(null, study, 0.5)).toBeNull();
   });
 });

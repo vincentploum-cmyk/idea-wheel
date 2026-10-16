@@ -1,4 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
+import { blendRates, project, positionAllowed } from '../lib/nhl-data/picks-pure';
 import {
   BUCKETS, PREDICTORS, boardPicks, compactRow, defaultFrom, exportRows, gradeRow, indexRun, marketReport,
   ownWindows, predictorReport, predictorValue, runForGame, seasonOf, slateReport, summarize,
@@ -120,7 +121,16 @@ describe('scorecard: the report', () => {
     expect(common.own5).toMatchObject({ n: 2, avg: 3, actual: 3, bias: 0 });
     expect(common.model.prob).toBeCloseTo(poissonAtLeast(3.1, 3), 2);
     expect(common.model.hit).toBe(0.5);
-    expect(PREDICTORS.map((p) => p.key)).toEqual(['model', 'own5', 'own10', 'own15', 'ownSeason', 'pf5', 'pfSeason']);
+    expect(PREDICTORS.map((p) => p.key)).toEqual(['model', 'study', 'blend', 'own5', 'own10', 'own15', 'ownSeason', 'pf5', 'pfSeason']);
+    // The study's λ rides on the row; the blend is the mean of the model's λ and the study's, null when either is missing.
+    const withStudy = { ...sample()[0], study: { lamS: 2.5, lamG: 0.2 } };
+    expect(predictorValue(withStudy, 'study', 'sog')).toBe(2.5);
+    expect(predictorValue(withStudy, 'blend', 'sog')).toBeCloseTo((3.1 + 2.5) / 2);
+    expect(predictorValue(withStudy, 'blend', 'g')).toBeCloseTo((withStudy.m.lambdaG + 0.2) / 2);
+    expect(predictorValue(sample()[0], 'study', 'sog')).toBeNull();
+    expect(predictorValue(sample()[0], 'blend', 'g')).toBeNull();
+    expect(exportRows([withStudy])[0]).toMatchObject({ studyS: 2.5, studyG: 0.2 });
+    expect(exportRows(sample())[0]).toMatchObject({ studyS: null, studyG: null });
     expect(predictorValue(sample()[0], 'pfSeason', 'g')).toBe(0.18);
     expect(predictorReport([], 'g').common.predictors[0]).toMatchObject({ n: 0, mae: null });
     // A predictor nobody has yet (own season in October) does not empty the common set.
@@ -142,5 +152,42 @@ describe('scorecard: the report', () => {
     expect(card.markets).toHaveLength(7);
     expect(card.predictors.g.stat).toBe('g');
     expect(exportRows(sample())[0]).toMatchObject({ date: '2026-10-08', name: 'Evan Bouchard', sog: 4, pts: 1, lambdaS: 3.1, own5: 3, pf5: 3.4, best: '3+ shots' });
+  });
+});
+
+describe('scorecard: the study read', () => {
+  const { studyRead } = require('../lib/nhl-data/scorecard');
+  const row = (date, gameId, playerId, team, opp, venue, pos, sog, g, icf, iscf, toi) => ({ date, gameId, playerId, name: `P${playerId}`, team, opp, venue, pos, sog, g, icf, iscf, toi });
+  test('rebuilds the board\'s read as it stood that morning, from the rows before the date', () => {
+    const rows = [];
+    // last season: player 1 (EDM C) 12 games, player 2 (CGY D) 12 games; CGY and EDM each defend 12 games
+    for (let k = 0; k < 12; k += 1) {
+      const d = `2026-01-${String(k + 1).padStart(2, '0')}`;
+      rows.push(row(d, 100 + k, 1, 'EDM', 'CGY', 'H', 'C', 3, 0, 5, 2, 20));
+      rows.push(row(d, 100 + k, 2, 'CGY', 'EDM', 'A', 'D', 1, 0, 2, 1, 22));
+    }
+    // this season: two games before the 10th, one on the 10th
+    rows.push(row('2026-10-08', 200, 1, 'EDM', 'CGY', 'A', 'C', 5, 1, 7, 3, 21), row('2026-10-08', 200, 2, 'CGY', 'EDM', 'H', 'D', 2, 0, 3, 1, 23));
+    rows.push(row('2026-10-09', 201, 1, 'EDM', 'CGY', 'H', 'C', 4, 0, 6, 2, 19), row('2026-10-09', 201, 2, 'CGY', 'EDM', 'A', 'D', 0, 0, 1, 0, 21));
+    rows.push(row('2026-10-10', 202, 1, 'EDM', 'CGY', 'H', 'C', 6, 2, 8, 4, 22));
+    const study = studyRead(rows, 2026);
+    const read8 = study.at('2026-10-08');
+    const a = read8({ id: 1, team: 'EDM', opp: 'CGY', venue: 'A', pos: 'C' });
+    expect(a.lamS).toBeGreaterThan(1); expect(a.lamG).toBeGreaterThan(0);
+    // the same skater through the board's own pieces
+    const cur = []; const prev = rows.filter((r) => r.playerId === 1 && r.date < '2026-07-01');
+    const table = positionAllowed(rows.filter((r) => r.date < '2026-07-01' && false), rows.filter((r) => r.date < '2026-07-01'));
+    expect(a).toEqual((({ lamS, lamG }) => ({ lamS, lamG }))(project(blendRates(cur, prev), { home: false, oppPos: table.read('CGY', 'C'), pos: 'C', b2b: false })));
+    // the 10th sees the two games before it (player 1 on a back-to-back after the 9th) and nothing from the 10th itself
+    const read10 = study.at('2026-10-10');
+    const b = read10({ id: 1, team: 'EDM', opp: 'CGY', venue: 'H', pos: 'C' });
+    const cur10 = rows.filter((r) => r.playerId === 1 && r.date >= '2026-10-01' && r.date < '2026-10-10');
+    const table10 = positionAllowed(rows.filter((r) => r.date >= '2026-10-01' && r.date < '2026-10-10'), rows.filter((r) => r.date < '2026-07-01'));
+    expect(b).toEqual((({ lamS, lamG }) => ({ lamS, lamG }))(project(blendRates(cur10, prev), { home: true, oppPos: table10.read('CGY', 'C'), pos: 'C', b2b: true })));
+    expect(b.lamS).not.toBe(a.lamS);
+    // no base, under five games: no read; a goalie-ish position: no read; dates must be asked in order
+    expect(read10({ id: 3, team: 'EDM', opp: 'CGY', venue: 'H', pos: 'C' })).toBeNull();
+    expect(read10({ id: 1, team: 'EDM', opp: 'CGY', venue: 'H', pos: 'G' })).toBeNull();
+    expect(() => study.at('2026-10-09')).toThrow();
   });
 });
