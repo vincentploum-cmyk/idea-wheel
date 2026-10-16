@@ -8,7 +8,7 @@ Lineup = the skaters who dressed in each team's last game (scratches and call-up
 known here; the site's board reads the beat writers' lines). The board rule: every skater over
 the floor (3+ SOG at 50%, 1+ goal at 35%), three to four a game.
 
-argv: <this season's games dir (relabelled)> <previous season's games dir (relabelled)> <date> [--all]
+argv: <this season's games dir (relabelled)> <previous season's games dir (relabelled)> <date> [--all] [--csv <out>]
 """
 import sys, glob, json, math
 from collections import defaultdict
@@ -17,6 +17,7 @@ import urllib.request
 
 cur_dir, prev_dir, date = sys.argv[1:4]
 show_all = '--all' in sys.argv
+csv_out = sys.argv[sys.argv.index('--csv') + 1] if '--csv' in sys.argv else None
 POS = ('C', 'LW', 'RW', 'D')
 # the shipped coefficients (picks-pure.js)
 S = dict(const=-1.4391, sog=0.3923, icf=0.4484, toi=0.297, home=0.0341, pos=0.6869, b2b=-0.026)
@@ -138,3 +139,15 @@ for r in sorted(rows, key=lambda r: -r['p3'])[:12]: print(line_s(r))
 print('\n=== The slate\'s top 12 scorers by P(1+ goal) ===')
 for r in sorted(rows, key=lambda r: -r['p1g'])[:12]: print(line_g(r))
 print(f'\n{len(rows)} skaters rated. Check scratches and the confirmed lines before puck drop; a skater not in the lineup is not a play.')
+if csv_out:
+    import csv
+    ids = {s['id']: s['name'] for t in dressed.values() for s in t}
+    byname = {(r['team'], r['name']): r for r in rows}
+    with open(csv_out, 'w', newline='') as f:
+        w = csv.DictWriter(f, fieldnames=['id'] + list(rows[0].keys()))
+        w.writeheader()
+        for t, sk in dressed.items():
+            for s in sk:
+                r = byname.get((t, s['name']))
+                if r: w.writerow({'id': s['id'], **r})
+    print('written', csv_out)
