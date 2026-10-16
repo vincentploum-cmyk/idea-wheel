@@ -100,9 +100,10 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   Poisson coefficients fitted on 2024-25 + 2025-26 by `tools/predictors/replay.py`, log features: the skater's rate,
   attempts, chances and TOI, this season blended into last season's base at n / (n + 18) shots, n / (n + 40) goals;
   home ice; back-to-back; and what the opponent allows **per skater at his position**, this season blended into last
-  season's table at games / (games + 15) for shots and games / (games + 40) for goals, `positionAllowed`) sits beside
-  them as a dimmed `Study` column and stands in when no run exists; the board's "Opp to pos" column shows that read
-  and its rank. A stored game grades the rows
+  season's table at games / (games + 15) for shots and games / (games + 40) for goals, `positionAllowed`) rides on
+  each API row as `study` and stands in when no run exists, but the panel shows one set of numbers only: player,
+  2+ / 3+ / 4+ (1+ G) with the break-even price, and Got once final — no study, rate or opponent columns (the user
+  wants the plays readable at a glance; the comparison lives on the History tab's scorecard). A stored game grades the rows
   (`withActuals` / `hitOf` in `picks-pure.js`: each skater's box-score SOG and goals ride on his row as `actual`,
   null when he did not play): every probability cell green when he reached that market's floor, red when he fell
   short, the row on its lead market, a "Got" column with the figure and a tally in the game head. The model's math is untouched.
