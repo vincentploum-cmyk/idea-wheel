@@ -5,7 +5,7 @@ import { TeamLogo, Headshot } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { PfTable, SortTh, Sel, UnderlineTabs, rankTone } from './pf-ui';
 import { TeamLink } from './links';
-import { GROUPS, OVERVIEW_COLS, boardTables, overviewRows, matchupReads, groupKeyFor, shootersAt } from '@/lib/nhl-data/defense-board';
+import { GROUPS, OVERVIEW_COLS, boardTables, overviewRows, matchupReads, groupKeyFor, shootersAt, figureFor } from '@/lib/nhl-data/defense-board';
 
 // The Defense tab: ShotPropz-style cheat sheets from the stored box scores. What every
 // team gives up to each position group, ranked softest first (1 = the most allowed),
@@ -55,13 +55,16 @@ function RankTable({ title, table, digits, playing, view, active, onPick }) {
   );
 }
 
-/** The shooting side's skaters at a group key tonight, clickable to the card: "Thompson C1 · Cozens C2 · …". */
+/** The shooting side's skaters at a group key tonight, best for the metric first, clickable to the card: "Thompson C1 3.9 · Cozens C2 2.4 · …". */
 function Shooters({ side, keyName, group, opp, venue, metric }) {
   const open = usePlayerCard();
   const list = shootersAt(side, keyName, group, metric);
-  const lam = (p) => (p.lamS == null && p.lamG == null ? '' : metric === 'g'
-    ? ` · the run's λ ${p.lamG != null ? `${p.lamG.toFixed(2)} goals` : ''}${p.lamS != null ? `${p.lamG != null ? ', ' : ''}${p.lamS.toFixed(2)} shots` : ''}`
-    : ` · the run's λ ${p.lamS != null ? `${p.lamS.toFixed(2)} shots` : ''}${p.lamG != null ? `${p.lamS != null ? ', ' : ''}${p.lamG.toFixed(2)} goals` : ''}`);
+  const lam = (p) => {
+    const f = figureFor(p, metric);
+    if (!f) return '';
+    const unit = metric === 'g' ? 'goals' : 'shots';
+    return f.source === 'run' ? ` · the run's λ ${f.value.toFixed(2)} ${unit}` : ` · ${f.value.toFixed(2)} ${unit} a game over his last ${p.gp} stored games (no run yet)`;
+  };
   if (!side) return <small className="nhlx-auto-meta">no lineup yet</small>;
   if (!list.length) return <small className="nhlx-auto-meta">nobody listed at {keyName}</small>;
   return (
@@ -70,7 +73,7 @@ function Shooters({ side, keyName, group, opp, venue, metric }) {
         <span key={p.id}>
           {i ? ' · ' : ''}
           <button type="button" className="nhlx-df-shooter" onClick={() => open({ id: p.id, opp, venue, pos: p.pos, line: p.line })} title={`${p.name}${p.carried ? ' (carried from an earlier lineup)' : ''}${lam(p)}`}>
-            {String(p.name).split(' ').slice(-1)[0]}<small>{p.pos === 'D' ? 'D' : p.pos}{p.line || ''}{p.carried ? '*' : ''}</small>
+            {String(p.name).split(' ').slice(-1)[0]}<small>{p.pos === 'D' ? 'D' : p.pos}{p.line || ''}{p.carried ? '*' : ''}{(() => { const f = figureFor(p, metric); return f ? ` ${f.value.toFixed(metric === 'g' ? 2 : 1)}` : ''; })()}</small>
           </button>
         </span>
       ))}
@@ -342,7 +345,7 @@ export default function DefensePanel() {
         <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Date" />
       </div>
 
-      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Tonight’s matchups</h3><small>{data.tonight?.length || 0} games on {date} · each shooting side against what its opponent gives up per skater at the position {venue === 'ALL' ? 'over every game' : 'at the venue it defends tonight'} · softest spot first, with the shooters lined up there tonight (click any position’s value to list that position’s shooters instead; first line first; * = carried from an earlier lineup)</small></div>
+      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Tonight’s matchups</h3><small>{data.tonight?.length || 0} games on {date} · each shooting side against what its opponent gives up per skater at the position {venue === 'ALL' ? 'over every game' : 'at the venue it defends tonight'} · softest spot first, with the shooters lined up there tonight, the best for {metric === 'g' ? 'goals' : 'shots'} first with his figure (the run’s λ, else his rate a game; click any position’s value to list that position’s shooters instead; * = carried from an earlier lineup)</small></div>
       <Reads reads={reads} keys={keys} digits={digits} metric={metric} active={active} onPick={pick} games={data.tonight || []} group={group} />
 
       <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Running hot</h3><small>Current streaks from this season’s stored games · the study found no carry-over from a goal last game, so read the streak as colour and the Tonight column as the matchup</small></div>

@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import { defenseByPosition, blendedDefense } from '../lib/nhl-data/defense';
-import { boardTables, overviewRows, matchupReads, rankDesc, groupKeyFor, shootersAt } from '../lib/nhl-data/defense-board';
+import { boardTables, overviewRows, matchupReads, rankDesc, groupKeyFor, shootersAt, figureFor } from '../lib/nhl-data/defense-board';
 
 // Three games: NYR at NJD, BOS at NJD, NJD at BOS. One skater per position per side.
 const row = (date, gameId, team, opp, venue, pos, sog, g) => ({ date, gameId, team, opp, venue, pos, sog, g, a: 0, icf: sog, iff: sog, iscf: 0, ihdcf: 0 });
@@ -76,18 +76,25 @@ describe('defense board', () => {
     expect(home.C.rows.map((r) => r.abbr)).toEqual(['NJD', 'BOS']); // NYR never defended at home
     expect(home.C.rows[0]).toMatchObject({ gp: 2, value: 1 });
   });
-  test('the shooters at a softest spot come from the side\'s lineup, first line first, grouped the way the tables are', () => {
+  test('the shooters at a softest spot come from the side\'s lineup, the best for the metric first, grouped the way the tables are', () => {
     const side = { team: 'BUF', skaters: [
       { id: 1, name: 'Tage Thompson', pos: 'C', line: 1, lamS: 3.9 }, { id: 2, name: 'Jack Quinn', pos: 'RW', line: 1 }, { id: 3, name: 'Josh Norris', pos: 'C', line: 2, lamS: 2.1 },
       { id: 4, name: 'Zach Benson', pos: 'LW', line: 2 }, { id: 5, name: 'Rasmus Dahlin', pos: 'D', line: 1 }, { id: 6, name: 'Peyton Krebs', pos: 'C', line: null, lamS: 1 },
     ] };
     expect(shootersAt(side, 'C').map((p) => p.name)).toEqual(['Tage Thompson', 'Josh Norris', 'Peyton Krebs']);
+    // A third-line centre who shoots more than the second-line one lists ahead of him; without a run the stored rate orders them, then the line.
+    const byRate = { skaters: [{ id: 1, name: 'A', pos: 'C', line: 2, sog: 1.8, gp: 20 }, { id: 2, name: 'B', pos: 'C', line: 3, sog: 2.6, gp: 20 }, { id: 3, name: 'C', pos: 'C', line: 1, sog: 2.6, gp: 20 }, { id: 4, name: 'D', pos: 'C', line: 4 }] };
+    expect(shootersAt(byRate, 'C').map((p) => p.name)).toEqual(['C', 'B', 'A', 'D']);
+    expect(figureFor(byRate.skaters[1])).toEqual({ value: 2.6, source: 'rate' });
+    expect(figureFor({ lamS: 3.1, sog: 2 , gp: 9 })).toEqual({ value: 3.1, source: 'run' });
+    expect(figureFor({ lamG: 0.4, g: 0.2, gp: 9 }, 'g')).toEqual({ value: 0.4, source: 'run' });
+    expect(figureFor({ sog: 2, gp: 0 })).toBeNull();
     // Within a line the run's λ for the metric orders the names: shots under 'sog', goals under 'g'.
     const tied = { skaters: [{ id: 1, name: 'A', pos: 'RW', line: 1, lamS: 2, lamG: 0.5 }, { id: 2, name: 'B', pos: 'RW', line: 1, lamS: 3, lamG: 0.3 }] };
     expect(shootersAt(tied, 'RW', 'pos', 'sog').map((p) => p.name)).toEqual(['B', 'A']);
     expect(shootersAt(tied, 'RW', 'pos', 'g').map((p) => p.name)).toEqual(['A', 'B']);
     expect(shootersAt(side, 'W', 'cwd').map((p) => p.name)).toEqual(['Jack Quinn', 'Zach Benson']);
-    expect(shootersAt(side, 'F', 'fd').map((p) => p.name)).toEqual(['Tage Thompson', 'Jack Quinn', 'Josh Norris', 'Zach Benson', 'Peyton Krebs']);
+    expect(shootersAt(side, 'F', 'fd').map((p) => p.name)).toEqual(['Tage Thompson', 'Josh Norris', 'Peyton Krebs', 'Jack Quinn', 'Zach Benson']);
     expect(shootersAt(side, 'D', 'fd').map((p) => p.id)).toEqual([5]);
     expect(shootersAt(null, 'C')).toEqual([]);
     expect(groupKeyFor('RW', 'cwd')).toBe('W');

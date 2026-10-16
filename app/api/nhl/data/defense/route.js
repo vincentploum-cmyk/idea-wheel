@@ -34,7 +34,8 @@ export async function GET(request) {
   // with position, line slot and the saved run's λ shots / goals when a run exists.
   const sidesById = Object.fromEntries((slate?.games || []).map((g) => [g.id, (g.sides || []).map((s) => ({
     team: s.team, source: s.source || null,
-    skaters: (s.skaters || []).filter((p) => p.inLineup && p.id != null).map((p) => ({ id: p.id, name: p.name, pos: p.pos, line: p.line ?? null, carried: !!p.carried, lamS: p.model?.sog ?? null, lamG: p.model?.g ?? null })),
+    // lamS / lamG = the saved run's λ when a run exists; sog / g = his stored rate a game (the slate's baseline window) as the fallback order
+    skaters: (s.skaters || []).filter((p) => p.inLineup && p.id != null).map((p) => ({ id: p.id, name: p.name, pos: p.pos, line: p.line ?? null, carried: !!p.carried, lamS: p.model?.sog ?? null, lamG: p.model?.g ?? null, sog: p.sog ?? null, g: p.g ?? null, gp: p.gp ?? 0 })),
   }))]));
   const all = mp?.teams?.situations?.all || {};
   const moneypuck = {
