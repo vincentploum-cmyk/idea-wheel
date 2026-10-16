@@ -149,8 +149,8 @@ function PredictorsTable({ report }) {
         </thead>
         <tbody>
           {list.map((p) => (
-            <tr key={p.key} className={p.key === 'model' ? 'is-model' : ''}>
-              <td><b>{p.label}</b> <small>{p.source === 'own' ? 'stored games' : p.source === 'propfinder' ? 'PropFinder' : 'saved run'}</small></td>
+            <tr key={p.key} className={p.key === 'model' ? 'is-model' : p.key === 'blend' ? 'is-blend' : ''}>
+              <td><b>{p.label}</b> <small>{p.source === 'own' ? 'stored games' : p.source === 'propfinder' ? 'PropFinder' : p.source === 'study' ? 'plain-rate read' : p.source === 'blend' ? 'half model, half study' : 'saved run'}</small></td>
               <td className="is-num">{num(p.avg)}</td>
               <td className="is-num">{num(p.actual)}</td>
               <td className="is-num">{signed(p.bias)}</td>
@@ -281,7 +281,7 @@ export default function Scorecard() {
         </div>
       </div>
       <p className="nhlx-auto-meta nhlx-fg-how">
-        Each stored game is graded against the newest run saved before its puck drop; a run saved after the game never counts. A call is one player-game with a probability for the market. “Said” is the model’s average probability, “Hit” how often the line was reached: the two should match. Brier is the squared error of the probabilities (0 perfect, 0.25 a coin flip). Below, the same player-games score the plain windows — a skater’s own last 5 / 10 / 15 stored games and season to date, and PropFinder’s L5 and season rates as the run saw them — beside the model’s λ, so the sources and windows can be compared on identical rows.
+        Each stored game is graded against the newest run saved before its puck drop; a run saved after the game never counts. A call is one player-game with a probability for the market. “Said” is the model’s average probability, “Hit” how often the line was reached: the two should match. Brier is the squared error of the probabilities (0 perfect, 0.25 a coin flip). Below, the same player-games score the study’s plain-rate read (the skater’s rate, attempts and ice time, home ice, back-to-back, what the opponent allows per skater at his position, all as they stood that morning), a half-and-half blend of the model’s λ and the study’s, and the plain windows — a skater’s own last 5 / 10 / 15 stored games and season to date, and PropFinder’s L5 and season rates as the run saw them — beside the model’s λ, so the sources, the blend and the windows can be compared on identical rows.
       </p>
       {err ? <div className="nhlx-alert">{err}</div> : null}
       {card && !card.players ? (
@@ -310,7 +310,7 @@ export default function Scorecard() {
           </div>
           <PredictorsTable report={card.predictors[stat]} />
           <p className="nhlx-auto-meta">
-            Own L5 / L10 / L15 need the full window of stored games (across seasons: in October the last five are last season’s); own season needs three games this season; PropFinder’s season rate is carried on runs saved from now on. Coverage on all rows: {card.predictors[stat].each.map((p) => `${p.label} ${p.n}`).join(' · ')}.
+            The blend wins when its Brier (and MAE) sits under the model’s on these rows; the board carries it only once that holds. Own L5 / L10 / L15 need the full window of stored games (across seasons: in October the last five are last season’s); own season needs three games this season; PropFinder’s season rate is carried on runs saved from now on. Coverage on all rows: {card.predictors[stat].each.map((p) => `${p.label} ${p.n}`).join(' · ')}.
           </p>
 
           <h3 className="nhlx-sc-h">By slate</h3>

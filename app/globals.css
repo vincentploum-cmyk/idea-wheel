@@ -1220,6 +1220,7 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-sc-table td.is-under { color: var(--bad-fg); }
 .nhlx-sc-table td.is-best { color: var(--heading); font-weight: 700; }
 .nhlx-sc-table tr.is-model td { background: var(--primary-soft); }
+.nhlx-sc-table tr.is-blend td { background: var(--bg-tint); }
 
 /* Tonight's picks (Best bets): one row of two tables per game, the notes under the slate. */
 .nhlx-pk { margin: 28px 0 36px; }
