@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { blendRates, project, fromModel, blendProjection, poissonAtLeast, fairOdds, shotsAllowed, positionAllowed, isBackToBack, pickGame, notesFor, seasonYearOf, SHOTS_FLOOR, LEAGUE_POS, withActuals, hitOf } from '../lib/nhl-data/picks';
+import { blendRates, project, fromModel, blendProjection, formOf, isSoftThird, FORM, poissonAtLeast, fairOdds, shotsAllowed, positionAllowed, isBackToBack, pickGame, notesFor, seasonYearOf, SHOTS_FLOOR, LEAGUE_POS, withActuals, hitOf } from '../lib/nhl-data/picks';
 
 const game = (sog, icf = sog * 1.8, g = 0.3, iscf = 1.5, toi = 17) => ({ sog, icf, g, iscf, toi });
 
@@ -215,5 +215,37 @@ describe('picks: blending the model with the study', () => {
     expect(blendProjection(model, study, 0)).toBe(model);
     expect(blendProjection(model, null, 0.5)).toBe(model);
     expect(blendProjection(null, study, 0.5)).toBeNull();
+  });
+});
+
+describe('picks: form flags and the soft third', () => {
+  const g = (sog, goals) => ({ sog, g: goals, icf: sog + 2, iscf: 1, toi: 18 });
+  test('shots: hot at 1.4x his rate over the last five, cold at 0.7x, five games needed', () => {
+    const prev = Array.from({ length: 20 }, () => g(2, 0));
+    const rates = blendRates([g(3, 0), g(4, 0), g(3, 0), g(3, 0), g(4, 0)], prev);
+    const f = formOf([g(3, 0), g(4, 0), g(3, 0), g(3, 0), g(4, 0)], prev, rates);
+    expect(f.sogL5).toBe(3.4); expect(f.sogRatio).toBeGreaterThanOrEqual(FORM.hotShots); expect(f.hotS).toBe(true); expect(f.coldS).toBe(false);
+    const cold = formOf([g(1, 0), g(0, 0), g(1, 0), g(1, 0), g(0, 0)], prev, blendRates([g(1, 0), g(0, 0), g(1, 0), g(1, 0), g(0, 0)], prev));
+    expect(cold.coldS).toBe(true); expect(cold.hotS).toBe(false);
+    // the last five run across the season boundary
+    const early = formOf([g(5, 0)], prev, blendRates([g(5, 0)], prev));
+    expect(early.games).toBe(5); expect(early.sogL5).toBe((2 * 4 + 5) / 5);
+    expect(formOf([], [], rates)).toBeNull();
+    expect(formOf([g(2, 0)], [], rates).sogRatio).toBeNull();
+  });
+  test('goals: hot at three in the last five; cold = none in ten when his rate owed him one and a half', () => {
+    const prev = Array.from({ length: 20 }, () => g(2, 0.3));
+    const hot = formOf([g(2, 1), g(3, 0), g(2, 2), g(1, 0), g(2, 1)], prev, blendRates([g(2, 1), g(3, 0), g(2, 2), g(1, 0), g(2, 1)], prev));
+    expect(hot.gL5).toBe(4); expect(hot.hotG).toBe(true); expect(hot.coldG).toBe(false);
+    const dry = Array.from({ length: 10 }, () => g(2, 0));
+    const cold = formOf(dry, prev, blendRates(dry, prev));
+    expect(cold.gL10).toBe(0); expect(cold.coldG).toBe(true); expect(cold.hotG).toBe(false);
+    // a 0.07-a-game defenseman is never cold
+    const dprev = Array.from({ length: 20 }, () => g(1, 0.07));
+    expect(formOf(dry, dprev, blendRates(dry, dprev)).coldG).toBe(false);
+  });
+  test('the soft third of a ranked table', () => {
+    expect(isSoftThird(1, 32)).toBe(true); expect(isSoftThird(11, 32)).toBe(true); expect(isSoftThird(12, 32)).toBe(false);
+    expect(isSoftThird(null, 32)).toBe(false); expect(isSoftThird(3, 0)).toBe(false);
   });
 });
