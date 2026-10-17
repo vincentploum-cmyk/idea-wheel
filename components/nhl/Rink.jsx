@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { Flags, ICON } from './flags';
 import { Headshot, TeamLogo, headshotUrl } from './media';
 import { TeamLink } from './links';
 import { usePlayerCard } from './PlayerCard';
@@ -157,7 +158,7 @@ function ModelPlays({ side, actualFor }) {
           {graded.map((pl) => (
             <button key={`${pl.kind}-${pl.name}`} type="button" className={`nhlx-play${pl.id ? '' : ' is-static'}${pl.hit == null ? (pl.dnp ? ' is-dnp' : '') : pl.hit ? ' is-hit' : ' is-miss'}`} onClick={() => pl.id && open({ id: pl.id, opp: side.opp, venue: side.venue, pos: pl.pos, line: pl.line })} title={`${pl.name} · ${pl.market} ${Math.round(pl.prob * 100)}% · play score ${pl.attack ?? '—'} (${pl.tier})${outcome(pl)}`}>
               <Headshot id={pl.id} size={26} />
-              <span className="nhlx-play-meta"><b>{shortName(pl.name)}</b><span>{pl.market} <em>{Math.round(pl.prob * 100)}%</em>{pl.hit != null ? <> · <strong className="nhlx-play-got">{pl.got} {unit(pl)}</strong></> : pl.dnp ? <> · DNP</> : null}</span></span>
+              <span className="nhlx-play-meta"><b>{shortName(pl.name)}<Flags c={pl} stat={pl.stat} /></b><span>{pl.market} <em>{Math.round(pl.prob * 100)}%</em>{pl.hit != null ? <> · <strong className="nhlx-play-got">{pl.got} {unit(pl)}</strong></> : pl.dnp ? <> · DNP</> : null}</span></span>
               <span className="nhlx-edge">{pl.tier}</span>
               {pl.hit != null ? <i className={`nhlx-play-mark ${pl.hit ? 'is-hit' : 'is-miss'}`} aria-label={pl.hit ? 'hit' : 'miss'}>{pl.hit ? '✓' : '✗'}</i> : null}
             </button>
@@ -199,7 +200,7 @@ function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false }
         <i className="nhlx-rk-num">{p.number ?? p.pos}</i>
       </span>
       <span className="nhlx-rk-meta">
-        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{h2hMark ? <span className="nhlx-rk-h2h" title={h2hTitle}>h2h</span> : null}<span className="nhlx-rk-nm">{shortName(p.name)}</span></b>
+        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{h2hMark ? <span className="nhlx-rk-h2h" title={h2hTitle}>h2h</span> : null}<Flags c={p} stat={metric} className="nhlx-rk-flags" /><span className="nhlx-rk-nm">{shortName(p.name)}</span></b>
         {played ? (actual
           ? <span className={`nhlx-rk-stat is-actual${(m?.sog ?? p.projSog) != null && actual.sog >= (m?.sog ?? p.projSog) ? ' is-over' : ''}`}><em>{actual.sog}</em>{NB}SOG{NB}· <em>{actual.g}</em>{NB}G{actual.a ? <>{NB}· <em>{actual.a}</em>{NB}A</> : null}{m?.sog != null ? <i>m{NB}{num(m.sog)}</i> : p.projSog != null ? <i>p{NB}{num(p.projSog)}</i> : null}</span>
           : <span className="nhlx-rk-stat">did not play</span>)
@@ -342,6 +343,7 @@ export function RinkLegend({ metric = 'sog' }) {
       <span><i className="is-tough" /> stingy: bottom third</span>
       <span>on each player: the model’s projected SOG and goals from the latest saved run for this slate (3+ SOG and 1+ G odds in the tooltip), or a matchup read when no run exists; once the game is final, the actual shots, goals and assists with the model’s number after “m”; click for the player card</span>
       <span>🔥 on fire, by the model’s rule: 1+ point at 50% or better, 2.0+ scoring chances per game, 16+ minutes</span>
+      <span><i className="nhlx-pk-flag is-hot is-legend">{ICON.hot}</i> hot going in ({metric === 'g' ? '3+ goals in his last five' : 'his last five at 1.4× his shot rate or more'}) · <i className="nhlx-pk-flag is-cold is-legend">{ICON.cold}</i> cold ({metric === 'g' ? 'no goal in ten games when his rate owed him one' : 'his last five at 0.7× or under'}) · <i className="nhlx-pk-flag is-soft is-legend">{ICON.soft}</i> the opponent is in the soft third of the league at his position for {word}, by the blended per-skater table; colour only, the numbers already carry his rate</span>
       {metric === 'g'
         ? <span><i className="nhlx-rk-h2h is-legend">h2h</i> scores on this opponent: more than a goal a game against them over 2+ stored games, or 2+ goals in the one game stored (this season and last)</span>
         : <span><i className="nhlx-rk-h2h is-legend">h2h</i> fires at this opponent: 4+ shots a game against them over 2+ stored games, or 5+ in the one game stored (this season and last)</span>}

@@ -5,6 +5,7 @@ import { Headshot, TeamLogo, rankClass } from './media';
 import { usePlayerCard, FormChip } from './PlayerCard';
 import { SlateDateContext } from './player-card-context';
 import { PfTable, PosBadge, SortTh, Tag } from './pf-ui';
+import { Flags } from './flags';
 import { TeamLink } from './links';
 import { oppClass } from './MoneyPuck';
 import { Rink, RinkLegend } from './Rink';
@@ -119,7 +120,7 @@ function SkaterRows({ skaters, showTeam, teamCount, sort }) {
       <td>{p.toi != null ? num(p.toi, 2) : '—'}</td>
       <td className={sort === 'g' ? 'is-sorted' : ''}>{num(p.g, 2)}</td>
       <td className={sort === 'sog' ? 'is-sorted' : ''}><b>{num(p.sog, 2)}</b></td>
-      <td>{p.l5Sog != null ? num(p.l5Sog, 2) : '—'}</td>
+      <td>{p.l5Sog != null ? num(p.l5Sog, 2) : '—'}<Flags c={p} stat="sog" /></td>
       <td>{p.iscf != null ? num(p.iscf, 2) : '—'}</td>
       <td className={rankClass(p.vs?.sog?.rank, teamCount)}>{p.vs?.sog ? num(p.vs.sog.allowed, 2) : '—'}{p.vs?.sog?.rank ? <span className="nhlx-rank">#{p.vs.sog.rank}</span> : null}</td>
       <td><EdgeChip v={p.shotEdge} /></td>
@@ -127,7 +128,7 @@ function SkaterRows({ skaters, showTeam, teamCount, sort }) {
       <td className={sort === 'projSog' ? 'is-sorted' : ''}><b>{num(p.projSog, 2)}</b></td>
       <td className={sort === 'projG' ? 'is-sorted' : ''}><b>{num(p.projG, 2)}</b></td>
       <td>{p.hit?.s3 != null ? `${Math.round(p.hit.s3 * 100)}%` : '—'}</td>
-      <td><FormChip tag={p.form?.goals} kind="goals" small /></td>
+      <td><FormChip tag={p.form?.goals} kind="goals" small /><Flags c={p} stat="g" /></td>
     </tr>
   ));
 }

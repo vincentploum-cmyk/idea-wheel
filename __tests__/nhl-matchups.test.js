@@ -333,6 +333,10 @@ describe('the plays strip above a rink (sidePlays)', () => {
     expect(p.goals.map((x) => [x.name, x.market, x.prob])).toEqual([['Alex Ovechkin', '1+ G', 0.38], ['Dylan Strome', '1+ G', 0.24]]);
     expect(p.shots[0]).toMatchObject({ id: 13, number: 8, pos: 'LW', kind: 'shots', stat: 'sog', min: 4, attack: 80 });
     expect(p.goals[1]).toMatchObject({ kind: 'goals', stat: 'g', min: 1, tier: 'Thin' });
+    // the flags ride onto the play (form going in, the soft spot), null when the skater has none
+    const flagged = sidePlays([sk('Alex Ovechkin', { gateOpen: true, p3s: 0.74, p4s: 0.52, p1g: 0.38, attack: 80 }, { opp: 'PIT', heat: { hotS: true }, oppPos: { softSog: true, softG: false } })], true);
+    expect(flagged.shots[0]).toMatchObject({ opp: 'PIT', heat: { hotS: true }, oppPos: { softSog: true } });
+    expect(p.shots[0]).toMatchObject({ heat: null, oppPos: null });
   });
   test('no run → null (the strip stays off); a run with nothing over the floor → empty lists', () => {
     expect(sidePlays(skaters, false)).toBeNull();

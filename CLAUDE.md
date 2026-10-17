@@ -104,10 +104,13 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   each API row as `study` and stands in when no run exists, but the panel shows one set of numbers only: player,
   2+ / 3+ / 4+ (1+ G) with the break-even price, and Got once final — no study, rate or opponent columns (the user
   wants the plays readable at a glance; the comparison lives on the History tab's scorecard). Beside the name, for
-  the table's market: a flame / snowflake for his form (`formOf` in `picks-pure.js`, `form` on the row: shots hot at
+  the table's market: a flame / snowflake for his form (`formOf` in `picks-pure.js`, `heat` on the row: shots hot at
   1.4× his blended rate over his last five, cold at 0.7×; goals hot at 3+ in his last five, cold = none in ten when
   his rate owed him 1.5) and a green rink when the opponent is in the soft third at his position (`oppPos.softSog` /
-  `softG`, `isSoftThird`). Colour only: the study found a streak adds nothing once the rate is in, so no number moves. A stored game grades the rows
+  `softG`, `isSoftThird`). Colour only: the study found a streak adds nothing once the rate is in, so no number moves.
+  The same flags (`components/nhl/flags.jsx`, `Flags`) sit on the Matchups tab: on each rink chip for the rink's
+  metric, on the plays strip per play, and in the all-skaters table's L5 S/G and Goals cells; `buildSlate` puts
+  `heat` and `oppPos` on every skater and `sidePlays` carries them onto the plays. A stored game grades the rows
   (`withActuals` / `hitOf` in `picks-pure.js`: each skater's box-score SOG and goals ride on his row as `actual`,
   null when he did not play): every probability cell green when he reached that market's floor, red when he fell
   short, the row on its lead market, a "Got" column with the figure and a tally in the game head. The model's math is untouched.
