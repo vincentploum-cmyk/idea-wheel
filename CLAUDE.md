@@ -109,7 +109,9 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
   his rate owed him 1.5) and a green rink when the opponent is in the soft third at his position (`oppPos.softSog` /
   `softG`, `isSoftThird`). Colour only: the study found a streak adds nothing once the rate is in, so no number moves.
   The same flags (`components/nhl/flags.jsx`, `Flags`) sit on the Matchups tab: on each rink chip for the rink's
-  metric, on the plays strip per play, and in the all-skaters table's L5 S/G and Goals cells; `buildSlate` puts
+  metric (flame / snowflake only, `soft={false}`: the ice band under the chip already shows the environment, and by
+  the picked window rather than the season table), on the plays strip per play, and in the all-skaters table's
+  L5 S/G and Goals cells; `buildSlate` puts
   `heat` and `oppPos` on every skater and `sidePlays` carries them onto the plays. A stored game grades the rows
   (`withActuals` / `hitOf` in `picks-pure.js`: each skater's box-score SOG and goals ride on his row as `actual`,
   null when he did not play): every probability cell green when he reached that market's floor, red when he fell
