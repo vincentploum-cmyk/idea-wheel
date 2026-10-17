@@ -1222,6 +1222,15 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-sc-table tr.is-model td { background: var(--primary-soft); }
 .nhlx-sc-table tr.is-blend td { background: var(--bg-tint); }
 
+/* Best bets: the flags beside a name — flame (hot), snowflake (cold), rink (soft spot at his position). */
+.nhlx-pk-flags { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: -2px; }
+.nhlx-pk-flag { display: inline-flex; width: 14px; height: 14px; }
+.nhlx-pk-flag svg { width: 14px; height: 14px; }
+.nhlx-pk-flag.is-hot { color: var(--warning); }
+.nhlx-pk-flag.is-cold { color: var(--primary); }
+.nhlx-pk-flag.is-soft { color: var(--success); }
+.nhlx-pk-table tr.is-under .nhlx-pk-flag { opacity: 0.6; }
+
 /* Tonight's picks (Best bets): one row of two tables per game, the notes under the slate. */
 .nhlx-pk { margin: 28px 0 36px; }
 .nhlx-pk-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 14px; margin-top: 12px; align-items: start; }
