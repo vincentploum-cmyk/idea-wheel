@@ -31,9 +31,9 @@ export function flagsFor(c, stat) {
   return out;
 }
 
-/** The flags as inline icons, or null when there are none. */
-export function Flags({ c, stat, className = '' }) {
-  const flags = flagsFor(c, stat);
+/** The flags as inline icons, or null when there are none. `soft: false` leaves the rink out (the ice is already tinted under a chip). */
+export function Flags({ c, stat, className = '', soft = true }) {
+  const flags = flagsFor(c, stat).filter((f) => soft || f.kind !== 'soft');
   if (!flags.length) return null;
   return <span className={`nhlx-pk-flags${className ? ` ${className}` : ''}`}>{flags.map((f) => <i key={f.kind} className={`nhlx-pk-flag is-${f.kind}`} title={f.title} aria-label={f.title}>{ICON[f.kind]}</i>)}</span>;
 }
