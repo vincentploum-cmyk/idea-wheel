@@ -1,0 +1,36 @@
+name: NBA data refresh
+
+# Keeps the NBA board's public data current: the night's schedule and scores and the finished
+# games' box scores from ESPN (anonymous, throttled to one call per 15 minutes), and the
+# PropFinder pull for the slate (with the site token), morning and late afternoon.
+on:
+  schedule:
+    - cron: '47 13 * * *'   # ~9:47 ET: tonight's schedule, the PropFinder pull
+    - cron: '23 21 * * *'   # ~5:23 PM ET: lines and logs again before tip-off
+    - cron: '11 6 * * *'    # ~2:11 AM ET: last night's finals and box scores
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Slate date (YYYY-MM-DD, ET). Blank = today (the 2 AM run: yesterday).'
+        required: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Refresh
+        env:
+          NHL_ACTIONS_TOKEN: ${{ secrets.NHL_ACTIONS_TOKEN }}
+        run: |
+          set -e
+          DATE="${{ github.event.inputs.date }}"
+          [ -z "$DATE" ] && DATE=$(TZ=America/New_York date +%F)
+          if [ "$(date -u +%H)" = "06" ] && [ -z "${{ github.event.inputs.date }}" ]; then DATE=$(TZ=America/New_York date -d 'yesterday' +%F); fi
+          echo "Refreshing the NBA slate of $DATE"
+          call() { local c; for attempt in 1 2; do c=$(curl -sS -o "$2" -w '%{http_code}' -X POST --max-time 280 ${NHL_ACTIONS_TOKEN:+-H "Authorization: Bearer $NHL_ACTIONS_TOKEN"} "$1" || echo 000); case "$c" in 5*|000) [ "$attempt" = 1 ] && { echo "server answered $c; retrying in 60 s"; sleep 60; } ;; *) break ;; esac; done; echo "$c"; }
+          code=$(call "https://ideareels.io/api/nba/refresh?date=$DATE&only=schedule" sched.json); echo "schedule: $code $(head -c 600 sched.json)"
+          [ "$code" = "200" ] || [ "$code" = "429" ]
+          if [ -n "$NHL_ACTIONS_TOKEN" ] && [ "$(date -u +%H)" != "06" ]; then
+            pf=$(call "https://ideareels.io/api/nba/refresh?date=$DATE&only=propfinder" pf.json); echo "propfinder: $pf $(head -c 600 pf.json)"
+          fi

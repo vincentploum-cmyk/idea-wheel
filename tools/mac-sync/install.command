@@ -1,11 +1,11 @@
 #!/bin/bash
-# One-time setup for the NHL Model folder sync. Double-click to run.
+# One-time setup for the ideareels folder sync (NHL files in Desktop/NHL, NFL cheat sheets in Desktop/NFL, NBA cheat sheets in Desktop/NBA). Double-click to run.
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
 CONF="$HOME/.config/nhl-model"
 AGENT="$HOME/Library/LaunchAgents/com.nhlmodel.sync.plist"
 APP="$HOME/Applications/NHL Sync.app"
-mkdir -p "$CONF" "$HOME/Library/LaunchAgents" "$HOME/Library/Logs"
+mkdir -p "$CONF" "$HOME/Library/LaunchAgents" "$HOME/Library/Logs" "$HOME/Desktop/NFL" "$HOME/Desktop/NBA"
 cp "$HERE/nhl-sync.sh" "$CONF/nhl-sync.sh"
 chmod 700 "$CONF/nhl-sync.sh"
 
@@ -24,7 +24,7 @@ rm -rf "$APP"
 osacompile -o "$APP" -e "do shell script \"/bin/bash '$CONF/nhl-sync.sh'\""
 # Keep it out of the Dock while it runs.
 /usr/libexec/PlistBuddy -c "Add :LSUIElement bool true" "$APP/Contents/Info.plist" 2>/dev/null || true
-/usr/libexec/PlistBuddy -c "Add :NSDesktopFolderUsageDescription string 'NHL Sync uploads new PropFinder matchup files from Desktop/NHL to ideareels.io.'" "$APP/Contents/Info.plist" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Add :NSDesktopFolderUsageDescription string 'NHL Sync uploads new PropFinder files from Desktop/NHL and NFL / NBA cheat sheets from Desktop/NFL and Desktop/NBA to ideareels.io.'" "$APP/Contents/Info.plist" 2>/dev/null || true
 codesign --force --deep -s - "$APP" 2>/dev/null || true
 
 cat > "$AGENT" <<PLIST
@@ -35,7 +35,7 @@ cat > "$AGENT" <<PLIST
   <key>Label</key><string>com.nhlmodel.sync</string>
   <key>ProgramArguments</key>
   <array><string>/usr/bin/open</string><string>-g</string><string>-j</string><string>-a</string><string>$APP</string></array>
-  <key>WatchPaths</key><array><string>$HOME/Desktop/NHL</string><string>$HOME/Desktop/NHL/Match days</string></array>
+  <key>WatchPaths</key><array><string>$HOME/Desktop/NHL</string><string>$HOME/Desktop/NHL/Match days</string><string>$HOME/Desktop/NFL</string><string>$HOME/Desktop/NBA</string></array>
   <key>StartInterval</key><integer>300</integer>
   <key>RunAtLoad</key><true/>
   <key>StandardErrorPath</key><string>$HOME/Library/Logs/nhl-sync.log</string>
@@ -51,5 +51,7 @@ echo "Running a first sync. macOS will ask whether \"NHL Sync\" may access your 
 open -W -a "$APP"
 tail -n 5 "$HOME/Library/Logs/nhl-sync.log" 2>/dev/null || true
 echo
-echo "Done. PropFinder matchup workbooks and skater/team stats CSV exports saved in Desktop/NHL (or its Match days folders) now upload automatically."
+echo "Done. PropFinder matchup workbooks and skater/team stats CSV exports saved in Desktop/NHL (or its Match days folders) now upload automatically,"
+echo "NFL cheat sheets (.csv / .xlsx) saved in Desktop/NFL go to the NFL board (name them wk7 / week-7 … to pick the week),"
+echo "and NBA cheat sheets saved in Desktop/NBA go to the NBA board (a date in the name picks the night)."
 echo "Log: ~/Library/Logs/nhl-sync.log   Uninstall: double-click uninstall.command"
