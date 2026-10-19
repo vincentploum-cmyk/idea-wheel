@@ -2,7 +2,7 @@
 
 This repo is the picks site served at https://ideareels.io: a start screen with three sports
 (`/` → `components/site/Start.jsx`), the NHL Model 3.0 app at `/nhl` (everything below the
-"Automation" heading), the NFL board at `/nfl` and the NBA slot at `/nba` (not wired). It
+"Automation" heading), the NFL board at `/nfl` and the NBA board at `/nba`. It
 replaced the former IdeaReels startup-idea product; that code is in git history before the
 "Replace IdeaReels with NHL Model 3.0" commit.
 
@@ -15,6 +15,45 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   `?next=`, then the admin list). The header (`components/nhl/SiteHeader.jsx`) takes `sport`
   for the mark and carries `components/site/SportNav.jsx` (NFL · NHL · NBA).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
+
+## The picks core (NFL and NBA)
+
+`lib/picks/*` is the sport-neutral pipeline both boards run on; each sport binds it with a
+config and keeps its own markets, teams, feeds and slate key:
+
+- `markets.js` (`makeMarkets`): a sport's markets ({ group, label, unit, fields (the box-score
+  fields the market settles on, summed), yesNo, floor, defense, aliases }) → `marketFromText`
+  (any spelling, whole-word match for short aliases like "PTS"), `statOf`, `defenseKey`.
+- `cheatsheet.js` (`makeCheatSheetParser`): CSV / TSV / Excel in any column order; long layout
+  = one row per prop with a market column, wide = one row per player with a column per market
+  ("<market> odds" / "<market> L10 %" beside it); a sheet or file named after a market supplies
+  it; hit rates as 7/10, 70% or 0.7.
+- `board.js` (`makeBoard`): the sheets' rows and PropFinder's lines merged per player + market +
+  line + side; the chance = hit rates over the line (L5 0.3, L10 0.3, season 0.4; PropFinder's
+  logs when pulled, else the sheet's columns), shrunk toward the book's implied probability at
+  n / (n + 6); per game and group the rows over the floor, three to four a table, fill-ins marked
+  `under`, a "next" line; flame / snowflake (`formOf`) and the soft spot (`softSpot`, the opponent
+  in the soft third at the position for the stat) are colour only; a stored box score grades
+  every row (`actual`, `hit`; a `played: false` line reads DNP) and the game head tallies the
+  plays over the floor. Notes written from the plays.
+- `propfinder.js` (`makePropfinder`): `/<LEAGUE>/teams` and `/<LEAGUE>/players?teamIds=…&hydrate=stats&withOddsOnly=true`
+  through `pfGetJson` in `lib/nhl-data/propfinder-api.js`. The NHL endpoints were checked; the
+  NFL / NBA game-row field names have not been seen yet, so every stat is read through the
+  sport's `FIELDS` spellings, prop lines through `playerProps`, and the pull records
+  `fieldsSeen.unread`, shown under Data sources after the first pull. Fix the spellings there
+  once a real pull shows them; never guess silently. `defenseAllowed` per position (the
+  positions the Opponent rows carry), ranks 1 = most allowed.
+- `store.js` (`makeStore`): `<sport>/<slate>/{schedule,sheets-index,propfinder}.json`,
+  `sheets/<id>.json`, `results/<gameId>.json`, `<sport>/meta/*`; the schedule re-fetched when
+  stale (6 h, 10 min while a game is on) with the finished games' box scores; a sheet with a
+  stored name replaces it; `boardFor`, `statusFor`, `pullPropfinder`.
+- `http.js`: the browser-agent GET (ESPN answers 403 to a user agent carrying a URL).
+- UI: `components/picks/Board.jsx` (per game the sport's tables, a play-less game collapses to
+  one line) and `Sources.jsx` (drop zone, stored sheets, PropFinder pull, ESPN refresh, folder
+  sync note); `components/nfl/*` and `components/nba/*` bind them.
+- The Mac folder sync (`tools/mac-sync/nhl-sync.sh`, `sync_sheets`) posts any `.csv` / `.xlsx`
+  saved in `~/Desktop/NFL` to `POST /api/nfl/sheets` and in `~/Desktop/NBA` to `/api/nba/sheets`
+  with the NHL sync token.
 
 ## NFL board (`/nfl`)
 
@@ -56,6 +95,24 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   Thursday games. UI: `components/nfl/NflApp.jsx` (week picker), `NflBoard.jsx`, `NflSources.jsx`.
 - Tests: `__tests__/nfl-*.test.js` (`fixtures/espn-nfl-summary.json` is a trimmed real summary).
 
+## NBA board (`/nba`)
+
+- The same pipeline keyed by the slate date (ET): `lib/nba/store.js` (`nba/<date>/…`,
+  `resolveSlate({ date })`, a date in a sheet's file name picks the night, else today),
+  `espn.js` (`scoreboard?dates=YYYYMMDD`, `parseSummary`: one stats block per team with points,
+  rebounds, assists, 3PT made-attempted, FT, steals, blocks, turnovers; `didNotPlay` → `played:
+  false`; `derived` adds PRA / PR / PA / RA / stocks / double-double / triple-double; ESPN labels
+  the 2026-27 season 2027, `seasonOfDate` keeps the start year), `teams.js` (ESPN's codes: GS,
+  NY, SA, NO, UTAH, WSH, PHX, BKN; `teamAbbrFromText` maps GSW / NYK / SAS / NOP / UTA / WAS /
+  PHO / BRK), `markets.js` (five groups: points, rebounds, assists, threes, combos & defense:
+  PRA, PR, PA, RA, steals, blocks, stocks, turnovers, FTM, double-double, triple-double),
+  `propfinder-nba.js` (`/NBA/…`, positions PG / SG / SF / PF / C / G / F).
+- Routes: `GET /api/nba/picks?date`, `GET|POST|DELETE /api/nba/sheets?date`,
+  `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`.
+  `.github/workflows/nba-data.yml`: 9:47 ET and 5:23 PM ET (schedule + PropFinder), 2:11 AM ET
+  (last night's box scores). UI: `components/nba/NbaApp.jsx` (date picker), `NbaBoard.jsx`,
+  `NbaSources.jsx`. Tests: `__tests__/nba-board.test.js` (`fixtures/espn-nba-summary.json`).
+
 ## Canonical locations
 
 - Local repo: `/Users/vincent/.openclaw/workspace/projects/idea-wheel`
@@ -68,7 +125,7 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
 
 1. Edit files in this repo.
 2. `npm test` and `npm run build`.
-3. Check `/`, `/nfl` and `/nhl` at 1440 and 390 widths (landing signed out; the start screen and
+3. Check `/`, `/nfl`, `/nba` and `/nhl` at 1440 and 390 widths (landing signed out; the start screen and
    the boards via `NHL_DEV_USER_EMAIL=... NHL_STORE_DRIVER=fs npm run dev`).
 4. Commit, push `main`; Render deploys in ~2-3 min. CI smoke checks `/`, `/auth/login`,
    `/api/health` (commit match) and that `/api/nhl/runs` returns 401 when signed out.

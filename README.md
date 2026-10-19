@@ -6,7 +6,7 @@ Private picks site served at **https://ideareels.io**. The start screen offers t
 |---|---|
 | `/nfl` | The NFL week's best plays per game in four tables (touchdowns, passing, rushing, receiving): the two cheat sheets you upload (drop zone, or `~/Desktop/NFL` through the Mac folder sync) plus PropFinder's game logs and prop lines, the schedule and box scores from ESPN, every row graded once the game is final. `lib/nfl/*`, `components/nfl/*`, `/api/nfl/*`. |
 | `/nhl` | NHL Model 3.0 (everything below): the shots / goals model, matchups, defense, first goal, best bets, league, history. |
-| `/nba` | The NBA slot; not wired yet. |
+| `/nba` | The night's best NBA plays per game in five tables (points, rebounds, assists, threes, combos): the same pipeline keyed by date, cheat sheets from the drop zone or `~/Desktop/NBA`, PropFinder's logs and lines, ESPN's schedule and box scores. `lib/nba/*`, `components/nba/*`, `/api/nba/*`. Both boards run on `lib/picks/*`. |
 
 ## NHL Model 3.0 · Shot Supply Engine
 

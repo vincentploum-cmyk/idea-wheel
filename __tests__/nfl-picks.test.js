@@ -137,6 +137,6 @@ describe('NFL picks: the board', () => {
   test('an empty week says what to do', () => {
     const b = buildBoard({ season: 2026, week: 7, games: GAMES, sheets: [], pf: null, results: {} });
     expect(b.plays).toBe(0);
-    expect(b.notes).toEqual([expect.stringMatching(/No plays yet in BUF @ KC, DAL @ PHI/), expect.stringMatching(/No data yet for this week/)]);
+    expect(b.notes).toEqual([expect.stringMatching(/No plays yet in BUF @ KC, DAL @ PHI/), expect.stringMatching(/No data yet for this slate/)]);
   });
 });

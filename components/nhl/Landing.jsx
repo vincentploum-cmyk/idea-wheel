@@ -24,7 +24,7 @@ const SPORTS = [
   },
   {
     code: 'NBA', title: 'NBA picks',
-    body: 'Next up. The page is in place; the data pull and the cheat-sheet path follow the NFL’s.',
+    body: 'Tonight’s best plays per game in five tables: points, rebounds, assists, threes and the combos, from the cheat sheets and PropFinder’s logs and lines, graded against the box score.',
   },
 ];
 
@@ -105,7 +105,7 @@ export default function Landing() {
               The best plays in every game, <span className="is-accent">graded against the box score</span>
             </h1>
             <p className="nhlx-hero-copy">
-              One start screen, three sports. NFL picks by touchdowns, passing, rushing and receiving; the NHL shots and goals model; the NBA next.
+              One start screen, three sports. NFL picks by touchdowns, passing, rushing and receiving; NBA picks by points, rebounds, assists and threes; the NHL shots and goals model.
             </p>
             <div className="nhlx-hero-cta">
               <Link href="/auth/login" className="nhlx-btn">Open the picks <span className="nhlx-arrow">→</span></Link>

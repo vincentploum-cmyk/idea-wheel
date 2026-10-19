@@ -3,7 +3,8 @@
 # (NHL-Goal-Matchups-*.xlsx) and the skater / team stats exports
 # (nhl-skater-stats-*.csv, nhl-team-stats-*.csv) — saved anywhere in ~/Desktop/NHL
 # (including the "Match days" subfolders) to ideareels.io, the NFL cheat sheets (any .csv /
-# .xlsx saved in ~/Desktop/NFL) to the NFL board, and fetches the beat
+# .xlsx saved in ~/Desktop/NFL) to the NFL board, the NBA cheat sheets (~/Desktop/NBA) to the NBA
+# board, and fetches the beat
 # writers' lines pages from gamedaytweets.com for the site (which cloud servers cannot
 # reach): once an hour, and every 15 minutes from an hour before a game until ten minutes after.
 # Installed by install.command; launchd runs it when a folder changes and every 5 minutes.
@@ -13,6 +14,8 @@ WATCH_DIR="${NHL_SYNC_DIR:-$HOME/Desktop/NHL}"
 URL="${NHL_SYNC_URL:-https://ideareels.io/api/nhl/data/matchups}"
 NFL_DIR="${NFL_SYNC_DIR:-$HOME/Desktop/NFL}"
 NFL_URL="${NFL_SYNC_URL:-https://ideareels.io/api/nfl/sheets}"
+NBA_DIR="${NBA_SYNC_DIR:-$HOME/Desktop/NBA}"
+NBA_URL="${NBA_SYNC_URL:-https://ideareels.io/api/nba/sheets}"
 TOKEN_FILE="$CONF/sync-token"
 STATE="$CONF/synced.txt"
 LOG="$HOME/Library/Logs/nhl-sync.log"
@@ -27,8 +30,8 @@ if [ ! -s "$TOKEN_FILE" ]; then
 fi
 TOKEN="$(tr -d '[:space:]' < "$TOKEN_FILE")"
 
-if ! ls "$WATCH_DIR" >/dev/null 2>&1 && ! ls "$NFL_DIR" >/dev/null 2>&1; then
-  log "cannot read $WATCH_DIR or $NFL_DIR (allow Desktop access for bash in System Settings > Privacy & Security > Files and Folders)"
+if ! ls "$WATCH_DIR" >/dev/null 2>&1 && ! ls "$NFL_DIR" >/dev/null 2>&1 && ! ls "$NBA_DIR" >/dev/null 2>&1; then
+  log "cannot read $WATCH_DIR, $NFL_DIR or $NBA_DIR (allow Desktop access for bash in System Settings > Privacy & Security > Files and Folders)"
   exit 0
 fi
 
@@ -97,26 +100,31 @@ while IFS= read -r -d '' f; do
   fi
 done
 
-# ── NFL cheat sheets ──────────────────────────────────────────────────────────
-# Any CSV / TSV / Excel file saved in ~/Desktop/NFL (or a subfolder) in the last three days is
-# posted to the NFL board; the site reads the week from the file name (wk7, week-7, a date) or
-# takes this week, and a file with a stored name replaces it.
-find "$NFL_DIR" -maxdepth 3 -type f \( -iname '*.csv' -o -iname '*.tsv' -o -iname '*.xlsx' -o -iname '*.xlsm' \) -not -name '~$*' -not -path '*/.*' -mtime -3 -print0 2>/dev/null |
-while IFS= read -r -d '' f; do
-  name="$(basename "$f")"
-  key="nfl|$name|$(stat -f %m "$f")|$(stat -f %z "$f")"
-  grep -Fxq "$key" "$STATE" && continue
-  s1=$(stat -f %z "$f"); sleep 2; s2=$(stat -f %z "$f")
-  [ "$s1" = "$s2" ] || continue
-  resp="$(curl -sS --max-time 90 -w $'\n%{http_code}' -H "Authorization: Bearer $TOKEN" -F "file=@$f" "$NFL_URL" 2>&1)"
-  code="${resp##*$'\n'}"
-  body="${resp%$'\n'*}"
-  if [ "$code" = "200" ]; then
-    echo "$key" >> "$STATE"
-    log "nfl: synced $name -> $(printf '%s' "$body" | head -c 400)"
-    osascript -e "display notification \"$name uploaded to the NFL board\" with title \"ideareels\"" >/dev/null 2>&1 || true
-  else
-    log "nfl: FAILED ($code) $name -> $(printf '%s' "$body" | head -c 400)"
-  fi
-done
+# ── NFL and NBA cheat sheets ──────────────────────────────────────────────────
+# Any CSV / TSV / Excel file saved in ~/Desktop/NFL or ~/Desktop/NBA (or a subfolder) in the last
+# three days is posted to that sport's board; the site reads the slate from the file name (NFL:
+# wk7, week-7, a date; NBA: a date) or takes the current one, and a file with a stored name replaces it.
+sync_sheets() {
+  local dir="$1" url="$2" tag="$3"
+  find "$dir" -maxdepth 3 -type f \( -iname '*.csv' -o -iname '*.tsv' -o -iname '*.xlsx' -o -iname '*.xlsm' \) -not -name '~$*' -not -path '*/.*' -mtime -3 -print0 2>/dev/null |
+  while IFS= read -r -d '' f; do
+    name="$(basename "$f")"
+    key="$tag|$name|$(stat -f %m "$f")|$(stat -f %z "$f")"
+    grep -Fxq "$key" "$STATE" && continue
+    s1=$(stat -f %z "$f"); sleep 2; s2=$(stat -f %z "$f")
+    [ "$s1" = "$s2" ] || continue
+    resp="$(curl -sS --max-time 90 -w $'\n%{http_code}' -H "Authorization: Bearer $TOKEN" -F "file=@$f" "$url" 2>&1)"
+    code="${resp##*$'\n'}"
+    body="${resp%$'\n'*}"
+    if [ "$code" = "200" ]; then
+      echo "$key" >> "$STATE"
+      log "$tag: synced $name -> $(printf '%s' "$body" | head -c 400)"
+      osascript -e "display notification \"$name uploaded to the $(printf '%s' "$tag" | tr a-z A-Z) board\" with title \"ideareels\"" >/dev/null 2>&1 || true
+    else
+      log "$tag: FAILED ($code) $name -> $(printf '%s' "$body" | head -c 400)"
+    fi
+  done
+}
+sync_sheets "$NFL_DIR" "$NFL_URL" nfl
+sync_sheets "$NBA_DIR" "$NBA_URL" nba
 exit 0

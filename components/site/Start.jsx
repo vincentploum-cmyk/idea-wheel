@@ -36,8 +36,18 @@ const TILES = [
   },
   {
     key: 'nba', code: 'NBA', title: 'NBA picks',
-    body: 'The NBA board is not wired yet: the page is in place, the data pull and the cheat-sheet path follow the NFL’s.',
-    status: () => 'Not wired yet',
+    body: 'Tonight’s best plays in every game, in five tables: points, rebounds, assists, threes and the combos. The cheat sheets you upload plus PropFinder’s logs and lines, graded against the box score.',
+    status: (s) => {
+      const n = s?.nba; if (!n || n.error) return n?.error ? `Schedule unavailable: ${n.error}` : 'Loading…';
+      if (n.games === null) return 'Tonight: schedule not fetched yet';
+      if (!n.games) return 'No games tonight';
+      const parts = [`Tonight: ${n.games} game${n.games === 1 ? '' : 's'}`];
+      if (n.finals) parts.push(`${n.finals} final`);
+      parts.push(n.sheets ? `${n.sheets} cheat sheet${n.sheets === 1 ? '' : 's'}` : 'no cheat sheet yet');
+      parts.push(n.propfinder ? 'PropFinder pulled' : 'PropFinder not pulled');
+      if (n.nextStart) parts.push(`next tip ${fmtKick(n.nextStart)}`);
+      return parts.join(' · ');
+    },
   },
 ];
 
@@ -67,7 +77,7 @@ export default function Start({ email }) {
           {err ? <p className="nhlx-auto-sub">Status unavailable: {err}</p> : null}
           <div className="ir-tiles">
             {TILES.map((t) => (
-              <Link key={t.key} href={`/${t.key}`} className={`ir-tile${t.key === 'nba' ? ' is-soon' : ''}`}>
+              <Link key={t.key} href={`/${t.key}`} className="ir-tile">
                 <span className="ir-tile-mark">{t.code}</span>
                 <span className="ir-tile-body">
                   <span className="ir-tile-title">{t.title}</span>
