@@ -13,7 +13,7 @@ export function Logo({ sport = null }) {
       <span className="nhlx-logo-mark">{sport || 'IR'}</span>
       <span className="nhlx-logo-text">
         <span className="nhlx-logo-word">IDEAREELS</span>
-        <span className="nhlx-logo-sub">{SUB[sport] || 'NFL · NHL · NBA picks'}</span>
+        <span className="nhlx-logo-sub">{SUB[sport] || 'NFL · NBA · NHL picks'}</span>
       </span>
     </Link>
   );

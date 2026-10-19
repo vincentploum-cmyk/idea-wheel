@@ -1,4 +1,4 @@
-# ideareels · NFL, NHL and NBA picks
+# ideareels · NFL, NBA and NHL picks
 
 Private picks site served at **https://ideareels.io**. The start screen offers three sports:
 

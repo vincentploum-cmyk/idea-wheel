@@ -26,15 +26,6 @@ const TILES = [
     },
   },
   {
-    key: 'nhl', code: 'NHL', title: 'NHL picks',
-    body: 'Model 3.0: tonight’s best shots and goal plays, the matchups by position, what every defense gives up, first-goal candidates and the scorecard. Everything you had, unchanged.',
-    status: (s) => {
-      const n = s?.nhl; if (!n) return 'Loading…';
-      if (!n.games) return 'No games tonight';
-      return `Tonight: ${n.games} game${n.games === 1 ? '' : 's'}${n.lineups ? ` · ${n.lineups} with lineups` : ''}`;
-    },
-  },
-  {
     key: 'nba', code: 'NBA', title: 'NBA picks',
     body: 'Tonight’s best plays in every game, in five tables: points, rebounds, assists, threes and the combos. The cheat sheets you upload plus PropFinder’s logs and lines, graded against the box score.',
     status: (s) => {
@@ -47,6 +38,15 @@ const TILES = [
       parts.push(n.propfinder ? 'PropFinder pulled' : 'PropFinder not pulled');
       if (n.nextStart) parts.push(`next tip ${fmtKick(n.nextStart)}`);
       return parts.join(' · ');
+    },
+  },
+  {
+    key: 'nhl', code: 'NHL', title: 'NHL picks',
+    body: 'Model 3.0: tonight’s best shots and goal plays, the matchups by position, what every defense gives up, first-goal candidates and the scorecard. Everything you had, unchanged.',
+    status: (s) => {
+      const n = s?.nhl; if (!n) return 'Loading…';
+      if (!n.games) return 'No games tonight';
+      return `Tonight: ${n.games} game${n.games === 1 ? '' : 's'}${n.lineups ? ` · ${n.lineups} with lineups` : ''}`;
     },
   },
 ];
@@ -92,7 +92,7 @@ export default function Start({ email }) {
       </main>
       <footer className="nhlx-footer">
         <div className="nhlx-wrap">
-          <span>ideareels · NFL, NHL and NBA picks</span>
+          <span>ideareels · NFL, NBA and NHL picks</span>
           <span>Private tool · access by invitation</span>
         </div>
       </footer>

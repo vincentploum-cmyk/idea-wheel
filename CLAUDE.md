@@ -13,7 +13,7 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   screen existed (`/#teams/BUF`, `/#matchups`) are forwarded to `/nhl#…` by `Start`.
 - `app/nhl|nfl|nba/page.js` gate through `lib/gate.js` (`gateSport`: sign-in redirect with
   `?next=`, then the admin list). The header (`components/nhl/SiteHeader.jsx`) takes `sport`
-  for the mark and carries `components/site/SportNav.jsx` (NFL · NHL · NBA).
+  for the mark and carries `components/site/SportNav.jsx` (NFL · NBA · NHL, the start screen's order).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)

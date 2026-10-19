@@ -2,6 +2,7 @@ import Link from 'next/link';
 import SiteHeader from './SiteHeader';
 import { teamLogo as nhlLogo } from '@/lib/nhl-data/teams';
 import { teamLogo as nflLogo, TEAMS as NFL_TEAMS } from '@/lib/nfl/teams';
+import { teamLogo as nbaLogo, TEAMS as NBA_TEAMS } from '@/lib/nba/teams';
 
 const NHL_TEAMS = [
   ['BOS', 'Bruins'], ['BUF', 'Sabres'], ['DET', 'Red Wings'], ['FLA', 'Panthers'], ['MTL', 'Canadiens'],
@@ -19,12 +20,12 @@ const SPORTS = [
     body: 'The week’s best plays per game in four tables: touchdowns, passing, rushing and receiving. The two cheat sheets you upload plus PropFinder’s game logs and lines, every row with the chance of the hit, its break-even price and the book’s price, graded against the box score.',
   },
   {
-    code: 'NHL', title: 'NHL picks',
-    body: 'Model 3.0: tonight’s best shots and goal plays, the matchups by position, what every defense gives up, first-goal candidates and a scorecard of every call against the box scores.',
-  },
-  {
     code: 'NBA', title: 'NBA picks',
     body: 'Tonight’s best plays per game in five tables: points, rebounds, assists, threes and the combos, from the cheat sheets and PropFinder’s logs and lines, graded against the box score.',
+  },
+  {
+    code: 'NHL', title: 'NHL picks',
+    body: 'Model 3.0: tonight’s best shots and goal plays, the matchups by position, what every defense gives up, first-goal candidates and a scorecard of every call against the box scores.',
   },
 ];
 
@@ -100,12 +101,12 @@ export default function Landing() {
       <main>
         <section className="nhlx-hero">
           <div className="nhlx-wrap">
-            <span className="nhlx-eyebrow">NFL · NHL · NBA</span>
+            <span className="nhlx-eyebrow">NFL · NBA · NHL</span>
             <h1>
               The best plays in every game, <span className="is-accent">graded against the box score</span>
             </h1>
             <p className="nhlx-hero-copy">
-              One start screen, three sports. NFL picks by touchdowns, passing, rushing and receiving; NBA picks by points, rebounds, assists and threes; the NHL shots and goals model.
+              One start screen, three sports: NFL picks by touchdowns, passing, rushing and receiving; NBA picks by points, rebounds, assists and threes; the NHL shots and goals model.
             </p>
             <div className="nhlx-hero-cta">
               <Link href="/auth/login" className="nhlx-btn">Open the picks <span className="nhlx-arrow">→</span></Link>
@@ -117,6 +118,7 @@ export default function Landing() {
 
         <div id="teams">
           <Strip items={Object.entries(NFL_TEAMS).map(([abbr, t]) => [abbr, t.name])} logo={nflLogo} />
+          <Strip items={Object.entries(NBA_TEAMS).map(([abbr, t]) => [abbr, t.name])} logo={nbaLogo} />
           <Strip items={NHL_TEAMS} logo={nhlLogo} />
         </div>
 
@@ -143,7 +145,7 @@ export default function Landing() {
 
       <footer className="nhlx-footer">
         <div className="nhlx-wrap">
-          <span>ideareels · NFL, NHL and NBA picks</span>
+          <span>ideareels · NFL, NBA and NHL picks</span>
           <span>Private tool · access by invitation</span>
         </div>
       </footer>
