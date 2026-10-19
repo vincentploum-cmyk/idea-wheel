@@ -5,7 +5,7 @@ import './globals.css';
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://ideareels.io'),
   title: {
-    default: 'ideareels · NFL, NHL and NBA picks',
+    default: 'ideareels · NFL, NBA and NHL picks',
     template: '%s · ideareels',
   },
   description: 'Private picks site: the NFL week’s best plays per game (touchdowns, passing, rushing, receiving), the NHL Model 3.0 shots and goals board, and the NBA slot.',

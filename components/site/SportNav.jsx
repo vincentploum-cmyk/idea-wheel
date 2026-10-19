@@ -5,8 +5,8 @@ import { usePathname } from 'next/navigation';
 
 export const SPORTS = [
   ['nfl', 'NFL'],
-  ['nhl', 'NHL'],
   ['nba', 'NBA'],
+  ['nhl', 'NHL'],
 ];
 
 /** The three sports in the header; the open one is marked. */
