@@ -15,6 +15,7 @@ import DefensePanel from './DefensePanel';
 import { PlayerCardHost } from './PlayerCard';
 import ThemeToggle from './ThemeToggle';
 import Scorecard from './Scorecard';
+import SportNav from '@/components/site/SportNav';
 
 const TABS = [
   ['teams', 'Teams & players'],
@@ -265,6 +266,8 @@ export default function NhlApp({ email }) {
   return (
     <PlayerCardHost>
       <SiteHeader
+        sport="NHL"
+        nav={<SportNav />}
         right={(
           <>
             <span className="nhlx-user">{email}</span>

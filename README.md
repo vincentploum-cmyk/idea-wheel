@@ -1,6 +1,16 @@
-# NHL Model 3.0 · Shot Supply Engine
+# ideareels · NFL, NHL and NBA picks
 
-Private NHL player-prop probability model served at **https://ideareels.io**.
+Private picks site served at **https://ideareels.io**. The start screen offers three sports:
+
+| Path | What |
+|---|---|
+| `/nfl` | The NFL week's best plays per game in four tables (touchdowns, passing, rushing, receiving): the two cheat sheets you upload (drop zone, or `~/Desktop/NFL` through the Mac folder sync) plus PropFinder's game logs and prop lines, the schedule and box scores from ESPN, every row graded once the game is final. `lib/nfl/*`, `components/nfl/*`, `/api/nfl/*`. |
+| `/nhl` | NHL Model 3.0 (everything below): the shots / goals model, matchups, defense, first goal, best bets, league, history. |
+| `/nba` | The NBA slot; not wired yet. |
+
+## NHL Model 3.0 · Shot Supply Engine
+
+Private NHL player-prop probability model.
 Upload the night's matchup workbooks, run the model in the browser, and every
 run is saved to Supabase with its input files so any slate can be reopened and
 audited against box scores later.
@@ -18,7 +28,7 @@ model or its API. Everyone else sees the landing page or an "access restricted" 
 
 | Path | What |
 |---|---|
-| `app/page.js` | Gate: landing (signed out) · locked (not admin) · workbench (admin) |
+| `app/page.js` | Gate: landing (signed out) · locked (not admin) · the start screen (admin); the NHL workbench is `app/nhl/page.js` |
 | `components/nhl/NhlModel.jsx` | The model (ported from `Desktop/NHL/nhl-project/nhl-predictor/src/App.jsx`), Flowbit restyle, logic unchanged |
 | `components/nhl/NhlApp.jsx` | Workbench shell: auto-save, run history, reopen/attach/delete |
 | `app/api/nhl/runs/**` | Admin-only API over Supabase Storage |

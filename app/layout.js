@@ -5,10 +5,10 @@ import './globals.css';
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://ideareels.io'),
   title: {
-    default: 'NHL Model 3.0 · Shot Supply Engine',
-    template: '%s · NHL Model 3.0',
+    default: 'ideareels · NFL, NHL and NBA picks',
+    template: '%s · ideareels',
   },
-  description: 'Private NHL player prop probability model: shots, goals, points and goalie saves ladders built from nightly matchup files.',
+  description: 'Private picks site: the NFL week’s best plays per game (touchdowns, passing, rushing, receiving), the NHL Model 3.0 shots and goals board, and the NBA slot.',
   // Private tool: keep it out of search indexes.
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
   icons: { icon: [{ url: '/icon.svg', type: 'image/svg+xml' }] },

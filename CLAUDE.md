@@ -1,8 +1,60 @@
 # CLAUDE.md
 
-This repo is the NHL Model 3.0 site served at https://ideareels.io
-(it replaced the former IdeaReels startup-idea product; that code is in git history
-before the "Replace IdeaReels with NHL Model 3.0" commit).
+This repo is the picks site served at https://ideareels.io: a start screen with three sports
+(`/` → `components/site/Start.jsx`), the NHL Model 3.0 app at `/nhl` (everything below the
+"Automation" heading), the NFL board at `/nfl` and the NBA slot at `/nba` (not wired). It
+replaced the former IdeaReels startup-idea product; that code is in git history before the
+"Replace IdeaReels with NHL Model 3.0" commit.
+
+## Site structure
+
+- `app/page.js`: signed out → `Landing`; signed in but not admin → `Locked`; admin → `Start`
+  (three tiles with a status line each from `/api/site/status`). Links saved before the start
+  screen existed (`/#teams/BUF`, `/#matchups`) are forwarded to `/nhl#…` by `Start`.
+- `app/nhl|nfl|nba/page.js` gate through `lib/gate.js` (`gateSport`: sign-in redirect with
+  `?next=`, then the admin list). The header (`components/nhl/SiteHeader.jsx`) takes `sport`
+  for the mark and carries `components/site/SportNav.jsx` (NFL · NHL · NBA).
+- The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
+
+## NFL board (`/nfl`)
+
+- Data: `lib/nfl/*`. `week.js` (ESPN's calendar stored at `nfl/calendar/<season>.json`, else the
+  kickoff rule: the Wednesday before the Thursday after Labor Day starts week 1; weeks run
+  Wednesday to Tuesday; `p1`–`p4` the postseason), `espn.js` (the week's schedule and scores,
+  `parseSummary` for a finished game's box score: passing / rushing / receiving lines, return
+  TDs, the first scorer from the scoring plays), `teams.js` (ESPN abbreviations; every other
+  spelling maps through `teamAbbrFromText`), `markets.js` (the markets in four groups:
+  touchdowns, passing, rushing, receiving; `marketFromText` reads any spelling), `odds.js`.
+- The two cheat sheets Vincent uploads by hand: `cheatsheet.js` (`parseCheatSheet`: CSV / TSV /
+  Excel, any column order; long layout = one row per prop with a market column, wide layout =
+  one row per player with a column per market, "<market> odds" / "<market> L10 %" beside it; a
+  sheet or file named after a market supplies it; hit rates as 7/10, 70% or 0.7). They arrive
+  through the drop zone under Data sources on `/nfl`, or the Mac folder sync watching
+  `~/Desktop/NFL` (`tools/mac-sync/nhl-sync.sh`, same sync token, `POST /api/nfl/sheets`); the
+  week is read from the file name (`wk7`, `week-7`, a date) or is this week. Stored at
+  `nfl/<season>/<wk>/sheets/<id>.json` with `sheets-index.json`; a file with a stored name replaces it.
+- The rest from PropFinder: `propfinder-nfl.js` through `pfGetJson` in
+  `lib/nhl-data/propfinder-api.js` (`/NFL/teams`, `/NFL/players?teamIds=…&hydrate=stats&withOddsOnly=true`).
+  The NFL routes follow the NHL's, but a football game row's field names have not been seen
+  yet: every stat is read through the spellings in `FIELDS`, prop lines through `playerProps`,
+  and the pull records `fieldsSeen.unread` (game-row keys this file does not read), shown under
+  Data sources after the first pull. Fix the spellings there once a real pull shows them; never
+  guess silently. Stored at `nfl/<season>/<wk>/propfinder.json` (players with logs and lines,
+  `defenseAllowed` per position with ranks 1 = most allowed).
+- The board: `picks.js` (`buildBoard`, pure): the sheets' rows and PropFinder's lines merged per
+  player + market + line + side; the chance = hit rates over the line (L5 0.3, L10 0.3, season
+  0.4; PropFinder's logs when pulled, else the sheet's columns), shrunk toward the book's implied
+  probability at n / (n + 6); per game and group the rows over the floor (0.55 yards markets,
+  0.35 anytime TD, in `MARKETS`), three to four a table, fill-ins marked `under`, a "next" line;
+  flame / snowflake (`formOf`) and the soft spot (`softSpot`, the opponent in the soft third at
+  the position for the stat) are colour only; a stored box score grades every row (`actual`, `hit`)
+  and the game head tallies the plays over the floor. Notes written from the plays.
+- Routes (`authorize()`, admin session or sync token): `GET /api/nfl/picks?season&week&type|date`,
+  `GET|POST|DELETE /api/nfl/sheets`, `POST /api/nfl/refresh?only=schedule|propfinder`
+  (anonymous calls refresh ESPN only, throttled), `GET /api/nfl/status`, `GET /api/site/status`.
+  `.github/workflows/nfl-data.yml` calls the refresh daily and after the Sunday / Monday /
+  Thursday games. UI: `components/nfl/NflApp.jsx` (week picker), `NflBoard.jsx`, `NflSources.jsx`.
+- Tests: `__tests__/nfl-*.test.js` (`fixtures/espn-nfl-summary.json` is a trimmed real summary).
 
 ## Canonical locations
 
@@ -16,8 +68,8 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
 
 1. Edit files in this repo.
 2. `npm test` and `npm run build`.
-3. Check `/` at 1440 and 390 widths (landing signed out; workbench via
-   `NHL_DEV_USER_EMAIL=... NHL_STORE_DRIVER=fs npm run dev`).
+3. Check `/`, `/nfl` and `/nhl` at 1440 and 390 widths (landing signed out; the start screen and
+   the boards via `NHL_DEV_USER_EMAIL=... NHL_STORE_DRIVER=fs npm run dev`).
 4. Commit, push `main`; Render deploys in ~2-3 min. CI smoke checks `/`, `/auth/login`,
    `/api/health` (commit match) and that `/api/nhl/runs` returns 401 when signed out.
 
@@ -242,8 +294,9 @@ before the "Replace IdeaReels with NHL Model 3.0" commit).
 
 ## Rules
 
-- The model is admin-only: `NHL_ADMIN_EMAILS` on Render when set, else `DEFAULT_ADMIN_EMAILS` in `lib/nhl-admin.js`
-  (both lists must carry a new person). Every `/api/nhl/*` route must call `requireNhlAdmin()`.
+- The site is admin-only: `NHL_ADMIN_EMAILS` on Render when set, else `DEFAULT_ADMIN_EMAILS` in `lib/nhl-admin.js`
+  (both lists must carry a new person). Every `/api/nhl/*`, `/api/nfl/*` and `/api/site/*` route must call
+  `requireNhlAdmin()` or `authorize()`.
 - Keep the model's math untouched when restyling; port logic changes from the local app into
   `components/nhl/model-core.js` (pipeline) and `NhlModel.jsx` (UI). One change went the other
   way (2026-10-13, port it into `App.jsx`): the published shots odds `p3s` / `p4s` / `p5s` (and `p2s`)
