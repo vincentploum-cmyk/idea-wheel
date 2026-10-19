@@ -9,7 +9,10 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
 ## Site structure
 
 - `app/page.js`: signed out → `Landing`; signed in but not admin → `Locked`; admin → `Start`
-  (three tiles with a status line each from `/api/site/status`). Links saved before the start
+  (a dark band with the date, then three panels NFL · NBA · NHL from `/api/site/status`: the
+  figures first (games, plays, the hit tally, sheets / lineups), the slate's games with logos,
+  scores and tallies, the sources line; the NFL / NBA panels read their boards from the stored
+  files, the NHL panel the day's schedule with scores). Links saved before the start
   screen existed (`/#teams/BUF`, `/#matchups`) are forwarded to `/nhl#…` by `Start`.
 - `app/nhl|nfl|nba/page.js` gate through `lib/gate.js` (`gateSport`: sign-in redirect with
   `?next=`, then the admin list). The header (`components/nhl/SiteHeader.jsx`) takes `sport`
