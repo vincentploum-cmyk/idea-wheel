@@ -17,14 +17,14 @@ export default function NbaBoard({ board }) {
     <NbaPlayerCardProvider date={board?.date}>
       {board?.games?.length ? (
         <div className="ir-court-switch nhlx-rk-toggle">
-          <small>Courts show</small>
+          <small>Courts</small>
           <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Court metric">
             {COURT_METRICS.map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={metric === key} className={`nhlx-tab${metric === key ? ' is-active' : ''}`} onClick={() => setMetric(key)}>{label}</button>)}
           </div>
-          <span className="nhlx-rk-toggle-note">Each zone is tinted by what the opponent gives up to that position (green = the most permissive third of the league, red = the stingiest); the chip carries the player’s line and chance for the stat.</span>
+          <span className="nhlx-rk-toggle-note">One stat for every court (the tabs above each court change it too). Zones: what the opponent gives up to that position over the window picked above the court (green = the most permissive third of the league, red = the stingiest). Chips: the player’s projection for tonight (his rate × that environment), the book’s main line and the chance. ✓ = the cheat sheet names him.</span>
         </div>
       ) : null}
-      <Board board={board} sport={SPORT} empty="No games on this date." before={(g) => <CourtPair g={g} metric={metric} sport={SPORT} />} />
+      <Board board={board} sport={SPORT} empty="No games on this date." before={(g) => <CourtPair g={g} metric={metric} onMetric={setMetric} sport={SPORT} />} />
     </NbaPlayerCardProvider>
   );
 }

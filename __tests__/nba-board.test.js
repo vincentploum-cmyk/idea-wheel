@@ -116,11 +116,23 @@ describe('NBA PropFinder mapping', () => {
       item('Double Double', 'doubleDouble', 'DraftKings', 'yes', 140, 0.5),
     ] };
     expect(mapPlayers([api])[0].props).toEqual([
-      { market: 'pts', line: 27.5, odds: -110, underOdds: -105, book: 'FanDuel', books: 2, isMain: true },
+      { market: 'pts', line: 27.5, odds: -110, underOdds: -105, book: 'FanDuel', books: 2, isMain: true, lines: [{ line: 27.5, odds: -110, underOdds: -105, books: 2, main: true }, { line: 29.5, odds: 120, underOdds: null, books: 1, main: false }] },
       { market: 'pra', line: 39.5, odds: -120, underOdds: null, book: 'DraftKings', books: 1, isMain: true },
       { market: 'tpm', line: 2.5, odds: -130, underOdds: null, book: 'DraftKings', books: 1, isMain: true },
       { market: 'dd', line: 0.5, odds: 140, underOdds: null, book: 'DraftKings', books: 1, isMain: true },
     ]);
+    // A book flags an alternate ladder's rung main too (Drummond o1.5 points, 2026-10-20): of the
+    // main lines the one nearest his own last-ten average is the play's line; the rest ride as `lines`.
+    const ladder = { ...PLAYER, stats: [{ ...GAME, points: 8 }, { ...GAME, gameDate: '2026-10-19T23:30:00Z', points: 10 }], odds: [
+      item('Player Points', 'points', 'Betano', 'over', -2000, 1.5), item('Player Points', 'points', 'Betano', 'over', -900, 3.5),
+      item('Player Points', 'points', 'DraftKings', 'over', -115, 8.5), item('Player Points', 'points', 'DraftKings', 'under', -105, 8.5),
+      item('Player Points', 'points', 'FanDuel', 'over', 130, 11.5, false),
+    ] };
+    const pts = mapPlayers([ladder])[0].props.find((x) => x.market === 'pts');
+    expect(pts).toMatchObject({ line: 8.5, odds: -115, underOdds: -105, isMain: true });
+    expect(pts.lines.map((x) => x.line)).toEqual([1.5, 3.5, 8.5, 11.5]);
+    // Without a log the most books decide, and the flag still beats an unflagged line.
+    expect(mapPlayers([{ ...ladder, stats: [] }])[0].props.find((x) => x.market === 'pts').line).toBe(8.5);
     expect(fieldsSeen([PLAYER], []).unread).toEqual(['oddStat']);
     const seen = fieldsSeen([PLAYER], []).markets;
     expect(Object.values(seen).reduce((s, m) => s + m.n, 0)).toBeGreaterThan(0);
@@ -153,6 +165,20 @@ describe('NBA PropFinder mapping', () => {
     expect(e.teams.BOS.C).toMatchObject({ gp: 0, prior: 82, pts: 4 });
     expect(e.teams.NY.PG).toMatchObject({ gp: 0, prior: 82, pts: 30 });
     expect(e.ranks.NY.PG.pts).toBe(1);
+    // The league's average per position and stat rides along, and the last-N windows PropFinder publishes with their own ranks.
+    expect(d.league.PG.pts).toBeCloseTo((24 + 30 + 27) / 3, 2);
+    expect(d.windows).toEqual({});
+    const windowed = teams.map((t) => ({ ...t, stats: [...t.stats, { ...row('PG', t.code === 'BOS' ? 160 : 100), lastNGames: 5 }, { ...row('PG', 120), lastNGames: 10, gamesPlayed: 10 }] }));
+    const w = defenseAllowed(windowed, { season: 2026 });
+    expect(Object.keys(w.windows).sort()).toEqual(['l10', 'l5']);
+    expect(w.windows.l5.teams.BOS.PG).toMatchObject({ pts: 32, lastN: 5, gp: 5 });
+    expect(w.windows.l5.ranks.BOS.PG.pts).toBe(1);
+    expect(w.windows.l5.ranks.NY.PG.pts).toBe(2);
+    expect(w.windows.l5.league.PG.pts).toBeCloseTo((32 + 20 + 20) / 3, 2);
+    expect(w.windows.l10.teams.NY.PG.pts).toBe(12);
+    expect(w.windows.l5.count).toBe(3);
+    // The season table is untouched by the window rows.
+    expect(w.teams.NY.PG.pts).toBe(30);
   });
 });
 
@@ -188,5 +214,23 @@ describe('NBA board', () => {
     expect(g.tables.threes.rows).toEqual([]);
     expect(g.tally.of).toBeGreaterThanOrEqual(3);
     expect(b.notes.join(' ')).toMatch(/Softest spots: NY to SFs/);
+  });
+});
+
+describe('NBA projection', () => {
+  const { envFactor, ownRate, projectionOf, projectFor } = require('../lib/picks/projection');
+  test('his rate times the environment, damped', () => {
+    expect(ownRate({ l5: 10, l10: 12, season: 20 })).toBe(17.2);
+    expect(ownRate({ season: 20 })).toBe(20);
+    expect(ownRate({ l10: 12 })).toBe(12);
+    expect(ownRate(null)).toBeNull();
+    expect(envFactor(30, 25)).toBe(1.12);           // 20% over the league counts 12%
+    expect(envFactor(20, 25)).toBe(0.88);
+    expect(envFactor(null, 25)).toBeNull();
+    expect(projectionOf(17.2, 1.12)).toBe(19.3);
+    expect(projectionOf({ season: 20 }, null)).toBe(20);
+    const allowed = { rows: { PG: { pts: { value: 30, rank: 1 } } }, league: { PG: { pts: 25 } } };
+    expect(projectFor({ season: 20 }, allowed, 'PG', 'pts')).toEqual({ rate: 20, factor: 1.12, value: 22.4, allowed: 30, league: 25, rank: 1 });
+    expect(projectFor({ season: 20 }, allowed, 'C', 'pts')).toMatchObject({ rate: 20, factor: null, value: 20 });
   });
 });
