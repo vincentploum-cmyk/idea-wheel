@@ -81,7 +81,8 @@ describe('NBA cheat sheet (OCR)', () => {
     expect(prit.own.pra).toMatchObject({ season: 27.9 });
     expect(bos.players.find((p) => p.player === 'Jaylen Brown').own.reb.season).toBe(4);
     expect(bos.allowed).toMatchObject({ from: 'sheet', count: 30 });
-    expect(bos.allowed.rows.PG.pts).toEqual({ value: null, rank: 23 });
+    expect(bos.allowed.rows.PG.pts).toEqual({ value: null, rank: 23, sheet: 23 });
+    expect(bos.allowed.sheet).toBe('same');
     expect(b.games[0].sides.DET.allowed.rows.PF.tpm.rank).toBe(6);
     // A mention alone is not a play.
     expect(plays.find((r) => r.player === 'Neemias Queta')).toBeUndefined();
