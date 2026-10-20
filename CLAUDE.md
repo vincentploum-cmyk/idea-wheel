@@ -46,8 +46,16 @@ config and keeps its own markets, teams, feeds and slate key:
   since the job and the status route may hold different module instances), and the rows land
   when the read is done (`status: 'done'`, with the games the pages paired) or `'failed'`.
   `POST /api/<sport>/sheets?reread=<id>` parses the stored words again (`&full=1` reads the PDF
-  again); the Sources panel polls while pending and carries a "Read again" button. Only the NFL
-  has a layout so far; an NBA picture PDF still answers 422. About four minutes for 14 pages.
+  again); the Sources panel polls while pending and carries a "Read again" button. JPEG pages
+  (DCTDecode) and Flate-compressed RGB / grey pages both come out (`pdfImages`; soft masks left
+  out), the column scale follows its width (`scaleFor`: 3× a 594 px NFL column, 2× a 1040 px NBA
+  one). About four minutes for the NFL's 14 pages on Render, half a minute for the NBA's three.
+  The helpers both layouts share (`rowsOf`, `claimFragments`, `resolveName`, `similarity`) live in
+  `ocr-layout.js`. A sheet row without a market and line is a **mention** (`board.js`,
+  `mentionsOf`): it never makes a play of its own but confirms every PropFinder play of that
+  player (`confirmed`, `sheetFiles`), lends his position, team and season average; a sheet's
+  `meta.oppRanks` (what each team's opponent gives up per position and stat, rank 1 = most) stands
+  in for PropFinder's defense table when the slate has no pull (`defenseFromSheets`).
 - `cheatsheet.js` (`makeCheatSheetParser`): CSV / TSV / Excel / PDF in any column order; long layout
   = one row per prop with a market column, wide = one row per player with a column per market
   ("<market> odds" / "<market> L10 %" beside it); a sheet or file named after a market supplies
@@ -145,6 +153,18 @@ config and keeps its own markets, teams, feeds and slate key:
   PHO / BRK), `markets.js` (five groups: points, rebounds, assists, threes, combos & defense:
   PRA, PR, PA, RA, steals, blocks, stocks, turnovers, FTM, double-double, triple-double),
   `propfinder-nba.js` (`/NBA/…`, positions PG / SG / SF / PF / C / G / F).
+- The NBA cheat sheet (`nba_<date>.pdf`, pictures: one page a game, one team a column, the logo on
+  top, twenty rank tiles and a Name · POS · MIN · PTS · REB · AST · 3PM table of season averages;
+  no lines, prices or hit rates) goes through OCR and `cheatsheet-ocr.js` (`parseNbaPages`): the
+  team is named through the roster (the logo is not text: the column's players matched against the
+  slate's PropFinder pull, or the nearest night's, `nearSlates` ±3 days; the schedule fills the
+  other side), the tiles are read by grid position (five rows PG · SG · SF · PF · C, four columns
+  pts · reb · ast · tpm, `parseTiles`; "d0th" / "qth" = 10th) as what the column's opponent gives
+  up (`meta.oppRanks`), the table's header fixes the columns and each player's name joins the
+  fragments around his numbers; averages and minutes get their dropped point and colon back
+  (`fixAvg`: "38" → 3.8, "1156" → 11.5; `fixMinutes`: "2744" → 27.7). Rows are mentions (market
+  null, group `players`, `avg: { min, pts, reb, ast, tpm }`), so the board marks the sheet's
+  players' PropFinder plays confirmed. Fixture: `__tests__/fixtures/ocr-nba-page1.json` (BOS · DET).
 - Routes: `GET /api/nba/picks?date`, `GET|POST|DELETE /api/nba/sheets?date`,
   `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`.
   `.github/workflows/nba-data.yml`: 9:47 ET and 5:23 PM ET (schedule + PropFinder), 2:11 AM ET
