@@ -194,7 +194,11 @@ config and keeps its own markets, teams, feeds and slate key:
   `lib/picks/store.js` (the slate's PropFinder pull: his logs newest first, his props, the game,
   the opponent's rows with ranks); the plays ride in from the opener. Hit rates and splits are
   computed in the card (`hitRate`, `splitGames`: season = this season's games once three are
-  played, else the last 82).
+  played, else the last 82). Usage rate, rebound chances and potential assists (PropFinder's
+  player-summary figures) are read per game row as optional `FIELDS` (`usg`, `rebCh`, `potAst`;
+  `optional: true` reads null when the row lacks the key, so an unknown spelling shows as "—" on
+  the card and in the pull's unread list, never as 0) and averaged per split in the top bar and
+  the splits table.
 - Routes: `GET /api/nba/picks?date`, `GET|POST|DELETE /api/nba/sheets?date`,
   `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`.
   `.github/workflows/nba-data.yml`: 9:47 ET and 5:23 PM ET (schedule + PropFinder), 2:11 AM ET
