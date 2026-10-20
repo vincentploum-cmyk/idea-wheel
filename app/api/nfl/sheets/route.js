@@ -36,7 +36,7 @@ export async function POST(request) {
   for (const f of files) {
     try {
       if (f.size > MAX_BYTES) throw new Error(`${f.name} is larger than 15 MB`);
-      if (!/\.(csv|tsv|txt|xlsx|xlsm|xls)$/i.test(f.name)) throw new Error(`${f.name}: not a CSV / TSV / Excel file`);
+      if (!/\.(csv|tsv|txt|xlsx|xlsm|xls|pdf)$/i.test(f.name)) throw new Error(`${f.name}: not a CSV / TSV / Excel / PDF file`);
       const buffer = Buffer.from(await f.arrayBuffer());
       results.push(await ingestCheatSheet({ buffer, fileName: f.name, week, season, type, source: auth.via === 'token' ? 'sync' : 'upload' }));
     } catch (err) {

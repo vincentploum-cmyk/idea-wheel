@@ -1,5 +1,7 @@
 const nextConfig = {
   reactStrictMode: true,
+  // pdf-parse (PDF cheat sheets) is loaded by Node as is: its bundled pdf.js is not for the bundler.
+  experimental: { serverComponentsExternalPackages: ['pdf-parse'] },
   env: {
     NEXT_PUBLIC_COMMIT_SHA: (process.env.RENDER_GIT_COMMIT || process.env.NEXT_PUBLIC_COMMIT_SHA || '').slice(0, 7),
   },

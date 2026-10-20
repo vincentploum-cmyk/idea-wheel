@@ -27,7 +27,14 @@ config and keeps its own markets, teams, feeds and slate key:
 - `markets.js` (`makeMarkets`): a sport's markets ({ group, label, unit, fields (the box-score
   fields the market settles on, summed), yesNo, floor, defense, aliases }) → `marketFromText`
   (any spelling, whole-word match for short aliases like "PTS"), `statOf`, `defenseKey`.
-- `cheatsheet.js` (`makeCheatSheetParser`): CSV / TSV / Excel in any column order; long layout
+- `pdf.js` (`pdfTables`): a PDF cheat sheet's pages as tables through pdf-parse's bundled pdf.js
+  (`serverComponentsExternalPackages`): text runs on one baseline make a row, a gap wider than a
+  character starts a cell, and cells are placed on the page's columns (`alignColumns`, cell
+  starts clustered within 14 pt) so a blank cell a PDF does not draw keeps the others in place.
+  `makeTextPdf` writes a small PDF for tests. The parser reads a PDF's tables with the previous
+  page's header carried onto pages that run on; the first rows read are stored with the sheet
+  (`preview`) and shown under Data sources, so a layout nothing parsed from can be checked there.
+- `cheatsheet.js` (`makeCheatSheetParser`): CSV / TSV / Excel / PDF in any column order; long layout
   = one row per prop with a market column, wide = one row per player with a column per market
   ("<market> odds" / "<market> L10 %" beside it); a sheet or file named after a market supplies
   it; hit rates as 7/10, 70% or 0.7.
@@ -54,7 +61,7 @@ config and keeps its own markets, teams, feeds and slate key:
 - UI: `components/picks/Board.jsx` (per game the sport's tables, a play-less game collapses to
   one line) and `Sources.jsx` (drop zone, stored sheets, PropFinder pull, ESPN refresh, folder
   sync note); `components/nfl/*` and `components/nba/*` bind them.
-- The Mac folder sync (`tools/mac-sync/nhl-sync.sh`, `sync_sheets`) posts any `.csv` / `.xlsx`
+- The Mac folder sync (`tools/mac-sync/nhl-sync.sh`, `sync_sheets`) posts any `.csv` / `.xlsx` / `.pdf`
   saved in `~/Desktop/NFL` to `POST /api/nfl/sheets` and in `~/Desktop/NBA` to `/api/nba/sheets`
   with the NHL sync token.
 

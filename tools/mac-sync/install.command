@@ -52,6 +52,6 @@ open -W -a "$APP"
 tail -n 5 "$HOME/Library/Logs/nhl-sync.log" 2>/dev/null || true
 echo
 echo "Done. PropFinder matchup workbooks and skater/team stats CSV exports saved in Desktop/NHL (or its Match days folders) now upload automatically,"
-echo "NFL cheat sheets (.csv / .xlsx) saved in Desktop/NFL go to the NFL board (name them wk7 / week-7 … to pick the week),"
+echo "NFL cheat sheets (.csv / .xlsx / .pdf) saved in Desktop/NFL go to the NFL board (name them wk7 / week-7 … to pick the week),"
 echo "and NBA cheat sheets saved in Desktop/NBA go to the NBA board (a date in the name picks the night)."
 echo "Log: ~/Library/Logs/nhl-sync.log   Uninstall: double-click uninstall.command"
