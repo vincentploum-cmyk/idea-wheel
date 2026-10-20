@@ -2,6 +2,7 @@
 
 import { fmtOdds } from '@/lib/nfl/odds';
 import { ICON } from '@/components/nhl/flags';
+import { useNbaPlayerCard } from './NbaPlayerCard';
 
 // The matchup view of an NBA game, the NHL rink's basketball twin: for each team a half court
 // (50 × 47 ft, the basket at the top) with its players placed by position (PF · C · SF under the
@@ -20,7 +21,7 @@ const W = 50; const H = 47;
 // Zones in feet: [x, y, width, height]; the label sits at the zone's foot, the chips stack from its top.
 const ZONES = { PF: [0, 0, 17, 22], C: [17, 0, 16, 22], SF: [33, 0, 17, 22], SG: [0, 22, 25, 25], PG: [25, 22, 25, 25] };
 const ZONE_OF = { PG: 'PG', SG: 'SG', SF: 'SF', PF: 'PF', C: 'C', G: 'SG', F: 'SF' };
-const CHIP_H = 6.4;                           // feet between stacked chips
+const CHIP_H = 5.2;                           // feet between stacked chips
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
 const shortName = (name) => { const parts = String(name || '').trim().split(' '); return parts.length > 1 ? parts.slice(1).join(' ') : name; };
@@ -35,25 +36,28 @@ export function zoneTone(rank, teams) {
   return 'mid';
 }
 
-/** The player's play for a market: the over (or yes) with the best chance, else his best side. */
+/** The player's play for a market: the book's main line on the over (or yes) side first, else his best over, else any. */
 export function playFor(p, market) {
   const mine = (p.plays || []).filter((x) => x.market === market);
-  return mine.find((x) => x.side === 'over' || x.side === 'yes') || mine[0] || null;
+  const overs = mine.filter((x) => x.side === 'over' || x.side === 'yes');
+  return overs.find((x) => x.main) || overs[0] || mine.find((x) => x.main) || mine[0] || null;
 }
 
+const ZONE_MAX = { PF: 3, C: 3, SF: 3, SG: 4, PG: 4 };   // chips a zone holds before the rest go under the court
+
 /** Players onto the court: one stack per zone (PG · SG · SF · PF · C; G and F join the guards and wings), the rest under it. */
-export function layoutCourt(players, { max = 4 } = {}) {
+export function layoutCourt(players) {
   const stacks = Object.fromEntries(Object.keys(ZONES).map((z) => [z, []]));
   const extras = [];
   for (const p of players) {
     const z = ZONE_OF[String(p.pos || '').toUpperCase()] || null;
-    if (!z || stacks[z].length >= max) { extras.push(p); continue; }
+    if (!z || stacks[z].length >= ZONE_MAX[z]) { extras.push(p); continue; }
     stacks[z].push(p);
   }
   const placed = [];
   for (const [z, list] of Object.entries(stacks)) {
     const [x, y, w] = ZONES[z];
-    list.forEach((p, i) => placed.push({ p, zone: z, x: x + w / 2, y: y + 3.6 + i * CHIP_H }));
+    list.forEach((p, i) => placed.push({ p, zone: z, x: x + w / 2, y: y + 3.4 + i * CHIP_H }));
   }
   return { placed, extras };
 }
@@ -94,7 +98,8 @@ function ZoneLabel({ zone, allowed, metric, opp }) {
   );
 }
 
-function Chip({ p, x, y, metric, sport, team, final }) {
+function Chip({ p, x, y, metric, sport, team, opp, venue, final }) {
+  const open = useNbaPlayerCard();
   const play = playFor(p, MARKET_OF[metric]);
   const avg = p.avg?.[metric];
   const over = play && play.p >= play.floor;
@@ -106,7 +111,7 @@ function Chip({ p, x, y, metric, sport, team, final }) {
   const all = (p.plays || []).filter((x) => x.side === 'over' || x.side === 'yes').map((x) => `${x.side === 'yes' ? '' : 'o'}${x.line} ${x.label} ${pct(x.p)}${x.odds != null ? ` at ${fmtOdds(x.odds)}` : ''}${x.hit == null ? '' : x.hit ? ' ✓' : ' ✗'}`);
   const title = `${p.player} · ${p.pos || '—'}${p.injury ? ` · ${p.injury}` : ''}${avg != null ? ` · ${num(avg)} ${STAT_LABEL[metric]} a game this season` : ''}${all.length ? `\n${all.join('\n')}` : '\nNo PropFinder line yet'}`;
   return (
-    <div className={`nhlx-rk-chip is-static${play?.confirmed ? ' is-pick' : ''}${p.injury ? ' is-out' : ''}`} style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }} title={title}>
+    <button type="button" className={`nhlx-rk-chip${play?.confirmed ? ' is-pick' : ''}${p.injury ? ' is-out' : ''}`} style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }} title={title} onClick={() => open({ key: p.key, player: p, team, opp, venue, market: MARKET_OF[metric] })}>
       <span className="nhlx-rk-pic">
         {p.espnId ? <img src={sport.headshotUrl(p.espnId)} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <img src={sport.teamLogo(team)} alt="" loading="lazy" className="is-logo" />}
         <i className="nhlx-rk-num">{p.pos || '—'}</i>
@@ -116,10 +121,10 @@ function Chip({ p, x, y, metric, sport, team, final }) {
         {play
           ? final && play.hit != null
             ? <span className={`nhlx-rk-stat is-actual${play.hit ? ' is-over' : ''}`}><em>{play.actual}</em>{NB}{STAT_LABEL[metric]}{NB}· {play.side === 'yes' ? '' : 'o'}{play.line}{NB}<i>{pct(play.p)}</i></span>
-            : <span className={`nhlx-rk-stat is-model${over ? ' is-over' : ''}`}><em>{play.side === 'yes' ? '' : 'o'}{play.line}</em>{NB}{STAT_LABEL[metric]}{NB}· <em>{pct(play.p)}</em>{play.odds != null ? <i>{fmtOdds(play.odds)}</i> : null}</span>
+            : <span className={`nhlx-rk-stat is-model${over ? ' is-over' : ''}`}><em>{play.side === 'yes' ? '' : 'o'}{play.line}</em>{NB}{STAT_LABEL[metric]}{NB}· <em>{pct(play.p)}</em></span>
           : <span className="nhlx-rk-stat">{avg != null ? <><em>{num(avg)}</em>{NB}{STAT_LABEL[metric]}{NB}avg</> : p.injury ? p.injury : 'no line'}</span>}
       </span>
-    </div>
+    </button>
   );
 }
 
@@ -132,14 +137,14 @@ function AllowedTable({ side }) {
   const count = a.count || 30;
   return (
     <div className="nhlx-pfd">
-      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {a.from === 'sheet' ? 'the cheat sheet’s tiles' : 'PropFinder'}</small></div>
+      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {a.from === 'sheet' ? 'the cheat sheet’s tiles' : 'PropFinder; this season blended into last season’s at games / (games + 15)'}</small></div>
       <div className="nhlx-pfd-wrap">
         <table className="nhlx-pfd-table">
           <thead><tr><th>Pos</th>{keys.map((k) => <th key={k}>{STAT_LABEL[k] || k.toUpperCase()}</th>)}</tr></thead>
           <tbody>
             {positions.map((pos) => (
               <tr key={pos}>
-                <td><b>{pos}</b>{a.rows[pos].gp ? <small className="nhlx-auto-meta"> {a.rows[pos].gp} GP</small> : null}</td>
+                <td><b>{pos}</b><small className="nhlx-auto-meta" title={a.rows[pos].prior ? `${a.rows[pos].gp || 0} games this season blended into last season's ${a.rows[pos].prior}` : ''}> {a.rows[pos].gp || 0}{a.rows[pos].prior ? `+${a.rows[pos].prior}` : ''} GP</small></td>
                 {keys.map((k) => { const c = a.rows[pos][k]; const tone = zoneTone(c?.rank, count); return <td key={k} className={c ? `is-${tone}` : ''}>{c ? <><span className="nhlx-pfd-val">{c.value != null ? num(c.value) : '—'}</span>{c.rank ? <span className="nhlx-pfd-rank">#{c.rank}</span> : null}</> : '—'}</td>; })}
               </tr>
             ))}
@@ -152,6 +157,7 @@ function AllowedTable({ side }) {
 
 /** Every player of the side with his props read against the matchup: the line and the chance per market. */
 function PlayersTable({ side, final }) {
+  const open = useNbaPlayerCard();
   const players = side.players.filter((p) => p.plays.length);
   if (!players.length) return null;
   return (
@@ -162,7 +168,7 @@ function PlayersTable({ side, final }) {
           <thead><tr><th>Player</th><th>Pos</th>{TABLE_MARKETS.map(([k, l]) => <th key={k}>{l}</th>)}{final ? <th>Got</th> : null}</tr></thead>
           <tbody>
             {players.map((p) => (
-              <tr key={p.key} className={p.injury ? 'is-muted' : ''}>
+              <tr key={p.key} className={`is-click${p.injury ? ' is-muted' : ''}`} onClick={() => open({ key: p.key, player: p, team: side.team, opp: side.opp, venue: side.venue })}>
                 <td><b>{p.player}</b>{p.injury ? <small className="nhlx-auto-meta"> {p.injury}</small> : null}</td>
                 <td>{p.pos || '—'}</td>
                 {TABLE_MARKETS.map(([k]) => {
@@ -198,7 +204,7 @@ function CourtCard({ side, metric, sport, final }) {
       <div className="nhlx-rk ir-court">
         <CourtMarkings clipId={clipId} tones={tones} />
         {Object.keys(ZONES).map((z) => <ZoneLabel key={z} zone={z} allowed={side.allowed} metric={metric} opp={side.opp} />)}
-        {placed.map(({ p, x, y }) => <Chip key={p.key} p={p} x={x} y={y} metric={metric} sport={sport} team={side.team} final={final} />)}
+        {placed.map(({ p, x, y }) => <Chip key={p.key} p={p} x={x} y={y} metric={metric} sport={sport} team={side.team} opp={side.opp} venue={side.venue} final={final} />)}
       </div>
       {extras.length ? <p className="nhlx-rk-extras nhlx-auto-meta"><b>Also:</b> {extras.map((p) => { const x = playFor(p, MARKET_OF[metric]); return `${p.player} (${p.pos || '—'}${x ? `, o${x.line} ${pct(x.p)}` : ''})`; }).join(' · ')}</p> : null}
       <PlayersTable side={side} final={final} />

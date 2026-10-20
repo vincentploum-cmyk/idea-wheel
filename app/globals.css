@@ -1416,3 +1416,11 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-court-soft svg { width: 12px; height: 12px; }
 .ir-court-table td:first-child { white-space: normal; min-width: 120px; }
 @media (max-width: 1000px) { .ir-court-pair { grid-template-columns: 1fr; } }
+
+/* NBA player card: the NHL card's shell, three averages in the top bar, the lines table under the defense rows. */
+.ir-pc-top { grid-template-columns: 40px minmax(200px, 1.6fr) repeat(3, minmax(80px, 0.6fr)); }
+.ir-pc-plays { margin-top: 16px; }
+.ir-court-table tr.is-click { cursor: pointer; }
+.ir-court-table tr.is-click:hover td { background: var(--bg-tint); }
+.nhlx-pc-stats .nhlx-pfd-table td.is-soft { background: var(--pf-soft-bg); } .nhlx-pc-stats .nhlx-pfd-table td.is-tough { background: var(--pf-tough-bg); }
+@media (max-width: 760px) { .ir-pc-top { grid-template-columns: 40px minmax(0, 1fr); } .ir-pc-top .nhlx-pc-stat { display: none; } }

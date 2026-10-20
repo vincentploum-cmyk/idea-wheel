@@ -178,9 +178,25 @@ config and keeps its own markets, teams, feeds and slate key:
   line and chance per market (PTS · REB · AST · 3PM · PRA), green over the floor. The data is
   `sides` on every board game (`sidesOf` in `lib/picks/board.js`: per team its players with their
   plays, the PropFinder players without one with their season averages, and `allowed` = the
-  opponent's `defense.teams` / `ranks` rows, or the sheet's tiles with ranks only).
+  opponent's `defense.teams` / `ranks` rows, or the sheet's tiles with ranks only). A chip shows the
+  book's main line (`playFor`: the main over, else the best over), one stat line, three chips under
+  the basket and four on the perimeter (`ZONE_MAX`).
+- The player card (`components/nba/NbaPlayerCard.jsx`, the NHL card's layout; `NbaPlayerCardProvider`
+  wraps the board, `useNbaPlayerCard()` opens it from any chip or "Props by player" row with
+  `{ key, player, team, opp, venue, market }`): the top bar (logo, position, tonight's game, PTS /
+  REB / AST a game this season), market tabs with the hit rate for the pressed split, the Over +
+  line block with the board's chance, price and sheet check for that line (the line menu lists his
+  lines and ±3 around the main one), the per-game bars against the line (`Bars`: green over, red
+  under, the average pill), the split tiles (L5 · L10 · L20 · season · vs opp · home / away; press one
+  to draw its games), the splits table (GP, MIN, PTS, REB, AST, 3PM, PRA, over %), and on the right
+  the opponent's allowed table with his position marked and "His lines tonight" (every play the
+  board has on him, click one to draw it). Data: `GET /api/nba/player?key&date` → `playerFor` in
+  `lib/picks/store.js` (the slate's PropFinder pull: his logs newest first, his props, the game,
+  the opponent's rows with ranks); the plays ride in from the opener. Hit rates and splits are
+  computed in the card (`hitRate`, `splitGames`: season = this season's games once three are
+  played, else the last 82).
 - Routes: `GET /api/nba/picks?date`, `GET|POST|DELETE /api/nba/sheets?date`,
-  `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`.
+  `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`.
   `.github/workflows/nba-data.yml`: 9:47 ET and 5:23 PM ET (schedule + PropFinder), 2:11 AM ET
   (last night's box scores). UI: `components/nba/NbaApp.jsx` (date picker), `NbaBoard.jsx`,
   `NbaSources.jsx`. Tests: `__tests__/nba-board.test.js` (`fixtures/espn-nba-summary.json`).

@@ -119,6 +119,9 @@ describe('NBA PropFinder mapping', () => {
       { market: 'dd', line: 0.5, odds: 140, underOdds: null, book: 'DraftKings', books: 1, isMain: true },
     ]);
     expect(fieldsSeen([PLAYER], []).unread).toEqual(['oddStat']);
+    const seen = fieldsSeen([PLAYER], []).markets;
+    expect(Object.values(seen).reduce((s, m) => s + m.n, 0)).toBeGreaterThan(0);
+    expect(Object.values(seen).every((m) => typeof m.n === 'number')).toBe(true);
   });
   test('what each defense allows per position, from the positions the rows carry', () => {
     const row = (pos, pts, reb = 30, ast = 20) => ({ type: 'Opponent', position: pos, seasonYear: 2026, gamesPlayed: 5, points: pts, rebounds: reb, assists: ast });
@@ -130,6 +133,17 @@ describe('NBA PropFinder mapping', () => {
     expect(d.ranks.MIA.PG.pts).toBe(2);
     expect(d.ranks.BOS.PG.pts).toBe(3);
     expect(d.ranks.NY.C.pts).toBe(1);
+    // Early in the season: this season's 2 games blended into last season's full row at 2 / (2 + 15); nothing played yet = last season's alone.
+    const early = [
+      { code: 'BOS', stats: [{ ...row('PG', 60), gamesPlayed: 2 }, { ...row('PG', 110 * 82 / 5), seasonYear: 2025, gamesPlayed: 82 }, { ...row('C', 0), gamesPlayed: 0 }, { ...row('C', 20 * 82 / 5), seasonYear: 2025, gamesPlayed: 82 }] },
+      { code: 'NYK', stats: [{ ...row('PG', 150 * 82 / 5), seasonYear: 2025, gamesPlayed: 82 }] },
+    ];
+    const e = defenseAllowed(early, { season: 2026 });
+    expect(e.teams.BOS.PG).toMatchObject({ gp: 2, prior: 82, season: 2026, priorSeason: 2025 });
+    expect(e.teams.BOS.PG.pts).toBeCloseTo((2 / 17) * 30 + (15 / 17) * 22, 1);
+    expect(e.teams.BOS.C).toMatchObject({ gp: 0, prior: 82, pts: 4 });
+    expect(e.teams.NY.PG).toMatchObject({ gp: 0, prior: 82, pts: 30 });
+    expect(e.ranks.NY.PG.pts).toBe(1);
   });
 });
 

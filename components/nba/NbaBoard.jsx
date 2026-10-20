@@ -6,6 +6,7 @@ import { GROUPS } from '@/lib/nba/markets';
 import { teamLogo, teamName } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
 import CourtPair, { COURT_METRICS } from './NbaCourt';
+import { NbaPlayerCardProvider } from './NbaPlayerCard';
 
 const SPORT = { groups: GROUPS, teamLogo, teamName, headshotUrl };
 
@@ -13,7 +14,7 @@ const SPORT = { groups: GROUPS, teamLogo, teamName, headshotUrl };
 export default function NbaBoard({ board }) {
   const [metric, setMetric] = useState('pts');
   return (
-    <>
+    <NbaPlayerCardProvider date={board?.date}>
       {board?.games?.length ? (
         <div className="ir-court-switch nhlx-rk-toggle">
           <small>Courts show</small>
@@ -24,6 +25,6 @@ export default function NbaBoard({ board }) {
         </div>
       ) : null}
       <Board board={board} sport={SPORT} empty="No games on this date." before={(g) => <CourtPair g={g} metric={metric} sport={SPORT} />} />
-    </>
+    </NbaPlayerCardProvider>
   );
 }
