@@ -29,6 +29,18 @@ export default function Sources({ sport, onChange }) {
 
   const load = useCallback(() => api(`${base}/status?${query}`).then(setStatus).catch((e) => setMsg(`Status: ${e.message}`)), [base, query]);
   useEffect(() => { load(); }, [load]);
+  // A PDF being read by OCR: poll until its rows land, then redraw the board.
+  const reading = !!status?.sheets?.some((s) => s.ocr?.status === 'pending');
+  useEffect(() => {
+    if (!reading) return undefined;
+    const t = setInterval(async () => {
+      const next = await api(`${base}/status?${query}`).catch(() => null);
+      if (!next) return;
+      setStatus(next);
+      if (!next.sheets.some((s) => s.ocr?.status === 'pending')) onChange?.();
+    }, 6000);
+    return () => clearInterval(t);
+  }, [reading, base, query, onChange]);
 
   const upload = async (files) => {
     const list = [...files].filter((f) => /\.(csv|tsv|txt|xlsx|xlsm|xls|pdf)$/i.test(f.name));
@@ -39,11 +51,21 @@ export default function Sources({ sport, onChange }) {
       for (const f of list) form.append('file', f, f.name);
       for (const [k, v] of Object.entries(fields)) form.append(k, String(v));
       const j = await api(`${base}/sheets`, { method: 'POST', body: form });
-      const lines = j.results.map((r) => (r.ok ? `${r.fileName}: ${r.rows} rows (${Object.entries(r.groups || {}).map(([g, n]) => `${n} ${groupLabel[g] || g}`).join(', ')})${r.pages ? ` from ${r.pages} page${r.pages === 1 ? '' : 's'}` : ''}${r.replaced ? ', replaced' : ''}${r.warnings?.length ? ` · ${r.warnings.length} warning${r.warnings.length === 1 ? '' : 's'}` : ''}` : `${r.fileName}: ${r.error || (r.warnings || []).join('; ') || 'no rows'}`));
+      const lines = j.results.map((r) => (r.pending ? `${r.fileName}: ${r.pages} page${r.pages === 1 ? '' : 's'} of pictures, being read by OCR (a few minutes); the rows land on the board when the read is done.` : r.ok ? `${r.fileName}: ${r.rows} rows (${Object.entries(r.groups || {}).map(([g, n]) => `${n} ${groupLabel[g] || g}`).join(', ')})${r.pages ? ` from ${r.pages} page${r.pages === 1 ? '' : 's'}` : ''}${r.replaced ? ', replaced' : ''}${r.warnings?.length ? ` · ${r.warnings.length} warning${r.warnings.length === 1 ? '' : 's'}` : ''}` : `${r.fileName}: ${r.error || (r.warnings || []).join('; ') || 'no rows'}`));
       setMsg(lines.join(' · '));
       setPreview(j.results.find((r) => !r.ok && r.preview?.length)?.preview || null);
       await load(); onChange?.();
     } catch (e) { setMsg(`Upload failed: ${e.message}`); }
+    finally { setBusy(''); }
+  };
+
+  const reread = async (s, full) => {
+    setBusy(s.id); setMsg('');
+    try {
+      const j = await api(`${base}/sheets?reread=${s.id}&${query}${full ? '&full=1' : ''}`, { method: 'POST' });
+      setMsg(j.sheet?.pending ? `${s.fileName}: reading again…` : j.sheet?.running ? `${s.fileName}: a read is already running.` : `${s.fileName}: ${j.sheet?.rows ?? 0} rows read again.`);
+      await load(); onChange?.();
+    } catch (e) { setMsg(`Re-read failed: ${e.message}`); }
     finally { setBusy(''); }
   };
 
@@ -83,7 +105,7 @@ export default function Sources({ sport, onChange }) {
       >
         <span className="nhlx-drop-icon">+</span>
         <span className="nhlx-drop-title">{busy === 'upload' ? 'Reading…' : 'Drop the cheat sheets here'}</span>
-        <span className="nhlx-drop-sub">CSV, TSV, Excel or PDF, any column order: one row per prop (market, line, side, odds, hit rates) or one row per player with a column per market. They land on {label}; a file with a stored name replaces it.</span>
+        <span className="nhlx-drop-sub">CSV, TSV, Excel or PDF, any column order: one row per prop (market, line, side, odds, hit rates) or one row per player with a column per market; a PDF of pictures is read by OCR. They land on {label}; a file with a stored name replaces it.</span>
         <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,.xlsx,.xlsm,.xls,.pdf" multiple hidden onChange={(e) => { upload(e.target.files); e.target.value = ''; }} />
       </div>
       {msg ? <p className="nhlx-auto-msg">{msg}</p> : null}
@@ -96,9 +118,12 @@ export default function Sources({ sport, onChange }) {
               {status.sheets.map((s) => (
                 <li key={s.id}>
                   <b>{s.fileName}</b>
-                  <span className="nhlx-auto-meta">{s.rows} rows · {s.players} players · {Object.entries(s.groups || {}).map(([g, n]) => `${n} ${groupLabel[g] || g}`).join(', ')} · {s.source === 'sync' ? 'folder sync' : 'uploaded'} {fmt(s.at)}{s.warnings?.length ? ` · ${s.warnings.length} row${s.warnings.length === 1 ? '' : 's'} skipped` : ''}</span>
-                  {s.warnings?.length ? <details className="ir-nfl-warn"><summary>Skipped rows</summary><ul>{s.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul></details> : null}
+                  {s.ocr?.status === 'pending' ? <span className="nhlx-auto-meta ir-ocr-live">Reading the pictures by OCR: page {s.ocr.page || 0} of {s.ocr.pages}… · {s.source === 'sync' ? 'folder sync' : 'uploaded'} {fmt(s.at)}</span>
+                    : s.ocr?.status === 'failed' ? <span className="nhlx-auto-meta">OCR read failed: {s.ocr.error || 'no rows'} · {s.source === 'sync' ? 'folder sync' : 'uploaded'} {fmt(s.at)}</span>
+                    : <span className="nhlx-auto-meta">{s.rows} rows · {s.players} players · {Object.entries(s.groups || {}).map(([g, n]) => `${n} ${groupLabel[g] || g}`).join(', ')} · {s.source === 'sync' ? 'folder sync' : 'uploaded'} {fmt(s.at)}{s.ocr ? ` · read by OCR from ${s.pages} page${s.pages === 1 ? '' : 's'}${s.ocr.games?.length ? ` (${s.ocr.games.map((g) => g.teams.filter(Boolean).join('–')).join(', ')})` : ''}` : ''}{s.warnings?.length ? ` · ${s.warnings.length} ${s.ocr ? 'note' : 'row'}${s.warnings.length === 1 ? '' : 's'}${s.ocr ? '' : ' skipped'}` : ''}</span>}
+                  {s.warnings?.length ? <details className="ir-nfl-warn"><summary>{s.ocr ? 'Notes from the read' : 'Skipped rows'}</summary><ul>{s.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul></details> : null}
                   {s.preview?.length ? <details className="ir-nfl-warn"><summary>First rows read from the PDF ({s.pages} page{s.pages === 1 ? '' : 's'})</summary><ul>{s.preview.map((row, i) => <li key={i}><code>{row}</code></li>)}</ul></details> : null}
+                  {s.ocr && s.ocr.status !== 'pending' ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={!!busy} onClick={() => reread(s, s.ocr.status === 'failed' && !s.ocr.games)}>Read again</button> : null}{' '}
                   <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-danger" disabled={busy === s.id} onClick={() => remove(s)}>Remove</button>
                 </li>
               ))}

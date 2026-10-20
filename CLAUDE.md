@@ -34,6 +34,20 @@ config and keeps its own markets, teams, feeds and slate key:
   `makeTextPdf` writes a small PDF for tests. The parser reads a PDF's tables with the previous
   page's header carried onto pages that run on; the first rows read are stored with the sheet
   (`preview`) and shown under Data sources, so a layout nothing parsed from can be checked there.
+- `ocr.js`: a PDF made of pictures (one JPEG a page, `pdfImages` slices the DCTDecode XObjects out
+  of the file, no renderer) is read by OCR: each page split into its two team columns, inverted,
+  scaled 3× and binarised through sharp (`prepareColumn`), then tesseract.js (`createReader`, one
+  worker a job, English data cached in the OS temp dir, PSM 6) gives the words with their boxes in
+  page pixels (`ocrPdf` → `[{ page, width, height, half, left, right }]`). The store runs it in the
+  background when the text parse finds nothing and the sport has a layout (`cfg.parseOcrPages`):
+  the PDF is kept at `sheets/<id>.pdf`, the words at `sheets/<id>.ocr.json`, the sheet is listed at
+  once with `ocr: { status: 'pending', page, pages }` (HTTP 200, so the folder sync records the file),
+  the index entry follows page by page (read past the JSON cache, `readJson(…, { fresh: true })`,
+  since the job and the status route may hold different module instances), and the rows land
+  when the read is done (`status: 'done'`, with the games the pages paired) or `'failed'`.
+  `POST /api/<sport>/sheets?reread=<id>` parses the stored words again (`&full=1` reads the PDF
+  again); the Sources panel polls while pending and carries a "Read again" button. Only the NFL
+  has a layout so far; an NBA picture PDF still answers 422. About four minutes for 14 pages.
 - `cheatsheet.js` (`makeCheatSheetParser`): CSV / TSV / Excel / PDF in any column order; long layout
   = one row per prop with a market column, wide = one row per player with a column per market
   ("<market> odds" / "<market> L10 %" beside it); a sheet or file named after a market supplies
@@ -82,6 +96,20 @@ config and keeps its own markets, teams, feeds and slate key:
   `~/Desktop/NFL` (`tools/mac-sync/nhl-sync.sh`, same sync token, `POST /api/nfl/sheets`); the
   week is read from the file name (`wk7`, `week-7`, a date) or is this week. Stored at
   `nfl/<season>/<wk>/sheets/<id>.json` with `sheets-index.json`; a file with a stored name replaces it.
+  The "detailed" sheet (`NFL_<season>_W<week>_detailed.pdf`: one page a game, one team a column, a
+  defense snapshot on top and the player tables under it, all pictures) goes through OCR and
+  `cheatsheet-detailed.js` (`parseDetailedPages`): the team from the column's head ("SEA 63 players"),
+  checked against the snapshot line ("DEN Defense Snapshot (use for evaluating SEA's …)") and the
+  week's schedule (`pairTeams`); in the Quarterbacks, Running Backs — Standard and WR / TE — Standard
+  tables the header's Line / Lines / Rec line and ATD words fix the columns, every row with two
+  numbers is a player, his name the fragments the layout wraps around his numbers (each text-only
+  row goes to the nearest numeric row), resolved against the slate's PropFinder players
+  (`resolveName`, edit distance: "Bammer" → Barner; the nearest week's pull stands in when the
+  week has none, `nearSlates`), book lines get their dropped decimal back (`fixLine`: "665/95" →
+  66.5 / 9.5, lines end in .5) and the ATD column is the American price (`fixPrice`). Rows: pass /
+  rush / rec yards with the line and no odds, anytime TD at the price; no hit rates, so on the board
+  they take PropFinder's logs (a row whose player has no pull is dropped by `chanceOf`). Fixture:
+  `__tests__/fixtures/ocr-nfl-detailed-page1.json` (page 1's real words, SEA · DEN).
 - The rest from PropFinder: `propfinder-nfl.js` through `pfGetJson` in
   `lib/nhl-data/propfinder-api.js` (`/NFL/teams`, `/NFL/players?teamIds=…&hydrate=stats&withOddsOnly=true`).
   The NFL routes follow the NHL's, but a football game row's field names have not been seen
