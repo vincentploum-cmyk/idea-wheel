@@ -168,7 +168,11 @@ config and keeps its own markets, teams, feeds and slate key:
 - The courts (`components/nba/NbaCourt.jsx`, the rink's basketball twin, drawn by `NbaBoard` through
   `Board`'s `before` slot above each game's tables): per team a half court (50 × 47 ft, the basket on
   top) with five zones — PF · C · SF under the basket, SG · PG on the perimeter (`ZONES`; G joins the
-  guards, F the wings, `layoutCourt`, four chips a zone, the rest listed under it) — each tinted by what
+  guards, F the wings, `layoutCourt`; PropFinder's depth chart places a player by his slot when the pull
+  carries one — `depthChart` in `lib/picks/propfinder.js` reads `team.depthChart.positions[SLOT].players`
+  (the NHL team objects' shape) into `data.depth[team][SLOT]`, `sidesOf` puts `slot` / `depth` on each
+  player and orders the side starters first, the chip's badge reads "PG1", `lineup: 'propfinder'` on the
+  side; else the roster position — three chips a front zone, four a back one, the rest listed under it) — each tinted by what
   tonight's opponent gives up to that position for the stat picked above the board (Points · Rebounds ·
   Assists · Threes, `COURT_METRICS`; `zoneTone` by rank third, rank 1 = the most permissive), the zone's
   foot carrying the rank; every chip the player's line and chance for the stat (`playFor`: the over or

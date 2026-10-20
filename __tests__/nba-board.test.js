@@ -3,7 +3,7 @@ import { marketFromText, groupOf, statFields, MARKETS, GROUPS } from '../lib/nba
 import { teamAbbrFromText, parseMatchup, teamLogo } from '../lib/nba/teams';
 import { parseCheatSheet, classifyHeader, parsePlayerCell } from '../lib/nba/cheatsheet';
 import { parseSummary, parseScoreboard, seasonOfDate, derived } from '../lib/nba/espn';
-import { gameRow, mapPlayers, defenseAllowed, fieldsSeen } from '../lib/nba/propfinder-nba';
+import { gameRow, mapPlayers, defenseAllowed, fieldsSeen, depthChart } from '../lib/nba/propfinder-nba';
 import { buildBoard, statOf, logRates } from '../lib/nba/picks';
 import { dateFromFileName } from '../lib/nba/store';
 import summary from './fixtures/espn-nba-summary.json';
@@ -125,6 +125,12 @@ describe('NBA PropFinder mapping', () => {
     const seen = fieldsSeen([PLAYER], []).markets;
     expect(Object.values(seen).reduce((s, m) => s + m.n, 0)).toBeGreaterThan(0);
     expect(Object.values(seen).every((m) => typeof m.n === 'number')).toBe(true);
+  });
+  test('a team’s depth chart, in the shape the NHL team objects carry', () => {
+    const team = { code: 'BOS', depthChart: { positions: { PG: { players: [{ full_name: 'Payton Pritchard', depth: 1, status: 'ACT', reference: '11' }, { full_name: 'Devin Carter', depth: 2, status: 'ACT' }] }, C: { players: [{ full_name: 'Neemias Queta', depth: 1 }] } } } };
+    expect(depthChart(team)).toEqual({ PG: [{ name: 'Payton Pritchard', key: 'payton pritchard', depth: 1, status: 'ACT', id: '11' }, { name: 'Devin Carter', key: 'devin carter', depth: 2, status: 'ACT', id: null }], C: [{ name: 'Neemias Queta', key: 'neemias queta', depth: 1, status: null, id: null }] });
+    expect(depthChart({ code: 'BOS' })).toBeNull();
+    expect(fieldsSeen([], [team]).sample.depthChart).toContain('Payton Pritchard');
   });
   test('what each defense allows per position, from the positions the rows carry', () => {
     const row = (pos, pts, reb = 30, ast = 20) => ({ type: 'Opponent', position: pos, seasonYear: 2026, gamesPlayed: 5, points: pts, rebounds: reb, assists: ast });

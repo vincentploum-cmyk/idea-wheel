@@ -49,8 +49,9 @@ const ZONE_MAX = { PF: 3, C: 3, SF: 3, SG: 4, PG: 4 };   // chips a zone holds b
 export function layoutCourt(players) {
   const stacks = Object.fromEntries(Object.keys(ZONES).map((z) => [z, []]));
   const extras = [];
+  // The depth chart's slot places a player (the starter first); the roster position otherwise.
   for (const p of players) {
-    const z = ZONE_OF[String(p.pos || '').toUpperCase()] || null;
+    const z = ZONE_OF[String(p.slot || p.pos || '').toUpperCase()] || ZONE_OF[String(p.pos || '').toUpperCase()] || null;
     if (!z || stacks[z].length >= ZONE_MAX[z]) { extras.push(p); continue; }
     stacks[z].push(p);
   }
@@ -109,12 +110,12 @@ function Chip({ p, x, y, metric, sport, team, opp, venue, final }) {
   if (play?.form === 'cold') flags.push(['cold', `Cold: ${pct(play.rates.l5)} of his last 5 over this line`, ICON.cold]);
   if (play?.spot?.soft) flags.push(['soft', `Soft spot: the opponent is in the permissive third at his position for this stat (#${play.spot.rank})`, ICON.soft]);
   const all = (p.plays || []).filter((x) => x.side === 'over' || x.side === 'yes').map((x) => `${x.side === 'yes' ? '' : 'o'}${x.line} ${x.label} ${pct(x.p)}${x.odds != null ? ` at ${fmtOdds(x.odds)}` : ''}${x.hit == null ? '' : x.hit ? ' ✓' : ' ✗'}`);
-  const title = `${p.player} · ${p.pos || '—'}${p.injury ? ` · ${p.injury}` : ''}${avg != null ? ` · ${num(avg)} ${STAT_LABEL[metric]} a game this season` : ''}${all.length ? `\n${all.join('\n')}` : '\nNo PropFinder line yet'}`;
+  const title = `${p.player} · ${p.pos || '—'}${p.depth ? ` · ${p.slot}${p.depth} on the depth chart${p.depth === 1 ? ' (starter)' : ''}` : ''}${p.injury ? ` · ${p.injury}` : ''}${avg != null ? ` · ${num(avg)} ${STAT_LABEL[metric]} a game this season` : ''}${all.length ? `\n${all.join('\n')}` : '\nNo PropFinder line yet'}`;
   return (
     <button type="button" className={`nhlx-rk-chip${play?.confirmed ? ' is-pick' : ''}${p.injury ? ' is-out' : ''}`} style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }} title={title} onClick={() => open({ key: p.key, player: p, team, opp, venue, market: MARKET_OF[metric] })}>
       <span className="nhlx-rk-pic">
         {p.espnId ? <img src={sport.headshotUrl(p.espnId)} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <img src={sport.teamLogo(team)} alt="" loading="lazy" className="is-logo" />}
-        <i className="nhlx-rk-num">{p.pos || '—'}</i>
+        <i className="nhlx-rk-num" title={p.depth ? `${p.slot}${p.depth} on PropFinder’s depth chart` : 'roster position'}>{p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</i>
       </span>
       <span className="nhlx-rk-meta">
         <b className="nhlx-rk-name">{flags.length ? <span className="nhlx-pk-flags nhlx-rk-flags">{flags.map(([k, t, icon]) => <i key={k} className={`nhlx-pk-flag is-${k}`} title={t} aria-label={t}>{icon}</i>)}</span> : null}<span className="nhlx-rk-nm">{shortName(p.player)}</span></b>
@@ -165,12 +166,12 @@ function PlayersTable({ side, final }) {
       <div className="nhlx-pfd-head"><b>Props by player · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">the line and the chance (green over the floor); ✓ on the cheat sheet</small></div>
       <div className="nhlx-pfd-wrap">
         <table className="nhlx-pfd-table ir-court-table">
-          <thead><tr><th>Player</th><th>Pos</th>{TABLE_MARKETS.map(([k, l]) => <th key={k}>{l}</th>)}{final ? <th>Got</th> : null}</tr></thead>
+          <thead><tr><th>Player</th><th title="The depth-chart slot and depth when PropFinder carries one, else the roster position">Pos</th>{TABLE_MARKETS.map(([k, l]) => <th key={k}>{l}</th>)}{final ? <th>Got</th> : null}</tr></thead>
           <tbody>
             {players.map((p) => (
               <tr key={p.key} className={`is-click${p.injury ? ' is-muted' : ''}`} onClick={() => open({ key: p.key, player: p, team: side.team, opp: side.opp, venue: side.venue })}>
                 <td><b>{p.player}</b>{p.injury ? <small className="nhlx-auto-meta"> {p.injury}</small> : null}</td>
-                <td>{p.pos || '—'}</td>
+                <td>{p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</td>
                 {TABLE_MARKETS.map(([k]) => {
                   const x = playFor(p, k);
                   if (!x) return <td key={k}>—</td>;
@@ -198,7 +199,7 @@ function CourtCard({ side, metric, sport, final }) {
     <section className="nhlx-rk-card ir-court-card" aria-label={`${side.team} court`}>
       <div className="nhlx-rk-head">
         <img src={sport.teamLogo(side.team)} alt="" width="40" height="40" loading="lazy" />
-        <div><b>{sport.teamName(side.team)} <small>{side.venue === 'H' ? 'vs' : 'at'} {sport.teamName(side.opp)}</small></b><small>{withLines} player{withLines === 1 ? '' : 's'} with a line · zones by what {side.opp} gives up to the position</small></div>
+        <div><b>{sport.teamName(side.team)} <small>{side.venue === 'H' ? 'vs' : 'at'} {sport.teamName(side.opp)}</small></b><small>{withLines} player{withLines === 1 ? '' : 's'} with a line · {side.lineup === 'propfinder' ? 'slots from PropFinder’s depth chart (1 = the starter)' : 'placed by roster position (no depth chart in the pull)'} · zones by what {side.opp} gives up</small></div>
       </div>
       <AllowedTable side={side} />
       <div className="nhlx-rk ir-court">
