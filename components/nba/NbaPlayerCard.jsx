@@ -212,7 +212,7 @@ function Card({ req, date, onClose }) {
             <div className="nhlx-pc-prop">
               <span className="nhlx-pc-over">OVER</span>
               <b>{line} {STAT_LABEL[market] || market}</b>
-              {play ? <span className="nhlx-pc-chip" title={`The board's chance for this line (${play.rates?.n || 0} games behind it, shrunk toward the book's price)${play.odds != null ? ` · ${fmtOdds(play.odds)}${play.book ? ` at ${play.book}` : ''}` : ''}${play.confirmed ? ' · on the cheat sheet' : ''}`}><b>{pct(play.p)}</b> chance{play.odds != null ? ` · ${fmtOdds(play.odds)}` : ''}{play.confirmed ? ' · ✓ sheet' : ''}</span> : null}
+              {play ? <span className="nhlx-pc-chip" title={`The board's chance for this line (${play.rates?.n || 0} games behind it, shrunk toward the book's price)${play.odds != null ? ` · ${fmtOdds(play.odds)}${play.book ? ` at ${play.book}` : ''}` : ''}`}><b>{pct(play.p)}</b> chance{play.odds != null ? ` · ${fmtOdds(play.odds)}` : ''}</span> : null}
               <label className="nhlx-sel nhlx-pc-line"><small>Line</small><select value={line} onChange={(e) => setLines({ ...lines, [market]: Number(e.target.value) })}>{lineChoices.map((l) => { const b = priced.get(l); return <option key={l} value={l}>{l}{b ? `${b.odds != null ? ` (${fmtOdds(b.odds)})` : ''}${b.main ? ' main' : ''}` : ''}</option>; })}</select></label>
               {proj.value != null ? <span className={`nhlx-pc-chip ir-pc-proj${proj.value > line ? ' is-up' : ' is-down'}`} title={`His ${num(proj.rate)} ${STAT_LABEL[market] || market} a game (season ${num(own?.season)}, last 10 ${num(own?.l10)}, last 5 ${num(own?.l5)})${proj.factor != null ? ` × ${proj.factor}: ${opp} gives up ${num(proj.allowed)} to ${myPos}s over ${WIN_LABEL[view]} against the league's ${num(proj.league)}` : ' (no environment table)'}`}><b>{num(proj.value)}</b> tonight{proj.factor != null ? ` · ×${proj.factor}` : ''}</span> : null}
             </div>
@@ -264,12 +264,12 @@ function Card({ req, date, onClose }) {
             ) : <div className="nhlx-empty">{data ? `No defense table for ${opp || 'the opponent'} in this pull.` : 'Loading…'}</div>}
             {plays.length ? (
               <div className="nhlx-pfd ir-pc-plays">
-                <div className="nhlx-pfd-head"><b>His lines tonight</b><small className="nhlx-auto-meta">the board’s chance per line; ✓ on the cheat sheet</small></div>
+                <div className="nhlx-pfd-head"><b>His lines tonight</b><small className="nhlx-auto-meta">the board’s chance per line</small></div>
                 <div className="nhlx-pfd-wrap">
                   <table className="nhlx-pfd-table">
                     <thead><tr><th>Market</th><th>Line</th><th>Chance</th><th>Price</th><th>L5 · L10 · season</th></tr></thead>
                     <tbody>
-                      {[...plays].sort((a, b) => b.p - a.p).map((x) => <tr key={x.id} className={x.market === market && x.line === line ? 'is-active' : ''} onClick={() => { setMarket(x.market); setLines({ ...lines, [x.market]: x.line }); }} style={{ cursor: 'pointer' }}><td><b>{x.label}</b>{x.confirmed ? ' ✓' : ''}</td><td>{x.side === 'yes' ? '' : x.side === 'under' ? 'u' : 'o'}{x.line}</td><td className={x.p >= x.floor ? 'is-soft' : 'is-tough'}><span className="nhlx-pfd-val">{pct(x.p)}</span></td><td>{x.odds != null ? fmtOdds(x.odds) : '—'}</td><td>{pct(x.rates?.l5)} · {pct(x.rates?.l10)} · {pct(x.rates?.season)}</td></tr>)}
+                      {[...plays].sort((a, b) => b.p - a.p).map((x) => <tr key={x.id} className={x.market === market && x.line === line ? 'is-active' : ''} onClick={() => { setMarket(x.market); setLines({ ...lines, [x.market]: x.line }); }} style={{ cursor: 'pointer' }}><td><b>{x.label}</b></td><td>{x.side === 'yes' ? '' : x.side === 'under' ? 'u' : 'o'}{x.line}</td><td className={x.p >= x.floor ? 'is-soft' : 'is-tough'}><span className="nhlx-pfd-val">{pct(x.p)}</span></td><td>{x.odds != null ? fmtOdds(x.odds) : '—'}</td><td>{pct(x.rates?.l5)} · {pct(x.rates?.l10)} · {pct(x.rates?.season)}</td></tr>)}
                     </tbody>
                   </table>
                 </div>
