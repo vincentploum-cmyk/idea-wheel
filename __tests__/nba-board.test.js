@@ -141,6 +141,14 @@ describe('NBA PropFinder mapping', () => {
       item('Player Made Threes', 'threePointsMade', 'DraftKings', 'over', -120, 2.5), item('Player Points', 'points', 'DraftKings', 'over', -110, 26.5),
     ] };
     expect(mapPlayers([stray])[0].props.map((x) => `${x.market} ${x.line}`)).toEqual(['tpm 2.5', 'pts 26.5']);
+    // Preseason rows are left out of the logs and the anchor (LeBron's o14.5 points, 2026-10-20), and the
+    // main line priced both ways by the most books wins before the one nearest his average.
+    const pre = { ...ladder, stats: [{ ...GAME, points: 9, seasonType: 'PRE' }, { ...GAME, gameDate: '2026-10-19T23:30:00Z', points: 10, seasonType: 'PRE' }, { ...GAME, gameDate: '2026-04-10T23:30:00Z', points: 28, season: 2025 }], odds: [
+      item('Player Points', 'points', 'Betano', 'over', -300, 9.5), item('Player Points', 'points', 'DraftKings', 'over', -115, 26.5), item('Player Points', 'points', 'DraftKings', 'under', -105, 26.5), item('Player Points', 'points', 'FanDuel', 'over', -110, 26.5),
+    ] };
+    const preP = mapPlayers([pre])[0];
+    expect(preP.games.map((g) => g.pts)).toEqual([28]);
+    expect(preP.props.find((x) => x.market === 'pts').line).toBe(26.5);
     // Without a log the most books decide, and the flag still beats an unflagged line.
     expect(mapPlayers([{ ...ladder, stats: [] }])[0].props.find((x) => x.market === 'pts').line).toBe(8.5);
     expect(fieldsSeen([PLAYER], []).unread).toEqual(['oddStat']);
@@ -250,5 +258,43 @@ describe('NBA projection', () => {
     const allowed = { rows: { PG: { pts: { value: 30, rank: 1 } } }, league: { PG: { pts: 25 } } };
     expect(projectFor({ season: 20 }, allowed, 'PG', 'pts')).toEqual({ rate: 20, factor: 1.12, value: 22.4, allowed: 30, league: 25, rank: 1 });
     expect(projectFor({ season: 20 }, allowed, 'C', 'pts')).toMatchObject({ rate: 20, factor: null, value: 20 });
+  });
+});
+
+describe('NBA ladders', () => {
+  const { ladderOf, buildBoard } = require('../lib/nba/picks');
+  const logs = Array.from({ length: 20 }, (_, i) => ({ date: `2026-01-${String(10 + i).padStart(2, '0')}`, season: 2026, type: 'REG', opp: 'NY', pts: 20 + (i % 5) * 3, reb: 8, ast: 5, tpm: 2 }));   // 20, 23, 26, 29, 32 repeating
+  test('the book’s rungs with his chance of clearing each, the main one marked', () => {
+    const prop = { market: 'pts', line: 25.5, odds: -110, underOdds: -110, books: 3, isMain: true, lines: [{ line: 19.5, odds: -400, underOdds: 280, books: 1, main: false }, { line: 25.5, odds: -110, underOdds: -110, books: 3, main: true }, { line: 31.5, odds: 300, underOdds: -400, books: 2, main: false }] };
+    const l = ladderOf(logs, { market: 'pts', season: 2026, prop });
+    expect(l.map((r) => [r.line, r.main])).toEqual([[19.5, false], [25.5, true], [31.5, false]]);
+    expect(l[0].p).toBeGreaterThan(l[1].p);
+    expect(l[1].p).toBeGreaterThan(l[2].p);
+    expect(l[1].rates).toMatchObject({ season: 0.6, n: 20 });   // 26, 29, 32 clear 25.5: 12 of 20
+    expect(l[2].rates.season).toBe(0.2);
+    expect(l[0].odds).toBe(-400);
+  });
+  test('a prop without a ladder climbs by the market’s step around the main line; no prop, around his average', () => {
+    const l = ladderOf(logs, { market: 'pts', season: 2026, prop: { market: 'pts', line: 25.5, odds: -110, underOdds: -110, books: 2, isMain: true } });
+    expect(l.map((r) => r.line)).toEqual([21.5, 23.5, 25.5, 27.5, 29.5, 31.5, 33.5]);
+    expect(l.find((r) => r.main)).toMatchObject({ line: 25.5, odds: -110, books: 2 });
+    const bare = ladderOf(logs, { market: 'reb', season: 2026 });
+    expect(bare.map((r) => r.line)).toEqual([6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5]);
+    expect(bare.find((r) => r.line === 7.5).p).toBeGreaterThan(0.8);
+    expect(bare.find((r) => r.line === 8.5).p).toBeLessThan(0.2);
+    expect(ladderOf(logs, { market: 'dd', season: 2026 })).toEqual([]);
+    // Four games this season: the rungs read over the last 82 across the seasons, not the four.
+    const early = [...logs.slice(0, 4).map((g) => ({ ...g, season: 2027 })), ...logs.map((g) => ({ ...g, season: 2026 }))];
+    const e = ladderOf(early, { market: 'pts', season: 2027, prop: { market: 'pts', line: 25.5, odds: -110, underOdds: -110, books: 2, isMain: true } });
+    expect(e.find((r) => r.line === 33.5).rates.n).toBe(24);
+    expect(e.find((r) => r.line === 33.5).p).toBeLessThan(0.15);
+  });
+  test('every side player with logs carries his ladders', () => {
+    const games = [{ id: 'g1', date: '2026-10-21T23:30Z', away: 'BOS', home: 'NY', final: false, state: 'pre' }];
+    const pf = { at: '2026-10-20T14:00:00Z', data: { players: [{ id: 'p1', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SF', games: logs, props: [{ market: 'pts', line: 25.5, odds: -110, underOdds: -110, isMain: true }] }], defense: null } };
+    const b = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf, results: {} });
+    const p = b.games[0].sides.BOS.players[0];
+    expect(Object.keys(p.ladders).sort()).toEqual(['ast', 'pra', 'pts', 'reb', 'tpm']);
+    expect(p.ladders.pts.find((r) => r.main).line).toBe(25.5);
   });
 });

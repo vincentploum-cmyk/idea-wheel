@@ -1438,3 +1438,19 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-court-card .nhlx-rk-toggle { margin: 6px 0 10px; }
 .ir-pc-proj.is-up b { color: var(--ok-fg); }
 .ir-pc-proj.is-down b { color: var(--bad-fg); }
+/* Ladders: a rung = the line, his chance, the price. */
+.ir-ladder-cell { vertical-align: top; }
+.ir-ladder-rung { display: flex; align-items: baseline; gap: 6px; font-size: 12px; line-height: 1.5; white-space: nowrap; color: var(--muted); }
+.ir-ladder-rung b { font-weight: 600; color: var(--body); min-width: 38px; }
+.ir-ladder-rung i { font-style: normal; font-weight: 600; min-width: 32px; }
+.ir-ladder-rung small { font-size: 11px; color: var(--muted); }
+.ir-ladder-rung.is-soft i { color: var(--ok-fg); }
+.ir-ladder-rung.is-tough i { color: var(--bad-fg); }
+.ir-ladder-rung.is-main b::before { content: '● '; font-size: 7px; vertical-align: 2px; color: var(--primary); }
+.ir-ladder-rung.is-hit b { color: var(--ok-fg); }
+.ir-ladder-rung.is-miss b { color: var(--bad-fg); }
+.ir-ladder-more { display: block; font-size: 11px; color: var(--muted); }
+.ir-ladder-table td { padding-top: 6px; padding-bottom: 6px; }
+.ir-pc-ladder { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
+.ir-pc-ladder .ir-ladder-rung { border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; background: var(--bg-soft); cursor: pointer; }
+.ir-pc-ladder .ir-ladder-rung.is-active { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
