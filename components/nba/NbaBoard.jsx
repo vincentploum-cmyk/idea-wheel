@@ -21,7 +21,7 @@ export default function NbaBoard({ board }) {
           <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Court metric">
             {COURT_METRICS.map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={metric === key} className={`nhlx-tab${metric === key ? ' is-active' : ''}`} onClick={() => setMetric(key)}>{label}</button>)}
           </div>
-          <span className="nhlx-rk-toggle-note">One stat for every court (the tabs above each court change it too). Zones: what the opponent gives up to that position over the window picked above the court (green = the most permissive third of the league, red = the stingiest). Chips: the player’s projection for tonight (his rate × that environment), the book’s main line and the chance. ✓ = the cheat sheet names him.</span>
+          <span className="nhlx-rk-toggle-note">One stat for every court (the tabs above each court change it too). Zones: what the opponent gives up to that position over the window picked above the court (green = the most permissive third of the league, red = the stingiest). Chips: what the player can get tonight (his rate × that environment, green when over the line), the book’s main line and the chance.</span>
         </div>
       ) : null}
       <Board board={board} sport={SPORT} empty="No games on this date." before={(g) => <CourtPair g={{ ...g, season: board?.season }} metric={metric} onMetric={setMetric} sport={SPORT} />} />

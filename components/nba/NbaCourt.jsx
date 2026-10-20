@@ -122,14 +122,13 @@ function Chip({ p, x, y, metric, sport, team, opp, venue, final, allowed, win })
   const proj = projectFor(p.own?.[metric], allowed, envPos(p), metric);
   const projText = proj.value != null ? `Tonight ${num(proj.value)} ${STAT_LABEL[metric]}: his ${num(proj.rate)} a game (season ${num(p.own?.[metric]?.season)}, last 10 ${num(p.own?.[metric]?.l10)}, last 5 ${num(p.own?.[metric]?.l5)})${proj.factor != null ? ` × ${proj.factor} (${opp} gives up ${num(proj.allowed)} to ${envPos(p)}s over ${WINDOW_TEXT[win] || win}, the league ${num(proj.league)})` : ' (no table for the environment)'}` : '';
   const flags = [];
-  if (play?.confirmed) flags.push(['conf', `On the cheat sheet: ${(play.sheetFiles || []).join(', ') || 'the uploaded sheet'} names him`, '✓']);
   if (play?.form === 'hot') flags.push(['hot', `Hot: ${pct(play.rates.l5)} of his last 5 over this line`, ICON.hot]);
   if (play?.form === 'cold') flags.push(['cold', `Cold: ${pct(play.rates.l5)} of his last 5 over this line`, ICON.cold]);
   if (play?.spot?.soft) flags.push(['soft', `Soft spot: the opponent is in the permissive third at his position for this stat (#${play.spot.rank})`, ICON.soft]);
-  const all = (p.plays || []).filter((x) => x.side === 'over' || x.side === 'yes').map((x) => `${x.side === 'yes' ? '' : 'o'}${x.line} ${x.label} ${pct(x.p)}${x.odds != null ? ` at ${fmtOdds(x.odds)}` : ''}${x.hit == null ? '' : x.hit ? ' ✓' : ' ✗'}`);
+  const all = (p.plays || []).filter((x) => x.side === 'over' || x.side === 'yes').map((x) => `${x.side === 'yes' ? '' : 'o'}${x.line} ${x.label} ${pct(x.p)}${x.odds != null ? ` at ${fmtOdds(x.odds)}` : ''}${x.hit == null ? '' : x.hit ? ' hit' : ' miss'}`);
   const title = `${p.player} · ${p.pos || '—'}${p.depth ? ` · ${p.slot}${p.depth} on the depth chart${p.depth === 1 ? ' (starter)' : ''}` : ''}${p.injury ? ` · ${p.injury}` : ''}${avg != null ? ` · ${num(avg)} ${STAT_LABEL[metric]} a game this season` : ''}${projText ? `\n${projText}` : ''}${all.length ? `\n${all.join('\n')}` : '\nNo PropFinder line yet'}`;
   return (
-    <button type="button" className={`nhlx-rk-chip${play?.confirmed ? ' is-pick' : ''}${p.injury ? ' is-out' : ''}`} style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }} title={title} onClick={() => open({ key: p.key, player: p, team, opp, venue, market: MARKET_OF[metric] })}>
+    <button type="button" className={`nhlx-rk-chip${p.injury ? ' is-out' : ''}`} style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }} title={title} onClick={() => open({ key: p.key, player: p, team, opp, venue, market: MARKET_OF[metric] })}>
       <span className="nhlx-rk-pic">
         {p.espnId ? <img src={sport.headshotUrl(p.espnId)} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <img src={sport.teamLogo(team)} alt="" loading="lazy" className="is-logo" />}
         <i className="nhlx-rk-num" title={p.depth ? `${p.slot}${p.depth} on PropFinder’s depth chart` : 'roster position'}>{p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</i>
@@ -139,7 +138,7 @@ function Chip({ p, x, y, metric, sport, team, opp, venue, final, allowed, win })
         {play
           ? final && play.hit != null
             ? <span className={`nhlx-rk-stat is-actual${play.hit ? ' is-over' : ''}`}><em>{play.actual}</em>{NB}{STAT_LABEL[metric]}{NB}· {play.side === 'yes' ? '' : 'o'}{play.line}{NB}<i>{pct(play.p)}</i></span>
-            : <span className={`nhlx-rk-stat is-model${over ? ' is-over' : ''}`}>{proj.value != null ? <><em className={proj.value > play.line ? 'is-up' : 'is-down'}>{num(proj.value)}</em>{NB}·{NB}</> : null}o{play.line}{NB}<em>{pct(play.p)}</em></span>
+            : <span className={`nhlx-rk-stat is-model${over ? ' is-over' : ''}`}>{proj.value != null ? <><em className={proj.value > play.line ? 'is-up' : 'is-down'}>{num(proj.value)}</em>{NB}{STAT_LABEL[metric]}{NB}·{NB}</> : null}o{play.line}{NB}<em>{pct(play.p)}</em></span>
           : <span className="nhlx-rk-stat">{proj.value != null ? <><em>{num(proj.value)}</em>{NB}{STAT_LABEL[metric]}{NB}tonight</> : avg != null ? <><em>{num(avg)}</em>{NB}{STAT_LABEL[metric]}{NB}avg</> : p.injury ? p.injury : 'no line'}</span>}
       </span>
     </button>
@@ -182,7 +181,7 @@ function PlayersTable({ side, final, win }) {
   const allowed = tableFor(side.allowed, win);
   return (
     <div className="nhlx-pfd ir-court-players">
-      <div className="nhlx-pfd-head"><b>Props by player · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market his projection for tonight (his rate × what {side.opp} gives up at his position, {WINDOW_LABEL[win] || win}), the line and the chance (green over the floor); ✓ = the cheat sheet names him</small></div>
+      <div className="nhlx-pfd-head"><b>Props by player · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market his projection for tonight (his rate × what {side.opp} gives up at his position, {WINDOW_LABEL[win] || win}), the line and the chance (green over the floor)</small></div>
       <div className="nhlx-pfd-wrap">
         <table className="nhlx-pfd-table ir-court-table">
           <thead><tr><th>Player</th><th title="The depth-chart slot and depth when PropFinder carries one, else the roster position">Pos</th>{TABLE_MARKETS.map(([k, l]) => <th key={k}>{l}</th>)}{final ? <th>Got</th> : null}</tr></thead>
@@ -196,8 +195,8 @@ function PlayersTable({ side, final, win }) {
                   const proj = projectFor(p.own?.[k], allowed, envPos(p), k);
                   if (!x) return <td key={k} title={proj.value != null ? `Tonight ${num(proj.value)} ${STAT_LABEL[k]} (his ${num(proj.rate)} × ${proj.factor ?? 1}); no line` : ''}>{proj.value != null ? <><span className="nhlx-pfd-val is-proj">{num(proj.value)}</span><span className="nhlx-pfd-rank">no line</span></> : '—'}</td>;
                   const tone = x.p >= x.floor ? 'soft' : x.p < x.floor - 0.1 ? 'tough' : 'mid';
-                  const title = `${proj.value != null ? `Tonight ${num(proj.value)} ${STAT_LABEL[k]}: his ${num(proj.rate)} a game × ${proj.factor ?? 1} (${side.opp} at ${envPos(p) || p.pos}) · ` : ''}${x.side === 'yes' ? '' : x.side === 'under' ? 'u' : 'o'}${x.line} ${x.label}: ${pct(x.p)} (break-even ${x.fair})${x.odds != null ? ` at ${fmtOdds(x.odds)}` : ''}${x.rates.n ? ` · over the line L5 ${pct(x.rates.l5)} · L10 ${pct(x.rates.l10)} · season ${pct(x.rates.season)} (${x.rates.n})` : ''}${x.spot?.soft ? ' · soft spot' : x.spot?.tough ? ' · tough spot' : ''}${x.confirmed ? ` · on the cheat sheet (${(x.sheetFiles || []).join(', ')})` : ''}${x.hit == null ? '' : ` · got ${x.actual} (${x.hit ? 'hit' : 'miss'})`}`;
-                  return <td key={k} className={`is-${tone}${x.hit == null ? '' : x.hit ? ' is-hit' : ' is-miss'}`} title={title}><span className="nhlx-pfd-val">{proj.value != null ? <i className={`ir-court-proj ${proj.value > x.line ? 'is-up' : 'is-down'}`}>{num(proj.value)}</i> : null}{x.side === 'under' ? 'u' : 'o'}{x.line}{x.confirmed ? <i className="ir-court-conf" title="on the cheat sheet">✓</i> : null}{x.spot?.soft ? <i className="nhlx-pk-flag is-soft ir-court-soft" title="soft spot">{ICON.soft}</i> : null}</span><span className="nhlx-pfd-rank">{pct(x.p)}</span></td>;
+                  const title = `${proj.value != null ? `Tonight ${num(proj.value)} ${STAT_LABEL[k]}: his ${num(proj.rate)} a game × ${proj.factor ?? 1} (${side.opp} at ${envPos(p) || p.pos}) · ` : ''}${x.side === 'yes' ? '' : x.side === 'under' ? 'u' : 'o'}${x.line} ${x.label}: ${pct(x.p)} (break-even ${x.fair})${x.odds != null ? ` at ${fmtOdds(x.odds)}` : ''}${x.rates.n ? ` · over the line L5 ${pct(x.rates.l5)} · L10 ${pct(x.rates.l10)} · season ${pct(x.rates.season)} (${x.rates.n})` : ''}${x.spot?.soft ? ' · soft spot' : x.spot?.tough ? ' · tough spot' : ''}${x.hit == null ? '' : ` · got ${x.actual} (${x.hit ? 'hit' : 'miss'})`}`;
+                  return <td key={k} className={`is-${tone}${x.hit == null ? '' : x.hit ? ' is-hit' : ' is-miss'}`} title={title}><span className="nhlx-pfd-val">{proj.value != null ? <i className={`ir-court-proj ${proj.value > x.line ? 'is-up' : 'is-down'}`}>{num(proj.value)}</i> : null}{x.side === 'under' ? 'u' : 'o'}{x.line}{x.spot?.soft ? <i className="nhlx-pk-flag is-soft ir-court-soft" title="soft spot">{ICON.soft}</i> : null}</span><span className="nhlx-pfd-rank">{pct(x.p)}</span></td>;
                 })}
                 {final ? <td>{TABLE_MARKETS.map(([k]) => { const x = playFor(p, k); return x && x.actual != null ? `${x.actual} ` : ''; }).join('').trim() || '—'}</td> : null}
               </tr>
