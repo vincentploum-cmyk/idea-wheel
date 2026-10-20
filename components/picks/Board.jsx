@@ -96,14 +96,16 @@ function GameHead({ g, sport }) {
 /**
  * The board of one slate for a sport: { groups: [[key, label]], teamLogo, teamName, headshotUrl }.
  * Per game the sport's tables; a game without a play collapses to one line; the notes under the slate.
+ * `before(game)` renders a sport's own view (the NBA court pair) between the game head and the tables.
  */
-export default function Board({ board, sport, empty = 'No games on this slate.' }) {
+export default function Board({ board, sport, empty = 'No games on this slate.', before = null }) {
   if (!board?.games?.length) return <div className="nhlx-empty">{empty}</div>;
   return (
     <>
       {board.games.map((g, i) => (
         <article key={g.id} className={`nhlx-mu-game${i === 0 ? ' is-first' : ''}`}>
           <GameHead g={g} sport={sport} />
+          {before ? before(g) : null}
           {g.plays ? (
             <div className="ir-nfl-grid">
               {sport.groups.map(([key, label]) => <GroupTable key={key} label={label} t={g.tables[key]} final={g.final} sport={sport} />)}
