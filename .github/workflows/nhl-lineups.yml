@@ -67,7 +67,7 @@ jobs:
           echo "Lineups for $Q"
           # A 5xx is usually the server restarting for a deploy: one more try after a minute.
           for attempt in 1 2; do
-            code=$(curl -sS -o resp.json -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?$Q" || echo 000)
+            code=$(curl -sS -o resp.json -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?$Q" || true); [ -n "$code" ] || code=000
             head -c 3000 resp.json; echo
             case "$code" in 5*|000) [ "$attempt" = 1 ] && { echo "server answered $code; retrying in 60 s"; sleep 60; } ;; *) break ;; esac
           done

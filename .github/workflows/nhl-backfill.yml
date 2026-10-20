@@ -34,7 +34,7 @@ jobs:
           set -u
           [ -n "$NHL_ACTIONS_TOKEN" ] || { echo "NHL_ACTIONS_TOKEN is not set"; exit 1; }
           # A 5xx or no answer is usually the server restarting for a deploy: one more try after a minute.
-          call() { local c; for attempt in 1 2; do c=$(curl -sS -o resp.json -w '%{http_code}' --max-time 290 -X POST -H "Authorization: Bearer $NHL_ACTIONS_TOKEN" "$1" || echo 000); case "$c" in 5*|000) [ "$attempt" = 1 ] && { echo "  server answered $c; retrying in 60 s"; sleep 60; } ;; *) break ;; esac; done; echo "$c"; }
+          call() { local c; for attempt in 1 2; do c=$(curl -sS -o resp.json -w '%{http_code}' --max-time 290 -X POST -H "Authorization: Bearer $NHL_ACTIONS_TOKEN" "$1" || true); [ -n "$c" ] || c=000; case "$c" in 5*|000) [ "$attempt" = 1 ] && { echo "  server answered $c; retrying in 60 s" >&2; sleep 60; } ;; *) break ;; esac; done; echo "$c"; }
           end=$(date -I -d "$TO + 1 day")
           d="$FROM"
           dates=0; failed=0

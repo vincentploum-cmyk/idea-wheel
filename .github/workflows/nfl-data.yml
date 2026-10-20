@@ -28,7 +28,7 @@ jobs:
           if [ "$(date -u +%H)" = "04" ] && [ -z "${{ github.event.inputs.date }}" ]; then DATE=$(TZ=America/New_York date -d 'yesterday' +%F); fi
           FORCE=""; [ "${{ github.event_name }}" = "workflow_dispatch" ] && FORCE="&force=1"
           echo "Refreshing the NFL week of $DATE"
-          call() { local c; for attempt in 1 2; do c=$(curl -sS -o "$2" -w '%{http_code}' -X POST --max-time 280 ${NHL_ACTIONS_TOKEN:+-H "Authorization: Bearer $NHL_ACTIONS_TOKEN"} "$1" || echo 000); case "$c" in 5*|000) [ "$attempt" = 1 ] && { echo "server answered $c; retrying in 60 s"; sleep 60; } ;; *) break ;; esac; done; echo "$c"; }
+          call() { local c; for attempt in 1 2; do c=$(curl -sS -o "$2" -w '%{http_code}' -X POST --max-time 280 ${NHL_ACTIONS_TOKEN:+-H "Authorization: Bearer $NHL_ACTIONS_TOKEN"} "$1" || true); [ -n "$c" ] || c=000; case "$c" in 5*|000) [ "$attempt" = 1 ] && { echo "server answered $c; retrying in 60 s" >&2; sleep 60; } ;; *) break ;; esac; done; echo "$c"; }
           code=$(call "https://ideareels.io/api/nfl/refresh?date=$DATE&only=schedule" sched.json); echo "schedule: $code $(head -c 600 sched.json)"
           [ "$code" = "200" ] || [ "$code" = "429" ]
           if [ -n "$NHL_ACTIONS_TOKEN" ] && [ "$(date -u +%H)" != "04" ]; then
