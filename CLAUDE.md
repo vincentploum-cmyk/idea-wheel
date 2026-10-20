@@ -173,30 +173,45 @@ config and keeps its own markets, teams, feeds and slate key:
   (the NHL team objects' shape) into `data.depth[team][SLOT]`, `sidesOf` puts `slot` / `depth` on each
   player and orders the side starters first, the chip's badge reads "PG1", `lineup: 'propfinder'` on the
   side; else the roster position — three chips a front zone, four a back one, the rest listed under it) — each tinted by what
-  tonight's opponent gives up to that position for the stat picked above the board (Points · Rebounds ·
-  Assists · Threes, `COURT_METRICS`; `zoneTone` by rank third, rank 1 = the most permissive), the zone's
-  foot carrying the rank; every chip the player's line and chance for the stat (`playFor`: the over or
-  yes side), ✓ when the cheat sheet confirms him, flame / snowflake / soft spot, his average when he has
-  no line; above the court the opponent-allowed table (per position, every stat PropFinder's table
-  carries, value + rank chip, the `nhlx-pfd-*` styles) and under it "Props by player": each player's
-  line and chance per market (PTS · REB · AST · 3PM · PRA), green over the floor. The data is
-  `sides` on every board game (`sidesOf` in `lib/picks/board.js`: per team its players with their
-  plays, the PropFinder players without one with their season averages, and `allowed` = the
-  opponent's `defense.teams` / `ranks` rows, or the sheet's tiles with ranks only). A chip shows the
-  book's main line (`playFor`: the main over, else the best over), one stat line, three chips under
-  the basket and four on the perimeter (`ZONE_MAX`).
+  tonight's opponent gives up to that position for the stat picked in the tabs above each court (Points ·
+  Rebounds · Assists · Threes, `COURT_METRICS`, one setting for the slate as the rink's Shots / Goals switch)
+  over the window picked beside them (Season = this season blended into last season's table; L5 / L10 /
+  L15 / L20 = PropFinder's `lastNGames` rows as published, `defenseAllowed` → `defense.windows[l5]` with
+  their own ranks and `league` = the league's average per position and stat; `windowsOf` / `tableFor` in
+  the court, `zoneTone` by rank third, rank 1 = the most permissive), the zone's foot carrying the rank;
+  every chip his **projection for tonight** (`lib/picks/projection.js`: `ownRate` = his season average
+  blended with his last ten at 0.65 / 0.35, × `envFactor` = 1 + 0.6 × (the opponent's allowed at his spot
+  over the league's average − 1) for the window picked; green over the line, red under, the hover showing
+  the arithmetic), the book's main line and the chance for the stat (`playFor`: the over or yes side), ✓ when
+  the cheat sheet names him (the hover names the file), flame / snowflake / soft spot, his projection
+  alone when he has no line; above the court the opponent-allowed table (per position, every stat
+  PropFinder's table carries, value + rank chip, the `nhlx-pfd-*` styles, the picked stat's column
+  marked, the league's average on hover) and under it "Props by player": each player's projection, line
+  and chance per market (PTS · REB · AST · 3PM · PRA), green over the floor. The data is `sides` on every
+  board game (`sidesOf` in `lib/picks/board.js`: per team its players with their plays and `own` = his
+  { l5, l10, season } averages per stat from his logs, the PropFinder players without a play too, and
+  `allowed` = the opponent's rows with ranks, `league`, and `windows`; or the sheet's tiles with ranks
+  only). A chip shows the book's main line (`playerProps` in `lib/picks/propfinder.js`: of the lines a
+  book flags main the one nearest his own last-ten average — a book flags its alternate ladder main too,
+  which put Drummond on o1.5 points on 2026-10-20 — else the line priced both ways with the most books;
+  the whole ladder rides on the prop as `lines`), one stat line, three chips under the basket and four on
+  the perimeter (`ZONE_MAX`). "Pull PropFinder" sits in the board head beside Reload (the same call as
+  under Data sources: `POST /api/nba/refresh?only=propfinder&force=1`).
 - The player card (`components/nba/NbaPlayerCard.jsx`, the NHL card's layout; `NbaPlayerCardProvider`
   wraps the board, `useNbaPlayerCard()` opens it from any chip or "Props by player" row with
   `{ key, player, team, opp, venue, market }`): the top bar (logo, position, tonight's game, PTS /
   REB / AST a game this season), market tabs with the hit rate for the pressed split, the Over +
-  line block with the board's chance, price and sheet check for that line (the line menu lists his
-  lines and ±3 around the main one), the per-game bars against the line (`Bars`: green over, red
+  line block with the board's chance, price and sheet check for that line (the line menu lists the
+  book's ladder with its prices, his plays' lines and ±3 around the one shown) and his projection for
+  tonight (`projectFor`, his windows from the logs × the opponent's environment at his spot over the
+  window picked on the right), the per-game bars against the line (`Bars`: green over, red
   under, the average pill), the split tiles (L5 · L10 · L20 · season · vs opp · home / away; press one
   to draw its games), the splits table (GP, MIN, PTS, REB, AST, 3PM, PRA, over %), and on the right
-  the opponent's allowed table with his position marked and "His lines tonight" (every play the
-  board has on him, click one to draw it). Data: `GET /api/nba/player?key&date` → `playerFor` in
-  `lib/picks/store.js` (the slate's PropFinder pull: his logs newest first, his props, the game,
-  the opponent's rows with ranks); the plays ride in from the opener. Hit rates and splits are
+  the opponent's allowed table (Season / L5 / L10 … tabs, his position marked, the league's average at
+  his spot under it) and "His lines tonight" (every play the board has on him, click one to draw it).
+  Data: `GET /api/nba/player?key&date` → `playerFor` in `lib/picks/store.js` (the slate's PropFinder
+  pull: his logs newest first, his props with their ladders, the game, the opponent's rows with ranks,
+  `league` and `windows`); the plays ride in from the opener. Hit rates and splits are
   computed in the card (`hitRate`, `splitGames`: season = this season's games once three are
   played, else the last 82). Usage rate, rebound chances and potential assists (PropFinder's
   player-summary figures) are read per game row as optional `FIELDS` (`usg`, `rebCh`, `potAst`;

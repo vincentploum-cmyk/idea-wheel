@@ -5,6 +5,7 @@ import { MARKETS, statOf } from '@/lib/nba/markets';
 import { teamLogo, teamName } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
 import { fmtOdds } from '@/lib/nfl/odds';
+import { projectFor } from '@/lib/picks/projection';
 
 // The NBA player card, laid out as the NHL card (components/nhl/PlayerCard.jsx): the top bar
 // (team logo, position, tonight's game, the season averages), market tabs carrying the hit rate for
@@ -127,6 +128,7 @@ function Card({ req, date, onClose }) {
   const [market, setMarket] = useState(req.market || 'pts');
   const [lines, setLines] = useState({});
   const [span, setSpan] = useState('l5');
+  const [win, setWin] = useState('season');   // the window of the opponent's table (season, or PropFinder's last-N rows)
   const plays = req.player?.plays || [];
 
   // The card is keyed by the player, so a new one mounts fresh; the fetch only ever lands here.
@@ -166,14 +168,24 @@ function Card({ req, date, onClose }) {
   const splits = [['l5', 'L5'], ['l10', 'L10'], ['l20', 'L20'], ['season', seasonTag(season)], ...(opp ? [['h2h', `vs ${opp}`]] : []), ...(venue ? [['venue', venue === 'H' ? 'Home' : 'Away']] : [])];
   const spanGames = splitGames(games, span, { season, opp, venue });
   const hit = hitRate(spanGames, market, line);
-  const lineSet = new Set([line, ...plays.filter((x) => x.market === market).map((x) => x.line)]);
+  // The line menu: the book's ladder for the market (PropFinder's `lines`, priced), his plays' lines and ±3 around the one shown.
+  const ladder = (data?.props || []).find((x) => x.market === market);
+  const priced = new Map((ladder?.lines || (ladder ? [{ line: ladder.line, odds: ladder.odds, main: ladder.isMain }] : [])).map((x) => [x.line, x]));
+  const lineSet = new Set([line, ...priced.keys(), ...plays.filter((x) => x.market === market).map((x) => x.line)]);
   for (let d = -3; d <= 3; d++) if (Math.floor(line) + d + 0.5 > 0) lineSet.add(Math.floor(line) + d + 0.5);
   const lineChoices = [...lineSet].sort((a, b) => a - b);
   const p = data?.player || { name: req.player?.player || req.key, team: req.team, pos: req.player?.pos || null, injury: req.player?.injury || null };
   const avgOf = (m, list) => { const vals = list.map((g) => (RAW.has(m) ? (g[m] == null ? null : Number(g[m])) : statOf(g, m))).filter((v) => v != null && Number.isFinite(v)); return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null; };
   const seasonGames = splitGames(games, 'season', { season, opp, venue });
-  const allowedKeys = data?.allowed ? [...new Set(Object.values(data.allowed).flatMap((r) => Object.keys(r)))].filter((k) => !['gp', 'season', 'prior', 'priorSeason'].includes(k)).sort((a, b) => (Object.keys(STAT_LABEL).indexOf(a) + 1 || 99) - (Object.keys(STAT_LABEL).indexOf(b) + 1 || 99)).slice(0, 8) : [];
+  const allowedKeys = data?.allowed ? [...new Set(Object.values(data.allowed).flatMap((r) => Object.keys(r)))].filter((k) => !['gp', 'season', 'prior', 'priorSeason', 'lastN'].includes(k)).sort((a, b) => (Object.keys(STAT_LABEL).indexOf(a) + 1 || 99) - (Object.keys(STAT_LABEL).indexOf(b) + 1 || 99)).slice(0, 8) : [];
   const myPos = POSITIONS.includes(p.pos) ? p.pos : p.pos === 'G' ? 'SG' : p.pos === 'F' ? 'SF' : null;
+  // What he can reach tonight: his own windows × the opponent's environment at his spot (the window picked on the right).
+  const windows = ['season', ...Object.keys(data?.windows || {}).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))];
+  const view = windows.includes(win) ? win : 'season';
+  const table = view === 'season' ? (data?.allowed ? { rows: data.allowed, league: data.league, count: data.count } : null) : data?.windows?.[view] || null;
+  const own = games.length ? { l5: avgOf(market, games.slice(0, 5)), l10: avgOf(market, games.slice(0, 10)), season: avgOf(market, seasonGames) } : null;
+  const proj = projectFor(own, table, myPos, market);
+  const WIN_LABEL = { season: seasonTag(season), l5: 'L5', l10: 'L10', l15: 'L15', l20: 'L20' };
 
   return (
     <div className="nhlx-modal" role="dialog" aria-modal="true" onClick={onClose}>
@@ -201,7 +213,8 @@ function Card({ req, date, onClose }) {
               <span className="nhlx-pc-over">OVER</span>
               <b>{line} {STAT_LABEL[market] || market}</b>
               {play ? <span className="nhlx-pc-chip" title={`The board's chance for this line (${play.rates?.n || 0} games behind it, shrunk toward the book's price)${play.odds != null ? ` · ${fmtOdds(play.odds)}${play.book ? ` at ${play.book}` : ''}` : ''}${play.confirmed ? ' · on the cheat sheet' : ''}`}><b>{pct(play.p)}</b> chance{play.odds != null ? ` · ${fmtOdds(play.odds)}` : ''}{play.confirmed ? ' · ✓ sheet' : ''}</span> : null}
-              <label className="nhlx-sel nhlx-pc-line"><small>Line</small><select value={line} onChange={(e) => setLines({ ...lines, [market]: Number(e.target.value) })}>{lineChoices.map((l) => <option key={l} value={l}>{l}</option>)}</select></label>
+              <label className="nhlx-sel nhlx-pc-line"><small>Line</small><select value={line} onChange={(e) => setLines({ ...lines, [market]: Number(e.target.value) })}>{lineChoices.map((l) => { const b = priced.get(l); return <option key={l} value={l}>{l}{b ? `${b.odds != null ? ` (${fmtOdds(b.odds)})` : ''}${b.main ? ' main' : ''}` : ''}</option>; })}</select></label>
+              {proj.value != null ? <span className={`nhlx-pc-chip ir-pc-proj${proj.value > line ? ' is-up' : ' is-down'}`} title={`His ${num(proj.rate)} ${STAT_LABEL[market] || market} a game (season ${num(own?.season)}, last 10 ${num(own?.l10)}, last 5 ${num(own?.l5)})${proj.factor != null ? ` × ${proj.factor}: ${opp} gives up ${num(proj.allowed)} to ${myPos}s over ${WIN_LABEL[view]} against the league's ${num(proj.league)}` : ' (no environment table)'}`}><b>{num(proj.value)}</b> tonight{proj.factor != null ? ` · ×${proj.factor}` : ''}</span> : null}
             </div>
             <div className="nhlx-pc-chips">
               {opp ? <span className="nhlx-pc-chip"><b>{venue === 'H' ? 'Home' : 'Away'}</b> {venue === 'A' ? '@' : 'vs'} <img src={teamLogo(opp)} alt="" width="18" height="18" /> {opp}</span> : null}
@@ -227,18 +240,24 @@ function Card({ req, date, onClose }) {
             </div>
           </section>
           <section className="nhlx-pc-pane nhlx-pc-right">
-            <div className="nhlx-pfd-head"><b>What {opp || 'the opponent'} gives up per game, by position</b><small className="nhlx-auto-meta">rank 1 = the most of {data?.count || 30} · this season blended into last season’s</small></div>
-            {data?.allowed ? (
+            <div className="nhlx-pfd-head"><b>What {opp || 'the opponent'} gives up per game, by position</b><small className="nhlx-auto-meta">rank 1 = the most of {table?.count || data?.count || 30} · {view === 'season' ? 'this season blended into last season’s' : `its last ${view.slice(1)} games`}{table?.league ? ' · Lg = the league’s average' : ''}</small></div>
+            {windows.length > 1 ? (
+              <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Window of the opponent's table" style={{ marginBottom: 8 }}>
+                {windows.map((k) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setWin(k)}>{WIN_LABEL[k]}</button>)}
+              </div>
+            ) : null}
+            {table?.rows ? (
               <div className="nhlx-pfd-wrap">
                 <table className="nhlx-pfd-table">
-                  <thead><tr><th>Pos</th>{allowedKeys.map((k) => <th key={k}>{STAT_LABEL[k] || k.toUpperCase()}</th>)}</tr></thead>
+                  <thead><tr><th>Pos</th>{allowedKeys.map((k) => <th key={k} className={k === market ? 'is-on' : ''}>{STAT_LABEL[k] || k.toUpperCase()}</th>)}</tr></thead>
                   <tbody>
-                    {[...POSITIONS.filter((x) => data.allowed[x]), ...Object.keys(data.allowed).filter((x) => !POSITIONS.includes(x))].map((pos) => (
+                    {[...POSITIONS.filter((x) => table.rows[x]), ...Object.keys(table.rows).filter((x) => !POSITIONS.includes(x))].map((pos) => (
                       <tr key={pos} className={pos === myPos ? 'is-active' : ''}>
                         <td><b>{pos}</b>{pos === myPos ? <small className="nhlx-auto-meta"> his spot</small> : null}</td>
-                        {allowedKeys.map((k) => { const c = data.allowed[pos][k]; const t = tone(c?.rank, data.count || 30); return <td key={k} className={c ? `is-${t}` : ''}>{c ? <><span className="nhlx-pfd-val">{c.value != null ? num(c.value) : '—'}</span>{c.rank ? <span className="nhlx-pfd-rank">#{c.rank}</span> : null}</> : '—'}</td>; })}
+                        {allowedKeys.map((k) => { const c = table.rows[pos][k]; const t = tone(c?.rank, table.count || data?.count || 30); const lg = table.league?.[pos]?.[k]; return <td key={k} className={`${c ? `is-${t}` : ''}${k === market ? ' is-on' : ''}`} title={c && lg != null ? `${num(c.value)} against the league's ${num(lg)} at ${pos}` : ''}>{c && typeof c === 'object' ? <><span className="nhlx-pfd-val">{c.value != null ? num(c.value) : '—'}</span>{c.rank ? <span className="nhlx-pfd-rank">#{c.rank}</span> : null}</> : '—'}</td>; })}
                       </tr>
                     ))}
+                    {table.league ? <tr className="ir-court-league"><td><b>Lg</b>{myPos ? <small className="nhlx-auto-meta"> at {myPos}</small> : null}</td>{allowedKeys.map((k) => <td key={k} className={k === market ? 'is-on' : ''}><span className="nhlx-pfd-val">{num(table.league[myPos]?.[k] ?? Object.values(table.league).map((r) => r[k]).find((v) => v != null))}</span></td>)}</tr> : null}
                   </tbody>
                 </table>
               </div>

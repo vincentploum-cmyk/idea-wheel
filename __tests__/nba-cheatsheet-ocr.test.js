@@ -76,6 +76,10 @@ describe('NBA cheat sheet (OCR)', () => {
     const prit = bos.players.find((p) => p.player === 'Payton Pritchard');
     expect(prit.plays[0]).toMatchObject({ market: 'pts', line: 15.5, side: 'over', confirmed: true });
     expect(prit.avg.pts).toBe(18.9);   // his logs' season average (18, 19, 20 repeating over ten games)
+    // His own windows per stat ride along for the projection; a player without a play has them too.
+    expect(prit.own.pts).toEqual({ l5: 18.8, l10: 18.9, season: 18.9 });
+    expect(prit.own.pra).toMatchObject({ season: 27.9 });
+    expect(bos.players.find((p) => p.player === 'Jaylen Brown').own.reb.season).toBe(4);
     expect(bos.allowed).toMatchObject({ from: 'sheet', count: 30 });
     expect(bos.allowed.rows.PG.pts).toEqual({ value: null, rank: 23 });
     expect(b.games[0].sides.DET.allowed.rows.PF.tpm.rank).toBe(6);
