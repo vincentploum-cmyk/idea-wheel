@@ -1,5 +1,6 @@
 # What predicts a skater's shots and goals? (2026-27 to date, 2025-26 as the control)
 
+Revision 7 (2026-10-20): the goal odds step replaced the same way as the shots one, on the Oct 13-20 grade (section 12).
 Revision 6 (2026-10-15): every angle at once (section 13): venue splits, pace, line slot, the opposing goalie, L5 / L10 / L15, head to head, rest, two-season priors, the opponent's tables per skater at the position and blended across the season boundary; the formulas replayed on this season's 3,852 skater-games and graded; the Best bets plain-rate read refitted (`picks-pure.js`).
 Revision 5 (2026-10-13): the model's own published odds graded on the scorecard export; the shots odds step replaced by the Poisson tail of λ (section 12).
 Revision 4 (2026-10-08): the rink's two environment tints, Rink vs PropFinder, graded against the box scores (section 10); the 1st goal tab graded against who scored first (section 11).
@@ -485,6 +486,31 @@ shape, the same before and after Oct 10:
 `p2s`) are the Poisson tails of the row's λ shots; the ladder's figures stay on the row as
 `ladderP3s` / `ladderP4s` / `ladderP5s` and still drive the attack score and the shot tiers. The
 goal and point odds are untouched.*
+
+*Applied 2026-10-20 to the goals, on the week that followed (Oct 13-20, 7 slates, 51 games, 1,728
+player-games). The goal odds step was worse than the shots one had been: in aggregate it was
+calibrated (P(1+ goal) 0.159 against 0.154), but it did not follow the λ. Skaters on a λ near 0.25
+were published at 60-67% (Geekie, Poitras, Kantserov, Crouse, Rakell), the top λ were capped near
+0.37 (MacKinnon 0.54, Celebrini 0.57), and the 38 rows published at 50%+ on a Poisson read under
+25% hit 0.32, about what the λ said. The Poisson tail of the same λ scored 0.124 Brier against
+0.130 over all rows and, on the rows over the boards' floor, read 0.41 against a 0.41 hit:*
+
+| 1+ goal, Oct 13-20 | n | published | Poisson(λ) | hit |
+|---|---|---|---|---|
+| Published P(1+) at 50% and up | 93 | 0.58 | 0.27 | 0.30 |
+| Board anytime-goal plays | 35 | 0.58 | | 0.29 |
+| Published P(1+) at the 35% floor and up | 272 | 0.48 | 0.25 | 0.32 |
+| Poisson(λ) at the 35% floor and up (λ ≥ 0.43) | 34 | 0.43 | 0.41 | 0.41 |
+| Top 272 by λ instead of by the ladder | 272 | 0.43 | 0.28 | 0.33 |
+
+*So the gain is the number, not the ranking: the same count ranked by λ hits 0.33 against 0.32.
+`p1g` / `p2g` / `p3g` are now the Poisson tails of the row's `lambdaG`; the ladder's figures stay
+on the row as `ladderP1g` / `ladderP2g` / `ladderP3g` and still drive the attack score and the goal
+tier. The board thins: 34 goal rows over the floor in the week against 272, one or two on a thin
+night, and the λ itself still runs low (0.12 against 0.18 scored), so the Poisson read understates
+the 0.2-0.4 band (stated 0.33, hit 0.43, n = 75) until the goals fit at ~2,000 rows. The floor is
+not lowered to compensate on one week. The point odds are untouched. Guard:
+`__tests__/nhl-model-odds.test.js`.*
 
 **What the Poisson read does not fix.** The λ itself is compressed the wrong way: too low under
 one shot (λ 0.6 → 1.07 actual) and too high above 3.5 (λ 3.7 → 3.0, λ 4.8 → 3.4 before Oct 10;

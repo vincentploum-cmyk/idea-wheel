@@ -5687,9 +5687,20 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
         const p2s = clamp(poissonAtLeast(lineBoostedS, 2), 0, 0.999);
         p1p = clamp(Number.isFinite(Number(p1p)) ? Number(p1p) : 0, 0, 0.999);
         p2p = clamp(Number.isFinite(Number(p2p)) ? Number(p2p) : 0, 0, 0.999);
-        p1g = clamp(Number.isFinite(Number(p1g)) ? Number(p1g) : 0, 0, 0.999);
-        p2g = clamp(Number.isFinite(Number(p2g)) ? Number(p2g) : 0, 0, 0.999);
-        p3g = clamp(Number.isFinite(Number(p3g)) ? Number(p3g) : 0, 0, 0.999);
+        const ladderP1g = clamp(Number.isFinite(Number(p1g)) ? Number(p1g) : 0, 0, 0.999);
+        const ladderP2g = clamp(Number.isFinite(Number(p2g)) ? Number(p2g) : 0, 0, 0.999);
+        const ladderP3g = clamp(Number.isFinite(Number(p3g)) ? Number(p3g) : 0, 0, 0.999);
+        // The published goal odds are the Poisson tails of the row's λ goals (lambdaGDisplay),
+        // the same step the shots odds took above. Graded on 1,728 player-games (Oct 13-20,
+        // 2026), the goal ladder's figures did not follow the λ: at 50%+ they hit 30% (the
+        // boards' anytime-goal plays: stated 0.58, hit 0.29, n = 35), skaters on a λ near 0.25
+        // were published at 60-67% and the top λ were capped near 0.37, while the Poisson read
+        // of the same λ scored better over all rows (Brier 0.124 vs 0.130) and read 0.41 against
+        // a 0.41 hit on the rows over the boards' floor. The ladder's figures stay on the row as
+        // ladderP1g/P2g/P3g and still drive the attack score and the goal tier.
+        p1g = clamp(poissonAtLeast(lambdaGDisplay, 1), 0, 0.999);
+        p2g = clamp(poissonAtLeast(lambdaGDisplay, 2), 0, 0.999);
+        p3g = clamp(poissonAtLeast(lambdaGDisplay, 3), 0, 0.999);
 
         results.push({
           name: skater.name,
@@ -5910,15 +5921,18 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
           p1g: +p1g.toFixed(4),
           p2g: +p2g.toFixed(4),
           p3g: +p3g.toFixed(4),
+          ladderP1g: +ladderP1g.toFixed(4),
+          ladderP2g: +ladderP2g.toFixed(4),
+          ladderP3g: +ladderP3g.toFixed(4),
           attackScore: Math.min(99, Math.round((
             0.16 * ladderP3s +
             0.24 * ladderP4s +
             0.12 * ladderP5s +
             0.24 * p1p +
             0.12 * p2p +
-            0.09 * p1g +
-            0.025 * p2g +
-            0.005 * p3g
+            0.09 * ladderP1g +
+            0.025 * ladderP2g +
+            0.005 * ladderP3g
           ) * 100 + attackBoost + Math.min(6, Math.max(0,
             (effectiveToi >= 16 ? 2 : effectiveToi >= 14 ? 1 : 0) +
             ((dangerRate >= 0.42 || (skater.iscfSeason || 0) >= 1.5) ? 2 : (dangerRate >= 0.34 ? 1 : 0)) +
