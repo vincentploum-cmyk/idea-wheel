@@ -188,7 +188,8 @@ function LadderCell({ p, market, final }) {
   const shown = ladder.slice(mainIdx, mainIdx + LADDER_ROWS);
   const play = playFor(p, market);
   const got = final && play?.actual != null ? play.actual : null;
-  const title = ladder.map((r) => `${r.main ? '● ' : ''}o${r.line}: ${pct(r.p)}${r.odds != null ? ` at ${fmtOdds(r.odds)}` : ` (break-even ${r.fair})`} · L5 ${pct(r.rates.l5)} · L10 ${pct(r.rates.l10)} · season ${pct(r.rates.season)} (${r.rates.n})`).join('\n');
+  const head = ladder[0] ? `Tonight ${num(ladder[0].proj)} ${STAT_LABEL[market]} (his rate${ladder[0].env != null ? ` × ${ladder[0].env} for the matchup` : ''}), spread ±${num(ladder[0].sd)}\n` : '';
+  const title = head + ladder.map((r) => `${r.main ? '● ' : ''}o${r.line}: ${pct(r.p)} = ½ his distribution over it (${pct(r.model)}) + ½ how often he cleared it (${pct(r.emp)}: L5 ${pct(r.rates.l5)} · L10 ${pct(r.rates.l10)} · season ${pct(r.rates.season)}, ${r.rates.n} games)${r.odds != null ? ` · ${fmtOdds(r.odds)}` : ` · break-even ${r.fair}`}`).join('\n');
   return (
     <td className="ir-ladder-cell" title={title}>
       {shown.map((r) => {
@@ -210,7 +211,7 @@ function PlayersTable({ side, final, win, view }) {
   if (view === 'ladders') {
     return (
       <div className="nhlx-pfd ir-court-players">
-        <div className="nhlx-pfd-head"><b>Ladders · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market the book’s main rung (●) and the rungs above it, each with his chance of clearing it (his hit rate over that rung, last 5 / last 10 / season, shrunk toward the rung’s price) and the price; hover a cell for the whole ladder; click the row for the card</small></div>
+        <div className="nhlx-pfd-head"><b>Ladders · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market the book’s main rung (●) and the rungs above it, each with his chance of clearing it tonight: his own distribution centred on his projection against {side.opp} at his spot, blended with how often he actually cleared that rung; green from 55%, red under 35%; the book’s price beside its rung; hover a cell for the whole ladder, click the row for the card</small></div>
         <div className="nhlx-pfd-wrap">
           <table className="nhlx-pfd-table ir-court-table ir-ladder-table">
             <thead><tr><th>Player</th><th>Pos</th>{TABLE_MARKETS.map(([k, l]) => <th key={k}>{l}</th>)}{final ? <th>Got</th> : null}</tr></thead>

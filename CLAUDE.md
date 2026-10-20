@@ -194,9 +194,12 @@ config and keeps its own markets, teams, feeds and slate key:
   board game (`sidesOf` in `lib/picks/board.js`: per team its players with their plays, `own` = his
   { l5, l10, season } averages per stat from his logs, and `ladders` per market (`ladderOf`, the markets in
   `LADDER_MARKETS` of `lib/nba/picks.js`: the book's rungs when the prop carries `lines`, else rungs by the
-  market's `step` around the main line, two under and four over; each rung with his chance of clearing
-  it — the board's hit-rate read against that rung, shrunk toward the rung's price, over his last 82
-  games until this season has `LADDER_MIN` = 10 — and the price), the PropFinder players without a play too, and
+  market's `step` around the main line, two under and four over; each rung with his realistic chance of
+  clearing it tonight — half his own distribution's tail over the rung (a normal centred on `ownRate` ×
+  the opponent's `envFactor` at his spot from the season table, his spread over his last 82 games floored
+  at a quarter of the projection, `upperTail`), half how often he actually cleared it (L5 / L10 / season
+  at the board's weights, over his last 82 games until this season has `LADDER_MIN` = 10); no price in
+  the number, the book's price beside its rung; `model`, `emp`, `proj`, `sd`, `env` on every rung), the PropFinder players without a play too, and
   `allowed` = the opponent's rows with ranks, `league`, and `windows`, every cell carrying the cheat
   sheet's tile for it as `sheet` when the sheet has one (`sheetCheck` in the court: a zone foot or a
   table cell gets a dashed edge, `is-doubt`, when the tile reads a different third than PropFinder, the
