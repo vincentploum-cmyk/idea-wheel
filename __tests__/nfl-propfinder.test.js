@@ -15,8 +15,8 @@ describe('PropFinder NFL mapping', () => {
   });
   test('prop lines on a player, unknown markets dropped', () => {
     expect(playerProps(PLAYER)).toEqual([
-      { market: 'pass_yds', line: 245.5, odds: -115, underOdds: -105, book: 'DK' },
-      { market: 'anytime_td', line: 0.5, odds: 150, underOdds: null, book: null },
+      { market: 'pass_yds', line: 245.5, odds: -115, underOdds: -105, book: 'DK', books: 1, isMain: true },
+      { market: 'anytime_td', line: 0.5, odds: 150, underOdds: null, book: null, books: 1, isMain: true },
     ]);
     const players = mapPlayers([PLAYER, { name: '' }]);
     expect(players).toHaveLength(1);

@@ -100,8 +100,24 @@ describe('NBA PropFinder mapping', () => {
     expect(gameRow({ ...GAME, points: 22, rebounds: 11, assists: 10 })).toMatchObject({ dd: 1, td3: 1 });
     const players = mapPlayers([PLAYER]);
     expect(players[0]).toMatchObject({ key: 'jayson tatum', team: 'BOS', pos: 'SF' });
-    expect(players[0].props).toEqual([{ market: 'pts', line: 27.5, odds: -115, underOdds: -105, book: null }, { market: 'pra', line: 39.5, odds: -110, underOdds: null, book: null }]);
+    expect(players[0].props).toEqual([{ market: 'pts', line: 27.5, odds: -115, underOdds: -105, book: null, books: 1, isMain: true }, { market: 'pra', line: 39.5, odds: -110, underOdds: null, book: null, books: 1, isMain: true }]);
     expect(mapPlayers([{ ...PLAYER, positionAbbreviation: 'G-F' }])[0].pos).toBe('G');
+    // The API's own shape (2026-10-20): one item per sportsbook and side, the main line flagged, quarter markets skipped.
+    const item = (market, categoryMapping, sportsbook, selectionLine, price, points, isMain = true) => ({ id: 1, gameId: 'g', playerId: 'p', sportsbook, market, categoryMapping, isMain, selection: 'Jock Landale', selectionLine, price, points, lastUpdated: '2026-10-19T22:50:38Z' });
+    const api = { ...PLAYER, odds: [
+      item('1st Quarter Player Assists', 'Q1assists', 'Betano', 'over', 195, 0.5),
+      item('Player Points', 'points', 'DraftKings', 'over', -115, 27.5), item('Player Points', 'points', 'DraftKings', 'under', -105, 27.5),
+      item('Player Points', 'points', 'FanDuel', 'over', -110, 27.5), item('Player Points', 'points', 'FanDuel', 'over', 120, 29.5, false),
+      item('Player Points + Rebounds + Assists', 'pointsReboundsAssists', 'DraftKings', 'over', -120, 39.5),
+      item('Player Three Points Made', 'threePointsMade', 'DraftKings', 'over', -130, 2.5),
+      item('Double Double', 'doubleDouble', 'DraftKings', 'yes', 140, 0.5),
+    ] };
+    expect(mapPlayers([api])[0].props).toEqual([
+      { market: 'pts', line: 27.5, odds: -110, underOdds: -105, book: 'FanDuel', books: 2, isMain: true },
+      { market: 'pra', line: 39.5, odds: -120, underOdds: null, book: 'DraftKings', books: 1, isMain: true },
+      { market: 'tpm', line: 2.5, odds: -130, underOdds: null, book: 'DraftKings', books: 1, isMain: true },
+      { market: 'dd', line: 0.5, odds: 140, underOdds: null, book: 'DraftKings', books: 1, isMain: true },
+    ]);
     expect(fieldsSeen([PLAYER], []).unread).toEqual(['oddStat']);
   });
   test('what each defense allows per position, from the positions the rows carry', () => {
