@@ -178,6 +178,13 @@ describe('NBA PropFinder mapping', () => {
     expect(d.ranks.MIA.PG.pts).toBe(2);
     expect(d.ranks.BOS.PG.pts).toBe(3);
     expect(d.ranks.NY.C.pts).toBe(1);
+    // The team's own totals and what it gives up in all ride along, with the league's average of the former.
+    const withTotals = teams.map((t) => ({ ...t, stats: [...t.stats, { ...row('All', t.code === 'BOS' ? 600 : 550), type: 'Team' }, { ...row('All', 560) }] }));
+    const wt = defenseAllowed(withTotals, { season: 2026 });
+    expect(wt.totals.BOS.for.pts).toBe(120);
+    expect(wt.totals.BOS.against.pts).toBe(112);
+    expect(wt.leagueFor.pts).toBeCloseTo((120 + 110 + 110) / 3, 2);
+    expect(d.totals).toEqual({});
     // Early in the season: this season's 2 games blended into last season's full row at 2 / (2 + 15); nothing played yet = last season's alone.
     const early = [
       { code: 'BOS', stats: [{ ...row('PG', 150), gamesPlayed: 2 }, { ...row('PG', 110), seasonYear: 2025, gamesPlayed: 82 }, { ...row('C', 0), gamesPlayed: 0 }, { ...row('C', 20), seasonYear: 2025, gamesPlayed: 82 }] },
@@ -263,7 +270,7 @@ describe('NBA projection', () => {
     expect(projectionOf(17.2, 1.12)).toBe(19.3);
     expect(projectionOf({ season: 20 }, null)).toBe(20);
     const allowed = { rows: { PG: { pts: { value: 30, rank: 1 } } }, league: { PG: { pts: 25 } } };
-    expect(projectFor({ season: 20 }, allowed, 'PG', 'pts')).toEqual({ rate: 20, factor: 1.12, value: 22.4, allowed: 30, league: 25, rank: 1 });
+    expect(projectFor({ season: 20 }, allowed, 'PG', 'pts')).toEqual({ rate: 20, factor: 1.12, team: null, value: 22.4, allowed: 30, league: 25, rank: 1 });
     expect(projectFor({ season: 20 }, allowed, 'C', 'pts')).toMatchObject({ rate: 20, factor: null, value: 20 });
   });
 });
@@ -316,6 +323,17 @@ describe('NBA ladders', () => {
     expect(Object.keys(p.ladders).sort()).toEqual(['ast', 'pra', 'pts', 'reb', 'tpm']);
     expect(p.ladders.pts.find((r) => r.main).line).toBe(25.5);
     expect(p.ladders.pts[0].env).toBeNull();   // no defense table in this pull
+    expect(p.scale).toEqual({});
+    // With the team's totals the side's projections are scaled to its expected total: BOS scores 110 a game, NY
+    // gives up 120 against a league of 115 → 110 × 1.026 = 112.9 tonight over the players' own rates.
+    const two = { ...pf, data: { ...pf.data, players: [...pf.data.players, { id: 'p2', name: 'Derrick White', key: 'derrick white', team: 'BOS', pos: 'SG', games: logs.map((g) => ({ ...g, pts: 104 })), props: [] }], defense: { teams: {}, ranks: {}, count: 0, league: {}, windows: {}, totals: { BOS: { for: { gp: 82, pts: 110, reb: 44, ast: 26 }, against: { gp: 82, pts: 112 } }, NY: { for: { gp: 82, pts: 115 }, against: { gp: 82, pts: 120, reb: 44, ast: 26 } } }, leagueFor: { pts: 115, reb: 44, ast: 26 } } } };
+    const sc = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: two, results: {} }).games[0].sides.BOS;
+    expect(sc.teamProj.pts).toBeCloseTo(112.9, 1);
+    expect(sc.scale.pts).toBeCloseTo(112.9 / (26 + 104), 2);   // over Brown's 26 + White's 104 own rates (the rest of the roster stands in White's figure)
+    expect(sc.scale.pra).toBeDefined();
+    expect(sc.players[0].scale.pts).toBe(sc.scale.pts);
+    expect(sc.players[0].ladders.pts[0].env).toBeCloseTo(sc.scale.pts, 2);   // no position table: the scale alone centres the ladder
+    expect(sc.players[0].ladders.pts[0].proj).toBeCloseTo(26 * sc.scale.pts, 0);
     // With a PropFinder table in, the cheat sheet's tiles ride on every cell as `sheet` beside PropFinder's rank.
     const defense = { teams: { NY: { SF: { gp: 0, pts: 24, reb: 6 } }, BOS: { SF: { gp: 0, pts: 20, reb: 7 } } }, ranks: { NY: { SF: { pts: 1, reb: 2 } }, BOS: { SF: { pts: 2, reb: 1 } } }, count: 2, league: { SF: { pts: 22, reb: 6.5 } }, windows: {} };
     const sheets = [{ id: 's', fileName: 'nba_20261021.pdf', rows: [], meta: { oppRanks: { BOS: { SF: { pts: 3, reb: 28 } } } } }];   // BOS's opponent (NY) gives up the 3rd most points to SFs, the 28th most rebounds
@@ -327,5 +345,14 @@ describe('NBA ladders', () => {
     expect(bos.rows.SF.reb).toEqual({ value: 6, rank: 2, sheet: 28 });
     expect(bos.sheet).toBe('beside');
     expect(withSheet.games[0].sides.NY.allowed.rows.SF.pts).toEqual({ value: 20, rank: 2 });
+  });
+});
+
+describe('NBA projection with the team scale', () => {
+  const { projectFor } = require('../lib/picks/projection');
+  test('the side’s factor multiplies the environment', () => {
+    const allowed = { rows: { PG: { pts: { value: 30, rank: 1 } } }, league: { PG: { pts: 25 } } };
+    expect(projectFor({ season: 20 }, allowed, 'PG', 'pts', { pts: 0.8 })).toMatchObject({ factor: 1.12, team: 0.8, value: 17.9 });
+    expect(projectFor({ season: 20 }, allowed, 'PG', 'pts', null)).toMatchObject({ team: null, value: 22.4 });
   });
 });

@@ -125,8 +125,8 @@ function Chip({ p, x, y, metric, sport, team, opp, venue, final, allowed, win })
   const play = playFor(p, MARKET_OF[metric]);
   const avg = p.avg?.[metric];
   const over = play && play.p >= play.floor;
-  const proj = projectFor(p.own?.[metric], allowed, envPos(p), metric);
-  const projText = proj.value != null ? `Tonight ${num(proj.value)} ${STAT_LABEL[metric]}: his ${num(proj.rate)} a game (season ${num(p.own?.[metric]?.season)}, last 10 ${num(p.own?.[metric]?.l10)}, last 5 ${num(p.own?.[metric]?.l5)})${proj.factor != null ? ` × ${proj.factor} (${opp} gives up ${num(proj.allowed)} to ${envPos(p)}s over ${WINDOW_TEXT[win] || win}, the league ${num(proj.league)})` : ' (no table for the environment)'}` : '';
+  const proj = projectFor(p.own?.[metric], allowed, envPos(p), metric, p.scale);
+  const projText = proj.value != null ? `Tonight ${num(proj.value)} ${STAT_LABEL[metric]}: his ${num(proj.rate)} a game (season ${num(p.own?.[metric]?.season)}, last 10 ${num(p.own?.[metric]?.l10)}, last 5 ${num(p.own?.[metric]?.l5)})${proj.factor != null ? ` × ${proj.factor} (${opp} gives up ${num(proj.allowed)} to ${envPos(p)}s over ${WINDOW_TEXT[win] || win}, the league ${num(proj.league)})` : ' (no table for the environment)'}${proj.team != null ? ` × ${proj.team} so the team's projections add up to its expected total` : ''}` : '';
   const flags = [];
   if (play?.form === 'hot') flags.push(['hot', `Hot: ${pct(play.rates.l5)} of his last 5 over this line`, ICON.hot]);
   if (play?.form === 'cold') flags.push(['cold', `Cold: ${pct(play.rates.l5)} of his last 5 over this line`, ICON.cold]);
@@ -211,7 +211,7 @@ function PlayersTable({ side, final, win, view }) {
   if (view === 'ladders') {
     return (
       <div className="nhlx-pfd ir-court-players">
-        <div className="nhlx-pfd-head"><b>Ladders · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market the book’s main rung (●) and the rungs above it, each with his chance of clearing it tonight: his own distribution centred on his projection against {side.opp} at his spot, blended with how often he actually cleared that rung; green from 55%, red under 35%; the book’s price beside its rung; hover a cell for the whole ladder, click the row for the card</small></div>
+        <div className="nhlx-pfd-head"><b>Ladders · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market the book’s main rung (●) and the rungs above it, each with his chance of clearing it tonight: his own distribution centred on his projection against {side.opp} at his spot{side.teamProj?.pts != null ? ` (the side’s projections add up to ${num(side.teamProj.pts, 0)} points, ${side.team}’s ${num(side.teamFor?.pts, 0)} a game through ${side.opp}’s defense)` : ''}, blended with how often he actually cleared that rung; green from 55%, red under 35%; the book’s price beside its rung; hover a cell for the whole ladder, click the row for the card</small></div>
         <div className="nhlx-pfd-wrap">
           <table className="nhlx-pfd-table ir-court-table ir-ladder-table">
             <thead><tr><th>Player</th><th>Pos</th>{TABLE_MARKETS.map(([k, l]) => <th key={k}>{l}</th>)}{final ? <th>Got</th> : null}</tr></thead>
@@ -232,7 +232,7 @@ function PlayersTable({ side, final, win, view }) {
   }
   return (
     <div className="nhlx-pfd ir-court-players">
-      <div className="nhlx-pfd-head"><b>Props by player · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market his projection for tonight (his rate × what {side.opp} gives up at his position, {WINDOW_LABEL[win] || win}), the line and the chance (green over the floor)</small></div>
+      <div className="nhlx-pfd-head"><b>Props by player · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market his projection for tonight (his rate × what {side.opp} gives up at his position, {WINDOW_LABEL[win] || win}{side.teamProj?.pts != null ? `; the side adds up to ${num(side.teamProj.pts, 0)} points, ${num(side.teamProj.reb, 0)} rebounds, ${num(side.teamProj.ast, 0)} assists: ${side.team}'s own ${num(side.teamFor?.pts, 0)} a game through ${side.opp}'s defense` : ''}), the line and the chance (green over the floor)</small></div>
       <div className="nhlx-pfd-wrap">
         <table className="nhlx-pfd-table ir-court-table">
           <thead><tr><th>Player</th><th title="The depth-chart slot and depth when PropFinder carries one, else the roster position">Pos</th>{TABLE_MARKETS.map(([k, l]) => <th key={k}>{l}</th>)}{final ? <th>Got</th> : null}</tr></thead>
@@ -243,7 +243,7 @@ function PlayersTable({ side, final, win, view }) {
                 <td>{p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</td>
                 {TABLE_MARKETS.map(([k]) => {
                   const x = playFor(p, k);
-                  const proj = projectFor(p.own?.[k], allowed, envPos(p), k);
+                  const proj = projectFor(p.own?.[k], allowed, envPos(p), k, p.scale);
                   if (!x) return <td key={k} title={proj.value != null ? `Tonight ${num(proj.value)} ${STAT_LABEL[k]} (his ${num(proj.rate)} × ${proj.factor ?? 1}); no line` : ''}>{proj.value != null ? <><span className="nhlx-pfd-val is-proj">{num(proj.value)}</span><span className="nhlx-pfd-rank">no line</span></> : '—'}</td>;
                   const tone = x.p >= x.floor ? 'soft' : x.p < x.floor - 0.1 ? 'tough' : 'mid';
                   const title = `${proj.value != null ? `Tonight ${num(proj.value)} ${STAT_LABEL[k]}: his ${num(proj.rate)} a game × ${proj.factor ?? 1} (${side.opp} at ${envPos(p) || p.pos}) · ` : ''}${x.side === 'yes' ? '' : x.side === 'under' ? 'u' : 'o'}${x.line} ${x.label}: ${pct(x.p)} (break-even ${x.fair})${x.odds != null ? ` at ${fmtOdds(x.odds)}` : ''}${x.rates.n ? ` · over the line L5 ${pct(x.rates.l5)} · L10 ${pct(x.rates.l10)} · season ${pct(x.rates.season)} (${x.rates.n})` : ''}${x.spot?.soft ? ' · soft spot' : x.spot?.tough ? ' · tough spot' : ''}${x.hit == null ? '' : ` · got ${x.actual} (${x.hit ? 'hit' : 'miss'})`}`;
@@ -296,7 +296,7 @@ function CourtCard({ side, metric, onMetric, sport, final, season, propsView, on
         {Object.keys(ZONES).map((z) => <ZoneLabel key={z} zone={z} allowed={allowed} metric={metric} opp={side.opp} win={view} />)}
         {placed.map(({ p, x, y }) => <Chip key={p.key} p={p} x={x} y={y} metric={metric} sport={sport} team={side.team} opp={side.opp} venue={side.venue} final={final} allowed={allowed} win={view} />)}
       </div>
-      {extras.length ? <p className="nhlx-rk-extras nhlx-auto-meta"><b>Also:</b> {extras.map((p) => { const x = playFor(p, MARKET_OF[metric]); const proj = projectFor(p.own?.[metric], allowed, envPos(p), metric); return `${p.player} (${p.pos || '—'}${proj.value != null ? `, ${num(proj.value)} tonight` : ''}${x ? `, o${x.line} ${pct(x.p)}` : ''})`; }).join(' · ')}</p> : null}
+      {extras.length ? <p className="nhlx-rk-extras nhlx-auto-meta"><b>Also:</b> {extras.map((p) => { const x = playFor(p, MARKET_OF[metric]); const proj = projectFor(p.own?.[metric], allowed, envPos(p), metric, p.scale); return `${p.player} (${p.pos || '—'}${proj.value != null ? `, ${num(proj.value)} tonight` : ''}${x ? `, o${x.line} ${pct(x.p)}` : ''})`; }).join(' · ')}</p> : null}
       <PlayersTable side={side} final={final} win={view} view={propsView} />
     </section>
   );

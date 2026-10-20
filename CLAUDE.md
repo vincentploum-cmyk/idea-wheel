@@ -199,7 +199,14 @@ config and keeps its own markets, teams, feeds and slate key:
   the opponent's `envFactor` at his spot from the season table, his spread over his last 82 games floored
   at a quarter of the projection, `upperTail`), half how often he actually cleared it (L5 / L10 / season
   at the board's weights, over his last 82 games until this season has `LADDER_MIN` = 10); no price in
-  the number, the book's price beside its rung; `model`, `emp`, `proj`, `sd`, `env` on every rung), the PropFinder players without a play too, and
+  the number, the book's price beside its rung; `model`, `emp`, `proj`, `sd`, `env` on every rung). **A side's
+  projections add up to the team's expected total tonight**: the pull keeps every team's own per-game row
+  (type Team, All) and what it gives up in all (`defense.totals[ABBR].for / .against`, `leagueFor`, the
+  same held / blend rule); `sidesOf` reads the team's expected figure per stat (its own × the opponent's
+  all-positions environment, damped) over the sum of its active players' own rates (the injured out left
+  aside) as `scale[stat]` (0.5–1.5; the combos on their parts), on the side with `teamProj` and on every
+  player; `projectFor(own, allowed, pos, stat, scale)` multiplies it in and the ladder's `env` carries it, so
+  a roster of last season's shares on other teams no longer adds up to 150 points), the PropFinder players without a play too, and
   `allowed` = the opponent's rows with ranks, `league`, and `windows`, every cell carrying the cheat
   sheet's tile for it as `sheet` when the sheet has one (`sheetCheck` in the court: the hover on a zone
   foot or a table cell names the tile's rank and whether it reads the same third as PropFinder — nothing
