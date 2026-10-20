@@ -194,8 +194,12 @@ config and keeps its own markets, teams, feeds and slate key:
   only). A chip shows the book's main line (`playerProps` in `lib/picks/propfinder.js`: of the lines a
   book flags main the one nearest his own last-ten average — a book flags its alternate ladder main too,
   which put Drummond on o1.5 points on 2026-10-20 — else the line priced both ways with the most books;
-  the whole ladder rides on the prop as `lines`), one stat line, three chips under the basket and four on
-  the perimeter (`ZONE_MAX`). "Pull PropFinder" sits in the board head beside Reload (the same call as
+  the whole ladder rides on the prop as `lines`; markets the board does not settle whose names carry a
+  market's word — "Player Made Two Pointers", "Player Fantasy Score", "… Attempted" — are skipped by
+  `NOT_A_MARKET`, the live pull of 2026-10-20 filed them under points and threes), one stat line, three
+  chips under the basket and four on the perimeter (`ZONE_MAX`). PropFinder's NBA depth chart arrives as a
+  JSON string in `team.depthChart.data` (`depthChart` parses it; `starter` = `nba_com_starter`, `injury` =
+  `espn_injury_status`); usage comes as `usagePct`, a fraction, read as a percentage. "Pull PropFinder" sits in the board head beside Reload (the same call as
   under Data sources: `POST /api/nba/refresh?only=propfinder&force=1`).
 - The player card (`components/nba/NbaPlayerCard.jsx`, the NHL card's layout; `NbaPlayerCardProvider`
   wraps the board, `useNbaPlayerCard()` opens it from any chip or "Props by player" row with
