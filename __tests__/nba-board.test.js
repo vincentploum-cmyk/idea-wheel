@@ -323,6 +323,10 @@ describe('NBA ladders', () => {
     expect(Object.keys(p.ladders).sort()).toEqual(['ast', 'pra', 'pts', 'reb', 'tpm']);
     expect(p.ladders.pts.find((r) => r.main).line).toBe(25.5);
     expect(p.ladders.pts[0].env).toBeNull();   // no defense table in this pull
+    // His range tonight: the expected figure, the quartiles of his distribution, the book's main rung with his chance.
+    expect(p.ranges.pts).toMatchObject({ exp: 26, floor: 22, ceiling: 30, line: 25.5, odds: -110 });
+    expect(p.ranges.pts.p).toBe(p.ladders.pts.find((r) => r.main).p);
+    expect(p.ranges.reb).toMatchObject({ exp: 8, line: null, p: null });
     expect(p.scale).toEqual({});
     // With the team's totals the side's projections are scaled to its expected total: BOS scores 110 a game, NY
     // gives up 120 against a league of 115 → 110 × 1.026 = 112.9 tonight over the players' own rates.

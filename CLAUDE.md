@@ -187,10 +187,13 @@ config and keeps its own markets, teams, feeds and slate key:
   alone when he has no line; above the court the opponent-allowed table (per position, every stat
   PropFinder's table carries, value + rank chip, the `nhlx-pfd-*` styles, the picked stat's column
   marked, the league's average on hover) and under it "Props by player": each player's projection, line
-  and chance per market (PTS · REB · AST · 3PM · PRA), green over the floor, or — the default, the
-  Ladders / Main lines tabs beside the window picker — the ladders: per market the main rung (●) and the
-  four above it with his chance and the price, the whole ladder on hover (`LadderCell`); the card draws
-  the picked market's ladder as rung buttons over the bars. The data is `sides` on every
+  and chance per market (PTS · REB · AST · 3PM · PRA) — no: the one table under each court ("Tonight",
+  `PlayersTable` / `RangeCell`) reads per player and market **what he is expected to get, his
+  floor–ceiling and the book's line with his chance to clear it** (`ranges[market]` on the player: `exp`
+  = the ladder's centre, `floor` / `ceiling` = the quartiles of his distribution, he lands between them
+  half the nights, `line` / `p` / `odds` = the main rung), the whole ladder in the hover; a ladder table
+  was tried (2026-10-20) and read as a wall of numbers; the card draws the picked market's ladder as rung
+  buttons over the bars. The data is `sides` on every
   board game (`sidesOf` in `lib/picks/board.js`: per team its players with their plays, `own` = his
   { l5, l10, season } averages per stat from his logs, and `ladders` per market (`ladderOf`, the markets in
   `LADDER_MARKETS` of `lib/nba/picks.js`: the book's rungs when the prop carries `lines`, else rungs by the

@@ -1454,3 +1454,15 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-pc-ladder { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
 .ir-pc-ladder .ir-ladder-rung { border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; background: var(--bg-soft); cursor: pointer; }
 .ir-pc-ladder .ir-ladder-rung.is-active { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+/* Tonight's ranges: expected · floor–ceiling, the book's line under it. */
+.ir-range-cell { vertical-align: top; white-space: nowrap; }
+.ir-range { display: flex; align-items: baseline; gap: 6px; }
+.ir-range b { font-size: 15px; font-weight: 700; }
+.ir-range small { font-size: 11.5px; color: var(--muted); }
+.ir-range-line { display: block; font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+.ir-range-line i { font-style: normal; font-weight: 600; }
+.ir-range-line.is-soft i { color: var(--ok-fg); }
+.ir-range-line.is-tough i { color: var(--bad-fg); }
+.ir-range-got { display: block; font-size: 11px; color: var(--muted); }
+.ir-range-cell.is-hit .ir-range-got { color: var(--ok-fg); }
+.ir-range-cell.is-miss .ir-range-got { color: var(--bad-fg); }
