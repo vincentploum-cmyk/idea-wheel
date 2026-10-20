@@ -24,6 +24,11 @@ const WINDOW_TEXT = { season: 'this season blended into last season’s table', 
 export function windowsOf(allowed) { return ['season', ...Object.keys(allowed?.windows || {}).filter((k) => WINDOW_LABEL[k]).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))]; }
 /** The side's allowed table for a window (the season table when the window is missing). */
 export function tableFor(allowed, win) { return (win && win !== 'season' && allowed?.windows?.[win]) || allowed || null; }
+/** Whether the cheat sheet's tile agrees with PropFinder's rank: the same third of the league → 'yes', else 'no'; null without a tile. */
+export function sheetCheck(cell, count) {
+  if (!cell || cell.sheet == null || cell.rank == null) return null;
+  return zoneTone(cell.sheet, count) === zoneTone(cell.rank, count) ? 'yes' : 'no';
+}
 /** The position the environment is read at: the depth-chart slot, else the roster position (G → SG, F → SF). */
 export function envPos(p) { return ZONE_OF[String(p.slot || p.pos || '').toUpperCase()] || ZONE_OF[String(p.pos || '').toUpperCase()] || null; }
 const MARKET_OF = { pts: 'pts', reb: 'reb', ast: 'ast', tpm: 'tpm' };
@@ -106,10 +111,11 @@ function ZoneLabel({ zone, allowed, metric, opp, win }) {
   const count = allowed?.count || 30;
   const tone = zoneTone(cell?.rank, count);
   const league = allowed?.league?.[zone]?.[metric];
-  const title = cell ? `${opp} gives up ${cell.value != null ? `${num(cell.value)} ${STAT_LABEL[metric] || metric} per game` : `the #${cell.rank} most ${STAT_LABEL[metric] || metric}`} to ${zone}s over ${WINDOW_TEXT[win] || win}${league != null ? ` (league ${num(league)})` : ''} · rank ${cell.rank} of ${count}, 1 = the most${allowed.from === 'sheet' ? ' · from the cheat sheet’s tiles' : ' · PropFinder'}` : `No defense table for ${opp} at ${zone}`;
+  const check = allowed?.from === 'sheet' ? null : sheetCheck(cell, count);
+  const title = cell ? `${opp} gives up ${cell.value != null ? `${num(cell.value)} ${STAT_LABEL[metric] || metric} per game` : `the #${cell.rank} most ${STAT_LABEL[metric] || metric}`} to ${zone}s over ${WINDOW_TEXT[win] || win}${league != null ? ` (league ${num(league)})` : ''} · rank ${cell.rank} of ${count}, 1 = the most${allowed.from === 'sheet' ? ' · from the cheat sheet’s tiles' : ' · PropFinder'}${check ? ` · the cheat sheet's tile says #${cell.sheet}: ${check === 'yes' ? 'the same read' : 'a different read'}` : ''}` : `No defense table for ${opp} at ${zone}`;
   return (
     <div className={`nhlx-rk-zone is-${tone}`} style={{ left: `${((x + w / 2) / W) * 100}%`, top: `${((y + h - 2.2) / H) * 100}%` }} title={title}>
-      <b>{zone}</b>{cell?.rank ? <span>#{cell.rank}{NB}{STAT_LABEL[metric] || metric}</span> : <span>no data</span>}
+      <b>{zone}</b>{cell?.rank ? <span>#{cell.rank}{NB}{STAT_LABEL[metric] || metric}{check ? <i className={`ir-sheet-check is-${check}`} aria-label={check === 'yes' ? 'the cheat sheet agrees' : `the cheat sheet says #${cell.sheet}`}>{check === 'yes' ? '✓' : `≠${cell.sheet}`}</i> : null}</span> : <span>no data</span>}
     </div>
   );
 }
@@ -155,7 +161,7 @@ function AllowedTable({ side, win, metric, season }) {
   const league = a.league || null;
   return (
     <div className="nhlx-pfd">
-      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position · {WINDOW_LABEL[win] || win}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {a.from === 'sheet' ? 'the cheat sheet’s tiles' : win === 'season' ? 'PropFinder; this season blended into last season’s at games / (games + 15)' : `PropFinder, ${WINDOW_TEXT[win]}${a.season && season && a.season < season ? ' of last season (no games this season yet)' : ''}`}{league ? ' · hover a cell for the league’s average' : ''}</small></div>
+      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position · {WINDOW_LABEL[win] || win}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {a.from === 'sheet' ? 'the cheat sheet’s tiles' : win === 'season' ? 'PropFinder; this season blended into last season’s at games / (games + 15)' : `PropFinder, ${WINDOW_TEXT[win]}${a.season && season && a.season < season ? ' of last season (no games this season yet)' : ''}`}{league ? ' · hover a cell for the league’s average' : ''}{a.sheet ? ' · ✓ = the cheat sheet’s tile reads the same third, ≠ its rank when not' : ''}{win === 'season' && Object.values(a.rows).some((r) => r.held) ? ` · last season’s table until ${side.opp} has ten games` : ''}</small></div>
       <div className="nhlx-pfd-wrap">
         <table className="nhlx-pfd-table">
           <thead><tr><th>Pos</th>{keys.map((k) => <th key={k} className={k === metric ? 'is-on' : ''}>{STAT_LABEL[k] || k.toUpperCase()}</th>)}</tr></thead>
@@ -163,7 +169,7 @@ function AllowedTable({ side, win, metric, season }) {
             {positions.map((pos) => (
               <tr key={pos}>
                 <td><b>{pos}</b><small className="nhlx-auto-meta" title={a.rows[pos].prior ? `${a.rows[pos].gp || 0} games this season blended into last season's ${a.rows[pos].prior}` : ''}> {a.rows[pos].gp || 0}{a.rows[pos].prior ? `+${a.rows[pos].prior}` : ''} GP</small></td>
-                {keys.map((k) => { const c = a.rows[pos][k]; const tone = zoneTone(c?.rank, count); const lg = league?.[pos]?.[k]; return <td key={k} className={`${c ? `is-${tone}` : ''}${k === metric ? ' is-on' : ''}`} title={c && lg != null ? `${num(c.value)} against the league's ${num(lg)} at ${pos}` : ''}>{c ? <><span className="nhlx-pfd-val">{c.value != null ? num(c.value) : '—'}</span>{c.rank ? <span className="nhlx-pfd-rank">#{c.rank}</span> : null}</> : '—'}</td>; })}
+                {keys.map((k) => { const c = a.rows[pos][k]; const tone = zoneTone(c?.rank, count); const lg = league?.[pos]?.[k]; const check = a.from === 'sheet' ? null : sheetCheck(c, count); return <td key={k} className={`${c ? `is-${tone}` : ''}${k === metric ? ' is-on' : ''}`} title={`${c && lg != null ? `${num(c.value)} against the league's ${num(lg)} at ${pos}` : ''}${check ? ` · the cheat sheet's tile: #${c.sheet} (${check === 'yes' ? 'the same third' : 'a different third'})` : ''}`}>{c ? <><span className="nhlx-pfd-val">{c.value != null ? num(c.value) : '—'}</span>{c.rank ? <span className="nhlx-pfd-rank">#{c.rank}{check ? <i className={`ir-sheet-check is-${check}`}>{check === 'yes' ? '✓' : `≠${c.sheet}`}</i> : null}</span> : null}</> : '—'}</td>; })}
               </tr>
             ))}
           </tbody>

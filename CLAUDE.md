@@ -197,8 +197,16 @@ config and keeps its own markets, teams, feeds and slate key:
   market's `step` around the main line, two under and four over; each rung with his chance of clearing
   it — the board's hit-rate read against that rung, shrunk toward the rung's price, over his last 82
   games until this season has `LADDER_MIN` = 10 — and the price), the PropFinder players without a play too, and
-  `allowed` = the opponent's rows with ranks, `league`, and `windows`; or the sheet's tiles with ranks
-  only). A chip shows the book's main line (`playerProps` in `lib/picks/propfinder.js`: of the lines a
+  `allowed` = the opponent's rows with ranks, `league`, and `windows`, every cell carrying the cheat
+  sheet's tile for it as `sheet` when the sheet has one (`sheetCheck` in the court: ✓ on the zone foot
+  and the rank chip when the tile reads the same third as PropFinder, ≠ with the tile's rank when not;
+  the sheet confirms the environment, it never changes a number); or the sheet's tiles with ranks only
+  when the slate has no pull). **The first ten games of the season read off last season**: a player's
+  season window stays last season's (his last 82, this season's few on top) until he has ten games this
+  season (`seasonMin: 10` in `lib/nba/picks.js`, `SEASON_MIN` in the card, whose season tile then reads
+  "'25-'26 +3"), the ladders' rungs the same (`LADDER_MIN`), and a team's season table is last season's
+  alone until it has ten games (`defenseMin: 10` in `propfinder-nba.js`, `held: true` on the row), then
+  the games / (games + 15) blend. A chip shows the book's main line (`playerProps` in `lib/picks/propfinder.js`: of the lines a
   book flags main the one nearest his own last-ten average — a book flags its alternate ladder main too,
   which put Drummond on o1.5 points on 2026-10-20 — else the line priced both ways with the most books;
   the whole ladder rides on the prop as `lines`; preseason rows, seasonType PRE, are left out of the logs

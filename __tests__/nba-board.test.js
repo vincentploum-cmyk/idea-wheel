@@ -182,8 +182,13 @@ describe('NBA PropFinder mapping', () => {
       { code: 'NYK', stats: [{ ...row('PG', 150 * 82 / 5), seasonYear: 2025, gamesPlayed: 82 }] },
     ];
     const e = defenseAllowed(early, { season: 2026 });
-    expect(e.teams.BOS.PG).toMatchObject({ gp: 2, prior: 82, season: 2026, priorSeason: 2025 });
-    expect(e.teams.BOS.PG.pts).toBeCloseTo((2 / 17) * 30 + (15 / 17) * 22, 1);
+    // The NBA holds last season's table until the team has ten games (`held`), then blends.
+    expect(e.teams.BOS.PG).toMatchObject({ gp: 2, prior: 82, priorSeason: 2025, held: true, pts: 22 });
+    const tenIn = early.map((t) => ({ ...t, stats: t.stats.map((r) => (r.seasonYear === 2026 && r.position === 'PG' ? { ...r, gamesPlayed: 10, points: 300 } : r)) }));
+    const b10 = defenseAllowed(tenIn, { season: 2026 });
+    expect(b10.teams.BOS.PG).toMatchObject({ gp: 10, prior: 82, season: 2026 });
+    expect(b10.teams.BOS.PG.held).toBeUndefined();
+    expect(b10.teams.BOS.PG.pts).toBeCloseTo((10 / 25) * 30 + (15 / 25) * 22, 1);
     expect(e.teams.BOS.C).toMatchObject({ gp: 0, prior: 82, pts: 4 });
     expect(e.teams.NY.PG).toMatchObject({ gp: 0, prior: 82, pts: 30 });
     expect(e.ranks.NY.PG.pts).toBe(1);
@@ -296,5 +301,14 @@ describe('NBA ladders', () => {
     const p = b.games[0].sides.BOS.players[0];
     expect(Object.keys(p.ladders).sort()).toEqual(['ast', 'pra', 'pts', 'reb', 'tpm']);
     expect(p.ladders.pts.find((r) => r.main).line).toBe(25.5);
+    // With a PropFinder table in, the cheat sheet's tiles ride on every cell as `sheet` beside PropFinder's rank.
+    const defense = { teams: { NY: { SF: { gp: 0, pts: 24, reb: 6 } }, BOS: { SF: { gp: 0, pts: 20, reb: 7 } } }, ranks: { NY: { SF: { pts: 1, reb: 2 } }, BOS: { SF: { pts: 2, reb: 1 } } }, count: 2, league: { SF: { pts: 22, reb: 6.5 } }, windows: {} };
+    const sheets = [{ id: 's', fileName: 'nba_20261021.pdf', rows: [], meta: { oppRanks: { BOS: { SF: { pts: 3, reb: 28 } } } } }];   // BOS's opponent (NY) gives up the 3rd most points to SFs, the 28th most rebounds
+    const withSheet = buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf: { ...pf, data: { ...pf.data, defense } }, results: {} });
+    const bos = withSheet.games[0].sides.BOS.allowed;
+    expect(bos.rows.SF.pts).toEqual({ value: 24, rank: 1, sheet: 3 });
+    expect(bos.rows.SF.reb).toEqual({ value: 6, rank: 2, sheet: 28 });
+    expect(bos.sheet).toBe('beside');
+    expect(withSheet.games[0].sides.NY.allowed.rows.SF.pts).toEqual({ value: 20, rank: 2 });
   });
 });

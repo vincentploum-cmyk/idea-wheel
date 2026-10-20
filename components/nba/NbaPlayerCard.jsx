@@ -24,6 +24,7 @@ const STAT_LABEL = { pts: 'PTS', reb: 'REB', ast: 'AST', tpm: '3PM', pra: 'PRA',
 // Per-game figures that are not markets: read straight off the game row.
 const RAW = new Set(['min', 'usg', 'rebCh', 'potAst']);
 const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
+const SEASON_MIN = 10;   // the season split is last season's (his last 82) until this one has ten games
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
 const pct = (r) => (r == null ? '—' : `${Math.round(r * 100)}%`);
 const mdy = (iso) => (iso ? `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}/${iso.slice(2, 4)}` : '');
@@ -43,7 +44,7 @@ export function hitRate(games, market, line) {
 export function splitGames(games, span, { season, opp, venue }) {
   if (span === 'h2h') return games.filter((g) => g.opp === opp);
   if (span === 'venue') return games.filter((g) => (venue === 'H' ? g.home === true || g.home === 1 : g.home === false || g.home === 0));
-  if (span === 'season') { const szn = games.filter((g) => g.season === season); return szn.length >= 3 ? szn : games.slice(0, 82); }
+  if (span === 'season') { const szn = games.filter((g) => g.season === season); return szn.length >= SEASON_MIN ? szn : games.slice(0, 82); }
   return games.slice(0, Number(span.slice(1)));
 }
 
@@ -165,7 +166,9 @@ function Card({ req, date, onClose }) {
   };
   const line = lineFor(market);
   const play = plays.find((x) => x.market === market && x.line === line && (x.side === 'over' || x.side === 'yes')) || plays.find((x) => x.market === market && x.line === line) || null;
-  const splits = [['l5', 'L5'], ['l10', 'L10'], ['l20', 'L20'], ['season', seasonTag(season)], ...(opp ? [['h2h', `vs ${opp}`]] : []), ...(venue ? [['venue', venue === 'H' ? 'Home' : 'Away']] : [])];
+  const thisSeason = games.filter((g) => g.season === season).length;
+  const seasonLabel = season && thisSeason < SEASON_MIN ? `${seasonTag(season - 1)}${thisSeason ? ` +${thisSeason}` : ''}` : seasonTag(season);
+  const splits = [['l5', 'L5'], ['l10', 'L10'], ['l20', 'L20'], ['season', seasonLabel], ...(opp ? [['h2h', `vs ${opp}`]] : []), ...(venue ? [['venue', venue === 'H' ? 'Home' : 'Away']] : [])];
   const spanGames = splitGames(games, span, { season, opp, venue });
   const hit = hitRate(spanGames, market, line);
   // The line menu: the book's ladder for the market (PropFinder's `lines`, priced), his plays' lines and ±3 around the one shown.
@@ -201,7 +204,7 @@ function Card({ req, date, onClose }) {
               <span className="nhlx-pc-slot">{p.pos || '—'} · {teamName(p.team) || p.team}{opp ? ` · ${venue === 'H' ? 'vs' : 'at'} ${opp}` : ''}{p.injury ? ` · ${p.injury}` : ''}</span>
             </div>
           </div>
-          {[['pts', 'PTS', 'points'], ['reb', 'REB', 'rebounds'], ['ast', 'AST', 'assists'], ['usg', 'USG%', 'usage rate: the share of his team’s possessions he ends while on the floor'], ['rebCh', 'REB CH', 'rebound chances: rebounds plus the ones within reach he did not get'], ['potAst', 'POT AST', 'potential assists: passes that led to a shot']].map(([m, l, t]) => <div key={m} className="nhlx-pc-stat" title={`${t}, a game, ${seasonTag(season)}${avgOf(m, seasonGames) == null && RAW.has(m) ? ' · not in this pull’s game rows (the unread fields under Data sources name the spelling)' : ''}`}><small>{l}{m === 'usg' ? '' : ' / G'}</small><b>{num(avgOf(m, seasonGames))}{m === 'usg' && avgOf(m, seasonGames) != null ? '%' : ''}</b></div>)}
+          {[['pts', 'PTS', 'points'], ['reb', 'REB', 'rebounds'], ['ast', 'AST', 'assists'], ['usg', 'USG%', 'usage rate: the share of his team’s possessions he ends while on the floor'], ['rebCh', 'REB CH', 'rebound chances: rebounds plus the ones within reach he did not get'], ['potAst', 'POT AST', 'potential assists: passes that led to a shot']].map(([m, l, t]) => <div key={m} className="nhlx-pc-stat" title={`${t}, a game, ${seasonLabel}${thisSeason < SEASON_MIN ? ' (last season carries the read until he has ten games this season)' : ''}${avgOf(m, seasonGames) == null && RAW.has(m) ? ' · not in this pull’s game rows (the unread fields under Data sources name the spelling)' : ''}`}><small>{l}{m === 'usg' ? '' : ' / G'}</small><b>{num(avgOf(m, seasonGames))}{m === 'usg' && avgOf(m, seasonGames) != null ? '%' : ''}</b></div>)}
         </div>
         {err ? <div className="nhlx-alert" style={{ margin: 16 }}>⚠ Couldn’t load this player: {err}</div> : null}
         <div className="nhlx-pc-body">
