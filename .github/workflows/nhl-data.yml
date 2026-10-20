@@ -37,7 +37,8 @@ jobs:
           if [ "$(date -u +%H)" = "04" ] && [ -z "${{ github.event.inputs.date }}" ]; then DATE=$(TZ=America/New_York date -d 'yesterday' +%F); fi
           echo "Refreshing $DATE"
           # A 5xx is usually the server restarting for a deploy: one more try after a minute.
-          call() { local c; for attempt in 1 2; do c=$(curl -sS -o "$2" -w '%{http_code}' -X POST --max-time 280 "$1" || echo 000); case "$c" in 5*|000) [ "$attempt" = 1 ] && { echo "server answered $c; retrying in 60 s"; sleep 60; } ;; *) break ;; esac; done; echo "$c"; }
+          # Only the status code goes to stdout: the caller captures it, so the retry note goes to stderr (2026-10-17: the note landed in $code and a throttled 429 retry failed the job).
+          call() { local c; for attempt in 1 2; do c=$(curl -sS -o "$2" -w '%{http_code}' -X POST --max-time 280 "$1" || true); [ -n "$c" ] || c=000; case "$c" in 5*|000) [ "$attempt" = 1 ] && { echo "server answered $c; retrying in 60 s" >&2; sleep 60; } ;; *) break ;; esac; done; echo "$c"; }
           # PropFinder first, as its own request: the pull and the model run each need most of the instance's memory.
           pf=$(call "https://ideareels.io/api/nhl/data/refresh?date=$DATE&only=propfinder" pf.json); echo "propfinder: $pf $(head -c 400 pf.json)"
           code=$(call "https://ideareels.io/api/nhl/data/refresh?date=$DATE" resp.json)
