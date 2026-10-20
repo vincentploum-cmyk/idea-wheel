@@ -8,7 +8,10 @@ describe('PropFinder NFL mapping', () => {
   test('a game row through the field spellings; absent fields read as 0', () => {
     const g = gameRow(GAME);
     expect(g).toMatchObject({ date: '2026-10-12', season: 2026, type: 'REG', home: true, opp: 'KC', passYds: 301, passTd: 2, passCmp: 24, passAtt: 33, passInt: 1, rushAtt: 5, rushYds: 22, rushTd: 1, rec: 0, recYds: 0, td: 1, passRushYds: 323, rushRecYds: 22 });
-    expect(gameRow({ gameDate: '2026-10-12', receivingYards: 80, receptions: 6, targets: 9, kickReturnTouchdowns: 1, opponentTeam: { code: 'WAS' } })).toMatchObject({ recYds: 80, rec: 6, tgt: 9, retTd: 1, td: 1, opp: 'WSH' });
+    expect(gameRow({ gameDate: '2026-10-12', receivingYards: 80, receptions: 6, targets: 9, kickReturnTouchdownss: 1, kickReturnTouchdowns: 1, opponentTeam: { code: 'WAS' } })).toMatchObject({ recYds: 80, rec: 6, tgt: 9, retTd: 1, td: 1, opp: 'WSH' });
+    // The spellings a real pull showed (2026-10-20).
+    expect(gameRow({ gameDate: '2026-10-12T17:00:00Z', season: 2026, seasonType: 'REG', isHome: false, opposingTeamCode: 'KC', receivingReceptions: 7, receivingYards: 91, receivingTargets: 10, receivingLongest: 34, receivingTouchdowns: 1, rushingLongest: 12, passingLongest: 0, puntReturnsTouchdowns: 1, fumblesEzRecTds: 0 }))
+      .toMatchObject({ opp: 'KC', home: false, rec: 7, recYds: 91, tgt: 10, recLong: 34, recTd: 1, rushLong: 12, retTd: 1, td: 2 });
   });
   test('prop lines on a player, unknown markets dropped', () => {
     expect(playerProps(PLAYER)).toEqual([
@@ -42,6 +45,13 @@ describe('PropFinder NFL mapping', () => {
     // DAL has no TE row this season: last season's stands in.
     expect(d.teams.DAL.TE).toMatchObject({ season: 2025, recYds: 14.12 });
     expect(pickRow(teams[0].stats, { season: 2026, position: 'WR' }).receivingYards).toBe(900);
+    // The NFL rows carry `year` and lastNGames 0 for the season; slot positions ride along.
+    const nfl = [{ code: 'KC', stats: [{ type: 'Opponent', position: 'WR', year: 2026, lastNGames: 0, gamesPlayed: 6, receivingYards: 900, receivingReceptions: 60, receivingTouchdowns: 6, rushingTouchdowns: 2 }, { type: 'Opponent', position: 'WR1', year: 2026, lastNGames: 0, gamesPlayed: 6, receivingYards: 480 }] }, { code: 'BUF', stats: [{ type: 'Opponent', position: 'WR', year: 2026, lastNGames: 0, gamesPlayed: 6, receivingYards: 600, receivingReceptions: 50, receivingTouchdowns: 3, rushingTouchdowns: 1 }] }];
+    const dn = defenseAllowed(nfl, { season: 2026 });
+    expect(dn.count).toBe(2);
+    expect(dn.teams.KC.WR).toMatchObject({ recYds: 150, rec: 10, recTd: 1, td: 1.33 });
+    expect(dn.teams.KC.WR1).toMatchObject({ recYds: 80 });
+    expect(dn.ranks.KC.WR.recYds).toBe(1);
     expect(pickRow(teams[0].stats, { season: 2026, position: 'WR', lastN: 5 })).toBeNull();
   });
 });
