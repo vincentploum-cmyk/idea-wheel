@@ -147,7 +147,7 @@ function Chip({ p, x, y, metric, sport, team, opp, venue, final, allowed, win })
 }
 
 /** What the opponent gives up per game to each position, with the league rank in every cell. */
-function AllowedTable({ side, win, metric }) {
+function AllowedTable({ side, win, metric, season }) {
   const a = tableFor(side.allowed, win);
   if (!a) return <p className="nhlx-auto-meta ir-court-none">No defense table for {side.opp} yet: pull PropFinder (the button above the board, or under Data sources).</p>;
   const keys = [...new Set(Object.values(a.rows).flatMap((r) => Object.keys(r)))].filter((k) => !['gp', 'prior'].includes(k)).sort((x, y) => (STAT_ORDER.indexOf(x) + 1 || 99) - (STAT_ORDER.indexOf(y) + 1 || 99)).slice(0, 8);
@@ -156,7 +156,7 @@ function AllowedTable({ side, win, metric }) {
   const league = a.league || null;
   return (
     <div className="nhlx-pfd">
-      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position · {WINDOW_LABEL[win] || win}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {a.from === 'sheet' ? 'the cheat sheet’s tiles' : win === 'season' ? 'PropFinder; this season blended into last season’s at games / (games + 15)' : `PropFinder, ${WINDOW_TEXT[win]}`}{league ? ' · hover a cell for the league’s average' : ''}</small></div>
+      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position · {WINDOW_LABEL[win] || win}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {a.from === 'sheet' ? 'the cheat sheet’s tiles' : win === 'season' ? 'PropFinder; this season blended into last season’s at games / (games + 15)' : `PropFinder, ${WINDOW_TEXT[win]}${a.season && season && a.season < season ? ' of last season (no games this season yet)' : ''}`}{league ? ' · hover a cell for the league’s average' : ''}</small></div>
       <div className="nhlx-pfd-wrap">
         <table className="nhlx-pfd-table">
           <thead><tr><th>Pos</th>{keys.map((k) => <th key={k} className={k === metric ? 'is-on' : ''}>{STAT_LABEL[k] || k.toUpperCase()}</th>)}</tr></thead>
@@ -209,7 +209,7 @@ function PlayersTable({ side, final, win }) {
   );
 }
 
-function CourtCard({ side, metric, onMetric, sport, final }) {
+function CourtCard({ side, metric, onMetric, sport, final, season }) {
   const windows = windowsOf(side.allowed);
   const [win, setWin] = useState('season');
   const view = windows.includes(win) ? win : 'season';
@@ -236,7 +236,7 @@ function CourtCard({ side, metric, onMetric, sport, final }) {
         </div>
         {windows.length === 1 ? <small className="nhlx-rk-toggle-note">{side.allowed ? 'no last-N rows in the pull yet' : 'no table yet'}</small> : null}
       </div>
-      <AllowedTable side={side} win={view} metric={metric} />
+      <AllowedTable side={side} win={view} metric={metric} season={season} />
       <div className="nhlx-rk ir-court">
         <CourtMarkings clipId={clipId} tones={tones} />
         {Object.keys(ZONES).map((z) => <ZoneLabel key={z} zone={z} allowed={allowed} metric={metric} opp={side.opp} win={view} />)}
@@ -255,7 +255,7 @@ export default function CourtPair({ g, metric, onMetric, sport }) {
   if (!list.length) return null;
   return (
     <div className="nhlx-rink-pair ir-court-pair">
-      {list.map((side) => <CourtCard key={side.team} side={side} metric={metric} onMetric={onMetric} sport={sport} final={g.final} />)}
+      {list.map((side) => <CourtCard key={side.team} side={side} metric={metric} onMetric={onMetric} sport={sport} final={g.final} season={g.season || null} />)}
     </div>
   );
 }

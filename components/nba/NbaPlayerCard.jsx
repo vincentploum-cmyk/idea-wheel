@@ -240,7 +240,7 @@ function Card({ req, date, onClose }) {
             </div>
           </section>
           <section className="nhlx-pc-pane nhlx-pc-right">
-            <div className="nhlx-pfd-head"><b>What {opp || 'the opponent'} gives up per game, by position</b><small className="nhlx-auto-meta">rank 1 = the most of {table?.count || data?.count || 30} · {view === 'season' ? 'this season blended into last season’s' : `its last ${view.slice(1)} games`}{table?.league ? ' · Lg = the league’s average' : ''}</small></div>
+            <div className="nhlx-pfd-head"><b>What {opp || 'the opponent'} gives up per game, by position</b><small className="nhlx-auto-meta">rank 1 = the most of {table?.count || data?.count || 30} · {view === 'season' ? 'this season blended into last season’s' : `its last ${view.slice(1)} games${table?.season && season && table.season < season ? ' of last season' : ''}`}{table?.league ? ' · Lg = the league’s average' : ''}</small></div>
             {windows.length > 1 ? (
               <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Window of the opponent's table" style={{ marginBottom: 8 }}>
                 {windows.map((k) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setWin(k)}>{WIN_LABEL[k]}</button>)}

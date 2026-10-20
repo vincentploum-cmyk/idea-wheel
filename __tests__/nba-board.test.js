@@ -101,6 +101,8 @@ describe('NBA PropFinder mapping', () => {
     // Tracking figures read when the row has them, null (never 0) when it does not.
     expect(gameRow(GAME)).toMatchObject({ usg: null, rebCh: null, potAst: null });
     expect(gameRow({ ...GAME, usagePercentage: 31.4, reboundChances: 12, potentialAssists: 9 })).toMatchObject({ usg: 31.4, rebCh: 12, potAst: 9 });
+    // The live spelling: usagePct as a fraction of the possessions, read as a percentage.
+    expect(gameRow({ ...GAME, usagePct: 0.1274 })).toMatchObject({ usg: 12.7 });
     const players = mapPlayers([PLAYER]);
     expect(players[0]).toMatchObject({ key: 'jayson tatum', team: 'BOS', pos: 'SF' });
     expect(players[0].props).toEqual([{ market: 'pts', line: 27.5, odds: -115, underOdds: -105, book: null, books: 1, isMain: true }, { market: 'pra', line: 39.5, odds: -110, underOdds: null, book: null, books: 1, isMain: true }]);
@@ -131,6 +133,14 @@ describe('NBA PropFinder mapping', () => {
     const pts = mapPlayers([ladder])[0].props.find((x) => x.market === 'pts');
     expect(pts).toMatchObject({ line: 8.5, odds: -115, underOdds: -105, isMain: true });
     expect(pts.lines.map((x) => x.line)).toEqual([1.5, 3.5, 8.5, 11.5]);
+    // Markets the board does not settle whose names carry a market's word (the live pull, 2026-10-20) are skipped.
+    const stray = { ...PLAYER, odds: [
+      item('Player Made Two Pointers', 'twoPointsMade', 'Betano', 'over', -150, 1.5), item('Player Two Pointers Attempted', 'twoPointsAtt', 'Betano', 'over', -150, 3.5),
+      item('Player Fantasy Score (All)', 'fantasyPoints', 'Betano', 'over', -110, 30.5), item('Player Threes Attempted', 'threePointsAtt', 'Betano', 'over', -110, 4.5),
+      item('Player Free Throws Attempted', 'freeThrowsAtt', 'Betano', 'over', -110, 3.5), item('Player Field Goals Made', 'fieldGoalsMade', 'Betano', 'over', -110, 7.5),
+      item('Player Made Threes', 'threePointsMade', 'DraftKings', 'over', -120, 2.5), item('Player Points', 'points', 'DraftKings', 'over', -110, 26.5),
+    ] };
+    expect(mapPlayers([stray])[0].props.map((x) => `${x.market} ${x.line}`)).toEqual(['tpm 2.5', 'pts 26.5']);
     // Without a log the most books decide, and the flag still beats an unflagged line.
     expect(mapPlayers([{ ...ladder, stats: [] }])[0].props.find((x) => x.market === 'pts').line).toBe(8.5);
     expect(fieldsSeen([PLAYER], []).unread).toEqual(['oddStat']);
@@ -140,8 +150,12 @@ describe('NBA PropFinder mapping', () => {
   });
   test('a team’s depth chart, in the shape the NHL team objects carry', () => {
     const team = { code: 'BOS', depthChart: { positions: { PG: { players: [{ full_name: 'Payton Pritchard', depth: 1, status: 'ACT', reference: '11' }, { full_name: 'Devin Carter', depth: 2, status: 'ACT' }] }, C: { players: [{ full_name: 'Neemias Queta', depth: 1 }] } } } };
-    expect(depthChart(team)).toEqual({ PG: [{ name: 'Payton Pritchard', key: 'payton pritchard', depth: 1, status: 'ACT', id: '11' }, { name: 'Devin Carter', key: 'devin carter', depth: 2, status: 'ACT', id: null }], C: [{ name: 'Neemias Queta', key: 'neemias queta', depth: 1, status: null, id: null }] });
+    expect(depthChart(team)).toEqual({ PG: [{ name: 'Payton Pritchard', key: 'payton pritchard', depth: 1, status: 'ACT', starter: null, injury: null, id: '11' }, { name: 'Devin Carter', key: 'devin carter', depth: 2, status: 'ACT', starter: null, injury: null, id: null }], C: [{ name: 'Neemias Queta', key: 'neemias queta', depth: 1, status: null, starter: null, injury: null, id: null }] });
     expect(depthChart({ code: 'BOS' })).toBeNull();
+    // The NBA shape: the chart as a JSON string in `data` (checked 2026-10-20), with the starter and injury flags.
+    const nba = { code: 'CHI', depthChart: { id: 1, teamId: 't', data: JSON.stringify({ id: 't', alias: 'CHI', positions: { C: { name: 'C', players: [{ id: 'x1', depth: 1, full_name: 'Nic Claxton', nba_com_starter: true, espn_injury_status: 'Out' }, { id: 'x2', depth: 2, full_name: 'Jalen Smith' }] }, PG: { players: [{ id: 'x3', depth: 1, full_name: 'Josh Giddey', nba_com_starter: true }] } } }) } };
+    expect(depthChart(nba)).toEqual({ C: [{ name: 'Nic Claxton', key: 'nic claxton', depth: 1, status: null, starter: true, injury: 'Out', id: 'x1' }, { name: 'Jalen Smith', key: 'jalen smith', depth: 2, status: null, starter: null, injury: null, id: 'x2' }], PG: [{ name: 'Josh Giddey', key: 'josh giddey', depth: 1, status: null, starter: true, injury: null, id: 'x3' }] });
+    expect(depthChart({ code: 'CHI', depthChart: { data: 'not json' } })).toBeNull();
     expect(fieldsSeen([], [team]).sample.depthChart).toContain('Payton Pritchard');
   });
   test('what each defense allows per position, from the positions the rows carry', () => {
@@ -177,6 +191,10 @@ describe('NBA PropFinder mapping', () => {
     expect(w.windows.l5.league.PG.pts).toBeCloseTo((32 + 20 + 20) / 3, 2);
     expect(w.windows.l10.teams.NY.PG.pts).toBe(12);
     expect(w.windows.l5.count).toBe(3);
+    expect(w.windows.l5.season).toBe(2026);
+    // Before this season's first game the windows are last season's final games, and say so.
+    const lastYear = teams.map((t) => ({ ...t, stats: [...t.stats, { ...row('PG', 100), seasonYear: 2025, lastNGames: 5 }] }));
+    expect(defenseAllowed(lastYear, { season: 2026 }).windows.l5).toMatchObject({ season: 2025, lastN: 5 });
     // The season table is untouched by the window rows.
     expect(w.teams.NY.PG.pts).toBe(30);
   });

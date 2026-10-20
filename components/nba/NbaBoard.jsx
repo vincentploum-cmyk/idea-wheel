@@ -24,7 +24,7 @@ export default function NbaBoard({ board }) {
           <span className="nhlx-rk-toggle-note">One stat for every court (the tabs above each court change it too). Zones: what the opponent gives up to that position over the window picked above the court (green = the most permissive third of the league, red = the stingiest). Chips: the player’s projection for tonight (his rate × that environment), the book’s main line and the chance. ✓ = the cheat sheet names him.</span>
         </div>
       ) : null}
-      <Board board={board} sport={SPORT} empty="No games on this date." before={(g) => <CourtPair g={g} metric={metric} onMetric={setMetric} sport={SPORT} />} />
+      <Board board={board} sport={SPORT} empty="No games on this date." before={(g) => <CourtPair g={{ ...g, season: board?.season }} metric={metric} onMetric={setMetric} sport={SPORT} />} />
     </NbaPlayerCardProvider>
   );
 }
