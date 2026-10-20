@@ -65,6 +65,16 @@ describe('NBA cheat sheet (OCR)', () => {
     // DET gives up the 23rd most points to point guards (BOS's tile), 29th to point guards' … no: the soft spot is by rank third.
     expect(pritchard.spot).toMatchObject({ rank: 23, teams: 30, soft: false, tough: true });
     expect(b.sources.sheets[0].rows).toBe(9);
+    // The matchup view's sides: every player with a play, PropFinder's others, and what the opponent gives up.
+    const bos = b.games[0].sides.BOS;
+    expect(bos).toMatchObject({ team: 'BOS', opp: 'DET', venue: 'A' });
+    expect(bos.players.map((p) => p.player).sort()).toEqual(['Jaylen Brown', 'Payton Pritchard']);
+    const prit = bos.players.find((p) => p.player === 'Payton Pritchard');
+    expect(prit.plays[0]).toMatchObject({ market: 'pts', line: 15.5, side: 'over', confirmed: true });
+    expect(prit.avg.pts).toBe(18.9);   // his logs' season average (18, 19, 20 repeating over ten games)
+    expect(bos.allowed).toMatchObject({ from: 'sheet', count: 30 });
+    expect(bos.allowed.rows.PG.pts).toEqual({ value: null, rank: 23 });
+    expect(b.games[0].sides.DET.allowed.rows.PF.tpm.rank).toBe(6);
     // A mention alone is not a play.
     expect(plays.find((r) => r.player === 'Neemias Queta')).toBeUndefined();
   });

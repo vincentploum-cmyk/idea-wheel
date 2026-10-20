@@ -1,5 +1,5 @@
 import { authorize, DATE_RE } from '@/lib/nhl-data/util';
-import { resolveSlate, listSheets, ingestCheatSheet, deleteSheet } from '@/lib/nba/store';
+import { resolveSlate, listSheets, ingestCheatSheet, rereadSheet, deleteSheet } from '@/lib/nba/store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,6 +20,18 @@ export async function GET(request) {
 export async function POST(request) {
   const auth = await authorize(request, { allowToken: true });
   if (!auth.ok) return auth.response;
+  // ?reread=<id>: parse a stored OCR read again (&full=1 reads the PDF again).
+  const url = new URL(request.url);
+  const reread = url.searchParams.get('reread');
+  if (reread) {
+    if (!/^[\w-]+$/.test(reread)) return Response.json({ error: 'bad id' }, { status: 400 });
+    const date = url.searchParams.get('date');
+    if (date && !DATE_RE.test(date)) return Response.json({ error: 'bad date' }, { status: 400 });
+    const slate = await resolveSlate({ date });
+    const entry = await rereadSheet(slate, reread, { full: url.searchParams.get('full') === '1' });
+    if (!entry) return Response.json({ error: 'no such sheet' }, { status: 404 });
+    return Response.json({ ok: !entry.error, date: slate.date, sheet: entry }, { status: entry.error ? 409 : 200 });
+  }
   let form;
   try { form = await request.formData(); } catch { return Response.json({ error: 'expected multipart form data' }, { status: 400 }); }
   const files = form.getAll('file').filter((f) => f && typeof f.arrayBuffer === 'function');

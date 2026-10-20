@@ -165,6 +165,20 @@ config and keeps its own markets, teams, feeds and slate key:
   (`fixAvg`: "38" → 3.8, "1156" → 11.5; `fixMinutes`: "2744" → 27.7). Rows are mentions (market
   null, group `players`, `avg: { min, pts, reb, ast, tpm }`), so the board marks the sheet's
   players' PropFinder plays confirmed. Fixture: `__tests__/fixtures/ocr-nba-page1.json` (BOS · DET).
+- The courts (`components/nba/NbaCourt.jsx`, the rink's basketball twin, drawn by `NbaBoard` through
+  `Board`'s `before` slot above each game's tables): per team a half court (50 × 47 ft, the basket on
+  top) with five zones — PF · C · SF under the basket, SG · PG on the perimeter (`ZONES`; G joins the
+  guards, F the wings, `layoutCourt`, four chips a zone, the rest listed under it) — each tinted by what
+  tonight's opponent gives up to that position for the stat picked above the board (Points · Rebounds ·
+  Assists · Threes, `COURT_METRICS`; `zoneTone` by rank third, rank 1 = the most permissive), the zone's
+  foot carrying the rank; every chip the player's line and chance for the stat (`playFor`: the over or
+  yes side), ✓ when the cheat sheet confirms him, flame / snowflake / soft spot, his average when he has
+  no line; above the court the opponent-allowed table (per position, every stat PropFinder's table
+  carries, value + rank chip, the `nhlx-pfd-*` styles) and under it "Props by player": each player's
+  line and chance per market (PTS · REB · AST · 3PM · PRA), green over the floor. The data is
+  `sides` on every board game (`sidesOf` in `lib/picks/board.js`: per team its players with their
+  plays, the PropFinder players without one with their season averages, and `allowed` = the
+  opponent's `defense.teams` / `ranks` rows, or the sheet's tiles with ranks only).
 - Routes: `GET /api/nba/picks?date`, `GET|POST|DELETE /api/nba/sheets?date`,
   `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`.
   `.github/workflows/nba-data.yml`: 9:47 ET and 5:23 PM ET (schedule + PropFinder), 2:11 AM ET
