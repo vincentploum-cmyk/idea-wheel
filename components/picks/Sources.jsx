@@ -134,9 +134,14 @@ export default function Sources({ sport, onChange }) {
           <div className="nhlx-auto-label">PropFinder</div>
           <div className="nhlx-auto-meta">
             {!status ? 'Loading…' : !pf?.configured ? 'Not configured: set PROPFINDER_EMAIL / PROPFINDER_PASSWORD on Render (the NHL pull’s credentials serve every sport).'
-              : pf.file ? <>Pulled {fmt(pf.file.at)}: {pf.file.players} players ({pf.file.withProps} with lines, {pf.file.withGames} with logs), {pf.file.defenseTeams} defenses.{pf.file.missingTeams?.length ? ` No team row for ${pf.file.missingTeams.join(', ')}.` : ''}{pf.file.fieldsSeen?.unread?.length ? <> <b>Unread game fields</b> (spellings this site does not know yet): <code>{pf.file.fieldsSeen.unread.join(', ')}</code>.</> : ''}</>
+              : pf.file ? <>Pulled {fmt(pf.file.at)}: {pf.file.players} players ({pf.file.withProps} with lines, {pf.file.withGames} with logs), {pf.file.defenseTeams} defenses{pf.file.depthCharts != null ? `, ${pf.file.depthCharts} depth chart${pf.file.depthCharts === 1 ? '' : 's'}` : ''}.{pf.file.missingTeams?.length ? ` No team row for ${pf.file.missingTeams.join(', ')}.` : ''}{pf.file.fieldsSeen?.unread?.length ? <> <b>Unread game fields</b> (spellings this site does not know yet): <code>{pf.file.fieldsSeen.unread.join(', ')}</code>.</> : ''}</>
               : pf.last?.skipped || pf.last?.error ? `Last try ${fmt(pf.last.at)}: ${pf.last.skipped || pf.last.error}` : 'Not pulled for this slate yet. The scheduled run pulls it; or pull now.'}
           </div>
+          {pf?.file?.fieldsSeen?.markets && Object.keys(pf.file.fieldsSeen.markets).length ? (
+            <details className="ir-nfl-warn"><summary>Odds markets in the pull ({Object.keys(pf.file.fieldsSeen.markets).length}) and where each is filed</summary>
+              <ul>{Object.entries(pf.file.fieldsSeen.markets).sort((a, b) => b[1].n - a[1].n).map(([name, m]) => <li key={name}><code>{name}</code> → {m.market || 'skipped'} ({m.n})</li>)}</ul>
+            </details>
+          ) : null}
           <div className="nhlx-auto-actions">
             <button type="button" className="nhlx-btn nhlx-btn-sm" disabled={!!busy || !pf?.configured} onClick={() => refresh('propfinder')}>{busy === 'propfinder' ? 'Pulling…' : 'Pull from PropFinder now'}</button>
           </div>

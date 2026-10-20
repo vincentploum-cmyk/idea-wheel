@@ -3,7 +3,7 @@ import { marketFromText, groupOf, statFields, MARKETS, GROUPS } from '../lib/nba
 import { teamAbbrFromText, parseMatchup, teamLogo } from '../lib/nba/teams';
 import { parseCheatSheet, classifyHeader, parsePlayerCell } from '../lib/nba/cheatsheet';
 import { parseSummary, parseScoreboard, seasonOfDate, derived } from '../lib/nba/espn';
-import { gameRow, mapPlayers, defenseAllowed, fieldsSeen } from '../lib/nba/propfinder-nba';
+import { gameRow, mapPlayers, defenseAllowed, fieldsSeen, depthChart } from '../lib/nba/propfinder-nba';
 import { buildBoard, statOf, logRates } from '../lib/nba/picks';
 import { dateFromFileName } from '../lib/nba/store';
 import summary from './fixtures/espn-nba-summary.json';
@@ -98,6 +98,9 @@ describe('NBA PropFinder mapping', () => {
   test('game rows, lines, positions and the unread fields', () => {
     expect(gameRow(GAME)).toMatchObject({ date: '2026-10-21', season: 2026, opp: 'NY', home: false, pts: 31, reb: 9, ast: 5, tpm: 4, stl: 2, tov: 3, min: 36, pra: 45, pr: 40, pa: 36, ra: 14, stlBlk: 2, dd: 0, td3: 0 });
     expect(gameRow({ ...GAME, points: 22, rebounds: 11, assists: 10 })).toMatchObject({ dd: 1, td3: 1 });
+    // Tracking figures read when the row has them, null (never 0) when it does not.
+    expect(gameRow(GAME)).toMatchObject({ usg: null, rebCh: null, potAst: null });
+    expect(gameRow({ ...GAME, usagePercentage: 31.4, reboundChances: 12, potentialAssists: 9 })).toMatchObject({ usg: 31.4, rebCh: 12, potAst: 9 });
     const players = mapPlayers([PLAYER]);
     expect(players[0]).toMatchObject({ key: 'jayson tatum', team: 'BOS', pos: 'SF' });
     expect(players[0].props).toEqual([{ market: 'pts', line: 27.5, odds: -115, underOdds: -105, book: null, books: 1, isMain: true }, { market: 'pra', line: 39.5, odds: -110, underOdds: null, book: null, books: 1, isMain: true }]);
@@ -119,6 +122,15 @@ describe('NBA PropFinder mapping', () => {
       { market: 'dd', line: 0.5, odds: 140, underOdds: null, book: 'DraftKings', books: 1, isMain: true },
     ]);
     expect(fieldsSeen([PLAYER], []).unread).toEqual(['oddStat']);
+    const seen = fieldsSeen([PLAYER], []).markets;
+    expect(Object.values(seen).reduce((s, m) => s + m.n, 0)).toBeGreaterThan(0);
+    expect(Object.values(seen).every((m) => typeof m.n === 'number')).toBe(true);
+  });
+  test('a team’s depth chart, in the shape the NHL team objects carry', () => {
+    const team = { code: 'BOS', depthChart: { positions: { PG: { players: [{ full_name: 'Payton Pritchard', depth: 1, status: 'ACT', reference: '11' }, { full_name: 'Devin Carter', depth: 2, status: 'ACT' }] }, C: { players: [{ full_name: 'Neemias Queta', depth: 1 }] } } } };
+    expect(depthChart(team)).toEqual({ PG: [{ name: 'Payton Pritchard', key: 'payton pritchard', depth: 1, status: 'ACT', id: '11' }, { name: 'Devin Carter', key: 'devin carter', depth: 2, status: 'ACT', id: null }], C: [{ name: 'Neemias Queta', key: 'neemias queta', depth: 1, status: null, id: null }] });
+    expect(depthChart({ code: 'BOS' })).toBeNull();
+    expect(fieldsSeen([], [team]).sample.depthChart).toContain('Payton Pritchard');
   });
   test('what each defense allows per position, from the positions the rows carry', () => {
     const row = (pos, pts, reb = 30, ast = 20) => ({ type: 'Opponent', position: pos, seasonYear: 2026, gamesPlayed: 5, points: pts, rebounds: reb, assists: ast });
@@ -130,6 +142,17 @@ describe('NBA PropFinder mapping', () => {
     expect(d.ranks.MIA.PG.pts).toBe(2);
     expect(d.ranks.BOS.PG.pts).toBe(3);
     expect(d.ranks.NY.C.pts).toBe(1);
+    // Early in the season: this season's 2 games blended into last season's full row at 2 / (2 + 15); nothing played yet = last season's alone.
+    const early = [
+      { code: 'BOS', stats: [{ ...row('PG', 60), gamesPlayed: 2 }, { ...row('PG', 110 * 82 / 5), seasonYear: 2025, gamesPlayed: 82 }, { ...row('C', 0), gamesPlayed: 0 }, { ...row('C', 20 * 82 / 5), seasonYear: 2025, gamesPlayed: 82 }] },
+      { code: 'NYK', stats: [{ ...row('PG', 150 * 82 / 5), seasonYear: 2025, gamesPlayed: 82 }] },
+    ];
+    const e = defenseAllowed(early, { season: 2026 });
+    expect(e.teams.BOS.PG).toMatchObject({ gp: 2, prior: 82, season: 2026, priorSeason: 2025 });
+    expect(e.teams.BOS.PG.pts).toBeCloseTo((2 / 17) * 30 + (15 / 17) * 22, 1);
+    expect(e.teams.BOS.C).toMatchObject({ gp: 0, prior: 82, pts: 4 });
+    expect(e.teams.NY.PG).toMatchObject({ gp: 0, prior: 82, pts: 30 });
+    expect(e.ranks.NY.PG.pts).toBe(1);
   });
 });
 

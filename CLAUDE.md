@@ -165,8 +165,46 @@ config and keeps its own markets, teams, feeds and slate key:
   (`fixAvg`: "38" → 3.8, "1156" → 11.5; `fixMinutes`: "2744" → 27.7). Rows are mentions (market
   null, group `players`, `avg: { min, pts, reb, ast, tpm }`), so the board marks the sheet's
   players' PropFinder plays confirmed. Fixture: `__tests__/fixtures/ocr-nba-page1.json` (BOS · DET).
+- The courts (`components/nba/NbaCourt.jsx`, the rink's basketball twin, drawn by `NbaBoard` through
+  `Board`'s `before` slot above each game's tables): per team a half court (50 × 47 ft, the basket on
+  top) with five zones — PF · C · SF under the basket, SG · PG on the perimeter (`ZONES`; G joins the
+  guards, F the wings, `layoutCourt`; PropFinder's depth chart places a player by his slot when the pull
+  carries one — `depthChart` in `lib/picks/propfinder.js` reads `team.depthChart.positions[SLOT].players`
+  (the NHL team objects' shape) into `data.depth[team][SLOT]`, `sidesOf` puts `slot` / `depth` on each
+  player and orders the side starters first, the chip's badge reads "PG1", `lineup: 'propfinder'` on the
+  side; else the roster position — three chips a front zone, four a back one, the rest listed under it) — each tinted by what
+  tonight's opponent gives up to that position for the stat picked above the board (Points · Rebounds ·
+  Assists · Threes, `COURT_METRICS`; `zoneTone` by rank third, rank 1 = the most permissive), the zone's
+  foot carrying the rank; every chip the player's line and chance for the stat (`playFor`: the over or
+  yes side), ✓ when the cheat sheet confirms him, flame / snowflake / soft spot, his average when he has
+  no line; above the court the opponent-allowed table (per position, every stat PropFinder's table
+  carries, value + rank chip, the `nhlx-pfd-*` styles) and under it "Props by player": each player's
+  line and chance per market (PTS · REB · AST · 3PM · PRA), green over the floor. The data is
+  `sides` on every board game (`sidesOf` in `lib/picks/board.js`: per team its players with their
+  plays, the PropFinder players without one with their season averages, and `allowed` = the
+  opponent's `defense.teams` / `ranks` rows, or the sheet's tiles with ranks only). A chip shows the
+  book's main line (`playFor`: the main over, else the best over), one stat line, three chips under
+  the basket and four on the perimeter (`ZONE_MAX`).
+- The player card (`components/nba/NbaPlayerCard.jsx`, the NHL card's layout; `NbaPlayerCardProvider`
+  wraps the board, `useNbaPlayerCard()` opens it from any chip or "Props by player" row with
+  `{ key, player, team, opp, venue, market }`): the top bar (logo, position, tonight's game, PTS /
+  REB / AST a game this season), market tabs with the hit rate for the pressed split, the Over +
+  line block with the board's chance, price and sheet check for that line (the line menu lists his
+  lines and ±3 around the main one), the per-game bars against the line (`Bars`: green over, red
+  under, the average pill), the split tiles (L5 · L10 · L20 · season · vs opp · home / away; press one
+  to draw its games), the splits table (GP, MIN, PTS, REB, AST, 3PM, PRA, over %), and on the right
+  the opponent's allowed table with his position marked and "His lines tonight" (every play the
+  board has on him, click one to draw it). Data: `GET /api/nba/player?key&date` → `playerFor` in
+  `lib/picks/store.js` (the slate's PropFinder pull: his logs newest first, his props, the game,
+  the opponent's rows with ranks); the plays ride in from the opener. Hit rates and splits are
+  computed in the card (`hitRate`, `splitGames`: season = this season's games once three are
+  played, else the last 82). Usage rate, rebound chances and potential assists (PropFinder's
+  player-summary figures) are read per game row as optional `FIELDS` (`usg`, `rebCh`, `potAst`;
+  `optional: true` reads null when the row lacks the key, so an unknown spelling shows as "—" on
+  the card and in the pull's unread list, never as 0) and averaged per split in the top bar and
+  the splits table.
 - Routes: `GET /api/nba/picks?date`, `GET|POST|DELETE /api/nba/sheets?date`,
-  `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`.
+  `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`.
   `.github/workflows/nba-data.yml`: 9:47 ET and 5:23 PM ET (schedule + PropFinder), 2:11 AM ET
   (last night's box scores). UI: `components/nba/NbaApp.jsx` (date picker), `NbaBoard.jsx`,
   `NbaSources.jsx`. Tests: `__tests__/nba-board.test.js` (`fixtures/espn-nba-summary.json`).

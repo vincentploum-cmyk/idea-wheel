@@ -56,6 +56,7 @@ describe('NBA cheat sheet (OCR)', () => {
     ], defense: null } };
     const sheet = parseNbaPages([page1], { roster: ROSTER, schedule: games });
     const sheets = [{ id: 's1', fileName: 'nba_20261020.pdf', at: '2026-10-20T15:00:00Z', rows: sheet.rows, meta: sheet.meta }];
+    pf.data.depth = { BOS: { PG: [{ name: 'Payton Pritchard', key: 'payton pritchard', depth: 2, status: 'ACT' }], SG: [{ name: 'Jaylen Brown', key: 'jaylen brown', depth: 1, status: 'ACT' }] } };
     const b = buildBoard({ date: '2026-10-20', season: 2026, games, sheets, pf, results: {} });
     const plays = b.games[0].tables.points.rows;
     const pritchard = plays.find((r) => r.player === 'Payton Pritchard');
@@ -65,6 +66,19 @@ describe('NBA cheat sheet (OCR)', () => {
     // DET gives up the 23rd most points to point guards (BOS's tile), 29th to point guards' … no: the soft spot is by rank third.
     expect(pritchard.spot).toMatchObject({ rank: 23, teams: 30, soft: false, tough: true });
     expect(b.sources.sheets[0].rows).toBe(9);
+    // The matchup view's sides: every player with a play, PropFinder's others, and what the opponent gives up.
+    const bos = b.games[0].sides.BOS;
+    expect(bos).toMatchObject({ team: 'BOS', opp: 'DET', venue: 'A' });
+    // The depth chart orders the side (starters first) and gives each player his slot.
+    expect(bos.players.map((p) => [p.player, p.slot, p.depth])).toEqual([['Jaylen Brown', 'SG', 1], ['Payton Pritchard', 'PG', 2]]);
+    expect(bos.lineup).toBe('propfinder');
+    expect(b.games[0].sides.DET.lineup).toBeNull();
+    const prit = bos.players.find((p) => p.player === 'Payton Pritchard');
+    expect(prit.plays[0]).toMatchObject({ market: 'pts', line: 15.5, side: 'over', confirmed: true });
+    expect(prit.avg.pts).toBe(18.9);   // his logs' season average (18, 19, 20 repeating over ten games)
+    expect(bos.allowed).toMatchObject({ from: 'sheet', count: 30 });
+    expect(bos.allowed.rows.PG.pts).toEqual({ value: null, rank: 23 });
+    expect(b.games[0].sides.DET.allowed.rows.PF.tpm.rank).toBe(6);
     // A mention alone is not a play.
     expect(plays.find((r) => r.player === 'Neemias Queta')).toBeUndefined();
   });
