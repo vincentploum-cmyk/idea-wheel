@@ -1454,6 +1454,6 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-pc-ladder { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
 .ir-pc-ladder .ir-ladder-rung { border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; background: var(--bg-soft); cursor: pointer; }
 .ir-pc-ladder .ir-ladder-rung.is-active { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
-.ir-sheet-check { font-style: normal; font-size: 10px; margin-left: 4px; font-weight: 700; }
-.ir-sheet-check.is-yes { color: var(--ok-fg); }
-.ir-sheet-check.is-no { color: var(--bad-fg); }
+/* The cheat sheet reads a different third than PropFinder: a dashed edge, nothing else. */
+.nhlx-pfd-table td.is-doubt { outline: 1px dashed var(--muted); outline-offset: -2px; }
+.nhlx-rk-zone.is-doubt { outline: 1px dashed currentColor; outline-offset: 2px; }

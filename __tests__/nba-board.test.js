@@ -167,24 +167,26 @@ describe('NBA PropFinder mapping', () => {
     expect(fieldsSeen([], [team]).sample.depthChart).toContain('Payton Pritchard');
   });
   test('what each defense allows per position, from the positions the rows carry', () => {
-    const row = (pos, pts, reb = 30, ast = 20) => ({ type: 'Opponent', position: pos, seasonYear: 2026, gamesPlayed: 5, points: pts, rebounds: reb, assists: ast });
+    // PropFinder's NBA rows are per-game figures already (no division by the games); a playoff row is not the season's.
+    const row = (pos, pts, reb = 6, ast = 4) => ({ type: 'Opponent', position: pos, seasonYear: 2026, seasonType: 'REG', gamesPlayed: 5, points: pts / 5, rebounds: reb, assists: ast });
     const teams = [{ code: 'BOS', stats: [row('PG', 120), row('C', 100)] }, { code: 'NYK', stats: [row('PG', 150), row('C', 110)] }, { code: 'MIA', stats: [row('PG', 135)] }];
     const d = defenseAllowed(teams, { season: 2026 });
     expect(d.positions.sort()).toEqual(['C', 'PG']);
     expect(d.teams.NY.PG).toMatchObject({ gp: 5, pts: 30, reb: 6, ast: 4, pra: 40 });
+    expect(defenseAllowed([{ code: 'NYK', stats: [{ ...row('PG', 150), seasonType: 'PST' }] }], { season: 2026 }).teams.NY).toBeUndefined();
     expect(d.ranks.NY.PG.pts).toBe(1);
     expect(d.ranks.MIA.PG.pts).toBe(2);
     expect(d.ranks.BOS.PG.pts).toBe(3);
     expect(d.ranks.NY.C.pts).toBe(1);
     // Early in the season: this season's 2 games blended into last season's full row at 2 / (2 + 15); nothing played yet = last season's alone.
     const early = [
-      { code: 'BOS', stats: [{ ...row('PG', 60), gamesPlayed: 2 }, { ...row('PG', 110 * 82 / 5), seasonYear: 2025, gamesPlayed: 82 }, { ...row('C', 0), gamesPlayed: 0 }, { ...row('C', 20 * 82 / 5), seasonYear: 2025, gamesPlayed: 82 }] },
-      { code: 'NYK', stats: [{ ...row('PG', 150 * 82 / 5), seasonYear: 2025, gamesPlayed: 82 }] },
+      { code: 'BOS', stats: [{ ...row('PG', 150), gamesPlayed: 2 }, { ...row('PG', 110), seasonYear: 2025, gamesPlayed: 82 }, { ...row('C', 0), gamesPlayed: 0 }, { ...row('C', 20), seasonYear: 2025, gamesPlayed: 82 }] },
+      { code: 'NYK', stats: [{ ...row('PG', 150), seasonYear: 2025, gamesPlayed: 82 }] },
     ];
     const e = defenseAllowed(early, { season: 2026 });
     // The NBA holds last season's table until the team has ten games (`held`), then blends.
     expect(e.teams.BOS.PG).toMatchObject({ gp: 2, prior: 82, priorSeason: 2025, held: true, pts: 22 });
-    const tenIn = early.map((t) => ({ ...t, stats: t.stats.map((r) => (r.seasonYear === 2026 && r.position === 'PG' ? { ...r, gamesPlayed: 10, points: 300 } : r)) }));
+    const tenIn = early.map((t) => ({ ...t, stats: t.stats.map((r) => (r.seasonYear === 2026 && r.position === 'PG' ? { ...r, gamesPlayed: 10, points: 30 } : r)) }));
     const b10 = defenseAllowed(tenIn, { season: 2026 });
     expect(b10.teams.BOS.PG).toMatchObject({ gp: 10, prior: 82, season: 2026 });
     expect(b10.teams.BOS.PG.held).toBeUndefined();
@@ -195,7 +197,7 @@ describe('NBA PropFinder mapping', () => {
     // The league's average per position and stat rides along, and the last-N windows PropFinder publishes with their own ranks.
     expect(d.league.PG.pts).toBeCloseTo((24 + 30 + 27) / 3, 2);
     expect(d.windows).toEqual({});
-    const windowed = teams.map((t) => ({ ...t, stats: [...t.stats, { ...row('PG', t.code === 'BOS' ? 160 : 100), lastNGames: 5 }, { ...row('PG', 120), lastNGames: 10, gamesPlayed: 10 }] }));
+    const windowed = teams.map((t) => ({ ...t, stats: [...t.stats, { ...row('PG', t.code === 'BOS' ? 160 : 100), lastNGames: 5 }, { ...row('PG', 60), lastNGames: 10, gamesPlayed: 10 }] }));
     const w = defenseAllowed(windowed, { season: 2026 });
     expect(Object.keys(w.windows).sort()).toEqual(['l10', 'l5']);
     expect(w.windows.l5.teams.BOS.PG).toMatchObject({ pts: 32, lastN: 5, gp: 5 });
