@@ -9,6 +9,7 @@ import SportNav from './SportNav';
 import { teamLogo as nflLogo } from '@/lib/nfl/teams';
 import { teamLogo as nbaLogo } from '@/lib/nba/teams';
 import { logoUrl as nhlLogo } from '@/components/nhl/media';
+import { leagueLogo } from '@/lib/site/leagues';
 
 const NHL_TABS = ['teams', 'matchups', 'defense', 'firstgoal', 'model', 'league', 'history'];
 const SHOW = 5;
@@ -101,7 +102,7 @@ export default function Start({ email }) {
                 return (
                   <Link key={p.key} href={`/${p.key}`} className="ir-panel" aria-label={`Open ${p.title}`}>
                     <span className="ir-panel-head">
-                      <span className="ir-panel-mark">{p.code}</span>
+                      <span className="ir-panel-mark"><img src={leagueLogo(p.key)} alt={p.code} width="44" height="44" /></span>
                       <span className="ir-panel-title"><b>{p.title}</b><small>{ready ? p.sub(s) : status ? 'Unavailable' : 'Loading…'}</small></span>
                       <span className="ir-panel-arrow" aria-hidden>→</span>
                     </span>

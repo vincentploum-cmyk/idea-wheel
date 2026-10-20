@@ -101,12 +101,12 @@ while IFS= read -r -d '' f; do
 done
 
 # ── NFL and NBA cheat sheets ──────────────────────────────────────────────────
-# Any CSV / TSV / Excel file saved in ~/Desktop/NFL or ~/Desktop/NBA (or a subfolder) in the last
+# Any CSV / TSV / Excel / PDF file saved in ~/Desktop/NFL or ~/Desktop/NBA (or a subfolder) in the last
 # three days is posted to that sport's board; the site reads the slate from the file name (NFL:
 # wk7, week-7, a date; NBA: a date) or takes the current one, and a file with a stored name replaces it.
 sync_sheets() {
   local dir="$1" url="$2" tag="$3"
-  find "$dir" -maxdepth 3 -type f \( -iname '*.csv' -o -iname '*.tsv' -o -iname '*.xlsx' -o -iname '*.xlsm' \) -not -name '~$*' -not -path '*/.*' -mtime -3 -print0 2>/dev/null |
+  find "$dir" -maxdepth 3 -type f \( -iname '*.csv' -o -iname '*.tsv' -o -iname '*.xlsx' -o -iname '*.xlsm' -o -iname '*.pdf' \) -not -name '~$*' -not -path '*/.*' -mtime -3 -print0 2>/dev/null |
   while IFS= read -r -d '' f; do
     name="$(basename "$f")"
     key="$tag|$name|$(stat -f %m "$f")|$(stat -f %z "$f")"

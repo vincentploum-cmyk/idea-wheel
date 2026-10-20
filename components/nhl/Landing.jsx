@@ -3,6 +3,7 @@ import SiteHeader from './SiteHeader';
 import { teamLogo as nhlLogo } from '@/lib/nhl-data/teams';
 import { teamLogo as nflLogo, TEAMS as NFL_TEAMS } from '@/lib/nfl/teams';
 import { teamLogo as nbaLogo, TEAMS as NBA_TEAMS } from '@/lib/nba/teams';
+import { LEAGUES, leagueLogo, leagueName } from '@/lib/site/leagues';
 
 const NHL_TEAMS = [
   ['BOS', 'Bruins'], ['BUF', 'Sabres'], ['DET', 'Red Wings'], ['FLA', 'Panthers'], ['MTL', 'Canadiens'],
@@ -101,7 +102,9 @@ export default function Landing() {
       <main>
         <section className="nhlx-hero">
           <div className="nhlx-wrap">
-            <span className="nhlx-eyebrow">NFL · NBA · NHL</span>
+            <div className="ir-league-row" aria-label="NFL, NBA and NHL">
+              {LEAGUES.map((l) => <img key={l} src={leagueLogo(l)} alt={leagueName(l)} width="56" height="56" />)}
+            </div>
             <h1>
               The best plays in every game, <span className="is-accent">graded against the box score</span>
             </h1>
@@ -130,7 +133,7 @@ export default function Landing() {
             <div className="nhlx-cards" style={{ textAlign: 'left' }}>
               {SPORTS.map((s) => (
                 <div className="nhlx-card" key={s.code}>
-                  <div className="nhlx-card-num">{s.code}</div>
+                  <img className="nhlx-card-logo" src={leagueLogo(s.code)} alt={s.code} width="64" height="64" />
                   <h3>{s.title}</h3>
                   <p>{s.body}</p>
                 </div>
