@@ -79,6 +79,10 @@ describe('NFL picks: the board', () => {
     const passing = g1.tables.passing;
     // Allen's logs clear both lines 8 of 10; the TD line's shorter price pulls its chance higher.
     expect(passing.rows.map((r) => [r.player, r.label, r.under || false])).toEqual([['Josh Allen', 'Pass TDs', false], ['Josh Allen', 'Pass yards', false], ['Patrick Mahomes', 'Pass yards', true]]);
+    // PropFinder first: Allen's plays are backed by its logs and confirmed by the sheet; Mahomes is sheet-only, a fill-in.
+    expect(passing.rows[0]).toMatchObject({ pfBacked: true, confirmed: true, sheetFiles: ['props-wk7.csv'] });
+    expect(passing.rows[2]).toMatchObject({ pfBacked: false, sheetOnly: true, under: true });
+    expect(passing.pfFirst).toBe(true);
     const allen = passing.rows[1];
     // The logs win over the sheet's columns: 4/5, 8/10, 8/10 against -115.
     expect(allen.rates).toMatchObject({ l5: 0.8, l10: 0.8, season: 0.8, n: 10, from: 'logs' });
@@ -99,6 +103,10 @@ describe('NFL picks: the board', () => {
     expect(td.rows.map((r) => r.player)).toEqual(['James Cook', 'Isiah Pacheco']);
     expect(td.rows[1].spot).toMatchObject({ soft: true, key: 'td' });
     expect(g1.tables.rushing.rows.map((r) => [r.player, r.sources])).toEqual([['Josh Allen', ['propfinder']]]);
+    expect(g1.tables.rushing.rows[0]).toMatchObject({ pfBacked: true, confirmed: false, onSheet: false });
+    // Receiving has no PropFinder play: the sheet's rows fill in, marked sheet-only.
+    expect(receiving.rows.map((r) => r.sheetOnly)).toEqual([true, true, true]);
+    expect(b.notes.join(' ')).toMatch(/PropFinder first: 2 plays over the floor from its logs and lines, 2 of them also on a cheat sheet \(✓\); 5 sheet-only plays listed behind them/);
     expect(g1.tables.rushing.rows[0].rates.from).toBe('logs');
     // Game 2 has one receiving row and nothing else; the notes say so.
     expect(b.games[1].plays).toBe(1);

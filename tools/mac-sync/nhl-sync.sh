@@ -120,6 +120,11 @@ sync_sheets() {
       echo "$key" >> "$STATE"
       log "$tag: synced $name -> $(printf '%s' "$body" | head -c 400)"
       osascript -e "display notification \"$name uploaded to the $(printf '%s' "$tag" | tr a-z A-Z) board\" with title \"ideareels\"" >/dev/null 2>&1 || true
+    elif [ "$code" = "422" ]; then
+      # The site read the file and found no prop rows: it is not posted again until it changes.
+      echo "$key" >> "$STATE"
+      log "$tag: REJECTED $name (no prop rows read; edit or replace the file to retry) -> $(printf '%s' "$body" | head -c 400)"
+      osascript -e "display notification \"$name: no prop rows could be read\" with title \"ideareels\"" >/dev/null 2>&1 || true
     else
       log "$tag: FAILED ($code) $name -> $(printf '%s' "$body" | head -c 400)"
     fi
