@@ -270,6 +270,8 @@ describe('NBA projection', () => {
 
 describe('NBA ladders', () => {
   const { ladderOf, buildBoard } = require('../lib/nba/picks');
+  const { upperTail } = require('../lib/picks/board');
+  test('the normal tail', () => { expect(upperTail(0)).toBeCloseTo(0.5, 6); expect(upperTail(1.96)).toBeCloseTo(0.025, 3); expect(upperTail(-1)).toBeCloseTo(0.8413, 3); });
   const logs = Array.from({ length: 20 }, (_, i) => ({ date: `2026-01-${String(10 + i).padStart(2, '0')}`, season: 2026, type: 'REG', opp: 'NY', pts: 20 + (i % 5) * 3, reb: 8, ast: 5, tpm: 2 }));   // 20, 23, 26, 29, 32 repeating
   test('the book’s rungs with his chance of clearing each, the main one marked', () => {
     const prop = { market: 'pts', line: 25.5, odds: -110, underOdds: -110, books: 3, isMain: true, lines: [{ line: 19.5, odds: -400, underOdds: 280, books: 1, main: false }, { line: 25.5, odds: -110, underOdds: -110, books: 3, main: true }, { line: 31.5, odds: 300, underOdds: -400, books: 2, main: false }] };
@@ -280,6 +282,16 @@ describe('NBA ladders', () => {
     expect(l[1].rates).toMatchObject({ season: 0.6, n: 20 });   // 26, 29, 32 clear 25.5: 12 of 20
     expect(l[2].rates.season).toBe(0.2);
     expect(l[0].odds).toBe(-400);
+    // The number: half his distribution's tail over the rung (mean 26, sd 4.3), half how often he cleared it; no price in it.
+    expect(l[1]).toMatchObject({ proj: 26, emp: 0.6 });
+    expect(l[1].sd).toBe(6.5);   // his own spread is 4.35; the floor, a quarter of the projection, keeps a scorer's tail
+    expect(l[1].model).toBeCloseTo(0.531, 2);
+    expect(l[1].p).toBeCloseTo(0.5 * 0.531 + 0.3, 2);
+    // The environment moves the centre: a soft spot (×1.12) lifts every rung.
+    const soft = ladderOf(logs, { market: 'pts', season: 2026, prop, env: 1.12 });
+    expect(soft[1].proj).toBeCloseTo(29.1, 1);
+    expect(soft[1].p).toBeGreaterThan(l[1].p);
+    expect(soft[1].env).toBe(1.12);
   });
   test('a prop without a ladder climbs by the market’s step around the main line; no prop, around his average', () => {
     const l = ladderOf(logs, { market: 'pts', season: 2026, prop: { market: 'pts', line: 25.5, odds: -110, underOdds: -110, books: 2, isMain: true } });
@@ -287,8 +299,8 @@ describe('NBA ladders', () => {
     expect(l.find((r) => r.main)).toMatchObject({ line: 25.5, odds: -110, books: 2 });
     const bare = ladderOf(logs, { market: 'reb', season: 2026 });
     expect(bare.map((r) => r.line)).toEqual([6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5]);
-    expect(bare.find((r) => r.line === 7.5).p).toBeGreaterThan(0.8);
-    expect(bare.find((r) => r.line === 8.5).p).toBeLessThan(0.2);
+    expect(bare.find((r) => r.line === 7.5).p).toBeGreaterThan(0.7);   // 8 every night: the floor on his spread keeps a tail
+    expect(bare.find((r) => r.line === 8.5).p).toBeLessThan(0.3);
     expect(ladderOf(logs, { market: 'dd', season: 2026 })).toEqual([]);
     // Four games this season: the rungs read over the last 82 across the seasons, not the four.
     const early = [...logs.slice(0, 4).map((g) => ({ ...g, season: 2027 })), ...logs.map((g) => ({ ...g, season: 2026 }))];
@@ -303,11 +315,14 @@ describe('NBA ladders', () => {
     const p = b.games[0].sides.BOS.players[0];
     expect(Object.keys(p.ladders).sort()).toEqual(['ast', 'pra', 'pts', 'reb', 'tpm']);
     expect(p.ladders.pts.find((r) => r.main).line).toBe(25.5);
+    expect(p.ladders.pts[0].env).toBeNull();   // no defense table in this pull
     // With a PropFinder table in, the cheat sheet's tiles ride on every cell as `sheet` beside PropFinder's rank.
     const defense = { teams: { NY: { SF: { gp: 0, pts: 24, reb: 6 } }, BOS: { SF: { gp: 0, pts: 20, reb: 7 } } }, ranks: { NY: { SF: { pts: 1, reb: 2 } }, BOS: { SF: { pts: 2, reb: 1 } } }, count: 2, league: { SF: { pts: 22, reb: 6.5 } }, windows: {} };
     const sheets = [{ id: 's', fileName: 'nba_20261021.pdf', rows: [], meta: { oppRanks: { BOS: { SF: { pts: 3, reb: 28 } } } } }];   // BOS's opponent (NY) gives up the 3rd most points to SFs, the 28th most rebounds
     const withSheet = buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf: { ...pf, data: { ...pf.data, defense } }, results: {} });
     const bos = withSheet.games[0].sides.BOS.allowed;
+    // With a table the ladder reads against NY's environment at SF: 24 over the league's 22 → ×1.055.
+    expect(withSheet.games[0].sides.BOS.players[0].ladders.pts[0].env).toBeCloseTo(1.055, 3);
     expect(bos.rows.SF.pts).toEqual({ value: 24, rank: 1, sheet: 3 });
     expect(bos.rows.SF.reb).toEqual({ value: 6, rank: 2, sheet: 28 });
     expect(bos.sheet).toBe('beside');

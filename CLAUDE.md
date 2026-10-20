@@ -194,15 +194,18 @@ config and keeps its own markets, teams, feeds and slate key:
   board game (`sidesOf` in `lib/picks/board.js`: per team its players with their plays, `own` = his
   { l5, l10, season } averages per stat from his logs, and `ladders` per market (`ladderOf`, the markets in
   `LADDER_MARKETS` of `lib/nba/picks.js`: the book's rungs when the prop carries `lines`, else rungs by the
-  market's `step` around the main line, two under and four over; each rung with his chance of clearing
-  it — the board's hit-rate read against that rung, shrunk toward the rung's price, over his last 82
-  games until this season has `LADDER_MIN` = 10 — and the price), the PropFinder players without a play too, and
+  market's `step` around the main line, two under and four over; each rung with his realistic chance of
+  clearing it tonight — half his own distribution's tail over the rung (a normal centred on `ownRate` ×
+  the opponent's `envFactor` at his spot from the season table, his spread over his last 82 games floored
+  at a quarter of the projection, `upperTail`), half how often he actually cleared it (L5 / L10 / season
+  at the board's weights, over his last 82 games until this season has `LADDER_MIN` = 10); no price in
+  the number, the book's price beside its rung; `model`, `emp`, `proj`, `sd`, `env` on every rung), the PropFinder players without a play too, and
   `allowed` = the opponent's rows with ranks, `league`, and `windows`, every cell carrying the cheat
-  sheet's tile for it as `sheet` when the sheet has one (`sheetCheck` in the court: a zone foot or a
-  table cell gets a dashed edge, `is-doubt`, when the tile reads a different third than PropFinder, the
-  hover naming the tile's rank; nothing when they agree — no ticks anywhere on the courts; the sheet
-  confirms the environment, it never changes a number); or the sheet's tiles with ranks only when the
-  slate has no pull). PropFinder's NBA team rows are per-game figures already (`rowsPerGame: true` in
+  sheet's tile for it as `sheet` when the sheet has one (`sheetCheck` in the court: the hover on a zone
+  foot or a table cell names the tile's rank and whether it reads the same third as PropFinder — nothing
+  drawn, no ticks, no dashed edges: the user reads the courts for the numbers; the sheet confirms the
+  environment, it never changes a number); or the sheet's tiles with ranks only when the slate has no
+  pull). A held table's rows read "last season" in place of the GP count. PropFinder's NBA team rows are per-game figures already (`rowsPerGame: true` in
   `propfinder-nba.js`; 2026-10-20 the table read 0.3 points a game after a second division), and only
   regular-season rows (`seasonType` REG) make a season table. **The first ten games of the season read off last season**: a player's
   season window stays last season's (his last 82, this season's few on top) until he has ten games this

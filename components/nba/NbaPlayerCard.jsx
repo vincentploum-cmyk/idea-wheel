@@ -229,7 +229,7 @@ function Card({ req, date, onClose }) {
               <div className="ir-pc-ladder" aria-label="Ladder">
                 {req.player.ladders[market].map((r) => {
                   const tone = r.p >= 0.55 ? 'soft' : r.p < 0.35 ? 'tough' : 'mid';
-                  return <button key={r.line} type="button" className={`ir-ladder-rung is-${tone}${r.main ? ' is-main' : ''}${r.line === line ? ' is-active' : ''}`} onClick={() => setLines({ ...lines, [market]: r.line })} title={`o${r.line}: ${pct(r.p)} · L5 ${pct(r.rates.l5)} · L10 ${pct(r.rates.l10)} · season ${pct(r.rates.season)} (${r.rates.n} games)${r.odds != null ? ` · ${fmtOdds(r.odds)}` : ` · break-even ${r.fair}`}${r.main ? ' · the book’s main line' : ''}`}><b>o{r.line}</b><i>{pct(r.p)}</i><small>{r.odds != null ? fmtOdds(r.odds) : r.fair}</small></button>;
+                  return <button key={r.line} type="button" className={`ir-ladder-rung is-${tone}${r.main ? ' is-main' : ''}${r.line === line ? ' is-active' : ''}`} onClick={() => setLines({ ...lines, [market]: r.line })} title={`o${r.line}: ${pct(r.p)} tonight = ½ his distribution over it (${pct(r.model)}: ${num(r.proj)} ± ${num(r.sd)}${r.env != null ? `, matchup × ${r.env}` : ''}) + ½ how often he cleared it (${pct(r.emp)}: L5 ${pct(r.rates.l5)} · L10 ${pct(r.rates.l10)} · season ${pct(r.rates.season)}, ${r.rates.n} games)${r.odds != null ? ` · ${fmtOdds(r.odds)}` : ` · break-even ${r.fair}`}${r.main ? ' · the book’s main line' : ''}`}><b>o{r.line}</b><i>{pct(r.p)}</i><small>{r.odds != null ? fmtOdds(r.odds) : r.fair}</small></button>;
                 })}
               </div>
             ) : null}

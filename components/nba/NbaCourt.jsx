@@ -114,7 +114,7 @@ function ZoneLabel({ zone, allowed, metric, opp, win }) {
   const check = allowed?.from === 'sheet' ? null : sheetCheck(cell, count);
   const title = cell ? `${opp} gives up ${cell.value != null ? `${num(cell.value)} ${STAT_LABEL[metric] || metric} per game` : `the #${cell.rank} most ${STAT_LABEL[metric] || metric}`} to ${zone}s over ${WINDOW_TEXT[win] || win}${league != null ? ` (league ${num(league)})` : ''} · rank ${cell.rank} of ${count}, 1 = the most${allowed.from === 'sheet' ? ' · from the cheat sheet’s tiles' : ' · PropFinder'}${check ? ` · the cheat sheet's tile says #${cell.sheet}: ${check === 'yes' ? 'the same read' : 'a different read'}` : ''}` : `No defense table for ${opp} at ${zone}`;
   return (
-    <div className={`nhlx-rk-zone is-${tone}${check === 'no' ? ' is-doubt' : ''}`} style={{ left: `${((x + w / 2) / W) * 100}%`, top: `${((y + h - 2.2) / H) * 100}%` }} title={title}>
+    <div className={`nhlx-rk-zone is-${tone}`} style={{ left: `${((x + w / 2) / W) * 100}%`, top: `${((y + h - 2.2) / H) * 100}%` }} title={title}>
       <b>{zone}</b>{cell?.rank ? <span>#{cell.rank}{NB}{STAT_LABEL[metric] || metric}</span> : <span>no data</span>}
     </div>
   );
@@ -161,15 +161,15 @@ function AllowedTable({ side, win, metric, season }) {
   const league = a.league || null;
   return (
     <div className="nhlx-pfd">
-      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position · {WINDOW_LABEL[win] || win}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {a.from === 'sheet' ? 'the cheat sheet’s tiles' : win === 'season' ? 'PropFinder; this season blended into last season’s at games / (games + 15)' : `PropFinder, ${WINDOW_TEXT[win]}${a.season && season && a.season < season ? ' of last season (no games this season yet)' : ''}`}{league ? ' · hover a cell for the league’s average' : ''}{a.sheet ? ' · a dashed cell: the cheat sheet’s tile reads a different third (hover for its rank)' : ''}{win === 'season' && Object.values(a.rows).some((r) => r.held) ? ` · last season’s table until ${side.opp} has ten games` : ''}</small></div>
+      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position · {WINDOW_LABEL[win] || win}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {a.from === 'sheet' ? 'the cheat sheet’s tiles' : win === 'season' ? 'PropFinder; this season blended into last season’s at games / (games + 15)' : `PropFinder, ${WINDOW_TEXT[win]}${a.season && season && a.season < season ? ' of last season (no games this season yet)' : ''}`}{league ? ' · hover a cell for the league’s average' : ''}{win === 'season' && Object.values(a.rows).some((r) => r.held) ? ` · last season’s table until ${side.opp} has ten games` : ''}</small></div>
       <div className="nhlx-pfd-wrap">
         <table className="nhlx-pfd-table">
           <thead><tr><th>Pos</th>{keys.map((k) => <th key={k} className={k === metric ? 'is-on' : ''}>{STAT_LABEL[k] || k.toUpperCase()}</th>)}</tr></thead>
           <tbody>
             {positions.map((pos) => (
               <tr key={pos}>
-                <td><b>{pos}</b><small className="nhlx-auto-meta" title={a.rows[pos].prior ? `${a.rows[pos].gp || 0} games this season blended into last season's ${a.rows[pos].prior}` : ''}> {a.rows[pos].gp || 0}{a.rows[pos].prior ? `+${a.rows[pos].prior}` : ''} GP</small></td>
-                {keys.map((k) => { const c = a.rows[pos][k]; const tone = zoneTone(c?.rank, count); const lg = league?.[pos]?.[k]; const check = a.from === 'sheet' ? null : sheetCheck(c, count); return <td key={k} className={`${c ? `is-${tone}` : ''}${k === metric ? ' is-on' : ''}${check === 'no' ? ' is-doubt' : ''}`} title={`${c && lg != null ? `${num(c.value)} against the league's ${num(lg)} at ${pos}` : ''}${check ? ` · the cheat sheet's tile: #${c.sheet} (${check === 'yes' ? 'the same third' : 'a different third'})` : ''}`}>{c ? <><span className="nhlx-pfd-val">{c.value != null ? num(c.value) : '—'}</span>{c.rank ? <span className="nhlx-pfd-rank">#{c.rank}</span> : null}</> : '—'}</td>; })}
+                <td><b>{pos}</b><small className="nhlx-auto-meta" title={a.rows[pos].held ? `Last season's table until ${side.opp} has ten games this season (${a.rows[pos].gp || 0} so far)` : a.rows[pos].prior ? `${a.rows[pos].gp || 0} games this season blended into last season's` : ''}> {a.rows[pos].held ? 'last season' : `${a.rows[pos].gp || 0} GP`}</small></td>
+                {keys.map((k) => { const c = a.rows[pos][k]; const tone = zoneTone(c?.rank, count); const lg = league?.[pos]?.[k]; const check = a.from === 'sheet' ? null : sheetCheck(c, count); return <td key={k} className={`${c ? `is-${tone}` : ''}${k === metric ? ' is-on' : ''}`} title={`${c && lg != null ? `${num(c.value)} against the league's ${num(lg)} at ${pos}` : ''}${check ? ` · the cheat sheet's tile: #${c.sheet} (${check === 'yes' ? 'the same third' : 'a different third'})` : ''}`}>{c ? <><span className="nhlx-pfd-val">{c.value != null ? num(c.value) : '—'}</span>{c.rank ? <span className="nhlx-pfd-rank">#{c.rank}</span> : null}</> : '—'}</td>; })}
               </tr>
             ))}
           </tbody>
@@ -188,7 +188,8 @@ function LadderCell({ p, market, final }) {
   const shown = ladder.slice(mainIdx, mainIdx + LADDER_ROWS);
   const play = playFor(p, market);
   const got = final && play?.actual != null ? play.actual : null;
-  const title = ladder.map((r) => `${r.main ? '● ' : ''}o${r.line}: ${pct(r.p)}${r.odds != null ? ` at ${fmtOdds(r.odds)}` : ` (break-even ${r.fair})`} · L5 ${pct(r.rates.l5)} · L10 ${pct(r.rates.l10)} · season ${pct(r.rates.season)} (${r.rates.n})`).join('\n');
+  const head = ladder[0] ? `Tonight ${num(ladder[0].proj)} ${STAT_LABEL[market]} (his rate${ladder[0].env != null ? ` × ${ladder[0].env} for the matchup` : ''}), spread ±${num(ladder[0].sd)}\n` : '';
+  const title = head + ladder.map((r) => `${r.main ? '● ' : ''}o${r.line}: ${pct(r.p)} = ½ his distribution over it (${pct(r.model)}) + ½ how often he cleared it (${pct(r.emp)}: L5 ${pct(r.rates.l5)} · L10 ${pct(r.rates.l10)} · season ${pct(r.rates.season)}, ${r.rates.n} games)${r.odds != null ? ` · ${fmtOdds(r.odds)}` : ` · break-even ${r.fair}`}`).join('\n');
   return (
     <td className="ir-ladder-cell" title={title}>
       {shown.map((r) => {
@@ -210,7 +211,7 @@ function PlayersTable({ side, final, win, view }) {
   if (view === 'ladders') {
     return (
       <div className="nhlx-pfd ir-court-players">
-        <div className="nhlx-pfd-head"><b>Ladders · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market the book’s main rung (●) and the rungs above it, each with his chance of clearing it (his hit rate over that rung, last 5 / last 10 / season, shrunk toward the rung’s price) and the price; hover a cell for the whole ladder; click the row for the card</small></div>
+        <div className="nhlx-pfd-head"><b>Ladders · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market the book’s main rung (●) and the rungs above it, each with his chance of clearing it tonight: his own distribution centred on his projection against {side.opp} at his spot, blended with how often he actually cleared that rung; green from 55%, red under 35%; the book’s price beside its rung; hover a cell for the whole ladder, click the row for the card</small></div>
         <div className="nhlx-pfd-wrap">
           <table className="nhlx-pfd-table ir-court-table ir-ladder-table">
             <thead><tr><th>Player</th><th>Pos</th>{TABLE_MARKETS.map(([k, l]) => <th key={k}>{l}</th>)}{final ? <th>Got</th> : null}</tr></thead>
