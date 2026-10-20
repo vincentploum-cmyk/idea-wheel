@@ -19,7 +19,9 @@ const DateCtx = createContext('');
 export const useNbaPlayerCard = () => useContext(Ctx);
 
 const TABS = [['pts', 'Points', 'PTS'], ['reb', 'Rebounds', 'REB'], ['ast', 'Assists', 'AST'], ['tpm', '3-pointers', '3PM'], ['pra', 'Pts + reb + ast', 'PRA'], ['pr', 'Pts + reb', 'PR'], ['pa', 'Pts + ast', 'PA'], ['ra', 'Reb + ast', 'RA'], ['stl', 'Steals', 'STL'], ['blk', 'Blocks', 'BLK'], ['tov', 'Turnovers', 'TO']];
-const STAT_LABEL = { pts: 'PTS', reb: 'REB', ast: 'AST', tpm: '3PM', pra: 'PRA', pr: 'PR', pa: 'PA', ra: 'RA', stl: 'STL', blk: 'BLK', tov: 'TO', ftm: 'FTM', fgm: 'FGM', min: 'MIN' };
+const STAT_LABEL = { pts: 'PTS', reb: 'REB', ast: 'AST', tpm: '3PM', pra: 'PRA', pr: 'PR', pa: 'PA', ra: 'RA', stl: 'STL', blk: 'BLK', tov: 'TO', ftm: 'FTM', fgm: 'FGM', min: 'MIN', usg: 'USG%', rebCh: 'REB CH', potAst: 'POT AST' };
+// Per-game figures that are not markets: read straight off the game row.
+const RAW = new Set(['min', 'usg', 'rebCh', 'potAst']);
 const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
 const pct = (r) => (r == null ? '—' : `${Math.round(r * 100)}%`);
@@ -168,7 +170,7 @@ function Card({ req, date, onClose }) {
   for (let d = -3; d <= 3; d++) if (Math.floor(line) + d + 0.5 > 0) lineSet.add(Math.floor(line) + d + 0.5);
   const lineChoices = [...lineSet].sort((a, b) => a - b);
   const p = data?.player || { name: req.player?.player || req.key, team: req.team, pos: req.player?.pos || null, injury: req.player?.injury || null };
-  const avgOf = (m, list) => { const vals = list.map((g) => (m === 'min' ? (g.min == null ? null : Number(g.min)) : statOf(g, m))).filter((v) => v != null && Number.isFinite(v)); return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null; };
+  const avgOf = (m, list) => { const vals = list.map((g) => (RAW.has(m) ? (g[m] == null ? null : Number(g[m])) : statOf(g, m))).filter((v) => v != null && Number.isFinite(v)); return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null; };
   const seasonGames = splitGames(games, 'season', { season, opp, venue });
   const allowedKeys = data?.allowed ? [...new Set(Object.values(data.allowed).flatMap((r) => Object.keys(r)))].filter((k) => !['gp', 'season', 'prior', 'priorSeason'].includes(k)).sort((a, b) => (Object.keys(STAT_LABEL).indexOf(a) + 1 || 99) - (Object.keys(STAT_LABEL).indexOf(b) + 1 || 99)).slice(0, 8) : [];
   const myPos = POSITIONS.includes(p.pos) ? p.pos : p.pos === 'G' ? 'SG' : p.pos === 'F' ? 'SF' : null;
@@ -187,7 +189,7 @@ function Card({ req, date, onClose }) {
               <span className="nhlx-pc-slot">{p.pos || '—'} · {teamName(p.team) || p.team}{opp ? ` · ${venue === 'H' ? 'vs' : 'at'} ${opp}` : ''}{p.injury ? ` · ${p.injury}` : ''}</span>
             </div>
           </div>
-          {[['pts', 'PTS'], ['reb', 'REB'], ['ast', 'AST']].map(([m, l]) => <div key={m} className="nhlx-pc-stat" title={`${l} a game, ${seasonTag(season)}`}><small>{l} / G</small><b>{num(avgOf(m, seasonGames))}</b></div>)}
+          {[['pts', 'PTS', 'points'], ['reb', 'REB', 'rebounds'], ['ast', 'AST', 'assists'], ['usg', 'USG%', 'usage rate: the share of his team’s possessions he ends while on the floor'], ['rebCh', 'REB CH', 'rebound chances: rebounds plus the ones within reach he did not get'], ['potAst', 'POT AST', 'potential assists: passes that led to a shot']].map(([m, l, t]) => <div key={m} className="nhlx-pc-stat" title={`${t}, a game, ${seasonTag(season)}${avgOf(m, seasonGames) == null && RAW.has(m) ? ' · not in this pull’s game rows (the unread fields under Data sources name the spelling)' : ''}`}><small>{l}{m === 'usg' ? '' : ' / G'}</small><b>{num(avgOf(m, seasonGames))}{m === 'usg' && avgOf(m, seasonGames) != null ? '%' : ''}</b></div>)}
         </div>
         {err ? <div className="nhlx-alert" style={{ margin: 16 }}>⚠ Couldn’t load this player: {err}</div> : null}
         <div className="nhlx-pc-body">
@@ -213,12 +215,12 @@ function Card({ req, date, onClose }) {
             </div>
             <div className="nhlx-pfd-wrap nhlx-pc-stats">
               <table className="nhlx-pfd-table">
-                <thead><tr><th>Split</th><th>GP</th><th>MIN</th>{['pts', 'reb', 'ast', 'tpm', 'pra'].map((m) => <th key={m}>{STAT_LABEL[m]}</th>)}<th>Over {line}</th></tr></thead>
+                <thead><tr><th>Split</th><th>GP</th><th>MIN</th>{['pts', 'reb', 'ast', 'tpm', 'pra', 'usg', 'rebCh', 'potAst'].map((m) => <th key={m} title={m === 'usg' ? 'Usage rate' : m === 'rebCh' ? 'Rebound chances a game' : m === 'potAst' ? 'Potential assists a game' : ''}>{STAT_LABEL[m]}</th>)}<th>Over {line}</th></tr></thead>
                 <tbody>
                   {splits.map(([k, label]) => {
                     const list = splitGames(games, k, { season, opp, venue });
                     const h = hitRate(list, market, line);
-                    return <tr key={k} className={span === k ? 'is-active' : ''}><td><b>{label}</b></td><td>{list.length}</td><td>{num(avgOf('min', list), 0)}</td>{['pts', 'reb', 'ast', 'tpm', 'pra'].map((m) => <td key={m}>{num(avgOf(m, list))}</td>)}<td className={h.gp ? (h.rate >= 0.5 ? 'is-soft' : 'is-tough') : ''}><span className="nhlx-pfd-val">{h.gp ? pct(h.rate) : '—'}</span>{h.gp ? <span className="nhlx-pfd-rank">{h.hits}/{h.gp}</span> : null}</td></tr>;
+                    return <tr key={k} className={span === k ? 'is-active' : ''}><td><b>{label}</b></td><td>{list.length}</td><td>{num(avgOf('min', list), 0)}</td>{['pts', 'reb', 'ast', 'tpm', 'pra', 'usg', 'rebCh', 'potAst'].map((m) => <td key={m}>{num(avgOf(m, list))}{m === 'usg' && avgOf(m, list) != null ? '%' : ''}</td>)}<td className={h.gp ? (h.rate >= 0.5 ? 'is-soft' : 'is-tough') : ''}><span className="nhlx-pfd-val">{h.gp ? pct(h.rate) : '—'}</span>{h.gp ? <span className="nhlx-pfd-rank">{h.hits}/{h.gp}</span> : null}</td></tr>;
                   })}
                 </tbody>
               </table>
