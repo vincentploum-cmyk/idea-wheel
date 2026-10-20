@@ -222,6 +222,14 @@ function Card({ req, date, onClose }) {
               {hit.gp ? <span className="nhlx-pc-chip"><b>Hit</b> {hit.hits}/{hit.gp}</span> : null}
               {data?.pulledAt ? <span className="nhlx-pc-chip" title="PropFinder's logs, pulled for this slate">PropFinder {new Date(data.pulledAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span> : null}
             </div>
+            {(req.player?.ladders?.[market] || []).length ? (
+              <div className="ir-pc-ladder" aria-label="Ladder">
+                {req.player.ladders[market].map((r) => {
+                  const tone = r.p >= 0.55 ? 'soft' : r.p < 0.35 ? 'tough' : 'mid';
+                  return <button key={r.line} type="button" className={`ir-ladder-rung is-${tone}${r.main ? ' is-main' : ''}${r.line === line ? ' is-active' : ''}`} onClick={() => setLines({ ...lines, [market]: r.line })} title={`o${r.line}: ${pct(r.p)} · L5 ${pct(r.rates.l5)} · L10 ${pct(r.rates.l10)} · season ${pct(r.rates.season)} (${r.rates.n} games)${r.odds != null ? ` · ${fmtOdds(r.odds)}` : ` · break-even ${r.fair}`}${r.main ? ' · the book’s main line' : ''}`}><b>o{r.line}</b><i>{pct(r.p)}</i><small>{r.odds != null ? fmtOdds(r.odds) : r.fair}</small></button>;
+                })}
+              </div>
+            ) : null}
             {!data && !err ? <div className="nhlx-empty">Loading the logs…</div> : spanGames.length ? <Bars games={spanGames} market={market} line={line} unit={STAT_LABEL[market] || market} /> : <div className="nhlx-empty">{span === 'h2h' ? `No logged games vs ${opp}.` : 'No logged games for this player yet.'}</div>}
             <div className="nhlx-rates">
               {splits.map(([k, label]) => <RateTile key={k} label={label} hit={hitRate(splitGames(games, k, { season, opp, venue }), market, line)} active={span === k} onClick={() => setSpan(k)} />)}

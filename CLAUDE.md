@@ -187,14 +187,22 @@ config and keeps its own markets, teams, feeds and slate key:
   alone when he has no line; above the court the opponent-allowed table (per position, every stat
   PropFinder's table carries, value + rank chip, the `nhlx-pfd-*` styles, the picked stat's column
   marked, the league's average on hover) and under it "Props by player": each player's projection, line
-  and chance per market (PTS · REB · AST · 3PM · PRA), green over the floor. The data is `sides` on every
-  board game (`sidesOf` in `lib/picks/board.js`: per team its players with their plays and `own` = his
-  { l5, l10, season } averages per stat from his logs, the PropFinder players without a play too, and
+  and chance per market (PTS · REB · AST · 3PM · PRA), green over the floor, or — the default, the
+  Ladders / Main lines tabs beside the window picker — the ladders: per market the main rung (●) and the
+  four above it with his chance and the price, the whole ladder on hover (`LadderCell`); the card draws
+  the picked market's ladder as rung buttons over the bars. The data is `sides` on every
+  board game (`sidesOf` in `lib/picks/board.js`: per team its players with their plays, `own` = his
+  { l5, l10, season } averages per stat from his logs, and `ladders` per market (`ladderOf`, the markets in
+  `LADDER_MARKETS` of `lib/nba/picks.js`: the book's rungs when the prop carries `lines`, else rungs by the
+  market's `step` around the main line, two under and four over; each rung with his chance of clearing
+  it — the board's hit-rate read against that rung, shrunk toward the rung's price, over his last 82
+  games until this season has `LADDER_MIN` = 10 — and the price), the PropFinder players without a play too, and
   `allowed` = the opponent's rows with ranks, `league`, and `windows`; or the sheet's tiles with ranks
   only). A chip shows the book's main line (`playerProps` in `lib/picks/propfinder.js`: of the lines a
   book flags main the one nearest his own last-ten average — a book flags its alternate ladder main too,
   which put Drummond on o1.5 points on 2026-10-20 — else the line priced both ways with the most books;
-  the whole ladder rides on the prop as `lines`; markets the board does not settle whose names carry a
+  the whole ladder rides on the prop as `lines`; preseason rows, seasonType PRE, are left out of the logs
+  and the anchor — they put LeBron on o14.5 points; markets the board does not settle whose names carry a
   market's word — "Player Made Two Pointers", "Player Fantasy Score", "… Attempted" — are skipped by
   `NOT_A_MARKET`, the live pull of 2026-10-20 filed them under points and threes), one stat line, three
   chips under the basket and four on the perimeter (`ZONE_MAX`). PropFinder's NBA depth chart arrives as a
