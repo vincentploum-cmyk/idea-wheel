@@ -180,76 +180,40 @@ function AllowedTable({ side, win, metric, season }) {
 }
 
 /** Every player of the side with his props read against the matchup: the line and the chance per market. */
-/** A player's ladder for a market in a cell: the main rung and the ones above it, each with his chance; the rungs under it on hover. */
-function LadderCell({ p, market, final }) {
-  const ladder = p.ladders?.[market] || [];
-  if (!ladder.length) return <td>—</td>;
-  const mainIdx = Math.max(0, ladder.findIndex((r) => r.main));
-  const shown = ladder.slice(mainIdx, mainIdx + LADDER_ROWS);
+/** One line per player and market: his expected figure tonight, his range (floor–ceiling), and the book's line with his chance. */
+function RangeCell({ p, market, final }) {
+  const r = p.ranges?.[market];
+  if (!r) return <td>—</td>;
   const play = playFor(p, market);
   const got = final && play?.actual != null ? play.actual : null;
-  const head = ladder[0] ? `Tonight ${num(ladder[0].proj)} ${STAT_LABEL[market]} (his rate${ladder[0].env != null ? ` × ${ladder[0].env} for the matchup` : ''}), spread ±${num(ladder[0].sd)}\n` : '';
-  const title = head + ladder.map((r) => `${r.main ? '● ' : ''}o${r.line}: ${pct(r.p)} = ½ his distribution over it (${pct(r.model)}) + ½ how often he cleared it (${pct(r.emp)}: L5 ${pct(r.rates.l5)} · L10 ${pct(r.rates.l10)} · season ${pct(r.rates.season)}, ${r.rates.n} games)${r.odds != null ? ` · ${fmtOdds(r.odds)}` : ` · break-even ${r.fair}`}`).join('\n');
+  const ladder = p.ladders?.[market] || [];
+  const title = `${p.player} · ${STAT_LABEL[market]} tonight: expected ${num(r.exp)}, between ${r.floor} and ${r.ceiling} half the nights (his own games, centred on the matchup)${r.line != null ? ` · the book's o${r.line}: ${pct(r.p)} to clear${r.odds != null ? ` at ${fmtOdds(r.odds)}` : ''}` : ''}${got != null ? ` · got ${got}` : ''}\n${ladder.map((x) => `o${x.line} ${pct(x.p)}`).join(' · ')}`;
+  const tone = r.p == null ? '' : r.p >= 0.55 ? 'soft' : r.p < 0.35 ? 'tough' : 'mid';
   return (
-    <td className="ir-ladder-cell" title={title}>
-      {shown.map((r) => {
-        const tone = r.p >= 0.55 ? 'soft' : r.p < 0.35 ? 'tough' : 'mid';
-        const hit = got == null ? null : got > r.line;
-        return <span key={r.line} className={`ir-ladder-rung is-${tone}${r.main ? ' is-main' : ''}${hit == null ? '' : hit ? ' is-hit' : ' is-miss'}`}><b>o{r.line}</b><i>{pct(r.p)}</i>{r.odds != null ? <small>{fmtOdds(r.odds)}</small> : null}</span>;
-      })}
-      {ladder.length > mainIdx + LADDER_ROWS ? <span className="ir-ladder-more">+{ladder.length - mainIdx - LADDER_ROWS} higher</span> : null}
+    <td className={`ir-range-cell${got != null ? (got > (r.line ?? -1) ? ' is-hit' : ' is-miss') : ''}`} title={title}>
+      <span className="ir-range"><b>{num(r.exp, 0)}</b><small>{r.floor}–{r.ceiling}</small></span>
+      {r.line != null ? <span className={`ir-range-line is-${tone}`}>o{r.line} <i>{pct(r.p)}</i></span> : <span className="ir-range-line">no line</span>}
+      {got != null ? <span className="ir-range-got">got {got}</span> : null}
     </td>
   );
 }
-const LADDER_ROWS = 5;
 
-function PlayersTable({ side, final, win, view }) {
+function PlayersTable({ side, final }) {
   const open = useNbaPlayerCard();
-  const players = side.players.filter((p) => p.plays.length || Object.keys(p.ladders || {}).length);
+  const players = side.players.filter((p) => Object.keys(p.ranges || {}).length);
   if (!players.length) return null;
-  const allowed = tableFor(side.allowed, win);
-  if (view === 'ladders') {
-    return (
-      <div className="nhlx-pfd ir-court-players">
-        <div className="nhlx-pfd-head"><b>Ladders · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market the book’s main rung (●) and the rungs above it, each with his chance of clearing it tonight: his own distribution centred on his projection against {side.opp} at his spot{side.teamProj?.pts != null ? ` (the side’s projections add up to ${num(side.teamProj.pts, 0)} points, ${side.team}’s ${num(side.teamFor?.pts, 0)} a game through ${side.opp}’s defense)` : ''}, blended with how often he actually cleared that rung; green from 55%, red under 35%; the book’s price beside its rung; hover a cell for the whole ladder, click the row for the card</small></div>
-        <div className="nhlx-pfd-wrap">
-          <table className="nhlx-pfd-table ir-court-table ir-ladder-table">
-            <thead><tr><th>Player</th><th>Pos</th>{TABLE_MARKETS.map(([k, l]) => <th key={k}>{l}</th>)}{final ? <th>Got</th> : null}</tr></thead>
-            <tbody>
-              {players.map((p) => (
-                <tr key={p.key} className={`is-click${p.injury ? ' is-muted' : ''}`} onClick={() => open({ key: p.key, player: p, team: side.team, opp: side.opp, venue: side.venue })}>
-                  <td><b>{p.player}</b>{p.injury ? <small className="nhlx-auto-meta"> {p.injury}</small> : null}</td>
-                  <td>{p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</td>
-                  {TABLE_MARKETS.map(([k]) => <LadderCell key={k} p={p} market={k} final={final} />)}
-                  {final ? <td>{TABLE_MARKETS.map(([k]) => { const x = playFor(p, k); return x && x.actual != null ? `${x.actual} ` : ''; }).join('').trim() || '—'}</td> : null}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  }
   return (
     <div className="nhlx-pfd ir-court-players">
-      <div className="nhlx-pfd-head"><b>Props by player · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market his projection for tonight (his rate × what {side.opp} gives up at his position, {WINDOW_LABEL[win] || win}{side.teamProj?.pts != null ? `; the side adds up to ${num(side.teamProj.pts, 0)} points, ${num(side.teamProj.reb, 0)} rebounds, ${num(side.teamProj.ast, 0)} assists: ${side.team}'s own ${num(side.teamFor?.pts, 0)} a game through ${side.opp}'s defense` : ''}), the line and the chance (green over the floor)</small></div>
+      <div className="nhlx-pfd-head"><b>Tonight · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market: what he is expected to get, his floor–ceiling (he lands inside it half the nights; the top is his ceiling), and the book’s line with his chance to clear it{side.teamProj?.pts != null ? ` · the side adds up to ${num(side.teamProj.pts, 0)} points` : ''} · click a row for the card and the full ladder</small></div>
       <div className="nhlx-pfd-wrap">
-        <table className="nhlx-pfd-table ir-court-table">
-          <thead><tr><th>Player</th><th title="The depth-chart slot and depth when PropFinder carries one, else the roster position">Pos</th>{TABLE_MARKETS.map(([k, l]) => <th key={k}>{l}</th>)}{final ? <th>Got</th> : null}</tr></thead>
+        <table className="nhlx-pfd-table ir-court-table ir-range-table">
+          <thead><tr><th>Player</th><th>Pos</th>{TABLE_MARKETS.map(([k, l]) => <th key={k}>{l}</th>)}</tr></thead>
           <tbody>
             {players.map((p) => (
               <tr key={p.key} className={`is-click${p.injury ? ' is-muted' : ''}`} onClick={() => open({ key: p.key, player: p, team: side.team, opp: side.opp, venue: side.venue })}>
                 <td><b>{p.player}</b>{p.injury ? <small className="nhlx-auto-meta"> {p.injury}</small> : null}</td>
                 <td>{p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</td>
-                {TABLE_MARKETS.map(([k]) => {
-                  const x = playFor(p, k);
-                  const proj = projectFor(p.own?.[k], allowed, envPos(p), k, p.scale);
-                  if (!x) return <td key={k} title={proj.value != null ? `Tonight ${num(proj.value)} ${STAT_LABEL[k]} (his ${num(proj.rate)} × ${proj.factor ?? 1}); no line` : ''}>{proj.value != null ? <><span className="nhlx-pfd-val is-proj">{num(proj.value)}</span><span className="nhlx-pfd-rank">no line</span></> : '—'}</td>;
-                  const tone = x.p >= x.floor ? 'soft' : x.p < x.floor - 0.1 ? 'tough' : 'mid';
-                  const title = `${proj.value != null ? `Tonight ${num(proj.value)} ${STAT_LABEL[k]}: his ${num(proj.rate)} a game × ${proj.factor ?? 1} (${side.opp} at ${envPos(p) || p.pos}) · ` : ''}${x.side === 'yes' ? '' : x.side === 'under' ? 'u' : 'o'}${x.line} ${x.label}: ${pct(x.p)} (break-even ${x.fair})${x.odds != null ? ` at ${fmtOdds(x.odds)}` : ''}${x.rates.n ? ` · over the line L5 ${pct(x.rates.l5)} · L10 ${pct(x.rates.l10)} · season ${pct(x.rates.season)} (${x.rates.n})` : ''}${x.spot?.soft ? ' · soft spot' : x.spot?.tough ? ' · tough spot' : ''}${x.hit == null ? '' : ` · got ${x.actual} (${x.hit ? 'hit' : 'miss'})`}`;
-                  return <td key={k} className={`is-${tone}${x.hit == null ? '' : x.hit ? ' is-hit' : ' is-miss'}`} title={title}><span className="nhlx-pfd-val">{proj.value != null ? <i className={`ir-court-proj ${proj.value > x.line ? 'is-up' : 'is-down'}`}>{num(proj.value)}</i> : null}{x.side === 'under' ? 'u' : 'o'}{x.line}{x.spot?.soft ? <i className="nhlx-pk-flag is-soft ir-court-soft" title="soft spot">{ICON.soft}</i> : null}</span><span className="nhlx-pfd-rank">{pct(x.p)}</span></td>;
-                })}
-                {final ? <td>{TABLE_MARKETS.map(([k]) => { const x = playFor(p, k); return x && x.actual != null ? `${x.actual} ` : ''; }).join('').trim() || '—'}</td> : null}
+                {TABLE_MARKETS.map(([k]) => <RangeCell key={k} p={p} market={k} final={final} />)}
               </tr>
             ))}
           </tbody>
@@ -259,7 +223,7 @@ function PlayersTable({ side, final, win, view }) {
   );
 }
 
-function CourtCard({ side, metric, onMetric, sport, final, season, propsView, onView }) {
+function CourtCard({ side, metric, onMetric, sport, final, season }) {
   const windows = windowsOf(side.allowed);
   const [win, setWin] = useState('season');
   const view = windows.includes(win) ? win : 'season';
@@ -285,10 +249,6 @@ function CourtCard({ side, metric, onMetric, sport, final, season, propsView, on
           {windows.map((k) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setWin(k)} title={WINDOW_TEXT[k]}>{WINDOW_LABEL[k]}</button>)}
         </div>
         {windows.length === 1 ? <small className="nhlx-rk-toggle-note">{side.allowed ? 'no last-N rows in the pull yet' : 'no table yet'}</small> : null}
-        <small>Table</small>
-        <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Props table view">
-          {[['ladders', 'Ladders'], ['lines', 'Main lines']].map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={propsView === k} className={`nhlx-tab${propsView === k ? ' is-active' : ''}`} onClick={() => onView?.(k)} title={k === 'ladders' ? 'Every rung of the book’s ladder with his chance of clearing it' : 'The book’s main line per market with his projection and chance'}>{l}</button>)}
-        </div>
       </div>
       <AllowedTable side={side} win={view} metric={metric} season={season} />
       <div className="nhlx-rk ir-court">
@@ -297,19 +257,19 @@ function CourtCard({ side, metric, onMetric, sport, final, season, propsView, on
         {placed.map(({ p, x, y }) => <Chip key={p.key} p={p} x={x} y={y} metric={metric} sport={sport} team={side.team} opp={side.opp} venue={side.venue} final={final} allowed={allowed} win={view} />)}
       </div>
       {extras.length ? <p className="nhlx-rk-extras nhlx-auto-meta"><b>Also:</b> {extras.map((p) => { const x = playFor(p, MARKET_OF[metric]); const proj = projectFor(p.own?.[metric], allowed, envPos(p), metric, p.scale); return `${p.player} (${p.pos || '—'}${proj.value != null ? `, ${num(proj.value)} tonight` : ''}${x ? `, o${x.line} ${pct(x.p)}` : ''})`; }).join(' · ')}</p> : null}
-      <PlayersTable side={side} final={final} win={view} view={propsView} />
+      <PlayersTable side={side} final={final} />
     </section>
   );
 }
 
 /** The two courts of a game: the away team first, as the game head reads. */
-export default function CourtPair({ g, metric, onMetric, sport, propsView = 'ladders', onView }) {
+export default function CourtPair({ g, metric, onMetric, sport }) {
   const sides = g.sides || {};
   const list = [sides[g.away], sides[g.home]].filter(Boolean);
   if (!list.length) return null;
   return (
     <div className="nhlx-rink-pair ir-court-pair">
-      {list.map((side) => <CourtCard key={side.team} side={side} metric={metric} onMetric={onMetric} sport={sport} final={g.final} season={g.season || null} propsView={propsView} onView={onView} />)}
+      {list.map((side) => <CourtCard key={side.team} side={side} metric={metric} onMetric={onMetric} sport={sport} final={g.final} season={g.season || null} />)}
     </div>
   );
 }
