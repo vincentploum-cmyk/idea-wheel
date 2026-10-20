@@ -134,7 +134,7 @@ export default function Sources({ sport, onChange }) {
           <div className="nhlx-auto-label">PropFinder</div>
           <div className="nhlx-auto-meta">
             {!status ? 'Loading…' : !pf?.configured ? 'Not configured: set PROPFINDER_EMAIL / PROPFINDER_PASSWORD on Render (the NHL pull’s credentials serve every sport).'
-              : pf.file ? <>Pulled {fmt(pf.file.at)}: {pf.file.players} players ({pf.file.withProps} with lines, {pf.file.withGames} with logs), {pf.file.defenseTeams} defenses.{pf.file.missingTeams?.length ? ` No team row for ${pf.file.missingTeams.join(', ')}.` : ''}{pf.file.fieldsSeen?.unread?.length ? <> <b>Unread game fields</b> (spellings this site does not know yet): <code>{pf.file.fieldsSeen.unread.join(', ')}</code>.</> : ''}</>
+              : pf.file ? <>Pulled {fmt(pf.file.at)}: {pf.file.players} players ({pf.file.withProps} with lines, {pf.file.withGames} with logs), {pf.file.defenseTeams} defenses{pf.file.depthCharts != null ? `, ${pf.file.depthCharts} depth chart${pf.file.depthCharts === 1 ? '' : 's'}` : ''}.{pf.file.missingTeams?.length ? ` No team row for ${pf.file.missingTeams.join(', ')}.` : ''}{pf.file.fieldsSeen?.unread?.length ? <> <b>Unread game fields</b> (spellings this site does not know yet): <code>{pf.file.fieldsSeen.unread.join(', ')}</code>.</> : ''}</>
               : pf.last?.skipped || pf.last?.error ? `Last try ${fmt(pf.last.at)}: ${pf.last.skipped || pf.last.error}` : 'Not pulled for this slate yet. The scheduled run pulls it; or pull now.'}
           </div>
           {pf?.file?.fieldsSeen?.markets && Object.keys(pf.file.fieldsSeen.markets).length ? (
