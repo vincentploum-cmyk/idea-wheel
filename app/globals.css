@@ -1382,6 +1382,8 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-nfl-sheets li { display: grid; gap: 4px; padding: 10px 12px; border-radius: var(--radius); background: var(--bg-soft); }
 .ir-nfl-sheets li b { font-weight: 600; color: var(--heading); word-break: break-all; }
 .ir-nfl-sheets li .nhlx-btn { justify-self: start; margin-top: 4px; }
+.ir-ocr-live { color: var(--primary); animation: ir-ocr-pulse 1.6s ease-in-out infinite; }
+@keyframes ir-ocr-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 .ir-nfl-warn summary { font-size: 13px; color: var(--muted); cursor: pointer; }
 .ir-nfl-warn ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: var(--muted); }
 @media (max-width: 1100px) { .ir-nfl-grid { grid-template-columns: minmax(0, 1fr); } }

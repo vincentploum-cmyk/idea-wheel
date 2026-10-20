@@ -1,5 +1,5 @@
 import { authorize } from '@/lib/nhl-data/util';
-import { resolveWeek, listSheets, ingestCheatSheet, deleteSheet } from '@/lib/nfl/store';
+import { resolveWeek, listSheets, ingestCheatSheet, rereadSheet, deleteSheet } from '@/lib/nfl/store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,10 +21,21 @@ export async function GET(request) {
 
 // Upload one or more cheat sheets (multipart `file`; optional `week`, `season`, `type`): from the UI's
 // drop zone or the Mac folder sync (Bearer token). The week comes from the form, else the file's name
-// (wk7 / week-7 / a date), else this week. A file with a stored name replaces it.
+// (wk7 / week-7 / a date), else this week. A file with a stored name replaces it. A PDF of pictures is
+// read by OCR in the background (`ocr.status` on the sheet); `?reread=<id>` parses a stored read again
+// (`&full=1` runs the OCR once more).
 export async function POST(request) {
   const auth = await authorize(request, { allowToken: true });
   if (!auth.ok) return auth.response;
+  const url = new URL(request.url);
+  const reread = url.searchParams.get('reread');
+  if (reread) {
+    if (!/^[\w-]+$/.test(reread)) return Response.json({ error: 'bad id' }, { status: 400 });
+    const wk = await weekOf(url);
+    const entry = await rereadSheet(wk, reread, { full: url.searchParams.get('full') === '1' });
+    if (!entry) return Response.json({ error: 'no such sheet' }, { status: 404 });
+    return Response.json({ ok: !entry.error, week: wk, sheet: entry }, { status: entry.error ? 409 : 200 });
+  }
   let form;
   try { form = await request.formData(); } catch { return Response.json({ error: 'expected multipart form data' }, { status: 400 }); }
   const files = form.getAll('file').filter((f) => f && typeof f.arrayBuffer === 'function');
