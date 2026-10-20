@@ -25,6 +25,8 @@ function Flags({ r }) {
 
 function Row({ r, final, sport }) {
   const grade = r.hit == null ? (final && r.actual === null ? ' is-dnp' : '') : r.hit ? ' is-hit' : ' is-miss';
+  const source = r.confirmed ? '✓ on the sheet' : r.sheetOnly ? 'sheet only' : r.pfBacked ? 'PropFinder' : 'sheet';
+  const sourceTitle = r.confirmed ? `PropFinder play, confirmed by ${r.sheetFiles.join(', ')}` : r.sheetOnly ? 'Only on a cheat sheet: PropFinder lists no line or log for it' : r.pfBacked ? 'From PropFinder’s logs and lines' : `From ${r.sheetFiles.join(', ')}`;
   const windows = [['L5', r.rates.l5, r.rates.l5N], ['L10', r.rates.l10], ['Season', r.rates.season, r.rates.n], ['H2H', r.rates.h2h]].filter(([, v]) => v != null).map(([k, v, n]) => `${k} ${pct(v)}${n ? ` (${n})` : ''}`).join(' · ');
   const title = [
     `${r.player} · ${playLabel(r)} · ${r.sources.join(' + ')}`,
@@ -32,17 +34,18 @@ function Row({ r, final, sport }) {
     r.avg?.season != null ? `Average: L5 ${r.avg.l5 ?? '—'} · L10 ${r.avg.l10 ?? '—'} · season ${r.avg.season}` : null,
     r.proj != null ? `Sheet projection ${r.proj}` : null, r.rating ? `Sheet rating ${r.rating}` : null, r.injury ? `Injury: ${r.injury}` : null,
     r.under ? 'Under the floor: listed to make three' : null,
+    r.sheetOnly ? 'Sheet only: PropFinder lists no line or log for it, so it fills in behind PropFinder’s plays' : null,
     r.hit == null ? (final && r.actual === null ? 'No box-score line (did not play)' : null) : `${r.hit ? 'Hit' : 'Miss'}: ${r.actual} ${r.unit} in the box score`,
   ].filter(Boolean).join('\n');
   return (
-    <tr className={`${r.under ? 'is-under' : ''}${grade}`} title={title}>
+    <tr className={`${r.under || r.sheetOnly ? 'is-under' : ''}${r.confirmed ? ' is-confirmed' : ''}${grade}`} title={title}>
       <td>
         <div className="nhlx-db-player">
           {r.espnId ? <img src={sport.headshotUrl(r.espnId)} alt="" width="30" height="30" loading="lazy" /> : <img src={sport.teamLogo(r.team)} alt="" width="30" height="30" loading="lazy" className="ir-nfl-logo" />}
           <span><b>{r.player}<Flags r={r} /></b><small>{r.team}{r.pos ? ` · ${r.pos}` : ''} · {r.venue === 'H' ? 'vs' : 'at'} {r.opp}{r.injury ? ` · ${r.injury}` : ''}</small></span>
         </div>
       </td>
-      <td className="ir-nfl-play"><b>{playLabel(r)}</b><small>{r.rates.from === 'logs' ? 'logs' : 'sheet'}{r.sources.length > 1 ? ' + sheet' : ''}</small></td>
+      <td className="ir-nfl-play"><b>{playLabel(r)}</b><small title={sourceTitle} className={r.confirmed ? 'is-confirmed' : ''}>{source}</small></td>
       <td className={`is-num is-lead${r.hit == null ? '' : r.hit ? ' is-hit' : ' is-miss'}`}><b>{pct(r.p)}</b><small>{r.fair}</small></td>
       <td className="is-num is-wide"><b>{fmtOdds(r.odds)}</b><small>{r.edge == null ? (r.book || '—') : `${r.edge >= 0 ? '+' : ''}${Math.round(r.edge * 100)} pts`}</small></td>
       {final ? <td className="is-num nhlx-pk-got">{r.actual === null || r.actual === undefined ? <small>DNP</small> : <><b>{r.actual}</b><small>{r.unit}</small></>}</td> : null}
@@ -67,7 +70,7 @@ function GroupTable({ label, t, final, sport }) {
           {t.rows.length ? t.rows.map((r) => <Row key={r.id} r={r} final={final} sport={sport} />) : <tr><td colSpan={final ? 5 : 4}><small className="ir-nfl-none">No {label.toLowerCase()} line for this game yet.</small></td></tr>}
         </tbody>
       </table>
-      {t.next.length ? <p className="nhlx-pk-next">Next: {t.next.map((r) => `${last(r.player)} ${playLabel(r)} ${pct(r.p)}`).join(' · ')}</p> : null}
+      {t.next.length ? <p className="nhlx-pk-next">Next: {t.next.map((r) => `${last(r.player)} ${playLabel(r)} ${pct(r.p)}${r.sheetOnly ? ' (sheet)' : ''}`).join(' · ')}</p> : null}
     </div>
   );
 }
