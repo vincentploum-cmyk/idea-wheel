@@ -528,7 +528,10 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   is never the default), `defaultDefenseTab` in `propfinder-csv.js`; the rink's tint defaults to PropFinder (this
   season's tab) when the opponent has a table, else to the Rink's stored games;
   a window PropFinder's API has not published for the current season is rolled from the stored
-  box scores across the season boundary by `withStoredWindows`, the way PropFinder's own L5 counts),
+  box scores across the season boundary by `withStoredWindows`, the way PropFinder's own L5 counts; a window
+  published for the league that lacks a team short of its games this season — CBJ had L5 and L15 and no L10
+  above its rink on 2026-10-27 — gets that team's row from the stored window, ranked among the table's teams,
+  `stood` on the table and the tab marked `source: 'stored'`, `withStoodTeams`),
   chips carrying the latest saved model run's λ shots / goals for the slate date from
   `lib/nhl-data/model-runs.js`, or a matchup read when no run exists; at the top of each rink card the model's plays
   for that team (`sidePlays` in `slate.js`, `ModelPlays` in `Rink.jsx`): the Best bets boards' rule, `boardPlays` in
