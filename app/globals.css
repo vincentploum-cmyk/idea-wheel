@@ -1258,7 +1258,7 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-mu-details { margin-top: 22px; padding-top: 14px; }
 .nhlx-mu-details > summary { font-size: 17px; }
 @media (max-width: 1000px) {
-  .nhlx-rink-pair { grid-template-columns: 1fr; }
+  .nhlx-rink-pair, .ir-picks-pair { grid-template-columns: 1fr; }
   .nhlx-mu-verdicts { grid-template-columns: 1fr; }
 }
 
@@ -1497,6 +1497,8 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .nhlx-pc-stats .nhlx-pfd-table td.is-soft { background: var(--pf-soft-bg); } .nhlx-pc-stats .nhlx-pfd-table td.is-tough { background: var(--pf-tough-bg); }
 @media (max-width: 760px) { .ir-pc-top { grid-template-columns: 40px minmax(0, 1fr); } .ir-pc-top .nhlx-pc-stat { display: none; } }
 /* The courts' projection and league row. */
+.ir-picks-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 24px; margin: 12px 0 4px; }
+.ir-court-card .ir-side-picks { margin: 10px 0 8px; }
 .ir-court-outs { margin: 8px 0 6px; }
 .ir-court-out { margin: 0; padding: 3px 0; border-top: 1px solid var(--line); }
 .ir-court-out b { color: var(--heading); font-weight: 600; }

@@ -39,6 +39,32 @@ describe('the trend line', () => {
   });
 });
 
+describe('the best plays strip', () => {
+  const game = (final) => [{ id: 'g1', date: '2026-10-27T23:30Z', away: 'NY', home: 'BOS', final, state: final ? 'post' : 'pre', ...(final ? { awayScore: 100, homeScore: 110, detail: 'Final' } : {}) }];
+  const logs = (pts, reb) => Array.from({ length: 12 }, (_, i) => ({ date: `2026-01-${String(10 + i).padStart(2, '0')}`, season: 2026, type: 'REG', opp: 'NY', pts, reb, ast: 5, tpm: 2, pra: pts + reb + 5, min: 34 }));
+  const pf = { at: '2026-10-27T14:00:00Z', data: { players: [
+    { id: 'p1', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SF', games: logs(30, 8), props: [{ market: 'pts', line: 24.5, odds: -110, underOdds: -110, isMain: true }, { market: 'reb', line: 8.5, odds: -120, underOdds: 100, isMain: true }] },
+    { id: 'p2', name: 'Derrick White', key: 'derrick white', team: 'BOS', pos: 'SG', games: logs(12, 4), props: [{ market: 'pts', line: 24.5, odds: 150, underOdds: -180, isMain: true }] },
+    { id: 'p3', name: 'Payton Pritchard', key: 'payton pritchard', team: 'BOS', pos: 'PG', games: logs(16, 3), props: [{ market: 'pts', line: 12.5, odds: -130, underOdds: 110, isMain: true }] },
+  ], defense: null } };
+  test('one play a player over the floor, by chance; the picked players marked; graded once final', () => {
+    const b = buildBoard({ date: '2026-10-27', season: 2026, games: game(false), sheets: [], pf, results: {} });
+    const g = b.games[0];
+    // Brown clears 24.5 every night and Pritchard 12.5 (both 100%, so the shrink toward the book's price puts Pritchard's
+    // −130 a hair above Brown's −110); Brown's 8 rebounds never clear 8.5 and White's 12 points never 24.5.
+    expect(g.sides.BOS.picks.map((x) => [x.player, x.market, x.line, x.side])).toEqual([['Payton Pritchard', 'pts', 12.5, 'over'], ['Jaylen Brown', 'pts', 24.5, 'over']]);
+    expect(g.sides.BOS.picks[1]).toMatchObject({ key: 'jaylen brown', label: 'Points', unit: 'pts', odds: -110, confirmed: false, hit: null });
+    expect(g.sides.BOS.picks[0].p).toBeGreaterThan(g.sides.BOS.picks[1].p);
+    expect(g.sides.BOS.players.map((p) => [p.player, p.picked]).sort()).toEqual([['Derrick White', false], ['Jaylen Brown', true], ['Payton Pritchard', true]]);
+    expect(g.sides.NY.picks).toEqual([]);
+    // Final: each pick graded on the box score; a pick without a row stays ungraded (the strip reads DNP).
+    const results = { g1: { id: 'g1', final: true, players: [{ name: 'Jaylen Brown', team: 'BOS', played: true, pts: 26, reb: 7, ast: 4, pra: 37 }] } };
+    const f = buildBoard({ date: '2026-10-27', season: 2026, games: game(true), sheets: [], pf, results }).games[0];
+    expect(f.sides.BOS.picks.find((x) => x.player === 'Jaylen Brown')).toMatchObject({ actual: 26, hit: true });
+    expect(f.sides.BOS.picks.find((x) => x.player === 'Payton Pritchard')).toMatchObject({ actual: null, hit: null });
+  });
+});
+
 describe('the NBA board’s sides', () => {
   const logs = Array.from({ length: 12 }, (_, i) => ({ date: `2026-01-${String(10 + i).padStart(2, '0')}`, season: 2026, type: 'REG', opp: 'NY', pts: 24 + (i % 3), reb: 8, ast: 5, tpm: 2, pra: 37 + (i % 3), min: 34 }));
   const games = [{ id: 'g1', date: '2026-10-27T23:30Z', away: 'NY', home: 'BOS', final: false, state: 'pre' }];

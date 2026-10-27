@@ -5,6 +5,7 @@ import { fmtOdds } from '@/lib/nfl/odds';
 import { ICON } from '@/components/nhl/flags';
 import { boardRead, windowRead } from '@/lib/picks/projection';
 import { seasonTag } from '@/lib/nba/teams';
+import SidePicks from '@/components/picks/SidePicks';
 import { useNbaPlayerCard } from './NbaPlayerCard';
 
 // The matchup view of an NBA game, the NHL rink's basketball twin: for each team a half court
@@ -22,6 +23,8 @@ import { useNbaPlayerCard } from './NbaPlayerCard';
 // the chip's projection is the board's (`ranges` on the side's player, lib/picks/board.js: his rate
 // × the matchup on the season table × the side's factor), the same number the Tonight table, the
 // shuffle's Expected and the card show; the hover says what the picked window would have read.
+// At the top of each card, as above each NHL rink: the board's best plays for the team
+// (components/picks/SidePicks.jsx, `side.picks`), the picked players' chips ringed on the court.
 export const COURT_METRICS = [['pts', 'Points'], ['reb', 'Rebounds'], ['ast', 'Assists'], ['tpm', 'Threes']];
 const WINDOW_LABEL = { season: 'Season', prior: 'Last season', l5: 'L5', l10: 'L10', l15: 'L15', l20: 'L20' };
 const WINDOW_TEXT = { season: 'this season’s table', prior: 'last season’s full table', l5: 'its last 5 games', l10: 'its last 10 games', l15: 'its last 15 games', l20: 'its last 20 games' };
@@ -157,7 +160,7 @@ function Chip({ p, x, y, metric, sport, team, opp, venue, final, allowed, season
   const all = (p.plays || []).filter((x) => x.side === 'over' || x.side === 'yes').map((x) => `${x.side === 'yes' ? '' : 'o'}${x.line} ${x.label} ${pct(x.p)}${x.odds != null ? ` at ${fmtOdds(x.odds)}` : ''}${x.hit == null ? '' : x.hit ? ' hit' : ' miss'}`);
   const title = `${p.player} · ${p.pos || '—'}${p.depth ? ` · ${p.slot}${p.depth} on the depth chart${p.depth === 1 ? ' (starter)' : ''}` : ''}${p.injury ? ` · ${p.injury}` : ''}${avg != null ? ` · ${num(avg)} ${STAT_LABEL[metric]} a game this season` : ''}${projText ? `\n${projText}` : ''}${woText ? `\n${woText}` : ''}${all.length ? `\n${all.join('\n')}` : '\nNo PropFinder line yet'}`;
   return (
-    <button type="button" className={`nhlx-rk-chip${p.injury ? ' is-out' : ''}`} style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }} title={title} onClick={() => open({ key: p.key, player: p, team, opp, venue, market: MARKET_OF[metric] })}>
+    <button type="button" className={`nhlx-rk-chip${p.injury ? ' is-out' : ''}${p.picked ? ' is-pick' : ''}`} style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }} title={title} onClick={() => open({ key: p.key, player: p, team, opp, venue, market: MARKET_OF[metric] })}>
       <span className="nhlx-rk-pic">
         {p.espnId ? <img src={sport.headshotUrl(p.espnId)} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <img src={sport.teamLogo(team)} alt="" loading="lazy" className="is-logo" />}
         <i className="nhlx-rk-num" title={p.depth ? `${p.slot}${p.depth} on PropFinder’s depth chart` : 'roster position'}>{p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</i>
@@ -272,6 +275,7 @@ function PlayersTable({ side, final }) {
 }
 
 function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season }) {
+  const open = useNbaPlayerCard();
   const windows = windowsOf(side.allowed);
   const [win, setWin] = useState('season');
   const view = windows.includes(win) ? win : 'season';
@@ -287,6 +291,7 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
         <img src={sport.teamLogo(side.team)} alt="" width="40" height="40" loading="lazy" />
         <div><b>{sport.teamName(side.team)} <small>{side.venue === 'H' ? 'vs' : 'at'} {sport.teamName(side.opp)}</small></b><small>{withLines} player{withLines === 1 ? '' : 's'} with a line · {side.lineup === 'propfinder' ? 'slots from PropFinder’s depth chart (1 = the starter)' : 'placed by roster position (no depth chart in the pull)'} · zones by what {side.opp} gives up over the tab picked · the chip: the board’s projection tonight (this season’s table, the same figure as the table under the court and the shuffle), the line, the chance</small></div>
       </div>
+      <SidePicks side={side} sport={sport} final={final} onOpen={(pl) => open({ key: pl.key, player: side.players.find((p) => p.key === pl.key) || null, team: side.team, opp: side.opp, venue: side.venue, market: pl.market })} />
       <div className="nhlx-rk-toggle">
         <small>Tint by</small>
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Which stat tints the court">
