@@ -24,9 +24,10 @@ describe('NFL picks: the read', () => {
     expect(chanceOf({ rates: { season: 0.7 }, n: 17, implied: null })).toBeCloseTo((17 * 0.7 + 3) / 23, 3);
     expect(chanceOf({ rates: { all: 0.6 }, n: 8 })).toBeCloseTo((8 * 0.6 + 3) / 14, 3);
     expect(chanceOf({ rates: {}, n: 8 })).toBeNull();
-    // Early-season: this season's three games are padded with last season's.
+    // Early-season: this season's two games are the season read, not last season's; without a game this season, last season's stand in.
     const early = [game('2026-09-20', true), game('2026-09-13', false), ...[true, true, true, false].map((o, i) => ({ ...game(`2025-12-${20 - i}`, o), season: 2025 }))];
-    expect(logRates(early, { market: 'pass_yds', line: 245.5, side: 'over', season: 2026 })).toMatchObject({ seasonN: 6, season: 4 / 6 });
+    expect(logRates(early, { market: 'pass_yds', line: 245.5, side: 'over', season: 2026 })).toMatchObject({ seasonN: 2, season: 0.5, l5: 0.8 });
+    expect(logRates(early.slice(2), { market: 'pass_yds', line: 245.5, side: 'over', season: 2026 })).toMatchObject({ seasonN: 4, season: 0.75 });
   });
   test('form and the soft spot are colour only', () => {
     expect(formOf({ l5: 0.8, l5N: 5, season: 0.6 })).toBe('hot');

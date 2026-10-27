@@ -85,7 +85,7 @@ describe('memo helpers', () => {
 });
 
 describe('the defense tables off one aggregate', () => {
-  const { defenseByPosition, defenseBySlot, blendedDefense, defenseVsTeam, pairRows } = require('../lib/nhl-data/defense');
+  const { defenseByPosition, defenseBySlot, seasonDefense, defenseVsTeam, pairRows } = require('../lib/nhl-data/defense');
   const { h2hTotals } = require('../lib/nhl-data/verdict');
   const { toRow, rowObj } = require('../lib/nhl-data/ingest');
   const game = (id, date) => ({ id, date });
@@ -109,10 +109,12 @@ describe('the defense tables off one aggregate', () => {
     expect(defenseBySlot(rows).teams.FLA.ALL.LW1.sog).toBe(3.5);
     expect(defenseBySlot(rows).teams.FLA.ALL.LW2.gp).toBe(2);
     expect(defenseBySlot(rows).teams.FLA.ALL.LW2.sog).toBe(0);
-    // Blended: this season's game at games / (games + 15) over last season's base (none under 10 games).
-    const blend = blendedDefense(rows, '2025-10-20');
-    expect(blend.teams.FLA.ALL.LW).toMatchObject({ gp: 1, base: 0 });
-    expect(blend.teams.FLA.ALL.LW.sog).toBe(3);
+    // The season table: this season's game alone (last season's one game is under the 10-game base, so it stands in for nothing).
+    const szn = seasonDefense(rows, '2025-10-20');
+    expect(szn.teams.FLA.ALL.LW).toMatchObject({ gp: 1, base: 0 });
+    expect(szn.teams.FLA.ALL.LW.sog).toBe(3);
+    expect(defenseByPosition(rows, { season: 2025 })).toBe(defenseByPosition(rows, { season: 2025 }));
+    expect(defenseByPosition(rows, { season: 2024 }).teams.FLA.ALL.LW).toMatchObject({ gp: 1, sog: 4 });
   });
 
   test('head-to-head reads come off the pair index, kept per rows array', () => {

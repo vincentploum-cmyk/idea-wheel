@@ -1192,9 +1192,9 @@ model reads in place of a skater's season goal rate at tonight's venue, is built
 writes a skater once he has five games at each venue, else he is left out and the model falls back to his season row;
 the history workbook (`buildHistorical`, every skater-game vs each opponent by position) is this season's games alone.
 The season workbook was already this season's rates. Nothing the model is given now reads a previous season except
-the under-five-game fallback. Still reading two seasons, and not a number the goals board makes: the Defense tab's
-Season span (labelled), the 1st goal tab's own-record and first-goals-allowed components, and the similar-shooter
-wash on the team log.
+the under-five-game fallback. Still reading two seasons, and not a number the goals board makes: the 1st goal
+tab's own-record and first-goals-allowed components, and the similar-shooter wash on the team log (the Defense tab's
+Season span went to this season's games the same day, `seasonDefense`).
 
 *Applied 2026-10-27 (`components/nhl/model-core.js`, port into App.jsx): the venue split's share of a skater's goal base and
 the historical-profile multipliers on the goal ladder are cut to a quarter (`VENUE_SPLIT_WEIGHT`, `H2H_WEIGHT`). The split used

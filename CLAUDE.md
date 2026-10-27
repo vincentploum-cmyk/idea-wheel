@@ -130,7 +130,8 @@ config and keeps its own markets, teams, feeds and slate key:
   sport's `FIELDS` spellings, prop lines through `playerProps`, and the pull records
   `fieldsSeen.unread`, shown under Data sources after the first pull. Fix the spellings there
   once a real pull shows them; never guess silently. `defenseAllowed` per position (the
-  positions the Opponent rows carry), ranks 1 = most allowed.
+  positions the Opponent rows carry), ranks 1 = most allowed, this season's rows as published (last
+  season's only before a team's first game, `held`).
 - `injuries.js`: PropFinder's injury report and the without-teammate ("w/o") splits, pulled live with
   the slate, never from a file. The report is `injuryReport` on the games payload the site's own
   pages load (`GET /<LEAGUE>/v2?sportsbooks=…`, read from the bundle 2026-10-27: a JSON string whose
@@ -274,7 +275,7 @@ config and keeps its own markets, teams, feeds and slate key:
   side; else the roster position — three chips a front zone, four a back one, the rest listed under it) — each tinted by what
   tonight's opponent gives up to that position for the stat picked in the tabs above each court (Points ·
   Rebounds · Assists · Threes, `COURT_METRICS`, one setting for the slate as the rink's Shots / Goals switch)
-  over the window picked beside them (Season = this season blended into last season's table; L5 / L10 /
+  over the window picked beside them (Season = this season's table as PropFinder publishes it; L5 / L10 /
   L15 / L20 = PropFinder's `lastNGames` rows as published, `defenseAllowed` → `defense.windows[l5]` with
   their own ranks and `league` = the league's average per position and stat; `windowsOf` / `tableFor` in
   the court, `zoneTone` by rank third, rank 1 = the most permissive), the zone's foot carrying the rank;
@@ -307,7 +308,7 @@ config and keeps its own markets, teams, feeds and slate key:
   clearing it tonight — half his own distribution's tail over the rung (a normal centred on `ownRate` ×
   the opponent's `envFactor` at his spot from the season table, his spread over his last 82 games floored
   at a quarter of the projection, `upperTail`), half how often he actually cleared it (L5 / L10 / season
-  at the board's weights, over his last 82 games until this season has `LADDER_MIN` = 10); no price in
+  at the board's weights, the season rate this season's from his first game); no price in
   the number, the book's price beside its rung; `model`, `emp`, `proj`, `sd`, `env` on every rung). **A side's
   projections add up to the team's expected total tonight**: the pull keeps every team's own per-game row
   (type Team, All) and what it gives up in all (`defense.totals[ABBR].for / .against`, `leagueFor`, the
@@ -327,14 +328,16 @@ config and keeps its own markets, teams, feeds and slate key:
   foot or a table cell names the tile's rank and whether it reads the same third as PropFinder — nothing
   drawn, no ticks, no dashed edges: the user reads the courts for the numbers; the sheet confirms the
   environment, it never changes a number); or the sheet's tiles with ranks only when the slate has no
-  pull). A held table's rows read "last season" in place of the GP count. PropFinder's NBA team rows are per-game figures already (`rowsPerGame: true` in
+  pull). A row standing in from last season reads "last season" in place of the GP count. PropFinder's NBA team rows are per-game figures already (`rowsPerGame: true` in
   `propfinder-nba.js`; 2026-10-20 the table read 0.3 points a game after a second division), and only
-  regular-season rows (`seasonType` REG) make a season table. **The first ten games of the season read off last season**: a player's
-  season window stays last season's (his last 82, this season's few on top) until he has ten games this
-  season (`seasonMin: 10` in `lib/nba/picks.js`, `SEASON_MIN` in the card, whose season tile then reads
-  "'25-'26 +3"), the ladders' rungs the same (`LADDER_MIN`), and a team's season table is last season's
-  alone until it has ten games (`defenseMin: 10` in `propfinder-nba.js`, `held: true` on the row), then
-  the games / (games + 15) blend. A chip shows the book's main line (`playerProps` in `lib/picks/propfinder.js`: of the lines a
+  regular-season rows (`seasonType` REG) make a season table. **A player's season window is this season's from his first game**
+  (`SEASON_MIN` = 1 in `lib/picks/board.js` and in the card; Vincent, 2026-10-27: this season, never last
+  season's; last season's games, his last 82, stand in only until he plays, when the card's season tile
+  reads "'25-'26"), the ladders' rungs' season rate the same. **A team's season table is this season's** as PropFinder publishes it, from its
+  first game (Vincent, 2026-10-27: the Season table reads this season for every sport, never last
+  season's; the ten-game hold and the games / (games + 15) blend that stood in `defenseAllowed` are
+  gone); last season's row stands in only for a team without a game yet (`held: true`), and the
+  court's row reads "last season" until then. A chip shows the book's main line (`playerProps` in `lib/picks/propfinder.js`: of the lines a
   book flags main the one nearest his own last-ten average — a book flags its alternate ladder main too,
   which put Drummond on o1.5 points on 2026-10-20 — else the line priced both ways with the most books;
   the whole ladder rides on the prop as `lines`; preseason rows, seasonType PRE, are left out of the logs
@@ -363,8 +366,8 @@ config and keeps its own markets, teams, feeds and slate key:
   Data: `GET /api/nba/player?key&date` → `playerFor` in `lib/picks/store.js` (the slate's PropFinder
   pull: his logs newest first, his props with their ladders, the game, the opponent's rows with ranks,
   `league` and `windows`); the plays ride in from the opener. Hit rates and splits are
-  computed in the card (`hitRate`, `splitGames`: season = this season's games once three are
-  played, else the last 82). Usage rate, rebound chances and potential assists (PropFinder's
+  computed in the card (`hitRate`, `splitGames`: season = this season's games from his first,
+  else his last 82). Usage rate, rebound chances and potential assists (PropFinder's
   player-summary figures) are read per game row as optional `FIELDS` (`usg`, `rebCh`, `potAst`;
   `optional: true` reads null when the row lacks the key, so an unknown spelling shows as "—" on
   the card and in the pull's unread list, never as 0) and averaged per split in the top bar and
@@ -455,9 +458,12 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   `/api/nhl/data/defense`, which also carries the date's games and MoneyPuck's team rates) is the ShotPropz-style cheat sheet:
   what every team gives up to each position group (C / LW / RW / D, C / W / D, F / D) in shots or goals **per skater at the
   position** a game (the study's read, section 13; `per` on every `defenseByPosition` cell, groups weighted by the skaters they
-  carry), the Season span = `blendedDefense`: this season blended into last season's table at games / (games + 15) for shots and
-  games / (games + 40) for goals (GP shows "this + last"; regular seasons only, last season's playoff rows are not loaded),
-  L10 / L5 the newest stored regular-season games across the seasons, by where the
+  carry), the Season span = `seasonDefense`: this season's stored games alone (Vincent, 2026-10-27; last season's table
+  stands in for a team without a game yet at the venue, GP "last season"; the games / (games + 15) blend is gone from the
+  tab, the study's λ keeps its own in `picks-pure.js`; the slot and first-goal Season tables, and the stored-games season
+  tables behind the rinks, verdicts and characteristics, are this season's rows too — `season` on `defenseTablesFor`,
+  the last-N windows and the head to head still across the boundary), L10 / L5 the newest stored regular-season games across the seasons (last season's playoff rows are not
+  loaded, `loadRows`), by where the
   defender plays, rank 1 = the most allowed with ties shared, tinted by rank thirds; above the tables
   tonight's matchups read off the same tables (`matchupReads`, each shooting side's softest spot first, with the shooters the
   slate's lineup has at that spot named and clickable, `shootersAt`; the API's `tonight` games carry `sides[].skaters` from
@@ -590,10 +596,16 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   it beside the board's λ (`modelOpp`), and nothing on the board reads it until that table says it predicts better.
   The panel opens on the read the History tab's scorecard rates best for the active bar (`readFromOf`: the
   tab pressed this session, else the verdict, else the board's λ), that tab green (`is-best`), the note saying which
-  is on and why. It reads the scorecard once a page load (`bestReadFrom` in `shuffle-pure.js`: each
-  read's Brier at the bar's floor height — the scorecard's model / matchup (`modelOpp`, goals only) / study / own5 / own10 / ownSeason predictors on the
-  rows every predictor covers, 100 at least; `READ_FROM_PREDICTOR`) and follows that verdict until a tab is pressed, the figures in the note
-  under the tabs. One request a slate, every bar move local; no
+  is on and why. The verdict is stored (`lib/nhl-data/best-read.js`, `data/scorecard/best-read.json`: one
+  `bestReadFrom` result per bar — each read's Brier at the bar's floor height, the scorecard's model / matchup (`modelOpp`, goals only) / study / own5 /
+  own10 / ownSeason predictors (`READ_FROM_PREDICTOR`) on the rows every predictor covers, 100 at least — written by every season-range
+  `buildScorecard`, i.e. the History tab's first grade and the morning refresh in the background after `dailyRefresh`,
+  never rewritten unchanged since a write drops the per-state builds; the scorecard itself reads every stored game and
+  run, tens of seconds on a cold server, so the shuffle never waits for it) and rides on `GET /api/nhl/data/shuffle`
+  as `bestRead`, so the tab is green on first paint and the note says when the verdict was built; only without a
+  stored verdict does the panel build the scorecard live, once a page load, with "grading…" on the row meanwhile
+  (2026-10-27: the tab stayed uncoloured while that build ran). It follows the verdict until a tab is pressed, the
+  figures in the note under the tabs. One request a slate, every bar move local; no
   number on the board changes. The chance at 1+ G is the
   run's own 1+ G figure (`fromModel` keeps the run's three-decimal λ), the Model tab's Top goals board ranks by that
   same figure (`scoreTopBoardRow` in `NhlModel.jsx`: shots by 3+, goals by 1+, points by 1+, the next rung breaking
@@ -691,7 +703,7 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   bundled `lib/nhl-data/seed/propfinder-<year>.js` is the fallback, regenerated with
   `node tools/propfinder-seed.mjs <season> <csv…>`). They are descriptive views, not model
   inputs; the slate's defense edges fall back to the per-position opponent tables while a
-  team has fewer than 10 stored games at a venue.
+  team has fewer than 10 stored games at a venue this season.
 - Player card (`components/nhl/PlayerCard.jsx`, data from `/api/nhl/data/player`): laid out as
   PropFinder's player view — top bar (headshot, position badge, shot form, graph average, average
   TOI; the badge is the night's lineup slot, "LW1 tonight", read from the position snapshot for the
@@ -757,8 +769,7 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   before his fifth game, his last 5 / 10 / 20 across the boundary, the flame / snowflake, the Defense tab's spans and track record, the
   profiles, the first-goal record, the history and home / away workbooks the model is given; this season's rows come
   whole, so the playoffs under way in April–June are the data. The opponent's table in any number is this season's
-  (`positionAllowed`, `defenseBlocks`); the Defense tab's Season span alone still blends the two regular seasons and
-  says so in its GP. (Vincent's call, 2026-10-27: the final games of a season on record are playoff games and read
+  (`positionAllowed`, `defenseBlocks`, and the Defense tab's `seasonDefense`). (Vincent's call, 2026-10-27: the final games of a season on record are playoff games and read
   over to nothing; the teams on the ice are this season's.)
 - Keep the model's math untouched when restyling; port logic changes from the local app into
   `components/nhl/model-core.js` (pipeline) and `NhlModel.jsx` (UI). One change went the other

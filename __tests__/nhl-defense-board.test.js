@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { defenseByPosition, blendedDefense } from '../lib/nhl-data/defense';
+import { defenseByPosition, seasonDefense } from '../lib/nhl-data/defense';
 import { boardTables, overviewRows, matchupReads, rankDesc, groupKeyFor, shootersAt, figureFor, resultsAt } from '../lib/nhl-data/defense-board';
 
 // Three games: NYR at NJD, BOS at NJD, NJD at BOS. One skater per position per side.
@@ -44,32 +44,38 @@ describe('defense board', () => {
     expect(d.teams.NJD.ALL.LW.per.sog).toBeCloseTo(2.667, 3);
     expect(boardTables(d, { metric: 'sog' }).LW.rows[0]).toMatchObject({ abbr: 'NJD', value: 2.667, gp: 2, base: 0 });
   });
-  test('the blended season table: this season at games / (games + 15) for shots, games / (games + 40) for goals, over a 10-game base', () => {
+  test('the season table: this season’s stored games alone, last season’s standing in until a team’s first game', () => {
     // Last season: NJD allowed its centres 2 shots and 0.2 goals a game over 20 games; this season 6 and 1 over 2 games.
     const prev = [];
     for (let i = 0; i < 20; i++) prev.push(row('2025-11-01', 100 + i, 'BOS', 'NJD', 'A', 'C', 2, i < 4 ? 1 : 0));
     const cur = [row('2026-10-01', 1, 'NYR', 'NJD', 'A', 'C', 6, 1), row('2026-10-03', 2, 'BOS', 'NJD', 'A', 'C', 6, 1)];
-    const b = blendedDefense([...prev, ...cur], '2026-10-05');
+    const b = seasonDefense([...prev, ...cur], '2026-10-05');
     const c = b.teams.NJD.ALL.C;
-    expect(c).toMatchObject({ gp: 2, base: 20, skaters: 1 });
-    expect(c.per.sog).toBeCloseTo((2 / 17) * 6 + (15 / 17) * 2, 2);
-    expect(c.per.g).toBeCloseTo((2 / 42) * 1 + (40 / 42) * 0.2, 2);
-    expect(c.sog).toBeCloseTo((2 / 17) * 6 + (15 / 17) * 2, 1);
-    // The shooters were away, so NJD defended at home only: no away table; a team with no record in either season is absent.
+    // This season's two games alone: no blend with last season's 2 a game.
+    expect(c).toMatchObject({ gp: 2, base: 0, skaters: 1, sog: 6, g: 1 });
+    expect(c.per.sog).toBe(6);
+    expect(c.per.g).toBe(1);
+    expect(c.held).toBeUndefined();
+    expect(b.season).toBe(2026);
+    // The shooters were away, so NJD defended at home only: no away table this season, and last season's was away too.
     expect(b.teams.NJD.A.C).toBeUndefined();
     expect(b.teams.NJD.H.C.gp).toBe(2);
     expect(b.teams.NYR).toBeUndefined();
-    expect(b.blended).toBe(true);
-    // The board reads the blend and shows the base.
-    expect(boardTables(b, { metric: 'sog' }).C.rows[0]).toMatchObject({ abbr: 'NJD', gp: 2, base: 20, value: 2.471, rank: 1 });
-    // Under a 10-game base last season counts for nothing: this season alone.
-    const thin = blendedDefense([...prev.slice(0, 5), ...cur], '2026-10-05');
-    expect(thin.teams.NJD.ALL.C).toMatchObject({ gp: 2, base: 0 });
-    expect(thin.teams.NJD.ALL.C.per.sog).toBe(6);
-    // Nothing this season yet: last season's table alone, gp 0.
-    const none = blendedDefense(prev, '2026-10-05');
-    expect(none.teams.NJD.ALL.C).toMatchObject({ gp: 0, base: 20 });
-    expect(none.teams.NJD.ALL.C.per.sog).toBe(2);
+    expect(boardTables(b, { metric: 'sog' }).C.rows[0]).toMatchObject({ abbr: 'NJD', gp: 2, base: 0, value: 6, rank: 1 });
+    // The same rows a season on (nothing of 2027-28 stored yet): two games last season are under the 10-game base, so nothing stands in.
+    const none = seasonDefense([...prev, ...cur], '2027-10-05');
+    expect(none.teams.NJD.ALL.C).toBeUndefined();
+    expect(none.season).toBe(2027);
+    // Nothing this season yet and a 20-game last season: last season's cell, gp 0, base 20; under 10 games it stands in for nothing.
+    const early = seasonDefense(prev, '2026-10-05');
+    expect(early.teams.NJD.ALL.C).toMatchObject({ gp: 0, base: 20, held: true });
+    expect(early.teams.NJD.ALL.C.per.sog).toBe(2);
+    expect(boardTables(early, { metric: 'sog' }).C.rows[0]).toMatchObject({ abbr: 'NJD', gp: 0, base: 20, value: 2 });
+    expect(seasonDefense(prev.slice(0, 5), '2026-10-05').teams.NJD.ALL.C).toBeUndefined();
+    // defenseByPosition with a season counts that season's rows alone; without one, every row.
+    expect(defenseByPosition([...prev, ...cur], { season: 2026 }).teams.NJD.ALL.C.gp).toBe(2);
+    expect(defenseByPosition([...prev, ...cur], { season: 2025 }).teams.NJD.ALL.C.gp).toBe(20);
+    expect(defenseByPosition([...prev, ...cur]).teams.NJD.ALL.C.gp).toBe(22);
   });
   test('the venue is where the defender played; a team with no game there is left out', () => {
     const home = boardTables(defense, { metric: 'g', venue: 'H' });

@@ -5,6 +5,7 @@ import { loadPropfinder } from '@/lib/nhl-data/propfinder';
 import { defenseTablesFor, opponentDefense, moneypuckBlock } from '@/lib/nhl-data/slate';
 import { teamVerdict } from '@/lib/nhl-data/verdict';
 import { shotProfiles, ratioRanks, teamCharacteristics } from '@/lib/nhl-data/characteristics';
+import { seasonYearOf } from '@/lib/nhl-data/picks-pure';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,7 +25,7 @@ export async function GET(request) {
   if (!DATE_RE.test(asOf)) return Response.json({ error: 'bad date' }, { status: 400 });
   try {
     const [rows, mp, pf] = await Promise.all([loadRows(addDays(asOf, 1)), loadMoneyPuck().catch(() => ({ teams: null, games: null })), loadPropfinder().catch(() => ({ opponentsByPos: null }))]);
-    const tables = defenseTablesFor(rows, pf);
+    const tables = defenseTablesFor(rows, pf, { season: seasonYearOf(asOf) });
     const moneypuck = moneypuckBlock(mp);
     const ratios = ratioRanks(moneypuck);
     const profiles = shotProfiles(rows, asOf);
