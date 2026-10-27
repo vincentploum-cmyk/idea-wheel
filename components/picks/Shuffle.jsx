@@ -185,7 +185,7 @@ export default function Shuffle({ sport, onOpen = null }) {
             <>
               <div className="nhlx-pfd-head" style={{ marginTop: 14 }}>
                 <b>Clear {height}+ {unitOf(active)}</b>
-                <small className="nhlx-auto-meta">{survivors.length} of {d.players.length} players · read from {fromLabel.toLowerCase()} · sorted by edge at the bar, then the chance · the book column is the rung at the bar, or the nearest one above it{onOpen ? ' · click a row for the card' : ''}</small>
+                <small className="nhlx-auto-meta">{survivors.length} of {d.players.length} players · read from {fromLabel.toLowerCase()} · sorted by the projection, then the chance · the book column is the rung at the bar, or the nearest one above it{onOpen ? ' · click a row for the card' : ''}</small>
               </div>
               <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
                 <table className="nhlx-db-table nhlx-pk-table ir-sh-table">

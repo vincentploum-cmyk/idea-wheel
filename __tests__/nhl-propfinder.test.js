@@ -250,6 +250,29 @@ describe('recent-games windows rolled from the stored box scores', () => {
     expect(propfinderDefenseTabs({ ...pf2026, opponentsByWindow: { l5: { season: 2026, teams: { T1: { gp: 5, g: 1 } }, ranks: {} } }, opponentsByPosWindow: {} }, 'NSH', null, { rows }).tabs.map((t) => t.key)).toContain('l5');
     expect(withStoredWindows(pf2026, [])).toBe(pf2026);
   });
+
+  test('a team missing from a league-wide pulled window reads its stored window (CBJ had no L10 tab, 2026-10-27)', () => {
+    // PropFinder lists an L10 row only for the teams with ten games this season: 31 teams, NSH not among them.
+    const league = Object.fromEntries(Array.from({ length: 31 }, (_, i) => [`T${i}`, { gp: 10, g: 2 + (i % 3), sog: 30 }]));
+    const ranks = Object.fromEntries(Object.keys(league).map((a) => [a, { g: 1, sog: 1 }]));
+    const pf = { ...pf2026, opponentsByWindow: { l10: { season: 2026, teams: league, ranks, count: 31 } }, opponentsByPosWindow: { l10: { LW: { season: 2026, teams: league, ranks, count: 31 } } } };
+    const merged = withStoredWindows(pf, rows);
+    // The pulled table is kept with NSH's last eight games (across the boundary) added: 22 goals over 8.
+    expect(merged.opponentsByWindow.l10.teams.T3).toEqual(league.T3);
+    expect(merged.opponentsByWindow.l10.teams.NSH).toMatchObject({ gp: 8, g: 2.75 });
+    expect(merged.opponentsByWindow.l10.ranks.NSH.g).toBe(22); // under the ten teams at 4, the ten at 3 and MTL at 4, over the eleven at 2
+    expect(merged.opponentsByWindow.l10.stood).toEqual({ NSH: 'stored', MTL: 'stored' });
+    expect(merged.opponentsByWindow.l10.count).toBe(33);
+    expect(merged.opponentsByPosWindow.l10.LW.teams.NSH.g).toBe(2.75);
+    const d = propfinderDefenseTabs(pf, 'NSH', null, { rows });
+    expect(d.tabs.map((t) => t.key)).toEqual(expect.arrayContaining(['l5', 'l10', 'l15']));
+    expect(d.tabs.find((t) => t.key === 'l10')).toMatchObject({ source: 'stored', rows: { All: { gp: 8, g: 2.75 } } });
+    expect(d.tabs.find((t) => t.key === 'l10').rows.All.ranks.g).toBe(22);
+    // A team PropFinder lists keeps its published row and no "stored" mark.
+    const t3 = propfinderDefenseTabs(pf, 'T3', null, { rows }).tabs.find((t) => t.key === 'l10');
+    expect(t3.rows.All.g).toBe(2);
+    expect(t3.source).toBeUndefined();
+  });
 });
 
 describe('defense tabs without holes', () => {

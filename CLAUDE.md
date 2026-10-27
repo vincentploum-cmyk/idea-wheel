@@ -87,7 +87,7 @@ config and keeps its own markets, teams, feeds and slate key:
   this season alone from three games), the opponent's rank at his spot and, once final, his figure; one request a
   market, every bar move local. `components/picks/Shuffle.jsx` (on both boards, above the tables; the NBA's rows open
   the card): the bars with the count of survivors at the floor ("keep players at 35% or better"), the curve of
-  survivors per height, the survivors at the bar sorted by edge (the chance there with its fair price, how often he
+  survivors per height, the survivors at the bar sorted by the projection, the highest on top (Vincent, 2026-10-27; by edge before), then the chance (the chance there with its fair price, how often he
   cleared it, the book's rung at the bar or the nearest above it with its price and edge, his projection — the board's, with
   its unit and the quartiles of his range, the Projected column that replaced Thins out on 2026-10-27 (Vincent: the projected
   points / rebounds / yards per player must be on the row); the Centre column, the window × the matchup the chance is read
@@ -605,7 +605,10 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   is never the default), `defaultDefenseTab` in `propfinder-csv.js`; the rink's tint defaults to PropFinder (this
   season's tab) when the opponent has a table, else to the Rink's stored games;
   a window PropFinder's API has not published for the current season is rolled from the stored
-  box scores across the season boundary by `withStoredWindows`, the way PropFinder's own L5 counts),
+  box scores across the season boundary by `withStoredWindows`, the way PropFinder's own L5 counts; a window
+  published for the league that lacks a team short of its games this season — CBJ had L5 and L15 and no L10
+  above its rink on 2026-10-27 — gets that team's row from the stored window, ranked among the table's teams,
+  `stood` on the table and the tab marked `source: 'stored'`, `withStoodTeams`),
   chips carrying the latest saved model run's λ shots / goals for the slate date from
   `lib/nhl-data/model-runs.js`, or a matchup read when no run exists; at the top of each rink card the model's plays
   for that team (`sidePlays` in `slate.js`, `ModelPlays` in `Rink.jsx`): the Best bets boards' rule, `boardPlays` in
@@ -654,11 +657,14 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   the list at the top of Best bets): the best shots plays and the best goal plays in every game: every skater over
   the floor (P(3+ SOG) 50%, P(1+ G) 35%), three to four a table (fill-ins marked `under`, the rest on a "next" line; a run row whose 3+ / 4+ pair is inverted is read off its λ; the run carries no 2+, it is read off the λ), with the break-even price, and the notes
   (softest spots, richest game, environment plays, near-ties, thin games, lineup sources) written from the picks.
-  The numbers are the model's: with a run saved for the date, each row is the run's λ and 2+ / 3+ / 4+ SOG and 1+ G
-  probabilities (`fromModel`) and only skaters the run projected are listed; the study's plain-rate read (fixed
+  The shots numbers are the model's: with a run saved for the date, each row is the run's λ and 2+ / 3+ / 4+ SOG
+  probabilities (`fromModel`) and only skaters the run projected are listed; the 1+ G is the study's read since
+  2026-10-27 (`studyWeightGoals`, the scorecard bullet below); the study's plain-rate read (fixed
   Poisson coefficients fitted on 2024-25 + 2025-26 by `tools/predictors/replay.py`, log features: the skater's rate,
   attempts, chances and TOI, this season's alone from his fifth game (`blendRates`; last season's regular season stands
-  in until then, `held`); home ice; back-to-back; and what the opponent allows **per skater at his position** this season
+  in until then, `held`; his goal rate shrunk toward the league's at his position at n / (n + 8) within the season,
+  `GOAL_RATE_SHRINK` in `project`, a held rate not shrunk — the 2026-10-27 replay had raw this-season reads over 40%
+  running 5–10 points high, 0.6+ scorers said .39 and hit .31 / .35, calibrated at k = 8); home ice; back-to-back; and what the opponent allows **per skater at his position** this season
   (`positionAllowed`; last season's regular season only for a team with no game yet, `held`). Vincent's call, 2026-10-27,
   twice over: this season's rate and this season's table — the study's n / (n + 18), n / (n + 40) and games / (games + 15),
   games / (games + 40) blends stay on record in sections 3, 13, 15 and 16 and in no number) rides on
@@ -693,7 +699,7 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   the study's λ beside them, `ownOf` = his last 5 / 10 / 20 and this season's mean shots and goals from the stored
   rows with how many of his last ten and of this season's games reached each height, the opponent's rank at his
   position, `heat`, `actual` once final), the chance at a height the Poisson tail of the λ (`chanceAt`: 3+ here is
-  the board's 3+ figure, 6+ the same λ further up), survivors at the floor sorted by the chance with the break-even
+  the board's 3+ figure, 6+ the same λ further up), survivors at the floor sorted by the projected figure, the board's λ, the highest on top (Vincent, 2026-10-27; by the chance before), then the chance, with the break-even
   price, how often he reached the bar, his projected shots or goals (the board's λ with its unit: the Projected column that
   replaced Thins out on 2026-10-27; the Centre column, the λ the chance is read from, shows only when the read is not the
   board's) and Got once final; the fallen strip under it, each with the bar he still clears. The **Matchup column reads the
@@ -705,7 +711,10 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   tab's L10 read #20 — two tables and two units, per skater against per game, for one matchup); the study's per-skater table
   (`oppPos`, what the study's λ reads) stands in for a team without one, marked "stored" and named in the hover; colour only,
   no number moves with the tab, and the row carries no soft-spot flag (the cell shows the environment, as the ice does under
-  a rink chip). "Read
+  a rink chip). Beside "Matchup from", **Position** (`POSITIONS` / `atPosition` in `shuffle-pure.js`: All · C · LW ·
+  RW · D; Vincent's ask, 2026-10-27, to shuffle the defensemen or the left wings alone): the bars' counts, the curve,
+  the list and the fallen strip read the picked position's skaters alone, and every row carries his line slot tonight
+  (LW1, D2, the rink chip's badge; the position alone when the lineup has no slot for him). "Read
   from" (`READ_FROM`) moves the λ to the study's or a window of his own results (a window he lacks falls back to the
   board's), or, on the goals bar, to the run's own goal λ with the opponent in it ("Model · matchup",
   `goalOpportunityLambda` on the result rows → `gOpp` in `indexModelRows` → `lamGOpp` on the candidate and the shuffle
@@ -864,9 +873,15 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   run's matchup goal λ (`modelOpp`, `goalOpportunityLambda` on the result rows, goals only; `lambdaGOpp` on the
   `?rows=1` export) —
   scored beside λ on the rows every covered predictor shares (MAE, bias, Poisson 3+ SOG / 1+ G Brier).
-  Descriptive only; nothing feeds the model. The board blends only through `NHL_PICKS_STUDY_WEIGHT` on
+  Descriptive only; nothing feeds the model. The board's shots blend only through `NHL_PICKS_STUDY_WEIGHT` on
   Render (the study's share, `blendProjection` in `picks-pure.js`, `studyWeight` in `picks.js`; unset =
-  the model alone), to be set once that table shows the blend beating the model. The same comparison runs
+  the model alone), to be set once that table shows the blend beating the model. **The board's goals read the
+  study's λ** since 2026-10-27 (`studyWeightGoals`: `NHL_PICKS_STUDY_WEIGHT_GOALS`, 1 unless set, 0 = the run's goal λ
+  back; `blendProjection`'s fourth argument; the shuffle's head and note say so): Vincent's call on the FLA @ WPG board
+  after the day's input changes — the run's published goal λ is built from his points rate, so Connor on nine goals in
+  eleven games read 28% and Reinhart fell from 28% to 21% on an unchanged goal rate as his assists dropped, while the
+  study's λ reads his goal rate, chances and shots this season, home ice and the opponent's row at his position (the
+  data study's section 16: his goal rate is the forecast). The scorecard's "board" replay still grades the run's rows. The same comparison runs
   offline on the `?rows=1` export with `tools/predictors/grade_blend.py`.
 - MoneyPuck team metrics (`lib/nhl-data/moneypuck.js`, `data/moneypuck/*`) feed the team
   page, Matchups defense cards and League; credit MoneyPuck.com wherever shown.

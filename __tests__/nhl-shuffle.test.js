@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { NHL_BARS, READ_FROM, HEIGHTS, heightsOf, ownOf, skaterRow, lambdaOf, chanceAt, readAt, thinsAt, survivorsAt, fallenAt, curveOf, trimDefenseTabs, matchupTabs, matchupTabOf, matchupOf } from '../lib/nhl-data/shuffle-pure';
+import { NHL_BARS, READ_FROM, HEIGHTS, POSITIONS, atPosition, heightsOf, ownOf, skaterRow, lambdaOf, chanceAt, readAt, thinsAt, survivorsAt, fallenAt, curveOf, trimDefenseTabs, matchupTabs, matchupTabOf, matchupOf } from '../lib/nhl-data/shuffle-pure';
 import { poissonAtLeast, fairOdds } from '../lib/nhl-data/picks-pure';
 
 const row = (date, sog, g) => ({ date, sog, g, icf: sog * 1.8, iscf: 1.5, toi: 17 });
@@ -10,6 +10,16 @@ const cand = { id: 7, name: 'David Pastrnak', team: 'BOS', opp: 'DET', venue: 'H
   oppPos: { sog: 1.9, g: 0.3, rankSog: 3, rankG: 5, teams: 32, softSog: true, softG: true }, spot: { source: 'propfinder', rankSog: 6, softSog: true }, heat: { shots: 'hot', goals: null } };
 
 describe('the NHL shuffle', () => {
+  test('the position filter: every skater, one position, or the forwards together', () => {
+    expect(POSITIONS.map(([k]) => k)).toEqual(['All', 'C', 'LW', 'RW', 'D']);
+    const rows = [{ id: 1, pos: 'C', line: 1 }, { id: 2, pos: 'LW', line: 2 }, { id: 3, pos: 'D', line: 1 }, { id: 4, pos: 'RW', line: null }, { id: 5, pos: null }];
+    expect(atPosition(rows, 'All')).toBe(rows);
+    expect(atPosition(rows)).toBe(rows);
+    expect(atPosition(rows, 'D').map((r) => r.id)).toEqual([3]);
+    expect(atPosition(rows, 'LW').map((r) => r.id)).toEqual([2]);
+    expect(atPosition(rows, 'F').map((r) => r.id)).toEqual([1, 2, 4]);
+    expect(atPosition(rows, 'G')).toEqual([]);
+  });
   test('two bars, shots 1 to 8 and goals 1 to 4, with their floors', () => {
     expect(NHL_BARS.map((b) => [b.market, b.start, b.floor])).toEqual([['sog', 3, 0.5], ['g', 1, 0.35]]);
     expect(heightsOf(NHL_BARS[0])).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
@@ -84,7 +94,8 @@ describe('the NHL shuffle', () => {
     expect(at3[0].thins).toBe(thinsAt(rows[0], 'sog', 0.5));
     expect(at3[0].thins).toBeGreaterThanOrEqual(3);
     const at2 = survivorsAt(rows, 'sog', 2, 0.5);
-    expect(at2.map((x) => x.row.name)).toEqual(['David Pastrnak', 'Charlie McAvoy']);   // the best chance first
+    expect(at2.map((x) => x.row.name)).toEqual(['David Pastrnak', 'Charlie McAvoy']);   // the highest λ first
+    expect(at2[0].row.lamS).toBeGreaterThan(at2[1].row.lamS);
     expect(fallenAt(rows, 'sog', 3, 0.5).map((x) => x.row.name)).toEqual(['Charlie McAvoy', 'Pavel Zacha']);
     const curve = curveOf(rows, 'sog', 0.5);
     expect(curve[0]).toEqual({ height: 1, n: 3 });
@@ -94,6 +105,12 @@ describe('the NHL shuffle', () => {
     // Reading from his last five moves the field: 3.2 a game instead of the board's 4.2.
     expect(survivorsAt(rows, 'sog', 4, 0.5, 'l5')).toHaveLength(0);
     expect(survivorsAt(rows, 'sog', 4, 0.5, 'model')).toHaveLength(1);
+    // The board's λ ranks the list whichever read is on: a skater hot over his last five has the higher chance
+    // at the bar read from them, but the higher projection stays on top.
+    const hot = { ...skaterRow({ ...cand, id: 10, name: 'Morgan Geekie', pos: 'LW', lamS: 2.4 }), own: { l5: { sog: 5.2, g: 0.6 } } };
+    const fromL5 = survivorsAt([rows[0], hot], 'sog', 3, 0.5, 'l5');
+    expect(fromL5.map((x) => x.row.name)).toEqual(['David Pastrnak', 'Morgan Geekie']);
+    expect(fromL5[1].read.p).toBeGreaterThan(fromL5[0].read.p);
   });
 });
 
