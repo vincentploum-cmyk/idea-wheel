@@ -1467,3 +1467,70 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-range-got { display: block; font-size: 11px; color: var(--muted); }
 .ir-range-cell.is-hit .ir-range-got { color: var(--ok-fg); }
 .ir-range-cell.is-miss .ir-range-got { color: var(--bad-fg); }
+
+/* ── The shuffle (components/picks/Shuffle.jsx): a bar per stat, the field falls away as it rises ── */
+.ir-sh { margin: 0 0 22px; padding: 16px 18px 14px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--card); }
+.ir-sh-head { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: flex-start; justify-content: space-between; }
+.ir-sh-head > div:first-child { flex: 1 1 420px; min-width: 0; }
+.ir-sh-title { font-size: 18px; }
+.ir-sh-title small { font-family: var(--font-ui); font-weight: 400; font-size: 13px; color: var(--muted); margin-left: 8px; }
+.ir-sh-floor { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 14px; color: var(--body); }
+.ir-sh-floor label { display: inline-flex; align-items: center; gap: 8px; }
+.ir-sh-floor select.nhlx-input-sm { width: auto; min-width: 84px; }
+.ir-sh-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 16px 32px; margin-top: 12px; align-items: start; }
+.ir-sh-bars { display: flex; flex-direction: column; gap: 2px; }
+.ir-sh-bar { display: grid; grid-template-columns: 104px minmax(0, 1fr) 76px 150px; gap: 12px; align-items: center; padding: 7px 10px; border-radius: var(--radius); }
+.ir-sh-bar.is-active { background: var(--bg-tint); }
+.ir-sh-bar-label { all: unset; cursor: pointer; font-weight: 600; color: var(--heading); font-size: 14.5px; }
+.ir-sh-bar.is-active .ir-sh-bar-label { color: var(--primary); }
+.ir-sh-bar input[type="range"] { width: 100%; accent-color: var(--primary); margin: 0; }
+.ir-sh-bar-val { text-align: right; line-height: 1.1; }
+.ir-sh-bar-val b { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: var(--heading); font-variant-numeric: tabular-nums; }
+.ir-sh-bar-val small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+.ir-sh-bar-count { text-align: right; font-size: 13px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ir-sh-bar-count b { color: var(--heading); font-size: 15px; }
+.ir-sh-side { padding-top: 4px; }
+.ir-sh-curve { display: flex; align-items: flex-end; gap: 3px; height: 72px; margin: 26px 0 24px; }
+.ir-sh-curve.is-empty { align-items: center; justify-content: center; color: var(--muted); font-size: 13px; border: 1.5px dashed var(--line-strong); border-radius: var(--radius); }
+.ir-sh-step { all: unset; flex: 1; position: relative; min-height: 2px; background: var(--primary-line); border-radius: 3px 3px 0 0; cursor: pointer; }
+.ir-sh-step:hover { background: var(--primary-hover); }
+.ir-sh-step.is-on { background: var(--primary); }
+.ir-sh-step i { position: absolute; left: -12px; right: -12px; top: -17px; text-align: center; font-size: 11px; font-style: normal; color: var(--body); font-variant-numeric: tabular-nums; }
+.ir-sh-step span { position: absolute; left: -12px; right: -12px; bottom: -18px; text-align: center; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ir-sh-step.is-on i, .ir-sh-step.is-on span { color: var(--heading); font-weight: 600; }
+.ir-spot { display: inline-flex; align-items: center; padding: 0 7px; border-radius: 5px; font-size: 12px; font-weight: 600; line-height: 20px; white-space: nowrap; background: var(--bg-soft); color: var(--muted); }
+.ir-spot.is-soft { background: var(--pf-soft-chip); color: var(--pf-soft-fg); }
+.ir-spot.is-mid { background: var(--pf-mid-chip); color: var(--pf-mid-fg); }
+.ir-spot.is-tough { background: var(--pf-tough-chip); color: var(--pf-tough-fg); }
+.ir-sh-table td.is-best b { color: var(--ok-fg); }
+.ir-sh-table td.small { font-size: 13px; }
+.ir-sh-check { color: var(--ok-fg); font-size: 12px; }
+.ir-sh-fell { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
+.ir-sh-fell > small { flex: 0 0 100%; margin-bottom: 2px; }
+.ir-sh-fell span { padding: 2px 9px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.ir-sh-fell span b { color: var(--bad-fg); font-weight: 600; margin-left: 5px; }
+.ir-sh-fell span i { font-style: normal; color: var(--muted); }
+@media (max-width: 991px) {
+  .ir-sh-grid { grid-template-columns: minmax(0, 1fr); }
+  .ir-sh-curve { margin-top: 24px; }
+}
+@media (max-width: 575px) {
+  .ir-sh { padding: 14px 12px 12px; }
+  .ir-sh-bar { grid-template-columns: 76px minmax(0, 1fr) 64px; gap: 8px; padding: 6px 6px; }
+  .ir-sh-bar-count { grid-column: 2 / -1; text-align: left; font-size: 12px; }
+  .ir-sh-bar-val b { font-size: 17px; }
+  .ir-sh-step i, .ir-sh-step span { font-size: 10px; }
+}
+
+/* ── The picks scorecard (components/picks/Scorecard.jsx) ── */
+.ir-sc { margin-top: 36px; padding-bottom: 8px; border-bottom: 0; }
+.ir-sc-head { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: flex-end; justify-content: space-between; }
+.ir-sc-head > div:first-child { flex: 1 1 420px; min-width: 0; }
+.ir-sc-range { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; }
+.ir-sc-range input.nhlx-input-sm { width: auto; }
+.ir-sc-sum { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 14px 0 4px; font-size: 14px; color: var(--muted); }
+.ir-sc-sum b { color: var(--heading); }
+.ir-sc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); gap: 14px; margin-top: 12px; align-items: start; }
+@media (min-width: 900px) { .ir-sc-wide { grid-column: span 2; } }
+.ir-sc .nhlx-sc-table td small { display: inline; margin-left: 4px; }
+@media (max-width: 575px) { .ir-sc-grid { grid-template-columns: minmax(0, 1fr); } }
