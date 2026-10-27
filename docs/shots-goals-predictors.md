@@ -1,5 +1,6 @@
 # What predicts a skater's shots and goals? (2026-27 to date, 2025-26 as the control)
 
+Revision 9 (2026-10-27): is a defense weak against a *line* (LW1 rather than LW3)? The slot-level allowance tested for persistence within and across seasons and as a leak-free predictor beyond the position read (section 15, `tools/predictors/slots.py`).
 Revision 8 (2026-10-27): section 10's rink and PropFinder tints regraded on 187 games; the windows graded as *filters*, the way a props screen uses them (section 14): L5 / L10 / L15 / L20, L10 at tonight's venue, season to date, last season, the blend and the shipped formula ranked per slate on 2025-26 and on this season through Oct 26; this season's own L5 / L10 / season comparison for the opponent's tables now that teams have 8 to 14 games.
 Revision 7 (2026-10-20): the goal odds step replaced the same way as the shots one, on the Oct 13-20 grade (section 12).
 Revision 6 (2026-10-15): every angle at once (section 13): venue splits, pace, line slot, the opposing goalie, L5 / L10 / L15, head to head, rest, two-season priors, the opponent's tables per skater at the position and blended across the season boundary; the formulas replayed on this season's 3,852 skater-games and graded; the Best bets plain-rate read refitted (`picks-pure.js`).
@@ -1036,3 +1037,96 @@ goals table +.0030 (z 3.8) and the blend +.0024 on the 4,529 rows, the this-seas
 Rerun: `tools/predictors/run.sh 2026`, then `python3 -I tools/predictors/filters.py .nhl-data/predictors/2026/games-pos
 .nhl-data/predictors/2025/games-pos .nhl-data/predictors/2026/rows.csv "2026-27"` (and the same on the 2025 rows with
 2024 as the previous season for the control).
+
+## 15. Is a defense weak against a line? LW1 against LW3 (2026-10-27)
+
+**Question.** The Defense tab and the rinks read what a team gives up per skater at a *position* (C / LW / RW /
+D). The site also stores each skater's lineup slot (LW1 … RW4, D1 … D3), so the sharper read is on the table:
+is a team generally weak against first lines, or against third lines, and if it has allowed a lot to a slot
+consistently, does that pattern predict? Script: `tools/predictors/slots.py` (2024-25 and 2025-26, 1,312 games
+and ~47,200 skater-games each; the slot is the study's TOI-rank proxy, section 13: the three forwards with the
+most ice time are line 1, the next three line 2, and so on, the top two defensemen pair 1 — the lineup card for
+first and fourth lines nearly always, a coin flip between lines 2 and 3 on some nights).
+
+**Three tests.** (1) *Persistence within a season*: every defending team's games split odd / even in date order
+(both halves span the season), what it allowed per skater at each position, line (F1 … F4, D1 … D3) and slot in
+each half, correlated between the halves across the league. Each figure is centred by the league's figure for the
+key in that half, so "first lines shoot more than fourth lines everywhere" does not count as a team trait; read
+three ways: plain shots per skater, shots over the shooters' own season rates (a team that happened to face the
+best first lines is not read as weak), and *beyond the position* — the slot over the team's own position figure,
+less the league's same. A trait shows in both halves; noise does not. The signal share is the part of the spread
+between teams that is more than sampling noise. (2) *Prediction, leak-free*: walking the season in date order,
+every skater-game gets the opponent's reads as they stood that morning (position, line and slot, each over the
+league's same), his own rate to date (5+ games), and in 2025-26 last season's full-season slot deviation of the
+opponent; Poisson regressions, 5-fold cross-validation by date blocks, scored as deviance saved beyond the
+position read (the study's unit; the position read is worth about 0.010 there); the plain lift by third of each
+read; and the hypothesis as stated — opponents in the same third on the slot over the season to date *and* over
+their last 10 games. (3) *Persistence across seasons*: 2024-25's full-season figures against 2025-26's.
+
+### Persistence of what a team allows per skater (r between the odd and even halves, 95% bootstrap)
+
+| Shots | 2024-25: over the shooters' rates | beyond the position | 2025-26: over the shooters' rates | beyond the position | across the two seasons |
+|---|---|---|---|---|---|
+| position (128 team × position pairs) | **.52** [.38, .62], signal share .46 | — | **.53** [.38, .64], share .52 | — | **.38** [.24, .52] |
+| line F1 … F4, D1 … D3 (224) | .41 [.26, .52] | **.09** [-.04, .22], share .00 | .41 [.29, .52] | **-.01** [-.15, .13], share .00 | -.07 [-.20, .07] |
+| slot LW1 … D3 (480) | .24 [.13, .33] | **.07** [-.03, .18], share .00 | .23 [.11, .33] | **.05** [-.05, .15], share .00 | -.08 [-.20, .01] |
+
+The line and slot rows persist only through the position they carry: the moment the team's own position figure is
+taken out, nothing is left (r within ±0.1 in both seasons, the interval straddling zero, no slot or line holding in
+both seasons — LW1 reads +.40 in 2024-25 and -.03 in 2025-26, LW2 +.12 then +.51, C1 +.29 then -.21). Across
+seasons the position read carries (.38) and the slot deviation does not (-.08). Goals: nothing persists at any
+level, the position included (r .12 / .14 within a season, .07 across), as sections 9 and 13 found.
+
+**Size.** Between teams a half season's position figure spreads ±0.14 shots a skater-game (SD), of which ±0.10 is
+real; the slot figure spreads ±0.23, of which ±0.12 is real — and that real part is the position's. Beyond the
+position the slot spreads ±0.19, of which ±0.05 is real at the point estimate and ±0.08 at the top of the interval:
+a "weak against LW1" trait, if there is one, is at most a tenth of a shot a game on a 2.5-shot first liner, under
+the noise of half a season's 41 skater-games at the slot.
+
+**The reading as a bettor makes it** (the five teams that allowed the most to LW1 in the odd games, what they allowed
+in the even games; league 2.6 a skater): 2025-26 3.23 → 2.51, under the league; over the shooters' own rates +0.71
+→ +0.03. The five stingiest 1.86 → 2.52, the league. 2024-25 3.18 → 3.00 and +0.82 → +0.57 (the one slot-season
+with a trace, LW1's +.40 above), the stingiest 2.05 → 2.46. The same on LW3, C1 and D1, both seasons: the top five
+fall back to the league or past it, the bottom five rise to it. Full regression to the mean, the position's part
+aside.
+
+### Prediction, leak-free (Poisson, 5-fold CV by date blocks, 39,400 rows a season)
+
+| on top of own rate + the position read | 2024-25: deviance saved | coefficient (z) | 2025-26: saved | coefficient (z) |
+|---|---|---|---|---|
+| the position read itself (over the own rate) | +0.0032 | +.49 (11.4) | +0.0036 | +.49 (12.3) |
+| + his line over the opponent's forwards / defense figure | +0.0000 | +.07 (1.4) | -0.0000 | +.01 (0.3) |
+| + his slot over the opponent's position figure | +0.0000 | +.06 (1.6) | +0.0000 | +.06 (1.9) |
+| + last season's full-season slot deviation | | | -0.0001 | -.08 (-1.4) |
+
+(The position read saves less here than in section 13 because the own rate is this season's alone from 5 games
+on, not the blend; the comparison between the rows is the point.) A coefficient of +1 would take the slot read at
+face value; +.06 says a slot that reads 20% soft is worth about 1% of shots, inside noise. By thirds of the slot
+deviation as it stood that morning (2025-26): the stingy third's skaters got 0.98 of what the own rate × the
+position read expected, the soft third 0.99 — and the "consistent" subset, opponents in the soft third over the
+season to date *and* over their last 10 games (7,688 rows), 0.99, the consistently stingy 0.98 (2024-25: 0.99 and
+0.97; 3+ SOG rates match the expected ones to a point). Last season's full-season slot deviation, the strongest
+form of "history": the soft third 0.97, the stingy third 0.99, the wrong way round and within noise.
+
+**Why the uncentred slot read scores well, and must not be used.** Taken raw (the opponent's allowance at the
+slot over its position figure, not over the league's same), the slot read saves +0.02 of deviance — twice the
+position read — with a coefficient of +.38 (z 28). That is not the defense: it is the skater's own deployment. The
+read carries "first lines shoot more than fourth lines" for every opponent alike, and so it tells the model which
+line he skated tonight, which the TOI-rank proxy takes from the box score of the game being predicted. Centred by
+the league's figure for the slot the same morning, the read is the opponent's own pattern and scores zero. Any
+slot-level environment read must be built the centred way or it will look like a find and be a leak.
+
+### Rule
+
+- **The position is the unit of the environment read, and it stays so.** A team's allowance per skater at a
+  position is a trait (r .5 within a season, .4 across), the slot deviation on top of it is not (r ≈ 0 within and
+  across seasons, 0.000 of deviance, lift 0.98 to 0.99 in every third, consistent or not). The Defense tab's and
+  the rinks' per-position tables are the right read; a per-slot table (LW1 … D3) would show half a season of noise
+  dressed as a pattern, and "this team has allowed a lot to LW1 consistently" has no carry-over the data can see.
+- **The slot still matters for the skater, not for the defense**: his own ice time and line are in his rate
+  (section 13: TOI and attempts), and the Defense tab's per-slot log (`defenseBySlot`) stays a descriptive view.
+- **Goals: nothing at any level**, the position included; the n / (n + 40) blend of section 9 stands.
+- Rerun: `python3 tools/predictors/slots.py .nhl-data/predictors/2024/games .nhl-data/predictors/2025/games`
+  (fetch.mjs records; add `.nhl-data/predictors/2026/games` once teams have ~40 games for the halves to mean
+  anything; the lineup-card slot from the app's stored rows is the one untested refinement, and the noise floor
+  above does not move with it).
