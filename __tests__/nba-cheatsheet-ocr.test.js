@@ -1,7 +1,7 @@
 import { describe, expect, test } from '@jest/globals';
 import { fixRank, fixAvg, fixMinutes, parseTiles, parseColumn, parseNbaPages } from '../lib/nba/cheatsheet-ocr';
 import { rowsOf, claimFragments, resolveName } from '../lib/picks/ocr-layout';
-import { pdfImages, scaleFor } from '../lib/picks/ocr';
+import { pdfImages, scaleFor, compositeOverWhite } from '../lib/picks/ocr';
 import { buildBoard } from '../lib/nba/picks';
 import page1 from './fixtures/ocr-nba-page1.json';
 import zlib from 'zlib';
@@ -12,6 +12,8 @@ const ROSTER = ['Payton Pritchard|BOS|PG', 'Neemias Queta|BOS|C', 'Sam Hauser|BO
 describe('NBA cheat sheet (OCR)', () => {
   test('ranks, averages and minutes get their punctuation back', () => {
     expect(fixRank('23rd')).toBe(23); expect(fixRank('(2nd)')).toBe(2); expect(fixRank('d0th')).toBe(10); expect(fixRank('qth')).toBe(10); expect(fixRank('Xin')).toBeNull(); expect(fixRank('99th')).toBeNull();
+    // "1st" on a bright tile and "3rd" with its r read as a 1, as the 2026-10-26 sheet's tiles came out.
+    expect(fixRank('dst')).toBe(1); expect(fixRank('IST:')).toBe(1); expect(fixRank('[St')).toBe(1); expect(fixRank('{ists')).toBe(1); expect(fixRank('lst')).toBe(1); expect(fixRank('31d)')).toBe(3); expect(fixRank('231d')).toBe(23); expect(fixRank('ith')).toBeNull();
     expect(fixAvg('16.3')).toBe(16.3); expect(fixAvg('38')).toBe(3.8); expect(fixAvg('04')).toBe(0.4); expect(fixAvg('249')).toBe(24.9); expect(fixAvg('1156')).toBe(11.5); expect(fixAvg('0.0')).toBe(0); expect(fixAvg('')).toBeNull();
     expect(fixMinutes('31:18')).toBe(31.3); expect(fixMinutes('2744')).toBe(27.7); expect(fixMinutes('12.46')).toBe(12.8); expect(fixMinutes('7:27')).toBe(7.5); expect(fixMinutes('5')).toBeNull();
     expect(scaleFor(594)).toBe(3); expect(scaleFor(1040)).toBe(2); expect(scaleFor(4000)).toBe(1);
@@ -87,16 +89,29 @@ describe('NBA cheat sheet (OCR)', () => {
     // A mention alone is not a play.
     expect(plays.find((r) => r.player === 'Neemias Queta')).toBeUndefined();
   });
-  test('Flate-compressed page images come out of the PDF as raw pixels, soft masks left out', () => {
-    const px = Buffer.alloc(2 * 2 * 3, 7); const mask = Buffer.alloc(2 * 2, 255);
-    const img = zlib.deflateSync(px); const msk = zlib.deflateSync(mask);
-    const parts = ['%PDF-1.3\n', `5 0 obj\n<</BitsPerComponent 8/ColorSpace/DeviceRGB/Filter/FlateDecode/Height 2/Length ${img.length}/SMask 6 0 R /Subtype/Image/Type/XObject/Width 2>>stream\n`];
-    const head = Buffer.from(parts.join(''), 'latin1');
-    const mid = Buffer.from(`\nendstream\nendobj\n6 0 obj\n<</BitsPerComponent 8/ColorSpace/DeviceGray/Filter/FlateDecode/Height 2/Length ${msk.length}/Subtype/Image/Type/XObject/Width 2>>stream\n`, 'latin1');
-    const tail = Buffer.from('\nendstream\nendobj\n%%EOF\n', 'latin1');
-    const images = pdfImages(Buffer.concat([head, img, mid, msk, tail]));
-    expect(images).toHaveLength(1);
-    expect(images[0]).toMatchObject({ width: 2, height: 2, raw: { width: 2, height: 2, channels: 3 } });
-    expect(images[0].data.equals(px)).toBe(true);
+  test('Flate-compressed page images come out of the PDF as raw pixels, the soft mask composited over white', () => {
+    const build = (px, mask, maskSide = 2) => {
+      const img = zlib.deflateSync(px); const msk = zlib.deflateSync(mask);
+      const head = Buffer.from(`%PDF-1.3\n5 0 obj\n<</BitsPerComponent 8/ColorSpace/DeviceRGB/Filter/FlateDecode/Height 2/Length ${img.length}/SMask 6 0 R /Subtype/Image/Type/XObject/Width 2>>stream\n`, 'latin1');
+      const mid = Buffer.from(`\nendstream\nendobj\n6 0 obj\n<</BitsPerComponent 8/ColorSpace/DeviceGray/Filter/FlateDecode/Height ${maskSide}/Length ${msk.length}/Subtype/Image/Type/XObject/Width ${maskSide}>>stream\n`, 'latin1');
+      const tail = Buffer.from('\nendstream\nendobj\n%%EOF\n', 'latin1');
+      return pdfImages(Buffer.concat([head, img, mid, msk, tail]));
+    };
+    // A fully opaque mask changes nothing; the mask itself is not a page.
+    const px = Buffer.alloc(2 * 2 * 3, 7);
+    const opaque = build(px, Buffer.alloc(4, 255));
+    expect(opaque).toHaveLength(1);
+    expect(opaque[0]).toMatchObject({ width: 2, height: 2, masked: true, raw: { width: 2, height: 2, channels: 3 } });
+    expect(opaque[0].data.equals(px)).toBe(true);
+    // Black pixels under a thin alpha are a light grey row; black under full alpha stays black text;
+    // a transparent pixel is the white page (the 2026-10-26 sheets: the grey rows' text lived in the mask alone).
+    const black = Buffer.alloc(2 * 2 * 3, 0);
+    const [page] = build(black, Buffer.from([13, 255, 0, 128]));
+    expect([...page.data]).toEqual([242, 242, 242, 0, 0, 0, 255, 255, 255, 127, 127, 127]);
+    expect(compositeOverWhite(Buffer.from([10, 20, 30]), Buffer.from([51]), 3)).toEqual(Buffer.from([206, 208, 210]));
+    // A mask of another size is left alone.
+    const [odd] = build(px, Buffer.alloc(9, 0), 3);
+    expect(odd.masked).toBe(false);
+    expect(odd.data.equals(px)).toBe(true);
   });
 });

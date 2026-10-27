@@ -47,9 +47,14 @@ config and keeps its own markets, teams, feeds and slate key:
   when the read is done (`status: 'done'`, with the games the pages paired) or `'failed'`.
   `POST /api/<sport>/sheets?reread=<id>` parses the stored words again (`&full=1` reads the PDF
   again); the Sources panel polls while pending and carries a "Read again" button. JPEG pages
-  (DCTDecode) and Flate-compressed RGB / grey pages both come out (`pdfImages`; soft masks left
-  out), the column scale follows its width (`scaleFor`: 3× a 594 px NFL column, 2× a 1040 px NBA
-  one). About four minutes for the NFL's 14 pages on Render, half a minute for the NBA's three.
+  (DCTDecode) and Flate-compressed RGB / grey pages both come out (`pdfImages`); a page's soft mask
+  is composited into it over white as a viewer draws it (`compositeOverWhite`, `masked: true`): the
+  NBA sheets of 2026-10-26 kept the grey table rows' text in the mask alone, so without it those rows
+  were black bands and every other player was missed (`__tests__/fixtures/ocr-nba-suns-okc.json`
+  holds that page's words whole; `fixRank` also reads "1st" tiles that come out as "dst" / "IST" /
+  "[St" and "3rd" as "31d"). A column is turned over only when it is dark (`prepareColumn`'s
+  `invert: 'auto'` by mean luminance); the column scale follows its width (`scaleFor`: 3× a 594 px
+  NFL column, 2× a 1040 px NBA one). About four minutes for the NFL's 14 pages on Render, half a minute for the NBA's three.
   The helpers both layouts share (`rowsOf`, `claimFragments`, `resolveName`, `similarity`) live in
   `ocr-layout.js`. A sheet row without a market and line is a **mention** (`board.js`,
   `mentionsOf`): it never makes a play of its own but confirms every PropFinder play of that
