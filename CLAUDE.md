@@ -503,8 +503,8 @@ config and keeps its own markets, teams, feeds and slate key:
   tab pressed this session, else the verdict, else the board's λ), that tab green (`is-best`), the note saying which
   is on and why. It reads the scorecard once a page load (`bestReadFrom` in `shuffle-pure.js`: each
   read's Brier at the bar's floor height — the scorecard's model / study / own5 / own10 / ownSeason predictors on the
-  rows every predictor covers, 100 at least) and marks the read that has predicted the active bar best on its tab,
-  the figures in the note under the tabs; it never switches on its own. One request a slate, every bar move local; no
+  rows every predictor covers, 100 at least) and follows that verdict until a tab is pressed, the figures in the note
+  under the tabs. One request a slate, every bar move local; no
   number on the board changes. The chance at 1+ G is the
   run's own 1+ G figure (`fromModel` keeps the run's three-decimal λ), the Model tab's Top goals board ranks by that
   same figure (`scoreTopBoardRow` in `NhlModel.jsx`: shots by 3+, goals by 1+, points by 1+, the next rung breaking
