@@ -4,10 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { survivorsAt, fallenAt, curveOf, READ_FROM, bestReadFrom, BEST_MIN } from '@/lib/picks/shuffle';
 
-// The shuffle: a bar per stat. Raise it and the field falls away; what stays are the players whose
-// chance of clearing the bar holds over the floor, each with his chance there, how often he has
-// actually cleared it, the book's rung at or above the bar with its price and edge, and the height
-// where he himself thins out. One request per market (/api/<sport>/shuffle), every bar move local.
+// The shuffle (each board's Shuffle tab): a bar per stat. Raise it and the field falls away; what
+// stays are the players whose chance of clearing the bar holds over the floor, each with his chance
+// there, how often he has actually cleared it, the book's rung at or above the bar with its price and
+// edge, and the height where he himself thins out. One request per market (/api/<sport>/shuffle),
+// every bar move local; the tab mounts the panel on its first visit and keeps it.
 //   sport: { api, query, markets: [{ market, label, unit, min, max, step, start }], teamLogo, headshotUrl, withDay }
 //   onOpen(player, market): open the player's card (the NBA), optional.
 
@@ -55,7 +56,6 @@ function Curve({ curve, height, onPick }) {
 
 export default function Shuffle({ sport, onOpen = null }) {
   const { api, query, markets, teamLogo, headshotUrl, withDay = false } = sport;
-  const [open, setOpen] = useState(true);
   const [active, setActive] = useState(markets[0].market);
   const [bars, setBars] = useState(() => Object.fromEntries(markets.map((m) => [m.market, m.start])));
   const [floor, setFloor] = useState(0.35);
@@ -80,7 +80,6 @@ export default function Shuffle({ sport, onOpen = null }) {
   // A new slate starts over; the active market loads first, then the others so every bar can count its field.
   useEffect(() => {
     if (loaded.current.query !== query) { loaded.current = { query, set: new Set() }; setData({}); }
-    if (!open) return undefined;
     let cancelled = false;
     (async () => {
       for (const m of [active, ...markets.map((x) => x.market).filter((x) => x !== active)]) {
@@ -90,12 +89,11 @@ export default function Shuffle({ sport, onOpen = null }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [open, active, query, markets, load]);
+  }, [active, query, markets, load]);
 
   // The season's scorecard, once per sport and season: which read has predicted best so far.
   const scorecardUrl = useMemo(() => { const season = new URLSearchParams(query).get('season'); return `${api}/scorecard${season ? `?season=${season}` : ''}`; }, [api, query]);
   useEffect(() => {
-    if (!open) return undefined;
     let cancelled = false;
     (async () => {
       try {
@@ -114,7 +112,7 @@ export default function Shuffle({ sport, onOpen = null }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [open, scorecardUrl, markets]);
+  }, [scorecardUrl, markets]);
 
   const d = data[active];
   const heights = useMemo(() => d?.heights || [], [d]);
@@ -133,16 +131,13 @@ export default function Shuffle({ sport, onOpen = null }) {
     <section className="ir-sh" aria-label="Shuffle">
       <div className="ir-sh-head">
         <div>
-          <h3 className="ir-sh-title">Shuffle <small>raise the bar, the field falls away</small></h3>
           <p className="nhlx-auto-meta">Set a height per stat; the list keeps the players whose chance of clearing it holds over the floor. The chance is his ladder read at that line (half his own distribution over it, centred on tonight’s projection with the matchup inside it, half how often he actually cleared it); the price is the book’s rung at or above the bar.</p>
         </div>
         <div className="ir-sh-floor">
           <label>Keep players at <select className="nhlx-input nhlx-input-sm" value={floor} onChange={(e) => setFloor(Number(e.target.value))} aria-label="The floor">{FLOORS.map((f) => <option key={f} value={f}>{Math.round(f * 100)}%</option>)}</select> or better</label>
-          <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" onClick={() => setOpen((o) => !o)}>{open ? 'Hide' : 'Show'}</button>
         </div>
       </div>
-      {open ? (
-        <div className="nhlx-rk-toggle ir-sh-from">
+      <div className="nhlx-rk-toggle ir-sh-from">
           <small>Read from</small>
           <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="What the chance is read from">
             {READ_FROM.map(([k, l]) => {
@@ -157,10 +152,7 @@ export default function Shuffle({ sport, onOpen = null }) {
           </div>
           <span className="nhlx-rk-toggle-note">The centre of each player’s distribution: the board’s blend, a plain window of his own results, or the book’s line. The hit-rate half of the chance stays as it is. {readNote(card)}</span>
         </div>
-      ) : null}
       {err ? <div className="nhlx-alert" style={{ marginTop: 12 }}>{err}</div> : null}
-      {open ? (
-        <>
           <div className="ir-sh-grid">
             <div className="ir-sh-bars">
               {markets.map((m) => {
@@ -239,8 +231,6 @@ export default function Shuffle({ sport, onOpen = null }) {
               ) : null}
             </>
           ) : null}
-        </>
-      ) : null}
     </section>
   );
 }

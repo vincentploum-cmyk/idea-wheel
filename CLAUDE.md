@@ -17,6 +17,11 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
 - `app/nhl|nfl|nba/page.js` gate through `lib/gate.js` (`gateSport`: sign-in redirect with
   `?next=`, then the admin list). The header (`components/nhl/SiteHeader.jsx`) takes `sport`
   for the mark and carries `components/site/SportNav.jsx` (NFL · NBA · NHL, the start screen's order).
+- Every app's tabs are the URL hash (`components/site/hash-tab.js`: `tabOf`, `useHashTab(keys, fallback)`
+  → `[tab, mounted]`, a visited panel stays mounted hidden so it keeps its state; `components/site/TabBar.jsx`
+  draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard, the data
+  sources, the default) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
+  drawn on both panels). The NHL app has eight (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)
@@ -84,7 +89,8 @@ config and keeps its own markets, teams, feeds and slate key:
   the card): the bars with the count of survivors at the floor ("keep players at 35% or better"), the curve of
   survivors per height, the survivors at the bar sorted by edge (the chance there with its fair price, how often he
   cleared it, the book's rung at the bar or the nearest above it with its price and edge, where he thins out, Got once
-  final) and the fallen strip. **Read from** (`READ_FROM`): the board's blend (default), last 5 / last 10 / season (his
+  final) and the fallen strip; it sits on each board's Shuffle tab (`#shuffle`; `NflShuffle` in `NflBoard.jsx`,
+  `NbaShuffle` in `NbaBoard.jsx` with its own card host), mounted on the tab's first visit and kept. **Read from** (`READ_FROM`): the board's blend (default), last 5 / last 10 / season (his
   window × the matchup as the centre of his distribution) or the book's line; only the model half of the chance moves,
   the hit-rate half stays. The panel reads the season's scorecard once per sport and season (`bestReadFrom`: each read's
   over-the-line Brier — the `× matchup` predictors, the projection, the line — pooled over the bars' markets, 100 plays at
@@ -327,8 +333,8 @@ config and keeps its own markets, teams, feeds and slate key:
   skater's games-played count in as his away shot base and his shots as goals.
 - Scheduled by `.github/workflows/nhl-data.yml` (daily results + lineups) and
   `nhl-lineups.yml` (hourly pre-game lineup reads); Mac folder sync in `tools/mac-sync`.
-- Signed-in page = seven hash tabs (`#teams`, `#matchups`, `#defense`, `#firstgoal`, `#model`, `#league`, `#history`); it opens on
-  Matchups. The Defense tab (`components/nhl/DefensePanel.jsx`, helpers in `lib/nhl-data/defense-board.js`, data from
+- Signed-in page = eight hash tabs (`#teams`, `#matchups`, `#defense`, `#firstgoal`, `#model`, `#shuffle`, `#league`,
+  `#history`); it opens on Matchups. The Defense tab (`components/nhl/DefensePanel.jsx`, helpers in `lib/nhl-data/defense-board.js`, data from
   `/api/nhl/data/defense`, which also carries the date's games and MoneyPuck's team rates) is the ShotPropz-style cheat sheet:
   what every team gives up to each position group (C / LW / RW / D, C / W / D, F / D) in shots or goals **per skater at the
   position** a game (the study's read, section 13; `per` on every `defenseByPosition` cell, groups weighted by the skaters they
@@ -421,17 +427,23 @@ config and keeps its own markets, teams, feeds and slate key:
   short, the row on its lead market, a "Got" column with the figure and a tally in the game head. The model's math is untouched.
   Study: `docs/shots-goals-predictors.md` (section 13 is the every-angle scan and the replay; `tools/predictors/run.sh <year>`
   rebuilds it, `explain.py` reads one skater-game).
-  The **shuffle** at the top of Best bets (`components/nhl/ShufflePanel.jsx`, `GET /api/nhl/data/shuffle?date=` →
-  `buildShuffle` in `picks.js`, which is `buildPicks(date, { withSkaters: true })` reshaped; the pure readers in
-  `lib/nhl-data/shuffle-pure.js`): a bar for shots (1+ … 8+, starts at 3+, floor 50%) and one for goals (1+ … 4+,
-  1+, 35%). Every skater of every game is read at every height off the board's own λ (`skaterRow`: lamS / lamG,
+  The **shuffle** on its own tab (`#shuffle`, `components/nhl/ShufflePanel.jsx` with its own slate-date picker, the
+  date riding on every card open; `GET /api/nhl/data/shuffle?date=` → `buildShuffle` in `picks.js`, which is
+  `buildPicks(date, { withSkaters: true })` reshaped; the pure readers in `lib/nhl-data/shuffle-pure.js`): a bar for
+  shots (1+ … 8+, starts at 3+, floor 50%) and one for goals (1+ … 4+, 1+, 35%). Every skater of every game is read at every height off the board's own λ (`skaterRow`: lamS / lamG,
   the study's λ beside them, `ownOf` = his last 5 / 10 / 20 and this season's mean shots and goals from the stored
   rows with how many of his last ten and of this season's games reached each height, the opponent's rank at his
   position, `heat`, `actual` once final), the chance at a height the Poisson tail of the λ (`chanceAt`: 3+ here is
   the board's 3+ figure, 6+ the same λ further up), survivors at the floor sorted by the chance with the break-even
   price, how often he reached the bar, where he thins out and Got once final; the fallen strip under it. "Read
   from" (`READ_FROM`) moves the λ to the study's or a window of his own results (a window he lacks falls back to the
-  board's). One request a slate, every bar move local; no number on the board changes.
+  board's). One request a slate, every bar move local; no number on the board changes. The chance at 1+ G is the
+  run's own 1+ G figure (`fromModel` keeps the run's three-decimal λ), the Model tab's Top goals board ranks by that
+  same figure (`scoreTopBoardRow` in `NhlModel.jsx`: shots by 3+, goals by 1+, points by 1+, the next rung breaking
+  ties; the tags are pills only, since 2026-10-27 — before that the tag bonuses put a 43% scorer first while the
+  shuffle listed him fourth), and the panel's head says when `NHL_PICKS_STUDY_WEIGHT` blends the study into the λ;
+  only the Top 5 boards, the rinks' strips and the scorecard's replay keep `boardPlays`' rule (4+ / 5+ with the attack
+  score, 1+ / 2+ with a slice of it), so they can reorder near-ties.
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching: the roster decides a row's group, a pair
   holds a defenseman and two forwards side by side are a short forward line, three pairs at most, and a

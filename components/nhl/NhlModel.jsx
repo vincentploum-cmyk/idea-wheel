@@ -336,35 +336,16 @@ function enrichBoardTags(r) {
   return { ...r, shotTag, ceilingTag, goalTag, compositeTag };
 }
 
+// The Top shots / goals / points boards and the game cards rank by the figure they show, so a
+// skater sits in the same place as on Best bets and the shuffle: shots by 3+ SOG, goals by 1+ G,
+// points by 1+ point, the next rung up breaking ties. The tags stay as pills but no longer move a
+// skater up the board: until 2026-10-27 the goals board added the tag bonuses, the danger rate and
+// the hot role to the chance, which put a 43% scorer with the PRIMARY TARGET pill first while the
+// shuffle, sorted by the chance alone, listed him fourth. (Port into App.jsx.)
 function scoreTopBoardRow(r, market = 'shots') {
-  const row = enrichBoardTags(r);
-  const hotRoleBonus = row.hotRoleExtreme ? 16 : row.hotRoleStrong ? 10 : row.hotRoleActive ? 5 : 0;
-  const compositeBonus =
-    row.compositeTag?.label === 'PRIMARY TARGET' ? 28 :
-    row.compositeTag?.label === 'LADDER TARGET' ? 22 :
-    row.compositeTag?.label === 'GOAL TARGET' ? 20 :
-    row.compositeTag?.label === 'CEILING PLAY' ? 16 : 0;
-  const shotBonus =
-    row.shotTag?.label === '4+ ELITE' ? 22 :
-    row.shotTag?.label === '4+ CORE' ? 16 :
-    row.shotTag?.label === '4+ THIN' ? 8 : 0;
-  const ceilingBonus =
-    row.ceilingTag?.label === '5+ ELITE' ? 20 :
-    row.ceilingTag?.label === '5+ EDGE' ? 14 :
-    row.ceilingTag?.label === '5+ LOTTO' ? 6 : 0;
-  const goalBonus =
-    row.goalTag?.label === 'GOAL ELITE' ? 22 :
-    row.goalTag?.label === 'GOAL CORE' ? 16 :
-    row.goalTag?.label === 'GOAL THIN' ? 8 :
-    row.goalTag?.label === 'GOAL LOTTO' ? 4 : 0;
-
-  if (market === 'shots') {
-    return ((row.p4s || 0) * 100) + ((row.p5s || 0) * 60) + ((row.signalScore || 0) * 0.18) + shotBonus + ceilingBonus + compositeBonus + hotRoleBonus;
-  }
-  if (market === 'goals') {
-    return ((row.p1g || 0) * 100) + ((row.p2g || 0) * 65) + ((row.dangerRate || 0) * 18) + goalBonus + compositeBonus + hotRoleBonus;
-  }
-  return ((row.p1p || 0) * 100) + ((row.p2p || 0) * 55) + ((row.signalScore || 0) * 0.22) + (goalBonus * 0.35) + (shotBonus * 0.20) + compositeBonus + (hotRoleBonus * 0.7);
+  if (market === 'shots') return (r.p3s || 0) + (r.p4s || 0) / 1000;
+  if (market === 'goals') return (r.p1g || 0) + (r.p2g || 0) / 1000;
+  return (r.p1p || 0) + (r.p2p || 0) / 1000;
 }
 
 function includeTopBoardRow(r, market = 'shots') {
