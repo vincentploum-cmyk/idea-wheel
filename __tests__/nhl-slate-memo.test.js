@@ -97,6 +97,10 @@ describe('the NHL builders are kept per store state', () => {
     const sh = await buildShuffle(DATE);
     expect((await buildShuffle(DATE)).games[0].skaters).toBe(sh.games[0].skaters);   // reshaped over the kept board
     expect(sh.games[0].skaters.length).toBeGreaterThan(0);
+    // Each opponent's PropFinder table rides on the shuffle for its Matchup column, keyed by the defending team, the same tabs as above the rink.
+    expect(Object.keys(sh.defense).sort()).toEqual(['BOS', 'NJD', 'NYR', 'PHI']);
+    expect(sh.defense.PHI).toEqual(expect.objectContaining({ tabs: expect.any(Array) }));
+    expect(sh.defense.PHI.tabs.map((t) => t.key)).toEqual(s1.games[0].sides[0].propfinder.tabs.map((t) => t.key));
     const f1 = await buildFirstGoalBoard(DATE);
     expect(await buildFirstGoalBoard(DATE)).toBe(f1);
     // Another date is its own entry.

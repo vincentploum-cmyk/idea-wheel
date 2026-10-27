@@ -88,8 +88,11 @@ config and keeps its own markets, teams, feeds and slate key:
   market, every bar move local. `components/picks/Shuffle.jsx` (on both boards, above the tables; the NBA's rows open
   the card): the bars with the count of survivors at the floor ("keep players at 35% or better"), the curve of
   survivors per height, the survivors at the bar sorted by edge (the chance there with its fair price, how often he
-  cleared it, the book's rung at the bar or the nearest above it with its price and edge, where he thins out, Got once
-  final) and the fallen strip; it sits on each board's Shuffle tab (`#shuffle`; `NflShuffle` in `NflBoard.jsx`,
+  cleared it, the book's rung at the bar or the nearest above it with its price and edge, his projection — the board's, with
+  its unit and the quartiles of his range, the Projected column that replaced Thins out on 2026-10-27 (Vincent: the projected
+  points / rebounds / yards per player must be on the row); the Centre column, the window × the matchup the chance is read
+  around, shows only when the read is not the board's blend — and Got once final) and the fallen strip (each with the bar he
+  still clears); it sits on each board's Shuffle tab (`#shuffle`; `NflShuffle` in `NflBoard.jsx`,
   `NbaShuffle` in `NbaBoard.jsx` with its own card host), mounted on the tab's first visit and kept. The Matchup cell
   carries the opponent's rank at his spot with its factor on his rate
   (`matchup`) and, apart from it, his side's factor (`teamFactor`, "team × 1.12"); `env` on the row is their product,
@@ -555,7 +558,18 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   rows with how many of his last ten and of this season's games reached each height, the opponent's rank at his
   position, `heat`, `actual` once final), the chance at a height the Poisson tail of the λ (`chanceAt`: 3+ here is
   the board's 3+ figure, 6+ the same λ further up), survivors at the floor sorted by the chance with the break-even
-  price, how often he reached the bar, where he thins out and Got once final; the fallen strip under it. "Read
+  price, how often he reached the bar, his projected shots or goals (the board's λ with its unit: the Projected column that
+  replaced Thins out on 2026-10-27; the Centre column, the λ the chance is read from, shows only when the read is not the
+  board's) and Got once final; the fallen strip under it, each with the bar he still clears. The **Matchup column reads the
+  opponent's PropFinder defense table**, the one above each rink on Matchups, on the same tabs (a "Matchup from" row under
+  Read from: last season, this season, L5, L10, L15, L5 home, L5 away, opening on the Matchups tab's default, this season's;
+  `defense` on the shuffle payload = each team's table trimmed, keyed by the defending team, `trimDefenseTabs` /
+  `matchupTabs` / `matchupTabOf` / `matchupOf` in `shuffle-pure.js`), so the rank it shows is the rank that tab shows on
+  Matchups (Vincent, 2026-10-27: the shuffle read Boldy at UTA as #25 RW off the study's per-skater table while the Matchups
+  tab's L10 read #20 — two tables and two units, per skater against per game, for one matchup); the study's per-skater table
+  (`oppPos`, what the study's λ reads) stands in for a team without one, marked "stored" and named in the hover; colour only,
+  no number moves with the tab, and the row carries no soft-spot flag (the cell shows the environment, as the ice does under
+  a rink chip). "Read
   from" (`READ_FROM`) moves the λ to the study's or a window of his own results (a window he lacks falls back to the
   board's). The panel opens on the read the History tab's scorecard rates best for the active bar (`readFromOf`: the
   tab pressed this session, else the verdict, else the board's λ), that tab green (`is-best`), the note saying which
