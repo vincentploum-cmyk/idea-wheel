@@ -714,6 +714,11 @@ p { margin: 0; }
 .nhlx-char-team:nth-child(2) > .nhlx-mu-verdict-head, .nhlx-char-team:nth-child(2) .nhlx-char-style { grid-column: 4 / 6; }
 .nhlx-char-team:nth-child(2) .nhlx-char-strengths { grid-column: 4; }
 .nhlx-char-team:nth-child(2) .nhlx-char-weaknesses { grid-column: 5; }
+/* "View more (n)" under a team's lists, row 4, in the muted ink; each list shows three lines until it is pressed. */
+.nhlx-char-more { grid-row: 4; justify-self: start; margin-top: 8px; padding: 2px 0; border: 0; background: none; font: inherit; font-size: 13px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.nhlx-char-more:hover { color: var(--heading); }
+.nhlx-char-team:nth-child(1) .nhlx-char-more { grid-column: 1 / 3; }
+.nhlx-char-team:nth-child(2) .nhlx-char-more { grid-column: 4 / 6; }
 .nhlx-char h5 { margin: 12px 0 2px; font-family: var(--font-ui); font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
 .nhlx-char h5 i { font-style: normal; font-weight: 700; margin-right: 3px; }
 .nhlx-char h5 i.is-plus { color: var(--ok-fg); }
@@ -734,7 +739,7 @@ p { margin: 0; }
 /* Phone: everything in one column, in reading order (head, strengths, weaknesses, style, then the other team). */
 @media (max-width: 720px) {
   .nhlx-char-grid, .nhlx-char-page .nhlx-char-grid { grid-template-columns: 1fr; }
-  .nhlx-char-team:nth-child(n) > .nhlx-mu-verdict-head, .nhlx-char-team:nth-child(n) .nhlx-char-strengths, .nhlx-char-team:nth-child(n) .nhlx-char-weaknesses, .nhlx-char-team:nth-child(n) .nhlx-char-style { grid-column: auto; grid-row: auto; }
+  .nhlx-char-team:nth-child(n) > .nhlx-mu-verdict-head, .nhlx-char-team:nth-child(n) .nhlx-char-strengths, .nhlx-char-team:nth-child(n) .nhlx-char-weaknesses, .nhlx-char-team:nth-child(n) .nhlx-char-style, .nhlx-char-team:nth-child(n) .nhlx-char-more { grid-column: auto; grid-row: auto; }
   .nhlx-char-team:nth-child(2) > .nhlx-mu-verdict-head { margin-top: 18px; }
 }
 /* The numbers the traits were read from, folded under them. */

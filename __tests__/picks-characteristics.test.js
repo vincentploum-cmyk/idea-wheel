@@ -6,7 +6,7 @@ import { teamCharacteristics as nfl } from '../lib/nfl/characteristics';
 import { buildBoard } from '../lib/nba/picks';
 
 // A league of fourteen filler teams close to the average plus the teams with a character (the NBA's
-// seventeen: the top four very, 5–6 strong, 12–13 weak, 14–17 very weak; the NFL's sixteen).
+// seventeen: the top three very, 4–5 strong, 13–14 weak, 15–17 very weak; the NFL's sixteen).
 const fillers = (make) => Object.fromEntries(Array.from({ length: 14 }, (_, i) => [`T${String(i).padStart(2, '0')}`, make(i)]));
 const meanOf = (totals, side) => {
   const out = {};
@@ -32,7 +32,7 @@ describe('the picks characteristics (NBA, NFL)', () => {
     ranks: { BOS: { PG: { pts: 2 }, SG: { pts: 8 }, SF: { pts: 7 }, PF: { pts: 9 }, C: { pts: 15 }, G: { pts: 1 } }, NY: { PG: { pts: 12 }, C: { pts: 1 } } },
   };
   test('levels, the split and the words', () => {
-    expect([1, 4, 5, 6, 7, 10, 11, 12, 13, 16].map((r) => levelOf(r, 16))).toEqual(['very', 'very', 'strong', 'strong', null, null, 'weak', 'weak', 'veryWeak', 'veryWeak']);
+    expect([1, 3, 4, 5, 7, 10, 12, 13, 14, 16].map((r) => levelOf(r, 16))).toEqual(['very', 'very', 'strong', null, null, null, null, 'weak', 'veryWeak', 'veryWeak']);
     const { strengths, weaknesses } = splitTraits([{ key: 'a', level: 'strong', rank: 5, n: 16 }, { key: 'b', level: 'very', rank: 1, n: 12 }, { key: 'c', level: 'weak', rank: 11, n: 16 }, { key: 'd', level: 'veryWeak', rank: 12, n: 12 }, null], 16);
     expect(keys(strengths)).toEqual(['b', 'a']);
     expect(keys(weaknesses)).toEqual(['d', 'c']);
@@ -53,7 +53,8 @@ describe('the picks characteristics (NBA, NFL)', () => {
     expect(c.strengths.find((x) => x.key === 'security').detail).toBe('12.0 turnovers a game, #1 of 17 fewest · PropFinder, 12 games');
     expect(c.strengths.find((x) => x.key === 'forcing').detail).toBe('15.0 turnovers a game allowed, #1 of 17 most forced · PropFinder, 12 games');
     expect(c.strengths.find((x) => x.key === 'holds')).toMatchObject({ text: 'Holds centres', detail: 'C 18.0 points a game, #15 of 16 most' });
-    expect(c.weaknesses.map((x) => [x.key, x.text, x.level])).toEqual([['line', 'Getting to the line', 'veryWeak'], ['leaks', 'Gives up points to point guards', 'veryWeak'], ['ftmAgainst', 'Keeping opponents off the line', 'weak']]);
+    // Free throws allowed at #12 of 17 sit in the middle half: no badge.
+    expect(c.weaknesses.map((x) => [x.key, x.text, x.level])).toEqual([['line', 'Getting to the line', 'veryWeak'], ['leaks', 'Gives up points to point guards', 'veryWeak']]);
     // The G group row is left aside (only the five positions), so "guards" never shows up beside "point guards".
     expect(c.weaknesses[1].detail).toBe('PG 26.0 points a game, #2 of 16 most');
     expect(keys(c.style)).toEqual(['threes']);
@@ -67,7 +68,8 @@ describe('the picks characteristics (NBA, NFL)', () => {
     expect(keys(c.weaknesses)).toEqual(['scoring', 'playmaking', 'security', 'rim', 'hands', 'ptsAgainst', 'rebAgainst', 'astAgainst', 'tpmAgainst', 'forcing', 'leaks', 'rebounding', 'threes']);
     expect(c.strengths.find((x) => x.key === 'ftmAgainst')).toMatchObject({ level: 'very' });
     expect(c.weaknesses.find((x) => x.key === 'leaks')).toMatchObject({ text: 'Gives up points to centres', level: 'veryWeak' });
-    expect(c.strengths.find((x) => x.key === 'holds')).toMatchObject({ text: 'Holds point guards', level: 'strong' });
+    // Point guards at #12 of 16 (the 5th best) miss the quarter: no "holds" line.
+    expect(c.strengths.find((x) => x.key === 'holds')).toBeUndefined();
     expect(c.strengths.find((x) => x.key === 'line')).toMatchObject({ text: 'Getting to the line' });
     const d = nba({ team: 'DET', venue: 'H', defense: nbaDefense });
     expect(d.strengths.find((x) => x.key === 'rebounding').detail).toBe("48.0 rebounds a game, #1 of 17 · PropFinder, last season's row until ten games (3 this season)");

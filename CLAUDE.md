@@ -157,8 +157,8 @@ config and keeps its own markets, teams, feeds and slate key:
   `characteristics` on every board game through `makeBoard({ characteristics })`; drawn by `components/nhl/Characteristics.jsx`
   from `Board.jsx` between the game head and the sport's view, the NHL card's layout with the sport's logos and, for the
   NBA, the sides' expected points as the head pill): each team's strengths and weaknesses with a badge (`lib/picks/levels.js`,
-  the three cards' shared `levelOf`: the top third Strong, the top four Very strong, the bottom third Weak, the bottom
-  four Very weak; the numbers on the hover only) from the pull's team rows — `totals[ABBR].for` (the team's own per-game
+  the three cards' shared `levelOf`: the top quarter Strong, the top three Very strong, the bottom quarter Weak, the
+  bottom three Very weak; three lines a list with "View more"; the numbers on the hover only) from the pull's team rows — `totals[ABBR].for` (the team's own per-game
   row: NBA scoring, rebounding, ball movement, threes, the line, ball security; NFL the passing and running games, the
   end zone, ball security) and `.against` (NBA limiting points / rebounds / assists / threes / free throws, forcing
   turnovers, with rim protection and active hands off its own blocks and steals; NFL pass and run defense, the end
@@ -526,9 +526,10 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   goals and pace, high / low half a goal either side of the league average; and above both, each
   team's **characteristics** (`lib/nhl-data/characteristics.js`, `teamCharacteristics`, `characteristics`
   per team on every slate game; drawn by `components/nhl/Characteristics.jsx`, WhoScored's layout): its
-  strengths and weaknesses as traits with a badge (`levelOf`: the top third of the league Strong, the
-  top four Very strong, the bottom third Weak, the bottom four Very weak; no number in the line, the
-  figures ride on the trait as `detail` for the hover) — shot volume, creating chances, high-danger
+  strengths and weaknesses as traits with a badge (`levelOf` in `lib/picks/levels.js`: the top quarter of the league
+  Strong, the top three Very strong, the bottom quarter Weak, the bottom three Very weak — thirds and a top four
+  wore a dozen badges on a bad team, 2026-10-27; no number in the line, the figures ride on the trait as `detail`
+  for the hover; each list shows its three most telling lines, `SHOWN`, with "View more (n)" per team for the rest) — shot volume, creating chances, high-danger
   chances, controlling the puck, finishing (GF over xGF, `ratioRanks`, 10 games), limiting chances /
   high-danger chances, goaltending (GA under xGA) from MoneyPuck; limiting shots / goals at tonight's
   venue, the positions it leaks to and holds (one line each way), its last ten against the season
