@@ -151,11 +151,13 @@ config and keeps its own markets, teams, feeds and slate key:
   = 1 game, and not every game: PropFinder's Injury Splits page speaks from one game and so does the
   board since 2026-10-27, the n / (n + 8) weight keeping one game a whisper; it was 3 and 5 together,
   which in October's fifth game left nothing to show — Vincent: "why are you not implementing the injury
-  splits?"). **The Injury Splits view** (`injurySplits` in `injuries.js`, `side.injurySplits` on every
-  board side, drawn by `InjurySplits` in `NbaCourt.jsx` as a fold under the out lines above each court):
-  for the side's out players, how every active teammate did in the games they sat — the out players
-  together as a combination and, with more than one out, each alone — minutes, points, rebounds, assists,
-  threes, PRA, with the gap against his games with them, from one game, PropFinder's page's layout. On the board (`board.js`) a player out keeps his chip, muted, and
+  splits?"). **No injury-splits table on the page** (Vincent, the same day, after one was drawn under the
+  out lines: "I don't need to see the injury splits, I need us to implement it in our prediction model in
+  the background; it's getting way too messy in the layout already"): the splits reach the figures through
+  `withoutOf` / `blendWithout` (the season rate and average behind every projection and rung) and the
+  vacated lifts, nothing is drawn; `injurySplits` in `injuries.js` (the page's table from the logs: every
+  teammate in the games the out players sat, the combination and each alone) stays as a tested helper
+  for the model's use, off the board's payload. Keep new reads in the numbers, not in new panels. On the board (`board.js`) a player out keeps his chip, muted, and
   loses his table rows (`out`, the game's `out` count); for everyone else the season hit rate behind
   the chance, the season average behind the projection and each ladder rung's season rate move toward
   the split at n / (n + `WITHOUT_K` = 8) (`blendWithout`; `without` on the play and the side's player:
