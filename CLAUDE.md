@@ -499,7 +499,10 @@ config and keeps its own markets, teams, feeds and slate key:
   `nhl-lineups.yml` settles every date from there to the date input (pages posted per date, then `only=settle`). Each rink shows when its source last changed
   and the Matchups header when the beat writers' pages last arrived (`sourceMeta.gdtFetchedAt`). After every lineup capture (and every matchup-file import for a
   coming slate) `lib/nhl-data/autorun.js` runs the model on the server with the stored
-  PropFinder workbooks + snapshot lineups + built history/home-away inputs + the pace workbook built from
+  PropFinder workbooks + snapshot lineups + built history / home-away inputs (this season's games alone, Vincent's call 2026-10-27: the history
+  workbook's skater-games vs each opponent by position, and the home / away split, written for a skater once he has
+  five games at each venue this season, else left out so the model reads his season row; `BUILDERS_VERSION` 4) + the
+  pace workbook built from
   MoneyPuck's team pace (`buildPace` in `lib/nhl-data/build.js`: CF+CA per 60 written per rostered skater in the
   pace export's layout, so the model's pace parser reads it unchanged; also the Model tab's auto Pace slot) and saves the run
   (source "auto", deduped by autoKey); the rink shows that run. The model's pure pipeline

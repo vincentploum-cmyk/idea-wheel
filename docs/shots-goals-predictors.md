@@ -1185,3 +1185,13 @@ deviance 3.05 against 1.19 for the blend over a whole season's early games, and 
 to the goal λ before Oct 10 (λ 0.49 against 0.17 actual on one- to three-game samples); the five-game floor keeps the
 worst of that out, and section 16's rows (10+ games) are where this season's rate is the forecast. The scorecard's
 Study λ and the model's own grades will show the rest as the games come in.
+
+The same evening, Kaprizov's case (an injury-cut season last year against a full start to this one): the two other
+files the model is handed from the stored rows follow the rule. The home / away workbook (`buildPlayerStats`), which the
+model reads in place of a skater's season goal rate at tonight's venue, is built from this season's games alone and
+writes a skater once he has five games at each venue, else he is left out and the model falls back to his season row;
+the history workbook (`buildHistorical`, every skater-game vs each opponent by position) is this season's games alone.
+The season workbook was already this season's rates. Nothing the model is given now reads a previous season except
+the under-five-game fallback. Still reading two seasons, and not a number the goals board makes: the Defense tab's
+Season span (labelled), the 1st goal tab's own-record and first-goals-allowed components, and the similar-shooter
+wash on the team log.
