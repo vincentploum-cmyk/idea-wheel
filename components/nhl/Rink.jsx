@@ -186,7 +186,8 @@ function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false }
   const title = `${p.name} · ${p.pos}${p.line ? ` L${p.line}` : ''} · ${p.gp || 0} GP · ${num(p.sog)} SOG/G, ${num(p.g, 2)} G/G${modelText}${h2hText}${p.projSog != null ? ` · matchup read ${num(p.projSog)} SOG, ${num(p.projG, 2)} G` : ''}${result}`
     + (p.shotEdge != null ? ` · shot edge ${p.shotEdge > 0 ? '+' : ''}${p.shotEdge}%` : '')
     + (p.goalEdge != null ? ` · goal edge ${p.goalEdge > 0 ? '+' : ''}${p.goalEdge}%` : '')
-    + (p.carried ? ` · carried from the last known lineup${p.carriedFrom ? ` (${p.carriedFrom})` : ''}` : p.inLineup ? '' : ' · not in the projected lineup');
+    + (p.carried ? ` · carried from the last known lineup${p.carriedFrom ? ` (${p.carriedFrom})` : ''}` : p.inLineup ? '' : ' · not in the projected lineup')
+    + (p.injury ? ` · injury report: ${p.injury}${p.injuryDetail ? ` (${p.injuryDetail})` : ''}` : '');
   return (
     <button
       type="button"
