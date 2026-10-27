@@ -155,21 +155,25 @@ describe('tonight’s picks', () => {
   });
   test('the notes read the picks: soft spots, the richest game, environment plays, near-ties, thin games, lineups', () => {
     const c = (name, opp, p3, p1g, sog, oppRank, under = false) => ({ name, opp, p3, p1g, rates: { sog }, oppRank, under });
-    const allowed = { teamCount: 32, teams: { BUF: { sog: 33.1, rank: 32 }, PHI: { sog: 32, rank: 31 }, STL: { sog: 25, rank: 10 }, TBL: { sog: 29, rank: 25 } } };
+    // Rank 1 = allows the most, as every table on the site ranks (PropFinder's All row, shotsAllowed): STL, #32, is the stingiest and never a soft spot.
+    const allowed = { teamCount: 32, teams: { BUF: { sog: 33.1, rank: 1 }, PHI: { sog: 32, rank: 2 }, STL: { sog: 25, rank: 32 }, TBL: { sog: 29, rank: 8 } } };
     const games = [
-      { away: 'DAL', home: 'BUF', shots: [c('Tage Thompson', 'BUF', 0.74, 0.48, 3.4, 32), c('Jason Robertson', 'BUF', 0.57, 0.49, 3.6, 32)], goals: [c('Jason Robertson', 'BUF', 0.57, 0.49, 3.6, 32), c('Tage Thompson', 'BUF', 0.74, 0.48, 3.4, 32)], shotsFallback: false, goalsFallback: false },
+      { away: 'DAL', home: 'BUF', shots: [c('Tage Thompson', 'BUF', 0.74, 0.48, 3.4, 1), c('Jason Robertson', 'BUF', 0.57, 0.49, 3.6, 1)], goals: [c('Jason Robertson', 'BUF', 0.57, 0.49, 3.6, 1), c('Tage Thompson', 'BUF', 0.74, 0.48, 3.4, 1)], shotsFallback: false, goalsFallback: false },
       // A fill-in under the floor (Eklund) is neither an environment play nor part of a near-tie.
-      { away: 'PHI', home: 'OTT', shots: [c('Dylan Cozens', 'PHI', 0.56, 0.27, 2.5, 1), c('Tim Stutzle', 'PHI', 0.54, 0.36, 2.42, 1), c('William Eklund', 'PHI', 0.49, 0.2, 2.3, 1, true)], goals: [c('Tim Stutzle', 'PHI', 0.54, 0.36, 2.42, 1)], shotsFallback: false, goalsFallback: false },
+      { away: 'PHI', home: 'OTT', shots: [c('Dylan Cozens', 'PHI', 0.56, 0.27, 2.5, 2), c('Tim Stutzle', 'PHI', 0.54, 0.36, 2.42, 2), c('William Eklund', 'PHI', 0.49, 0.2, 2.3, 2, true)], goals: [c('Tim Stutzle', 'PHI', 0.54, 0.36, 2.42, 2)], shotsFallback: false, goalsFallback: false },
       { away: 'SJS', home: 'STL', shots: [c('Dylan Holloway', 'SJS', 0.43, 0.28, 2.75, 20)], goals: [c('Dylan Holloway', 'SJS', 0.43, 0.28, 2.75, 20)], shotsFallback: true, goalsFallback: true },
-      { away: 'MIN', home: 'TBL', shots: [c('A', 'TBL', 0.71, 0.48, 3, 25), c('B', 'MIN', 0.7, 0.46, 3.3, 31), c('C', 'MIN', 0.63, 0.56, 3.4, 31)], goals: [c('C', 'MIN', 0.63, 0.56, 3.4, 31), c('D', 'TBL', 0.5, 0.5, 3, 25), c('A', 'TBL', 0.71, 0.48, 3, 25)], shotsFallback: false, goalsFallback: false },
+      { away: 'MIN', home: 'TBL', shots: [c('A', 'TBL', 0.71, 0.48, 3, 8), c('B', 'MIN', 0.7, 0.46, 3.3, 31), c('C', 'MIN', 0.63, 0.56, 3.4, 31)], goals: [c('C', 'MIN', 0.63, 0.56, 3.4, 31), c('D', 'TBL', 0.5, 0.5, 3, 8), c('A', 'TBL', 0.71, 0.48, 3, 8)], shotsFallback: false, goalsFallback: false },
     ];
     const notes = notesFor(games, allowed, { total: 8, gamedaytweets: 6, roster: 2, carried: 1 });
     const kinds = notes.map((n) => n.kind);
     expect(kinds).toEqual(['soft', 'rich', 'env', 'tie', 'thin', 'lineups']);
-    expect(notes[0].text).toContain('BUF has allowed the most shots in the league so far (33.1 a game, #32 of 32): Thompson and Robertson get that matchup.');
+    expect(notes[0].text).toContain('BUF has allowed the most shots in the league so far (33.1 a game, #1 of 32): Thompson and Robertson get that matchup.');
     expect(notes[0].text).toContain('PHI has allowed the second most shots');
+    expect(notes[0].text).not.toContain('STL');
     expect(notes[1].text).toBe('MIN @ TBL is the richest game: 3 shooters over 55% for 3+ and 3 scorers over 40%.');
-    expect(notes[2].text).toContain('Cozens and Stutzle are environment plays: PHI allows the most shots in the league');
+    expect(notes[2].text).toContain('Cozens and Stutzle are environment plays: PHI allows the #2 most shots in the league');
+    // The table named when it is PropFinder's (the All row on the tab the rink opens on).
+    expect(notesFor(games, { ...allowed, source: 'propfinder' }, null)[0].text).toContain('(33.1 a game, #1 of 32, PropFinder’s table)');
     expect(notes[3].text).toContain('A and B (3+ shots)');
     expect(notes[3].text).toContain('Robertson and Thompson (1+ goal)');
     expect(notes[4].text).toContain('SJS @ STL has no real pick either way: nobody is over 50% for 3+ shots or 35% for a goal, so the rows there are the best available.');

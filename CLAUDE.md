@@ -538,8 +538,15 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   wants the plays readable at a glance; the comparison lives on the History tab's scorecard). Beside the name, for
   the table's market: a flame / snowflake for his form (`formOf` in `picks-pure.js`, `heat` on the row: shots hot at
   1.4× his blended rate over his last five, cold at 0.7×; goals hot at 3+ in his last five, cold = none in ten when
-  his rate owed him 1.5) and a green rink when the opponent is in the soft third at his position (`oppPos.softSog` /
-  `softG`, `isSoftThird`). Colour only: the study found a streak adds nothing once the rate is in, so no number moves.
+  his rate owed him 1.5) and a green rink when the opponent is in the soft third at his position **on PropFinder's table
+  above the rink on Matchups, the tab it opens on** (`spot` on every slate skater, candidate and play: `spotFromTab` in
+  `propfinder-csv.js` off `defaultDefenseTab`, PropFinder's rank, soft = the top third of the tab's teams; Vincent,
+  2026-10-27, after the shuffle's Matchup column moved to that table: one environment read everywhere it is colour). The
+  study's per-skater table (`oppPos`, `isSoftThird`) stays the study λ's environment and stands in for a team without a
+  PropFinder table, named in the flag's hover. The notes' softest spots and environment plays read PropFinder's All row the
+  same way (`oppRank` / `oppSog` on the candidate, `allowed.notesFrom` on the payload, the stored team totals when no team
+  has a table), rank 1 = allows the most — until 2026-10-27 the softest-spots note read rank 32 as the most and named the
+  three stingiest teams. Colour only: the study found a streak adds nothing once the rate is in, so no number moves.
   The same flags (`components/nhl/flags.jsx`, `Flags`) sit on the Matchups tab: on each rink chip for the rink's
   metric (flame / snowflake only, `soft={false}`: the ice band under the chip already shows the environment, and by
   the picked window rather than the season table), on the plays strip per play, and in the all-skaters table's

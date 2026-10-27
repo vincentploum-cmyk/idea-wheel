@@ -7,7 +7,7 @@ const row = (date, sog, g) => ({ date, sog, g, icf: sog * 1.8, iscf: 1.5, toi: 1
 const cur = [[4, 0], [2, 0], [5, 1], [3, 0], [1, 0], [4, 1], [2, 0], [6, 1]].map(([s, g], i) => row(`2026-10-${String(8 + i).padStart(2, '0')}`, s, g));
 const prev = Array.from({ length: 20 }, (_, i) => row(`2026-03-${String(1 + i).padStart(2, '0')}`, 2, 0));
 const cand = { id: 7, name: 'David Pastrnak', team: 'BOS', opp: 'DET', venue: 'H', pos: 'RW', line: 1, lamS: 4.2, lamG: 0.55, source: 'model', study: { lamS: 3.9, p3: 0.7, p4: 0.5, p1g: 0.4 },
-  oppPos: { sog: 1.9, g: 0.3, rankSog: 3, rankG: 5, teams: 32, softSog: true, softG: true }, heat: { shots: 'hot', goals: null } };
+  oppPos: { sog: 1.9, g: 0.3, rankSog: 3, rankG: 5, teams: 32, softSog: true, softG: true }, spot: { source: 'propfinder', rankSog: 6, softSog: true }, heat: { shots: 'hot', goals: null } };
 
 describe('the NHL shuffle', () => {
   test('two bars, shots 1 to 8 and goals 1 to 4, with their floors', () => {
@@ -31,7 +31,7 @@ describe('the NHL shuffle', () => {
   });
   test('a skater’s row: the board’s λ, the study’s, his windows, the matchup, the grade', () => {
     const r = skaterRow({ ...cand, actual: { sog: 5, g: 1 } }, { study: { lamS: 3.9, lamG: 0.41 }, cur, prev });
-    expect(r).toMatchObject({ id: 7, name: 'David Pastrnak', pos: 'RW', line: 1, lamS: 4.2, lamG: 0.55, study: { lamS: 3.9, lamG: 0.41 }, oppPos: { rankSog: 3, teams: 32, softSog: true }, actual: { sog: 5, g: 1 } });
+    expect(r).toMatchObject({ id: 7, name: 'David Pastrnak', pos: 'RW', line: 1, lamS: 4.2, lamG: 0.55, study: { lamS: 3.9, lamG: 0.41 }, oppPos: { rankSog: 3, teams: 32, softSog: true }, spot: { source: 'propfinder', rankSog: 6 }, actual: { sog: 5, g: 1 } });
     expect(r.own.l5.sog).toBe(3.2);
     expect(skaterRow(cand).actual).toBeUndefined();                      // before the game
     expect(skaterRow(cand, { cur, prev }).study.lamG).toBeNull();       // the candidate's study carries no goals λ; the full projection does
