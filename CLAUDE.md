@@ -99,8 +99,11 @@ config and keeps its own markets, teams, feeds and slate key:
   scored on the tab, never ranked best) or the book's line; only the model half of the chance moves,
   the hit-rate half stays. The panel reads the season's scorecard once per sport and season (`bestReadFrom`: each read's
   over-the-line Brier — the `× matchup` predictors, the projection, the line — pooled over the bars' markets, 100 plays at
-  least) and marks the read that has predicted best on its tab, with the figures in the note under the tabs; it never
-  switches on its own. A stat he never records (a quarterback's receiving yards) gets no ladder and no row.
+  least) and **opens on the read that has predicted best** (`readFromOf`: the tab pressed this session, else the
+  verdict, else the board's blend; the verdict's tab is green, `is-best` in `globals.css`, pressed or not, with the
+  figures in the note under the tabs — "Reading from last 10, the green tab: …"; press any tab to override for the
+  session; Vincent's ask, 2026-10-27: no reading the note to know which to pick). A stat he never records (a
+  quarterback's receiving yards) gets no ladder and no row.
 - `scorecard.js` (`asOf`, `gradeBoard`, `gradePredictors`, `summarize`; the store's `gradeSlate` / `scorecardFor`,
   one finished slate memoised ten minutes): the picks scorecard, `GET /api/nba/scorecard?from&to` (ET dates, the
   season to date by default) and `GET /api/nfl/scorecard?season&from&to` (week ordinals, 19–22 the postseason), drawn
@@ -257,10 +260,17 @@ config and keeps its own markets, teams, feeds and slate key:
   L15 / L20 = PropFinder's `lastNGames` rows as published, `defenseAllowed` → `defense.windows[l5]` with
   their own ranks and `league` = the league's average per position and stat; `windowsOf` / `tableFor` in
   the court, `zoneTone` by rank third, rank 1 = the most permissive), the zone's foot carrying the rank;
-  every chip his **projection for tonight** (`lib/picks/projection.js`: `ownRate` = his season average
-  blended with his last ten at 0.65 / 0.35, × `envFactor` = 1 + 0.6 × (the opponent's allowed at his spot
-  over the league's average − 1) for the window picked; green over the line, red under, the hover showing
-  the arithmetic), the book's main line and the chance for the stat (`playFor`: the over or yes side), ✓ when
+  every chip his **projection for tonight**: **the board's figure** (`ranges[stat].exp` on the side's
+  player, `boardRead` in the court: `lib/picks/projection.js`'s `ownRate` = his season average blended
+  with his last ten at 0.65 / 0.35, × `envFactor` = 1 + 0.6 × (the opponent's allowed at his spot over
+  the league's average − 1) **on the season table**, × the side's factor; `rate` / `matchup` / `team` /
+  `env` ride on the range so the hover spells it out; green over the line, red under). **A window moves
+  no figure** (Vincent, 2026-10-27: the shuffle said #26 PF × 0.96 and 15.8 for Randle at BOS while the
+  court on L10 said #10 and 17.3, the chip's projection then following the window): the L5 / L10 tabs
+  tint the zones and fill the table, the chip, the Tonight table, the shuffle's Expected and the card
+  all show the one board projection, and the chip's hover says what the picked window would have read
+  (`windowRead`); the shuffle's Matchup hover names the season table it reads. The chip also carries the
+  book's main line and the chance for the stat (`playFor`: the over or yes side), ✓ when
   the cheat sheet names him (the hover names the file), flame / snowflake / soft spot, his projection
   alone when he has no line; above the court the opponent-allowed table (per position, every stat
   PropFinder's table carries, value + rank chip, the `nhlx-pfd-*` styles, the picked stat's column
@@ -325,8 +335,11 @@ config and keeps its own markets, teams, feeds and slate key:
   REB / AST a game this season), market tabs with the hit rate for the pressed split, the Over +
   line block with the board's chance, price and sheet check for that line (the line menu lists the
   book's ladder with its prices, his plays' lines and ±3 around the one shown) and his projection for
-  tonight (`projectFor`, his windows from the logs × the opponent's environment at his spot over the
-  window picked on the right), the per-game bars against the line (`Bars`: green over, red
+  tonight — the board's (`board` in the `/api/nba/player` payload: his entry on the slate's board from
+  `boardFor`, `envPos`, `scale`, `ranges`, `ladders`, `plays`, so the card shows the same figure, ladder
+  rungs and lines whichever view opened it, the shuffle's rows included; `projectFor` on the season
+  table only for a market without a ladder; the window tabs on the right fill the allowed table and the
+  hover says what that window would read), the per-game bars against the line (`Bars`: green over, red
   under, the average pill), the split tiles (L5 · L10 · L20 · season · vs opp · home / away; press one
   to draw its games), the splits table (GP, MIN, PTS, REB, AST, 3PM, PRA, over %), and on the right
   the opponent's allowed table (Season / L5 / L10 … tabs, his position marked, the league's average at
@@ -345,6 +358,54 @@ config and keeps its own markets, teams, feeds and slate key:
   `.github/workflows/nba-data.yml`: 9:47 ET and 5:23 PM ET (schedule + PropFinder), 2:11 AM ET
   (last night's box scores). UI: `components/nba/NbaApp.jsx` (date picker), `NbaBoard.jsx`,
   `NbaSources.jsx`. Tests: `__tests__/nba-board.test.js` (`fixtures/espn-nba-summary.json`).
+
+## Performance: what is computed once and kept
+
+The data layer is CPU-bound, not I/O-bound: two seasons of stored skater-games (~50k rows a
+season) are read into every NHL tab, and before 2026-10-27 the slate was rebuilt from them on
+every API call (56 s cold on a synthetic two-season store, every tab paying it again:
+`propfinderDefenseTabs` rolled the five PropFinder windows over a fresh filtered copy of the
+rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
+
+- `lib/memo.js` (pure, no store import, so the client bundles that share `lib/nhl-data` helpers
+  stay clean): `memoByRows(rows, key, compute)` keeps a value per rows array (a WeakMap: it goes
+  with the array; another array with the same content is a new computation); `inputsMemo` keeps
+  a value per set of input objects (identity); `asyncMemo({ ttl, max, revision })` keeps an
+  async build per key while the store's revision, the inputs' identities and the TTL hold, and
+  shares a build in flight. A memoised value is shared between requests: **read-only**.
+- `lib/nhl-store.js`: `dataRevision()` bumps on every write / invalidation (and on a run saved
+  or deleted); `readJson` shares an in-flight download between requests that arrive together
+  (`invalidate` drops it, so a read after a write never joins the one before it); the blob cache
+  (logos, headshots, `readBlob(…, { cache: true })`) is an LRU within a byte budget
+  (`BLOB_BUDGET_BYTES`, 32 MB) instead of 200 entries. `loadRows` (`build.js`) shares an
+  in-flight load per `asOf` and hands back the same array while the season files are unchanged.
+- Per rows array (`memoByRows`): `defense.js` builds one per-game aggregate per kind
+  (`aggregate(rows, 'pos' | 'slot')`, one pass over the rows) and every table off it
+  (`defenseByPosition` with `lastN` and the `games: 'regular'` filter, `defenseBySlot`,
+  `blendedDefense` without filtering the rows), `pairRows` (defending team | attacking team →
+  rows) behind `defenseVsTeam` and `verdict.js`'s `h2hTotals`, `firstGoalsAllowed`,
+  `playerBaselines`; `propfinder.js`'s `storedWindowTables` (so `withStoredWindows` rolls each
+  window once a store state, not once a side); `picks-pure.js`'s `seasonSplit(rows, season)`
+  (this season's and last season's rows per player, the flat lists, each team's last game,
+  `shotsAllowed`, `positionAllowed`: the slate, the picks and the first-goal board read the same
+  split); `slate.js`'s `h2hByOpponent`; `firstgoal.js`'s `firstGoalRecord`; `defense-grade.js`'s
+  `gradeDefenseReads` (the whole replay, when no `trace`).
+- Per store state (`asyncMemo` with `revision: dataRevision`, 15 min): `buildSlate(date)` (inputs:
+  the rows, the positions snapshot, the lineups and games files, `latestModelRun`), `buildPicks`
+  (board and `withSkaters`, inputs: the slate and the rows; `buildShuffle` reshapes it),
+  `buildFirstGoalBoard`, and the Defense tab's payload in `app/api/nhl/data/defense/route.js`.
+  `loadMoneyPuck` and `loadPlayers` are `memoizeByInputs` (the same object while the files are).
+  A write through the store (a lineup read, a stored game, a pull, a run) drops them at once; a
+  run saved through `/api/nhl/runs` (its own module copy) shows within `latestModelRun`'s minute.
+- NFL / NBA (`lib/picks/store.js`): `boardFor` keeps the built board per slate files (the
+  schedule, the pull, the sheets, the results: `inputsMemo`), `shuffleFor` the shuffle per board
+  and market; a sheet whose OCR is done is read through the cache (fresh only while pending, or
+  when the cached copy is still the pending one), the sheets index stays a fresh read.
+- `middleware.js` skips `/api/nhl/data/media` (hundreds of image requests a page, the route checks
+  the session itself); the media route's CDN fallback redirect is cacheable for a day.
+- Tests: `__tests__/memo.test.js` (the helpers, the tables off one aggregate),
+  `__tests__/nhl-slate-memo.test.js` (the builders through the bucket mock, the blob budget, the NBA
+  board). When adding a builder a page waits on, wrap it the same way and name its inputs.
 
 ## Canonical locations
 
@@ -502,10 +563,12 @@ config and keeps its own markets, teams, feeds and slate key:
   the board's 3+ figure, 6+ the same λ further up), survivors at the floor sorted by the chance with the break-even
   price, how often he reached the bar, where he thins out and Got once final; the fallen strip under it. "Read
   from" (`READ_FROM`) moves the λ to the study's or a window of his own results (a window he lacks falls back to the
-  board's). The panel reads the History tab's scorecard once a page load (`bestReadFrom` in `shuffle-pure.js`: each
+  board's). The panel opens on the read the History tab's scorecard rates best for the active bar (`readFromOf`: the
+  tab pressed this session, else the verdict, else the board's λ), that tab green (`is-best`), the note saying which
+  is on and why. It reads the scorecard once a page load (`bestReadFrom` in `shuffle-pure.js`: each
   read's Brier at the bar's floor height — the scorecard's model / study / own5 / own10 / ownSeason predictors on the
-  rows every predictor covers, 100 at least) and marks the read that has predicted the active bar best on its tab,
-  the figures in the note under the tabs; it never switches on its own. One request a slate, every bar move local; no
+  rows every predictor covers, 100 at least) and follows that verdict until a tab is pressed, the figures in the note
+  under the tabs. One request a slate, every bar move local; no
   number on the board changes. The chance at 1+ G is the
   run's own 1+ G figure (`fromModel` keeps the run's three-decimal λ), the Model tab's Top goals board ranks by that
   same figure (`scoreTopBoardRow` in `NhlModel.jsx`: shots by 3+, goals by 1+, points by 1+, the next rung breaking

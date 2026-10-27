@@ -46,7 +46,7 @@ describe('the NBA shuffle', () => {
     expect(sh.heights[sh.heights.length - 1]).toBe(pts.max);
     expect(sh.players.map((p) => p.player)).toEqual(['Jaylen Brown', 'Sam Hauser']);
     const brown = sh.players[0];
-    expect(brown).toMatchObject({ team: 'BOS', opp: 'NY', venue: 'A', pos: 'SF', spot: { pos: 'SF', rank: 1, value: 24, count: 2 }, main: { line: 25.5, odds: -110 } });
+    expect(brown).toMatchObject({ team: 'BOS', opp: 'NY', venue: 'A', pos: 'SF', spot: { pos: 'SF', rank: 1, value: 24, count: 2, held: false }, main: { line: 25.5, odds: -110 } });
     expect(brown.env).toBeCloseTo(1.055, 3);   // NY gives up 24 to SFs against a league of 22, damped
     expect(brown.matchup).toBeCloseTo(1.055, 3);   // the matchup alone; no team totals in this pull, so no side factor
     expect(brown.teamFactor).toBeNull();
