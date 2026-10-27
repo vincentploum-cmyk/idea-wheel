@@ -21,7 +21,7 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   → `[tab, mounted]`, a visited panel stays mounted hidden so it keeps its state; `components/site/TabBar.jsx`
   draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard, the data
   sources, the default) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
-  drawn on both panels). The NHL app has eight (below).
+  drawn on both panels); the NBA page a third, `#firstbasket`. The NHL app has eight (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)
@@ -444,6 +444,27 @@ config and keeps its own markets, teams, feeds and slate key:
   `optional: true` reads null when the row lacks the key, so an unknown spelling shows as "—" on
   the card and in the pull's unread list, never as 0) and averaged per split in the top bar and
   the splits table.
+- **First basket** (`#firstbasket`, `components/nba/NbaFirstBasket.jsx`, `GET /api/nba/firstbasket?date[&backfill=0]`,
+  `firstBasketFor` in `lib/nba/store.js`, the model in `lib/nba/firstbasket.js`; Vincent's ask, 2026-10-27, after
+  PropFinder's First Basket page): who scores the first field goal of each game. ESPN's summary carries the plays, so
+  `parseOpening` in `lib/nba/espn.js` stores with every box score an `opening` — the tip (the two jumpers, who gained
+  possession, by team), the first basket (scorer, team, 2 or 3), the first points (a free throw counts) and each team's
+  first shot (`__tests__/fixtures/espn-nba-summary-plays.json` is DAL at MIA of 2026-10-26, trimmed); results stored
+  before it lack it and the tab's load reads a dozen of them again from ESPN each time (`MAX_BACKFILL`, `missing` in
+  the payload says how many remain; a summary without plays is marked `openingMissing`). The season's record
+  (`firstBasketRecord` over the season's stored results, ten minutes a cache): per player (ESPN id, joined to the pull
+  by `normName`) his starts, first baskets, first points, first shots and jump balls won / jumped; per team its tips,
+  first baskets scored and conceded; and how often the team with first possession scored first. Each starter (the
+  depth chart's: the nba.com starter flag, then depth 1 a slot; the five most-played pulled players without a chart,
+  `startersOf`; the out left aside, the overrides in through `pfFor`) gets P(team first) × his share: P(first
+  possession) is the starting centre's jump record ((won + 2) / (jumped + 4), `TIP_K`), the team's tip record standing
+  in, half without either, × `FIRST_POSSESSION_EDGE` = 0.57 (the season's own share once 40 games are on record); his
+  share is his field-goal attempts among the five starters × his finishing (`FINISH_WEIGHT`), moved toward his first-shot
+  share this season at n / (n + `SHARE_K`), the five normalised; his own first baskets over starts blend in at starts /
+  (starts + `OWN_K`). The chance carries its fair price and the book's first-basket price when the pull has one
+  (`firstBasketOdds` in `lib/picks/propfinder.js`: the items naming a first basket / first field goal, not a team's or
+  first points, the best price as `firstBasket` on the player, never a market), with the edge; the score is the chance
+  × 4 on 0–100. Once stored, who scored first, the first points and the tip are on the game and the rows are graded.
 - Routes: `GET /api/nba/picks?date`, `GET /api/nba/shuffle?date&market`, `GET /api/nba/scorecard?from&to`, `GET|POST|DELETE /api/nba/sheets?date`,
   `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`,
   `GET|POST /api/nba/injuries?date` (the admin's injury overrides).
