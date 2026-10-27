@@ -115,7 +115,7 @@ describe('the NHL builders are kept per store state', () => {
 
   test('the defense tables of a rows array are built from one aggregate and kept', async () => {
     const { loadRows } = require('../lib/nhl-data/build');
-    const { defenseByPosition, defenseBySlot, blendedDefense } = require('../lib/nhl-data/defense');
+    const { defenseByPosition, defenseBySlot, seasonDefense } = require('../lib/nhl-data/defense');
     const { gradeDefenseReads } = require('../lib/nhl-data/defense-grade');
     const { storedWindowTables, withStoredWindows } = require('../lib/nhl-data/propfinder');
     const rows = await loadRows(DATE);
@@ -123,8 +123,9 @@ describe('the NHL builders are kept per store state', () => {
     expect(defenseByPosition(rows)).toBe(defenseByPosition(rows));
     expect(defenseByPosition(rows, { lastN: 5 })).toBe(defenseByPosition(rows, { lastN: 5 }));
     expect(defenseBySlot(rows).teams.PHI.ALL.LW1.gp).toBeGreaterThan(0);
-    expect(blendedDefense(rows, DATE)).toBe(blendedDefense(rows, DATE));
-    expect(blendedDefense(rows, DATE).teams.PHI.ALL.LW.base).toBeGreaterThan(0);
+    expect(seasonDefense(rows, DATE)).toBe(seasonDefense(rows, DATE));
+    expect(seasonDefense(rows, DATE).season).toBe(2025);
+    expect(seasonDefense(rows, DATE).teams.PHI.ALL.LW.per.sog).toBeGreaterThan(0);
     const win = storedWindowTables(rows, 'l5', { season: 2025 });
     expect(storedWindowTables(rows, 'l5', { season: 2025 })).toBe(win);
     expect(win.LW.teams.PHI.gp).toBe(5);

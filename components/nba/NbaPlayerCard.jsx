@@ -24,7 +24,7 @@ const STAT_LABEL = { pts: 'PTS', reb: 'REB', ast: 'AST', tpm: '3PM', pra: 'PRA',
 // Per-game figures that are not markets: read straight off the game row.
 const RAW = new Set(['min', 'usg', 'rebCh', 'potAst']);
 const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
-const SEASON_MIN = 10;   // the season split is last season's (his last 82) until this one has ten games
+const SEASON_MIN = 1;    // the season split is this season's from his first game; last season's (his last 82) stands in until then
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
 const pct = (r) => (r == null ? '—' : `${Math.round(r * 100)}%`);
 const mdy = (iso) => (iso ? `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}/${iso.slice(2, 4)}` : '');
@@ -187,7 +187,7 @@ function Card({ req, date, onClose }) {
   const p = data?.player || { name: req.player?.player || req.key, team: req.team, pos: req.player?.pos || null, injury: req.player?.injury || null };
   const avgOf = (m, list) => { const vals = list.map((g) => (RAW.has(m) ? (g[m] == null ? null : Number(g[m])) : statOf(g, m))).filter((v) => v != null && Number.isFinite(v)); return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null; };
   const seasonGames = splitGames(games, 'season', splitCtx);
-  const allowedKeys = data?.allowed ? [...new Set(Object.values(data.allowed).flatMap((r) => Object.keys(r)))].filter((k) => !['gp', 'season', 'prior', 'priorSeason', 'lastN'].includes(k)).sort((a, b) => (Object.keys(STAT_LABEL).indexOf(a) + 1 || 99) - (Object.keys(STAT_LABEL).indexOf(b) + 1 || 99)).slice(0, 8) : [];
+  const allowedKeys = data?.allowed ? [...new Set(Object.values(data.allowed).flatMap((r) => Object.keys(r)))].filter((k) => !['gp', 'season', 'prior', 'priorSeason', 'lastN', 'held'].includes(k)).sort((a, b) => (Object.keys(STAT_LABEL).indexOf(a) + 1 || 99) - (Object.keys(STAT_LABEL).indexOf(b) + 1 || 99)).slice(0, 8) : [];
   // The spot his environment is read at: the board's (his depth-chart slot when the opponent's table has it), else his roster position.
   const myPos = bp?.envPos || (POSITIONS.includes(p.pos) ? p.pos : p.pos === 'G' ? 'SG' : p.pos === 'F' ? 'SF' : null);
   // The tabs on the right: this season's table (the one the board reads), last season's in full, then PropFinder's last-N windows.

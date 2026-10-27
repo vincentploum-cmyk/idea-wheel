@@ -221,22 +221,20 @@ describe('NBA PropFinder mapping', () => {
     expect(wt.totals.BOS.l10.against).toMatchObject({ pts: 108 });
     expect(wt.totals.BOS.prior).toBeNull();
     expect(d.totals).toEqual({});
-    expect(d.prior).toBeNull();
-    // Early in the season: this season's row from its first game, as PropFinder publishes it (no blend into last
-    // season's: Vincent, 2026-10-27, the teams on the court are this season's); nothing played yet = last season's alone, held.
+    // Early in the season the table is this season's from the team's first game (two games: this
+    // season's 35 a game, not last season's 22 and no blend of the two); a position without a game
+    // this season yet reads last season's row and says so (`held`).
     const early = [
-      { code: 'BOS', stats: [{ ...row('PG', 150), gamesPlayed: 2, points: 34 }, { ...row('PG', 110), seasonYear: 2025, gamesPlayed: 82 }, { ...row('C', 0), gamesPlayed: 0 }, { ...row('C', 20), seasonYear: 2025, gamesPlayed: 82 }] },
+      { code: 'BOS', stats: [{ ...row('PG', 175), gamesPlayed: 2 }, { ...row('PG', 110), seasonYear: 2025, gamesPlayed: 82 }, { ...row('C', 0), gamesPlayed: 0 }, { ...row('C', 20), seasonYear: 2025, gamesPlayed: 82 }] },
       { code: 'NYK', stats: [{ ...row('PG', 150), seasonYear: 2025, gamesPlayed: 82 }] },
     ];
     const e = defenseAllowed(early, { season: 2026 });
-    expect(e.teams.BOS.PG).toMatchObject({ gp: 2, prior: 82, priorSeason: 2025, season: 2026, pts: 34 });
+    expect(e.teams.BOS.PG).toMatchObject({ gp: 2, season: 2026, pts: 35 });
     expect(e.teams.BOS.PG.held).toBeUndefined();
-    const tenIn = early.map((t) => ({ ...t, stats: t.stats.map((r) => (r.seasonYear === 2026 && r.position === 'PG' ? { ...r, gamesPlayed: 10, points: 30 } : r)) }));
-    const b10 = defenseAllowed(tenIn, { season: 2026 });
-    expect(b10.teams.BOS.PG).toMatchObject({ gp: 10, prior: 82, season: 2026, pts: 30 });
-    expect(e.teams.BOS.C).toMatchObject({ gp: 0, prior: 82, pts: 4, held: true, season: 2025 });
-    expect(e.teams.NY.PG).toMatchObject({ gp: 0, prior: 82, pts: 30, held: true });
-    expect(e.ranks.BOS.PG.pts).toBe(1);   // 34 this season over NY's 30 (last season's, held)
+    expect(e.teams.BOS.PG.prior).toBeUndefined();
+    expect(e.teams.BOS.C).toMatchObject({ gp: 0, prior: 82, priorSeason: 2025, season: 2025, held: true, pts: 4 });
+    expect(e.teams.NY.PG).toMatchObject({ gp: 0, prior: 82, season: 2025, held: true, pts: 30 });
+    expect(e.ranks.BOS.PG.pts).toBe(1);
     expect(e.ranks.NY.PG.pts).toBe(2);
     // Last season's full table rides along as `prior`, ranked on its own: NY's 30 over BOS's 22.
     expect(e.prior).toMatchObject({ season: 2025, count: 2 });
@@ -245,6 +243,7 @@ describe('NBA PropFinder mapping', () => {
     expect(e.prior.ranks.NY.PG.pts).toBe(1);
     expect(e.prior.ranks.BOS.PG.pts).toBe(2);
     expect(e.prior.league.PG.pts).toBe(26);
+    expect(d.prior).toBeNull();   // no last-season rows in the plain fixture
     // The league's average per position and stat rides along, and the last-N windows PropFinder publishes with their own ranks.
     expect(d.league.PG.pts).toBeCloseTo((24 + 30 + 27) / 3, 2);
     expect(d.windows).toEqual({});
@@ -389,11 +388,13 @@ describe('NBA ladders', () => {
     expect(bare.find((r) => r.line === 7.5).p).toBeGreaterThan(0.7);   // 8 every night: the floor on his spread keeps a tail
     expect(bare.find((r) => r.line === 8.5).p).toBeLessThan(0.3);
     expect(ladderOf(logs, { market: 'dd', season: 2026 })).toEqual([]);
-    // Four games this season: the rungs read over the last 82 across the seasons, not the four.
+    // Four games this season: the rungs' season rate reads those four (20, 23, 26, 29: none over 33.5), not the 24 across
+    // the seasons; the spread behind the model half still comes from his last 82.
     const early = [...logs.slice(0, 4).map((g) => ({ ...g, season: 2027 })), ...logs.map((g) => ({ ...g, season: 2026 }))];
     const e = ladderOf(early, { market: 'pts', season: 2027, prop: { market: 'pts', line: 25.5, odds: -110, underOdds: -110, books: 2, isMain: true } });
-    expect(e.find((r) => r.line === 33.5).rates.n).toBe(24);
+    expect(e.find((r) => r.line === 33.5).rates).toMatchObject({ n: 4, season: 0 });
     expect(e.find((r) => r.line === 33.5).p).toBeLessThan(0.15);
+    expect(e.find((r) => r.line === 33.5).sd).toBeGreaterThan(4);
   });
   test('every side player with logs carries his ladders', () => {
     const games = [{ id: 'g1', date: '2026-10-21T23:30Z', away: 'BOS', home: 'NY', final: false, state: 'pre' }];

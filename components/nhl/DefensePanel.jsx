@@ -12,7 +12,7 @@ import { GROUPS, OVERVIEW_COLS, boardTables, overviewRows, matchupReads, groupKe
 // tonight's matchups read off the same tables, and a team overview with MoneyPuck's rates.
 
 const METRICS = [['sog', 'Shots'], ['g', 'Goals']];
-const SPANS = [['season', 'Season (blended)'], ['l10', 'Last 10'], ['l5', 'Last 5']];
+const SPANS = [['season', 'Season'], ['l10', 'Last 10'], ['l5', 'Last 5']];
 const VENUES = [['ALL', 'All'], ['H', 'Home'], ['A', 'Away']];
 const VIEWS = [['all', 'All teams'], ['tonight', 'Playing tonight']];
 const GROUP_OPTS = Object.entries(GROUPS).map(([k, g]) => [k, g.label]);
@@ -24,8 +24,8 @@ function RankChip({ rank, n }) {
   return rank ? <span className="nhlx-rank" title={`Rank ${rank} of ${n}: 1 allows the most`}>#{rank}</span> : null;
 }
 
-/** "7 + 82" for a blended season row (this season's games, last season's in the blend), else the games. */
-const gpText = (r) => (r?.base ? `${r.gp} + ${r.base}` : r?.gp ?? '—');
+/** The games behind a row; "last season" when last season's table stands in for a team without a game yet. */
+const gpText = (r) => (r?.gp ? r.gp : r?.base ? 'last season' : '—');
 
 /** One cheat-sheet table: Rk · Team · GP · value, tinted by rank thirds, the league mean at the foot. */
 function RankTable({ title, table, digits, playing, view, active, onPick }) {
@@ -34,7 +34,7 @@ function RankTable({ title, table, digits, playing, view, active, onPick }) {
     <div className="nhlx-df-table">
       <h4>{title}</h4>
       <PfTable className="nhlx-da-table">
-        <thead><tr><th>Rk</th><th className="is-left">Team</th><th title="Games this season, + last season's in the blend">GP</th><th title={`${digits === 1 ? 'Shots' : 'Goals'} allowed per skater at the position, a game`}>{digits === 1 ? 'SA / skater' : 'GA / skater'}</th></tr></thead>
+        <thead><tr><th>Rk</th><th className="is-left">Team</th><th title="Games this season; “last season” = last season's table standing in until the team's first game">GP</th><th title={`${digits === 1 ? 'Shots' : 'Goals'} allowed per skater at the position, a game`}>{digits === 1 ? 'SA / skater' : 'GA / skater'}</th></tr></thead>
         <tbody>
           {rows.map((r) => {
             const dim = view === 'tonight' && playing.size && !playing.has(r.abbr);
@@ -236,7 +236,7 @@ function Streaks({ list, tab, onTab, playing, view, byVenue, venue, group, digit
   );
 }
 
-const SPAN_LABEL = { season: 'Season (blended)', l10: 'Last 10', l5: 'Last 5' };
+const SPAN_LABEL = { season: 'Season', l10: 'Last 10', l5: 'Last 5' };
 const pct = (v, d = 1) => (v == null ? '—' : `${(v * 100).toFixed(d)}%`);
 const signed = (v) => (v == null ? '—' : `${v > 0 ? '+' : ''}${(v * 100).toFixed(1)}%`);
 
@@ -453,7 +453,7 @@ export default function DefensePanel() {
 
       <div className="nhlx-da-legend"><span><i className="is-soft" />Softest third</span><span><i className="is-mid" />Middle</span><span><i className="is-tough" />Stingiest third</span></div>
       <p className="nhlx-df-note">
-        {data.games} games stored. {thin ? `${thin} teams have fewer than 10 games ${venue === 'ALL' ? 'stored' : venue === 'H' ? 'at home' : 'away'}; their ranks can swing on one night.` : ''} Every figure is what the team allows per skater at the position a game, the read the study found twice as sharp as the per-game total. The Season span blends this season into last season’s table at games / (games + 15) for shots and games / (games + 40) for goals (GP reads “this season + last”); Last 10 / Last 5 are the newest stored games across the two seasons and are the noisier read. Positions are the lineup slots the box scores were logged under (LW / C / RW by line, D by pair); a group’s figure weights its positions by the skaters they carry. Click a team to follow it through every table. MoneyPuck rates credit MoneyPuck.com.
+        {data.games} games stored. {thin ? `${thin} teams have fewer than 10 games ${venue === 'ALL' ? 'stored' : venue === 'H' ? 'at home' : 'away'}; their ranks can swing on one night.` : ''} Every figure is what the team allows per skater at the position a game, the read the study found twice as sharp as the per-game total. The Season span is this season’s stored games alone (a team without a game yet at the venue reads last season’s table, GP “last season”, until its first); Last 10 / Last 5 are the newest stored games across the two seasons and are the noisier read. Positions are the lineup slots the box scores were logged under (LW / C / RW by line, D by pair); a group’s figure weights its positions by the skaters they carry. Click a team to follow it through every table. MoneyPuck rates credit MoneyPuck.com.
       </p>
     </div>
   );
