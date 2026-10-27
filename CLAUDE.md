@@ -180,8 +180,17 @@ config and keeps its own markets, teams, feeds and slate key:
   their chunks sit behind the login; the shared bundle names only the team, player and image routes):
   `fetchRotations` reads it once a pull when `PROPFINDER_<LEAGUE>_ROTATIONS_PATH` names it on Render
   (`{teamIds}`, `{date}` filled in) and stores the answer's keys and first 2000 characters as `rotations` on the
-  pull, shown under Data sources, so the read can be written from what the page really sends. The notes name
-  who is out and the reads moved; the card's
+  pull, shown under Data sources, so the read can be written from what the page really sends. **The volume
+  behind a made count** (`volumeOf` in `board.js`, Vincent's ask of 2026-10-27 for PropFinder's Volume Trends;
+  `volumeMarkets` per sport: the NBA's threes off `tpa` and free throws off `fta`, the NFL's receptions off `tgt`):
+  his attempts a game over his last 5 / 10 / the season (the rate's own blend) × his percentage, this season's made
+  over attempts shrunk toward his long run (his last `seasonCap` games) at attempts / (attempts + `VOLUME_K` = 40),
+  so a 4-of-8 start reads a little over his usual rate, not as 50%; `own[stat].volume` { att, pct, pctSeason,
+  pctLong, attN, field } on the side player, `ranges[market].volume` and the shuffle row carry it, `ownRate` reads
+  attempts × percentage in place of the made count when the logs carry attempts (a without split's move on the
+  made count rides over as a ratio), the made count stands without them (the field's spelling unseen in the pull);
+  the hovers spell it out and the card's splits table carries FGA, 3PA and FTA a game beside the made counts. The
+  notes name who is out and the reads moved; the card's
   "w/o X" tile draws the split (`without.gameIds` from `/api/<sport>/player`); the pull's `injuries`
   meta (source, counts, the players read one by one, errors) shows under Data sources. No live pull
   had been seen when this was written: an empty report there means the route or the field names

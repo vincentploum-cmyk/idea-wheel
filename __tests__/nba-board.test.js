@@ -484,6 +484,28 @@ describe('NBA ladders', () => {
   });
 });
 
+describe('NBA volume read', () => {
+  const games = [{ id: 'g1', date: '2026-10-21T23:30Z', away: 'BOS', home: 'NY', final: false, state: 'pre' }];
+  const log = (date, season, tpm, tpa) => ({ date, season, type: 'REG', opp: 'NY', pts: 20, reb: 5, ast: 3, tpm, tpa, pra: 28, pr: 25, pa: 23, ra: 8 });
+  test('threes read off his attempts × his percentage, the season’s shrunk toward his long-run one', () => {
+    // Three games this season at 4 of 8 (50%) over twenty last season at 2 of 8 (25%): attempts 8 a game, the
+    // percentage (12 + 40 × 0.283) / (24 + 40) = 36.4% → 2.9 threes; the made count alone said 0.65 × 4 + 0.35 × 2.6 = 3.5.
+    const logs = [...[0, 1, 2].map((i) => log(`2026-10-${20 - i}`, 2026, 4, 8)), ...Array.from({ length: 20 }, (_, i) => log(`2026-04-${String(20 - i).padStart(2, '0')}`, 2025, 2, 8))];
+    const pf = { at: '2026-10-21T14:00:00Z', data: { players: [{ id: 'p1', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SF', games: logs, props: [{ market: 'tpm', line: 2.5, odds: -110, underOdds: -110, isMain: true }] }], defense: null } };
+    const p = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf, results: {} }).games[0].sides.BOS.players[0];
+    expect(p.own.tpm).toMatchObject({ season: 4, l10: 2.6, volume: { att: { l5: 8, l10: 8, season: 8 }, pct: 0.364, pctSeason: 0.5, pctLong: 0.283, attN: 24, field: 'tpa' } });
+    expect(p.ranges.tpm).toMatchObject({ rate: 2.9, exp: 2.9, volume: { att: 8, pct: 0.364, pctSeason: 0.5, pctLong: 0.283, attN: 24 } });
+    expect(p.ladders.tpm[0].rate).toBe(2.9);
+    // Points carry no volume read; without attempts in the logs the made count stands.
+    expect(p.own.pts.volume).toBeUndefined();
+    expect(p.ranges.pts.volume).toBeNull();
+    const bare = { ...pf, data: { ...pf.data, players: pf.data.players.map((x) => ({ ...x, games: x.games.map(({ tpa, ...g }) => g) })) } };
+    const q = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: bare, results: {} }).games[0].sides.BOS.players[0];
+    expect(q.own.tpm.volume).toBeUndefined();
+    expect(q.ranges.tpm.rate).toBe(3.5);
+  });
+});
+
 describe('NBA board read', () => {
   const { boardRead, windowRead } = require('../lib/picks/projection');
   const season = { rows: { PF: { pts: { value: 18.8, rank: 26 }, held: true } }, league: { PF: { pts: 20.1 } }, count: 30 };
