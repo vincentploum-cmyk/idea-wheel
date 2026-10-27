@@ -32,13 +32,15 @@ function Row({ x, badge = false }) {
  * so the four parts sit on the grid of `.nhlx-char-grid` (head row, lists row, style row) and two
  * teams side by side keep their sections level however long either list runs.
  */
-export function TeamCharacteristics({ c, headline = null, tone = '' }) {
+export function TeamCharacteristics({ c, headline = null, tone = '', renderTeam = null }) {
+  const head = headline ?? c.headline ?? null;
+  const headTone = headline != null ? tone : c.tone || tone;
   return (
     <div className="nhlx-char-team">
       <div className="nhlx-mu-verdict-head">
-        <TeamLink abbr={c.team} logo={22}><b>{c.team}</b></TeamLink>
+        {renderTeam ? renderTeam(c.team) : <TeamLink abbr={c.team} logo={22}><b>{c.team}</b></TeamLink>}
         <small>{c.venue === 'H' ? 'home' : 'away'}</small>
-        {headline ? <span className={`nhlx-edge ${tone}`}>{headline}</span> : null}
+        {head ? <span className={`nhlx-edge ${headTone || ''}`}>{head}</span> : null}
       </div>
       <section className="nhlx-char-strengths" aria-label={`${c.team} strengths`}>
         <h5><i className="is-plus">+</i> Strengths</h5>
@@ -56,15 +58,19 @@ export function TeamCharacteristics({ c, headline = null, tone = '' }) {
   );
 }
 
-/** Both teams of a slate game, away then home, with the game-total pill on the head. */
-export function GameCharacteristics({ game }) {
+/**
+ * Both teams of a game, away then home. On the NHL slate the head pill is the game-total read and
+ * each team's pill its defense verdict; the picks boards (NBA, NFL) pass `pill` ({ text, tone, title })
+ * and `renderTeam(abbr)` for their own logos, and each team's pill comes with its characteristics.
+ */
+export function GameCharacteristics({ game, renderTeam = null, pill = undefined }) {
   const total = game.total;
-  const tone = total?.tier === 'high' ? 'is-soft' : total?.tier === 'low' ? 'is-tough' : '';
+  const head = pill !== undefined ? pill : total ? { text: total.headline, tone: total.tier === 'high' ? 'is-soft' : total.tier === 'low' ? 'is-tough' : '', title: total.lines?.map((l) => l.text).join('\n') } : null;
   return (
     <div className="nhlx-char">
       <div className="nhlx-char-head">
         <b>Characteristics</b>
-        {total ? <span className={`nhlx-edge ${tone}`} title={total.lines?.map((l) => l.text).join('\n')}>{total.headline}</span> : null}
+        {head?.text ? <span className={`nhlx-edge ${head.tone || ''}`} title={head.title || undefined}>{head.text}</span> : null}
         <small>hover a line for the numbers</small>
       </div>
       <div className="nhlx-char-grid">
@@ -72,8 +78,8 @@ export function GameCharacteristics({ game }) {
           const c = game.characteristics?.[team];
           const v = game.verdicts?.[team];
           return c
-            ? <TeamCharacteristics key={team} c={c} headline={v?.headline || null} tone={v?.tier === 'leaky' ? 'is-soft' : v?.tier === 'tight' ? 'is-tough' : ''} />
-            : <div key={team} className="nhlx-char-team"><div className="nhlx-mu-verdict-head"><TeamLink abbr={team} logo={22}><b>{team}</b></TeamLink><small>No read yet</small></div></div>;
+            ? <TeamCharacteristics key={team} c={c} headline={v ? v.headline : null} tone={v?.tier === 'leaky' ? 'is-soft' : v?.tier === 'tight' ? 'is-tough' : ''} renderTeam={renderTeam} />
+            : <div key={team} className="nhlx-char-team"><div className="nhlx-mu-verdict-head">{renderTeam ? renderTeam(team) : <TeamLink abbr={team} logo={22}><b>{team}</b></TeamLink>}<small>No read yet</small></div></div>;
         })}
       </div>
     </div>

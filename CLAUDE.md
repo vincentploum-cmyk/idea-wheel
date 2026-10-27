@@ -153,6 +153,22 @@ config and keeps its own markets, teams, feeds and slate key:
   meta (source, counts, the players read one by one, errors) shows under Data sources. No live pull
   had been seen when this was written: an empty report there means the route or the field names
   differ — `fieldsSeen.sample.injury` and `sample.gamesPayload` show what came back.
+- `characteristics.js` (`makeCharacteristics`, bound in `lib/nba/characteristics.js` and `lib/nfl/characteristics.js`,
+  `characteristics` on every board game through `makeBoard({ characteristics })`; drawn by `components/nhl/Characteristics.jsx`
+  from `Board.jsx` between the game head and the sport's view, the NHL card's layout with the sport's logos and, for the
+  NBA, the sides' expected points as the head pill): each team's strengths and weaknesses with a badge (`lib/picks/levels.js`,
+  the three cards' shared `levelOf`: the top third Strong, the top four Very strong, the bottom third Weak, the bottom
+  four Very weak; the numbers on the hover only) from the pull's team rows — `totals[ABBR].for` (the team's own per-game
+  row: NBA scoring, rebounding, ball movement, threes, the line, ball security; NFL the passing and running games, the
+  end zone, ball security) and `.against` (NBA limiting points / rebounds / assists / threes / free throws, forcing
+  turnovers, with rim protection and active hands off its own blocks and steals; NFL pass and run defense, the end
+  zone, takeaways), each ranked over the teams in the pull (a `held` row reads last season's) — plus the positions its
+  defense leaks to and holds from the per-position table (NBA points to the five positions, NFL yards: passing to
+  quarterbacks, rushing to backs, receiving to receivers and tight ends), one line each way; the team's pill is its
+  defense in thirds on the headline stat (points / touchdowns allowed); and a **style of play** from its own shares
+  against the league (NBA: lives on the three / scores inside the arc, gets to the line, shares the ball /
+  isolation-heavy, shootouts / low-scoring games; NFL: pass- or run-heavy, downfield or short passing, shootouts /
+  low-scoring games). No trend line: PropFinder's windows are per position only.
 - `store.js` (`makeStore`): `<sport>/<slate>/{schedule,sheets-index,propfinder}.json`,
   `sheets/<id>.json`, `results/<gameId>.json`, `<sport>/meta/*`; the schedule re-fetched when
   stale (6 h, 10 min while a game is on) with the finished games' box scores; a sheet with a

@@ -9,7 +9,7 @@ import { headshotUrl } from '@/lib/nba/espn';
 import CourtPair, { COURT_METRICS } from './NbaCourt';
 import { NbaPlayerCardProvider, useNbaPlayerCard } from './NbaPlayerCard';
 
-const SPORT = { groups: GROUPS, teamLogo, teamName, headshotUrl };
+const SPORT = { groups: GROUPS, teamLogo, teamName, headshotUrl, totalStat: 'pts', totalUnit: 'points' };
 const BARS = SHUFFLE_MARKETS.map((m) => ({ ...m, label: labelOf(m.market), unit: MARKETS[m.market].unit }));
 
 /** The shuffle for the night, a row opening the player's card; needs an NbaPlayerCardProvider above it. */
