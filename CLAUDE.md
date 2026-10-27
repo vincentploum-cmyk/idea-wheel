@@ -372,7 +372,10 @@ config and keeps its own markets, teams, feeds and slate key:
   tonight's venue —
   above each rink the opponent's PropFinder defense table (`propfinderDefenseTabs` in
   `lib/nhl-data/propfinder.js`, drawn by `PropfinderDefense` in `components/nhl/Propfinder.jsx`:
-  All/C/LW/RW/D rows, season tabs then L5 / L10 / L15, per game or total, PropFinder's ranks, sortable;
+  All/C/LW/RW/D rows, season tabs then L5 / L10 / L15, per game or total, PropFinder's ranks, sortable; **the table
+  and the PropFinder tint open on this season's tab** whenever PropFinder has published it (Vincent's call, 2026-10-27:
+  the teams on the ice are this season's; last season's tab is there to compare against, never the default; a window
+  is never the default), `defaultDefenseTab` in `propfinder-csv.js`;
   a window PropFinder's API has not published for the current season is rolled from the stored
   box scores across the season boundary by `withStoredWindows`, the way PropFinder's own L5 counts),
   chips carrying the latest saved model run's λ shots / goals for the slate date from

@@ -3,7 +3,7 @@ import { inspectPropfinderCsv, parsePlayerCell, parseRanked, parseStatsCsv, stat
 import { nameResolver } from '../lib/nhl-data/names';
 import { PROPFINDER_SEED } from '../lib/nhl-data/seed/propfinder-2025';
 import { seedSnapshots, propfinderDefenseTabs, storedWindowTables, withStoredWindows } from '../lib/nhl-data/propfinder';
-import { defaultDefenseTab, defenseBandFromTab, defenseTabText, SEASON_TAB_MIN_GAMES } from '../lib/nhl-data/propfinder-csv';
+import { defaultDefenseTab, defenseBandFromTab, defenseTabText } from '../lib/nhl-data/propfinder-csv';
 
 const SKATERS = `Position,All
 Strength,All
@@ -172,15 +172,14 @@ describe('propfinder defense tabs (the table above each rink)', () => {
   });
   test('a tab becomes a rink band per position, in the slate window shape', () => {
     const d = propfinderDefenseTabs(pf, 'LAK');
-    // The table opens on the season tab, never on a window: last season's full table until this season's has 15 games.
+    // The table opens on this season's tab whenever it exists, never on a window; last season's only without it.
     expect(defaultDefenseTab(d.tabs).key).toBe('season-2025');
     expect(defaultDefenseTab([d.tabs[0]]).key).toBe('season-2025');
     expect(defaultDefenseTab([d.tabs[1]]).key).toBe('l10');
     expect(defaultDefenseTab([])).toBeNull();
     const cur = (gp) => ({ ...d.tabs[0], key: 'season-2026', label: '2026', season: 2026, rows: Object.fromEntries(Object.entries(d.tabs[0].rows).map(([k, r]) => [k, { ...r, gp }])) });
-    expect(defaultDefenseTab([d.tabs[0], cur(SEASON_TAB_MIN_GAMES - 1), d.tabs[1]]).key).toBe('season-2025');
-    expect(defaultDefenseTab([d.tabs[0], cur(SEASON_TAB_MIN_GAMES), d.tabs[1]]).key).toBe('season-2026');
-    expect(defaultDefenseTab([cur(3), d.tabs[1]]).key).toBe('season-2026'); // a lone season tab stands, however few its games
+    expect(defaultDefenseTab([d.tabs[0], cur(3), d.tabs[1]]).key).toBe('season-2026');
+    expect(defaultDefenseTab([cur(10), d.tabs[0], d.tabs[1]]).key).toBe('season-2026'); // whatever the order of the tabs
     expect(defenseTabText(d.tabs[0])).toBe('the 2025 season');
     expect(defenseTabText(d.tabs[1])).toBe('the last 10 games');
     const band = defenseBandFromTab(d.tabs[1], 'D');
