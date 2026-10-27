@@ -1106,6 +1106,8 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-rk-toggle > small { color: var(--muted); font-size: 13px; white-space: nowrap; }
 .nhlx-rk-toggle { flex-wrap: wrap; }
 .nhlx-rk-toggle-note { color: var(--muted); font-size: 13px; }
+/* The shuffle's "Read from" row while the scorecard is being built for the first time (no stored verdict yet). */
+.ir-sh-grading { font-style: normal; font-size: 13px; color: var(--muted); animation: ir-ocr-pulse 1.4s ease-in-out infinite; }
 .nhlx-rk-tabs { margin-bottom: 0; }
 .nhlx-rk-tabs .nhlx-tab { padding: 4px 10px; font-size: 13.5px; }
 .nhlx-rk-tabs .nhlx-tab i { font-style: normal; margin-left: 3px; color: var(--primary); }

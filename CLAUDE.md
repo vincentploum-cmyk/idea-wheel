@@ -565,10 +565,16 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   from" (`READ_FROM`) moves the λ to the study's or a window of his own results (a window he lacks falls back to the
   board's). The panel opens on the read the History tab's scorecard rates best for the active bar (`readFromOf`: the
   tab pressed this session, else the verdict, else the board's λ), that tab green (`is-best`), the note saying which
-  is on and why. It reads the scorecard once a page load (`bestReadFrom` in `shuffle-pure.js`: each
-  read's Brier at the bar's floor height — the scorecard's model / study / own5 / own10 / ownSeason predictors on the
-  rows every predictor covers, 100 at least) and follows that verdict until a tab is pressed, the figures in the note
-  under the tabs. One request a slate, every bar move local; no
+  is on and why. The verdict is stored (`lib/nhl-data/best-read.js`, `data/scorecard/best-read.json`: one
+  `bestReadFrom` result per bar — each read's Brier at the bar's floor height, the scorecard's model / study / own5 /
+  own10 / ownSeason predictors on the rows every predictor covers, 100 at least — written by every season-range
+  `buildScorecard`, i.e. the History tab's first grade and the morning refresh in the background after `dailyRefresh`,
+  never rewritten unchanged since a write drops the per-state builds; the scorecard itself reads every stored game and
+  run, tens of seconds on a cold server, so the shuffle never waits for it) and rides on `GET /api/nhl/data/shuffle`
+  as `bestRead`, so the tab is green on first paint and the note says when the verdict was built; only without a
+  stored verdict does the panel build the scorecard live, once a page load, with "grading…" on the row meanwhile
+  (2026-10-27: the tab stayed uncoloured while that build ran). It follows the verdict until a tab is pressed, the
+  figures in the note under the tabs. One request a slate, every bar move local; no
   number on the board changes. The chance at 1+ G is the
   run's own 1+ G figure (`fromModel` keeps the run's three-decimal λ), the Model tab's Top goals board ranks by that
   same figure (`scoreTopBoardRow` in `NhlModel.jsx`: shots by 3+, goals by 1+, points by 1+, the next rung breaking

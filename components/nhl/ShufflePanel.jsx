@@ -42,20 +42,30 @@ function Curve({ curve, height, onPick }) {
 const cardCache = { promise: null };   // the scorecard's predictors, one read a page load
 const readLabel = (k) => READ_FROM.find(([key]) => key === k)?.[1] || k;
 
-/** What the History tab's scorecard says about the reads for the active bar, for the note under the tabs. */
-function readNote(card, best, market, from) {
+/** When a stored verdict was built: "Oct 27, 9:24 AM". */
+const fmtWhen = (iso) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '' : d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); };
+
+/**
+ * What the scorecard says about the reads for the active bar, for the note under the tabs: the
+ * verdict stored with the slate (`stored`, lib/nhl-data/best-read.js), the live card when one was
+ * built here, or the state in between (`grading`: the first build under way).
+ */
+function readNote(card, best, market, from, { stored = null, grading = false } = {}) {
   const at = market === 'sog' ? '3+ SOG' : '1+ goal';
   const on = readLabel(from).toLowerCase();
-  if (!card) return `Reading from ${on}. The History tab’s scorecard says which read has predicted best; the green tab follows it.`;
-  if (card.failed) return `Reading from ${on}. The scorecard could not be read, so no tab is marked.`;
+  if (grading) return `Reading from ${on}. Grading the season’s games against the saved runs for the first time, a minute or so; the green tab follows.`;
+  if (!card && !stored) return `Reading from ${on}. The History tab’s scorecard says which read has predicted best; the green tab follows it.`;
+  if (card?.failed && !stored) return `Reading from ${on}. The scorecard could not be read, so no tab is marked.`;
   if (!best || best.best == null) return `Reading from ${on} until the scorecard can rank the reads for ${at}: ${best?.n ?? 0} skater-games graded this season, it needs ${BEST_MIN}.`;
   const b = best.scores[best.best]; const next = best.ranked[1]; const model = best.scores.model;
   const beside = best.best === 'model'
     ? (next ? `, next ${readLabel(next).toLowerCase()} at ${best.scores[next].brier.toFixed(3)}` : '')
     : (model ? `, the board’s λ ${model.brier.toFixed(3)}` : '');
   const verdict = `the scorecard rates it best for ${at} this season: Brier ${b.brier.toFixed(3)} over ${best.n} skater-games${beside} (lower is better; within .002 is a coin flip)`;
-  if (from === best.best) return `Reading from ${on}, the green tab: ${verdict}.`;
-  return `Reading from ${on}, your pick. The green tab, ${readLabel(best.best).toLowerCase()}, is where ${verdict}; press it to go back.`;
+  // A stored verdict says when it was built; the morning refresh and the History tab's Grade renew it.
+  const asOf = !card?.predictors && stored?.at ? ` · as of ${fmtWhen(stored.at)}, renewed each morning and by the History tab’s Grade` : '';
+  if (from === best.best) return `Reading from ${on}, the green tab: ${verdict}${asOf}.`;
+  return `Reading from ${on}, your pick. The green tab, ${readLabel(best.best).toLowerCase()}, is where ${verdict}${asOf}; press it to go back.`;
 }
 
 export default function ShufflePanel() {
@@ -82,8 +92,13 @@ export default function ShufflePanel() {
   const shift = (n) => { const d = new Date(`${date}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); pick(d.toISOString().slice(0, 10)); };
   const pretty = date ? new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' }) : '';
 
-  // The History tab's scorecard, once a page load: which read has predicted each bar best so far.
+  // The verdict stored with the slate (lib/nhl-data/best-read.js): which read the scorecard rates
+  // best per bar, so the green tab is there on first paint.
+  const stored = data?.bestRead || null;
+  // The History tab's scorecard, live, only while nothing is stored yet (once a page load): the build
+  // reads every stored game and run, tens of seconds on a cold server, and stores the verdict for next time.
   useEffect(() => {
+    if (!data || stored) return undefined;
     let cancelled = false;
     (async () => {
       try {
@@ -102,14 +117,15 @@ export default function ShufflePanel() {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [data, stored]);
 
   const rows = useMemo(() => (data?.games || []).flatMap((g) => g.skaters.map((s) => ({ ...s, game: g.id, start: g.startTimeUTC, final: g.final }))), [data]);
   const bar = NHL_BARS.find((b) => b.market === active);
   const height = Math.min(bar.max, Math.max(bar.min, bars[active]));
   const floor = floors[active];
   // The read: the tab pressed this session, else the one the History tab's scorecard rates best for the active bar, else the board's λ.
-  const best = useMemo(() => (card?.predictors ? bestReadFrom(card.predictors, active) : null), [card, active]);
+  const best = useMemo(() => (card?.predictors ? bestReadFrom(card.predictors, active) : stored?.bars?.[active] || null), [card, stored, active]);
+  const grading = !!data && !stored && !card;   // the first build of the scorecard, under way here
   const from = readFromOf(picked, best);
   const survivors = useMemo(() => survivorsAt(rows, active, height, floor, from), [rows, active, height, floor, from]);
   const fallen = useMemo(() => fallenAt(rows, active, height, floor, from), [rows, active, height, floor, from]);
@@ -161,7 +177,8 @@ export default function ShufflePanel() {
                 );
               })}
             </div>
-            <span className="nhlx-rk-toggle-note">{readNote(card, best, active, from)} A window he does not have yet falls back to the board’s λ.{blended ? ` The board’s λ is the run’s blended with the study’s at ${blended} (NHL_PICKS_STUDY_WEIGHT on the server), so its figures sit between the Model tab’s and the study’s.` : ''}</span>
+            {grading ? <i className="ir-sh-grading" role="status">grading the season’s games…</i> : null}
+            <span className="nhlx-rk-toggle-note">{readNote(card, best, active, from, { stored, grading })} A window he does not have yet falls back to the board’s λ.{blended ? ` The board’s λ is the run’s blended with the study’s at ${blended} (NHL_PICKS_STUDY_WEIGHT on the server), so its figures sit between the Model tab’s and the study’s.` : ''}</span>
           </div>
           <div className="ir-sh-grid">
             <div className="ir-sh-bars">
