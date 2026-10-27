@@ -125,14 +125,17 @@ function Chip({ p, x, y, metric, sport, team, opp, venue, final, allowed, win })
   const play = playFor(p, MARKET_OF[metric]);
   const avg = p.avg?.[metric];
   const over = play && play.p >= play.floor;
+  // The without-teammate split behind his season read (lib/picks/injuries.js), when a key teammate is out tonight.
+  const own = p.own?.[metric];
+  const woText = p.without && own?.without != null ? `Without ${p.without.names.join(' + ')} (${p.without.absent.map((a) => `${a.name}: ${a.status}${a.detail ? `, ${a.detail}` : ''}`).join('; ')}): ${num(own.without)} ${STAT_LABEL[metric]} a game over ${own.n} game${own.n === 1 ? '' : 's'}; the season read moved from ${num(own.all)} to ${num(own.season)} (weight ${p.without.weight})` : null;
   const proj = projectFor(p.own?.[metric], allowed, envPos(p), metric, p.scale);
-  const projText = proj.value != null ? `Tonight ${num(proj.value)} ${STAT_LABEL[metric]}: his ${num(proj.rate)} a game (season ${num(p.own?.[metric]?.season)}, last 10 ${num(p.own?.[metric]?.l10)}, last 5 ${num(p.own?.[metric]?.l5)})${proj.factor != null ? ` × ${proj.factor} (${opp} gives up ${num(proj.allowed)} to ${envPos(p)}s over ${WINDOW_TEXT[win] || win}, the league ${num(proj.league)})` : ' (no table for the environment)'}${proj.team != null ? ` × ${proj.team} so the team's projections add up to its expected total` : ''}` : '';
+  const projText = proj.value != null ? `Tonight ${num(proj.value)} ${STAT_LABEL[metric]}: his ${num(proj.rate)} a game (season ${num(p.own?.[metric]?.season)}, last 10 ${num(p.own?.[metric]?.l10)}, last 5 ${num(p.own?.[metric]?.l5)})${proj.factor != null ? ` × ${proj.factor} (${opp} gives up ${num(proj.allowed)} to ${envPos(p)}s over ${WINDOW_TEXT[win] || win}, the league ${num(proj.league)})` : ' (no table for the environment)'}${proj.team != null ? ` × ${proj.team} so the side's projections add up to its share of the team's expected total` : ''}` : '';
   const flags = [];
   if (play?.form === 'hot') flags.push(['hot', `Hot: ${pct(play.rates.l5)} of his last 5 over this line`, ICON.hot]);
   if (play?.form === 'cold') flags.push(['cold', `Cold: ${pct(play.rates.l5)} of his last 5 over this line`, ICON.cold]);
   if (play?.spot?.soft) flags.push(['soft', `Soft spot: the opponent is in the permissive third at his position for this stat (#${play.spot.rank})`, ICON.soft]);
   const all = (p.plays || []).filter((x) => x.side === 'over' || x.side === 'yes').map((x) => `${x.side === 'yes' ? '' : 'o'}${x.line} ${x.label} ${pct(x.p)}${x.odds != null ? ` at ${fmtOdds(x.odds)}` : ''}${x.hit == null ? '' : x.hit ? ' hit' : ' miss'}`);
-  const title = `${p.player} · ${p.pos || '—'}${p.depth ? ` · ${p.slot}${p.depth} on the depth chart${p.depth === 1 ? ' (starter)' : ''}` : ''}${p.injury ? ` · ${p.injury}` : ''}${avg != null ? ` · ${num(avg)} ${STAT_LABEL[metric]} a game this season` : ''}${projText ? `\n${projText}` : ''}${all.length ? `\n${all.join('\n')}` : '\nNo PropFinder line yet'}`;
+  const title = `${p.player} · ${p.pos || '—'}${p.depth ? ` · ${p.slot}${p.depth} on the depth chart${p.depth === 1 ? ' (starter)' : ''}` : ''}${p.injury ? ` · ${p.injury}` : ''}${avg != null ? ` · ${num(avg)} ${STAT_LABEL[metric]} a game this season` : ''}${projText ? `\n${projText}` : ''}${woText ? `\n${woText}` : ''}${all.length ? `\n${all.join('\n')}` : '\nNo PropFinder line yet'}`;
   return (
     <button type="button" className={`nhlx-rk-chip${p.injury ? ' is-out' : ''}`} style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }} title={title} onClick={() => open({ key: p.key, player: p, team, opp, venue, market: MARKET_OF[metric] })}>
       <span className="nhlx-rk-pic">
@@ -198,20 +201,30 @@ function RangeCell({ p, market, final }) {
   );
 }
 
+/** What the side's projections add up to: its share of the team's expected points, or why they are not scaled. */
+function sideNote(side) {
+  const T = side.teamProj?.pts;
+  if (T == null) return '';
+  const cover = side.share != null ? `${Math.round(side.share * 100)}% of the minutes` : null;
+  if (side.scale?.pts == null) return ` · the team is expected to score ${num(T, 0)}${cover ? `; its priced players play ${cover}, too few to scale them` : ''}`;
+  if (side.share != null && side.share < 1) return ` · its players add up to ${num(T * side.share, 0)} of the team’s ${num(T, 0)} points (${cover})`;
+  return ` · the side adds up to ${num(T, 0)} points`;
+}
+
 function PlayersTable({ side, final }) {
   const open = useNbaPlayerCard();
   const players = side.players.filter((p) => Object.keys(p.ranges || {}).length);
   if (!players.length) return null;
   return (
     <div className="nhlx-pfd ir-court-players">
-      <div className="nhlx-pfd-head"><b>Tonight · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market: what he is expected to get, his floor–ceiling (he lands inside it half the nights; the top is his ceiling), and the book’s line with his chance to clear it{side.teamProj?.pts != null ? ` · the side adds up to ${num(side.teamProj.pts, 0)} points` : ''} · click a row for the card and the full ladder</small></div>
+      <div className="nhlx-pfd-head"><b>Tonight · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market: what he is expected to get, his floor–ceiling (he lands inside it half the nights; the top is his ceiling), and the book’s line with his chance to clear it{sideNote(side)} · click a row for the card and the full ladder</small></div>
       <div className="nhlx-pfd-wrap">
         <table className="nhlx-pfd-table ir-court-table ir-range-table">
           <thead><tr><th>Player</th><th>Pos</th>{TABLE_MARKETS.map(([k, l]) => <th key={k}>{l}</th>)}</tr></thead>
           <tbody>
             {players.map((p) => (
               <tr key={p.key} className={`is-click${p.injury ? ' is-muted' : ''}`} onClick={() => open({ key: p.key, player: p, team: side.team, opp: side.opp, venue: side.venue })}>
-                <td><b>{p.player}</b>{p.injury ? <small className="nhlx-auto-meta"> {p.injury}</small> : null}</td>
+                <td><b>{p.player}</b>{p.injury ? <small className="nhlx-auto-meta" title={p.injuryDetail || ''}> {p.injury}</small> : null}{p.without ? <small className="nhlx-auto-meta" title={`His season read moves toward his ${p.without.n} games without ${p.without.names.join(' + ')} (weight ${p.without.weight})`}> w/o {p.without.names.join(' + ')}</small> : null}</td>
                 <td>{p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</td>
                 {TABLE_MARKETS.map(([k]) => <RangeCell key={k} p={p} market={k} final={final} />)}
               </tr>

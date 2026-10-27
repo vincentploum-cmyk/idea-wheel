@@ -41,7 +41,9 @@ export function hitRate(games, market, line) {
 }
 
 /** The games a split draws from a player's logs (newest first): l5 / l10 / l20 / season / h2h / venue. */
-export function splitGames(games, span, { season, opp, venue }) {
+export function splitGames(games, span, { season, opp, venue, withoutIds = null }) {
+  // "w/o": his games without the key teammates out tonight (the ids from /api/nba/player).
+  if (span === 'without') { const ids = withoutIds instanceof Set ? withoutIds : new Set((withoutIds || []).map(String)); return games.filter((g) => g.gameId != null && ids.has(String(g.gameId))); }
   if (span === 'h2h') return games.filter((g) => g.opp === opp);
   if (span === 'venue') return games.filter((g) => (venue === 'H' ? g.home === true || g.home === 1 : g.home === false || g.home === 0));
   if (span === 'season') { const szn = games.filter((g) => g.season === season); return szn.length >= SEASON_MIN ? szn : games.slice(0, 82); }
@@ -168,8 +170,10 @@ function Card({ req, date, onClose }) {
   const play = plays.find((x) => x.market === market && x.line === line && (x.side === 'over' || x.side === 'yes')) || plays.find((x) => x.market === market && x.line === line) || null;
   const thisSeason = games.filter((g) => g.season === season).length;
   const seasonLabel = season && thisSeason < SEASON_MIN ? `${seasonTag(season - 1)}${thisSeason ? ` +${thisSeason}` : ''}` : seasonTag(season);
-  const splits = [['l5', 'L5'], ['l10', 'L10'], ['l20', 'L20'], ['season', seasonLabel], ...(opp ? [['h2h', `vs ${opp}`]] : []), ...(venue ? [['venue', venue === 'H' ? 'Home' : 'Away']] : [])];
-  const spanGames = splitGames(games, span, { season, opp, venue });
+  const without = data?.without?.gameIds?.length ? data.without : null;
+  const splits = [['l5', 'L5'], ['l10', 'L10'], ['l20', 'L20'], ['season', seasonLabel], ...(opp ? [['h2h', `vs ${opp}`]] : []), ...(venue ? [['venue', venue === 'H' ? 'Home' : 'Away']] : []), ...(without ? [['without', `w/o ${without.names.join(' + ')}`]] : [])];
+  const splitCtx = { season, opp, venue, withoutIds: without?.gameIds || null };
+  const spanGames = splitGames(games, span, splitCtx);
   const hit = hitRate(spanGames, market, line);
   // The line menu: the book's ladder for the market (PropFinder's `lines`, priced), his plays' lines and ±3 around the one shown.
   const ladder = (data?.props || []).find((x) => x.market === market);
@@ -179,7 +183,7 @@ function Card({ req, date, onClose }) {
   const lineChoices = [...lineSet].sort((a, b) => a - b);
   const p = data?.player || { name: req.player?.player || req.key, team: req.team, pos: req.player?.pos || null, injury: req.player?.injury || null };
   const avgOf = (m, list) => { const vals = list.map((g) => (RAW.has(m) ? (g[m] == null ? null : Number(g[m])) : statOf(g, m))).filter((v) => v != null && Number.isFinite(v)); return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null; };
-  const seasonGames = splitGames(games, 'season', { season, opp, venue });
+  const seasonGames = splitGames(games, 'season', splitCtx);
   const allowedKeys = data?.allowed ? [...new Set(Object.values(data.allowed).flatMap((r) => Object.keys(r)))].filter((k) => !['gp', 'season', 'prior', 'priorSeason', 'lastN'].includes(k)).sort((a, b) => (Object.keys(STAT_LABEL).indexOf(a) + 1 || 99) - (Object.keys(STAT_LABEL).indexOf(b) + 1 || 99)).slice(0, 8) : [];
   const myPos = POSITIONS.includes(p.pos) ? p.pos : p.pos === 'G' ? 'SG' : p.pos === 'F' ? 'SF' : null;
   // What he can reach tonight: his own windows × the opponent's environment at his spot (the window picked on the right).
@@ -201,7 +205,7 @@ function Card({ req, date, onClose }) {
             </span>
             <div style={{ minWidth: 0 }}>
               <h3>{p.name}</h3>
-              <span className="nhlx-pc-slot">{p.pos || '—'} · {teamName(p.team) || p.team}{opp ? ` · ${venue === 'H' ? 'vs' : 'at'} ${opp}` : ''}{p.injury ? ` · ${p.injury}` : ''}</span>
+              <span className="nhlx-pc-slot">{p.pos || '—'} · {teamName(p.team) || p.team}{opp ? ` · ${venue === 'H' ? 'vs' : 'at'} ${opp}` : ''}{p.injury ? ` · ${p.injury}${p.injuryDetail ? ` (${p.injuryDetail})` : ''}` : ''}</span>
             </div>
           </div>
           {[['pts', 'PTS', 'points'], ['reb', 'REB', 'rebounds'], ['ast', 'AST', 'assists'], ['usg', 'USG%', 'usage rate: the share of his team’s possessions he ends while on the floor'], ['rebCh', 'REB CH', 'rebound chances: rebounds plus the ones within reach he did not get'], ['potAst', 'POT AST', 'potential assists: passes that led to a shot']].map(([m, l, t]) => <div key={m} className="nhlx-pc-stat" title={`${t}, a game, ${seasonLabel}${thisSeason < SEASON_MIN ? ' (last season carries the read until he has ten games this season)' : ''}${avgOf(m, seasonGames) == null && RAW.has(m) ? ' · not in this pull’s game rows (the unread fields under Data sources name the spelling)' : ''}`}><small>{l}{m === 'usg' ? '' : ' / G'}</small><b>{num(avgOf(m, seasonGames))}{m === 'usg' && avgOf(m, seasonGames) != null ? '%' : ''}</b></div>)}
@@ -217,7 +221,7 @@ function Card({ req, date, onClose }) {
               <b>{line} {STAT_LABEL[market] || market}</b>
               {play ? <span className="nhlx-pc-chip" title={`The board's chance for this line (${play.rates?.n || 0} games behind it, shrunk toward the book's price)${play.odds != null ? ` · ${fmtOdds(play.odds)}${play.book ? ` at ${play.book}` : ''}` : ''}`}><b>{pct(play.p)}</b> chance{play.odds != null ? ` · ${fmtOdds(play.odds)}` : ''}</span> : null}
               <label className="nhlx-sel nhlx-pc-line"><small>Line</small><select value={line} onChange={(e) => setLines({ ...lines, [market]: Number(e.target.value) })}>{lineChoices.map((l) => { const b = priced.get(l); return <option key={l} value={l}>{l}{b ? `${b.odds != null ? ` (${fmtOdds(b.odds)})` : ''}${b.main ? ' main' : ''}` : ''}</option>; })}</select></label>
-              {proj.value != null ? <span className={`nhlx-pc-chip ir-pc-proj${proj.value > line ? ' is-up' : ' is-down'}`} title={`His ${num(proj.rate)} ${STAT_LABEL[market] || market} a game (season ${num(own?.season)}, last 10 ${num(own?.l10)}, last 5 ${num(own?.l5)})${proj.factor != null ? ` × ${proj.factor}: ${opp} gives up ${num(proj.allowed)} to ${myPos}s over ${WIN_LABEL[view]} against the league's ${num(proj.league)}` : ' (no environment table)'}${proj.team != null ? ` × ${proj.team} so his team's projections add up to its expected total` : ''}`}><b>{num(proj.value)}</b> tonight{proj.factor != null || proj.team != null ? ` · ×${Math.round((proj.factor ?? 1) * (proj.team ?? 1) * 1000) / 1000}` : ''}</span> : null}
+              {proj.value != null ? <span className={`nhlx-pc-chip ir-pc-proj${proj.value > line ? ' is-up' : ' is-down'}`} title={`His ${num(proj.rate)} ${STAT_LABEL[market] || market} a game (season ${num(own?.season)}, last 10 ${num(own?.l10)}, last 5 ${num(own?.l5)})${proj.factor != null ? ` × ${proj.factor}: ${opp} gives up ${num(proj.allowed)} to ${myPos}s over ${WIN_LABEL[view]} against the league's ${num(proj.league)}` : ' (no environment table)'}${proj.team != null ? ` × ${proj.team} so his side's projections add up to its share of the team's expected total` : ''}`}><b>{num(proj.value)}</b> tonight{proj.factor != null || proj.team != null ? ` · ×${Math.round((proj.factor ?? 1) * (proj.team ?? 1) * 1000) / 1000}` : ''}</span> : null}
             </div>
             <div className="nhlx-pc-chips">
               {opp ? <span className="nhlx-pc-chip"><b>{venue === 'H' ? 'Home' : 'Away'}</b> {venue === 'A' ? '@' : 'vs'} <img src={teamLogo(opp)} alt="" width="18" height="18" /> {opp}</span> : null}
@@ -235,14 +239,15 @@ function Card({ req, date, onClose }) {
             ) : null}
             {!data && !err ? <div className="nhlx-empty">Loading the logs…</div> : spanGames.length ? <Bars games={spanGames} market={market} line={line} unit={STAT_LABEL[market] || market} /> : <div className="nhlx-empty">{span === 'h2h' ? `No logged games vs ${opp}.` : 'No logged games for this player yet.'}</div>}
             <div className="nhlx-rates">
-              {splits.map(([k, label]) => <RateTile key={k} label={label} hit={hitRate(splitGames(games, k, { season, opp, venue }), market, line)} active={span === k} onClick={() => setSpan(k)} />)}
+              {splits.map(([k, label]) => <RateTile key={k} label={label} hit={hitRate(splitGames(games, k, splitCtx), market, line)} active={span === k} onClick={() => setSpan(k)} />)}
             </div>
+            {without ? <p className="nhlx-auto-meta ir-pc-without">w/o {without.names.join(' + ')} ({without.absent.map((a) => `${a.name}: ${a.status}${a.detail ? `, ${a.detail}` : ''}`).join('; ')}): his {without.n} logged game{without.n === 1 ? '' : 's'} without {without.absent.length === 1 ? 'him' : 'them'}. The board’s season read moves toward this split at weight {without.weight}.</p> : null}
             <div className="nhlx-pfd-wrap nhlx-pc-stats">
               <table className="nhlx-pfd-table">
                 <thead><tr><th>Split</th><th>GP</th><th>MIN</th>{['pts', 'reb', 'ast', 'tpm', 'pra', 'usg', 'rebCh', 'potAst'].map((m) => <th key={m} title={m === 'usg' ? 'Usage rate' : m === 'rebCh' ? 'Rebound chances a game' : m === 'potAst' ? 'Potential assists a game' : ''}>{STAT_LABEL[m]}</th>)}<th>Over {line}</th></tr></thead>
                 <tbody>
                   {splits.map(([k, label]) => {
-                    const list = splitGames(games, k, { season, opp, venue });
+                    const list = splitGames(games, k, splitCtx);
                     const h = hitRate(list, market, line);
                     return <tr key={k} className={span === k ? 'is-active' : ''}><td><b>{label}</b></td><td>{list.length}</td><td>{num(avgOf('min', list), 0)}</td>{['pts', 'reb', 'ast', 'tpm', 'pra', 'usg', 'rebCh', 'potAst'].map((m) => <td key={m}>{num(avgOf(m, list))}{m === 'usg' && avgOf(m, list) != null ? '%' : ''}</td>)}<td className={h.gp ? (h.rate >= 0.5 ? 'is-soft' : 'is-tough') : ''}><span className="nhlx-pfd-val">{h.gp ? pct(h.rate) : '—'}</span>{h.gp ? <span className="nhlx-pfd-rank">{h.hits}/{h.gp}</span> : null}</td></tr>;
                   })}

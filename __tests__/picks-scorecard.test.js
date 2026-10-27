@@ -120,7 +120,7 @@ describe('the predictors', () => {
   const rows = gradePredictors(board, pf, { key: '2026-10-21', season: 2026, actualOf, ownWindows });
   test('one row per player, market and box-score line: his figure beside every predictor', () => {
     const pts = rows.find((r) => r.market === 'pts');
-    expect(pts).toMatchObject({ slate: '2026-10-21', key: 'jayson tatum', actual: 29, line: 27.5, own3: 29, own5: 28, own10: 25.5, ownSeason: 24.5 });
+    expect(pts).toMatchObject({ slate: '2026-10-21', key: 'jayson tatum', actual: 29, line: 27.5, own3: 29, own5: 28, own10: 25.5, ownSeason: 24.5, h2h: 28.5, h2hN: 4 });   // every log here is against NY: his last four meetings
     // The windows × the matchup: the centre the shuffle reads from (× env to 0.1), on every row that has the window.
     const x = (v) => Math.round(v * (pts.env ?? 1) * 10) / 10;
     expect([pts.own5x, pts.own10x, pts.ownSeasonx]).toEqual([x(28), x(25.5), x(24.5)]);
@@ -132,6 +132,29 @@ describe('the predictors', () => {
     expect(rows.map((r) => r.market).sort()).toEqual(['ast', 'pra', 'pts', 'reb', 'tpm']);
     // No row without a box score.
     expect(gradePredictors(board, pf, { key: 'x', season: 2026, actualOf: () => undefined, ownWindows })).toEqual([]);
+  });
+  test('head to head: his last meetings with the opponent, two at least, scored without thinning the common rows', () => {
+    const { ownWindows: ow } = require('../lib/nba/picks');
+    const mixed = logs.map((g, i) => ({ ...g, opp: i % 3 === 0 ? 'NY' : 'LAL' }));   // vs NY on 10-20, 10-17, 10-14, 10-11: 30, 27, 24, 21
+    expect(ow(mixed, { market: 'pts', season: 2026, opp: 'NY' })).toMatchObject({ h2h: 25.5, h2hN: 4 });
+    expect(ow(mixed.slice(0, 2), { market: 'pts', season: 2026, opp: 'NY' })).toMatchObject({ h2h: null, h2hN: 1 });   // one meeting is a coin
+    expect(ow(mixed, { market: 'pts', season: 2026 })).toMatchObject({ h2h: null, h2hN: 0 });
+    expect(ow(mixed, { market: 'pts', season: 2026, opp: 'NY' }).l3).toBe(29);   // the plain windows unchanged
+    // A second player who never met NY has no head-to-head row; the common rows still carry him.
+    const pf2 = { ...pf, data: { ...pf.data, players: [...pf.data.players, { id: 'p2', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SF', games: logs.map((g) => ({ ...g, opp: 'LAL', pts: g.pts - 5 })), props: [{ market: 'pts', line: 22.5, odds: -110, underOdds: -110, isMain: true }] }] } };
+    const res2 = { g1: { ...results.g1, players: [...results.g1.players, { name: 'Jaylen Brown', team: 'BOS', played: true, pts: 20, reb: 6, ast: 3, pra: 29 }] } };
+    const b2 = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pf2, results: res2 });
+    const a2 = (g, p, market) => { const line = actualFor(res2[g.id], p); return line === undefined ? undefined : line && line.played !== false ? statOf(line, market) : null; };
+    const r2 = gradePredictors(b2, pf2, { key: '2026-10-21', season: 2026, actualOf: a2, ownWindows: ow });
+    expect(r2.filter((r) => r.market === 'pts').map((r) => [r.key, r.h2h, r.h2hN])).toEqual([['jayson tatum', 28.5, 4], ['jaylen brown', null, 0]]);
+    const rep = predictorReport(r2, 'pts', 'Points');
+    expect(rep.common.n).toBe(2);   // both rows carry every dense predictor
+    const h2h = rep.common.predictors.find((p) => p.key === 'h2h');
+    expect(h2h).toMatchObject({ sparse: true, n: 1, avg: 28.5, actual: 29, bias: -0.5 });
+    expect(h2h.against.proj).toMatchObject({ n: 1, actual: 29 });   // the projection on the same row
+    expect(h2h.against.blend).toMatchObject({ n: 1, actual: 29 });
+    expect(rep.common.predictors.find((p) => p.key === 'proj').n).toBe(2);   // the dense ones on both rows
+    expect(rep.common.predictors.find((p) => p.key === 'own5').against).toBeUndefined();
   });
   test('the report: bias, MAE, RMSE and the over-the-line read per predictor, on common rows', () => {
     const rep = predictorReport(rows, 'pts', 'Points');
