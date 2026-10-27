@@ -11,8 +11,14 @@ on:
   workflow_dispatch:
     inputs:
       date:
-        description: 'Slate date (YYYY-MM-DD, ET). Blank = today (the 2 AM run: yesterday).'
+        description: 'Slate date (YYYY-MM-DD, ET) or a range (YYYY-MM-DD..YYYY-MM-DD). Blank = today (the 2 AM run: yesterday).'
         required: false
+      what:
+        description: 'all = schedule, scores, box scores and the PropFinder pull (forced); schedule = scores and box scores only, safe for a past date (a forced pull would replace its pre-game lines and tables)'
+        required: false
+        default: 'all'
+        type: choice
+        options: [all, schedule]
 
 jobs:
   refresh:
@@ -24,14 +30,32 @@ jobs:
           NHL_ACTIONS_TOKEN: ${{ secrets.NHL_ACTIONS_TOKEN }}
         run: |
           set -e
-          DATE="${{ github.event.inputs.date }}"
-          [ -z "$DATE" ] && DATE=$(TZ=America/New_York date +%F)
-          if [ "$(date -u +%H)" = "06" ] && [ -z "${{ github.event.inputs.date }}" ]; then DATE=$(TZ=America/New_York date -d 'yesterday' +%F); fi
+          INPUT_DATE="${{ github.event.inputs.date }}"
+          WHAT="${{ github.event.inputs.what }}"; [ -z "$WHAT" ] && WHAT=all
+          TODAY=$(TZ=America/New_York date +%F); YDAY=$(TZ=America/New_York date -d 'yesterday' +%F)
+          # The dates to refresh: the input (one date or a from..to range), else today, else
+          # yesterday in the 2 AM slot.
+          if [ -n "$INPUT_DATE" ]; then
+            case "$INPUT_DATE" in
+              *..*) FROM=${INPUT_DATE%..*}; TO=${INPUT_DATE#*..}; DATES=""; d=$FROM; while [[ "$d" < "$TO" || "$d" == "$TO" ]]; do DATES="$DATES $d"; d=$(date -d "$d + 1 day" +%F); done ;;
+              *) DATES="$INPUT_DATE" ;;
+            esac
+          elif [ "$(date -u +%H)" = "06" ]; then DATES="$YDAY"
+          else DATES="$TODAY"; fi
           FORCE=""; [ "${{ github.event_name }}" = "workflow_dispatch" ] && FORCE="&force=1"
-          echo "Refreshing the NBA slate of $DATE"
           call() { local c; for attempt in 1 2; do c=$(curl -sS -o "$2" -w '%{http_code}' -X POST --max-time 280 ${NHL_ACTIONS_TOKEN:+-H "Authorization: Bearer $NHL_ACTIONS_TOKEN"} "$1" || true); [ -n "$c" ] || c=000; case "$c" in 5*|000) [ "$attempt" = 1 ] && { echo "server answered $c; retrying in 60 s" >&2; sleep 60; } ;; *) break ;; esac; done; echo "$c"; }
-          code=$(call "https://ideareels.io/api/nba/refresh?date=$DATE&only=schedule" sched.json); echo "schedule: $code $(head -c 600 sched.json)"
-          [ "$code" = "200" ] || [ "$code" = "429" ]
-          if [ -n "$NHL_ACTIONS_TOKEN" ] && [ "$(date -u +%H)" != "06" ]; then
-            pf=$(call "https://ideareels.io/api/nba/refresh?date=$DATE&only=propfinder${FORCE}" pf.json); echo "propfinder: $pf $(head -c 16000 pf.json)"
+          # Every scheduled run settles yesterday first: the 2 AM slot that exists for it is dropped by
+          # GitHub more often than it fires (not once from 2026-10-20 to 10-27), and nothing else refreshes
+          # a slate after its games, so last night's finals and box scores were only stored when someone
+          # opened that date's board. Idempotent: a box score already stored is skipped.
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$DATES" != "$YDAY" ]; then
+            code=$(call "https://ideareels.io/api/nba/refresh?date=$YDAY&only=schedule" yday.json); echo "yesterday ($YDAY) schedule: $code $(head -c 600 yday.json)"
           fi
+          for DATE in $DATES; do
+            echo "Refreshing the NBA slate of $DATE"
+            code=$(call "https://ideareels.io/api/nba/refresh?date=$DATE&only=schedule" sched.json); echo "schedule: $code $(head -c 600 sched.json)"
+            [ "$code" = "200" ] || [ "$code" = "429" ]
+            if [ "$WHAT" = "all" ] && [ -n "$NHL_ACTIONS_TOKEN" ] && [ "$(date -u +%H)" != "06" ]; then
+              pf=$(call "https://ideareels.io/api/nba/refresh?date=$DATE&only=propfinder${FORCE}" pf.json); echo "propfinder: $pf $(head -c 16000 pf.json)"
+            fi
+          done

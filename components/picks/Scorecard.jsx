@@ -1,27 +1,36 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { plainSummary } from '@/lib/picks/scorecard-words';
 
-// The picks scorecard (/api/<sport>/scorecard): every stored slate's board replayed leak-free and
-// graded against the box scores. Tables only; colour marks where the calls landed above or below
-// what the board said. Nothing here feeds the board.
+// The picks scorecard (/api/<sport>/scorecard): every stored slate's board replayed with only what
+// was known before the games and graded against the box scores. The verdict at the top says it in
+// plain words (lib/picks/scorecard-words.js); the tables under it are the detail. Nothing here
+// feeds the board.
 //   sport: { api, kind: 'date' | 'week', season (week), to (the slate date or week ordinal), label }
+//
+// The words the tables use: "board said" = the chance the board gave; "actually hit" = how often
+// the line was cleared; "off by" = actually hit minus board said, in points (green = hit more
+// often than said); "accuracy" = how far the chances were from what happened, 0 perfect, 0.25 a
+// coin flip, lower is better (the Brier score); "average miss" = how far a projected figure was
+// from the box score, in the stat's units.
 
 const pct = (v, d = 0) => (v == null ? '—' : `${(v * 100).toFixed(d)}%`);
-const brier = (v) => (v == null ? '—' : v.toFixed(3));
-const ret = (v) => (v == null ? '—' : `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(2)}`);
+const acc = (v) => (v == null ? '—' : v.toFixed(3));
+const ret = (v) => (v == null ? '—' : `${v >= 0 ? '+' : '−'}${Math.round(Math.abs(v) * 100)}%`);
 const fmtDate = (d) => (d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? new Date(`${d}T12:00:00Z`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' }) : d);
+const ACCURACY = 'How far the chances were from what happened: 0 is perfect, 0.25 is a coin flip, lower is better';
 
-/** Hit minus said, in points; tinted once the sample means something. */
-function Diff({ s }) {
+/** Actually hit minus board said, in points; tinted once the sample means something. */
+function OffBy({ s }) {
   if (!s || !s.n || s.diff == null) return <td className="is-num">—</td>;
   const d = s.diff * 100;
   const cls = s.n >= 20 && Math.abs(d) >= 5 ? (d > 0 ? ' is-over' : ' is-under') : '';
-  return <td className={`is-num${cls}`} title={`Hit rate minus the stated chance over ${s.n} calls`}>{d > 0 ? '+' : ''}{d.toFixed(0)} pts</td>;
+  return <td className={`is-num${cls}`} title={`Actually hit minus board said over ${s.n} plays; green = hit more often than the board said, red = less often`}>{d > 0 ? '+' : ''}{d.toFixed(0)} pts</td>;
 }
 const Hit = ({ s }) => <td className="is-num">{s?.n ? <><b>{pct(s.hit)}</b><small>{s.n}</small></> : '—'}</td>;
 
-/** Rows of { label, all, board }: said / calls / hit / diff for every call, then the table rows. */
+/** Rows of { label, all, board }: plays / board said / actually hit / off by, then the board's own plays. */
 function SplitTable({ title, rows, first = 'Split' }) {
   return (
     <div className="nhlx-db-table-wrap">
@@ -29,11 +38,11 @@ function SplitTable({ title, rows, first = 'Split' }) {
         <thead>
           <tr>
             <th>{first}</th>
-            <th className="is-num" title="Graded plays">Calls</th>
-            <th className="is-num" title="The board’s average chance over those calls">Said</th>
-            <th className="is-num" title="How often the line was cleared">Hit</th>
-            <th className="is-num" title="Hit minus said">Diff</th>
-            <th className="is-num" title="The plays that made a table (over the floor, PropFinder-backed): how often they hit">On the board</th>
+            <th className="is-num" title="Graded plays">Plays</th>
+            <th className="is-num" title="The chance the board gave, averaged over those plays">Board said</th>
+            <th className="is-num" title="How often the line was actually cleared">Actually hit</th>
+            <th className="is-num" title="Actually hit minus board said, in points">Off by</th>
+            <th className="is-num" title="The plays that made a table (over the floor, PropFinder-backed): how often they hit, and how many">Board picks hit</th>
           </tr>
         </thead>
         <tbody>
@@ -43,7 +52,7 @@ function SplitTable({ title, rows, first = 'Split' }) {
               <td className="is-num">{r.all?.n ?? 0}</td>
               <td className="is-num">{pct(r.all?.said)}</td>
               <td className="is-num"><b>{pct(r.all?.hit)}</b></td>
-              <Diff s={r.all} />
+              <OffBy s={r.all} />
               <Hit s={r.board} />
             </tr>
           ))}
@@ -60,13 +69,13 @@ function EdgeTable({ edges }) {
       <table className="nhlx-db-table nhlx-mu-table nhlx-sc-table">
         <thead>
           <tr>
-            <th>Edge against the book</th>
-            <th className="is-num" title="Priced plays in the bucket">Calls</th>
-            <th className="is-num" title="The price’s implied probability, vig included">Book said</th>
-            <th className="is-num" title="The board’s chance">Board said</th>
-            <th className="is-num">Hit</th>
-            <th className="is-num" title="Flat-stake return per unit at the book’s price (a model metric: one unit on every call)">Return</th>
-            <th className="is-num" title="The same on the plays that made a table">On the board</th>
+            <th title="How far the board’s chance sat above the chance the book’s price implied">Board’s edge over the book</th>
+            <th className="is-num" title="Priced plays in the row">Plays</th>
+            <th className="is-num" title="The chance the book’s price implied, its cut included">Book’s price said</th>
+            <th className="is-num" title="The chance the board gave">Board said</th>
+            <th className="is-num" title="How often the line was actually cleared">Actually hit</th>
+            <th className="is-num" title="One unit staked on every play at the book’s price: the return per unit">Return per unit</th>
+            <th className="is-num" title="The same on the plays that made a table">Board picks</th>
           </tr>
         </thead>
         <tbody>
@@ -83,6 +92,7 @@ function EdgeTable({ edges }) {
           ))}
         </tbody>
       </table>
+      <p className="nhlx-auto-meta" style={{ margin: '6px 2px 0' }}>Where the board disagrees most with the book is where it is most sure of itself; if those rows hit less often than the board said, the board is too confident where it matters.</p>
     </div>
   );
 }
@@ -94,23 +104,23 @@ function LaddersTable({ ladders }) {
       <table className="nhlx-db-table nhlx-mu-table nhlx-sc-table">
         <thead>
           <tr>
-            <th>Ladder</th>
-            <th className="is-num" title="Rungs graded (every rung of every player with a box-score line); the three reads are scored on the rungs with a hit rate">Rungs</th>
-            <th className="is-num" title="The model’s tail over the rung: said / hit / Brier">Model said</th><th className="is-num">Hit</th><th className="is-num">Brier</th>
-            <th className="is-num" title="His hit rate at the rung over his logs: said / hit / Brier">Hit-rate said</th><th className="is-num">Hit</th><th className="is-num">Brier</th>
-            <th className="is-num" title="The blend the board shows (half and half): said / hit / Brier">Blend said</th><th className="is-num">Hit</th><th className="is-num">Brier</th>
-            <th className="is-num" title="The book’s main rung: how often it cleared">Main rung</th>
-            <th className="is-num" title="Rungs the blend put at 20–35%: the ceiling plays; said / hit">Ceiling rungs</th>
+            <th>Stat</th>
+            <th className="is-num" title="Rungs graded: every rung of every player with a box-score line">Rungs</th>
+            <th className="is-num" title="The half of the chance read off his range: where his projection and his spread put the rung">From his range said</th><th className="is-num">Hit</th><th className="is-num" title={ACCURACY}>Accuracy</th>
+            <th className="is-num" title="The half of the chance read off how often he actually cleared the rung in his own games">From his past said</th><th className="is-num">Hit</th><th className="is-num" title={ACCURACY}>Accuracy</th>
+            <th className="is-num" title="The two halves together: the chance the board shows">Board said</th><th className="is-num">Hit</th><th className="is-num" title={ACCURACY}>Accuracy</th>
+            <th className="is-num" title="The book’s main line: how often it was cleared">Book’s line hit</th>
+            <th className="is-num" title="The long shots: rungs the board put at 20–35%; what it said against how often they hit">Long shots said → hit</th>
           </tr>
         </thead>
         <tbody>
           {ladders.map((l) => {
             const b = best(l);
-            const cell = (k) => <td className={`is-num${l[k]?.n && l[k].brier === b ? ' is-best' : ''}`}>{brier(l[k]?.brier)}</td>;
+            const cell = (k) => <td className={`is-num${l[k]?.n && l[k].brier === b ? ' is-best' : ''}`}>{acc(l[k]?.brier)}</td>;
             return (
               <tr key={l.key}>
                 <td><b>{l.label}</b></td>
-                <td className="is-num">{l.n}<small>{l.common}</small></td>
+                <td className="is-num">{l.n}</td>
                 <td className="is-num">{pct(l.model?.said)}</td><td className="is-num">{pct(l.model?.hit)}</td>{cell('model')}
                 <td className="is-num">{pct(l.emp?.said)}</td><td className="is-num">{pct(l.emp?.hit)}</td>{cell('emp')}
                 <td className="is-num">{pct(l.blend?.said)}</td><td className="is-num"><b>{pct(l.blend?.hit)}</b></td>{cell('blend')}
@@ -121,64 +131,67 @@ function LaddersTable({ ladders }) {
           })}
         </tbody>
       </table>
+      <p className="nhlx-auto-meta" style={{ margin: '6px 2px 0' }}>Every chance on the board is half “from his range” and half “from his past”. Bold = the most accurate of the three on that stat.</p>
     </div>
   );
 }
 
 /**
- * The predictors of a player's figure, per market: the windows of his own results before the game,
- * the board's blend, the projection and the book's line, each against the box score (bias, MAE,
- * RMSE) and as an over-the-line read (said / hit / Brier), on the rows every predictor covers.
+ * Which number predicts his figure best, per market: his own windows before the game, his head to
+ * head, the board's blend, the projection with the matchup in it and the book's line, each against
+ * the box scores (average miss, high or low) and as a chance of clearing the book's line.
  */
 function PredictorsTable({ predictors }) {
   const [market, setMarket] = useState(predictors[0]?.key);
   const report = predictors.find((p) => p.key === market) || predictors[0];
   if (!report) return null;
   const list = report.common.predictors;
-  const withN = list.filter((p) => p.n && !p.sparse);   // the bold compares the predictors scored on the same rows
+  const withN = list.filter((p) => p.n && !p.sparse);   // the bold compares the reads scored on the same games
   const bestMae = withN.length ? Math.min(...withN.map((p) => p.mae)) : null;
   const bestBrier = withN.filter((p) => p.brier != null).length ? Math.min(...withN.filter((p) => p.brier != null).map((p) => p.brier)) : null;
-  const source = (s) => (s === 'own' ? 'his own results' : s === 'board' ? 'the board' : 'the book');
+  const source = (s) => (s === 'own' ? 'his own games' : s === 'board' ? 'the board' : 'the book');
+  const lean = (bias) => (bias == null ? '—' : Math.abs(bias) < 0.05 ? 'even' : `${Math.abs(bias).toFixed(1)} ${bias > 0 ? 'high' : 'low'}`);
   return (
     <>
-      <div className="nhlx-tabs" role="tablist" aria-label="Predictor market" style={{ marginBottom: 10 }}>
+      <div className="nhlx-tabs" role="tablist" aria-label="Stat" style={{ marginBottom: 10 }}>
         {predictors.map((p) => <button key={p.key} type="button" role="tab" aria-selected={p.key === report.key} className={`nhlx-tab${p.key === report.key ? ' is-active' : ''}`} onClick={() => setMarket(p.key)}>{p.label} <small>{p.n}</small></button>)}
       </div>
       <div className="nhlx-db-table-wrap">
         <table className="nhlx-db-table nhlx-mu-table nhlx-sc-table">
           <thead>
             <tr>
-              <th>Predictor</th>
-              <th className="is-num" title="Player-games every predictor here covers">Rows</th>
-              <th className="is-num" title="Average figure the predictor put on them">Projected</th>
-              <th className="is-num" title="Average figure they got">Actual</th>
-              <th className="is-num" title="Projected minus actual">Bias</th>
-              <th className="is-num" title="Mean absolute error (lower is better)">MAE</th>
-              <th className="is-num" title="Root mean squared error (lower is better)">RMSE</th>
-              <th className="is-num" title="The chance of clearing the book’s main line the predictor implies as the centre of his distribution">Over the line said</th>
-              <th className="is-num">Hit</th>
-              <th className="is-num" title="Brier score of those chances (lower is better)">Brier</th>
+              <th>Read</th>
+              <th className="is-num" title="Player-games it was scored on">Games</th>
+              <th className="is-num" title="What it said he would get, on average">Predicted</th>
+              <th className="is-num" title="What he actually got, on average">Actual</th>
+              <th className="is-num" title="Whether it runs high or low: predicted minus actual, on average">Runs</th>
+              <th className="is-num" title="How far it was from his figure on a typical night (lower is better)">Average miss</th>
+              <th className="is-num" title="The chance of clearing the book’s main line it implies, on average">Over the line said</th>
+              <th className="is-num" title="How often the line was actually cleared">Actually hit</th>
+              <th className="is-num" title={ACCURACY}>Accuracy</th>
             </tr>
           </thead>
           <tbody>
             {list.map((p) => (
               <tr key={p.key} className={p.key === 'proj' ? 'is-model' : p.key === 'blend' ? 'is-blend' : ''}>
-                <td title={p.note || undefined}><b>{p.label}</b> <small>{source(p.source)}</small>{p.sparse && p.n ? <small className="nhlx-auto-meta" style={{ display: 'block' }}>on its {p.n} rows · the projection there: MAE {p.against?.proj?.mae ?? '—'}, Brier {brier(p.against?.proj?.brier)} · the blend: MAE {p.against?.blend?.mae ?? '—'}, Brier {brier(p.against?.blend?.brier)}</small> : null}</td>
+                <td title={p.note || undefined}>
+                  <b>{p.label}</b> <small>{source(p.source)}</small>
+                  {p.sparse && p.n ? <small className="nhlx-auto-meta" style={{ display: 'block' }}>on the {p.n} games with two meetings · the projection on those same games: miss {p.against?.proj?.mae ?? '—'}, accuracy {acc(p.against?.proj?.brier)} · the blend: miss {p.against?.blend?.mae ?? '—'}, accuracy {acc(p.against?.blend?.brier)}</small> : null}
+                </td>
                 <td className="is-num">{p.n}</td>
                 <td className="is-num">{p.avg ?? '—'}</td>
                 <td className="is-num">{p.actual ?? '—'}</td>
-                <td className="is-num">{p.bias == null ? '—' : `${p.bias > 0 ? '+' : ''}${p.bias}`}</td>
+                <td className="is-num">{lean(p.bias)}</td>
                 <td className={`is-num${p.n && !p.sparse && p.mae === bestMae ? ' is-best' : ''}`}>{p.mae ?? '—'}</td>
-                <td className="is-num">{p.rmse ?? '—'}</td>
                 <td className="is-num">{pct(p.said)}</td>
                 <td className="is-num">{p.lined ? <><b>{pct(p.hit)}</b><small>{p.lined}</small></> : '—'}</td>
-                <td className={`is-num${p.brier != null && !p.sparse && p.brier === bestBrier ? ' is-best' : ''}`}>{brier(p.brier)}</td>
+                <td className={`is-num${p.brier != null && !p.sparse && p.brier === bestBrier ? ' is-best' : ''}`}>{acc(p.brier)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="nhlx-auto-meta" style={{ margin: '6px 2px 0' }}>{report.common.n} of {report.n} player-games carry every predictor (a window needs its games; a line needs a book; head to head is scored on the rows with two meetings, the projection and the blend beside it on those same rows, and the bold is not for it). Bold = the best column. If a plain window beats the projection here over a month, the board should read from it.</p>
+      <p className="nhlx-auto-meta" style={{ margin: '6px 2px 0' }}>{report.common.n} of {report.n} player-games carry every read (a window needs its games; a line needs a book). Bold = the best column among the reads scored on the same games; head to head is scored on the games with two prior meetings, with the projection and the blend beside it on those same games. If a plain window of his own games beats the projection here over a month, the board should read from it.</p>
     </>
   );
 }
@@ -212,19 +225,15 @@ export default function Scorecard({ sport }) {
   // The season to date on first open (the route's default range); the controls narrow it after.
   useEffect(() => { if (open && !report && !busy) load({ from: '', to: to || '' }); }, [open, report, busy, load, to]);
 
-  const summary = report ? [
-    [`${report.slates} ${kind === 'week' ? 'week' : 'night'}${report.slates === 1 ? '' : 's'}`],
-    [`${report.graded} of ${report.games} finished game${report.games === 1 ? '' : 's'} graded`],
-    [`${report.plays} calls`, `${report.boardPlays} on the board`],
-  ] : [];
-  const all = report?.all; const board = report?.board;
+  const words = report?.plays ? plainSummary(report, { kind }) : null;
+  const unit = kind === 'week' ? 'week' : 'night';
 
   return (
     <section className="ir-sc nhlx-sc" aria-label={`${label} scorecard`}>
       <div className="ir-sc-head">
         <div>
           <h2 className="nhlx-sc-h" style={{ margin: 0 }}>Scorecard <small>what the board said against what happened</small></h2>
-          <p className="nhlx-auto-meta">Every stored {kind === 'week' ? 'week' : 'night'} replayed from its files as it stood before the games (each player’s log cut before his game) and graded against the box scores. Said = the board’s chance; Hit = how often the line was cleared; Brier = mean squared error of the chance (0.25 is a coin flip, lower is better). Nothing here feeds the board.</p>
+          <p className="nhlx-auto-meta">Every stored {unit} is replayed with only what was known before the games, then graded against the box scores. “Board said” is the chance it gave, “actually hit” how often the line was cleared, “off by” the gap in points. Nothing here changes the board.</p>
         </div>
         <div className="ir-sc-range">
           {kind === 'date' ? (
@@ -248,40 +257,43 @@ export default function Scorecard({ sport }) {
       {err ? <div className="nhlx-alert" style={{ marginTop: 12 }}>{err}</div> : null}
       {open ? (
         !report ? <div className="nhlx-empty">{busy ? 'Grading the stored slates…' : 'No scorecard yet.'}</div> : !report.plays ? (
-          <div className="nhlx-empty">No graded plays {asked?.from ? `between ${fmtDate(asked.from)} and ${fmtDate(asked.to)}` : 'yet'}: a slate grades once its games are final and their box scores stored.</div>
+          <div className="nhlx-empty">No graded plays {asked?.from ? `between ${fmtDate(asked.from)} and ${fmtDate(asked.to)}` : 'yet'}: a {unit} grades once its games are final and their box scores stored.</div>
         ) : (
           <>
-            <div className="ir-sc-sum">
-              {summary.map((s, i) => <span key={i}>{s.map((x, j) => <span key={j}>{j ? ' · ' : ''}{x}</span>)}</span>)}
-              <span>All calls: said <b>{pct(all.said)}</b>, hit <b>{pct(all.hit)}</b>, Brier <b>{brier(all.brier)}</b></span>
-              <span>On the board: said <b>{pct(board.said)}</b>, hit <b>{pct(board.hit)}</b> over <b>{board.n}</b></span>
-              {all.priced ? <span>At the book’s price: implied <b>{pct(all.implied)}</b>, return <b>{ret(all.ret)}</b> a unit over {all.priced} priced calls{board.priced ? <>, <b>{ret(board.ret)}</b> on the board’s {board.priced}</> : null}</span> : null}
-              {asked?.from ? <span className="nhlx-auto-meta">{fmtDate(asked.from)} to {fmtDate(asked.to)} · built {new Date(report.builtAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</span> : null}
-            </div>
+            <ul className="ir-sc-verdict" aria-label="In plain words">
+              <li><b>What was graded.</b> {words.coverage}</li>
+              <li><b>Did the chances come true?</b> {words.chances}</li>
+              <li><b>The board’s picks.</b> {words.picks}</li>
+              {words.book ? <li><b>Against the book.</b> {words.book}</li> : null}
+              {words.projections.map((p) => <li key={p.key}><b>{p.label}.</b> {p.text.slice(p.label.length + 2)}</li>)}
+              {words.caution ? <li className="nhlx-auto-meta">{words.caution}</li> : null}
+              {asked?.from ? <li className="nhlx-auto-meta">{fmtDate(asked.from)} to {fmtDate(asked.to)} · built {new Date(report.builtAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</li> : null}
+            </ul>
+            <h3 className="nhlx-sc-h">The chances <small>did they come true, and where</small></h3>
             <div className="ir-sc-grid">
-              <SplitTable first="The board said" rows={report.buckets.map((b) => ({ key: b.key, label: b.label, all: b.all, board: b.board }))} title="Calibration: a well-read board hits about as often as it says in every row." />
-              <SplitTable first="Market" rows={report.markets} />
-              <SplitTable first="Matchup" rows={report.thirds} title="The opponent’s third at the player’s position for the stat (colour on the board, no number)." />
-              <SplitTable first="Source" rows={report.sources} />
-              <SplitTable first="Form" rows={report.forms} title="Flame and snowflake are colour only; this is whether they would have earned a number." />
+              <SplitTable first="When the board said" rows={report.buckets.map((b) => ({ key: b.key, label: b.label, all: b.all, board: b.board }))} title="A well-read board hits about as often as it says in every row: a 60–70% row should hit around 65%." />
+              <SplitTable first="By stat" rows={report.markets} />
+              <SplitTable first="By matchup" rows={report.thirds} title="How generous the opponent is to the player’s position for the stat: the soft third gives up the most. Colour on the board, not a number." />
+              <SplitTable first="By source" rows={report.sources} />
+              <SplitTable first="By form" rows={report.forms} title="Hot and cold are colour only on the board; this says whether they would have earned a number." />
               <EdgeTable edges={report.edges} />
             </div>
             {report.predictors?.length ? (
               <>
-                <h3 className="nhlx-sc-h">What predicts his figure <small>his own results over a window, the board’s blend of them, the projection with the matchup in it, and the book’s line, each against the box scores</small></h3>
+                <h3 className="nhlx-sc-h">Which number predicts best <small>his own games over a window, his head to head, the board’s blend, the projection with the matchup in it, and the book’s line, each against the box scores</small></h3>
                 <PredictorsTable predictors={report.predictors} />
               </>
             ) : null}
             {report.ladders?.length ? (
               <>
-                <h3 className="nhlx-sc-h">Ladders <small>every rung of every player with a box-score line; the model’s tail, his hit rate and the blend the board shows, side by side</small></h3>
+                <h3 className="nhlx-sc-h">The two halves of a chance <small>every rung of every player with a box score: read off his range, off his past, and the two together as the board shows it</small></h3>
                 <LaddersTable ladders={report.ladders} />
               </>
             ) : null}
-            <h3 className="nhlx-sc-h">By {kind === 'week' ? 'week' : 'night'}</h3>
+            <h3 className="nhlx-sc-h">By {unit}</h3>
             <div className="nhlx-db-table-wrap">
               <table className="nhlx-db-table nhlx-mu-table nhlx-sc-table">
-                <thead><tr><th>{kind === 'week' ? 'Week' : 'Night'}</th><th className="is-num" title="Games graded / games finished">Games</th><th className="is-num">Calls</th><th className="is-num">Said</th><th className="is-num">Hit</th><th className="is-num">Diff</th><th className="is-num">On the board</th></tr></thead>
+                <thead><tr><th>{kind === 'week' ? 'Week' : 'Night'}</th><th className="is-num" title="Games graded / games finished">Games</th><th className="is-num">Plays</th><th className="is-num">Board said</th><th className="is-num">Actually hit</th><th className="is-num">Off by</th><th className="is-num">Board picks hit</th></tr></thead>
                 <tbody>
                   {report.bySlate.map((s) => (
                     <tr key={s.key} className={s.plays ? '' : 'is-muted'}>
@@ -290,7 +302,7 @@ export default function Scorecard({ sport }) {
                       <td className="is-num">{s.plays}</td>
                       <td className="is-num">{pct(s.all?.said)}</td>
                       <td className="is-num"><b>{pct(s.all?.hit)}</b></td>
-                      <Diff s={s.all} />
+                      <OffBy s={s.all} />
                       <Hit s={s.board} />
                     </tr>
                   ))}

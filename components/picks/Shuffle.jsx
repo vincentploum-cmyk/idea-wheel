@@ -28,7 +28,7 @@ function readNote(card) {
   const beside = card.best === 'blend'
     ? (next ? `, next ${readLabel(next)} at ${card.scores[next].brier.toFixed(3)}` : '')
     : (blend ? `, against ${blend.brier.toFixed(3)} for the board’s blend` : '');
-  return `The scorecard rates ${readLabel(card.best)} best so far: Brier ${b.brier.toFixed(3)} over ${card.n} plays this season${beside} (lower is better; within .002 is a coin flip).`;
+  return `The scorecard rates ${readLabel(card.best)} best so far: accuracy ${b.brier.toFixed(3)} over ${card.n} plays this season${beside} (0 is perfect, 0.25 a coin flip, lower is better; within .002 of each other is a tie).`;
 }
 
 /** League rank → 'soft' | 'mid' | 'tough' | 'none' by third. */
@@ -149,7 +149,7 @@ export default function Shuffle({ sport, onOpen = null }) {
               const what = k === 'blend' ? 'The board’s read: his season blended with his last ten, × the matchup' : k === 'line' ? 'The book’s main line as the centre of his distribution' : k === 'h2h' ? 'His average over his last 4 meetings with the opponent (2 at least, from PropFinder’s logs; the opponent is in it already, so no matchup on top; the board’s blend stands in for a player without two)' : `His average over his ${l.toLowerCase()} games, × the matchup`;
               const sc = card?.scores?.[k];
               return (
-                <button key={k} type="button" role="tab" aria-selected={from === k} className={`nhlx-tab${from === k ? ' is-active' : ''}`} onClick={() => setFrom(k)} title={sc ? `${what} · scorecard: Brier ${sc.brier.toFixed(3)} over ${sc.n} plays this season${card.best === k ? ' (the best so far)' : ''}` : what}>
+                <button key={k} type="button" role="tab" aria-selected={from === k} className={`nhlx-tab${from === k ? ' is-active' : ''}`} onClick={() => setFrom(k)} title={sc ? `${what} · scorecard: accuracy ${sc.brier.toFixed(3)} over ${sc.n} plays this season (lower is better)${card.best === k ? ' · the best so far' : ''}` : what}>
                   {l}{card?.best === k ? <i>best</i> : null}
                 </button>
               );
