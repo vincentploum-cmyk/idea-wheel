@@ -86,7 +86,10 @@ config and keeps its own markets, teams, feeds and slate key:
   cleared it, the book's rung at the bar or the nearest above it with its price and edge, where he thins out, Got once
   final) and the fallen strip. **Read from** (`READ_FROM`): the board's blend (default), last 5 / last 10 / season (his
   window × the matchup as the centre of his distribution) or the book's line; only the model half of the chance moves,
-  the hit-rate half stays. A stat he never records (a quarterback's receiving yards) gets no ladder and no row.
+  the hit-rate half stays. The panel reads the season's scorecard once per sport and season (`bestReadFrom`: each read's
+  over-the-line Brier — the `× matchup` predictors, the projection, the line — pooled over the bars' markets, 100 plays at
+  least) and marks the read that has predicted best on its tab, with the figures in the note under the tabs; it never
+  switches on its own. A stat he never records (a quarterback's receiving yards) gets no ladder and no row.
 - `scorecard.js` (`asOf`, `gradeBoard`, `gradePredictors`, `summarize`; the store's `gradeSlate` / `scorecardFor`,
   one finished slate memoised ten minutes): the picks scorecard, `GET /api/nba/scorecard?from&to` (ET dates, the
   season to date by default) and `GET /api/nfl/scorecard?season&from&to` (week ordinals, 19–22 the postseason), drawn
@@ -96,8 +99,8 @@ config and keeps its own markets, teams, feeds and slate key:
   hit / diff / Brier overall, on the board, by chance bucket, market, matchup third, source (confirmed / PropFinder
   alone / sheet alone), form, and by edge against the book with the flat-stake return at the book's price; every ladder
   rung (model tail vs hit rate vs the blend, Brier each, the main rung, the 20–35% ceiling rungs); and the
-  **predictors** (`PREDICTORS`): his last 3 / 5 / 10 / 20, season to date, the board's blend, the projection with the
-  matchup in it and the book's line, each against his figure (bias, MAE, RMSE) and as an over-the-line read (said /
+  **predictors** (`PREDICTORS`): his last 3 / 5 / 10 / 20, season to date, the last 5 / 10 / season × the matchup (the
+  centres the shuffle reads from), the board's blend, the projection with the matchup in it and the book's line, each against his figure (bias, MAE, RMSE) and as an over-the-line read (said /
   hit / Brier), on the rows every predictor covers. Descriptive only; the question it answers is whether a plain window
   of his own results beats the board's read, in which case the board should read from it.
 - `propfinder.js` (`makePropfinder`): `/<LEAGUE>/teams` and `/<LEAGUE>/players?teamIds=…&hydrate=stats&withOddsOnly=true`

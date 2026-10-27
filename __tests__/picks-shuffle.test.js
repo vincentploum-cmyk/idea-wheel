@@ -219,3 +219,27 @@ describe('a stat he never records', () => {
     expect(shuffleOf({ market: 'pass_yds', board: b, pf, season: 2026 }).players).toHaveLength(1);
   });
 });
+
+describe('which read the scorecard rates best', () => {
+  const { bestReadFrom, READ_FROM_PREDICTOR, READ_FROM } = require('../lib/picks/shuffle');
+  const rep = (market, briers, lined) => ({ key: market, common: { n: lined, predictors: Object.entries(briers).map(([key, brier]) => ({ key, brier, lined })) } });
+  test('every read maps to a scorecard predictor', () => {
+    expect(READ_FROM.map(([k]) => READ_FROM_PREDICTOR[k])).toEqual(['proj', 'own5x', 'own10x', 'ownSeasonx', 'line']);
+  });
+  test('the Brier of each read pooled over the markets, weighted by its plays; the lowest wins once enough plays are in', () => {
+    const predictors = [
+      rep('pts', { proj: 0.24, own5x: 0.25, own10x: 0.22, ownSeasonx: 0.23, line: 0.245, own5: 0.3 }, 300),
+      rep('reb', { proj: 0.2, own5x: 0.26, own10x: 0.25, ownSeasonx: 0.21, line: 0.22 }, 100),
+      rep('stl', { proj: 0.1, own5x: 0.1, own10x: 0.1, ownSeasonx: 0.1, line: 0.1 }, 1000),   // not one of the shuffle's markets
+    ];
+    const r = bestReadFrom(predictors, ['pts', 'reb']);
+    expect(r.n).toBe(400);
+    expect(r.scores.l10).toEqual({ brier: 0.2275, n: 400 });    // (0.22 × 300 + 0.25 × 100) / 400
+    expect(r.scores.blend).toEqual({ brier: 0.23, n: 400 });
+    expect(r.ranked).toEqual(['season', 'l10', 'blend', 'line', 'l5']);
+    expect(r.best).toBe('season');
+    expect(bestReadFrom(predictors, ['pts', 'reb'], { min: 500 })).toMatchObject({ best: null, n: 400 });
+    expect(bestReadFrom([], ['pts'])).toEqual({ best: null, n: 0, scores: {}, ranked: [] });
+    expect(bestReadFrom(predictors).n).toBe(1400);   // no market list: every market in the report
+  });
+});

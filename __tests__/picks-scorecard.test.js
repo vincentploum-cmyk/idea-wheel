@@ -121,6 +121,9 @@ describe('the predictors', () => {
   test('one row per player, market and box-score line: his figure beside every predictor', () => {
     const pts = rows.find((r) => r.market === 'pts');
     expect(pts).toMatchObject({ slate: '2026-10-21', key: 'jayson tatum', actual: 29, line: 27.5, own3: 29, own5: 28, own10: 25.5, ownSeason: 24.5 });
+    // The windows × the matchup: the centre the shuffle reads from (× env to 0.1), on every row that has the window.
+    const x = (v) => Math.round(v * (pts.env ?? 1) * 10) / 10;
+    expect([pts.own5x, pts.own10x, pts.ownSeasonx]).toEqual([x(28), x(25.5), x(24.5)]);
     expect(pts.own20).toBe(24.5);   // twelve games: the last twenty are all of them
     const lad = board.games[0].sides.BOS.players[0].ladders.pts;
     expect(pts.proj).toBe(lad[0].proj);
