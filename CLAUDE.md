@@ -259,10 +259,17 @@ config and keeps its own markets, teams, feeds and slate key:
   L15 / L20 = PropFinder's `lastNGames` rows as published, `defenseAllowed` → `defense.windows[l5]` with
   their own ranks and `league` = the league's average per position and stat; `windowsOf` / `tableFor` in
   the court, `zoneTone` by rank third, rank 1 = the most permissive), the zone's foot carrying the rank;
-  every chip his **projection for tonight** (`lib/picks/projection.js`: `ownRate` = his season average
-  blended with his last ten at 0.65 / 0.35, × `envFactor` = 1 + 0.6 × (the opponent's allowed at his spot
-  over the league's average − 1) for the window picked; green over the line, red under, the hover showing
-  the arithmetic), the book's main line and the chance for the stat (`playFor`: the over or yes side), ✓ when
+  every chip his **projection for tonight**: **the board's figure** (`ranges[stat].exp` on the side's
+  player, `boardRead` in the court: `lib/picks/projection.js`'s `ownRate` = his season average blended
+  with his last ten at 0.65 / 0.35, × `envFactor` = 1 + 0.6 × (the opponent's allowed at his spot over
+  the league's average − 1) **on the season table**, × the side's factor; `rate` / `matchup` / `team` /
+  `env` ride on the range so the hover spells it out; green over the line, red under). **A window moves
+  no figure** (Vincent, 2026-10-27: the shuffle said #26 PF × 0.96 and 15.8 for Randle at BOS while the
+  court on L10 said #10 and 17.3, the chip's projection then following the window): the L5 / L10 tabs
+  tint the zones and fill the table, the chip, the Tonight table, the shuffle's Expected and the card
+  all show the one board projection, and the chip's hover says what the picked window would have read
+  (`windowRead`); the shuffle's Matchup hover names the season table it reads. The chip also carries the
+  book's main line and the chance for the stat (`playFor`: the over or yes side), ✓ when
   the cheat sheet names him (the hover names the file), flame / snowflake / soft spot, his projection
   alone when he has no line; above the court the opponent-allowed table (per position, every stat
   PropFinder's table carries, value + rank chip, the `nhlx-pfd-*` styles, the picked stat's column
@@ -325,8 +332,11 @@ config and keeps its own markets, teams, feeds and slate key:
   REB / AST a game this season), market tabs with the hit rate for the pressed split, the Over +
   line block with the board's chance, price and sheet check for that line (the line menu lists the
   book's ladder with its prices, his plays' lines and ±3 around the one shown) and his projection for
-  tonight (`projectFor`, his windows from the logs × the opponent's environment at his spot over the
-  window picked on the right), the per-game bars against the line (`Bars`: green over, red
+  tonight — the board's (`board` in the `/api/nba/player` payload: his entry on the slate's board from
+  `boardFor`, `envPos`, `scale`, `ranges`, `ladders`, `plays`, so the card shows the same figure, ladder
+  rungs and lines whichever view opened it, the shuffle's rows included; `projectFor` on the season
+  table only for a market without a ladder; the window tabs on the right fill the allowed table and the
+  hover says what that window would read), the per-game bars against the line (`Bars`: green over, red
   under, the average pill), the split tiles (L5 · L10 · L20 · season · vs opp · home / away; press one
   to draw its games), the splits table (GP, MIN, PTS, REB, AST, 3PM, PRA, over %), and on the right
   the opponent's allowed table (Season / L5 / L10 … tabs, his position marked, the league's average at
