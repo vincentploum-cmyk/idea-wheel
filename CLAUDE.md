@@ -169,14 +169,21 @@ config and keeps its own markets, teams, feeds and slate key:
   defense in thirds on the headline stat (points / touchdowns allowed); and a **style of play** from its own shares
   against the league (NBA: lives on the three / scores inside the arc, gets to the line, shares the ball /
   isolation-heavy, shootouts / low-scoring games; NFL: pass- or run-heavy, downfield or short passing, shootouts /
-  low-scoring games). No trend line: PropFinder's windows are per position only.
+  low-scoring games). The NBA card also carries the NHL card's trend line (`trend: { stat, unit }` in the config:
+  "Defense loosening / tightening over the last ten" when the team's rank on points allowed over its last ten,
+  `totals[ABBR].l10.against` from PropFinder's All row at lastN 10, drifts `TREND_DRIFT` = 5 places from its season
+  rank, over `TREND_MIN_TEAMS` = 10 teams with a last-ten row at least).
 - `store.js` (`makeStore`): `<sport>/<slate>/{schedule,sheets-index,propfinder}.json`,
   `sheets/<id>.json`, `results/<gameId>.json`, `<sport>/meta/*`; the schedule re-fetched when
   stale (6 h, 10 min while a game is on) with the finished games' box scores; a sheet with a
   stored name replaces it; `boardFor`, `statusFor`, `pullPropfinder`.
 - `http.js`: the browser-agent GET (ESPN answers 403 to a user agent carrying a URL).
 - UI: `components/picks/Board.jsx` (per game the sport's tables, a play-less game collapses to
-  one line) and `Sources.jsx` (drop zone, stored sheets, PropFinder pull, ESPN refresh, folder
+  one line), `SidePicks.jsx` (the strip above a side's view, the NHL rink's model plays for the picks boards: the board's
+  best plays for the team, `side.picks` in `board.js` = the table rows over the floor for its players, one a player by
+  chance, `PICKS_MAX` = 4, with the price and the edge, graded with the rows once the game is stored; the NBA draws it at
+  the top of each court card with the picked players' chips ringed and a play opening the card, the NFL between the game
+  head and the tables, both sides side by side — Vincent's ask, 2026-10-27) and `Sources.jsx` (drop zone, stored sheets, PropFinder pull, ESPN refresh, folder
   sync note); `components/nfl/*` and `components/nba/*` bind them.
 - The Mac folder sync (`tools/mac-sync/nhl-sync.sh`, `sync_sheets`) posts any `.csv` / `.xlsx` / `.pdf`
   saved in `~/Desktop/NFL` to `POST /api/nfl/sheets` and in `~/Desktop/NBA` to `/api/nba/sheets`
@@ -275,10 +282,14 @@ config and keeps its own markets, teams, feeds and slate key:
   side; else the roster position — three chips a front zone, four a back one, the rest listed under it) — each tinted by what
   tonight's opponent gives up to that position for the stat picked in the tabs above each court (Points ·
   Rebounds · Assists · Threes, `COURT_METRICS`, one setting for the slate as the rink's Shots / Goals switch)
-  over the window picked beside them (Season = this season's table as PropFinder publishes it; L5 / L10 /
-  L15 / L20 = PropFinder's `lastNGames` rows as published, `defenseAllowed` → `defense.windows[l5]` with
-  their own ranks and `league` = the league's average per position and stat; `windowsOf` / `tableFor` in
-  the court, `zoneTone` by rank third, rank 1 = the most permissive), the zone's foot carrying the rank;
+  over the tab picked beside them (**this season's table as PropFinder publishes it**, the default and the table the
+  board reads, labelled by its years, "'26-'27"; last season's in full, "'25-'26", `allowed.prior` from
+  `defense.prior`, a comparison only; then L5 / L10 / L15 / L20 = PropFinder's `lastNGames` rows as published,
+  `defenseAllowed` → `defense.windows[l5]` with their own ranks and `league` = the league's average per position
+  and stat; `windowsOf` / `tableFor` / `windowLabel` in the court, `zoneTone` by rank third, rank 1 = the most
+  permissive), the zone's foot carrying the rank; **above the table, who is out tonight** (`OutLines`: the side's
+  team then the opponent, from `side.out` = PropFinder's injury report through `absentByTeam`, name, position,
+  status and detail; Vincent's ask, 2026-10-27);
   every chip his **projection for tonight**: **the board's figure** (`ranges[stat].exp` on the side's
   player, `boardRead` in the court: `lib/picks/projection.js`'s `ownRate` = his season average blended
   with his last ten at 0.65 / 0.35, × `envFactor` = 1 + 0.6 × (the opponent's allowed at his spot over
@@ -337,7 +348,9 @@ config and keeps its own markets, teams, feeds and slate key:
   first game (Vincent, 2026-10-27: the Season table reads this season for every sport, never last
   season's; the ten-game hold and the games / (games + 15) blend that stood in `defenseAllowed` are
   gone); last season's row stands in only for a team without a game yet (`held: true`), and the
-  court's row reads "last season" until then. A chip shows the book's main line (`playerProps` in `lib/picks/propfinder.js`: of the lines a
+  court's row reads "last season" until then. Last season's full table rides along as `defense.prior`, the second
+  tab on the court and the card ("'25-'26"), a comparison only; the team totals carry the last ten this season as
+  `totals[ABBR].l10` and last season as `.prior` (the characteristics card's trend line). A chip shows the book's main line (`playerProps` in `lib/picks/propfinder.js`: of the lines a
   book flags main the one nearest his own last-ten average — a book flags its alternate ladder main too,
   which put Drummond on o1.5 points on 2026-10-20 — else the line priced both ways with the most books;
   the whole ladder rides on the prop as `lines`; preseason rows, seasonType PRE, are left out of the logs
@@ -357,8 +370,8 @@ config and keeps its own markets, teams, feeds and slate key:
   tonight — the board's (`board` in the `/api/nba/player` payload: his entry on the slate's board from
   `boardFor`, `envPos`, `scale`, `ranges`, `ladders`, `plays`, so the card shows the same figure, ladder
   rungs and lines whichever view opened it, the shuffle's rows included; `projectFor` on the season
-  table only for a market without a ladder; the window tabs on the right fill the allowed table and the
-  hover says what that window would read), the per-game bars against the line (`Bars`: green over, red
+  table only for a market without a ladder; the tabs on the right — this season's table, last season's
+  (`prior` in the payload), the windows — fill the allowed table and the hover says what that tab would read), the per-game bars against the line (`Bars`: green over, red
   under, the average pill), the split tiles (L5 · L10 · L20 · season · vs opp · home / away; press one
   to draw its games), the splits table (GP, MIN, PTS, REB, AST, 3PM, PRA, over %), and on the right
   the opponent's allowed table (Season / L5 / L10 … tabs, his position marked, the league's average at
