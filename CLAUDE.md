@@ -84,8 +84,12 @@ config and keeps its own markets, teams, feeds and slate key:
   the card): the bars with the count of survivors at the floor ("keep players at 35% or better"), the curve of
   survivors per height, the survivors at the bar sorted by edge (the chance there with its fair price, how often he
   cleared it, the book's rung at the bar or the nearest above it with its price and edge, where he thins out, Got once
-  final) and the fallen strip. **Read from** (`READ_FROM`): the board's blend (default), last 5 / last 10 / season (his
-  window × the matchup as the centre of his distribution) or the book's line; only the model half of the chance moves,
+  final) and the fallen strip. The Matchup cell carries the opponent's rank at his spot with its factor on his rate
+  (`matchup`) and, apart from it, his side's factor (`teamFactor`, "team × 1.12"); `env` on the row is their product,
+  the multiplier in his projection. **Read from** (`READ_FROM`): the board's blend (default), last 5 / last 10 / season (his
+  window × the matchup as the centre of his distribution), head to head (his last 4 meetings with the opponent as
+  PropFinder's logs hold them, 2 at least, as it is — no matchup on top; the blend stands in without two; `SPARSE_READS`:
+  scored on the tab, never ranked best) or the book's line; only the model half of the chance moves,
   the hit-rate half stays. The panel reads the season's scorecard once per sport and season (`bestReadFrom`: each read's
   over-the-line Brier — the `× matchup` predictors, the projection, the line — pooled over the bars' markets, 100 plays at
   least) and marks the read that has predicted best on its tab, with the figures in the note under the tabs; it never
@@ -99,9 +103,13 @@ config and keeps its own markets, teams, feeds and slate key:
   hit / diff / Brier overall, on the board, by chance bucket, market, matchup third, source (confirmed / PropFinder
   alone / sheet alone), form, and by edge against the book with the flat-stake return at the book's price; every ladder
   rung (model tail vs hit rate vs the blend, Brier each, the main rung, the 20–35% ceiling rungs); and the
-  **predictors** (`PREDICTORS`): his last 3 / 5 / 10 / 20, season to date, the last 5 / 10 / season × the matchup (the
-  centres the shuffle reads from), the board's blend, the projection with the matchup in it and the book's line, each against his figure (bias, MAE, RMSE) and as an over-the-line read (said /
-  hit / Brier), on the rows every predictor covers. Descriptive only; the question it answers is whether a plain window
+  **predictors** (`PREDICTORS`): his last 3 / 5 / 10 / 20, season to date, his head to head (`h2h`: his last 4 meetings
+  with the opponent before the game, `H2H_MIN` = 2 of them at least, from `ownWindows` with `opp`; `sparse`, so it never
+  thins the rows the others are compared on: scored on the common rows that have it, with the projection and the blend
+  scored on those same rows beside it, `against`, and the panel's bold is not for it), the last 5 / 10 / season × the
+  matchup (the centres the shuffle reads from), the board's blend, the projection with the matchup in it and the book's
+  line, each against his figure (bias, MAE, RMSE) and as an over-the-line read (said / hit / Brier), on the rows every
+  predictor covers. Descriptive only; the question it answers is whether a plain window
   of his own results beats the board's read, in which case the board should read from it.
 - `propfinder.js` (`makePropfinder`): `/<LEAGUE>/teams` and `/<LEAGUE>/players?teamIds=…&hydrate=stats&withOddsOnly=true`
   through `pfGetJson` in `lib/nhl-data/propfinder-api.js`. The NHL endpoints were checked; the
@@ -110,6 +118,28 @@ config and keeps its own markets, teams, feeds and slate key:
   `fieldsSeen.unread`, shown under Data sources after the first pull. Fix the spellings there
   once a real pull shows them; never guess silently. `defenseAllowed` per position (the
   positions the Opponent rows carry), ranks 1 = most allowed.
+- `injuries.js`: PropFinder's injury report and the without-teammate ("w/o") splits, pulled live with
+  the slate, never from a file. The report is `injuryReport` on the games payload the site's own
+  pages load (`GET /<LEAGUE>/v2?sportsbooks=…`, read from the bundle 2026-10-27: a JSON string whose
+  `data` lists { team: { id }, player: { id, name, position }, status, type }; the per-team
+  `/injuries/<league>/<teamId>` route is the fallback), statuses read into one spelling (`statusOf`),
+  `isOut` = Out / Doubtful / IR / LTIR / Suspended / PUP / NFI. `fetchInjuries` in `propfinder.js`
+  stores it with the pull as `data.injuries.rows`, `applyInjuries` puts `injury` / `injuryDetail` on
+  every player (the report, then the depth chart's espn flag), and the players out whom the odds-only
+  call left out are read one by one (`/<LEAGUE>/player/<id>`, `readFor: 'injury'`, `MAX_ABSENT_READS`)
+  so their logs say which games they took part in: every game row carries `gameId`, `gamesPlayed` is a
+  teammate's rows with minutes, `keyAbsences` the out teammates who took part in ≥ 40% (and 5) of a
+  player's logged games, `withoutGames` his games without them, `withoutOf` the split (≥ `WITHOUT_MIN`
+  = 3 games, and not every game). On the board (`board.js`) a player out keeps his chip, muted, and
+  loses his table rows (`out`, the game's `out` count); for everyone else the season hit rate behind
+  the chance, the season average behind the projection and each ladder rung's season rate move toward
+  the split at n / (n + `WITHOUT_K` = 8) (`blendWithout`; `without` on the play and the side's player:
+  names, n, weight, rate, avg, seasonAll; `own[stat].all` / `.without` / `.n` on the side, so the
+  team-total scale sums the blended rates). The notes name who is out and the reads moved; the card's
+  "w/o X" tile draws the split (`without.gameIds` from `/api/<sport>/player`); the pull's `injuries`
+  meta (source, counts, the players read one by one, errors) shows under Data sources. No live pull
+  had been seen when this was written: an empty report there means the route or the field names
+  differ — `fieldsSeen.sample.injury` and `sample.gamesPayload` show what came back.
 - `store.js` (`makeStore`): `<sport>/<slate>/{schedule,sheets-index,propfinder}.json`,
   `sheets/<id>.json`, `results/<gameId>.json`, `<sport>/meta/*`; the schedule re-fetched when
   stale (6 h, 10 min while a game is on) with the finished games' box scores; a sheet with a
@@ -246,10 +276,16 @@ config and keeps its own markets, teams, feeds and slate key:
   projections add up to the team's expected total tonight**: the pull keeps every team's own per-game row
   (type Team, All) and what it gives up in all (`defense.totals[ABBR].for / .against`, `leagueFor`, the
   same held / blend rule); `sidesOf` reads the team's expected figure per stat (its own × the opponent's
-  all-positions environment, damped) over the sum of its active players' own rates (the injured out left
-  aside) as `scale[stat]` (0.5–1.5; the combos on their parts), on the side with `teamProj` and on every
-  player; `projectFor(own, allowed, pos, stat, scale)` multiplies it in and the ladder's `env` carries it, so
-  a roster of last season's shares on other teams no longer adds up to 150 points), the PropFinder players without a play too, and
+  all-positions environment, damped), **pro-rated to the share of the game its priced, active players account
+  for** (`coverage` in `lib/nba/picks.js`: their own minutes over the 240 a team plays, `share` / `minutes` on the
+  side; the pull is odds-only, so the bench is never in it and the priced players' rates never add up to the whole
+  team — read as the whole team the total put ×1.4–1.5 on every projection of a thinly priced side, Cunningham at
+  34 points against the #29 PG defense on 2026-10-27), over the sum of their own rates (the injured out left
+  aside) as `scale[stat]` (0.5–1.5; the combos on their parts; no scale under half the minutes, the priced few
+  being the stars; a sport without a coverage measure, or logs without minutes, scales down only, cap 1), on the
+  side with `teamProj` and on every player; `projectFor(own, allowed, pos, stat, scale)` multiplies it in and the
+  ladder's `env` carries it, so a roster of last season's shares on other teams no longer adds up to 150 points),
+  the PropFinder players without a play too, and
   `allowed` = the opponent's rows with ranks, `league`, and `windows`, every cell carrying the cheat
   sheet's tile for it as `sheet` when the sheet has one (`sheetCheck` in the court: the hover on a zone
   foot or a table cell names the tile's rank and whether it reads the same third as PropFinder — nothing
@@ -503,6 +539,11 @@ config and keeps its own markets, teams, feeds and slate key:
   hourly lineup reads pull when the slate's files are still missing): skater and team tables into
   `data/propfinder/*` and the season + L5 matchup workbooks through `ingestMatchupFile`, in the
   exports' exact layouts, then the auto run. Admin button and `POST /api/nhl/data/propfinder/pull`.
+  The pull also reads the injury report live (`fetchInjuryReport`, `/NHL/v2`, parsed by
+  `lib/picks/injuries.js`, stored at `data/propfinder/injuries.json`, `injuries` in the pull meta): the
+  slate's skaters carry `injury` / `injuryDetail` (the rink chip's title) and `depthChartLines` leaves
+  the players out off the fallback lineup; the beat writers' and NHL.com lineups are untouched, and
+  nothing in the model's math reads it.
   Keep producing the CSV/workbook shapes the parsers already read; never adapt the parsers to the API.
   The season workbook's numbers are blended, not raw (the predictor study's shrinkage, `docs/shots-goals-predictors.md`
   sections 3 and 9): each skater's "Season" row is this season's regular-season games blended with last season's at
