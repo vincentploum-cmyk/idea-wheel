@@ -9,6 +9,7 @@ import { Flags } from './flags';
 import { TeamLink } from './links';
 import { oppClass } from './MoneyPuck';
 import { Rink, RinkLegend } from './Rink';
+import { GameCharacteristics } from './Characteristics';
 
 const POS = ['LW', 'C', 'RW', 'D'];
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
@@ -134,15 +135,15 @@ function SkaterRows({ skaters, showTeam, teamCount, sort }) {
 }
 
 /**
- * The game-total read and the two defense verdicts under a game head. With a game script above
- * them they fold away (the script is the digest; these are the numbers it was written from);
- * without one they stand open as before.
+ * The game-total read and the two defense verdicts under a game head. With the characteristics
+ * above them they fold away (the traits are the digest; these are the numbers they were read
+ * from); without them they stand open as before.
  */
 function GameNumbers({ folded, children }) {
   if (!folded) return children;
   return (
     <details className="nhlx-mu-numbers">
-      <summary>The numbers behind the script</summary>
+      <summary>The numbers behind the reads</summary>
       {children}
     </details>
   );
@@ -369,19 +370,9 @@ export default function MatchupsPanel() {
                     : fmtTime(g.startTimeUTC)}
                 </small>
               </div>
-              {g.script && (
-                <div className="nhlx-mu-script">
-                  <div className="nhlx-mu-verdict-head">
-                    <b>Game script</b>
-                    <span className={`nhlx-edge ${g.script.tone || ''}`}>{g.script.headline}</span>
-                    {g.log?.score ? <small>final · {g.log.score.away + g.log.score.home} goals</small> : null}
-                  </div>
-                  {/* One line a part (Total · Edge · Shots · Goals · Plays · Result), the lead word bold so the eye can jump to the one it wants. */}
-                  {g.script.parts.map((part) => <p key={part.key} className={part.tone || undefined}><b>{part.label}.</b> {part.text}</p>)}
-                </div>
-              )}
+              {g.characteristics && Object.values(g.characteristics).some(Boolean) && <GameCharacteristics game={g} />}
               {(g.total || (g.verdicts && Object.values(g.verdicts).some(Boolean))) && (
-              <GameNumbers folded={!!g.script}>
+              <GameNumbers folded={!!(g.characteristics && Object.values(g.characteristics).some(Boolean))}>
               {g.total && (
                 <div className="nhlx-mu-verdict nhlx-mu-total">
                   <div className="nhlx-mu-verdict-head">

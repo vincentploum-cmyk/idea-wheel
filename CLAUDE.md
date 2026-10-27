@@ -390,19 +390,25 @@ config and keeps its own markets, teams, feeds and slate key:
   each play washed green (hit the floor) or red (fell short) with the box-score figure once the game is stored, dashed and dimmed when the skater has no box-score row, nothing shown without a run; finished games show the
   box score; above each game's team verdicts a game-total read, `gameTotalRead` in
   `lib/nhl-data/verdict.js`: the stored meetings' totals blended with MoneyPuck's expected
-  goals and pace, high / low half a goal either side of the league average; and above both, the
-  **game script** (`lib/nhl-data/script.js`, `gameScript`, `script` on every slate game): how the
-  game is likely to go in a few sentences written from those reads — Total (the read, its basis,
-  the pace of the two), Edge (who outscores whom on MoneyPuck's expected goals each way, 0.4 apart;
-  who shoots a lot or little), Shots (each side's shooters: the defense they face at its venue, where
-  it leaks and holds, its last ten with "but" when that runs against the season), Goals (the softer
-  net at 0.2 a game apart; who concedes the first goal more, 5 games at the venue, a 15-point lean),
-  Plays (the strip's plays per side with hot / cold / soft spot as words, or the matchup read's
-  volume shooters without a run) and Result once stored (the score against the read, the first goal,
-  the plays' record); `teamVerdict` carries its reads as data for it (`season`, `leaks`, `holds`,
-  `trend`, `offense`, `pace`); the Matchups tab shows the script under the game head and folds the
-  total and the verdicts under "The numbers behind the script" — Vincent's ask of 2026-10-27: the
-  bullets were too much to digest into how the game would go) and the per-team defense card
+  goals and pace, high / low half a goal either side of the league average; and above both, each
+  team's **characteristics** (`lib/nhl-data/characteristics.js`, `teamCharacteristics`, `characteristics`
+  per team on every slate game; drawn by `components/nhl/Characteristics.jsx`, WhoScored's layout): its
+  strengths and weaknesses as traits with a badge (`levelOf`: the top third of the league Strong, the
+  top four Very strong, the bottom third Weak, the bottom four Very weak; no number in the line, the
+  figures ride on the trait as `detail` for the hover) — shot volume, creating chances, high-danger
+  chances, controlling the puck, finishing (GF over xGF, `ratioRanks`, 10 games), limiting chances /
+  high-danger chances, goaltending (GA under xGA) from MoneyPuck; limiting shots / goals at tonight's
+  venue, the positions it leaks to and holds (one line each way), its last ten against the season
+  (loosening / tightening at five ranks' drift) and conceding the first goal at the venue from the
+  stored tables — and its **style of play** as plain traits (fast pace / slow game; where its shots come
+  from — the point, the wingers, the centres —, the top line carrying the scoring or scoring spread
+  across the lines, shooting from dangerous areas or the perimeter, scoring first or chasing games;
+  `shotProfiles` from the team's own stored rows, this season from ten games, last season's until
+  then, judged against the league's shares at `PROFILE_EDGE` = 15%); the Matchups tab shows the two
+  teams side by side under the game head with the total's pill and folds the game-total read and the
+  verdicts under "The numbers behind the reads" (Vincent, 2026-10-27: the bullets, and a prose script
+  tried the same day, were too much to digest into how the game would go; WhoScored's strengths /
+  weaknesses / style was the ask) and the per-team defense card
   (`lib/nhl-data/defense.js`) are descriptive views over the stored rows; the model's
   own math stays in `NhlModel.jsx`. Logos/headshots are copied into `data/media/*` and
   served by `/api/nhl/data/media`; standings/leaders live in `data/league/*`.
