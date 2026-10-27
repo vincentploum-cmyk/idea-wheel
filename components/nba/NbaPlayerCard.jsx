@@ -131,6 +131,22 @@ function Card({ req, date, onClose }) {
   const [lines, setLines] = useState({});
   const [span, setSpan] = useState('l5');
   const [win, setWin] = useState('season');   // the window of the opponent's table (season, or PropFinder's last-N rows): the table on the right, never the figure
+  const [marking, setMarking] = useState('');   // the injury override in flight: 'Active' | 'Out' | 'clear'
+  // The admin's word over the report (POST /api/nba/injuries): mark him playing or out by hand; the board,
+  // the shuffle and the card read the pull through it at once, and the page reloads its board.
+  const mark = async (status) => {
+    if (!data?.player?.team) return;
+    setMarking(status || 'clear');
+    try {
+      const q = date ? `?date=${date}` : '';
+      const r = await fetch(`/api/nba/injuries${q}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ team: data.player.team, key: data.player.key, name: data.player.name, status, detail: status ? 'set by hand on the card' : null }) });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || `${r.status}`);
+      const again = await fetch(`/api/nba/player?${new URLSearchParams({ key: req.key, ...(date ? { date } : {}) })}`, { cache: 'no-store' });
+      if (again.ok) setData(await again.json());
+      window.dispatchEvent(new CustomEvent('nba:injury-override', { detail: { date, team: data.player.team, key: data.player.key, status } }));
+    } catch (e) { setErr(`The override was not saved: ${e.message}`); }
+    setMarking('');
+  };
   // His entry on the board (the payload's, else the opener's when the court or the Tonight table opened the card): the
   // spot his environment is read at, the side's scale, his ranges and ladders, his plays. The shuffle's row carries none
   // of these, so the payload fills them in.
@@ -219,7 +235,14 @@ function Card({ req, date, onClose }) {
             </span>
             <div style={{ minWidth: 0 }}>
               <h3>{p.name}</h3>
-              <span className="nhlx-pc-slot">{p.pos || '—'} · {teamName(p.team) || p.team}{opp ? ` · ${venue === 'H' ? 'vs' : 'at'} ${opp}` : ''}{p.injury ? ` · ${p.injury}${p.injuryDetail ? ` (${p.injuryDetail})` : ''}` : ''}</span>
+              <span className="nhlx-pc-slot" title={p.injuryFrom === 'override' ? `Marked ${p.injury} by hand on ${String(p.override?.at || '').slice(0, 16).replace('T', ' ')}` : p.injuryFrom === 'report' ? `PropFinder’s injury report: listed ${p.injuryRaw || p.injury}${p.injuryDate ? ` on ${String(p.injuryDate).slice(0, 10)}` : ''}` : p.injuryFrom === 'depth' ? `The depth chart’s flag: ${p.injuryRaw || p.injury}` : p.injuryStale ? `The report listed him ${p.injuryStale.status} on ${String(p.injuryStale.date).slice(0, 10)}, but he played on ${p.injuryStale.playedOn}: the listing is left aside` : 'Nothing listed on PropFinder’s injury report'}>{p.pos || '—'} · {teamName(p.team) || p.team}{opp ? ` · ${venue === 'H' ? 'vs' : 'at'} ${opp}` : ''}{p.injury ? ` · ${p.injury}${p.injuryDetail ? ` (${p.injuryDetail})` : ''}${p.injuryFrom === 'override' ? ' · by hand' : p.injuryFrom === 'depth' ? ' · depth chart' : ''}` : p.injuryStale ? ` · listed ${p.injuryStale.status} on ${String(p.injuryStale.date).slice(0, 10)}, played since` : ''}</span>
+              {data?.player ? (
+                <span className="ir-pc-mark">
+                  {p.injury && p.injuryFrom !== 'override' && ['Out', 'Doubtful', 'IR', 'Suspended'].includes(p.injury) ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={!!marking} onClick={() => mark('Active')} title="The report is wrong: he plays tonight. His rows come back on the board and his production stays his.">{marking === 'Active' ? 'Marking…' : 'He plays'}</button> : null}
+                  {!p.injury || (p.injuryFrom !== 'override' && !['Out', 'Doubtful', 'IR', 'Suspended'].includes(p.injury)) ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={!!marking} onClick={() => mark('Out')} title="He is out tonight whatever the report says: his rows leave the board and his minutes and production go to his teammates.">{marking === 'Out' ? 'Marking…' : 'Mark out'}</button> : null}
+                  {p.injuryFrom === 'override' ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={!!marking} onClick={() => mark(null)} title="Back to the report's word">{marking === 'clear' ? 'Clearing…' : 'Back to the report'}</button> : null}
+                </span>
+              ) : null}
             </div>
           </div>
           {[['pts', 'PTS', 'points'], ['reb', 'REB', 'rebounds'], ['ast', 'AST', 'assists'], ['usg', 'USG%', 'usage rate: the share of his team’s possessions he ends while on the floor'], ['rebCh', 'REB CH', 'rebound chances: rebounds plus the ones within reach he did not get'], ['potAst', 'POT AST', 'potential assists: passes that led to a shot']].map(([m, l, t]) => <div key={m} className="nhlx-pc-stat" title={`${t}, a game, ${seasonLabel}${thisSeason < SEASON_MIN ? ' (last season carries the read until he has ten games this season)' : ''}${avgOf(m, seasonGames) == null && RAW.has(m) ? ' · not in this pull’s game rows (the unread fields under Data sources name the spelling)' : ''}`}><small>{l}{m === 'usg' ? '' : ' / G'}</small><b>{num(avgOf(m, seasonGames))}{m === 'usg' && avgOf(m, seasonGames) != null ? '%' : ''}</b></div>)}
@@ -268,6 +291,24 @@ function Card({ req, date, onClose }) {
                 </tbody>
               </table>
             </div>
+            {data?.teammates?.length ? (
+              <div className="nhlx-pfd-wrap nhlx-pc-stats ir-pc-lab">
+                <div className="nhlx-pfd-head"><b>With and without each teammate</b><small className="nhlx-auto-meta">his averages over the games they shared and over his games the teammate sat, {seasonLabel}; the gap is without minus with · the teammate’s health tonight first</small></div>
+                <table className="nhlx-pfd-table">
+                  <thead><tr><th>Teammate</th><th>Tonight</th><th>GP with · without</th>{['min', 'pts', 'reb', 'ast', 'tpm'].map((m) => <th key={m}>{STAT_LABEL[m]} with → w/o</th>)}</tr></thead>
+                  <tbody>
+                    {data.teammates.map((t) => (
+                      <tr key={t.key} className={t.health === 'Out' ? 'is-active' : ''}>
+                        <td><b>{t.name}</b>{t.pos ? <small className="nhlx-auto-meta"> {t.pos}</small> : null}</td>
+                        <td><span className={`ir-health is-${(t.health || 'In').toLowerCase()}`} title={t.injury ? `${t.injury}${t.injuryDetail ? ` · ${t.injuryDetail}` : ''}` : 'Nothing listed'}>{t.health}</span></td>
+                        <td>{t.together} · {t.apart}</td>
+                        {['min', 'pts', 'reb', 'ast', 'tpm'].map((m) => <td key={m} className={t.delta?.[m] != null && Math.abs(t.delta[m]) >= (m === 'min' ? 3 : m === 'pts' ? 2 : 1) ? (t.delta[m] > 0 ? 'is-soft' : 'is-tough') : ''}><span className="nhlx-pfd-val">{num(t.with?.[m], m === 'min' ? 0 : 1)}{t.without ? ` → ${num(t.without[m], m === 'min' ? 0 : 1)}` : ''}</span>{t.delta?.[m] != null ? <span className="nhlx-pfd-rank">{t.delta[m] > 0 ? '+' : ''}{num(t.delta[m], 1)}</span> : null}</td>)}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
           </section>
           <section className="nhlx-pc-pane nhlx-pc-right">
             <div className="nhlx-pfd-head"><b>What {opp || 'the opponent'} gives up per game, by position</b><small className="nhlx-auto-meta">rank 1 = the most of {table?.count || data?.count || 30} · {view === 'season' ? `${WIN_LABEL.season} as PropFinder publishes it${held ? ` (last season’s until ${opp} plays its first game)` : ''}, the table the board’s projection reads` : view === 'prior' ? `${WIN_LABEL.prior} in full · a comparison: the figure above stays the board’s` : `its last ${view.slice(1)} games${table?.season && season && table.season < season ? ' of last season' : ''} · a comparison: the figure above stays the board’s`}{table?.league ? ' · Lg = the league’s average' : ''}</small></div>

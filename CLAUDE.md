@@ -178,9 +178,9 @@ config and keeps its own markets, teams, feeds and slate key:
   vacated lift, so the minutes carry the opportunity and the lift the role on top; the notes' "Rotation" line
   names the minutes that moved most. PropFinder's Rotations page's own route is not known (the site's pages and
   their chunks sit behind the login; the shared bundle names only the team, player and image routes):
-  `fetchRotations` reads it once a pull when `PROPFINDER_<LEAGUE>_ROTATIONS_PATH` names it on Render
-  (`{teamIds}`, `{date}` filled in) and stores the answer's keys and first 2000 characters as `rotations` on the
-  pull, shown under Data sources, so the read can be written from what the page really sends. **The volume
+  `fetchSamples` reads it once a pull when `PROPFINDER_<LEAGUE>_ROTATIONS_PATH` (or `…_SAMPLE_PATHS`) names it on
+  Render (`{teamIds}`, `{date}` filled in) and stores the answer's keys and first 2000 characters as
+  `samples.rotations` on the pull, shown under Data sources, so the read can be written from what the page sends. **The volume
   behind a made count** (`volumeOf` in `board.js`, Vincent's ask of 2026-10-27 for PropFinder's Volume Trends;
   `volumeMarkets` per sport: the NBA's threes off `tpa` and free throws off `fta`, the NFL's receptions off `tgt`):
   his attempts a game over his last 5 / 10 / the season (the rate's own blend) × his percentage, this season's made
@@ -189,7 +189,24 @@ config and keeps its own markets, teams, feeds and slate key:
   pctLong, attN, field } on the side player, `ranges[market].volume` and the shuffle row carry it, `ownRate` reads
   attempts × percentage in place of the made count when the logs carry attempts (a without split's move on the
   made count rides over as a ratio), the made count stands without them (the field's spelling unseen in the pull);
-  the hovers spell it out and the card's splits table carries FGA, 3PA and FTA a game beside the made counts. The
+  the hovers spell it out and the card's splits table carries FGA, 3PA and FTA a game beside the made counts.
+  **A report row the logs have overtaken is left aside** (`markStale` in `injuries.js`, run by `applyInjuries` at
+  the pull; Vincent, 2026-10-27: Dončić read as out while he was playing): a row listing a player out with a date
+  before a game row of his with minutes (he played since) is marked `stale: { playedOn }`, `absentByTeam` and the
+  boards skip it, the player carries `injuryStale` (the card's slot line and the shuffle's Health hover say so), the
+  pull's `injuries.stale` lists them under Data sources; a row without a date stands as listed. The report is read
+  one row a player, the newest dated (`latestReport`; `raw` keeps the status as listed, `date` reads `date` /
+  `gameDate` / `reportDate` / `updatedAt`). **The admin's word over the report**: `POST /api/nba/injuries?date` with
+  { team, key, status: 'Active' | 'Out' | null, detail, name } (`setOverride`, `nba/<date>/injury-overrides.json`),
+  `GET` lists them; `pfFor` in `store.js` reads the pull through them (`applyOverrides`, a fresh object per pull +
+  overrides, `injuryFrom: 'override'`, the rows replaced), so the board, the shuffle and the card follow at once;
+  the card's slot line carries "He plays" / "Mark out" / "Back to the report" (the page's board reloads on the
+  `nba:injury-override` event). **With and without each teammate** (`teammateSplits`, PropFinder's Lineup Lab as
+  far as the logs reach; Vincent's ask, 2026-10-27): `teammates` on the card's payload = for every pulled teammate
+  who took part in three of his games at least, his averages (minutes, points, rebounds, assists, threes) over the
+  games they shared and over his games the teammate sat, the gap, and the teammate's health tonight; drawn under
+  the splits table. The page's own route is behind the login: name it in `PROPFINDER_NBA_SAMPLE_PATHS`
+  ("rotations=/NBA/…;lineups=/NBA/…", `fetchSamples`, `samples` on the pull) to see what it sends. The
   notes name who is out and the reads moved; the card's
   "w/o X" tile draws the split (`without.gameIds` from `/api/<sport>/player`); the pull's `injuries`
   meta (source, counts, the players read one by one, errors) shows under Data sources. No live pull
@@ -428,7 +445,8 @@ config and keeps its own markets, teams, feeds and slate key:
   the card and in the pull's unread list, never as 0) and averaged per split in the top bar and
   the splits table.
 - Routes: `GET /api/nba/picks?date`, `GET /api/nba/shuffle?date&market`, `GET /api/nba/scorecard?from&to`, `GET|POST|DELETE /api/nba/sheets?date`,
-  `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`.
+  `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`,
+  `GET|POST /api/nba/injuries?date` (the admin's injury overrides).
   `.github/workflows/nba-data.yml`: 9:47 ET and 5:23 PM ET (schedule + PropFinder), 2:11 AM ET
   (last night's box scores). UI: `components/nba/NbaApp.jsx` (date picker), `NbaBoard.jsx`,
   `NbaSources.jsx`. Tests: `__tests__/nba-board.test.js` (`fixtures/espn-nba-summary.json`).

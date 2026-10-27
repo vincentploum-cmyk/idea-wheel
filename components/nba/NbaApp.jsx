@@ -40,6 +40,12 @@ export default function NbaApp({ email }) {
     .catch((e) => setErr(`Couldn’t load the slate: ${e.message}`))
     .finally(() => setBusy(false)), []);
   useEffect(() => { load(''); }, [load]);
+  // An injury override set on a card (POST /api/nba/injuries): the board reads the pull through it, so reload the day.
+  useEffect(() => {
+    const onMark = (e) => { const d = e.detail?.date || date; if (d) load(d); };
+    window.addEventListener('nba:injury-override', onMark);
+    return () => window.removeEventListener('nba:injury-override', onMark);
+  }, [load, date]);
   const go = (d) => { setBusy(true); setErr(''); load(d); };
   // The PropFinder pull from the board head (the same call as under Data sources): lines, logs, defenses and depth charts for the night.
   const pullNow = async () => {

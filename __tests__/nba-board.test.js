@@ -168,14 +168,14 @@ describe('NBA PropFinder mapping', () => {
     const got = await fetchInjuries({ teams, byAbbr, slateAbbrs: ['BOS', 'NY'], get: v2 });
     expect(got.source).toBe('v2');
     expect(calls).toHaveLength(1);
-    expect(got.rows).toEqual([{ id: 'p1', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', status: 'Out', detail: 'Achilles', date: null }]);
+    expect(got.rows).toEqual([{ id: 'p1', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', status: 'Out', detail: 'Achilles', raw: 'out', date: null }]);
     expect(got.keys).toEqual(['games', 'players', 'depthCharts', 'injuryReport']);
     expect(got.sample).toMatchObject({ status: 'out' });
     // Without the games payload, the per-team route; one refusal ends it.
     const perTeam = async (path) => { if (path.startsWith('/NBA/v2')) throw new Error('PropFinder 404 for /NBA/v2'); if (path === '/injuries/nba/1') return [{ id: 7, name: 'Jaylen Brown', status: 'Questionable', position: 'SG' }]; if (path === '/injuries/nba/2') return []; throw new Error('404'); };
     const fb = await fetchInjuries({ teams, byAbbr, slateAbbrs: ['BOS', 'NY'], get: perTeam });
     expect(fb.source).toBe('teams');
-    expect(fb.rows).toEqual([{ id: '7', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SG', status: 'Questionable', detail: null, date: null }]);
+    expect(fb.rows).toEqual([{ id: '7', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SG', status: 'Questionable', detail: null, raw: 'Questionable', date: null }]);
     expect(fb.errors[0]).toContain('404');
     const none = await fetchInjuries({ teams, byAbbr, slateAbbrs: ['BOS'], get: async () => { throw new Error('down'); } });
     expect(none).toMatchObject({ rows: [], source: null });

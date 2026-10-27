@@ -199,4 +199,36 @@ describe('the NBA board is kept per slate files', () => {
     await nhlStore.writeJson('nba/2026-10-20/propfinder.json', pf);
     expect((await nba.boardFor(slate, { refresh: false })).games).not.toBe(b1.games);
   });
+  test('the admin’s injury override reaches the board, the shuffle and the card through the stored pull', async () => {
+    const nba = require('../lib/nba/store');
+    const slate = { date: '2026-10-22' };
+    files.set('nba/2026-10-22/schedule.json', JSON.stringify({ slate, games: [{ id: '402', date: '2026-10-23T00:00:00Z', away: 'LAL', home: 'NY', final: false, state: 'pre' }], fetchedAt: new Date().toISOString() }));
+    const game = (n, pts) => ({ date: `2026-10-${String(n).padStart(2, '0')}`, season: 2026, type: 'REG', gameId: `g${n}`, opp: 'NY', pts, reb: 5, ast: 8, tpm: 2, min: 34 });
+    const logs = Array.from({ length: 6 }, (_, i) => game(i + 1, 30));
+    const pf = { at: new Date().toISOString(), data: { players: [
+      { id: 'p1', key: 'luka doncic', name: 'Luka Doncic', team: 'LAL', pos: 'PG', games: logs, props: [{ market: 'pts', line: 29.5, over: -110, under: -110 }], injury: 'Out', injuryDetail: 'calf', injuryFrom: 'report' },
+      { id: 'p2', key: 'austin reaves', name: 'Austin Reaves', team: 'LAL', pos: 'SG', games: logs.map((g) => ({ ...g, pts: 20, ast: 5 })), props: [{ market: 'pts', line: 19.5, over: -110, under: -110 }] },
+    ], defense: null, injuries: { rows: [{ id: 'p1', name: 'Luka Doncic', key: 'luka doncic', team: 'LAL', pos: 'PG', status: 'Out', detail: 'calf', raw: 'out', date: null }] } } };
+    files.set('nba/2026-10-22/propfinder.json', JSON.stringify(pf));
+    const before = await nba.boardFor(slate, { refresh: false });
+    expect(before.games[0].out).toBe(1);
+    expect(before.games[0].sides.LAL.players.find((p) => p.key === 'austin reaves').own.pts.lift).toBeGreaterThan(0);   // Luka's points handed over
+    // Marked playing by hand: his rows come back, nothing is handed over, the card says who marked him.
+    await nba.setOverride(slate, { team: 'LAL', key: 'luka doncic', status: 'Active', detail: 'set by hand', name: 'Luka Doncic' });
+    expect((await nba.loadOverrides(slate)).players['LAL|luka doncic']).toMatchObject({ status: 'Active', detail: 'set by hand' });
+    const after = await nba.boardFor(slate, { refresh: false });
+    expect(after.games).not.toBe(before.games);
+    expect(after.games[0].out).toBe(0);
+    expect(after.games[0].sides.LAL.players.find((p) => p.key === 'luka doncic')).toMatchObject({ injury: 'Active', injuryFrom: 'override', out: false, health: 'In' });
+    expect(after.games[0].sides.LAL.players.find((p) => p.key === 'austin reaves').own.pts.lift).toBeUndefined();
+    expect((await nba.shuffleFor(slate, 'pts')).players.find((p) => p.key === 'luka doncic')).toMatchObject({ health: 'In', injuryFrom: 'override' });
+    const card = await nba.playerFor(slate, 'luka doncic');
+    expect(card.player).toMatchObject({ injury: 'Active', injuryFrom: 'override', override: { status: 'Active' } });
+    expect(card.teammates.map((t) => t.key)).toEqual(['austin reaves']);
+    // Cleared: the report's word again. The same board object while nothing changes.
+    await nba.setOverride(slate, { team: 'LAL', key: 'luka doncic', status: null });
+    expect((await nba.boardFor(slate, { refresh: false })).games[0].out).toBe(1);
+    const same = await nba.boardFor(slate, { refresh: false });
+    expect((await nba.boardFor(slate, { refresh: false })).games).toBe(same.games);
+  });
 });
