@@ -99,8 +99,11 @@ config and keeps its own markets, teams, feeds and slate key:
   scored on the tab, never ranked best) or the book's line; only the model half of the chance moves,
   the hit-rate half stays. The panel reads the season's scorecard once per sport and season (`bestReadFrom`: each read's
   over-the-line Brier — the `× matchup` predictors, the projection, the line — pooled over the bars' markets, 100 plays at
-  least) and marks the read that has predicted best on its tab, with the figures in the note under the tabs; it never
-  switches on its own. A stat he never records (a quarterback's receiving yards) gets no ladder and no row.
+  least) and **opens on the read that has predicted best** (`readFromOf`: the tab pressed this session, else the
+  verdict, else the board's blend; the verdict's tab is green, `is-best` in `globals.css`, pressed or not, with the
+  figures in the note under the tabs — "Reading from last 10, the green tab: …"; press any tab to override for the
+  session; Vincent's ask, 2026-10-27: no reading the note to know which to pick). A stat he never records (a
+  quarterback's receiving yards) gets no ladder and no row.
 - `scorecard.js` (`asOf`, `gradeBoard`, `gradePredictors`, `summarize`; the store's `gradeSlate` / `scorecardFor`,
   one finished slate memoised ten minutes): the picks scorecard, `GET /api/nba/scorecard?from&to` (ET dates, the
   season to date by default) and `GET /api/nfl/scorecard?season&from&to` (week ordinals, 19–22 the postseason), drawn
@@ -506,10 +509,12 @@ config and keeps its own markets, teams, feeds and slate key:
   the board's 3+ figure, 6+ the same λ further up), survivors at the floor sorted by the chance with the break-even
   price, how often he reached the bar, where he thins out and Got once final; the fallen strip under it. "Read
   from" (`READ_FROM`) moves the λ to the study's or a window of his own results (a window he lacks falls back to the
-  board's). The panel reads the History tab's scorecard once a page load (`bestReadFrom` in `shuffle-pure.js`: each
+  board's). The panel opens on the read the History tab's scorecard rates best for the active bar (`readFromOf`: the
+  tab pressed this session, else the verdict, else the board's λ), that tab green (`is-best`), the note saying which
+  is on and why. It reads the scorecard once a page load (`bestReadFrom` in `shuffle-pure.js`: each
   read's Brier at the bar's floor height — the scorecard's model / study / own5 / own10 / ownSeason predictors on the
-  rows every predictor covers, 100 at least) and marks the read that has predicted the active bar best on its tab,
-  the figures in the note under the tabs; it never switches on its own. One request a slate, every bar move local; no
+  rows every predictor covers, 100 at least) and follows that verdict until a tab is pressed, the figures in the note
+  under the tabs. One request a slate, every bar move local; no
   number on the board changes. The chance at 1+ G is the
   run's own 1+ G figure (`fromModel` keeps the run's three-decimal λ), the Model tab's Top goals board ranks by that
   same figure (`scoreTopBoardRow` in `NhlModel.jsx`: shots by 3+, goals by 1+, points by 1+, the next rung breaking
