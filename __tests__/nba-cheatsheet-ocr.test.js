@@ -39,6 +39,16 @@ describe('NBA cheat sheet (OCR)', () => {
     expect(bare.warnings.some((w) => /no team named/.test(w))).toBe(true);
     expect(bare.rows.map((r) => r.player)).toEqual(expect.arrayContaining(['Payton Pritchard', 'Baylor Scheierman', 'Devin Carter']));
   });
+  test('a tile whose word box drifts left still sits in its column', () => {
+    // Twenty tiles in the sheet's 5 × 4 grid, 250 px apart; one word box starts 55 px left of its column (the Bucks' 11th on 2026-10-26).
+    const words = [];
+    const ranks = [['6th', '3rd', '5th', '7th'], ['16th', '20th', '11th', '1st'], ['17th', '14th', '5th', '11th'], ['10th', '11th', '4th', '4th'], ['27th', '29th', '27th', '23rd']];
+    ranks.forEach((row, ri) => row.forEach((text, ci) => { const x = 80 + ci * 250 + (ri === 3 && ci === 1 ? -55 : 0); words.push({ text, x, x1: x + 70 + (ri === 3 && ci === 1 ? 55 : 0), y: 300 + ri * 150, y1: 352 + ri * 150, conf: 90 }); }));
+    const tiles = parseTiles(words, { below: 1131 });
+    expect(tiles.PF).toEqual({ pts: 10, reb: 11, ast: 4, tpm: 4 });
+    expect(tiles.SG).toEqual({ pts: 16, reb: 20, ast: 11, tpm: 1 });
+    expect(Object.values(tiles).reduce((s, r) => s + Object.keys(r).length, 0)).toBe(20);
+  });
   test('fragments split over rows join the nearest numbers row', () => {
     const w = (text, x, y) => ({ text, x, x1: x + 40, y: y - 10, y1: y });
     const words = [w('Name', 100, 100), w('POS', 400, 100), w('MIN', 520, 100), w('PTS', 620, 100), w('REB', 720, 100), w('AST', 820, 100), w('3PM', 920, 100),
