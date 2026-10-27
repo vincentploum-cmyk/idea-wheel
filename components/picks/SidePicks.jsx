@@ -20,7 +20,7 @@ function flagsOf(pl) {
   return out;
 }
 
-export default function SidePicks({ side, sport, final = false, onOpen = null }) {
+export default function SidePicks({ side, sport, final = false, onOpen = null, heading = true }) {
   const picks = side?.picks;
   if (!picks) return null;
   const graded = picks.map((pl) => ({ ...pl, dnp: !!final && pl.hit == null && pl.actual == null }));
@@ -28,7 +28,7 @@ export default function SidePicks({ side, sport, final = false, onOpen = null })
   const note = !picks.length ? 'No play clears the floor' : scored.length ? `${scored.filter((pl) => pl.hit).length} of ${scored.length} hit` : final ? 'Not in the box score' : `${picks.length} over the floor`;
   return (
     <div className="nhlx-plays ir-side-picks" title="The board’s best plays for this team: the table rows over the floor, one a player, four at most; the pill is the book’s price with the edge over its implied chance in points">
-      <div className="nhlx-plays-head"><b>Best plays · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">{note}</small></div>
+      <div className="nhlx-plays-head">{heading && <b>Best plays · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b>}<small className="nhlx-auto-meta">{note}</small></div>
       {graded.length > 0 && (
         <div className="nhlx-plays-row">
           {graded.map((pl) => {

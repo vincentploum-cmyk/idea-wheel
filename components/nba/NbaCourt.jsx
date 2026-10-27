@@ -284,14 +284,13 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
   const count = allowed?.count || 30;
   const tones = Object.fromEntries(Object.keys(ZONES).map((z) => [z, zoneTone(allowed?.rows?.[z]?.[metric]?.rank, count)]));
   const clipId = `court-${side.team}-${side.opp}`;
-  const withLines = side.players.filter((p) => p.plays.length).length;
   return (
     <section className="nhlx-rk-card ir-court-card" aria-label={`${side.team} court`}>
       <div className="nhlx-rk-head">
         <img src={sport.teamLogo(side.team)} alt="" width="40" height="40" loading="lazy" />
-        <div><b>{sport.teamName(side.team)} <small>{side.venue === 'H' ? 'vs' : 'at'} {sport.teamName(side.opp)}</small></b><small>{withLines} player{withLines === 1 ? '' : 's'} with a line · {side.lineup === 'propfinder' ? 'slots from PropFinder’s depth chart (1 = the starter)' : 'placed by roster position (no depth chart in the pull)'} · zones by what {side.opp} gives up over the tab picked · the chip: the board’s projection tonight (this season’s table, the same figure as the table under the court and the shuffle), the line, the chance</small></div>
+        <div><b>{sport.teamName(side.team)} <small>{side.venue === 'H' ? 'vs' : 'at'} {sport.teamName(side.opp)}</small></b></div>
       </div>
-      <SidePicks side={side} sport={sport} final={final} onOpen={(pl) => open({ key: pl.key, player: side.players.find((p) => p.key === pl.key) || null, team: side.team, opp: side.opp, venue: side.venue, market: pl.market })} />
+      <SidePicks side={side} sport={sport} final={final} heading={false} onOpen={(pl) => open({ key: pl.key, player: side.players.find((p) => p.key === pl.key) || null, team: side.team, opp: side.opp, venue: side.venue, market: pl.market })} />
       <div className="nhlx-rk-toggle">
         <small>Tint by</small>
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Which stat tints the court">
