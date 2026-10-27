@@ -150,7 +150,8 @@ export default function ShufflePanel() {
   const showCentre = from !== 'model';
   // The board's λ is the run's alone unless NHL_PICKS_STUDY_WEIGHT blends the study in on the server.
   const blended = data?.studyWeight ? `${Math.round(data.studyWeight * 100)}%` : null;
-  const modelTitle = data?.source === 'study' ? 'No run saved for the date: the study’s read stands in' : blended ? `The saved run’s λ blended with the study’s at ${blended} (NHL_PICKS_STUDY_WEIGHT), as the board reads it` : 'The saved run’s λ, as the board reads it';
+  const blendedG = data?.studyWeightGoals ? `${Math.round(data.studyWeightGoals * 100)}%` : null;
+  const modelTitle = data?.source === 'study' ? 'No run saved for the date: the study’s read stands in' : blended || blendedG ? `As the board reads it: shots ${blended ? `the run’s λ blended with the study’s at ${blended}` : 'the run’s λ'}; goals ${blendedG === '100%' ? 'the study’s λ (his goal rate, chances and shots this season, home ice, the opponent at his position)' : blendedG ? `the run’s λ blended with the study’s at ${blendedG}` : 'the run’s λ'}` : 'The saved run’s λ, as the board reads it';
 
   return (
     <section className="nhlx-pk" aria-label="Shuffle">
@@ -192,7 +193,7 @@ export default function ShufflePanel() {
               })}
             </div>
             {grading ? <i className="ir-sh-grading" role="status">grading the season’s games…</i> : null}
-            <span className="nhlx-rk-toggle-note">{readNote(card, best, active, from, { stored, grading })} A window he does not have yet falls back to the board’s λ.{blended ? ` The board’s λ is the run’s blended with the study’s at ${blended} (NHL_PICKS_STUDY_WEIGHT on the server), so its figures sit between the Model tab’s and the study’s.` : ''}</span>
+            <span className="nhlx-rk-toggle-note">{readNote(card, best, active, from, { stored, grading })} A window he does not have yet falls back to the board’s λ.{blended || blendedG ? ` The board’s λ: shots ${blended ? `the run’s blended with the study’s at ${blended} (NHL_PICKS_STUDY_WEIGHT)` : 'the run’s'}; goals ${blendedG === '100%' ? 'the study’s read' : blendedG ? `the run’s blended with the study’s at ${blendedG}` : 'the run’s'} (NHL_PICKS_STUDY_WEIGHT_GOALS, 1 unless set).` : ''}</span>
           </div>
           <div className="nhlx-rk-toggle ir-sh-from">
             {mTabs.length ? (

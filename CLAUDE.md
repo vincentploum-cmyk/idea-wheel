@@ -580,8 +580,9 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   the list at the top of Best bets): the best shots plays and the best goal plays in every game: every skater over
   the floor (P(3+ SOG) 50%, P(1+ G) 35%), three to four a table (fill-ins marked `under`, the rest on a "next" line; a run row whose 3+ / 4+ pair is inverted is read off its λ; the run carries no 2+, it is read off the λ), with the break-even price, and the notes
   (softest spots, richest game, environment plays, near-ties, thin games, lineup sources) written from the picks.
-  The numbers are the model's: with a run saved for the date, each row is the run's λ and 2+ / 3+ / 4+ SOG and 1+ G
-  probabilities (`fromModel`) and only skaters the run projected are listed; the study's plain-rate read (fixed
+  The shots numbers are the model's: with a run saved for the date, each row is the run's λ and 2+ / 3+ / 4+ SOG
+  probabilities (`fromModel`) and only skaters the run projected are listed; the 1+ G is the study's read since
+  2026-10-27 (`studyWeightGoals`, the scorecard bullet below); the study's plain-rate read (fixed
   Poisson coefficients fitted on 2024-25 + 2025-26 by `tools/predictors/replay.py`, log features: the skater's rate,
   attempts, chances and TOI, this season's alone from his fifth game (`blendRates`; last season's regular season stands
   in until then, `held`); home ice; back-to-back; and what the opponent allows **per skater at his position** this season
@@ -793,9 +794,15 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   run's matchup goal λ (`modelOpp`, `goalOpportunityLambda` on the result rows, goals only; `lambdaGOpp` on the
   `?rows=1` export) —
   scored beside λ on the rows every covered predictor shares (MAE, bias, Poisson 3+ SOG / 1+ G Brier).
-  Descriptive only; nothing feeds the model. The board blends only through `NHL_PICKS_STUDY_WEIGHT` on
+  Descriptive only; nothing feeds the model. The board's shots blend only through `NHL_PICKS_STUDY_WEIGHT` on
   Render (the study's share, `blendProjection` in `picks-pure.js`, `studyWeight` in `picks.js`; unset =
-  the model alone), to be set once that table shows the blend beating the model. The same comparison runs
+  the model alone), to be set once that table shows the blend beating the model. **The board's goals read the
+  study's λ** since 2026-10-27 (`studyWeightGoals`: `NHL_PICKS_STUDY_WEIGHT_GOALS`, 1 unless set, 0 = the run's goal λ
+  back; `blendProjection`'s fourth argument; the shuffle's head and note say so): Vincent's call on the FLA @ WPG board
+  after the day's input changes — the run's published goal λ is built from his points rate, so Connor on nine goals in
+  eleven games read 28% and Reinhart fell from 28% to 21% on an unchanged goal rate as his assists dropped, while the
+  study's λ reads his goal rate, chances and shots this season, home ice and the opponent's row at his position (the
+  data study's section 16: his goal rate is the forecast). The scorecard's "board" replay still grades the run's rows. The same comparison runs
   offline on the `?rows=1` export with `tools/predictors/grade_blend.py`.
 - MoneyPuck team metrics (`lib/nhl-data/moneypuck.js`, `data/moneypuck/*`) feed the team
   page, Matchups defense cards and League; credit MoneyPuck.com wherever shown.

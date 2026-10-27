@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { blendRates, project, fromModel, blendProjection, formOf, isSoftThird, FORM, poissonAtLeast, fairOdds, shotsAllowed, positionAllowed, isBackToBack, pickGame, notesFor, seasonYearOf, SHOTS_FLOOR, LEAGUE_POS, withActuals, hitOf } from '../lib/nhl-data/picks';
+import { studyWeight, studyWeightGoals, blendRates, project, fromModel, blendProjection, formOf, isSoftThird, FORM, poissonAtLeast, fairOdds, shotsAllowed, positionAllowed, isBackToBack, pickGame, notesFor, seasonYearOf, SHOTS_FLOOR, LEAGUE_POS, withActuals, hitOf } from '../lib/nhl-data/picks';
 
 const game = (sog, icf = sog * 1.8, g = 0.3, iscf = 1.5, toi = 17) => ({ sog, icf, g, iscf, toi });
 
@@ -225,6 +225,17 @@ describe('picks: blending the model with the study', () => {
     expect(b.model).toMatchObject({ lamS: 3, p3: 0.6 }); expect(b.study).toMatchObject({ lamS: 2, p3: 0.32 });
     expect(blendProjection(model, study, 1).lamS).toBe(2); expect(blendProjection(model, study, 2).lamS).toBe(2);
     expect(blendProjection(fromModel({ sog: 3.0, g: 0.4, gOpp: 0.5 }), study, 0.5).lamGOpp).toBe(0.5);   // the matchup λ rides through the blend untouched
+  });
+  test('a goals-only share: shots stay the run’s, goals take the study’s λ (the board since 2026-10-27)', () => {
+    const g = blendProjection(model, study, 0, 1);
+    expect(g.lamS).toBe(3); expect(g.p3).toBe(0.6); expect(g.p4).toBe(0.35); expect(g.ladder).toBe('run'); expect(g.blend).toBe(0);
+    expect(g.lamG).toBe(0.2); expect(g.p1g).toBeCloseTo(1 - Math.exp(-0.2), 2); expect(g.blendG).toBe(1);
+    expect(g.model).toMatchObject({ lamG: 0.4, p1g: 0.33 }); expect(g.study).toMatchObject({ lamG: 0.2 });
+    expect(blendProjection(model, study, 0, 0)).toBe(model);
+    expect(blendProjection(model, study, 0.5, 0).lamG).toBe(0.4);   // a goals share of 0 keeps the run's goal λ
+    expect(studyWeightGoals({})).toBe(1); expect(studyWeightGoals({ NHL_PICKS_STUDY_WEIGHT_GOALS: '0' })).toBe(0);
+    expect(studyWeightGoals({ NHL_PICKS_STUDY_WEIGHT_GOALS: '0.5' })).toBe(0.5); expect(studyWeightGoals({ NHL_PICKS_STUDY_WEIGHT_GOALS: '2' })).toBe(1);
+    expect(studyWeight({})).toBe(0); expect(studyWeight({ NHL_PICKS_STUDY_WEIGHT: '0.5' })).toBe(0.5);
   });
   test('off without a weight, a study read or a model row', () => {
     expect(blendProjection(model, study, 0)).toBe(model);

@@ -1200,3 +1200,11 @@ Season span went to this season's games the same day, `seasonDefense`).
 the historical-profile multipliers on the goal ladder are cut to a quarter (`VENUE_SPLIT_WEIGHT`, `H2H_WEIGHT`). The split used
 to replace his season goal rate outright for tonight's venue, and through the points step that was the published λ goals'
 base; it now carries a quarter of it. The shots side's venue base and history weights are untouched.*
+
+*2026-10-27, evening — the board's goals read the study's λ.* On the FLA @ WPG board after the day's input changes, Connor
+(9 goals in 11 games, 0.82 a game) read 28%, Brady Tkachuk (0.64) 30%, Reinhart (0.45, the same as last season) fell from
+28% to 21% as his assists dropped: the run's published goal λ is the points λ × his finisher share × 0.9 (the note under
+section 12), so no input change reaches it. The study's λ reads his goal rate, chances and shots (this season's since
+today), home ice and the opponent's row at his position, and gives Connor about 44%, Brady 38%, Verhaeghe and Perfetti 35%,
+Reinhart 31% — what section 16's fit says a goal rate is worth. `NHL_PICKS_STUDY_WEIGHT_GOALS` (1 unless set) puts the
+study's λ on the board's goals; the shots stay the run's. The scorecard grades both reads every morning.
