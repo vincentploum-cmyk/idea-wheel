@@ -5,7 +5,7 @@ import { MARKETS, statOf } from '@/lib/nba/markets';
 import { teamLogo, teamName } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
 import { fmtOdds } from '@/lib/nfl/odds';
-import { projectFor } from '@/lib/picks/projection';
+import { boardRead, windowRead } from '@/lib/picks/projection';
 
 // The NBA player card, laid out as the NHL card (components/nhl/PlayerCard.jsx): the top bar
 // (team logo, position, tonight's game, the season averages), market tabs carrying the hit rate for
@@ -131,8 +131,12 @@ function Card({ req, date, onClose }) {
   const [market, setMarket] = useState(req.market || 'pts');
   const [lines, setLines] = useState({});
   const [span, setSpan] = useState('l5');
-  const [win, setWin] = useState('season');   // the window of the opponent's table (season, or PropFinder's last-N rows)
-  const plays = req.player?.plays || [];
+  const [win, setWin] = useState('season');   // the window of the opponent's table (season, or PropFinder's last-N rows): the table on the right, never the figure
+  // His entry on the board (the payload's, else the opener's when the court or the Tonight table opened the card): the
+  // spot his environment is read at, the side's scale, his ranges and ladders, his plays. The shuffle's row carries none
+  // of these, so the payload fills them in.
+  const bp = data?.board || (req.player?.ranges ? req.player : null);
+  const plays = req.player?.plays?.length ? req.player.plays : bp?.plays || [];
 
   // The card is keyed by the player, so a new one mounts fresh; the fetch only ever lands here.
   useEffect(() => {
@@ -185,14 +189,24 @@ function Card({ req, date, onClose }) {
   const avgOf = (m, list) => { const vals = list.map((g) => (RAW.has(m) ? (g[m] == null ? null : Number(g[m])) : statOf(g, m))).filter((v) => v != null && Number.isFinite(v)); return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null; };
   const seasonGames = splitGames(games, 'season', splitCtx);
   const allowedKeys = data?.allowed ? [...new Set(Object.values(data.allowed).flatMap((r) => Object.keys(r)))].filter((k) => !['gp', 'season', 'prior', 'priorSeason', 'lastN'].includes(k)).sort((a, b) => (Object.keys(STAT_LABEL).indexOf(a) + 1 || 99) - (Object.keys(STAT_LABEL).indexOf(b) + 1 || 99)).slice(0, 8) : [];
-  const myPos = POSITIONS.includes(p.pos) ? p.pos : p.pos === 'G' ? 'SG' : p.pos === 'F' ? 'SF' : null;
-  // What he can reach tonight: his own windows × the opponent's environment at his spot (the window picked on the right).
+  // The spot his environment is read at: the board's (his depth-chart slot when the opponent's table has it), else his roster position.
+  const myPos = bp?.envPos || (POSITIONS.includes(p.pos) ? p.pos : p.pos === 'G' ? 'SG' : p.pos === 'F' ? 'SF' : null);
   const windows = ['season', ...Object.keys(data?.windows || {}).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))];
   const view = windows.includes(win) ? win : 'season';
-  const table = view === 'season' ? (data?.allowed ? { rows: data.allowed, league: data.league, count: data.count } : null) : data?.windows?.[view] || null;
+  const seasonTable = data?.allowed ? { rows: data.allowed, league: data.league, count: data.count } : null;
+  const table = view === 'season' ? seasonTable : data?.windows?.[view] || null;
+  // What he can reach tonight: the board's projection (`ranges` on his board entry: his rate × the matchup on the season
+  // table × the side's factor, lib/picks/board.js), the one figure the court's chip, the Tonight table and the shuffle
+  // show; the same read off his logs and the season table for a market without a ladder. The window picked on the
+  // right fills the table; the hover says what it would have read.
   const own = games.length ? { l5: avgOf(market, games.slice(0, 5)), l10: avgOf(market, games.slice(0, 10)), season: avgOf(market, seasonGames) } : null;
-  const proj = projectFor(own, table, myPos, market, req.player?.scale || null);
+  const proj = boardRead({ ranges: bp?.ranges || null, own: { [market]: own }, scale: bp?.scale || null }, market, seasonTable, myPos);
+  const held = proj.held;
   const WIN_LABEL = { season: seasonTag(season), l5: 'L5', l10: 'L10', l15: 'L15', l20: 'L20' };
+  const WIN_TEXT = { l5: 'its last 5 games', l10: 'its last 10 games', l15: 'its last 15 games', l20: 'its last 20 games' };
+  // The picked window's read at his spot, for the hover: its cell and factor in place of the season table's.
+  const winRead = view !== 'season' ? windowRead(proj, table, market) : null;
+  const projTitle = proj.value == null ? '' : `Tonight ${num(proj.value)} ${STAT_LABEL[market] || market}, the board's read: his ${num(proj.rate)} a game (the season blended with his last ten)${proj.matchup != null ? ` × ${proj.matchup} (${opp} gives up ${num(proj.allowed)} to ${myPos}s, #${proj.rank ?? '—'} of ${proj.count || data?.count || 30} on ${held ? 'last season’s table' : 'this season blended into last season’s'}, the league ${num(proj.league)})` : ' (no environment table)'}${proj.team != null ? ` × ${proj.team} so his side's projections add up to its share of the team's expected total` : ''}${proj.floor != null ? ` · between ${proj.floor} and ${proj.ceiling} half the nights` : ''}${winRead ? ` · over ${WIN_TEXT[view]} ${opp} gives up ${num(winRead.allowed)} (#${winRead.rank ?? '—'}): the matchup would read × ${winRead.factor}, ${num(winRead.value)}; the window fills the table on the right, the figure stays the board's` : ''} · his windows: season ${num(own?.season)}, last 10 ${num(own?.l10)}, last 5 ${num(own?.l5)}`;
 
   return (
     <div className="nhlx-modal" role="dialog" aria-modal="true" onClick={onClose}>
@@ -221,7 +235,7 @@ function Card({ req, date, onClose }) {
               <b>{line} {STAT_LABEL[market] || market}</b>
               {play ? <span className="nhlx-pc-chip" title={`The board's chance for this line (${play.rates?.n || 0} games behind it, shrunk toward the book's price)${play.odds != null ? ` · ${fmtOdds(play.odds)}${play.book ? ` at ${play.book}` : ''}` : ''}`}><b>{pct(play.p)}</b> chance{play.odds != null ? ` · ${fmtOdds(play.odds)}` : ''}</span> : null}
               <label className="nhlx-sel nhlx-pc-line"><small>Line</small><select value={line} onChange={(e) => setLines({ ...lines, [market]: Number(e.target.value) })}>{lineChoices.map((l) => { const b = priced.get(l); return <option key={l} value={l}>{l}{b ? `${b.odds != null ? ` (${fmtOdds(b.odds)})` : ''}${b.main ? ' main' : ''}` : ''}</option>; })}</select></label>
-              {proj.value != null ? <span className={`nhlx-pc-chip ir-pc-proj${proj.value > line ? ' is-up' : ' is-down'}`} title={`His ${num(proj.rate)} ${STAT_LABEL[market] || market} a game (season ${num(own?.season)}, last 10 ${num(own?.l10)}, last 5 ${num(own?.l5)})${proj.factor != null ? ` × ${proj.factor}: ${opp} gives up ${num(proj.allowed)} to ${myPos}s over ${WIN_LABEL[view]} against the league's ${num(proj.league)}` : ' (no environment table)'}${proj.team != null ? ` × ${proj.team} so his side's projections add up to its share of the team's expected total` : ''}`}><b>{num(proj.value)}</b> tonight{proj.factor != null || proj.team != null ? ` · ×${Math.round((proj.factor ?? 1) * (proj.team ?? 1) * 1000) / 1000}` : ''}</span> : null}
+              {proj.value != null ? <span className={`nhlx-pc-chip ir-pc-proj${proj.value > line ? ' is-up' : ' is-down'}`} title={projTitle}><b>{num(proj.value)}</b> tonight{proj.env != null ? ` · ×${proj.env}` : ''}</span> : null}
             </div>
             <div className="nhlx-pc-chips">
               {opp ? <span className="nhlx-pc-chip"><b>{venue === 'H' ? 'Home' : 'Away'}</b> {venue === 'A' ? '@' : 'vs'} <img src={teamLogo(opp)} alt="" width="18" height="18" /> {opp}</span> : null}
@@ -229,9 +243,9 @@ function Card({ req, date, onClose }) {
               {hit.gp ? <span className="nhlx-pc-chip"><b>Hit</b> {hit.hits}/{hit.gp}</span> : null}
               {data?.pulledAt ? <span className="nhlx-pc-chip" title="PropFinder's logs, pulled for this slate">PropFinder {new Date(data.pulledAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span> : null}
             </div>
-            {(req.player?.ladders?.[market] || []).length ? (
+            {(bp?.ladders?.[market] || []).length ? (
               <div className="ir-pc-ladder" aria-label="Ladder">
-                {req.player.ladders[market].map((r) => {
+                {bp.ladders[market].map((r) => {
                   const tone = r.p >= 0.55 ? 'soft' : r.p < 0.35 ? 'tough' : 'mid';
                   return <button key={r.line} type="button" className={`ir-ladder-rung is-${tone}${r.main ? ' is-main' : ''}${r.line === line ? ' is-active' : ''}`} onClick={() => setLines({ ...lines, [market]: r.line })} title={`o${r.line}: ${pct(r.p)} tonight = ½ his distribution over it (${pct(r.model)}: ${num(r.proj)} ± ${num(r.sd)}${r.env != null ? `, matchup × ${r.env}` : ''}) + ½ how often he cleared it (${pct(r.emp)}: L5 ${pct(r.rates.l5)} · L10 ${pct(r.rates.l10)} · season ${pct(r.rates.season)}, ${r.rates.n} games)${r.odds != null ? ` · ${fmtOdds(r.odds)}` : ` · break-even ${r.fair}`}${r.main ? ' · the book’s main line' : ''}`}><b>o{r.line}</b><i>{pct(r.p)}</i><small>{r.odds != null ? fmtOdds(r.odds) : r.fair}</small></button>;
                 })}
@@ -256,7 +270,7 @@ function Card({ req, date, onClose }) {
             </div>
           </section>
           <section className="nhlx-pc-pane nhlx-pc-right">
-            <div className="nhlx-pfd-head"><b>What {opp || 'the opponent'} gives up per game, by position</b><small className="nhlx-auto-meta">rank 1 = the most of {table?.count || data?.count || 30} · {view === 'season' ? 'this season blended into last season’s' : `its last ${view.slice(1)} games${table?.season && season && table.season < season ? ' of last season' : ''}`}{table?.league ? ' · Lg = the league’s average' : ''}</small></div>
+            <div className="nhlx-pfd-head"><b>What {opp || 'the opponent'} gives up per game, by position</b><small className="nhlx-auto-meta">rank 1 = the most of {table?.count || data?.count || 30} · {view === 'season' ? `this season blended into last season’s${held ? ` (last season’s alone until ${opp} has ten games)` : ''}, the table the board’s projection reads` : `its last ${view.slice(1)} games${table?.season && season && table.season < season ? ' of last season' : ''} · a comparison: the figure above stays the board’s`}{table?.league ? ' · Lg = the league’s average' : ''}</small></div>
             {windows.length > 1 ? (
               <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Window of the opponent's table" style={{ marginBottom: 8 }}>
                 {windows.map((k) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setWin(k)}>{WIN_LABEL[k]}</button>)}

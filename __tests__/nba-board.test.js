@@ -395,6 +395,9 @@ describe('NBA ladders', () => {
     expect(p.ranges.pts).toMatchObject({ exp: 26, floor: 22, ceiling: 30, line: 25.5, odds: -110 });
     expect(p.ranges.pts.p).toBe(p.ladders.pts.find((r) => r.main).p);
     expect(p.ranges.reb).toMatchObject({ exp: 8, line: null, p: null });
+    // The arithmetic rides on the range (every view spells out the same figure): no table, no scale → his rate alone.
+    expect(p.ranges.pts).toMatchObject({ rate: 26, matchup: null, team: null, env: null });
+    expect(p.ladders.pts[0].rate).toBe(26);
     expect(p.scale).toEqual({});
     // With the team's totals the side's projections are scaled to its expected total: BOS scores 110 a game, NY
     // gives up 120 against a league of 115 → 110 × 1.026 = 112.9 tonight over the players' own rates.
@@ -406,6 +409,8 @@ describe('NBA ladders', () => {
     expect(sc.players[0].scale.pts).toBe(sc.scale.pts);
     expect(sc.players[0].ladders.pts[0].env).toBeCloseTo(sc.scale.pts, 2);   // no position table: the scale alone centres the ladder
     expect(sc.players[0].ladders.pts[0].proj).toBeCloseTo(26 * sc.scale.pts, 0);
+    expect(sc.players[0].ranges.pts).toMatchObject({ rate: 26, matchup: null, team: sc.scale.pts, env: sc.scale.pts });
+    expect(sc.players[0].ranges.pts.exp).toBeCloseTo(26 * sc.scale.pts, 0);
     expect(sc.share).toBeNull();   // no minutes in these logs: no measure of the roster the pull covers
     // The pull is odds-only, so the priced players' rates never add up to the whole team: the total is
     // pro-rated to the share of the minutes they play (their own minutes over 240). Brown 36 and White
@@ -437,10 +442,39 @@ describe('NBA ladders', () => {
     const bos = withSheet.games[0].sides.BOS.allowed;
     // With a table the ladder reads against NY's environment at SF: 24 over the league's 22 → ×1.055.
     expect(withSheet.games[0].sides.BOS.players[0].ladders.pts[0].env).toBeCloseTo(1.055, 3);
+    // The range names the matchup apart from the side's factor, the season table's cell behind it: 26 × 1.055 = 27.4.
+    const range = withSheet.games[0].sides.BOS.players[0].ranges.pts;
+    expect(range).toMatchObject({ rate: 26, team: null, exp: 27.4 });
+    expect(range.matchup).toBeCloseTo(1.055, 3);
+    expect(range.env).toBe(range.matchup);
     expect(bos.rows.SF.pts).toEqual({ value: 24, rank: 1, sheet: 3 });
     expect(bos.rows.SF.reb).toEqual({ value: 6, rank: 2, sheet: 28 });
     expect(bos.sheet).toBe('beside');
     expect(withSheet.games[0].sides.NY.allowed.rows.SF.pts).toEqual({ value: 20, rank: 2 });
+  });
+});
+
+describe('NBA board read', () => {
+  const { boardRead, windowRead } = require('../lib/picks/projection');
+  const season = { rows: { PF: { pts: { value: 18.8, rank: 26 }, held: true } }, league: { PF: { pts: 20.1 } }, count: 30 };
+  const l10 = { rows: { PF: { pts: { value: 21.8, rank: 10 } } }, league: { PF: { pts: 20.1 } }, count: 30 };
+  test('one figure per player and stat: the board’s range, the season table’s cell behind it; the window a comparison', () => {
+    // Randle at BOS, 2026-10-27: the shuffle said #26 PF × 0.96 and 15.8, the court on L10 said #10 and 17.3.
+    const p = { ranges: { pts: { exp: 15.8, floor: 11, ceiling: 21, rate: 18.5, matchup: 0.961, team: 0.89, env: 0.855 } }, own: { pts: { season: 18.4, l10: 18.7 } }, scale: { pts: 0.89 } };
+    const read = boardRead(p, 'pts', season, 'PF');
+    expect(read).toMatchObject({ value: 15.8, rate: 18.5, matchup: 0.961, team: 0.89, env: 0.855, floor: 11, ceiling: 21, from: 'board', pos: 'PF', allowed: 18.8, rank: 26, league: 20.1, count: 30, held: true });
+    // The L10 window would read × 1.051 → 17.3; the figure stays 15.8 and the hover says so.
+    expect(windowRead(read, l10, 'pts')).toMatchObject({ factor: 1.051, value: 17.3, allowed: 21.8, rank: 10, league: 20.1 });
+    expect(windowRead(read, { rows: {}, league: {} }, 'pts')).toBeNull();
+    expect(windowRead(read, season, 'pts')).toMatchObject({ factor: 0.961, value: 15.8 });
+  });
+  test('a stat without a ladder reads off his windows and the season table, never a window', () => {
+    const p = { ranges: {}, own: { pts: { season: 18.4, l10: 18.7 } }, scale: { pts: 0.89 } };
+    const read = boardRead(p, 'pts', season, 'PF');
+    expect(read).toMatchObject({ rate: 18.5, matchup: 0.961, team: 0.89, env: 0.855, floor: null, from: 'own', rank: 26, held: true });
+    expect(read.value).toBeCloseTo(15.8, 1);
+    expect(boardRead({ ranges: {}, own: {}, scale: null }, 'pts', season, 'PF')).toMatchObject({ value: null, rate: null, matchup: 0.961, env: 0.961, from: 'own' });
+    expect(boardRead({ ranges: {}, own: { pts: { season: 10 } } }, 'pts', null, 'PF')).toMatchObject({ value: 10, matchup: null, team: null, env: null, allowed: null, rank: null, held: false });
   });
 });
 
