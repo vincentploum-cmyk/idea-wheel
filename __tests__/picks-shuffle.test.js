@@ -59,6 +59,20 @@ describe('the NBA shuffle', () => {
     expect(brown.book.map((b) => [b.line, b.odds, b.main])).toEqual([[19.5, -400, false], [25.5, -110, true], [31.5, 300, false]]);
     expect(brown.exp).toBeCloseTo(26 * 1.055, 0);
   });
+  test('every row carries his health in one word, with the status and detail beside it', () => {
+    const listed = { ...pf, data: { ...pf.data, players: [
+      { ...pf.data.players[0], injury: 'Out', injuryDetail: 'Achilles' },
+      { ...pf.data.players[1], injury: 'Day-To-Day' },
+      { id: 'p3', name: 'Josh Hart', key: 'josh hart', team: 'NY', pos: 'SF', games: logs.map((g) => ({ ...g, opp: 'BOS' })), props: [] },
+    ] } };
+    const b = nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: listed, results: {} });
+    const s = nbaShuffle({ market: 'pts', board: b, pf: listed, season: 2026 });
+    const by = Object.fromEntries(s.players.map((p) => [p.player, p]));
+    expect(by['Jaylen Brown']).toMatchObject({ health: 'Out', injury: 'Out', injuryDetail: 'Achilles' });
+    expect(by['Sam Hauser']).toMatchObject({ health: 'DTD', injury: 'Day-To-Day', injuryDetail: null });
+    expect(by['Josh Hart']).toMatchObject({ health: 'In', injury: null, injuryDetail: null });
+    expect(sh.players.every((p) => p.health === 'In')).toBe(true);   // nothing listed on the plain pull
+  });
   test('the read at a height: the chance, how often he cleared it, the book’s price at or above the bar', () => {
     const brown = sh.players[0];
     const r26 = readAt(brown, sh.heights, 26);   // o25.5: the main line, priced

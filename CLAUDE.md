@@ -89,7 +89,10 @@ config and keeps its own markets, teams, feeds and slate key:
   the card): the bars with the count of survivors at the floor ("keep players at 35% or better"), the curve of
   survivors per height, the survivors at the bar sorted by edge (the chance there with its fair price, how often he
   cleared it, the book's rung at the bar or the nearest above it with its price and edge, where he thins out, Got once
-  final) and the fallen strip; it sits on each board's Shuffle tab (`#shuffle`; `NflShuffle` in `NflBoard.jsx`,
+  final) and the fallen strip, each row with a **Health** word first (`healthOf` in `injuries.js`, `health` on every side player
+  and shuffle row: In = nothing listed or listed active, DTD = on the report but not ruled out, Out = `isOut`; the pill's hover
+  names the status and detail as listed, and only an Out row is dimmed — before 2026-10-27 any listed status dimmed the row, so a
+  day-to-day player read like one ruled out); it sits on each board's Shuffle tab (`#shuffle`; `NflShuffle` in `NflBoard.jsx`,
   `NbaShuffle` in `NbaBoard.jsx` with its own card host), mounted on the tab's first visit and kept. The Matchup cell
   carries the opponent's rank at his spot with its factor on his rate
   (`matchup`) and, apart from it, his side's factor (`teamFactor`, "team × 1.12"); `env` on the row is their product,
