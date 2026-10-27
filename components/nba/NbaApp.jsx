@@ -5,15 +5,28 @@ import SiteHeader from '@/components/nhl/SiteHeader';
 import SignOutButton from '@/components/nhl/SignOutButton';
 import ThemeToggle from '@/components/nhl/ThemeToggle';
 import SportNav from '@/components/site/SportNav';
+import TabBar from '@/components/site/TabBar';
+import { useHashTab } from '@/components/site/hash-tab';
 import Scorecard from '@/components/picks/Scorecard';
-import NbaBoard from './NbaBoard';
+import NbaBoard, { NbaShuffle } from './NbaBoard';
 import NbaSources from './NbaSources';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : '');
 
-/** The NBA page: the night's board with its date picker (the shuffle on top of it), the notes, the scorecard and the data sources under it. */
+const TABS = [
+  ['board', 'Best plays'],
+  ['shuffle', 'Shuffle'],
+];
+const TAB_KEYS = TABS.map(([key]) => key);
+
+/**
+ * The NBA page, two hash tabs over one date picker: Best plays (the night's board with the courts,
+ * the notes, the scorecard and the data sources under it) and Shuffle (a bar per market over the
+ * night's players, a row opening the player's card).
+ */
 export default function NbaApp({ email }) {
+  const [tab, mounted] = useHashTab(TAB_KEYS, 'board');
   const [date, setDate] = useState('');
   const [board, setBoard] = useState(null);
   const [err, setErr] = useState('');
@@ -47,11 +60,32 @@ export default function NbaApp({ email }) {
   const finals = games.filter((g) => g.final).length;
   const src = board?.sources;
 
+  // The slate head, the same on both tabs: the date and its figures, the picker, the PropFinder pull.
+  const head = () => (
+    <div className="nhlx-today-head">
+      <div>
+        <div className="nhlx-today-date">{pretty || 'Loading…'}</div>
+        <div className="nhlx-auto-sub">
+          {board ? [`${games.length} game${games.length === 1 ? '' : 's'}`, finals ? `${finals} final` : null, `${board.plays} play${board.plays === 1 ? '' : 's'}`, src?.sheets?.length ? `${src.sheets.length} cheat sheet${src.sheets.length === 1 ? '' : 's'}` : 'no cheat sheet', src?.propfinder ? `PropFinder ${fmtDay(src.propfinder.at)} ${fmtTime(src.propfinder.at)}` : 'PropFinder not pulled'].filter(Boolean).join(' · ') : ''}
+        </div>
+      </div>
+      <div className="nhlx-auto-actions">
+        <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !date} onClick={() => shift(-1)} aria-label="Previous day">‹</button>
+        <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && go(e.target.value)} aria-label="Slate date" />
+        <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !date} onClick={() => shift(1)} aria-label="Next day">›</button>
+        <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy || !date} onClick={() => go(date)}>{busy ? 'Loading…' : 'Reload'}</button>
+        <button type="button" className="nhlx-btn nhlx-btn-sm" disabled={pull.busy || busy || !date} onClick={pullNow} title="Pull tonight's lines, logs, defense tables and depth charts from PropFinder now (the scheduled run does it at 9:47 AM and 5:23 PM ET)">{pull.busy ? 'Pulling…' : 'Pull PropFinder'}</button>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <SiteHeader sport="NBA" nav={<SportNav />} right={<><span className="nhlx-user">{email}</span><ThemeToggle /><SignOutButton /></>} />
       <main>
-        <section className="nhlx-bench">
+        <TabBar tabs={TABS} tab={tab} />
+
+        <section className="nhlx-bench nhlx-tabpanel" id="board" role="tabpanel" aria-labelledby="tab-board" hidden={tab !== 'board'}>
           <div className="nhlx-wrap">
             <div className="nhlx-bench-head">
               <div>
@@ -61,27 +95,31 @@ export default function NbaApp({ email }) {
               </div>
             </div>
             <section className="nhlx-pk" aria-label="Tonight’s picks">
-              <div className="nhlx-today-head">
-                <div>
-                  <div className="nhlx-today-date">{pretty || 'Loading…'}</div>
-                  <div className="nhlx-auto-sub">
-                    {board ? [`${games.length} game${games.length === 1 ? '' : 's'}`, finals ? `${finals} final` : null, `${board.plays} play${board.plays === 1 ? '' : 's'}`, src?.sheets?.length ? `${src.sheets.length} cheat sheet${src.sheets.length === 1 ? '' : 's'}` : 'no cheat sheet', src?.propfinder ? `PropFinder ${fmtDay(src.propfinder.at)} ${fmtTime(src.propfinder.at)}` : 'PropFinder not pulled'].filter(Boolean).join(' · ') : ''}
-                  </div>
-                </div>
-                <div className="nhlx-auto-actions">
-                  <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !date} onClick={() => shift(-1)} aria-label="Previous day">‹</button>
-                  <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && go(e.target.value)} aria-label="Slate date" />
-                  <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !date} onClick={() => shift(1)} aria-label="Next day">›</button>
-                  <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy || !date} onClick={() => go(date)}>{busy ? 'Loading…' : 'Reload'}</button>
-                  <button type="button" className="nhlx-btn nhlx-btn-sm" disabled={pull.busy || busy || !date} onClick={pullNow} title="Pull tonight's lines, logs, defense tables and depth charts from PropFinder now (the scheduled run does it at 9:47 AM and 5:23 PM ET)">{pull.busy ? 'Pulling…' : 'Pull PropFinder'}</button>
-                </div>
-              </div>
+              {head()}
               {pull.msg ? <p className="nhlx-auto-msg">{pull.msg}</p> : null}
               {err ? <div className="nhlx-alert">{err}</div> : null}
               {board ? <NbaBoard board={board} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null}
             </section>
             {date ? <Scorecard sport={{ api: '/api/nba', kind: 'date', to: date, label: 'NBA' }} /> : null}
             {date ? <NbaSources date={date} onChange={() => go(date)} /> : null}
+          </div>
+        </section>
+
+        <section className="nhlx-bench nhlx-tabpanel" id="shuffle" role="tabpanel" aria-labelledby="tab-shuffle" hidden={tab !== 'shuffle'}>
+          <div className="nhlx-wrap">
+            <div className="nhlx-bench-head">
+              <div>
+                <span className="nhlx-eyebrow">NBA</span>
+                <h1>The <span>shuffle</span></h1>
+                <p>Raise the bar and the field falls away. A bar per market over every player on the night’s slate with a PropFinder log: the list keeps the players whose chance of clearing the bar holds over the floor, with the book’s rung at the bar and its edge. Click a row for his card.</p>
+              </div>
+            </div>
+            <section className="nhlx-pk" aria-label="Tonight’s shuffle">
+              {head()}
+              {pull.msg ? <p className="nhlx-auto-msg">{pull.msg}</p> : null}
+              {err ? <div className="nhlx-alert">{err}</div> : null}
+              {mounted('shuffle') && date ? (games.length ? <NbaShuffle date={date} /> : board ? <div className="nhlx-empty">No games on this date.</div> : null) : null}
+            </section>
           </div>
         </section>
       </main>
