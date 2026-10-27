@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { TeamLink } from './links';
 import { LEVEL_TEXT } from '@/lib/nhl-data/characteristics';
+import { SHOWN } from '@/lib/picks/levels';
 
 // A team's characteristics the way WhoScored draws a club's: strengths and weaknesses as traits
 // with a badge, then the style of play as plain traits. Every line carries its numbers in the
@@ -35,6 +36,10 @@ function Row({ x, badge = false }) {
 export function TeamCharacteristics({ c, headline = null, tone = '', renderTeam = null }) {
   const head = headline ?? c.headline ?? null;
   const headTone = headline != null ? tone : c.tone || tone;
+  // Each list shows its SHOWN most telling lines (they come most extreme first); "View more" opens the rest.
+  const [open, setOpen] = useState(false);
+  const shown = (list) => (open ? list : list.slice(0, SHOWN));
+  const hidden = [c.strengths, c.weaknesses, c.style].reduce((n, list) => n + Math.max(0, list.length - SHOWN), 0);
   return (
     <div className="nhlx-char-team">
       <div className="nhlx-mu-verdict-head">
@@ -44,16 +49,21 @@ export function TeamCharacteristics({ c, headline = null, tone = '', renderTeam 
       </div>
       <section className="nhlx-char-strengths" aria-label={`${c.team} strengths`}>
         <h5><i className="is-plus">+</i> Strengths</h5>
-        {c.strengths.length ? <ul>{c.strengths.map((x) => <Row key={x.key} x={x} badge />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out</p>}
+        {c.strengths.length ? <ul>{shown(c.strengths).map((x) => <Row key={x.key} x={x} badge />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out</p>}
       </section>
       <section className="nhlx-char-weaknesses" aria-label={`${c.team} weaknesses`}>
         <h5><i className="is-minus">−</i> Weaknesses</h5>
-        {c.weaknesses.length ? <ul>{c.weaknesses.map((x) => <Row key={x.key} x={x} badge />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out</p>}
+        {c.weaknesses.length ? <ul>{shown(c.weaknesses).map((x) => <Row key={x.key} x={x} badge />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out</p>}
       </section>
       <section className="nhlx-char-style" aria-label={`${c.team} style of play`}>
         <h5>Style of play</h5>
-        {c.style.length ? <ul>{c.style.map((x) => <Row key={x.key} x={x} />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out yet</p>}
+        {c.style.length ? <ul>{shown(c.style).map((x) => <Row key={x.key} x={x} />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out yet</p>}
       </section>
+      {hidden > 0 || open ? (
+        <button type="button" className="nhlx-char-more" onClick={() => setOpen(!open)} aria-expanded={open}>
+          {open ? 'View less' : `View more (${hidden})`}
+        </button>
+      ) : null}
     </div>
   );
 }
