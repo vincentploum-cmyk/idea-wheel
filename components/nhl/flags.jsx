@@ -11,12 +11,14 @@ export const ICON = {
 };
 
 /**
- * The flags for a skater `c` ({ heat, oppPos, opp, pos }) on `stat` ('sog' | 'g'): his form going in
- * (`heat`, formOf in picks-pure.js; colour only — the study found a streak adds nothing once the
- * rate is in, so no number moves) and the soft spot (`oppPos.softSog` / `softG`).
+ * The flags for a skater `c` ({ heat, spot, oppPos, opp, pos }) on `stat` ('sog' | 'g'): his form going
+ * in (`heat`, formOf in picks-pure.js; colour only — the study found a streak adds nothing once the
+ * rate is in, so no number moves) and the soft spot: `spot` (PropFinder's table above the rink on
+ * Matchups, on the tab it opens on — `spotFromTab` in propfinder-csv.js — so the flag and the ice
+ * agree), the study's per-skater table (`oppPos`) standing in for a team without one, named in the title.
  */
 export function flagsFor(c, stat) {
-  const f = c?.heat; const o = c?.oppPos; const out = [];
+  const f = c?.heat; const s = c?.spot; const o = s || c?.oppPos; const out = [];
   if (f) {
     if (stat === 'sog') {
       if (f.hotS) out.push({ kind: 'hot', title: `Hot: ${f.sogL5} shots a game over his last ${f.games}, ${Math.round((f.sogRatio - 1) * 100)}% over his norm (colour only; the number already carries his rate and minutes)` });
@@ -25,8 +27,11 @@ export function flagsFor(c, stat) {
     else if (f.coldG) out.push({ kind: 'cold', title: `Cold: no goal in his last ${FORM.coldGoalsGames} games` });
   }
   if (o && (stat === 'sog' ? o.softSog : o.softG)) {
-    const v = stat === 'sog' ? o.sog : o.g; const rank = stat === 'sog' ? o.rankSog : o.rankG;
-    out.push({ kind: 'soft', title: `Soft spot: ${c.opp} allows ${Number(v).toFixed(stat === 'sog' ? 2 : 3)} ${stat === 'sog' ? 'shots' : 'goals'} per ${c.pos} a game, #${rank} of ${o.teams} (the soft third)` });
+    const v = stat === 'sog' ? o.sog : o.g; const rank = stat === 'sog' ? o.rankSog : o.rankG; const word = stat === 'sog' ? 'shots' : 'goals';
+    const read = s
+      ? `${c.opp} allows ${Number(v).toFixed(2)} ${word} a game to ${c.pos} over ${s.tab.text}, #${rank} of ${o.teams} (the soft third) · PropFinder’s table above the rink on Matchups, its ${s.tab.label} tab`
+      : `${c.opp} allows ${Number(v).toFixed(stat === 'sog' ? 2 : 3)} ${word} per ${c.pos} a game, #${rank} of ${o.teams} (the soft third) · the stored box scores, this season blended into last season’s, per skater at the position: no PropFinder table for ${c.opp}`;
+    out.push({ kind: 'soft', title: `Soft spot: ${read}` });
   }
   return out;
 }

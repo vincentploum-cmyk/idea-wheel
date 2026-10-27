@@ -241,7 +241,7 @@ function BandLabel({ pos, d, opp, view, windowText = null, teamCount, x, y, metr
 }
 
 /** One side of a game: `side` is an entry of a slate game's `sides`. */
-export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, modelRun = null, metric = 'sog', onMetric = null }) {
+export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, modelRun = null, metric = 'sog', onMetric = null, pfKey: controlledKey = undefined, onPfKey = null }) {
   // Kept for the card's title (hover): where the chip numbers and the lines come from.
   const numSrc = modelRun ? `Numbers on the chips: the model, ${modelRun.source === 'auto' ? 'run automatically' : 'run'} ${et(modelRun.createdAt)}${modelRun.players ? ` (${modelRun.players} players)` : ''}.` : 'No model run for this slate yet: chips show a matchup read (own SOG/G × opponent ratio).';
   const { placed, extras } = useMemo(() => layoutSide(side.skaters), [side.skaters]);
@@ -266,7 +266,10 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
   // toggle). On the opponents with 10+ games this season's table was the best tint by deviance
   // (docs/shots-goals-predictors.md section 10, refreshed 2026-10-27).
   const [tint, setTint] = useState('propfinder');
-  const [pfKey, setPfKey] = useState(null);
+  // The PropFinder tab: owned here, or by the panel (`pfKey` / `onPfKey`) so the defense card under the rink reads the same tab.
+  const [ownKey, setOwnKey] = useState(null);
+  const pfKey = controlledKey === undefined ? ownKey : controlledKey;
+  const setPfKey = (k) => { setOwnKey(k); onPfKey?.(k); };
   const pfTabs = side.propfinder?.tabs || [];
   const pfTab = pfTabs.find((t) => t.key === pfKey) || defaultDefenseTab(pfTabs);
   const fromPf = tint === 'propfinder' && !!pfTab;
@@ -346,7 +349,7 @@ export function RinkLegend({ metric = 'sog' }) {
       <span><i className="is-tough" /> stingy: bottom third</span>
       <span>on each player: the model’s projected SOG and goals from the latest saved run for this slate (3+ SOG and 1+ G odds in the tooltip), or a matchup read when no run exists; once the game is final, the actual shots, goals and assists with the model’s number after “m”; click for the player card</span>
       <span>🔥 on fire, by the model’s rule: 1+ point at 50% or better, 2.0+ scoring chances per game, 16+ minutes</span>
-      <span><i className="nhlx-pk-flag is-hot is-legend">{ICON.hot}</i> hot going in ({metric === 'g' ? '3+ goals in his last five' : 'his last five at 1.4× his shot rate or more'}) · <i className="nhlx-pk-flag is-cold is-legend">{ICON.cold}</i> cold ({metric === 'g' ? 'no goal in ten games when his rate owed him one' : 'his last five at 0.7× or under'}) ; on the plays above the rink and in the skater table, <i className="nhlx-pk-flag is-soft is-legend">{ICON.soft}</i> marks the opponent in the soft third of the league at his position for {word} by the season table (on the ice the band under a chip already shows it); colour only, the numbers already carry his rate</span>
+      <span><i className="nhlx-pk-flag is-hot is-legend">{ICON.hot}</i> hot going in ({metric === 'g' ? '3+ goals in his last five' : 'his last five at 1.4× his shot rate or more'}) · <i className="nhlx-pk-flag is-cold is-legend">{ICON.cold}</i> cold ({metric === 'g' ? 'no goal in ten games when his rate owed him one' : 'his last five at 0.7× or under'}) ; on the plays above the rink and in the skater table, <i className="nhlx-pk-flag is-soft is-legend">{ICON.soft}</i> marks the opponent in the soft third of the league at his position for {word} on PropFinder’s table above the rink, the tab it opens on (on the ice the band under a chip already shows it); colour only, the numbers already carry his rate</span>
       {metric === 'g'
         ? <span><i className="nhlx-rk-h2h is-legend">h2h</i> scores on this opponent: more than a goal a game against them over 2+ stored games, or 2+ goals in the one game stored (this season and last)</span>
         : <span><i className="nhlx-rk-h2h is-legend">h2h</i> fires at this opponent: 4+ shots a game against them over 2+ stored games, or 5+ in the one game stored (this season and last)</span>}

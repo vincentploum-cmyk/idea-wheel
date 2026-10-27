@@ -88,15 +88,36 @@ describe('the NHL builders are kept per store state', () => {
     expect(s1).toBe(s2);
     expect(s1.games).toHaveLength(2);
     expect(s1.games[0].sides[0].skaters.length).toBe(18);
+    // The soft-spot flag's read on every skater: PropFinder's table above the rink, on the tab it opens on, at his position.
+    const { defaultDefenseTab } = require('../lib/nhl-data/propfinder-csv');
+    const side0 = s1.games[0].sides[0]; const sk0 = side0.skaters[0]; const tab0 = defaultDefenseTab(side0.propfinder.tabs);
+    expect(sk0.spot).toMatchObject({ source: 'propfinder', pos: sk0.pos, teams: tab0.count, tab: { key: tab0.key } });
+    expect(sk0.spot.rankSog).toBe(tab0.rows[sk0.pos].ranks.sog);
+    expect(sk0.spot.softSog).toBe(sk0.spot.rankSog <= Math.ceil(tab0.count / 3));
+    expect(sk0.oppPos).not.toBeNull();   // the study's own environment stays beside it
+    // The skater table's Opp S/G, the edges and the matchup read sit on the same table: PropFinder's per-position season table first.
+    expect(sk0.vs.sog).toMatchObject({ source: 'propfinder', rank: expect.any(Number) });
+    expect(sk0.vs.sog.allowed).toBe(side0.propfinder.tabs.find((t) => t.kind === 'season' && t.season === sk0.vs.sog.seasonLabel.slice(0, 4) * 1).rows[sk0.pos].sog);
+    expect(sk0.projSog).toBeCloseTo(sk0.sog * sk0.vs.sog.ratio, 1);
     const downloads = calls.download;
     expect(await buildSlate(DATE)).toBe(s1);
     expect(calls.download).toBe(downloads);        // nothing read again for a hit
     const p1 = await buildPicks(DATE);
     expect(await buildPicks(DATE)).toBe(p1);
     expect(p1.games[0].shots.length).toBeGreaterThan(0);
+    // The picks carry the same read (the top shooter may be on either side: his own opponent's tab), and the notes' team table is PropFinder's All row.
+    const c0 = p1.games[0].shots[0]; const tabOf = defaultDefenseTab(s1.games[0].sides.find((s) => s.team === c0.team).propfinder.tabs);
+    expect(c0.spot).toMatchObject({ source: 'propfinder', pos: c0.pos, tab: { key: tabOf.key } });
+    expect(c0.oppRank).toBe(tabOf.rows.All.ranks.sog);
+    expect(c0.oppSog).toBe(tabOf.rows.All.sog);
+    expect(p1.allowed.notesFrom).toBe('propfinder');
     const sh = await buildShuffle(DATE);
     expect((await buildShuffle(DATE)).games[0].skaters).toBe(sh.games[0].skaters);   // reshaped over the kept board
     expect(sh.games[0].skaters.length).toBeGreaterThan(0);
+    // Each opponent's PropFinder table rides on the shuffle for its Matchup column, keyed by the defending team, the same tabs as above the rink.
+    expect(Object.keys(sh.defense).sort()).toEqual(['BOS', 'NJD', 'NYR', 'PHI']);
+    expect(sh.defense.PHI).toEqual(expect.objectContaining({ tabs: expect.any(Array) }));
+    expect(sh.defense.PHI.tabs.map((t) => t.key)).toEqual(s1.games[0].sides[0].propfinder.tabs.map((t) => t.key));
     const f1 = await buildFirstGoalBoard(DATE);
     expect(await buildFirstGoalBoard(DATE)).toBe(f1);
     // Another date is its own entry.

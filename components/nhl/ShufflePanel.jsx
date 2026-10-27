@@ -5,14 +5,17 @@ import { Headshot } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { Flags } from './flags';
 import { LEAGUE_POS } from '@/lib/nhl-data/picks-pure';
-import { NHL_BARS, READ_FROM, HEIGHTS, survivorsAt, fallenAt, curveOf, bestReadFrom, readFromOf, BEST_MIN } from '@/lib/nhl-data/shuffle-pure';
+import { NHL_BARS, READ_FROM, HEIGHTS, survivorsAt, fallenAt, curveOf, bestReadFrom, readFromOf, BEST_MIN, matchupTabs, matchupTabOf, matchupOf } from '@/lib/nhl-data/shuffle-pure';
 
 // The NHL shuffle (its own tab, with its own slate date): a bar for shots and one for goals. Raise
 // it and the field falls away; what stays are the skaters whose chance of the bar holds over the
 // floor, off the board's own λ (the Poisson tail further up the same ladder the 2+ / 3+ / 4+ columns
-// read), each with his chance and break-even price, how often he has actually reached it, where he
-// thins out, and his figure once final. "Read from" moves the λ to the study's or a window of his
-// own stored games. One request a slate (/api/nhl/data/shuffle), every bar move local.
+// read), each with his chance and break-even price, how often he has actually reached it, his
+// projected shots or goals (the board's λ) and his figure once final. "Read from" moves the λ to the
+// study's or a window of his own stored games. The Matchup column reads the opponent's PropFinder
+// defense table, the one above each rink on Matchups, on the same tabs ("Matchup from", this season's
+// by default), so its rank is the rank that tab shows there. One request a slate
+// (/api/nhl/data/shuffle), every bar move local.
 
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const num = (v, d = 2) => (v == null ? '—' : Number(v).toFixed(d));
@@ -75,6 +78,7 @@ export default function ShufflePanel() {
   const [bars, setBars] = useState(() => Object.fromEntries(NHL_BARS.map((b) => [b.market, b.start])));
   const [floors, setFloors] = useState(() => Object.fromEntries(NHL_BARS.map((b) => [b.market, b.floor])));
   const [picked, setPicked] = useState(null);   // the tab pressed this session; until then the panel follows the scorecard's verdict for the active bar
+  const [matchupKey, setMatchupKey] = useState(null);   // the PropFinder tab the Matchup column reads; null = the Matchups tab's default (this season's)
   const [data, setData] = useState(null);
   const [card, setCard] = useState(null);   // { predictors } from the History tab's scorecard, { failed } when it could not be read, null until read
   const [busy, setBusy] = useState(true);
@@ -132,8 +136,13 @@ export default function ShufflePanel() {
   const curve = useMemo(() => curveOf(rows, active, floor, from), [rows, active, floor, from]);
   const countAt = (m) => { const h = Math.min(8, Math.max(1, bars[m])); return curveOf(rows, m, floors[m], from).find((c) => c.height === h)?.n ?? null; };
   const fromLabel = readLabel(from);
+  // The Matchup column's tabs: the opponents' PropFinder tables as Matchups draws them above the rinks.
+  const mTabs = useMemo(() => matchupTabs(data?.defense), [data]);
+  const mTab = matchupTabOf(matchupKey, mTabs);
   const final = rows.some((r) => r.final);
   const statLabel = active === 'sog' ? 'shots' : 'goals';
+  // The board's λ is the projection column; the centre column shows only when the chance is read from somewhere else.
+  const showCentre = from !== 'model';
   // The board's λ is the run's alone unless NHL_PICKS_STUDY_WEIGHT blends the study in on the server.
   const blended = data?.studyWeight ? `${Math.round(data.studyWeight * 100)}%` : null;
   const modelTitle = data?.source === 'study' ? 'No run saved for the date: the study’s read stands in' : blended ? `The saved run’s λ blended with the study’s at ${blended} (NHL_PICKS_STUDY_WEIGHT), as the board reads it` : 'The saved run’s λ, as the board reads it';
@@ -180,6 +189,17 @@ export default function ShufflePanel() {
             {grading ? <i className="ir-sh-grading" role="status">grading the season’s games…</i> : null}
             <span className="nhlx-rk-toggle-note">{readNote(card, best, active, from, { stored, grading })} A window he does not have yet falls back to the board’s λ.{blended ? ` The board’s λ is the run’s blended with the study’s at ${blended} (NHL_PICKS_STUDY_WEIGHT on the server), so its figures sit between the Model tab’s and the study’s.` : ''}</span>
           </div>
+          {mTabs.length ? (
+            <div className="nhlx-rk-toggle ir-sh-from">
+              <small>Matchup from</small>
+              <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Which PropFinder table the Matchup column reads">
+                {mTabs.map((t) => (
+                  <button key={t.key} type="button" role="tab" aria-selected={mTab?.key === t.key} className={`nhlx-tab${mTab?.key === t.key ? ' is-active' : ''}`} onClick={() => setMatchupKey(t.key)} title={`What each opponent allows a game to each position over ${t.text}: PropFinder’s table above the rinks on Matchups, its ${t.label} tab`}>{t.label}</button>
+                ))}
+              </div>
+              <span className="nhlx-rk-toggle-note">The Matchup column reads PropFinder’s defense table, the one above each rink on Matchups, on the same tab{mTab ? ` (${mTab.text})` : ''}: the rank is PropFinder’s, 1 = allows the most. Colour only; no number moves with the tab.</span>
+            </div>
+          ) : null}
           <div className="ir-sh-grid">
             <div className="ir-sh-bars">
               {NHL_BARS.map((b) => {
@@ -211,38 +231,44 @@ export default function ShufflePanel() {
                   <thead>
                     <tr>
                       <th>Skater</th>
-                      <th title={`What the opponent allows per skater at his position in ${statLabel} a game, and its rank (1 = allows the most)`}>Matchup</th>
-                      <th className="is-num" title={`The λ ${statLabel} his chance is read from`}>{from === 'model' ? 'λ' : 'Centre'}</th>
+                      <th title={`What the opponent allows a game to his position in ${statLabel}${mTab ? ` over ${mTab.text}` : ''} and PropFinder’s rank (1 = allows the most): the table above the rink on Matchups, on the tab picked above; the stored per-skater table stands in, named in the hover, for a team without one`}>Matchup</th>
+                      {showCentre ? <th className="is-num" title={`The λ ${statLabel} his chance is read from: ${fromLabel.toLowerCase()} (the board’s λ when he lacks the window)`}>Centre</th> : null}
                       <th className="is-num" title={`His chance of ${height}+ ${statLabel} and the break-even price under it`}>Chance at {height}+</th>
                       <th title="How often he reached the bar: his last ten stored games, and this season">Reached it</th>
-                      <th className="is-num" title={`The highest bar he still clears at ${Math.round(floor * 100)}%`}>Thins out</th>
+                      <th className="is-num" title={`His projected ${statLabel} tonight: the board’s λ, the figure the rink chip and Best bets carry (${modelTitle.charAt(0).toLowerCase()}${modelTitle.slice(1)})`}>Projected</th>
                       {final ? <th className="is-num" title="The box-score figure">Got</th> : null}
                     </tr>
                   </thead>
                   <tbody>
-                    {survivors.length ? survivors.map(({ row: c, read: r, thins }) => {
-                      const rank = active === 'sog' ? c.oppPos?.rankSog : c.oppPos?.rankG;
-                      const allows = active === 'sog' ? c.oppPos?.sog : c.oppPos?.g;
+                    {survivors.length ? survivors.map(({ row: c, read: r }) => {
+                      // The opponent at his position: PropFinder's table on the tab picked, else the study's per-skater table (named in the hover).
+                      const m = matchupOf(c, data.defense, mTab?.key, active);
                       const league = LEAGUE_POS[c.pos]?.[active];
-                      const tone = toneOf(rank, c.oppPos?.teams);
+                      const tone = toneOf(m?.rank, m?.teams);
+                      const dec = m?.source === 'propfinder' || active === 'sog' ? 2 : 3;
+                      const mTitle = !m ? `No defense table for ${c.opp} at ${c.pos}`
+                        : m.source === 'propfinder' ? `${c.opp} allows ${num(m.value, dec)} ${statLabel} a game to ${c.pos} over ${m.tab.text}, #${m.rank} of ${m.teams} · PropFinder’s table, the ${m.tab.label} tab above the rink on Matchups${m.tab.stored ? ' (this window rolled from the stored box scores, as PropFinder counts it)' : ''}`
+                        : `${c.opp} allows ${num(m.value, dec)} ${statLabel} per ${c.pos} a game, #${m.rank} of ${m.teams}${league != null ? ` (league ${num(league, dec)})` : ''} · the stored box scores, this season blended into last season’s, per skater at the position: ${c.opp} has no PropFinder ${m.missing && mTab ? `${mTab.label} ` : ''}table`;
+                      const lam = active === 'sog' ? c.lamS : c.lamG;
+                      const windows = `study ${num(active === 'sog' ? c.study?.lamS : c.study?.lamG)} · last 5 ${num(c.own?.l5?.[active])} · last 10 ${num(c.own?.l10?.[active])} · season ${num(c.own?.season?.[active])} (${c.own?.season?.n ?? 0} games)`;
                       const grade = r.hit == null ? (c.final && c.actual === null ? ' is-dnp' : '') : r.hit ? ' is-hit' : ' is-miss';
                       return (
                         <tr key={c.id} className={`is-click${grade}`} onClick={() => open({ id: c.id, opp: c.opp, venue: c.venue, pos: c.pos, line: c.line, date })}>
                           <td>
                             <div className="nhlx-db-player">
                               <Headshot id={c.id} size={30} />
-                              <span><b>{c.name}<Flags c={c} stat={active} /></b><small>{c.team} · {c.pos}{c.line || ''} · {c.venue === 'H' ? 'vs' : 'at'} {c.opp}{c.start ? ` · ${fmtTime(c.start)}` : ''}{c.carried ? ' · carried' : ''}</small></span>
+                              <span><b>{c.name}<Flags c={c} stat={active} soft={false} /></b><small>{c.team} · {c.pos}{c.line || ''} · {c.venue === 'H' ? 'vs' : 'at'} {c.opp}{c.start ? ` · ${fmtTime(c.start)}` : ''}{c.carried ? ' · carried' : ''}</small></span>
                             </div>
                           </td>
-                          <td>{rank ? <span className={`ir-spot is-${tone}`} title={`${c.opp} allows ${num(allows, active === 'sog' ? 2 : 3)} ${statLabel} per ${c.pos} a game, #${rank} of ${c.oppPos.teams}${league != null ? ` (league ${num(league, active === 'sog' ? 2 : 3)})` : ''}`}>#{rank} {c.pos}</span> : <span className="ir-spot is-none">no table</span>}{allows != null ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }}>{num(allows, active === 'sog' ? 2 : 3)}</small> : null}</td>
-                          <td className="is-num" title={`Board ${num(active === 'sog' ? c.lamS : c.lamG)} · study ${num(active === 'sog' ? c.study?.lamS : c.study?.lamG)} · last 5 ${num(c.own?.l5?.[active])} · last 10 ${num(c.own?.l10?.[active])} · season ${num(c.own?.season?.[active])} (${c.own?.season?.n ?? 0} games)`}><b>{num(r.lambda)}</b>{r.fellBack ? <small>board’s</small> : from !== 'model' ? <small>board {num(active === 'sog' ? c.lamS : c.lamG)}</small> : null}</td>
+                          <td>{m ? <span className={`ir-spot is-${tone}`} title={mTitle}>#{m.rank} {c.pos}</span> : <span className="ir-spot is-none" title={mTitle}>no table</span>}{m?.value != null ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }} title={mTitle}>{num(m.value, dec)}{m.source === 'stored' ? ' · stored' : ''}</small> : null}</td>
+                          {showCentre ? <td className="is-num" title={`Board ${num(lam)} · ${windows}`}><b>{num(r.lambda)}</b>{r.fellBack ? <small>board’s</small> : null}</td> : null}
                           <td className="is-num is-lead"><b>{pct(r.p)}</b><small>{r.fair}</small></td>
                           <td className="small">{r.cleared ? `${r.cleared.n} of last ${r.cleared.of}` : '—'}{r.season?.of ? <small className="nhlx-auto-meta"> · {pct(r.season.n / r.season.of)} this season ({r.season.of})</small> : null}</td>
-                          <td className="is-num"><b>{thins == null ? '—' : `${thins}+`}</b></td>
+                          <td className="is-num" title={`${modelTitle} · ${windows}`}><b>{num(lam)}</b><small>{bar.unit}</small></td>
                           {final ? <td className="is-num nhlx-pk-got">{r.got === undefined ? <small>—</small> : r.got === null ? <small>DNP</small> : <><b>{r.got}</b><small>{bar.unit}</small></>}</td> : null}
                         </tr>
                       );
-                    }) : <tr><td colSpan={final ? 7 : 6}><small className="ir-nfl-none">Nobody clears {height}+ at {Math.round(floor * 100)}% or better. Lower the bar or the floor.</small></td></tr>}
+                    }) : <tr><td colSpan={5 + (showCentre ? 1 : 0) + (final ? 1 : 0)}><small className="ir-nfl-none">Nobody clears {height}+ at {Math.round(floor * 100)}% or better. Lower the bar or the floor.</small></td></tr>}
                   </tbody>
                 </table>
               </div>

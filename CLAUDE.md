@@ -88,11 +88,15 @@ config and keeps its own markets, teams, feeds and slate key:
   market, every bar move local. `components/picks/Shuffle.jsx` (on both boards, above the tables; the NBA's rows open
   the card): the bars with the count of survivors at the floor ("keep players at 35% or better"), the curve of
   survivors per height, the survivors at the bar sorted by edge (the chance there with its fair price, how often he
-  cleared it, the book's rung at the bar or the nearest above it with its price and edge, where he thins out, Got once
-  final) and the fallen strip, each row with a **Health** word first (`healthOf` in `injuries.js`, `health` on every side player
-  and shuffle row: In = nothing listed or listed active, DTD = on the report but not ruled out, Out = `isOut`; the pill's hover
-  names the status and detail as listed, and only an Out row is dimmed — before 2026-10-27 any listed status dimmed the row, so a
-  day-to-day player read like one ruled out); it sits on each board's Shuffle tab (`#shuffle`; `NflShuffle` in `NflBoard.jsx`,
+  cleared it, the book's rung at the bar or the nearest above it with its price and edge, his projection — the board's, with
+  its unit and the quartiles of his range, the Projected column that replaced Thins out on 2026-10-27 (Vincent: the projected
+  points / rebounds / yards per player must be on the row); the Centre column, the window × the matchup the chance is read
+  around, shows only when the read is not the board's blend — and Got once final) and the fallen strip (each with the bar he
+  still clears), each row with a **Health** word first (`healthOf` in `injuries.js`, `health` on every side player and
+  shuffle row: In = nothing listed or listed active, DTD = on the report but not ruled out, Out = `isOut`; the pill's
+  hover names the status and detail as listed, and only an Out row is dimmed — before 2026-10-27 any listed status
+  dimmed the row, so a day-to-day player read like one ruled out);
+  it sits on each board's Shuffle tab (`#shuffle`; `NflShuffle` in `NflBoard.jsx`,
   `NbaShuffle` in `NbaBoard.jsx` with its own card host), mounted on the tab's first visit and kept. The Matchup cell
   carries the opponent's rank at his spot with its factor on his rate
   (`matchup`) and, apart from it, his side's factor (`teamFactor`, "team × 1.12"); `env` on the row is their product,
@@ -558,7 +562,16 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   from `opponentDefense(opp, defVenue, tables, vs)` and `defenseTablesFor(rows, pf)` in `slate.js`, the
   same builders `buildSlate` uses for every side, `moneypuckBlock` the MoneyPuck block) and the per-team defense card
   (`lib/nhl-data/defense.js`) are descriptive views over the stored rows; the model's
-  own math stays in `NhlModel.jsx`. Logos/headshots are copied into `data/media/*` and
+  own math stays in `NhlModel.jsx`. In the Matchups fold "Defense tables and all skaters" the defense card and the
+  skater table's Opp S/G read PropFinder's table above the rink **on the tab the rink is on** (`defenseCardFromTabs` in
+  `propfinder-csv.js`; the rink's tab is lifted into `MatchupsPanel` as `pfKeys`, `Rink` taking `pfKey` / `onPfKey`;
+  the card's L10 column is PropFinder's L10 tab, the first-goal column and the MoneyPuck line stay the stored games'
+  and MoneyPuck's; the stored venue table stands in, named, for a team without a table), and `edge()` in `slate.js`
+  reads PropFinder's per-position season table first (the stored venue table standing in, `thin` under 10 games), so
+  the skater table's edges and the slate's matchup read (`vs`, `projSog` / `projG`: the chips without a run, `top`)
+  sit on the same table as the ice, the flags and the shuffle (Vincent, 2026-10-27: "fold the defense card into the
+  same table too"; until then the stored venue table led once it had 10 games). The verdicts and the
+  characteristics still read `side.defense`, the venue table, as the prose reads they are. Logos/headshots are copied into `data/media/*` and
   served by `/api/nhl/data/media`; standings/leaders live in `data/league/*`.
 - Tonight's picks (`lib/nhl-data/picks.js` + `picks-pure.js`, `/api/nhl/data/picks`, `components/nhl/PicksPanel.jsx`,
   the list at the top of Best bets): the best shots plays and the best goal plays in every game: every skater over
@@ -577,8 +590,15 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   wants the plays readable at a glance; the comparison lives on the History tab's scorecard). Beside the name, for
   the table's market: a flame / snowflake for his form (`formOf` in `picks-pure.js`, `heat` on the row: shots hot at
   1.4× his blended rate over his last five, cold at 0.7×; goals hot at 3+ in his last five, cold = none in ten when
-  his rate owed him 1.5) and a green rink when the opponent is in the soft third at his position (`oppPos.softSog` /
-  `softG`, `isSoftThird`). Colour only: the study found a streak adds nothing once the rate is in, so no number moves.
+  his rate owed him 1.5) and a green rink when the opponent is in the soft third at his position **on PropFinder's table
+  above the rink on Matchups, the tab it opens on** (`spot` on every slate skater, candidate and play: `spotFromTab` in
+  `propfinder-csv.js` off `defaultDefenseTab`, PropFinder's rank, soft = the top third of the tab's teams; Vincent,
+  2026-10-27, after the shuffle's Matchup column moved to that table: one environment read everywhere it is colour). The
+  study's per-skater table (`oppPos`, `isSoftThird`) stays the study λ's environment and stands in for a team without a
+  PropFinder table, named in the flag's hover. The notes' softest spots and environment plays read PropFinder's All row the
+  same way (`oppRank` / `oppSog` on the candidate, `allowed.notesFrom` on the payload, the stored team totals when no team
+  has a table), rank 1 = allows the most — until 2026-10-27 the softest-spots note read rank 32 as the most and named the
+  three stingiest teams. Colour only: the study found a streak adds nothing once the rate is in, so no number moves.
   The same flags (`components/nhl/flags.jsx`, `Flags`) sit on the Matchups tab: on each rink chip for the rink's
   metric (flame / snowflake only, `soft={false}`: the ice band under the chip already shows the environment, and by
   the picked window rather than the season table), on the plays strip per play, and in the all-skaters table's
@@ -597,7 +617,18 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   rows with how many of his last ten and of this season's games reached each height, the opponent's rank at his
   position, `heat`, `actual` once final), the chance at a height the Poisson tail of the λ (`chanceAt`: 3+ here is
   the board's 3+ figure, 6+ the same λ further up), survivors at the floor sorted by the chance with the break-even
-  price, how often he reached the bar, where he thins out and Got once final; the fallen strip under it. "Read
+  price, how often he reached the bar, his projected shots or goals (the board's λ with its unit: the Projected column that
+  replaced Thins out on 2026-10-27; the Centre column, the λ the chance is read from, shows only when the read is not the
+  board's) and Got once final; the fallen strip under it, each with the bar he still clears. The **Matchup column reads the
+  opponent's PropFinder defense table**, the one above each rink on Matchups, on the same tabs (a "Matchup from" row under
+  Read from: last season, this season, L5, L10, L15, L5 home, L5 away, opening on the Matchups tab's default, this season's;
+  `defense` on the shuffle payload = each team's table trimmed, keyed by the defending team, `trimDefenseTabs` /
+  `matchupTabs` / `matchupTabOf` / `matchupOf` in `shuffle-pure.js`), so the rank it shows is the rank that tab shows on
+  Matchups (Vincent, 2026-10-27: the shuffle read Boldy at UTA as #25 RW off the study's per-skater table while the Matchups
+  tab's L10 read #20 — two tables and two units, per skater against per game, for one matchup); the study's per-skater table
+  (`oppPos`, what the study's λ reads) stands in for a team without one, marked "stored" and named in the hover; colour only,
+  no number moves with the tab, and the row carries no soft-spot flag (the cell shows the environment, as the ice does under
+  a rink chip). "Read
   from" (`READ_FROM`) moves the λ to the study's or a window of his own results (a window he lacks falls back to the
   board's), or, on the goals bar, to the run's own goal λ with the opponent in it ("Model · matchup",
   `goalOpportunityLambda` on the result rows → `gOpp` in `indexModelRows` → `lamGOpp` on the candidate and the shuffle

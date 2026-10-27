@@ -3,7 +3,7 @@ import { inspectPropfinderCsv, parsePlayerCell, parseRanked, parseStatsCsv, stat
 import { nameResolver } from '../lib/nhl-data/names';
 import { PROPFINDER_SEED } from '../lib/nhl-data/seed/propfinder-2025';
 import { seedSnapshots, propfinderDefenseTabs, storedWindowTables, withStoredWindows } from '../lib/nhl-data/propfinder';
-import { defaultDefenseTab, defenseBandFromTab, defenseTabText } from '../lib/nhl-data/propfinder-csv';
+import { defaultDefenseTab, defenseBandFromTab, defenseTabText, spotFromTab, defenseCardFromTabs } from '../lib/nhl-data/propfinder-csv';
 
 const SKATERS = `Position,All
 Strength,All
@@ -274,5 +274,31 @@ describe('defense tabs without holes', () => {
     expect(tab.rows.All.ranks.iscf).toBe(2); // DET 31 (7 + 8 + 8 + 8), SEA 29.25, BOS 29
     expect(tab.rows.All.ranks.g).toBe(2); // PropFinder's own rank kept
     expect(Object.values(tab.rows).every((r) => Object.values(r).every((v) => v !== null))).toBe(true);
+  });
+  test('the soft-spot read at a position: PropFinder’s figures and ranks on the tab, soft in the top third of its teams', () => {
+    const det = propfinderDefenseTabs(pf, 'DET').tabs[0];
+    expect(spotFromTab(det, 'All')).toEqual({ source: 'propfinder', pos: 'All', sog: 30, g: 3, gp: 4, rankSog: 1, rankG: 1, teams: 3, softSog: true, softG: true, tab: { key: 'season-2026', label: '2026', text: 'the 2026 season', stored: false } });
+    expect(spotFromTab(det, 'LW')).toMatchObject({ sog: 5, g: 1, rankSog: null, softSog: false, rankG: 1, softG: true });   // no shots rank in the export: no soft flag for shots
+    const sea = propfinderDefenseTabs(pf, 'SEA').tabs[0];
+    expect(spotFromTab(sea, 'LW')).toMatchObject({ g: 0, rankG: 3, softG: false });   // the zero the API left out, ranked last
+    expect(spotFromTab(sea, 'G')).toBeNull();
+    expect(spotFromTab(null, 'C')).toBeNull();
+  });
+  test('the Matchups defense card off a side’s tabs: the tab the rink is on (this season’s by default), its L10 tab, a band per position', () => {
+    const tabs = propfinderDefenseTabs(pf, 'DET').tabs;
+    const card = defenseCardFromTabs(tabs);
+    expect(card.tab.key).toBe('season-2026');
+    expect(card.text).toBe('the 2026 season');
+    expect(card.l10).toBeNull();
+    expect(card.rows.LW).toEqual({ band: expect.objectContaining({ season: { gp: 4, sog: 5, g: 1, iscf: 7 }, rank: { sog: null, g: 1, iscf: null }, teamCount: 3 }), l10: null });
+    expect(Object.keys(card.rows)).toEqual(['LW', 'C', 'RW', 'D']);
+    expect(defenseCardFromTabs(tabs, 'nope').tab.key).toBe('season-2026');   // a tab the side lacks: the default
+    const l10 = { key: 'l10', label: 'L10', kind: 'window', windowGames: 10, split: null, season: 2026, count: 3, rows: { LW: { gp: 10, sog: 6.1, g: 0.9, ranks: { sog: 1, g: 2 } } } };
+    const withL10 = defenseCardFromTabs([...tabs, l10], 'l10');
+    expect(withL10.tab.key).toBe('l10');
+    expect(withL10.rows.LW.l10).toMatchObject({ season: { sog: 6.1 }, rank: { sog: 1 } });
+    expect(withL10.rows.C.l10).toBeNull();   // no C row on the L10 tab
+    expect(defenseCardFromTabs([])).toBeNull();
+    expect(defenseCardFromTabs(null)).toBeNull();
   });
 });
