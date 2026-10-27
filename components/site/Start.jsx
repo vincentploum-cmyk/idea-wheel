@@ -11,7 +11,7 @@ import { teamLogo as nbaLogo } from '@/lib/nba/teams';
 import { logoUrl as nhlLogo } from '@/components/nhl/media';
 import { leagueLogo } from '@/lib/site/leagues';
 
-const NHL_TABS = ['teams', 'matchups', 'defense', 'firstgoal', 'model', 'league', 'history'];
+const NHL_TABS = ['teams', 'matchups', 'defense', 'firstgoal', 'model', 'shuffle', 'league', 'history'];
 const SHOW = 5;
 
 const fmtWhen = (iso, withDay) => (iso ? new Date(iso).toLocaleString(undefined, withDay ? { weekday: 'short', hour: 'numeric', minute: '2-digit' } : { hour: 'numeric', minute: '2-digit' }) : '');

@@ -9,6 +9,7 @@ import { Flags } from './flags';
 import { TeamLink } from './links';
 import { oppClass } from './MoneyPuck';
 import { Rink, RinkLegend } from './Rink';
+import { GameCharacteristics } from './Characteristics';
 
 const POS = ['LW', 'C', 'RW', 'D'];
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
@@ -131,6 +132,21 @@ function SkaterRows({ skaters, showTeam, teamCount, sort }) {
       <td><FormChip tag={p.form?.goals} kind="goals" small /><Flags c={p} stat="g" /></td>
     </tr>
   ));
+}
+
+/**
+ * The game-total read and the two defense verdicts under a game head. With the characteristics
+ * above them they fold away (the traits are the digest; these are the numbers they were read
+ * from); without them they stand open as before.
+ */
+function GameNumbers({ folded, children }) {
+  if (!folded) return children;
+  return (
+    <details className="nhlx-mu-numbers">
+      <summary>The numbers behind the reads</summary>
+      {children}
+    </details>
+  );
 }
 
 /** Finished game: every skater's pre-game position, box line, and the defense bucket it fed. */
@@ -354,6 +370,9 @@ export default function MatchupsPanel() {
                     : fmtTime(g.startTimeUTC)}
                 </small>
               </div>
+              {g.characteristics && Object.values(g.characteristics).some(Boolean) && <GameCharacteristics game={g} />}
+              {(g.total || (g.verdicts && Object.values(g.verdicts).some(Boolean))) && (
+              <GameNumbers folded={!!(g.characteristics && Object.values(g.characteristics).some(Boolean))}>
               {g.total && (
                 <div className="nhlx-mu-verdict nhlx-mu-total">
                   <div className="nhlx-mu-verdict-head">
@@ -387,6 +406,8 @@ export default function MatchupsPanel() {
                     );
                   })}
                 </div>
+              )}
+              </GameNumbers>
               )}
               <div className="nhlx-rink-pair">
                 {g.rinkSides.map((s) => <Rink key={s.team} side={s} teamCount={slate.teamCount} posFilter={pos} minGp={minGp} log={g.log} modelRun={slate.modelRun} metric={metric} onMetric={setMetric} />)}

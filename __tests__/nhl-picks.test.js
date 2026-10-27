@@ -63,7 +63,7 @@ describe('tonight’s picks', () => {
     expect(row).toMatchObject({ lamS: 4.1, lamG: 0.7, p2: 0.93, p3: 0.85, p4: 0.78, p1g: 0.5, ladder: 'run', study: { p3: 0.59, p4: 0.37, p1g: 0.4 } });
     // The run's matchup goal λ rides along for the shuffle and the scorecard; null when the run lacks it.
     expect(row.lamGOpp).toBeNull();
-    expect(fromModel({ sog: 4.1, g: 0.7, gOpp: 0.812 }).lamGOpp).toBe(0.81);
+    expect(fromModel({ sog: 4.1, g: 0.7, gOpp: 0.8124 }).lamGOpp).toBe(0.812);   // three decimals, like the λ
     // The run carries no 2+: it comes off the λ and never sits below the run's 3+.
     const noP2 = fromModel({ sog: 4.1, g: 0.7, p3s: 0.85, p4s: 0.78, p1g: 0.5 });
     expect(noP2).toMatchObject({ p3: 0.85, p4: 0.78, ladder: 'run' });
@@ -76,6 +76,9 @@ describe('tonight’s picks', () => {
     // A probability the run did not carry is read off its λ; no shots rate, no row.
     expect(fromModel({ sog: 3, g: 0.4 }).p3).toBeCloseTo(poissonAtLeast(3, 3), 2);
     expect(fromModel({ sog: 3, g: 0.4 }).p1g).toBeCloseTo(1 - Math.exp(-0.4), 2);
+    // The run's λ keep their three decimals, so the shuffle's tail at 1+ is the run's own 1+ G figure.
+    expect(fromModel({ sog: 3.94, g: 0.564 })).toMatchObject({ lamS: 3.94, lamG: 0.564 });
+    expect(poissonAtLeast(fromModel({ sog: 3.94, g: 0.564 }).lamG, 1)).toBeCloseTo(0.431, 3);
     expect(fromModel({ sog: 3, g: 0.4 }).study).toBeNull();
     expect(fromModel(null, study)).toBeNull();
     expect(fromModel({ sog: null, p3s: 0.6 }, study)).toBeNull();

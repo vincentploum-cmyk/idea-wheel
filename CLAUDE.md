@@ -17,6 +17,11 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
 - `app/nhl|nfl|nba/page.js` gate through `lib/gate.js` (`gateSport`: sign-in redirect with
   `?next=`, then the admin list). The header (`components/nhl/SiteHeader.jsx`) takes `sport`
   for the mark and carries `components/site/SportNav.jsx` (NFL · NBA · NHL, the start screen's order).
+- Every app's tabs are the URL hash (`components/site/hash-tab.js`: `tabOf`, `useHashTab(keys, fallback)`
+  → `[tab, mounted]`, a visited panel stays mounted hidden so it keeps its state; `components/site/TabBar.jsx`
+  draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard, the data
+  sources, the default) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
+  drawn on both panels). The NHL app has eight (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)
@@ -84,12 +89,24 @@ config and keeps its own markets, teams, feeds and slate key:
   the card): the bars with the count of survivors at the floor ("keep players at 35% or better"), the curve of
   survivors per height, the survivors at the bar sorted by edge (the chance there with its fair price, how often he
   cleared it, the book's rung at the bar or the nearest above it with its price and edge, where he thins out, Got once
-  final) and the fallen strip. **Read from** (`READ_FROM`): the board's blend (default), last 5 / last 10 / season (his
-  window × the matchup as the centre of his distribution) or the book's line; only the model half of the chance moves,
+  final) and the fallen strip, each row with a **Health** word first (`healthOf` in `injuries.js`, `health` on every side player
+  and shuffle row: In = nothing listed or listed active, DTD = on the report but not ruled out, Out = `isOut`; the pill's hover
+  names the status and detail as listed, and only an Out row is dimmed — before 2026-10-27 any listed status dimmed the row, so a
+  day-to-day player read like one ruled out); it sits on each board's Shuffle tab (`#shuffle`; `NflShuffle` in `NflBoard.jsx`,
+  `NbaShuffle` in `NbaBoard.jsx` with its own card host), mounted on the tab's first visit and kept. The Matchup cell
+  carries the opponent's rank at his spot with its factor on his rate
+  (`matchup`) and, apart from it, his side's factor (`teamFactor`, "team × 1.12"); `env` on the row is their product,
+  the multiplier in his projection. **Read from** (`READ_FROM`): the board's blend (default), last 5 / last 10 / season (his
+  window × the matchup as the centre of his distribution), head to head (his last 4 meetings with the opponent as
+  PropFinder's logs hold them, 2 at least, as it is — no matchup on top; the blend stands in without two; `SPARSE_READS`:
+  scored on the tab, never ranked best) or the book's line; only the model half of the chance moves,
   the hit-rate half stays. The panel reads the season's scorecard once per sport and season (`bestReadFrom`: each read's
   over-the-line Brier — the `× matchup` predictors, the projection, the line — pooled over the bars' markets, 100 plays at
-  least) and marks the read that has predicted best on its tab, with the figures in the note under the tabs; it never
-  switches on its own. A stat he never records (a quarterback's receiving yards) gets no ladder and no row.
+  least) and **opens on the read that has predicted best** (`readFromOf`: the tab pressed this session, else the
+  verdict, else the board's blend; the verdict's tab is green, `is-best` in `globals.css`, pressed or not, with the
+  figures in the note under the tabs — "Reading from last 10, the green tab: …"; press any tab to override for the
+  session; Vincent's ask, 2026-10-27: no reading the note to know which to pick). A stat he never records (a
+  quarterback's receiving yards) gets no ladder and no row.
 - `scorecard.js` (`asOf`, `gradeBoard`, `gradePredictors`, `summarize`; the store's `gradeSlate` / `scorecardFor`,
   one finished slate memoised ten minutes): the picks scorecard, `GET /api/nba/scorecard?from&to` (ET dates, the
   season to date by default) and `GET /api/nfl/scorecard?season&from&to` (week ordinals, 19–22 the postseason), drawn
@@ -99,9 +116,13 @@ config and keeps its own markets, teams, feeds and slate key:
   hit / diff / Brier overall, on the board, by chance bucket, market, matchup third, source (confirmed / PropFinder
   alone / sheet alone), form, and by edge against the book with the flat-stake return at the book's price; every ladder
   rung (model tail vs hit rate vs the blend, Brier each, the main rung, the 20–35% ceiling rungs); and the
-  **predictors** (`PREDICTORS`): his last 3 / 5 / 10 / 20, season to date, the last 5 / 10 / season × the matchup (the
-  centres the shuffle reads from), the board's blend, the projection with the matchup in it and the book's line, each against his figure (bias, MAE, RMSE) and as an over-the-line read (said /
-  hit / Brier), on the rows every predictor covers. Descriptive only; the question it answers is whether a plain window
+  **predictors** (`PREDICTORS`): his last 3 / 5 / 10 / 20, season to date, his head to head (`h2h`: his last 4 meetings
+  with the opponent before the game, `H2H_MIN` = 2 of them at least, from `ownWindows` with `opp`; `sparse`, so it never
+  thins the rows the others are compared on: scored on the common rows that have it, with the projection and the blend
+  scored on those same rows beside it, `against`, and the panel's bold is not for it), the last 5 / 10 / season × the
+  matchup (the centres the shuffle reads from), the board's blend, the projection with the matchup in it and the book's
+  line, each against his figure (bias, MAE, RMSE) and as an over-the-line read (said / hit / Brier), on the rows every
+  predictor covers. Descriptive only; the question it answers is whether a plain window
   of his own results beats the board's read, in which case the board should read from it.
 - `propfinder.js` (`makePropfinder`): `/<LEAGUE>/teams` and `/<LEAGUE>/players?teamIds=…&hydrate=stats&withOddsOnly=true`
   through `pfGetJson` in `lib/nhl-data/propfinder-api.js`. The NHL endpoints were checked; the
@@ -110,6 +131,44 @@ config and keeps its own markets, teams, feeds and slate key:
   `fieldsSeen.unread`, shown under Data sources after the first pull. Fix the spellings there
   once a real pull shows them; never guess silently. `defenseAllowed` per position (the
   positions the Opponent rows carry), ranks 1 = most allowed.
+- `injuries.js`: PropFinder's injury report and the without-teammate ("w/o") splits, pulled live with
+  the slate, never from a file. The report is `injuryReport` on the games payload the site's own
+  pages load (`GET /<LEAGUE>/v2?sportsbooks=…`, read from the bundle 2026-10-27: a JSON string whose
+  `data` lists { team: { id }, player: { id, name, position }, status, type }; the per-team
+  `/injuries/<league>/<teamId>` route is the fallback), statuses read into one spelling (`statusOf`),
+  `isOut` = Out / Doubtful / IR / LTIR / Suspended / PUP / NFI. `fetchInjuries` in `propfinder.js`
+  stores it with the pull as `data.injuries.rows`, `applyInjuries` puts `injury` / `injuryDetail` on
+  every player (the report, then the depth chart's espn flag), and the players out whom the odds-only
+  call left out are read one by one (`/<LEAGUE>/player/<id>`, `readFor: 'injury'`, `MAX_ABSENT_READS`)
+  so their logs say which games they took part in: every game row carries `gameId`, `gamesPlayed` is a
+  teammate's rows with minutes, `keyAbsences` the out teammates who took part in ≥ 40% (and 5) of a
+  player's logged games, `withoutGames` his games without them, `withoutOf` the split (≥ `WITHOUT_MIN`
+  = 3 games, and not every game). On the board (`board.js`) a player out keeps his chip, muted, and
+  loses his table rows (`out`, the game's `out` count); for everyone else the season hit rate behind
+  the chance, the season average behind the projection and each ladder rung's season rate move toward
+  the split at n / (n + `WITHOUT_K` = 8) (`blendWithout`; `without` on the play and the side's player:
+  names, n, weight, rate, avg, seasonAll; `own[stat].all` / `.without` / `.n` on the side, so the
+  team-total scale sums the blended rates). The notes name who is out and the reads moved; the card's
+  "w/o X" tile draws the split (`without.gameIds` from `/api/<sport>/player`); the pull's `injuries`
+  meta (source, counts, the players read one by one, errors) shows under Data sources. No live pull
+  had been seen when this was written: an empty report there means the route or the field names
+  differ — `fieldsSeen.sample.injury` and `sample.gamesPayload` show what came back.
+- `characteristics.js` (`makeCharacteristics`, bound in `lib/nba/characteristics.js` and `lib/nfl/characteristics.js`,
+  `characteristics` on every board game through `makeBoard({ characteristics })`; drawn by `components/nhl/Characteristics.jsx`
+  from `Board.jsx` between the game head and the sport's view, the NHL card's layout with the sport's logos and, for the
+  NBA, the sides' expected points as the head pill): each team's strengths and weaknesses with a badge (`lib/picks/levels.js`,
+  the three cards' shared `levelOf`: the top quarter Strong, the top three Very strong, the bottom quarter Weak, the
+  bottom three Very weak; three lines a list with "View more"; the numbers on the hover only) from the pull's team rows — `totals[ABBR].for` (the team's own per-game
+  row: NBA scoring, rebounding, ball movement, threes, the line, ball security; NFL the passing and running games, the
+  end zone, ball security) and `.against` (NBA limiting points / rebounds / assists / threes / free throws, forcing
+  turnovers, with rim protection and active hands off its own blocks and steals; NFL pass and run defense, the end
+  zone, takeaways), each ranked over the teams in the pull (a `held` row reads last season's) — plus the positions its
+  defense leaks to and holds from the per-position table (NBA points to the five positions, NFL yards: passing to
+  quarterbacks, rushing to backs, receiving to receivers and tight ends), one line each way; the team's pill is its
+  defense in thirds on the headline stat (points / touchdowns allowed); and a **style of play** from its own shares
+  against the league (NBA: lives on the three / scores inside the arc, gets to the line, shares the ball /
+  isolation-heavy, shootouts / low-scoring games; NFL: pass- or run-heavy, downfield or short passing, shootouts /
+  low-scoring games). No trend line: PropFinder's windows are per position only.
 - `store.js` (`makeStore`): `<sport>/<slate>/{schedule,sheets-index,propfinder}.json`,
   `sheets/<id>.json`, `results/<gameId>.json`, `<sport>/meta/*`; the schedule re-fetched when
   stale (6 h, 10 min while a game is on) with the finished games' box scores; a sheet with a
@@ -219,10 +278,17 @@ config and keeps its own markets, teams, feeds and slate key:
   L15 / L20 = PropFinder's `lastNGames` rows as published, `defenseAllowed` → `defense.windows[l5]` with
   their own ranks and `league` = the league's average per position and stat; `windowsOf` / `tableFor` in
   the court, `zoneTone` by rank third, rank 1 = the most permissive), the zone's foot carrying the rank;
-  every chip his **projection for tonight** (`lib/picks/projection.js`: `ownRate` = his season average
-  blended with his last ten at 0.65 / 0.35, × `envFactor` = 1 + 0.6 × (the opponent's allowed at his spot
-  over the league's average − 1) for the window picked; green over the line, red under, the hover showing
-  the arithmetic), the book's main line and the chance for the stat (`playFor`: the over or yes side), ✓ when
+  every chip his **projection for tonight**: **the board's figure** (`ranges[stat].exp` on the side's
+  player, `boardRead` in the court: `lib/picks/projection.js`'s `ownRate` = his season average blended
+  with his last ten at 0.65 / 0.35, × `envFactor` = 1 + 0.6 × (the opponent's allowed at his spot over
+  the league's average − 1) **on the season table**, × the side's factor; `rate` / `matchup` / `team` /
+  `env` ride on the range so the hover spells it out; green over the line, red under). **A window moves
+  no figure** (Vincent, 2026-10-27: the shuffle said #26 PF × 0.96 and 15.8 for Randle at BOS while the
+  court on L10 said #10 and 17.3, the chip's projection then following the window): the L5 / L10 tabs
+  tint the zones and fill the table, the chip, the Tonight table, the shuffle's Expected and the card
+  all show the one board projection, and the chip's hover says what the picked window would have read
+  (`windowRead`); the shuffle's Matchup hover names the season table it reads. The chip also carries the
+  book's main line and the chance for the stat (`playFor`: the over or yes side), ✓ when
   the cheat sheet names him (the hover names the file), flame / snowflake / soft spot, his projection
   alone when he has no line; above the court the opponent-allowed table (per position, every stat
   PropFinder's table carries, value + rank chip, the `nhlx-pfd-*` styles, the picked stat's column
@@ -246,10 +312,16 @@ config and keeps its own markets, teams, feeds and slate key:
   projections add up to the team's expected total tonight**: the pull keeps every team's own per-game row
   (type Team, All) and what it gives up in all (`defense.totals[ABBR].for / .against`, `leagueFor`, the
   same held / blend rule); `sidesOf` reads the team's expected figure per stat (its own × the opponent's
-  all-positions environment, damped) over the sum of its active players' own rates (the injured out left
-  aside) as `scale[stat]` (0.5–1.5; the combos on their parts), on the side with `teamProj` and on every
-  player; `projectFor(own, allowed, pos, stat, scale)` multiplies it in and the ladder's `env` carries it, so
-  a roster of last season's shares on other teams no longer adds up to 150 points), the PropFinder players without a play too, and
+  all-positions environment, damped), **pro-rated to the share of the game its priced, active players account
+  for** (`coverage` in `lib/nba/picks.js`: their own minutes over the 240 a team plays, `share` / `minutes` on the
+  side; the pull is odds-only, so the bench is never in it and the priced players' rates never add up to the whole
+  team — read as the whole team the total put ×1.4–1.5 on every projection of a thinly priced side, Cunningham at
+  34 points against the #29 PG defense on 2026-10-27), over the sum of their own rates (the injured out left
+  aside) as `scale[stat]` (0.5–1.5; the combos on their parts; no scale under half the minutes, the priced few
+  being the stars; a sport without a coverage measure, or logs without minutes, scales down only, cap 1), on the
+  side with `teamProj` and on every player; `projectFor(own, allowed, pos, stat, scale)` multiplies it in and the
+  ladder's `env` carries it, so a roster of last season's shares on other teams no longer adds up to 150 points),
+  the PropFinder players without a play too, and
   `allowed` = the opponent's rows with ranks, `league`, and `windows`, every cell carrying the cheat
   sheet's tile for it as `sheet` when the sheet has one (`sheetCheck` in the court: the hover on a zone
   foot or a table cell names the tile's rank and whether it reads the same third as PropFinder — nothing
@@ -279,8 +351,11 @@ config and keeps its own markets, teams, feeds and slate key:
   REB / AST a game this season), market tabs with the hit rate for the pressed split, the Over +
   line block with the board's chance, price and sheet check for that line (the line menu lists the
   book's ladder with its prices, his plays' lines and ±3 around the one shown) and his projection for
-  tonight (`projectFor`, his windows from the logs × the opponent's environment at his spot over the
-  window picked on the right), the per-game bars against the line (`Bars`: green over, red
+  tonight — the board's (`board` in the `/api/nba/player` payload: his entry on the slate's board from
+  `boardFor`, `envPos`, `scale`, `ranges`, `ladders`, `plays`, so the card shows the same figure, ladder
+  rungs and lines whichever view opened it, the shuffle's rows included; `projectFor` on the season
+  table only for a market without a ladder; the window tabs on the right fill the allowed table and the
+  hover says what that window would read), the per-game bars against the line (`Bars`: green over, red
   under, the average pill), the split tiles (L5 · L10 · L20 · season · vs opp · home / away; press one
   to draw its games), the splits table (GP, MIN, PTS, REB, AST, 3PM, PRA, over %), and on the right
   the opponent's allowed table (Season / L5 / L10 … tabs, his position marked, the league's average at
@@ -299,6 +374,54 @@ config and keeps its own markets, teams, feeds and slate key:
   `.github/workflows/nba-data.yml`: 9:47 ET and 5:23 PM ET (schedule + PropFinder), 2:11 AM ET
   (last night's box scores). UI: `components/nba/NbaApp.jsx` (date picker), `NbaBoard.jsx`,
   `NbaSources.jsx`. Tests: `__tests__/nba-board.test.js` (`fixtures/espn-nba-summary.json`).
+
+## Performance: what is computed once and kept
+
+The data layer is CPU-bound, not I/O-bound: two seasons of stored skater-games (~50k rows a
+season) are read into every NHL tab, and before 2026-10-27 the slate was rebuilt from them on
+every API call (56 s cold on a synthetic two-season store, every tab paying it again:
+`propfinderDefenseTabs` rolled the five PropFinder windows over a fresh filtered copy of the
+rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
+
+- `lib/memo.js` (pure, no store import, so the client bundles that share `lib/nhl-data` helpers
+  stay clean): `memoByRows(rows, key, compute)` keeps a value per rows array (a WeakMap: it goes
+  with the array; another array with the same content is a new computation); `inputsMemo` keeps
+  a value per set of input objects (identity); `asyncMemo({ ttl, max, revision })` keeps an
+  async build per key while the store's revision, the inputs' identities and the TTL hold, and
+  shares a build in flight. A memoised value is shared between requests: **read-only**.
+- `lib/nhl-store.js`: `dataRevision()` bumps on every write / invalidation (and on a run saved
+  or deleted); `readJson` shares an in-flight download between requests that arrive together
+  (`invalidate` drops it, so a read after a write never joins the one before it); the blob cache
+  (logos, headshots, `readBlob(…, { cache: true })`) is an LRU within a byte budget
+  (`BLOB_BUDGET_BYTES`, 32 MB) instead of 200 entries. `loadRows` (`build.js`) shares an
+  in-flight load per `asOf` and hands back the same array while the season files are unchanged.
+- Per rows array (`memoByRows`): `defense.js` builds one per-game aggregate per kind
+  (`aggregate(rows, 'pos' | 'slot')`, one pass over the rows) and every table off it
+  (`defenseByPosition` with `lastN` and the `games: 'regular'` filter, `defenseBySlot`,
+  `blendedDefense` without filtering the rows), `pairRows` (defending team | attacking team →
+  rows) behind `defenseVsTeam` and `verdict.js`'s `h2hTotals`, `firstGoalsAllowed`,
+  `playerBaselines`; `propfinder.js`'s `storedWindowTables` (so `withStoredWindows` rolls each
+  window once a store state, not once a side); `picks-pure.js`'s `seasonSplit(rows, season)`
+  (this season's and last season's rows per player, the flat lists, each team's last game,
+  `shotsAllowed`, `positionAllowed`: the slate, the picks and the first-goal board read the same
+  split); `slate.js`'s `h2hByOpponent`; `firstgoal.js`'s `firstGoalRecord`; `defense-grade.js`'s
+  `gradeDefenseReads` (the whole replay, when no `trace`).
+- Per store state (`asyncMemo` with `revision: dataRevision`, 15 min): `buildSlate(date)` (inputs:
+  the rows, the positions snapshot, the lineups and games files, `latestModelRun`), `buildPicks`
+  (board and `withSkaters`, inputs: the slate and the rows; `buildShuffle` reshapes it),
+  `buildFirstGoalBoard`, and the Defense tab's payload in `app/api/nhl/data/defense/route.js`.
+  `loadMoneyPuck` and `loadPlayers` are `memoizeByInputs` (the same object while the files are).
+  A write through the store (a lineup read, a stored game, a pull, a run) drops them at once; a
+  run saved through `/api/nhl/runs` (its own module copy) shows within `latestModelRun`'s minute.
+- NFL / NBA (`lib/picks/store.js`): `boardFor` keeps the built board per slate files (the
+  schedule, the pull, the sheets, the results: `inputsMemo`), `shuffleFor` the shuffle per board
+  and market; a sheet whose OCR is done is read through the cache (fresh only while pending, or
+  when the cached copy is still the pending one), the sheets index stays a fresh read.
+- `middleware.js` skips `/api/nhl/data/media` (hundreds of image requests a page, the route checks
+  the session itself); the media route's CDN fallback redirect is cacheable for a day.
+- Tests: `__tests__/memo.test.js` (the helpers, the tables off one aggregate),
+  `__tests__/nhl-slate-memo.test.js` (the builders through the bucket mock, the blob budget, the NBA
+  board). When adding a builder a page waits on, wrap it the same way and name its inputs.
 
 ## Canonical locations
 
@@ -327,8 +450,8 @@ config and keeps its own markets, teams, feeds and slate key:
   skater's games-played count in as his away shot base and his shots as goals.
 - Scheduled by `.github/workflows/nhl-data.yml` (daily results + lineups) and
   `nhl-lineups.yml` (hourly pre-game lineup reads); Mac folder sync in `tools/mac-sync`.
-- Signed-in page = seven hash tabs (`#teams`, `#matchups`, `#defense`, `#firstgoal`, `#model`, `#league`, `#history`); it opens on
-  Matchups. The Defense tab (`components/nhl/DefensePanel.jsx`, helpers in `lib/nhl-data/defense-board.js`, data from
+- Signed-in page = eight hash tabs (`#teams`, `#matchups`, `#defense`, `#firstgoal`, `#model`, `#shuffle`, `#league`,
+  `#history`); it opens on Matchups. The Defense tab (`components/nhl/DefensePanel.jsx`, helpers in `lib/nhl-data/defense-board.js`, data from
   `/api/nhl/data/defense`, which also carries the date's games and MoneyPuck's team rates) is the ShotPropz-style cheat sheet:
   what every team gives up to each position group (C / LW / RW / D, C / W / D, F / D) in shots or goals **per skater at the
   position** a game (the study's read, section 13; `per` on every `defenseByPosition` cell, groups weighted by the skaters they
@@ -391,7 +514,30 @@ config and keeps its own markets, teams, feeds and slate key:
   each play washed green (hit the floor) or red (fell short) with the box-score figure once the game is stored, dashed and dimmed when the skater has no box-score row, nothing shown without a run; finished games show the
   box score; above each game's team verdicts a game-total read, `gameTotalRead` in
   `lib/nhl-data/verdict.js`: the stored meetings' totals blended with MoneyPuck's expected
-  goals and pace, high / low half a goal either side of the league average) and the per-team defense card
+  goals and pace, high / low half a goal either side of the league average; and above both, each
+  team's **characteristics** (`lib/nhl-data/characteristics.js`, `teamCharacteristics`, `characteristics`
+  per team on every slate game; drawn by `components/nhl/Characteristics.jsx`, WhoScored's layout): its
+  strengths and weaknesses as traits with a badge (`levelOf` in `lib/picks/levels.js`: the top quarter of the league
+  Strong, the top three Very strong, the bottom quarter Weak, the bottom three Very weak — thirds and a top four
+  wore a dozen badges on a bad team, 2026-10-27; no number in the line, the figures ride on the trait as `detail`
+  for the hover; each list shows its three most telling lines, `SHOWN`, with "View more (n)" per team for the rest) — shot volume, creating chances, high-danger
+  chances, controlling the puck, finishing (GF over xGF, `ratioRanks`, 10 games), limiting chances /
+  high-danger chances, goaltending (GA under xGA) from MoneyPuck; limiting shots / goals at tonight's
+  venue, the positions it leaks to and holds (one line each way), its last ten against the season
+  (loosening / tightening at five ranks' drift) and conceding the first goal at the venue from the
+  stored tables — and its **style of play** as plain traits (fast pace / slow game; where its shots come
+  from — the point, the wingers, the centres —, the top line carrying the scoring or scoring spread
+  across the lines, shooting from dangerous areas or the perimeter, scoring first or chasing games;
+  `shotProfiles` from the team's own stored rows, this season from ten games, last season's until
+  then, judged against the league's shares at `PROFILE_EDGE` = 15%); the Matchups tab shows the two
+  teams side by side under the game head with the total's pill and folds the game-total read and the
+  verdicts under "The numbers behind the reads" (Vincent, 2026-10-27: the bullets, and a prose script
+  tried the same day, were too much to digest into how the game would go; WhoScored's strengths /
+  weaknesses / style was the ask); the Teams tab carries the same card for the picked team with an
+  At home / Away switch (`TeamCharacteristicsCard` → `GET /api/nhl/data/characteristics?team=XXX[&date=]`,
+  games through the date, both venues with the verdict's headline; the side's defense object comes
+  from `opponentDefense(opp, defVenue, tables, vs)` and `defenseTablesFor(rows, pf)` in `slate.js`, the
+  same builders `buildSlate` uses for every side, `moneypuckBlock` the MoneyPuck block) and the per-team defense card
   (`lib/nhl-data/defense.js`) are descriptive views over the stored rows; the model's
   own math stays in `NhlModel.jsx`. Logos/headshots are copied into `data/media/*` and
   served by `/api/nhl/data/media`; standings/leaders live in `data/league/*`.
@@ -424,10 +570,10 @@ config and keeps its own markets, teams, feeds and slate key:
   short, the row on its lead market, a "Got" column with the figure and a tally in the game head. The model's math is untouched.
   Study: `docs/shots-goals-predictors.md` (section 13 is the every-angle scan and the replay; `tools/predictors/run.sh <year>`
   rebuilds it, `explain.py` reads one skater-game).
-  The **shuffle** at the top of Best bets (`components/nhl/ShufflePanel.jsx`, `GET /api/nhl/data/shuffle?date=` →
-  `buildShuffle` in `picks.js`, which is `buildPicks(date, { withSkaters: true })` reshaped; the pure readers in
-  `lib/nhl-data/shuffle-pure.js`): a bar for shots (1+ … 8+, starts at 3+, floor 50%) and one for goals (1+ … 4+,
-  1+, 35%). Every skater of every game is read at every height off the board's own λ (`skaterRow`: lamS / lamG,
+  The **shuffle** on its own tab (`#shuffle`, `components/nhl/ShufflePanel.jsx` with its own slate-date picker, the
+  date riding on every card open; `GET /api/nhl/data/shuffle?date=` → `buildShuffle` in `picks.js`, which is
+  `buildPicks(date, { withSkaters: true })` reshaped; the pure readers in `lib/nhl-data/shuffle-pure.js`): a bar for
+  shots (1+ … 8+, starts at 3+, floor 50%) and one for goals (1+ … 4+, 1+, 35%). Every skater of every game is read at every height off the board's own λ (`skaterRow`: lamS / lamG,
   the study's λ beside them, `ownOf` = his last 5 / 10 / 20 and this season's mean shots and goals from the stored
   rows with how many of his last ten and of this season's games reached each height, the opponent's rank at his
   position, `heat`, `actual` once final), the chance at a height the Poisson tail of the λ (`chanceAt`: 3+ here is
@@ -442,7 +588,19 @@ config and keeps its own markets, teams, feeds and slate key:
   a team is soft on goals and tight on assists) and his last-five goal form multiplier (`l5GoalFormMult`) not at all
   (his last five reach it as points only, at 0.35); `goalOpportunityLambda` carries both. Not graded as of 2026-10-27: the scorecard's "Windows and sources" table scores
   it beside the board's λ (`modelOpp`), and nothing on the board reads it until that table says it predicts better.
-  One request a slate, every bar move local; no number on the board changes.
+  The panel opens on the read the History tab's scorecard rates best for the active bar (`readFromOf`: the
+  tab pressed this session, else the verdict, else the board's λ), that tab green (`is-best`), the note saying which
+  is on and why. It reads the scorecard once a page load (`bestReadFrom` in `shuffle-pure.js`: each
+  read's Brier at the bar's floor height — the scorecard's model / matchup (`modelOpp`, goals only) / study / own5 / own10 / ownSeason predictors on the
+  rows every predictor covers, 100 at least; `READ_FROM_PREDICTOR`) and follows that verdict until a tab is pressed, the figures in the note
+  under the tabs. One request a slate, every bar move local; no
+  number on the board changes. The chance at 1+ G is the
+  run's own 1+ G figure (`fromModel` keeps the run's three-decimal λ), the Model tab's Top goals board ranks by that
+  same figure (`scoreTopBoardRow` in `NhlModel.jsx`: shots by 3+, goals by 1+, points by 1+, the next rung breaking
+  ties; the tags are pills only, since 2026-10-27 — before that the tag bonuses put a 43% scorer first while the
+  shuffle listed him fourth), and the panel's head says when `NHL_PICKS_STUDY_WEIGHT` blends the study into the λ;
+  only the Top 5 boards, the rinks' strips and the scorecard's replay keep `boardPlays`' rule (4+ / 5+ with the attack
+  score, 1+ / 2+ with a slice of it), so they can reorder near-ties.
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching: the roster decides a row's group, a pair
   holds a defenseman and two forwards side by side are a short forward line, three pairs at most, and a
@@ -513,6 +671,11 @@ config and keeps its own markets, teams, feeds and slate key:
   hourly lineup reads pull when the slate's files are still missing): skater and team tables into
   `data/propfinder/*` and the season + L5 matchup workbooks through `ingestMatchupFile`, in the
   exports' exact layouts, then the auto run. Admin button and `POST /api/nhl/data/propfinder/pull`.
+  The pull also reads the injury report live (`fetchInjuryReport`, `/NHL/v2`, parsed by
+  `lib/picks/injuries.js`, stored at `data/propfinder/injuries.json`, `injuries` in the pull meta): the
+  slate's skaters carry `injury` / `injuryDetail` (the rink chip's title) and `depthChartLines` leaves
+  the players out off the fallback lineup; the beat writers' and NHL.com lineups are untouched, and
+  nothing in the model's math reads it.
   Keep producing the CSV/workbook shapes the parsers already read; never adapt the parsers to the API.
   The season workbook's numbers are this season's, not a blend (Vincent's call, 2026-10-27; the predictor study's
   shrinkage, `docs/shots-goals-predictors.md` sections 3 and 9, stays there and in no number): each skater's "Season"

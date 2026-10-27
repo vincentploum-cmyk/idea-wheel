@@ -6,7 +6,7 @@ export default function GlobalError({ reset }) {
       <body style={{ margin: 0, background: '#0b0e13', color: '#ababab', fontFamily: 'system-ui, sans-serif' }}>
         <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24, textAlign: 'center' }}>
           <div>
-            <h1 style={{ color: '#fff', fontSize: 28, margin: 0 }}>Something broke</h1>
+            <h1 style={{ color: '#fff', fontSize: 29, margin: 0 }}>Something broke</h1>
             <p style={{ marginTop: 12 }}>The page hit an unexpected error.</p>
             <button
               type="button"

@@ -90,7 +90,7 @@ describe('NFL picks: the board', () => {
     expect(allen).toMatchObject({ odds: -115, fair: expect.stringMatching(/^-\d+$/), venue: 'A', opp: 'KC', form: null, sources: ['props-wk7.csv', 'propfinder'] });
     expect(allen.edge).toBeCloseTo(allen.p - 115 / 215, 3);
     expect(allen.spot).toMatchObject({ rank: 1, soft: true, key: 'passYds' });
-    expect(allen.avg).toEqual({ l5: 264, l10: 264, season: 264 });
+    expect(allen.avg).toEqual({ l5: 264, l10: 264, season: 264, seasonN: 10 });
     // Mahomes is under the 55% floor: a fill-in, marked.
     expect(passing.rows[2].p).toBeLessThan(0.55);
     expect(passing.fallback).toBe(false);

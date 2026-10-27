@@ -177,7 +177,7 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
       const r = j.result;
       setBusy(false);
       await loadSlate(date);
-      setMsg(`PropFinder pulled: ${r.games} games, ${r.players} players, ${r.teamTables} team tables.${j.model?.ran ? ` Model run saved (${j.model.players} players).` : j.model?.skipped ? ` Model not run yet: ${j.model.skipped}.` : ''}`);
+      setMsg(`PropFinder pulled: ${r.games} games, ${r.players} players, ${r.teamTables} team tables.${r.injuries?.source ? ` Injury report: ${r.injuries.slate} on the slate, ${r.injuries.out} out.` : r.injuries?.error ? ` Injury report not read (${r.injuries.error}).` : ''}${j.model?.ran ? ` Model run saved (${j.model.players} players).` : j.model?.skipped ? ` Model not run yet: ${j.model.skipped}.` : ''}`);
     } catch (err) {
       setMsg(`PropFinder pull failed: ${err.message}`);
       setBusy(false);
@@ -310,7 +310,7 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
   const pf = status?.propfinder || null;
   const pfLast = pf?.last;
   const pfLastLine = !pfLast ? ''
-    : pfLast.ok ? `Last pull ${fmt(pfLast.at)} for ${pfLast.date}: ${pfLast.games} games, ${pfLast.players} players, season ${pfLast.season}-${String((pfLast.season || 0) + 1).slice(2)}.`
+    : pfLast.ok ? `Last pull ${fmt(pfLast.at)} for ${pfLast.date}: ${pfLast.games} games, ${pfLast.players} players, season ${pfLast.season}-${String((pfLast.season || 0) + 1).slice(2)}.${pfLast.injuries?.source ? ` Injury report: ${pfLast.injuries.slate} on the slate, ${pfLast.injuries.out} out.` : pfLast.injuries?.error ? ` Injury report not read (${pfLast.injuries.error}).` : ''}`
       : `Last pull ${fmt(pfLast.at)} failed: ${pfLast.error || pfLast.skipped}.`;
   const fileRow = (key, label, hint) => (
     <div key={key} className={`nhlx-gd-file${slots[key] ? ' is-ready' : ''}`}>

@@ -1,5 +1,8 @@
 import { authorize, DATE_RE, todayET, addDays } from '@/lib/nhl-data/util';
+import { readJson, dataRevision } from '@/lib/nhl-store';
+import { asyncMemo } from '@/lib/memo';
 import { loadRows } from '@/lib/nhl-data/build';
+import { positionsPath } from '@/lib/nhl-data/positions';
 import { defenseByPosition, defenseBySlot, blendedDefense, firstGoalsAllowed } from '@/lib/nhl-data/defense';
 import { gamesFor, buildSlate } from '@/lib/nhl-data/slate';
 import { loadMoneyPuck } from '@/lib/nhl-data/moneypuck';
@@ -19,6 +22,16 @@ export async function GET(request) {
   const url = new URL(request.url);
   const asOf = url.searchParams.get('date') || todayET();
   if (!DATE_RE.test(asOf)) return Response.json({ error: 'bad date' }, { status: 400 });
+  return Response.json(await buildDefense(asOf), { headers: { 'Cache-Control': 'no-store' } });
+}
+
+// The payload is kept per store state (lib/memo.js): the Defense tab and the Teams tab both open on
+// it, and the tables, the slate and the streaks are the same until a game or lineup is stored.
+const memo = asyncMemo({ ttl: 15 * 60 * 1000, max: 4, revision: dataRevision });
+const inputs = (asOf) => () => Promise.all([loadRows(addDays(asOf, 1)), buildSlate(asOf).catch(() => null), readJson(positionsPath(asOf)), loadMoneyPuck().catch(() => null)]);
+const buildDefense = (asOf) => memo(asOf, inputs(asOf), () => computeDefense(asOf));
+
+async function computeDefense(asOf) {
   // loadRows is strictly-before; include games played on the date itself.
   const rows = await loadRows(addDays(asOf, 1));
   const season = blendedDefense(rows, asOf);
@@ -48,11 +61,11 @@ export async function GET(request) {
     year: mp?.teams?.year ?? null, updatedAt: mp?.teams?.updatedAt ?? null,
     teams: Object.fromEntries(Object.entries(all).map(([a, t]) => [a, { gp: t.gp ?? null, ga60: t.ga60 ?? null, sa60: t.sa60 ?? null, xga60: t.xga60 ?? null, hdsa60: t.hdsa60 ?? null, pace60: t.pace60 ?? null }])),
   };
-  return Response.json({
+  return {
     asOf, games: new Set(rows.map((r) => r.gameId)).size, season, l10, l5, slots, firstGoals,
     tonight: (tonight || []).map((g) => ({ id: g.id, away: g.away, home: g.home, startTimeUTC: g.startTimeUTC || null, sides: sidesById[g.id] || null, result: resultById[g.id] || null })),
     moneypuck,
     // Who is running hot (this season's stored games): goal / point / 3+ SOG streaks, the last game, tonight's opponent.
     streaks: skaterStreaks(rows, { date: asOf, games: tonight || [] }),
-  }, { headers: { 'Cache-Control': 'no-store' } });
+  };
 }

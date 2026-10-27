@@ -227,6 +227,30 @@ describe('PropFinder depth chart as a lineup', () => {
   });
 });
 
+describe('PropFinder injury report (NHL)', () => {
+  test('read live from the games payload; the depth-chart lineup leaves the players out off the lines', async () => {
+    const { fetchInjuryReport, depthChartLines } = await import('../lib/nhl-data/propfinder-api');
+    const report = JSON.stringify({ data: [
+      { team: { id: pit.id }, player: { id: '1', name: 'Sidney Crosby', position: 'C' }, status: 'out', type: 'upper body' },
+      { team: { id: pit.id }, player: { id: '2', name: 'Evgeni Malkin', position: 'C' }, status: 'day-to-day', type: 'illness' },
+    ] });
+    const paths = [];
+    const got = await fetchInjuryReport(TEAMS, { get: async (path) => { paths.push(path); return { games: [], injuryReport: report }; } });
+    expect(paths).toEqual(['/NHL/v2?sportsbooks=draftkings&sportsbooks=fanduel&sportsbooks=betmgm&sportsbooks=caesars&sportsbooks=fanatics']);
+    expect(got.source).toBe('v2');
+    expect(got.rows.map((r) => [r.name, r.key, r.team, r.status, r.detail])).toEqual([['Sidney Crosby', 'sidney crosby', 'PIT', 'Out', 'upper body'], ['Evgeni Malkin', 'evgeni malkin', 'PIT', 'DTD', 'illness']]);
+    const failed = await fetchInjuryReport(TEAMS, { get: async () => { throw new Error('PropFinder 500 for /NHL/v2'); } });
+    expect(failed).toMatchObject({ rows: [], source: null });
+    expect(failed.error).toContain('500');
+    const empty = await fetchInjuryReport(TEAMS, { get: async () => ({ games: [] }) });
+    expect(empty.error).toContain('no injury report');
+    const lines = depthChartLines(pit, { absent: new Set(['sidney crosby']) });
+    expect(lines.players['sidney crosby']).toBeUndefined();
+    expect(lines.players['evgeni malkin']).toBeDefined();
+    expect(depthChartLines(pit).players['sidney crosby']).toBeDefined();
+  });
+});
+
 describe('pulled team rows without holes', () => {
   test('a counting field the API left out is 0; the All row\'s scoring chances come from the positions', () => {
     const row = teamRow('TOR', { gamesPlayed: 2, shots: 10, missedShots: 4, blockedAtt: 2 });

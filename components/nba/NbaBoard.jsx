@@ -9,21 +9,30 @@ import { headshotUrl } from '@/lib/nba/espn';
 import CourtPair, { COURT_METRICS } from './NbaCourt';
 import { NbaPlayerCardProvider, useNbaPlayerCard } from './NbaPlayerCard';
 
-const SPORT = { groups: GROUPS, teamLogo, teamName, headshotUrl };
+const SPORT = { groups: GROUPS, teamLogo, teamName, headshotUrl, totalStat: 'pts', totalUnit: 'points' };
 const BARS = SHUFFLE_MARKETS.map((m) => ({ ...m, label: labelOf(m.market), unit: MARKETS[m.market].unit }));
 
-/** The shuffle for the night, a row opening the player's card. */
-function NbaShuffle({ date }) {
+/** The shuffle for the night, a row opening the player's card; needs an NbaPlayerCardProvider above it. */
+function NbaShuffleRows({ date }) {
   const open = useNbaPlayerCard();
   return <Shuffle sport={{ api: '/api/nba', query: `date=${date}`, markets: BARS, teamLogo, headshotUrl }} onOpen={(p, market) => open({ key: p.key, player: p, team: p.team, opp: p.opp, venue: p.venue, market })} />;
 }
 
-/** The night's board: the shuffle, then per game the two courts (the matchup view) over the five tables. */
+/** The night's shuffle (the Shuffle tab), with its own card host. */
+export function NbaShuffle({ date }) {
+  if (!date) return null;
+  return (
+    <NbaPlayerCardProvider date={date}>
+      <NbaShuffleRows date={date} />
+    </NbaPlayerCardProvider>
+  );
+}
+
+/** The night's board: per game the two courts (the matchup view) over the five tables. */
 export default function NbaBoard({ board }) {
   const [metric, setMetric] = useState('pts');
   return (
     <NbaPlayerCardProvider date={board?.date}>
-      {board?.games?.length ? <NbaShuffle date={board.date} /> : null}
       {board?.games?.length ? (
         <div className="ir-court-switch nhlx-rk-toggle">
           <small>Courts</small>

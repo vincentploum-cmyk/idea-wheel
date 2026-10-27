@@ -96,3 +96,24 @@ describe('the NHL shuffle', () => {
     expect(survivorsAt(rows, 'sog', 4, 0.5, 'model')).toHaveLength(1);
   });
 });
+
+describe('which read the scorecard rates best', () => {
+  const { bestReadFrom, READ_FROM_PREDICTOR } = require('../lib/nhl-data/shuffle-pure');
+  const report = (briers, n) => ({ common: { n, predictors: Object.entries(briers).map(([key, brier]) => ({ key, brier, n: brier == null ? 0 : n })) } });
+  test('every read is a scorecard predictor', () => {
+    expect(READ_FROM.map(([k]) => READ_FROM_PREDICTOR[k])).toEqual(['model', 'modelOpp', 'study', 'own5', 'own10', 'ownSeason']);
+  });
+  test('the lowest Brier at the bar’s floor wins once enough skater-games are in; each bar has its own verdict', () => {
+    const predictors = {
+      sog: report({ model: 0.231, study: 0.228, blend: 0.229, own5: 0.24, own10: 0.235, own15: 0.233, ownSeason: 0.25, pf5: 0.3, pfSeason: null }, 400),
+      g: report({ model: 0.12, study: 0.125, own5: 0.13, own10: 0.119, ownSeason: 0.14 }, 400),
+    };
+    const sog = bestReadFrom(predictors, 'sog');
+    expect(sog).toMatchObject({ best: 'study', n: 400, ranked: ['study', 'model', 'l10', 'l5', 'season'] });
+    expect(sog.scores.model).toEqual({ brier: 0.231, n: 400 });
+    expect(Object.keys(sog.scores)).not.toContain('blend');   // the blend, L15 and PropFinder's rates are not reads of the shuffle
+    expect(bestReadFrom(predictors, 'g')).toMatchObject({ best: 'l10', ranked: ['l10', 'model', 'study', 'l5', 'season'] });
+    expect(bestReadFrom(predictors, 'sog', { min: 500 })).toMatchObject({ best: null, n: 400 });
+    expect(bestReadFrom(null, 'sog')).toEqual({ best: null, n: 0, scores: {}, ranked: [] });
+  });
+});

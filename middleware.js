@@ -37,5 +37,7 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  // Logos and headshots (/api/nhl/data/media, hundreds a page) check the session in the route
+  // itself; refreshing the cookie there would only race the refresh on the page's own requests.
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/nhl/data/media|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };
