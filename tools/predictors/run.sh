@@ -34,6 +34,7 @@ python3 -I tools/predictors/build_rows.py "$work/games-pos" "$year" "$work/mp" "
 python3 -I tools/predictors/analyze.py "$work/rows.csv" "$year-$((year + 1 - 2000)) season" "${BOOT:-300}" | tee "$work/analysis.txt"
 python3 -I tools/predictors/calib.py "$work/rows.csv" | tee "$work/calibration.txt"
 python3 -I tools/predictors/angles.py "$work/rows.csv" "$year-$((year + 1 - 2000))" | tee "$work/angles.txt"
+python3 -I tools/predictors/goal_factors.py "$work/rows.csv" "$year-$((year + 1 - 2000)) season" | tee "$work/goal-factors.txt"
 # the replay needs the previous season's rows (built with ITS previous season as the prior): run.sh <prev> first
 if [ -s "$root/$prev/rows.csv" ]; then
   second=""; [ -s "$root/$((year - 2))/rows.csv" ] && second="$root/$((year - 2))/rows.csv"

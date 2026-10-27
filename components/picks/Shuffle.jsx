@@ -192,7 +192,8 @@ export default function Shuffle({ sport, onOpen = null }) {
                   <thead>
                     <tr>
                       <th>Player</th>
-                      <th title="The opponent’s rank at his position for the stat on the season table (this season blended into last season’s; the court’s and the card’s Season tab — their L5 / L10 windows compare against it and move no figure), 1 = gives up the most, with its factor on his rate; ‘team ×’ is his side’s factor (the team’s expected total, pro-rated to the minutes its priced players play, over their rates), the two multiplied into his projection">Matchup</th>
+                      <th title="In: nothing listed, or listed active · DTD: on the report but not ruled out (day-to-day, questionable, probable, a game-time decision) · Out: out, doubtful, suspended or on an injured list; the hover names the status as listed">Health</th>
+                      <th title="The opponent’s rank at his position for the stat on the season table (the court’s and the card’s first tab; their other tabs compare against it and move no figure), 1 = gives up the most, with its factor on his rate; ‘team ×’ is his side’s factor (the team’s expected total, pro-rated to the minutes its priced players play, over their rates), the two multiplied into his projection">Matchup</th>
                       {showCentre ? <th className="is-num" title={`The centre his chance is read around: ${fromLabel.toLowerCase()}${from === 'line' || from === 'h2h' ? '' : ' × the matchup'} (the board’s projection when he lacks the window)`}>Centre</th> : null}
                       <th className="is-num" title={`His chance of ${height}+ and the break-even price under it`}>Chance at {height}+</th>
                       <th title="How often he cleared the bar: his last ten, and the season rate">Cleared it</th>
@@ -208,14 +209,15 @@ export default function Shuffle({ sport, onOpen = null }) {
                       const tone = toneOf(p.spot?.rank, p.spot?.count);
                       const grade = r.hit == null ? '' : r.hit ? ' is-hit' : ' is-miss';
                       return (
-                        <tr key={p.key} className={`${onOpen ? 'is-click' : ''}${p.injury ? ' is-under' : ''}${grade}`} onClick={() => onOpen?.(p, active)}>
+                        <tr key={p.key} className={`${onOpen ? 'is-click' : ''}${p.health === 'Out' ? ' is-under' : ''}${grade}`} onClick={() => onOpen?.(p, active)}>
                           <td>
                             <div className="nhlx-db-player">
                               {p.espnId ? <img src={headshotUrl(p.espnId)} alt="" width="30" height="30" loading="lazy" /> : <img src={teamLogo(p.team)} alt="" width="30" height="30" loading="lazy" className="ir-nfl-logo" />}
-                              <span><b>{p.player}{p.confirmed ? <small className="ir-sh-check" title={`On the cheat sheet: ${p.sheet.join(', ')}`}> ✓</small> : null}</b><small>{p.team}{p.slot && p.depth ? ` · ${p.slot}${p.depth}` : p.pos ? ` · ${p.pos}` : ''} · {p.venue === 'H' ? 'vs' : 'at'} {p.opp}{p.start ? ` · ${fmtStart(p.start, withDay)}` : ''}{p.injury ? ` · ${p.injury}` : ''}</small></span>
+                              <span><b>{p.player}{p.confirmed ? <small className="ir-sh-check" title={`On the cheat sheet: ${p.sheet.join(', ')}`}> ✓</small> : null}</b><small>{p.team}{p.slot && p.depth ? ` · ${p.slot}${p.depth}` : p.pos ? ` · ${p.pos}` : ''} · {p.venue === 'H' ? 'vs' : 'at'} {p.opp}{p.start ? ` · ${fmtStart(p.start, withDay)}` : ''}</small></span>
                             </div>
                           </td>
-                          <td>{p.spot?.rank ? <span className={`ir-spot is-${tone}`} title={`${p.opp} gives up ${num(p.spot.value)} ${unitOf(active)} a game to ${p.spot.pos}s, #${p.spot.rank} of ${p.spot.count}${p.spot.league != null ? ` (the league ${num(p.spot.league)})` : ''} on ${p.spot.held ? `last season’s table (${p.opp}’s own until it has ten games this season)` : 'the season table (this season blended into last season’s)'}, the table the board reads: the court’s L5 / L10 tabs compare against it${p.matchup != null ? ` · × ${num(p.matchup, 2)} on his rate` : ''}`}>#{p.spot.rank} {p.spot.pos}</span> : <span className="ir-spot is-none">no table</span>}{p.matchup != null ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }}>× {num(p.matchup, 2)}</small> : null}{p.teamFactor != null && p.teamFactor !== 1 ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }} title={`${p.team}’s expected total tonight, pro-rated to the minutes its priced players play, over the sum of their own rates: × ${num(p.teamFactor, 2)} on every projection of the side`}>team × {num(p.teamFactor, 2)}</small> : null}</td>
+                          <td><span className={`ir-health is-${(p.health || 'In').toLowerCase()}`} title={p.injury ? `${p.injury}${p.injuryDetail ? ` · ${p.injuryDetail}` : ''}` : 'Nothing listed'}>{p.health || 'In'}</span></td>
+                          <td>{p.spot?.rank ? <span className={`ir-spot is-${tone}`} title={`${p.opp} gives up ${num(p.spot.value)} ${unitOf(active)} a game to ${p.spot.pos}s, #${p.spot.rank} of ${p.spot.count}${p.spot.league != null ? ` (the league ${num(p.spot.league)})` : ''} on ${p.spot.held ? `last season’s table (${p.opp} has no game this season yet)` : 'this season’s table'}, the table the board reads: the court’s other tabs compare against it${p.matchup != null ? ` · × ${num(p.matchup, 2)} on his rate` : ''}`}>#{p.spot.rank} {p.spot.pos}</span> : <span className="ir-spot is-none">no table</span>}{p.matchup != null ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }}>× {num(p.matchup, 2)}</small> : null}{p.teamFactor != null && p.teamFactor !== 1 ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }} title={`${p.team}’s expected total tonight, pro-rated to the minutes its priced players play, over the sum of their own rates: × ${num(p.teamFactor, 2)} on every projection of the side`}>team × {num(p.teamFactor, 2)}</small> : null}</td>
                           {showCentre ? <td className="is-num" title={windows}><b>{num(r.centre)}</b></td> : null}
                           <td className="is-num is-lead" title={`Model tail ${pct(r.model)} · hit rate ${pct(r.emp)} over ${r.n} games`}><b>{pct(r.p)}</b><small>{r.fair} fair</small></td>
                           <td className="small">{r.cleared ? `${r.cleared.n} of last ${r.cleared.of}` : '—'}{r.season != null ? <small className="nhlx-auto-meta"> · {pct(r.season)} season</small> : null}</td>
@@ -225,7 +227,7 @@ export default function Shuffle({ sport, onOpen = null }) {
                           {final ? <td className="is-num nhlx-pk-got">{r.got === undefined ? <small>—</small> : r.got === null ? <small>DNP</small> : <><b>{r.got}</b><small>{unitOf(active)}</small></>}</td> : null}
                         </tr>
                       );
-                    }) : <tr><td colSpan={7 + (showCentre ? 1 : 0) + (final ? 1 : 0)}><small className="ir-nfl-none">Nobody clears {height}+ at {Math.round(floor * 100)}% or better. Lower the bar or the floor.</small></td></tr>}
+                    }) : <tr><td colSpan={8 + (showCentre ? 1 : 0) + (final ? 1 : 0)}><small className="ir-nfl-none">Nobody clears {height}+ at {Math.round(floor * 100)}% or better. Lower the bar or the floor.</small></td></tr>}
                   </tbody>
                 </table>
               </div>

@@ -121,7 +121,21 @@ describe('scorecard: the report', () => {
     expect(common.own5).toMatchObject({ n: 2, avg: 3, actual: 3, bias: 0 });
     expect(common.model.prob).toBeCloseTo(poissonAtLeast(3.1, 3), 2);
     expect(common.model.hit).toBe(0.5);
-    expect(PREDICTORS.map((p) => p.key)).toEqual(['model', 'study', 'blend', 'own5', 'own10', 'own15', 'ownSeason', 'pf5', 'pfSeason']);
+    expect(PREDICTORS.map((p) => p.key)).toEqual(['model', 'modelOpp', 'study', 'blend', 'own5', 'own10', 'own15', 'ownSeason', 'pf5', 'pfSeason']);
+    // The run's matchup goal λ (goalOpportunityLambda) scores on goals only, on the rows whose run carries it.
+    expect(compactRow(row({ goalOpportunityLambda: 0.41 })).lambdaGOpp).toBe(0.41);
+    expect(compactRow(row()).lambdaGOpp).toBeNull();
+    const withOpp = { ...sample()[0], m: { ...sample()[0].m, lambdaGOpp: 0.41 } };
+    expect(predictorValue(withOpp, 'modelOpp', 'g')).toBe(0.41);
+    expect(predictorValue(withOpp, 'modelOpp', 'sog')).toBeNull();
+    expect(predictorValue(sample()[0], 'modelOpp', 'g')).toBeNull();
+    expect(exportRows([withOpp])[0].lambdaGOpp).toBe(0.41);
+    expect(exportRows(sample())[0].lambdaGOpp).toBeNull();
+    const g = predictorReport([withOpp, ...sample().slice(1)], 'g');
+    expect(g.each.find((p) => p.key === 'modelOpp')).toMatchObject({ n: 1, avg: 0.41 });
+    expect(g.common.covered).toContain('modelOpp');
+    expect(g.common.n).toBe(1);
+    expect(predictorReport([withOpp], 'sog').common.covered).not.toContain('modelOpp');
     // The study's λ rides on the row; the blend is the mean of the model's λ and the study's, null when either is missing.
     const withStudy = { ...sample()[0], study: { lamS: 2.5, lamG: 0.2 } };
     expect(predictorValue(withStudy, 'study', 'sog')).toBe(2.5);

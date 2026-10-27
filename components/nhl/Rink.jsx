@@ -226,7 +226,7 @@ function BandLabel({ pos, d, opp, view, windowText = null, teamCount, x, y, metr
   const n = d?.teamCount || teamCount;
   const tone = zoneTone(r[metric], n);
   const when = windowText || WINDOW_TEXT[view];
-  const from = d?.source === 'propfinder' ? (d.window ? ` · PropFinder's table, ${d.window}` : ` · PropFinder ${d.seasonLabel} (last season, until ${opp} has enough stored games)`)
+  const from = d?.source === 'propfinder' ? (d.window ? ` · PropFinder's table, ${d.window}` : ` · PropFinder's ${d.seasonLabel} table, until ${opp} has enough stored games at this venue`)
     : d?.source === 'h2h' ? ` · ${s?.gp ?? 0} stored meeting${s?.gp === 1 ? '' : 's'}; the rank is where that sits among the league's season values at this venue`
       : ` · this season's stored games (${s?.gp ?? 0})`;
   // First goals given up to this position (the season table at tonight's venue; the card's column has the same numbers).

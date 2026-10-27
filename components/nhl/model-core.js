@@ -23,6 +23,20 @@ function poissonAtLeast(lambda, n) {
   return Math.max(0, Math.min(1, 1 - cumulative));
 }
 
+// ─── WEIGHTS UNDER REVIEW (2026-10-27) ────────────────────────────────────────
+// Vincent's call after docs/shots-goals-predictors.md section 16 (this season's data: the home /
+// away split moves P(1+ goal) ×1.02 across its range and the head-to-head ×1.00, against ×4.2 for
+// his season rate): the split's share of a skater's goal base, which used to replace his season
+// rate outright, and the historical-profile (position vs opponent) multipliers on the goal ladder
+// are cut to a quarter for now. 1 is the model as it was, 0 the factor off. Port into App.jsx.
+const VENUE_SPLIT_WEIGHT = 0.25;
+const H2H_WEIGHT = 0.25;
+/** A venue-split figure at its weight over the season figure; the season figure alone without a split. */
+function venueMix(venueValue, seasonValue) {
+  if (venueValue == null || !Number.isFinite(Number(venueValue))) return seasonValue;
+  return VENUE_SPLIT_WEIGHT * Number(venueValue) + (1 - VENUE_SPLIT_WEIGHT) * (Number(seasonValue) || 0);
+}
+
 // ─── TEAM NORMALIZATION ──────────────────────────────────────────────────────
 
 const TEAM_ALIASES = {
@@ -2297,10 +2311,10 @@ function buildGoalProbabilityFromPipeline({
 }) {
   const compressedDefense = 1 + (defenseGoalMult - 1) * 0.34;
   const compressedRole = 1 + (roleGoalMult - 1) * 0.24;
-  const compressedVenue = 1 + (venueGoalMult - 1) * 0.18;
+  const compressedVenue = 1 + (venueGoalMult - 1) * 0.18 * VENUE_SPLIT_WEIGHT;
   const compressedTeamRole = 1 + (teamRoleGoalAdj - 1) * 0.24;
-  const compressedHist1 = 1 + (histGoalMult1 - 1) * 0.22;
-  const compressedHist2 = 1 + (histGoalMult2 - 1) * 0.18;
+  const compressedHist1 = 1 + (histGoalMult1 - 1) * 0.22 * H2H_WEIGHT;
+  const compressedHist2 = 1 + (histGoalMult2 - 1) * 0.18 * H2H_WEIGHT;
   const compressedRoleAdj = 1 + (roleGoalAdj - 1) * 0.22;
 
   const environmentBoost =
@@ -3445,7 +3459,7 @@ function buildTeamOpportunityContext({ preppedPlayers, oppDef, blockPaceMult, te
   const teamBaselineGoals = preppedPlayers.reduce((sum, p) => {
     const venueGoals = p.pHA ? (isHome ? p.pHA.g_home : p.pHA.g_away) : null;
     const seasonGoals = p.skater.goalsSeason || 0;
-    return sum + Math.max(0, venueGoals != null && venueGoals > 0 ? venueGoals : seasonGoals);
+    return sum + Math.max(0, venueGoals != null && venueGoals > 0 ? venueMix(venueGoals, seasonGoals) : seasonGoals);
   }, 0);
 
   const goalPressureMult = clamp(
@@ -3501,7 +3515,7 @@ function buildTeamOpportunityContext({ preppedPlayers, oppDef, blockPaceMult, te
 
     const style = p.capabilityBase?.style || classifyCapabilityStyle({
       shotsBase: p.shotsAnchor || shots,
-      goalsBase: p.pHA ? (isHome ? p.pHA.g_home : p.pHA.g_away) : goals,
+      goalsBase: p.pHA ? venueMix(isHome ? p.pHA.g_home : p.pHA.g_away, goals) : goals,
       pointsBase: (p.skater.goalsSeason || 0) + (p.skater.astSeason || 0),
       shotsSeason: shots,
       goalsSeason: goals,
@@ -4209,10 +4223,11 @@ function buildCapabilityBaseFloors({ skater, pHA, isHome, effectiveToi, playerTo
   const venueGoalsBase = pHA ? (isHome ? pHA.g_home : pHA.g_away) : null;
   const venueGoalsL5 = pHA ? (isHome ? pHA.g_l5_home : pHA.g_l5_away) : null;
   const seasonGoals = skater.goalsSeason || 0;
+  const seasonGoalsBase = 0.80 * seasonGoals + 0.20 * Math.max(0, skater.goalsL5 || seasonGoals);
   const baseGoals = Math.max(0.001,
     venueGoalsBase != null && venueGoalsBase > 0
-      ? 0.72 * venueGoalsBase + 0.18 * seasonGoals + 0.10 * Math.max(0, venueGoalsL5 || 0)
-      : 0.80 * seasonGoals + 0.20 * Math.max(0, skater.goalsL5 || seasonGoals)
+      ? VENUE_SPLIT_WEIGHT * (0.72 * venueGoalsBase + 0.18 * seasonGoals + 0.10 * Math.max(0, venueGoalsL5 || 0)) + (1 - VENUE_SPLIT_WEIGHT) * seasonGoalsBase
+      : seasonGoalsBase
   );
 
   const venueToi = pHA ? (isHome ? pHA.toi_home : pHA.toi_away) : null;
@@ -4840,8 +4855,9 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
         else if (shotFloor.level === 'average') cappedLambdaS = Math.min(cappedLambdaS, posKey === 'D' ? 2.65 : 3.0);
         if (posKey === 'D' && shotFloor.level !== 'elite') cappedLambdaS = Math.min(cappedLambdaS, 2.9);
 
-        const goalsL5 = (venueGoalsL5 !== null ? venueGoalsL5 : skater.goalsL5) ?? 0;
-        const goalsSeason = (venueGoalsSeason !== null ? venueGoalsSeason : skater.goalsSeason) ?? 0;
+        // The venue split at VENUE_SPLIT_WEIGHT over his season figures (it used to replace them).
+        const goalsL5 = venueMix(venueGoalsL5, skater.goalsL5 ?? 0) ?? 0;
+        const goalsSeason = venueMix(venueGoalsSeason, skater.goalsSeason ?? 0) ?? 0;
         const rawGoalsBlend = 0.25 * goalsL5 + 0.75 * goalsSeason;
         const goalsFloor = goalsL5 === 0 ? 0.85 * goalsSeason : 0.9 * goalsSeason;
         const scorerTier = scorerTierInfo({
@@ -6121,6 +6137,9 @@ function summarizeRun(files, results, games) {
 }
 
 export {
+  VENUE_SPLIT_WEIGHT,
+  H2H_WEIGHT,
+  venueMix,
   PLAYER_NAME_ALIASES,
   TEAM_LOGO_ABBR,
   POSITIONS,

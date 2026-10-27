@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { TeamLink } from './links';
 import { LEVEL_TEXT } from '@/lib/nhl-data/characteristics';
+import { SHOWN } from '@/lib/picks/levels';
 
 // A team's characteristics the way WhoScored draws a club's: strengths and weaknesses as traits
 // with a badge, then the style of play as plain traits. Every line carries its numbers in the
@@ -32,39 +33,54 @@ function Row({ x, badge = false }) {
  * so the four parts sit on the grid of `.nhlx-char-grid` (head row, lists row, style row) and two
  * teams side by side keep their sections level however long either list runs.
  */
-export function TeamCharacteristics({ c, headline = null, tone = '' }) {
+export function TeamCharacteristics({ c, headline = null, tone = '', renderTeam = null }) {
+  const head = headline ?? c.headline ?? null;
+  const headTone = headline != null ? tone : c.tone || tone;
+  // Each list shows its SHOWN most telling lines (they come most extreme first); "View more" opens the rest.
+  const [open, setOpen] = useState(false);
+  const shown = (list) => (open ? list : list.slice(0, SHOWN));
+  const hidden = [c.strengths, c.weaknesses, c.style].reduce((n, list) => n + Math.max(0, list.length - SHOWN), 0);
   return (
     <div className="nhlx-char-team">
       <div className="nhlx-mu-verdict-head">
-        <TeamLink abbr={c.team} logo={22}><b>{c.team}</b></TeamLink>
+        {renderTeam ? renderTeam(c.team) : <TeamLink abbr={c.team} logo={22}><b>{c.team}</b></TeamLink>}
         <small>{c.venue === 'H' ? 'home' : 'away'}</small>
-        {headline ? <span className={`nhlx-edge ${tone}`}>{headline}</span> : null}
+        {head ? <span className={`nhlx-edge ${headTone || ''}`}>{head}</span> : null}
       </div>
       <section className="nhlx-char-strengths" aria-label={`${c.team} strengths`}>
         <h5><i className="is-plus">+</i> Strengths</h5>
-        {c.strengths.length ? <ul>{c.strengths.map((x) => <Row key={x.key} x={x} badge />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out</p>}
+        {c.strengths.length ? <ul>{shown(c.strengths).map((x) => <Row key={x.key} x={x} badge />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out</p>}
       </section>
       <section className="nhlx-char-weaknesses" aria-label={`${c.team} weaknesses`}>
         <h5><i className="is-minus">−</i> Weaknesses</h5>
-        {c.weaknesses.length ? <ul>{c.weaknesses.map((x) => <Row key={x.key} x={x} badge />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out</p>}
+        {c.weaknesses.length ? <ul>{shown(c.weaknesses).map((x) => <Row key={x.key} x={x} badge />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out</p>}
       </section>
       <section className="nhlx-char-style" aria-label={`${c.team} style of play`}>
         <h5>Style of play</h5>
-        {c.style.length ? <ul>{c.style.map((x) => <Row key={x.key} x={x} />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out yet</p>}
+        {c.style.length ? <ul>{shown(c.style).map((x) => <Row key={x.key} x={x} />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out yet</p>}
       </section>
+      {hidden > 0 || open ? (
+        <button type="button" className="nhlx-char-more" onClick={() => setOpen(!open)} aria-expanded={open}>
+          {open ? 'View less' : `View more (${hidden})`}
+        </button>
+      ) : null}
     </div>
   );
 }
 
-/** Both teams of a slate game, away then home, with the game-total pill on the head. */
-export function GameCharacteristics({ game }) {
+/**
+ * Both teams of a game, away then home. On the NHL slate the head pill is the game-total read and
+ * each team's pill its defense verdict; the picks boards (NBA, NFL) pass `pill` ({ text, tone, title })
+ * and `renderTeam(abbr)` for their own logos, and each team's pill comes with its characteristics.
+ */
+export function GameCharacteristics({ game, renderTeam = null, pill = undefined }) {
   const total = game.total;
-  const tone = total?.tier === 'high' ? 'is-soft' : total?.tier === 'low' ? 'is-tough' : '';
+  const head = pill !== undefined ? pill : total ? { text: total.headline, tone: total.tier === 'high' ? 'is-soft' : total.tier === 'low' ? 'is-tough' : '', title: total.lines?.map((l) => l.text).join('\n') } : null;
   return (
     <div className="nhlx-char">
       <div className="nhlx-char-head">
         <b>Characteristics</b>
-        {total ? <span className={`nhlx-edge ${tone}`} title={total.lines?.map((l) => l.text).join('\n')}>{total.headline}</span> : null}
+        {head?.text ? <span className={`nhlx-edge ${head.tone || ''}`} title={head.title || undefined}>{head.text}</span> : null}
         <small>hover a line for the numbers</small>
       </div>
       <div className="nhlx-char-grid">
@@ -72,8 +88,8 @@ export function GameCharacteristics({ game }) {
           const c = game.characteristics?.[team];
           const v = game.verdicts?.[team];
           return c
-            ? <TeamCharacteristics key={team} c={c} headline={v?.headline || null} tone={v?.tier === 'leaky' ? 'is-soft' : v?.tier === 'tight' ? 'is-tough' : ''} />
-            : <div key={team} className="nhlx-char-team"><div className="nhlx-mu-verdict-head"><TeamLink abbr={team} logo={22}><b>{team}</b></TeamLink><small>No read yet</small></div></div>;
+            ? <TeamCharacteristics key={team} c={c} headline={v ? v.headline : null} tone={v?.tier === 'leaky' ? 'is-soft' : v?.tier === 'tight' ? 'is-tough' : ''} renderTeam={renderTeam} />
+            : <div key={team} className="nhlx-char-team"><div className="nhlx-mu-verdict-head">{renderTeam ? renderTeam(team) : <TeamLink abbr={team} logo={22}><b>{team}</b></TeamLink>}<small>No read yet</small></div></div>;
         })}
       </div>
     </div>

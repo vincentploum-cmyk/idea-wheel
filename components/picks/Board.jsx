@@ -2,6 +2,7 @@
 
 import { fmtOdds } from '@/lib/nfl/odds';
 import { ICON } from '@/components/nhl/flags';
+import { GameCharacteristics } from '@/components/nhl/Characteristics';
 
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const fmtStart = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
@@ -94,18 +95,35 @@ function GameHead({ g, sport }) {
   );
 }
 
+/** The characteristics card's team mark on a picks board: the sport's logo and the code. */
+const teamMark = (sport) => function TeamMark(abbr) {
+  return <><img src={sport.teamLogo(abbr)} alt="" width="22" height="22" loading="lazy" className="ir-nfl-logo" /><b>{abbr}</b></>;
+};
+
+/** The card's head pill: the sides' expected total tonight for the sport's total stat (the NBA's points), when both carry one. */
+function expectedPill(g, sport) {
+  if (!sport.totalStat) return null;
+  const a = g.sides?.[g.away]?.teamProj?.[sport.totalStat]; const h = g.sides?.[g.home]?.teamProj?.[sport.totalStat];
+  if (a == null || h == null) return null;
+  const unit = sport.totalUnit || sport.totalStat;
+  return { text: `${Math.round(a + h)} ${unit} expected · ${g.away} ${Math.round(a)} · ${g.home} ${Math.round(h)}`, tone: '', title: `Each side's expected ${unit} tonight: its own per-game figure through the opponent's environment, pro-rated to its priced players (PropFinder)` };
+}
+
 /**
- * The board of one slate for a sport: { groups: [[key, label]], teamLogo, teamName, headshotUrl }.
- * Per game the sport's tables; a game without a play collapses to one line; the notes under the slate.
- * `before(game)` renders a sport's own view (the NBA court pair) between the game head and the tables.
+ * The board of one slate for a sport: { groups: [[key, label]], teamLogo, teamName, headshotUrl,
+ * totalStat?, totalUnit? }. Per game the two teams' characteristics (when the pull carries team
+ * rows), then the sport's tables; a game without a play collapses to one line; the notes under the
+ * slate. `before(game)` renders a sport's own view (the NBA court pair) between the game head and the tables.
  */
 export default function Board({ board, sport, empty = 'No games on this slate.', before = null }) {
   if (!board?.games?.length) return <div className="nhlx-empty">{empty}</div>;
+  const mark = teamMark(sport);
   return (
     <>
       {board.games.map((g, i) => (
         <article key={g.id} className={`nhlx-mu-game${i === 0 ? ' is-first' : ''}`}>
           <GameHead g={g} sport={sport} />
+          {g.characteristics ? <GameCharacteristics game={g} renderTeam={mark} pill={expectedPill(g, sport)} /> : null}
           {before ? before(g) : null}
           {g.plays ? (
             <div className="ir-nfl-grid">

@@ -108,7 +108,7 @@ function DefenseCard({ side, teamCount, mp, pfKey = null }) {
       </table>
       <small className="nhlx-auto-meta">
         {card ? `${card.tab.rows?.All?.gp ?? 0} GP on PropFinder’s ${card.tab.label} tab${card.tab.source === 'stored' ? ' (rolled from the stored box scores, as PropFinder counts it)' : ''}` : `${side.defense.All?.season?.gp || 0} games at ${defVenue} this season`}{fgText}
-        {!card && POS.some((p) => side.defense[p]?.source === 'propfinder') ? ` · positions marked PF use PropFinder ${POS.map((p) => side.defense[p]?.seasonLabel).find(Boolean)} (last season) until 10 games are stored` : ''}
+        {!card && POS.some((p) => side.defense[p]?.source === 'propfinder') ? ` · positions marked PF use PropFinder's ${POS.map((p) => side.defense[p]?.seasonLabel).find(Boolean)} table until 10 games are stored` : ''}
       </small>
       <MpLine mp={mp} opp={side.opp} venue={side.venue} />
     </div>

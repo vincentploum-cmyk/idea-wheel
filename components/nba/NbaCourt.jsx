@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { ICON } from '@/components/nhl/flags';
 import { boardRead, windowRead } from '@/lib/picks/projection';
+import { seasonTag } from '@/lib/nba/teams';
+import SidePicks from '@/components/picks/SidePicks';
 import { useNbaPlayerCard } from './NbaPlayerCard';
 
 // The matchup view of an NBA game, the NHL rink's basketball twin: for each team a half court
@@ -15,18 +17,23 @@ import { useNbaPlayerCard } from './NbaPlayerCard';
 // position, lib/picks/projection.js); above the court the opponent's allowed table per position
 // with the league ranks, under it every player's props read against the matchup. Above each
 // court, as above each NHL rink: the stat tabs (Points · Rebounds · Assists · Threes, one setting
-// for the slate) and the window of the opponent's table (Season, then L5 / L10 / L15 / L20 as
+// for the slate) and the window of the opponent's table (this season's as PropFinder publishes it,
+// the default and the table the board reads; last season's in full; then L5 / L10 / L15 / L20 as
 // PropFinder publishes them) that tints the zones and fills the table. A window moves no figure:
 // the chip's projection is the board's (`ranges` on the side's player, lib/picks/board.js: his rate
 // × the matchup on the season table × the side's factor), the same number the Tonight table, the
 // shuffle's Expected and the card show; the hover says what the picked window would have read.
+// At the top of each card, as above each NHL rink: the board's best plays for the team
+// (components/picks/SidePicks.jsx, `side.picks`), the picked players' chips ringed on the court.
 export const COURT_METRICS = [['pts', 'Points'], ['reb', 'Rebounds'], ['ast', 'Assists'], ['tpm', 'Threes']];
-const WINDOW_LABEL = { season: 'Season', l5: 'L5', l10: 'L10', l15: 'L15', l20: 'L20' };
-const WINDOW_TEXT = { season: 'this season blended into last season’s table', l5: 'its last 5 games', l10: 'its last 10 games', l15: 'its last 15 games', l20: 'its last 20 games' };
-/** The windows a side's allowed table offers, the season first. */
-export function windowsOf(allowed) { return ['season', ...Object.keys(allowed?.windows || {}).filter((k) => WINDOW_LABEL[k]).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))]; }
+const WINDOW_LABEL = { season: 'Season', prior: 'Last season', l5: 'L5', l10: 'L10', l15: 'L15', l20: 'L20' };
+const WINDOW_TEXT = { season: 'this season’s table', prior: 'last season’s full table', l5: 'its last 5 games', l10: 'its last 10 games', l15: 'its last 15 games', l20: 'its last 20 games' };
+/** The windows a side's allowed table offers: this season first (the table the board reads), last season's in full when the pull has it, then the last-N windows. */
+export function windowsOf(allowed) { return ['season', ...(allowed?.prior ? ['prior'] : []), ...Object.keys(allowed?.windows || {}).filter((k) => WINDOW_LABEL[k]).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))]; }
 /** The side's allowed table for a window (the season table when the window is missing). */
-export function tableFor(allowed, win) { return (win && win !== 'season' && allowed?.windows?.[win]) || allowed || null; }
+export function tableFor(allowed, win) { return (win === 'prior' && allowed?.prior) || (win && win !== 'season' && win !== 'prior' && allowed?.windows?.[win]) || allowed || null; }
+/** A tab's label: the seasons by their years ('26-'27), the windows by their length. */
+export function windowLabel(win, allowed, season) { return win === 'season' ? seasonTag(season) : win === 'prior' ? seasonTag(allowed?.prior?.season || (season ? season - 1 : null)) : WINDOW_LABEL[win] || win; }
 /** Whether the cheat sheet's tile agrees with PropFinder's rank: the same third of the league → 'yes', else 'no'; null without a tile. */
 export function sheetCheck(cell, count) {
   if (!cell || cell.sheet == null || cell.rank == null) return null;
@@ -62,7 +69,7 @@ export function zoneTone(rank, teams) {
 function projectionText(read, stat, opp, allowed, win) {
   if (read?.value == null) return '';
   const label = STAT_LABEL[stat] || stat;
-  const table = read.held ? 'last season’s table' : 'this season blended into last season’s';
+  const table = read.held ? 'last season’s table, no game this season yet' : 'this season’s table';
   const env = read.matchup != null ? ` × ${read.matchup} (${opp} gives up ${num(read.allowed)} ${label} to ${read.pos}s, #${read.rank ?? '—'} of ${read.count ?? '—'} on ${table}, the league ${num(read.league)})` : ' (no table for the environment)';
   const team = read.team != null ? ` × ${read.team} so the side's projections add up to its share of the team's expected total` : '';
   const w = win && win !== 'season' ? windowRead(read, allowed, stat) : null;
@@ -153,7 +160,7 @@ function Chip({ p, x, y, metric, sport, team, opp, venue, final, allowed, season
   const all = (p.plays || []).filter((x) => x.side === 'over' || x.side === 'yes').map((x) => `${x.side === 'yes' ? '' : 'o'}${x.line} ${x.label} ${pct(x.p)}${x.odds != null ? ` at ${fmtOdds(x.odds)}` : ''}${x.hit == null ? '' : x.hit ? ' hit' : ' miss'}`);
   const title = `${p.player} · ${p.pos || '—'}${p.depth ? ` · ${p.slot}${p.depth} on the depth chart${p.depth === 1 ? ' (starter)' : ''}` : ''}${p.injury ? ` · ${p.injury}` : ''}${avg != null ? ` · ${num(avg)} ${STAT_LABEL[metric]} a game this season` : ''}${projText ? `\n${projText}` : ''}${woText ? `\n${woText}` : ''}${all.length ? `\n${all.join('\n')}` : '\nNo PropFinder line yet'}`;
   return (
-    <button type="button" className={`nhlx-rk-chip${p.injury ? ' is-out' : ''}`} style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }} title={title} onClick={() => open({ key: p.key, player: p, team, opp, venue, market: MARKET_OF[metric] })}>
+    <button type="button" className={`nhlx-rk-chip${p.injury ? ' is-out' : ''}${p.picked ? ' is-pick' : ''}`} style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }} title={title} onClick={() => open({ key: p.key, player: p, team, opp, venue, market: MARKET_OF[metric] })}>
       <span className="nhlx-rk-pic">
         {p.espnId ? <img src={sport.headshotUrl(p.espnId)} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <img src={sport.teamLogo(team)} alt="" loading="lazy" className="is-logo" />}
         <i className="nhlx-rk-num" title={p.depth ? `${p.slot}${p.depth} on PropFinder’s depth chart` : 'roster position'}>{p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</i>
@@ -170,6 +177,16 @@ function Chip({ p, x, y, metric, sport, team, opp, venue, final, allowed, season
   );
 }
 
+/** Who is out tonight (PropFinder's injury report), the side's team then the opponent, above the opponent's table. */
+function OutLines({ side, oppOut }) {
+  const line = (team, list) => (
+    <p className="nhlx-auto-meta ir-court-out" key={team}>
+      <b>Out for {team}:</b> {list?.length ? list.map((a) => `${a.name}${a.pos ? ` (${a.pos})` : ''} · ${a.status}${a.detail ? `, ${a.detail}` : ''}`).join(' · ') : 'nobody listed out on PropFinder’s injury report'}
+    </p>
+  );
+  return <div className="ir-court-outs" aria-label="Players out tonight">{line(side.team, side.out)}{line(side.opp, oppOut)}</div>;
+}
+
 /** What the opponent gives up per game to each position, with the league rank in every cell. */
 function AllowedTable({ side, win, metric, season }) {
   const a = tableFor(side.allowed, win);
@@ -178,16 +195,21 @@ function AllowedTable({ side, win, metric, season }) {
   const positions = [...POSITIONS.filter((p) => a.rows[p]), ...Object.keys(a.rows).filter((p) => !POSITIONS.includes(p))];
   const count = a.count || 30;
   const league = a.league || null;
+  const held = win === 'season' && Object.values(a.rows).some((r) => r.held);
+  const note = a.from === 'sheet' ? 'the cheat sheet’s tiles'
+    : win === 'season' ? `PropFinder, ${seasonTag(season)} as published, the table the board’s projections read${held ? ` · last season’s until ${side.opp} plays its first game` : ''}`
+      : win === 'prior' ? `PropFinder, ${windowLabel('prior', side.allowed, season)} in full · a comparison: the board reads this season’s`
+        : `PropFinder, ${WINDOW_TEXT[win]}${a.season && season && a.season < season ? ' of last season (no games this season yet)' : ''} · a comparison: the board reads this season’s table`;
   return (
     <div className="nhlx-pfd">
-      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position · {WINDOW_LABEL[win] || win}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {a.from === 'sheet' ? 'the cheat sheet’s tiles' : win === 'season' ? 'PropFinder; this season blended into last season’s at games / (games + 15)' : `PropFinder, ${WINDOW_TEXT[win]}${a.season && season && a.season < season ? ' of last season (no games this season yet)' : ''}`}{league ? ' · hover a cell for the league’s average' : ''}{win === 'season' && Object.values(a.rows).some((r) => r.held) ? ` · last season’s table until ${side.opp} has ten games` : ''}</small></div>
+      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position · {windowLabel(win, side.allowed, season)}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {note}{league ? ' · hover a cell for the league’s average' : ''}</small></div>
       <div className="nhlx-pfd-wrap">
         <table className="nhlx-pfd-table">
           <thead><tr><th>Pos</th>{keys.map((k) => <th key={k} className={k === metric ? 'is-on' : ''}>{STAT_LABEL[k] || k.toUpperCase()}</th>)}</tr></thead>
           <tbody>
             {positions.map((pos) => (
               <tr key={pos}>
-                <td><b>{pos}</b><small className="nhlx-auto-meta" title={a.rows[pos].held ? `Last season's table until ${side.opp} has ten games this season (${a.rows[pos].gp || 0} so far)` : a.rows[pos].prior ? `${a.rows[pos].gp || 0} games this season blended into last season's` : ''}> {a.rows[pos].held ? 'last season' : `${a.rows[pos].gp || 0} GP`}</small></td>
+                <td><b>{pos}</b><small className="nhlx-auto-meta" title={a.rows[pos].held ? `Last season's table (${a.rows[pos].prior || 0} games) until ${side.opp} plays its first game this season` : win === 'prior' ? `${a.rows[pos].gp || 0} games last season` : `${a.rows[pos].gp || 0} games${win === 'season' ? ' this season' : ''}`}> {a.rows[pos].held ? 'last season' : `${a.rows[pos].gp || 0} GP`}</small></td>
                 {keys.map((k) => { const c = a.rows[pos][k]; const tone = zoneTone(c?.rank, count); const lg = league?.[pos]?.[k]; const check = a.from === 'sheet' ? null : sheetCheck(c, count); return <td key={k} className={`${c ? `is-${tone}` : ''}${k === metric ? ' is-on' : ''}`} title={`${c && lg != null ? `${num(c.value)} against the league's ${num(lg)} at ${pos}` : ''}${check ? ` · the cheat sheet's tile: #${c.sheet} (${check === 'yes' ? 'the same third' : 'a different third'})` : ''}`}>{c ? <><span className="nhlx-pfd-val">{c.value != null ? num(c.value) : '—'}</span>{c.rank ? <span className="nhlx-pfd-rank">#{c.rank}</span> : null}</> : '—'}</td>; })}
               </tr>
             ))}
@@ -252,7 +274,8 @@ function PlayersTable({ side, final }) {
   );
 }
 
-function CourtCard({ side, metric, onMetric, sport, final, season }) {
+function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season }) {
+  const open = useNbaPlayerCard();
   const windows = windowsOf(side.allowed);
   const [win, setWin] = useState('season');
   const view = windows.includes(win) ? win : 'season';
@@ -266,8 +289,9 @@ function CourtCard({ side, metric, onMetric, sport, final, season }) {
     <section className="nhlx-rk-card ir-court-card" aria-label={`${side.team} court`}>
       <div className="nhlx-rk-head">
         <img src={sport.teamLogo(side.team)} alt="" width="40" height="40" loading="lazy" />
-        <div><b>{sport.teamName(side.team)} <small>{side.venue === 'H' ? 'vs' : 'at'} {sport.teamName(side.opp)}</small></b><small>{withLines} player{withLines === 1 ? '' : 's'} with a line · {side.lineup === 'propfinder' ? 'slots from PropFinder’s depth chart (1 = the starter)' : 'placed by roster position (no depth chart in the pull)'} · zones by what {side.opp} gives up over the window picked · the chip: the board’s projection tonight (the season table, the same figure as the table under the court and the shuffle), the line, the chance</small></div>
+        <div><b>{sport.teamName(side.team)} <small>{side.venue === 'H' ? 'vs' : 'at'} {sport.teamName(side.opp)}</small></b><small>{withLines} player{withLines === 1 ? '' : 's'} with a line · {side.lineup === 'propfinder' ? 'slots from PropFinder’s depth chart (1 = the starter)' : 'placed by roster position (no depth chart in the pull)'} · zones by what {side.opp} gives up over the tab picked · the chip: the board’s projection tonight (this season’s table, the same figure as the table under the court and the shuffle), the line, the chance</small></div>
       </div>
+      <SidePicks side={side} sport={sport} final={final} onOpen={(pl) => open({ key: pl.key, player: side.players.find((p) => p.key === pl.key) || null, team: side.team, opp: side.opp, venue: side.venue, market: pl.market })} />
       <div className="nhlx-rk-toggle">
         <small>Tint by</small>
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Which stat tints the court">
@@ -275,10 +299,11 @@ function CourtCard({ side, metric, onMetric, sport, final, season }) {
         </div>
         <small>{side.opp} allows over</small>
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label={`Window of ${side.opp}'s defense`}>
-          {windows.map((k) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setWin(k)} title={`${WINDOW_TEXT[k]}${k === 'season' ? ': the table the board’s projections read' : ': tints the zones and fills the table; the chips keep the board’s figure, the hover says what this window would read'}`}>{WINDOW_LABEL[k]}</button>)}
+          {windows.map((k) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setWin(k)} title={`${WINDOW_TEXT[k]}${k === 'season' ? ': the table the board’s projections read' : ': tints the zones and fills the table; the chips keep the board’s figure, the hover says what this window would read'}`}>{windowLabel(k, side.allowed, season)}</button>)}
         </div>
-        {windows.length === 1 ? <small className="nhlx-rk-toggle-note">{side.allowed ? 'no last-N rows in the pull yet' : 'no table yet'}</small> : view !== 'season' ? <small className="nhlx-rk-toggle-note">tint and table only: the chips keep the board’s season read</small> : null}
+        {windows.length === 1 ? <small className="nhlx-rk-toggle-note">{side.allowed ? 'no last-N rows in the pull yet' : 'no table yet'}</small> : view !== 'season' ? <small className="nhlx-rk-toggle-note">tint and table only: the chips keep the board’s read off this season’s table</small> : null}
       </div>
+      <OutLines side={side} oppOut={oppOut} />
       <AllowedTable side={side} win={view} metric={metric} season={season} />
       <div className="nhlx-rk ir-court">
         <CourtMarkings clipId={clipId} tones={tones} />
@@ -298,7 +323,7 @@ export default function CourtPair({ g, metric, onMetric, sport }) {
   if (!list.length) return null;
   return (
     <div className="nhlx-rink-pair ir-court-pair">
-      {list.map((side) => <CourtCard key={side.team} side={side} metric={metric} onMetric={onMetric} sport={sport} final={g.final} season={g.season || null} />)}
+      {list.map((side) => <CourtCard key={side.team} side={side} oppOut={sides[side.opp]?.out || null} metric={metric} onMetric={onMetric} sport={sport} final={g.final} season={g.season || null} />)}
     </div>
   );
 }
