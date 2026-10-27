@@ -1298,6 +1298,17 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .nhlx-df-reads td small { color: var(--muted); }
 .nhlx-df-cell { display: inline-flex; align-items: baseline; gap: 6px; }
 .nhlx-df-cell b { font-family: var(--font-display); font-size: 15px; }
+/* The track record by rank: a column per rank of the opponent's table; bold = ranks 1 through it together, small = the rank alone. */
+.nhlx-df-ranks { overflow-x: auto; margin-top: 10px; }
+.nhlx-df-ranks table { border-collapse: collapse; width: 100%; min-width: 1180px; font-variant-numeric: tabular-nums; }
+.nhlx-df-ranks th { padding: 4px 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.nhlx-df-ranks th.is-left, .nhlx-df-ranks td.is-left { text-align: left; padding-left: 8px; white-space: nowrap; }
+.nhlx-df-ranks td { padding: 4px 2px; text-align: center; border-bottom: 1px solid var(--line); }
+.nhlx-df-ranks td.is-left b { color: var(--heading); }
+.nhlx-df-ranks td b { display: block; font-family: var(--font-display); font-size: 12px; }
+.nhlx-df-ranks td small { display: block; font-size: 10px; color: var(--muted); }
+.nhlx-df-ranks td.is-soft { background: var(--pf-soft-bg); color: var(--pf-ink); }
+.nhlx-df-ranks td.is-tough { background: var(--pf-tough-bg); color: var(--pf-ink); }
 .nhlx-df-reads td.is-best .nhlx-df-cell b { text-decoration: underline; text-decoration-color: var(--primary); text-underline-offset: 3px; }
 .nhlx-df-note { margin-top: 10px; font-size: 12px; color: var(--muted); line-height: 1.5; }
 @media (max-width: 640px) {

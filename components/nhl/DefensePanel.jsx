@@ -88,9 +88,10 @@ function Shooters({ side, keyName, group, opp, venue, metric }) {
  */
 function Results({ side, keyName, group, metric, game }) {
   const result = game?.result || null;
+  const [now] = useState(() => Date.now()); // read once: the note only says whether puck drop has passed
   if (!result) {
     const start = Date.parse(game?.startTimeUTC || '');
-    return <small className="nhlx-auto-meta">{Number.isFinite(start) && start < Date.now() ? 'no box score yet' : 'not played yet'}</small>;
+    return <small className="nhlx-auto-meta">{Number.isFinite(start) && start < now ? 'no box score yet' : 'not played yet'}</small>;
   }
   const list = side && keyName ? shootersAt(side, keyName, group, metric) : [];
   const r = resultsAt(list, result, metric);
@@ -238,10 +239,57 @@ const SPAN_LABEL = { season: 'Season (blended)', l10: 'Last 10', l5: 'Last 5' };
 const pct = (v, d = 1) => (v == null ? '—' : `${(v * 100).toFixed(d)}%`);
 const signed = (v) => (v == null ? '—' : `${v > 0 ? '+' : ''}${(v * 100).toFixed(1)}%`);
 
+const signed0 = (v) => (v == null ? '—' : `${v > 0 ? '+' : ''}${Math.round(v * 100)}%`);
+const liftTone = (v) => (v == null ? '' : v >= 0.03 ? 'is-soft' : v <= -0.03 ? 'is-tough' : '');
+
+/**
+ * The track record by the opponent's rank at the skater's position: one column per rank, per span a
+ * row; the bold figure is ranks 1 through that one together (how far down the table the soft read
+ * holds: it stays green as long as adding the next rank keeps the pooled lift up), the small one the
+ * rank alone (about 200 skater-games a rank, so noisy on its own). The hover carries both with the
+ * counts and the floor rates.
+ */
+function ByRank({ grade, metric, floor, unit }) {
+  const spans = ['season', 'l10', 'l5'];
+  const n = Math.max(0, ...spans.flatMap((s) => (grade.spans[s][metric].ranks || []).map((r) => r.rank)));
+  if (!n) return null;
+  const ranks = Array.from({ length: n }, (_, i) => i + 1);
+  return (
+    <div className="nhlx-df-ranks">
+      <table>
+        <thead>
+          <tr><th className="is-left">By rank</th>{ranks.map((k) => <th key={k}>#{k}</th>)}</tr>
+        </thead>
+        <tbody>
+          {spans.map((s) => {
+            const by = Object.fromEntries((grade.spans[s][metric].ranks || []).map((r) => [r.rank, r]));
+            return (
+              <tr key={s}>
+                <td className="is-left"><b>{SPAN_LABEL[s]}</b></td>
+                {ranks.map((k) => {
+                  const r = by[k];
+                  if (!r) return <td key={k}><small>—</small></td>;
+                  const t = r.top;
+                  return (
+                    <td key={k} className={liftTone(t.lift)} title={`Ranks 1 to ${k} together: ${t.n} skater-games, ${t.actual.toFixed(2)} ${unit} a game against ${t.expected.toFixed(2)} from their own rates (${signed(t.lift)}); ${floor} ${pct(t.hit)} against ${pct(t.hitExpected)} expected · rank ${k} alone: ${r.n} skater-games, ${signed(r.lift)}; ${floor} ${pct(r.hit)} against ${pct(r.hitExpected)}`}>
+                      <b>{signed0(t.lift)}</b><small>{signed0(r.lift)}</small>
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 /**
  * The tab's track record: every stored skater-game this season graded against the tables as they
  * stood that morning. For each span, the soft / mid / tough third of the opponent's table at the
- * skater's position: what he did against his own rate going in; the softest-spot shooters the same.
+ * skater's position: what he did against his own rate going in; the softest-spot shooters the same;
+ * and under it the strip by rank (`ByRank`).
  */
 function TrackRecord({ grade, metric, loading }) {
   if (loading) return <p className="nhlx-auto-meta">Grading the season’s games against the tables as they stood each morning…</p>;
@@ -286,6 +334,7 @@ function TrackRecord({ grade, metric, loading }) {
           </tr>
         </tbody>
       </PfTable>
+      <ByRank grade={grade} metric={metric} floor={floor} unit={unit} />
     </div>
   );
 }
@@ -395,7 +444,7 @@ export default function DefensePanel() {
         {keys.map((k) => <RankTable key={k} title={`${metric === 'g' ? 'Goals' : 'Shots'} against ${k}`} table={tables?.[k]} digits={digits} playing={playing} view={view} active={active} onPick={pick} />)}
       </div>
 
-      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Track record</h3><small>Every stored skater-game this season through {date}, graded against each table as it stood that morning · the cell is the skaters’ {metric === 'g' ? 'goals' : 'shots'} against their own rate going in (lift), the {metric === 'g' ? '1+ goal' : '3+ SOG'} rate and the count · a table that works pulls the soft third up and the tough third down</small></div>
+      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Track record</h3><small>Every stored skater-game this season through {date}, graded against each table as it stood that morning · the cell is the skaters’ {metric === 'g' ? 'goals' : 'shots'} against their own rate going in (lift), the {metric === 'g' ? '1+ goal' : '3+ SOG'} rate and the count · a table that works pulls the soft third up and the tough third down · under it the same by the opponent’s rank: the bold figure is ranks 1 through that one together (how far down the table the soft read holds), the small one the rank alone</small></div>
       <TrackRecord grade={grade} metric={metric} loading={grading} />
 
       <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Team overview</h3><small>Stored box scores for the span above · MoneyPuck season rates, all situations{data.moneypuck?.updatedAt ? ` (updated ${new Date(data.moneypuck.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})` : ''}</small></div>

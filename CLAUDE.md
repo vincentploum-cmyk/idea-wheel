@@ -332,7 +332,9 @@ config and keeps its own markets, teams, feeds and slate key:
   `buildSlate` and, once the game is stored, `result` = the score and every skater's shots and goals by id, which the
   Result column on the right grades per listed shooter at 3+ SOG / 1+ goal with a tally, `resultsAt`), a track record (`lib/nhl-data/defense-grade.js`, `/api/nhl/data/defense/grade?to=`: every stored skater-game
   of the season replayed against each span's table as it stood that morning, by third of the opponent's table at the skater's
-  position and at the side's softest spot, lift against the skaters' own blended rates and the 3+ SOG / 1+ G rate), and a team overview
+  position and at the side's softest spot, lift against the skaters' own blended rates and the 3+ SOG / 1+ G rate, and by the
+  opponent's rank — `ranks` per span and metric, each rank's read with `top`, ranks 1 through it together, drawn as the strip
+  under the thirds table so the tab says how far down the table the soft read holds), and a team overview
   (GA / GP, SA / GP from the stored box scores; xGA / 60, high-danger shots against and pace from MoneyPuck), each column ranked;
   between them "Running hot" (`lib/nhl-data/streaks.js`, `streaks` in the defense API): every skater's current goal / point /
   3+ SOG streak from this season's stored games, his last game and tonight's opponent read off the same tables at his
