@@ -11,6 +11,14 @@ how it correlates with what the skater actually did, what it adds to a projectio
 the skater's own baseline, and, the practical one, the hit rate of 2+ / 3+ / 4+ SOG and
 1+ goal when the rink shows the band soft / mid / tough.
 
+Section 7 (2026-10-27): the tint by the MODEL'S LANE RULE against the tint by the SOG rank third.
+The rink tinted by shots allowed alone while the model (`classifyDefenseLaneState` in
+components/nhl/model-core.js) reads the opponent's shots, iCF, iFF and iSCF ranks together, so the
+season tabs' attempts columns (per game to the position, PropFinder's figure, and per skater) are
+rebuilt and ranked the same way, the lane state is read off them by the model's rule, and both tints
+are scored: each column alone on top of the skater's baseline, the band as a categorical read, and
+the hit rates by band.
+
 argv: <rows.csv of the season under test> <games dir of that season> <games dir of the
 previous season> <label> [propfinder opponents csv of the previous season]
 
@@ -45,16 +53,16 @@ def defense_games(games):
     for g in games:
         for side, other in (('home', 'away'), ('away', 'home')):
             d = g[side]['abbrev']
-            tot = {p: [0, 0, 0] for p in POS}  # sog, g, skaters
+            tot = {p: [0, 0, 0, 0, 0, 0] for p in POS}  # sog, g, skaters, icf, iff, iscf
             for s in g['skaters']:
                 if s['opp'] != d or s['pos'] not in POS: continue
-                t = tot[s['pos']]; t[0] += s['sog']; t[1] += s['g']; t[2] += 1
+                t = tot[s['pos']]; t[0] += s['sog']; t[1] += s['g']; t[2] += 1; t[3] += s['icf']; t[4] += s['iff']; t[5] += s['iscf']
             hist[d].append(dict(date=g['date'], gameId=g['id'], dv='H' if side == 'home' else 'A',
                                 sa=g[other]['sog'], ga=g[other]['score'], pos=tot))
     return hist
 
 def agg(gs, pos, k):
-    """Per-game total allowed to `pos` (k=0 shots, 1 goals), PropFinder's definition, and per skater."""
+    """Per-game total allowed to `pos` (k=0 shots, 1 goals, 3 iCF, 4 iFF, 5 iSCF), PropFinder's definition, and per skater."""
     if not gs: return (np.nan, np.nan)
     tot = sum(x['pos'][pos][k] for x in gs); n = sum(x['pos'][pos][2] for x in gs)
     return (tot / len(gs), tot / n if n else np.nan)
@@ -75,6 +83,34 @@ for t in teams:
             hv = [x for x in h if x['dv'] == v]
             static[(t, p, f'ls_venue{v}')] = agg(hv, p, 0)[0], agg(hv, p, 1)[0]
     static[(t, 'team', 'ls_season')] = (np.mean([x['sa'] for x in h]) if h else np.nan, np.mean([x['ga'] for x in h]) if h else np.nan)
+
+# ---- the attempts columns of the two season tabs (what PropFinder's table shows beside SOG and goals),
+# ---- per game to the position and per skater, for the lane rule and the column-by-column comparison
+XCOLS = ['sog', 'g', 'icf', 'iff', 'iscf']
+XK = {'sog': 0, 'g': 1, 'icf': 3, 'iff': 4, 'iscf': 5}
+LANE_READS = ['std_all', 'ls_season']
+def attempts_of(gs, pos):
+    out = {}
+    for c, k in XK.items():
+        pg, per = agg(gs, pos, k)
+        out[c] = pg; out[f'{c}_per'] = per
+    return out
+static_x = {(t, p): attempts_of(prev_hist.get(t, []), p) for t in teams for p in POS}
+
+def lane_shots(sog, icf, iff, iscf):
+    """classifyDefenseLaneState(…, 'shots') in model-core.js on the four ranks (1 = allows the most; nan = no rank)."""
+    rs = [r for r in (sog, icf, iff, iscf) if r == r]
+    opened = sum(1 for r in rs if r <= 12); supp = sum(1 for r in rs if r >= 23)
+    if opened >= 2 or (sog == sog and sog <= 12) or (iscf == iscf and iscf <= 12): return 'open'
+    if supp >= 3 or (sog == sog and sog >= 23 and iscf == iscf and iscf >= 23): return 'suppressed'
+    return 'neutral'
+def lane_goals(g, iscf, sog):
+    """classifyDefenseLaneState(…, 'goals'): goals, iSCF and shots allowed."""
+    rs = [r for r in (g, iscf, sog) if r == r]
+    opened = sum(1 for r in rs if r <= 16); supp = sum(1 for r in rs if r >= 23)
+    if opened >= 2 or (g == g and g <= 16) or (iscf == iscf and iscf <= 12): return 'open'
+    if supp >= 2 or (g == g and g >= 23 and iscf == iscf and iscf >= 23): return 'suppressed'
+    return 'neutral'
 
 pf = {}
 if pf_csv:
@@ -152,10 +188,21 @@ for date, day in d.groupby('date', sort=True):
             for rd in READS:
                 for k in (0, 1):
                     rank_pool[(p, dv, rd, k)] = [league[(t, p, dv)][rd][k] for t in teams if not math.isnan(league[(t, p, dv)][rd][k])]
+    # the season tabs' attempts columns today (neither depends on the venue), with their league ranks
+    xleague = {(t, p, 'std_all'): attempts_of(hist[t], p) for t in teams for p in POS}
+    xleague.update({(t, p, 'ls_season'): static_x[(t, p)] for t in teams for p in POS})
+    xpool = {(p, rd, c): [xleague[(t, p, rd)][c] for t in teams if xleague[(t, p, rd)][c] == xleague[(t, p, rd)][c]] for p in POS for rd in LANE_READS for c in XCOLS}
     for r in day.itertuples():
         dv = 'A' if r.venue == 'H' else 'H'
         rr = league[(r.opp, r.pos, dv)]
         rec = {'idx': r.Index, 'opp_games': len(hist[r.opp])}
+        for rd in LANE_READS:
+            x = xleague[(r.opp, r.pos, rd)]
+            for c in XCOLS:
+                rec[f'{rd}_x_{c}'] = x[c]; rec[f'{rd}_x_{c}_per'] = x[f'{c}_per']
+                rec[f'{rd}_x_{c}_rank'] = rank_of(xpool[(r.pos, rd, c)], x[c])
+            rec[f'{rd}_lane_sog'] = lane_shots(rec[f'{rd}_x_sog_rank'], rec[f'{rd}_x_icf_rank'], rec[f'{rd}_x_iff_rank'], rec[f'{rd}_x_iscf_rank']) if x['sog'] == x['sog'] else 'n/a'
+            rec[f'{rd}_lane_g'] = lane_goals(rec[f'{rd}_x_g_rank'], rec[f'{rd}_x_iscf_rank'], rec[f'{rd}_x_sog_rank']) if x['sog'] == x['sog'] else 'n/a'
         for rd in READS:
             rec[f'{rd}_sog'], rec[f'{rd}_g'] = rr[rd]
             if rd.startswith('pf_'):
@@ -169,10 +216,10 @@ for date, day in d.groupby('date', sort=True):
     for g in cur_by_date.get(date, []):
         for side, other in (('home', 'away'), ('away', 'home')):
             t = g[side]['abbrev']
-            tot = {p: [0, 0, 0] for p in POS}
+            tot = {p: [0, 0, 0, 0, 0, 0] for p in POS}
             for s in g['skaters']:
                 if s['opp'] != t or s['pos'] not in POS: continue
-                x = tot[s['pos']]; x[0] += s['sog']; x[1] += s['g']; x[2] += 1
+                x = tot[s['pos']]; x[0] += s['sog']; x[1] += s['g']; x[2] += 1; x[3] += s['icf']; x[4] += s['iff']; x[5] += s['iscf']
             hist[t].append(dict(date=g['date'], gameId=g['id'], dv='H' if side == 'home' else 'A', sa=g[other]['sog'], ga=g[other]['score'], pos=tot))
 d = d.join(pd.DataFrame(feat).set_index('idx'))
 d.to_csv(rows_csv.replace('.csv', '-envsrc.csv'), index=False)
@@ -306,3 +353,85 @@ for lo, hi in [(0, 4), (5, 9), (10, 14), (15, 19), (20, 29), (30, 49), (50, 99)]
     r3v = cv(sub, core + ['rink_venue_sog'], 'sog')['dev']; r4 = cv(sub, core + ['ls_season_sog', 'std_all_sog'], 'sog')['dev'] if sub.std_all_sog.notna().all() else np.nan
     r5 = cv(sub, core + ['pf_ls_season_sog'], 'sog')['dev'] if pf and sub.pf_ls_season_sog.notna().all() else np.nan
     print(f'   opp games {lo:2d}-{hi:2d}  n={len(sub):6d}  none {r0:.4f}  last season {r1:.4f}  PropFinder last season {r5:.4f}  this season {r2:.4f}  rink venue {r3v:.4f}  last+this {r4:.4f}')
+
+# ---------------- 7. the model's lane rule vs the SOG rank third: which tint reads better? (2026-10-27)
+print('\n--- 7. The tint by the MODEL\'S LANE RULE (shots, iCF, iFF, iSCF allowed together; classifyDefenseLaneState in model-core.js) against the tint by the SOG rank third, on the season tabs ---')
+LANE_DESC = {'std_all': "this season to date, by position (PropFinder's this-season tab, the one the rink opens on)", 'ls_season': "last season's full table, by position"}
+def dummies(df, col, levels=('soft', 'tough')):
+    out = []
+    for lv in levels:
+        name = f'{col}_is_{lv}'; df[name] = (df[col] == lv).astype(float); out.append(name)
+    return out
+for rd in LANE_READS:
+    sub = base[base[f'{rd}_x_sog'].notna()].copy()
+    if len(sub) < 400: continue
+    print(f'\n   === {rd}: {LANE_DESC[rd]} ({len(sub)} skater-games) ===')
+    # 7a. each column of the table alone on top of the skater's baseline, per game to the position and per skater
+    print('   7a. SOG: skater baseline + ONE column of the table, cross-validated Poisson deviance (lower is better), gain over the skater alone, z and % SOG per SD (full fit)')
+    r0 = cv(sub, core, 'sog')['dev']
+    for unit, suffix in (('per game to the position (the table\'s figure)', ''), ('per skater at the position', '_per')):
+        print(f'      {unit}:')
+        for c in ('sog', 'icf', 'iff', 'iscf'):
+            col = f'{rd}_x_{c}{suffix}'
+            df = sub.dropna(subset=[col]); df = df[df[col] > 0]
+            if len(df) < 400: continue
+            dev = cv(df, core + [col], 'sog')['dev']; b0 = cv(df, core, 'sog')['dev']
+            Xr = sm.add_constant(df[core + [col]].astype(float)); mr = sm.GLM(df.sog.astype(float), Xr, family=sm.families.Poisson()).fit(); sd = df[col].std()
+            print(f'         {c:5s} allowed  dev {dev:.4f}  gain {b0 - dev:+.4f}  z {mr.tvalues[col]:5.1f}  {100*(np.exp(mr.params[col]*sd)-1):5.1f}% per SD')
+        # all four together
+        cols = [f'{rd}_x_{c}{suffix}' for c in ('sog', 'icf', 'iff', 'iscf')]
+        df = sub.dropna(subset=cols)
+        if len(df) >= 400:
+            print(f'         all four      dev {cv(df, core + cols, "sog")["dev"]:.4f}  gain {cv(df, core, "sog")["dev"] - cv(df, core + cols, "sog")["dev"]:+.4f}')
+    # 7b. the two tints as categorical reads (soft / tough dummies) on the same rows
+    sub['third_sog'] = tone(sub[f'{rd}_x_sog_rank']); sub['third_iff'] = tone(sub[f'{rd}_x_iff_rank']); sub['third_g'] = tone(sub[f'{rd}_x_g_rank'])
+    both = sub[(sub.third_sog != 'n/a') & (sub[f'{rd}_lane_sog'] != 'n/a')].copy()
+    d_third = dummies(both, 'third_sog'); d_iff = dummies(both, 'third_iff'); d_lane = dummies(both, f'{rd}_lane_sog', ('open', 'suppressed'))
+    b0 = cv(both, core, 'sog')['dev']
+    print(f'   7b. SOG: the tint as a read (soft / tough dummies on top of the skater baseline), {len(both)} rows: none {b0:.4f}'
+          f'  SOG third {cv(both, core + d_third, "sog")["dev"]:.4f} (gain {b0 - cv(both, core + d_third, "sog")["dev"]:+.4f})'
+          f'  iFF third {cv(both, core + d_iff, "sog")["dev"]:.4f} (gain {b0 - cv(both, core + d_iff, "sog")["dev"]:+.4f})'
+          f'  model lane {cv(both, core + d_lane, "sog")["dev"]:.4f} (gain {b0 - cv(both, core + d_lane, "sog")["dev"]:+.4f})'
+          f'  SOG third + lane {cv(both, core + d_third + d_lane, "sog")["dev"]:.4f}')
+    agree = (both.third_sog.map({'soft': 'open', 'mid': 'neutral', 'tough': 'suppressed'}) == both[f'{rd}_lane_sog']).mean()
+    print(f'       the lane and the SOG third give the same colour on {100*agree:.0f}% of rows; share of rows: ' + ', '.join(f'{k} {100*v:.0f}%' for k, v in both[f'{rd}_lane_sog'].value_counts(normalize=True).items()) + ' (lane) vs ' + ', '.join(f'{k} {100*v:.0f}%' for k, v in both.third_sog.value_counts(normalize=True).items()) + ' (SOG third)')
+    # 7c. hit rates by band, each tint
+    def band_rates(df, col, order):
+        t = df[df[col].isin(order)]
+        out = t.groupby(col).agg(n=('sog', 'size'), sog=('sog', 'mean'), p2=('sog', lambda s: (s >= 2).mean()), p3=('sog', lambda s: (s >= 3).mean()), p4=('sog', lambda s: (s >= 4).mean()), g1=('g', lambda s: (s >= 1).mean()))
+        return out.reindex(order)
+    for name, col, order in (('SOG rank third (the tint until 2026-10-27)', 'third_sog', ['soft', 'mid', 'tough']), ('iFF rank third', 'third_iff', ['soft', 'mid', 'tough']), ('the model\'s lane rule (the tint since)', f'{rd}_lane_sog', ['open', 'neutral', 'suppressed'])):
+        bt = band_rates(both, col, order)
+        if bt.n.min() < 30: continue
+        print(f'   7c. by {name}:')
+        print('      ' + bt.to_string(float_format=lambda v: f'{v:.3f}').replace('\n', '\n      '))
+        print(f'      favourable - stingy: SOG {bt.sog.iloc[0] - bt.sog.iloc[2]:+.2f}, P(3+) {100*(bt.p3.iloc[0] - bt.p3.iloc[2]):+.1f} pts, P(4+) {100*(bt.p4.iloc[0] - bt.p4.iloc[2]):+.1f} pts, P(1+ G) {100*(bt.g1.iloc[0] - bt.g1.iloc[2]):+.1f} pts')
+    # where they disagree: SOG third says soft but the lane says neutral / suppressed, and the other way
+    dis = both[(both.third_sog == 'soft') & (both[f'{rd}_lane_sog'] != 'open')]; dis2 = both[(both.third_sog != 'soft') & (both[f'{rd}_lane_sog'] == 'open')]
+    dis3 = both[(both.third_sog == 'tough') & (both[f'{rd}_lane_sog'] != 'suppressed')]; dis4 = both[(both.third_sog != 'tough') & (both[f'{rd}_lane_sog'] == 'suppressed')]
+    print(f'       disagreements: SOG-soft but not lane-open n={len(dis)} SOG {dis.sog.mean():.2f} P(3+) {100*(dis.sog >= 3).mean():.1f}% · lane-open but not SOG-soft n={len(dis2)} SOG {dis2.sog.mean():.2f} P(3+) {100*(dis2.sog >= 3).mean():.1f}%'
+          f' · SOG-tough but not lane-suppressed n={len(dis3)} SOG {dis3.sog.mean():.2f} P(3+) {100*(dis3.sog >= 3).mean():.1f}% · lane-suppressed but not SOG-tough n={len(dis4)} SOG {dis4.sog.mean():.2f} P(3+) {100*(dis4.sog >= 3).mean():.1f}%')
+    # within the skater's tier (the filter the user applies), the two tints
+    both['tier'] = pd.cut(both.ls_sog_pg, [0, 1.5, 2, 2.5, 3, 10], labels=['<1.5', '1.5-2', '2-2.5', '2.5-3', '3+'], right=False)
+    for name, col, order in (('SOG third', 'third_sog', ['soft', 'mid', 'tough']), ('model lane', f'{rd}_lane_sog', ['open', 'neutral', 'suppressed'])):
+        piv = both.groupby(['tier', col], observed=True).agg(n=('sog', 'size'), p3=('sog', lambda s: (s >= 3).mean())).unstack(col).reindex(columns=pd.MultiIndex.from_product([['n', 'p3'], order]))
+        print(f'   7d. last-season SOG/G tier x {name}:')
+        print('      ' + piv.to_string(float_format=lambda v: f'{v:.2f}').replace('\n', '\n      '))
+    # by the opponent's games played (this season's tab only reads once the opponent has games)
+    if rd == 'std_all':
+        print('   7e. SOG: the tint as a read by the opponent\'s games played this season (none / SOG third / lane), same rows')
+        for lo, hi in [(1, 4), (5, 9), (10, 14), (15, 19), (20, 29), (30, 49), (50, 99)]:
+            s2 = both[(both.opp_games >= lo) & (both.opp_games <= hi)]
+            if len(s2) < 400: continue
+            b = cv(s2, core, 'sog')['dev']; t3 = cv(s2, core + d_third, 'sog')['dev']; ln = cv(s2, core + d_lane, 'sog')['dev']; fi = cv(s2, core + [f'{rd}_x_iff'], 'sog')['dev']; so = cv(s2, core + [f'{rd}_x_sog'], 'sog')['dev']
+            print(f'      opp games {lo:2d}-{hi:2d}  n={len(s2):6d}  none {b:.4f}  SOG third {t3:.4f} ({b - t3:+.4f})  lane {ln:.4f} ({b - ln:+.4f})  SOG allowed {so:.4f} ({b - so:+.4f})  iFF allowed {fi:.4f} ({b - fi:+.4f})')
+    # 7f. goals: the goals lane (goals, iSCF, shots allowed) against the goals rank third
+    bg2 = bg[bg[f'{rd}_x_sog'].notna()].copy()
+    bg2['third_g'] = tone(bg2[f'{rd}_x_g_rank']); bg2 = bg2[(bg2.third_g != 'n/a') & (bg2[f'{rd}_lane_g'] != 'n/a')]
+    if len(bg2) >= 400:
+        g_third = dummies(bg2, 'third_g'); g_lane = dummies(bg2, f'{rd}_lane_g', ('open', 'suppressed'))
+        b0 = cv(bg2, coreg, 'g')['dev']
+        print(f'   7f. GOALS: the tint as a read on top of the goal baseline, {len(bg2)} rows: none {b0:.4f}  goals third {cv(bg2, coreg + g_third, "g")["dev"]:.4f} ({b0 - cv(bg2, coreg + g_third, "g")["dev"]:+.4f})  goals lane {cv(bg2, coreg + g_lane, "g")["dev"]:.4f} ({b0 - cv(bg2, coreg + g_lane, "g")["dev"]:+.4f})')
+        for name, col, order in (('goals rank third', 'third_g', ['soft', 'mid', 'tough']), ('the model\'s goals lane', f'{rd}_lane_g', ['open', 'neutral', 'suppressed'])):
+            t = bg2[bg2[col].isin(order)].groupby(col).agg(n=('g', 'size'), g1=('g', lambda s: (s >= 1).mean()), g=('g', 'mean')).reindex(order)
+            print(f'      by {name}: ' + ' · '.join(f'{k} n={int(v.n)} P(1+ G) {100*v.g1:.1f}%' for k, v in t.iterrows()) + f'  (favourable - stingy {100*(t.g1.iloc[0] - t.g1.iloc[2]):+.1f} pts)')

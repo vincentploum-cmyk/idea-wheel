@@ -77,7 +77,8 @@ def derive(d):
     for c in ['opp_sa_pg', 'opp_pos_sog_pg', 'opp_pos_sog_per', 'opp_slot_sog_pg', 'opp_pls_pos_sog_pg', 'opp_ls_sa_pg', 'opp_ls_ca_pg', 'opp_sa_pg_venue', 'opp_pos_sog_venue',
               'opp_sa_l5', 'opp_sa_l10', 'opp_sa_l15', 'opp_pos_sog_l5', 'opp_pos_sog_l10', 'opp_pos_sog_l15', 'opp_pls_pos_sog_venue', 'opp_pls_slot_sog_pg',
               'pace_game_std', 'pace_game_ls', 'pace_opp_std', 'pace_team_std', 'p_toi_l5', 'p_toi_l1', 'bl_toi', 'toi_l5_or_bl', 'ls_toi_pg', 'team_sf_pg', 'team_ls_sf_pg', 'opp_sf_pg',
-              'opp_sa_blend', 'opp_ca_blend', 'opp_pos_sog_blend', 'opp_pos_sog_per_blend', 'opp_pls_pos_sog_per', 'opp_slot_sog_blend']:
+              'opp_sa_blend', 'opp_ca_blend', 'opp_pos_sog_blend', 'opp_pos_sog_per_blend', 'opp_pls_pos_sog_per', 'opp_slot_sog_blend',
+              'opp_pos_icf_pg', 'opp_pos_iff_pg', 'opp_pos_iscf_pg', 'opp_pos_icf_per', 'opp_pos_iff_per', 'opp_pos_iscf_per']:
         if c in d: d['log_' + c] = lg(d[c])
     for c in ['opp_ga_pg', 'opp_pos_g_pg', 'opp_pos_g_per', 'opp_slot_g_pg', 'opp_pls_pos_g_pg', 'opp_ls_ga_pg', 'opp_ls_xga_pg', 'opp_ga_pg_venue', 'opp_pos_g_venue',
               'opp_ga_l5', 'opp_ga_l10', 'opp_ga_l15', 'opp_pos_g_l5', 'opp_pos_g_l10', 'opp_pos_g_l15', 'opp_pls_pos_g_venue', 'opp_pls_slot_g_pg', 'opp_pos_g_blend', 'opp_ga_blend', 'opp_pos_g_per_blend', 'opp_pls_pos_g_per', 'opp_slot_g_blend']:

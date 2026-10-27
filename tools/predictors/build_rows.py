@@ -265,9 +265,13 @@ for date in sorted(by_date):
             row['opp_pos_n'] = len(oph)
             row['opp_pos_sog_pg'] = mean([h['sog'] for h in oph]); row['opp_pos_g_pg'] = mean([h['g'] for h in oph])
             row['opp_pos_icf_pg'] = mean([h['icf'] for h in oph])
+            row['opp_pos_iff_pg'] = mean([h['iff'] for h in oph]); row['opp_pos_iscf_pg'] = mean([h['iscf'] for h in oph])
             tot_n = sum(h['n'] for h in oph)
             row['opp_pos_sog_per'] = sum(h['sog'] for h in oph) / tot_n if tot_n else NAN
             row['opp_pos_g_per'] = sum(h['g'] for h in oph) / tot_n if tot_n else NAN
+            # attempts and chances allowed per skater at the position (the model's lane rule reads iCF / iFF / iSCF beside SOG)
+            for k in ('icf', 'iff', 'iscf'):
+                row[f'opp_pos_{k}_per'] = sum(h[k] for h in oph) / tot_n if tot_n else NAN
             for w in (5, 10, 15):
                 row[f'opp_pos_sog_l{w}'] = mean([h['sog'] for h in oph[-w:]]) if len(oph) >= w else NAN
                 row[f'opp_pos_g_l{w}'] = mean([h['g'] for h in oph[-w:]]) if len(oph) >= w else NAN
@@ -348,8 +352,8 @@ for date in sorted(by_date):
             h2h[(s['id'], s['opp'])].append(rec)
             k = (s['opp'], s['pos'])
             if k not in per:
-                per[k] = dict(date=date, dv='A' if s['venue'] == 'H' else 'H', sog=0, g=0, icf=0, n=0, slots={})
-            p = per[k]; p['sog'] += s['sog']; p['g'] += s['g']; p['icf'] += s['icf']; p['n'] += 1
+                per[k] = dict(date=date, dv='A' if s['venue'] == 'H' else 'H', sog=0, g=0, icf=0, iff=0, iscf=0, n=0, slots={})
+            p = per[k]; p['sog'] += s['sog']; p['g'] += s['g']; p['icf'] += s['icf']; p['iff'] += s['iff']; p['iscf'] += s['iscf']; p['n'] += 1
             sl = slots.get(s['id'])
             if sl:
                 cur = p['slots'].get(sl, (0, 0)); p['slots'][sl] = (cur[0] + s['sog'], cur[1] + s['g'])

@@ -7,6 +7,7 @@ import { TeamLink } from './links';
 import { usePlayerCard } from './PlayerCard';
 import { PropfinderDefense } from './Propfinder';
 import { defaultDefenseTab, defenseBandFromTab, defenseTabText } from '@/lib/nhl-data/propfinder-csv';
+import { bandTone, laneRanksText, laneRuleText, LANE_WORD, thirdTone } from '@/lib/nhl-data/lane';
 
 // Tactical board: one team's whole lineup on a full vertical rink (85 × 200 ft,
 // attacking goal at the top). Forward lines stack in the attacking half with
@@ -41,14 +42,8 @@ function sourceText(side) {
 /** " · 3 slots carried from the last known lineup (2026-09-30)". */
 const carriedText = (side) => (side.carried ? ` · ${side.carried.count} slot${side.carried.count === 1 ? '' : 's'} carried from the last known lineup${side.carried.date ? ` (${side.carried.date})` : ''}` : '');
 
-/** League rank (1 = most permissive) → 'soft' | 'mid' | 'tough' | 'none'. */
-export function zoneTone(rank, teams) {
-  if (!rank || !teams) return 'none';
-  const third = Math.ceil(teams / 3);
-  if (rank <= third) return 'soft';
-  if (rank > teams - third) return 'tough';
-  return 'mid';
-}
+/** League rank (1 = most permissive) → 'soft' | 'mid' | 'tough' | 'none': the stored-games tint (the Rink toggle). */
+export const zoneTone = thirdTone;
 
 /** Last name only; the chip's title carries the full name. */
 const shortName = (name) => {
@@ -224,7 +219,9 @@ function BandLabel({ pos, d, opp, view, windowText = null, teamCount, x, y, metr
   const r = d?.rank || {};
   const s = d?.season;
   const n = d?.teamCount || teamCount;
-  const tone = zoneTone(r[metric], n);
+  // PropFinder's table: the model's lane rule on the row's ranks (shots, iCF, iFF, iSCF together); the stored games: the rank third.
+  const lane = d?.lane?.[metric] || null;
+  const tone = bandTone(d, metric, n);
   const when = windowText || WINDOW_TEXT[view];
   const from = d?.source === 'propfinder' ? (d.window ? ` · PropFinder's table, ${d.window}` : ` · PropFinder's ${d.seasonLabel} table, until ${opp} has enough stored games at this venue`)
     : d?.source === 'h2h' ? ` · ${s?.gp ?? 0} stored meeting${s?.gp === 1 ? '' : 's'}; the rank is where that sits among the league's season values at this venue`
@@ -232,10 +229,15 @@ function BandLabel({ pos, d, opp, view, windowText = null, teamCount, x, y, metr
   // First goals given up to this position (the season table at tonight's venue; the card's column has the same numbers).
   const fg = d?.firstGoal;
   const fgText = fg?.games ? ` · first goal given up to ${pos} in ${fg.allowed} of ${fg.games} games${fg.rank ? ` (#${fg.rank})` : ''}${Object.keys(fg.bySlot || {}).length ? `: ${Object.entries(fg.bySlot).sort((a, b) => b[1] - a[1]).map(([k, c]) => `${k} ×${c}`).join(', ')}` : ''}` : '';
-  const title = s?.gp ? `${opp} allows ${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'}) per game to ${pos} ${when} · rank 1 = most permissive of ${n}${from}${fgText}` : `No defense data for ${opp} ${when} yet`;
+  const laneText = lane ? ` · ${LANE_WORD[lane]} lane for ${metric === 'g' ? 'goals' : 'shots'} by the model's rule on ${laneRanksText(r, metric)} (${laneRuleText(metric)})` : '';
+  const title = s?.gp ? `${opp} allows ${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'})${s.iff != null ? `, ${num(s.icf)} iCF (#${r.icf ?? '–'}), ${num(s.iff)} iFF (#${r.iff ?? '–'}), ${num(s.iscf)} iSCF (#${r.iscf ?? '–'})` : ''} per game to ${pos} ${when} · rank 1 = most permissive of ${n}${laneText}${from}${fgText}` : `No defense data for ${opp} ${when} yet`;
+  // On a lane the label names the two columns that matter most for the market (the four ride on the hover); the rank thirds show the two markets.
+  const figures = lane
+    ? (metric === 'g' ? <>#{r.g ?? '–'} G · #{r.iscf ?? '–'} iSCF</> : <>#{r.sog ?? '–'} SOG · #{r.iff ?? '–'} iFF</>)
+    : (metric === 'g' ? <>#{r.g ?? '–'} G · #{r.sog ?? '–'} SOG</> : <>#{r.sog ?? '–'} SOG · #{r.g ?? '–'} G</>);
   return (
     <div className={`nhlx-rk-zone is-${tone}`} style={{ left: `${x}%`, top: `${pct(y)}%` }} title={title}>
-      <b>{pos}</b>{s?.gp ? <span>{metric === 'g' ? <>#{r.g ?? '–'} G · #{r.sog ?? '–'} SOG</> : <>#{r.sog ?? '–'} SOG · #{r.g ?? '–'} G</>}{d?.source === 'propfinder' ? <i title={`PropFinder ${d.seasonLabel}`}>PF</i> : d?.source === 'h2h' ? <i title={`${s.gp} stored meeting${s.gp === 1 ? '' : 's'}`}>{s.gp} GP</i> : null}</span> : <span>{view?.startsWith('h2h') ? 'no meetings' : 'no data'}</span>}
+      <b>{pos}</b>{s?.gp ? <span>{figures}{d?.source === 'propfinder' ? <i title={`PropFinder ${d.seasonLabel}${lane ? ` · ${LANE_WORD[lane]} lane by the model's rule` : ''}`}>PF</i> : d?.source === 'h2h' ? <i title={`${s.gp} stored meeting${s.gp === 1 ? '' : 's'}`}>{s.gp} GP</i> : null}</span> : <span>{view?.startsWith('h2h') ? 'no meetings' : 'no data'}</span>}
     </div>
   );
 }
@@ -275,12 +277,14 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
   const fromPf = tint === 'propfinder' && !!pfTab;
   const defAt = (pos) => (fromPf ? defenseBandFromTab(pfTab, pos) : side.defense?.[pos]?.windows?.[v] ?? (v === defaultView ? side.defense?.[pos] : null) ?? null);
   const windowText = fromPf ? `over ${defenseTabText(pfTab)} (PropFinder)` : WINDOW_TEXT[v];
-  const tones = Object.fromEntries(ZONES.map((z) => [z, posFilter && posFilter !== z ? 'none' : zoneTone(defAt(z)?.rank?.[metric], defAt(z)?.teamCount || teamCount)]));
+  // PropFinder's table tints by the model's lane rule (the row's shots, iCF, iFF and iSCF ranks together, `lane` on the band); the stored games by the rank third.
+  const tones = Object.fromEntries(ZONES.map((z) => [z, posFilter && posFilter !== z ? 'none' : bandTone(defAt(z), metric, teamCount)]));
   const metricWord = metric === 'g' ? 'goals' : 'shots';
+  const tintText = fromPf ? `Ice tinted by the model's lane rule on what ${side.opp} allows ${windowText} to each position for ${metricWord} (${laneRuleText(metric)}; rank 1 = most permissive)` : `Ice tinted by the ${metricWord} ${side.opp} allows ${windowText} to each position (rank 1 = most permissive)`;
   const clipId = `rink-${side.team}-${side.opp}`;
   const open = usePlayerCard();
   return (
-    <section className="nhlx-rk-card" aria-label={`${side.team} lineup on the rink`} title={`${numSrc} Ice tinted by the ${metricWord} ${side.opp} allows ${windowText} to each position (rank 1 = most permissive) · ${sourceText(side)}`}>
+    <section className="nhlx-rk-card" aria-label={`${side.team} lineup on the rink`} title={`${numSrc} ${tintText} · ${sourceText(side)}`}>
       <ModelPlays side={side} actualFor={actual ? actualFor : null} />
       <div className="nhlx-rk-head">
         <TeamLink abbr={side.team} logo={28} />
@@ -300,7 +304,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
         <small>from</small>
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="What tints the rink">
           <button type="button" role="tab" aria-selected={!fromPf} className={`nhlx-tab${!fromPf ? ' is-active' : ''}`} onClick={() => setTint('rink')} title="Our stored box scores, by the window on the right">Rink</button>
-          <button type="button" role="tab" aria-selected={fromPf} disabled={!pfTab} className={`nhlx-tab${fromPf ? ' is-active' : ''}`} onClick={() => setTint('propfinder')} title={pfTab ? 'PropFinder\'s table above: its selected tab tints the rink' : 'No PropFinder table for this opponent'}>PropFinder</button>
+          <button type="button" role="tab" aria-selected={fromPf} disabled={!pfTab} className={`nhlx-tab${fromPf ? ' is-active' : ''}`} onClick={() => setTint('propfinder')} title={pfTab ? `PropFinder's table above: its selected tab tints the rink by the model's lane rule (${laneRuleText(metric)})` : 'No PropFinder table for this opponent'}>PropFinder</button>
         </div>
         {fromPf ? (
           <small className="nhlx-rk-toggle-note">{side.opp} allows over {defenseTabText(pfTab)} · pick a tab in the table above</small>
@@ -344,12 +348,12 @@ export function RinkLegend({ metric = 'sog' }) {
   const word = metric === 'g' ? 'goals' : 'shots';
   return (
     <p className="nhlx-rk-legend nhlx-auto-meta">
-      <span><i className="is-soft" /> favourable: the opponent allows the most {word} to that position (top third of the league); switch Shots / Goals above a rink to tint by the other</span>
+      <span><i className="is-soft" /> favourable: on PropFinder’s table, an open lane by the model’s rule ({metric === 'g' ? 'two of goals / iSCF / SOG allowed in the top 16, or goals alone, or iSCF in the top 12' : 'two of SOG / iCF / iFF / iSCF allowed in the top 12, or SOG or iSCF alone'}); tinted from the stored games, the top third of the league on {word} allowed to that position; switch Shots / Goals above a rink to tint by the other</span>
       <span><i className="is-mid" /> neutral</span>
-      <span><i className="is-tough" /> stingy: bottom third</span>
+      <span><i className="is-tough" /> stingy: a suppressed lane ({metric === 'g' ? 'two of the three 23rd or worse, or goals and iSCF both' : 'three of the four 23rd or worse, or SOG and iSCF both'}), or the bottom third</span>
       <span>on each player: the model’s projected SOG and goals from the latest saved run for this slate (3+ SOG and 1+ G odds in the tooltip), or a matchup read when no run exists; once the game is final, the actual shots, goals and assists with the model’s number after “m”; click for the player card</span>
       <span>🔥 on fire, by the model’s rule: 1+ point at 50% or better, 2.0+ scoring chances per game, 16+ minutes</span>
-      <span><i className="nhlx-pk-flag is-hot is-legend">{ICON.hot}</i> hot going in ({metric === 'g' ? '3+ goals in his last five' : 'his last five at 1.4× his shot rate or more'}) · <i className="nhlx-pk-flag is-cold is-legend">{ICON.cold}</i> cold ({metric === 'g' ? 'no goal in ten games when his rate owed him one' : 'his last five at 0.7× or under'}) ; on the plays above the rink and in the skater table, <i className="nhlx-pk-flag is-soft is-legend">{ICON.soft}</i> marks the opponent in the soft third of the league at his position for {word} on PropFinder’s table above the rink, the tab it opens on (on the ice the band under a chip already shows it); colour only, the numbers already carry his rate</span>
+      <span><i className="nhlx-pk-flag is-hot is-legend">{ICON.hot}</i> hot going in ({metric === 'g' ? '3+ goals in his last five' : 'his last five at 1.4× his shot rate or more'}) · <i className="nhlx-pk-flag is-cold is-legend">{ICON.cold}</i> cold ({metric === 'g' ? 'no goal in ten games when his rate owed him one' : 'his last five at 0.7× or under'}) ; on the plays above the rink and in the skater table, <i className="nhlx-pk-flag is-soft is-legend">{ICON.soft}</i> marks an open lane for {word} at his position by the model’s rule on PropFinder’s table above the rink, the tab it opens on (on the ice the band under a chip already shows it); colour only, the numbers already carry his rate</span>
       {metric === 'g'
         ? <span><i className="nhlx-rk-h2h is-legend">h2h</i> scores on this opponent: more than a goal a game against them over 2+ stored games, or 2+ goals in the one game stored (this season and last)</span>
         : <span><i className="nhlx-rk-h2h is-legend">h2h</i> fires at this opponent: 4+ shots a game against them over 2+ stored games, or 5+ in the one game stored (this season and last)</span>}

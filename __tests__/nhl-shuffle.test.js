@@ -143,7 +143,7 @@ describe('the Matchup column reads the Matchups tab’s PropFinder table', () =>
   }, ...extra });
   const uta = { cols: [], tabs: [
     tab('season-2025', '2025', 'season', { season: 2025 }, { g: 1.1, sog: 7.3, ranks: { g: 9, sog: 11 } }),
-    tab('season-2026', '2026', 'season', {}, { g: 1.2, sog: 6.9, ranks: { g: 6, sog: 15 } }),
+    tab('season-2026', '2026', 'season', {}, { g: 1.2, sog: 6.9, ranks: { g: 6, sog: 15 }, lane: { sog: 'open', g: 'open' } }),   // the model's lane on the row: iCF #27, iFF #25, iSCF #27 make no case, but the stamp is the server's; here it says open
     tab('l10', 'L10', 'window', { windowGames: 10, split: null, source: 'stored' }, { g: 1.5, sog: 6.6, ranks: { g: 2, sog: 20 } }),
   ] };
   const boldy = { id: 1, name: 'Matt Boldy', team: 'MIN', opp: 'UTA', pos: 'RW', lamS: 3.64, oppPos: { sog: 1.62, g: 0.21, rankSog: 25, rankG: 14, teams: 32, softSog: false, softG: false } };
@@ -151,7 +151,9 @@ describe('the Matchup column reads the Matchups tab’s PropFinder table', () =>
   test('a side’s tabs trimmed to the rows and the shots / goals ranks the column needs', () => {
     expect(defense.UTA.tabs.map((t) => t.key)).toEqual(['season-2025', 'season-2026', 'l10']);
     expect(defense.UTA.tabs[2]).toMatchObject({ label: 'L10', kind: 'window', windowGames: 10, source: 'stored', count: 32, rows: { RW: { gp: 10, sog: 6.6, g: 1.5, ranks: { sog: 20, g: 2 } } } });
-    expect(defense.UTA.tabs[2].rows.RW.icf).toBeUndefined();
+    expect(defense.UTA.tabs[2].rows.RW).toMatchObject({ icf: 11.3, iff: 9, iscf: 6.4, ranks: { icf: 27, iff: 25, iscf: 27 }, lane: null });   // the lane rule's columns ride along; no lane stamped on this row
+    expect(defense.UTA.tabs[1].rows.RW.lane).toEqual({ sog: 'open', g: 'open' });
+    expect(defense.UTA.tabs[2].rows.All.a).toBeUndefined();
     expect(defense.UTA.tabs[1].source).toBe('propfinder');
     expect(trimDefenseTabs(null)).toBeNull();
     expect(trimDefenseTabs({ tabs: [] })).toBeNull();
@@ -167,14 +169,16 @@ describe('the Matchup column reads the Matchups tab’s PropFinder table', () =>
     expect(matchupTabOf(null, [])).toBeNull();
   });
   test('the read is PropFinder’s figure and rank on the tab: L10 says #20 for a RW at UTA, this season #15, never the study’s #25', () => {
-    expect(matchupOf(boldy, defense, 'l10', 'sog')).toEqual({ source: 'propfinder', pos: 'RW', rank: 20, value: 6.6, gp: 10, teams: 32, tab: { key: 'l10', label: 'L10', text: 'the last 10 games', stored: true } });
-    expect(matchupOf(boldy, defense, 'season-2026', 'sog')).toMatchObject({ rank: 15, value: 6.9, tab: { key: 'season-2026', stored: false } });
+    expect(matchupOf(boldy, defense, 'l10', 'sog')).toEqual({ source: 'propfinder', pos: 'RW', rank: 20, value: 6.6, gp: 10, teams: 32, ranks: { sog: 20, g: 2, icf: 27, iff: 25, iscf: 27 }, lane: null, tone: 'mid', tab: { key: 'l10', label: 'L10', text: 'the last 10 games', stored: true } });
+    // The cell's colour is the model's lane when the row carries one: #15 SOG is the middle third, the lane says open, so the cell is soft.
+    expect(matchupOf(boldy, defense, 'season-2026', 'sog')).toMatchObject({ rank: 15, value: 6.9, lane: 'open', tone: 'soft', tab: { key: 'season-2026', stored: false } });
+    expect(matchupOf(boldy, defense, 'season-2025', 'sog')).toMatchObject({ rank: 11, lane: null, tone: 'soft' });   // no lane: the rank third
     expect(matchupOf(boldy, defense, 'l10', 'g')).toMatchObject({ rank: 2, value: 1.5 });
     expect(matchupOf(boldy, defense, null, 'sog').tab.key).toBe('season-2026');   // no tab picked: the default, as above the rink
   });
   test('a team without the tab falls back to the study’s per-skater table, marked stored with the tab it lacks', () => {
     const atMin = { ...boldy, team: 'UTA', opp: 'MIN' };
-    expect(matchupOf(atMin, defense, 'l10', 'sog')).toEqual({ source: 'stored', pos: 'RW', rank: 25, value: 1.62, gp: null, teams: 32, tab: null, missing: 'l10' });
+    expect(matchupOf(atMin, defense, 'l10', 'sog')).toEqual({ source: 'stored', pos: 'RW', rank: 25, value: 1.62, gp: null, teams: 32, ranks: null, lane: null, tone: 'tough', tab: null, missing: 'l10' });
     expect(matchupOf(atMin, defense, 'season-2026', 'sog')).toMatchObject({ source: 'propfinder', rank: 15 });
     expect(matchupOf({ ...boldy, opp: 'XXX' }, defense, 'l10', 'g')).toMatchObject({ source: 'stored', rank: 14, value: 0.21 });
     expect(matchupOf({ ...boldy, opp: 'XXX', oppPos: null }, defense, 'l10', 'sog')).toBeNull();

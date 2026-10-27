@@ -2,8 +2,9 @@ import { describe, expect, test } from '@jest/globals';
 import { inspectPropfinderCsv, parsePlayerCell, parseRanked, parseStatsCsv, statKey, fileInfo, seasonYear } from '../lib/nhl-data/propfinder-csv';
 import { nameResolver } from '../lib/nhl-data/names';
 import { PROPFINDER_SEED } from '../lib/nhl-data/seed/propfinder-2025';
-import { seedSnapshots, propfinderDefenseTabs, storedWindowTables, withStoredWindows } from '../lib/nhl-data/propfinder';
+import { seedSnapshots, propfinderDefenseTabs, storedWindowTables, withStoredWindows, laneOf } from '../lib/nhl-data/propfinder';
 import { defaultDefenseTab, defenseBandFromTab, defenseTabText, spotFromTab, defenseCardFromTabs } from '../lib/nhl-data/propfinder-csv';
+import { bandTone, thirdTone, laneRanksText, laneTone } from '../lib/nhl-data/lane';
 
 const SKATERS = `Position,All
 Strength,All
@@ -296,14 +297,47 @@ describe('defense tabs without holes', () => {
     expect(tab.rows.All.iscf).toBe(29.25); // 6.25 + 8.75 + 8.25 + 6
     expect(tab.rows.All.ranks.iscf).toBe(2); // DET 31 (7 + 8 + 8 + 8), SEA 29.25, BOS 29
     expect(tab.rows.All.ranks.g).toBe(2); // PropFinder's own rank kept
-    expect(Object.values(tab.rows).every((r) => Object.values(r).every((v) => v !== null))).toBe(true);
+    // Every cell filled; a row without a rank at all (C and RW here: every team equal, no rank in the export) carries no lane.
+    expect(Object.values(tab.rows).every((r) => Object.entries(r).every(([k, v]) => v !== null || (k === 'lane' && Object.values(r.ranks).every((x) => x == null))))).toBe(true);
+    expect(tab.rows.LW.lane).toEqual({ sog: 'neutral', g: 'open' });   // no shots / attempts rank: nothing opens the shots lane; goals #3 of 3 is within the top 16
+    expect(tab.rows.All.lane).toEqual({ sog: 'open', g: 'open' });
+  });
+  test('the model’s lane rule on a row’s ranks (laneOf): shots read SOG, iCF, iFF and iSCF together, goals read goals, iSCF and SOG', () => {
+    // The Bruins on 2026-10-27 (the screenshot that started it): LW #8 SOG is open by SOG alone, D #24 SOG is open by iSCF #10, and the
+    // shots-only tint had LW green and D red. Goals: LW allows the 31st most goals yet SOG #8 and iSCF #13 are two signals in the top 16.
+    expect(laneOf({ g: 31, a: 25, sog: 8, icf: 15, iff: 13, iscf: 13 })).toEqual({ sog: 'open', g: 'open' });
+    expect(laneOf({ g: 9, a: 31, sog: 24, icf: 24, iff: 30, iscf: 10 })).toEqual({ sog: 'open', g: 'open' });
+    expect(laneOf({ g: 30, a: 28, sog: 18, icf: 7, iff: 8, iscf: 9 })).toEqual({ sog: 'open', g: 'open' });   // C: three attempts columns in the top 12 open the shots lane; iSCF #9 alone opens the goals lane
+    expect(laneOf({ g: 20, a: 20, sog: 30, icf: 25, iff: 28, iscf: 26 })).toEqual({ sog: 'suppressed', g: 'suppressed' });
+    expect(laneOf({ g: 18, a: 20, sog: 15, icf: 13, iff: 14, iscf: 18 })).toEqual({ sog: 'neutral', g: 'neutral' });
+    expect(laneOf({ g: 18, a: 20, sog: 15, icf: 12, iff: 11, iscf: 18 })).toEqual({ sog: 'open', g: 'neutral' });   // two attempts columns in the top 12 open the lane without SOG
+    expect(laneOf({ g: null, a: null, sog: null, icf: null, iff: null, iscf: null })).toBeNull();
+    expect(laneOf(null)).toBeNull();
+    // The band's tone: the lane when the row carries one, the rank third otherwise; the words for the hover.
+    expect(laneTone('open')).toBe('soft'); expect(laneTone('suppressed')).toBe('tough'); expect(laneTone(null)).toBe('none');
+    expect(bandTone({ rank: { sog: 24 }, lane: { sog: 'open', g: 'open' }, teamCount: 32 }, 'sog')).toBe('soft');
+    expect(bandTone({ rank: { sog: 24 }, lane: null, teamCount: 32 }, 'sog')).toBe('tough');
+    expect(bandTone({ rank: { sog: 24 } }, 'sog', 32)).toBe('tough');
+    expect(bandTone(null, 'sog', 32)).toBe('none');
+    expect([thirdTone(1, 32), thirdTone(11, 32), thirdTone(12, 32), thirdTone(21, 32), thirdTone(22, 32), thirdTone(null, 32)]).toEqual(['soft', 'soft', 'mid', 'mid', 'tough', 'none']);
+    expect(laneRanksText({ sog: 24, icf: 24, iff: 30, iscf: 10 }, 'sog')).toBe('#24 SOG, #24 iCF, #30 iFF, #10 iSCF');
+    expect(laneRanksText({ g: 9, iscf: 10 }, 'g')).toBe('#9 G, #10 iSCF, #– SOG');
   });
   test('the soft-spot read at a position: PropFinder’s figures and ranks on the tab, soft in the top third of its teams', () => {
     const det = propfinderDefenseTabs(pf, 'DET').tabs[0];
-    expect(spotFromTab(det, 'All')).toEqual({ source: 'propfinder', pos: 'All', sog: 30, g: 3, gp: 4, rankSog: 1, rankG: 1, teams: 3, softSog: true, softG: true, tab: { key: 'season-2026', label: '2026', text: 'the 2026 season', stored: false } });
-    expect(spotFromTab(det, 'LW')).toMatchObject({ sog: 5, g: 1, rankSog: null, softSog: false, rankG: 1, softG: true });   // no shots rank in the export: no soft flag for shots
+    expect(spotFromTab(det, 'All')).toEqual({
+      source: 'propfinder', pos: 'All', sog: 30, g: 3, icf: 60, iff: 45, iscf: 31, gp: 4, rankSog: 1, rankG: 1, rankIcf: 2, rankIff: 2, rankIscf: 1, teams: 3,
+      laneSog: 'open', laneG: 'open', softSog: true, softG: true, toughSog: false, toughG: false, tab: { key: 'season-2026', label: '2026', text: 'the 2026 season', stored: false },
+    });
+    expect(spotFromTab(det, 'LW')).toMatchObject({ sog: 5, g: 1, rankSog: null, laneSog: 'neutral', softSog: false, toughSog: false, rankG: 1, laneG: 'open', softG: true });   // no shots rank in the export: nothing opens the shots lane
+    // The lane, not the SOG rank third, is the flag: the Bruins' D on 2026-10-27, #24 SOG (the tough third) but open by iSCF #10.
+    const bos = { key: 'season-2026', label: '2026', kind: 'season', season: 2026, count: 32, rows: { D: { gp: 10, g: 0.5, a: 1, sog: 6.67, icf: 17, iff: 9.33, iscf: 4.67, ranks: { g: 9, a: 31, sog: 24, icf: 24, iff: 30, iscf: 10 }, lane: laneOf({ g: 9, a: 31, sog: 24, icf: 24, iff: 30, iscf: 10 }) } } };
+    expect(spotFromTab(bos, 'D')).toMatchObject({ rankSog: 24, rankIff: 30, rankIscf: 10, laneSog: 'open', softSog: true, toughSog: false, laneG: 'open', softG: true });
+    // A row without a lane (an older payload) keeps the rank-thirds read.
+    const noLane = { ...bos, rows: { D: { ...bos.rows.D, lane: undefined } } };
+    expect(spotFromTab(noLane, 'D')).toMatchObject({ laneSog: null, softSog: false, toughSog: true, laneG: null, softG: true, toughG: false });
     const sea = propfinderDefenseTabs(pf, 'SEA').tabs[0];
-    expect(spotFromTab(sea, 'LW')).toMatchObject({ g: 0, rankG: 3, softG: false });   // the zero the API left out, ranked last
+    expect(spotFromTab(sea, 'LW')).toMatchObject({ g: 0, rankG: 3, laneG: 'open', softG: true });   // the zero the API left out, ranked last of three — still within the rule's top 16, an absolute cut on a 32-team table
     expect(spotFromTab(sea, 'G')).toBeNull();
     expect(spotFromTab(null, 'C')).toBeNull();
   });
@@ -313,7 +347,7 @@ describe('defense tabs without holes', () => {
     expect(card.tab.key).toBe('season-2026');
     expect(card.text).toBe('the 2026 season');
     expect(card.l10).toBeNull();
-    expect(card.rows.LW).toEqual({ band: expect.objectContaining({ season: { gp: 4, sog: 5, g: 1, iscf: 7 }, rank: { sog: null, g: 1, iscf: null }, teamCount: 3 }), l10: null });
+    expect(card.rows.LW).toEqual({ band: expect.objectContaining({ season: { gp: 4, sog: 5, g: 1, icf: 12, iff: 9, iscf: 7 }, rank: { sog: null, g: 1, icf: null, iff: null, iscf: null }, lane: { sog: 'neutral', g: 'open' }, teamCount: 3 }), l10: null });
     expect(Object.keys(card.rows)).toEqual(['LW', 'C', 'RW', 'D']);
     expect(defenseCardFromTabs(tabs, 'nope').tab.key).toBe('season-2026');   // a tab the side lacks: the default
     const l10 = { key: 'l10', label: 'L10', kind: 'window', windowGames: 10, split: null, season: 2026, count: 3, rows: { LW: { gp: 10, sog: 6.1, g: 0.9, ranks: { sog: 1, g: 2 } } } };

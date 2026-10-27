@@ -6,6 +6,7 @@ import { usePlayerCard } from './PlayerCard';
 import { Flags } from './flags';
 import { LEAGUE_POS } from '@/lib/nhl-data/picks-pure';
 import { NHL_BARS, READ_FROM, HEIGHTS, POSITIONS, atPosition, survivorsAt, fallenAt, curveOf, bestReadFrom, readFromOf, BEST_MIN, matchupTabs, matchupTabOf, matchupOf } from '@/lib/nhl-data/shuffle-pure';
+import { laneRanksText, laneRuleText, LANE_WORD, thirdTone } from '@/lib/nhl-data/lane';
 
 // The NHL shuffle (its own tab, with its own slate date): a bar for shots and one for goals. Raise
 // it and the field falls away; what stays are the skaters whose chance of the bar holds over the
@@ -25,11 +26,8 @@ const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { ho
 const FLOORS = [0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.6, 0.7];
 const FELL_MAX = 14;
 
-function toneOf(rank, teams) {
-  if (!rank || !teams) return 'none';
-  const third = Math.ceil(teams / 3);
-  return rank <= third ? 'soft' : rank > teams - third ? 'tough' : 'mid';
-}
+/** The Matchup cell's tone: the read's own (the model's lane on a PropFinder row, lib/nhl-data/lane.js), else the rank third. */
+const toneOf = (m) => m?.tone || thirdTone(m?.rank, m?.teams);
 
 function Curve({ curve, height, onPick }) {
   const max = Math.max(1, ...curve.map((c) => c.n));
@@ -259,10 +257,11 @@ export default function ShufflePanel() {
                       // The opponent at his position: PropFinder's table on the tab picked, else the study's per-skater table (named in the hover).
                       const m = matchupOf(c, data.defense, mTab?.key, active);
                       const league = LEAGUE_POS[c.pos]?.[active];
-                      const tone = toneOf(m?.rank, m?.teams);
+                      const tone = toneOf(m);
                       const dec = m?.source === 'propfinder' || active === 'sog' ? 2 : 3;
+                      const laneNote = m?.lane ? ` · ${LANE_WORD[m.lane]} lane by the model’s rule on ${laneRanksText(m.ranks, active)} (${laneRuleText(active)}), the colour the rink tints by` : '';
                       const mTitle = !m ? `No defense table for ${c.opp} at ${c.pos}`
-                        : m.source === 'propfinder' ? `${c.opp} allows ${num(m.value, dec)} ${statLabel} a game to ${c.pos} over ${m.tab.text}, #${m.rank} of ${m.teams} · PropFinder’s table, the ${m.tab.label} tab above the rink on Matchups${m.tab.stored ? ' (this window rolled from the stored box scores, as PropFinder counts it)' : ''}`
+                        : m.source === 'propfinder' ? `${c.opp} allows ${num(m.value, dec)} ${statLabel} a game to ${c.pos} over ${m.tab.text}, #${m.rank} of ${m.teams}${laneNote} · PropFinder’s table, the ${m.tab.label} tab above the rink on Matchups${m.tab.stored ? ' (this window rolled from the stored box scores, as PropFinder counts it)' : ''}`
                         : `${c.opp} allows ${num(m.value, dec)} ${statLabel} per ${c.pos} a game, #${m.rank} of ${m.teams}${league != null ? ` (league ${num(league, dec)})` : ''} · the stored box scores, this season blended into last season’s, per skater at the position: ${c.opp} has no PropFinder ${m.missing && mTab ? `${mTab.label} ` : ''}table`;
                       const lam = active === 'sog' ? c.lamS : c.lamG;
                       const windows = `study ${num(active === 'sog' ? c.study?.lamS : c.study?.lamG)} · last 5 ${num(c.own?.l5?.[active])} · last 10 ${num(c.own?.l10?.[active])} · season ${num(c.own?.season?.[active])} (${c.own?.season?.n ?? 0} games)`;

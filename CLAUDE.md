@@ -515,8 +515,17 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   card's "1st goal" column, `firstGoals` in the defense API); games logged without it get it
   from the play-by-play via `stampFirstGoals` (`ingestGames` with nothing new, `?only=firstgoals`). The
   Matchups tab (`lib/nhl-data/slate.js`; each game drawn as two rinks in
-  `components/nhl/Rink.jsx`, ice bands tinted by the opponent's SOG-allowed or goals-allowed rank per position (the slate-wide
-  Shots / Goals switch above each rink, `metric` state in `MatchupsPanel`; the band labels, legend and the chips'
+  `components/nhl/Rink.jsx`, ice bands tinted by what the opponent allows to each position — **from PropFinder's table, by
+  the model's lane rule** (`classifyDefenseLaneState` in `model-core.js`: shots read the SOG, iCF, iFF and iSCF ranks
+  together — open when two of the four are in the top 12, or SOG or iSCF alone; suppressed when three are 23rd or worse,
+  or SOG and iSCF both; goals read goals, iSCF and SOG — open on two in the top 16, or goals alone, or iSCF in the top 12;
+  the server stamps every PropFinder defense row with it, `lane: { sog, g }` through `laneOf` in `lib/nhl-data/propfinder.js`,
+  and `lib/nhl-data/lane.js` turns it into the tone and the hover's words, `bandTone` / `laneRuleText` / `laneRanksText`;
+  Vincent, 2026-10-27: the tint read shots allowed alone, the model reads the four columns and the study has iFF the
+  better volume signal than SOG; a row without a lane, and the stored-games tint, keep the rank thirds) — or, tinted from
+  the stored games, by the SOG-allowed or goals-allowed rank third (the slate-wide
+  Shots / Goals switch above each rink, `metric` state in `MatchupsPanel`; the band labels — on a lane the two ranks that
+  matter most, #SOG · #iFF or #G · #iSCF, the four on the hover with the lane word —, legend and the chips'
   h2h mark follow it: scorers (`h2hHot`) under Goals, shooters (`h2hShotsHot`) under Shots)
   for the window picked above the rink — home / away / L5 / L10 / L5 home / L5 away, defaulting to
   tonight's venue —
@@ -596,10 +605,12 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   wants the plays readable at a glance; the comparison lives on the History tab's scorecard). Beside the name, for
   the table's market: a flame / snowflake for his form (`formOf` in `picks-pure.js`, `heat` on the row: shots hot at
   1.4× his blended rate over his last five, cold at 0.7×; goals hot at 3+ in his last five, cold = none in ten when
-  his rate owed him 1.5) and a green rink when the opponent is in the soft third at his position **on PropFinder's table
-  above the rink on Matchups, the tab it opens on** (`spot` on every slate skater, candidate and play: `spotFromTab` in
-  `propfinder-csv.js` off `defaultDefenseTab`, PropFinder's rank, soft = the top third of the tab's teams; Vincent,
-  2026-10-27, after the shuffle's Matchup column moved to that table: one environment read everywhere it is colour). The
+  his rate owed him 1.5) and a green rink when the opponent's lane at his position is **open by the model's lane rule on
+  PropFinder's table above the rink on Matchups, the tab it opens on** (`spot` on every slate skater, candidate and play:
+  `spotFromTab` in `propfinder-csv.js` off `defaultDefenseTab`, the row's `lane` — `softSog` / `softG` = open, `toughSog` /
+  `toughG` = suppressed, `laneSog` / `laneG` the word, the five ranks beside it; the top third of the tab's teams only for a
+  row without a lane; Vincent, 2026-10-27, after the shuffle's Matchup column moved to that table: one environment read
+  everywhere it is colour, and the same day the read became the model's four-column rule instead of the SOG rank). The
   study's per-skater table (`oppPos`, `isSoftThird`) stays the study λ's environment and stands in for a team without a
   PropFinder table, named in the flag's hover. The notes' softest spots and environment plays read PropFinder's All row the
   same way (`oppRank` / `oppSog` on the candidate, `allowed.notesFrom` on the payload, the stored team totals when no team
@@ -632,7 +643,9 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   `matchupTabs` / `matchupTabOf` / `matchupOf` in `shuffle-pure.js`), so the rank it shows is the rank that tab shows on
   Matchups (Vincent, 2026-10-27: the shuffle read Boldy at UTA as #25 RW off the study's per-skater table while the Matchups
   tab's L10 read #20 — two tables and two units, per skater against per game, for one matchup); the study's per-skater table
-  (`oppPos`, what the study's λ reads) stands in for a team without one, marked "stored" and named in the hover; colour only,
+  (`oppPos`, what the study's λ reads) stands in for a team without one, marked "stored" and named in the hover; the cell's
+  colour is the row's `lane` for the bar's market (`tone` on `matchupOf`, the model's rule as the rink tints; the rank third
+  for a row without one or the stored fallback), the hover naming the four ranks and the rule; colour only,
   no number moves with the tab, and the row carries no soft-spot flag (the cell shows the environment, as the ice does under
   a rink chip). Beside "Matchup from", **Position** (`POSITIONS` / `atPosition` in `shuffle-pure.js`: All · C · LW ·
   RW · D; Vincent's ask, 2026-10-27, to shuffle the defensemen or the left wings alone): the bars' counts, the curve,

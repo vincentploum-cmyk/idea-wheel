@@ -93,7 +93,10 @@ describe('the NHL builders are kept per store state', () => {
     const side0 = s1.games[0].sides[0]; const sk0 = side0.skaters[0]; const tab0 = defaultDefenseTab(side0.propfinder.tabs);
     expect(sk0.spot).toMatchObject({ source: 'propfinder', pos: sk0.pos, teams: tab0.count, tab: { key: tab0.key } });
     expect(sk0.spot.rankSog).toBe(tab0.rows[sk0.pos].ranks.sog);
-    expect(sk0.spot.softSog).toBe(sk0.spot.rankSog <= Math.ceil(tab0.count / 3));
+    // The flag is the model's lane on the row (shots, iCF, iFF and iSCF ranks together), the rank third only for a row without one.
+    const { laneOf } = require('../lib/nhl-data/propfinder');
+    expect(sk0.spot.laneSog).toBe(laneOf(tab0.rows[sk0.pos].ranks)?.sog ?? null);
+    expect(sk0.spot.softSog).toBe(sk0.spot.laneSog ? sk0.spot.laneSog === 'open' : sk0.spot.rankSog <= Math.ceil(tab0.count / 3));
     expect(sk0.oppPos).not.toBeNull();   // the study's own environment stays beside it
     // The skater table's Opp S/G, the edges and the matchup read sit on the same table: PropFinder's per-position season table first.
     expect(sk0.vs.sog).toMatchObject({ source: 'propfinder', rank: expect.any(Number) });
