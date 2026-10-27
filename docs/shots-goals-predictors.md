@@ -1071,8 +1071,8 @@ both in the builders and the board, none in the model's math:
   digits, `isPlayoffGame`) from every base — a skater's blended rate, his last 5 / 10 / 20 across the boundary, the
   flame / snowflake, the Defense tab's spans and track record, the shooting profiles, the first-goal record, the
   history and home / away workbooks the model is given. This season's rows come whole, so in April–June the playoffs
-  under way are the data. The skater's own blend into last season's regular season (n / (n + 18) shots, n / (n + 40)
-  goals) stays: section 12 is what the raw early-season rates did to the goal λ before Oct 10.
+  under way are the data. The skater's own blend into last season's regular season went the same way later that day
+  (the decision under section 16): this season's rate from his fifth game, last season's regular season until then.
 
 What the record says this costs, for the next reading of the scorecard: this season's position table alone added
 z +2.7 against the blend's +6.2 as a read (section 13), ranked worse than the skater's own blend as a multiplier
@@ -1175,3 +1175,13 @@ where the sample can tell.
 5. So the weight belongs on the one input the published λ goals reads weakest: his goal rate enters it through the
    points step (section 12's note), while the four factors it is asked to weigh are, by the data, one small multiplier
    (the opponent's row, matured) and three that should not move the number at all.
+
+**Decision (Vincent, 2026-10-27, on this section).** The rate is this season's. `blendRates` (the study's read, the
+board without a run, the shuffle's Study λ, the flame / snowflake baseline, the scorecard's Study λ from here on) and
+`blendedSeasonRates` (the model's season workbook) read a skater's own regular-season games this season alone from his
+fifth game; last season's regular season stands in until then (`held`). The n / (n + 18) and n / (n + 40) shrinkage of
+section 3 stays here and in no number. What the record says it costs: section 3 measured this season's average alone at
+deviance 3.05 against 1.19 for the blend over a whole season's early games, and section 12 is what raw early rates did
+to the goal λ before Oct 10 (λ 0.49 against 0.17 actual on one- to three-game samples); the five-game floor keeps the
+worst of that out, and section 16's rows (10+ games) are where this season's rate is the forecast. The scorecard's
+Study λ and the model's own grades will show the rest as the games come in.

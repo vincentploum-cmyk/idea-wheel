@@ -145,21 +145,18 @@ describe('PropFinder API → team tables', () => {
     expect(e.sog).toBe(15);
     expect(e.g).toBe(3);
   });
-  test('blended season rates: last season earns its weight back game by game', () => {
+  test('season rates: this season’s alone from his fifth game, last season’s regular season until then', () => {
     const game = (season, shots, goals, toi = '18:00') => ({ gameDate: `${season + 1}-01-01T00:00:00Z`, season, seasonType: 'REG', shots, missedShots: 1, blockedAtt: 1, goals, scoringChances: 2, totalTimeOnIce: toi });
     const prior = Array.from({ length: 20 }, () => game(2025, 2, 0.5, '20:00'));
-    // Two games this season at 6 shots and a goal each, on a 2-shot, half-a-goal prior.
+    // Two games this season at 6 shots and a goal each, on a 2-shot, half-a-goal prior: last season's rates, this season's GP.
     const hot = { name: 'Hot Start', stats: [...prior, game(2026, 6, 1, '16:00'), game(2026, 6, 1, '16:00')] };
-    const r = blendedSeasonRates(hot, 2026);
-    expect(r.gp).toBe(2);
-    expect(r.sog).toBeCloseTo((2 / 20) * 6 + (18 / 20) * 2, 2);     // 2.4
-    expect(r.icf).toBeCloseTo((2 / 20) * 8 + (18 / 20) * 4, 2);     // attempts shrink like shots
-    expect(r.g).toBeCloseTo((2 / 42) * 1 + (40 / 42) * 0.5, 2);     // 0.52
-    expect(r.toi).toBeCloseTo((2 / 7) * 16 + (5 / 7) * 20, 2);      // the role moves faster
-    // Twenty games in, this season carries about half of the shots and a third of the goals.
+    expect(blendedSeasonRates(hot, 2026)).toMatchObject({ gp: 2, sog: 2, g: 0.5, toi: 20 });
+    // Five games in: his own rates alone (Vincent's call, 2026-10-27).
+    const five = { name: 'Five', stats: [...prior, ...Array.from({ length: 5 }, () => game(2026, 6, 1, '16:00'))] };
+    expect(blendedSeasonRates(five, 2026)).toMatchObject({ gp: 5, sog: 6, g: 1, toi: 16 });
     const later = { name: 'Later', stats: [...prior, ...Array.from({ length: 20 }, () => game(2026, 4, 0.2))] };
-    expect(blendedSeasonRates(later, 2026).sog).toBeCloseTo((20 / 38) * 4 + (18 / 38) * 2, 2);
-    expect(blendedSeasonRates(later, 2026).g).toBeCloseTo((20 / 60) * 0.2 + (40 / 60) * 0.5, 2);
+    expect(blendedSeasonRates(later, 2026).sog).toBeCloseTo(4, 2);
+    expect(blendedSeasonRates(later, 2026).g).toBeCloseTo(0.2, 2);
     // No game yet this season: last season's rates. Under 10 games last season: this season's alone.
     expect(blendedSeasonRates({ stats: prior }, 2026)).toMatchObject({ gp: 20, sog: 2, g: 0.5 });
     expect(blendedSeasonRates({ stats: [...prior.slice(0, 9), game(2026, 6, 1)] }, 2026)).toMatchObject({ gp: 1, sog: 6, g: 1 });

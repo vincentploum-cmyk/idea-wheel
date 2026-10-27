@@ -8,17 +8,20 @@ describe('tonight’s picks', () => {
     expect(seasonYearOf('2026-10-08')).toBe(2026);
     expect(seasonYearOf('2027-04-01')).toBe(2026);
   });
-  test('rates blend this season into last season’s base by games played', () => {
+  test('rates are this season’s from his fifth game; last season’s regular season stands in until then', () => {
     const prev = Array.from({ length: 82 }, () => game(3));
     const cur = [game(5), game(6), game(4)];
+    // Three games this season on an 82-game base: last season's rate, held.
     const r = blendRates(cur, prev);
-    // w = 3 / 21 for shots: 5 * 3/21 + 3 * 18/21
-    expect(r.sog).toBeCloseTo(3.286, 2);
+    expect(r.sog).toBe(3); expect(r.held).toBe(true);
     expect(r.baseSog).toBe(3);
     expect(r.curSog).toBe(5);
-    // TOI blends at n / (n + 5); the last five games this season are the ice-time read.
+    // Five games this season: his own rate alone (Vincent's call, 2026-10-27), the base kept beside it for the record.
+    const five = blendRates([...cur, game(2), game(3)], prev);
+    expect(five.sog).toBe(4); expect(five.held).toBe(false); expect(five.baseSog).toBe(3); expect(five.base).toBe(82);
+    // TOI follows the same rule; the last five games this season are the ice-time read.
     const t = blendRates([game(3, 5, 0, 1, 20), game(3, 5, 0, 1, 22)], Array.from({ length: 82 }, () => game(3, 5, 0.3, 1.5, 15)));
-    expect(t.toi).toBeCloseTo((2 / 7) * 21 + (5 / 7) * 15, 3);
+    expect(t.toi).toBe(15);
     expect(t.toiL5).toBe(21);
     expect(blendRates([], Array.from({ length: 82 }, () => game(3, 5, 0.3, 1.5, 15))).toiL5).toBe(15);
     // No base and too few games this season: no rate. Five games this season stand alone.
@@ -227,12 +230,15 @@ describe('picks: form flags and the soft third', () => {
   const g = (sog, goals) => ({ sog, g: goals, icf: sog + 2, iscf: 1, toi: 18 });
   test('shots: hot at 1.4x his rate over the last five, cold at 0.7x, five games needed', () => {
     const prev = Array.from({ length: 20 }, () => g(2, 0));
-    const rates = blendRates([g(3, 0), g(4, 0), g(3, 0), g(3, 0), g(4, 0)], prev);
-    const f = formOf([g(3, 0), g(4, 0), g(3, 0), g(3, 0), g(4, 0)], prev, rates);
+    // His rate is this season's: five quiet games at one shot, then 3 / 4 / 3 / 3 / 4 (rate 2.2, last five 3.4).
+    const quiet = Array.from({ length: 5 }, () => g(1, 0)); const burst = [g(3, 0), g(4, 0), g(3, 0), g(3, 0), g(4, 0)];
+    const rates = blendRates([...quiet, ...burst], prev);
+    const f = formOf([...quiet, ...burst], prev, rates);
     expect(f.sogL5).toBe(3.4); expect(f.sogRatio).toBeGreaterThanOrEqual(FORM.hotShots); expect(f.hotS).toBe(true); expect(f.coldS).toBe(false);
-    const cold = formOf([g(1, 0), g(0, 0), g(1, 0), g(1, 0), g(0, 0)], prev, blendRates([g(1, 0), g(0, 0), g(1, 0), g(1, 0), g(0, 0)], prev));
+    const busy = Array.from({ length: 5 }, () => g(3, 0)); const dip = [g(1, 0), g(0, 0), g(1, 0), g(1, 0), g(0, 0)];
+    const cold = formOf([...busy, ...dip], prev, blendRates([...busy, ...dip], prev));
     expect(cold.coldS).toBe(true); expect(cold.hotS).toBe(false);
-    // the last five run across the season boundary
+    // the last five run across the season boundary; under five games this season his rate is last season's
     const early = formOf([g(5, 0)], prev, blendRates([g(5, 0)], prev));
     expect(early.games).toBe(5); expect(early.sogL5).toBe((2 * 4 + 5) / 5);
     expect(formOf([], [], rates)).toBeNull();
@@ -242,12 +248,14 @@ describe('picks: form flags and the soft third', () => {
     const prev = Array.from({ length: 20 }, () => g(2, 0.3));
     const hot = formOf([g(2, 1), g(3, 0), g(2, 2), g(1, 0), g(2, 1)], prev, blendRates([g(2, 1), g(3, 0), g(2, 2), g(1, 0), g(2, 1)], prev));
     expect(hot.gL5).toBe(4); expect(hot.hotG).toBe(true); expect(hot.coldG).toBe(false);
-    const dry = Array.from({ length: 10 }, () => g(2, 0));
+    // Three goals in his first five, then ten dry: his rate (0.2 a game) owed him two.
+    const dry = [g(2, 1), g(2, 1), g(2, 1), g(2, 0), g(2, 0), ...Array.from({ length: 10 }, () => g(2, 0))];
     const cold = formOf(dry, prev, blendRates(dry, prev));
     expect(cold.gL10).toBe(0); expect(cold.coldG).toBe(true); expect(cold.hotG).toBe(false);
     // a 0.07-a-game defenseman is never cold
     const dprev = Array.from({ length: 20 }, () => g(1, 0.07));
-    expect(formOf(dry, dprev, blendRates(dry, dprev)).coldG).toBe(false);
+    const ddry = [g(1, 1), ...Array.from({ length: 14 }, () => g(1, 0))];   // one goal in fifteen: 0.07 a game
+    expect(formOf(ddry, dprev, blendRates(ddry, dprev)).coldG).toBe(false);
   });
   test('the soft third of a ranked table', () => {
     expect(isSoftThird(1, 32)).toBe(true); expect(isSoftThird(11, 32)).toBe(true); expect(isSoftThird(12, 32)).toBe(false);

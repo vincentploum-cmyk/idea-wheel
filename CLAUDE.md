@@ -402,11 +402,11 @@ config and keeps its own markets, teams, feeds and slate key:
   The numbers are the model's: with a run saved for the date, each row is the run's λ and 2+ / 3+ / 4+ SOG and 1+ G
   probabilities (`fromModel`) and only skaters the run projected are listed; the study's plain-rate read (fixed
   Poisson coefficients fitted on 2024-25 + 2025-26 by `tools/predictors/replay.py`, log features: the skater's rate,
-  attempts, chances and TOI, this season blended into last season's regular season at n / (n + 18) shots, n / (n + 40)
-  goals; home ice; back-to-back; and what the opponent allows **per skater at his position** this season
-  (`positionAllowed`; Vincent's call, 2026-10-27: no blend into last season's table — the study's games / (games + 15)
-  and games / (games + 40) blend stays on record in sections 13 and 15 and in no number; last season's regular season
-  stands in only for a team with no game yet, `held`)) rides on
+  attempts, chances and TOI, this season's alone from his fifth game (`blendRates`; last season's regular season stands
+  in until then, `held`); home ice; back-to-back; and what the opponent allows **per skater at his position** this season
+  (`positionAllowed`; last season's regular season only for a team with no game yet, `held`). Vincent's call, 2026-10-27,
+  twice over: this season's rate and this season's table — the study's n / (n + 18), n / (n + 40) and games / (games + 15),
+  games / (games + 40) blends stay on record in sections 3, 13, 15 and 16 and in no number) rides on
   each API row as `study` and stands in when no run exists, but the panel shows one set of numbers only: player,
   2+ / 3+ / 4+ (1+ G) with the break-even price, and Got once final — no study, rate or opponent columns (the user
   wants the plays readable at a glance; the comparison lives on the History tab's scorecard). Beside the name, for
@@ -511,10 +511,10 @@ config and keeps its own markets, teams, feeds and slate key:
   `data/propfinder/*` and the season + L5 matchup workbooks through `ingestMatchupFile`, in the
   exports' exact layouts, then the auto run. Admin button and `POST /api/nhl/data/propfinder/pull`.
   Keep producing the CSV/workbook shapes the parsers already read; never adapt the parsers to the API.
-  The season workbook's numbers are blended, not raw (the predictor study's shrinkage, `docs/shots-goals-predictors.md`
-  sections 3 and 9): each skater's "Season" row is this season's regular-season games blended with last season's at
-  n / (n + 18) for shots, attempts and chances, n / (n + 40) for goals, assists and points, n / (n + 5) for TOI
-  (`blendedSeasonRates`; last season's alone until his first game, this season's alone without a 10-game prior), and
+  The season workbook's numbers are this season's, not a blend (Vincent's call, 2026-10-27; the predictor study's
+  shrinkage, `docs/shots-goals-predictors.md` sections 3 and 9, stays there and in no number): each skater's "Season"
+  row is this season's regular-season games alone from his fifth (`blendedSeasonRates`, the name kept; last season's
+  regular season stands in until then when it has 10+ games, GP this season's count), and
   each "Defense (Season)" block is the team's season to date as PropFinder publishes it (`defenseBlocks`; Vincent's
   call, 2026-10-27: the blend into last season's figure at n / (n + 15) and n / (n + 40) is gone, last season's row
   stands in only for a team with no game yet; no L10 window any more). GP is this season's count. The L5 workbook and the stored CSV-shaped tables stay PropFinder's own numbers; a
@@ -587,8 +587,8 @@ config and keeps its own markets, teams, feeds and slate key:
   (both lists must carry a new person). Every `/api/nhl/*`, `/api/nfl/*` and `/api/site/*` route must call
   `requireNhlAdmin()` or `authorize()`.
 - Last season means the regular season: `loadRows` (`rowsBefore` in `lib/nhl-data/build.js`) drops the previous
-  season's playoff rows (`isPlayoffGame` in `util.js`, the game id's type digits) from every base — a skater's blended
-  rates, his last 5 / 10 / 20 across the boundary, the flame / snowflake, the Defense tab's spans and track record, the
+  season's playoff rows (`isPlayoffGame` in `util.js`, the game id's type digits) from every base — a skater's rates
+  before his fifth game, his last 5 / 10 / 20 across the boundary, the flame / snowflake, the Defense tab's spans and track record, the
   profiles, the first-goal record, the history and home / away workbooks the model is given; this season's rows come
   whole, so the playoffs under way in April–June are the data. The opponent's table in any number is this season's
   (`positionAllowed`, `defenseBlocks`); the Defense tab's Season span alone still blends the two regular seasons and
