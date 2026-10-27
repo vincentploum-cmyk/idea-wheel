@@ -695,6 +695,19 @@ p { margin: 0; }
 .nhlx-mu-verdict li.is-tough::marker { color: var(--bad-fg); }
 .nhlx-mu-total { margin-top: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
 .nhlx-mu-total > small { display: block; margin-top: 6px; }
+/* The game script: a few sentences under the game head, one line a part with its lead word bold;
+   the total's tone (high / low) on the headline pill and on its lead word. */
+.nhlx-mu-script { margin-top: 14px; }
+.nhlx-mu-script p { margin: 6px 0 0; max-width: 65ch; font-size: 15px; line-height: 1.5; color: var(--body); }
+.nhlx-mu-script p b { color: var(--heading); font-weight: 600; }
+.nhlx-mu-script p.is-soft > b { color: var(--ok-fg); }
+.nhlx-mu-script p.is-tough > b { color: var(--bad-fg); }
+/* The numbers the script was written from, folded under it. */
+.nhlx-mu-numbers { margin-top: 10px; }
+.nhlx-mu-numbers > summary { cursor: pointer; font-size: 13px; color: var(--muted); list-style-position: inside; }
+.nhlx-mu-numbers > summary:hover { color: var(--heading); }
+.nhlx-mu-numbers[open] > summary { color: var(--heading); }
+.nhlx-mu-numbers .nhlx-mu-total { margin-top: 10px; }
 .nhlx-mu-side { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
 .nhlx-mu-side-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--heading); }
 .nhlx-mu-side-head small { color: var(--muted); font-size: 13px; }
