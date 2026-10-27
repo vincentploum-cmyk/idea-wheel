@@ -376,11 +376,13 @@ describe('NBA ladders', () => {
     expect(bare.find((r) => r.line === 7.5).p).toBeGreaterThan(0.7);   // 8 every night: the floor on his spread keeps a tail
     expect(bare.find((r) => r.line === 8.5).p).toBeLessThan(0.3);
     expect(ladderOf(logs, { market: 'dd', season: 2026 })).toEqual([]);
-    // Four games this season: the rungs read over the last 82 across the seasons, not the four.
+    // Four games this season: the rungs' season rate reads those four (20, 23, 26, 29: none over 33.5), not the 24 across
+    // the seasons; the spread behind the model half still comes from his last 82.
     const early = [...logs.slice(0, 4).map((g) => ({ ...g, season: 2027 })), ...logs.map((g) => ({ ...g, season: 2026 }))];
     const e = ladderOf(early, { market: 'pts', season: 2027, prop: { market: 'pts', line: 25.5, odds: -110, underOdds: -110, books: 2, isMain: true } });
-    expect(e.find((r) => r.line === 33.5).rates.n).toBe(24);
+    expect(e.find((r) => r.line === 33.5).rates).toMatchObject({ n: 4, season: 0 });
     expect(e.find((r) => r.line === 33.5).p).toBeLessThan(0.15);
+    expect(e.find((r) => r.line === 33.5).sd).toBeGreaterThan(4);
   });
   test('every side player with logs carries his ladders', () => {
     const games = [{ id: 'g1', date: '2026-10-21T23:30Z', away: 'BOS', home: 'NY', final: false, state: 'pre' }];

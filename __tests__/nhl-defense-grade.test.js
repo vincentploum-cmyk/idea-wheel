@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import { gradeDefenseReads, thirdOf } from '../lib/nhl-data/defense-grade';
-import { blendedDefense, defenseByPosition } from '../lib/nhl-data/defense';
+import { seasonDefense, defenseByPosition } from '../lib/nhl-data/defense';
 import { boardTables } from '../lib/nhl-data/defense-board';
 
 // Last season: 12 games where NJD gives centres 4 shots and 1 goal, BOS gives centres 1 shot and 0 goals,
@@ -30,7 +30,9 @@ describe('the defense tab graded', () => {
     const g = gradeDefenseReads([...prev, ...cur], { season: 2026 });
     expect(g).toMatchObject({ season: 2026, from: '2026-10-01', to: '2026-10-03', dates: 2, games: 2, skaterGames: 4 });
     const s = g.spans.season.sog;
-    // Oct 1: NJD is the soft third for centres (4 a game last season), BOS the tough one; player 1 shot 5 against a 3.0 rate.
+    // Oct 1: nothing stored this season, so last season's table stands in: NJD is the soft third for centres (4 a game),
+    // BOS the tough one; player 1 shot 5 against a 3.0 rate. Oct 3: this season's one game alone (NJD 5, BOS 1, NYR
+    // still last season's 2): the same order.
     expect(s.thirds.soft.n).toBe(2); // player 1 on Oct 1 and player 3 on Oct 3, both at NJD
     expect(s.thirds.soft.actual).toBe(4.5);
     expect(s.thirds.soft.expected).toBeCloseTo((3 + 2.5) / 2, 2);
@@ -47,12 +49,12 @@ describe('the defense tab graded', () => {
     expect(s.ranks[0]).toMatchObject(s.thirds.soft);
     expect(s.ranks[0].top).toMatchObject({ n: 2, actual: 4.5, hit: 1 });
     expect(s.ranks[1]).toMatchObject({ rank: 2, n: 1, actual: 3, hit: 1 }); // player 1 at NYR on Oct 3
-    expect(s.ranks[1].expected).toBeCloseTo(5 / 19 + (18 / 19) * 3, 2); // his 5 on Oct 1 blended into last season's 3.0 at 1 / (1 + 18)
+    expect(s.ranks[1].expected).toBeCloseTo(5 / 19 + (18 / 19) * 3, 2); // his own rate going in: his 5 on Oct 1 blended into last season's 3.0 at 1 / (1 + 18)
     expect(s.ranks[1].top.n).toBe(3);
     expect(s.ranks[1].top.actual).toBeCloseTo((4.5 * 2 + 3) / 3, 3);
     expect(s.ranks[2]).toMatchObject(s.thirds.tough);
     expect(s.ranks[2].top).toEqual(s.all);
-    // Goals: NJD leaks a goal a game to centres last season; the blend at 0 games this season is last season's table.
+    // Goals: NJD leaks a goal a game to centres last season (Oct 1's table) and one in its one game this season (Oct 3's).
     const gg = g.spans.season.g;
     expect(gg.thirds.soft.n).toBe(2);
     expect(gg.thirds.soft.actual).toBe(0.5);
@@ -68,7 +70,7 @@ describe('the defense tab graded', () => {
 });
 
 describe('the grader rebuilds the tab’s tables exactly', () => {
-  test('each date’s ranked boards equal blendedDefense / defenseByPosition on the rows before it', () => {
+  test('each date’s ranked boards equal seasonDefense / defenseByPosition on the rows before it', () => {
     // Four teams, four positions, two skaters a position; 14 games last season, 4 dates this season, with some noise.
     const teams = ['NJD', 'BOS', 'NYR', 'TOR']; const pos = ['C', 'LW', 'RW', 'D'];
     let seed = 7; const rnd = () => { seed = (seed * 48271) % 2147483647; return seed / 2147483647; };
@@ -87,7 +89,7 @@ describe('the grader rebuilds the tab’s tables exactly', () => {
     expect(Object.keys(seen)).toEqual(dates);
     for (const date of dates) {
       const prior = rows.filter((r) => r.date < date);
-      const ref = { season: blendedDefense(prior, date), l10: defenseByPosition(prior, { lastN: 10 }), l5: defenseByPosition(prior, { lastN: 5 }) };
+      const ref = { season: seasonDefense(prior, date), l10: defenseByPosition(prior, { lastN: 10 }), l5: defenseByPosition(prior, { lastN: 5 }) };
       for (const span of ['season', 'l10', 'l5']) for (const metric of ['sog', 'g']) {
         const t = boardTables(ref[span], { metric, venue: 'ALL', group: 'pos' });
         for (const p of pos) {

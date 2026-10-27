@@ -24,7 +24,7 @@ const STAT_LABEL = { pts: 'PTS', reb: 'REB', ast: 'AST', tpm: '3PM', pra: 'PRA',
 // Per-game figures that are not markets: read straight off the game row.
 const RAW = new Set(['min', 'usg', 'rebCh', 'potAst']);
 const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
-const SEASON_MIN = 10;   // the season split is last season's (his last 82) until this one has ten games
+const SEASON_MIN = 1;    // the season split is this season's from his first game; last season's (his last 82) stands in until then
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
 const pct = (r) => (r == null ? '—' : `${Math.round(r * 100)}%`);
 const mdy = (iso) => (iso ? `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}/${iso.slice(2, 4)}` : '');
