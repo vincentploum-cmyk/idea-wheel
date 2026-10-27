@@ -424,7 +424,11 @@ config and keeps its own markets, teams, feeds and slate key:
   every team that played is settled from the lines posted during its game, not only the ones playing again today
   (the backstop for a chain that broke), and the Mac sync reads once more 3 h 30 to 4 h after puck drop.
   `autoRunModel` never runs for a past date (a run saved after the games would only replace the pre-game run the
-  rink shows; the scorecard grades the newest run saved before puck drop). Each rink shows when its source last changed
+  rink shows; the scorecard grades the newest run saved before puck drop). `GET /api/nhl/data/lineups/audit?from&to`
+  (`lib/nhl-data/lineup-audit.js`) says which stored games still owe a post-game read: per team where its positions came
+  from (a tweet from the warm-up window or the game = settled; an earlier tweet; the preview; the depth chart or roster;
+  no snapshot), the tweet's minutes from puck drop, and what a re-stamp would change; the `backfill_from` input of
+  `nhl-lineups.yml` settles every date from there to the date input (pages posted per date, then `only=settle`). Each rink shows when its source last changed
   and the Matchups header when the beat writers' pages last arrived (`sourceMeta.gdtFetchedAt`). After every lineup capture (and every matchup-file import for a
   coming slate) `lib/nhl-data/autorun.js` runs the model on the server with the stored
   PropFinder workbooks + snapshot lineups + built history/home-away inputs + the pace workbook built from

@@ -44,6 +44,10 @@ on:
         description: 'Game ids whose post-game read is done, comma-separated (carried from hop to hop)'
         required: false
         default: ''
+      backfill_from:
+        description: 'Post-game reads for past dates: every date from this one (YYYY-MM-DD) up to the date input, pages posted and only=settle per date; no chain'
+        required: false
+        default: ''
 
 jobs:
   lineups:
@@ -67,8 +71,30 @@ jobs:
           [ -n "$CHAIN" ] || CHAIN=60
           SETTLE="${{ github.event.inputs.settle }}"; [ "$SETTLE" = "1" ] || SETTLE=0
           SETTLED="${{ github.event.inputs.settled }}"
-          echo "date=$DATE" >> "$GITHUB_OUTPUT"; echo "due=$DUE" >> "$GITHUB_OUTPUT"; echo "chain=$CHAIN" >> "$GITHUB_OUTPUT"; echo "settle=$SETTLE" >> "$GITHUB_OUTPUT"; echo "settled=$SETTLED" >> "$GITHUB_OUTPUT"
-          echo "date=$DATE due=${DUE:-all} chain=$CHAIN settle=$SETTLE settled=${SETTLED:-none} event=${{ github.event_name }}"
+          BACKFILL="${{ github.event.inputs.backfill_from }}"
+          # A backfill settles its dates and stops: no chain, and the date itself is a post-game read.
+          if [ -n "$BACKFILL" ]; then CHAIN=0; SETTLE=1; fi
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"; echo "due=$DUE" >> "$GITHUB_OUTPUT"; echo "chain=$CHAIN" >> "$GITHUB_OUTPUT"; echo "settle=$SETTLE" >> "$GITHUB_OUTPUT"; echo "settled=$SETTLED" >> "$GITHUB_OUTPUT"; echo "backfill=$BACKFILL" >> "$GITHUB_OUTPUT"
+          echo "date=$DATE due=${DUE:-all} chain=$CHAIN settle=$SETTLE settled=${SETTLED:-none} backfill=${BACKFILL:-none} event=${{ github.event_name }}"
+      - name: Post-game reads for past dates (backfill)
+        if: steps.when.outputs.backfill != ''
+        continue-on-error: true
+        env:
+          NHL_ACTIONS_TOKEN: ${{ secrets.NHL_ACTIONS_TOKEN }}
+        run: |
+          # Every date from backfill_from up to the day before the date input (the date itself follows below):
+          # the teams' pages as they stand now (a page holds ~50 tweets, about two weeks for a busy writer), posted
+          # with that date so the lines posted at or during those games count, then the settle: the previews'
+          # final update, the snapshot re-captured, the stored box scores re-stamped. The audit
+          # (GET /api/nhl/data/lineups/audit?from&to) says which dates were worth it.
+          d="${{ steps.when.outputs.backfill }}"; end="${{ steps.when.outputs.date }}"
+          while [ "$d" \< "$end" ]; do
+            echo "== $d"
+            tools/gdt-pages.sh "$d" || echo "pages for $d: not posted"
+            scode=$(curl -sS -o "settle-$d.json" -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?date=$d&only=settle" || true)
+            echo "settle $d: ${scode:-000} $(head -c 600 "settle-$d.json" 2>/dev/null)"
+            d=$(date -u -d "$d +1 day" +%F)
+          done
       - name: Beat writers' lines from GameDayTweets (fetched here, parsed by the site)
         continue-on-error: true
         env:
