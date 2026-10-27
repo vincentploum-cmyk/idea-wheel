@@ -27,7 +27,11 @@ function Row({ x, badge = false }) {
   );
 }
 
-/** One team: strengths and weaknesses side by side, the style of play under them. */
+/**
+ * One team: its head, strengths, weaknesses and style of play. The wrapper is `display: contents`,
+ * so the four parts sit on the grid of `.nhlx-char-grid` (head row, lists row, style row) and two
+ * teams side by side keep their sections level however long either list runs.
+ */
 export function TeamCharacteristics({ c, headline = null, tone = '' }) {
   return (
     <div className="nhlx-char-team">
@@ -36,17 +40,15 @@ export function TeamCharacteristics({ c, headline = null, tone = '' }) {
         <small>{c.venue === 'H' ? 'home' : 'away'}</small>
         {headline ? <span className={`nhlx-edge ${tone}`}>{headline}</span> : null}
       </div>
-      <div className="nhlx-char-cols">
-        <section aria-label={`${c.team} strengths`}>
-          <h5><i className="is-plus">+</i> Strengths</h5>
-          {c.strengths.length ? <ul>{c.strengths.map((x) => <Row key={x.key} x={x} badge />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out</p>}
-        </section>
-        <section aria-label={`${c.team} weaknesses`}>
-          <h5><i className="is-minus">−</i> Weaknesses</h5>
-          {c.weaknesses.length ? <ul>{c.weaknesses.map((x) => <Row key={x.key} x={x} badge />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out</p>}
-        </section>
-      </div>
-      <section aria-label={`${c.team} style of play`}>
+      <section className="nhlx-char-strengths" aria-label={`${c.team} strengths`}>
+        <h5><i className="is-plus">+</i> Strengths</h5>
+        {c.strengths.length ? <ul>{c.strengths.map((x) => <Row key={x.key} x={x} badge />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out</p>}
+      </section>
+      <section className="nhlx-char-weaknesses" aria-label={`${c.team} weaknesses`}>
+        <h5><i className="is-minus">−</i> Weaknesses</h5>
+        {c.weaknesses.length ? <ul>{c.weaknesses.map((x) => <Row key={x.key} x={x} badge />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out</p>}
+      </section>
+      <section className="nhlx-char-style" aria-label={`${c.team} style of play`}>
         <h5>Style of play</h5>
         {c.style.length ? <ul>{c.style.map((x) => <Row key={x.key} x={x} />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out yet</p>}
       </section>
