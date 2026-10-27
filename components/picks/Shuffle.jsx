@@ -7,7 +7,7 @@ import { survivorsAt, fallenAt, curveOf, READ_FROM, bestReadFrom, readFromOf, BE
 // The shuffle (each board's Shuffle tab): a bar per stat. Raise it and the field falls away; what
 // stays are the players whose chance of clearing the bar holds over the floor, each with his chance
 // there, how often he has actually cleared it, the book's rung at or above the bar with its price and
-// edge, and the height where he himself thins out. One request per market (/api/<sport>/shuffle),
+// edge, and his projection for the game (the board's). One request per market (/api/<sport>/shuffle),
 // every bar move local; the tab mounts the panel on its first visit and keeps it.
 //   sport: { api, query, markets: [{ market, label, unit, min, max, step, start }], teamLogo, headshotUrl, withDay }
 //   onOpen(player, market): open the player's card (the NBA), optional.
@@ -130,6 +130,8 @@ export default function Shuffle({ sport, onOpen = null }) {
   const unitOf = (m) => markets.find((x) => x.market === m)?.unit || '';
   const final = !!d && d.finals > 0;
   const fromLabel = READ_FROM.find(([k]) => k === from)?.[1] || from;
+  // The board's projection is the Projected column; the centre column shows only when the chance is read from somewhere else.
+  const showCentre = from !== 'blend';
 
   return (
     <section className="ir-sh" aria-label="Shuffle">
@@ -191,18 +193,19 @@ export default function Shuffle({ sport, onOpen = null }) {
                     <tr>
                       <th>Player</th>
                       <th title="In: nothing listed, or listed active · DTD: on the report but not ruled out (day-to-day, questionable, probable, a game-time decision) · Out: out, doubtful, suspended or on an injured list; the hover names the status as listed">Health</th>
-                      <th title="The opponent’s rank at his position for the stat on the season table (this season blended into last season’s; the court’s and the card’s Season tab — their L5 / L10 windows compare against it and move no figure), 1 = gives up the most, with its factor on his rate; ‘team ×’ is his side’s factor (the team’s expected total, pro-rated to the minutes its priced players play, over their rates), the two multiplied into his projection">Matchup</th>
-                      <th className="is-num" title={from === 'blend' ? 'His projection for the game, and the quartiles of his range' : `The centre his chance is read around: ${fromLabel.toLowerCase()}${from === 'line' || from === 'h2h' ? '' : ' × the matchup'}; the board’s projection under it`}>{from === 'blend' ? 'Expected' : 'Centre'}</th>
+                      <th title="The opponent’s rank at his position for the stat on the season table (the court’s and the card’s first tab; their other tabs compare against it and move no figure), 1 = gives up the most, with its factor on his rate; ‘team ×’ is his side’s factor (the team’s expected total, pro-rated to the minutes its priced players play, over their rates), the two multiplied into his projection">Matchup</th>
+                      {showCentre ? <th className="is-num" title={`The centre his chance is read around: ${fromLabel.toLowerCase()}${from === 'line' || from === 'h2h' ? '' : ' × the matchup'} (the board’s projection when he lacks the window)`}>Centre</th> : null}
                       <th className="is-num" title={`His chance of ${height}+ and the break-even price under it`}>Chance at {height}+</th>
                       <th title="How often he cleared the bar: his last ten, and the season rate">Cleared it</th>
                       <th className="is-num" title="The book’s rung at the bar, or the nearest rung above it, with its price">Book</th>
                       <th className="is-num" title="The rung’s chance minus the price’s implied probability, in points">Edge</th>
-                      <th className="is-num" title={`The highest bar he still clears at ${Math.round(floor * 100)}%`}>Thins out</th>
+                      <th className="is-num" title="His projection for the game, the board’s: his season blended with his last ten × the matchup × his side’s factor, the figure the board and the card show; the quartiles of his range beside the unit">Projected</th>
                       {final ? <th className="is-num" title="The box-score figure">Got</th> : null}
                     </tr>
                   </thead>
                   <tbody>
-                    {survivors.length ? survivors.map(({ player: p, read: r, thins }) => {
+                    {survivors.length ? survivors.map(({ player: p, read: r }) => {
+                      const windows = `Spread ${num(p.sd)} over his games · last 5 ${num(p.own?.l5)} · last 10 ${num(p.own?.l10)} · season ${num(p.own?.season)} (${p.own?.seasonN ?? 0} games) · vs ${p.opp} ${num(p.own?.h2h)} (${p.own?.h2hN ?? 0} meetings) · blend ${num(p.own?.blend)}`;
                       const tone = toneOf(p.spot?.rank, p.spot?.count);
                       const grade = r.hit == null ? '' : r.hit ? ' is-hit' : ' is-miss';
                       return (
@@ -214,17 +217,17 @@ export default function Shuffle({ sport, onOpen = null }) {
                             </div>
                           </td>
                           <td><span className={`ir-health is-${(p.health || 'In').toLowerCase()}`} title={p.injury ? `${p.injury}${p.injuryDetail ? ` · ${p.injuryDetail}` : ''}` : 'Nothing listed'}>{p.health || 'In'}</span></td>
-                          <td>{p.spot?.rank ? <span className={`ir-spot is-${tone}`} title={`${p.opp} gives up ${num(p.spot.value)} ${unitOf(active)} a game to ${p.spot.pos}s, #${p.spot.rank} of ${p.spot.count}${p.spot.league != null ? ` (the league ${num(p.spot.league)})` : ''} on ${p.spot.held ? `last season’s table (${p.opp}’s own until it has ten games this season)` : 'the season table (this season blended into last season’s)'}, the table the board reads: the court’s L5 / L10 tabs compare against it${p.matchup != null ? ` · × ${num(p.matchup, 2)} on his rate` : ''}`}>#{p.spot.rank} {p.spot.pos}</span> : <span className="ir-spot is-none">no table</span>}{p.matchup != null ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }}>× {num(p.matchup, 2)}</small> : null}{p.teamFactor != null && p.teamFactor !== 1 ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }} title={`${p.team}’s expected total tonight, pro-rated to the minutes its priced players play, over the sum of their own rates: × ${num(p.teamFactor, 2)} on every projection of the side`}>team × {num(p.teamFactor, 2)}</small> : null}</td>
-                          <td className="is-num" title={`Spread ${num(p.sd)} over his games · last 5 ${num(p.own?.l5)} · last 10 ${num(p.own?.l10)} · season ${num(p.own?.season)} (${p.own?.seasonN ?? 0} games) · vs ${p.opp} ${num(p.own?.h2h)} (${p.own?.h2hN ?? 0} meetings) · blend ${num(p.own?.blend)}`}><b>{num(r.centre)}</b><small>{from === 'blend' ? (p.floor != null ? `${p.floor}–${p.ceiling}` : '') : `board ${num(p.exp)}`}</small></td>
+                          <td>{p.spot?.rank ? <span className={`ir-spot is-${tone}`} title={`${p.opp} gives up ${num(p.spot.value)} ${unitOf(active)} a game to ${p.spot.pos}s, #${p.spot.rank} of ${p.spot.count}${p.spot.league != null ? ` (the league ${num(p.spot.league)})` : ''} on ${p.spot.held ? `last season’s table (${p.opp} has no game this season yet)` : 'this season’s table'}, the table the board reads: the court’s other tabs compare against it${p.matchup != null ? ` · × ${num(p.matchup, 2)} on his rate` : ''}`}>#{p.spot.rank} {p.spot.pos}</span> : <span className="ir-spot is-none">no table</span>}{p.matchup != null ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }}>× {num(p.matchup, 2)}</small> : null}{p.teamFactor != null && p.teamFactor !== 1 ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }} title={`${p.team}’s expected total tonight, pro-rated to the minutes its priced players play, over the sum of their own rates: × ${num(p.teamFactor, 2)} on every projection of the side`}>team × {num(p.teamFactor, 2)}</small> : null}</td>
+                          {showCentre ? <td className="is-num" title={windows}><b>{num(r.centre)}</b></td> : null}
                           <td className="is-num is-lead" title={`Model tail ${pct(r.model)} · hit rate ${pct(r.emp)} over ${r.n} games`}><b>{pct(r.p)}</b><small>{r.fair} fair</small></td>
                           <td className="small">{r.cleared ? `${r.cleared.n} of last ${r.cleared.of}` : '—'}{r.season != null ? <small className="nhlx-auto-meta"> · {pct(r.season)} season</small> : null}</td>
                           <td className="is-num" title={r.book ? `${r.exact ? 'The book’s rung at the bar' : 'The nearest rung above the bar'}: ${r.book.main ? 'the main line, ' : ''}${r.book.books} book${r.book.books === 1 ? '' : 's'} · its chance ${pct(r.book.p)}` : 'No rung at or above the bar'}>{r.book ? <><b>{r.exact ? '' : '↑ '}o{r.book.line}</b><small>{fmtOdds(r.book.odds)}{r.book.main ? ' · main' : ''}</small></> : <small>no line</small>}</td>
                           <td className={`is-num${r.edge != null && r.edge > 0 ? ' is-best' : ''}`}>{r.edge == null ? '—' : <b>{r.edge >= 0 ? '+' : '−'}{Math.abs(Math.round(r.edge * 100))} pts</b>}</td>
-                          <td className="is-num"><b>{thins == null ? '—' : `${thins}+`}</b></td>
+                          <td className="is-num" title={`The board’s projection · ${windows}`}><b>{num(p.exp)}</b><small>{unitOf(active)}{p.floor != null ? ` · ${p.floor}–${p.ceiling}` : ''}</small></td>
                           {final ? <td className="is-num nhlx-pk-got">{r.got === undefined ? <small>—</small> : r.got === null ? <small>DNP</small> : <><b>{r.got}</b><small>{unitOf(active)}</small></>}</td> : null}
                         </tr>
                       );
-                    }) : <tr><td colSpan={final ? 10 : 9}><small className="ir-nfl-none">Nobody clears {height}+ at {Math.round(floor * 100)}% or better. Lower the bar or the floor.</small></td></tr>}
+                    }) : <tr><td colSpan={8 + (showCentre ? 1 : 0) + (final ? 1 : 0)}><small className="ir-nfl-none">Nobody clears {height}+ at {Math.round(floor * 100)}% or better. Lower the bar or the floor.</small></td></tr>}
                   </tbody>
                 </table>
               </div>

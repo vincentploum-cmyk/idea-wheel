@@ -10,6 +10,7 @@ import { TeamLink } from './links';
 import { oppClass } from './MoneyPuck';
 import { Rink, RinkLegend } from './Rink';
 import { GameCharacteristics } from './Characteristics';
+import { defenseCardFromTabs } from '@/lib/nhl-data/propfinder-csv';
 
 const POS = ['LW', 'C', 'RW', 'D'];
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
@@ -56,35 +57,49 @@ function FirstGoalCell({ fg, pos, opp, venue, teamCount }) {
   );
 }
 
-function DefenseCard({ side, teamCount, mp }) {
+/**
+ * The defense card under a rink (in "Defense tables and all skaters"): what `side.opp` allows per
+ * game to each position on PropFinder's table, the one above the rink, on the tab the rink is on
+ * (`pfKey`; this season's by default) with PropFinder's ranks, the L10 column off its L10 tab; the
+ * first goals given up at tonight's venue stay the stored games' (PropFinder has none). The stored
+ * venue table stands in, named, for a team without a PropFinder table.
+ */
+function DefenseCard({ side, teamCount, mp, pfKey = null }) {
   const defVenue = side.venue === 'A' ? 'home' : 'away';
+  const card = defenseCardFromTabs(side.propfinder?.tabs, pfKey);
+  const n = card?.tab?.count || teamCount;
+  const fg = side.defense.All?.firstGoal;
+  const fgText = fg?.games ? ` · first goal given up in ${fg.allowed} of ${fg.games} games at ${defVenue} (${slotBreakdown(fg.bySlot) || 'no line on record'})` : '';
   return (
     <div className="nhlx-defcard">
       <div className="nhlx-defcard-head">
         <TeamLogo abbr={side.opp} size={28} />
         <div>
-          <b>{side.opp} defense at {defVenue}</b>
-          <small>Allowed per game to each position · rank 1 = most permissive of {teamCount}</small>
+          <b>{side.opp} defense{card ? '' : ` at ${defVenue}`}</b>
+          <small>{card ? `Allowed per game to each position over ${card.text} · PropFinder’s table above the rink, the tab the rink is on · rank 1 = most permissive of ${n}` : `Allowed per game to each position · the stored box scores at ${defVenue} (no PropFinder table for ${side.opp}) · rank 1 = most permissive of ${teamCount}`}</small>
         </div>
       </div>
       <table className="nhlx-deftable">
         <thead>
-          <tr><th>Pos</th><th>SOG</th><th>Goals</th><th>Chances</th><th>L10 SOG</th><th title="First goals of the game given up to this position at this venue, out of the games whose first goal is on record; the line slots they came from">1st goal</th></tr>
+          <tr><th>Pos</th><th>SOG</th><th>Goals</th><th>Chances</th><th title={card ? (card.l10 ? 'PropFinder’s L10 tab' : 'No L10 tab for this team') : 'The stored last 10 games'}>L10 SOG</th><th title="First goals of the game given up to this position at this venue, out of the games whose first goal is on record; the line slots they came from (the stored games)">1st goal</th></tr>
         </thead>
         <tbody>
           {POS.map((pos) => {
             const d = side.defense[pos];
-            const s = d?.season;
-            const r = d?.rank || {};
-            const l10 = d?.l10;
-            const rl10 = d?.l10Rank || {};
+            const b = card ? card.rows[pos].band : null;
+            const s = card ? b?.season : d?.season;
+            const r = (card ? b?.rank : d?.rank) || {};
+            const cnt = card ? n : d?.teamCount || teamCount;
+            const l10 = card ? card.rows[pos].l10?.season : d?.l10;
+            const rl10 = (card ? card.rows[pos].l10?.rank : d?.l10Rank) || {};
+            const nl10 = card ? card.l10?.count || n : teamCount;
             return (
               <tr key={pos}>
-                <td><b>{pos}</b>{d?.source === 'propfinder' ? <i title={`PropFinder ${d.seasonLabel}`}> PF</i> : null}</td>
-                <td className={rankClass(r.sog, d?.teamCount || teamCount)}>{s?.gp ? `${num(s.sog)} ` : '—'}{r.sog ? <i>#{r.sog}</i> : null}</td>
-                <td className={rankClass(r.g, teamCount)}>{s?.gp ? `${num(s.g, 2)} ` : '—'}{r.g ? <i>#{r.g}</i> : null}</td>
-                <td className={rankClass(r.iscf, teamCount)}>{s?.gp ? `${num(s.iscf)} ` : '—'}{r.iscf ? <i>#{r.iscf}</i> : null}</td>
-                <td className={rankClass(rl10.sog, teamCount)}>{l10?.gp ? `${num(l10.sog)} ` : '—'}{rl10.sog ? <i>#{rl10.sog}</i> : null}</td>
+                <td><b>{pos}</b>{!card && d?.source === 'propfinder' ? <i title={`PropFinder ${d.seasonLabel}`}> PF</i> : null}</td>
+                <td className={rankClass(r.sog, cnt)}>{s?.gp ? `${num(s.sog)} ` : '—'}{r.sog ? <i>#{r.sog}</i> : null}</td>
+                <td className={rankClass(r.g, cnt)}>{s?.gp && s.g != null ? `${num(s.g, 2)} ` : '—'}{r.g ? <i>#{r.g}</i> : null}</td>
+                <td className={rankClass(r.iscf, cnt)}>{s?.gp && s.iscf != null ? `${num(s.iscf)} ` : '—'}{r.iscf ? <i>#{r.iscf}</i> : null}</td>
+                <td className={rankClass(rl10.sog, nl10)}>{l10?.gp ? `${num(l10.sog)} ` : '—'}{rl10.sog ? <i>#{rl10.sog}</i> : null}</td>
                 <FirstGoalCell fg={d?.firstGoal} pos={pos} opp={side.opp} venue={defVenue} teamCount={teamCount} />
               </tr>
             );
@@ -92,17 +107,19 @@ function DefenseCard({ side, teamCount, mp }) {
         </tbody>
       </table>
       <small className="nhlx-auto-meta">
-        {side.defense.All?.season?.gp || 0} games at {defVenue} this season{side.defense.All?.firstGoal?.games ? ` · first goal given up in ${side.defense.All.firstGoal.allowed} of ${side.defense.All.firstGoal.games} (${slotBreakdown(side.defense.All.firstGoal.bySlot) || 'no line on record'})` : ''}
-        {POS.some((p) => side.defense[p]?.source === 'propfinder') ? ` · positions marked PF use PropFinder's ${POS.map((p) => side.defense[p]?.seasonLabel).find(Boolean)} table until 10 games are stored` : ''}
+        {card ? `${card.tab.rows?.All?.gp ?? 0} GP on PropFinder’s ${card.tab.label} tab${card.tab.source === 'stored' ? ' (rolled from the stored box scores, as PropFinder counts it)' : ''}` : `${side.defense.All?.season?.gp || 0} games at ${defVenue} this season`}{fgText}
+        {!card && POS.some((p) => side.defense[p]?.source === 'propfinder') ? ` · positions marked PF use PropFinder's ${POS.map((p) => side.defense[p]?.seasonLabel).find(Boolean)} table until 10 games are stored` : ''}
       </small>
       <MpLine mp={mp} opp={side.opp} venue={side.venue} />
     </div>
   );
 }
 
-function SkaterRows({ skaters, showTeam, teamCount, sort }) {
+function SkaterRows({ skaters, showTeam, teamCount, sort, card = null }) {
   const open = usePlayerCard();
   const sorted = sort === 'shotScore' ? skaters : [...skaters].sort((a, b) => ((b[sort] ?? -Infinity) - (a[sort] ?? -Infinity)));
+  // Opp S/G: PropFinder's table on the tab the rink is on (the defense card beside the table reads the same cell), else the slate's edge read.
+  const oppOf = (p) => { const b = card?.rows?.[p.pos]?.band; return b ? { allowed: b.season.sog, rank: b.rank.sog, n: card.tab.count || teamCount } : p.vs?.sog ? { allowed: p.vs.sog.allowed, rank: p.vs.sog.rank, n: teamCount } : null; };
   return sorted.map((p) => (
     <tr key={`${p.team}-${p.name}`} className={`${p.inLineup ? '' : 'is-muted'}${p.id ? ' is-click' : ''}`} onClick={() => p.id && open({ id: p.id, opp: p.opp, venue: p.venue, pos: p.pos, line: p.line })}>
       <td className="is-left">
@@ -123,7 +140,7 @@ function SkaterRows({ skaters, showTeam, teamCount, sort }) {
       <td className={sort === 'sog' ? 'is-sorted' : ''}><b>{num(p.sog, 2)}</b></td>
       <td>{p.l5Sog != null ? num(p.l5Sog, 2) : '—'}<Flags c={p} stat="sog" /></td>
       <td>{p.iscf != null ? num(p.iscf, 2) : '—'}</td>
-      <td className={rankClass(p.vs?.sog?.rank, teamCount)}>{p.vs?.sog ? num(p.vs.sog.allowed, 2) : '—'}{p.vs?.sog?.rank ? <span className="nhlx-rank">#{p.vs.sog.rank}</span> : null}</td>
+      {(() => { const o = oppOf(p); return <td className={rankClass(o?.rank, o?.n || teamCount)}>{o ? num(o.allowed, 2) : '—'}{o?.rank ? <span className="nhlx-rank">#{o.rank}</span> : null}</td>; })()}
       <td><EdgeChip v={p.shotEdge} /></td>
       <td><EdgeChip v={p.goalEdge} /></td>
       <td className={sort === 'projSog' ? 'is-sorted' : ''}><b>{num(p.projSog, 2)}</b></td>
@@ -191,7 +208,7 @@ function PositionLog({ game }) {
   );
 }
 
-function SkaterTable({ skaters, showTeam = false, teamCount }) {
+function SkaterTable({ skaters, showTeam = false, teamCount, card = null }) {
   // Default order is the slate's shot score (volume × matchup); a column header re-sorts.
   const [sort, setSort] = useState('shotScore');
   const th = (k, label, title) => <SortTh k={k} label={label} sort={sort} onSort={(c) => setSort(sort === c ? 'shotScore' : c)} title={title} />;
@@ -206,16 +223,16 @@ function SkaterTable({ skaters, showTeam = false, teamCount }) {
           {th('sog', 'S/G')}
           {th('l5Sog', 'L5 S/G', 'Shots per game over the last 5')}
           {th('iscf', 'iSCF/G', 'Scoring chances per game')}
-          <th title="Shots the opponent allows per game to this position at this venue (rank 1 = most)">Opp S/G</th>
-          <th title="Opponent's shots allowed to this position vs the league average">Shot edge</th>
-          <th title="Opponent's goals allowed to this position vs the league average">Goal edge</th>
-          {th('projSog', 'Proj S', "Player's S/G × opponent's shot ratio")}
-          {th('projG', 'Proj G', "Player's G/G × opponent's goal ratio")}
+          <th title={card ? `Shots the opponent allows per game to this position over ${card.text} on PropFinder’s table, the tab the rink is on (rank 1 = most)` : 'Shots the opponent allows per game to this position at this venue, from the stored games (rank 1 = most)'}>Opp S/G</th>
+          <th title="Opponent's shots allowed to this position vs the league average on PropFinder's season table (the stored games at this venue for a team without one)">Shot edge</th>
+          <th title="Opponent's goals allowed to this position vs the league average on PropFinder's season table (the stored games at this venue for a team without one)">Goal edge</th>
+          {th('projSog', 'Proj S', "Player's S/G × opponent's shot ratio (PropFinder's season table)")}
+          {th('projG', 'Proj G', "Player's G/G × opponent's goal ratio (PropFinder's season table)")}
           <th title="How often the player had 3+ shots over the window">3+</th>
           <th title="Goal form over the last 5 games">Goals</th>
         </tr>
       </thead>
-      <tbody><SkaterRows skaters={skaters} showTeam={showTeam} teamCount={teamCount} sort={sort} /></tbody>
+      <tbody><SkaterRows skaters={skaters} showTeam={showTeam} teamCount={teamCount} sort={sort} card={card} /></tbody>
     </PfTable>
   );
 }
@@ -231,6 +248,8 @@ export default function MatchupsPanel() {
   const [gameId, setGameId] = useState('');
   // What tints every rink on the slate: the shots or the goals the opponent allows (one switch, all rinks follow).
   const [metric, setMetric] = useState('sog');
+  // The PropFinder tab each rink is on (game | team → tab key; null = the tab it opens on), so the defense card and skater table under it read the same tab.
+  const [pfKeys, setPfKeys] = useState({});
 
   const load = useCallback((d) => fetch(`/api/nhl/data/slate${d ? `?date=${d}` : ''}`, { cache: 'no-store' })
     .then(async (res) => {
@@ -410,7 +429,7 @@ export default function MatchupsPanel() {
               </GameNumbers>
               )}
               <div className="nhlx-rink-pair">
-                {g.rinkSides.map((s) => <Rink key={s.team} side={s} teamCount={slate.teamCount} posFilter={pos} minGp={minGp} log={g.log} modelRun={slate.modelRun} metric={metric} onMetric={setMetric} />)}
+                {g.rinkSides.map((s) => <Rink key={s.team} side={s} teamCount={slate.teamCount} posFilter={pos} minGp={minGp} log={g.log} modelRun={slate.modelRun} metric={metric} onMetric={setMetric} pfKey={pfKeys[`${g.id}|${s.team}`] ?? null} onPfKey={(k) => setPfKeys((m) => ({ ...m, [`${g.id}|${s.team}`]: k }))} />)}
               </div>
               <RinkLegend metric={metric} />
               {g.log && <PositionLog game={g} />}
@@ -423,8 +442,8 @@ export default function MatchupsPanel() {
                       <small>{s.venue === 'H' ? 'home' : 'away'} · positions from {{ lineup: 'the NHL.com projected lineup', gamedaytweets: 'the beat writers’ lines', propfinder: 'PropFinder’s depth chart' }[s.source] || 'the roster (no lineup yet)'}</small>
                     </div>
                     <div className="nhlx-mu-grid">
-                      <DefenseCard side={s} teamCount={slate.teamCount} mp={slate.moneypuck} />
-                      {s.skaters.length ? <SkaterTable skaters={s.skaters} teamCount={slate.teamCount} /> : <p className="nhlx-auto-meta">No skaters match the filter.</p>}
+                      <DefenseCard side={s} teamCount={slate.teamCount} mp={slate.moneypuck} pfKey={pfKeys[`${g.id}|${s.team}`] ?? null} />
+                      {s.skaters.length ? <SkaterTable skaters={s.skaters} teamCount={slate.teamCount} card={defenseCardFromTabs(s.propfinder?.tabs, pfKeys[`${g.id}|${s.team}`] ?? null)} /> : <p className="nhlx-auto-meta">No skaters match the filter.</p>}
                     </div>
                   </div>
                 ))}
