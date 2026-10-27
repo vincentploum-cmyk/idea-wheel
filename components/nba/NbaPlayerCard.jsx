@@ -184,7 +184,7 @@ function Card({ req, date, onClose }) {
   const p = data?.player || { name: req.player?.player || req.key, team: req.team, pos: req.player?.pos || null, injury: req.player?.injury || null };
   const avgOf = (m, list) => { const vals = list.map((g) => (RAW.has(m) ? (g[m] == null ? null : Number(g[m])) : statOf(g, m))).filter((v) => v != null && Number.isFinite(v)); return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null; };
   const seasonGames = splitGames(games, 'season', splitCtx);
-  const allowedKeys = data?.allowed ? [...new Set(Object.values(data.allowed).flatMap((r) => Object.keys(r)))].filter((k) => !['gp', 'season', 'prior', 'priorSeason', 'lastN'].includes(k)).sort((a, b) => (Object.keys(STAT_LABEL).indexOf(a) + 1 || 99) - (Object.keys(STAT_LABEL).indexOf(b) + 1 || 99)).slice(0, 8) : [];
+  const allowedKeys = data?.allowed ? [...new Set(Object.values(data.allowed).flatMap((r) => Object.keys(r)))].filter((k) => !['gp', 'season', 'prior', 'priorSeason', 'lastN', 'held'].includes(k)).sort((a, b) => (Object.keys(STAT_LABEL).indexOf(a) + 1 || 99) - (Object.keys(STAT_LABEL).indexOf(b) + 1 || 99)).slice(0, 8) : [];
   const myPos = POSITIONS.includes(p.pos) ? p.pos : p.pos === 'G' ? 'SG' : p.pos === 'F' ? 'SF' : null;
   // What he can reach tonight: his own windows × the opponent's environment at his spot (the window picked on the right).
   const windows = ['season', ...Object.keys(data?.windows || {}).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))];
@@ -256,7 +256,7 @@ function Card({ req, date, onClose }) {
             </div>
           </section>
           <section className="nhlx-pc-pane nhlx-pc-right">
-            <div className="nhlx-pfd-head"><b>What {opp || 'the opponent'} gives up per game, by position</b><small className="nhlx-auto-meta">rank 1 = the most of {table?.count || data?.count || 30} · {view === 'season' ? 'this season blended into last season’s' : `its last ${view.slice(1)} games${table?.season && season && table.season < season ? ' of last season' : ''}`}{table?.league ? ' · Lg = the league’s average' : ''}</small></div>
+            <div className="nhlx-pfd-head"><b>What {opp || 'the opponent'} gives up per game, by position</b><small className="nhlx-auto-meta">rank 1 = the most of {table?.count || data?.count || 30} · {view === 'season' ? (Object.values(table?.rows || {}).some((r) => r?.held) ? 'last season’s table until the first game this season' : 'this season') : `its last ${view.slice(1)} games${table?.season && season && table.season < season ? ' of last season' : ''}`}{table?.league ? ' · Lg = the league’s average' : ''}</small></div>
             {windows.length > 1 ? (
               <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Window of the opponent's table" style={{ marginBottom: 8 }}>
                 {windows.map((k) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setWin(k)}>{WIN_LABEL[k]}</button>)}

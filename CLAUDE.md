@@ -124,7 +124,8 @@ config and keeps its own markets, teams, feeds and slate key:
   sport's `FIELDS` spellings, prop lines through `playerProps`, and the pull records
   `fieldsSeen.unread`, shown under Data sources after the first pull. Fix the spellings there
   once a real pull shows them; never guess silently. `defenseAllowed` per position (the
-  positions the Opponent rows carry), ranks 1 = most allowed.
+  positions the Opponent rows carry), ranks 1 = most allowed, this season's rows as published (last
+  season's only before a team's first game, `held`).
 - `injuries.js`: PropFinder's injury report and the without-teammate ("w/o") splits, pulled live with
   the slate, never from a file. The report is `injuryReport` on the games payload the site's own
   pages load (`GET /<LEAGUE>/v2?sportsbooks=…`, read from the bundle 2026-10-27: a JSON string whose
@@ -252,7 +253,7 @@ config and keeps its own markets, teams, feeds and slate key:
   side; else the roster position — three chips a front zone, four a back one, the rest listed under it) — each tinted by what
   tonight's opponent gives up to that position for the stat picked in the tabs above each court (Points ·
   Rebounds · Assists · Threes, `COURT_METRICS`, one setting for the slate as the rink's Shots / Goals switch)
-  over the window picked beside them (Season = this season blended into last season's table; L5 / L10 /
+  over the window picked beside them (Season = this season's table as PropFinder publishes it; L5 / L10 /
   L15 / L20 = PropFinder's `lastNGames` rows as published, `defenseAllowed` → `defense.windows[l5]` with
   their own ranks and `league` = the league's average per position and stat; `windowsOf` / `tableFor` in
   the court, `zoneTone` by rank third, rank 1 = the most permissive), the zone's foot carrying the rank;
@@ -298,14 +299,16 @@ config and keeps its own markets, teams, feeds and slate key:
   foot or a table cell names the tile's rank and whether it reads the same third as PropFinder — nothing
   drawn, no ticks, no dashed edges: the user reads the courts for the numbers; the sheet confirms the
   environment, it never changes a number); or the sheet's tiles with ranks only when the slate has no
-  pull). A held table's rows read "last season" in place of the GP count. PropFinder's NBA team rows are per-game figures already (`rowsPerGame: true` in
+  pull). A row standing in from last season reads "last season" in place of the GP count. PropFinder's NBA team rows are per-game figures already (`rowsPerGame: true` in
   `propfinder-nba.js`; 2026-10-20 the table read 0.3 points a game after a second division), and only
   regular-season rows (`seasonType` REG) make a season table. **The first ten games of the season read off last season**: a player's
   season window stays last season's (his last 82, this season's few on top) until he has ten games this
   season (`seasonMin: 10` in `lib/nba/picks.js`, `SEASON_MIN` in the card, whose season tile then reads
-  "'25-'26 +3"), the ladders' rungs the same (`LADDER_MIN`), and a team's season table is last season's
-  alone until it has ten games (`defenseMin: 10` in `propfinder-nba.js`, `held: true` on the row), then
-  the games / (games + 15) blend. A chip shows the book's main line (`playerProps` in `lib/picks/propfinder.js`: of the lines a
+  "'25-'26 +3"), the ladders' rungs the same (`LADDER_MIN`). **A team's season table is this season's** as PropFinder publishes it, from its
+  first game (Vincent, 2026-10-27: the Season table reads this season for every sport, never last
+  season's; the ten-game hold and the games / (games + 15) blend that stood in `defenseAllowed` are
+  gone); last season's row stands in only for a team without a game yet (`held: true`), and the
+  court's row reads "last season" until then. A chip shows the book's main line (`playerProps` in `lib/picks/propfinder.js`: of the lines a
   book flags main the one nearest his own last-ten average — a book flags its alternate ladder main too,
   which put Drummond on o1.5 points on 2026-10-20 — else the line priced both ways with the most books;
   the whole ladder rides on the prop as `lines`; preseason rows, seasonType PRE, are left out of the logs
