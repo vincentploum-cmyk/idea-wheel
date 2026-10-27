@@ -297,25 +297,26 @@ describe('NBA board', () => {
     const tatum = g.sides.BOS.players.find((p) => p.player === 'Jayson Tatum');
     expect(tatum).toMatchObject({ injury: 'Out', injuryDetail: 'Achilles', out: true, without: null });
     expect(tatum.plays).toHaveLength(1);
-    // Brown over 24.5 points: 3 of 8 overall, 3 of 3 without Tatum; the season read moves at 3 / (3 + 8).
+    // Brown over 24.5 points: 3 of 8 overall, 3 of 3 without Tatum; every window moves toward the split's 100% at
+    // 3 / (3 + 4) = 0.429: the season 0.375 → 0.643, the last five 0.6 → 0.771.
     const brown = [...g.tables.points.rows, ...g.tables.points.next].find((x) => x.player === 'Jaylen Brown');
-    expect(brown).toMatchObject({ out: false, injury: null, rates: { l5: 0.6, l10: 0.375, season: 0.545 } });
-    expect(brown.without).toMatchObject({ names: ['Tatum'], n: 3, rate: 1, rateN: 3, seasonAll: 0.375, avg: 34, avgAll: 25.3, weight: 0.273 });
+    expect(brown).toMatchObject({ out: false, injury: null, rates: { l5: 0.771, l10: 0.643, season: 0.643 } });
+    expect(brown.without).toMatchObject({ names: ['Tatum'], n: 3, rate: 1, rateN: 3, seasonAll: 0.375, avg: 34, avgAll: 25.3, weight: 0.429 });
     expect(brown.without.absent[0]).toMatchObject({ name: 'Jayson Tatum', status: 'Out', detail: 'Achilles', together: 5, of: 8 });
-    expect(brown.avg).toMatchObject({ l5: 28.4, l10: 25.3, season: 27.7 });
+    expect(brown.avg).toMatchObject({ l5: 28.4, l10: 25.3, season: 29 });   // the season average behind the play, moved toward his 34 without Tatum
     const side = g.sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
-    expect(side.own.pts).toMatchObject({ all: 25.3, without: 34, n: 3, season: 27.7 });
-    expect(side.without).toMatchObject({ names: ['Tatum'], n: 3, weight: 0.273 });
-    // Tatum's minutes go to the ones who play: his 34 a game, for the 5 of Brown's 8 games he was part
-    // of, Brown's share of the game (35 of 240) → +3.1 on Brown's 35, 38.1 capped at 38: × 1.086 on every
-    // rate of his. His production too: 28 a game × 0.625 × 60% to the priced players (Brown alone here)
-    // at 1 − the split's weight = 7.6, less the 2.3 points Brown's extra minutes already add = 5.3 on
-    // top. Brown's rate: 26.9 × 1.086 + 5.3 = 34.5, the ladder's centre and the range with it.
+    expect(side.own.pts).toMatchObject({ all: 25.3, without: 34, n: 3, season: 25.3 });   // the windows stay plain: ownRate moves the whole rate toward the split
+    expect(side.without).toMatchObject({ names: ['Tatum'], n: 3, weight: 0.429 });
+    // The split first: Brown's 25.3 moves toward his 34 without Tatum at 3 / (3 + 4) → 29.0. Tatum's minutes go to
+    // the ones who play: his 34 a game, for the 5 of Brown's 8 games he was part of, Brown's share of the game (35 of
+    // 240) → +3.1 on Brown's 35, 38.1 capped at 38: × 1.086 → 31.5. His production too: 28 a game × 0.625 × 60% to the
+    // priced players (Brown alone here) at 1 − the split's weight = 6.0, less the 2.5 points Brown's extra minutes
+    // already add = 3.5 on top. Brown's rate 35.0, the ladder's centre and the range with it.
     expect(side.minutes).toMatchObject({ base: 35, recent: 35, vacated: 3, tonight: 38, factor: 1.086, from: ['Jayson Tatum'] });
-    expect(side.own.pts).toMatchObject({ lift: 5.3, liftFrom: ['Jayson Tatum'], minFactor: 1.086 });
-    expect(side.ranges.pts).toMatchObject({ rate: 34.5, lift: 5.3, liftFrom: ['Jayson Tatum'], minutes: 1.086, exp: 34.5 });
-    expect(side.ladders.pts[0].rate).toBe(34.5);
-    expect(b.notes.find((n) => n.startsWith('Vacated production'))).toContain('BOS: Jaylen Brown +5.3 pts (Tatum out)');
+    expect(side.own.pts).toMatchObject({ lift: 3.5, liftFrom: ['Jayson Tatum'], minFactor: 1.086 });
+    expect(side.ranges.pts).toMatchObject({ rate: 35, lift: 3.5, liftFrom: ['Jayson Tatum'], minutes: 1.086, exp: 35 });
+    expect(side.ladders.pts[0].rate).toBe(35);
+    expect(b.notes.find((n) => n.startsWith('Vacated production'))).toContain('BOS: Jaylen Brown +3.5 pts (Tatum out)');
     expect(b.notes.find((n) => n.startsWith('Rotation'))).toContain('BOS: Jaylen Brown 38 min (35 behind his rate, +3 with Tatum out) × 1.086');
     // A season-long absence hands over nothing: Brown's averages were earned without him already.
     const gone = { ...pfInj, data: { ...pfInj.data, players: pfInj.data.players.map((p) => (p.key === 'jayson tatum' ? { ...p, games: p.games.map((g) => ({ ...g, gameId: 'old' + g.gameId })) } : p)) } };
