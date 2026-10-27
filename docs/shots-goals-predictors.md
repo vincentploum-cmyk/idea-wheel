@@ -451,6 +451,70 @@ soft, 32.5% tough). None of the per-game position tints comes near the Defense t
 table (section 13, this season: +0.0116 against +0.0001 for the per-game position table): the rink colours the
 environment, the Defense tab and the Best bets Opp column measure it.
 
+### The tint by the model's lane rule (2026-10-27)
+
+The rink tinted by shots allowed alone (goals allowed on the Goals switch) while the model's own
+environment read, `classifyDefenseLaneState` in `components/nhl/model-core.js`, reads the
+opponent's SOG, iCF, iFF and iSCF ranks together: a lane is **open** when two of the four are in
+the top 12, or SOG or iSCF alone; **suppressed** when three are 23rd or worse, or SOG and iSCF
+both; goals read goals, iSCF and SOG allowed (open on two in the top 16, or goals alone, or iSCF
+in the top 12). Vincent's ask, 2026-10-27: tint by the model's rule, since section 1 has attempts
+(iCF / iFF) as the better volume signal than SOG. The rink, the soft-spot flag and the shuffle's
+Matchup cell now colour by the lane (`lane` on every PropFinder defense row, `lib/nhl-data/lane.js`).
+`env_source.py` section 7 grades it: the season tabs' attempts columns rebuilt and ranked the same
+way (per game to the position, PropFinder's figure, and per skater), the lane read off the ranks
+by the model's rule, each column scored alone on top of the skater's baseline, and the three tints
+(SOG rank third, iFF rank third, the lane) scored as categorical reads and by their band hit rates.
+
+**Each column of the table alone** (skater baseline + one column, CV deviance gain; the control's
+this-season tab on 40,967 skater-games, the last-season tab in brackets):
+
+| Column of the opponent's position table | per game (the table's figure) | per skater at the position |
+|---|---|---|
+| SOG allowed | +0.0005 [-0.0001] | +0.0050 [+0.0048] |
+| iCF allowed | +0.0002 [+0.0007], the wrong sign | +0.0027 [+0.0022] |
+| iFF allowed | +0.0003 [-0.0001] | **+0.0053 [+0.0052]** |
+| iSCF allowed | **+0.0045 [+0.0045]** | +0.0048 [+0.0044] |
+| all four together | +0.0051 [+0.0047] | +0.0055 [+0.0052] |
+
+Per skater, iFF allowed and SOG allowed are the same read (z 14.8 vs 14.4; this season's 187 games
+say +0.0041 vs +0.0046 on this season's tab and +0.0119 vs +0.0106 on last season's); the four
+together add nothing over either alone. Per game, the figures PropFinder's table shows, SOG, iCF
+and iFF carry nothing once the skater's rate is in, and iSCF is the one column that does
+(+0.0045, z 13.7, 7% of SOG per SD) — the attacker's own position level is what a per-game
+column mostly carries (the correction in this section's opening), and scoring chances are the
+least position-bound of the four. Section 13's table has the same reads on the player core.
+
+**The tint as a read** (soft / tough dummies on the skater baseline, and the band hit rates):
+
+| Tint | control, this-season tab (40,967) | control, last-season tab (41,499) | this season, this-season tab (5,650) |
+|---|---|---|---|
+| SOG rank third (until 2026-10-27) | +0.0028 · soft − tough P(3+) +4.0 pts | +0.0015 · +3.2 | +0.0011 · +2.9 |
+| iFF rank third | +0.0028 · +3.7 | +0.0014 · +2.9 | +0.0013 · +3.0 |
+| the model's lane rule (since) | +0.0027 · +3.7 | +0.0005 · +1.0 | +0.0003 · +1.1 |
+
+On this season's tab in the control the three are a dead heat; on last season's tab and on this
+season so far the lane rule reads weaker. The reason is the rule's cut, not its columns: it opens
+52% of the league's lanes (the top 12 on any of two columns, or two of four) and suppresses 27%,
+against a third each, so the open band is diluted — the 8,000 control rows the lane opens that the
+SOG third does not hit 3+ at 23.1% against 24.6% in the SOG-soft band, and the 3,400 rows the SOG
+third calls tough that the lane leaves neutral hit 21.8% [18.3% on last season's tab], the stingiest
+rows the tint no longer marks. Within the skater's tier (section 5's cut) the two tints move P(3+)
+alike at the top tiers (2.5 to 3 SOG/G: open .51 / suppressed .45 against soft .51 / tough .46).
+The lane and the SOG third agree on 71 to 78% of rows; the lane never leaves a SOG-soft lane
+unopened (SOG in the top 12 opens it by itself).
+
+**Goals.** No tint reads goals (section 9's finding stands): the goals rank third +0.0001 /
+-0.0002, the goals lane -0.0001 / 0.0000, the band gaps within a point either way, and the lane's
+suppressed band scores *more* often than its open one on both tabs (17.1% vs 15.2%, 16.2% vs 15.6%).
+
+**Rule.** As a colour, the SOG third, the iFF third and the model's lane are worth the same on the
+tab the rink opens on and the lane less on last season's; what would read better than any of them
+is iSCF allowed per game, or any column per skater — the per-skater read the study's λ already
+carries in the number. The tint follows the model's rule by Vincent's call (one rule for the ice and
+the model); the figures here say it is not a better tint than the SOG third, only the same one with
+a wider open band.
+
 ## 11. The 1st goal tab, graded
 
 The tab's score (`lib/nhl-data/firstgoal.js`: 45% the model's 1+ goal odds, 30% the player's own
@@ -691,6 +755,12 @@ standard deviation of the read moves the rate.
 | team shots allowed at tonight's venue | +0.0035 | +8.6 | +5.0 |
 | shots allowed to the position AND his line slot (TOI rank), blended | +0.0024 [+0.0011] | +7.0 | +6.3 |
 | shots allowed to the position per game (PropFinder's figure), season | +0.0009 | +4.8 | +3.2 |
+| iSCF allowed to the position per game (PropFinder's figure), season | +0.0076 (all rows +0.0060) | +12.3 | +11.9 |
+| iCF / iFF allowed to the position per game (PropFinder's figures), season | +0.0003 / +0.0004 | -2.5 / +3.5 | -2.2 / +2.4 |
+| iFF allowed per skater at the position, season (2026-10-27) | +0.0088 (all rows +0.0059, ahead of SOG's +0.0056 there) | +13.2 | +11.2 |
+| iSCF allowed per skater at the position, season | +0.0078 (all rows +0.0073) | +12.3 | +13.4 |
+| iCF allowed per skater at the position, season | +0.0046 | +9.8 | +6.0 |
+| SOG + iFF per skater (both) / SOG + iCF + iFF + iSCF per skater (the model's lane rule's four) | +0.0093 / +0.0095 | +3.2, +1.1 / +3.0, +0.1, +0.0, +2.1 | |
 | shots allowed to the position at tonight's venue | +0.0009 | +4.6 | +2.9 |
 | shots allowed to the position, L15 / L10 / L5 | +0.0010 / +0.0005 / -0.0004 | +4.9 / +4.1 / +2.6 | +3.1 / +2.5 / +1.5 |
 | opponent's games' pace (shots both ways), this season | +0.0006 | +3.7 | +2.2 |

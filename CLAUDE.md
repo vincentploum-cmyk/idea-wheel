@@ -522,7 +522,11 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   the server stamps every PropFinder defense row with it, `lane: { sog, g }` through `laneOf` in `lib/nhl-data/propfinder.js`,
   and `lib/nhl-data/lane.js` turns it into the tone and the hover's words, `bandTone` / `laneRuleText` / `laneRanksText`;
   Vincent, 2026-10-27: the tint read shots allowed alone, the model reads the four columns and the study has iFF the
-  better volume signal than SOG; a row without a lane, and the stored-games tint, keep the rank thirds) — or, tinted from
+  better volume signal than SOG; graded the same day in `docs/shots-goals-predictors.md` section 10, "The tint by the model's
+  lane rule": on the control's this-season tab the lane, the SOG third and the iFF third are a dead heat as a tint, on
+  last season's tab and this season so far the lane reads weaker — its cut opens 52% of lanes; per skater iFF and SOG
+  allowed are the same read, per game iSCF is the one column of the table that carries signal; the lane stays by
+  Vincent's call, one rule for the ice and the model; a row without a lane, and the stored-games tint, keep the rank thirds) — or, tinted from
   the stored games, by the SOG-allowed or goals-allowed rank third (the slate-wide
   Shots / Goals switch above each rink, `metric` state in `MatchupsPanel`; the band labels — on a lane the two ranks that
   matter most, #SOG · #iFF or #G · #iSCF, the four on the hover with the lane word —, legend and the chips'
