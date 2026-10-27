@@ -1490,6 +1490,9 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .nhlx-pc-stats .nhlx-pfd-table td.is-soft { background: var(--pf-soft-bg); } .nhlx-pc-stats .nhlx-pfd-table td.is-tough { background: var(--pf-tough-bg); }
 @media (max-width: 760px) { .ir-pc-top { grid-template-columns: 40px minmax(0, 1fr); } .ir-pc-top .nhlx-pc-stat { display: none; } }
 /* The courts' projection and league row. */
+.ir-court-outs { margin: 8px 0 6px; }
+.ir-court-out { margin: 0; padding: 3px 0; border-top: 1px solid var(--line); }
+.ir-court-out b { color: var(--heading); font-weight: 600; }
 .ir-court .nhlx-rk-stat em.is-up { color: var(--ok-fg); }
 .ir-court .nhlx-rk-stat em.is-down { color: var(--bad-fg); }
 .ir-court-proj { font-style: normal; font-weight: 600; margin-right: 5px; }

@@ -211,28 +211,40 @@ describe('NBA PropFinder mapping', () => {
     expect(d.ranks.BOS.PG.pts).toBe(3);
     expect(d.ranks.NY.C.pts).toBe(1);
     // The team's own totals and what it gives up in all ride along, with the league's average of the former.
-    const withTotals = teams.map((t) => ({ ...t, stats: [...t.stats, { ...row('All', t.code === 'BOS' ? 600 : 550), type: 'Team' }, { ...row('All', 560) }] }));
+    const withTotals = teams.map((t) => ({ ...t, stats: [...t.stats, { ...row('All', t.code === 'BOS' ? 600 : 550), type: 'Team' }, { ...row('All', 560) }, { ...row('All', 580), type: 'Team', lastNGames: 10, gamesPlayed: 10 }, { ...row('All', 540), lastNGames: 10, gamesPlayed: 10 }] }));
     const wt = defenseAllowed(withTotals, { season: 2026 });
     expect(wt.totals.BOS.for.pts).toBe(120);
     expect(wt.totals.BOS.against.pts).toBe(112);
     expect(wt.leagueFor.pts).toBeCloseTo((120 + 110 + 110) / 3, 2);
+    // The last ten this season ride on the totals (the characteristics card's trend), last season too when the rows carry it.
+    expect(wt.totals.BOS.l10.for).toMatchObject({ pts: 116, gp: 10 });
+    expect(wt.totals.BOS.l10.against).toMatchObject({ pts: 108 });
+    expect(wt.totals.BOS.prior).toBeNull();
     expect(d.totals).toEqual({});
-    // Early in the season: this season's 2 games blended into last season's full row at 2 / (2 + 15); nothing played yet = last season's alone.
+    expect(d.prior).toBeNull();
+    // Early in the season: this season's row from its first game, as PropFinder publishes it (no blend into last
+    // season's: Vincent, 2026-10-27, the teams on the court are this season's); nothing played yet = last season's alone, held.
     const early = [
-      { code: 'BOS', stats: [{ ...row('PG', 150), gamesPlayed: 2 }, { ...row('PG', 110), seasonYear: 2025, gamesPlayed: 82 }, { ...row('C', 0), gamesPlayed: 0 }, { ...row('C', 20), seasonYear: 2025, gamesPlayed: 82 }] },
+      { code: 'BOS', stats: [{ ...row('PG', 150), gamesPlayed: 2, points: 34 }, { ...row('PG', 110), seasonYear: 2025, gamesPlayed: 82 }, { ...row('C', 0), gamesPlayed: 0 }, { ...row('C', 20), seasonYear: 2025, gamesPlayed: 82 }] },
       { code: 'NYK', stats: [{ ...row('PG', 150), seasonYear: 2025, gamesPlayed: 82 }] },
     ];
     const e = defenseAllowed(early, { season: 2026 });
-    // The NBA holds last season's table until the team has ten games (`held`), then blends.
-    expect(e.teams.BOS.PG).toMatchObject({ gp: 2, prior: 82, priorSeason: 2025, held: true, pts: 22 });
+    expect(e.teams.BOS.PG).toMatchObject({ gp: 2, prior: 82, priorSeason: 2025, season: 2026, pts: 34 });
+    expect(e.teams.BOS.PG.held).toBeUndefined();
     const tenIn = early.map((t) => ({ ...t, stats: t.stats.map((r) => (r.seasonYear === 2026 && r.position === 'PG' ? { ...r, gamesPlayed: 10, points: 30 } : r)) }));
     const b10 = defenseAllowed(tenIn, { season: 2026 });
-    expect(b10.teams.BOS.PG).toMatchObject({ gp: 10, prior: 82, season: 2026 });
-    expect(b10.teams.BOS.PG.held).toBeUndefined();
-    expect(b10.teams.BOS.PG.pts).toBeCloseTo((10 / 25) * 30 + (15 / 25) * 22, 1);
-    expect(e.teams.BOS.C).toMatchObject({ gp: 0, prior: 82, pts: 4 });
-    expect(e.teams.NY.PG).toMatchObject({ gp: 0, prior: 82, pts: 30 });
-    expect(e.ranks.NY.PG.pts).toBe(1);
+    expect(b10.teams.BOS.PG).toMatchObject({ gp: 10, prior: 82, season: 2026, pts: 30 });
+    expect(e.teams.BOS.C).toMatchObject({ gp: 0, prior: 82, pts: 4, held: true, season: 2025 });
+    expect(e.teams.NY.PG).toMatchObject({ gp: 0, prior: 82, pts: 30, held: true });
+    expect(e.ranks.BOS.PG.pts).toBe(1);   // 34 this season over NY's 30 (last season's, held)
+    expect(e.ranks.NY.PG.pts).toBe(2);
+    // Last season's full table rides along as `prior`, ranked on its own: NY's 30 over BOS's 22.
+    expect(e.prior).toMatchObject({ season: 2025, count: 2 });
+    expect(e.prior.teams.BOS.PG.pts).toBe(22);
+    expect(e.prior.teams.NY.PG.pts).toBe(30);
+    expect(e.prior.ranks.NY.PG.pts).toBe(1);
+    expect(e.prior.ranks.BOS.PG.pts).toBe(2);
+    expect(e.prior.league.PG.pts).toBe(26);
     // The league's average per position and stat rides along, and the last-N windows PropFinder publishes with their own ranks.
     expect(d.league.PG.pts).toBeCloseTo((24 + 30 + 27) / 3, 2);
     expect(d.windows).toEqual({});
