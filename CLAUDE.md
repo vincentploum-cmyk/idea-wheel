@@ -89,7 +89,10 @@ config and keeps its own markets, teams, feeds and slate key:
   the card): the bars with the count of survivors at the floor ("keep players at 35% or better"), the curve of
   survivors per height, the survivors at the bar sorted by edge (the chance there with its fair price, how often he
   cleared it, the book's rung at the bar or the nearest above it with its price and edge, where he thins out, Got once
-  final) and the fallen strip; it sits on each board's Shuffle tab (`#shuffle`; `NflShuffle` in `NflBoard.jsx`,
+  final) and the fallen strip, each row with a **Health** word first (`healthOf` in `injuries.js`, `health` on every side player
+  and shuffle row: In = nothing listed or listed active, DTD = on the report but not ruled out, Out = `isOut`; the pill's hover
+  names the status and detail as listed, and only an Out row is dimmed — before 2026-10-27 any listed status dimmed the row, so a
+  day-to-day player read like one ruled out); it sits on each board's Shuffle tab (`#shuffle`; `NflShuffle` in `NflBoard.jsx`,
   `NbaShuffle` in `NbaBoard.jsx` with its own card host), mounted on the tab's first visit and kept. The Matchup cell
   carries the opponent's rank at his spot with its factor on his rate
   (`matchup`) and, apart from it, his side's factor (`teamFactor`, "team × 1.12"); `env` on the row is their product,
@@ -151,6 +154,22 @@ config and keeps its own markets, teams, feeds and slate key:
   meta (source, counts, the players read one by one, errors) shows under Data sources. No live pull
   had been seen when this was written: an empty report there means the route or the field names
   differ — `fieldsSeen.sample.injury` and `sample.gamesPayload` show what came back.
+- `characteristics.js` (`makeCharacteristics`, bound in `lib/nba/characteristics.js` and `lib/nfl/characteristics.js`,
+  `characteristics` on every board game through `makeBoard({ characteristics })`; drawn by `components/nhl/Characteristics.jsx`
+  from `Board.jsx` between the game head and the sport's view, the NHL card's layout with the sport's logos and, for the
+  NBA, the sides' expected points as the head pill): each team's strengths and weaknesses with a badge (`lib/picks/levels.js`,
+  the three cards' shared `levelOf`: the top quarter Strong, the top three Very strong, the bottom quarter Weak, the
+  bottom three Very weak; three lines a list with "View more"; the numbers on the hover only) from the pull's team rows — `totals[ABBR].for` (the team's own per-game
+  row: NBA scoring, rebounding, ball movement, threes, the line, ball security; NFL the passing and running games, the
+  end zone, ball security) and `.against` (NBA limiting points / rebounds / assists / threes / free throws, forcing
+  turnovers, with rim protection and active hands off its own blocks and steals; NFL pass and run defense, the end
+  zone, takeaways), each ranked over the teams in the pull (a `held` row reads last season's) — plus the positions its
+  defense leaks to and holds from the per-position table (NBA points to the five positions, NFL yards: passing to
+  quarterbacks, rushing to backs, receiving to receivers and tight ends), one line each way; the team's pill is its
+  defense in thirds on the headline stat (points / touchdowns allowed); and a **style of play** from its own shares
+  against the league (NBA: lives on the three / scores inside the arc, gets to the line, shares the ball /
+  isolation-heavy, shootouts / low-scoring games; NFL: pass- or run-heavy, downfield or short passing, shootouts /
+  low-scoring games). No trend line: PropFinder's windows are per position only.
 - `store.js` (`makeStore`): `<sport>/<slate>/{schedule,sheets-index,propfinder}.json`,
   `sheets/<id>.json`, `results/<gameId>.json`, `<sport>/meta/*`; the schedule re-fetched when
   stale (6 h, 10 min while a game is on) with the finished games' box scores; a sheet with a
@@ -503,9 +522,10 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   goals and pace, high / low half a goal either side of the league average; and above both, each
   team's **characteristics** (`lib/nhl-data/characteristics.js`, `teamCharacteristics`, `characteristics`
   per team on every slate game; drawn by `components/nhl/Characteristics.jsx`, WhoScored's layout): its
-  strengths and weaknesses as traits with a badge (`levelOf`: the top third of the league Strong, the
-  top four Very strong, the bottom third Weak, the bottom four Very weak; no number in the line, the
-  figures ride on the trait as `detail` for the hover) — shot volume, creating chances, high-danger
+  strengths and weaknesses as traits with a badge (`levelOf` in `lib/picks/levels.js`: the top quarter of the league
+  Strong, the top three Very strong, the bottom quarter Weak, the bottom three Very weak — thirds and a top four
+  wore a dozen badges on a bad team, 2026-10-27; no number in the line, the figures ride on the trait as `detail`
+  for the hover; each list shows its three most telling lines, `SHOWN`, with "View more (n)" per team for the rest) — shot volume, creating chances, high-danger
   chances, controlling the puck, finishing (GF over xGF, `ratioRanks`, 10 games), limiting chances /
   high-danger chances, goaltending (GA under xGA) from MoneyPuck; limiting shots / goals at tonight's
   venue, the positions it leaks to and holds (one line each way), its last ten against the season

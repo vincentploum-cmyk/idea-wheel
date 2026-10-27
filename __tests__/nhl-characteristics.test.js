@@ -18,10 +18,10 @@ const mp = {
 const keys = (list) => list.map((x) => x.key);
 
 describe('characteristics', () => {
-  test('levelOf: the top third strong, the top four very, the bottom third weak, the bottom four very', () => {
-    expect(levelOf(1)).toBe('very'); expect(levelOf(4)).toBe('very'); expect(levelOf(5)).toBe('strong'); expect(levelOf(11)).toBe('strong');
-    expect(levelOf(12)).toBeNull(); expect(levelOf(21)).toBeNull();
-    expect(levelOf(22)).toBe('weak'); expect(levelOf(28)).toBe('weak'); expect(levelOf(29)).toBe('veryWeak'); expect(levelOf(32)).toBe('veryWeak');
+  test('levelOf: the top quarter strong, the top three very, the bottom quarter weak, the bottom three very', () => {
+    expect(levelOf(1)).toBe('very'); expect(levelOf(3)).toBe('very'); expect(levelOf(4)).toBe('strong'); expect(levelOf(8)).toBe('strong');
+    expect(levelOf(9)).toBeNull(); expect(levelOf(24)).toBeNull();
+    expect(levelOf(25)).toBe('weak'); expect(levelOf(29)).toBe('weak'); expect(levelOf(30)).toBe('veryWeak'); expect(levelOf(32)).toBe('veryWeak');
     expect(levelOf(null)).toBeNull();
     expect(LEVEL_TEXT.veryWeak).toBe('Very weak');
   });
@@ -38,17 +38,18 @@ describe('characteristics', () => {
   });
   test('PHI at home: strengths and weaknesses most extreme first, with the numbers on each trait', () => {
     const c = teamCharacteristics({ team: 'PHI', venue: 'H', defense: phiDef, mp, ratios: ratioRanks(mp), teamCount: 32 });
-    expect(keys(c.strengths)).toEqual(['finishing', 'shotsAgainst', 'holds', 'goalsAgainst']);
+    // The quarter rule: goals allowed at #24 (9th best) and the wings at #24 / #22 no longer carry a badge.
+    expect(keys(c.strengths)).toEqual(['finishing', 'shotsAgainst', 'holds']);
     expect(c.strengths.map((x) => [x.text, x.level])).toEqual([
-      ['Finishing', 'very'], ['Limiting shots at home', 'strong'], ['Holds every position at home', 'strong'], ['Limiting goals at home', 'strong'],
+      ['Finishing', 'very'], ['Limiting shots at home', 'strong'], ['Holds centres and defensemen at home', 'strong'],
     ]);
-    expect(keys(c.weaknesses)).toEqual(['goaltending', 'danger', 'chancesAgainst', 'chances', 'trend', 'volume']);
+    expect(keys(c.weaknesses)).toEqual(['goaltending', 'danger', 'chancesAgainst', 'trend']);
     expect(c.weaknesses.map((x) => [x.text, x.level])).toEqual([
-      ['Goaltending', 'veryWeak'], ['High-danger chances', 'veryWeak'], ['Limiting chances', 'weak'], ['Creating chances', 'weak'], ['Defense loosening over the last ten', 'weak'], ['Shot volume', 'weak'],
+      ['Goaltending', 'veryWeak'], ['High-danger chances', 'veryWeak'], ['Limiting chances', 'weak'], ['Defense loosening over the last ten', 'weak'],
     ]);
     expect(c.strengths[0].detail).toBe('2.00 goals for per 60 on 1.67 expected (×1.20), #1 of 12 · MoneyPuck');
     expect(c.strengths[1].detail).toBe('25.9 shots allowed a game, #27 of 32 most · 53 stored games at home');
-    expect(c.weaknesses[4].detail).toBe('28.7 shots allowed a game over its last 10, #9 of 32 most, against #27 on the season at home');
+    expect(c.weaknesses[3].detail).toBe('28.7 shots allowed a game over its last 10, #9 of 32 most, against #27 on the season at home');
     // Style without a profile: the pace alone.
     expect(c.style).toEqual([{ key: 'pace', kind: 'tempo', text: 'Plays at a fast pace', detail: '119.1 shot attempts both ways per 60, #5 of 32 fastest · MoneyPuck' }]);
   });
@@ -57,12 +58,15 @@ describe('characteristics', () => {
     expect(c.strengths.map((x) => [x.key, x.text, x.level])).toEqual([
       ['goaltending', 'Goaltending', 'very'], ['holds', 'Holds left wings on the road', 'strong'], ['trend', 'Defense tightening over the last ten', 'strong'],
     ]);
+    // Centres and defensemen at #11 sit in the middle half now; the first goal at #4 reads weak, not very.
     expect(c.weaknesses.map((x) => [x.key, x.text, x.level])).toEqual([
-      ['finishing', 'Finishing', 'veryWeak'], ['firstGoal', 'Concedes the first goal on the road', 'veryWeak'], ['leaks', 'Leaks shots to centres and defensemen on the road', 'weak'],
+      ['finishing', 'Finishing', 'veryWeak'], ['firstGoal', 'Concedes the first goal on the road', 'weak'],
     ]);
-    expect(c.weaknesses[2].detail).toBe('C 8.2 shots a game, #11 of 32 most · D 9.1 shots a game, #11 of 32 most');
     expect(c.weaknesses[1].detail).toBe('conceded the first goal in 7 of 12 games on the road (58%, league 50%), #4 of 32 most');
-    expect(c.style).toEqual([{ key: 'pace', kind: 'tempo', text: 'Plays a slow game', detail: '95.0 shot attempts both ways per 60, #24 of 32 fastest · MoneyPuck' }]);
+    // A pace of #24 is the middle half too: no style line for it.
+    expect(c.style).toEqual([]);
+    const leaky = { ...cbjDef, C: pos(6, 8.2), D: pos(2, 9.1) };
+    expect(teamCharacteristics({ team: 'CBJ', venue: 'A', defense: leaky }).weaknesses.find((x) => x.key === 'leaks')).toMatchObject({ text: 'Leaks shots to defensemen and centres on the road', level: 'veryWeak', detail: 'D 9.1 shots a game, #2 of 32 most · C 8.2 shots a game, #6 of 32 most' });
     // A rare-first-goal record reads as a strength with its own words; thin records say nothing.
     const stingy = { ...cbjDef, All: { ...cbjDef.All, firstGoal: fg(12, 2, 30) } };
     expect(teamCharacteristics({ team: 'CBJ', venue: 'A', defense: stingy }).strengths.find((x) => x.key === 'firstGoal')).toMatchObject({ text: 'Rarely concedes the first goal on the road', level: 'very' });
