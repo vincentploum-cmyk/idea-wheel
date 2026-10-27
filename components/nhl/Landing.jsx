@@ -1,19 +1,6 @@
 import Link from 'next/link';
 import SiteHeader from './SiteHeader';
-import { teamLogo as nhlLogo } from '@/lib/nhl-data/teams';
-import { teamLogo as nflLogo, TEAMS as NFL_TEAMS } from '@/lib/nfl/teams';
-import { teamLogo as nbaLogo, TEAMS as NBA_TEAMS } from '@/lib/nba/teams';
 import { LEAGUES, leagueLogo, leagueName } from '@/lib/site/leagues';
-
-const NHL_TEAMS = [
-  ['BOS', 'Bruins'], ['BUF', 'Sabres'], ['DET', 'Red Wings'], ['FLA', 'Panthers'], ['MTL', 'Canadiens'],
-  ['OTT', 'Senators'], ['TBL', 'Lightning'], ['TOR', 'Maple Leafs'], ['CAR', 'Hurricanes'], ['CBJ', 'Blue Jackets'],
-  ['NJD', 'Devils'], ['NYI', 'Islanders'], ['NYR', 'Rangers'], ['PHI', 'Flyers'], ['PIT', 'Penguins'],
-  ['WSH', 'Capitals'], ['CHI', 'Blackhawks'], ['COL', 'Avalanche'], ['DAL', 'Stars'], ['MIN', 'Wild'],
-  ['NSH', 'Predators'], ['STL', 'Blues'], ['UTA', 'Mammoth'], ['WPG', 'Jets'], ['ANA', 'Ducks'],
-  ['CGY', 'Flames'], ['EDM', 'Oilers'], ['LAK', 'Kings'], ['SJS', 'Sharks'], ['SEA', 'Kraken'],
-  ['VAN', 'Canucks'], ['VGK', 'Golden Knights'],
-];
 
 const SPORTS = [
   {
@@ -29,22 +16,6 @@ const SPORTS = [
     body: 'Model 3.0: tonight’s best shots and goal plays, the matchups by position, what every defense gives up, first-goal candidates and a scorecard of every call against the box scores.',
   },
 ];
-
-function Strip({ items, logo }) {
-  const row = [...items, ...items];
-  return (
-    <div className="nhlx-marquee" aria-hidden>
-      <div className="nhlx-marquee-track">
-        {row.map(([abbr, name], i) => (
-          <span className="nhlx-marquee-item" key={`${abbr}-${i}`}>
-            <img src={logo(abbr)} alt="" width="30" height="30" loading="lazy" />
-            {name}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function Preview() {
   return (
@@ -93,7 +64,6 @@ export default function Landing() {
         nav={(
           <>
             <a href="#sports">Sports</a>
-            <a href="#teams">Coverage</a>
           </>
         )}
         right={<Link href="/auth/login" className="nhlx-btn nhlx-btn-sm">Sign in</Link>}
@@ -118,12 +88,6 @@ export default function Landing() {
             <Preview />
           </div>
         </section>
-
-        <div id="teams">
-          <Strip items={Object.entries(NFL_TEAMS).map(([abbr, t]) => [abbr, t.name])} logo={nflLogo} />
-          <Strip items={Object.entries(NBA_TEAMS).map(([abbr, t]) => [abbr, t.name])} logo={nbaLogo} />
-          <Strip items={NHL_TEAMS} logo={nhlLogo} />
-        </div>
 
         <section className="nhlx-section" id="sports">
           <div className="nhlx-wrap nhlx-center-text">
