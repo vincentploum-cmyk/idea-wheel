@@ -555,6 +555,25 @@ P(4+) ≥ 40% or P(3+) ≥ 60%) made 109 calls stated 0.59 that hit 0.39 (31 cal
 0.55, hit 0.45), against 135 calls stated 0.64 that hit 0.44 under the ladder. Honest odds also mean
 fewer calls: P(3+) ≥ 60% is now λ ≥ 3.1 and P(4+) ≥ 40% is λ ≥ 3.7.
 
+*2026-10-27 — what the λ goals is made of.* FLA @ WPG: the PropFinder table on this season's tab has WPG 5th-most
+goals allowed to centres, Brady Tkachuk carries the goals flame, and the goals table reads "nobody over 35%" (M.
+Tkachuk 31%, B. Tkachuk 29%, Reinhart 28%). Three things are true at once. (1) The board's 35% floor is λ ≥ 0.43:
+section 14's table has the formula clearing it for 1.9 skaters a night league-wide (hit .430), so a game with none
+over it is the usual case and the head says so. (2) The opponent read the model and the study use is the blend of
+section 3 (this season at games / (games + 40) for goals): at ten games WPG's centre row is four fifths last
+season's, which is the read that scored (z +6.2 against +2.7 for this season's table alone, and "× the position
+table season to date" ranks worse than the skater's own blend). The 2026 tab the rink tints from is a different
+read from the one in the number. (3) The published λ goals (`lambdaGDisplay` in `model-core.js`) is the points λ ×
+his finisher share × 0.9: the opponent's goals row reaches it only through the points step's defense multiplier
+(0.45 × a goals multiplier damped by tier and capped at 1.02–1.20, beside 0.35 × the assists allowed — the same
+table has WPG 31st on assists to centres, which pulls against the goals softness) and the last-five goal form
+multiplier (`l5GoalFormMult`) not at all: his last five reach it as points only, at 0.35. The model's own goal λ with those in it (`goalOpportunityLambda`: the blended goal rate × the opponent's
+goals / chances / shots at his position × form × line × pace, capped by line) is on every result row and was never
+graded. It now scores on the scorecard's "Windows and sources" table as "Model matchup λ" (goals only) and reads
+the shuffle's goals bar as "Model · matchup"; nothing on the board moves until that table shows it under the
+board's λ on Brier. The λ's own shortfall in the 0.2–0.4 band (stated 0.33, hit 0.43 on Oct 13–20, above) is
+the other half of the FLA reading: the post-Oct-10 rows now number past the ~2,000 the goals fit was waiting for.
+
 ## 6. What this means for the model and the site
 
 *Applied 2026-10-10 (items 1 and 4, input side, model math untouched): the PropFinder API builder

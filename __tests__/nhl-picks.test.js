@@ -58,6 +58,9 @@ describe('tonight’s picks', () => {
     const study = { lamS: 3.08, p3: 0.59, p4: 0.37, p1g: 0.4 };
     const row = fromModel({ sog: 4.1, g: 0.7, p2s: 0.93, p3s: 0.85, p4s: 0.78, p1g: 0.5 }, study);
     expect(row).toMatchObject({ lamS: 4.1, lamG: 0.7, p2: 0.93, p3: 0.85, p4: 0.78, p1g: 0.5, ladder: 'run', study: { p3: 0.59, p4: 0.37, p1g: 0.4 } });
+    // The run's matchup goal λ rides along for the shuffle and the scorecard; null when the run lacks it.
+    expect(row.lamGOpp).toBeNull();
+    expect(fromModel({ sog: 4.1, g: 0.7, gOpp: 0.812 }).lamGOpp).toBe(0.81);
     // The run carries no 2+: it comes off the λ and never sits below the run's 3+.
     const noP2 = fromModel({ sog: 4.1, g: 0.7, p3s: 0.85, p4s: 0.78, p1g: 0.5 });
     expect(noP2).toMatchObject({ p3: 0.85, p4: 0.78, ladder: 'run' });
@@ -210,6 +213,7 @@ describe('picks: blending the model with the study', () => {
     expect(b.p2).toBeGreaterThanOrEqual(b.p3); expect(b.p3).toBeGreaterThanOrEqual(b.p4);
     expect(b.model).toMatchObject({ lamS: 3, p3: 0.6 }); expect(b.study).toMatchObject({ lamS: 2, p3: 0.32 });
     expect(blendProjection(model, study, 1).lamS).toBe(2); expect(blendProjection(model, study, 2).lamS).toBe(2);
+    expect(blendProjection(fromModel({ sog: 3.0, g: 0.4, gOpp: 0.5 }), study, 0.5).lamGOpp).toBe(0.5);   // the matchup λ rides through the blend untouched
   });
   test('off without a weight, a study read or a model row', () => {
     expect(blendProjection(model, study, 0)).toBe(model);

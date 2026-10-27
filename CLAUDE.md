@@ -431,7 +431,15 @@ config and keeps its own markets, teams, feeds and slate key:
   the board's 3+ figure, 6+ the same λ further up), survivors at the floor sorted by the chance with the break-even
   price, how often he reached the bar, where he thins out and Got once final; the fallen strip under it. "Read
   from" (`READ_FROM`) moves the λ to the study's or a window of his own results (a window he lacks falls back to the
-  board's). One request a slate, every bar move local; no number on the board changes.
+  board's), or, on the goals bar, to the run's own goal λ with the opponent in it ("Model · matchup",
+  `goalOpportunityLambda` on the result rows → `gOpp` in `indexModelRows` → `lamGOpp` on the candidate and the shuffle
+  row): the published λ goals (`lambdaGDisplay` in `model-core.js`) is the points λ × his finisher share × 0.9, so the
+  opponent's goals table reaches the board's 1+ G only through the points step's defense multiplier (45% of a
+  multiplier damped by tier and capped at 1.02–1.20, beside 0.35 × the assists allowed, which pull the other way when
+  a team is soft on goals and tight on assists) and his last-five goal form multiplier (`l5GoalFormMult`) not at all
+  (his last five reach it as points only, at 0.35); `goalOpportunityLambda` carries both. Not graded as of 2026-10-27: the scorecard's "Windows and sources" table scores
+  it beside the board's λ (`modelOpp`), and nothing on the board reads it until that table says it predicts better.
+  One request a slate, every bar move local; no number on the board changes.
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching: the roster decides a row's group, a pair
   holds a defenseman and two forwards side by side are a short forward line, three pairs at most, and a
@@ -550,7 +558,9 @@ config and keeps its own markets, teams, feeds and slate key:
   boards replayed per slate; and the window predictors — own L5 / L10 / L15 / season from the stored
   rows (full window required) and PropFinder L5 / season as the run saw them (`shotsL5`, `shotsSeason`
   on the result rows) and the study's λ as it stood that morning (`studyRead`: the Best bets plain-rate
-  read rebuilt leak-free from the stored rows before each date) with a half-and-half model + study blend —
+  read rebuilt leak-free from the stored rows before each date) with a half-and-half model + study blend, and the
+  run's matchup goal λ (`modelOpp`, `goalOpportunityLambda` on the result rows, goals only; `lambdaGOpp` on the
+  `?rows=1` export) —
   scored beside λ on the rows every covered predictor shares (MAE, bias, Poisson 3+ SOG / 1+ G Brier).
   Descriptive only; nothing feeds the model. The board blends only through `NHL_PICKS_STUDY_WEIGHT` on
   Render (the study's share, `blendProjection` in `picks-pure.js`, `studyWeight` in `picks.js`; unset =

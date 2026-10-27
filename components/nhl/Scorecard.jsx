@@ -150,7 +150,7 @@ function PredictorsTable({ report }) {
         <tbody>
           {list.map((p) => (
             <tr key={p.key} className={p.key === 'model' ? 'is-model' : p.key === 'blend' ? 'is-blend' : ''}>
-              <td><b>{p.label}</b> <small>{p.source === 'own' ? 'stored games' : p.source === 'propfinder' ? 'PropFinder' : p.source === 'study' ? 'plain-rate read' : p.source === 'blend' ? 'half model, half study' : 'saved run'}</small></td>
+              <td><b>{p.label}</b> <small>{p.source === 'own' ? 'stored games' : p.source === 'propfinder' ? 'PropFinder' : p.source === 'study' ? 'plain-rate read' : p.source === 'blend' ? 'half model, half study' : p.source === 'modelOpp' ? 'the run’s goal λ with the opponent in it' : 'saved run'}</small></td>
               <td className="is-num">{num(p.avg)}</td>
               <td className="is-num">{num(p.actual)}</td>
               <td className="is-num">{signed(p.bias)}</td>
