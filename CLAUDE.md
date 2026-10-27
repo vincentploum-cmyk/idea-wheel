@@ -333,7 +333,8 @@ config and keeps its own markets, teams, feeds and slate key:
   what every team gives up to each position group (C / LW / RW / D, C / W / D, F / D) in shots or goals **per skater at the
   position** a game (the study's read, section 13; `per` on every `defenseByPosition` cell, groups weighted by the skaters they
   carry), the Season span = `blendedDefense`: this season blended into last season's table at games / (games + 15) for shots and
-  games / (games + 40) for goals (GP shows "this + last"), L10 / L5 the newest stored games across the seasons, by where the
+  games / (games + 40) for goals (GP shows "this + last"; regular seasons only, last season's playoff rows are not loaded),
+  L10 / L5 the newest stored regular-season games across the seasons, by where the
   defender plays, rank 1 = the most allowed with ties shared, tinted by rank thirds; above the tables
   tonight's matchups read off the same tables (`matchupReads`, each shooting side's softest spot first, with the shooters the
   slate's lineup has at that spot named and clickable, `shootersAt`; the API's `tonight` games carry `sides[].skaters` from
@@ -401,9 +402,11 @@ config and keeps its own markets, teams, feeds and slate key:
   The numbers are the model's: with a run saved for the date, each row is the run's λ and 2+ / 3+ / 4+ SOG and 1+ G
   probabilities (`fromModel`) and only skaters the run projected are listed; the study's plain-rate read (fixed
   Poisson coefficients fitted on 2024-25 + 2025-26 by `tools/predictors/replay.py`, log features: the skater's rate,
-  attempts, chances and TOI, this season blended into last season's base at n / (n + 18) shots, n / (n + 40) goals;
-  home ice; back-to-back; and what the opponent allows **per skater at his position**, this season blended into last
-  season's table at games / (games + 15) for shots and games / (games + 40) for goals, `positionAllowed`) rides on
+  attempts, chances and TOI, this season blended into last season's regular season at n / (n + 18) shots, n / (n + 40)
+  goals; home ice; back-to-back; and what the opponent allows **per skater at his position** this season
+  (`positionAllowed`; Vincent's call, 2026-10-27: no blend into last season's table — the study's games / (games + 15)
+  and games / (games + 40) blend stays on record in sections 13 and 15 and in no number; last season's regular season
+  stands in only for a team with no game yet, `held`)) rides on
   each API row as `study` and stands in when no run exists, but the panel shows one set of numbers only: player,
   2+ / 3+ / 4+ (1+ G) with the break-even price, and Got once final — no study, rate or opponent columns (the user
   wants the plays readable at a glance; the comparison lives on the History tab's scorecard). Beside the name, for
@@ -512,9 +515,9 @@ config and keeps its own markets, teams, feeds and slate key:
   sections 3 and 9): each skater's "Season" row is this season's regular-season games blended with last season's at
   n / (n + 18) for shots, attempts and chances, n / (n + 40) for goals, assists and points, n / (n + 5) for TOI
   (`blendedSeasonRates`; last season's alone until his first game, this season's alone without a 10-game prior), and
-  each "Defense (Season)" block is the team's season to date blended with last season's full figure at n / (n + 15)
-  for shots, attempts and chances and n / (n + 40) for goals and assists (`defenseBlocks`; no L10 window any more).
-  GP is this season's count. The L5 workbook and the stored CSV-shaped tables stay PropFinder's own numbers; a
+  each "Defense (Season)" block is the team's season to date as PropFinder publishes it (`defenseBlocks`; Vincent's
+  call, 2026-10-27: the blend into last season's figure at n / (n + 15) and n / (n + 40) is gone, last season's row
+  stands in only for a team with no game yet; no L10 window any more). GP is this season's count. The L5 workbook and the stored CSV-shaped tables stay PropFinder's own numbers; a
   manually uploaded PropFinder export is stored as exported.
 - PropFinder CSV exports (skater per-game rates for the season or last N games, team stats for and
   against with ranks, opponent stats per position tagged by a `-lw/-c/-rw/-d` file-name suffix) are imported by
@@ -583,6 +586,14 @@ config and keeps its own markets, teams, feeds and slate key:
 - The site is admin-only: `NHL_ADMIN_EMAILS` on Render when set, else `DEFAULT_ADMIN_EMAILS` in `lib/nhl-admin.js`
   (both lists must carry a new person). Every `/api/nhl/*`, `/api/nfl/*` and `/api/site/*` route must call
   `requireNhlAdmin()` or `authorize()`.
+- Last season means the regular season: `loadRows` (`rowsBefore` in `lib/nhl-data/build.js`) drops the previous
+  season's playoff rows (`isPlayoffGame` in `util.js`, the game id's type digits) from every base — a skater's blended
+  rates, his last 5 / 10 / 20 across the boundary, the flame / snowflake, the Defense tab's spans and track record, the
+  profiles, the first-goal record, the history and home / away workbooks the model is given; this season's rows come
+  whole, so the playoffs under way in April–June are the data. The opponent's table in any number is this season's
+  (`positionAllowed`, `defenseBlocks`); the Defense tab's Season span alone still blends the two regular seasons and
+  says so in its GP. (Vincent's call, 2026-10-27: the final games of a season on record are playoff games and read
+  over to nothing; the teams on the ice are this season's.)
 - Keep the model's math untouched when restyling; port logic changes from the local app into
   `components/nhl/model-core.js` (pipeline) and `NhlModel.jsx` (UI). One change went the other
   way (2026-10-13, port it into `App.jsx`): the published shots odds `p3s` / `p4s` / `p5s` (and `p2s`)

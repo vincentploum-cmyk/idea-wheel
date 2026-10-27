@@ -122,28 +122,28 @@ describe('PropFinder API → team tables', () => {
     expect(file).toMatchObject({ statsType: 'opponent', position: 'All', windowGames: 10, count: 4 });
     expect(file.ranks.TOR.g).toBe(1);
   });
-  test('defense blocks: this season blended with last season, ranked 1 = most', () => {
+  test('defense blocks: this season’s table, ranked 1 = most', () => {
     const d = defenseBlocks(TEAMS, { season: 2025 });
     expect(d.label).toBe('Defense (Season)');
-    // PIT vs D: 2025 row 88 gp (640 SOG, 47 G, 131 A, 365 missed, 620 blocked, 423 SC), 2024 row 82 gp (695, 39, 155, 367, 559, 370).
-    const w15 = 88 / (88 + 15); const w40 = 88 / (88 + 40);
+    // PIT vs D: the 2025 row alone, 88 gp (640 SOG, 47 G, 131 A, 365 missed, 620 blocked, 423 SC); the 2024 row
+    // (82 gp: 695, 39, 155, 367, 559, 370) is not in it (Vincent's call, 2026-10-27: no blend into last season).
     const r2 = (v) => Math.round(v * 100) / 100;
     expect(d.teams.PIT.D.gp).toBe(88);
-    expect(d.teams.PIT.D.sog).toBe(r2(w15 * (640 / 88) + (1 - w15) * (695 / 82)));
-    expect(d.teams.PIT.D.iff).toBe(r2(w15 * ((640 + 365) / 88) + (1 - w15) * ((695 + 367) / 82)));
-    expect(d.teams.PIT.D.iscf).toBe(r2(w15 * (423 / 88) + (1 - w15) * (370 / 82)));
-    expect(d.teams.PIT.D.g).toBe(r2(w40 * (47 / 88) + (1 - w40) * (39 / 82)));
-    expect(d.teams.PIT.D.a).toBe(r2(w40 * (131 / 88) + (1 - w40) * (155 / 82)));
+    expect(d.teams.PIT.D.sog).toBe(r2(640 / 88));
+    expect(d.teams.PIT.D.iff).toBe(r2((640 + 365) / 88));
+    expect(d.teams.PIT.D.iscf).toBe(r2(423 / 88));
+    expect(d.teams.PIT.D.g).toBe(r2(47 / 88));
+    expect(d.teams.PIT.D.a).toBe(r2(131 / 88));
     expect(Object.values(d.ranks).map((r) => r.All.sog).sort()).toEqual([1, 2, 3, 4]);
     // A season with no prior rows is this season's alone; a season not played yet carries last season's.
     expect(defenseBlocks(TEAMS, { season: 2024 }).teams.PIT.D).toMatchObject({ gp: 82, sog: r2(695 / 82), g: r2(39 / 82) });
     expect(defenseBlocks(TEAMS, { season: 2026 }).teams.PIT.D).toMatchObject({ gp: 88, sog: r2(640 / 88) });
-    // Two games into a season the prior still carries most of the read.
+    // Two games into a season the read is those two games.
     const early = TEAMS.map((t) => (t.code !== 'PIT' ? t : { ...t, stats: [...t.stats, { seasonYear: 2026, seasonType: '', type: 'Opponent', position: 'D', gamesPlayed: 2, goals: 6, assists: 8, shots: 30, missedShots: 10, blockedAtt: 12, scoringChances: 14 }] }));
     const e = defenseBlocks(early, { season: 2026 }).teams.PIT.D;
     expect(e.gp).toBe(2);
-    expect(e.sog).toBe(r2((2 / 17) * 15 + (15 / 17) * (640 / 88)));
-    expect(e.g).toBe(r2((2 / 42) * 3 + (40 / 42) * (47 / 88)));
+    expect(e.sog).toBe(15);
+    expect(e.g).toBe(3);
   });
   test('blended season rates: last season earns its weight back game by game', () => {
     const game = (season, shots, goals, toi = '18:00') => ({ gameDate: `${season + 1}-01-01T00:00:00Z`, season, seasonType: 'REG', shots, missedShots: 1, blockedAtt: 1, goals, scoringChances: 2, totalTimeOnIce: toi });

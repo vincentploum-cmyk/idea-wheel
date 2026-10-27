@@ -96,7 +96,7 @@ describe('tonight’s picks', () => {
     expect(a.league).toBe(27.25);
     expect(a.teamCount).toBe(2);
   });
-  test('what each team allows per skater at a position, this season blended into last season’s, with ranks', () => {
+  test('what each team allows per skater at a position, this season’s table, with ranks', () => {
     const row = (opp, pos, sog, g, gameId) => ({ opp, pos, sog, g, gameId });
     // This season: BUF has given C skaters 2.5 shots a game over two games, CAR 1.0 over one.
     const cur = [row('BUF', 'C', 3, 1, 1), row('BUF', 'C', 2, 0, 1), row('BUF', 'C', 3, 0, 2), row('BUF', 'C', 2, 0, 2), row('CAR', 'C', 1, 0, 3), row('CAR', 'C', 1, 0, 3), row('BUF', 'D', 1, 0, 1)];
@@ -104,21 +104,22 @@ describe('tonight’s picks', () => {
     const prev = [];
     for (let i = 0; i < 20; i++) { prev.push(row('BUF', 'C', 1.5, 0.2, 100 + i), row('CAR', 'C', 2, 0.3, 200 + i), row('TOR', 'C', 1.7, 0.25, 300 + i)); }
     const a = positionAllowed(cur, prev);
-    // BUF C: 2 games → w = 2 / 17: 2.5 * 2/17 + 1.5 * 15/17
-    expect(a.read('BUF', 'C').sog).toBeCloseTo(2.5 * (2 / 17) + 1.5 * (15 / 17), 2);
-    expect(a.read('BUF', 'C').g).toBeCloseTo(0.25 * (2 / 42) + 0.2 * (40 / 42), 3);
-    expect(a.read('BUF', 'C')).toMatchObject({ games: 2, prevGames: 20, curSog: 2.5, prevSog: 1.5 });
-    expect(a.read('CAR', 'C').sog).toBeCloseTo(1 * (1 / 16) + 2 * (15 / 16), 2);
-    // TOR: last season only; BUF D: this season only (no 10-game base last season).
-    expect(a.read('TOR', 'C')).toMatchObject({ games: 0, sog: 1.7, prevSog: 1.7 });
-    expect(a.read('BUF', 'D')).toMatchObject({ games: 1, sog: 1, prevSog: null });
+    // This season's table alone (Vincent's call, 2026-10-27): BUF C 2.5 over two games, last season's 1.5 kept beside it for the record.
+    expect(a.read('BUF', 'C').sog).toBe(2.5);
+    expect(a.read('BUF', 'C').g).toBe(0.25);
+    expect(a.read('BUF', 'C')).toMatchObject({ games: 2, prevGames: 20, curSog: 2.5, prevSog: 1.5, held: false });
+    expect(a.read('CAR', 'C').sog).toBe(1);
+    // TOR: no game yet this season, last season's regular season stands in (held); BUF D: this season only (no 10-game base last season).
+    expect(a.read('TOR', 'C')).toMatchObject({ games: 0, sog: 1.7, prevSog: 1.7, held: true });
+    expect(a.read('BUF', 'D')).toMatchObject({ games: 1, sog: 1, prevSog: null, held: false });
     expect(a.read('BUF', 'LW')).toBeNull();
     expect(a.read('NYR', 'C')).toBeNull();
-    // Ranks: 1 = allows the most to the position. CAR 1.94 > BUF 1.62 > ... TOR 1.7 sits between.
-    expect(a.read('CAR', 'C').rankSog).toBe(1);
+    // Ranks: 1 = allows the most to the position. BUF 2.5 > TOR 1.7 (held) > CAR 1.0.
+    expect(a.read('BUF', 'C').rankSog).toBe(1);
     expect(a.read('TOR', 'C').rankSog).toBe(2);
-    expect(a.read('BUF', 'C').rankSog).toBe(3);
-    expect(a.read('CAR', 'C').rankG).toBe(1);
+    expect(a.read('CAR', 'C').rankSog).toBe(3);
+    expect(a.read('BUF', 'C').rankG).toBe(1);
+    expect(a.read('CAR', 'C').rankG).toBe(3);
     expect(a.teamCount).toBe(3);
   });
   test('a team is on a back-to-back when its last stored game was the day before', () => {

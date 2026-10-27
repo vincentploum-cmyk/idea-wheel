@@ -559,11 +559,10 @@ fewer calls: P(3+) ≥ 60% is now λ ≥ 3.1 and P(4+) ≥ 40% is λ ≥ 3.7.
 goals allowed to centres, Brady Tkachuk carries the goals flame, and the goals table reads "nobody over 35%" (M.
 Tkachuk 31%, B. Tkachuk 29%, Reinhart 28%). Three things are true at once. (1) The board's 35% floor is λ ≥ 0.43:
 section 14's table has the formula clearing it for 1.9 skaters a night league-wide (hit .430), so a game with none
-over it is the usual case and the head says so. (2) The opponent read the model and the study use is the blend of
-section 3 (this season at games / (games + 40) for goals): at ten games WPG's centre row is four fifths last
-season's, which is the read that scored (z +6.2 against +2.7 for this season's table alone, and "× the position
-table season to date" ranks worse than the skater's own blend). The 2026 tab the rink tints from is a different
-read from the one in the number. (3) The published λ goals (`lambdaGDisplay` in `model-core.js`) is the points λ ×
+over it is the usual case and the head says so. (2) The opponent read the model and the study used was the blend of
+section 3 (this season at games / (games + 40) for goals): at ten games WPG's centre row was four fifths last
+season's, the read that scored (z +6.2 against +2.7 for this season's table alone). Superseded the same day,
+section 15: the opponent read is this season's, and last season's playoff rows are out of every base. (3) The published λ goals (`lambdaGDisplay` in `model-core.js`) is the points λ ×
 his finisher share × 0.9: the opponent's goals row reaches it only through the points step's defense multiplier
 (0.45 × a goals multiplier damped by tier and capped at 1.02–1.20, beside 0.35 × the assists allowed — the same
 table has WPG 31st on assists to centres, which pulls against the goals softness) and the last-five goal form
@@ -1055,3 +1054,30 @@ goals table +.0030 (z 3.8) and the blend +.0024 on the 4,529 rows, the this-seas
 Rerun: `tools/predictors/run.sh 2026`, then `python3 -I tools/predictors/filters.py .nhl-data/predictors/2026/games-pos
 .nhl-data/predictors/2025/games-pos .nhl-data/predictors/2026/rows.csv "2026-27"` (and the same on the 2025 rows with
 2024 as the previous season for the control).
+
+## 15. Decision 2026-10-27: the opponent's table is this season's, and last season's playoffs are out
+
+Vincent's call, on the FLA @ WPG board of Oct 27 (section 12's note): the teams on the ice are this season's, and
+the final games of last season on record are playoff games, which read over to nothing in October. Two changes,
+both in the builders and the board, none in the model's math:
+
+- **The opponent's table is this season's** wherever a number is made: `positionAllowed` (the study's read, the
+  soft-spot colour, the notes, the scorecard's Study λ from here on) and the "Defense (Season)" block of the model's
+  matchup workbook (`defenseBlocks`: PropFinder's season-to-date Opponent rows as published; the model's own
+  multipliers on it are unchanged). Last season's regular season stands in only for a team with no game yet. The
+  games / (games + 15) and games / (games + 40) blend that sections 9 and 13 fitted stays on record here and in no
+  number.
+- **Last season means the regular season**: `loadRows` drops the previous season's playoff rows (the game id's type
+  digits, `isPlayoffGame`) from every base — a skater's blended rate, his last 5 / 10 / 20 across the boundary, the
+  flame / snowflake, the Defense tab's spans and track record, the shooting profiles, the first-goal record, the
+  history and home / away workbooks the model is given. This season's rows come whole, so in April–June the playoffs
+  under way are the data. The skater's own blend into last season's regular season (n / (n + 18) shots, n / (n + 40)
+  goals) stays: section 12 is what the raw early-season rates did to the goal λ before Oct 10.
+
+What the record says this costs, for the next reading of the scorecard: this season's position table alone added
+z +2.7 against the blend's +6.2 as a read (section 13), ranked worse than the skater's own blend as a multiplier
+(section 14), and a 5-game read of a defense is half noise, trustworthy from ~15 games (section 9) — at ten games
+and beyond, where the season now is, the gap closes. From here the scorecard's Study λ and the board's soft-spot
+grading run on the this-season table, so the "Windows and sources" table and the Defense tab's track record will
+show the difference in numbers as the games come in. The sections above were measured with the blend and stay as
+measured.
