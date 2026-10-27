@@ -521,7 +521,16 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   from `opponentDefense(opp, defVenue, tables, vs)` and `defenseTablesFor(rows, pf)` in `slate.js`, the
   same builders `buildSlate` uses for every side, `moneypuckBlock` the MoneyPuck block) and the per-team defense card
   (`lib/nhl-data/defense.js`) are descriptive views over the stored rows; the model's
-  own math stays in `NhlModel.jsx`. Logos/headshots are copied into `data/media/*` and
+  own math stays in `NhlModel.jsx`. In the Matchups fold "Defense tables and all skaters" the defense card and the
+  skater table's Opp S/G read PropFinder's table above the rink **on the tab the rink is on** (`defenseCardFromTabs` in
+  `propfinder-csv.js`; the rink's tab is lifted into `MatchupsPanel` as `pfKeys`, `Rink` taking `pfKey` / `onPfKey`;
+  the card's L10 column is PropFinder's L10 tab, the first-goal column and the MoneyPuck line stay the stored games'
+  and MoneyPuck's; the stored venue table stands in, named, for a team without a table), and `edge()` in `slate.js`
+  reads PropFinder's per-position season table first (the stored venue table standing in, `thin` under 10 games), so
+  the skater table's edges and the slate's matchup read (`vs`, `projSog` / `projG`: the chips without a run, `top`)
+  sit on the same table as the ice, the flags and the shuffle (Vincent, 2026-10-27: "fold the defense card into the
+  same table too"; until then the stored venue table led once it had 10 games). The verdicts and the
+  characteristics still read `side.defense`, the venue table, as the prose reads they are. Logos/headshots are copied into `data/media/*` and
   served by `/api/nhl/data/media`; standings/leaders live in `data/league/*`.
 - Tonight's picks (`lib/nhl-data/picks.js` + `picks-pure.js`, `/api/nhl/data/picks`, `components/nhl/PicksPanel.jsx`,
   the list at the top of Best bets): the best shots plays and the best goal plays in every game: every skater over

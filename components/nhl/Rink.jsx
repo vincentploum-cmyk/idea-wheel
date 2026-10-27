@@ -241,7 +241,7 @@ function BandLabel({ pos, d, opp, view, windowText = null, teamCount, x, y, metr
 }
 
 /** One side of a game: `side` is an entry of a slate game's `sides`. */
-export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, modelRun = null, metric = 'sog', onMetric = null }) {
+export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, modelRun = null, metric = 'sog', onMetric = null, pfKey: controlledKey = undefined, onPfKey = null }) {
   // Kept for the card's title (hover): where the chip numbers and the lines come from.
   const numSrc = modelRun ? `Numbers on the chips: the model, ${modelRun.source === 'auto' ? 'run automatically' : 'run'} ${et(modelRun.createdAt)}${modelRun.players ? ` (${modelRun.players} players)` : ''}.` : 'No model run for this slate yet: chips show a matchup read (own SOG/G × opponent ratio).';
   const { placed, extras } = useMemo(() => layoutSide(side.skaters), [side.skaters]);
@@ -266,7 +266,10 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
   // toggle). On the opponents with 10+ games this season's table was the best tint by deviance
   // (docs/shots-goals-predictors.md section 10, refreshed 2026-10-27).
   const [tint, setTint] = useState('propfinder');
-  const [pfKey, setPfKey] = useState(null);
+  // The PropFinder tab: owned here, or by the panel (`pfKey` / `onPfKey`) so the defense card under the rink reads the same tab.
+  const [ownKey, setOwnKey] = useState(null);
+  const pfKey = controlledKey === undefined ? ownKey : controlledKey;
+  const setPfKey = (k) => { setOwnKey(k); onPfKey?.(k); };
   const pfTabs = side.propfinder?.tabs || [];
   const pfTab = pfTabs.find((t) => t.key === pfKey) || defaultDefenseTab(pfTabs);
   const fromPf = tint === 'propfinder' && !!pfTab;

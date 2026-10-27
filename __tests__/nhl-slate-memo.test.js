@@ -95,6 +95,10 @@ describe('the NHL builders are kept per store state', () => {
     expect(sk0.spot.rankSog).toBe(tab0.rows[sk0.pos].ranks.sog);
     expect(sk0.spot.softSog).toBe(sk0.spot.rankSog <= Math.ceil(tab0.count / 3));
     expect(sk0.oppPos).not.toBeNull();   // the study's own environment stays beside it
+    // The skater table's Opp S/G, the edges and the matchup read sit on the same table: PropFinder's per-position season table first.
+    expect(sk0.vs.sog).toMatchObject({ source: 'propfinder', rank: expect.any(Number) });
+    expect(sk0.vs.sog.allowed).toBe(side0.propfinder.tabs.find((t) => t.kind === 'season' && t.season === sk0.vs.sog.seasonLabel.slice(0, 4) * 1).rows[sk0.pos].sog);
+    expect(sk0.projSog).toBeCloseTo(sk0.sog * sk0.vs.sog.ratio, 1);
     const downloads = calls.download;
     expect(await buildSlate(DATE)).toBe(s1);
     expect(calls.download).toBe(downloads);        // nothing read again for a hit
