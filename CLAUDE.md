@@ -47,9 +47,14 @@ config and keeps its own markets, teams, feeds and slate key:
   when the read is done (`status: 'done'`, with the games the pages paired) or `'failed'`.
   `POST /api/<sport>/sheets?reread=<id>` parses the stored words again (`&full=1` reads the PDF
   again); the Sources panel polls while pending and carries a "Read again" button. JPEG pages
-  (DCTDecode) and Flate-compressed RGB / grey pages both come out (`pdfImages`; soft masks left
-  out), the column scale follows its width (`scaleFor`: 3× a 594 px NFL column, 2× a 1040 px NBA
-  one). About four minutes for the NFL's 14 pages on Render, half a minute for the NBA's three.
+  (DCTDecode) and Flate-compressed RGB / grey pages both come out (`pdfImages`); a page's soft mask
+  is composited into it over white as a viewer draws it (`compositeOverWhite`, `masked: true`): the
+  NBA sheets of 2026-10-26 kept the grey table rows' text in the mask alone, so without it those rows
+  were black bands and every other player was missed (`__tests__/fixtures/ocr-nba-suns-okc.json`
+  holds that page's words whole; `fixRank` also reads "1st" tiles that come out as "dst" / "IST" /
+  "[St" and "3rd" as "31d"). A column is turned over only when it is dark (`prepareColumn`'s
+  `invert: 'auto'` by mean luminance); the column scale follows its width (`scaleFor`: 3× a 594 px
+  NFL column, 2× a 1040 px NBA one). About four minutes for the NFL's 14 pages on Render, half a minute for the NBA's three.
   The helpers both layouts share (`rowsOf`, `claimFragments`, `resolveName`, `similarity`) live in
   `ocr-layout.js`. A sheet row without a market and line is a **mention** (`board.js`,
   `mentionsOf`): it never makes a play of its own but confirms every PropFinder play of that
@@ -409,6 +414,17 @@ config and keeps its own markets, teams, feeds and slate key:
   short, the row on its lead market, a "Got" column with the figure and a tally in the game head. The model's math is untouched.
   Study: `docs/shots-goals-predictors.md` (section 13 is the every-angle scan and the replay; `tools/predictors/run.sh <year>`
   rebuilds it, `explain.py` reads one skater-game).
+  The **shuffle** at the top of Best bets (`components/nhl/ShufflePanel.jsx`, `GET /api/nhl/data/shuffle?date=` →
+  `buildShuffle` in `picks.js`, which is `buildPicks(date, { withSkaters: true })` reshaped; the pure readers in
+  `lib/nhl-data/shuffle-pure.js`): a bar for shots (1+ … 8+, starts at 3+, floor 50%) and one for goals (1+ … 4+,
+  1+, 35%). Every skater of every game is read at every height off the board's own λ (`skaterRow`: lamS / lamG,
+  the study's λ beside them, `ownOf` = his last 5 / 10 / 20 and this season's mean shots and goals from the stored
+  rows with how many of his last ten and of this season's games reached each height, the opponent's rank at his
+  position, `heat`, `actual` once final), the chance at a height the Poisson tail of the λ (`chanceAt`: 3+ here is
+  the board's 3+ figure, 6+ the same λ further up), survivors at the floor sorted by the chance with the break-even
+  price, how often he reached the bar, where he thins out and Got once final; the fallen strip under it. "Read
+  from" (`READ_FROM`) moves the λ to the study's or a window of his own results (a window he lacks falls back to the
+  board's). One request a slate, every bar move local; no number on the board changes.
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching: the roster decides a row's group, a pair
   holds a defenseman and two forwards side by side are a short forward line, three pairs at most, and a
