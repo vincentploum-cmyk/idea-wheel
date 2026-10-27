@@ -41,6 +41,17 @@ describe('the defense tab graded', () => {
     expect(s.best.n).toBe(4);
     expect(s.all.n).toBe(4);
     expect(s.all.hitExpected).toBeGreaterThan(0);
+    // By rank: NJD is rank 1 of 3 for centres' shots, NYR 2, BOS 3; rank 1 is the soft third here, and
+    // `top` reads ranks 1 through k together, so the last one is every skater-game.
+    expect(s.ranks.map((r) => r.rank)).toEqual([1, 2, 3]);
+    expect(s.ranks[0]).toMatchObject(s.thirds.soft);
+    expect(s.ranks[0].top).toMatchObject({ n: 2, actual: 4.5, hit: 1 });
+    expect(s.ranks[1]).toMatchObject({ rank: 2, n: 1, actual: 3, hit: 1 }); // player 1 at NYR on Oct 3
+    expect(s.ranks[1].expected).toBeCloseTo(5 / 19 + (18 / 19) * 3, 2); // his 5 on Oct 1 blended into last season's 3.0 at 1 / (1 + 18)
+    expect(s.ranks[1].top.n).toBe(3);
+    expect(s.ranks[1].top.actual).toBeCloseTo((4.5 * 2 + 3) / 3, 3);
+    expect(s.ranks[2]).toMatchObject(s.thirds.tough);
+    expect(s.ranks[2].top).toEqual(s.all);
     // Goals: NJD leaks a goal a game to centres last season; the blend at 0 games this season is last season's table.
     const gg = g.spans.season.g;
     expect(gg.thirds.soft.n).toBe(2);

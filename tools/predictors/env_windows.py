@@ -61,14 +61,24 @@ for w in WINS + [999]:
     tg[f'ga_{tag}'] = tg.groupby('opp').ga.transform(lambda s: s.shift(1).rolling(w if w != 999 else 200, min_periods=min(w, 3) if w != 999 else 3).mean())
 tg['n_prior'] = tg.groupby('opp').cumcount()
 sub = tg[(tg.n_prior >= 30) & tg.next10_sa.notna()]
-print(f'   opponents with 30+ prior games, {len(sub)} team-games:')
-for w in WINS + [999]:
+print(f'   opponents with 30+ prior games, {len(sub)} team-games:' + ('' if len(sub) >= 50 else ' too few for the read (needs 40+ games a team)'))
+for w in (WINS + [999] if len(sub) >= 50 else []):
     tag = f'L{w}' if w != 999 else 'season'
     print(f'   {tag:7s} shots allowed r = {stats.pearsonr(sub[f"sa_{tag}"], sub.next10_sa)[0]:.3f}   goals allowed r = {stats.pearsonr(sub[f"ga_{tag}"], sub.next10_ga)[0]:.3f}')
 sub2 = tg[(tg.n_prior >= 10) & (tg.n_prior < 20) & tg.next10_sa.notna()]
-print(f'   opponents with 10-19 prior games ({len(sub2)} team-games), windows up to L10 + season:')
-for tag in ['L3', 'L5', 'L10', 'season']:
+print(f'   opponents with 10-19 prior games ({len(sub2)} team-games), windows up to L10 + season:' + ('' if len(sub2) >= 50 else ' too few for the read'))
+for tag in (['L3', 'L5', 'L10', 'season'] if len(sub2) >= 50 else []):
     print(f'   {tag:7s} shots allowed r = {stats.pearsonr(sub2[f"sa_{tag}"], sub2.next10_sa)[0]:.3f}   goals allowed r = {stats.pearsonr(sub2[f"ga_{tag}"], sub2.next10_ga)[0]:.3f}')
+# a season in progress: how well does each window of the opponent's first games predict its NEXT 5 games?
+tg['next5_sa'] = tg.groupby('opp').sa.transform(lambda s: s[::-1].rolling(5, min_periods=5).mean()[::-1].shift(-1))
+tg['next5_ga'] = tg.groupby('opp').ga.transform(lambda s: s[::-1].rolling(5, min_periods=5).mean()[::-1].shift(-1))
+sub3 = tg[(tg.n_prior >= 5) & tg.next5_sa.notna()]
+if len(sub3) >= 50:
+    print(f'   opponents with 5+ prior games ({len(sub3)} team-games), each window against the opponent\'s NEXT 5 games:')
+    for tag in ['L3', 'L5', 'L10', 'season']:
+        m = sub3[f'sa_{tag}'].notna()
+        if m.sum() >= 30:
+            print(f'   {tag:7s} shots allowed r = {stats.pearsonr(sub3.loc[m, f"sa_{tag}"], sub3.loc[m, "next5_sa"])[0]:.3f}   goals allowed r = {stats.pearsonr(sub3.loc[m, f"ga_{tag}"], sub3.loc[m, "next5_ga"])[0]:.3f}   (n={int(m.sum())})')
 
 # ---------------- 2. incremental value in the player projection, same rows
 def cv(df, cols, target):
@@ -83,6 +93,45 @@ def cv(df, cols, target):
     return out
 base = d[(d.n_prior >= 20) & (d.opp_n >= 30) & d.ls_sog_pg.notna()].copy()
 core_s = ['p_sog_avg', 'ls_sog_pg', 'p_icf_avg', 'p_toi_l5', 'home']
+if len(base) < 500:
+    # a season in progress: the windows this season's games can define, skaters with 5+ games, opponents with 8+
+    core_e = ['p_sog_avg', 'ls_sog_pg', 'p_icf_avg', 'home']
+    cur = d[(d.n_prior >= 5) & (d.opp_n >= 8) & d.ls_sog_pg.notna()].copy()
+    if 'opp_pls_pos_sog_per' in cur:
+        wgt = cur.opp_n / (cur.opp_n + 15)
+        cur['psa_blend'] = np.where(cur.opp_pls_pos_sog_per.notna(), wgt * cur.psa_season.fillna(0) + (1 - wgt) * cur.opp_pls_pos_sog_per, cur.psa_season)
+    print(f'\n--- 2 (season in progress). SOG: player core + ONE environment window, skaters with 5+ games and opponents with 8+ games this season (n={len(cur)}) ---')
+    res = [dict(window='none (player core only)', **cv(cur, core_e, 'sog'))]
+    if 'opp_ls_sa_pg' in cur: res.append(dict(window='opp LAST SEASON shots allowed / game', **cv(cur, core_e + ['opp_ls_sa_pg'], 'sog')))
+    for fam, nm in [('sa', 'opp shots allowed / game'), ('psa', 'opp shots allowed per skater at the POSITION')]:
+        for tag in ['L3', 'L5', 'L10', 'season']:
+            if cur[f'{fam}_{tag}'].notna().sum() >= 300: res.append(dict(window=f'{nm}: {tag}', **cv(cur, core_e + [f'{fam}_{tag}'], 'sog')))
+    if 'opp_pls_pos_sog_per' in cur: res.append(dict(window='opp LAST SEASON shots allowed per skater at the position', **cv(cur, core_e + ['opp_pls_pos_sog_per'], 'sog')))
+    if 'psa_blend' in cur: res.append(dict(window='position per skater, season to date blended into last season at n / (n + 15)', **cv(cur, core_e + ['psa_blend'], 'sog')))
+    for c, nm in [('sa_venueL5', 'opp shots allowed at tonight\'s venue, L5'), ('psa_venueL5', 'position at venue, L5')]:
+        if cur[c].notna().sum() >= 300: res.append(dict(window=nm, **cv(cur, core_e + [c], 'sog')))
+    res = pd.DataFrame(res); pd.set_option('display.width', 200)
+    base_dev = res.dev.iloc[0]; res['gain'] = base_dev - res.dev
+    print(res.to_string(index=False, float_format=lambda v: f'{v:.4f}'))
+    res.to_csv(sys.argv[1].replace('.csv', '-env-sog-inprogress.csv'), index=False)
+    curg = cur[cur.ls_xg_pg.notna() & cur.ls_shpct.notna()].copy()
+    core_eg = ['p_sog_avg', 'p_iscf_avg', 'ls_xg_pg', 'p_g_avg', 'ls_shpct', 'home']
+    if 'opp_pls_pos_g_per' in curg:
+        wgt = curg.opp_n / (curg.opp_n + 40)
+        curg['pga_blend'] = np.where(curg.opp_pls_pos_g_per.notna(), wgt * curg.pga_season.fillna(0) + (1 - wgt) * curg.opp_pls_pos_g_per, curg.pga_season)
+    print(f'\n--- 3 (season in progress). Goals: goal core + ONE environment window (n={len(curg)}) ---')
+    res = [dict(window='none (goal core only)', **cv(curg, core_eg, 'g'))]
+    for fam, nm in [('ga', 'opp goals allowed / game'), ('pga', 'opp goals allowed per skater at the POSITION')]:
+        for tag in ['L5', 'L10', 'season']:
+            if curg[f'{fam}_{tag}'].notna().sum() >= 300: res.append(dict(window=f'{nm}: {tag}', **cv(curg, core_eg + [f'{fam}_{tag}'], 'g')))
+    if 'opp_ls_ga_pg' in curg: res.append(dict(window='opp LAST SEASON goals allowed / game', **cv(curg, core_eg + ['opp_ls_ga_pg'], 'g')))
+    if 'opp_pls_pos_g_per' in curg: res.append(dict(window='opp LAST SEASON goals allowed per skater at the position', **cv(curg, core_eg + ['opp_pls_pos_g_per'], 'g')))
+    if 'pga_blend' in curg: res.append(dict(window='position per skater, season to date blended into last season at n / (n + 40)', **cv(curg, core_eg + ['pga_blend'], 'g')))
+    res = pd.DataFrame(res); base_dev = res.dev.iloc[0]; res['gain'] = base_dev - res.dev
+    print(res.to_string(index=False, float_format=lambda v: f'{v:.4f}'))
+    res.to_csv(sys.argv[1].replace('.csv', '-env-goal-inprogress.csv'), index=False)
+    print('\n   (sections 2 and 3 as written need opponents with 30+ games; rerun once the season is past December)')
+    sys.exit(0)
 print(f'\n--- 2. SOG: player core + ONE environment window (skaters with 20+ games, opponents with 30+ games, n={len(base)}) ---')
 res = [dict(window='none (player core only)', **cv(base, core_s, 'sog'))]
 for fam, nm in [('sa', 'opp shots allowed / game'), ('psa', 'opp shots allowed per skater at the POSITION')]:

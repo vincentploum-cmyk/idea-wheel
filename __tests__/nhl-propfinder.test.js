@@ -172,9 +172,14 @@ describe('propfinder defense tabs (the table above each rink)', () => {
   });
   test('a tab becomes a rink band per position, in the slate window shape', () => {
     const d = propfinderDefenseTabs(pf, 'LAK');
-    expect(defaultDefenseTab(d.tabs).key).toBe('l10');
+    // The table opens on this season's tab whenever it exists, never on a window; last season's only without it.
+    expect(defaultDefenseTab(d.tabs).key).toBe('season-2025');
     expect(defaultDefenseTab([d.tabs[0]]).key).toBe('season-2025');
+    expect(defaultDefenseTab([d.tabs[1]]).key).toBe('l10');
     expect(defaultDefenseTab([])).toBeNull();
+    const cur = (gp) => ({ ...d.tabs[0], key: 'season-2026', label: '2026', season: 2026, rows: Object.fromEntries(Object.entries(d.tabs[0].rows).map(([k, r]) => [k, { ...r, gp }])) });
+    expect(defaultDefenseTab([d.tabs[0], cur(3), d.tabs[1]]).key).toBe('season-2026');
+    expect(defaultDefenseTab([cur(10), d.tabs[0], d.tabs[1]]).key).toBe('season-2026'); // whatever the order of the tabs
     expect(defenseTabText(d.tabs[0])).toBe('the 2025 season');
     expect(defenseTabText(d.tabs[1])).toBe('the last 10 games');
     const band = defenseBandFromTab(d.tabs[1], 'D');

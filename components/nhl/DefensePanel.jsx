@@ -5,7 +5,7 @@ import { TeamLogo, Headshot } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { PfTable, SortTh, Sel, UnderlineTabs, rankTone } from './pf-ui';
 import { TeamLink } from './links';
-import { GROUPS, OVERVIEW_COLS, boardTables, overviewRows, matchupReads, groupKeyFor, shootersAt, figureFor } from '@/lib/nhl-data/defense-board';
+import { GROUPS, OVERVIEW_COLS, boardTables, overviewRows, matchupReads, groupKeyFor, shootersAt, figureFor, resultsAt } from '@/lib/nhl-data/defense-board';
 
 // The Defense tab: ShotPropz-style cheat sheets from the stored box scores. What every
 // team gives up to each position group, ranked softest first (1 = the most allowed),
@@ -82,13 +82,49 @@ function Shooters({ side, keyName, group, opp, venue, metric }) {
 }
 
 /**
+ * What the listed shooters did, once the game is stored: the tally over the floor (3+ SOG, or 1+ goal under
+ * Goals) with the score, then each shooter's figure, green at the floor, red under it, DNP without a row.
+ * Before the game, or while the box score is not stored yet, a note says so.
+ */
+function Results({ side, keyName, group, metric, game }) {
+  const result = game?.result || null;
+  const [now] = useState(() => Date.now()); // read once: the note only says whether puck drop has passed
+  if (!result) {
+    const start = Date.parse(game?.startTimeUTC || '');
+    return <small className="nhlx-auto-meta">{Number.isFinite(start) && start < now ? 'no box score yet' : 'not played yet'}</small>;
+  }
+  const list = side && keyName ? shootersAt(side, keyName, group, metric) : [];
+  const r = resultsAt(list, result, metric);
+  const unit = metric === 'g' ? 'goal' : 'SOG';
+  const score = result.score && game ? `${game.away} ${result.score.away}–${result.score.home} ${game.home}` : '';
+  return (
+    <>
+      <b>{r.graded ? `${r.hits} of ${r.graded}` : '—'}</b> <small>{metric === 'g' ? '1+ goal' : '3+ SOG'}{score ? ` · ${score}` : ''}</small>
+      <br />
+      <span className="nhlx-df-got">
+        {r.rows.map((p, i) => (
+          <span key={p.id}>
+            {i ? ' · ' : ''}
+            <span className={p.hit == null ? 'is-dnp' : p.hit ? 'is-hit' : 'is-miss'} title={p.hit == null ? `${p.name}: no box-score row (did not play)` : `${p.name}: ${p.got} ${unit}${p.got === 1 || unit === 'SOG' ? '' : 's'} · ${p.hit ? 'at' : 'under'} the floor of ${r.floor}`}>
+              {String(p.name).split(' ').slice(-1)[0]} <b>{p.hit == null ? 'DNP' : p.got}</b>
+            </span>
+          </span>
+        ))}
+        {!r.rows.length && <small className="nhlx-auto-meta">nobody listed</small>}
+      </span>
+    </>
+  );
+}
+
+/**
  * Tonight's shooting sides, softest spot first: the defender's figure and rank per group, and the shooters
  * the side has at one position: the softest spot by default, or the cell last clicked on that row.
  */
 function Reads({ reads, keys, digits, metric, active, onPick, games, group }) {
   const [picked, setPicked] = useState({});
   if (!reads.length) return <p className="nhlx-auto-meta">No games on this date.</p>;
-  const sideOf = (m) => (games || []).find((g) => g.id === m.gameId)?.sides?.find((s) => s.team === m.team) || null;
+  const gameOf = (m) => (games || []).find((g) => g.id === m.gameId) || null;
+  const sideOf = (m) => gameOf(m)?.sides?.find((s) => s.team === m.team) || null;
   const namesAt = (side, k) => shootersAt(side, k, group, metric).map((p) => `${String(p.name).split(' ').slice(-1)[0]} ${p.pos}${p.line || ''}`).join(', ');
   const rowKey = (m) => `${m.gameId}-${m.team}`;
   const shownKey = (m) => (picked[rowKey(m)] && keys.includes(picked[rowKey(m)]) ? picked[rowKey(m)] : m.best?.key || null);
@@ -101,6 +137,7 @@ function Reads({ reads, keys, digits, metric, active, onPick, games, group }) {
             <th className="is-left">Against</th>
             {keys.map((k) => <th key={k}>{k}</th>)}
             <th className="is-left" title="The softest spot by default; click a position's value to list the shooters there instead">Softest spot · shooters</th>
+            <th className="is-left" title="Once the game is stored: the listed shooters' shots (goals under Goals), the tally at 3+ SOG / 1+ goal, and the score">Result</th>
           </tr>
         </thead>
         <tbody>
@@ -130,6 +167,9 @@ function Reads({ reads, keys, digits, metric, active, onPick, games, group }) {
                     <Shooters side={side} keyName={shown || m.best.key} group={group} opp={m.opp} venue={m.venue} metric={metric} />
                   </> : <small>no games stored</small>}
                 </td>
+                <td className="is-left nhlx-df-result">
+                  <Results side={side} keyName={shown || m.best?.key || null} group={group} metric={metric} game={gameOf(m)} />
+                </td>
               </tr>
             );
           })}
@@ -139,15 +179,15 @@ function Reads({ reads, keys, digits, metric, active, onPick, games, group }) {
   );
 }
 
-const STREAK_TABS = [['goals', 'Goal streaks'], ['points', 'Point streaks'], ['sog3', '3+ shot streaks']];
+const STREAK_TABS = [['goals', 'Goal streaks'], ['points', 'Point streaks'], ['sog3', '3+ shot streaks'], ['sog4', '4+ shot streaks']];
 
 /** Who is running hot, with tonight's opponent read off the same tables at his position. */
 function Streaks({ list, tab, onTab, playing, view, byVenue, venue, group, digits, metric }) {
   const open = usePlayerCard();
   const rows = useMemo(() => {
     const l = view === 'tonight' ? list.filter((p) => p.tonight) : list;
-    const key = tab === 'goals' ? (p) => p.goals.streak * 100 + p.goals.l5 : tab === 'points' ? (p) => p.points.streak * 100 + p.points.l5 : (p) => p.sog3.streak * 100 + p.sog3.l5;
-    return [...l].filter((p) => (tab === 'goals' ? p.goals.streak >= 2 : tab === 'points' ? p.points.streak >= 3 : p.sog3.streak >= 3)).sort((a, b) => key(b) - key(a) || a.name.localeCompare(b.name)).slice(0, 40);
+    const key = tab === 'goals' ? (p) => p.goals.streak * 100 + p.goals.l5 : tab === 'points' ? (p) => p.points.streak * 100 + p.points.l5 : tab === 'sog4' ? (p) => p.sog4.streak * 100 + (p.sog4.l5 || 0) : (p) => p.sog3.streak * 100 + p.sog3.l5;
+    return [...l].filter((p) => (tab === 'goals' ? p.goals.streak >= 2 : tab === 'points' ? p.points.streak >= 3 : tab === 'sog4' ? (p.sog4?.streak || 0) >= 2 : p.sog3.streak >= 3)).sort((a, b) => key(b) - key(a) || a.name.localeCompare(b.name)).slice(0, 40);
   }, [list, tab, view]);
   const cellFor = (p) => {
     if (!p.tonight || !byVenue) return null;
@@ -164,7 +204,7 @@ function Streaks({ list, tab, onTab, playing, view, byVenue, venue, group, digit
           <thead>
             <tr>
               <th className="is-left">Skater</th><th>Slot</th>
-              <th title="Consecutive games with a goal">G streak</th><th title="Consecutive games with a point">Pts streak</th><th title="Consecutive games with 3+ shots on goal">3+ SOG streak</th>
+              <th title="Consecutive games with a goal">G streak</th><th title="Consecutive games with a point">Pts streak</th><th title="Consecutive games with 3+ shots on goal">3+ SOG streak</th><th title="Consecutive games with 4+ shots on goal">4+ SOG streak</th>
               <th title="Goals over his last five games">G L5</th><th title="Shots on goal over his last five games">SOG L5</th>
               <th className="is-left">Last game</th>
               <th className="is-left" title={`What tonight's opponent gives up per skater at his position a game (${metric === 'g' ? 'goals' : 'shots'}), with its rank`}>Tonight</th>
@@ -180,6 +220,7 @@ function Streaks({ list, tab, onTab, playing, view, byVenue, venue, group, digit
                   <td className={tab === 'goals' ? 'is-sorted' : ''}>{p.goals.streak || '—'}</td>
                   <td className={tab === 'points' ? 'is-sorted' : ''}>{p.points.streak || '—'}</td>
                   <td className={tab === 'sog3' ? 'is-sorted' : ''}>{p.sog3.streak || '—'}</td>
+                  <td className={tab === 'sog4' ? 'is-sorted' : ''}>{p.sog4?.streak || '—'}</td>
                   <td>{p.goals.l5}</td><td>{p.sog3.l5}</td>
                   <td className="is-left"><small>{p.last.date.slice(5)} {p.last.venue === 'H' ? 'vs' : '@'} {p.last.opp} · {p.last.g} G {p.last.a} A {p.last.sog} SOG</small></td>
                   <td className={`is-left ${c ? rankTone(c.rank, c.n) : ''}`}>
@@ -199,10 +240,57 @@ const SPAN_LABEL = { season: 'Season (blended)', l10: 'Last 10', l5: 'Last 5' };
 const pct = (v, d = 1) => (v == null ? '—' : `${(v * 100).toFixed(d)}%`);
 const signed = (v) => (v == null ? '—' : `${v > 0 ? '+' : ''}${(v * 100).toFixed(1)}%`);
 
+const signed0 = (v) => (v == null ? '—' : `${v > 0 ? '+' : ''}${Math.round(v * 100)}%`);
+const liftTone = (v) => (v == null ? '' : v >= 0.03 ? 'is-soft' : v <= -0.03 ? 'is-tough' : '');
+
+/**
+ * The track record by the opponent's rank at the skater's position: one column per rank, per span a
+ * row; the bold figure is ranks 1 through that one together (how far down the table the soft read
+ * holds: it stays green as long as adding the next rank keeps the pooled lift up), the small one the
+ * rank alone (about 200 skater-games a rank, so noisy on its own). The hover carries both with the
+ * counts and the floor rates.
+ */
+function ByRank({ grade, metric, floor, unit }) {
+  const spans = ['season', 'l10', 'l5'];
+  const n = Math.max(0, ...spans.flatMap((s) => (grade.spans[s][metric].ranks || []).map((r) => r.rank)));
+  if (!n) return null;
+  const ranks = Array.from({ length: n }, (_, i) => i + 1);
+  return (
+    <div className="nhlx-df-ranks">
+      <table>
+        <thead>
+          <tr><th className="is-left">By rank</th>{ranks.map((k) => <th key={k}>#{k}</th>)}</tr>
+        </thead>
+        <tbody>
+          {spans.map((s) => {
+            const by = Object.fromEntries((grade.spans[s][metric].ranks || []).map((r) => [r.rank, r]));
+            return (
+              <tr key={s}>
+                <td className="is-left"><b>{SPAN_LABEL[s]}</b></td>
+                {ranks.map((k) => {
+                  const r = by[k];
+                  if (!r) return <td key={k}><small>—</small></td>;
+                  const t = r.top;
+                  return (
+                    <td key={k} className={liftTone(t.lift)} title={`Ranks 1 to ${k} together: ${t.n} skater-games, ${t.actual.toFixed(2)} ${unit} a game against ${t.expected.toFixed(2)} from their own rates (${signed(t.lift)}); ${floor} ${pct(t.hit)} against ${pct(t.hitExpected)} expected · rank ${k} alone: ${r.n} skater-games, ${signed(r.lift)}; ${floor} ${pct(r.hit)} against ${pct(r.hitExpected)}`}>
+                      <b>{signed0(t.lift)}</b><small>{signed0(r.lift)}</small>
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 /**
  * The tab's track record: every stored skater-game this season graded against the tables as they
  * stood that morning. For each span, the soft / mid / tough third of the opponent's table at the
- * skater's position: what he did against his own rate going in; the softest-spot shooters the same.
+ * skater's position: what he did against his own rate going in; the softest-spot shooters the same;
+ * and under it the strip by rank (`ByRank`).
  */
 function TrackRecord({ grade, metric, loading }) {
   if (loading) return <p className="nhlx-auto-meta">Grading the season’s games against the tables as they stood each morning…</p>;
@@ -247,6 +335,7 @@ function TrackRecord({ grade, metric, loading }) {
           </tr>
         </tbody>
       </PfTable>
+      <ByRank grade={grade} metric={metric} floor={floor} unit={unit} />
     </div>
   );
 }
@@ -345,7 +434,7 @@ export default function DefensePanel() {
         <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Date" />
       </div>
 
-      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Tonight’s matchups</h3><small>{data.tonight?.length || 0} games on {date} · each shooting side against what its opponent gives up per skater at the position {venue === 'ALL' ? 'over every game' : 'at the venue it defends tonight'} · softest spot first, with the shooters lined up there tonight, the best for {metric === 'g' ? 'goals' : 'shots'} first with his figure (the run’s λ, else his rate a game; click any position’s value to list that position’s shooters instead; * = carried from an earlier lineup)</small></div>
+      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Tonight’s matchups</h3><small>{data.tonight?.length || 0} games on {date} · each shooting side against what its opponent gives up per skater at the position {venue === 'ALL' ? 'over every game' : 'at the venue it defends tonight'} · softest spot first, with the shooters lined up there tonight, the best for {metric === 'g' ? 'goals' : 'shots'} first with his figure (the run’s λ, else his rate a game; click any position’s value to list that position’s shooters instead; * = carried from an earlier lineup) · once the game is stored, Result grades the listed shooters at {metric === 'g' ? '1+ goal' : '3+ SOG'} with the score</small></div>
       <Reads reads={reads} keys={keys} digits={digits} metric={metric} active={active} onPick={pick} games={data.tonight || []} group={group} />
 
       <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Running hot</h3><small>Current streaks from this season’s stored games · the study found no carry-over from a goal last game, so read the streak as colour and the Tonight column as the matchup</small></div>
@@ -356,7 +445,7 @@ export default function DefensePanel() {
         {keys.map((k) => <RankTable key={k} title={`${metric === 'g' ? 'Goals' : 'Shots'} against ${k}`} table={tables?.[k]} digits={digits} playing={playing} view={view} active={active} onPick={pick} />)}
       </div>
 
-      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Track record</h3><small>Every stored skater-game this season through {date}, graded against each table as it stood that morning · the cell is the skaters’ {metric === 'g' ? 'goals' : 'shots'} against their own rate going in (lift), the {metric === 'g' ? '1+ goal' : '3+ SOG'} rate and the count · a table that works pulls the soft third up and the tough third down</small></div>
+      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Track record</h3><small>Every stored skater-game this season through {date}, graded against each table as it stood that morning · the cell is the skaters’ {metric === 'g' ? 'goals' : 'shots'} against their own rate going in (lift), the {metric === 'g' ? '1+ goal' : '3+ SOG'} rate and the count · a table that works pulls the soft third up and the tough third down · under it the same by the opponent’s rank: the bold figure is ranks 1 through that one together (how far down the table the soft read holds), the small one the rank alone</small></div>
       <TrackRecord grade={grade} metric={metric} loading={grading} />
 
       <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Team overview</h3><small>Stored box scores for the span above · MoneyPuck season rates, all situations{data.moneypuck?.updatedAt ? ` (updated ${new Date(data.moneypuck.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})` : ''}</small></div>

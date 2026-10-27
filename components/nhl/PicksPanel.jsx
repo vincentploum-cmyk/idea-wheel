@@ -6,6 +6,7 @@ import { usePlayerCard } from './PlayerCard';
 import { SlateDateContext } from './player-card-context';
 import { fairOdds, hitOf } from '@/lib/nhl-data/picks-pure';
 import { Flags } from './flags';
+import ShufflePanel from './ShufflePanel';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
@@ -135,6 +136,7 @@ export default function PicksPanel() {
       <p className="nhlx-auto-meta nhlx-fg-how">
         The best shots plays and goal plays in every game. The percentage is the chance of the hit, the price under it the break-even; dimmed rows are under the floor. Click a player for his card.
       </p>
+      {date ? <ShufflePanel date={date} /> : null}
       {board && !board.games.length ? <div className="nhlx-empty">No games on this date.</div> : null}
       {board && board.games.map((g, i) => (
         <article key={g.id} className={`nhlx-mu-game${i === 0 ? ' is-first' : ''}`}>

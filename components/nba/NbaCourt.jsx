@@ -129,7 +129,7 @@ function Chip({ p, x, y, metric, sport, team, opp, venue, final, allowed, win })
   const own = p.own?.[metric];
   const woText = p.without && own?.without != null ? `Without ${p.without.names.join(' + ')} (${p.without.absent.map((a) => `${a.name}: ${a.status}${a.detail ? `, ${a.detail}` : ''}`).join('; ')}): ${num(own.without)} ${STAT_LABEL[metric]} a game over ${own.n} game${own.n === 1 ? '' : 's'}; the season read moved from ${num(own.all)} to ${num(own.season)} (weight ${p.without.weight})` : null;
   const proj = projectFor(p.own?.[metric], allowed, envPos(p), metric, p.scale);
-  const projText = proj.value != null ? `Tonight ${num(proj.value)} ${STAT_LABEL[metric]}: his ${num(proj.rate)} a game (season ${num(p.own?.[metric]?.season)}, last 10 ${num(p.own?.[metric]?.l10)}, last 5 ${num(p.own?.[metric]?.l5)})${proj.factor != null ? ` × ${proj.factor} (${opp} gives up ${num(proj.allowed)} to ${envPos(p)}s over ${WINDOW_TEXT[win] || win}, the league ${num(proj.league)})` : ' (no table for the environment)'}${proj.team != null ? ` × ${proj.team} so the team's projections add up to its expected total` : ''}` : '';
+  const projText = proj.value != null ? `Tonight ${num(proj.value)} ${STAT_LABEL[metric]}: his ${num(proj.rate)} a game (season ${num(p.own?.[metric]?.season)}, last 10 ${num(p.own?.[metric]?.l10)}, last 5 ${num(p.own?.[metric]?.l5)})${proj.factor != null ? ` × ${proj.factor} (${opp} gives up ${num(proj.allowed)} to ${envPos(p)}s over ${WINDOW_TEXT[win] || win}, the league ${num(proj.league)})` : ' (no table for the environment)'}${proj.team != null ? ` × ${proj.team} so the side's projections add up to its share of the team's expected total` : ''}` : '';
   const flags = [];
   if (play?.form === 'hot') flags.push(['hot', `Hot: ${pct(play.rates.l5)} of his last 5 over this line`, ICON.hot]);
   if (play?.form === 'cold') flags.push(['cold', `Cold: ${pct(play.rates.l5)} of his last 5 over this line`, ICON.cold]);
@@ -201,13 +201,23 @@ function RangeCell({ p, market, final }) {
   );
 }
 
+/** What the side's projections add up to: its share of the team's expected points, or why they are not scaled. */
+function sideNote(side) {
+  const T = side.teamProj?.pts;
+  if (T == null) return '';
+  const cover = side.share != null ? `${Math.round(side.share * 100)}% of the minutes` : null;
+  if (side.scale?.pts == null) return ` · the team is expected to score ${num(T, 0)}${cover ? `; its priced players play ${cover}, too few to scale them` : ''}`;
+  if (side.share != null && side.share < 1) return ` · its players add up to ${num(T * side.share, 0)} of the team’s ${num(T, 0)} points (${cover})`;
+  return ` · the side adds up to ${num(T, 0)} points`;
+}
+
 function PlayersTable({ side, final }) {
   const open = useNbaPlayerCard();
   const players = side.players.filter((p) => Object.keys(p.ranges || {}).length);
   if (!players.length) return null;
   return (
     <div className="nhlx-pfd ir-court-players">
-      <div className="nhlx-pfd-head"><b>Tonight · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market: what he is expected to get, his floor–ceiling (he lands inside it half the nights; the top is his ceiling), and the book’s line with his chance to clear it{side.teamProj?.pts != null ? ` · the side adds up to ${num(side.teamProj.pts, 0)} points` : ''} · click a row for the card and the full ladder</small></div>
+      <div className="nhlx-pfd-head"><b>Tonight · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b><small className="nhlx-auto-meta">per market: what he is expected to get, his floor–ceiling (he lands inside it half the nights; the top is his ceiling), and the book’s line with his chance to clear it{sideNote(side)} · click a row for the card and the full ladder</small></div>
       <div className="nhlx-pfd-wrap">
         <table className="nhlx-pfd-table ir-court-table ir-range-table">
           <thead><tr><th>Player</th><th>Pos</th>{TABLE_MARKETS.map(([k, l]) => <th key={k}>{l}</th>)}</tr></thead>

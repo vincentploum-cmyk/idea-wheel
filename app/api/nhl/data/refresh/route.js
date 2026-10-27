@@ -44,7 +44,7 @@ async function handle(request) {
         const last = await readJson(marker);
         if (last?.at && Date.now() - Date.parse(last.at) < 60 * 1000) dispatch = { ok: false, skipped: `already requested at ${last.at}` };
         else {
-          dispatch = await dispatchLinesWorkflow({ date, due: null, chain: 40 });
+          dispatch = await dispatchLinesWorkflow({ date, due: null, chain: 60 });
           if (dispatch.ok) await writeJson(marker, { at: dispatch.at, date });
         }
       }

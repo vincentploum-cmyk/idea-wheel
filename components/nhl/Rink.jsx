@@ -261,9 +261,11 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
   const defaultView = side.venue === 'A' ? 'home' : 'away';
   const [view, setView] = useState(null);
   const v = view || defaultView;
-  // What tints the ice: our stored games (the window toggle) or the PropFinder table above
-  // (its selected tab, which the rink then owns).
-  const [tint, setTint] = useState('rink');
+  // What tints the ice: the PropFinder table above (its selected tab, which the rink then owns;
+  // this season's tab by default) when the opponent has one, else our stored games (the window
+  // toggle). On the opponents with 10+ games this season's table was the best tint by deviance
+  // (docs/shots-goals-predictors.md section 10, refreshed 2026-10-27).
+  const [tint, setTint] = useState('propfinder');
   const [pfKey, setPfKey] = useState(null);
   const pfTabs = side.propfinder?.tabs || [];
   const pfTab = pfTabs.find((t) => t.key === pfKey) || defaultDefenseTab(pfTabs);
