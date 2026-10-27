@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import SiteHeader from './SiteHeader';
 import SignOutButton from './SignOutButton';
@@ -10,12 +10,15 @@ import DatabasePanel from './DatabasePanel';
 import MatchupsPanel from './MatchupsPanel';
 import FirstGoalPanel from './FirstGoalPanel';
 import PicksPanel from './PicksPanel';
+import ShufflePanel from './ShufflePanel';
 import LeaguePanel from './LeaguePanel';
 import DefensePanel from './DefensePanel';
 import { PlayerCardHost } from './PlayerCard';
 import ThemeToggle from './ThemeToggle';
 import Scorecard from './Scorecard';
 import SportNav from '@/components/site/SportNav';
+import TabBar from '@/components/site/TabBar';
+import { useHashTab } from '@/components/site/hash-tab';
 
 const TABS = [
   ['teams', 'Teams & players'],
@@ -23,35 +26,12 @@ const TABS = [
   ['defense', 'Defense'],
   ['firstgoal', '1st goal'],
   ['model', 'Best bets'],
+  ['shuffle', 'Shuffle'],
   ['league', 'League'],
   ['history', 'Run history'],
 ];
 const TAB_KEYS = TABS.map(([key]) => key);
 const DEFAULT_TAB = 'matchups';
-
-// The URL hash is the tab state, so tabs deep-link and back/forward work.
-function tabFromHash() {
-  // `#teams/BUF` is the Teams tab with a team picked (see links.jsx).
-  const key = window.location.hash.slice(1).split('/')[0];
-  return TAB_KEYS.includes(key) ? key : DEFAULT_TAB;
-}
-
-// Tabs visited this page load; a visited panel stays mounted so the model
-// keeps its loaded files when you switch away.
-const visited = new Set();
-function subscribeHash(cb) {
-  const onChange = () => { visited.add(tabFromHash()); cb(); };
-  onChange();
-  window.addEventListener('hashchange', onChange);
-  return () => window.removeEventListener('hashchange', onChange);
-}
-const visitedKey = () => [...visited].sort().join(',');
-
-function useHashTab() {
-  const tab = useSyncExternalStore(subscribeHash, tabFromHash, () => DEFAULT_TAB);
-  const seen = useSyncExternalStore(subscribeHash, visitedKey, () => '');
-  return [tab, (key) => key === tab || seen.split(',').includes(key)];
-}
 
 // The model is ~10k lines plus SheetJS; load it on the client only.
 const NhlModel = memo(dynamic(() => import('./NhlModel'), {
@@ -141,7 +121,9 @@ export default function NhlApp({ email }) {
   const [busy, setBusy] = useState(false);
   const [latest, setLatest] = useState(null);
   const [autoSlots, setAutoSlots] = useState(null);
-  const [tab, mounted] = useHashTab();
+  // The URL hash is the tab state (`#teams/BUF` is the Teams tab with a team picked, see links.jsx);
+  // a visited panel stays mounted so the model keeps its loaded files when you switch away.
+  const [tab, mounted] = useHashTab(TAB_KEYS, DEFAULT_TAB);
   const activeRunRef = useRef(null);
   useEffect(() => { activeRunRef.current = activeRunId; }, [activeRunId]);
   const prevFilesRef = useRef({});
@@ -278,23 +260,7 @@ export default function NhlApp({ email }) {
       />
 
       <main>
-        <div className="nhlx-wrap nhlx-tabbar">
-          <div className="nhlx-tabs" role="tablist" aria-label="Sections">
-            {TABS.map(([key, label]) => (
-              <a
-                key={key}
-                href={`#${key}`}
-                role="tab"
-                id={`tab-${key}`}
-                aria-selected={tab === key}
-                aria-controls={key}
-                className={`nhlx-tab${tab === key ? ' is-active' : ''}`}
-              >
-                {label}
-              </a>
-            ))}
-          </div>
-        </div>
+        <TabBar tabs={TABS} tab={tab} />
 
         <section className="nhlx-section nhlx-tabpanel" id="teams" role="tabpanel" aria-labelledby="tab-teams" hidden={tab !== 'teams'}>
           <div className="nhlx-wrap">
@@ -358,6 +324,15 @@ export default function NhlApp({ email }) {
                 </div>
               </>
             )}
+          </div>
+        </section>
+
+        <section className="nhlx-section nhlx-tabpanel" id="shuffle" role="tabpanel" aria-labelledby="tab-shuffle" hidden={tab !== 'shuffle'}>
+          <div className="nhlx-wrap">
+            <span className="nhlx-eyebrow">Tonight</span>
+            <h2 className="nhlx-h2">The <span>shuffle</span></h2>
+            <p className="nhlx-lede">Raise the bar and the field falls away. A bar for shots and one for goals; the list keeps the skaters whose chance of the bar holds over the floor, off the same λ as Best bets, so a skater’s 1+ goal chance here is his Best bets figure and the order is the order of the chance.</p>
+            <div style={{ marginTop: 28 }}>{mounted('shuffle') && <ShufflePanel />}</div>
           </div>
         </section>
 

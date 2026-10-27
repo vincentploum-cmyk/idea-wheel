@@ -250,7 +250,7 @@ function buildBoardRationale(r, market = "shots") {
   return buildBoardBulletPoints(r, market).join(" ");
 }
 
-function BulletList({ items, color = "#373449", fontSize = "18px", tight = false }) {
+function BulletList({ items, color = "#373449", fontSize = "19px", tight = false }) {
   const list = (items || []).filter(Boolean);
   if (!list.length) return null;
   return (
@@ -316,7 +316,7 @@ function TagPill({ tag }) {
       borderRadius: '999px',
       background: tag.bg,
       color: tag.fg,
-      fontSize: '15px',
+      fontSize: '16px',
       fontWeight: 800,
       fontFamily: "'Outfit Variable','Outfit',sans-serif",
       letterSpacing: '0.03em',
@@ -336,35 +336,16 @@ function enrichBoardTags(r) {
   return { ...r, shotTag, ceilingTag, goalTag, compositeTag };
 }
 
+// The Top shots / goals / points boards and the game cards rank by the figure they show, so a
+// skater sits in the same place as on Best bets and the shuffle: shots by 3+ SOG, goals by 1+ G,
+// points by 1+ point, the next rung up breaking ties. The tags stay as pills but no longer move a
+// skater up the board: until 2026-10-27 the goals board added the tag bonuses, the danger rate and
+// the hot role to the chance, which put a 43% scorer with the PRIMARY TARGET pill first while the
+// shuffle, sorted by the chance alone, listed him fourth. (Port into App.jsx.)
 function scoreTopBoardRow(r, market = 'shots') {
-  const row = enrichBoardTags(r);
-  const hotRoleBonus = row.hotRoleExtreme ? 16 : row.hotRoleStrong ? 10 : row.hotRoleActive ? 5 : 0;
-  const compositeBonus =
-    row.compositeTag?.label === 'PRIMARY TARGET' ? 28 :
-    row.compositeTag?.label === 'LADDER TARGET' ? 22 :
-    row.compositeTag?.label === 'GOAL TARGET' ? 20 :
-    row.compositeTag?.label === 'CEILING PLAY' ? 16 : 0;
-  const shotBonus =
-    row.shotTag?.label === '4+ ELITE' ? 22 :
-    row.shotTag?.label === '4+ CORE' ? 16 :
-    row.shotTag?.label === '4+ THIN' ? 8 : 0;
-  const ceilingBonus =
-    row.ceilingTag?.label === '5+ ELITE' ? 20 :
-    row.ceilingTag?.label === '5+ EDGE' ? 14 :
-    row.ceilingTag?.label === '5+ LOTTO' ? 6 : 0;
-  const goalBonus =
-    row.goalTag?.label === 'GOAL ELITE' ? 22 :
-    row.goalTag?.label === 'GOAL CORE' ? 16 :
-    row.goalTag?.label === 'GOAL THIN' ? 8 :
-    row.goalTag?.label === 'GOAL LOTTO' ? 4 : 0;
-
-  if (market === 'shots') {
-    return ((row.p4s || 0) * 100) + ((row.p5s || 0) * 60) + ((row.signalScore || 0) * 0.18) + shotBonus + ceilingBonus + compositeBonus + hotRoleBonus;
-  }
-  if (market === 'goals') {
-    return ((row.p1g || 0) * 100) + ((row.p2g || 0) * 65) + ((row.dangerRate || 0) * 18) + goalBonus + compositeBonus + hotRoleBonus;
-  }
-  return ((row.p1p || 0) * 100) + ((row.p2p || 0) * 55) + ((row.signalScore || 0) * 0.22) + (goalBonus * 0.35) + (shotBonus * 0.20) + compositeBonus + (hotRoleBonus * 0.7);
+  if (market === 'shots') return (r.p3s || 0) + (r.p4s || 0) / 1000;
+  if (market === 'goals') return (r.p1g || 0) + (r.p2g || 0) / 1000;
+  return (r.p1p || 0) + (r.p2p || 0) / 1000;
 }
 
 function includeTopBoardRow(r, market = 'shots') {
@@ -388,7 +369,7 @@ function signalTier(score) {
 
 const css = `
   .nhlx-model *{box-sizing:border-box;}
-  .nhlx-model{font-size:17px;line-height:1.5;color:#26262c;}
+  .nhlx-model{font-size:18px;line-height:1.5;color:#26262c;}
   .nhlx-model ::-webkit-scrollbar{width:8px;height:8px;}
   .nhlx-model ::-webkit-scrollbar-thumb{background:#dcdbe8;border-radius:8px;}
 
@@ -400,8 +381,8 @@ const css = `
   .nhlx-model .fade-up{animation:fadeUp 0.3s ease forwards;}
   .nhlx-model .rh:hover td{background:#f4f1fe!important;}
 
-  .nhlx-model input,.nhlx-model select,.nhlx-model button{font-family:'Inter Variable','Inter',sans-serif;font-size:1rem;}
-  .nhlx-model table{font-size:1rem;border-collapse:collapse;}
+  .nhlx-model input,.nhlx-model select,.nhlx-model button{font-family:'Inter Variable','Inter',sans-serif;font-size:17px;}
+  .nhlx-model table{font-size:17px;border-collapse:collapse;}
   .nhlx-model h1,.nhlx-model h2,.nhlx-model h3,.nhlx-model h4,.nhlx-model p{margin:0;}
 
   @media (max-width: 1180px) {
@@ -478,7 +459,7 @@ function Tooltip({ hist, mouseX, mouseY }) {
     >
       <div
         style={{
-          fontSize: "16px",
+          fontSize: "17px",
           fontWeight: 700,
           color: "#373449",
           letterSpacing: "0.12em",
@@ -492,7 +473,7 @@ function Tooltip({ hist, mouseX, mouseY }) {
         Historical Profile
       </div>
 
-      <div style={{ fontSize: "18px", lineHeight: "2.1" }}>
+      <div style={{ fontSize: "19px", lineHeight: "2.1" }}>
         {[
           ["Sample", `${hist.n} / ${hist.total} games`, "#05011c"],
           ["Hit rate", `${Math.round(hist.hitRate * 100)}%`, "#d97706"],
@@ -507,7 +488,7 @@ function Tooltip({ hist, mouseX, mouseY }) {
               alignItems: "center",
             }}
           >
-            <span style={{ color: "#373449", fontSize: "18px" }}>{lbl}</span>
+            <span style={{ color: "#373449", fontSize: "19px" }}>{lbl}</span>
             <strong style={{ color: vc }}>{val}</strong>
           </div>
         ))}
@@ -522,7 +503,7 @@ function Tooltip({ hist, mouseX, mouseY }) {
             alignItems: "center",
           }}
         >
-          <span style={{ color: "#373449", fontSize: "18px" }}>λ adjustment</span>
+          <span style={{ color: "#373449", fontSize: "19px" }}>λ adjustment</span>
           <strong style={{ color: adjColor }}>
             {adjMult > 1 ? "+" : ""}
             {Math.round((adjMult - 1) * 100)}%
@@ -581,13 +562,13 @@ function ProbCell({ p, hist, highlight, onHover, onLeave, prop, fire }) {
     >
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
-          {fire && <span style={{ fontSize: "18px", lineHeight: 1 }}>🔥</span>}
+          {fire && <span style={{ fontSize: "19px", lineHeight: 1 }}>🔥</span>}
           <span
             style={{
               display: "inline-block",
               fontFamily: "'Outfit Variable','Outfit',sans-serif",
               fontWeight: 900,
-              fontSize: highlight ? "16px" : "14px",
+              fontSize: highlight ? "17px" : "15px",
               color: fg,
               background: bg,
               borderRadius: "7px",
@@ -603,7 +584,7 @@ function ProbCell({ p, hist, highlight, onHover, onLeave, prop, fire }) {
         </div>
 
         <span style={{
-          fontSize: "13px",
+          fontSize: "14px",
           fontWeight: 700,
           color: label ? labelColor(label) : "#636977",
           fontFamily: "'Outfit Variable','Outfit',sans-serif",
@@ -613,7 +594,7 @@ function ProbCell({ p, hist, highlight, onHover, onLeave, prop, fire }) {
         </span>
 
         {hist && (
-          <span style={{ fontSize: "15px", color: adjColor }}>
+          <span style={{ fontSize: "16px", color: adjColor }}>
             {adjMult > 1.005 ? "▲" : adjMult < 0.995 ? "▼" : "—"} {adjPct}%
           </span>
         )}
@@ -735,10 +716,10 @@ function MatchupHistory({ venueProfile, player, venue }) {
   return (
     <div style={{ padding: "16px 18px", fontFamily: "'Inter Variable','Inter',sans-serif", background: "#f0fdf4", borderRadius: "10px", marginTop: "4px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "14px", flexWrap: "wrap" }}>
-        <span style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 700, fontSize: "24px", letterSpacing: "0.12em", color: "#15803d", textTransform: "uppercase" }}>
+        <span style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 700, fontSize: "25px", letterSpacing: "0.12em", color: "#15803d", textTransform: "uppercase" }}>
           {player.pos} vs {player.opponent} · {venueDisplay} · {vs.n || 0} games in history
         </span>
-        <span style={{ fontSize: "22px", color: "#373449" }}>
+        <span style={{ fontSize: "23px", color: "#373449" }}>
           Avg shots: <strong style={{ color: "#05011c" }}>{fmt(vs.avgS)}</strong> · Avg points: <strong style={{ color: "#05011c" }}>{fmt(vs.avgP)}</strong> · Avg goals: <strong style={{ color: "#05011c" }}>{fmt(vs.avgG)}</strong> · Avg TOI: <strong style={{ color: "#05011c" }}>{fmt(vs.avgT)} min</strong>
         </span>
       </div>
@@ -749,20 +730,20 @@ function MatchupHistory({ venueProfile, player, venue }) {
           const rc = rateColor(rate || 0);
           return (
             <div key={label} style={{ background: "#fff", borderRadius: "10px", padding: "14px 16px", border: "1px solid #e9e8f3" }}>
-              <div style={{ fontSize: "30px", fontWeight: 900, color: "#373449", letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: "8px", fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>{label}</div>
+              <div style={{ fontSize: "31px", fontWeight: 900, color: "#373449", letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: "8px", fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>{label}</div>
               <div style={{ height: "4px", background: "#e9e8f3", borderRadius: "2px", marginBottom: "10px" }}><div style={{ height: "4px", width: `${Math.round((rate || 0) * 100)}%`, background: rc, borderRadius: "2px" }} /></div>
-              <div style={{ fontSize: "42px", fontWeight: 700, color: rc, fontFamily: "'Outfit Variable','Outfit',sans-serif", lineHeight: 1, marginBottom: "4px" }}>{pct(rate)}</div>
-              <div style={{ fontSize: "22px", color: "#636977", marginBottom: achieverToi != null ? "10px" : "0" }}>hit rate</div>
-              {achieverToi != null && <div style={{ paddingTop: "10px", borderTop: "1px solid #e9ecef" }}><div style={{ fontSize: "22px", color: "#636977", marginBottom: "3px" }}>Achiever avg TOI</div><div style={{ fontSize: "28px", fontWeight: 700, color: playerAhead ? "#16a34a" : "#ea580c" }}>{fmt(achieverToi)} min <span style={{ fontSize: "22px", fontWeight: 400 }}>{playerAhead ? "< yours" : "> yours"}</span></div></div>}
+              <div style={{ fontSize: "43px", fontWeight: 700, color: rc, fontFamily: "'Outfit Variable','Outfit',sans-serif", lineHeight: 1, marginBottom: "4px" }}>{pct(rate)}</div>
+              <div style={{ fontSize: "23px", color: "#636977", marginBottom: achieverToi != null ? "10px" : "0" }}>hit rate</div>
+              {achieverToi != null && <div style={{ paddingTop: "10px", borderTop: "1px solid #e9ecef" }}><div style={{ fontSize: "23px", color: "#636977", marginBottom: "3px" }}>Achiever avg TOI</div><div style={{ fontSize: "29px", fontWeight: 700, color: playerAhead ? "#16a34a" : "#ea580c" }}>{fmt(achieverToi)} min <span style={{ fontSize: "23px", fontWeight: 400 }}>{playerAhead ? "< yours" : "> yours"}</span></div></div>}
             </div>
           );
         })}
       </div>
       <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center", padding: "10px 14px", background: "#ecfdf5", borderRadius: "8px", border: "1px solid #bbf7d0" }}>
-        <span style={{ fontSize: "21px", fontWeight: 700, color: "#636977", fontFamily: "'Outfit Variable','Outfit',sans-serif", letterSpacing: "0.08em", textTransform: "uppercase" }}>Tonight&apos;s Player</span>
-        <span style={{ fontSize: "26px", color: "#05011c", fontWeight: 700 }}>{player.name}</span>
-        <span style={{ fontSize: "24px", color: "#373449" }}>iFF <strong style={{ color: accent }}>{playerIff}</strong> · TOI <strong style={{ color: accent }}>{playerToi} min</strong> · Def mult <strong style={{ color: accent }}>{player.defMult?.toFixed(3) ?? '—'}</strong> · λ shots <strong style={{ color: accent }}>{player.lambdaS?.toFixed(2) ?? '—'}</strong></span>
-        <span style={{ marginLeft: "auto", fontSize: "22px", color: "#636977" }}>Hist avg TOI (all): <strong style={{ color: "#05011c" }}>{fmt(vs.avgT)} min</strong> vs yours <strong style={{ color: Number(player.playerToi) >= Number(vs.avgT || 0) ? "#16a34a" : "#ea580c" }}>{playerToi} min</strong></span>
+        <span style={{ fontSize: "22px", fontWeight: 700, color: "#636977", fontFamily: "'Outfit Variable','Outfit',sans-serif", letterSpacing: "0.08em", textTransform: "uppercase" }}>Tonight&apos;s Player</span>
+        <span style={{ fontSize: "27px", color: "#05011c", fontWeight: 700 }}>{player.name}</span>
+        <span style={{ fontSize: "25px", color: "#373449" }}>iFF <strong style={{ color: accent }}>{playerIff}</strong> · TOI <strong style={{ color: accent }}>{playerToi} min</strong> · Def mult <strong style={{ color: accent }}>{player.defMult?.toFixed(3) ?? '—'}</strong> · λ shots <strong style={{ color: accent }}>{player.lambdaS?.toFixed(2) ?? '—'}</strong></span>
+        <span style={{ marginLeft: "auto", fontSize: "23px", color: "#636977" }}>Hist avg TOI (all): <strong style={{ color: "#05011c" }}>{fmt(vs.avgT)} min</strong> vs yours <strong style={{ color: Number(player.playerToi) >= Number(vs.avgT || 0) ? "#16a34a" : "#ea580c" }}>{playerToi} min</strong></span>
       </div>
     </div>
   );
@@ -799,7 +780,7 @@ function HistStatCard({ label, homeRate, awayRate, tonightVenue, homeN, awayN })
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "6px", minWidth: "120px" }}>
-      <div style={{ fontSize: "15px", fontWeight: 700, color: "#80828d", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>
+      <div style={{ fontSize: "16px", fontWeight: 700, color: "#80828d", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>
         {label}
       </div>
       {[{ key: "H", rate: homeRate, n: homeN }, { key: "A", rate: awayRate, n: awayN }].map(({ key, rate, n }) => {
@@ -813,16 +794,16 @@ function HistStatCard({ label, homeRate, awayRate, tonightVenue, homeN, awayN })
             border: isTonight ? `1.5px solid ${color(rate)}44` : "1px solid #e9e8f3",
           }}>
             <span style={{
-              fontSize: "15px", fontWeight: 800, fontFamily: "'Outfit Variable','Outfit',sans-serif",
+              fontSize: "16px", fontWeight: 800, fontFamily: "'Outfit Variable','Outfit',sans-serif",
               color: isTonight ? color(rate) : "#80828d",
               minWidth: "12px",
             }}>{key}</span>
             <span style={{
-              fontSize: "21px", fontWeight: 900, fontFamily: "'Outfit Variable','Outfit',sans-serif",
+              fontSize: "22px", fontWeight: 900, fontFamily: "'Outfit Variable','Outfit',sans-serif",
               color: isTonight ? color(rate) : "#636977",
             }}>{pct(rate)}</span>
-            {n != null && <span style={{ fontSize: "14px", color: "#80828d" }}>({n}g)</span>}
-            {isTonight && <span style={{ fontSize: "14px", fontWeight: 700, color: color(rate), marginLeft: "auto" }}>★</span>}
+            {n != null && <span style={{ fontSize: "15px", color: "#80828d" }}>({n}g)</span>}
+            {isTonight && <span style={{ fontSize: "15px", fontWeight: 700, color: color(rate), marginLeft: "auto" }}>★</span>}
           </div>
         );
       })}
@@ -852,15 +833,15 @@ function PlayerExpandedPanel({ r, venue, hasHist }) {
 
       {/* Model section — always shown */}
       <div style={{ flex: "0 0 auto", minWidth: "220px", background: "#fff", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "12px 14px" }}>
-        <div style={{ fontSize: "15px", fontWeight: 700, color: "#80828d", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Outfit Variable','Outfit',sans-serif", marginBottom: "8px" }}>
+        <div style={{ fontSize: "16px", fontWeight: 700, color: "#80828d", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Outfit Variable','Outfit',sans-serif", marginBottom: "8px" }}>
           Model Output
         </div>
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
-          <span style={{ background: "#dcfce7", borderRadius: "6px", padding: "4px 8px", fontWeight: 700, fontSize: "16px", color: "#15803d" }}>Signal {r.signalScore ?? r.edgeScore}</span>
-          <span style={{ background: "#ede9fe", borderRadius: "6px", padding: "4px 8px", fontWeight: 700, fontSize: "16px", color: "#7c3aed" }}>λS {r.lambdaS?.toFixed(1)}</span>
-          <span style={{ background: "#ffedd5", borderRadius: "6px", padding: "4px 8px", fontWeight: 700, fontSize: "16px", color: "#b45309" }}>λG {r.lambdaG?.toFixed(2)}</span>
+          <span style={{ background: "#dcfce7", borderRadius: "6px", padding: "4px 8px", fontWeight: 700, fontSize: "17px", color: "#15803d" }}>Signal {r.signalScore ?? r.edgeScore}</span>
+          <span style={{ background: "#ede9fe", borderRadius: "6px", padding: "4px 8px", fontWeight: 700, fontSize: "17px", color: "#7c3aed" }}>λS {r.lambdaS?.toFixed(1)}</span>
+          <span style={{ background: "#ffedd5", borderRadius: "6px", padding: "4px 8px", fontWeight: 700, fontSize: "17px", color: "#b45309" }}>λG {r.lambdaG?.toFixed(2)}</span>
         </div>
-        <div style={{ fontSize: "16px", color: "#373449", lineHeight: 1.7 }}>
+        <div style={{ fontSize: "17px", color: "#373449", lineHeight: 1.7 }}>
           <div><strong>Best bet:</strong> {r.bestBetLabel || bestBetLabel(r).label} · {Math.round(((r.bestProb ?? bestBetLabel(r).prob) || 0) * 100)}%</div>
           <div><strong>Why:</strong> {r.selectionRationale || r.featureSummary}</div>
           <div><strong>Role:</strong> {r.currentRole || `L${r.todayLine}`} · <strong>Line fit:</strong> {r.lineFit || "neutral"} · <strong>Venue form:</strong> {r.venueFormTag || "Neutral"}</div>
@@ -873,15 +854,15 @@ function PlayerExpandedPanel({ r, venue, hasHist }) {
       {/* History section */}
       <div style={{ flex: 1, background: "#fff", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "12px 14px", minWidth: "340px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-          <span style={{ fontSize: "15px", fontWeight: 700, color: "#80828d", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>
+          <span style={{ fontSize: "16px", fontWeight: 700, color: "#80828d", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>
             Historical Hit Rates vs {r.opponent}
           </span>
-          <span style={{ fontSize: "15px", color: "#80828d" }}>·</span>
-          <span style={{ fontSize: "15px", color: r.isHome ? "#166534" : "#1d4ed8", fontWeight: 700, background: r.isHome ? "#dcfce7" : "#dbeafe", padding: "2px 6px", borderRadius: "4px" }}>
+          <span style={{ fontSize: "16px", color: "#80828d" }}>·</span>
+          <span style={{ fontSize: "16px", color: r.isHome ? "#166534" : "#1d4ed8", fontWeight: 700, background: r.isHome ? "#dcfce7" : "#dbeafe", padding: "2px 6px", borderRadius: "4px" }}>
             Tonight: {r.isHome ? "HOME" : "AWAY"} ★
           </span>
           {!histAvailable && (
-            <span style={{ fontSize: "15px", color: "#80828d", fontStyle: "italic" }}>— upload history file to see</span>
+            <span style={{ fontSize: "16px", color: "#80828d", fontStyle: "italic" }}>— upload history file to see</span>
           )}
         </div>
         {histAvailable ? (
@@ -899,12 +880,12 @@ function PlayerExpandedPanel({ r, venue, hasHist }) {
             ))}
           </div>
         ) : (
-          <div style={{ fontSize: "16px", color: "#80828d", fontStyle: "italic" }}>
+          <div style={{ fontSize: "17px", color: "#80828d", fontStyle: "italic" }}>
             Upload the Historical Profiles file to see H/A hit rates for this player vs {r.opponent}.
           </div>
         )}
         <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #f2f2f8" }}>
-          <div style={{ fontSize: "15px", fontWeight: 700, color: "#80828d", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Outfit Variable','Outfit',sans-serif", marginBottom: "8px" }}>
+          <div style={{ fontSize: "16px", fontWeight: 700, color: "#80828d", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Outfit Variable','Outfit',sans-serif", marginBottom: "8px" }}>
             Last 7 venue form ({r.isHome ? "Home" : "Away"})
           </div>
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
@@ -916,8 +897,8 @@ function PlayerExpandedPanel({ r, venue, hasHist }) {
               ["1+ G", r.venueG1Rate],
             ].map(([label, val]) => (
               <div key={label} style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "8px", padding: "8px 10px", minWidth: "70px" }}>
-                <div style={{ fontSize: "15px", color: "#80828d", fontWeight: 700 }}>{label}</div>
-                <div style={{ fontSize: "27px", fontWeight: 900, fontFamily: "'Outfit Variable','Outfit',sans-serif", color: "#05011c" }}>{val != null ? `${Math.round(val * 100)}%` : "—"}</div>
+                <div style={{ fontSize: "16px", color: "#80828d", fontWeight: 700 }}>{label}</div>
+                <div style={{ fontSize: "28px", fontWeight: 900, fontFamily: "'Outfit Variable','Outfit',sans-serif", color: "#05011c" }}>{val != null ? `${Math.round(val * 100)}%` : "—"}</div>
               </div>
             ))}
             <div style={{ background: r.venueFormTag === "Hot" ? "#dcfce7" : r.venueFormTag === "Cold" ? "#fee2e2" : "#f2f2f8", borderRadius: "8px", padding: "8px 12px", fontWeight: 800, color: r.venueFormTag === "Hot" ? "#15803d" : r.venueFormTag === "Cold" ? "#b91c1c" : "#636977" }}>
@@ -986,10 +967,10 @@ function PropFinderDefenseCard({ defBlock, accent = "#a855f7", rankingsData = nu
     const tone = defenseRankTone(rank);
     return (
       <td style={{ padding: "10px 8px", borderBottom: "1px solid rgba(255,255,255,0.08)", textAlign: "center" }}>
-        <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 800, fontSize: "24px", color: "#f9faff", lineHeight: 1.05 }}>
+        <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 800, fontSize: "25px", color: "#f9faff", lineHeight: 1.05 }}>
           {formatCheatStat(value)}
         </div>
-        <div style={{ marginTop: "6px", display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: "38px", padding: "2px 8px", borderRadius: "999px", background: tone.bg, color: tone.fg, fontSize: "14px", fontWeight: 800, fontFamily: "'Outfit Variable','Outfit',sans-serif", letterSpacing: "0.04em" }}>
+        <div style={{ marginTop: "6px", display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: "38px", padding: "2px 8px", borderRadius: "999px", background: tone.bg, color: tone.fg, fontSize: "15px", fontWeight: 800, fontFamily: "'Outfit Variable','Outfit',sans-serif", letterSpacing: "0.04em" }}>
           {rank ? `#${rank}` : "—"}
         </div>
       </td>
@@ -1004,16 +985,16 @@ function PropFinderDefenseCard({ defBlock, accent = "#a855f7", rankingsData = nu
             <img src={teamLogoUrl(defBlock.team)} alt="" style={{ width: "24px", height: "24px", objectFit: "contain" }} />
           ) : null}
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 800, fontSize: "24px", color: "#f9faff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 800, fontSize: "25px", color: "#f9faff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {normShort(defBlock.team)} Defense
             </div>
-            <div style={{ marginTop: "2px", fontSize: "13px", color: "#80828d", textTransform: "uppercase", letterSpacing: "0.12em" }}>
+            <div style={{ marginTop: "2px", fontSize: "14px", color: "#80828d", textTransform: "uppercase", letterSpacing: "0.12em" }}>
               PropFinder cheat sheet
             </div>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-          <span style={{ fontSize: "14px", color: mode === "per" ? "#f9faff" : "#636977", fontWeight: 700 }}>Per Game</span>
+          <span style={{ fontSize: "15px", color: mode === "per" ? "#f9faff" : "#636977", fontWeight: 700 }}>Per Game</span>
           <button
             type="button"
             onClick={() => setMode((m) => (m === "per" ? "total" : "per"))}
@@ -1021,7 +1002,7 @@ function PropFinderDefenseCard({ defBlock, accent = "#a855f7", rankingsData = nu
           >
             <span style={{ position: "absolute", top: "2px", left: mode === "per" ? "2px" : "18px", width: "16px", height: "16px", borderRadius: "999px", background: mode === "per" ? "#05011c" : "#f9faff", transition: "left 0.18s ease" }} />
           </button>
-          <span style={{ fontSize: "14px", color: mode === "total" ? "#f9faff" : "#636977", fontWeight: 700 }}>Total</span>
+          <span style={{ fontSize: "15px", color: mode === "total" ? "#f9faff" : "#636977", fontWeight: 700 }}>Total</span>
         </div>
       </div>
 
@@ -1030,7 +1011,7 @@ function PropFinderDefenseCard({ defBlock, accent = "#a855f7", rankingsData = nu
           <thead>
             <tr>
               {["Position", "Goals/G", "Assists/G", "Shots/G", "ICF/G", "IFF/G", "ISCF/G"].map((label, idx) => (
-                <th key={label} style={{ padding: "10px 8px", textAlign: idx === 0 ? "left" : "center", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "16px", letterSpacing: "0.08em", textTransform: "uppercase", color: "#dcdbe8", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>
+                <th key={label} style={{ padding: "10px 8px", textAlign: idx === 0 ? "left" : "center", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "17px", letterSpacing: "0.08em", textTransform: "uppercase", color: "#dcdbe8", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>
                   {label}
                 </th>
               ))}
@@ -1039,7 +1020,7 @@ function PropFinderDefenseCard({ defBlock, accent = "#a855f7", rankingsData = nu
           <tbody>
             {rows.map((row) => (
               <tr key={row.pos}>
-                <td style={{ padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,0.08)", color: "#f9faff", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "22px", fontWeight: 800 }}>
+                <td style={{ padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,0.08)", color: "#f9faff", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "23px", fontWeight: 800 }}>
                   {row.pos}
                 </td>
                 <MetricCell value={row.goals}   pos={row.pos} metric="goalsRank" />
@@ -1063,14 +1044,14 @@ function PropFinderCheatStrip({ matchup, rankingsData = null }) {
   return (
     <div style={{ marginBottom: "16px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "8px", flexWrap: "wrap" }}>
-        <span style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "13px", fontWeight: 700, color: "#80828d", textTransform: "uppercase", letterSpacing: "0.1em" }}>Defense rank</span>
+        <span style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "14px", fontWeight: 700, color: "#80828d", textTransform: "uppercase", letterSpacing: "0.1em" }}>Defense rank</span>
         {[
           { label: "1–11  Most allowed",   fg: "#16a34a", bg: "rgba(22,163,74,0.13)" },
           { label: "12–22  Ok matchup",    fg: "#d97706", bg: "rgba(217,119,6,0.13)" },
           { label: "23–32  Least allowed", fg: "#dc2626", bg: "rgba(220,38,38,0.13)" },
           { label: "—  No file",           fg: "#80828d", bg: "rgba(148,163,184,0.13)" },
         ].map(({ label, fg, bg }) => (
-          <span key={label} style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: bg, color: fg, borderRadius: "999px", padding: "2px 9px", fontSize: "12px", fontWeight: 700, fontFamily: "'Outfit Variable','Outfit',sans-serif", letterSpacing: "0.03em" }}>
+          <span key={label} style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: bg, color: fg, borderRadius: "999px", padding: "2px 9px", fontSize: "13px", fontWeight: 700, fontFamily: "'Outfit Variable','Outfit',sans-serif", letterSpacing: "0.03em" }}>
             {label}
           </span>
         ))}
@@ -1092,7 +1073,7 @@ function SortTh({ col, label, title, width, sortCol, sortDir, onToggle }) {
       style={{
         padding: "9px 5px",
         textAlign: "right",
-        fontSize: "18px",
+        fontSize: "19px",
         fontWeight: 700,
         letterSpacing: "0.1em",
         textTransform: "uppercase",
@@ -1304,7 +1285,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                 color: viewMode === mode ? "#15803d" : "#636977",
                 fontFamily: "'Outfit Variable','Outfit',sans-serif",
                 fontWeight: 700,
-                fontSize: "18px",
+                fontSize: "19px",
                 cursor: "pointer",
               }}
             >
@@ -1333,12 +1314,12 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                     color: activeGame === g ? "#1d4ed8" : "#636977",
                     fontFamily: "'Outfit Variable','Outfit',sans-serif",
                     fontWeight: 700,
-                    fontSize: "18px",
+                    fontSize: "19px",
                     cursor: "pointer",
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {g} <span style={{ opacity: 0.6, fontSize: "16px" }}>({count})</span>
+                  {g} <span style={{ opacity: 0.6, fontSize: "17px" }}>({count})</span>
                 </button>
               );
             })}
@@ -1369,7 +1350,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
               borderRadius: "10px",
               color: "#26262c",
               padding: "9px 12px",
-              fontSize: "18px",
+              fontSize: "19px",
               outline: "none",
             }}
           />
@@ -1383,7 +1364,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                 borderRadius: "8px",
                 border: "none",
                 cursor: "pointer",
-                fontSize: "20px",
+                fontSize: "21px",
                 fontWeight: 700,
                 fontFamily: "'Outfit Variable','Outfit',sans-serif",
                 whiteSpace: "nowrap",
@@ -1405,7 +1386,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
               borderRadius: "8px",
               color: "#26262c",
               padding: "8px 10px",
-              fontSize: "18px",
+              fontSize: "19px",
               outline: "none",
               cursor: "pointer",
               minWidth: "84px",
@@ -1425,7 +1406,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
               padding: "8px 12px",
               borderRadius: "8px",
               cursor: "pointer",
-              fontSize: "18px",
+              fontSize: "19px",
               fontFamily: "'Outfit Variable','Outfit',sans-serif",
               fontWeight: 700,
               whiteSpace: "nowrap",
@@ -1443,7 +1424,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
               padding: "8px 12px",
               borderRadius: "8px",
               cursor: "pointer",
-              fontSize: "18px",
+              fontSize: "19px",
               fontFamily: "'Outfit Variable','Outfit',sans-serif",
               fontWeight: 700,
               whiteSpace: "nowrap",
@@ -1456,7 +1437,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
           </button>
 
           <div style={{ display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap" }}>
-            <span style={{ fontSize: "16px", color: "#4b4a5c" }}>Min 3+S%</span>
+            <span style={{ fontSize: "17px", color: "#4b4a5c" }}>Min 3+S%</span>
             <input
               type="number"
               min="0"
@@ -1470,7 +1451,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                 borderRadius: "6px",
                 color: "#26262c",
                 padding: "7px 6px",
-                fontSize: "18px",
+                fontSize: "19px",
                 outline: "none",
                 textAlign: "center",
               }}
@@ -1478,7 +1459,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap" }}>
-            <span style={{ fontSize: "16px", color: "#4b4a5c" }}>Min Leak</span>
+            <span style={{ fontSize: "17px", color: "#4b4a5c" }}>Min Leak</span>
             <input
               type="number"
               min="0"
@@ -1492,7 +1473,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                 borderRadius: "6px",
                 color: "#26262c",
                 padding: "7px 6px",
-                fontSize: "18px",
+                fontSize: "19px",
                 outline: "none",
                 textAlign: "center",
               }}
@@ -1502,7 +1483,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
 
         <div
           style={{
-            fontSize: "18px",
+            fontSize: "19px",
             color: "#4b4a5c",
             marginBottom: "10px",
             display: "flex",
@@ -1539,7 +1520,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
               width: "100%",
               minWidth: "1800px",
               borderCollapse: "collapse",
-              fontSize: "18px",
+              fontSize: "19px",
               tableLayout: "fixed",
             }}
           >
@@ -1567,9 +1548,9 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
             <thead>
               <tr style={{ background: "#f2f2f8" }}>
                 <th colSpan={11} style={{ position: "sticky", top: 0, background: "#f2f2f8", zIndex: 9, borderBottom: "1px solid #e9e8f3", padding: "8px 5px" }} />
-                <th colSpan={3} style={{ position: "sticky", top: 0, background: "#ecfccb", color: "#166534", zIndex: 9, borderBottom: "1px solid #e9e8f3", padding: "8px 5px", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "18px", letterSpacing: "0.10em", textTransform: "uppercase" }}>Shots</th>
-                <th colSpan={2} style={{ position: "sticky", top: 0, background: "#dbeafe", color: "#1d4ed8", zIndex: 9, borderBottom: "1px solid #e9e8f3", padding: "8px 5px", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "18px", letterSpacing: "0.10em", textTransform: "uppercase" }}>Points</th>
-                <th colSpan={3} style={{ position: "sticky", top: 0, background: "#fef3c7", color: "#b45309", zIndex: 9, borderBottom: "1px solid #e9e8f3", padding: "8px 5px", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "18px", letterSpacing: "0.10em", textTransform: "uppercase" }}>Goals</th>
+                <th colSpan={3} style={{ position: "sticky", top: 0, background: "#ecfccb", color: "#166534", zIndex: 9, borderBottom: "1px solid #e9e8f3", padding: "8px 5px", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.10em", textTransform: "uppercase" }}>Shots</th>
+                <th colSpan={2} style={{ position: "sticky", top: 0, background: "#dbeafe", color: "#1d4ed8", zIndex: 9, borderBottom: "1px solid #e9e8f3", padding: "8px 5px", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.10em", textTransform: "uppercase" }}>Points</th>
+                <th colSpan={3} style={{ position: "sticky", top: 0, background: "#fef3c7", color: "#b45309", zIndex: 9, borderBottom: "1px solid #e9e8f3", padding: "8px 5px", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.10em", textTransform: "uppercase" }}>Goals</th>
               </tr>
               <tr style={{ background: "#f8fafb" }}>
                 <th
@@ -1577,7 +1558,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                     padding: "9px 5px",
                     width: "34px",
                     textAlign: "center",
-                    fontSize: "18px",
+                    fontSize: "19px",
                     color: "#4b4a5c",
                     borderBottom: "1px solid #e9ecef",
                     fontFamily: "'Outfit Variable','Outfit',sans-serif",
@@ -1595,7 +1576,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                   style={{
                     padding: "9px 5px",
                     textAlign: "left",
-                    fontSize: "18px",
+                    fontSize: "19px",
                     fontWeight: 700,
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
@@ -1681,7 +1662,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                         style={{
                           padding: "9px 5px",
                           textAlign: "center",
-                          fontSize: "18px",
+                          fontSize: "19px",
                           color: "#4b4a5c",
                           fontFamily: "'Outfit Variable','Outfit',sans-serif",
                         }}
@@ -1692,7 +1673,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                       <td style={{ padding: "12px 8px" }}>
                         <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                            <span style={{ color: "#05011c", fontWeight: 700, fontSize: "21px" }}>
+                            <span style={{ color: "#05011c", fontWeight: 700, fontSize: "22px" }}>
                               {r.name} <span style={{ color: "#636977", fontWeight: 600 }}>{r.venue}</span>
                             </span>
                             {alert && (
@@ -1708,7 +1689,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                                   borderRadius: "999px",
                                   background: alert.bg,
                                   color: alert.fg,
-                                  fontSize: "18px",
+                                  fontSize: "19px",
                                   fontWeight: 900,
                                   border: `1px solid ${alert.fg}22`,
                                 }}
@@ -1718,7 +1699,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                             )}
                             <span
                               style={{
-                                fontSize: "16px",
+                                fontSize: "17px",
                                 fontWeight: 700,
                                 fontFamily: "'Outfit Variable','Outfit',sans-serif",
                                 padding: "2px 6px",
@@ -1731,12 +1712,12 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
 {r.currentRole || `L${r.todayLine}`}
                             </span>
                           </div>
-                          <span style={{ fontSize: "16px", color: "#4b4a5c" }}>
+                          <span style={{ fontSize: "17px", color: "#4b4a5c" }}>
                             {r.isHome ? "🏠" : "✈"} · {r.leakTier} matchup · TOI {r.effectiveToi ?? r.playerToi}m
                           </span>
-                          <span style={{ fontSize: "17px", color: "#05011c", fontWeight: 800 }}>{primaryCall}</span>
+                          <span style={{ fontSize: "18px", color: "#05011c", fontWeight: 800 }}>{primaryCall}</span>
                           <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap", marginTop: "4px" }}>
-                            <span style={{ padding: "3px 8px", borderRadius: "999px", background: playTier.bg, color: playTier.fg, fontSize: "15px", fontWeight: 800, fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>
+                            <span style={{ padding: "3px 8px", borderRadius: "999px", background: playTier.bg, color: playTier.fg, fontSize: "16px", fontWeight: 800, fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>
                               Play Score {r.attackScore ?? "—"} · {playTier.label}
                             </span>
                             <TagPill tag={r.compositeTag} />
@@ -1746,34 +1727,34 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                           </div>
                           <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "3px" }}>
                             {quickWhy.map((item, idx) => (
-                              <span key={`${rowKey}-why-${idx}`} style={{ fontSize: "15px", color: "#4b4a5c" }}>• {item.replace(/\.$/, "")}</span>
+                              <span key={`${rowKey}-why-${idx}`} style={{ fontSize: "16px", color: "#4b4a5c" }}>• {item.replace(/\.$/, "")}</span>
                             ))}
                           </div>
                         </div>
                       </td>
 
-                      <td style={{ padding: "9px 5px", textAlign: "right", color: "#373449", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "18px" }}>
+                      <td style={{ padding: "9px 5px", textAlign: "right", color: "#373449", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px" }}>
                         {r.team}
                       </td>
 
                       <td style={{ padding: "9px 5px", textAlign: "right" }}>
-                        <span style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 700, fontSize: "18px", color: pc, background: `${pc}22`, borderRadius: "5px", padding: "3px 6px" }}>
+                        <span style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 700, fontSize: "19px", color: pc, background: `${pc}22`, borderRadius: "5px", padding: "3px 6px" }}>
                           {r.pos}
                         </span>
                       </td>
 
                       <td style={{ padding: "9px 5px", textAlign: "right" }}>
-                        <span style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 700, fontSize: "18px", color: r.isHome ? "#166534" : "#1d4ed8", background: r.isHome ? "#dcfce7" : "#dbeafe", borderRadius: "5px", padding: "3px 6px" }}>
+                        <span style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 700, fontSize: "19px", color: r.isHome ? "#166534" : "#1d4ed8", background: r.isHome ? "#dcfce7" : "#dbeafe", borderRadius: "5px", padding: "3px 6px" }}>
                           {r.venue}
                         </span>
                       </td>
 
-                      <td style={{ padding: "9px 5px", textAlign: "right", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "18px", color: "#373449" }}>
+                      <td style={{ padding: "9px 5px", textAlign: "right", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", color: "#373449" }}>
                         {r.opponent}
                       </td>
 
                       <td style={{ padding: "9px 5px", textAlign: "right" }}>
-                        <span style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 700, fontSize: "18px", color: gc, background: r.gateOpen ? "#dcfce7" : "#fee2e2", borderRadius: "7px", padding: "3px 6px" }}>
+                        <span style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 700, fontSize: "19px", color: gc, background: r.gateOpen ? "#dcfce7" : "#fee2e2", borderRadius: "7px", padding: "3px 6px" }}>
                           {r.defRank === 99 ? "—" : `#${r.defRank}`}
                         </span>
                       </td>
@@ -1789,7 +1770,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                           color: getPlayScoreLabel(r.attackScore).fg,
                           fontFamily: "'Outfit Variable','Outfit',sans-serif",
                           fontWeight: 900,
-                          fontSize: "18px"
+                          fontSize: "19px"
                         }}>
                           {r.attackScore ?? "—"}
                         </span>
@@ -1805,17 +1786,17 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                           color: r.attackBadge?.fg || "#636977",
                           fontFamily: "'Outfit Variable','Outfit',sans-serif",
                           fontWeight: 800,
-                          fontSize: "16px"
+                          fontSize: "17px"
                         }}>
                           {r.attackBadge?.label || "—"}
                         </span>
                       </td>
 
-                      <td style={{ padding: "9px 5px", textAlign: "right", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "18px", color: "#373449" }}>
+                      <td style={{ padding: "9px 5px", textAlign: "right", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", color: "#373449" }}>
                         {r.oppAvgShots != null ? r.oppAvgShots.toFixed(2) : ""}
                       </td>
 
-                      <td style={{ padding: "9px 5px", textAlign: "right", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "18px", color: "#373449" }}>
+                      <td style={{ padding: "9px 5px", textAlign: "right", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", color: "#373449" }}>
                         {r.oppAvgGoals != null ? r.oppAvgGoals.toFixed(3) : ""}
                       </td>
 
@@ -1857,7 +1838,7 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                       padding: "44px",
                       textAlign: "center",
                       color: "#4b4a5c",
-                      fontSize: "18px",
+                      fontSize: "19px",
                     }}
                   >
                     No players match your filters.
@@ -1893,7 +1874,7 @@ function TabButton({ active, onClick, children }) {
         color: active ? "#166534" : "#636977",
         fontFamily: "'Outfit Variable','Outfit',sans-serif",
         fontWeight: 800,
-        fontSize: "18px",
+        fontSize: "19px",
         cursor: "pointer",
       }}
     >
@@ -1915,7 +1896,7 @@ function SummaryCard({ title, body, accent = "#15803d" }) {
       <div
         style={{
           fontFamily: "'Outfit Variable','Outfit',sans-serif",
-          fontSize: "24px",
+          fontSize: "25px",
           fontWeight: 800,
           color: accent,
           marginBottom: "8px",
@@ -1923,7 +1904,7 @@ function SummaryCard({ title, body, accent = "#15803d" }) {
       >
         {title}
       </div>
-      <div style={{ fontSize: "18px", color: "#373449", lineHeight: 1.65 }}>{body}</div>
+      <div style={{ fontSize: "19px", color: "#373449", lineHeight: 1.65 }}>{body}</div>
     </div>
   );
 }
@@ -1934,7 +1915,7 @@ function SummaryCard({ title, body, accent = "#15803d" }) {
 function BestBetsCard({ title, accent, rows, market }) {
   return (
     <div style={{ background: "#ffffff", border: "1px solid #e9e8f3", borderRadius: "16px", padding: "16px" }}>
-      <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "28px", fontWeight: 800, color: accent, marginBottom: "10px" }}>{title}</div>
+      <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "29px", fontWeight: 800, color: accent, marginBottom: "10px" }}>{title}</div>
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         {rows.map((r, idx) => {
           const prob = market === "shots" ? Math.max(r.p4s || 0, r.p3s || 0) : market === "goals2" ? (r.p2g || 0) : (r.p1g || 0);
@@ -1946,20 +1927,20 @@ function BestBetsCard({ title, accent, rows, market }) {
           return (
             <div key={`${market}-${r.name}-${idx}`} style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "12px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center" }}>
-                <div style={{ fontSize: "19px", fontWeight: 800, color: "#05011c" }}>{idx + 1}. {r.name} <span style={{ color: "#636977", fontWeight: 600 }}>{r.venue}</span></div>
-                <div style={{ fontSize: "18px", fontWeight: 800, color: accent }}>{headline}</div>
+                <div style={{ fontSize: "20px", fontWeight: 800, color: "#05011c" }}>{idx + 1}. {r.name} <span style={{ color: "#636977", fontWeight: 600 }}>{r.venue}</span></div>
+                <div style={{ fontSize: "19px", fontWeight: 800, color: accent }}>{headline}</div>
               </div>
               <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginTop: "6px" }}>
-                <span style={{ padding: "4px 8px", borderRadius: "999px", background: getPlayScoreLabel(r.attackScore).bg, color: getPlayScoreLabel(r.attackScore).fg, fontSize: "16px", fontWeight: 800, fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>
+                <span style={{ padding: "4px 8px", borderRadius: "999px", background: getPlayScoreLabel(r.attackScore).bg, color: getPlayScoreLabel(r.attackScore).fg, fontSize: "17px", fontWeight: 800, fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>
                   Play Score {r.attackScore ?? "—"} · {getPlayScoreLabel(r.attackScore).label}
                 </span>
-                <span style={{ color: "#636977", fontSize: "17px" }}>{r.bestBetLabel || getPrimaryCall(r).replace("Best call: ", "")}</span>
-                <span style={{ color: "#636977", fontSize: "17px" }}>{tail}</span>
+                <span style={{ color: "#636977", fontSize: "18px" }}>{r.bestBetLabel || getPrimaryCall(r).replace("Best call: ", "")}</span>
+                <span style={{ color: "#636977", fontSize: "18px" }}>{tail}</span>
               </div>
             </div>
           );
         })}
-        {!rows.length && <div style={{ color: "#636977", fontSize: "17px" }}>No skater clears the floor on this slate.</div>}
+        {!rows.length && <div style={{ color: "#636977", fontSize: "18px" }}>No skater clears the floor on this slate.</div>}
       </div>
     </div>
   );
@@ -2112,8 +2093,8 @@ function AuditView({ data, actualResults = {} }) {
           { label: "Goal Outcomes", value: summary.goalOutcomes, fg: "#b45309", bg: "#fef3c7" },
         ].map((c) => (
           <div key={c.label} style={{ background: c.bg, color: c.fg, borderRadius: "14px", padding: "14px", border: "1px solid #e9e8f3" }}>
-            <div style={{ fontSize: "16px", opacity: 0.8 }}>{c.label}</div>
-            <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 800, fontSize: "30px" }}>{c.value}</div>
+            <div style={{ fontSize: "17px", opacity: 0.8 }}>{c.label}</div>
+            <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 800, fontSize: "31px" }}>{c.value}</div>
           </div>
         ))}
       </div>
@@ -2133,7 +2114,7 @@ function AuditView({ data, actualResults = {} }) {
                 color: auditMode === t.key ? "#ffffff" : "#373449",
                 fontFamily: "'Outfit Variable','Outfit',sans-serif",
                 fontWeight: 800,
-                fontSize: "18px"
+                fontSize: "19px"
               }}
             >
               {t.label}
@@ -2152,7 +2133,7 @@ function AuditView({ data, actualResults = {} }) {
             color: "#1d4ed8",
             fontFamily: "'Outfit Variable','Outfit',sans-serif",
             fontWeight: 800,
-            fontSize: "18px",
+            fontSize: "19px",
             whiteSpace: "nowrap"
           }}
         >
@@ -2164,31 +2145,31 @@ function AuditView({ data, actualResults = {} }) {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ background: "#f8fafb" }}>
-              <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.04em", color: "#80828d" }}>Player</th>
-              <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.04em", color: "#80828d" }}>Role</th>
-              <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.04em", color: "#80828d" }}>Hist Venue Avg S</th>
-              <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.04em", color: "#80828d" }}>Hist Venue Avg G</th>
-              <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.04em", color: "#80828d" }}>Team</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "20px", letterSpacing: "0.04em", color: "#80828d" }}>Player</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "20px", letterSpacing: "0.04em", color: "#80828d" }}>Role</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "20px", letterSpacing: "0.04em", color: "#80828d" }}>Hist Venue Avg S</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "20px", letterSpacing: "0.04em", color: "#80828d" }}>Hist Venue Avg G</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "20px", letterSpacing: "0.04em", color: "#80828d" }}>Team</th>
               {auditMode === "shots" && (
                 <>
-                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.04em", color: "#80828d" }}>Actual SOG</th>
-                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.04em", color: "#80828d" }}>3+ Pre-game</th>
-                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.04em", color: "#80828d" }}>4+ Pre-game</th>
-                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.04em", color: "#80828d" }}>5+ Pre-game</th>
+                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "20px", letterSpacing: "0.04em", color: "#80828d" }}>Actual SOG</th>
+                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "20px", letterSpacing: "0.04em", color: "#80828d" }}>3+ Pre-game</th>
+                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "20px", letterSpacing: "0.04em", color: "#80828d" }}>4+ Pre-game</th>
+                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "20px", letterSpacing: "0.04em", color: "#80828d" }}>5+ Pre-game</th>
                 </>
               )}
               {auditMode === "points" && (
                 <>
-                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.04em", color: "#80828d" }}>Actual Points</th>
-                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.04em", color: "#80828d" }}>1+ Pre-game</th>
-                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.04em", color: "#80828d" }}>2+ Pre-game</th>
+                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "20px", letterSpacing: "0.04em", color: "#80828d" }}>Actual Points</th>
+                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "20px", letterSpacing: "0.04em", color: "#80828d" }}>1+ Pre-game</th>
+                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "20px", letterSpacing: "0.04em", color: "#80828d" }}>2+ Pre-game</th>
                 </>
               )}
               {auditMode === "goals" && (
                 <>
-                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.04em", color: "#80828d" }}>Actual Goals</th>
-                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.04em", color: "#80828d" }}>1+ Pre-game</th>
-                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", letterSpacing: "0.04em", color: "#80828d" }}>2+ Pre-game</th>
+                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "20px", letterSpacing: "0.04em", color: "#80828d" }}>Actual Goals</th>
+                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "20px", letterSpacing: "0.04em", color: "#80828d" }}>1+ Pre-game</th>
+                  <th style={{ textAlign: "left", padding: "10px 12px", borderBottom: "1px solid #e9e8f3", fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "20px", letterSpacing: "0.04em", color: "#80828d" }}>2+ Pre-game</th>
                 </>
               )}
             </tr>
@@ -2197,8 +2178,8 @@ function AuditView({ data, actualResults = {} }) {
             {filtered.map((r, idx) => (
               <tr key={`${r.name}-${idx}`} style={{ borderBottom: "1px solid #fbfcfd" }}>
                 <td style={{ padding: "10px 12px" }}>
-                  <div style={{ fontWeight: 800, fontSize: "18px", color: "#05011c" }}>{r.name}</div>
-                  <div style={{ fontSize: "14px", color: "#636977" }}>{r.venue}</div>
+                  <div style={{ fontWeight: 800, fontSize: "19px", color: "#05011c" }}>{r.name}</div>
+                  <div style={{ fontSize: "15px", color: "#636977" }}>{r.venue}</div>
                 </td>
                 <td style={{ padding: "10px 12px", color: "#373449", fontWeight: 700 }}>{r.currentRole || "—"}</td>
                 <td style={{ padding: "10px 12px", color: "#373449" }}>{r.oppAvgShots != null ? r.oppAvgShots.toFixed(2) : "—"}</td>
@@ -2315,7 +2296,7 @@ function BestByGame({ data }) {
       <div
         style={{
           fontFamily: "'Outfit Variable','Outfit',sans-serif",
-          fontSize: "33px",
+          fontSize: "34px",
           fontWeight: 800,
           color: "#05011c",
           marginBottom: "6px",
@@ -2323,7 +2304,7 @@ function BestByGame({ data }) {
       >
         Best by game
       </div>
-      <div style={{ fontSize: "21px", color: "#636977", marginBottom: "14px" }}>
+      <div style={{ fontSize: "22px", color: "#636977", marginBottom: "14px" }}>
         Fast matchup view: the legit best shot, point, and goal bets for each game, not just one player.
       </div>
 
@@ -2347,7 +2328,7 @@ function BestByGame({ data }) {
             <div
               style={{
                 fontFamily: "'Outfit Variable','Outfit',sans-serif",
-                fontSize: "24px",
+                fontSize: "25px",
                 fontWeight: 800,
                 color: "#26262c",
                 marginBottom: "10px",
@@ -2356,12 +2337,12 @@ function BestByGame({ data }) {
               {game}
             </div>
 
-            <div style={{ fontSize: "18px", color: "#636977", marginBottom: "10px" }}>
+            <div style={{ fontSize: "19px", color: "#636977", marginBottom: "10px" }}>
               Environment: <strong style={{ color: "#166534" }}>{envBest?.environmentTier}</strong> · Score {envBest?.environmentScore ?? "—"}
             </div>
 
             <div style={{ marginBottom: "12px" }}>
-              <div style={{ fontSize: "18px", fontWeight: 800, color: "#05011c", marginBottom: "6px" }}>
+              <div style={{ fontSize: "19px", fontWeight: 800, color: "#05011c", marginBottom: "6px" }}>
                 Best shots bets
               </div>
 
@@ -2378,27 +2359,27 @@ function BestByGame({ data }) {
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center" }}>
-                        <div style={{ fontSize: "18px", fontWeight: 700, color: "#05011c" }}>
+                        <div style={{ fontSize: "19px", fontWeight: 700, color: "#05011c" }}>
                           {r.name} <span style={{ color: "#636977", fontWeight: 600 }}>{r.venue}</span>
                         </div>
-                        <div style={{ fontSize: "18px", fontWeight: 800, color: "#166534" }}>
+                        <div style={{ fontSize: "19px", fontWeight: 800, color: "#166534" }}>
                           {Math.round((r.p4s || 0) * 100)}% for 4+
                         </div>
                       </div>
-                      <div style={{ fontSize: "18px", color: "#636977", marginTop: "2px" }}>
+                      <div style={{ fontSize: "19px", color: "#636977", marginTop: "2px" }}>
                         3+ {Math.round((r.p3s || 0) * 100)}% · Pred S {r.lambdaS?.toFixed(1)} · Signal {r.signalScore}
                       </div>
-                      <div style={{ marginTop: "6px" }}><BulletList items={buildBoardBulletPoints(r, "shots")} color="#373449" fontSize="17px" tight /></div>
+                      <div style={{ marginTop: "6px" }}><BulletList items={buildBoardBulletPoints(r, "shots")} color="#373449" fontSize="18px" tight /></div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div style={{ fontSize: "18px", color: "#636977" }}>No strong shot bets flagged.</div>
+                <div style={{ fontSize: "19px", color: "#636977" }}>No strong shot bets flagged.</div>
               )}
             </div>
 
             <div style={{ marginBottom: "12px" }}>
-              <div style={{ fontSize: "18px", fontWeight: 800, color: "#05011c", marginBottom: "6px" }}>
+              <div style={{ fontSize: "19px", fontWeight: 800, color: "#05011c", marginBottom: "6px" }}>
                 Best points bets
               </div>
 
@@ -2415,27 +2396,27 @@ function BestByGame({ data }) {
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center" }}>
-                        <div style={{ fontSize: "18px", fontWeight: 700, color: "#05011c" }}>
+                        <div style={{ fontSize: "19px", fontWeight: 700, color: "#05011c" }}>
                           {r.name} <span style={{ color: "#636977", fontWeight: 600 }}>{r.venue}</span>
                         </div>
-                        <div style={{ fontSize: "18px", fontWeight: 800, color: "#2563eb" }}>
+                        <div style={{ fontSize: "19px", fontWeight: 800, color: "#2563eb" }}>
                           {Math.round((r.p1p || 0) * 100)}% for 1P
                         </div>
                       </div>
-                      <div style={{ fontSize: "18px", color: "#636977", marginTop: "2px" }}>
+                      <div style={{ fontSize: "19px", color: "#636977", marginTop: "2px" }}>
                         2P {Math.round((r.p2p || 0) * 100)}% · Pred P {r.lambdaP?.toFixed(2)} · Signal {r.signalScore}
                       </div>
-                      <div style={{ marginTop: "6px" }}><BulletList items={buildBoardBulletPoints(r, "points")} color="#373449" fontSize="17px" tight /></div>
+                      <div style={{ marginTop: "6px" }}><BulletList items={buildBoardBulletPoints(r, "points")} color="#373449" fontSize="18px" tight /></div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div style={{ fontSize: "18px", color: "#636977" }}>No strong points bets flagged.</div>
+                <div style={{ fontSize: "19px", color: "#636977" }}>No strong points bets flagged.</div>
               )}
             </div>
 
             <div>
-              <div style={{ fontSize: "18px", fontWeight: 800, color: "#05011c", marginBottom: "6px" }}>
+              <div style={{ fontSize: "19px", fontWeight: 800, color: "#05011c", marginBottom: "6px" }}>
                 Best goal bets
               </div>
 
@@ -2452,22 +2433,22 @@ function BestByGame({ data }) {
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center" }}>
-                        <div style={{ fontSize: "18px", fontWeight: 700, color: "#05011c" }}>
+                        <div style={{ fontSize: "19px", fontWeight: 700, color: "#05011c" }}>
                           {r.name} <span style={{ color: "#636977", fontWeight: 600 }}>{r.venue}</span>
                         </div>
-                        <div style={{ fontSize: "18px", fontWeight: 800, color: "#b45309" }}>
+                        <div style={{ fontSize: "19px", fontWeight: 800, color: "#b45309" }}>
                           {Math.round((r.p1g || 0) * 100)}% for 1G
                         </div>
                       </div>
-                      <div style={{ fontSize: "18px", color: "#636977", marginTop: "2px" }}>
+                      <div style={{ fontSize: "19px", color: "#636977", marginTop: "2px" }}>
                         2G {Math.round((r.p2g || 0) * 100)}% · Pred G {r.lambdaG?.toFixed(2)} · Signal {r.signalScore}
                       </div>
-                      <div style={{ marginTop: "6px" }}><BulletList items={buildBoardBulletPoints(r, "goals")} color="#373449" fontSize="17px" tight /></div>
+                      <div style={{ marginTop: "6px" }}><BulletList items={buildBoardBulletPoints(r, "goals")} color="#373449" fontSize="18px" tight /></div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div style={{ fontSize: "18px", color: "#636977" }}>No strong goal bets flagged.</div>
+                <div style={{ fontSize: "19px", color: "#636977" }}>No strong goal bets flagged.</div>
               )}
             </div>
           </div>
@@ -2540,7 +2521,7 @@ function ConclusionBoard({ data }) {
         <div
           style={{
             fontFamily: "'Outfit Variable','Outfit',sans-serif",
-            fontSize: "33px",
+            fontSize: "34px",
             fontWeight: 800,
             color: "#05011c",
             marginBottom: "10px",
@@ -2549,10 +2530,10 @@ function ConclusionBoard({ data }) {
           Board legend
         </div>
         <div style={{ display: "grid", gap: "12px" }}>
-          <div style={{ fontSize: "18px", color: "#373449", lineHeight: 1.55 }}>
+          <div style={{ fontSize: "19px", color: "#373449", lineHeight: 1.55 }}>
             <strong>Shot tags:</strong> 4+ ELITE = 70%+ · 4+ CORE = 55–70% · 4+ THIN = 45–55% · 5+ ELITE = 30%+ · 5+ EDGE = 18–30% · 5+ LOTTO = 12–18%
           </div>
-          <div style={{ fontSize: "18px", color: "#373449", lineHeight: 1.55 }}>
+          <div style={{ fontSize: "19px", color: "#373449", lineHeight: 1.55 }}>
             <strong>Goal tags:</strong> GOAL ELITE = 45%+ · GOAL CORE = 30–45% · GOAL THIN = 22–30% · GOAL LOTTO = 18–22%
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
@@ -2561,7 +2542,7 @@ function ConclusionBoard({ data }) {
             <TagPill tag={{ label: "GOAL TARGET" }} />
             <TagPill tag={{ label: "CEILING PLAY" }} />
           </div>
-          <div style={{ fontSize: "18px", color: "#636977", lineHeight: 1.55 }}>
+          <div style={{ fontSize: "19px", color: "#636977", lineHeight: 1.55 }}>
             <strong>How to use it:</strong> PRIMARY TARGET = best all-around play · LADDER TARGET = strongest 4+/5+ shot ladder candidate · GOAL TARGET = best goal play · CEILING PLAY = higher-variance upside only
           </div>
         </div>
@@ -2578,7 +2559,7 @@ function ConclusionBoard({ data }) {
         <div
           style={{
             fontFamily: "'Outfit Variable','Outfit',sans-serif",
-            fontSize: "33px",
+            fontSize: "34px",
             fontWeight: 800,
             color: "#05011c",
             marginBottom: "10px",
@@ -2601,7 +2582,7 @@ function ConclusionBoard({ data }) {
                 border: "1px solid #e9e8f3",
                 borderRadius: "12px",
                 padding: "14px",
-                fontSize: "18px",
+                fontSize: "19px",
                 color: "#373449",
                 lineHeight: 1.6,
               }}
@@ -2621,7 +2602,7 @@ function ConclusionBoard({ data }) {
             padding: "18px",
           }}
         >
-          <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "33px", fontWeight: 800, color: "#05011c", marginBottom: "10px" }}>
+          <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "34px", fontWeight: 800, color: "#05011c", marginBottom: "10px" }}>
             Top shots board
           </div>
           <div style={{ display: "grid", gap: "10px" }}>
@@ -2630,15 +2611,15 @@ function ConclusionBoard({ data }) {
                 <div style={{ display: "flex", justifyContent: "space-between", gap: "10px" }}>
                   <div>
                     <div style={{ fontWeight: 700, color: "#05011c" }}>{idx + 1}. {r.name} <span style={{ color: "#636977", fontWeight: 600 }}>{r.venue}</span></div>
-                    <div style={{ fontSize: "18px", color: "#636977" }}>{r.game} · {r.pos} · Signal {r.signalScore}</div>
+                    <div style={{ fontSize: "19px", color: "#636977" }}>{r.game} · {r.pos} · Signal {r.signalScore}</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}><TagPill tag={r.compositeTag} /><TagPill tag={r.shotTag} /><TagPill tag={r.ceilingTag} /><TagPill tag={r.goalTag} /></div>
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontWeight: 800, color: "#15803d" }}>{Math.round(r.p3s * 100)}% 3+</div>
-                    <div style={{ fontSize: "18px", color: "#636977" }}>{Math.round(r.p4s * 100)}% 4+</div>
+                    <div style={{ fontSize: "19px", color: "#636977" }}>{Math.round(r.p4s * 100)}% 4+</div>
                   </div>
                 </div>
-                <div style={{ marginTop: "8px" }}><BulletList items={buildBoardBulletPoints(r, "shots")} color="#373449" fontSize="17px" tight /></div>
+                <div style={{ marginTop: "8px" }}><BulletList items={buildBoardBulletPoints(r, "shots")} color="#373449" fontSize="18px" tight /></div>
               </div>
             ))}
           </div>
@@ -2652,7 +2633,7 @@ function ConclusionBoard({ data }) {
             padding: "18px",
           }}
         >
-          <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "33px", fontWeight: 800, color: "#05011c", marginBottom: "10px" }}>
+          <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "34px", fontWeight: 800, color: "#05011c", marginBottom: "10px" }}>
             Top points board
           </div>
           <div style={{ display: "grid", gap: "10px" }}>
@@ -2661,15 +2642,15 @@ function ConclusionBoard({ data }) {
                 <div style={{ display: "flex", justifyContent: "space-between", gap: "10px" }}>
                   <div>
                     <div style={{ fontWeight: 700, color: "#05011c" }}>{idx + 1}. {r.name} <span style={{ color: "#636977", fontWeight: 600 }}>{r.venue}</span></div>
-                    <div style={{ fontSize: "18px", color: "#636977" }}>{r.game} · {r.pos} · Signal {r.signalScore}</div>
+                    <div style={{ fontSize: "19px", color: "#636977" }}>{r.game} · {r.pos} · Signal {r.signalScore}</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}><TagPill tag={r.compositeTag} /><TagPill tag={r.shotTag} /><TagPill tag={r.ceilingTag} /><TagPill tag={r.goalTag} /></div>
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontWeight: 800, color: "#2563eb" }}>{Math.round(r.p1p * 100)}% 1P</div>
-                    <div style={{ fontSize: "18px", color: "#636977" }}>{Math.round(r.p2p * 100)}% 2P</div>
+                    <div style={{ fontSize: "19px", color: "#636977" }}>{Math.round(r.p2p * 100)}% 2P</div>
                   </div>
                 </div>
-                <div style={{ marginTop: "8px" }}><BulletList items={buildBoardBulletPoints(r, "points")} color="#373449" fontSize="17px" tight /></div>
+                <div style={{ marginTop: "8px" }}><BulletList items={buildBoardBulletPoints(r, "points")} color="#373449" fontSize="18px" tight /></div>
               </div>
             ))}
           </div>
@@ -2683,7 +2664,7 @@ function ConclusionBoard({ data }) {
             padding: "18px",
           }}
         >
-          <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "33px", fontWeight: 800, color: "#05011c", marginBottom: "10px" }}>
+          <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "34px", fontWeight: 800, color: "#05011c", marginBottom: "10px" }}>
             Top goals board
           </div>
           <div style={{ display: "grid", gap: "10px" }}>
@@ -2692,15 +2673,15 @@ function ConclusionBoard({ data }) {
                 <div style={{ display: "flex", justifyContent: "space-between", gap: "10px" }}>
                   <div>
                     <div style={{ fontWeight: 700, color: "#05011c" }}>{idx + 1}. {r.name} <span style={{ color: "#636977", fontWeight: 600 }}>{r.venue}</span></div>
-                    <div style={{ fontSize: "18px", color: "#636977" }}>{r.game} · {r.pos} · Danger {Math.round(r.dangerRate * 100)}%</div>
+                    <div style={{ fontSize: "19px", color: "#636977" }}>{r.game} · {r.pos} · Danger {Math.round(r.dangerRate * 100)}%</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}><TagPill tag={r.compositeTag} /><TagPill tag={r.goalTag} /><TagPill tag={r.shotTag} /></div>
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontWeight: 800, color: "#b45309" }}>{Math.round(r.p1g * 100)}% 1G</div>
-                    <div style={{ fontSize: "18px", color: "#636977" }}>{Math.round(r.p2g * 100)}% 2G</div>
+                    <div style={{ fontSize: "19px", color: "#636977" }}>{Math.round(r.p2g * 100)}% 2G</div>
                   </div>
                 </div>
-                <div style={{ marginTop: "8px" }}><BulletList items={buildBoardBulletPoints(r, "goals")} color="#373449" fontSize="17px" tight /></div>
+                <div style={{ marginTop: "8px" }}><BulletList items={buildBoardBulletPoints(r, "goals")} color="#373449" fontSize="18px" tight /></div>
               </div>
             ))}
           </div>
@@ -2826,14 +2807,14 @@ function DefenseRoleProfiles({ data }) {
     return (
       <div key={`${kind}-${row.name}-${row.team}-${row.currentRole || row.pos}`} style={{ background: "#fff", border: "1px solid #e9e8f3", borderRadius: "10px", padding: "10px 12px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center" }}>
-          <div style={{ fontSize: "14px", fontWeight: 700, color: "#05011c" }}>
+          <div style={{ fontSize: "15px", fontWeight: 700, color: "#05011c" }}>
             {row.name} <span style={{ color: "#636977", fontWeight: 600 }}>{row.currentRole || row.pos}</span>
           </div>
-          <div style={{ fontSize: "14px", fontWeight: 800, color: prob >= 0.5 ? "#15803d" : prob >= 0.35 ? "#b45309" : "#636977" }}>
+          <div style={{ fontSize: "15px", fontWeight: 800, color: prob >= 0.5 ? "#15803d" : prob >= 0.35 ? "#b45309" : "#636977" }}>
             {label}
           </div>
         </div>
-        <div style={{ fontSize: "12px", color: "#636977", marginTop: "4px", lineHeight: 1.45 }}>
+        <div style={{ fontSize: "13px", color: "#636977", marginTop: "4px", lineHeight: 1.45 }}>
           {row.team} · Signal {row.signalScore ?? "—"} · {row.featureSummary || row.selectionRationale || "No note"}
         </div>
       </div>
@@ -2844,10 +2825,10 @@ function DefenseRoleProfiles({ data }) {
     <div style={{ background: "#ffffff", border: "1px solid #e9e8f3", borderRadius: "16px", padding: "16px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "center", flexWrap: "wrap", marginBottom: "8px" }}>
         <div>
-          <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "18px", fontWeight: 800, color: "#05011c", marginBottom: "4px" }}>
+          <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "19px", fontWeight: 800, color: "#05011c", marginBottom: "4px" }}>
             Defense Role Profiles
           </div>
-          <div style={{ fontSize: "13px", color: "#636977" }}>
+          <div style={{ fontSize: "14px", color: "#636977" }}>
             Slate-aware and lineup-aware. Uses today&apos;s lineup role as the source of truth.
           </div>
         </div>
@@ -2864,7 +2845,7 @@ function DefenseRoleProfiles({ data }) {
                 color: mode === key ? sectionMeta[key].color : "#636977",
                 fontFamily: "'Outfit Variable','Outfit',sans-serif",
                 fontWeight: 700,
-                fontSize: "13px",
+                fontSize: "14px",
                 cursor: "pointer",
               }}
             >
@@ -2875,7 +2856,7 @@ function DefenseRoleProfiles({ data }) {
       </div>
 
       {!teamCards.length && (
-        <div style={{ fontSize: "13px", color: "#80828d", marginBottom: "10px" }}>
+        <div style={{ fontSize: "14px", color: "#80828d", marginBottom: "10px" }}>
           No opponent cards available for the current slate.
         </div>
       )}
@@ -2886,15 +2867,15 @@ function DefenseRoleProfiles({ data }) {
           const rows = card[meta.key] || [];
           return (
             <div key={card.teamKey} style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
-              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "16px", fontWeight: 800, color: "#05011c", marginBottom: "4px" }}>
+              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "17px", fontWeight: 800, color: "#05011c", marginBottom: "4px" }}>
                 {card.team}
               </div>
-              <div style={{ fontSize: "12px", color: "#636977", marginBottom: "10px" }}>
+              <div style={{ fontSize: "13px", color: "#636977", marginBottom: "10px" }}>
                 {card.roleSignals[meta.signal]}
               </div>
 
               <div style={{ background: "#fff", border: "1px solid #e9e8f3", borderRadius: "10px", padding: "10px 12px", marginBottom: "10px" }}>
-                <div style={{ fontSize: "14px", fontWeight: 800, color: meta.color, marginBottom: "6px", fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>
+                <div style={{ fontSize: "15px", fontWeight: 800, color: meta.color, marginBottom: "6px", fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>
                   {meta.title}
                 </div>
                 {rows.length ? (
@@ -2902,7 +2883,7 @@ function DefenseRoleProfiles({ data }) {
                     {rows.map((row) => renderFitCard(row, meta.signal))}
                   </div>
                 ) : (
-                  <div style={{ fontSize: "12px", color: "#80828d" }}>No current fits cleared the model threshold.</div>
+                  <div style={{ fontSize: "13px", color: "#80828d" }}>No current fits cleared the model threshold.</div>
                 )}
               </div>
             </div>
@@ -2942,18 +2923,18 @@ function BetCard({ title, subtitle, legs, combinedProb, type, note }) {
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
             <span style={{
-              fontSize: "15px", fontWeight: 800, fontFamily: "'Outfit Variable','Outfit',sans-serif",
+              fontSize: "16px", fontWeight: 800, fontFamily: "'Outfit Variable','Outfit',sans-serif",
               background: typeColor.bg, color: typeColor.label,
               border: `1px solid ${typeColor.border}`,
               padding: "2px 7px", borderRadius: "999px", letterSpacing: "0.08em",
             }}>{typeColor.tag}</span>
-            <span style={{ fontSize: "20px", fontWeight: 800, color: "#05011c", fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>{title}</span>
+            <span style={{ fontSize: "21px", fontWeight: 800, color: "#05011c", fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>{title}</span>
           </div>
-          {subtitle && <div style={{ fontSize: "16px", color: "#636977" }}>{subtitle}</div>}
+          {subtitle && <div style={{ fontSize: "17px", color: "#636977" }}>{subtitle}</div>}
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
-          <div style={{ fontSize: "33px", fontWeight: 900, fontFamily: "'Outfit Variable','Outfit',sans-serif", color: probColor, lineHeight: 1 }}>{pct}%</div>
-          <div style={{ fontSize: "14px", color: "#80828d", textTransform: "uppercase", letterSpacing: "0.06em" }}>model prob</div>
+          <div style={{ fontSize: "34px", fontWeight: 900, fontFamily: "'Outfit Variable','Outfit',sans-serif", color: probColor, lineHeight: 1 }}>{pct}%</div>
+          <div style={{ fontSize: "15px", color: "#80828d", textTransform: "uppercase", letterSpacing: "0.06em" }}>model prob</div>
         </div>
       </div>
 
@@ -2964,13 +2945,13 @@ function BetCard({ title, subtitle, legs, combinedProb, type, note }) {
             background: "#f8fafb", borderRadius: "8px", padding: "6px 10px",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "16px", fontWeight: 700, color: "#373449" }}>{leg.player}</span>
-              <span style={{ fontSize: "15px", color: "#80828d" }}>{leg.team} · {leg.pos}</span>
+              <span style={{ fontSize: "17px", fontWeight: 700, color: "#373449" }}>{leg.player}</span>
+              <span style={{ fontSize: "16px", color: "#80828d" }}>{leg.team} · {leg.pos}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "16px", color: "#636977" }}>{leg.prop}</span>
+              <span style={{ fontSize: "17px", color: "#636977" }}>{leg.prop}</span>
               <span style={{
-                fontSize: "18px", fontWeight: 900, fontFamily: "'Outfit Variable','Outfit',sans-serif",
+                fontSize: "19px", fontWeight: 900, fontFamily: "'Outfit Variable','Outfit',sans-serif",
                 color: leg.prob >= 0.6 ? "#15803d" : leg.prob >= 0.4 ? "#b45309" : "#c2410c",
               }}>{Math.round(leg.prob * 100)}%</span>
             </div>
@@ -2979,7 +2960,7 @@ function BetCard({ title, subtitle, legs, combinedProb, type, note }) {
       </div>
 
       {note && (
-        <div style={{ fontSize: "15px", color: "#636977", fontStyle: "italic", borderTop: "1px solid #f2f2f8", paddingTop: "6px" }}>
+        <div style={{ fontSize: "16px", color: "#636977", fontStyle: "italic", borderTop: "1px solid #f2f2f8", paddingTop: "6px" }}>
           💡 {note}
         </div>
       )}
@@ -3168,15 +3149,15 @@ function BetIdeas({ data }) {
       {/* Header controls */}
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "16px", color: "#4b4a5c", whiteSpace: "nowrap" }}>Min Model Prob</span>
+          <span style={{ fontSize: "17px", color: "#4b4a5c", whiteSpace: "nowrap" }}>Min Model Prob</span>
           <input
             type="number" min="20" max="90" value={minProb}
             onChange={(e) => setMinProb(Number(e.target.value))}
-            style={{ width: "52px", background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "8px", color: "#26262c", padding: "7px 8px", fontSize: "20px", outline: "none", textAlign: "center" }}
+            style={{ width: "52px", background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "8px", color: "#26262c", padding: "7px 8px", fontSize: "21px", outline: "none", textAlign: "center" }}
           />
-          <span style={{ fontSize: "16px", color: "#80828d" }}>%</span>
+          <span style={{ fontSize: "17px", color: "#80828d" }}>%</span>
         </div>
-        <div style={{ fontSize: "16px", color: "#80828d", fontStyle: "italic" }}>
+        <div style={{ fontSize: "17px", color: "#80828d", fontStyle: "italic" }}>
           Gate-open players only · Probabilities are model estimates, not odds
         </div>
       </div>
@@ -3185,7 +3166,7 @@ function BetIdeas({ data }) {
       <div style={{ display: "flex", gap: "8px", marginBottom: "18px", flexWrap: "wrap" }}>
         {sections.map((s) => (
           <button key={s.key} onClick={() => setActiveSection(s.key)} style={{
-            padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "18px",
+            padding: "7px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "19px",
             fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 700,
             border: `1px solid ${activeSection === s.key ? "#16a34a" : "#e9e8f3"}`,
             background: activeSection === s.key ? "#dcfce7" : "#fff",
@@ -3198,7 +3179,7 @@ function BetIdeas({ data }) {
 
       {/* Cards grid */}
       {displayed.length === 0 ? (
-        <div style={{ padding: "40px", textAlign: "center", color: "#80828d", fontSize: "20px" }}>
+        <div style={{ padding: "40px", textAlign: "center", color: "#80828d", fontSize: "21px" }}>
           No ideas meet the {minProb}% threshold. Try lowering it.
         </div>
       ) : (
@@ -3209,7 +3190,7 @@ function BetIdeas({ data }) {
         </div>
       )}
 
-      <div style={{ marginTop: "16px", fontSize: "15px", color: "#80828d", textAlign: "center" }}>
+      <div style={{ marginTop: "16px", fontSize: "16px", color: "#80828d", textAlign: "center" }}>
         ⚠ Model probabilities only. Always verify lines at your sportsbook. Past performance doesn&apos;t guarantee future results.
       </div>
     </div>
@@ -3233,7 +3214,7 @@ function getBestLeg(r) {
 function GuideSection({ icon, title, accent, children }) {
   return (
     <div style={{ background: "#fff", border: `1px solid ${accent}33`, borderLeft: `4px solid ${accent}`, borderRadius: "10px", padding: "14px 16px" }}>
-      <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 800, fontSize: "22px", color: accent, marginBottom: "10px" }}>
+      <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 800, fontSize: "23px", color: accent, marginBottom: "10px" }}>
         {icon} {title}
       </div>
       {children}
@@ -3250,10 +3231,10 @@ function ThreshRow({ label, tiers }) {
   };
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", flexWrap: "wrap" }}>
-      <span style={{ fontSize: "18px", fontWeight: 700, color: "#05011c", minWidth: "80px", fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>{label}</span>
+      <span style={{ fontSize: "19px", fontWeight: 700, color: "#05011c", minWidth: "80px", fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>{label}</span>
       {tiers.map((t, i) => (
         <span key={i} style={{
-          fontSize: "16px", fontWeight: 700, padding: "3px 9px", borderRadius: "999px",
+          fontSize: "17px", fontWeight: 700, padding: "3px 9px", borderRadius: "999px",
           background: colors[t.type]?.bg || "#f2f2f8",
           color: colors[t.type]?.fg || "#636977",
         }}>{t.label}</span>
@@ -3269,10 +3250,10 @@ function BettingGuide() {
       {/* Header */}
       <div style={{ background: "#05011c", borderRadius: "12px", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
-          <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 900, fontSize: "30px", color: "#fff", letterSpacing: "0.05em" }}>BETTING GUIDE</div>
-          <div style={{ fontSize: "16px", color: "#80828d", marginTop: "2px" }}>Model thresholds · Decision framework · Trap rules</div>
+          <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 900, fontSize: "31px", color: "#fff", letterSpacing: "0.05em" }}>BETTING GUIDE</div>
+          <div style={{ fontSize: "17px", color: "#80828d", marginTop: "2px" }}>Model thresholds · Decision framework · Trap rules</div>
         </div>
-        <div style={{ fontSize: "42px" }}>🎯</div>
+        <div style={{ fontSize: "43px" }}>🎯</div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
@@ -3282,14 +3263,14 @@ function BettingGuide() {
           <ThreshRow label="3+ SOG" tiers={[{label:"≥65% → Strong play",type:"strong"},{label:"58–64% → Parlay anchor",type:"playable"},{label:"52–57% → Thin",type:"thin"}]} />
           <ThreshRow label="4+ SOG" tiers={[{label:"≥50% → Strong",type:"strong"},{label:"45–49% → Playable",type:"playable"},{label:"40–44% → Thin edge",type:"thin"}]} />
           <ThreshRow label="5+ SOG" tiers={[{label:"≥35% → Elite shooters only",type:"thin"},{label:"<35% → Noise",type:"avoid"}]} />
-          <div style={{ fontSize: "16px", color: "#636977", marginTop: "8px", fontStyle: "italic" }}>Shots are volume-driven → iFF model is strongest here. Start here.</div>
+          <div style={{ fontSize: "17px", color: "#636977", marginTop: "8px", fontStyle: "italic" }}>Shots are volume-driven → iFF model is strongest here. Start here.</div>
         </GuideSection>
 
         {/* POINTS */}
         <GuideSection icon="🎯" title="2. POINTS — Core Signal Layer" accent="#2563eb">
           <ThreshRow label="1+ Point" tiers={[{label:"≥55% → Strong",type:"strong"},{label:"50–54% → Playable",type:"playable"},{label:"<50% → Avoid standalone",type:"avoid"}]} />
           <ThreshRow label="2+ Points" tiers={[{label:"≥30% → Strong ceiling",type:"strong"},{label:"25–29% → Good parlay piece",type:"playable"},{label:"<25% → Too thin",type:"avoid"}]} />
-          <div style={{ fontSize: "16px", color: "#991b1b", marginTop: "8px", fontWeight: 700 }}>⚠ Critical: If 1P is weak → ignore ALL goal outputs, no matter what.</div>
+          <div style={{ fontSize: "17px", color: "#991b1b", marginTop: "8px", fontWeight: 700 }}>⚠ Critical: If 1P is weak → ignore ALL goal outputs, no matter what.</div>
         </GuideSection>
 
         {/* GOALS */}
@@ -3301,34 +3282,34 @@ function BettingGuide() {
 
         {/* KEY FILTER */}
         <GuideSection icon="🔥" title="4. KEY FILTER — Before Any Goal Bet" accent="#dc2626">
-          <div style={{ fontSize: "18px", color: "#373449", marginBottom: "8px", fontWeight: 700 }}>You need ALL THREE:</div>
+          <div style={{ fontSize: "19px", color: "#373449", marginBottom: "8px", fontWeight: 700 }}>You need ALL THREE:</div>
           {[
             { check: "✅", label: "1P ≥ 50%" },
             { check: "✅", label: "iSCF/G strong (≥ ~2.0)" },
             { check: "✅", label: "TOI ≥ ~16 min" },
           ].map((r, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "5px", background: "#fef2f2", borderRadius: "6px", padding: "5px 10px" }}>
-              <span style={{ fontSize: "20px" }}>{r.check}</span>
-              <span style={{ fontSize: "18px", fontWeight: 700, color: "#05011c" }}>{r.label}</span>
+              <span style={{ fontSize: "21px" }}>{r.check}</span>
+              <span style={{ fontSize: "19px", fontWeight: 700, color: "#05011c" }}>{r.label}</span>
             </div>
           ))}
-          <div style={{ fontSize: "16px", color: "#dc2626", marginTop: "8px", fontWeight: 700 }}>If one is missing → probability is inflated noise.</div>
+          <div style={{ fontSize: "17px", color: "#dc2626", marginTop: "8px", fontWeight: 700 }}>If one is missing → probability is inflated noise.</div>
         </GuideSection>
 
         {/* TRAP RULE */}
         <GuideSection icon="⚠️" title="5. TRAPS — What Not To Do" accent="#7c3aed">
-          <div style={{ fontSize: "18px", color: "#373449", marginBottom: "8px" }}>Avoid these mistakes:</div>
+          <div style={{ fontSize: "19px", color: "#373449", marginBottom: "8px" }}>Avoid these mistakes:</div>
           {[
             "Taking goals just because % looks high",
             "Ignoring the points layer",
             "Treating all 30% goal probabilities equally",
           ].map((t, i) => (
-            <div key={i} style={{ fontSize: "18px", color: "#dc2626", marginBottom: "4px" }}>✗ {t}</div>
+            <div key={i} style={{ fontSize: "19px", color: "#dc2626", marginBottom: "4px" }}>✗ {t}</div>
           ))}
           <div style={{ marginTop: "10px", background: "#f5f3ff", borderRadius: "8px", padding: "10px 12px" }}>
-            <div style={{ fontSize: "16px", fontWeight: 800, color: "#7c3aed", marginBottom: "4px" }}>Example</div>
-            <div style={{ fontSize: "18px", color: "#373449" }}>30% goal + 55% 1P → <span style={{ color: "#15803d", fontWeight: 700 }}>GOOD ✅</span></div>
-            <div style={{ fontSize: "18px", color: "#373449" }}>30% goal + 44% 1P → <span style={{ color: "#dc2626", fontWeight: 700 }}>TRAP ❌</span></div>
+            <div style={{ fontSize: "17px", fontWeight: 800, color: "#7c3aed", marginBottom: "4px" }}>Example</div>
+            <div style={{ fontSize: "19px", color: "#373449" }}>30% goal + 55% 1P → <span style={{ color: "#15803d", fontWeight: 700 }}>GOOD ✅</span></div>
+            <div style={{ fontSize: "19px", color: "#373449" }}>30% goal + 44% 1P → <span style={{ color: "#dc2626", fontWeight: 700 }}>TRAP ❌</span></div>
           </div>
         </GuideSection>
 
@@ -3340,10 +3321,10 @@ function BettingGuide() {
             { step: "Step 3", label: "Ceiling Adds", items: ["2P ≥ 28%", "2G ≥ 12%"] },
           ].map((s, i) => (
             <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "8px", alignItems: "flex-start" }}>
-              <span style={{ fontSize: "15px", fontWeight: 800, background: "#dbeafe", color: "#1d4ed8", padding: "3px 7px", borderRadius: "999px", whiteSpace: "nowrap", fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>{s.step}</span>
+              <span style={{ fontSize: "16px", fontWeight: 800, background: "#dbeafe", color: "#1d4ed8", padding: "3px 7px", borderRadius: "999px", whiteSpace: "nowrap", fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>{s.step}</span>
               <div>
-                <div style={{ fontSize: "18px", fontWeight: 700, color: "#05011c", marginBottom: "2px" }}>{s.label}</div>
-                {s.items.map((item, j) => <div key={j} style={{ fontSize: "16px", color: "#373449" }}>→ {item}</div>)}
+                <div style={{ fontSize: "19px", fontWeight: 700, color: "#05011c", marginBottom: "2px" }}>{s.label}</div>
+                {s.items.map((item, j) => <div key={j} style={{ fontSize: "17px", color: "#373449" }}>→ {item}</div>)}
               </div>
             </div>
           ))}
@@ -3352,7 +3333,7 @@ function BettingGuide() {
 
       {/* Bottom line */}
       <div style={{ background: "#05011c", borderRadius: "12px", padding: "16px 20px" }}>
-        <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 900, fontSize: "24px", color: "#22c55e", marginBottom: "8px" }}>🧾 BOTTOM LINE — One Clean Rule</div>
+        <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontWeight: 900, fontSize: "25px", color: "#22c55e", marginBottom: "8px" }}>🧾 BOTTOM LINE — One Clean Rule</div>
         <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
           {[
             { label: "1P ≥ 55%", color: "#22c55e" },
@@ -3360,21 +3341,21 @@ function BettingGuide() {
             { label: "iFF ≥ ~3.0 OR S/G ≥ ~2.5", color: "#22c55e" },
           ].map((r, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ color: "#22c55e", fontSize: "21px" }}>✅</span>
-              <span style={{ fontSize: "20px", fontWeight: 700, color: r.color, fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>{r.label}</span>
+              <span style={{ color: "#22c55e", fontSize: "22px" }}>✅</span>
+              <span style={{ fontSize: "21px", fontWeight: 700, color: r.color, fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>{r.label}</span>
             </div>
           ))}
         </div>
-        <div style={{ fontSize: "16px", color: "#636977", marginTop: "8px" }}>Everything else is noise. Only bet goals when all three are present.</div>
+        <div style={{ fontSize: "17px", color: "#636977", marginTop: "8px" }}>Everything else is noise. Only bet goals when all three are present.</div>
       </div>
 
       {/* Clamp note */}
       <GuideSection icon="🧪" title="7. Clamp Calibration Note" accent="#636977">
-        <div style={{ fontSize: "18px", color: "#373449", marginBottom: "6px" }}>Current clamp: <code style={{ background: "#f2f2f8", padding: "2px 5px", borderRadius: "4px" }}>1G ≤ 1P × 0.78</code></div>
-        <div style={{ fontSize: "18px", color: "#373449", marginBottom: "4px" }}>More realistic NHL baseline: <strong>1G ≈ 0.55–0.65 of 1P</strong></div>
+        <div style={{ fontSize: "19px", color: "#373449", marginBottom: "6px" }}>Current clamp: <code style={{ background: "#f2f2f8", padding: "2px 5px", borderRadius: "4px" }}>1G ≤ 1P × 0.78</code></div>
+        <div style={{ fontSize: "19px", color: "#373449", marginBottom: "4px" }}>More realistic NHL baseline: <strong>1G ≈ 0.55–0.65 of 1P</strong></div>
         <div style={{ display: "flex", gap: "12px", marginTop: "8px", flexWrap: "wrap" }}>
-          <div style={{ fontSize: "16px", color: "#dc2626" }}>→ Too many false positives? Lower to 0.65</div>
-          <div style={{ fontSize: "16px", color: "#15803d" }}>→ Too few scorers surfacing? Keep 0.78</div>
+          <div style={{ fontSize: "17px", color: "#dc2626" }}>→ Too many false positives? Lower to 0.65</div>
+          <div style={{ fontSize: "17px", color: "#15803d" }}>→ Too few scorers surfacing? Keep 0.78</div>
         </div>
       </GuideSection>
 
@@ -3384,7 +3365,7 @@ function BettingGuide() {
 
 function CheatTable({ headers, rows }) {
   return (
-    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "18px" }}>
+    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "19px" }}>
       <thead>
         <tr>
           {headers.map((h) => (
@@ -3395,7 +3376,7 @@ function CheatTable({ headers, rows }) {
                 padding: "10px",
                 borderBottom: "1px solid #e9e8f3",
                 color: "#636977",
-                fontSize: "18px",
+                fontSize: "19px",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
               }}
@@ -3532,7 +3513,7 @@ function ModelCheatSheet({ data }) {
               cursor: "pointer",
               fontFamily: "'Outfit Variable','Outfit',sans-serif",
               fontWeight: 700,
-              fontSize: "20px",
+              fontSize: "21px",
               border: `1px solid ${cheatTab === key ? "#16a34a" : "#e9e8f3"}`,
               background: cheatTab === key ? "#dcfce7" : "#fff",
               color: cheatTab === key ? "#15803d" : "#636977",
@@ -3547,10 +3528,10 @@ function ModelCheatSheet({ data }) {
 
       {cheatTab === "params" && (
         <div style={{ background: "#ffffff", border: "1px solid #e9e8f3", borderRadius: "16px", padding: "18px" }}>
-          <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "36px", fontWeight: 800, color: "#05011c", marginBottom: "4px" }}>
+          <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "37px", fontWeight: 800, color: "#05011c", marginBottom: "4px" }}>
             Model cheat tab
           </div>
-          <div style={{ fontSize: "21px", color: "#636977", marginBottom: "14px" }}>
+          <div style={{ fontSize: "22px", color: "#636977", marginBottom: "14px" }}>
             Updated to match the live engine: style gating, pace tiers, hot-role overrides, 4+ shot gate logic, and the compressed goal pipeline.
           </div>
 
@@ -3558,62 +3539,62 @@ function ModelCheatSheet({ data }) {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "12px", marginBottom: "16px" }}>
               <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
                 <div style={{ fontWeight: 700, color: "#166534", marginBottom: "6px" }}>Current 4+ / 5+ shot names</div>
-                <div style={{ fontSize: "18px", color: "#373449", lineHeight: 1.6 }}>{examples.shotNames || "No current strong shot ladders."}</div>
+                <div style={{ fontSize: "19px", color: "#373449", lineHeight: 1.6 }}>{examples.shotNames || "No current strong shot ladders."}</div>
               </div>
               <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
                 <div style={{ fontWeight: 700, color: "#b45309", marginBottom: "6px" }}>Current goal names</div>
-                <div style={{ fontSize: "18px", color: "#373449", lineHeight: 1.6 }}>{examples.goalNames || "No current strong goal names."}</div>
+                <div style={{ fontSize: "19px", color: "#373449", lineHeight: 1.6 }}>{examples.goalNames || "No current strong goal names."}</div>
               </div>
               <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
                 <div style={{ fontWeight: 700, color: "#2563eb", marginBottom: "6px" }}>Current hot-role names</div>
-                <div style={{ fontSize: "18px", color: "#373449", lineHeight: 1.6 }}>{examples.hotNames || "No current hot-role signals."}</div>
+                <div style={{ fontSize: "19px", color: "#373449", lineHeight: 1.6 }}>{examples.hotNames || "No current hot-role signals."}</div>
               </div>
             </div>
           )}
 
           <div style={{ display: "grid", gap: "14px" }}>
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
-              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#15803d", marginBottom: "8px" }}>Defense lane thresholds</div>
+              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "25px", fontWeight: 800, color: "#15803d", marginBottom: "8px" }}>Defense lane thresholds</div>
               <CheatTable headers={["Metric", "Strong", "Neutral", "Fade"]} rows={defenseRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
-              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#0f766e", marginBottom: "8px" }}>Pace tier logic</div>
+              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "25px", fontWeight: 800, color: "#0f766e", marginBottom: "8px" }}>Pace tier logic</div>
               <CheatTable headers={["Market", "Fast", "Positive", "Slow"]} rows={paceRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
-              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#7c3aed", marginBottom: "8px" }}>Capability styles</div>
+              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "25px", fontWeight: 800, color: "#7c3aed", marginBottom: "8px" }}>Capability styles</div>
               <CheatTable headers={["Style", "Primary market", "Engine effect", "Read"]} rows={styleRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
-              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#15803d", marginBottom: "8px" }}>Shot gate logic</div>
+              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "25px", fontWeight: 800, color: "#15803d", marginBottom: "8px" }}>Shot gate logic</div>
               <CheatTable headers={["Path", "Trigger", "What it means"]} rows={shotGateRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
-              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#15803d", marginBottom: "8px" }}>Player floor profiles</div>
+              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "25px", fontWeight: 800, color: "#15803d", marginBottom: "8px" }}>Player floor profiles</div>
               <CheatTable headers={["Profile", "Elite", "Good", "Average", "Weak"]} rows={floorRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
-              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#15803d", marginBottom: "8px" }}>4+ / 5+ shot gate</div>
+              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "25px", fontWeight: 800, color: "#15803d", marginBottom: "8px" }}>4+ / 5+ shot gate</div>
               <CheatTable headers={["Path", "Threshold", "Use"]} rows={fourPlusRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
-              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#2563eb", marginBottom: "8px" }}>Hot-role override</div>
+              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "25px", fontWeight: 800, color: "#2563eb", marginBottom: "8px" }}>Hot-role override</div>
               <CheatTable headers={["Signal", "Rule", "Effect"]} rows={hotRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
-              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#b45309", marginBottom: "8px" }}>Goal engine</div>
+              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "25px", fontWeight: 800, color: "#b45309", marginBottom: "8px" }}>Goal engine</div>
               <CheatTable headers={["Component", "Logic", "Why it matters"]} rows={goalRows} />
             </div>
 
             <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "14px" }}>
-              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "24px", fontWeight: 800, color: "#2563eb", marginBottom: "8px" }}>History priority</div>
+              <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "25px", fontWeight: 800, color: "#2563eb", marginBottom: "8px" }}>History priority</div>
               <CheatTable headers={["Layer", "Primary read", "Secondary read", "Note"]} rows={historyRows} />
             </div>
           </div>
@@ -3772,43 +3753,43 @@ function GoalieSavesBoard({ data }) {
           <div key={`${g.game}-${g.goalieTeam}`} style={{ background: "#ffffff", border: "1px solid #e9e8f3", borderRadius: "16px", padding: "18px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", marginBottom: "10px" }}>
               <div>
-                <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "33px", fontWeight: 800, color: "#05011c" }}>
+                <div style={{ fontFamily: "'Outfit Variable','Outfit',sans-serif", fontSize: "34px", fontWeight: 800, color: "#05011c" }}>
                   {g.goalieLabel}
                 </div>
-                <div style={{ fontSize: "18px", color: "#636977" }}>{g.game} · facing {g.offensiveTeam}</div>
+                <div style={{ fontSize: "19px", color: "#636977" }}>{g.game} · facing {g.offensiveTeam}</div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontWeight: 900, fontSize: "42px", color: "#2563eb" }}>{g.blendedSaves}</div>
-                <div style={{ fontSize: "18px", color: "#636977" }}>blended saves</div>
+                <div style={{ fontWeight: 900, fontSize: "43px", color: "#2563eb" }}>{g.blendedSaves}</div>
+                <div style={{ fontSize: "19px", color: "#636977" }}>blended saves</div>
               </div>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "12px" }}>
               <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "10px", padding: "10px" }}>
-                <div style={{ fontSize: "16px", color: "#636977", textTransform: "uppercase", letterSpacing: "0.06em" }}>Shots against</div>
+                <div style={{ fontSize: "17px", color: "#636977", textTransform: "uppercase", letterSpacing: "0.06em" }}>Shots against</div>
                 <div style={{ fontWeight: 800, color: "#05011c" }}>{g.expectedShotsAgainst}</div>
               </div>
               <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "10px", padding: "10px" }}>
-                <div style={{ fontSize: "16px", color: "#636977", textTransform: "uppercase", letterSpacing: "0.06em" }}>Model saves</div>
+                <div style={{ fontSize: "17px", color: "#636977", textTransform: "uppercase", letterSpacing: "0.06em" }}>Model saves</div>
                 <div style={{ fontWeight: 800, color: "#05011c" }}>{g.modelSaves}</div>
               </div>
               <div style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "10px", padding: "10px" }}>
-                <div style={{ fontSize: "16px", color: "#636977", textTransform: "uppercase", letterSpacing: "0.06em" }}>Pressure</div>
+                <div style={{ fontSize: "17px", color: "#636977", textTransform: "uppercase", letterSpacing: "0.06em" }}>Pressure</div>
                 <div style={{ fontWeight: 800, color: g.pressureScore >= 70 ? "#15803d" : g.pressureScore >= 55 ? "#b45309" : "#373449" }}>{g.pressureScore}</div>
               </div>
             </div>
 
-            <div style={{ fontSize: "18px", color: "#373449", lineHeight: 1.65, marginBottom: "10px" }}>
+            <div style={{ fontSize: "19px", color: "#373449", lineHeight: 1.65, marginBottom: "10px" }}>
               Best save line: <strong>Over {g.bestLine.line}</strong> · prob <strong>{Math.round(g.bestLine.prob * 100)}%</strong> · signal <strong>{g.bestLine.signal > 0 ? "+" : ""}{g.bestLine.edge}</strong>
             </div>
 
-            <div style={{ fontSize: "18px", color: "#373449", lineHeight: 1.6, marginBottom: "10px" }}>
+            <div style={{ fontSize: "19px", color: "#373449", lineHeight: 1.6, marginBottom: "10px" }}>
               Drivers: {g.attackDrivers.join(" · ")}
             </div>
 
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
               {g.overLines.slice(0, 4).map((line) => (
-                <div key={`${g.game}-${g.goalieTeam}-${line.line}`} style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "999px", padding: "6px 10px", fontSize: "18px", color: "#1d4ed8", fontWeight: 700 }}>
+                <div key={`${g.game}-${g.goalieTeam}-${line.line}`} style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "999px", padding: "6px 10px", fontSize: "19px", color: "#1d4ed8", fontWeight: 700 }}>
                   O{line.line} {Math.round(line.prob * 100)}%
                 </div>
               ))}

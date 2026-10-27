@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { plainSummary } from '@/lib/picks/scorecard-words';
 
 // The picks scorecard (/api/<sport>/scorecard): every stored slate's board replayed with only what
@@ -201,29 +201,28 @@ export default function Scorecard({ sport }) {
   const [open, setOpen] = useState(true);
   const [range, setRange] = useState({ from: '', to: '' });
   const [report, setReport] = useState(null);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(true);   // the first read runs on open
   const [err, setErr] = useState('');
   const [asked, setAsked] = useState(null);   // the range the report answers
+  const inflight = useRef(false);             // a read on its way: the effect starts no second one
 
-  const load = useCallback(async (r) => {
-    setBusy(true); setErr('');
+  // The fetch sets state only in its callbacks, so the first read can run from the effect.
+  const load = useCallback((r) => {
     const q = new URLSearchParams();
     if (kind === 'week' && season) q.set('season', String(season));
     if (r.from) q.set('from', String(r.from));
     if (r.to) q.set('to', String(r.to));
-    try {
-      const res = await fetch(`${api}/scorecard?${q}`, { cache: 'no-store' });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.detail || j.error || `${res.status}`);
-      setReport(j);
-      setAsked({ from: j.from, to: j.to });
-      setRange((cur) => ({ from: cur.from || j.from || '', to: cur.to || j.to || '' }));
-    } catch (e) { setErr(`Scorecard: ${e.message}`); }
-    finally { setBusy(false); }
+    inflight.current = true;
+    return fetch(`${api}/scorecard?${q}`, { cache: 'no-store' })
+      .then(async (res) => { const j = await res.json().catch(() => ({})); if (!res.ok) throw new Error(j.detail || j.error || `${res.status}`); return j; })
+      .then((j) => { setReport(j); setAsked({ from: j.from, to: j.to }); setRange((cur) => ({ from: cur.from || j.from || '', to: cur.to || j.to || '' })); setErr(''); })
+      .catch((e) => setErr(`Scorecard: ${e.message}`))
+      .finally(() => { inflight.current = false; setBusy(false); });
   }, [api, kind, season]);
+  const grade = (r) => { setBusy(true); setErr(''); load(r); };
 
   // The season to date on first open (the route's default range); the controls narrow it after.
-  useEffect(() => { if (open && !report && !busy) load({ from: '', to: to || '' }); }, [open, report, busy, load, to]);
+  useEffect(() => { if (open && !report && !inflight.current) load({ from: '', to: to || '' }); }, [open, report, load, to]);
 
   const words = report?.plays ? plainSummary(report, { kind }) : null;
   const unit = kind === 'week' ? 'week' : 'night';
@@ -250,7 +249,7 @@ export default function Scorecard({ sport }) {
               <input type="number" min="1" max="22" className="nhlx-input nhlx-input-sm" style={{ width: 72 }} value={range.to} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))} aria-label="To week" />
             </>
           )}
-          <button type="button" className="nhlx-btn nhlx-btn-sm" disabled={busy} onClick={() => load(range)}>{busy ? 'Grading…' : 'Grade'}</button>
+          <button type="button" className="nhlx-btn nhlx-btn-sm" disabled={busy} onClick={() => grade(range)}>{busy ? 'Grading…' : 'Grade'}</button>
           <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" onClick={() => setOpen((o) => !o)}>{open ? 'Hide' : 'Show'}</button>
         </div>
       </div>
