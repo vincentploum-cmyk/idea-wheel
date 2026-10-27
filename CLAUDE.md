@@ -631,7 +631,10 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   tab's L10 read #20 — two tables and two units, per skater against per game, for one matchup); the study's per-skater table
   (`oppPos`, what the study's λ reads) stands in for a team without one, marked "stored" and named in the hover; colour only,
   no number moves with the tab, and the row carries no soft-spot flag (the cell shows the environment, as the ice does under
-  a rink chip). "Read
+  a rink chip). Beside "Matchup from", **Position** (`POSITIONS` / `atPosition` in `shuffle-pure.js`: All · C · LW ·
+  RW · D; Vincent's ask, 2026-10-27, to shuffle the defensemen or the left wings alone): the bars' counts, the curve,
+  the list and the fallen strip read the picked position's skaters alone, and every row carries his line slot tonight
+  (LW1, D2, the rink chip's badge; the position alone when the lineup has no slot for him). "Read
   from" (`READ_FROM`) moves the λ to the study's or a window of his own results (a window he lacks falls back to the
   board's), or, on the goals bar, to the run's own goal λ with the opponent in it ("Model · matchup",
   `goalOpportunityLambda` on the result rows → `gOpp` in `indexModelRows` → `lamGOpp` on the candidate and the shuffle
