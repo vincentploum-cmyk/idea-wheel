@@ -48,6 +48,9 @@ describe('the NBA shuffle', () => {
     const brown = sh.players[0];
     expect(brown).toMatchObject({ team: 'BOS', opp: 'NY', venue: 'A', pos: 'SF', spot: { pos: 'SF', rank: 1, value: 24, count: 2 }, main: { line: 25.5, odds: -110 } });
     expect(brown.env).toBeCloseTo(1.055, 3);   // NY gives up 24 to SFs against a league of 22, damped
+    expect(brown.matchup).toBeCloseTo(1.055, 3);   // the matchup alone; no team totals in this pull, so no side factor
+    expect(brown.teamFactor).toBeNull();
+    expect(brown.spot.league).toBe(22);
     expect(brown.at).toHaveLength(sh.heights.length);
     expect(brown.at.every((r) => r && r.p >= 0 && r.p <= 1)).toBe(true);
     expect(brown).toMatchObject({ n: 20, l10N: 10 });
@@ -100,6 +103,23 @@ describe('the NBA shuffle', () => {
     expect(returnOf(readAt(brown, s.heights, 32))).toBe(-1);               // o31.5 at +300, missed
     expect(s.players.find((p) => p.player === 'Sam Hauser').actual).toBeNull();
   });
+  test('the matchup column keeps the opponent’s factor apart from the side’s', () => {
+    // BOS scores 110 a game against NY's 120 allowed (league 115): 112.9 expected; Brown and Hauser at
+    // 36 + 24 minutes = 25% of the game, too few to scale → the matchup is the whole environment; at
+    // 36 + 180 = 90% the side's factor is 112.9 × 0.9 over their 34, capped at 1.5, and rides beside it.
+    const totals = { BOS: { for: { gp: 82, pts: 110, reb: 44, ast: 26 }, against: { gp: 82, pts: 112 } }, NY: { for: { gp: 82, pts: 115 }, against: { gp: 82, pts: 120 } } };
+    const withMin = (mins) => ({ ...pf, data: { ...pf.data, players: pf.data.players.map((p, i) => ({ ...p, games: p.games.map((g) => ({ ...g, min: mins[i] })) })), defense: { ...defense, totals, leagueFor: { pts: 115, reb: 44, ast: 26 } } } });
+    const few = nbaShuffle({ market: 'pts', board: nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 24]), results: {} }), pf: withMin([36, 24]), season: 2026 }).players.find((p) => p.player === 'Jaylen Brown');
+    expect(few.matchup).toBeCloseTo(1.055, 3);
+    expect(few.teamFactor).toBeNull();
+    expect(few.env).toBeCloseTo(1.055, 3);
+    const most = nbaShuffle({ market: 'pts', board: nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 180]), results: {} }), pf: withMin([36, 180]), season: 2026 }).players.find((p) => p.player === 'Jaylen Brown');
+    expect(most.matchup).toBeCloseTo(1.055, 3);
+    expect(most.teamFactor).toBe(1.5);
+    expect(most.env).toBeCloseTo(1.055 * 1.5, 2);
+    expect(most.exp).toBeCloseTo(26 * most.env, 0);
+    expect(most.own.blend).toBe(26);
+  });
   test('a market without a bar, or a yes-no market, reads as nothing', () => {
     expect(nbaShuffle({ market: 'dd', board, pf, season: 2026 })).toBeNull();
     expect(nbaShuffle({ market: 'stl', board, pf, season: 2026 })).toBeNull();
@@ -119,6 +139,17 @@ describe('NFL ladders by configuration', () => {
     expect(NFL_MARKETS.receptions.step).toBe(1);
     expect(NFL_LADDERS).toEqual(expect.arrayContaining(['pass_yds', 'rush_yds', 'rec_yds', 'receptions']));
     expect(NFL_BARS.map((m) => m.market)).toEqual(expect.arrayContaining(['rec_yds', 'rush_yds', 'pass_yds', 'receptions']));
+  });
+  test('without a coverage measure the team’s total is a ceiling on the side, never a floor', () => {
+    // PHI throws for 300 a game against DAL's 250 allowed (league 240): 307.5 expected over Brown's 90 alone
+    // would be ×1.5 at the cap; the NFL pull carries no minutes, so the side scales down only: ×1 here.
+    const t = { ...pf(null), data: { ...pf(null).data, defense: { ...defense, totals: { PHI: { for: { gp: 8, recYds: 300 } }, DAL: { against: { gp: 8, recYds: 250 } } }, leagueFor: { recYds: 240 } } } };
+    const side = nflBoard({ season: 2026, week: 9, games, sheets: [], pf: t, results: {} }).games[0].sides.PHI;
+    expect(side.share).toBeNull();
+    expect(side.teamProj.recYds).toBeCloseTo(307.5, 1);
+    expect(side.scale.recYds).toBe(1);
+    const crowd = { ...t, data: { ...t.data, players: [...t.data.players, { id: 'p2', name: 'DeVonta Smith', key: 'devonta smith', team: 'PHI', pos: 'WR', games: rec.map((g) => ({ ...g, recYds: 300 })), props: [] }] } };
+    expect(nflBoard({ season: 2026, week: 9, games, sheets: [], pf: crowd, results: {} }).games[0].sides.PHI.scale.recYds).toBeCloseTo(307.5 / 390, 3);
   });
   test('a receiver’s ladder and range read against the WR row, the slot row when PropFinder lists it', () => {
     const b = nflBoard({ season: 2026, week: 9, games, sheets: [], pf: pf(null), results: {} });
@@ -165,22 +196,26 @@ describe('reading from his own results', () => {
   const lastSeason = Array.from({ length: 20 }, (_, i) => ({ date: `2026-03-${String(28 - i).padStart(2, '0')}`, season: 2025, type: 'REG', opp: 'NY', pts: 20, reb: 8, ast: 5, tpm: 2, pra: 33 }));
   const logs = [...lastSeason, ...thisSeason];   // oldest first on purpose: the windows sort
   test('the windows: last 3 / 5 / 10 / 20 and this season alone', () => {
-    expect(ownWindows(logs, { market: 'pts', season: 2026 })).toEqual({ l3: 35, l5: 34, l10: 31.5, l20: 25.8, season: 31.5, seasonN: 10, n: 30 });
+    expect(ownWindows(logs, { market: 'pts', season: 2026 })).toEqual({ l3: 35, l5: 34, l10: 31.5, l20: 25.8, season: 31.5, seasonN: 10, n: 30, h2h: null, h2hN: 0 });   // no opponent asked: no head to head
     expect(ownWindows(thisSeason.slice(0, 2), { market: 'pts', season: 2026 })).toMatchObject({ l3: 35.5, season: null, seasonN: 2 });
-    expect(ownWindows([], { market: 'pts', season: 2026 })).toEqual({ l3: null, l5: null, l10: null, l20: null, season: null, seasonN: 0, n: 0 });
+    expect(ownWindows([], { market: 'pts', season: 2026 })).toEqual({ l3: null, l5: null, l10: null, l20: null, season: null, seasonN: 0, n: 0, h2h: null, h2hN: 0 });
   });
   test('the shuffle carries the windows and recentres the chance on the one picked', () => {
     const pf = { at: '2026-10-21T12:00:00Z', data: { players: [{ id: 'p1', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SF', games: logs, props: [prop] }], defense: null } };
     const b = nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf, results: {} });
     const sh = nbaShuffle({ market: 'pts', board: b, pf, season: 2026 });
     const brown = sh.players[0];
-    expect(brown.own).toEqual({ l3: 35, l5: 34, l10: 31.5, season: 31.5, seasonN: 10, blend: brown.exp });   // no table: no environment, the blend is the projection
+    expect(brown.own).toEqual({ l3: 35, l5: 34, l10: 31.5, season: 31.5, seasonN: 10, h2h: 34.5, h2hN: 4, blend: brown.exp });   // no table: no environment, the blend is the projection; every game here is against NY
     expect(brown.env).toBeNull();
-    expect(READ_FROM.map(([k]) => k)).toEqual(['blend', 'l5', 'l10', 'season', 'line']);
+    expect(READ_FROM.map(([k]) => k)).toEqual(['blend', 'l5', 'l10', 'season', 'h2h', 'line']);
     expect(centreOf(brown, 'blend')).toBeNull();
     expect(centreOf(brown, 'l5')).toBe(34);
     expect(centreOf(brown, 'line')).toBe(25.5);
     expect(centreOf({ ...brown, env: 1.1 }, 'l5')).toBe(37.4);
+    // Head to head: his last four meetings with NY (every game here), as they are — the opponent is in them already.
+    expect(brown.own).toMatchObject({ h2h: 34.5, h2hN: 4 });
+    expect(centreOf({ ...brown, env: 1.1 }, 'h2h')).toBe(34.5);
+    expect(centreOf({ ...brown, own: { ...brown.own, h2h: null } }, 'h2h')).toBeNull();   // without two meetings the blend stands in
     const i = sh.heights.indexOf(30);
     const fromBlend = pAt(brown, sh.heights, i, 'blend');
     const fromL5 = pAt(brown, sh.heights, i, 'l5');
@@ -224,11 +259,11 @@ describe('which read the scorecard rates best', () => {
   const { bestReadFrom, READ_FROM_PREDICTOR, READ_FROM } = require('../lib/picks/shuffle');
   const rep = (market, briers, lined) => ({ key: market, common: { n: lined, predictors: Object.entries(briers).map(([key, brier]) => ({ key, brier, lined })) } });
   test('every read maps to a scorecard predictor', () => {
-    expect(READ_FROM.map(([k]) => READ_FROM_PREDICTOR[k])).toEqual(['proj', 'own5x', 'own10x', 'ownSeasonx', 'line']);
+    expect(READ_FROM.map(([k]) => READ_FROM_PREDICTOR[k])).toEqual(['proj', 'own5x', 'own10x', 'ownSeasonx', 'h2h', 'line']);
   });
   test('the Brier of each read pooled over the markets, weighted by its plays; the lowest wins once enough plays are in', () => {
     const predictors = [
-      rep('pts', { proj: 0.24, own5x: 0.25, own10x: 0.22, ownSeasonx: 0.23, line: 0.245, own5: 0.3 }, 300),
+      rep('pts', { proj: 0.24, own5x: 0.25, own10x: 0.22, ownSeasonx: 0.23, line: 0.245, own5: 0.3, h2h: 0.19 }, 300),
       rep('reb', { proj: 0.2, own5x: 0.26, own10x: 0.25, ownSeasonx: 0.21, line: 0.22 }, 100),
       rep('stl', { proj: 0.1, own5x: 0.1, own10x: 0.1, ownSeasonx: 0.1, line: 0.1 }, 1000),   // not one of the shuffle's markets
     ];
@@ -236,7 +271,8 @@ describe('which read the scorecard rates best', () => {
     expect(r.n).toBe(400);
     expect(r.scores.l10).toEqual({ brier: 0.2275, n: 400 });    // (0.22 × 300 + 0.25 × 100) / 400
     expect(r.scores.blend).toEqual({ brier: 0.23, n: 400 });
-    expect(r.ranked).toEqual(['season', 'l10', 'blend', 'line', 'l5']);
+    expect(r.ranked).toEqual(['season', 'l10', 'blend', 'line', 'l5']);   // head to head is scored on its own rows: shown, never ranked
+    expect(r.scores.h2h).toEqual({ brier: 0.19, n: 300 });
     expect(r.best).toBe('season');
     expect(bestReadFrom(predictors, ['pts', 'reb'], { min: 500 })).toMatchObject({ best: null, n: 400 });
     expect(bestReadFrom([], ['pts'])).toEqual({ best: null, n: 0, scores: {}, ranked: [] });

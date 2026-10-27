@@ -3,7 +3,7 @@ import { marketFromText, groupOf, statFields, MARKETS, GROUPS } from '../lib/nba
 import { teamAbbrFromText, parseMatchup, teamLogo } from '../lib/nba/teams';
 import { parseCheatSheet, classifyHeader, parsePlayerCell } from '../lib/nba/cheatsheet';
 import { parseSummary, parseScoreboard, seasonOfDate, derived } from '../lib/nba/espn';
-import { gameRow, mapPlayers, defenseAllowed, fieldsSeen, depthChart } from '../lib/nba/propfinder-nba';
+import { gameRow, mapPlayers, defenseAllowed, fieldsSeen, depthChart, fetchInjuries, applyInjuries } from '../lib/nba/propfinder-nba';
 import { buildBoard, statOf, logRates } from '../lib/nba/picks';
 import { dateFromFileName } from '../lib/nba/store';
 import summary from './fixtures/espn-nba-summary.json';
@@ -103,6 +103,9 @@ describe('NBA PropFinder mapping', () => {
     expect(gameRow({ ...GAME, usagePercentage: 31.4, reboundChances: 12, potentialAssists: 9 })).toMatchObject({ usg: 31.4, rebCh: 12, potAst: 9 });
     // The live spelling: usagePct as a fraction of the possessions, read as a percentage.
     expect(gameRow({ ...GAME, usagePct: 0.1274 })).toMatchObject({ usg: 12.7 });
+    // The game's id rides along (the without-teammate splits read a teammate's games by it), null without one.
+    expect(gameRow(GAME).gameId).toBeNull();
+    expect(gameRow({ ...GAME, gameId: 401 }).gameId).toBe('401');
     const players = mapPlayers([PLAYER]);
     expect(players[0]).toMatchObject({ key: 'jayson tatum', team: 'BOS', pos: 'SF' });
     expect(players[0].props).toEqual([{ market: 'pts', line: 27.5, odds: -115, underOdds: -105, book: null, books: 1, isMain: true }, { market: 'pra', line: 39.5, odds: -110, underOdds: null, book: null, books: 1, isMain: true }]);
@@ -155,6 +158,35 @@ describe('NBA PropFinder mapping', () => {
     const seen = fieldsSeen([PLAYER], []).markets;
     expect(Object.values(seen).reduce((s, m) => s + m.n, 0)).toBeGreaterThan(0);
     expect(Object.values(seen).every((m) => typeof m.n === 'number')).toBe(true);
+  });
+  test('the injury report, live: the games payload first, the per-team route as the fallback; statuses onto the players', async () => {
+    const teams = [{ id: 1, code: 'BOS' }, { id: 2, code: 'NYK' }];
+    const byAbbr = { BOS: teams[0], NY: teams[1] };
+    const report = JSON.stringify({ data: [{ team: { id: 1 }, player: { id: 'p1', name: 'Jayson Tatum', position: 'SF' }, status: 'out', type: 'Achilles' }] });
+    const calls = [];
+    const v2 = async (path) => { calls.push(path); if (path.startsWith('/NBA/v2?sportsbooks=draftkings&sportsbooks=fanduel')) return { games: [], players: [], depthCharts: [], injuryReport: report }; throw new Error('404'); };
+    const got = await fetchInjuries({ teams, byAbbr, slateAbbrs: ['BOS', 'NY'], get: v2 });
+    expect(got.source).toBe('v2');
+    expect(calls).toHaveLength(1);
+    expect(got.rows).toEqual([{ id: 'p1', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', status: 'Out', detail: 'Achilles', date: null }]);
+    expect(got.keys).toEqual(['games', 'players', 'depthCharts', 'injuryReport']);
+    expect(got.sample).toMatchObject({ status: 'out' });
+    // Without the games payload, the per-team route; one refusal ends it.
+    const perTeam = async (path) => { if (path.startsWith('/NBA/v2')) throw new Error('PropFinder 404 for /NBA/v2'); if (path === '/injuries/nba/1') return [{ id: 7, name: 'Jaylen Brown', status: 'Questionable', position: 'SG' }]; if (path === '/injuries/nba/2') return []; throw new Error('404'); };
+    const fb = await fetchInjuries({ teams, byAbbr, slateAbbrs: ['BOS', 'NY'], get: perTeam });
+    expect(fb.source).toBe('teams');
+    expect(fb.rows).toEqual([{ id: '7', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SG', status: 'Questionable', detail: null, date: null }]);
+    expect(fb.errors[0]).toContain('404');
+    const none = await fetchInjuries({ teams, byAbbr, slateAbbrs: ['BOS'], get: async () => { throw new Error('down'); } });
+    expect(none).toMatchObject({ rows: [], source: null });
+    expect(none.error).toContain('down');
+    // Onto the players: the report by id, then team + name; the depth chart's flag when the report says nothing.
+    const players = [{ id: 'p1', key: 'jayson tatum', team: 'BOS' }, { id: 'x', key: 'jaylen brown', team: 'BOS' }, { id: 'y', key: 'josh hart', team: 'NY' }, { id: 'z', key: 'nobody', team: 'NY' }];
+    applyInjuries(players, [...got.rows, ...fb.rows], { NY: { SG: [{ key: 'josh hart', injury: 'Out' }] } });
+    expect(players.map((p) => [p.injury || null, p.injuryFrom || null])).toEqual([['Out', 'report'], ['Questionable', 'report'], ['Out', 'depth'], [null, null]]);
+    expect(players[0].injuryDetail).toBe('Achilles');
+    expect(fieldsSeen([PLAYER], [], got).sample.injury).toContain('Achilles');
+    expect(fieldsSeen([PLAYER], [], got).sample.gamesPayload).toBe('games, players, depthCharts, injuryReport');
   });
   test('a team’s depth chart, in the shape the NHL team objects carry', () => {
     const team = { code: 'BOS', depthChart: { positions: { PG: { players: [{ full_name: 'Payton Pritchard', depth: 1, status: 'ACT', reference: '11' }, { full_name: 'Devin Carter', depth: 2, status: 'ACT' }] }, C: { players: [{ full_name: 'Neemias Queta', depth: 1 }] } } } };
@@ -236,6 +268,42 @@ describe('NBA board', () => {
     { name: 'Jayson Tatum', team: 'BOS', played: true, pts: 29, reb: 12, ast: 4, pra: 45, dd: 1, td3: 0 },
     { name: 'Jalen Brunson', team: 'NY', played: true, pts: 24, reb: 3, ast: 9, pra: 36, dd: 0, td3: 0 },
   ] } };
+  test('the injury report: a player out keeps his chip but loses his table rows; a teammate reads w/o him', () => {
+    const gid = (i) => `g${i}`;
+    // Brown's eight games (newest first): 34 points in the three without Tatum, 20 in the five with him.
+    const brownLogs = logs.map((g, i) => ({ ...log(g.date, i < 3 ? 34 : 20, 6, 4), gameId: gid(i), min: 35 }));
+    const tatumLogs = logs.map((g, i) => ({ ...g, gameId: gid(i), min: 34 })).filter((_, i) => i >= 3);   // no rows for g0–g2: he sat them
+    const pfInj = { at: pf.at, data: { ...pf.data, players: [
+      { id: 'p1', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', games: tatumLogs, props: [{ market: 'reb', line: 8.5, odds: -110, underOdds: -110 }], injury: 'Out', injuryDetail: 'Achilles' },
+      { id: 'p2', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SG', games: brownLogs, props: [{ market: 'pts', line: 24.5, odds: -110, underOdds: -110 }] },
+    ], injuries: { source: 'v2', rows: [{ id: 'p1', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', status: 'Out', detail: 'Achilles', date: null }] } } };
+    const b = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pfInj, results: {} });
+    const g = b.games[0];
+    expect(g.tables.rebounds.rows.find((x) => x.player === 'Jayson Tatum')).toBeUndefined();
+    expect(g.tables.rebounds.next.find((x) => x.player === 'Jayson Tatum')).toBeUndefined();
+    expect(g.out).toBe(1);
+    expect(b.plays).toBe(1);
+    const tatum = g.sides.BOS.players.find((p) => p.player === 'Jayson Tatum');
+    expect(tatum).toMatchObject({ injury: 'Out', injuryDetail: 'Achilles', out: true, without: null });
+    expect(tatum.plays).toHaveLength(1);
+    // Brown over 24.5 points: 3 of 8 overall, 3 of 3 without Tatum; the season read moves at 3 / (3 + 8).
+    const brown = [...g.tables.points.rows, ...g.tables.points.next].find((x) => x.player === 'Jaylen Brown');
+    expect(brown).toMatchObject({ out: false, injury: null, rates: { l5: 0.6, l10: 0.375, season: 0.545 } });
+    expect(brown.without).toMatchObject({ names: ['Tatum'], n: 3, rate: 1, rateN: 3, seasonAll: 0.375, avg: 34, avgAll: 25.3, weight: 0.273 });
+    expect(brown.without.absent[0]).toMatchObject({ name: 'Jayson Tatum', status: 'Out', detail: 'Achilles', together: 5, of: 8 });
+    expect(brown.avg).toMatchObject({ l5: 28.4, l10: 25.3, season: 27.7 });
+    const side = g.sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
+    expect(side.own.pts).toMatchObject({ all: 25.3, without: 34, n: 3, season: 27.7 });
+    expect(side.without).toMatchObject({ names: ['Tatum'], n: 3, weight: 0.273 });
+    expect(side.ladders.pts.find((r) => r.main).proj).toBeGreaterThan(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: { ...pfInj, data: { ...pfInj.data, injuries: { rows: [] }, players: pfInj.data.players.map((p) => ({ ...p, injury: null })) } }, results: {} }).games[0].sides.BOS.players.find((p) => p.player === 'Jaylen Brown').ladders.pts.find((r) => r.main).proj);
+    expect(b.notes.find((n) => n.startsWith('Out tonight'))).toContain('Jayson Tatum (BOS, Out, Achilles)');
+    expect(b.notes.find((n) => n.startsWith('Without-teammate reads'))).toContain('Jaylen Brown w/o Tatum (3 games: 100% over 24.5 Points, 34 a game)');
+    // Nobody out: no split, nothing muted, the plain reads.
+    const plain = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: { ...pfInj, data: { ...pfInj.data, injuries: { rows: [] }, players: pfInj.data.players.map((p) => ({ ...p, injury: null })) } }, results: {} });
+    expect(plain.games[0].out).toBe(0);
+    expect([...plain.games[0].tables.points.rows, ...plain.games[0].tables.points.next].find((x) => x.player === 'Jaylen Brown')).toMatchObject({ without: null, rates: { season: 0.375 } });
+    expect(plain.notes.find((n) => n.startsWith('Nobody on the slate is out'))).toBeUndefined();
+  });
   test('tables per group from the logs and the sheet, graded', () => {
     expect(statOf({ pts: 10, reb: 11, ast: 12 }, 'pra')).toBe(33);
     const r = logRates(logs, { market: 'pts', line: 27.5, side: 'over', season: 2026, opp: 'NY' });
@@ -338,6 +406,30 @@ describe('NBA ladders', () => {
     expect(sc.players[0].scale.pts).toBe(sc.scale.pts);
     expect(sc.players[0].ladders.pts[0].env).toBeCloseTo(sc.scale.pts, 2);   // no position table: the scale alone centres the ladder
     expect(sc.players[0].ladders.pts[0].proj).toBeCloseTo(26 * sc.scale.pts, 0);
+    expect(sc.share).toBeNull();   // no minutes in these logs: no measure of the roster the pull covers
+    // The pull is odds-only, so the priced players' rates never add up to the whole team: the total is
+    // pro-rated to the share of the minutes they play (their own minutes over 240). Brown 36 and White
+    // 144 a game = 75% of the minutes → 112.9 × 0.75 over their 130.
+    const withMin = (mins) => ({ ...two, data: { ...two.data, players: two.data.players.map((p, i) => ({ ...p, games: p.games.map((g) => ({ ...g, min: mins[i] })) })) } });
+    const cov = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 144]), results: {} }).games[0].sides.BOS;
+    expect(cov.minutes).toBe(180);
+    expect(cov.share).toBe(0.75);
+    expect(cov.teamProj.pts).toBeCloseTo(112.9, 1);
+    expect(cov.scale.pts).toBeCloseTo((112.9 * 0.75) / 130, 3);
+    expect(cov.players[0].ladders.pts[0].env).toBeCloseTo(cov.scale.pts, 2);
+    // Without the share a thinly priced side inflated: White at 40 a game puts the two at 66 against a
+    // 112.9 total, ×1.5 at the old cap; pro-rated to their minutes it is ×1.28, and with no minutes at
+    // all the total is a ceiling on their shares, never a floor (×1).
+    const thinPts = { ...two, data: { ...two.data, players: two.data.players.map((p) => (p.key === 'derrick white' ? { ...p, games: p.games.map((g) => ({ ...g, pts: 40 })) } : p)) } };
+    expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: thinPts, results: {} }).games[0].sides.BOS.scale.pts).toBe(1);
+    const thinMin = { ...thinPts, data: { ...thinPts.data, players: thinPts.data.players.map((p, i) => ({ ...p, games: p.games.map((g) => ({ ...g, min: [36, 144][i] })) })) } };
+    expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: thinMin, results: {} }).games[0].sides.BOS.scale.pts).toBeCloseTo((112.9 * 0.75) / 66, 3);
+    // Under half the minutes the priced few are the stars, whose share the minutes understate: no scale, the total still named.
+    const few = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 24]), results: {} }).games[0].sides.BOS;
+    expect(few.share).toBe(0.25);
+    expect(few.scale).toEqual({});
+    expect(few.teamProj.pts).toBeCloseTo(112.9, 1);
+    expect(few.players[0].ladders.pts[0].env).toBeNull();
     // With a PropFinder table in, the cheat sheet's tiles ride on every cell as `sheet` beside PropFinder's rank.
     const defense = { teams: { NY: { SF: { gp: 0, pts: 24, reb: 6 } }, BOS: { SF: { gp: 0, pts: 20, reb: 7 } } }, ranks: { NY: { SF: { pts: 1, reb: 2 } }, BOS: { SF: { pts: 2, reb: 1 } } }, count: 2, league: { SF: { pts: 22, reb: 6.5 } }, windows: {} };
     const sheets = [{ id: 's', fileName: 'nba_20261021.pdf', rows: [], meta: { oppRanks: { BOS: { SF: { pts: 3, reb: 28 } } } } }];   // BOS's opponent (NY) gives up the 3rd most points to SFs, the 28th most rebounds

@@ -4,10 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { survivorsAt, fallenAt, curveOf, READ_FROM, bestReadFrom, BEST_MIN } from '@/lib/picks/shuffle';
 
-// The shuffle: a bar per stat. Raise it and the field falls away; what stays are the players whose
-// chance of clearing the bar holds over the floor, each with his chance there, how often he has
-// actually cleared it, the book's rung at or above the bar with its price and edge, and the height
-// where he himself thins out. One request per market (/api/<sport>/shuffle), every bar move local.
+// The shuffle (each board's Shuffle tab): a bar per stat. Raise it and the field falls away; what
+// stays are the players whose chance of clearing the bar holds over the floor, each with his chance
+// there, how often he has actually cleared it, the book's rung at or above the bar with its price and
+// edge, and the height where he himself thins out. One request per market (/api/<sport>/shuffle),
+// every bar move local; the tab mounts the panel on its first visit and keeps it.
 //   sport: { api, query, markets: [{ market, label, unit, min, max, step, start }], teamLogo, headshotUrl, withDay }
 //   onOpen(player, market): open the player's card (the NBA), optional.
 
@@ -55,7 +56,6 @@ function Curve({ curve, height, onPick }) {
 
 export default function Shuffle({ sport, onOpen = null }) {
   const { api, query, markets, teamLogo, headshotUrl, withDay = false } = sport;
-  const [open, setOpen] = useState(true);
   const [active, setActive] = useState(markets[0].market);
   const [bars, setBars] = useState(() => Object.fromEntries(markets.map((m) => [m.market, m.start])));
   const [floor, setFloor] = useState(0.35);
@@ -80,7 +80,6 @@ export default function Shuffle({ sport, onOpen = null }) {
   // A new slate starts over; the active market loads first, then the others so every bar can count its field.
   useEffect(() => {
     if (loaded.current.query !== query) { loaded.current = { query, set: new Set() }; setData({}); }
-    if (!open) return undefined;
     let cancelled = false;
     (async () => {
       for (const m of [active, ...markets.map((x) => x.market).filter((x) => x !== active)]) {
@@ -90,12 +89,11 @@ export default function Shuffle({ sport, onOpen = null }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [open, active, query, markets, load]);
+  }, [active, query, markets, load]);
 
   // The season's scorecard, once per sport and season: which read has predicted best so far.
   const scorecardUrl = useMemo(() => { const season = new URLSearchParams(query).get('season'); return `${api}/scorecard${season ? `?season=${season}` : ''}`; }, [api, query]);
   useEffect(() => {
-    if (!open) return undefined;
     let cancelled = false;
     (async () => {
       try {
@@ -114,7 +112,7 @@ export default function Shuffle({ sport, onOpen = null }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [open, scorecardUrl, markets]);
+  }, [scorecardUrl, markets]);
 
   const d = data[active];
   const heights = useMemo(() => d?.heights || [], [d]);
@@ -133,20 +131,17 @@ export default function Shuffle({ sport, onOpen = null }) {
     <section className="ir-sh" aria-label="Shuffle">
       <div className="ir-sh-head">
         <div>
-          <h3 className="ir-sh-title">Shuffle <small>raise the bar, the field falls away</small></h3>
           <p className="nhlx-auto-meta">Set a height per stat; the list keeps the players whose chance of clearing it holds over the floor. The chance is his ladder read at that line (half his own distribution over it, centred on tonight’s projection with the matchup inside it, half how often he actually cleared it); the price is the book’s rung at or above the bar.</p>
         </div>
         <div className="ir-sh-floor">
           <label>Keep players at <select className="nhlx-input nhlx-input-sm" value={floor} onChange={(e) => setFloor(Number(e.target.value))} aria-label="The floor">{FLOORS.map((f) => <option key={f} value={f}>{Math.round(f * 100)}%</option>)}</select> or better</label>
-          <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" onClick={() => setOpen((o) => !o)}>{open ? 'Hide' : 'Show'}</button>
         </div>
       </div>
-      {open ? (
-        <div className="nhlx-rk-toggle ir-sh-from">
+      <div className="nhlx-rk-toggle ir-sh-from">
           <small>Read from</small>
           <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="What the chance is read from">
             {READ_FROM.map(([k, l]) => {
-              const what = k === 'blend' ? 'The board’s read: his season blended with his last ten, × the matchup' : k === 'line' ? 'The book’s main line as the centre of his distribution' : `His average over his ${l.toLowerCase()} games, × the matchup`;
+              const what = k === 'blend' ? 'The board’s read: his season blended with his last ten, × the matchup' : k === 'line' ? 'The book’s main line as the centre of his distribution' : k === 'h2h' ? 'His average over his last 4 meetings with the opponent (2 at least, from PropFinder’s logs; the opponent is in it already, so no matchup on top; the board’s blend stands in for a player without two)' : `His average over his ${l.toLowerCase()} games, × the matchup`;
               const sc = card?.scores?.[k];
               return (
                 <button key={k} type="button" role="tab" aria-selected={from === k} className={`nhlx-tab${from === k ? ' is-active' : ''}`} onClick={() => setFrom(k)} title={sc ? `${what} · scorecard: Brier ${sc.brier.toFixed(3)} over ${sc.n} plays this season${card.best === k ? ' (the best so far)' : ''}` : what}>
@@ -157,10 +152,7 @@ export default function Shuffle({ sport, onOpen = null }) {
           </div>
           <span className="nhlx-rk-toggle-note">The centre of each player’s distribution: the board’s blend, a plain window of his own results, or the book’s line. The hit-rate half of the chance stays as it is. {readNote(card)}</span>
         </div>
-      ) : null}
       {err ? <div className="nhlx-alert" style={{ marginTop: 12 }}>{err}</div> : null}
-      {open ? (
-        <>
           <div className="ir-sh-grid">
             <div className="ir-sh-bars">
               {markets.map((m) => {
@@ -194,8 +186,8 @@ export default function Shuffle({ sport, onOpen = null }) {
                   <thead>
                     <tr>
                       <th>Player</th>
-                      <th title="The opponent’s rank at his position for the stat (1 = gives up the most) and the environment factor in his projection">Matchup</th>
-                      <th className="is-num" title={from === 'blend' ? 'His projection for the game, and the quartiles of his range' : `The centre his chance is read around: ${fromLabel.toLowerCase()}${from === 'line' ? '' : ' × the matchup'}; the board’s projection under it`}>{from === 'blend' ? 'Expected' : 'Centre'}</th>
+                      <th title="The opponent’s rank at his position for the stat (1 = gives up the most) with its factor on his rate; ‘team ×’ is his side’s factor (the team’s expected total, pro-rated to the minutes its priced players play, over their rates), the two multiplied into his projection">Matchup</th>
+                      <th className="is-num" title={from === 'blend' ? 'His projection for the game, and the quartiles of his range' : `The centre his chance is read around: ${fromLabel.toLowerCase()}${from === 'line' || from === 'h2h' ? '' : ' × the matchup'}; the board’s projection under it`}>{from === 'blend' ? 'Expected' : 'Centre'}</th>
                       <th className="is-num" title={`His chance of ${height}+ and the break-even price under it`}>Chance at {height}+</th>
                       <th title="How often he cleared the bar: his last ten, and the season rate">Cleared it</th>
                       <th className="is-num" title="The book’s rung at the bar, or the nearest rung above it, with its price">Book</th>
@@ -216,8 +208,8 @@ export default function Shuffle({ sport, onOpen = null }) {
                               <span><b>{p.player}{p.confirmed ? <small className="ir-sh-check" title={`On the cheat sheet: ${p.sheet.join(', ')}`}> ✓</small> : null}</b><small>{p.team}{p.slot && p.depth ? ` · ${p.slot}${p.depth}` : p.pos ? ` · ${p.pos}` : ''} · {p.venue === 'H' ? 'vs' : 'at'} {p.opp}{p.start ? ` · ${fmtStart(p.start, withDay)}` : ''}{p.injury ? ` · ${p.injury}` : ''}</small></span>
                             </div>
                           </td>
-                          <td>{p.spot?.rank ? <span className={`ir-spot is-${tone}`} title={`${p.opp} gives up ${num(p.spot.value)} ${unitOf(active)} a game to ${p.spot.pos}s, #${p.spot.rank} of ${p.spot.count}`}>#{p.spot.rank} {p.spot.pos}</span> : <span className="ir-spot is-none">no table</span>}{p.env != null ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }}>× {num(p.env, 2)}</small> : null}</td>
-                          <td className="is-num" title={`Spread ${num(p.sd)} over his games · last 5 ${num(p.own?.l5)} · last 10 ${num(p.own?.l10)} · season ${num(p.own?.season)} (${p.own?.seasonN ?? 0} games) · blend ${num(p.own?.blend)}`}><b>{num(r.centre)}</b><small>{from === 'blend' ? (p.floor != null ? `${p.floor}–${p.ceiling}` : '') : `board ${num(p.exp)}`}</small></td>
+                          <td>{p.spot?.rank ? <span className={`ir-spot is-${tone}`} title={`${p.opp} gives up ${num(p.spot.value)} ${unitOf(active)} a game to ${p.spot.pos}s, #${p.spot.rank} of ${p.spot.count}${p.spot.league != null ? ` (the league ${num(p.spot.league)})` : ''}${p.matchup != null ? ` · × ${num(p.matchup, 2)} on his rate` : ''}`}>#{p.spot.rank} {p.spot.pos}</span> : <span className="ir-spot is-none">no table</span>}{p.matchup != null ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }}>× {num(p.matchup, 2)}</small> : null}{p.teamFactor != null && p.teamFactor !== 1 ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }} title={`${p.team}’s expected total tonight, pro-rated to the minutes its priced players play, over the sum of their own rates: × ${num(p.teamFactor, 2)} on every projection of the side`}>team × {num(p.teamFactor, 2)}</small> : null}</td>
+                          <td className="is-num" title={`Spread ${num(p.sd)} over his games · last 5 ${num(p.own?.l5)} · last 10 ${num(p.own?.l10)} · season ${num(p.own?.season)} (${p.own?.seasonN ?? 0} games) · vs ${p.opp} ${num(p.own?.h2h)} (${p.own?.h2hN ?? 0} meetings) · blend ${num(p.own?.blend)}`}><b>{num(r.centre)}</b><small>{from === 'blend' ? (p.floor != null ? `${p.floor}–${p.ceiling}` : '') : `board ${num(p.exp)}`}</small></td>
                           <td className="is-num is-lead" title={`Model tail ${pct(r.model)} · hit rate ${pct(r.emp)} over ${r.n} games`}><b>{pct(r.p)}</b><small>{r.fair} fair</small></td>
                           <td className="small">{r.cleared ? `${r.cleared.n} of last ${r.cleared.of}` : '—'}{r.season != null ? <small className="nhlx-auto-meta"> · {pct(r.season)} season</small> : null}</td>
                           <td className="is-num" title={r.book ? `${r.exact ? 'The book’s rung at the bar' : 'The nearest rung above the bar'}: ${r.book.main ? 'the main line, ' : ''}${r.book.books} book${r.book.books === 1 ? '' : 's'} · its chance ${pct(r.book.p)}` : 'No rung at or above the bar'}>{r.book ? <><b>{r.exact ? '' : '↑ '}o{r.book.line}</b><small>{fmtOdds(r.book.odds)}{r.book.main ? ' · main' : ''}</small></> : <small>no line</small>}</td>
@@ -239,8 +231,6 @@ export default function Shuffle({ sport, onOpen = null }) {
               ) : null}
             </>
           ) : null}
-        </>
-      ) : null}
     </section>
   );
 }
