@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import { dispatchLinesWorkflow, githubDispatchConfigured } from '../lib/nhl-data/github-dispatch';
-import { nextHop, linesFound, WINDOW_BEFORE_MIN, WINDOW_AFTER_MIN, HOP_MIN, MAX_SLEEP_SEC } from '../lib/nhl-data/lines-chain';
+import { nextHop, linesFound, WINDOW_BEFORE_MIN, WINDOW_AFTER_MIN, HOP_MIN, MAX_SLEEP_SEC, SETTLE_AFTER_START_MIN, SETTLE_RETRY_MIN, SETTLE_UNTIL_MIN } from '../lib/nhl-data/lines-chain';
 import { gdtTimes } from '../lib/nhl-data/ingest';
 
 describe('GitHub dispatch of the pre-game lineups run', () => {
@@ -56,8 +56,10 @@ describe('the warm-up chain: every 15 minutes from an hour before puck drop unti
     expect(r.why).toMatch(/EDM@ANA/);
   });
 
-  test('a game whose warm-up lines are in is left alone, and the chain ends when every game has them', () => {
-    expect(nextHop(games, t1 - 20 * min, 40, warmups).hop).toBe(false);             // PIT@WSH found, EDM@ANA found
+  test('a game whose warm-up lines are in is left alone before the game; the chain then waits for its post-game read', () => {
+    const r0 = nextHop(games, t1 - 20 * min, 40, warmups);                            // PIT@WSH found, EDM@ANA found
+    expect(r0).toMatchObject({ hop: true, settle: true, sleepSec: (SETTLE_AFTER_START_MIN + 20) * 60 });
+    expect(r0.why).toMatch(/post-game read of PIT@WSH/);
     const r = nextHop(games, t1 - 20 * min, 40, { ...warmups, EDM: morning.EDM, ANA: morning.ANA });
     expect(r.hop).toBe(true);
     expect(r.why).toMatch(/waiting for the window of EDM@ANA/);                       // PIT@WSH found: wait for the late game
@@ -78,11 +80,38 @@ describe('the warm-up chain: every 15 minutes from an hour before puck drop unti
     expect(r.sleepSec).toBe(5 * 60);
   });
 
-  test('the window closes ten minutes after puck drop, and a spent budget ends the chain', () => {
-    expect(nextHop(games, t0 + (WINDOW_AFTER_MIN - 1) * min, 40, {}).hop).toBe(true);
-    expect(nextHop(games, t0 + (WINDOW_AFTER_MIN + 1) * min, 40, {}).hop).toBe(false);
+  test('the window closes ten minutes after puck drop, the post-game read follows, and a spent budget ends the chain', () => {
+    expect(nextHop(games, t0 + (WINDOW_AFTER_MIN - 1) * min, 40, {})).toMatchObject({ hop: true, settle: false });
+    const after = nextHop(games, t0 + (WINDOW_AFTER_MIN + 1) * min, 40, {});           // both windows shut: the post-game reads remain
+    expect(after).toMatchObject({ hop: true, settle: true });
+    expect(after.why).toMatch(/post-game read of PIT@WSH/);                              // 7 PM game, now 10:11 PM: its instant is 10:30
+    expect(after.sleepSec).toBe((SETTLE_AFTER_START_MIN - 180 - WINDOW_AFTER_MIN - 1) * 60);
+    expect(nextHop(games, t0 + (SETTLE_UNTIL_MIN + 1) * min, 40, {}).hop).toBe(false);  // past the tweet cutoff for both: the morning run's job
     expect(nextHop(games, t0 - 30 * min, 0, {})).toMatchObject({ hop: false, reason: 'no hops left' });
     expect(nextHop([], t0, 40, {}).hop).toBe(false);
+  });
+
+  test('the post-game read: 3 h 30 after puck drop once the game is final, again in 20 minutes while it is on, settled games carried on', () => {
+    const played = [{ id: 1, startTimeUTC: '2026-10-07T23:00:00Z', away: 'PIT', home: 'WSH', state: 'OFF' }, { id: 2, startTimeUTC: '2026-10-08T02:00:00Z', away: 'EDM', home: 'ANA', state: 'LIVE' }];
+    // 10:00 PM: the early game is final but its instant (10:30) is half an hour off; the late game's window is shut.
+    const wait = nextHop(played, t1 + 180 * min, 40, warmups);
+    expect(wait).toMatchObject({ hop: true, settle: true, sleepSec: 30 * 60 });
+    // 10:31 PM, a post-game hop: the early game is final past its instant, so this read settled it; the late game is next.
+    const done = nextHop(played, t1 + 211 * min, 40, warmups, { settleHop: true });
+    expect(done.settled).toEqual(['1']);
+    expect(done.why).toMatch(/post-game read of EDM@ANA/);
+    expect(done.sleepSec).toBe(Math.round((t0 + SETTLE_AFTER_START_MIN * min - (t1 + 211 * min)) / 1000));
+    // The same instant on a hop that was not a post-game read: the read is due now (next minute), nothing settled yet.
+    expect(nextHop(played, t1 + 211 * min, 40, warmups)).toMatchObject({ settle: true, sleepSec: 60, settled: [] });
+    // 1:31 AM: the late game still on (overtime): try again in 20 minutes; a settled id rides along.
+    const live = nextHop(played, t0 + 211 * min, 40, warmups, { settled: ['1'], settleHop: true });
+    expect(live).toMatchObject({ hop: true, settle: true, sleepSec: SETTLE_RETRY_MIN * 60, settled: ['1'] });
+    expect(live.why).toMatch(/not final yet/);
+    // Final now: settled, and the chain ends.
+    const end = nextHop([played[0], { ...played[1], state: 'FINAL' }], t0 + 231 * min, 40, warmups, { settled: ['1'], settleHop: true });
+    expect(end).toMatchObject({ hop: false, settled: ['1', '2'] });
+    // A game without an id is tracked by its matchup.
+    expect(nextHop([{ startTimeUTC: '2026-10-07T23:00:00Z', away: 'PIT', home: 'WSH', state: 'OFF' }], t1 + 211 * min, 40, {}, { settleHop: true }).settled).toEqual(['PIT@WSH']);
   });
 
   test('the site reports each team\'s newest tweet time for the chain', () => {
