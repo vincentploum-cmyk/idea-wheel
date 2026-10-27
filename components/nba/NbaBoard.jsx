@@ -2,19 +2,28 @@
 
 import { useState } from 'react';
 import Board from '@/components/picks/Board';
-import { GROUPS } from '@/lib/nba/markets';
+import Shuffle from '@/components/picks/Shuffle';
+import { GROUPS, MARKETS, SHUFFLE_MARKETS, labelOf } from '@/lib/nba/markets';
 import { teamLogo, teamName } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
 import CourtPair, { COURT_METRICS } from './NbaCourt';
-import { NbaPlayerCardProvider } from './NbaPlayerCard';
+import { NbaPlayerCardProvider, useNbaPlayerCard } from './NbaPlayerCard';
 
 const SPORT = { groups: GROUPS, teamLogo, teamName, headshotUrl };
+const BARS = SHUFFLE_MARKETS.map((m) => ({ ...m, label: labelOf(m.market), unit: MARKETS[m.market].unit }));
 
-/** The night's board: per game the two courts (the matchup view) over the five tables. */
+/** The shuffle for the night, a row opening the player's card. */
+function NbaShuffle({ date }) {
+  const open = useNbaPlayerCard();
+  return <Shuffle sport={{ api: '/api/nba', query: `date=${date}`, markets: BARS, teamLogo, headshotUrl }} onOpen={(p, market) => open({ key: p.key, player: p, team: p.team, opp: p.opp, venue: p.venue, market })} />;
+}
+
+/** The night's board: the shuffle, then per game the two courts (the matchup view) over the five tables. */
 export default function NbaBoard({ board }) {
   const [metric, setMetric] = useState('pts');
   return (
     <NbaPlayerCardProvider date={board?.date}>
+      {board?.games?.length ? <NbaShuffle date={board.date} /> : null}
       {board?.games?.length ? (
         <div className="ir-court-switch nhlx-rk-toggle">
           <small>Courts</small>

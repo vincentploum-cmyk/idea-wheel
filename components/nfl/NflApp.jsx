@@ -6,13 +6,14 @@ import SignOutButton from '@/components/nhl/SignOutButton';
 import ThemeToggle from '@/components/nhl/ThemeToggle';
 import SportNav from '@/components/site/SportNav';
 import { weekLabel, shiftWeek } from '@/lib/nfl/week';
+import Scorecard from '@/components/picks/Scorecard';
 import NflBoard from './NflBoard';
 import NflSources from './NflSources';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : '');
 
-/** The NFL page: the week's board with its week picker, the notes, and the data sources under it. */
+/** The NFL page: the week's board with its week picker (the shuffle on top of it), the notes, the scorecard and the data sources under it. */
 export default function NflApp({ email }) {
   const [wk, setWk] = useState(null);     // { season, week, type }
   const [board, setBoard] = useState(null);
@@ -67,6 +68,7 @@ export default function NflApp({ email }) {
               {err ? <div className="nhlx-alert">{err}</div> : null}
               {board ? <NflBoard board={board} /> : !err ? <div className="nhlx-empty">Loading the week…</div> : null}
             </section>
+            {wk ? <Scorecard sport={{ api: '/api/nfl', kind: 'week', season: wk.season, to: wk.type === 3 ? 18 + wk.week : wk.week, label: 'NFL' }} /> : null}
             {wk ? <NflSources wk={wk} onChange={() => go(wk)} /> : null}
           </div>
         </section>

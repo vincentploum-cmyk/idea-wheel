@@ -5,13 +5,14 @@ import SiteHeader from '@/components/nhl/SiteHeader';
 import SignOutButton from '@/components/nhl/SignOutButton';
 import ThemeToggle from '@/components/nhl/ThemeToggle';
 import SportNav from '@/components/site/SportNav';
+import Scorecard from '@/components/picks/Scorecard';
 import NbaBoard from './NbaBoard';
 import NbaSources from './NbaSources';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : '');
 
-/** The NBA page: the night's board with its date picker, the notes, and the data sources under it. */
+/** The NBA page: the night's board with its date picker (the shuffle on top of it), the notes, the scorecard and the data sources under it. */
 export default function NbaApp({ email }) {
   const [date, setDate] = useState('');
   const [board, setBoard] = useState(null);
@@ -79,6 +80,7 @@ export default function NbaApp({ email }) {
               {err ? <div className="nhlx-alert">{err}</div> : null}
               {board ? <NbaBoard board={board} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null}
             </section>
+            {date ? <Scorecard sport={{ api: '/api/nba', kind: 'date', to: date, label: 'NBA' }} /> : null}
             {date ? <NbaSources date={date} onChange={() => go(date)} /> : null}
           </div>
         </section>
