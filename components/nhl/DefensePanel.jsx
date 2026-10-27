@@ -179,15 +179,15 @@ function Reads({ reads, keys, digits, metric, active, onPick, games, group }) {
   );
 }
 
-const STREAK_TABS = [['goals', 'Goal streaks'], ['points', 'Point streaks'], ['sog3', '3+ shot streaks']];
+const STREAK_TABS = [['goals', 'Goal streaks'], ['points', 'Point streaks'], ['sog3', '3+ shot streaks'], ['sog4', '4+ shot streaks']];
 
 /** Who is running hot, with tonight's opponent read off the same tables at his position. */
 function Streaks({ list, tab, onTab, playing, view, byVenue, venue, group, digits, metric }) {
   const open = usePlayerCard();
   const rows = useMemo(() => {
     const l = view === 'tonight' ? list.filter((p) => p.tonight) : list;
-    const key = tab === 'goals' ? (p) => p.goals.streak * 100 + p.goals.l5 : tab === 'points' ? (p) => p.points.streak * 100 + p.points.l5 : (p) => p.sog3.streak * 100 + p.sog3.l5;
-    return [...l].filter((p) => (tab === 'goals' ? p.goals.streak >= 2 : tab === 'points' ? p.points.streak >= 3 : p.sog3.streak >= 3)).sort((a, b) => key(b) - key(a) || a.name.localeCompare(b.name)).slice(0, 40);
+    const key = tab === 'goals' ? (p) => p.goals.streak * 100 + p.goals.l5 : tab === 'points' ? (p) => p.points.streak * 100 + p.points.l5 : tab === 'sog4' ? (p) => p.sog4.streak * 100 + (p.sog4.l5 || 0) : (p) => p.sog3.streak * 100 + p.sog3.l5;
+    return [...l].filter((p) => (tab === 'goals' ? p.goals.streak >= 2 : tab === 'points' ? p.points.streak >= 3 : tab === 'sog4' ? (p.sog4?.streak || 0) >= 2 : p.sog3.streak >= 3)).sort((a, b) => key(b) - key(a) || a.name.localeCompare(b.name)).slice(0, 40);
   }, [list, tab, view]);
   const cellFor = (p) => {
     if (!p.tonight || !byVenue) return null;
@@ -204,7 +204,7 @@ function Streaks({ list, tab, onTab, playing, view, byVenue, venue, group, digit
           <thead>
             <tr>
               <th className="is-left">Skater</th><th>Slot</th>
-              <th title="Consecutive games with a goal">G streak</th><th title="Consecutive games with a point">Pts streak</th><th title="Consecutive games with 3+ shots on goal">3+ SOG streak</th>
+              <th title="Consecutive games with a goal">G streak</th><th title="Consecutive games with a point">Pts streak</th><th title="Consecutive games with 3+ shots on goal">3+ SOG streak</th><th title="Consecutive games with 4+ shots on goal">4+ SOG streak</th>
               <th title="Goals over his last five games">G L5</th><th title="Shots on goal over his last five games">SOG L5</th>
               <th className="is-left">Last game</th>
               <th className="is-left" title={`What tonight's opponent gives up per skater at his position a game (${metric === 'g' ? 'goals' : 'shots'}), with its rank`}>Tonight</th>
@@ -220,6 +220,7 @@ function Streaks({ list, tab, onTab, playing, view, byVenue, venue, group, digit
                   <td className={tab === 'goals' ? 'is-sorted' : ''}>{p.goals.streak || '—'}</td>
                   <td className={tab === 'points' ? 'is-sorted' : ''}>{p.points.streak || '—'}</td>
                   <td className={tab === 'sog3' ? 'is-sorted' : ''}>{p.sog3.streak || '—'}</td>
+                  <td className={tab === 'sog4' ? 'is-sorted' : ''}>{p.sog4?.streak || '—'}</td>
                   <td>{p.goals.l5}</td><td>{p.sog3.l5}</td>
                   <td className="is-left"><small>{p.last.date.slice(5)} {p.last.venue === 'H' ? 'vs' : '@'} {p.last.opp} · {p.last.g} G {p.last.a} A {p.last.sog} SOG</small></td>
                   <td className={`is-left ${c ? rankTone(c.rank, c.n) : ''}`}>

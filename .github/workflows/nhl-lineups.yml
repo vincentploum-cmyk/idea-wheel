@@ -91,7 +91,7 @@ jobs:
           while [ "$d" \< "$end" ]; do
             echo "== $d"
             tools/gdt-pages.sh "$d" || echo "pages for $d: not posted"
-            scode=$(curl -sS -o "settle-$d.json" -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?date=$d&only=settle" || true)
+            scode=$(curl -sS -o "settle-$d.json" -w '%{http_code}' -X POST --max-time 280 -H "Authorization: Bearer $NHL_ACTIONS_TOKEN" "https://ideareels.io/api/nhl/data/refresh?date=$d&only=settle" || true)
             echo "settle $d: ${scode:-000} $(head -c 600 "settle-$d.json" 2>/dev/null)"
             d=$(date -u -d "$d +1 day" +%F)
           done
@@ -101,13 +101,17 @@ jobs:
           NHL_ACTIONS_TOKEN: ${{ secrets.NHL_ACTIONS_TOKEN }}
         run: tools/gdt-pages.sh "${{ steps.when.outputs.date }}"
       - name: Refresh lineups
+        env:
+          NHL_ACTIONS_TOKEN: ${{ secrets.NHL_ACTIONS_TOKEN }}
         run: |
           set -e
+          # With the token the calls are not throttled (anonymous calls: one per 15 minutes per mode).
+          AUTH=(); [ -n "$NHL_ACTIONS_TOKEN" ] && AUTH=(-H "Authorization: Bearer $NHL_ACTIONS_TOKEN")
           Q="date=${{ steps.when.outputs.date }}&only=lineups"; [ -n "${{ steps.when.outputs.due }}" ] && Q="$Q&due=${{ steps.when.outputs.due }}"
           echo "Lineups for $Q"
           # A 5xx is usually the server restarting for a deploy: one more try after a minute.
           for attempt in 1 2; do
-            code=$(curl -sS -o resp.json -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?$Q" || true); [ -n "$code" ] || code=000
+            code=$(curl -sS -o resp.json -w '%{http_code}' -X POST --max-time 280 "${AUTH[@]}" "https://ideareels.io/api/nhl/data/refresh?$Q" || true); [ -n "$code" ] || code=000
             head -c 3000 resp.json; echo
             case "$code" in 5*|000) [ "$attempt" = 1 ] && { echo "server answered $code; retrying in 60 s"; sleep 60; } ;; *) break ;; esac
           done
@@ -115,7 +119,7 @@ jobs:
           # A post-game read: the previews' final update, the snapshot re-captured from every line stored
           # (the pages posted above included the tweets from the game), the stored box scores re-stamped.
           if [ "${{ steps.when.outputs.settle }}" = "1" ]; then
-            scode=$(curl -sS -o settle.json -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?date=${{ steps.when.outputs.date }}&only=settle" || true)
+            scode=$(curl -sS -o settle.json -w '%{http_code}' -X POST --max-time 280 "${AUTH[@]}" "https://ideareels.io/api/nhl/data/refresh?date=${{ steps.when.outputs.date }}&only=settle" || true)
             echo "post-game settle: ${scode:-000} $(head -c 1500 settle.json 2>/dev/null)"
           fi
       - name: Hand on through the warm-up windows and the post-game reads
