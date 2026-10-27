@@ -1208,3 +1208,24 @@ section 12), so no input change reaches it. The study's λ reads his goal rate, 
 today), home ice and the opponent's row at his position, and gives Connor about 44%, Brady 38%, Verhaeghe and Perfetti 35%,
 Reinhart 31% — what section 16's fit says a goal rate is worth. `NHL_PICKS_STUDY_WEIGHT_GOALS` (1 unless set) puts the
 study's λ on the board's goals; the shots stay the run's. The scorecard grades both reads every morning.
+
+*Are they realistic? (2026-10-27, late.)* The study's goal formula replayed on raw this-season inputs (`p_g_avg`, `p_iscf_avg`,
+`p_sog_avg`, `opp_pos_g_per`, the rows of `tools/predictors`, 5+ prior games), graded against the box scores:
+
+| | n | said | hit |
+|---|---|---|---|
+| 2025-26, all rows | 42,816 | .150 | .155 (Brier .1223) |
+| 2025-26, published 30–35% | 1,984 | .323 | .323 |
+| 2025-26, published 35–40% | 1,195 | .372 | .381 |
+| 2025-26, published 40–45% | 459 | .419 | .392 |
+| 2025-26, published 45% and up | 175 | .488 | .343 |
+| 2025-26, 0.6+ goals a game going in | 566 | .395 | .311 |
+| 2025-26, P(1+) ≥ 35% with 5–15 prior games | 374 | .410 | .334 |
+| 2026-27 through Oct 26, P(1+) ≥ 35% | 204 | .425 | .353 |
+
+Up to 40% the read is what happens; above it a hot start is read as a rate. A within-season shrink of the goal rate
+toward the league's at his position at n / (n + k), this season's games only: k = 8 takes the 0.6+ scorers to said .366
+(hit .311) last season and .349 (hit .345) this season, improves the Brier on both (.1223 → .1221, .1352 → .1337) and
+costs two skaters a night over the floor (11.5 → 9.2); k = 18 adds nothing more. Applied as `GOAL_RATE_SHRINK` = 8 in
+`project` (`picks-pure.js`); a rate standing in from last season is not shrunk. The top end still runs a few points high
+at 5–15 games (said .40, hit .30–.36), which is the formula's shape, fitted on blended inputs, not the rate.

@@ -585,7 +585,9 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   2026-10-27 (`studyWeightGoals`, the scorecard bullet below); the study's plain-rate read (fixed
   Poisson coefficients fitted on 2024-25 + 2025-26 by `tools/predictors/replay.py`, log features: the skater's rate,
   attempts, chances and TOI, this season's alone from his fifth game (`blendRates`; last season's regular season stands
-  in until then, `held`); home ice; back-to-back; and what the opponent allows **per skater at his position** this season
+  in until then, `held`; his goal rate shrunk toward the league's at his position at n / (n + 8) within the season,
+  `GOAL_RATE_SHRINK` in `project`, a held rate not shrunk — the 2026-10-27 replay had raw this-season reads over 40%
+  running 5–10 points high, 0.6+ scorers said .39 and hit .31 / .35, calibrated at k = 8); home ice; back-to-back; and what the opponent allows **per skater at his position** this season
   (`positionAllowed`; last season's regular season only for a team with no game yet, `held`). Vincent's call, 2026-10-27,
   twice over: this season's rate and this season's table — the study's n / (n + 18), n / (n + 40) and games / (games + 15),
   games / (games + 40) blends stay on record in sections 3, 13, 15 and 16 and in no number) rides on

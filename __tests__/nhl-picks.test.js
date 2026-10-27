@@ -52,6 +52,11 @@ describe('tonight’s picks', () => {
     expect(project(star, { home: false, oppPos: LEAGUE_POS.C, pos: 'C' }).lamS).toBeLessThan(4.6);
     expect(project(star, { home: false, oppPos: LEAGUE_POS.C, pos: 'C' }).lamS).toBeGreaterThan(3.8);
     expect(project(star, { home: false, oppPos: LEAGUE_POS.C, pos: 'C' }).p1g).toBeGreaterThan(0.4);
+    // A hot start regresses within the season: eleven games at 0.82 goals read about 10% under the same rate over 82 (GOAL_RATE_SHRINK = 8); a rate standing in from last season is not shrunk.
+    const hot = blendRates(Array.from({ length: 11 }, () => game(4.4, 8, 0.82, 4.3, 21)), Array.from({ length: 82 }, () => game(3.4, 6.5, 0.48, 3.3, 21)));
+    const full = blendRates(Array.from({ length: 82 }, () => game(4.4, 8, 0.82, 4.3, 21)), []);
+    expect(project(hot, { home: true, pos: 'LW' }).lamG / project(full, { home: true, pos: 'LW' }).lamG).toBeCloseTo(0.90, 1);
+    expect(project(hot, { home: true, pos: 'LW' }).lamS).toBe(project(full, { home: true, pos: 'LW' }).lamS);   // shots untouched
     // A league-average top-six forward lands near the league's figures.
     const avg = blendRates([], Array.from({ length: 82 }, () => game(1.73, 3.1, 0.23, 1.2, 16.3)));
     expect(project(avg, { home: false, oppPos: LEAGUE_POS.C, pos: 'C' }).lamS).toBeCloseTo(1.73, 0);
