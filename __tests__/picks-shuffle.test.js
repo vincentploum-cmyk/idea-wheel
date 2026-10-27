@@ -98,11 +98,18 @@ describe('the NBA shuffle', () => {
     expect(curve[0]).toEqual({ height: pts.min, n: 2 });
     for (let i = 1; i < curve.length; i++) expect(curve[i].n).toBeLessThanOrEqual(curve[i - 1].n);
     expect(curve[curve.length - 1].n).toBe(0);
-    // A low bar everyone clears: the best edge first (Brown is priced, so he carries an edge; Hauser has no line).
+    // A low bar everyone clears: the highest projection first (Brown, 26 a game, over Hauser at 8; Hauser has no line).
     const at8 = survivorsAt(sh.players, sh.heights, 8, floor);
     expect(at8.map((x) => x.player.player)).toEqual(['Jaylen Brown', 'Sam Hauser']);
     expect(at8[1].read.edge).toBeNull();
     expect(survivorsAt(sh.players, sh.heights, 10, floor).map((x) => x.player.player)).toEqual(['Jaylen Brown']);   // 8 a game clears 10 in no game
+    // The projection ranks over the edge: an unpriced player projected higher than Brown tops the list, Brown's edge notwithstanding.
+    const brown = sh.players.find((p) => p.player === 'Jaylen Brown');
+    const bigger = { ...brown, player: 'Big Night', exp: brown.exp + 5, book: [] };
+    const ranked = survivorsAt([brown, bigger], sh.heights, 8, floor);
+    expect(ranked.map((x) => x.player.player)).toEqual(['Big Night', 'Jaylen Brown']);
+    expect(ranked[0].read.edge).toBeNull();
+    expect(ranked[1].read.edge).not.toBeNull();
   });
   test('a finished game grades the read', () => {
     const final = [{ ...games[0], final: true, state: 'post', awayScore: 110, homeScore: 100 }];

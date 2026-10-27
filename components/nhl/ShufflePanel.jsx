@@ -224,7 +224,7 @@ export default function ShufflePanel() {
             <>
               <div className="nhlx-pfd-head" style={{ marginTop: 14 }}>
                 <b>{height}+ {bar.unit}</b>
-                <small className="nhlx-auto-meta">{survivors.length} of {rows.length} skaters · read from {fromLabel.toLowerCase()} · sorted by the chance · click a skater for his card</small>
+                <small className="nhlx-auto-meta">{survivors.length} of {rows.length} skaters · read from {fromLabel.toLowerCase()} · sorted by the projection, then the chance · click a skater for his card</small>
               </div>
               <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
                 <table className="nhlx-db-table nhlx-pk-table ir-sh-table">

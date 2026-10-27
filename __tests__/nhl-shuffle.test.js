@@ -84,7 +84,8 @@ describe('the NHL shuffle', () => {
     expect(at3[0].thins).toBe(thinsAt(rows[0], 'sog', 0.5));
     expect(at3[0].thins).toBeGreaterThanOrEqual(3);
     const at2 = survivorsAt(rows, 'sog', 2, 0.5);
-    expect(at2.map((x) => x.row.name)).toEqual(['David Pastrnak', 'Charlie McAvoy']);   // the best chance first
+    expect(at2.map((x) => x.row.name)).toEqual(['David Pastrnak', 'Charlie McAvoy']);   // the highest λ first
+    expect(at2[0].row.lamS).toBeGreaterThan(at2[1].row.lamS);
     expect(fallenAt(rows, 'sog', 3, 0.5).map((x) => x.row.name)).toEqual(['Charlie McAvoy', 'Pavel Zacha']);
     const curve = curveOf(rows, 'sog', 0.5);
     expect(curve[0]).toEqual({ height: 1, n: 3 });
@@ -94,6 +95,12 @@ describe('the NHL shuffle', () => {
     // Reading from his last five moves the field: 3.2 a game instead of the board's 4.2.
     expect(survivorsAt(rows, 'sog', 4, 0.5, 'l5')).toHaveLength(0);
     expect(survivorsAt(rows, 'sog', 4, 0.5, 'model')).toHaveLength(1);
+    // The board's λ ranks the list whichever read is on: a skater hot over his last five has the higher chance
+    // at the bar read from them, but the higher projection stays on top.
+    const hot = { ...skaterRow({ ...cand, id: 10, name: 'Morgan Geekie', pos: 'LW', lamS: 2.4 }), own: { l5: { sog: 5.2, g: 0.6 } } };
+    const fromL5 = survivorsAt([rows[0], hot], 'sog', 3, 0.5, 'l5');
+    expect(fromL5.map((x) => x.row.name)).toEqual(['David Pastrnak', 'Morgan Geekie']);
+    expect(fromL5[1].read.p).toBeGreaterThan(fromL5[0].read.p);
   });
 });
 

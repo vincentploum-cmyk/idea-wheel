@@ -87,7 +87,7 @@ config and keeps its own markets, teams, feeds and slate key:
   this season alone from three games), the opponent's rank at his spot and, once final, his figure; one request a
   market, every bar move local. `components/picks/Shuffle.jsx` (on both boards, above the tables; the NBA's rows open
   the card): the bars with the count of survivors at the floor ("keep players at 35% or better"), the curve of
-  survivors per height, the survivors at the bar sorted by edge (the chance there with its fair price, how often he
+  survivors per height, the survivors at the bar sorted by the projection, the highest on top (Vincent, 2026-10-27; by edge before), then the chance (the chance there with its fair price, how often he
   cleared it, the book's rung at the bar or the nearest above it with its price and edge, his projection — the board's, with
   its unit and the quartiles of his range, the Projected column that replaced Thins out on 2026-10-27 (Vincent: the projected
   points / rebounds / yards per player must be on the row); the Centre column, the window × the matchup the chance is read
@@ -616,7 +616,7 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   the study's λ beside them, `ownOf` = his last 5 / 10 / 20 and this season's mean shots and goals from the stored
   rows with how many of his last ten and of this season's games reached each height, the opponent's rank at his
   position, `heat`, `actual` once final), the chance at a height the Poisson tail of the λ (`chanceAt`: 3+ here is
-  the board's 3+ figure, 6+ the same λ further up), survivors at the floor sorted by the chance with the break-even
+  the board's 3+ figure, 6+ the same λ further up), survivors at the floor sorted by the projected figure, the board's λ, the highest on top (Vincent, 2026-10-27; by the chance before), then the chance, with the break-even
   price, how often he reached the bar, his projected shots or goals (the board's λ with its unit: the Projected column that
   replaced Thins out on 2026-10-27; the Centre column, the λ the chance is read from, shows only when the read is not the
   board's) and Got once final; the fallen strip under it, each with the bar he still clears. The **Matchup column reads the
