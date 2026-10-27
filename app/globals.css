@@ -120,7 +120,8 @@ body {
   font-family: var(--font-ui);
   font-size: 17.5px;
   line-height: 1.6;
-  overflow-x: hidden;
+  /* No overflow here: with html clipping x, an overflow on body makes body the scroll
+     container, and the sticky header then sticks to body's box, not the viewport. */
   -webkit-font-smoothing: antialiased;
 }
 
