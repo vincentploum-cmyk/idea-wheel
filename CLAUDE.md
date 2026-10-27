@@ -101,9 +101,13 @@ config and keeps its own markets, teams, feeds and slate key:
   hit / diff / Brier overall, on the board, by chance bucket, market, matchup third, source (confirmed / PropFinder
   alone / sheet alone), form, and by edge against the book with the flat-stake return at the book's price; every ladder
   rung (model tail vs hit rate vs the blend, Brier each, the main rung, the 20–35% ceiling rungs); and the
-  **predictors** (`PREDICTORS`): his last 3 / 5 / 10 / 20, season to date, the last 5 / 10 / season × the matchup (the
-  centres the shuffle reads from), the board's blend, the projection with the matchup in it and the book's line, each against his figure (bias, MAE, RMSE) and as an over-the-line read (said /
-  hit / Brier), on the rows every predictor covers. Descriptive only; the question it answers is whether a plain window
+  **predictors** (`PREDICTORS`): his last 3 / 5 / 10 / 20, season to date, his head to head (`h2h`: his last 4 meetings
+  with the opponent before the game, `H2H_MIN` = 2 of them at least, from `ownWindows` with `opp`; `sparse`, so it never
+  thins the rows the others are compared on: scored on the common rows that have it, with the projection and the blend
+  scored on those same rows beside it, `against`, and the panel's bold is not for it), the last 5 / 10 / season × the
+  matchup (the centres the shuffle reads from), the board's blend, the projection with the matchup in it and the book's
+  line, each against his figure (bias, MAE, RMSE) and as an over-the-line read (said / hit / Brier), on the rows every
+  predictor covers. Descriptive only; the question it answers is whether a plain window
   of his own results beats the board's read, in which case the board should read from it.
 - `propfinder.js` (`makePropfinder`): `/<LEAGUE>/teams` and `/<LEAGUE>/players?teamIds=…&hydrate=stats&withOddsOnly=true`
   through `pfGetJson` in `lib/nhl-data/propfinder-api.js`. The NHL endpoints were checked; the

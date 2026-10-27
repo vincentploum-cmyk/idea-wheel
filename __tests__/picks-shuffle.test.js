@@ -196,9 +196,9 @@ describe('reading from his own results', () => {
   const lastSeason = Array.from({ length: 20 }, (_, i) => ({ date: `2026-03-${String(28 - i).padStart(2, '0')}`, season: 2025, type: 'REG', opp: 'NY', pts: 20, reb: 8, ast: 5, tpm: 2, pra: 33 }));
   const logs = [...lastSeason, ...thisSeason];   // oldest first on purpose: the windows sort
   test('the windows: last 3 / 5 / 10 / 20 and this season alone', () => {
-    expect(ownWindows(logs, { market: 'pts', season: 2026 })).toEqual({ l3: 35, l5: 34, l10: 31.5, l20: 25.8, season: 31.5, seasonN: 10, n: 30 });
+    expect(ownWindows(logs, { market: 'pts', season: 2026 })).toEqual({ l3: 35, l5: 34, l10: 31.5, l20: 25.8, season: 31.5, seasonN: 10, n: 30, h2h: null, h2hN: 0 });   // no opponent asked: no head to head
     expect(ownWindows(thisSeason.slice(0, 2), { market: 'pts', season: 2026 })).toMatchObject({ l3: 35.5, season: null, seasonN: 2 });
-    expect(ownWindows([], { market: 'pts', season: 2026 })).toEqual({ l3: null, l5: null, l10: null, l20: null, season: null, seasonN: 0, n: 0 });
+    expect(ownWindows([], { market: 'pts', season: 2026 })).toEqual({ l3: null, l5: null, l10: null, l20: null, season: null, seasonN: 0, n: 0, h2h: null, h2hN: 0 });
   });
   test('the shuffle carries the windows and recentres the chance on the one picked', () => {
     const pf = { at: '2026-10-21T12:00:00Z', data: { players: [{ id: 'p1', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SF', games: logs, props: [prop] }], defense: null } };

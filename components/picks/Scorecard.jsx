@@ -135,7 +135,7 @@ function PredictorsTable({ predictors }) {
   const report = predictors.find((p) => p.key === market) || predictors[0];
   if (!report) return null;
   const list = report.common.predictors;
-  const withN = list.filter((p) => p.n);
+  const withN = list.filter((p) => p.n && !p.sparse);   // the bold compares the predictors scored on the same rows
   const bestMae = withN.length ? Math.min(...withN.map((p) => p.mae)) : null;
   const bestBrier = withN.filter((p) => p.brier != null).length ? Math.min(...withN.filter((p) => p.brier != null).map((p) => p.brier)) : null;
   const source = (s) => (s === 'own' ? 'his own results' : s === 'board' ? 'the board' : 'the book');
@@ -163,22 +163,22 @@ function PredictorsTable({ predictors }) {
           <tbody>
             {list.map((p) => (
               <tr key={p.key} className={p.key === 'proj' ? 'is-model' : p.key === 'blend' ? 'is-blend' : ''}>
-                <td><b>{p.label}</b> <small>{source(p.source)}</small></td>
+                <td title={p.note || undefined}><b>{p.label}</b> <small>{source(p.source)}</small>{p.sparse && p.n ? <small className="nhlx-auto-meta" style={{ display: 'block' }}>on its {p.n} rows · the projection there: MAE {p.against?.proj?.mae ?? '—'}, Brier {brier(p.against?.proj?.brier)} · the blend: MAE {p.against?.blend?.mae ?? '—'}, Brier {brier(p.against?.blend?.brier)}</small> : null}</td>
                 <td className="is-num">{p.n}</td>
                 <td className="is-num">{p.avg ?? '—'}</td>
                 <td className="is-num">{p.actual ?? '—'}</td>
                 <td className="is-num">{p.bias == null ? '—' : `${p.bias > 0 ? '+' : ''}${p.bias}`}</td>
-                <td className={`is-num${p.n && p.mae === bestMae ? ' is-best' : ''}`}>{p.mae ?? '—'}</td>
+                <td className={`is-num${p.n && !p.sparse && p.mae === bestMae ? ' is-best' : ''}`}>{p.mae ?? '—'}</td>
                 <td className="is-num">{p.rmse ?? '—'}</td>
                 <td className="is-num">{pct(p.said)}</td>
                 <td className="is-num">{p.lined ? <><b>{pct(p.hit)}</b><small>{p.lined}</small></> : '—'}</td>
-                <td className={`is-num${p.brier != null && p.brier === bestBrier ? ' is-best' : ''}`}>{brier(p.brier)}</td>
+                <td className={`is-num${p.brier != null && !p.sparse && p.brier === bestBrier ? ' is-best' : ''}`}>{brier(p.brier)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="nhlx-auto-meta" style={{ margin: '6px 2px 0' }}>{report.common.n} of {report.n} player-games carry every predictor (a window needs its games; a line needs a book). Bold = the best column. If a plain window beats the projection here over a month, the board should read from it.</p>
+      <p className="nhlx-auto-meta" style={{ margin: '6px 2px 0' }}>{report.common.n} of {report.n} player-games carry every predictor (a window needs its games; a line needs a book; head to head is scored on the rows with two meetings, the projection and the blend beside it on those same rows, and the bold is not for it). Bold = the best column. If a plain window beats the projection here over a month, the board should read from it.</p>
     </>
   );
 }
