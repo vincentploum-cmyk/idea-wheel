@@ -1,5 +1,6 @@
 # What predicts a skater's shots and goals? (2026-27 to date, 2025-26 as the control)
 
+Revision 8 (2026-10-27): section 10's rink and PropFinder tints regraded on 187 games; the windows graded as *filters*, the way a props screen uses them (section 14): L5 / L10 / L15 / L20, L10 at tonight's venue, season to date, last season, the blend and the shipped formula ranked per slate on 2025-26 and on this season through Oct 26; this season's own L5 / L10 / season comparison for the opponent's tables now that teams have 8 to 14 games.
 Revision 7 (2026-10-20): the goal odds step replaced the same way as the shots one, on the Oct 13-20 grade (section 12).
 Revision 6 (2026-10-15): every angle at once (section 13): venue splits, pace, line slot, the opposing goalie, L5 / L10 / L15, head to head, rest, two-season priors, the opponent's tables per skater at the position and blended across the season boundary; the formulas replayed on this season's 3,852 skater-games and graded; the Best bets plain-rate read refitted (`picks-pure.js`).
 Revision 5 (2026-10-13): the model's own published odds graded on the scorecard export; the shots odds step replaced by the Poisson tail of λ (section 12).
@@ -31,6 +32,7 @@ gaps between rows of the same ladder on the same rows.
 | How much to trust this season's average | Weight it n / (n + 18): about 10% after 1 to 3 games, 25% at 4 to 10, 50% at ~18, 70% at 40+. Goals shrink harder: n / (n + 40). | Fitted on both seasons: k = 16 (2026-27) and 18 (2025-26) for SOG, 42 and 39 for goals (section 3) |
 | Best this-season volume signal | **Shot attempts (iCF / iFF), not SOG.** Attempts are the less noisy count; for defensemen season-to-date iCF already beats last season's SOG. | CV deviance 1.279 (iCF) vs 1.337 (SOG) this season; D: 1.310 vs 1.330 vs 1.400 |
 | "L5 average is x" | L5 is a weak stand-alone and adds almost nothing once the season rate is in. Season-to-date > L10 > L5 > L3 > last game, every time. | Control, skaters with 20+ games: deviance L5 1.340, L10 1.302, season 1.263, season + L5 1.262 (section 7) |
+| Which filter finds the candidates: L5, L10, L10 home, season, last season? | **None of the short windows. Rank by the blended rate (this season into last at n / (n + 18) shots, n / (n + 40) goals), or by the shipped formula; last season alone is the next best.** Top 20 a slate by each filter, 3+ SOG hit rate, 2025-26 / this season: formula .558 / .548, blended average .560 / .543, last season .539 / .536, L20 .542 / .520, L10 .523 / .511, L10 at the venue .516 / .502, L5 .486 / .480, L5 hit rate .479 / .464 (slate base .23). Goals the same order: blend .350 / .311, last season .337 / .307, L10 .302 / .279, L5 .270 / .263 (base .16). The venue split never beats the same window over all games, and an L5 hit rate of 100% was a 54% 3+ SOG player (n = 366) and a 29% scorer. | section 14 |
 | Hot hand (big last game) | None. The next game lands on the player's baseline. | Last game 4 SOG: next game 2.02 vs baseline 2.08 (this season), 2.13 vs 2.14 (control). 5+ SOG: +0.6 on n=31 here, +0.1 on n=1,965 in the control |
 | Scored last game | No carry-over. Scorers score again at their own rate, not above it. | Scored 1 last game: P(1+ goal) next 0.22; their last-season rate implies 0.22 (control, n=5,693) |
 | "He had 4 goals against this team" | **A small, real effect, not a driver.** Across seasons, a strong record against an opponent is worth about 1 to 2 points of P(1+ goal) on top of the player's full-season rate. Within a season it is worth nothing beyond chance. Most of the raw correlation is "good scorers score everywhere". | 2024-25 record vs 2025-26 rematches (38,539 games): 4+ goals vs the opponent last season scored in 31.0% of rematches vs 32.7% expected from the full-season rate; H2H term z = 4.6 against a rate that excludes those games, z = 1.5 against one that includes them; permutation p = 0.03. Within 2025-26 (24,662 games): the H2H term equals what shuffled opponent labels produce, p = 0.65 (section 8) |
@@ -418,6 +420,36 @@ tiers, roughly one line of odds. For goals, the last-season goals/G tier does th
   pointed the wrong way this season. If the Rink tint stays, its default should be the all-games
   season table, not the venue split.
 - The band's figure can stay a per-game total: within a position it reads the same as per skater.
+
+### Refreshed 2026-10-27, on 187 games (6,201 skater-games with a prior; opponents with 1 to 14 games)
+
+The same grade (`env_source.py` on the fresh rows) with three more weeks of box scores. Soft minus tough band, as
+the rink tints it, for the skaters sitting in each band:
+
+| Toggle | SOG | P(3+) | P(1+ G) | 2.5-3 SOG/G shooters, P(3+) soft / tough |
+|---|---|---|---|---|
+| Rink, tonight's venue (the default Home / Away) | +0.16 | **+4.5 pts** | +2.6 | .52 / .40 |
+| PropFinder, last season's full tab ("2025") | +0.17 | **+3.9** | +1.9 | .53 / .38 |
+| last season, all games, by position (no toggle shows it) | +0.19 | +4.5 | +2.1 | .53 / .37 |
+| team total shots allowed, last season / this season (no position) | +0.22 / +0.19 | +4.7 / +4.7 | +1.3 / +1.2 | |
+| PropFinder, this season's tab ("2026") | +0.11 | +2.9 | +1.4 | .48 / .40 |
+| Rink L10 (last 10 across the two seasons; PropFinder's L10 tab reads the same games) | +0.11 | +2.2 | +2.3 | |
+| Rink L5 home / L5 away | +0.08 | +2.4 | +0.9 | |
+| this season's L5 by position (PropFinder L5 once the season is older) | +0.04 | +2.0 | -0.3 | |
+| Rink L5 | +0.06 | **+0.8** | +1.3 | .48 / .43; 3+ shooters .65 / **.69** |
+
+By the opponent's games played (deviance of the skater's baseline + the read; lower is better): with 0 to 4 games
+no read helps (none 1.2481, last season 1.2493, rink venue 1.2490); with 5 to 9 games none 1.2241, this season's
+table 1.2243, last season 1.2254; with 10 to 14 games (903 rows) none 1.1839, last season 1.1772, rink venue
+1.1758, **this season's table 1.1703**, last + this 1.1700. So the switch to the current-season tab is where the
+control put it: at ten-plus games the opponent's own table already leads, and by ~15 it is the read. For goals the
+one tint that holds is still **PropFinder, Goals, last season's tab**: +0.0034 of deviance (rebuilt last-season
+table +0.0029; the rink default by goals +0.0014; this season's goals table -0.0005; Rink L5 / L10 by goals
+-0.0007 / -0.0001), and by tier the .35-.5 scorers scored 36.6% in its soft band against 28.6% in its tough one,
+where this season's goals table read the same cut backwards (28.5% soft, 33.8% tough) and so did Rink L5 (24.5%
+soft, 32.5% tough). None of the per-game position tints comes near the Defense tab's per-skater blended Season
+table (section 13, this season: +0.0116 against +0.0001 for the per-game position table): the rink colours the
+environment, the Defense tab and the Best bets Opp column measure it.
 
 ## 11. The 1st goal tab, graded
 
@@ -841,3 +873,166 @@ still waiting on rows.
 `tools/predictors/run.sh 2026` fetches, relabels, builds the rows with the previous season as the
 prior, and runs `angles.py` and `replay.py`; `explain.py <rows-replay.csv> <date> <team> <name>` reads
 one night.
+
+
+## 14. The windows as filters: L5, L10, L10 home, season, last season (2026-10-27)
+
+**Question.** A props screen offers the same reads for every skater: his hit rate or average over the last 5 / 10 /
+15 / 20 games, the last 10 at tonight's venue ("L10 home"), this season, last season. Which one finds tonight's
+shooters and scorers? Sections 1, 7 and 13 scored the windows as *rates* (deviance of a Poisson fit); this section
+scores them as *filters*, the way they are used: every skater on the slate ranked by the filter, the top 10 / 20
+taken, and the share that hit 3+ SOG (2+ / 4+) and 1+ goal; the precision of the thresholds a screen applies
+("hit in 8 of L10"); and what a stated hit rate was actually worth. Script: `tools/predictors/filters.py` (every
+read from games strictly before the row's game; "last N" counts across the season boundary, as a screen does in
+October; the venue windows are the last N at tonight's venue; ties inside a hit rate are broken by the same
+window's average, then at random, so no filter borrows from another).
+
+**Data.** 2025-26 as the control: 40,233 skater-games with 20+ prior games across the two seasons and every read
+defined, 167 slates (2024-25 is its "last season"). This season through Oct 26: 5,983 skater-games, 28 slates,
+187 games, teams with 1 to 14 games. The yardsticks are the blend of section 3 (this season's average into last
+season's at n / (n + 18) for shots, n / (n + 40) for goals; the same blend of the hit rates beside it) and the
+shipped Best bets formula (section 13: blend + attempts + TOI + the opponent's per-skater position read).
+
+### 3+ SOG: the top 20 a slate by each filter (hit rate; the slate's base rate .231 / .222)
+
+| Filter (ranked by it, top 20 a night) | 2025-26 | this season | AUC 25-26 | stated 25-26 (top 20) |
+|---|---|---|---|---|
+| **shipped formula** | **.558** | **.548** | .752 | .549 |
+| **average, blend of season into last** | **.560** | **.543** | .747 | .582 |
+| hit rate, blend of season into last | .554 | .530 | .744 | .575 |
+| average L20 | .542 | .520 | .737 | .600 |
+| average L15 | .541 | .500 | .733 | .608 |
+| average, last season | .539 | .536 | .734 | .580 |
+| average, last season at the venue | .537 | .534 | .729 | .590 |
+| hit rate L20 | .534 | .509 | .728 | .608 |
+| hit rate, last season | .530 | .520 | .730 | .575 |
+| average L10 | .523 | .511 | .723 | .623 |
+| average L10 at the venue | .519 | .496 | .722 | .624 |
+| hit rate L10 at the venue ("L10 home / away") | .516 | .502 | .705 | .649 |
+| hit rate L10 | .514 | .502 | .707 | .650 |
+| average L5 | .486 | .480 | .703 | .660 |
+| hit rate L5 | .479 | .464 | .679 | .719 |
+| hit rate L5 at the venue | .469 | .443 | .675 | .720 |
+
+Paired bootstrap over slates, the formula's top 20 against each filter's (difference in hit rate, 95% interval),
+2025-26 [this season]: vs hit rate L5 +.079 [+.064, +.095] (this season +.084 [+.048, +.123]); vs hit rate L10
++.045 [+.031, +.057] (+.046 [+.014, +.080]); vs L10 at the venue +.042 [+.027, +.056] (+.046 [+.002, +.089]);
+vs season to date +.026 [+.015, +.036] (+.057 [+.017, +.094]); vs last season +.029 [+.017, +.040] (+.029
+[+.002, +.055]); vs average L10 +.036 [+.022, +.049] (+.038 [+.005, +.068]); vs the blended average -.001
+[-.010, +.006] (+.005 [-.027, +.032]). Every short window loses to the blend by a margin the interval excludes, in
+both seasons; the formula and the plain blended average are the same filter to within noise (the opponent read is a
+tie-breaker, section 13). The same order holds for 2+ SOG (top 20: blend .778, formula .773, L20 .765, last season
+.757, L10 .748, L10 venue .726 hit rate, L5 .695 hit rate; base .443) and for 4+ SOG (formula .349, blend .345,
+L15 .330, last season .327, L10 .316, L10 venue .312, L5 .289, L5 hit rate .285; base .110).
+
+**Mid-season, this season's own windows against each other** (2025-26, skaters with 10+ games this season,
+34,049 rows; top 20 a slate, 3+ SOG): formula .557, blended average .557, blended hit rate .553, season-to-date
+average .545, season-to-date hit rate .537, last season .534, season to date at the venue .522, L10 this season
+.519 (hit rate .512), L10 at the venue .517 (hit rate .512), L5 .485 (hit rate .476). Once a skater has ten games
+the season-to-date read is the best single window, and the blend still beats it; L10 and L5 are below last
+season's full figure all year.
+
+**What a stated hit rate was worth** (2025-26, same rows; actual 3+ SOG rate, n):
+
+| the window's hit rate | L5 | L10 | L10 at the venue | L20 | last season | blend |
+|---|---|---|---|---|---|---|
+| 40-60% | .42 (4,092) | .44 (4,826) | .44 (4,684) | .45 (5,343) | .46 (5,906) | .46 (5,424) |
+| 60-80% | .50 (1,704) | .55 (1,706) | .55 (1,652) | .60 (1,582) | .62 (1,342) | .62 (1,607) |
+| 80-99% | — | .61 (139) | .54 (149) | .63 (60) | — | — |
+| 100% | **.54 (366)** | — | .73 (33) | — | — | — |
+
+A skater who hit 3+ in all five of his last five hit 3+ in 54% of the next games (this season .51, n = 47): an
+L5 of 100% is a 54% player, an L10 of 80 to 90% a 61% player, and the regression is the whole gap between the
+stated and the hit columns above. The blend's 60-80% band hit .62, the same as it said. For goals the same cut:
+an L5 goal rate of 100% scored next game 29% of the time (n = 31); L10 at 60-80% scored 29% (n = 155); L20
+at 60-80% 40% (n = 63); last season's rate at 40-60% 38%; the blend's 40-60% band .37.
+
+**The threshold a screen applies** (2025-26; rows passing a night out of ~241 rated skaters, and their hit rate):
+
+| 3+ SOG filter | a night | hit | | 1+ goal filter | a night | hit |
+|---|---|---|---|---|---|---|
+| L5 hit rate ≥ 70% (= 4 of 5) | 12.4 | .504 | | L5 ≥ 50% | 14.6 | .277 |
+| L10 ≥ 70% | 11.1 | .554 | | L10 ≥ 50% | 12.6 | .316 |
+| L10 ≥ 80% | 4.3 | .576 | | L10 ≥ 60% | 4.3 | .304 |
+| L10 at the venue ≥ 80% | 4.3 | .587 | | L10 at the venue ≥ 60% | 4.0 | .345 |
+| L20 ≥ 70% | 5.7 | .609 | | L20 ≥ 50% | 5.1 | .355 |
+| last season ≥ 60% | 8.0 | .615 | | last season ≥ 40% | 5.8 | .373 |
+| blend ≥ 60% | 9.7 | **.622** | | blend ≥ 40% | 5.7 | .367 |
+| formula P(3+) ≥ 50% (the board's floor) | 17.5 | .597 | | formula P(1+) ≥ 30% | 8.8 | **.388** |
+| formula P(3+) ≥ 60% | 6.6 | **.646** | | formula P(1+) ≥ 35% (the board's floor) | 1.9 | .430 |
+
+This season the same cuts: L5 ≥ 70% 10 a night at .527, L10 ≥ 70% 9 at .571, L10 at the venue ≥ 70% 10 at .574,
+last season ≥ 60% 9 at .619, blend ≥ 60% 9 at .647, formula P(3+) ≥ 50% 14 at .629 and ≥ 60% 7 at .683; goals:
+L10 ≥ 50% 10 at .311, last season ≥ 40% 9 at .382, blend ≥ 40% 8 at .373, formula ≥ 30% 2 at .415. At every
+volume the blend or the formula gives the same count of players at a higher hit rate than any L5 / L10 cut.
+
+### 1+ goal: the top 20 a slate (base .159 / .157)
+
+| Filter | 2025-26 | this season | AUC 25-26 |
+|---|---|---|---|
+| **average, blend of season into last** | **.350** | .311 | .699 |
+| **shipped formula** | **.350** | **.316** | .702 |
+| hit rate, blend | .348 | .307 | .699 |
+| average, last season | .337 | .307 | .690 |
+| hit rate, last season | .336 | .316 | .689 |
+| hit rate L20 | .326 | .314 | .671 |
+| average L15 | .311 | .311 | .666 |
+| average L10 | .302 | .279 | .649 |
+| hit rate L10 | .298 | .279 | .645 |
+| hit rate L10 at the venue | .292 | .282 | .642 |
+| average L5 | .270 | .263 | .609 |
+| hit rate L5 | .262 | .250 | .606 |
+
+Bootstrap, formula vs each (2025-26): L5 +.088 [+.069, +.106], L10 +.052 [+.036, +.068], L10 at the venue
++.058 [+.042, +.075], season to date +.027 [+.013, +.041], last season +.014 [+.001, +.025], the blend .000.
+Goals are rarer than shots, so the short windows are mostly luck: the L5 goal filter's top 20 scored 26%, barely
+above the slate's best 20 by any read of volume, and an L10 of 50%+ (five goals in ten) scored next game 32% of the
+time. Mid-season (10+ games this season) the order is the same: blend .349, season to date .337, last season .334,
+L10 .305, L10 at the venue .291, L5 .270.
+
+### The opponent's window as the filter
+
+The blended average multiplied by each read of the opponent (the read over the league's average, at the formula's
+elasticity), ranked the same way, 2025-26, 35,156 rows where every window is defined (opponents with 10+ games):
+blend alone .558, × the team's season total .555, × last season's position table .552, × the team's L10 .552, × the
+team's L5 .549, × the position table season to date .547, × the position blend .546, × the position at tonight's
+venue .540, × the position L10 .533, × the position L5 .519. As a *multiplier* on the ranking no opponent read
+beats the skater's own blend, and the short position windows hurt it: a 5-game read of a defense is half noise
+(section 9), so scaling a skater up or down by it moves the wrong players in. The environment belongs inside the
+fitted formula at its fitted size (+.001 of Brier, section 13), never as a filter of its own; this season (871 rows,
+opponents with 10+ games) the same rows read .418 to .438 for every version, within noise of each other.
+
+**This season's own windows, now testable** (teams with 8 to 14 games through Oct 26; `env_windows.py` on the
+2026 rows, skaters with 5+ games and opponents with 8+, 1,764 rows; gain in deviance over the player core): the
+per-skater position read blended into last season +.0119, last season's per-skater table +.0100, the team total L3
+/ L5 / L10 / season +.0123 / +.0082 / +.0053 / +.0053, the position table L3 / L5 / L10 / season +.0082 / +.0068 /
++.0066 / +.0061, the team at tonight's venue L5 +.0064, the position at the venue L5 +.0049. Reliability of the
+read itself (55 team-games with 5+ prior games, against the opponent's next five): L3 r .30, L5 .35, L10 .39, season
+.39 for shots allowed; .08 to .14 for goals allowed. On this season's own games the short windows are all within noise
+of each other and of the season total, and the two reads that carry last season lead, as the control said they would
+(section 9: "carry last season's figure until the opponent has ~15 games"). On the larger 4,529 rows of `angles.py`
+(skaters with a prior game): the blended per-skater read +.0116 (z 7.6), last season's +.0116 (z 7.5), the team blend
++.0062, the team season total +.0040, the position table per game +.0001, any venue read +.0012 or less. For goals
+no window of this season's tables helps yet (every one .000 or negative on 1,764 rows); last season's per-skater
+goals table +.0030 (z 3.8) and the blend +.0024 on the 4,529 rows, the this-season table -.0002.
+
+### Rule
+
+- **To find candidates, rank by the blended rate** (this season into last at n / (n + 18) for shots, n / (n + 40)
+  for goals) **or by the Best bets formula**; they pick the same players, and the board's floor (P(3+) ≥ 50%, P(1+
+  goal) ≥ 35%) is the threshold. Until a skater has ~10 games, last season's full figure alone is the next best
+  filter and beats every window of this season; after ten, season to date is the best single window, still behind
+  the blend.
+- **L5 is the worst filter tested, in both seasons and for every market**, and "L5 home / away" is worse than L5.
+  L10 and L10 at the venue sit between L5 and the season figures and never beat last season's full rate. A venue
+  split never beats the same window over all games: it halves the sample for a home / away difference the study
+  measures at 2 to 4%.
+- **Read a short hit rate as what it was worth**: 5 of 5 = a 54% player for 3+ SOG, 8 or 9 of 10 = 61%, and a hot
+  L5 for goals scores next game 29% of the time. The blend's stated rate is what happens.
+- **Never filter on the opponent's L5 / L10**; the opponent's read is a few percent inside the formula, by position
+  per skater, season to date blended into last season, and this season's own tables are not yet worth more than
+  last season's.
+
+Rerun: `tools/predictors/run.sh 2026`, then `python3 -I tools/predictors/filters.py .nhl-data/predictors/2026/games-pos
+.nhl-data/predictors/2025/games-pos .nhl-data/predictors/2026/rows.csv "2026-27"` (and the same on the 2025 rows with
+2024 as the previous season for the control).

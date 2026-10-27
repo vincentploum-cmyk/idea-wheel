@@ -334,7 +334,8 @@ config and keeps its own markets, teams, feeds and slate key:
   defender plays, rank 1 = the most allowed with ties shared, tinted by rank thirds; above the tables
   tonight's matchups read off the same tables (`matchupReads`, each shooting side's softest spot first, with the shooters the
   slate's lineup has at that spot named and clickable, `shootersAt`; the API's `tonight` games carry `sides[].skaters` from
-  `buildSlate`), a track record (`lib/nhl-data/defense-grade.js`, `/api/nhl/data/defense/grade?to=`: every stored skater-game
+  `buildSlate` and, once the game is stored, `result` = the score and every skater's shots and goals by id, which the
+  Result column on the right grades per listed shooter at 3+ SOG / 1+ goal with a tally, `resultsAt`), a track record (`lib/nhl-data/defense-grade.js`, `/api/nhl/data/defense/grade?to=`: every stored skater-game
   of the season replayed against each span's table as it stood that morning, by third of the opponent's table at the skater's
   position and at the side's softest spot, lift against the skaters' own blended rates and the 3+ SOG / 1+ G rate), and a team overview
   (GA / GP, SA / GP from the stored box scores; xGA / 60, high-danger shots against and pace from MoneyPuck), each column ranked;
@@ -455,13 +456,27 @@ config and keeps its own markets, teams, feeds and slate key:
   before puck drop, every 15 minutes until the game's lineups are found (`linesFound` in
   `lib/nhl-data/lines-chain.js`: both teams have a tweet from the 45 minutes before the start, the warm-up window, so an afternoon
   projected-lines tweet does not stop the reads; the site reports
-  `gdtAt` per team in the refresh response via `gdtTimes`) or the game is 10 minutes old. GitHub's cron only
+  `gdtAt` per team in the refresh response via `gdtTimes`) or the game is 10 minutes old; **then one post-game read per
+  game** (`SETTLE_AFTER_START_MIN`: 3 h 30 after puck drop once the NHL schedule says the game is final, about an hour
+  after a regulation final; again every 20 minutes while it is still on, until the 4-hour tweet cutoff): the hop is
+  dispatched with `settle=1`, posts the pages (the lines the writers put up at or during the game: a late scratch, a
+  swap at warm-up, the pairs as they skated) and calls `only=settle` (the previews' final update, the snapshot
+  re-captured, the stored box scores re-stamped), and `settled` carries the done game ids from hop to hop, so a
+  skater's position and line slot for a game are the ones he actually played. GitHub's cron only
   seeds it (2 of 24 slots fired on 2026-10-07): every run hands itself on with its own token (`tools/lines-chain.mjs`,
-  a wait for the first window, then 15-minute hops; skipped while another run is queued or running; 40 hops a
+  a wait for the first window, then 15-minute hops, then the post-game reads; skipped while another run is queued or running; 60 hops a
   chain), and the Matchups tab's "Refresh lines" button dispatches a run on demand
   (`/api/nhl/data/refresh?only=lineups&dispatch=1` → `lib/nhl-data/github-dispatch.js` → `workflow_dispatch`,
   needs `GITHUB_DISPATCH_TOKEN` on Render; the panel then polls the slate until a new page delivery shows).
-  The post-game settle is a separate, unchanged path. Each rink shows when its source last changed
+  The morning and late runs (`nhl-data.yml`, 9:17 and 00:41 ET) post yesterday's teams' pages before today's, so
+  every team that played is settled from the lines posted during its game, not only the ones playing again today
+  (the backstop for a chain that broke), and the Mac sync reads once more 3 h 30 to 4 h after puck drop.
+  `autoRunModel` never runs for a past date (a run saved after the games would only replace the pre-game run the
+  rink shows; the scorecard grades the newest run saved before puck drop). `GET /api/nhl/data/lineups/audit?from&to`
+  (`lib/nhl-data/lineup-audit.js`) says which stored games still owe a post-game read: per team where its positions came
+  from (a tweet from the warm-up window or the game = settled; an earlier tweet; the preview; the depth chart or roster;
+  no snapshot), the tweet's minutes from puck drop, and what a re-stamp would change; the `backfill_from` input of
+  `nhl-lineups.yml` settles every date from there to the date input (pages posted per date, then `only=settle`). Each rink shows when its source last changed
   and the Matchups header when the beat writers' pages last arrived (`sourceMeta.gdtFetchedAt`). After every lineup capture (and every matchup-file import for a
   coming slate) `lib/nhl-data/autorun.js` runs the model on the server with the stored
   PropFinder workbooks + snapshot lineups + built history/home-away inputs + the pace workbook built from

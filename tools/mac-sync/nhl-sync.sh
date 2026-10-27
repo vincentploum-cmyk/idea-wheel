@@ -6,7 +6,8 @@
 # .xlsx saved in ~/Desktop/NFL) to the NFL board, the NBA cheat sheets (~/Desktop/NBA) to the NBA
 # board, and fetches the beat
 # writers' lines pages from gamedaytweets.com for the site (which cloud servers cannot
-# reach): once an hour, and every 15 minutes from an hour before a game until ten minutes after.
+# reach): once an hour, every 15 minutes from an hour before a game until ten minutes after, and
+# again 3 h 30 to 4 h after puck drop (the post-game read).
 # Installed by install.command; launchd runs it when a folder changes and every 5 minutes.
 set -u
 CONF="$HOME/.config/nhl-model"
@@ -50,12 +51,16 @@ sched=$(curl -sS --max-time 30 "https://api-web.nhle.com/v1/schedule/$TODAY" 2>/
 # Today's block of the week: between "date":"<today>" and the next day's "date".
 today_block=$(printf '%s' "$sched" | tr -d '\n' | sed -e "s/.*\"date\":\"$TODAY\"//" -e 's/"date":"20[0-9-]*".*//')
 # The beat writers post warm-up lines 15 to 30 minutes before puck drop: from 60 minutes
-# before any game's start until 10 minutes after it, read every 15 minutes, not hourly.
+# before any game's start until 10 minutes after it, read every 15 minutes, not hourly. And once
+# after the game, 3 h 30 to 4 h after puck drop (about an hour after the final; the site counts a
+# tweet up to 4 h after the start for that game), so the lines the writers posted at or during the
+# game re-stamp the stored box score.
 gap="$LINES_GAP"
 for t in $(printf '%s' "$today_block" | grep -oE '"startTimeUTC":"[0-9T:Z-]+"' | cut -d'"' -f4); do
   start=$(date -j -u -f '%Y-%m-%dT%H:%M:%SZ' "$t" +%s 2>/dev/null || date -u -d "$t" +%s 2>/dev/null || echo 0)
   [ "$start" -gt 0 ] || continue
   if [ $((start - now)) -le 3600 ] && [ $((now - start)) -le 600 ]; then gap="$LINES_GAP_PREGAME"; break; fi
+  if [ $((now - start)) -ge 12600 ] && [ $((now - start)) -le 14400 ]; then gap="$LINES_GAP_PREGAME"; break; fi
 done
 if [ $((now - last)) -ge "$gap" ]; then
   echo "$now" > "$LINES_STAMP"

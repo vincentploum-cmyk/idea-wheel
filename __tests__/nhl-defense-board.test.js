@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import { defenseByPosition, blendedDefense } from '../lib/nhl-data/defense';
-import { boardTables, overviewRows, matchupReads, rankDesc, groupKeyFor, shootersAt, figureFor } from '../lib/nhl-data/defense-board';
+import { boardTables, overviewRows, matchupReads, rankDesc, groupKeyFor, shootersAt, figureFor, resultsAt } from '../lib/nhl-data/defense-board';
 
 // Three games: NYR at NJD, BOS at NJD, NJD at BOS. One skater per position per side.
 const row = (date, gameId, team, opp, venue, pos, sog, g) => ({ date, gameId, team, opp, venue, pos, sog, g, a: 0, icf: sog, iff: sog, iscf: 0, ihdcf: 0 });
@@ -118,5 +118,17 @@ describe('defense board', () => {
     expect(reads[0].cells.C).toMatchObject({ abbr: 'NJD', value: 5, rank: 1, n: 2 });
     expect(reads[1]).toMatchObject({ team: 'NJD', opp: 'BOS', venue: 'H' });
     expect(reads[1].cells.C).toMatchObject({ abbr: 'BOS', value: 3 }); // BOS away: the one game at NJD
+  });
+  test('the listed shooters graded against the stored box score: 3+ SOG under shots, 1+ goal under goals, DNP without a row', () => {
+    const list = [{ id: 1, name: 'Cutter Gauthier', pos: 'LW', line: 1 }, { id: 2, name: 'Ross Johnston', pos: 'LW', line: 4 }, { id: 3, name: 'Frank Vatrano', pos: 'LW', line: 2 }];
+    const result = { score: { away: 3, home: 2 }, skaters: { 1: { sog: 5, g: 1 }, 2: { sog: 2, g: 0 } } };
+    expect(resultsAt(list, null, 'sog')).toBeNull();
+    const shots = resultsAt(list, result, 'sog');
+    expect(shots.rows.map((r) => [r.got, r.hit])).toEqual([[5, true], [2, false], [null, null]]);
+    expect(shots).toMatchObject({ hits: 1, graded: 2, floor: 3, stat: 'sog' });
+    const goals = resultsAt(list, result, 'g');
+    expect(goals.rows.map((r) => [r.got, r.hit])).toEqual([[1, true], [0, false], [null, null]]);
+    expect(goals).toMatchObject({ hits: 1, graded: 2, floor: 1 });
+    expect(resultsAt([], result, 'sog')).toMatchObject({ rows: [], hits: 0, graded: 0 });
   });
 });
