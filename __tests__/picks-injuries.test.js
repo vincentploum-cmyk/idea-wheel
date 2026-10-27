@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { statusOf, isOut, parseInjuryReport, gamesPlayed, keyAbsences, withoutGames, blendWithout, withoutWeight, absentByTeam, withoutOf, shortNames, WITHOUT_K } from '../lib/picks/injuries';
+import { statusOf, isOut, healthOf, parseInjuryReport, gamesPlayed, keyAbsences, withoutGames, blendWithout, withoutWeight, absentByTeam, withoutOf, shortNames, WITHOUT_K } from '../lib/picks/injuries';
 
 describe('PropFinder injury report', () => {
   test('statuses read into one spelling, as the site maps them', () => {
@@ -21,6 +21,13 @@ describe('PropFinder injury report', () => {
     expect(statusOf(null)).toBeNull();
     for (const s of ['Out', 'doubtful', 'IR', 'LTIR', 'Suspended', 'PUP']) expect(isOut(s)).toBe(true);
     for (const s of ['Questionable', 'GTD', 'DTD', 'Probable', 'Active', null]) expect(isOut(s)).toBe(false);
+  });
+  test('health in one word: In / DTD / Out', () => {
+    for (const s of [null, '', 'Active', 'ACT', 'Available', 'healthy']) expect(healthOf(s)).toBe('In');
+    for (const s of ['Day-To-Day', 'day to day', 'DTD', 'Questionable', 'Q', 'Probable', 'GTD', 'game-time decision']) expect(healthOf(s)).toBe('DTD');
+    for (const s of ['Out', 'out', 'O', 'Doubtful', 'IR', 'injured reserve', 'LTIR', 'Suspended', 'PUP', 'NFI']) expect(healthOf(s)).toBe('Out');
+    expect(healthOf('Out', 'probable to return')).toBe('DTD');   // a detail naming probable / questionable sets the status, PropFinder's own rule
+    expect(healthOf('Something new')).toBe('DTD');   // an unknown status is listed, not out
   });
   test('the games payload’s report (a JSON string) and the per-team list', () => {
     const teamOf = (id) => ({ 1: 'BOS', 2: 'NY' }[id] || null);
