@@ -1081,3 +1081,97 @@ and beyond, where the season now is, the gap closes. From here the scorecard's S
 grading run on the this-season table, so the "Windows and sources" table and the Defense tab's track record will
 show the difference in numbers as the games come in. The sections above were measured with the blend and stay as
 measured.
+
+## 16. Which goal factor weighs heaviest: environment, venue split, hot streak, head-to-head (2026-10-27)
+
+**Question (Vincent).** The model's chance of a goal is built from the environment (what the opponent gives up at his
+position), his own figures at tonight's venue, whether he is on a hot streak, and his head-to-head record where there
+is one. Which of them weighs heaviest in predicting who scores? **Answered on this season's data alone**, as asked:
+every read on a row comes from games earlier in the same season, no previous-season blend, positions relabelled from
+the faceoffs as in section 13. Script: `tools/predictors/goal_factors.py` (numpy + pandas; `run.sh` runs it after
+`angles.py`). Rows: skaters with 10+ prior games against opponents with 5+ games.
+
+**Data.** 2025-26 regular season: 38,836 skater-games, 148 slates (Oct 27 to Apr 16), P(1+ goal) .156. 2026-27 through
+Oct 26: 1,452 skater-games with 8+ prior games, 10 slates, P(1+ goal) .180 — a check, not a measurement (a meeting
+already this season on 10% of rows, a venue split of three or four games).
+
+**The reads.** His rate = season-to-date goals a game. Environment = the opponent's goals allowed per skater at his
+position, season to date (and its last 10). Venue = his goal rate at tonight's venue over his season rate. Hot streak =
+his last-five goal rate over his season rate; the model's spike cut (L5 > 1.45 × season) and the board's flame (3+ in
+L5) in the tier tables. Head-to-head = his goals a game against them in this season's meetings over his season rate,
+with a flag for having met them. Home ice beside them. Every fit carries position fixed effects, so each factor is read
+within the position: without them the per-position environment looks strong (z 9.5) because defensemen face a low
+"goals allowed to D" row and score little — that is the position, not the opponent.
+
+### The weight of each factor (2025-26, Poisson on the log reads, all in one fit)
+
+The swing is what P(1+ goal) does for a median skater when the factor moves from its 10th to its 90th percentile, the
+others held at their medians; the multiplier is the same move on λ.
+
+| factor | 10th → 90th pct | λ × | P(1+ goal) | swing | z |
+|---|---|---|---|---|---|
+| **his season-to-date goal rate** | 0.02 → 0.38 a game | **×4.2** | .075 → .281 | **+20.5 pts** | 34.3 |
+| environment: opp goals per skater at his position | 0.06 → 0.26 | ×1.08 | .150 → .162 | +1.1 | 1.0 |
+| home ice | away → home | ×1.05 | .159 → .165 | +0.7 | 1.9 |
+| head-to-head: has met them this season | no → yes | ×1.04 | .154 → .159 | +0.5 | 1.3 |
+| venue: his venue rate / season rate | 0.68 → 1.31 | ×1.02 | .157 → .160 | +0.3 | 0.7 |
+| hot streak: his L5 / season rate | 0.38 → 1.80 | ×0.95 | .163 → .155 | −0.8 | −1.8 |
+| head-to-head: his rate vs them / season rate (meetings) | 0.25 → 2.60 | ×1.00 | .159 → .159 | 0.0 | 0.0 |
+
+Where the opponent has 30+ games behind its table (28,836 rows) the environment reads ×1.17 across its range (+2.3 pts,
+z 1.6) and nothing else moves: home ×1.06, venue ×1.01, head-to-head ×1.00, the streak ×0.93 (z −2.0). The position's
+last-10 goals allowed in place of the season table: ×1.03 (z 0.6) on the mature rows, ×1.07 (z 1.7) on all. The
+cross-validated ladder says the same: his rate alone scores deviance .6058 / Brier .12390; adding any one factor or all
+four moves the third decimal of neither (environment +.0000, venue −.0000, streak +.0001, head-to-head −.0001); all four
+without his rate costs .032 deviance.
+
+### As filters (the slate's top 20, share that scored; 146 slates)
+
+| ranked by | hit | vs his rate alone (95%) |
+|---|---|---|
+| his rate alone | **.340** | — |
+| the fitted model, rate + all four + home, out of fold | .340 | .000 [−.006, +.008] |
+| his rate × environment | .326 | −.014 [−.026, −.004] |
+| his rate × venue ratio | .314 | −.026 [−.040, −.014] |
+| his rate × streak ratio | .291 | −.049 [−.064, −.031] |
+| his rate × head-to-head ratio | .267 | −.073 [−.092, −.053] |
+| last-5 goal rate alone | .267 | −.073 |
+| head-to-head goals vs them alone | .206 | −.134 |
+| environment alone | .131 | −.209 (the slate's base rate .156) |
+
+### Tiers (thirds of his season rate; P(1+ goal) and the lift over the tier's mean)
+
+- Environment, soft third vs tight third of the opponent's row at his position: low tier .074 vs .068, mid .154 vs .144,
+  high .264 vs .247 — one to two points, the same size the fit gives it.
+- Venue: a skater who scores more at tonight's venue than his season rate hits **less** in the mid and high tiers (.132
+  vs .145; .217 vs .263): the split is noise that regresses.
+- Home ice: +0.3 to +0.9 points in every tier.
+- Hot streak: the model's spike cut (L5 > 1.45 × season) is −4.9 points in the high tier (.206 vs .257 normal); the
+  board's flame (3+ in L5) reads +2.7 in the high tier (.282 vs .257), which is the higher season rate of the skaters who
+  carry it, since the fit with the rate in it gives the streak nothing. Scored last game: +2.0 in the high tier, the
+  same story.
+- Head-to-head: scored against them already this season +1.2 to +2.4 points in the mid and high tiers; no goal against
+  them −0.2 to −0.7; the rate against them carries nothing once his season rate is in (z 0.0).
+
+### This season through Oct 26 (1,452 rows, a check)
+
+His rate ×2.1 (+11.9 pts, z 4.0), home ×1.2 (+3.5, z 1.6), environment ×1.11 (+1.8, z 0.5), the streak ×1.03 (z 0.2), venue
+×1.02 (z 0.1), head-to-head on 142 rows with a meeting (z 0.8). Top 20 a slate: his rate alone .285, × streak .295, × venue
+.290, × environment .260, × head-to-head .275, every interval through zero at ten slates. The order is the full season's
+where the sample can tell.
+
+### What it says
+
+1. **His own season-to-date goal rate is the whole forecast**: a ×4 swing on λ against ×1.1 or less for anything else;
+   as a filter nothing beats it, and the model with all four factors in it ties it.
+2. **Environment is the only factor with a measurable weight**, and it is small: ×1.08 across the realistic range of
+   the opponent's row, ×1.17 once the table has 30+ games behind it. One or two points of P(1+ goal) between the tight
+   and the soft third of the league. The model's `defenseGoalMult` range (0.82–1.22 before damping, capped at 1.02–1.20 by
+   tier) is at or above what the data supports.
+3. **Home ice is real and tiny**: ×1.05.
+4. **Venue split, hot streak and head-to-head carry no weight** once his rate is in: venue ×1.02, head-to-head ×1.00, the
+   streak ×0.95 (the wrong way: a skater above his rate over five games comes back to it). Their multipliers in the model
+   (`l5GoalFormMult` 0.88–1.14, `venueGoalMult`, `histGoalMult`) should be 1.0, and the flame stays colour.
+5. So the weight belongs on the one input the published λ goals reads weakest: his goal rate enters it through the
+   points step (section 12's note), while the four factors it is asked to weigh are, by the data, one small multiplier
+   (the opponent's row, matured) and three that should not move the number at all.
