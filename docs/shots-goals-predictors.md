@@ -1,6 +1,6 @@
 # What predicts a skater's shots and goals? (2026-27 to date, 2025-26 as the control)
 
-Revision 9 (2026-10-27, later): the 1st goal tab regraded on the last ten slates of this season and the season to date, game by game (section 11, `tools/predictors/firstgoal_window.py`).
+Revision 9 (2026-10-27, later): the 1st goal tab regraded on the last ten slates of this season and the season to date, game by game (section 11, `tools/predictors/firstgoal_window.py`); what would make the first-goal read better, tested on 2025-26 and out of sample on this season (`firstgoal_extras.mjs`, `firstgoal_model.py`): nothing beyond the matchup λ, and the number should be a probability over the game's skaters, shrunk at the top.
 Revision 8 (2026-10-27): section 10's rink and PropFinder tints regraded on 187 games; the windows graded as *filters*, the way a props screen uses them (section 14): L5 / L10 / L15 / L20, L10 at tonight's venue, season to date, last season, the blend and the shipped formula ranked per slate on 2025-26 and on this season through Oct 26; this season's own L5 / L10 / season comparison for the opponent's tables now that teams have 8 to 14 games.
 Revision 7 (2026-10-20): the goal odds step replaced the same way as the shots one, on the Oct 13-20 grade (section 12).
 Revision 6 (2026-10-15): every angle at once (section 13): venue splits, pace, line slot, the opposing goalie, L5 / L10 / L15, head to head, rest, two-season priors, the opponent's tables per skater at the position and blended across the season boundary; the formulas replayed on this season's 3,852 skater-games and graded; the Best bets plain-rate read refitted (`picks-pure.js`).
@@ -547,6 +547,72 @@ goal: its slate top 10 scores in 35% of player-games (break-even about +190) aga
 head-to-head columns as colour; the replay says that lifts the #1's any-goal rate from about 30% to
 33 to 37% and leaves the first-goal hit rate where it is. Rerun after each stretch with
 `python3 -I tools/predictors/firstgoal_window.py .nhl-data/predictors/2026/games-pos .nhl-data/predictors/2025/games-pos --last 10`.
+
+### What would make it better (tested 2026-10-27)
+
+Every signal specific to the *first* goal, pulled from the play-by-play and the shift charts
+(`tools/predictors/firstgoal_extras.mjs`: first-period goals and shots per skater, whether he was on
+the ice for the opening faceoff, his seconds in the first 5 and 10 minutes and in the first period,
+power-play goals, the first goal's time and strength) and tested leak-free as a conditional logit over
+each game's 36 dressed skaters (`firstgoal_model.py`: P(he scores first | game) = exp(x·β) / Σ over the
+game; 2025-26's 1,311 games with 2024-25 as the prior, five-fold cross-validated by game; then the
+fitted coefficients applied as they stand to this season's 178 games). Beside the candidates, two
+hindsight reads give the ceiling: the skater ranked by his *actual* goals a game over the whole
+season, and by his actual first-period goals a game.
+
+**The first goal itself (2025-26).** 82% in the first period, 35% inside five minutes, 59% inside ten,
+median 8.0 minutes; 77% at even strength, 21% on the power play; the home side scores it 51.1% of the
+time and the side with the higher summed goal rate 52.4%, so which *team* scores first is close to a
+coin toss; the scorer was on the ice for the opening draw in 34% of games (28% of skaters are);
+defensemen score 14% of first goals and are 34% of the skaters.
+
+| 2025-26, per game | log loss | #1 scores first | first scorer in top 3 | in top 5 | #1 scores at all |
+|---|---|---|---|---|---|
+| random | 3.583 | 3.0% | 8.2% | 15.1% | 15.9% |
+| goal rate / Σ game, no fit | 3.580 | 6.0% | 18.1% | 30.2% | 35.5% |
+| shipped λG / Σ game, no fit | 3.386 | 6.6% | 19.9% | 30.4% | 38.7% |
+| the tab's score, normalised | 3.414 | 6.3% | 19.6% | 29.8% | 36.5% |
+| fitted: goal rate | 3.407 | 6.0% | 18.1% | 30.2% | 35.5% |
+| + shipped λG (the matchup) | 3.391 | 6.3% | 19.7% | 30.1% | 38.4% |
+| + first-period goals and shots | 3.393 | 6.2% | 19.5% | 29.6% | 38.2% |
+| + opening shift, first-10-minute ice | 3.393 | 5.8% | 19.3% | 29.8% | 36.8% |
+| + power-play goals | 3.392 | 5.7% | 18.8% | 30.6% | 36.0% |
+| + home, team share, opposing goalie | 3.394 | 5.8% | 19.1% | 30.2% | 35.9% |
+| + the tab's own record, leak, h2h | 3.396 | 6.1% | 19.2% | 29.8% | 35.5% |
+| **hindsight: his season goal rate** | 3.292 | 7.7% | 22.8% | 34.7% | 40.7% |
+| **hindsight: his season first-period goal rate** | 3.339 | 8.9% | 22.2% | 35.5% | 35.8% |
+
+**The ceiling is close.** Knowing every skater's true goal rate for the season would lift the #1 from
+6% to 7.7% and the top 5 from 30% to 35%: the pre-game read already has four fifths of what a rate can
+give, and the rest is the night's luck. Knowing who scores *early* is worth a little more (8.9%) but
+the pre-game first-period rate is too noisy to carry any of it.
+
+**Only the matchup survives.** In the full fit the shipped λG (the skater's blended goals, chances and
+shots with the opponent's goals allowed per skater at his position) is z = +5.4 and every other term is
+inside ±2: first-period goals +0.7 and shots -0.8, the opening shift +0.8, first-10-minute ice -0.1,
+power-play goals +1.8 (and nothing out of sample), home -0.3, the team's share of the two sides' goal
+rates -0.9, the opposing starter's save % +0.8, and the tab's own first-goal record 0.0, leak -0.2 and
+head to head +1.2. The log-loss gain over the goal rate is 0.016 for the λG and nothing after it. Out
+of sample on this season (178 games) the same: goal rate 7.9% / top 5 27%, with the λG 6.7% / 29%, the
+full model 6.7% / 29%, log loss 3.397 → 3.389 → 3.394; the hindsight ceiling 12.4%.
+
+**The number, not the ranking, is where the accuracy is.** The plain read λ / Σ over the game's skaters
+is on the line up to 8% (stated 6.9%, hit 6.9% on 3,385 rows) and overstates above it: the 8 to 10%
+bucket hit 5.0% (884 rows), the 10%+ bucket 5.7% (105); the fitted models put a coefficient of 0.75 to
+0.85 on the log rate, which flattens the top, and read on the line to 8%. No skater is a 10% first-goal
+shot before puck drop: the best candidate in a game is 6 to 8%, break-even +1,150 to +1,570. The tab's
+0 to 100 score reads like a confidence and is not one: a 75 is a 6% shot.
+
+**What the tab should do.** Rank by the model's 1+ goal odds alone (the rule above); show each
+candidate's first-goal chance as his λG^0.8 over the sum of λG^0.8 across both lineups (the game's
+36 skaters add to one), with the fair price, in place of the 0 to 100 score; keep the own record, leak
+and head-to-head columns as colour; and read the slate list by that probability, which makes a
+candidate in a low-scoring game comparable with one in a shootout (this season the slate top 10 by
+λ / Σ scored first 7.7% against 5.8% by raw λ; last season 6.0% both). What would move it beyond that
+is not in the stored data: the book's own first-goal prices as a reference, and the lineup and goalie
+as confirmed at puck drop (the tab already reads the beat writers' lines). A 2-point difference in
+hit rate at 6% needs about 500 games to show, so the tab's first-goal number should be judged over a
+season, never a week.
 
 ## 12. The model's own odds, graded (Oct 1-12, 2026)
 
