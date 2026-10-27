@@ -5,7 +5,7 @@ import { Headshot } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { Flags } from './flags';
 import { LEAGUE_POS } from '@/lib/nhl-data/picks-pure';
-import { NHL_BARS, READ_FROM, HEIGHTS, survivorsAt, fallenAt, curveOf } from '@/lib/nhl-data/shuffle-pure';
+import { NHL_BARS, READ_FROM, HEIGHTS, survivorsAt, fallenAt, curveOf, bestReadFrom, BEST_MIN } from '@/lib/nhl-data/shuffle-pure';
 
 // The NHL shuffle (the top of Best bets): a bar for shots and one for goals. Raise it and the field
 // falls away; what stays are the skaters whose chance of the bar holds over the floor, off the
@@ -39,6 +39,22 @@ function Curve({ curve, height, onPick }) {
   );
 }
 
+const cardCache = { promise: null };   // the scorecard's predictors, one read a page load
+const readLabel = (k) => READ_FROM.find(([key]) => key === k)?.[1] || k;
+
+/** What the History tab's scorecard says about the reads for the active bar, for the note under the tabs. */
+function readNote(card, best, market) {
+  const at = market === 'sog' ? '3+ SOG' : '1+ goal';
+  if (!card) return 'The History tab’s scorecard says which has predicted best.';
+  if (card.failed) return 'The scorecard could not be read; the History tab says which has predicted best.';
+  if (!best || best.best == null) return `The scorecard cannot rank them for ${at} yet: ${best?.n ?? 0} skater-games graded this season, it needs ${BEST_MIN}.`;
+  const b = best.scores[best.best]; const next = best.ranked[1]; const model = best.scores.model;
+  const beside = best.best === 'model'
+    ? (next ? `, next ${readLabel(next)} at ${best.scores[next].brier.toFixed(3)}` : '')
+    : (model ? `, against ${model.brier.toFixed(3)} for the board’s λ` : '');
+  return `The scorecard rates ${readLabel(best.best)} best for ${at} so far: Brier ${b.brier.toFixed(3)} over ${best.n} skater-games this season${beside} (lower is better; within .002 is a coin flip).`;
+}
+
 export default function ShufflePanel({ date }) {
   const open = usePlayerCard();
   const [opened, setOpened] = useState(true);
@@ -47,6 +63,7 @@ export default function ShufflePanel({ date }) {
   const [floors, setFloors] = useState(() => Object.fromEntries(NHL_BARS.map((b) => [b.market, b.floor])));
   const [from, setFrom] = useState('model');
   const [data, setData] = useState(null);
+  const [card, setCard] = useState(null);   // { predictors } from the History tab's scorecard, { failed } when it could not be read, null until read
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
@@ -61,7 +78,31 @@ export default function ShufflePanel({ date }) {
     } catch (e) { setErr(`Shuffle: ${e.message}`); }
     finally { setBusy(false); }
   }, []);
-  useEffect(() => { if (opened) load(date); }, [opened, date, load]);
+  // The slate's skaters once the panel is open (the async hop keeps the loader's busy flag out of the effect body).
+  useEffect(() => { if (opened) (async () => { await load(date); })(); }, [opened, date, load]);
+
+  // The History tab's scorecard, once a page load: which read has predicted each bar best so far.
+  useEffect(() => {
+    if (!opened) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!cardCache.promise) {
+          cardCache.promise = fetch('/api/nhl/data/scorecard', { cache: 'no-store' }).then(async (res) => {
+            const j = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(j.detail || j.error || `${res.status}`);
+            return j.predictors || null;
+          });
+        }
+        const predictors = await cardCache.promise;
+        if (!cancelled) setCard({ predictors });
+      } catch {
+        cardCache.promise = null;
+        if (!cancelled) setCard({ predictors: null, failed: true });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [opened]);
 
   const rows = useMemo(() => (data?.games || []).flatMap((g) => g.skaters.map((s) => ({ ...s, game: g.id, start: g.startTimeUTC, final: g.final }))), [data]);
   const bar = NHL_BARS.find((b) => b.market === active);
@@ -71,7 +112,8 @@ export default function ShufflePanel({ date }) {
   const fallen = useMemo(() => fallenAt(rows, active, height, floor, from), [rows, active, height, floor, from]);
   const curve = useMemo(() => curveOf(rows, active, floor, from), [rows, active, floor, from]);
   const countAt = (m) => { const h = Math.min(8, Math.max(1, bars[m])); return curveOf(rows, m, floors[m], from).find((c) => c.height === h)?.n ?? null; };
-  const fromLabel = READ_FROM.find(([k]) => k === from)?.[1] || from;
+  const fromLabel = readLabel(from);
+  const best = useMemo(() => (card?.predictors ? bestReadFrom(card.predictors, active) : null), [card, active]);
   const final = rows.some((r) => r.final);
   const statLabel = active === 'sog' ? 'shots' : 'goals';
 
@@ -93,9 +135,17 @@ export default function ShufflePanel({ date }) {
           <div className="nhlx-rk-toggle ir-sh-from">
             <small>Read from</small>
             <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="What the chance is read from">
-              {READ_FROM.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={from === k} className={`nhlx-tab${from === k ? ' is-active' : ''}`} onClick={() => setFrom(k)} title={k === 'model' ? (data?.source === 'study' ? 'No run saved for the date: the study’s read stands in' : 'The saved run’s λ, as the board reads it') : k === 'study' ? 'The study’s plain-rate read: his blended rates, home ice, back-to-back and the opponent at his position' : `His average over his ${l.toLowerCase()} stored games as the λ`}>{l}</button>)}
+              {READ_FROM.map(([k, l]) => {
+                const what = k === 'model' ? (data?.source === 'study' ? 'No run saved for the date: the study’s read stands in' : 'The saved run’s λ, as the board reads it') : k === 'study' ? 'The study’s plain-rate read: his blended rates, home ice, back-to-back and the opponent at his position' : `His average over his ${l.toLowerCase()} stored games as the λ`;
+                const sc = best?.scores?.[k];
+                return (
+                  <button key={k} type="button" role="tab" aria-selected={from === k} className={`nhlx-tab${from === k ? ' is-active' : ''}`} onClick={() => setFrom(k)} title={sc ? `${what} · scorecard, ${active === 'sog' ? '3+ SOG' : '1+ goal'}: Brier ${sc.brier.toFixed(3)} over ${sc.n} skater-games this season${best.best === k ? ' (the best so far)' : ''}` : what}>
+                    {l}{best?.best === k ? <i>best</i> : null}
+                  </button>
+                );
+              })}
             </div>
-            <span className="nhlx-rk-toggle-note">The λ each chance is read from. A window he does not have yet falls back to the board’s. The History tab’s scorecard says which has predicted best.</span>
+            <span className="nhlx-rk-toggle-note">The λ each chance is read from. A window he does not have yet falls back to the board’s. {readNote(card, best, active)}</span>
           </div>
           <div className="ir-sh-grid">
             <div className="ir-sh-bars">
