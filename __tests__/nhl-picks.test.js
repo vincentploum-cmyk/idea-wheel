@@ -8,17 +8,20 @@ describe('tonight’s picks', () => {
     expect(seasonYearOf('2026-10-08')).toBe(2026);
     expect(seasonYearOf('2027-04-01')).toBe(2026);
   });
-  test('rates blend this season into last season’s base by games played', () => {
+  test('rates are this season’s from his fifth game; last season’s regular season stands in until then', () => {
     const prev = Array.from({ length: 82 }, () => game(3));
     const cur = [game(5), game(6), game(4)];
+    // Three games this season on an 82-game base: last season's rate, held.
     const r = blendRates(cur, prev);
-    // w = 3 / 21 for shots: 5 * 3/21 + 3 * 18/21
-    expect(r.sog).toBeCloseTo(3.286, 2);
+    expect(r.sog).toBe(3); expect(r.held).toBe(true);
     expect(r.baseSog).toBe(3);
     expect(r.curSog).toBe(5);
-    // TOI blends at n / (n + 5); the last five games this season are the ice-time read.
+    // Five games this season: his own rate alone (Vincent's call, 2026-10-27), the base kept beside it for the record.
+    const five = blendRates([...cur, game(2), game(3)], prev);
+    expect(five.sog).toBe(4); expect(five.held).toBe(false); expect(five.baseSog).toBe(3); expect(five.base).toBe(82);
+    // TOI follows the same rule; the last five games this season are the ice-time read.
     const t = blendRates([game(3, 5, 0, 1, 20), game(3, 5, 0, 1, 22)], Array.from({ length: 82 }, () => game(3, 5, 0.3, 1.5, 15)));
-    expect(t.toi).toBeCloseTo((2 / 7) * 21 + (5 / 7) * 15, 3);
+    expect(t.toi).toBe(15);
     expect(t.toiL5).toBe(21);
     expect(blendRates([], Array.from({ length: 82 }, () => game(3, 5, 0.3, 1.5, 15))).toiL5).toBe(15);
     // No base and too few games this season: no rate. Five games this season stand alone.
@@ -58,6 +61,9 @@ describe('tonight’s picks', () => {
     const study = { lamS: 3.08, p3: 0.59, p4: 0.37, p1g: 0.4 };
     const row = fromModel({ sog: 4.1, g: 0.7, p2s: 0.93, p3s: 0.85, p4s: 0.78, p1g: 0.5 }, study);
     expect(row).toMatchObject({ lamS: 4.1, lamG: 0.7, p2: 0.93, p3: 0.85, p4: 0.78, p1g: 0.5, ladder: 'run', study: { p3: 0.59, p4: 0.37, p1g: 0.4 } });
+    // The run's matchup goal λ rides along for the shuffle and the scorecard; null when the run lacks it.
+    expect(row.lamGOpp).toBeNull();
+    expect(fromModel({ sog: 4.1, g: 0.7, gOpp: 0.8124 }).lamGOpp).toBe(0.812);   // three decimals, like the λ
     // The run carries no 2+: it comes off the λ and never sits below the run's 3+.
     const noP2 = fromModel({ sog: 4.1, g: 0.7, p3s: 0.85, p4s: 0.78, p1g: 0.5 });
     expect(noP2).toMatchObject({ p3: 0.85, p4: 0.78, ladder: 'run' });
@@ -96,7 +102,7 @@ describe('tonight’s picks', () => {
     expect(a.league).toBe(27.25);
     expect(a.teamCount).toBe(2);
   });
-  test('what each team allows per skater at a position, this season blended into last season’s, with ranks', () => {
+  test('what each team allows per skater at a position, this season’s table, with ranks', () => {
     const row = (opp, pos, sog, g, gameId) => ({ opp, pos, sog, g, gameId });
     // This season: BUF has given C skaters 2.5 shots a game over two games, CAR 1.0 over one.
     const cur = [row('BUF', 'C', 3, 1, 1), row('BUF', 'C', 2, 0, 1), row('BUF', 'C', 3, 0, 2), row('BUF', 'C', 2, 0, 2), row('CAR', 'C', 1, 0, 3), row('CAR', 'C', 1, 0, 3), row('BUF', 'D', 1, 0, 1)];
@@ -104,21 +110,22 @@ describe('tonight’s picks', () => {
     const prev = [];
     for (let i = 0; i < 20; i++) { prev.push(row('BUF', 'C', 1.5, 0.2, 100 + i), row('CAR', 'C', 2, 0.3, 200 + i), row('TOR', 'C', 1.7, 0.25, 300 + i)); }
     const a = positionAllowed(cur, prev);
-    // BUF C: 2 games → w = 2 / 17: 2.5 * 2/17 + 1.5 * 15/17
-    expect(a.read('BUF', 'C').sog).toBeCloseTo(2.5 * (2 / 17) + 1.5 * (15 / 17), 2);
-    expect(a.read('BUF', 'C').g).toBeCloseTo(0.25 * (2 / 42) + 0.2 * (40 / 42), 3);
-    expect(a.read('BUF', 'C')).toMatchObject({ games: 2, prevGames: 20, curSog: 2.5, prevSog: 1.5 });
-    expect(a.read('CAR', 'C').sog).toBeCloseTo(1 * (1 / 16) + 2 * (15 / 16), 2);
-    // TOR: last season only; BUF D: this season only (no 10-game base last season).
-    expect(a.read('TOR', 'C')).toMatchObject({ games: 0, sog: 1.7, prevSog: 1.7 });
-    expect(a.read('BUF', 'D')).toMatchObject({ games: 1, sog: 1, prevSog: null });
+    // This season's table alone (Vincent's call, 2026-10-27): BUF C 2.5 over two games, last season's 1.5 kept beside it for the record.
+    expect(a.read('BUF', 'C').sog).toBe(2.5);
+    expect(a.read('BUF', 'C').g).toBe(0.25);
+    expect(a.read('BUF', 'C')).toMatchObject({ games: 2, prevGames: 20, curSog: 2.5, prevSog: 1.5, held: false });
+    expect(a.read('CAR', 'C').sog).toBe(1);
+    // TOR: no game yet this season, last season's regular season stands in (held); BUF D: this season only (no 10-game base last season).
+    expect(a.read('TOR', 'C')).toMatchObject({ games: 0, sog: 1.7, prevSog: 1.7, held: true });
+    expect(a.read('BUF', 'D')).toMatchObject({ games: 1, sog: 1, prevSog: null, held: false });
     expect(a.read('BUF', 'LW')).toBeNull();
     expect(a.read('NYR', 'C')).toBeNull();
-    // Ranks: 1 = allows the most to the position. CAR 1.94 > BUF 1.62 > ... TOR 1.7 sits between.
-    expect(a.read('CAR', 'C').rankSog).toBe(1);
+    // Ranks: 1 = allows the most to the position. BUF 2.5 > TOR 1.7 (held) > CAR 1.0.
+    expect(a.read('BUF', 'C').rankSog).toBe(1);
     expect(a.read('TOR', 'C').rankSog).toBe(2);
-    expect(a.read('BUF', 'C').rankSog).toBe(3);
-    expect(a.read('CAR', 'C').rankG).toBe(1);
+    expect(a.read('CAR', 'C').rankSog).toBe(3);
+    expect(a.read('BUF', 'C').rankG).toBe(1);
+    expect(a.read('CAR', 'C').rankG).toBe(3);
     expect(a.teamCount).toBe(3);
   });
   test('a team is on a back-to-back when its last stored game was the day before', () => {
@@ -213,6 +220,7 @@ describe('picks: blending the model with the study', () => {
     expect(b.p2).toBeGreaterThanOrEqual(b.p3); expect(b.p3).toBeGreaterThanOrEqual(b.p4);
     expect(b.model).toMatchObject({ lamS: 3, p3: 0.6 }); expect(b.study).toMatchObject({ lamS: 2, p3: 0.32 });
     expect(blendProjection(model, study, 1).lamS).toBe(2); expect(blendProjection(model, study, 2).lamS).toBe(2);
+    expect(blendProjection(fromModel({ sog: 3.0, g: 0.4, gOpp: 0.5 }), study, 0.5).lamGOpp).toBe(0.5);   // the matchup λ rides through the blend untouched
   });
   test('off without a weight, a study read or a model row', () => {
     expect(blendProjection(model, study, 0)).toBe(model);
@@ -225,12 +233,15 @@ describe('picks: form flags and the soft third', () => {
   const g = (sog, goals) => ({ sog, g: goals, icf: sog + 2, iscf: 1, toi: 18 });
   test('shots: hot at 1.4x his rate over the last five, cold at 0.7x, five games needed', () => {
     const prev = Array.from({ length: 20 }, () => g(2, 0));
-    const rates = blendRates([g(3, 0), g(4, 0), g(3, 0), g(3, 0), g(4, 0)], prev);
-    const f = formOf([g(3, 0), g(4, 0), g(3, 0), g(3, 0), g(4, 0)], prev, rates);
+    // His rate is this season's: five quiet games at one shot, then 3 / 4 / 3 / 3 / 4 (rate 2.2, last five 3.4).
+    const quiet = Array.from({ length: 5 }, () => g(1, 0)); const burst = [g(3, 0), g(4, 0), g(3, 0), g(3, 0), g(4, 0)];
+    const rates = blendRates([...quiet, ...burst], prev);
+    const f = formOf([...quiet, ...burst], prev, rates);
     expect(f.sogL5).toBe(3.4); expect(f.sogRatio).toBeGreaterThanOrEqual(FORM.hotShots); expect(f.hotS).toBe(true); expect(f.coldS).toBe(false);
-    const cold = formOf([g(1, 0), g(0, 0), g(1, 0), g(1, 0), g(0, 0)], prev, blendRates([g(1, 0), g(0, 0), g(1, 0), g(1, 0), g(0, 0)], prev));
+    const busy = Array.from({ length: 5 }, () => g(3, 0)); const dip = [g(1, 0), g(0, 0), g(1, 0), g(1, 0), g(0, 0)];
+    const cold = formOf([...busy, ...dip], prev, blendRates([...busy, ...dip], prev));
     expect(cold.coldS).toBe(true); expect(cold.hotS).toBe(false);
-    // the last five run across the season boundary
+    // the last five run across the season boundary; under five games this season his rate is last season's
     const early = formOf([g(5, 0)], prev, blendRates([g(5, 0)], prev));
     expect(early.games).toBe(5); expect(early.sogL5).toBe((2 * 4 + 5) / 5);
     expect(formOf([], [], rates)).toBeNull();
@@ -240,12 +251,14 @@ describe('picks: form flags and the soft third', () => {
     const prev = Array.from({ length: 20 }, () => g(2, 0.3));
     const hot = formOf([g(2, 1), g(3, 0), g(2, 2), g(1, 0), g(2, 1)], prev, blendRates([g(2, 1), g(3, 0), g(2, 2), g(1, 0), g(2, 1)], prev));
     expect(hot.gL5).toBe(4); expect(hot.hotG).toBe(true); expect(hot.coldG).toBe(false);
-    const dry = Array.from({ length: 10 }, () => g(2, 0));
+    // Three goals in his first five, then ten dry: his rate (0.2 a game) owed him two.
+    const dry = [g(2, 1), g(2, 1), g(2, 1), g(2, 0), g(2, 0), ...Array.from({ length: 10 }, () => g(2, 0))];
     const cold = formOf(dry, prev, blendRates(dry, prev));
     expect(cold.gL10).toBe(0); expect(cold.coldG).toBe(true); expect(cold.hotG).toBe(false);
     // a 0.07-a-game defenseman is never cold
     const dprev = Array.from({ length: 20 }, () => g(1, 0.07));
-    expect(formOf(dry, dprev, blendRates(dry, dprev)).coldG).toBe(false);
+    const ddry = [g(1, 1), ...Array.from({ length: 14 }, () => g(1, 0))];   // one goal in fifteen: 0.07 a game
+    expect(formOf(ddry, dprev, blendRates(ddry, dprev)).coldG).toBe(false);
   });
   test('the soft third of a ranked table', () => {
     expect(isSoftThird(1, 32)).toBe(true); expect(isSoftThird(11, 32)).toBe(true); expect(isSoftThird(12, 32)).toBe(false);

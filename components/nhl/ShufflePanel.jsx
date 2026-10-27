@@ -168,7 +168,7 @@ export default function ShufflePanel() {
             <small>Read from</small>
             <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="What the chance is read from">
               {READ_FROM.map(([k, l]) => {
-                const what = k === 'model' ? modelTitle : k === 'study' ? 'The study’s plain-rate read: his blended rates, home ice, back-to-back and the opponent at his position' : `His average over his ${l.toLowerCase()} stored games as the λ`;
+                const what = k === 'model' ? modelTitle : k === 'modelOpp' ? 'The run’s goal λ with the opponent in it: his goal rate × what the opponent gives up at his position, his last five, his line and the pace, before the points step the board’s goal figure is read off. Shots stay on the board’s λ.' : k === 'study' ? 'The study’s plain-rate read: his blended rates, home ice, back-to-back and the opponent at his position' : `His average over his ${l.toLowerCase()} stored games as the λ`;
                 const sc = best?.scores?.[k];
                 return (
                   <button key={k} type="button" role="tab" aria-selected={from === k} className={`nhlx-tab${from === k ? ' is-active' : ''}${best?.best === k ? ' is-best' : ''}`} onClick={() => setPicked(k)} title={sc ? `${what} · scorecard, ${active === 'sog' ? '3+ SOG' : '1+ goal'}: Brier ${sc.brier.toFixed(3)} over ${sc.n} skater-games this season${best.best === k ? ' (the best so far: the panel opens on it)' : ''}` : what}>

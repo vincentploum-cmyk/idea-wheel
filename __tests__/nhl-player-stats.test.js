@@ -23,18 +23,25 @@ describe('the home / away workbook the auto run builds', () => {
     const games = [];
     // A depth defenseman: 0.2 shots a game, nothing in his last five away games.
     const smits = { id: 1, name: 'Alberts Smits', team: 'NYR', pos: 'D' };
-    const dates = ['2026-09-29', '2026-10-01', '2026-10-03', '2026-10-05', '2026-10-07', '2026-10-08'];
+    const dates = ['2026-09-29', '2026-10-01', '2026-10-03', '2026-10-05', '2026-10-07', '2026-10-08', '2026-10-10', '2026-10-12', '2026-10-14', '2026-10-16'];
     dates.forEach((date, i) => games.push(row({ date, gameId: 100 + i, ...smits, opp: 'PHI', venue: i % 2 ? 'H' : 'A', toi: 14, g: 0, a: 0, sog: i === 1 ? 1 : 0, icf: 1, iff: 1, iscf: 0 })));
     // A top winger: 3.5 shots at home, 2.5 away, 0.5 goals a game.
     const star = { id: 2, name: 'Artemi Panarin', team: 'NYR', pos: 'LW' };
     dates.forEach((date, i) => games.push(row({ date, gameId: 100 + i, ...star, opp: 'PHI', venue: i % 2 ? 'H' : 'A', toi: 20, g: i % 2 ? 1 : 0, a: 1, sog: i % 2 ? 3.5 : 2.5, icf: 6, iff: 5, iscf: 2 })));
+    // A star with 82 games last season and four this season: not in the file (the model reads his season row);
+    // last season's games never make the split (Vincent's call, 2026-10-27).
+    const kap = { id: 3, name: 'Kirill Kaprizov', team: 'MIN', pos: 'LW' };
+    const lastSeason = Array.from({ length: 82 }, (_, i) => row({ date: `2026-0${1 + (i % 3)}-${String(1 + (i % 28)).padStart(2, '0')}`, gameId: 2025020100 + i, ...kap, opp: 'CHI', venue: i % 2 ? 'H' : 'A', toi: 21, g: 1, a: 1, sog: 5, icf: 8, iff: 7, iscf: 3 }));
+    dates.slice(0, 4).forEach((date, i) => games.push(row({ date, gameId: 200 + i, ...kap, opp: 'CHI', venue: i % 2 ? 'H' : 'A', toi: 21, g: 1, a: 0, sog: 4, icf: 7, iff: 6, iscf: 3 })));
     mockStored.set(rowsPath('20262027'), { updatedAt: 'x', rows: games });
-    mockStored.set(PLAYERS_PATH, { players: { 1: { ...smits }, 2: { ...star } } });
+    mockStored.set(rowsPath('20252026'), { updatedAt: 'y', rows: lastSeason });
+    mockStored.set(PLAYERS_PATH, { players: { 1: { ...smits }, 2: { ...star }, 3: { ...kap } } });
 
-    const built = await buildPlayerStats('2026-10-09');
+    const built = await buildPlayerStats('2026-10-17');
     expect(built.players).toBe(2);
     const parsed = parsePlayerHomeAway(toBuffer(built.wb).toString('binary'));
 
+    expect(parsed['kirill kaprizov']).toBeUndefined();
     const p = parsed['artemi panarin'];
     expect(p.team).toBe('Rangers');
     expect(p.pos).toBe('LW');
@@ -55,7 +62,7 @@ describe('the home / away workbook the auto run builds', () => {
     // The depth defenseman keeps his own tiny base (his one shot came at home): the away base is
     // zero, not his games-played count, and nothing reads shots as goals.
     const d = parsed['alberts smits'];
-    expect(d.base_shots_home).toBeCloseTo(0.33, 2);
+    expect(d.base_shots_home).toBeCloseTo(0.2, 2);
     expect(d.base_shots_away).toBe(0);
     expect(d.base_plus_form_away).toBe(0);
     expect(d.sog_l5_away).toBe(0);

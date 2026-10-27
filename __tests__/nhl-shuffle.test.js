@@ -14,7 +14,7 @@ describe('the NHL shuffle', () => {
     expect(NHL_BARS.map((b) => [b.market, b.start, b.floor])).toEqual([['sog', 3, 0.5], ['g', 1, 0.35]]);
     expect(heightsOf(NHL_BARS[0])).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     expect(HEIGHTS.g).toEqual([1, 2, 3, 4]);
-    expect(READ_FROM.map(([k]) => k)).toEqual(['model', 'study', 'l5', 'l10', 'season']);
+    expect(READ_FROM.map(([k]) => k)).toEqual(['model', 'modelOpp', 'study', 'l5', 'l10', 'season']);
   });
   test('his own windows and how often he reached each height', () => {
     const own = ownOf(cur, prev);
@@ -50,6 +50,16 @@ describe('the NHL shuffle', () => {
     expect(lambdaOf(young, 'sog', 'season')).toBeNull();
     expect(chanceAt(young, 'sog', 3, 'season')).toBeCloseTo(poissonAtLeast(4.2, 3), 3);
     expect(readAt(young, 'sog', 3, 'season')).toMatchObject({ from: 'model', fellBack: true });
+    // The run's matchup goal λ reads the goals bar; the shots bar stays on the board's λ.
+    const opp = skaterRow({ ...cand, lamGOpp: 0.48 }, { cur, prev });
+    expect(opp.lamGOpp).toBe(0.48);
+    expect(lambdaOf(opp, 'g', 'modelOpp')).toBe(0.48);
+    expect(lambdaOf(opp, 'sog', 'modelOpp')).toBeNull();
+    expect(readAt(opp, 'g', 1, 'modelOpp')).toMatchObject({ lambda: 0.48, from: 'modelOpp', fellBack: false });
+    expect(readAt(opp, 'g', 1, 'modelOpp').p).toBeCloseTo(1 - Math.exp(-0.48), 3);
+    expect(readAt(opp, 'sog', 3, 'modelOpp')).toMatchObject({ lambda: 4.2, from: 'model', fellBack: true });
+    expect(skaterRow(cand).lamGOpp).toBeNull();
+    expect(readAt(skaterRow(cand), 'g', 1, 'modelOpp')).toMatchObject({ lambda: 0.55, from: 'model', fellBack: true });
   });
   test('the read at a height: chance, break-even, how often he reached it, the grade', () => {
     const r = skaterRow({ ...cand, actual: { sog: 5, g: 1 } }, { study: { lamS: 3.9, lamG: 0.41 }, cur, prev });
@@ -91,7 +101,7 @@ describe('which read the scorecard rates best', () => {
   const { bestReadFrom, READ_FROM_PREDICTOR } = require('../lib/nhl-data/shuffle-pure');
   const report = (briers, n) => ({ common: { n, predictors: Object.entries(briers).map(([key, brier]) => ({ key, brier, n: brier == null ? 0 : n })) } });
   test('every read is a scorecard predictor', () => {
-    expect(READ_FROM.map(([k]) => READ_FROM_PREDICTOR[k])).toEqual(['model', 'study', 'own5', 'own10', 'ownSeason']);
+    expect(READ_FROM.map(([k]) => READ_FROM_PREDICTOR[k])).toEqual(['model', 'modelOpp', 'study', 'own5', 'own10', 'ownSeason']);
   });
   test('the lowest Brier at the bar’s floor wins once enough skater-games are in; each bar has its own verdict', () => {
     const predictors = {
