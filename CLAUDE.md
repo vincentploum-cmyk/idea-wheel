@@ -118,6 +118,28 @@ config and keeps its own markets, teams, feeds and slate key:
   `fieldsSeen.unread`, shown under Data sources after the first pull. Fix the spellings there
   once a real pull shows them; never guess silently. `defenseAllowed` per position (the
   positions the Opponent rows carry), ranks 1 = most allowed.
+- `injuries.js`: PropFinder's injury report and the without-teammate ("w/o") splits, pulled live with
+  the slate, never from a file. The report is `injuryReport` on the games payload the site's own
+  pages load (`GET /<LEAGUE>/v2?sportsbooks=…`, read from the bundle 2026-10-27: a JSON string whose
+  `data` lists { team: { id }, player: { id, name, position }, status, type }; the per-team
+  `/injuries/<league>/<teamId>` route is the fallback), statuses read into one spelling (`statusOf`),
+  `isOut` = Out / Doubtful / IR / LTIR / Suspended / PUP / NFI. `fetchInjuries` in `propfinder.js`
+  stores it with the pull as `data.injuries.rows`, `applyInjuries` puts `injury` / `injuryDetail` on
+  every player (the report, then the depth chart's espn flag), and the players out whom the odds-only
+  call left out are read one by one (`/<LEAGUE>/player/<id>`, `readFor: 'injury'`, `MAX_ABSENT_READS`)
+  so their logs say which games they took part in: every game row carries `gameId`, `gamesPlayed` is a
+  teammate's rows with minutes, `keyAbsences` the out teammates who took part in ≥ 40% (and 5) of a
+  player's logged games, `withoutGames` his games without them, `withoutOf` the split (≥ `WITHOUT_MIN`
+  = 3 games, and not every game). On the board (`board.js`) a player out keeps his chip, muted, and
+  loses his table rows (`out`, the game's `out` count); for everyone else the season hit rate behind
+  the chance, the season average behind the projection and each ladder rung's season rate move toward
+  the split at n / (n + `WITHOUT_K` = 8) (`blendWithout`; `without` on the play and the side's player:
+  names, n, weight, rate, avg, seasonAll; `own[stat].all` / `.without` / `.n` on the side, so the
+  team-total scale sums the blended rates). The notes name who is out and the reads moved; the card's
+  "w/o X" tile draws the split (`without.gameIds` from `/api/<sport>/player`); the pull's `injuries`
+  meta (source, counts, the players read one by one, errors) shows under Data sources. No live pull
+  had been seen when this was written: an empty report there means the route or the field names
+  differ — `fieldsSeen.sample.injury` and `sample.gamesPayload` show what came back.
 - `store.js` (`makeStore`): `<sport>/<slate>/{schedule,sheets-index,propfinder}.json`,
   `sheets/<id>.json`, `results/<gameId>.json`, `<sport>/meta/*`; the schedule re-fetched when
   stale (6 h, 10 min while a game is on) with the finished games' box scores; a sheet with a
@@ -513,6 +535,11 @@ config and keeps its own markets, teams, feeds and slate key:
   hourly lineup reads pull when the slate's files are still missing): skater and team tables into
   `data/propfinder/*` and the season + L5 matchup workbooks through `ingestMatchupFile`, in the
   exports' exact layouts, then the auto run. Admin button and `POST /api/nhl/data/propfinder/pull`.
+  The pull also reads the injury report live (`fetchInjuryReport`, `/NHL/v2`, parsed by
+  `lib/picks/injuries.js`, stored at `data/propfinder/injuries.json`, `injuries` in the pull meta): the
+  slate's skaters carry `injury` / `injuryDetail` (the rink chip's title) and `depthChartLines` leaves
+  the players out off the fallback lineup; the beat writers' and NHL.com lineups are untouched, and
+  nothing in the model's math reads it.
   Keep producing the CSV/workbook shapes the parsers already read; never adapt the parsers to the API.
   The season workbook's numbers are blended, not raw (the predictor study's shrinkage, `docs/shots-goals-predictors.md`
   sections 3 and 9): each skater's "Season" row is this season's regular-season games blended with last season's at
