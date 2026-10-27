@@ -48,6 +48,9 @@ describe('the NBA shuffle', () => {
     const brown = sh.players[0];
     expect(brown).toMatchObject({ team: 'BOS', opp: 'NY', venue: 'A', pos: 'SF', spot: { pos: 'SF', rank: 1, value: 24, count: 2 }, main: { line: 25.5, odds: -110 } });
     expect(brown.env).toBeCloseTo(1.055, 3);   // NY gives up 24 to SFs against a league of 22, damped
+    expect(brown.matchup).toBeCloseTo(1.055, 3);   // the matchup alone; no team totals in this pull, so no side factor
+    expect(brown.teamFactor).toBeNull();
+    expect(brown.spot.league).toBe(22);
     expect(brown.at).toHaveLength(sh.heights.length);
     expect(brown.at.every((r) => r && r.p >= 0 && r.p <= 1)).toBe(true);
     expect(brown).toMatchObject({ n: 20, l10N: 10 });
@@ -100,6 +103,23 @@ describe('the NBA shuffle', () => {
     expect(returnOf(readAt(brown, s.heights, 32))).toBe(-1);               // o31.5 at +300, missed
     expect(s.players.find((p) => p.player === 'Sam Hauser').actual).toBeNull();
   });
+  test('the matchup column keeps the opponent’s factor apart from the side’s', () => {
+    // BOS scores 110 a game against NY's 120 allowed (league 115): 112.9 expected; Brown and Hauser at
+    // 36 + 24 minutes = 25% of the game, too few to scale → the matchup is the whole environment; at
+    // 36 + 180 = 90% the side's factor is 112.9 × 0.9 over their 34, capped at 1.5, and rides beside it.
+    const totals = { BOS: { for: { gp: 82, pts: 110, reb: 44, ast: 26 }, against: { gp: 82, pts: 112 } }, NY: { for: { gp: 82, pts: 115 }, against: { gp: 82, pts: 120 } } };
+    const withMin = (mins) => ({ ...pf, data: { ...pf.data, players: pf.data.players.map((p, i) => ({ ...p, games: p.games.map((g) => ({ ...g, min: mins[i] })) })), defense: { ...defense, totals, leagueFor: { pts: 115, reb: 44, ast: 26 } } } });
+    const few = nbaShuffle({ market: 'pts', board: nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 24]), results: {} }), pf: withMin([36, 24]), season: 2026 }).players.find((p) => p.player === 'Jaylen Brown');
+    expect(few.matchup).toBeCloseTo(1.055, 3);
+    expect(few.teamFactor).toBeNull();
+    expect(few.env).toBeCloseTo(1.055, 3);
+    const most = nbaShuffle({ market: 'pts', board: nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 180]), results: {} }), pf: withMin([36, 180]), season: 2026 }).players.find((p) => p.player === 'Jaylen Brown');
+    expect(most.matchup).toBeCloseTo(1.055, 3);
+    expect(most.teamFactor).toBe(1.5);
+    expect(most.env).toBeCloseTo(1.055 * 1.5, 2);
+    expect(most.exp).toBeCloseTo(26 * most.env, 0);
+    expect(most.own.blend).toBe(26);
+  });
   test('a market without a bar, or a yes-no market, reads as nothing', () => {
     expect(nbaShuffle({ market: 'dd', board, pf, season: 2026 })).toBeNull();
     expect(nbaShuffle({ market: 'stl', board, pf, season: 2026 })).toBeNull();
@@ -119,6 +139,17 @@ describe('NFL ladders by configuration', () => {
     expect(NFL_MARKETS.receptions.step).toBe(1);
     expect(NFL_LADDERS).toEqual(expect.arrayContaining(['pass_yds', 'rush_yds', 'rec_yds', 'receptions']));
     expect(NFL_BARS.map((m) => m.market)).toEqual(expect.arrayContaining(['rec_yds', 'rush_yds', 'pass_yds', 'receptions']));
+  });
+  test('without a coverage measure the team’s total is a ceiling on the side, never a floor', () => {
+    // PHI throws for 300 a game against DAL's 250 allowed (league 240): 307.5 expected over Brown's 90 alone
+    // would be ×1.5 at the cap; the NFL pull carries no minutes, so the side scales down only: ×1 here.
+    const t = { ...pf(null), data: { ...pf(null).data, defense: { ...defense, totals: { PHI: { for: { gp: 8, recYds: 300 } }, DAL: { against: { gp: 8, recYds: 250 } } }, leagueFor: { recYds: 240 } } } };
+    const side = nflBoard({ season: 2026, week: 9, games, sheets: [], pf: t, results: {} }).games[0].sides.PHI;
+    expect(side.share).toBeNull();
+    expect(side.teamProj.recYds).toBeCloseTo(307.5, 1);
+    expect(side.scale.recYds).toBe(1);
+    const crowd = { ...t, data: { ...t.data, players: [...t.data.players, { id: 'p2', name: 'DeVonta Smith', key: 'devonta smith', team: 'PHI', pos: 'WR', games: rec.map((g) => ({ ...g, recYds: 300 })), props: [] }] } };
+    expect(nflBoard({ season: 2026, week: 9, games, sheets: [], pf: crowd, results: {} }).games[0].sides.PHI.scale.recYds).toBeCloseTo(307.5 / 390, 3);
   });
   test('a receiver’s ladder and range read against the WR row, the slot row when PropFinder lists it', () => {
     const b = nflBoard({ season: 2026, week: 9, games, sheets: [], pf: pf(null), results: {} });

@@ -84,7 +84,9 @@ config and keeps its own markets, teams, feeds and slate key:
   the card): the bars with the count of survivors at the floor ("keep players at 35% or better"), the curve of
   survivors per height, the survivors at the bar sorted by edge (the chance there with its fair price, how often he
   cleared it, the book's rung at the bar or the nearest above it with its price and edge, where he thins out, Got once
-  final) and the fallen strip. **Read from** (`READ_FROM`): the board's blend (default), last 5 / last 10 / season (his
+  final) and the fallen strip. The Matchup cell carries the opponent's rank at his spot with its factor on his rate
+  (`matchup`) and, apart from it, his side's factor (`teamFactor`, "team × 1.12"); `env` on the row is their product,
+  the multiplier in his projection. **Read from** (`READ_FROM`): the board's blend (default), last 5 / last 10 / season (his
   window × the matchup as the centre of his distribution) or the book's line; only the model half of the chance moves,
   the hit-rate half stays. The panel reads the season's scorecard once per sport and season (`bestReadFrom`: each read's
   over-the-line Brier — the `× matchup` predictors, the projection, the line — pooled over the bars' markets, 100 plays at
@@ -246,10 +248,16 @@ config and keeps its own markets, teams, feeds and slate key:
   projections add up to the team's expected total tonight**: the pull keeps every team's own per-game row
   (type Team, All) and what it gives up in all (`defense.totals[ABBR].for / .against`, `leagueFor`, the
   same held / blend rule); `sidesOf` reads the team's expected figure per stat (its own × the opponent's
-  all-positions environment, damped) over the sum of its active players' own rates (the injured out left
-  aside) as `scale[stat]` (0.5–1.5; the combos on their parts), on the side with `teamProj` and on every
-  player; `projectFor(own, allowed, pos, stat, scale)` multiplies it in and the ladder's `env` carries it, so
-  a roster of last season's shares on other teams no longer adds up to 150 points), the PropFinder players without a play too, and
+  all-positions environment, damped), **pro-rated to the share of the game its priced, active players account
+  for** (`coverage` in `lib/nba/picks.js`: their own minutes over the 240 a team plays, `share` / `minutes` on the
+  side; the pull is odds-only, so the bench is never in it and the priced players' rates never add up to the whole
+  team — read as the whole team the total put ×1.4–1.5 on every projection of a thinly priced side, Cunningham at
+  34 points against the #29 PG defense on 2026-10-27), over the sum of their own rates (the injured out left
+  aside) as `scale[stat]` (0.5–1.5; the combos on their parts; no scale under half the minutes, the priced few
+  being the stars; a sport without a coverage measure, or logs without minutes, scales down only, cap 1), on the
+  side with `teamProj` and on every player; `projectFor(own, allowed, pos, stat, scale)` multiplies it in and the
+  ladder's `env` carries it, so a roster of last season's shares on other teams no longer adds up to 150 points),
+  the PropFinder players without a play too, and
   `allowed` = the opponent's rows with ranks, `league`, and `windows`, every cell carrying the cheat
   sheet's tile for it as `sheet` when the sheet has one (`sheetCheck` in the court: the hover on a zone
   foot or a table cell names the tile's rank and whether it reads the same third as PropFinder — nothing

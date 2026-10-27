@@ -338,6 +338,30 @@ describe('NBA ladders', () => {
     expect(sc.players[0].scale.pts).toBe(sc.scale.pts);
     expect(sc.players[0].ladders.pts[0].env).toBeCloseTo(sc.scale.pts, 2);   // no position table: the scale alone centres the ladder
     expect(sc.players[0].ladders.pts[0].proj).toBeCloseTo(26 * sc.scale.pts, 0);
+    expect(sc.share).toBeNull();   // no minutes in these logs: no measure of the roster the pull covers
+    // The pull is odds-only, so the priced players' rates never add up to the whole team: the total is
+    // pro-rated to the share of the minutes they play (their own minutes over 240). Brown 36 and White
+    // 144 a game = 75% of the minutes → 112.9 × 0.75 over their 130.
+    const withMin = (mins) => ({ ...two, data: { ...two.data, players: two.data.players.map((p, i) => ({ ...p, games: p.games.map((g) => ({ ...g, min: mins[i] })) })) } });
+    const cov = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 144]), results: {} }).games[0].sides.BOS;
+    expect(cov.minutes).toBe(180);
+    expect(cov.share).toBe(0.75);
+    expect(cov.teamProj.pts).toBeCloseTo(112.9, 1);
+    expect(cov.scale.pts).toBeCloseTo((112.9 * 0.75) / 130, 3);
+    expect(cov.players[0].ladders.pts[0].env).toBeCloseTo(cov.scale.pts, 2);
+    // Without the share a thinly priced side inflated: White at 40 a game puts the two at 66 against a
+    // 112.9 total, ×1.5 at the old cap; pro-rated to their minutes it is ×1.28, and with no minutes at
+    // all the total is a ceiling on their shares, never a floor (×1).
+    const thinPts = { ...two, data: { ...two.data, players: two.data.players.map((p) => (p.key === 'derrick white' ? { ...p, games: p.games.map((g) => ({ ...g, pts: 40 })) } : p)) } };
+    expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: thinPts, results: {} }).games[0].sides.BOS.scale.pts).toBe(1);
+    const thinMin = { ...thinPts, data: { ...thinPts.data, players: thinPts.data.players.map((p, i) => ({ ...p, games: p.games.map((g) => ({ ...g, min: [36, 144][i] })) })) } };
+    expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: thinMin, results: {} }).games[0].sides.BOS.scale.pts).toBeCloseTo((112.9 * 0.75) / 66, 3);
+    // Under half the minutes the priced few are the stars, whose share the minutes understate: no scale, the total still named.
+    const few = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 24]), results: {} }).games[0].sides.BOS;
+    expect(few.share).toBe(0.25);
+    expect(few.scale).toEqual({});
+    expect(few.teamProj.pts).toBeCloseTo(112.9, 1);
+    expect(few.players[0].ladders.pts[0].env).toBeNull();
     // With a PropFinder table in, the cheat sheet's tiles ride on every cell as `sheet` beside PropFinder's rank.
     const defense = { teams: { NY: { SF: { gp: 0, pts: 24, reb: 6 } }, BOS: { SF: { gp: 0, pts: 20, reb: 7 } } }, ranks: { NY: { SF: { pts: 1, reb: 2 } }, BOS: { SF: { pts: 2, reb: 1 } } }, count: 2, league: { SF: { pts: 22, reb: 6.5 } }, windows: {} };
     const sheets = [{ id: 's', fileName: 'nba_20261021.pdf', rows: [], meta: { oppRanks: { BOS: { SF: { pts: 3, reb: 28 } } } } }];   // BOS's opponent (NY) gives up the 3rd most points to SFs, the 28th most rebounds
