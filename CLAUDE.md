@@ -158,11 +158,16 @@ config and keeps its own markets, teams, feeds and slate key:
   vacated lifts, nothing is drawn; `injurySplits` in `injuries.js` (the page's table from the logs: every
   teammate in the games the out players sat, the combination and each alone) stays as a tested helper
   for the model's use, off the board's payload. Keep new reads in the numbers, not in new panels. On the board (`board.js`) a player out keeps his chip, muted, and
-  loses his table rows (`out`, the game's `out` count); for everyone else the season hit rate behind
-  the chance, the season average behind the projection and each ladder rung's season rate move toward
-  the split at n / (n + `WITHOUT_K` = 8) (`blendWithout`; `without` on the play and the side's player:
-  names, n, weight, rate, avg, seasonAll; `own[stat].all` / `.without` / `.n` on the side, so the
-  team-total ceiling sums the blended rates). **The production an out player leaves goes to his active
+  loses his table rows (`out`, the game's `out` count); for everyone else **the split drives the read**
+  (Vincent, 2026-10-27, "you should use the data on the injury split tab for our predictions": until then
+  it moved the season window alone at n / (n + 8), a +8 split moving a projection a point): `ownRate`
+  (`lib/picks/projection.js`, where `WITHOUT_K` = 4 and `withoutWeight` live, the client-safe module
+  `injuries.js` re-exports them from) moves his whole rate — the season blended with his last ten, or the
+  volume read — toward his average in the games without the teammates out tonight (`own[stat].without`
+  over `.n` games, `.all` the plain season) at n / (n + 4): one game a fifth of the way, two a third, four
+  halfway, eight two thirds; the ladder's rungs move the whole empirical hit rate the same way and the
+  play's chance every window (`blendWithout`); `without` on the play and the side's player carries names,
+  n, weight, rate, avg, seasonAll. **The production an out player leaves goes to his active
   teammates** (`vacatedLifts` in `injuries.js`, 2026-10-27, Vincent: a point guard out, his assists must
   land on someone): per stat, each out player's own rate (`ownRate` of his windows; the players the
   odds-only pull left out are read one by one, so they have logs) × how much of the teammate's window he

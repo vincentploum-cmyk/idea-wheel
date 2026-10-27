@@ -73,13 +73,17 @@ describe('without-teammate splits', () => {
     expect(keyAbsences([{ pts: 1 }], absent)).toEqual([]);   // rows without a gameId say nothing
   });
   test('the blend moves the season read toward the split by its games', () => {
-    expect(blendWithout(0.5, 0.9, 8)).toBe(0.7);   // 8 / (8 + 8): half way
+    expect(WITHOUT_K).toBe(4);
+    expect(blendWithout(0.5, 0.9, 4)).toBe(0.7);   // 4 / (4 + 4): half way
+    expect(blendWithout(0.5, 0.9, 8)).toBe(0.767);   // two thirds
+    expect(blendWithout(0.5, 0.9, 1)).toBe(0.58);   // one game: a fifth
     expect(blendWithout(0.5, 0.9, 0)).toBe(0.5);
     expect(blendWithout(null, 0.9, 4)).toBe(0.9);
     expect(blendWithout(0.5, null, 4)).toBe(0.5);
-    expect(withoutWeight(8)).toBe(0.5);
+    expect(withoutWeight(4)).toBe(0.5);
+    expect(withoutWeight(8)).toBe(0.667);
     expect(withoutWeight(0)).toBe(0);
-    expect(WITHOUT_K).toBe(8);
+    expect(WITHOUT_K).toBe(4);
   });
   test('per team the players out tonight, and a player’s split against them', () => {
     const pf = { data: {
