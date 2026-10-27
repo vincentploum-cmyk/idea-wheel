@@ -348,7 +348,7 @@ config and keeps its own markets, teams, feeds and slate key:
   3+ SOG streak from this season's stored games, his last game and tonight's opponent read off the same tables at his
   position (the study found no carry-over from a goal last game, so the streak is colour, the Tonight cell the matchup). The 1st goal tab (`lib/nhl-data/firstgoal.js`, `/api/nhl/data/firstgoal`, `FirstGoalPanel.jsx`) ranks
   tonight's skaters as first-goal candidates: own first-goal record from the rows' `fg` flag, the opponent's first
-  goals given up to the position and slot at the venue, head to head, and the model's 1+ goal odds (score 0–100). The stored data (rosters, media, game history, league, MoneyPuck) is kept fresh by the
+  goals given up to the position and slot at the venue, head to head, and the model's 1+ goal odds (score 0–100; graded in `docs/shots-goals-predictors.md` section 11 on 2025-26 and on this season's slates: the ranking is the goal odds and no more, the other three parts are colour, `tools/predictors/firstgoal_window.py` regrades the last N slates). The stored data (rosters, media, game history, league, MoneyPuck) is kept fresh by the
   morning run and shown, with repair buttons and the backfill, under Best bets → "Data sources"
   (`/api/nhl/data/setup`); there is no setup tab.
   Positions are captured per game from the newest lineup dated at or before it

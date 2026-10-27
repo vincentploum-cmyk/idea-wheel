@@ -1,5 +1,6 @@
 # What predicts a skater's shots and goals? (2026-27 to date, 2025-26 as the control)
 
+Revision 9 (2026-10-27, later): the 1st goal tab regraded on the last ten slates of this season and the season to date, game by game (section 11, `tools/predictors/firstgoal_window.py`).
 Revision 8 (2026-10-27): section 10's rink and PropFinder tints regraded on 187 games; the windows graded as *filters*, the way a props screen uses them (section 14): L5 / L10 / L15 / L20, L10 at tonight's venue, season to date, last season, the blend and the shipped formula ranked per slate on 2025-26 and on this season through Oct 26; this season's own L5 / L10 / season comparison for the opponent's tables now that teams have 8 to 14 games.
 Revision 7 (2026-10-20): the goal odds step replaced the same way as the shots one, on the Oct 13-20 grade (section 12).
 Revision 6 (2026-10-15): every angle at once (section 13): venue splits, pace, line slot, the opposing goalie, L5 / L10 / L15, head to head, rest, two-season priors, the opponent's tables per skater at the position and blended across the season boundary; the formulas replayed on this season's 3,852 skater-games and graded; the Best bets plain-rate read refitted (`picks-pure.js`).
@@ -485,6 +486,67 @@ player-games against 14.5% for the rest of the slate) and a weak one for the *fi
 vs 2.7%). Rank it by the model's 1+ goal odds and treat the first-goal record, the leak and the
 head-to-head columns as colour, not as inputs; a first-goal price has to clear roughly 15 to 1
 on the tab's best candidate before it is a bet.
+
+### The last ten slates (Oct 17 to 26, 2026), replayed 2026-10-27
+
+The same replay on the season in progress, game by game (`tools/predictors/firstgoal_window.py`: the
+tab's four parts rebuilt leak-free from the public box scores for every skater who dressed, from the
+games before each date only, with positions by the faceoffs taken; the model's 1+ goal odds stood in
+for by the player's goal rate, this season blended into last at n / (n + 40), and as a second read by
+the shipped formula's goal λ with the matchup in it; ties broken at random where the tab breaks them
+by lineup order, which can move a game or two). 67 games on 10 slates, 2,412 skater-games, 36 skaters
+a game, 58 of the 67 first goals in the first period; the season to date (178 games since Oct 1)
+under it. Full output: `firstgoal-window-rows.csv` / `-games.csv` next to the games dirs.
+
+| Per game, 36 skaters | #1 scores first | first scorer in top 3 | in top 5 | in top 6 (the By game table) | #1 scores at all | first scorer's median rank |
+|---|---|---|---|---|---|---|
+| chance | 2.8% | 8.3% | 13.9% | 16.7% | 15.7% | 18.5 |
+| **last 10 slates, 67 games** | | | | | | |
+| tab score (goal rate for the model term) | 6.0% (4) | 17.9% | 35.8% | 35.8% | 20.9% | 10 |
+| tab score (shipped λG for the model term) | 7.5% (5) | 22.4% | 31.3% | 35.8% | 20.9% | 10 |
+| tab without the model term (own + leak + h2h) | 9.0% (6) | 19.4% | 32.8% | 35.8% | 20.9% | 10 |
+| goal rate alone | 9.0% (6) | 25.4% | 32.8% | 34.3% | 31.3% | 10 |
+| shipped λG alone | 7.5% (5) | 20.9% | 34.3% | 35.8% | 32.8% | 9 |
+| own first-goal rate alone | 9.0% (6) | 20.9% | 31.3% | 35.8% | 23.9% | 10 |
+| opponent first-goal leak alone | 4.5% (3) | 10.4% | 17.9% | 20.9% | 16.4% | 17 |
+| head to head alone | 4.5% (3) | 16.4% | 20.9% | 25.4% | 14.9% | 13 |
+| **season to date, 178 games** | | | | | | |
+| tab score (goal rate for the model term) | 6.2% (11) | 16.3% | 30.9% | 33.1% | 29.8% | 10.5 |
+| tab score (shipped λG for the model term) | 7.9% (14) | 18.0% | 29.8% | 34.3% | 31.5% | 11 |
+| goal rate alone | 7.9% (14) | 21.9% | 27.0% | 30.9% | 33.1% | 11 |
+| shipped λG alone | 6.7% (12) | 19.1% | 29.2% | 31.5% | 36.5% | 10.5 |
+| opponent first-goal leak alone | 3.4% (6) | 10.1% | 17.4% | 19.1% | 16.9% | 17 |
+
+**Against chance the shortlist holds.** The first scorer sat in his game's top 5 in 24 of the 67 games
+(36% against 14% by chance) and in the top 10 in 39 (58% against 28%); the slate-wide top 10 scored
+first in 8.0% of player-games against 2.6% for the rest of the slate and scored at all in 35% against
+15%; the score reads monotonically (0 to 19: 0.7% scored first, 40 to 49: 4.5%, 60 and up: 9%; scored at
+all 7.5% to 37%), so the number on the tab is worth about an eighth of itself as a first-goal chance at
+the top and about half of itself as an anytime-goal chance. The four #1 hits: McDavid (Oct 17 at UTA),
+Hagel (Oct 20 at VGK), Stamkos and Batherson (Oct 24).
+
+**Against the goal rate it adds nothing, as 2025-26 said.** The first scorer ranked higher on the tab
+than on the goal rate alone in 26 games and lower in 22 (season: 78 and 62); the joint fit on the
+season's 6,370 rows puts the goal-rate term at z = 4.5 for the first goal and 11.4 for any goal, the own
+first-goal record at 0.8, the leak at 1.6 and head to head at 0.9; the leak alone ranks at chance (4.5%
+on the window, 3.4% on the season, every bucket of its ratio between 2% and 4%). **The extra parts cost
+the #1 pick**: the tab's top candidate scored at all in 21% of the window's games against 31% for the
+goal rate's top candidate and 33% for the λG's (season 30% against 33% and 37%), because the own-record
+and leak terms lift a player with a lucky first-goal history over the game's best scorer: Boldy over
+Kaprizov as #1 five times (no goal in the five; Kaprizov scored first on Oct 24 as the tab's #2),
+Svechnikov over Aho four times (none), Gauthier four times (none). Defensemen scored 10 of the 67
+first goals and the tab had them at a mean rank of 21.
+
+**Price.** The #1's 6 to 8% first-goal rate is break-even at +1,150 to +1,575, and on 67 games the
+interval runs 2% to 16%; each of the top three sits at the same 6 to 8%. Books price a game's top
+first-goal candidates at roughly +600 to +1,000 (the usual market range, not measured here), so the
+tab's #1 is not a first-goal bet at the usual price. The tab earns its place as the shortlist for *a*
+goal: its slate top 10 scores in 35% of player-games (break-even about +190) against 15% for the rest.
+
+**Rule, unchanged.** Rank by the model's 1+ goal odds and keep the first-goal record, the leak and the
+head-to-head columns as colour; the replay says that lifts the #1's any-goal rate from about 30% to
+33 to 37% and leaves the first-goal hit rate where it is. Rerun after each stretch with
+`python3 -I tools/predictors/firstgoal_window.py .nhl-data/predictors/2026/games-pos .nhl-data/predictors/2025/games-pos --last 10`.
 
 ## 12. The model's own odds, graded (Oct 1-12, 2026)
 
