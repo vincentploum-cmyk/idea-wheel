@@ -5,14 +5,14 @@ import { Headshot } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { Flags } from './flags';
 import { LEAGUE_POS } from '@/lib/nhl-data/picks-pure';
-import { NHL_BARS, READ_FROM, HEIGHTS, survivorsAt, fallenAt, curveOf, bestReadFrom, BEST_MIN } from '@/lib/nhl-data/shuffle-pure';
+import { NHL_BARS, READ_FROM, HEIGHTS, survivorsAt, fallenAt, curveOf, bestReadFrom, readFromOf, BEST_MIN } from '@/lib/nhl-data/shuffle-pure';
 
-// The NHL shuffle (the top of Best bets): a bar for shots and one for goals. Raise it and the field
-// falls away; what stays are the skaters whose chance of the bar holds over the floor, off the
-// board's own λ (the Poisson tail further up the same ladder the 2+ / 3+ / 4+ columns read), each
-// with his chance and break-even price, how often he has actually reached it, where he thins
-// out, and his figure once final. "Read from" moves the λ to the study's or a window of his own
-// stored games. One request a slate (/api/nhl/data/shuffle), every bar move local.
+// The NHL shuffle (its own tab, with its own slate date): a bar for shots and one for goals. Raise
+// it and the field falls away; what stays are the skaters whose chance of the bar holds over the
+// floor, off the board's own λ (the Poisson tail further up the same ladder the 2+ / 3+ / 4+ columns
+// read), each with his chance and break-even price, how often he has actually reached it, where he
+// thins out, and his figure once final. "Read from" moves the λ to the study's or a window of his
+// own stored games. One request a slate (/api/nhl/data/shuffle), every bar move local.
 
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const num = (v, d = 2) => (v == null ? '—' : Number(v).toFixed(d));
@@ -43,47 +43,47 @@ const cardCache = { promise: null };   // the scorecard's predictors, one read a
 const readLabel = (k) => READ_FROM.find(([key]) => key === k)?.[1] || k;
 
 /** What the History tab's scorecard says about the reads for the active bar, for the note under the tabs. */
-function readNote(card, best, market) {
+function readNote(card, best, market, from) {
   const at = market === 'sog' ? '3+ SOG' : '1+ goal';
-  if (!card) return 'The History tab’s scorecard says which has predicted best.';
-  if (card.failed) return 'The scorecard could not be read; the History tab says which has predicted best.';
-  if (!best || best.best == null) return `The scorecard cannot rank them for ${at} yet: ${best?.n ?? 0} skater-games graded this season, it needs ${BEST_MIN}.`;
+  const on = readLabel(from).toLowerCase();
+  if (!card) return `Reading from ${on}. The History tab’s scorecard says which read has predicted best; the green tab follows it.`;
+  if (card.failed) return `Reading from ${on}. The scorecard could not be read, so no tab is marked.`;
+  if (!best || best.best == null) return `Reading from ${on} until the scorecard can rank the reads for ${at}: ${best?.n ?? 0} skater-games graded this season, it needs ${BEST_MIN}.`;
   const b = best.scores[best.best]; const next = best.ranked[1]; const model = best.scores.model;
   const beside = best.best === 'model'
-    ? (next ? `, next ${readLabel(next)} at ${best.scores[next].brier.toFixed(3)}` : '')
-    : (model ? `, against ${model.brier.toFixed(3)} for the board’s λ` : '');
-  return `The scorecard rates ${readLabel(best.best)} best for ${at} so far: Brier ${b.brier.toFixed(3)} over ${best.n} skater-games this season${beside} (lower is better; within .002 is a coin flip).`;
+    ? (next ? `, next ${readLabel(next).toLowerCase()} at ${best.scores[next].brier.toFixed(3)}` : '')
+    : (model ? `, the board’s λ ${model.brier.toFixed(3)}` : '');
+  const verdict = `the scorecard rates it best for ${at} this season: Brier ${b.brier.toFixed(3)} over ${best.n} skater-games${beside} (lower is better; within .002 is a coin flip)`;
+  if (from === best.best) return `Reading from ${on}, the green tab: ${verdict}.`;
+  return `Reading from ${on}, your pick. The green tab, ${readLabel(best.best).toLowerCase()}, is where ${verdict}; press it to go back.`;
 }
 
-export default function ShufflePanel({ date }) {
+export default function ShufflePanel() {
   const open = usePlayerCard();
-  const [opened, setOpened] = useState(true);
+  const [date, setDate] = useState('');
   const [active, setActive] = useState('sog');
   const [bars, setBars] = useState(() => Object.fromEntries(NHL_BARS.map((b) => [b.market, b.start])));
   const [floors, setFloors] = useState(() => Object.fromEntries(NHL_BARS.map((b) => [b.market, b.floor])));
-  const [from, setFrom] = useState('model');
+  const [picked, setPicked] = useState(null);   // the tab pressed this session; until then the panel follows the scorecard's verdict for the active bar
   const [data, setData] = useState(null);
   const [card, setCard] = useState(null);   // { predictors } from the History tab's scorecard, { failed } when it could not be read, null until read
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(true);
   const [err, setErr] = useState('');
 
-  const load = useCallback(async (d) => {
-    if (!d) return;
-    setBusy(true); setErr('');
-    try {
-      const res = await fetch(`/api/nhl/data/shuffle?date=${d}`, { cache: 'no-store' });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.detail || j.error || `${res.status}`);
-      setData(j);
-    } catch (e) { setErr(`Shuffle: ${e.message}`); }
-    finally { setBusy(false); }
-  }, []);
-  // The slate's skaters once the panel is open (the async hop keeps the loader's busy flag out of the effect body).
-  useEffect(() => { if (opened) (async () => { await load(date); })(); }, [opened, date, load]);
+  // Today's slate (ET) first; the picker then names the date. The fetch sets state only in its
+  // callbacks, so the first load can run from the effect.
+  const load = useCallback((d) => fetch(`/api/nhl/data/shuffle${d ? `?date=${d}` : ''}`, { cache: 'no-store' })
+    .then(async (res) => { const j = await res.json().catch(() => ({})); if (!res.ok) throw new Error(j.detail || j.error || `${res.status}`); return j; })
+    .then((j) => { setData(j); setDate(j.date); setErr(''); })
+    .catch((e) => setErr(`Shuffle: ${e.message}`))
+    .finally(() => setBusy(false)), []);
+  useEffect(() => { load(''); }, [load]);
+  const pick = (d) => { setBusy(true); setErr(''); load(d); };
+  const shift = (n) => { const d = new Date(`${date}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); pick(d.toISOString().slice(0, 10)); };
+  const pretty = date ? new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' }) : '';
 
   // The History tab's scorecard, once a page load: which read has predicted each bar best so far.
   useEffect(() => {
-    if (!opened) return undefined;
     let cancelled = false;
     (async () => {
       try {
@@ -102,50 +102,66 @@ export default function ShufflePanel({ date }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [opened]);
+  }, []);
 
   const rows = useMemo(() => (data?.games || []).flatMap((g) => g.skaters.map((s) => ({ ...s, game: g.id, start: g.startTimeUTC, final: g.final }))), [data]);
   const bar = NHL_BARS.find((b) => b.market === active);
   const height = Math.min(bar.max, Math.max(bar.min, bars[active]));
   const floor = floors[active];
+  // The read: the tab pressed this session, else the one the History tab's scorecard rates best for the active bar, else the board's λ.
+  const best = useMemo(() => (card?.predictors ? bestReadFrom(card.predictors, active) : null), [card, active]);
+  const from = readFromOf(picked, best);
   const survivors = useMemo(() => survivorsAt(rows, active, height, floor, from), [rows, active, height, floor, from]);
   const fallen = useMemo(() => fallenAt(rows, active, height, floor, from), [rows, active, height, floor, from]);
   const curve = useMemo(() => curveOf(rows, active, floor, from), [rows, active, floor, from]);
   const countAt = (m) => { const h = Math.min(8, Math.max(1, bars[m])); return curveOf(rows, m, floors[m], from).find((c) => c.height === h)?.n ?? null; };
   const fromLabel = readLabel(from);
-  const best = useMemo(() => (card?.predictors ? bestReadFrom(card.predictors, active) : null), [card, active]);
   const final = rows.some((r) => r.final);
   const statLabel = active === 'sog' ? 'shots' : 'goals';
+  // The board's λ is the run's alone unless NHL_PICKS_STUDY_WEIGHT blends the study in on the server.
+  const blended = data?.studyWeight ? `${Math.round(data.studyWeight * 100)}%` : null;
+  const modelTitle = data?.source === 'study' ? 'No run saved for the date: the study’s read stands in' : blended ? `The saved run’s λ blended with the study’s at ${blended} (NHL_PICKS_STUDY_WEIGHT), as the board reads it` : 'The saved run’s λ, as the board reads it';
 
   return (
-    <section className="ir-sh" aria-label="Shuffle">
+    <section className="nhlx-pk" aria-label="Shuffle">
+      <div className="nhlx-today-head">
+        <div>
+          <div className="nhlx-today-date">{pretty || 'Loading…'}</div>
+          <div className="nhlx-auto-sub">
+            {data ? `${data.games.length} game${data.games.length === 1 ? '' : 's'} · ${rows.length} skaters · ${data.source === 'model' ? `model run saved ${data.modelRun?.createdAt ? fmtTime(data.modelRun.createdAt) : ''}${blended ? ` · blended with the study at ${blended}` : ''}` : 'no model run yet: the study’s read'}` : ''}
+          </div>
+        </div>
+        <div className="nhlx-auto-actions">
+          <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !date} onClick={() => shift(-1)} aria-label="Previous day">‹</button>
+          <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && pick(e.target.value)} aria-label="Slate date" />
+          <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !date} onClick={() => shift(1)} aria-label="Next day">›</button>
+          <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy || !date} onClick={() => pick(date)}>{busy ? 'Loading…' : 'Reload'}</button>
+        </div>
+      </div>
+      {err ? <div className="nhlx-alert">{err}</div> : null}
+      <div className="ir-sh">
       <div className="ir-sh-head">
         <div>
-          <h3 className="ir-sh-title">Shuffle <small>raise the bar, the field falls away</small></h3>
           <p className="nhlx-auto-meta">A bar for shots and one for goals. The list keeps the skaters whose chance of the bar holds over the floor, off the board’s own λ: the 3+ figure here is the board’s 3+ figure, and 5+ or 6+ is the same λ read further up. No price in the number; the break-even price sits under it.</p>
         </div>
         <div className="ir-sh-floor">
           <label>Keep skaters at <select className="nhlx-input nhlx-input-sm" value={floor} onChange={(e) => setFloors((f) => ({ ...f, [active]: Number(e.target.value) }))} aria-label={`The ${statLabel} floor`}>{FLOORS.map((f) => <option key={f} value={f}>{Math.round(f * 100)}%</option>)}</select> or better <small className="nhlx-auto-meta">({bar.label.toLowerCase()})</small></label>
-          <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" onClick={() => setOpened((o) => !o)}>{opened ? 'Hide' : 'Show'}</button>
         </div>
       </div>
-      {err ? <div className="nhlx-alert" style={{ marginTop: 12 }}>{err}</div> : null}
-      {opened ? (
-        <>
           <div className="nhlx-rk-toggle ir-sh-from">
             <small>Read from</small>
             <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="What the chance is read from">
               {READ_FROM.map(([k, l]) => {
-                const what = k === 'model' ? (data?.source === 'study' ? 'No run saved for the date: the study’s read stands in' : 'The saved run’s λ, as the board reads it') : k === 'study' ? 'The study’s plain-rate read: his blended rates, home ice, back-to-back and the opponent at his position' : `His average over his ${l.toLowerCase()} stored games as the λ`;
+                const what = k === 'model' ? modelTitle : k === 'study' ? 'The study’s plain-rate read: his blended rates, home ice, back-to-back and the opponent at his position' : `His average over his ${l.toLowerCase()} stored games as the λ`;
                 const sc = best?.scores?.[k];
                 return (
-                  <button key={k} type="button" role="tab" aria-selected={from === k} className={`nhlx-tab${from === k ? ' is-active' : ''}`} onClick={() => setFrom(k)} title={sc ? `${what} · scorecard, ${active === 'sog' ? '3+ SOG' : '1+ goal'}: Brier ${sc.brier.toFixed(3)} over ${sc.n} skater-games this season${best.best === k ? ' (the best so far)' : ''}` : what}>
+                  <button key={k} type="button" role="tab" aria-selected={from === k} className={`nhlx-tab${from === k ? ' is-active' : ''}${best?.best === k ? ' is-best' : ''}`} onClick={() => setPicked(k)} title={sc ? `${what} · scorecard, ${active === 'sog' ? '3+ SOG' : '1+ goal'}: Brier ${sc.brier.toFixed(3)} over ${sc.n} skater-games this season${best.best === k ? ' (the best so far: the panel opens on it)' : ''}` : what}>
                     {l}{best?.best === k ? <i>best</i> : null}
                   </button>
                 );
               })}
             </div>
-            <span className="nhlx-rk-toggle-note">The λ each chance is read from. A window he does not have yet falls back to the board’s. {readNote(card, best, active)}</span>
+            <span className="nhlx-rk-toggle-note">{readNote(card, best, active, from)} A window he does not have yet falls back to the board’s λ.{blended ? ` The board’s λ is the run’s blended with the study’s at ${blended} (NHL_PICKS_STUDY_WEIGHT on the server), so its figures sit between the Model tab’s and the study’s.` : ''}</span>
           </div>
           <div className="ir-sh-grid">
             <div className="ir-sh-bars">
@@ -194,7 +210,7 @@ export default function ShufflePanel({ date }) {
                       const tone = toneOf(rank, c.oppPos?.teams);
                       const grade = r.hit == null ? (c.final && c.actual === null ? ' is-dnp' : '') : r.hit ? ' is-hit' : ' is-miss';
                       return (
-                        <tr key={c.id} className={`is-click${grade}`} onClick={() => open({ id: c.id, opp: c.opp, venue: c.venue, pos: c.pos, line: c.line })}>
+                        <tr key={c.id} className={`is-click${grade}`} onClick={() => open({ id: c.id, opp: c.opp, venue: c.venue, pos: c.pos, line: c.line, date })}>
                           <td>
                             <div className="nhlx-db-player">
                               <Headshot id={c.id} size={30} />
@@ -222,8 +238,7 @@ export default function ShufflePanel({ date }) {
               ) : null}
             </>
           ) : null}
-        </>
-      ) : null}
+      </div>
     </section>
   );
 }

@@ -695,6 +695,40 @@ p { margin: 0; }
 .nhlx-mu-verdict li.is-tough::marker { color: var(--bad-fg); }
 .nhlx-mu-total { margin-top: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
 .nhlx-mu-total > small { display: block; margin-top: 6px; }
+/* Characteristics (WhoScored's layout): per team its strengths and weaknesses, a trait a line with a
+   badge, then its style of play; the numbers live in the hover only. Two teams side by side. */
+.nhlx-char { margin-top: 14px; }
+.nhlx-char-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--heading); font-weight: 600; }
+.nhlx-char-head small { color: var(--muted); font-weight: 400; }
+.nhlx-char-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; margin-top: 10px; }
+.nhlx-char-team { min-width: 0; }
+.nhlx-char-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; }
+.nhlx-char h5 { margin: 12px 0 2px; font-family: var(--font-ui); font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.nhlx-char h5 i { font-style: normal; font-weight: 700; margin-right: 3px; }
+.nhlx-char h5 i.is-plus { color: var(--ok-fg); }
+.nhlx-char h5 i.is-minus { color: var(--bad-fg); }
+.nhlx-char ul { list-style: none; margin: 0; padding: 0; }
+.nhlx-char-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.35; color: var(--body); }
+.nhlx-char-row > span:first-of-type { flex: 1 1 auto; min-width: 0; }
+.nhlx-char-icon { flex: 0 0 auto; display: inline-flex; width: 14px; height: 14px; color: var(--muted); }
+.nhlx-char-icon svg { width: 14px; height: 14px; }
+.nhlx-char-badge { flex: 0 0 auto; min-width: 0; font-size: 11.5px; padding: 1px 8px; white-space: nowrap; }
+.nhlx-char-badge.is-very { font-weight: 700; box-shadow: inset 0 0 0 1px var(--ok-line); }
+.nhlx-char-badge.is-very.is-tough { box-shadow: inset 0 0 0 1px var(--bad-line); }
+.nhlx-char .nhlx-auto-meta { margin: 4px 0 0; padding-top: 5px; border-top: 1px solid var(--line); }
+/* The Teams tab: one team, the venue switch in the head, the card no wider than a game's column pair. */
+.nhlx-char-page { margin: 18px 0 22px; }
+.nhlx-char-page .nhlx-char-grid { grid-template-columns: minmax(0, 820px); }
+.nhlx-char-page .nhlx-char-head .nhlx-tabs { margin: 0; }
+@media (max-width: 720px) {
+  .nhlx-char-grid, .nhlx-char-cols { grid-template-columns: 1fr; }
+}
+/* The numbers the traits were read from, folded under them. */
+.nhlx-mu-numbers { margin-top: 10px; }
+.nhlx-mu-numbers > summary { cursor: pointer; font-size: 13px; color: var(--muted); list-style-position: inside; }
+.nhlx-mu-numbers > summary:hover { color: var(--heading); }
+.nhlx-mu-numbers[open] > summary { color: var(--heading); }
+.nhlx-mu-numbers .nhlx-mu-total { margin-top: 10px; }
 .nhlx-mu-side { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
 .nhlx-mu-side-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--heading); }
 .nhlx-mu-side-head small { color: var(--muted); font-size: 14px; }
@@ -1061,6 +1095,10 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-rk-tabs { margin-bottom: 0; }
 .nhlx-rk-tabs .nhlx-tab { padding: 4px 10px; font-size: 13.5px; }
 .nhlx-rk-tabs .nhlx-tab i { font-style: normal; margin-left: 3px; color: var(--primary); }
+/* The shuffle's "Read from": the read the scorecard rates best is green, pressed or not, so the verdict reads without the note. */
+.nhlx-rk-tabs .nhlx-tab.is-best { color: var(--ok-fg); background: var(--ok-bg); box-shadow: inset 0 0 0 1px var(--ok-line); }
+.nhlx-rk-tabs .nhlx-tab.is-best.is-active { box-shadow: inset 0 0 0 1.5px var(--ok-fg); font-weight: 600; }
+.nhlx-rk-tabs .nhlx-tab.is-best i { color: var(--ok-fg); }
 /* The opponent's PropFinder defense table above the ice: per-position allowed, rank in every cell. */
 .nhlx-pfd { margin: 0 0 12px; }
 .nhlx-pfd-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 8px; }
@@ -1541,6 +1579,9 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-sc-range input.nhlx-input-sm { width: auto; }
 .ir-sc-sum { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 14px 0 4px; font-size: 15px; color: var(--muted); }
 .ir-sc-sum b { color: var(--heading); }
+.ir-sc-verdict { list-style: none; margin: 14px 0 0; padding: 12px 14px; display: grid; gap: 7px; font-size: 14px; line-height: 1.45; color: var(--body, var(--heading)); background: var(--bg-tint); border: 1px solid var(--line); border-radius: 10px; }
+.ir-sc-verdict b { color: var(--heading); }
+.ir-sc-verdict li.nhlx-auto-meta { font-size: 12.5px; }
 .ir-sc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); gap: 14px; margin-top: 12px; align-items: start; }
 @media (min-width: 900px) { .ir-sc-wide { grid-column: span 2; } }
 .ir-sc .nhlx-sc-table td small { display: inline; margin-left: 4px; }
