@@ -1,6 +1,6 @@
 # What predicts a skater's shots and goals? (2026-27 to date, 2025-26 as the control)
 
-Revision 8 (2026-10-27): the windows graded as *filters*, the way a props screen uses them (section 14): L5 / L10 / L15 / L20, L10 at tonight's venue, season to date, last season, the blend and the shipped formula ranked per slate on 2025-26 and on this season through Oct 26; this season's own L5 / L10 / season comparison for the opponent's tables now that teams have 8 to 14 games.
+Revision 8 (2026-10-27): section 10's rink and PropFinder tints regraded on 187 games; the windows graded as *filters*, the way a props screen uses them (section 14): L5 / L10 / L15 / L20, L10 at tonight's venue, season to date, last season, the blend and the shipped formula ranked per slate on 2025-26 and on this season through Oct 26; this season's own L5 / L10 / season comparison for the opponent's tables now that teams have 8 to 14 games.
 Revision 7 (2026-10-20): the goal odds step replaced the same way as the shots one, on the Oct 13-20 grade (section 12).
 Revision 6 (2026-10-15): every angle at once (section 13): venue splits, pace, line slot, the opposing goalie, L5 / L10 / L15, head to head, rest, two-season priors, the opponent's tables per skater at the position and blended across the season boundary; the formulas replayed on this season's 3,852 skater-games and graded; the Best bets plain-rate read refitted (`picks-pure.js`).
 Revision 5 (2026-10-13): the model's own published odds graded on the scorecard export; the shots odds step replaced by the Poisson tail of λ (section 12).
@@ -420,6 +420,36 @@ tiers, roughly one line of odds. For goals, the last-season goals/G tier does th
   pointed the wrong way this season. If the Rink tint stays, its default should be the all-games
   season table, not the venue split.
 - The band's figure can stay a per-game total: within a position it reads the same as per skater.
+
+### Refreshed 2026-10-27, on 187 games (6,201 skater-games with a prior; opponents with 1 to 14 games)
+
+The same grade (`env_source.py` on the fresh rows) with three more weeks of box scores. Soft minus tough band, as
+the rink tints it, for the skaters sitting in each band:
+
+| Toggle | SOG | P(3+) | P(1+ G) | 2.5-3 SOG/G shooters, P(3+) soft / tough |
+|---|---|---|---|---|
+| Rink, tonight's venue (the default Home / Away) | +0.16 | **+4.5 pts** | +2.6 | .52 / .40 |
+| PropFinder, last season's full tab ("2025") | +0.17 | **+3.9** | +1.9 | .53 / .38 |
+| last season, all games, by position (no toggle shows it) | +0.19 | +4.5 | +2.1 | .53 / .37 |
+| team total shots allowed, last season / this season (no position) | +0.22 / +0.19 | +4.7 / +4.7 | +1.3 / +1.2 | |
+| PropFinder, this season's tab ("2026") | +0.11 | +2.9 | +1.4 | .48 / .40 |
+| Rink L10 (last 10 across the two seasons; PropFinder's L10 tab reads the same games) | +0.11 | +2.2 | +2.3 | |
+| Rink L5 home / L5 away | +0.08 | +2.4 | +0.9 | |
+| this season's L5 by position (PropFinder L5 once the season is older) | +0.04 | +2.0 | -0.3 | |
+| Rink L5 | +0.06 | **+0.8** | +1.3 | .48 / .43; 3+ shooters .65 / **.69** |
+
+By the opponent's games played (deviance of the skater's baseline + the read; lower is better): with 0 to 4 games
+no read helps (none 1.2481, last season 1.2493, rink venue 1.2490); with 5 to 9 games none 1.2241, this season's
+table 1.2243, last season 1.2254; with 10 to 14 games (903 rows) none 1.1839, last season 1.1772, rink venue
+1.1758, **this season's table 1.1703**, last + this 1.1700. So the switch to the current-season tab is where the
+control put it: at ten-plus games the opponent's own table already leads, and by ~15 it is the read. For goals the
+one tint that holds is still **PropFinder, Goals, last season's tab**: +0.0034 of deviance (rebuilt last-season
+table +0.0029; the rink default by goals +0.0014; this season's goals table -0.0005; Rink L5 / L10 by goals
+-0.0007 / -0.0001), and by tier the .35-.5 scorers scored 36.6% in its soft band against 28.6% in its tough one,
+where this season's goals table read the same cut backwards (28.5% soft, 33.8% tough) and so did Rink L5 (24.5%
+soft, 32.5% tough). None of the per-game position tints comes near the Defense tab's per-skater blended Season
+table (section 13, this season: +0.0116 against +0.0001 for the per-game position table): the rink colours the
+environment, the Defense tab and the Best bets Opp column measure it.
 
 ## 11. The 1st goal tab, graded
 
