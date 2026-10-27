@@ -1503,6 +1503,11 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-court-outs { margin: 8px 0 6px; }
 .ir-court-out { margin: 0; padding: 3px 0; border-top: 1px solid var(--line); }
 .ir-court-out b { color: var(--heading); font-weight: 600; }
+.ir-court-splits { margin: 6px 0 2px; }
+.ir-court-splits > summary { cursor: pointer; padding: 4px 0; }
+.ir-court-splits > summary b { color: var(--heading); font-weight: 600; }
+.ir-court-split { margin: 6px 0 10px; }
+.ir-court-split .nhlx-pfd-head { padding: 6px 0 4px; }
 .ir-court .nhlx-rk-stat em.is-up { color: var(--ok-fg); }
 .ir-court .nhlx-rk-stat em.is-down { color: var(--bad-fg); }
 .ir-court-proj { font-style: normal; font-weight: 600; margin-right: 5px; }
