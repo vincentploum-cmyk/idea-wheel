@@ -408,7 +408,11 @@ config and keeps its own markets, teams, feeds and slate key:
   teams side by side under the game head with the total's pill and folds the game-total read and the
   verdicts under "The numbers behind the reads" (Vincent, 2026-10-27: the bullets, and a prose script
   tried the same day, were too much to digest into how the game would go; WhoScored's strengths /
-  weaknesses / style was the ask) and the per-team defense card
+  weaknesses / style was the ask); the Teams tab carries the same card for the picked team with an
+  At home / Away switch (`TeamCharacteristicsCard` → `GET /api/nhl/data/characteristics?team=XXX[&date=]`,
+  games through the date, both venues with the verdict's headline; the side's defense object comes
+  from `opponentDefense(opp, defVenue, tables, vs)` and `defenseTablesFor(rows, pf)` in `slate.js`, the
+  same builders `buildSlate` uses for every side, `moneypuckBlock` the MoneyPuck block) and the per-team defense card
   (`lib/nhl-data/defense.js`) are descriptive views over the stored rows; the model's
   own math stays in `NhlModel.jsx`. Logos/headshots are copied into `data/media/*` and
   served by `/api/nhl/data/media`; standings/leaders live in `data/league/*`.

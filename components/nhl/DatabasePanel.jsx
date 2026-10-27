@@ -5,6 +5,7 @@ import { Headshot, TeamLogo, rankClass } from './media';
 import { defenseTier, TIER_TEXT, TIER_TONE } from '@/lib/nhl-data/verdict';
 import { usePlayerCard } from './PlayerCard';
 import { TeamMoneyPuck } from './MoneyPuck';
+import { TeamCharacteristicsCard } from './Characteristics';
 import { TeamPropfinder } from './Propfinder';
 import TeamGameLog from './TeamGameLog';
 import { teamFromHash, TeamLink } from './links';
@@ -493,6 +494,8 @@ function DatabasePanel() {
             </div>
             <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" style={{ marginLeft: 'auto' }} onClick={() => setTeam('')}>All teams</button>
           </div>
+          {/* The Matchups card for this team alone, at home or away (the read every game card opens with). */}
+          <TeamCharacteristicsCard key={`char-${selected.abbrev}`} abbr={selected.abbrev} />
           <TeamDefense abbr={selected.abbrev} defense={defense} />
           <TeamGameLog key={selected.abbrev} abbr={selected.abbrev} />
           <TeamPropfinder abbr={selected.abbrev} pf={pf} />

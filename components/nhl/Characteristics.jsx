@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { TeamLink } from './links';
 import { LEVEL_TEXT } from '@/lib/nhl-data/characteristics';
 
@@ -73,6 +74,44 @@ export function GameCharacteristics({ game }) {
             : <div key={team} className="nhlx-char-team"><div className="nhlx-mu-verdict-head"><TeamLink abbr={team} logo={22}><b>{team}</b></TeamLink><small>No read yet</small></div></div>;
         })}
       </div>
+    </div>
+  );
+}
+
+/**
+ * The Teams tab's card: one team at home or away (a switch above the lists; the stored-table traits
+ * follow the venue, MoneyPuck's and the style do not), from `GET /api/nhl/data/characteristics?team=`.
+ */
+export function TeamCharacteristicsCard({ abbr }) {
+  const [data, setData] = useState(null);
+  const [err, setErr] = useState('');
+  const [venue, setVenue] = useState('H');
+  // Keyed by team where it is drawn, so a new team starts a fresh card (no reset here).
+  useEffect(() => {
+    if (!abbr) return undefined;
+    let live = true;
+    fetch(`/api/nhl/data/characteristics?team=${encodeURIComponent(abbr)}`, { cache: 'no-store' })
+      .then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.detail || j.error || `${r.status}`); return j; })
+      .then((j) => { if (live) setData(j); })
+      .catch((e) => { if (live) setErr(`Couldn’t read the characteristics: ${e.message}`); });
+    return () => { live = false; };
+  }, [abbr]);
+  const side = data?.[venue === 'H' ? 'home' : 'away'];
+  const c = side?.characteristics;
+  const tone = side?.verdict?.tier === 'leaky' ? 'is-soft' : side?.verdict?.tier === 'tight' ? 'is-tough' : '';
+  return (
+    <div className="nhlx-char nhlx-char-page">
+      <div className="nhlx-char-head">
+        <b>Characteristics</b>
+        <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Venue">
+          {[['H', 'At home'], ['A', 'Away']].map(([k, l]) => (
+            <button key={k} type="button" role="tab" aria-selected={venue === k} className={`nhlx-tab${venue === k ? ' is-active' : ''}`} onClick={() => setVenue(k)}>{l}</button>
+          ))}
+        </div>
+        <small>{data ? `${side?.games || 0} stored games ${venue === 'H' ? 'at home' : 'away'}${data.profile ? ` · style from ${data.profile.games} games` : ''} · hover a line for the numbers` : err || 'Loading…'}</small>
+      </div>
+      {c ? <div className="nhlx-char-grid"><TeamCharacteristics c={c} headline={side.verdict?.headline || null} tone={tone} /></div>
+        : data ? <p className="nhlx-auto-meta">No read for {abbr} {venue === 'H' ? 'at home' : 'away'} yet: no stored games and no MoneyPuck table.</p> : null}
     </div>
   );
 }
