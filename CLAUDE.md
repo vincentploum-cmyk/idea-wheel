@@ -784,7 +784,9 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   the points step) and the historical-profile (position vs opponent) multipliers on the goal ladder are cut to a
   quarter — `VENUE_SPLIT_WEIGHT` and `H2H_WEIGHT` at the top of `model-core.js`, `venueMix`; 1 restores the model as
   it was, 0 turns the factor off; Vincent's call after the study's section 16 (`__tests__/nhl-model-weights.test.js`).
-  `node tools/port-model-core.mjs [App.jsx]` applies that port on the Mac by exact-text anchors (a backup beside the
-  file, nothing written if an anchor differs, `--check` to look first); the odds ports it only reports.
+  `node tools/port-model-core.mjs [App.jsx]` applies all three ports on the Mac (the 2026-10-13 shots odds, the
+  2026-10-20 goal odds, the 2026-10-27 weights), each group all-or-nothing by exact-text anchors: a backup beside the
+  file, a group already there reported as ported, a group with a differing anchor skipped and named, `--check` to
+  look first. On 2026-10-27 App.jsx had neither odds port: the local app had published the ladder's odds since Oct 13.
 - Secrets stay out of git (Render env + `.env.local`).
 - Site is `noindex` by design (robots.txt disallow + X-Robots-Tag).
