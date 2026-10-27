@@ -22,7 +22,8 @@ export async function GET(request) {
   }
   let fallback = kind === 'logo' ? teamLogo(id.toUpperCase()) : (await loadPlayers()).players[id]?.headshot;
   if (!fallback) return new Response(null, { status: 404 });
-  return Response.redirect(fallback, 302);
+  // Not copied yet: send the browser to the NHL's CDN and let it keep the answer for a day.
+  return new Response(null, { status: 302, headers: { Location: fallback, 'Cache-Control': 'private, max-age=86400' } });
 }
 
 // Admin: copy the next batch of missing logos / headshots from the NHL.
