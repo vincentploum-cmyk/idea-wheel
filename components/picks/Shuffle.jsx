@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fmtOdds } from '@/lib/nfl/odds';
-import { survivorsAt, fallenAt, curveOf, READ_FROM, bestReadFrom, BEST_MIN } from '@/lib/picks/shuffle';
+import { survivorsAt, fallenAt, curveOf, READ_FROM, bestReadFrom, readFromOf, BEST_MIN } from '@/lib/picks/shuffle';
 
 // The shuffle (each board's Shuffle tab): a bar per stat. Raise it and the field falls away; what
 // stays are the players whose chance of clearing the bar holds over the floor, each with his chance
@@ -21,15 +21,18 @@ const cardCache = new Map();   // scorecard url → promise of its predictors: o
 const readLabel = (k) => READ_FROM.find(([key]) => key === k)?.[1] || k;
 
 /** What the season's scorecard says about the reads, for the note under the tabs. */
-function readNote(card) {
-  if (!card) return 'The scorecard under the board says which has predicted best.';
-  if (card.failed) return 'The scorecard could not be read; it says under the board which has predicted best.';
-  if (card.best == null) return `The scorecard cannot rank them yet: ${card.n} plays graded this season, it needs ${BEST_MIN}.`;
+function readNote(card, from) {
+  const on = readLabel(from).toLowerCase();
+  if (!card) return `Reading from ${on}. The scorecard under the board says which read has predicted best; the green tab follows it.`;
+  if (card.failed) return `Reading from ${on}. The scorecard could not be read, so no tab is marked.`;
+  if (card.best == null) return `Reading from ${on} until the scorecard can rank the reads: ${card.n} plays graded this season, it needs ${BEST_MIN}.`;
   const b = card.scores[card.best]; const next = card.ranked[1]; const blend = card.scores.blend;
   const beside = card.best === 'blend'
-    ? (next ? `, next ${readLabel(next)} at ${card.scores[next].brier.toFixed(3)}` : '')
-    : (blend ? `, against ${blend.brier.toFixed(3)} for the board’s blend` : '');
-  return `The scorecard rates ${readLabel(card.best)} best so far: accuracy ${b.brier.toFixed(3)} over ${card.n} plays this season${beside} (0 is perfect, 0.25 a coin flip, lower is better; within .002 of each other is a tie).`;
+    ? (next ? `, next ${readLabel(next).toLowerCase()} at ${card.scores[next].brier.toFixed(3)}` : '')
+    : (blend ? `, the board’s blend ${blend.brier.toFixed(3)}` : '');
+  const verdict = `the scorecard rates it best this season: accuracy ${b.brier.toFixed(3)} over ${card.n} plays${beside} (0 is perfect, 0.25 a coin flip, lower is better; within .002 of each other is a tie)`;
+  if (from === card.best) return `Reading from ${on}, the green tab: ${verdict}.`;
+  return `Reading from ${on}, your pick. The green tab, ${readLabel(card.best).toLowerCase()}, is where ${verdict}; press it to go back.`;
 }
 
 /** League rank → 'soft' | 'mid' | 'tough' | 'none' by third. */
@@ -59,8 +62,9 @@ export default function Shuffle({ sport, onOpen = null }) {
   const [active, setActive] = useState(markets[0].market);
   const [bars, setBars] = useState(() => Object.fromEntries(markets.map((m) => [m.market, m.start])));
   const [floor, setFloor] = useState(0.35);
-  const [from, setFrom] = useState('blend');
+  const [picked, setPicked] = useState(null);   // the tab pressed this session; until then the panel follows the scorecard's verdict
   const [card, setCard] = useState(null);   // the season's scorecard on the reads: { best, n, scores, ranked }, null until read
+  const from = readFromOf(picked, card);
   const [data, setData] = useState({});
   const [busy, setBusy] = useState('');
   const [err, setErr] = useState('');
@@ -144,13 +148,13 @@ export default function Shuffle({ sport, onOpen = null }) {
               const what = k === 'blend' ? 'The board’s read: his season blended with his last ten, × the matchup' : k === 'line' ? 'The book’s main line as the centre of his distribution' : k === 'h2h' ? 'His average over his last 4 meetings with the opponent (2 at least, from PropFinder’s logs; the opponent is in it already, so no matchup on top; the board’s blend stands in for a player without two)' : `His average over his ${l.toLowerCase()} games, × the matchup`;
               const sc = card?.scores?.[k];
               return (
-                <button key={k} type="button" role="tab" aria-selected={from === k} className={`nhlx-tab${from === k ? ' is-active' : ''}`} onClick={() => setFrom(k)} title={sc ? `${what} · scorecard: accuracy ${sc.brier.toFixed(3)} over ${sc.n} plays this season (lower is better)${card.best === k ? ' · the best so far' : ''}` : what}>
+                <button key={k} type="button" role="tab" aria-selected={from === k} className={`nhlx-tab${from === k ? ' is-active' : ''}${card?.best === k ? ' is-best' : ''}`} onClick={() => setPicked(k)} title={sc ? `${what} · scorecard: accuracy ${sc.brier.toFixed(3)} over ${sc.n} plays this season (lower is better)${card.best === k ? ' · the best so far: the panel opens on it' : ''}` : what}>
                   {l}{card?.best === k ? <i>best</i> : null}
                 </button>
               );
             })}
           </div>
-          <span className="nhlx-rk-toggle-note">The centre of each player’s distribution: the board’s blend, a plain window of his own results, or the book’s line. The hit-rate half of the chance stays as it is. {readNote(card)}</span>
+          <span className="nhlx-rk-toggle-note">{readNote(card, from)} The tab sets the centre of each player’s distribution; the hit-rate half of the chance stays as it is.</span>
         </div>
       {err ? <div className="nhlx-alert" style={{ marginTop: 12 }}>{err}</div> : null}
           <div className="ir-sh-grid">
