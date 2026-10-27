@@ -1,11 +1,15 @@
-name: NHL lineups (pre-game)
+name: NHL lineups (pre-game and post-game)
 
 # The beat writers' tweets on GameDayTweets (fetched here with Chrome, the site is refused)
 # and NHL.com's projected lineup, for the games of the day. The rule: from 60 minutes before
 # puck drop, read every 15 minutes until the game's lineups are found (both teams have a
 # tweet from the 45 minutes before the start: the warm-up lines) or the game is ten minutes
-# old. The newest lines dated at or before each game win; the post-game settle (yesterday's
-# pages in the morning run) is unchanged.
+# old; then one post-game read per game, 3 h 30 after puck drop once the game is final (about an
+# hour after a regulation final; tried again every 20 minutes while it is still on, until the
+# 4-hour tweet cutoff), which takes the lines posted at or during the game and the preview's
+# final update (`only=settle`), re-captures the position snapshot and re-stamps the stored box
+# score. The newest lines dated at or before each game win. The morning run (yesterday's pages
+# for every team that played) is the backstop.
 #
 # GitHub's cron is a lottery (on 2026-10-07 the twice-hourly schedule fired twice all day, and
 # the 9:37 PM warm-up tweet never reached the site before the 10 PM game), so the schedule
@@ -29,9 +33,21 @@ on:
         description: 'Only games starting within this many minutes (blank = all games on the date)'
         required: false
       chain:
-        description: 'Self-dispatched hops this run may add (0 = none; a hop is a wait for the next window or a 15-minute read inside one)'
+        description: 'Self-dispatched hops this run may add (0 = none; a hop is a wait for the next window, a 15-minute read inside one, or a post-game read)'
         required: false
-        default: '40'
+        default: '60'
+      settle:
+        description: 'This run is a post-game read (1): also re-read the previews and re-stamp the stored box scores (only=settle)'
+        required: false
+        default: '0'
+      settled:
+        description: 'Game ids whose post-game read is done, comma-separated (carried from hop to hop)'
+        required: false
+        default: ''
+      backfill_from:
+        description: 'Post-game reads for past dates: every date from this one (YYYY-MM-DD) up to the date input, pages posted and only=settle per date; no chain'
+        required: false
+        default: ''
 
 jobs:
   lineups:
@@ -52,9 +68,33 @@ jobs:
           # dispatched run reads what it was asked for (blank = every game on the date).
           [ -z "$DUE" ] && [ "${{ github.event_name }}" = "schedule" ] && DUE=150
           CHAIN="${{ github.event.inputs.chain }}"
-          [ -n "$CHAIN" ] || CHAIN=40
-          echo "date=$DATE" >> "$GITHUB_OUTPUT"; echo "due=$DUE" >> "$GITHUB_OUTPUT"; echo "chain=$CHAIN" >> "$GITHUB_OUTPUT"
-          echo "date=$DATE due=${DUE:-all} chain=$CHAIN event=${{ github.event_name }}"
+          [ -n "$CHAIN" ] || CHAIN=60
+          SETTLE="${{ github.event.inputs.settle }}"; [ "$SETTLE" = "1" ] || SETTLE=0
+          SETTLED="${{ github.event.inputs.settled }}"
+          BACKFILL="${{ github.event.inputs.backfill_from }}"
+          # A backfill settles its dates and stops: no chain, and the date itself is a post-game read.
+          if [ -n "$BACKFILL" ]; then CHAIN=0; SETTLE=1; fi
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"; echo "due=$DUE" >> "$GITHUB_OUTPUT"; echo "chain=$CHAIN" >> "$GITHUB_OUTPUT"; echo "settle=$SETTLE" >> "$GITHUB_OUTPUT"; echo "settled=$SETTLED" >> "$GITHUB_OUTPUT"; echo "backfill=$BACKFILL" >> "$GITHUB_OUTPUT"
+          echo "date=$DATE due=${DUE:-all} chain=$CHAIN settle=$SETTLE settled=${SETTLED:-none} backfill=${BACKFILL:-none} event=${{ github.event_name }}"
+      - name: Post-game reads for past dates (backfill)
+        if: steps.when.outputs.backfill != ''
+        continue-on-error: true
+        env:
+          NHL_ACTIONS_TOKEN: ${{ secrets.NHL_ACTIONS_TOKEN }}
+        run: |
+          # Every date from backfill_from up to the day before the date input (the date itself follows below):
+          # the teams' pages as they stand now (a page holds ~50 tweets, about two weeks for a busy writer), posted
+          # with that date so the lines posted at or during those games count, then the settle: the previews'
+          # final update, the snapshot re-captured, the stored box scores re-stamped. The audit
+          # (GET /api/nhl/data/lineups/audit?from&to) says which dates were worth it.
+          d="${{ steps.when.outputs.backfill }}"; end="${{ steps.when.outputs.date }}"
+          while [ "$d" \< "$end" ]; do
+            echo "== $d"
+            tools/gdt-pages.sh "$d" || echo "pages for $d: not posted"
+            scode=$(curl -sS -o "settle-$d.json" -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?date=$d&only=settle" || true)
+            echo "settle $d: ${scode:-000} $(head -c 600 "settle-$d.json" 2>/dev/null)"
+            d=$(date -u -d "$d +1 day" +%F)
+          done
       - name: Beat writers' lines from GameDayTweets (fetched here, parsed by the site)
         continue-on-error: true
         env:
@@ -72,21 +112,29 @@ jobs:
             case "$code" in 5*|000) [ "$attempt" = 1 ] && { echo "server answered $code; retrying in 60 s"; sleep 60; } ;; *) break ;; esac
           done
           [ "$code" = "200" ] || [ "$code" = "429" ]
-      - name: Hand on through the warm-up windows
+          # A post-game read: the previews' final update, the snapshot re-captured from every line stored
+          # (the pages posted above included the tweets from the game), the stored box scores re-stamped.
+          if [ "${{ steps.when.outputs.settle }}" = "1" ]; then
+            scode=$(curl -sS -o settle.json -w '%{http_code}' -X POST --max-time 280 "https://ideareels.io/api/nhl/data/refresh?date=${{ steps.when.outputs.date }}&only=settle" || true)
+            echo "post-game settle: ${scode:-000} $(head -c 1500 settle.json 2>/dev/null)"
+          fi
+      - name: Hand on through the warm-up windows and the post-game reads
         if: steps.when.outputs.chain != '0'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -e
-          next=$(node --no-warnings tools/lines-chain.mjs "${{ steps.when.outputs.date }}" "${{ steps.when.outputs.chain }}" resp.json)
+          flags=""; [ "${{ steps.when.outputs.settle }}" = "1" ] && flags="--settle"
+          next=$(node --no-warnings tools/lines-chain.mjs "${{ steps.when.outputs.date }}" "${{ steps.when.outputs.chain }}" resp.json $flags --settled "${{ steps.when.outputs.settled }}")
           echo "$next"
           case "$next" in sleep=*) ;; *) exit 0 ;; esac
           sleep_s=$(echo "$next" | sed -E 's/^sleep=([0-9]+).*/\1/'); hops=$(echo "$next" | sed -E 's/.*hops=([0-9]+).*/\1/')
+          settle_next=$(echo "$next" | sed -E 's/.*settle=([01]).*/\1/'); settled=$(echo "$next" | sed -E 's/.*settled=([^ ]*) why=.*/\1/')
           # Another run already queued or running (a schedule tick, a refresh from the site) carries the chain instead.
           others=$(gh run list --workflow nhl-lineups.yml --status queued --json databaseId --jq 'length'; gh run list --workflow nhl-lineups.yml --status in_progress --json databaseId --jq 'length')
           total=0; for n in $others; do total=$((total + n)); done
           if [ "$total" -gt 1 ]; then echo "another run is queued or running ($total incl. this one): not dispatching"; exit 0; fi
-          echo "sleeping $sleep_s s, then the next hop ($hops left)"
+          echo "sleeping $sleep_s s, then the next hop ($hops left; post-game read: $settle_next; settled: ${settled:-none})"
           sleep "$sleep_s"
-          gh workflow run nhl-lineups.yml --ref "${{ github.ref_name }}" -f "date=${{ steps.when.outputs.date }}" -f "due=${{ steps.when.outputs.due }}" -f "chain=$hops"
+          gh workflow run nhl-lineups.yml --ref "${{ github.ref_name }}" -f "date=${{ steps.when.outputs.date }}" -f "due=${{ steps.when.outputs.due }}" -f "chain=$hops" -f "settle=$settle_next" -f "settled=$settled"
           echo "dispatched the next hop"

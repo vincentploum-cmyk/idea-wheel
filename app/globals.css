@@ -1275,6 +1275,13 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-df-shooter { all: unset; cursor: pointer; font-weight: 600; color: var(--heading); }
 .nhlx-df-shooter small { margin-left: 2px; font-weight: 500; color: var(--muted); }
 .nhlx-df-shooter:hover { text-decoration: underline; }
+/* The Result column of the matchup reads: each listed shooter's box-score figure, green at the floor, red under it. */
+.nhlx-df-result { min-width: 200px; }
+.nhlx-df-got { display: inline; line-height: 1.7; color: var(--muted); font-weight: 500; }
+.nhlx-df-got b { font-family: var(--font-display); font-variant-numeric: tabular-nums; color: var(--heading); }
+.nhlx-df-got .is-hit b { color: var(--ok-fg); }
+.nhlx-df-got .is-miss b { color: var(--bad-fg); }
+.nhlx-df-got .is-dnp b { color: var(--muted); font-weight: 500; font-size: 12px; }
 .nhlx-df-cellbtn { all: unset; cursor: pointer; display: inline-block; padding: 2px 4px; border-radius: 6px; }
 .nhlx-df-cellbtn:hover { outline: 1px solid var(--line-strong); }
 td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }

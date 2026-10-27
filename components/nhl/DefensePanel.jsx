@@ -5,7 +5,7 @@ import { TeamLogo, Headshot } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { PfTable, SortTh, Sel, UnderlineTabs, rankTone } from './pf-ui';
 import { TeamLink } from './links';
-import { GROUPS, OVERVIEW_COLS, boardTables, overviewRows, matchupReads, groupKeyFor, shootersAt, figureFor } from '@/lib/nhl-data/defense-board';
+import { GROUPS, OVERVIEW_COLS, boardTables, overviewRows, matchupReads, groupKeyFor, shootersAt, figureFor, resultsAt } from '@/lib/nhl-data/defense-board';
 
 // The Defense tab: ShotPropz-style cheat sheets from the stored box scores. What every
 // team gives up to each position group, ranked softest first (1 = the most allowed),
@@ -82,13 +82,48 @@ function Shooters({ side, keyName, group, opp, venue, metric }) {
 }
 
 /**
+ * What the listed shooters did, once the game is stored: the tally over the floor (3+ SOG, or 1+ goal under
+ * Goals) with the score, then each shooter's figure, green at the floor, red under it, DNP without a row.
+ * Before the game, or while the box score is not stored yet, a note says so.
+ */
+function Results({ side, keyName, group, metric, game }) {
+  const result = game?.result || null;
+  if (!result) {
+    const start = Date.parse(game?.startTimeUTC || '');
+    return <small className="nhlx-auto-meta">{Number.isFinite(start) && start < Date.now() ? 'no box score yet' : 'not played yet'}</small>;
+  }
+  const list = side && keyName ? shootersAt(side, keyName, group, metric) : [];
+  const r = resultsAt(list, result, metric);
+  const unit = metric === 'g' ? 'goal' : 'SOG';
+  const score = result.score && game ? `${game.away} ${result.score.away}–${result.score.home} ${game.home}` : '';
+  return (
+    <>
+      <b>{r.graded ? `${r.hits} of ${r.graded}` : '—'}</b> <small>{metric === 'g' ? '1+ goal' : '3+ SOG'}{score ? ` · ${score}` : ''}</small>
+      <br />
+      <span className="nhlx-df-got">
+        {r.rows.map((p, i) => (
+          <span key={p.id}>
+            {i ? ' · ' : ''}
+            <span className={p.hit == null ? 'is-dnp' : p.hit ? 'is-hit' : 'is-miss'} title={p.hit == null ? `${p.name}: no box-score row (did not play)` : `${p.name}: ${p.got} ${unit}${p.got === 1 || unit === 'SOG' ? '' : 's'} · ${p.hit ? 'at' : 'under'} the floor of ${r.floor}`}>
+              {String(p.name).split(' ').slice(-1)[0]} <b>{p.hit == null ? 'DNP' : p.got}</b>
+            </span>
+          </span>
+        ))}
+        {!r.rows.length && <small className="nhlx-auto-meta">nobody listed</small>}
+      </span>
+    </>
+  );
+}
+
+/**
  * Tonight's shooting sides, softest spot first: the defender's figure and rank per group, and the shooters
  * the side has at one position: the softest spot by default, or the cell last clicked on that row.
  */
 function Reads({ reads, keys, digits, metric, active, onPick, games, group }) {
   const [picked, setPicked] = useState({});
   if (!reads.length) return <p className="nhlx-auto-meta">No games on this date.</p>;
-  const sideOf = (m) => (games || []).find((g) => g.id === m.gameId)?.sides?.find((s) => s.team === m.team) || null;
+  const gameOf = (m) => (games || []).find((g) => g.id === m.gameId) || null;
+  const sideOf = (m) => gameOf(m)?.sides?.find((s) => s.team === m.team) || null;
   const namesAt = (side, k) => shootersAt(side, k, group, metric).map((p) => `${String(p.name).split(' ').slice(-1)[0]} ${p.pos}${p.line || ''}`).join(', ');
   const rowKey = (m) => `${m.gameId}-${m.team}`;
   const shownKey = (m) => (picked[rowKey(m)] && keys.includes(picked[rowKey(m)]) ? picked[rowKey(m)] : m.best?.key || null);
@@ -101,6 +136,7 @@ function Reads({ reads, keys, digits, metric, active, onPick, games, group }) {
             <th className="is-left">Against</th>
             {keys.map((k) => <th key={k}>{k}</th>)}
             <th className="is-left" title="The softest spot by default; click a position's value to list the shooters there instead">Softest spot · shooters</th>
+            <th className="is-left" title="Once the game is stored: the listed shooters' shots (goals under Goals), the tally at 3+ SOG / 1+ goal, and the score">Result</th>
           </tr>
         </thead>
         <tbody>
@@ -129,6 +165,9 @@ function Reads({ reads, keys, digits, metric, active, onPick, games, group }) {
                     {shown && shown !== m.best.key ? <small className="nhlx-auto-meta">{shown} shooters (#{m.cells[shown]?.rank ?? '—'}): </small> : null}
                     <Shooters side={side} keyName={shown || m.best.key} group={group} opp={m.opp} venue={m.venue} metric={metric} />
                   </> : <small>no games stored</small>}
+                </td>
+                <td className="is-left nhlx-df-result">
+                  <Results side={side} keyName={shown || m.best?.key || null} group={group} metric={metric} game={gameOf(m)} />
                 </td>
               </tr>
             );
@@ -345,7 +384,7 @@ export default function DefensePanel() {
         <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Date" />
       </div>
 
-      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Tonight’s matchups</h3><small>{data.tonight?.length || 0} games on {date} · each shooting side against what its opponent gives up per skater at the position {venue === 'ALL' ? 'over every game' : 'at the venue it defends tonight'} · softest spot first, with the shooters lined up there tonight, the best for {metric === 'g' ? 'goals' : 'shots'} first with his figure (the run’s λ, else his rate a game; click any position’s value to list that position’s shooters instead; * = carried from an earlier lineup)</small></div>
+      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Tonight’s matchups</h3><small>{data.tonight?.length || 0} games on {date} · each shooting side against what its opponent gives up per skater at the position {venue === 'ALL' ? 'over every game' : 'at the venue it defends tonight'} · softest spot first, with the shooters lined up there tonight, the best for {metric === 'g' ? 'goals' : 'shots'} first with his figure (the run’s λ, else his rate a game; click any position’s value to list that position’s shooters instead; * = carried from an earlier lineup) · once the game is stored, Result grades the listed shooters at {metric === 'g' ? '1+ goal' : '3+ SOG'} with the score</small></div>
       <Reads reads={reads} keys={keys} digits={digits} metric={metric} active={active} onPick={pick} games={data.tonight || []} group={group} />
 
       <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Running hot</h3><small>Current streaks from this season’s stored games · the study found no carry-over from a goal last game, so read the streak as colour and the Tonight column as the matchup</small></div>
