@@ -87,7 +87,9 @@ config and keeps its own markets, teams, feeds and slate key:
   final) and the fallen strip. The Matchup cell carries the opponent's rank at his spot with its factor on his rate
   (`matchup`) and, apart from it, his side's factor (`teamFactor`, "team × 1.12"); `env` on the row is their product,
   the multiplier in his projection. **Read from** (`READ_FROM`): the board's blend (default), last 5 / last 10 / season (his
-  window × the matchup as the centre of his distribution) or the book's line; only the model half of the chance moves,
+  window × the matchup as the centre of his distribution), head to head (his last 4 meetings with the opponent as
+  PropFinder's logs hold them, 2 at least, as it is — no matchup on top; the blend stands in without two; `SPARSE_READS`:
+  scored on the tab, never ranked best) or the book's line; only the model half of the chance moves,
   the hit-rate half stays. The panel reads the season's scorecard once per sport and season (`bestReadFrom`: each read's
   over-the-line Brier — the `× matchup` predictors, the projection, the line — pooled over the bars' markets, 100 plays at
   least) and marks the read that has predicted best on its tab, with the figures in the note under the tabs; it never
