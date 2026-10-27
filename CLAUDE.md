@@ -605,6 +605,10 @@ config and keeps its own markets, teams, feeds and slate key:
   on 2026-10-20 for the goals (port it too): `p1g` / `p2g` / `p3g` are the Poisson tails of `lambdaG`,
   the goal ladder rides along as `ladderP1g` / `ladderP2g` / `ladderP3g` and still sets the attack
   score and the goal tier (`__tests__/nhl-model-odds.test.js` holds both)
-  (`docs/shots-goals-predictors.md` section 12).
+  (`docs/shots-goals-predictors.md` section 12). And on 2026-10-27 (port it too): the home / away split's share of a
+  skater's goal base (it used to replace his season goal rate outright, and so reached the published λ goals through
+  the points step) and the historical-profile (position vs opponent) multipliers on the goal ladder are cut to a
+  quarter — `VENUE_SPLIT_WEIGHT` and `H2H_WEIGHT` at the top of `model-core.js`, `venueMix`; 1 restores the model as
+  it was, 0 turns the factor off; Vincent's call after the study's section 16 (`__tests__/nhl-model-weights.test.js`).
 - Secrets stay out of git (Render env + `.env.local`).
 - Site is `noindex` by design (robots.txt disallow + X-Robots-Tag).

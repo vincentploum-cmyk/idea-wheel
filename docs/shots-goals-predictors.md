@@ -1195,3 +1195,8 @@ The season workbook was already this season's rates. Nothing the model is given 
 the under-five-game fallback. Still reading two seasons, and not a number the goals board makes: the Defense tab's
 Season span (labelled), the 1st goal tab's own-record and first-goals-allowed components, and the similar-shooter
 wash on the team log.
+
+*Applied 2026-10-27 (`components/nhl/model-core.js`, port into App.jsx): the venue split's share of a skater's goal base and
+the historical-profile multipliers on the goal ladder are cut to a quarter (`VENUE_SPLIT_WEIGHT`, `H2H_WEIGHT`). The split used
+to replace his season goal rate outright for tonight's venue, and through the points step that was the published λ goals'
+base; it now carries a quarter of it. The shots side's venue base and history weights are untouched.*
