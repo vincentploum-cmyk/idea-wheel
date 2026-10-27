@@ -20,9 +20,9 @@ const DateCtx = createContext('');
 export const useNbaPlayerCard = () => useContext(Ctx);
 
 const TABS = [['pts', 'Points', 'PTS'], ['reb', 'Rebounds', 'REB'], ['ast', 'Assists', 'AST'], ['tpm', '3-pointers', '3PM'], ['pra', 'Pts + reb + ast', 'PRA'], ['pr', 'Pts + reb', 'PR'], ['pa', 'Pts + ast', 'PA'], ['ra', 'Reb + ast', 'RA'], ['stl', 'Steals', 'STL'], ['blk', 'Blocks', 'BLK'], ['tov', 'Turnovers', 'TO']];
-const STAT_LABEL = { pts: 'PTS', reb: 'REB', ast: 'AST', tpm: '3PM', pra: 'PRA', pr: 'PR', pa: 'PA', ra: 'RA', stl: 'STL', blk: 'BLK', tov: 'TO', ftm: 'FTM', fgm: 'FGM', min: 'MIN', usg: 'USG%', rebCh: 'REB CH', potAst: 'POT AST' };
+const STAT_LABEL = { pts: 'PTS', reb: 'REB', ast: 'AST', tpm: '3PM', tpa: '3PA', fga: 'FGA', fta: 'FTA', pra: 'PRA', pr: 'PR', pa: 'PA', ra: 'RA', stl: 'STL', blk: 'BLK', tov: 'TO', ftm: 'FTM', fgm: 'FGM', min: 'MIN', usg: 'USG%', rebCh: 'REB CH', potAst: 'POT AST' };
 // Per-game figures that are not markets: read straight off the game row.
-const RAW = new Set(['min', 'usg', 'rebCh', 'potAst']);
+const RAW = new Set(['min', 'usg', 'rebCh', 'potAst', 'tpa', 'fga', 'fta']);
 const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
 const SEASON_MIN = 1;    // the season split is this season's from his first game; last season's (his last 82) stands in until then
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
@@ -131,6 +131,22 @@ function Card({ req, date, onClose }) {
   const [lines, setLines] = useState({});
   const [span, setSpan] = useState('l5');
   const [win, setWin] = useState('season');   // the window of the opponent's table (season, or PropFinder's last-N rows): the table on the right, never the figure
+  const [marking, setMarking] = useState('');   // the injury override in flight: 'Active' | 'Out' | 'clear'
+  // The admin's word over the report (POST /api/nba/injuries): mark him playing or out by hand; the board,
+  // the shuffle and the card read the pull through it at once, and the page reloads its board.
+  const mark = async (status) => {
+    if (!data?.player?.team) return;
+    setMarking(status || 'clear');
+    try {
+      const q = date ? `?date=${date}` : '';
+      const r = await fetch(`/api/nba/injuries${q}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ team: data.player.team, key: data.player.key, name: data.player.name, status, detail: status ? 'set by hand on the card' : null }) });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || `${r.status}`);
+      const again = await fetch(`/api/nba/player?${new URLSearchParams({ key: req.key, ...(date ? { date } : {}) })}`, { cache: 'no-store' });
+      if (again.ok) setData(await again.json());
+      window.dispatchEvent(new CustomEvent('nba:injury-override', { detail: { date, team: data.player.team, key: data.player.key, status } }));
+    } catch (e) { setErr(`The override was not saved: ${e.message}`); }
+    setMarking('');
+  };
   // His entry on the board (the payload's, else the opener's when the court or the Tonight table opened the card): the
   // spot his environment is read at, the side's scale, his ranges and ladders, his plays. The shuffle's row carries none
   // of these, so the payload fills them in.
@@ -200,13 +216,13 @@ function Card({ req, date, onClose }) {
   // show; the same read off his logs and the season table for a market without a ladder. The window picked on the
   // right fills the table; the hover says what it would have read.
   const own = games.length ? { l5: avgOf(market, games.slice(0, 5)), l10: avgOf(market, games.slice(0, 10)), season: avgOf(market, seasonGames) } : null;
-  const proj = boardRead({ ranges: bp?.ranges || null, own: { [market]: own }, scale: bp?.scale || null }, market, seasonTable, myPos);
+  const proj = boardRead({ ranges: bp?.ranges || null, own: { [market]: own }, scale: bp?.scale || null, minutes: bp?.minutes || null }, market, seasonTable, myPos);
   const held = proj.held;
   const WIN_LABEL = { season: seasonTag(season), prior: seasonTag(data?.prior?.season || (season ? season - 1 : null)), l5: 'L5', l10: 'L10', l15: 'L15', l20: 'L20' };
   const WIN_TEXT = { prior: 'last season’s full table', l5: 'its last 5 games', l10: 'its last 10 games', l15: 'its last 15 games', l20: 'its last 20 games' };
   // The picked window's read at his spot, for the hover: its cell and factor in place of the season table's.
   const winRead = view !== 'season' ? windowRead(proj, table, market) : null;
-  const projTitle = proj.value == null ? '' : `Tonight ${num(proj.value)} ${STAT_LABEL[market] || market}, the board's read: his ${num(proj.rate)} a game (the season blended with his last ten)${proj.matchup != null ? ` × ${proj.matchup} (${opp} gives up ${num(proj.allowed)} to ${myPos}s, #${proj.rank ?? '—'} of ${proj.count || data?.count || 30} on ${held ? 'last season’s table, no game this season yet' : 'this season’s table'}, the league ${num(proj.league)})` : ' (no environment table)'}${proj.team != null ? ` × ${proj.team} so his side's projections add up to its share of the team's expected total` : ''}${proj.floor != null ? ` · between ${proj.floor} and ${proj.ceiling} half the nights` : ''}${winRead ? ` · over ${WIN_TEXT[view]} ${opp} gives up ${num(winRead.allowed)} (#${winRead.rank ?? '—'}): the matchup would read × ${winRead.factor}, ${num(winRead.value)}; the window fills the table on the right, the figure stays the board's` : ''} · his windows: season ${num(own?.season)}, last 10 ${num(own?.l10)}, last 5 ${num(own?.l5)}`;
+  const projTitle = proj.value == null ? '' : `Tonight ${num(proj.value)} ${STAT_LABEL[market] || market}, the board's read: his ${num(proj.rate)} a game (the season blended with his last ten${proj.volume ? `: ${num(proj.volume.att)} attempts a game at ${num(proj.volume.pct * 100)}%` : ''}${proj.minutes?.factor && proj.minutes.factor !== 1 ? `, × ${num(proj.minutes.factor, 3)} for ${num(proj.minutes.tonight)} minutes tonight over the ${num(proj.minutes.base)} behind it${proj.minutes.vacated ? `: +${num(proj.minutes.vacated)} with ${(proj.minutes.from || []).join(' + ')} out` : ''}` : ''}${proj.lift ? `, +${num(proj.lift)} of it ${(proj.liftFrom || []).join(' + ')}'s production handed to him, out tonight` : ''})${proj.matchup != null ? ` × ${proj.matchup} (${opp} gives up ${num(proj.allowed)} to ${myPos}s, #${proj.rank ?? '—'} of ${proj.count || data?.count || 30} on ${held ? 'last season’s table, no game this season yet' : 'this season’s table'}, the league ${num(proj.league)})` : ' (no environment table)'}${proj.team != null ? ` × ${proj.team} (his side's rates run past the team's expected total: scaled down to it)` : ''}${proj.floor != null ? ` · between ${proj.floor} and ${proj.ceiling} half the nights` : ''}${winRead ? ` · over ${WIN_TEXT[view]} ${opp} gives up ${num(winRead.allowed)} (#${winRead.rank ?? '—'}): the matchup would read × ${winRead.factor}, ${num(winRead.value)}; the window fills the table on the right, the figure stays the board's` : ''} · his windows: season ${num(own?.season)}, last 10 ${num(own?.l10)}, last 5 ${num(own?.l5)}`;
 
   return (
     <div className="nhlx-modal" role="dialog" aria-modal="true" onClick={onClose}>
@@ -219,7 +235,14 @@ function Card({ req, date, onClose }) {
             </span>
             <div style={{ minWidth: 0 }}>
               <h3>{p.name}</h3>
-              <span className="nhlx-pc-slot">{p.pos || '—'} · {teamName(p.team) || p.team}{opp ? ` · ${venue === 'H' ? 'vs' : 'at'} ${opp}` : ''}{p.injury ? ` · ${p.injury}${p.injuryDetail ? ` (${p.injuryDetail})` : ''}` : ''}</span>
+              <span className="nhlx-pc-slot" title={p.injuryFrom === 'override' ? `Marked ${p.injury} by hand on ${String(p.override?.at || '').slice(0, 16).replace('T', ' ')}` : p.injuryFrom === 'report' ? `PropFinder’s injury report: listed ${p.injuryRaw || p.injury}${p.injuryDate ? ` on ${String(p.injuryDate).slice(0, 10)}` : ''}` : p.injuryFrom === 'depth' ? `The depth chart’s flag: ${p.injuryRaw || p.injury}` : p.injuryStale ? `The report listed him ${p.injuryStale.status} on ${String(p.injuryStale.date).slice(0, 10)}, but he played on ${p.injuryStale.playedOn}: the listing is left aside` : 'Nothing listed on PropFinder’s injury report'}>{p.pos || '—'} · {teamName(p.team) || p.team}{opp ? ` · ${venue === 'H' ? 'vs' : 'at'} ${opp}` : ''}{p.injury ? ` · ${p.injury}${p.injuryDetail ? ` (${p.injuryDetail})` : ''}${p.injuryFrom === 'override' ? ' · by hand' : p.injuryFrom === 'depth' ? ' · depth chart' : ''}` : p.injuryStale ? ` · listed ${p.injuryStale.status} on ${String(p.injuryStale.date).slice(0, 10)}, played since` : ''}</span>
+              {data?.player ? (
+                <span className="ir-pc-mark">
+                  {p.injury && p.injuryFrom !== 'override' && ['Out', 'Doubtful', 'IR', 'Suspended'].includes(p.injury) ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={!!marking} onClick={() => mark('Active')} title="The report is wrong: he plays tonight. His rows come back on the board and his production stays his.">{marking === 'Active' ? 'Marking…' : 'He plays'}</button> : null}
+                  {!p.injury || (p.injuryFrom !== 'override' && !['Out', 'Doubtful', 'IR', 'Suspended'].includes(p.injury)) ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={!!marking} onClick={() => mark('Out')} title="He is out tonight whatever the report says: his rows leave the board and his minutes and production go to his teammates.">{marking === 'Out' ? 'Marking…' : 'Mark out'}</button> : null}
+                  {p.injuryFrom === 'override' ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={!!marking} onClick={() => mark(null)} title="Back to the report's word">{marking === 'clear' ? 'Clearing…' : 'Back to the report'}</button> : null}
+                </span>
+              ) : null}
             </div>
           </div>
           {[['pts', 'PTS', 'points'], ['reb', 'REB', 'rebounds'], ['ast', 'AST', 'assists'], ['usg', 'USG%', 'usage rate: the share of his team’s possessions he ends while on the floor'], ['rebCh', 'REB CH', 'rebound chances: rebounds plus the ones within reach he did not get'], ['potAst', 'POT AST', 'potential assists: passes that led to a shot']].map(([m, l, t]) => <div key={m} className="nhlx-pc-stat" title={`${t}, a game, ${seasonLabel}${thisSeason < SEASON_MIN ? ' (last season carries the read until he has ten games this season)' : ''}${avgOf(m, seasonGames) == null && RAW.has(m) ? ' · not in this pull’s game rows (the unread fields under Data sources name the spelling)' : ''}`}><small>{l}{m === 'usg' ? '' : ' / G'}</small><b>{num(avgOf(m, seasonGames))}{m === 'usg' && avgOf(m, seasonGames) != null ? '%' : ''}</b></div>)}
@@ -258,16 +281,34 @@ function Card({ req, date, onClose }) {
             {without ? <p className="nhlx-auto-meta ir-pc-without">w/o {without.names.join(' + ')} ({without.absent.map((a) => `${a.name}: ${a.status}${a.detail ? `, ${a.detail}` : ''}`).join('; ')}): his {without.n} logged game{without.n === 1 ? '' : 's'} without {without.absent.length === 1 ? 'him' : 'them'}. The board’s season read moves toward this split at weight {without.weight}.</p> : null}
             <div className="nhlx-pfd-wrap nhlx-pc-stats">
               <table className="nhlx-pfd-table">
-                <thead><tr><th>Split</th><th>GP</th><th>MIN</th>{['pts', 'reb', 'ast', 'tpm', 'pra', 'usg', 'rebCh', 'potAst'].map((m) => <th key={m} title={m === 'usg' ? 'Usage rate' : m === 'rebCh' ? 'Rebound chances a game' : m === 'potAst' ? 'Potential assists a game' : ''}>{STAT_LABEL[m]}</th>)}<th>Over {line}</th></tr></thead>
+                <thead><tr><th>Split</th><th>GP</th><th>MIN</th>{['pts', 'fga', 'reb', 'ast', 'tpm', 'tpa', 'fta', 'pra', 'usg', 'rebCh', 'potAst'].map((m) => <th key={m} title={m === 'usg' ? 'Usage rate' : m === 'rebCh' ? 'Rebound chances a game' : m === 'potAst' ? 'Potential assists a game' : m === 'fga' ? 'Field-goal attempts a game: his volume' : m === 'tpa' ? 'Three-point attempts a game: the volume behind his threes' : m === 'fta' ? 'Free-throw attempts a game' : ''}>{STAT_LABEL[m]}</th>)}<th>Over {line}</th></tr></thead>
                 <tbody>
                   {splits.map(([k, label]) => {
                     const list = splitGames(games, k, splitCtx);
                     const h = hitRate(list, market, line);
-                    return <tr key={k} className={span === k ? 'is-active' : ''}><td><b>{label}</b></td><td>{list.length}</td><td>{num(avgOf('min', list), 0)}</td>{['pts', 'reb', 'ast', 'tpm', 'pra', 'usg', 'rebCh', 'potAst'].map((m) => <td key={m}>{num(avgOf(m, list))}{m === 'usg' && avgOf(m, list) != null ? '%' : ''}</td>)}<td className={h.gp ? (h.rate >= 0.5 ? 'is-soft' : 'is-tough') : ''}><span className="nhlx-pfd-val">{h.gp ? pct(h.rate) : '—'}</span>{h.gp ? <span className="nhlx-pfd-rank">{h.hits}/{h.gp}</span> : null}</td></tr>;
+                    return <tr key={k} className={span === k ? 'is-active' : ''}><td><b>{label}</b></td><td>{list.length}</td><td>{num(avgOf('min', list), 0)}</td>{['pts', 'fga', 'reb', 'ast', 'tpm', 'tpa', 'fta', 'pra', 'usg', 'rebCh', 'potAst'].map((m) => <td key={m}>{num(avgOf(m, list))}{m === 'usg' && avgOf(m, list) != null ? '%' : ''}</td>)}<td className={h.gp ? (h.rate >= 0.5 ? 'is-soft' : 'is-tough') : ''}><span className="nhlx-pfd-val">{h.gp ? pct(h.rate) : '—'}</span>{h.gp ? <span className="nhlx-pfd-rank">{h.hits}/{h.gp}</span> : null}</td></tr>;
                   })}
                 </tbody>
               </table>
             </div>
+            {data?.teammates?.length ? (
+              <div className="nhlx-pfd-wrap nhlx-pc-stats ir-pc-lab">
+                <div className="nhlx-pfd-head"><b>With and without each teammate</b><small className="nhlx-auto-meta">his averages over the games they shared and over his games the teammate sat, {seasonLabel}; the gap is without minus with · the teammate’s health tonight first</small></div>
+                <table className="nhlx-pfd-table">
+                  <thead><tr><th>Teammate</th><th>Tonight</th><th>GP with · without</th>{['min', 'pts', 'reb', 'ast', 'tpm'].map((m) => <th key={m}>{STAT_LABEL[m]} with → w/o</th>)}</tr></thead>
+                  <tbody>
+                    {data.teammates.map((t) => (
+                      <tr key={t.key} className={t.health === 'Out' ? 'is-active' : ''}>
+                        <td><b>{t.name}</b>{t.pos ? <small className="nhlx-auto-meta"> {t.pos}</small> : null}</td>
+                        <td><span className={`ir-health is-${(t.health || 'In').toLowerCase()}`} title={t.injury ? `${t.injury}${t.injuryDetail ? ` · ${t.injuryDetail}` : ''}` : 'Nothing listed'}>{t.health}</span></td>
+                        <td>{t.together} · {t.apart}</td>
+                        {['min', 'pts', 'reb', 'ast', 'tpm'].map((m) => <td key={m} className={t.delta?.[m] != null && Math.abs(t.delta[m]) >= (m === 'min' ? 3 : m === 'pts' ? 2 : 1) ? (t.delta[m] > 0 ? 'is-soft' : 'is-tough') : ''}><span className="nhlx-pfd-val">{num(t.with?.[m], m === 'min' ? 0 : 1)}{t.without ? ` → ${num(t.without[m], m === 'min' ? 0 : 1)}` : ''}</span>{t.delta?.[m] != null ? <span className="nhlx-pfd-rank">{t.delta[m] > 0 ? '+' : ''}{num(t.delta[m], 1)}</span> : null}</td>)}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
           </section>
           <section className="nhlx-pc-pane nhlx-pc-right">
             <div className="nhlx-pfd-head"><b>What {opp || 'the opponent'} gives up per game, by position</b><small className="nhlx-auto-meta">rank 1 = the most of {table?.count || data?.count || 30} · {view === 'season' ? `${WIN_LABEL.season} as PropFinder publishes it${held ? ` (last season’s until ${opp} plays its first game)` : ''}, the table the board’s projection reads` : view === 'prior' ? `${WIN_LABEL.prior} in full · a comparison: the figure above stays the board’s` : `its last ${view.slice(1)} games${table?.season && season && table.season < season ? ' of last season' : ''} · a comparison: the figure above stays the board’s`}{table?.league ? ' · Lg = the league’s average' : ''}</small></div>

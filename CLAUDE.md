@@ -21,7 +21,7 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   → `[tab, mounted]`, a visited panel stays mounted hidden so it keeps its state; `components/site/TabBar.jsx`
   draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard, the data
   sources, the default) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
-  drawn on both panels). The NHL app has eight (below).
+  drawn on both panels); the NBA page a third, `#firstbasket`. The NHL app has eight (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)
@@ -153,7 +153,61 @@ config and keeps its own markets, teams, feeds and slate key:
   the chance, the season average behind the projection and each ladder rung's season rate move toward
   the split at n / (n + `WITHOUT_K` = 8) (`blendWithout`; `without` on the play and the side's player:
   names, n, weight, rate, avg, seasonAll; `own[stat].all` / `.without` / `.n` on the side, so the
-  team-total scale sums the blended rates). The notes name who is out and the reads moved; the card's
+  team-total ceiling sums the blended rates). **The production an out player leaves goes to his active
+  teammates** (`vacatedLifts` in `injuries.js`, 2026-10-27, Vincent: a point guard out, his assists must
+  land on someone): per stat, each out player's own rate (`ownRate` of his windows; the players the
+  odds-only pull left out are read one by one, so they have logs) × how much of the teammate's window he
+  was part of (`playedShare`: the share of the teammate's games this season, else his last ten, the out
+  player took part in — a season-long absence hands over nothing, the averages were earned without him)
+  × `VACATED_SHARE` = 0.6 (the rest to the bench the pull never lists), shared by the active players'
+  own rates for the stat; where the teammate has a without split of his own, the split speaks first and
+  the lift counts at 1 − its weight. The lift rides on his windows as `own[stat].lift` / `.liftFrom`, so
+  `ownRate` carries it into every projection (the ladder's centre takes it as `lift`, `ranges[market]`
+  and the shuffle row name it — the shuffle reads the split through the binding's `withoutFor`, since
+  `shuffle.js` is bundled by the client and `injuries.js` reaches the server store —, the hovers spell
+  it out, the notes' "Vacated production" line names the three biggest a side); the hit rates behind
+  the chance stay his own. **The rotation** (`lib/picks/rotations.js`, `minutesTonight`, Vincent's ask of
+  2026-10-27 for PropFinder's Rotations page; its data, minutes a game, is in the pull's logs, `coverage.field`):
+  each active player's minutes tonight = his last five blended half and half into the minutes behind his rate
+  (the season with his last ten, `RECENT_WEIGHT`), plus the out players' minutes handed to the ones who play
+  (each out player's minutes × `playedShare` × the priced players' share of the 240, by their own minutes, the
+  vacated minutes taking nobody past `coverage.cap` = 38); over the minutes behind his rate = `minFactor`
+  (0.75–1.3, `FACTOR_MIN` / `FACTOR_MAX`) on every stat's rate through `ownRate` (`own[stat].minFactor`; the
+  ladder takes it as `minFactor`), `minutes` { base, recent, vacated, tonight, factor, from } on the side player,
+  the shuffle row and `ranges[market].minutes`; what his extra minutes already add of a stat comes off his
+  vacated lift, so the minutes carry the opportunity and the lift the role on top; the notes' "Rotation" line
+  names the minutes that moved most. PropFinder's Rotations page's own route is not known (the site's pages and
+  their chunks sit behind the login; the shared bundle names only the team, player and image routes):
+  `fetchSamples` reads it once a pull when `PROPFINDER_<LEAGUE>_ROTATIONS_PATH` (or `…_SAMPLE_PATHS`) names it on
+  Render (`{teamIds}`, `{date}` filled in) and stores the answer's keys and first 2000 characters as
+  `samples.rotations` on the pull, shown under Data sources, so the read can be written from what the page sends. **The volume
+  behind a made count** (`volumeOf` in `board.js`, Vincent's ask of 2026-10-27 for PropFinder's Volume Trends;
+  `volumeMarkets` per sport: the NBA's threes off `tpa` and free throws off `fta`, the NFL's receptions off `tgt`):
+  his attempts a game over his last 5 / 10 / the season (the rate's own blend) × his percentage, this season's made
+  over attempts shrunk toward his long run (his last `seasonCap` games) at attempts / (attempts + `VOLUME_K` = 40),
+  so a 4-of-8 start reads a little over his usual rate, not as 50%; `own[stat].volume` { att, pct, pctSeason,
+  pctLong, attN, field } on the side player, `ranges[market].volume` and the shuffle row carry it, `ownRate` reads
+  attempts × percentage in place of the made count when the logs carry attempts (a without split's move on the
+  made count rides over as a ratio), the made count stands without them (the field's spelling unseen in the pull);
+  the hovers spell it out and the card's splits table carries FGA, 3PA and FTA a game beside the made counts.
+  **A report row the logs have overtaken is left aside** (`markStale` in `injuries.js`, run by `applyInjuries` at
+  the pull; Vincent, 2026-10-27: Dončić read as out while he was playing): a row listing a player out with a date
+  before a game row of his with minutes (he played since) is marked `stale: { playedOn }`, `absentByTeam` and the
+  boards skip it, the player carries `injuryStale` (the card's slot line and the shuffle's Health hover say so), the
+  pull's `injuries.stale` lists them under Data sources; a row without a date stands as listed. The report is read
+  one row a player, the newest dated (`latestReport`; `raw` keeps the status as listed, `date` reads `date` /
+  `gameDate` / `reportDate` / `updatedAt`). **The admin's word over the report**: `POST /api/nba/injuries?date` with
+  { team, key, status: 'Active' | 'Out' | null, detail, name } (`setOverride`, `nba/<date>/injury-overrides.json`),
+  `GET` lists them; `pfFor` in `store.js` reads the pull through them (`applyOverrides`, a fresh object per pull +
+  overrides, `injuryFrom: 'override'`, the rows replaced), so the board, the shuffle and the card follow at once;
+  the card's slot line carries "He plays" / "Mark out" / "Back to the report" (the page's board reloads on the
+  `nba:injury-override` event). **With and without each teammate** (`teammateSplits`, PropFinder's Lineup Lab as
+  far as the logs reach; Vincent's ask, 2026-10-27): `teammates` on the card's payload = for every pulled teammate
+  who took part in three of his games at least, his averages (minutes, points, rebounds, assists, threes) over the
+  games they shared and over his games the teammate sat, the gap, and the teammate's health tonight; drawn under
+  the splits table. The page's own route is behind the login: name it in `PROPFINDER_NBA_SAMPLE_PATHS`
+  ("rotations=/NBA/…;lineups=/NBA/…", `fetchSamples`, `samples` on the pull) to see what it sends. The
+  notes name who is out and the reads moved; the card's
   "w/o X" tile draws the split (`without.gameIds` from `/api/<sport>/player`); the pull's `injuries`
   meta (source, counts, the players read one by one, errors) shows under Data sources. No live pull
   had been seen when this was written: an empty report there means the route or the field names
@@ -328,15 +382,16 @@ config and keeps its own markets, teams, feeds and slate key:
   projections add up to the team's expected total tonight**: the pull keeps every team's own per-game row
   (type Team, All) and what it gives up in all (`defense.totals[ABBR].for / .against`, `leagueFor`, the
   same held / blend rule); `sidesOf` reads the team's expected figure per stat (its own × the opponent's
-  all-positions environment, damped), **pro-rated to the share of the game its priced, active players account
-  for** (`coverage` in `lib/nba/picks.js`: their own minutes over the 240 a team plays, `share` / `minutes` on the
-  side; the pull is odds-only, so the bench is never in it and the priced players' rates never add up to the whole
-  team — read as the whole team the total put ×1.4–1.5 on every projection of a thinly priced side, Cunningham at
-  34 points against the #29 PG defense on 2026-10-27), over the sum of their own rates (the injured out left
-  aside) as `scale[stat]` (0.5–1.5; the combos on their parts; no scale under half the minutes, the priced few
-  being the stars; a sport without a coverage measure, or logs without minutes, scales down only, cap 1), on the
-  side with `teamProj` and on every player; `projectFor(own, allowed, pos, stat, scale)` multiplies it in and the
-  ladder's `env` carries it, so a roster of last season's shares on other teams no longer adds up to 150 points),
+  all-positions environment, damped) as `teamProj`, **a ceiling on the side's projections, never a lift**: only
+  when the active players' own rates (the lifts and the without splits in) add up to more than it does the side
+  scale down to it, `scale[stat]` (0.5 at the least; the combos on their parts), on the side and on every player;
+  `projectFor(own, allowed, pos, stat, scale)` multiplies it in and the ladder's `env` carries it, so a roster of
+  last season's shares on other teams no longer adds up to 150 points. Until 2026-10-27 the factor also lifted:
+  the total pro-rated to the priced players' minutes (`coverage` in `lib/nba/picks.js`, `share` / `minutes` still
+  on the side for the hover) over their rates, capped at 1.5 — the pull is odds-only, the rates never add up to the
+  team, and the factor put the same ×1.5 on a non-shooter's threes as on the shooters' (Castle at 3.6 threes
+  against a +800 book; Vincent: realistic figures, and an out player's production to his teammates, which the
+  lifts above do player by player),
   the PropFinder players without a play too, and
   `allowed` = the opponent's rows with ranks, `league`, and `windows`, every cell carrying the cheat
   sheet's tile for it as `sheet` when the sheet has one (`sheetCheck` in the court: the hover on a zone
@@ -389,8 +444,30 @@ config and keeps its own markets, teams, feeds and slate key:
   `optional: true` reads null when the row lacks the key, so an unknown spelling shows as "—" on
   the card and in the pull's unread list, never as 0) and averaged per split in the top bar and
   the splits table.
+- **First basket** (`#firstbasket`, `components/nba/NbaFirstBasket.jsx`, `GET /api/nba/firstbasket?date[&backfill=0]`,
+  `firstBasketFor` in `lib/nba/store.js`, the model in `lib/nba/firstbasket.js`; Vincent's ask, 2026-10-27, after
+  PropFinder's First Basket page): who scores the first field goal of each game. ESPN's summary carries the plays, so
+  `parseOpening` in `lib/nba/espn.js` stores with every box score an `opening` — the tip (the two jumpers, who gained
+  possession, by team), the first basket (scorer, team, 2 or 3), the first points (a free throw counts) and each team's
+  first shot (`__tests__/fixtures/espn-nba-summary-plays.json` is DAL at MIA of 2026-10-26, trimmed); results stored
+  before it lack it and the tab's load reads a dozen of them again from ESPN each time (`MAX_BACKFILL`, `missing` in
+  the payload says how many remain; a summary without plays is marked `openingMissing`). The season's record
+  (`firstBasketRecord` over the season's stored results, ten minutes a cache): per player (ESPN id, joined to the pull
+  by `normName`) his starts, first baskets, first points, first shots and jump balls won / jumped; per team its tips,
+  first baskets scored and conceded; and how often the team with first possession scored first. Each starter (the
+  depth chart's: the nba.com starter flag, then depth 1 a slot; the five most-played pulled players without a chart,
+  `startersOf`; the out left aside, the overrides in through `pfFor`) gets P(team first) × his share: P(first
+  possession) is the starting centre's jump record ((won + 2) / (jumped + 4), `TIP_K`), the team's tip record standing
+  in, half without either, × `FIRST_POSSESSION_EDGE` = 0.57 (the season's own share once 40 games are on record); his
+  share is his field-goal attempts among the five starters × his finishing (`FINISH_WEIGHT`), moved toward his first-shot
+  share this season at n / (n + `SHARE_K`), the five normalised; his own first baskets over starts blend in at starts /
+  (starts + `OWN_K`). The chance carries its fair price and the book's first-basket price when the pull has one
+  (`firstBasketOdds` in `lib/picks/propfinder.js`: the items naming a first basket / first field goal, not a team's or
+  first points, the best price as `firstBasket` on the player, never a market), with the edge; the score is the chance
+  × 4 on 0–100. Once stored, who scored first, the first points and the tip are on the game and the rows are graded.
 - Routes: `GET /api/nba/picks?date`, `GET /api/nba/shuffle?date&market`, `GET /api/nba/scorecard?from&to`, `GET|POST|DELETE /api/nba/sheets?date`,
-  `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`.
+  `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`,
+  `GET|POST /api/nba/injuries?date` (the admin's injury overrides).
   `.github/workflows/nba-data.yml`: 9:47 ET and 5:23 PM ET (schedule + PropFinder), 2:11 AM ET
   (last night's box scores). UI: `components/nba/NbaApp.jsx` (date picker), `NbaBoard.jsx`,
   `NbaSources.jsx`. Tests: `__tests__/nba-board.test.js` (`fixtures/espn-nba-summary.json`).

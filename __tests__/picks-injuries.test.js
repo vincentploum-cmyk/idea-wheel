@@ -1,5 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
-import { statusOf, isOut, healthOf, parseInjuryReport, gamesPlayed, keyAbsences, withoutGames, blendWithout, withoutWeight, absentByTeam, withoutOf, shortNames, WITHOUT_K } from '../lib/picks/injuries';
+import { statusOf, isOut, healthOf, parseInjuryReport, gamesPlayed, keyAbsences, withoutGames, blendWithout, withoutWeight, absentByTeam, withoutOf, shortNames, WITHOUT_K, playedShare, vacatedLifts, VACATED_SHARE, latestReport, markStale, applyOverrides, teammateSplits } from '../lib/picks/injuries';
+import { ownRate } from '../lib/picks/projection';
 
 describe('PropFinder injury report', () => {
   test('statuses read into one spelling, as the site maps them', () => {
@@ -38,9 +39,9 @@ describe('PropFinder injury report', () => {
       null, 'junk', { team: { id: 1 }, player: { id: 'p0' }, status: 'out' },
     ] });
     expect(parseInjuryReport(report, { teamOf })).toEqual([
-      { id: 'p1', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', status: 'Out', detail: 'Achilles', date: null },
-      { id: 'p9', name: 'Josh Hart', key: 'josh hart', team: 'NY', pos: 'SG', status: 'Questionable', detail: 'back', date: null },
-      { id: 'p5', name: 'Nobody Known', key: 'nobody known', team: null, pos: null, status: 'DTD', detail: null, date: null },
+      { id: 'p1', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', status: 'Out', detail: 'Achilles', raw: 'out', date: null },
+      { id: 'p9', name: 'Josh Hart', key: 'josh hart', team: 'NY', pos: 'SG', status: 'Questionable', detail: 'back', raw: 'questionable', date: null },
+      { id: 'p5', name: 'Nobody Known', key: 'nobody known', team: null, pos: null, status: 'DTD', detail: null, raw: 'day-to-day', date: null },
     ]);
     expect(parseInjuryReport(JSON.parse(report), { teamOf })).toHaveLength(3);   // the parsed object reads the same
     expect(parseInjuryReport('not json')).toEqual([]);
@@ -48,7 +49,7 @@ describe('PropFinder injury report', () => {
     expect(parseInjuryReport({ data: 'nope' })).toEqual([]);
     // The per-team route's shape: a flat player with status, description, position, date.
     const perTeam = [{ id: 44, name: 'Jaylen Brown', status: 'Out', description: 'hamstring; questionable for Friday', position: 'SG', date: '2026-10-27' }];
-    expect(parseInjuryReport(perTeam, { team: 'BOS' })).toEqual([{ id: '44', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SG', status: 'Questionable', detail: 'hamstring; questionable for Friday', date: '2026-10-27' }]);
+    expect(parseInjuryReport(perTeam, { team: 'BOS' })).toEqual([{ id: '44', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SG', status: 'Questionable', detail: 'hamstring; questionable for Friday', raw: 'Out', date: '2026-10-27' }]);
   });
 });
 
@@ -104,5 +105,85 @@ describe('without-teammate splits', () => {
     expect(withoutOf({ ...brown, games: [...brown.games.slice(0, 1), ...brown.games.slice(4)] }, absent.BOS)).toBeNull();   // one game without him: under WITHOUT_MIN
     expect(shortNames([{ name: 'Jayson Tatum' }, { name: 'Jaylen Brown' }])).toEqual(['Tatum', 'Brown']);
     expect(shortNames([{ name: 'Jayson Tatum' }, { name: 'Jaxon Tatum' }])).toEqual(['J. Tatum', 'J. Tatum']);
+  });
+  test('the production an out player leaves goes to his active teammates by their own rates, for the share of their games he played', () => {
+    const g = (i, extra = {}) => ({ gameId: `g${i}`, season: 2026, type: 'REG', ...extra });
+    // The star took part in 6 of the guard's 8 games this season; the guard's two newest were without him.
+    const guard = { key: 'guard', games: [g(0), g(1), g(2), g(3), g(4), g(5), g(6), g(7)], own: { ast: { l10: 6, season: 6 }, pts: { l10: 20, season: 20 } } };
+    const wing = { key: 'wing', games: [g(0), g(1), g(2), g(3), g(4), g(5), g(6), g(7)], own: { ast: { l10: 2, season: 2 }, pts: { l10: 20, season: 20 } } };
+    const star = { key: 'star', name: 'The Star', played: new Set(['g2', 'g3', 'g4', 'g5', 'g6', 'g7']), own: { ast: { l10: 8, season: 8 }, pts: { l10: 25, season: 25 } } };
+    expect(playedShare(guard.games, star.played, { season: 2026 })).toBe(0.75);
+    expect(playedShare(guard.games, new Set(), { season: 2026 })).toBe(0);
+    // Last season's games are not the window once he has a game this season; without one, his last ten are.
+    expect(playedShare([g(0), g(1, { season: 2025 })], star.played, { season: 2026 })).toBe(0);
+    expect(playedShare([g(2, { season: 2025 }), g(9, { season: 2025 })], star.played, { season: 2026 })).toBe(0.5);
+    expect(VACATED_SHARE).toBe(0.6);
+    const lifts = vacatedLifts([guard, wing], [star], ownRate, { season: 2026 });
+    // 8 assists × 0.75 of the guard's games × 0.6 = 3.6, shared 6 : 2 → 2.7 to the guard, 0.9 to the wing; the points 25 × 0.75 × 0.6 = 11.25 halved.
+    expect(lifts.guard.ast).toEqual({ lift: 2.7, from: ['The Star'] });
+    expect(lifts.wing.ast).toEqual({ lift: 0.9, from: ['The Star'] });
+    expect(lifts.guard.pts.lift).toBeCloseTo(5.63, 2);
+    // Two out at once add up; a player out all season (none of their games) hands over nothing; the out player gets no lift himself.
+    const other = { key: 'other', name: 'Other', played: new Set(['g0', 'g1']), own: { ast: { season: 4 } } };
+    expect(vacatedLifts([guard, wing], [star, other], ownRate, { season: 2026 }).guard.ast).toEqual({ lift: 3.15, from: ['The Star', 'Other'] });
+    expect(vacatedLifts([guard], [{ ...star, played: new Set(['x']) }], ownRate, { season: 2026 })).toEqual({});
+    expect(vacatedLifts([guard, { ...star, games: guard.games }], [star], ownRate, { season: 2026 }).star).toBeUndefined();
+    // No rate of his own for the stat: nothing to share, nothing received.
+    expect(vacatedLifts([{ ...wing, own: {} }], [star], ownRate, { season: 2026 })).toEqual({});
+    // The lift rides on the windows into the rate every projection reads.
+    expect(ownRate({ l10: 6, season: 6, lift: 2.7 })).toBe(8.7);
+    expect(ownRate({ season: 6 })).toBe(6);
+  });
+  test('one row a player, the newest dated; a row the logs overtook is marked stale and left aside', () => {
+    const rows = [
+      { id: 'p1', name: 'Luka Doncic', key: 'luka doncic', team: 'LAL', status: 'Out', detail: 'calf', date: '2026-10-20' },
+      { id: 'p1', name: 'Luka Doncic', key: 'luka doncic', team: 'LAL', status: 'Questionable', detail: 'calf', date: '2026-10-24' },
+      { id: 'p2', name: 'Austin Reaves', key: 'austin reaves', team: 'LAL', status: 'Out', detail: 'groin', date: '2026-10-26' },
+      { id: 'p3', name: 'LeBron James', key: 'lebron james', team: 'LAL', status: 'Out', detail: 'sciatica', date: null },
+    ];
+    const latest = latestReport(rows);
+    expect(latest.map((r) => [r.key, r.status])).toEqual([['luka doncic', 'Questionable'], ['austin reaves', 'Out'], ['lebron james', 'Out']]);
+    // The parser dedupes on its own: the same player twice in a report reads once, the newest.
+    expect(parseInjuryReport([{ id: 'p1', name: 'Luka Doncic', status: 'out', date: '2026-10-20' }, { id: 'p1', name: 'Luka Doncic', status: 'available', date: '2026-10-26' }], { team: 'LAL' }).map((r) => r.status)).toEqual(['Available']);
+    // Reaves listed out on the 26th but has a game row with minutes on the 27th: stale. LeBron's row has no date: as listed.
+    const players = [
+      { id: 'p2', key: 'austin reaves', team: 'LAL', games: [{ gameId: 'g9', date: '2026-10-27T02:00:00Z', min: 31 }, { gameId: 'g8', date: '2026-10-25', min: 30 }] },
+      { id: 'p3', key: 'lebron james', team: 'LAL', games: [{ gameId: 'g9', date: '2026-10-27', min: 35 }] },
+    ];
+    const out = [{ ...latest[1] }, { ...latest[2] }];
+    markStale(out, players);
+    expect(out[0].stale).toEqual({ playedOn: '2026-10-27' });
+    expect(out[1].stale).toBeUndefined();
+    // A row dated after his last game stands; a DNP row (0 minutes) is not a game played.
+    const fresh = [{ ...latest[1], date: '2026-10-28' }]; markStale(fresh, players); expect(fresh[0].stale).toBeUndefined();
+    const dnp = [{ ...latest[1] }]; markStale(dnp, [{ ...players[0], games: [{ gameId: 'g9', date: '2026-10-27', min: 0 }] }]); expect(dnp[0].stale).toBeUndefined();
+    // absentByTeam leaves a stale row aside.
+    const pf = { data: { players, injuries: { rows: out } } };
+    expect(absentByTeam(pf).LAL.map((a) => a.key)).toEqual(['lebron james']);
+  });
+  test('the admin’s override replaces the report’s word for a player and rides on the rows', () => {
+    const pf = { at: 'x', data: { players: [{ id: 'p1', name: 'Luka Doncic', key: 'luka doncic', team: 'LAL', pos: 'PG', injury: 'Out', injuryDetail: 'calf', injuryFrom: 'report', games: [] }, { id: 'p4', name: 'Rui Hachimura', key: 'rui hachimura', team: 'LAL', pos: 'PF', games: [] }], injuries: { rows: [{ id: 'p1', name: 'Luka Doncic', key: 'luka doncic', team: 'LAL', status: 'Out', detail: 'calf' }] } } };
+    expect(applyOverrides(pf, {})).toBe(pf);
+    expect(applyOverrides(pf, { 'LAL|luka doncic': { status: null } })).toBe(pf);
+    const o = applyOverrides(pf, { 'LAL|luka doncic': { status: 'Active', detail: 'set by hand', at: '2026-10-27T20:00:00Z' }, 'LAL|rui hachimura': { status: 'out', at: '2026-10-27T20:01:00Z' } });
+    expect(o).not.toBe(pf);
+    expect(pf.data.players[0].injury).toBe('Out');   // the stored pull untouched
+    expect(o.data.players[0]).toMatchObject({ injury: 'Active', injuryDetail: 'set by hand', injuryFrom: 'override', injuryOverride: { status: 'Active' } });
+    expect(o.data.players[1]).toMatchObject({ injury: 'Out', injuryFrom: 'override' });
+    expect(o.data.injuries.rows.map((r) => [r.key, r.status, !!r.override])).toEqual([['luka doncic', 'Active', true], ['rui hachimura', 'Out', true]]);
+    expect(absentByTeam(o).LAL?.map((a) => a.key) ?? []).toEqual(['rui hachimura']);
+  });
+  test('with and without each teammate: his averages over the games they shared and the ones the teammate sat', () => {
+    const g = (i, pts, extra = {}) => ({ gameId: `g${i}`, date: `2026-10-${String(10 + i).padStart(2, '0')}`, season: 2026, type: 'REG', min: 34, pts, reb: 6, ast: 4, tpm: 2, ...extra });
+    const me = { key: 'austin reaves', name: 'Austin Reaves', team: 'LAL', games: [g(0, 30), g(1, 28), g(2, 20), g(3, 18), g(4, 22), g(5, 19)] };
+    const luka = { key: 'luka doncic', name: 'Luka Doncic', team: 'LAL', pos: 'PG', injury: 'Out', injuryDetail: 'calf', games: [g(2, 30), g(3, 31), g(4, 33), g(5, 29)] };   // sat g0 and g1
+    const lebron = { key: 'lebron james', name: 'LeBron James', team: 'LAL', pos: 'SF', games: me.games.map((x) => ({ ...x, pts: 25 })) };   // every game
+    const bench = { key: 'deep bench', name: 'Deep Bench', team: 'LAL', games: [g(5, 2)] };   // one game together: under the floor
+    const other = { key: 'someone else', name: 'Someone Else', team: 'DAL', games: me.games };
+    const t = teammateSplits(me, [bench, luka, lebron, other, me], { season: 2026 });
+    expect(t.map((x) => x.key)).toEqual(['lebron james', 'luka doncic']);
+    expect(t[1]).toMatchObject({ name: 'Luka Doncic', pos: 'PG', injury: 'Out', health: 'Out', together: 4, apart: 2, with: { min: 34, pts: 19.8, reb: 6, ast: 4, tpm: 2 }, without: { min: 34, pts: 29 }, delta: { pts: 9.2, min: 0, reb: 0 } });
+    expect(t[0]).toMatchObject({ health: 'In', together: 6, apart: 0, without: null, delta: { pts: null } });
+    expect(teammateSplits({ ...me, games: [] }, [luka], { season: 2026 })).toEqual([]);
   });
 });

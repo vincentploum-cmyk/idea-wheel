@@ -168,14 +168,14 @@ describe('NBA PropFinder mapping', () => {
     const got = await fetchInjuries({ teams, byAbbr, slateAbbrs: ['BOS', 'NY'], get: v2 });
     expect(got.source).toBe('v2');
     expect(calls).toHaveLength(1);
-    expect(got.rows).toEqual([{ id: 'p1', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', status: 'Out', detail: 'Achilles', date: null }]);
+    expect(got.rows).toEqual([{ id: 'p1', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', status: 'Out', detail: 'Achilles', raw: 'out', date: null }]);
     expect(got.keys).toEqual(['games', 'players', 'depthCharts', 'injuryReport']);
     expect(got.sample).toMatchObject({ status: 'out' });
     // Without the games payload, the per-team route; one refusal ends it.
     const perTeam = async (path) => { if (path.startsWith('/NBA/v2')) throw new Error('PropFinder 404 for /NBA/v2'); if (path === '/injuries/nba/1') return [{ id: 7, name: 'Jaylen Brown', status: 'Questionable', position: 'SG' }]; if (path === '/injuries/nba/2') return []; throw new Error('404'); };
     const fb = await fetchInjuries({ teams, byAbbr, slateAbbrs: ['BOS', 'NY'], get: perTeam });
     expect(fb.source).toBe('teams');
-    expect(fb.rows).toEqual([{ id: '7', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SG', status: 'Questionable', detail: null, date: null }]);
+    expect(fb.rows).toEqual([{ id: '7', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SG', status: 'Questionable', detail: null, raw: 'Questionable', date: null }]);
     expect(fb.errors[0]).toContain('404');
     const none = await fetchInjuries({ teams, byAbbr, slateAbbrs: ['BOS'], get: async () => { throw new Error('down'); } });
     expect(none).toMatchObject({ rows: [], source: null });
@@ -306,6 +306,24 @@ describe('NBA board', () => {
     const side = g.sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
     expect(side.own.pts).toMatchObject({ all: 25.3, without: 34, n: 3, season: 27.7 });
     expect(side.without).toMatchObject({ names: ['Tatum'], n: 3, weight: 0.273 });
+    // Tatum's minutes go to the ones who play: his 34 a game, for the 5 of Brown's 8 games he was part
+    // of, Brown's share of the game (35 of 240) → +3.1 on Brown's 35, 38.1 capped at 38: × 1.086 on every
+    // rate of his. His production too: 28 a game × 0.625 × 60% to the priced players (Brown alone here)
+    // at 1 − the split's weight = 7.6, less the 2.3 points Brown's extra minutes already add = 5.3 on
+    // top. Brown's rate: 26.9 × 1.086 + 5.3 = 34.5, the ladder's centre and the range with it.
+    expect(side.minutes).toMatchObject({ base: 35, recent: 35, vacated: 3, tonight: 38, factor: 1.086, from: ['Jayson Tatum'] });
+    expect(side.own.pts).toMatchObject({ lift: 5.3, liftFrom: ['Jayson Tatum'], minFactor: 1.086 });
+    expect(side.ranges.pts).toMatchObject({ rate: 34.5, lift: 5.3, liftFrom: ['Jayson Tatum'], minutes: 1.086, exp: 34.5 });
+    expect(side.ladders.pts[0].rate).toBe(34.5);
+    expect(b.notes.find((n) => n.startsWith('Vacated production'))).toContain('BOS: Jaylen Brown +5.3 pts (Tatum out)');
+    expect(b.notes.find((n) => n.startsWith('Rotation'))).toContain('BOS: Jaylen Brown 38 min (35 behind his rate, +3 with Tatum out) × 1.086');
+    // A season-long absence hands over nothing: Brown's averages were earned without him already.
+    const gone = { ...pfInj, data: { ...pfInj.data, players: pfInj.data.players.map((p) => (p.key === 'jayson tatum' ? { ...p, games: p.games.map((g) => ({ ...g, gameId: 'old' + g.gameId })) } : p)) } };
+    const goneSide = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: gone, results: {} }).games[0].sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
+    expect(goneSide.own.pts.lift).toBeUndefined();
+    expect(goneSide.ranges.pts.lift).toBeNull();
+    expect(goneSide.minutes).toMatchObject({ base: 35, tonight: 35, vacated: 0, factor: 1, from: [] });
+    expect(goneSide.ranges.pts.minutes).toBeNull();
     expect(side.ladders.pts.find((r) => r.main).proj).toBeGreaterThan(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: { ...pfInj, data: { ...pfInj.data, injuries: { rows: [] }, players: pfInj.data.players.map((p) => ({ ...p, injury: null })) } }, results: {} }).games[0].sides.BOS.players.find((p) => p.player === 'Jaylen Brown').ladders.pts.find((r) => r.main).proj);
     expect(b.notes.find((n) => n.startsWith('Out tonight'))).toContain('Jayson Tatum (BOS, Out, Achilles)');
     expect(b.notes.find((n) => n.startsWith('Without-teammate reads'))).toContain('Jaylen Brown w/o Tatum (3 games: 100% over 24.5 Points, 34 a game)');
@@ -412,42 +430,41 @@ describe('NBA ladders', () => {
     expect(p.ranges.pts).toMatchObject({ rate: 26, matchup: null, team: null, env: null });
     expect(p.ladders.pts[0].rate).toBe(26);
     expect(p.scale).toEqual({});
-    // With the team's totals the side's projections are scaled to its expected total: BOS scores 110 a game, NY
-    // gives up 120 against a league of 115 → 110 × 1.026 = 112.9 tonight over the players' own rates.
+    // The team's expected total is a ceiling on the side's projections: BOS scores 110 a game, NY gives up 120
+    // against a league of 115 → 112.9 tonight; the players' own rates add up to 130, so the side scales down to it.
     const two = { ...pf, data: { ...pf.data, players: [...pf.data.players, { id: 'p2', name: 'Derrick White', key: 'derrick white', team: 'BOS', pos: 'SG', games: logs.map((g) => ({ ...g, pts: 104 })), props: [] }], defense: { teams: {}, ranks: {}, count: 0, league: {}, windows: {}, totals: { BOS: { for: { gp: 82, pts: 110, reb: 44, ast: 26 }, against: { gp: 82, pts: 112 } }, NY: { for: { gp: 82, pts: 115 }, against: { gp: 82, pts: 120, reb: 44, ast: 26 } } }, leagueFor: { pts: 115, reb: 44, ast: 26 } } } };
     const sc = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: two, results: {} }).games[0].sides.BOS;
     expect(sc.teamProj.pts).toBeCloseTo(112.9, 1);
     expect(sc.scale.pts).toBeCloseTo(112.9 / (26 + 104), 2);   // over Brown's 26 + White's 104 own rates (the rest of the roster stands in White's figure)
-    expect(sc.scale.pra).toBeDefined();
+    expect(sc.scale.pra).toBeUndefined();   // their PRA rates (39 + 117) stay under the team's 182.9: nothing to scale
+    expect(sc.teamProj.pra).toBeCloseTo(182.9, 1);
     expect(sc.players[0].scale.pts).toBe(sc.scale.pts);
     expect(sc.players[0].ladders.pts[0].env).toBeCloseTo(sc.scale.pts, 2);   // no position table: the scale alone centres the ladder
     expect(sc.players[0].ladders.pts[0].proj).toBeCloseTo(26 * sc.scale.pts, 0);
     expect(sc.players[0].ranges.pts).toMatchObject({ rate: 26, matchup: null, team: sc.scale.pts, env: sc.scale.pts });
     expect(sc.players[0].ranges.pts.exp).toBeCloseTo(26 * sc.scale.pts, 0);
     expect(sc.share).toBeNull();   // no minutes in these logs: no measure of the roster the pull covers
-    // The pull is odds-only, so the priced players' rates never add up to the whole team: the total is
-    // pro-rated to the share of the minutes they play (their own minutes over 240). Brown 36 and White
-    // 144 a game = 75% of the minutes → 112.9 × 0.75 over their 130.
+    // The minutes the priced players play ride along as the share of the game they cover; they move no figure.
     const withMin = (mins) => ({ ...two, data: { ...two.data, players: two.data.players.map((p, i) => ({ ...p, games: p.games.map((g) => ({ ...g, min: mins[i] })) })) } });
     const cov = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 144]), results: {} }).games[0].sides.BOS;
     expect(cov.minutes).toBe(180);
     expect(cov.share).toBe(0.75);
     expect(cov.teamProj.pts).toBeCloseTo(112.9, 1);
-    expect(cov.scale.pts).toBeCloseTo((112.9 * 0.75) / 130, 3);
-    expect(cov.players[0].ladders.pts[0].env).toBeCloseTo(cov.scale.pts, 2);
-    // Without the share a thinly priced side inflated: White at 40 a game puts the two at 66 against a
-    // 112.9 total, ×1.5 at the old cap; pro-rated to their minutes it is ×1.28, and with no minutes at
-    // all the total is a ceiling on their shares, never a floor (×1).
+    expect(cov.scale.pts).toBeCloseTo(112.9 / 130, 3);
+    // It never lifts: a thinly priced side (White at 40 a game puts the two at 66 against a 112.9 total)
+    // keeps every player on his own rate — the old pro-rated factor put ×1.28 to ×1.5 on every projection
+    // of such a side, a non-shooter's threes included (Castle at 3.6 threes, 2026-10-27).
     const thinPts = { ...two, data: { ...two.data, players: two.data.players.map((p) => (p.key === 'derrick white' ? { ...p, games: p.games.map((g) => ({ ...g, pts: 40 })) } : p)) } };
-    expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: thinPts, results: {} }).games[0].sides.BOS.scale.pts).toBe(1);
+    const thin = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: thinPts, results: {} }).games[0].sides.BOS;
+    expect(thin.scale).toEqual({});
+    expect(thin.teamProj.pts).toBeCloseTo(112.9, 1);
+    expect(thin.players[0].ladders.pts[0].env).toBeNull();
+    expect(thin.players[0].ranges.pts).toMatchObject({ rate: 26, team: null, exp: 26 });
     const thinMin = { ...thinPts, data: { ...thinPts.data, players: thinPts.data.players.map((p, i) => ({ ...p, games: p.games.map((g) => ({ ...g, min: [36, 144][i] })) })) } };
-    expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: thinMin, results: {} }).games[0].sides.BOS.scale.pts).toBeCloseTo((112.9 * 0.75) / 66, 3);
-    // Under half the minutes the priced few are the stars, whose share the minutes understate: no scale, the total still named.
-    const few = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 24]), results: {} }).games[0].sides.BOS;
-    expect(few.share).toBe(0.25);
-    expect(few.scale).toEqual({});
-    expect(few.teamProj.pts).toBeCloseTo(112.9, 1);
-    expect(few.players[0].ladders.pts[0].env).toBeNull();
+    expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: thinMin, results: {} }).games[0].sides.BOS.scale).toEqual({});
+    // The floor of the ceiling: a side whose rates run past twice the total scales to 0.5 at the least.
+    const wild = { ...two, data: { ...two.data, players: two.data.players.map((p) => (p.key === 'derrick white' ? { ...p, games: p.games.map((g) => ({ ...g, pts: 300 })) } : p)) } };
+    expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: wild, results: {} }).games[0].sides.BOS.scale.pts).toBe(0.5);
     // With a PropFinder table in, the cheat sheet's tiles ride on every cell as `sheet` beside PropFinder's rank.
     const defense = { teams: { NY: { SF: { gp: 0, pts: 24, reb: 6 } }, BOS: { SF: { gp: 0, pts: 20, reb: 7 } } }, ranks: { NY: { SF: { pts: 1, reb: 2 } }, BOS: { SF: { pts: 2, reb: 1 } } }, count: 2, league: { SF: { pts: 22, reb: 6.5 } }, windows: {} };
     const sheets = [{ id: 's', fileName: 'nba_20261021.pdf', rows: [], meta: { oppRanks: { BOS: { SF: { pts: 3, reb: 28 } } } } }];   // BOS's opponent (NY) gives up the 3rd most points to SFs, the 28th most rebounds
@@ -464,6 +481,28 @@ describe('NBA ladders', () => {
     expect(bos.rows.SF.reb).toEqual({ value: 6, rank: 2, sheet: 28 });
     expect(bos.sheet).toBe('beside');
     expect(withSheet.games[0].sides.NY.allowed.rows.SF.pts).toEqual({ value: 20, rank: 2 });
+  });
+});
+
+describe('NBA volume read', () => {
+  const games = [{ id: 'g1', date: '2026-10-21T23:30Z', away: 'BOS', home: 'NY', final: false, state: 'pre' }];
+  const log = (date, season, tpm, tpa) => ({ date, season, type: 'REG', opp: 'NY', pts: 20, reb: 5, ast: 3, tpm, tpa, pra: 28, pr: 25, pa: 23, ra: 8 });
+  test('threes read off his attempts × his percentage, the season’s shrunk toward his long-run one', () => {
+    // Three games this season at 4 of 8 (50%) over twenty last season at 2 of 8 (25%): attempts 8 a game, the
+    // percentage (12 + 40 × 0.283) / (24 + 40) = 36.4% → 2.9 threes; the made count alone said 0.65 × 4 + 0.35 × 2.6 = 3.5.
+    const logs = [...[0, 1, 2].map((i) => log(`2026-10-${20 - i}`, 2026, 4, 8)), ...Array.from({ length: 20 }, (_, i) => log(`2026-04-${String(20 - i).padStart(2, '0')}`, 2025, 2, 8))];
+    const pf = { at: '2026-10-21T14:00:00Z', data: { players: [{ id: 'p1', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SF', games: logs, props: [{ market: 'tpm', line: 2.5, odds: -110, underOdds: -110, isMain: true }] }], defense: null } };
+    const p = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf, results: {} }).games[0].sides.BOS.players[0];
+    expect(p.own.tpm).toMatchObject({ season: 4, l10: 2.6, volume: { att: { l5: 8, l10: 8, season: 8 }, pct: 0.364, pctSeason: 0.5, pctLong: 0.283, attN: 24, field: 'tpa' } });
+    expect(p.ranges.tpm).toMatchObject({ rate: 2.9, exp: 2.9, volume: { att: 8, pct: 0.364, pctSeason: 0.5, pctLong: 0.283, attN: 24 } });
+    expect(p.ladders.tpm[0].rate).toBe(2.9);
+    // Points carry no volume read; without attempts in the logs the made count stands.
+    expect(p.own.pts.volume).toBeUndefined();
+    expect(p.ranges.pts.volume).toBeNull();
+    const bare = { ...pf, data: { ...pf.data, players: pf.data.players.map((x) => ({ ...x, games: x.games.map(({ tpa, ...g }) => g) })) } };
+    const q = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: bare, results: {} }).games[0].sides.BOS.players[0];
+    expect(q.own.tpm.volume).toBeUndefined();
+    expect(q.ranges.tpm.rate).toBe(3.5);
   });
 });
 

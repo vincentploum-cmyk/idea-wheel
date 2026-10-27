@@ -10,6 +10,7 @@ import { useHashTab } from '@/components/site/hash-tab';
 import Scorecard from '@/components/picks/Scorecard';
 import NbaBoard, { NbaShuffle } from './NbaBoard';
 import NbaSources from './NbaSources';
+import NbaFirstBasket from './NbaFirstBasket';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : '');
@@ -17,6 +18,7 @@ const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { wee
 const TABS = [
   ['board', 'Best plays'],
   ['shuffle', 'Shuffle'],
+  ['firstbasket', 'First basket'],
 ];
 const TAB_KEYS = TABS.map(([key]) => key);
 
@@ -40,6 +42,12 @@ export default function NbaApp({ email }) {
     .catch((e) => setErr(`Couldn’t load the slate: ${e.message}`))
     .finally(() => setBusy(false)), []);
   useEffect(() => { load(''); }, [load]);
+  // An injury override set on a card (POST /api/nba/injuries): the board reads the pull through it, so reload the day.
+  useEffect(() => {
+    const onMark = (e) => { const d = e.detail?.date || date; if (d) load(d); };
+    window.addEventListener('nba:injury-override', onMark);
+    return () => window.removeEventListener('nba:injury-override', onMark);
+  }, [load, date]);
   const go = (d) => { setBusy(true); setErr(''); load(d); };
   // The PropFinder pull from the board head (the same call as under Data sources): lines, logs, defenses and depth charts for the night.
   const pullNow = async () => {
@@ -119,6 +127,21 @@ export default function NbaApp({ email }) {
               {pull.msg ? <p className="nhlx-auto-msg">{pull.msg}</p> : null}
               {err ? <div className="nhlx-alert">{err}</div> : null}
               {mounted('shuffle') && date ? (games.length ? <NbaShuffle date={date} /> : board ? <div className="nhlx-empty">No games on this date.</div> : null) : null}
+            </section>
+          </div>
+        </section>
+        <section className="nhlx-bench nhlx-tabpanel" id="firstbasket" role="tabpanel" aria-labelledby="tab-firstbasket" hidden={tab !== 'firstbasket'}>
+          <div className="nhlx-wrap">
+            <div className="nhlx-bench-head">
+              <div>
+                <span className="nhlx-eyebrow">NBA</span>
+                <h1>First <span>basket</span></h1>
+                <p>Who scores the first field goal of each game: the tip, the team with first possession, each starter’s share of his team’s first shot and his own record this season, with the book’s price beside it.</p>
+              </div>
+            </div>
+            <section className="nhlx-pk" aria-label="First basket">
+              {head()}
+              {mounted('firstbasket') && date ? <NbaFirstBasket date={date} /> : null}
             </section>
           </div>
         </section>

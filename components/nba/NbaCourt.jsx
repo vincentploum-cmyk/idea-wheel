@@ -71,10 +71,13 @@ function projectionText(read, stat, opp, allowed, win) {
   const label = STAT_LABEL[stat] || stat;
   const table = read.held ? 'last season’s table, no game this season yet' : 'this season’s table';
   const env = read.matchup != null ? ` × ${read.matchup} (${opp} gives up ${num(read.allowed)} ${label} to ${read.pos}s, #${read.rank ?? '—'} of ${read.count ?? '—'} on ${table}, the league ${num(read.league)})` : ' (no table for the environment)';
-  const team = read.team != null ? ` × ${read.team} so the side's projections add up to its share of the team's expected total` : '';
+  const team = read.team != null ? ` × ${read.team} (the side's rates run past the team's expected total: scaled down to it)` : '';
+  const lift = read.lift ? ` (+${num(read.lift)} of it ${(read.liftFrom || []).join(' + ')}'s production, out tonight)` : '';
+  const vol = read.volume ? ` (${num(read.volume.att)} attempts at ${num(read.volume.pct * 100)}%)` : '';
+  const mins = read.minutes?.factor && read.minutes.factor !== 1 ? ` (${num(read.minutes.tonight)} minutes tonight over the ${num(read.minutes.base)} behind his rate, × ${num(read.minutes.factor, 3)}${read.minutes.vacated ? `: +${num(read.minutes.vacated)} with ${(read.minutes.from || []).join(' + ')} out` : ''})` : '';
   const w = win && win !== 'season' ? windowRead(read, allowed, stat) : null;
   const window = w ? ` · over ${WINDOW_TEXT[win] || win} ${opp} gives up ${num(w.allowed)} (#${w.rank ?? '—'}): the matchup would read × ${w.factor}, ${num(w.value)} ${label}; the window tints the court, the figure stays the board's` : '';
-  return `Tonight ${num(read.value)} ${label}, the board's read: his ${num(read.rate)} a game (the season blended with his last ten)${env}${team}${window}`;
+  return `Tonight ${num(read.value)} ${label}, the board's read: his ${num(read.rate)} a game (the season blended with his last ten)${vol}${mins}${lift}${env}${team}${window}`;
 }
 
 /** The player's play for a market: the book's main line on the over (or yes) side first, else his best over, else any. */
