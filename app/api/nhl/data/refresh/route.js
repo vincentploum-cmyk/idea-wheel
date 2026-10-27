@@ -3,6 +3,7 @@ import { pullPropfinder, propfinderConfigured } from '@/lib/nhl-data/propfinder-
 import { dispatchLinesWorkflow } from '@/lib/nhl-data/github-dispatch';
 import { authorize, todayET, DATE_RE } from '@/lib/nhl-data/util';
 import { readJson, writeJson } from '@/lib/nhl-store';
+import { buildScorecard } from '@/lib/nhl-data/scorecard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -65,7 +66,15 @@ async function handle(request) {
     else if (only === 'restamp') result = await restampPositions(date);
     else if (only === 'firstgoals') result = await stampFirstGoals(date);
     else if (only === 'propfinder') result = propfinderConfigured() && date >= todayET() ? await pullPropfinder(date) : { ok: false, skipped: propfinderConfigured() ? 'past date' : 'PropFinder credentials are not configured' };
-    else result = await dailyRefresh(date);
+    else {
+      result = await dailyRefresh(date);
+      // The shuffle's "Read from" verdict, renewed once the day's games are in (lib/nhl-data/best-read.js):
+      // the season's scorecard, read from every stored game and run, in the background — too long
+      // for a request through the proxy — and stored for the shuffle to read with the slate.
+      buildScorecard()
+        .then((card) => console.log(`[nhl-data] best read renewed: ${card.players} player-games over ${card.slates} slates`))
+        .catch((e) => console.error('[nhl-data] best read not renewed:', e));
+    }
     return Response.json({ ok: true, result }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
     console.error('[nhl-data] refresh failed:', err);

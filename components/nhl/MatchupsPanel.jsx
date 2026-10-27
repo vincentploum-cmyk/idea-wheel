@@ -93,7 +93,7 @@ function DefenseCard({ side, teamCount, mp }) {
       </table>
       <small className="nhlx-auto-meta">
         {side.defense.All?.season?.gp || 0} games at {defVenue} this season{side.defense.All?.firstGoal?.games ? ` · first goal given up in ${side.defense.All.firstGoal.allowed} of ${side.defense.All.firstGoal.games} (${slotBreakdown(side.defense.All.firstGoal.bySlot) || 'no line on record'})` : ''}
-        {POS.some((p) => side.defense[p]?.source === 'propfinder') ? ` · positions marked PF use PropFinder ${POS.map((p) => side.defense[p]?.seasonLabel).find(Boolean)} (last season) until 10 games are stored` : ''}
+        {POS.some((p) => side.defense[p]?.source === 'propfinder') ? ` · positions marked PF use PropFinder's ${POS.map((p) => side.defense[p]?.seasonLabel).find(Boolean)} table until 10 games are stored` : ''}
       </small>
       <MpLine mp={mp} opp={side.opp} venue={side.venue} />
     </div>

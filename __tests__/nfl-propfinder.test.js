@@ -42,8 +42,9 @@ describe('PropFinder NFL mapping', () => {
     expect(d.ranks.DAL.WR.recYds).toBe(1);
     expect(d.ranks.KC.WR.recYds).toBe(2);
     expect(d.ranks.BUF.WR.recYds).toBe(3);
-    // DAL has no TE row this season: last season's stands in.
-    expect(d.teams.DAL.TE).toMatchObject({ season: 2025, recYds: 14.12 });
+    // DAL has no TE row this season: last season's stands in, and says so; KC's is this season's alone.
+    expect(d.teams.DAL.TE).toMatchObject({ season: 2025, held: true, prior: 17, recYds: 14.12 });
+    expect(d.teams.KC.WR.held).toBeUndefined();
     expect(pickRow(teams[0].stats, { season: 2026, position: 'WR' }).receivingYards).toBe(900);
     // The NFL rows carry `year` and lastNGames 0 for the season; slot positions ride along.
     const nfl = [{ code: 'KC', stats: [{ type: 'Opponent', position: 'WR', year: 2026, lastNGames: 0, gamesPlayed: 6, receivingYards: 900, receivingReceptions: 60, receivingTouchdowns: 6, rushingTouchdowns: 2 }, { type: 'Opponent', position: 'WR1', year: 2026, lastNGames: 0, gamesPlayed: 6, receivingYards: 480 }] }, { code: 'BUF', stats: [{ type: 'Opponent', position: 'WR', year: 2026, lastNGames: 0, gamesPlayed: 6, receivingYards: 600, receivingReceptions: 50, receivingTouchdowns: 3, rushingTouchdowns: 1 }] }];

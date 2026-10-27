@@ -22,7 +22,7 @@ import { useNbaPlayerCard } from './NbaPlayerCard';
 // shuffle's Expected and the card show; the hover says what the picked window would have read.
 export const COURT_METRICS = [['pts', 'Points'], ['reb', 'Rebounds'], ['ast', 'Assists'], ['tpm', 'Threes']];
 const WINDOW_LABEL = { season: 'Season', l5: 'L5', l10: 'L10', l15: 'L15', l20: 'L20' };
-const WINDOW_TEXT = { season: 'this season blended into last season’s table', l5: 'its last 5 games', l10: 'its last 10 games', l15: 'its last 15 games', l20: 'its last 20 games' };
+const WINDOW_TEXT = { season: 'this season', l5: 'its last 5 games', l10: 'its last 10 games', l15: 'its last 15 games', l20: 'its last 20 games' };
 /** The windows a side's allowed table offers, the season first. */
 export function windowsOf(allowed) { return ['season', ...Object.keys(allowed?.windows || {}).filter((k) => WINDOW_LABEL[k]).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))]; }
 /** The side's allowed table for a window (the season table when the window is missing). */
@@ -180,14 +180,14 @@ function AllowedTable({ side, win, metric, season }) {
   const league = a.league || null;
   return (
     <div className="nhlx-pfd">
-      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position · {WINDOW_LABEL[win] || win}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {a.from === 'sheet' ? 'the cheat sheet’s tiles' : win === 'season' ? 'PropFinder; this season blended into last season’s at games / (games + 15)' : `PropFinder, ${WINDOW_TEXT[win]}${a.season && season && a.season < season ? ' of last season (no games this season yet)' : ''}`}{league ? ' · hover a cell for the league’s average' : ''}{win === 'season' && Object.values(a.rows).some((r) => r.held) ? ` · last season’s table until ${side.opp} has ten games` : ''}</small></div>
+      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position · {WINDOW_LABEL[win] || win}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {a.from === 'sheet' ? 'the cheat sheet’s tiles' : win === 'season' ? 'PropFinder, this season' : `PropFinder, ${WINDOW_TEXT[win]}${a.season && season && a.season < season ? ' of last season (no games this season yet)' : ''}`}{league ? ' · hover a cell for the league’s average' : ''}{win === 'season' && Object.values(a.rows).some((r) => r.held) ? ` · last season’s table until ${side.opp} plays its first game` : ''}</small></div>
       <div className="nhlx-pfd-wrap">
         <table className="nhlx-pfd-table">
           <thead><tr><th>Pos</th>{keys.map((k) => <th key={k} className={k === metric ? 'is-on' : ''}>{STAT_LABEL[k] || k.toUpperCase()}</th>)}</tr></thead>
           <tbody>
             {positions.map((pos) => (
               <tr key={pos}>
-                <td><b>{pos}</b><small className="nhlx-auto-meta" title={a.rows[pos].held ? `Last season's table until ${side.opp} has ten games this season (${a.rows[pos].gp || 0} so far)` : a.rows[pos].prior ? `${a.rows[pos].gp || 0} games this season blended into last season's` : ''}> {a.rows[pos].held ? 'last season' : `${a.rows[pos].gp || 0} GP`}</small></td>
+                <td><b>{pos}</b><small className="nhlx-auto-meta" title={a.rows[pos].held ? `Last season's table (${a.rows[pos].prior || 0} games) until ${side.opp} plays its first game this season` : a.rows[pos].prior ? `${a.rows[pos].gp || 0} games this season blended into last season's (an older pull: pull PropFinder again for this season's table)` : `${a.rows[pos].gp || 0} games this season`}> {a.rows[pos].held ? 'last season' : `${a.rows[pos].gp || 0} GP`}</small></td>
                 {keys.map((k) => { const c = a.rows[pos][k]; const tone = zoneTone(c?.rank, count); const lg = league?.[pos]?.[k]; const check = a.from === 'sheet' ? null : sheetCheck(c, count); return <td key={k} className={`${c ? `is-${tone}` : ''}${k === metric ? ' is-on' : ''}`} title={`${c && lg != null ? `${num(c.value)} against the league's ${num(lg)} at ${pos}` : ''}${check ? ` · the cheat sheet's tile: #${c.sheet} (${check === 'yes' ? 'the same third' : 'a different third'})` : ''}`}>{c ? <><span className="nhlx-pfd-val">{c.value != null ? num(c.value) : '—'}</span>{c.rank ? <span className="nhlx-pfd-rank">#{c.rank}</span> : null}</> : '—'}</td>; })}
               </tr>
             ))}

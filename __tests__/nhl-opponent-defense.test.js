@@ -37,6 +37,16 @@ describe('a side’s defense object (opponentDefense)', () => {
     expect(alone.LW.windows.h2hhome).toBeNull();
     expect(alone.All).toEqual(d.All);
   });
+  test('the season tables count the slate’s season alone; the last-N windows roll across the boundary', () => {
+    // The same games a season earlier on top: without a season every row counts, with one only its rows do.
+    const older = rows.map((r) => ({ ...r, gameId: r.gameId + 1000, date: r.date.replace('2026-', '2025-') }));
+    const all = defenseTablesFor([...older, ...rows], null);
+    const one = defenseTablesFor([...older, ...rows], null, { season: 2026 });
+    expect(all.season.teams.NJD.H.C.gp).toBe(2 * defenseTablesFor(rows, null).season.teams.NJD.H.C.gp);
+    expect(one.season.teams.NJD.H.C.gp).toBe(defenseTablesFor(rows, null).season.teams.NJD.H.C.gp);
+    expect(one.firstGoals.teams.NJD?.H?.games || 0).toBe(defenseTablesFor(rows, null).firstGoals.teams.NJD?.H?.games || 0);
+    expect(one.recent.teams.NJD.ALL.C.gp).toBe(all.recent.teams.NJD.ALL.C.gp);
+  });
   test('a venue with no stored games reads empty, and a thin one falls back to PropFinder’s table', () => {
     const tables = defenseTablesFor(rows, null);
     const away = opponentDefense('NJD', 'A', tables);
