@@ -411,6 +411,17 @@ config and keeps its own markets, teams, feeds and slate key:
   short, the row on its lead market, a "Got" column with the figure and a tally in the game head. The model's math is untouched.
   Study: `docs/shots-goals-predictors.md` (section 13 is the every-angle scan and the replay; `tools/predictors/run.sh <year>`
   rebuilds it, `explain.py` reads one skater-game).
+  The **shuffle** at the top of Best bets (`components/nhl/ShufflePanel.jsx`, `GET /api/nhl/data/shuffle?date=` →
+  `buildShuffle` in `picks.js`, which is `buildPicks(date, { withSkaters: true })` reshaped; the pure readers in
+  `lib/nhl-data/shuffle-pure.js`): a bar for shots (1+ … 8+, starts at 3+, floor 50%) and one for goals (1+ … 4+,
+  1+, 35%). Every skater of every game is read at every height off the board's own λ (`skaterRow`: lamS / lamG,
+  the study's λ beside them, `ownOf` = his last 5 / 10 / 20 and this season's mean shots and goals from the stored
+  rows with how many of his last ten and of this season's games reached each height, the opponent's rank at his
+  position, `heat`, `actual` once final), the chance at a height the Poisson tail of the λ (`chanceAt`: 3+ here is
+  the board's 3+ figure, 6+ the same λ further up), survivors at the floor sorted by the chance with the break-even
+  price, how often he reached the bar, where he thins out and Got once final; the fallen strip under it. "Read
+  from" (`READ_FROM`) moves the λ to the study's or a window of his own results (a window he lacks falls back to the
+  board's). One request a slate, every bar move local; no number on the board changes.
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching: the roster decides a row's group, a pair
   holds a defenseman and two forwards side by side are a short forward line, three pairs at most, and a
