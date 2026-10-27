@@ -153,7 +153,20 @@ config and keeps its own markets, teams, feeds and slate key:
   the chance, the season average behind the projection and each ladder rung's season rate move toward
   the split at n / (n + `WITHOUT_K` = 8) (`blendWithout`; `without` on the play and the side's player:
   names, n, weight, rate, avg, seasonAll; `own[stat].all` / `.without` / `.n` on the side, so the
-  team-total scale sums the blended rates). The notes name who is out and the reads moved; the card's
+  team-total ceiling sums the blended rates). **The production an out player leaves goes to his active
+  teammates** (`vacatedLifts` in `injuries.js`, 2026-10-27, Vincent: a point guard out, his assists must
+  land on someone): per stat, each out player's own rate (`ownRate` of his windows; the players the
+  odds-only pull left out are read one by one, so they have logs) × how much of the teammate's window he
+  was part of (`playedShare`: the share of the teammate's games this season, else his last ten, the out
+  player took part in — a season-long absence hands over nothing, the averages were earned without him)
+  × `VACATED_SHARE` = 0.6 (the rest to the bench the pull never lists), shared by the active players'
+  own rates for the stat; where the teammate has a without split of his own, the split speaks first and
+  the lift counts at 1 − its weight. The lift rides on his windows as `own[stat].lift` / `.liftFrom`, so
+  `ownRate` carries it into every projection (the ladder's centre takes it as `lift`, `ranges[market]`
+  and the shuffle row name it — the shuffle reads the split through the binding's `withoutFor`, since
+  `shuffle.js` is bundled by the client and `injuries.js` reaches the server store —, the hovers spell
+  it out, the notes' "Vacated production" line names the three biggest a side); the hit rates behind
+  the chance stay his own. The notes name who is out and the reads moved; the card's
   "w/o X" tile draws the split (`without.gameIds` from `/api/<sport>/player`); the pull's `injuries`
   meta (source, counts, the players read one by one, errors) shows under Data sources. No live pull
   had been seen when this was written: an empty report there means the route or the field names
@@ -328,15 +341,16 @@ config and keeps its own markets, teams, feeds and slate key:
   projections add up to the team's expected total tonight**: the pull keeps every team's own per-game row
   (type Team, All) and what it gives up in all (`defense.totals[ABBR].for / .against`, `leagueFor`, the
   same held / blend rule); `sidesOf` reads the team's expected figure per stat (its own × the opponent's
-  all-positions environment, damped), **pro-rated to the share of the game its priced, active players account
-  for** (`coverage` in `lib/nba/picks.js`: their own minutes over the 240 a team plays, `share` / `minutes` on the
-  side; the pull is odds-only, so the bench is never in it and the priced players' rates never add up to the whole
-  team — read as the whole team the total put ×1.4–1.5 on every projection of a thinly priced side, Cunningham at
-  34 points against the #29 PG defense on 2026-10-27), over the sum of their own rates (the injured out left
-  aside) as `scale[stat]` (0.5–1.5; the combos on their parts; no scale under half the minutes, the priced few
-  being the stars; a sport without a coverage measure, or logs without minutes, scales down only, cap 1), on the
-  side with `teamProj` and on every player; `projectFor(own, allowed, pos, stat, scale)` multiplies it in and the
-  ladder's `env` carries it, so a roster of last season's shares on other teams no longer adds up to 150 points),
+  all-positions environment, damped) as `teamProj`, **a ceiling on the side's projections, never a lift**: only
+  when the active players' own rates (the lifts and the without splits in) add up to more than it does the side
+  scale down to it, `scale[stat]` (0.5 at the least; the combos on their parts), on the side and on every player;
+  `projectFor(own, allowed, pos, stat, scale)` multiplies it in and the ladder's `env` carries it, so a roster of
+  last season's shares on other teams no longer adds up to 150 points. Until 2026-10-27 the factor also lifted:
+  the total pro-rated to the priced players' minutes (`coverage` in `lib/nba/picks.js`, `share` / `minutes` still
+  on the side for the hover) over their rates, capped at 1.5 — the pull is odds-only, the rates never add up to the
+  team, and the factor put the same ×1.5 on a non-shooter's threes as on the shooters' (Castle at 3.6 threes
+  against a +800 book; Vincent: realistic figures, and an out player's production to his teammates, which the
+  lifts above do player by player),
   the PropFinder players without a play too, and
   `allowed` = the opponent's rows with ranks, `league`, and `windows`, every cell carrying the cheat
   sheet's tile for it as `sheet` when the sheet has one (`sheetCheck` in the court: the hover on a zone

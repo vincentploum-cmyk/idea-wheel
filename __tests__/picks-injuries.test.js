@@ -1,5 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
-import { statusOf, isOut, healthOf, parseInjuryReport, gamesPlayed, keyAbsences, withoutGames, blendWithout, withoutWeight, absentByTeam, withoutOf, shortNames, WITHOUT_K } from '../lib/picks/injuries';
+import { statusOf, isOut, healthOf, parseInjuryReport, gamesPlayed, keyAbsences, withoutGames, blendWithout, withoutWeight, absentByTeam, withoutOf, shortNames, WITHOUT_K, playedShare, vacatedLifts, VACATED_SHARE } from '../lib/picks/injuries';
+import { ownRate } from '../lib/picks/projection';
 
 describe('PropFinder injury report', () => {
   test('statuses read into one spelling, as the site maps them', () => {
@@ -104,5 +105,33 @@ describe('without-teammate splits', () => {
     expect(withoutOf({ ...brown, games: [...brown.games.slice(0, 1), ...brown.games.slice(4)] }, absent.BOS)).toBeNull();   // one game without him: under WITHOUT_MIN
     expect(shortNames([{ name: 'Jayson Tatum' }, { name: 'Jaylen Brown' }])).toEqual(['Tatum', 'Brown']);
     expect(shortNames([{ name: 'Jayson Tatum' }, { name: 'Jaxon Tatum' }])).toEqual(['J. Tatum', 'J. Tatum']);
+  });
+  test('the production an out player leaves goes to his active teammates by their own rates, for the share of their games he played', () => {
+    const g = (i, extra = {}) => ({ gameId: `g${i}`, season: 2026, type: 'REG', ...extra });
+    // The star took part in 6 of the guard's 8 games this season; the guard's two newest were without him.
+    const guard = { key: 'guard', games: [g(0), g(1), g(2), g(3), g(4), g(5), g(6), g(7)], own: { ast: { l10: 6, season: 6 }, pts: { l10: 20, season: 20 } } };
+    const wing = { key: 'wing', games: [g(0), g(1), g(2), g(3), g(4), g(5), g(6), g(7)], own: { ast: { l10: 2, season: 2 }, pts: { l10: 20, season: 20 } } };
+    const star = { key: 'star', name: 'The Star', played: new Set(['g2', 'g3', 'g4', 'g5', 'g6', 'g7']), own: { ast: { l10: 8, season: 8 }, pts: { l10: 25, season: 25 } } };
+    expect(playedShare(guard.games, star.played, { season: 2026 })).toBe(0.75);
+    expect(playedShare(guard.games, new Set(), { season: 2026 })).toBe(0);
+    // Last season's games are not the window once he has a game this season; without one, his last ten are.
+    expect(playedShare([g(0), g(1, { season: 2025 })], star.played, { season: 2026 })).toBe(0);
+    expect(playedShare([g(2, { season: 2025 }), g(9, { season: 2025 })], star.played, { season: 2026 })).toBe(0.5);
+    expect(VACATED_SHARE).toBe(0.6);
+    const lifts = vacatedLifts([guard, wing], [star], ownRate, { season: 2026 });
+    // 8 assists × 0.75 of the guard's games × 0.6 = 3.6, shared 6 : 2 → 2.7 to the guard, 0.9 to the wing; the points 25 × 0.75 × 0.6 = 11.25 halved.
+    expect(lifts.guard.ast).toEqual({ lift: 2.7, from: ['The Star'] });
+    expect(lifts.wing.ast).toEqual({ lift: 0.9, from: ['The Star'] });
+    expect(lifts.guard.pts.lift).toBeCloseTo(5.63, 2);
+    // Two out at once add up; a player out all season (none of their games) hands over nothing; the out player gets no lift himself.
+    const other = { key: 'other', name: 'Other', played: new Set(['g0', 'g1']), own: { ast: { season: 4 } } };
+    expect(vacatedLifts([guard, wing], [star, other], ownRate, { season: 2026 }).guard.ast).toEqual({ lift: 3.15, from: ['The Star', 'Other'] });
+    expect(vacatedLifts([guard], [{ ...star, played: new Set(['x']) }], ownRate, { season: 2026 })).toEqual({});
+    expect(vacatedLifts([guard, { ...star, games: guard.games }], [star], ownRate, { season: 2026 }).star).toBeUndefined();
+    // No rate of his own for the stat: nothing to share, nothing received.
+    expect(vacatedLifts([{ ...wing, own: {} }], [star], ownRate, { season: 2026 })).toEqual({});
+    // The lift rides on the windows into the rate every projection reads.
+    expect(ownRate({ l10: 6, season: 6, lift: 2.7 })).toBe(8.7);
+    expect(ownRate({ season: 6 })).toBe(6);
   });
 });
