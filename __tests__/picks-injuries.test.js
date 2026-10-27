@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { statusOf, isOut, healthOf, parseInjuryReport, gamesPlayed, keyAbsences, withoutGames, blendWithout, withoutWeight, absentByTeam, withoutOf, shortNames, WITHOUT_K, playedShare, vacatedLifts, VACATED_SHARE, latestReport, markStale, applyOverrides, teammateSplits } from '../lib/picks/injuries';
+import { statusOf, isOut, healthOf, parseInjuryReport, gamesPlayed, keyAbsences, withoutGames, blendWithout, withoutWeight, absentByTeam, withoutOf, shortNames, WITHOUT_K, WITHOUT_MIN, playedShare, vacatedLifts, VACATED_SHARE, latestReport, markStale, applyOverrides, teammateSplits, injurySplits } from '../lib/picks/injuries';
 import { ownRate } from '../lib/picks/projection';
 
 describe('PropFinder injury report', () => {
@@ -101,8 +101,11 @@ describe('without-teammate splits', () => {
     expect(withoutOf(tatum, absent.BOS)).toBeNull();   // his own absence is not his split
     expect(withoutOf(brown, absent.NY)).toBeNull();
     expect(withoutOf(brown, [])).toBeNull();
-    expect(withoutOf({ ...brown, games: brown.games.slice(0, 4) }, absent.BOS)).toBeNull();   // every logged game already without him
-    expect(withoutOf({ ...brown, games: [...brown.games.slice(0, 1), ...brown.games.slice(4)] }, absent.BOS)).toBeNull();   // one game without him: under WITHOUT_MIN
+    // Every logged game already without Tatum: nothing to learn from him; Holiday (doubtful, 2 of those 4 games with Brown) still makes a split.
+    expect(withoutOf({ ...brown, games: brown.games.slice(0, 4) }, absent.BOS)).toMatchObject({ n: 2, absent: [{ name: 'Jrue Holiday' }] });
+    // One game without him speaks (WITHOUT_MIN = 1, as PropFinder's Injury Splits page; its weight 1 / 9 keeps it a whisper).
+    expect(WITHOUT_MIN).toBe(1);
+    expect(withoutOf({ ...brown, games: [...brown.games.slice(0, 1), ...brown.games.slice(4)] }, absent.BOS)).toMatchObject({ n: 1 });
     expect(shortNames([{ name: 'Jayson Tatum' }, { name: 'Jaylen Brown' }])).toEqual(['Tatum', 'Brown']);
     expect(shortNames([{ name: 'Jayson Tatum' }, { name: 'Jaxon Tatum' }])).toEqual(['J. Tatum', 'J. Tatum']);
   });
@@ -185,5 +188,29 @@ describe('without-teammate splits', () => {
     expect(t[1]).toMatchObject({ name: 'Luka Doncic', pos: 'PG', injury: 'Out', health: 'Out', together: 4, apart: 2, with: { min: 34, pts: 19.8, reb: 6, ast: 4, tpm: 2 }, without: { min: 34, pts: 29 }, delta: { pts: 9.2, min: 0, reb: 0 } });
     expect(t[0]).toMatchObject({ health: 'In', together: 6, apart: 0, without: null, delta: { pts: null } });
     expect(teammateSplits({ ...me, games: [] }, [luka], { season: 2026 })).toEqual([]);
+  });
+  test('the injury splits: every teammate in the games the out players sat, the combination and each alone, from one game', () => {
+    const g = (i, pts, extra = {}) => ({ gameId: `g${i}`, date: `2026-10-${String(10 + i).padStart(2, '0')}`, season: 2026, type: 'REG', min: 32, pts, reb: 5, ast: 4, tpm: 2, pra: pts + 9, ...extra });
+    const reaves = { key: 'austin reaves', name: 'Austin Reaves', team: 'LAL', pos: 'SG', games: [g(0, 30), g(1, 28), g(2, 20), g(3, 18), g(4, 22), g(5, 19)] };
+    const rui = { key: 'rui hachimura', name: 'Rui Hachimura', team: 'LAL', pos: 'PF', games: [g(0, 16), g(1, 14), g(2, 10), g(3, 12), g(4, 11), g(5, 13)] };
+    const luka = { key: 'luka doncic', name: 'Luka Doncic', team: 'LAL', pos: 'PG', status: 'Out', played: new Set(['g2', 'g3', 'g4', 'g5']) };   // sat g0, g1
+    const lebron = { key: 'lebron james', name: 'LeBron James', team: 'LAL', pos: 'SF', status: 'Out', played: new Set(['g1', 'g2', 'g3', 'g4', 'g5']) };   // sat g0
+    const players = [reaves, rui, { key: 'luka doncic', name: 'Luka Doncic', team: 'LAL', pos: 'PG', games: [g(2, 30), g(3, 30), g(4, 30), g(5, 30)] }];
+    const one = injurySplits(players, [luka], { season: 2026 });
+    expect(one).toHaveLength(1);
+    expect(one[0].out).toEqual([{ key: 'luka doncic', name: 'Luka Doncic', pos: 'PG', status: 'Out' }]);
+    expect(one[0].combo).toBe(false);
+    expect(one[0].rows.map((r) => r.name)).toEqual(['Austin Reaves', 'Rui Hachimura']);   // Luka himself is never a row
+    expect(one[0].rows[0]).toMatchObject({ with: { gp: 4, pts: 19.8 }, without: { gp: 2, pts: 29, min: 32 }, delta: { pts: 9.2, min: 0 } });
+    // Two out: the pair together (g0 alone: both sat) and each alone.
+    const two = injurySplits(players, [luka, lebron], { season: 2026 });
+    expect(two.map((s) => [s.combo, s.out.map((a) => a.name)])).toEqual([[true, ['Luka Doncic', 'LeBron James']], [false, ['Luka Doncic']], [false, ['LeBron James']]]);
+    expect(two[0].rows[0]).toMatchObject({ name: 'Austin Reaves', with: { gp: 4 }, without: { gp: 1, pts: 30 }, delta: { pts: 10.2 } });
+    expect(two[2].rows[0]).toMatchObject({ name: 'Austin Reaves', without: { gp: 1, pts: 30 }, with: { gp: 5, pts: 21.4 } });
+    // An out player without logs on record (no played set) makes no split; nobody out, none.
+    expect(injurySplits(players, [{ ...luka, played: new Set() }], { season: 2026 })).toEqual([]);
+    expect(injurySplits(players, [], { season: 2026 })).toEqual([]);
+    // A teammate who never played without him has no row.
+    expect(injurySplits([{ ...rui, games: rui.games.slice(2) }], [luka], { season: 2026 })).toEqual([]);
   });
 });

@@ -187,7 +187,37 @@ function OutLines({ side, oppOut }) {
       <b>Out for {team}:</b> {list?.length ? list.map((a) => `${a.name}${a.pos ? ` (${a.pos})` : ''} · ${a.status}${a.detail ? `, ${a.detail}` : ''}`).join(' · ') : 'nobody listed out on PropFinder’s injury report'}
     </p>
   );
-  return <div className="ir-court-outs" aria-label="Players out tonight">{line(side.team, side.out)}{line(side.opp, oppOut)}</div>;
+  return <div className="ir-court-outs" aria-label="Players out tonight">{line(side.team, side.out)}{line(side.opp, oppOut)}<InjurySplits side={side} /></div>;
+}
+
+const SPLIT_COLS = [['min', 'MIN', 0], ['pts', 'PTS', 1], ['reb', 'REB', 1], ['ast', 'AST', 1], ['tpm', '3PM', 1], ['pra', 'PRA', 1]];
+
+/** PropFinder's Injury Splits for the side: how each teammate has done in the games the out players sat, with the gap against his games with them. */
+function InjurySplits({ side }) {
+  const list = side.injurySplits || [];
+  if (!list.length) return null;
+  return (
+    <details className="ir-court-splits">
+      <summary className="nhlx-auto-meta"><b>Injury splits for {side.team}</b> · how each teammate did in the games {list[0].out.map((a) => a.name).join(' + ')} sat, and the gap against his games with {list[0].out.length === 1 ? 'him' : 'them'}</summary>
+      {list.map((s) => (
+        <div key={s.out.map((a) => a.key).join('+')} className="nhlx-pfd-wrap ir-court-split">
+          <div className="nhlx-pfd-head"><b>Without {s.out.map((a) => `${a.name}${a.pos ? ` (${a.pos})` : ''}`).join(' + ')}</b><small className="nhlx-auto-meta">{s.combo ? 'all of them out together' : 'him out'} · his average in those games, the gap against his games with {s.out.length === 1 ? 'him' : 'them'} beside it · from one game, as PropFinder’s page</small></div>
+          <table className="nhlx-pfd-table">
+            <thead><tr><th>Teammate</th><th title="Games without · games with">GP w/o · with</th>{SPLIT_COLS.map(([k, l]) => <th key={k}>{l}</th>)}</tr></thead>
+            <tbody>
+              {s.rows.map((r) => (
+                <tr key={r.key}>
+                  <td><b>{r.name}</b>{r.pos ? <small className="nhlx-auto-meta"> {r.pos}</small> : null}</td>
+                  <td>{r.without.gp} · {r.with?.gp ?? 0}</td>
+                  {SPLIT_COLS.map(([k, , d]) => <td key={k} className={r.delta[k] != null && Math.abs(r.delta[k]) >= (k === 'min' ? 3 : k === 'pts' || k === 'pra' ? 2 : 1) ? (r.delta[k] > 0 ? 'is-soft' : 'is-tough') : ''}><span className="nhlx-pfd-val">{num(r.without[k], d)}</span>{r.delta[k] != null ? <span className="nhlx-pfd-rank">{r.delta[k] > 0 ? '+' : ''}{num(r.delta[k], d)}</span> : null}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+    </details>
+  );
 }
 
 /** What the opponent gives up per game to each position, with the league rank in every cell. */

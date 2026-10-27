@@ -146,9 +146,16 @@ config and keeps its own markets, teams, feeds and slate key:
   every player (the report, then the depth chart's espn flag), and the players out whom the odds-only
   call left out are read one by one (`/<LEAGUE>/player/<id>`, `readFor: 'injury'`, `MAX_ABSENT_READS`)
   so their logs say which games they took part in: every game row carries `gameId`, `gamesPlayed` is a
-  teammate's rows with minutes, `keyAbsences` the out teammates who took part in ≥ 40% (and 5) of a
+  teammate's rows with minutes, `keyAbsences` the out teammates who took part in ≥ 40% (and 2) of a
   player's logged games, `withoutGames` his games without them, `withoutOf` the split (≥ `WITHOUT_MIN`
-  = 3 games, and not every game). On the board (`board.js`) a player out keeps his chip, muted, and
+  = 1 game, and not every game: PropFinder's Injury Splits page speaks from one game and so does the
+  board since 2026-10-27, the n / (n + 8) weight keeping one game a whisper; it was 3 and 5 together,
+  which in October's fifth game left nothing to show — Vincent: "why are you not implementing the injury
+  splits?"). **The Injury Splits view** (`injurySplits` in `injuries.js`, `side.injurySplits` on every
+  board side, drawn by `InjurySplits` in `NbaCourt.jsx` as a fold under the out lines above each court):
+  for the side's out players, how every active teammate did in the games they sat — the out players
+  together as a combination and, with more than one out, each alone — minutes, points, rebounds, assists,
+  threes, PRA, with the gap against his games with them, from one game, PropFinder's page's layout. On the board (`board.js`) a player out keeps his chip, muted, and
   loses his table rows (`out`, the game's `out` count); for everyone else the season hit rate behind
   the chance, the season average behind the projection and each ladder rung's season rate move toward
   the split at n / (n + `WITHOUT_K` = 8) (`blendWithout`; `without` on the play and the side's player:
