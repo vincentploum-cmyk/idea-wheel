@@ -1577,6 +1577,7 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-spot.is-soft { background: var(--pf-soft-chip); color: var(--pf-soft-fg); }
 .ir-spot.is-mid { background: var(--pf-mid-chip); color: var(--pf-mid-fg); }
 .ir-lift { color: var(--pf-soft-fg); font-weight: 700; cursor: help; }
+.ir-dip { color: var(--pf-tough-fg); font-weight: 700; cursor: help; }
 .ir-spot.is-tough { background: var(--pf-tough-chip); color: var(--pf-tough-fg); }
 .ir-health { display: inline-flex; align-items: center; padding: 0 7px; border-radius: 5px; font-size: 13px; font-weight: 600; line-height: 20px; white-space: nowrap; background: var(--bg-soft); color: var(--muted); }
 .ir-health.is-in { background: var(--ok-bg); color: var(--ok-fg); }

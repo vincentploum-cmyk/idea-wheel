@@ -166,7 +166,22 @@ config and keeps its own markets, teams, feeds and slate key:
   and the shuffle row name it — the shuffle reads the split through the binding's `withoutFor`, since
   `shuffle.js` is bundled by the client and `injuries.js` reaches the server store —, the hovers spell
   it out, the notes' "Vacated production" line names the three biggest a side); the hit rates behind
-  the chance stay his own. The notes name who is out and the reads moved; the card's
+  the chance stay his own. **The rotation** (`lib/picks/rotations.js`, `minutesTonight`, Vincent's ask of
+  2026-10-27 for PropFinder's Rotations page; its data, minutes a game, is in the pull's logs, `coverage.field`):
+  each active player's minutes tonight = his last five blended half and half into the minutes behind his rate
+  (the season with his last ten, `RECENT_WEIGHT`), plus the out players' minutes handed to the ones who play
+  (each out player's minutes × `playedShare` × the priced players' share of the 240, by their own minutes, the
+  vacated minutes taking nobody past `coverage.cap` = 38); over the minutes behind his rate = `minFactor`
+  (0.75–1.3, `FACTOR_MIN` / `FACTOR_MAX`) on every stat's rate through `ownRate` (`own[stat].minFactor`; the
+  ladder takes it as `minFactor`), `minutes` { base, recent, vacated, tonight, factor, from } on the side player,
+  the shuffle row and `ranges[market].minutes`; what his extra minutes already add of a stat comes off his
+  vacated lift, so the minutes carry the opportunity and the lift the role on top; the notes' "Rotation" line
+  names the minutes that moved most. PropFinder's Rotations page's own route is not known (the site's pages and
+  their chunks sit behind the login; the shared bundle names only the team, player and image routes):
+  `fetchRotations` reads it once a pull when `PROPFINDER_<LEAGUE>_ROTATIONS_PATH` names it on Render
+  (`{teamIds}`, `{date}` filled in) and stores the answer's keys and first 2000 characters as `rotations` on the
+  pull, shown under Data sources, so the read can be written from what the page really sends. The notes name
+  who is out and the reads moved; the card's
   "w/o X" tile draws the split (`without.gameIds` from `/api/<sport>/player`); the pull's `injuries`
   meta (source, counts, the players read one by one, errors) shows under Data sources. No live pull
   had been seen when this was written: an empty report there means the route or the field names

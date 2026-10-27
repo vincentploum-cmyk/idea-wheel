@@ -24,11 +24,14 @@ describe('the bar and the ladder', () => {
     ], injuries: { rows: [{ id: 'p2', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', status: 'Out', detail: 'Achilles' }] }, defense: null } };
     const b = nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf, results: {} });
     const side = b.games[0].sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
-    // Tatum played every one of Brown's games: 28 × 1 × 0.6 to Brown alone = 16.8 on his 26 (no split of his own: Tatum never sat).
-    expect(side.own.pts).toMatchObject({ lift: 16.8, liftFrom: ['Jayson Tatum'] });
+    // Tatum played every one of Brown's games: his 34 minutes × Brown's share of the game (34 of 240) = +4.8
+    // on Brown's 34, capped at 38 → × 1.118 on his 26; his 28 points × 1 × 0.6 to Brown alone = 16.8, less
+    // the 3.1 the extra minutes already add = 13.7 on top (no split of his own: Tatum never sat). 26 × 1.118 + 13.7 = 42.8.
+    expect(side.minutes).toMatchObject({ base: 34, tonight: 38, factor: 1.118, from: ['Jayson Tatum'] });
+    expect(side.own.pts).toMatchObject({ lift: 13.7, liftFrom: ['Jayson Tatum'], minFactor: 1.118 });
     expect(side.ranges.pts.exp).toBe(42.8);
     const row = nbaShuffle({ market: 'pts', board: b, pf, season: 2026 }).players.find((p) => p.key === 'jaylen brown');
-    expect(row).toMatchObject({ exp: 42.8, lift: 16.8, liftFrom: ['Jayson Tatum'] });
+    expect(row).toMatchObject({ exp: 42.8, lift: 13.7, liftFrom: ['Jayson Tatum'], minutes: { tonight: 38, factor: 1.118 } });
     expect(nbaShuffle({ market: 'pts', board: b, pf, season: 2026 }).players.find((p) => p.key === 'jayson tatum')).toMatchObject({ health: 'Out', lift: null });
   });
   test('the ladder takes the shuffle’s lines as rungs and keeps the book’s rungs priced beside them', () => {
