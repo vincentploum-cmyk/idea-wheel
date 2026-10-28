@@ -43,3 +43,20 @@ to) and the chance is graded at it without a price. `--top` is the pull's popula
 PropFinder's odds-only count), `--from` the first slate graded. Writes `nba-<date>.md`,
 `nba-<date>-summary.json` (the site's `summarize` output) and `nba-<date>-rows.csv` (every
 projection with its parts: rate, matchup, team scale, lift, minutes factor, the figure).
+
+## NHL: the game script (`nhl_game_script.py`)
+
+The team layer and the split tested on two seasons: what sets a team's shots and goals tonight
+(its own volume and the opponent's, season / venue / last ten, rest, home; a Poisson model fitted
+on the fit season and applied unchanged to the test season), the model's own Stage 1 rebuilt
+beside it, whether an opponent's weakness by position persists from one half of a season to the
+other, and the skaters' reads with the team's projected volume divided among them, graded against
+the shipped read on the same skater-games. Needs pandas, scipy and statsmodels.
+
+```bash
+npm run audit:nhl -- --date 2026-10-27
+node --import ./tools/audit/register.mjs tools/audit/nhl-audit.mjs --date 2026-04-16 --cur .nhl-data/predictors/2025/games-pos --prev .nhl-data/predictors/empty --out .nhl-data/audit/out25
+python3 -I tools/audit/nhl_game_script.py --fit-games .nhl-data/predictors/2025/games-pos --fit-rows .nhl-data/audit/out25/nhl-2026-04-16-rows.csv --test-games .nhl-data/predictors/2026/games-pos --test-rows .nhl-data/audit/out/nhl-2026-10-27-rows.csv --date 2026-10-27 --out .nhl-data/audit/out/nhl-game-script-2026-10-27.md
+```
+
+The first run is written up in `docs/audits/2026-10-28-game-script.md`.

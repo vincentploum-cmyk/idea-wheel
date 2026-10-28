@@ -560,6 +560,17 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   shots rows 62% said → 55% hit); the NBA matchup from a ≤ 5-game table costs 0.24 of MAE on every projection;
   the NBA ladder is over-confident above 60% (his spread ~1.4× too narrow, the hit-rate half unshrunk); "hot"
   plays hit 36% on a 55% said. No number was changed by the audit; the changes it asks for are listed there.
+- The game script, tested (`docs/audits/2026-10-28-game-script.md`, `tools/audit/nhl_game_script.py`; Vincent's
+  question of 2026-10-28: a team strong at home against a visitor leaking over its last ten dominates, and the shots
+  and goals divide by the opponent's weaknesses). On 2025-26 and 2026-27's box scores: a team's shots tonight follow
+  its own volume (elasticity 0.99) and what the opponent allows (0.92), season to date, + 2.4% at home, ∓ 4% on a
+  back-to-back; a team's own home split (half-season correlation −0.23) and the last ten add nothing; teams projected
+  at 56%+ of a game's shots took 59% and won 69%, yet in one game shot share and goal share correlate 0.09 (score
+  effects). Which position a defense gives its shots to is not a trait (C / LW / RW −0.09 to 0.13, D 0.40): the
+  opponent's weakness is how much it allows, not to whom, so the volume divides by the skaters' own shares. The
+  model's Stage 1 steps (−6% at most for a tight defense) lose to the fitted elasticity (deviance 1.47 vs 1.27 this
+  season) and its team goals read loses to the league average early; the script read at the skater level puts the
+  Best bets rows from 62% said → 55% hit to 60% → 58% (goals 40% → 35% to 39% → 39%). Proposals there; nothing changed.
 
 ## Canonical locations
 
