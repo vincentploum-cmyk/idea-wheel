@@ -545,6 +545,22 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   `__tests__/nhl-slate-memo.test.js` (the builders through the bucket mock, the blob budget, the NBA
   board). When adding a builder a page waits on, wrap it the same way and name its inputs.
 
+## Audits
+
+- `tools/audit/` (README there): the boards' reads replayed leak-free over the season from public data with
+  the site's own functions, and one slate laid out game by game, graded. `npm run audit:nhl -- --date …` replays
+  the plain-rate read (`picks-pure.js`: the goals read since 2026-10-27, the shots stand-in) over the NHL API's
+  box scores with the variants beside it (the study's blends, the table blended / shrunk / last season's / none,
+  the goal-rate shrink); `npm run audit:nba -- --date …` rebuilds the NBA board (`buildBoard` on a pull built from
+  ESPN's logs, graded by `lib/picks/scorecard.js` as `gradeSlate` does; pseudo lines, no price). The store is not
+  needed; the model run's shots λ is not in it (the History tab's export + `grade_blend.py`). Reports in
+  `docs/audits/`. The first, 2026-10-27 (`docs/audits/2026-10-27-model-audit.md`, 6,505 NHL skater-games and
+  30,532 NBA rungs): this season's opponent table at ten games reads 1.5–2.4× as wide as a season's and
+  correlates 0.1–0.5 with it, so inside the formula it hurts (Brier 0.1501 against 0.1459 blended, the Best bets
+  shots rows 62% said → 55% hit); the NBA matchup from a ≤ 5-game table costs 0.24 of MAE on every projection;
+  the NBA ladder is over-confident above 60% (his spread ~1.4× too narrow, the hit-rate half unshrunk); "hot"
+  plays hit 36% on a 55% said. No number was changed by the audit; the changes it asks for are listed there.
+
 ## Canonical locations
 
 - Local repo: `/Users/vincent/.openclaw/workspace/projects/idea-wheel`

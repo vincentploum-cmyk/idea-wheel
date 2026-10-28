@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "MALLOC_ARENA_MAX=2 NODE_OPTIONS='--max-old-space-size=1536 --expose-gc' next start",
     "lint": "eslint",
-    "test": "jest"
+    "test": "jest",
+    "audit:nhl": "node --import ./tools/audit/register.mjs tools/audit/nhl-audit.mjs --cur .nhl-data/predictors/2026/games-pos --prev .nhl-data/predictors/2025/games-pos --out .nhl-data/audit/out",
+    "audit:nba": "node --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --raw .nhl-data/audit/nba --out .nhl-data/audit/out"
   },
   "dependencies": {
     "@fontsource-variable/schibsted-grotesk": "^5.3.0",
