@@ -25,13 +25,13 @@ describe('the bar and the ladder', () => {
     const b = nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf, results: {} });
     const side = b.games[0].sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
     // Tatum played every one of Brown's games: his 34 minutes × Brown's share of the game (34 of 240) = +4.8
-    // on Brown's 34, capped at 38 → × 1.118 on his 26; his 28 points × 1 × 0.6 to Brown alone = 16.8, less
-    // the 3.1 the extra minutes already add = 13.7 on top (no split of his own: Tatum never sat). 26 × 1.118 + 13.7 = 42.8.
-    expect(side.minutes).toMatchObject({ base: 34, tonight: 38, factor: 1.118, from: ['Jayson Tatum'] });
-    expect(side.own.pts).toMatchObject({ lift: 13.7, liftFrom: ['Jayson Tatum'], minFactor: 1.118 });
-    expect(side.ranges.pts.exp).toBe(42.8);
+    // on Brown's 34, capped at 38, read at × 1 (the NBA's minutes factor lifts no rate); his 28 points × 1 × 0.2 (the
+    // NBA's vacated share) to Brown alone = 5.6 on top, whole (no split of his own: Tatum never sat). 26 + 5.6 = 31.6.
+    expect(side.minutes).toMatchObject({ base: 34, tonight: 38, factor: 1, from: ['Jayson Tatum'] });
+    expect(side.own.pts).toMatchObject({ lift: 5.6, liftFrom: ['Jayson Tatum'] });
+    expect(side.ranges.pts.exp).toBe(31.6);
     const row = nbaShuffle({ market: 'pts', board: b, pf, season: 2026 }).players.find((p) => p.key === 'jaylen brown');
-    expect(row).toMatchObject({ exp: 42.8, lift: 13.7, liftFrom: ['Jayson Tatum'], minutes: { tonight: 38, factor: 1.118 } });
+    expect(row).toMatchObject({ exp: 31.6, lift: 5.6, liftFrom: ['Jayson Tatum'], minutes: { tonight: 38, factor: 1 } });
     expect(nbaShuffle({ market: 'pts', board: b, pf, season: 2026 }).players.find((p) => p.key === 'jayson tatum')).toMatchObject({ health: 'Out', lift: null });
   });
   test('the ladder takes the shuffle’s lines as rungs and keeps the book’s rungs priced beside them', () => {
@@ -42,7 +42,9 @@ describe('the bar and the ladder', () => {
     const bar = l.find((r) => r.line === 27.5);
     expect(bar.odds).toBeNull();
     expect(bar.rates).toMatchObject({ season: 0.4, n: 20, l10: 0.4, l10N: 10 });   // 29 and 32 clear 27.5: 8 of 20, 4 of 10
-    expect(bar.p).toBeCloseTo(0.5 * bar.model + 0.5 * bar.emp, 3);   // rounded to three places
+    // The tail carries the cocktail's 0.7 and what the cleared-it half gives up for twenty games this season (6 / 23 of its 0.3).
+    expect(bar.wModel).toBeCloseTo(0.7 + 0.3 * 6 / 23, 3);
+    expect(bar.p).toBeCloseTo(bar.wModel * bar.model + (1 - bar.wModel) * bar.emp, 3);   // rounded to three places
     // Without a ladder from the book the main line still gets its price.
     const bare = nbaLadder(logs, { market: 'pts', season: 2026, prop: { market: 'pts', line: 25.5, odds: -115, underOdds: -105 }, lines: [27.5] });
     expect(bare.map((r) => [r.line, r.odds, r.main])).toEqual([[25.5, -115, true], [27.5, null, false]]);
@@ -51,7 +53,8 @@ describe('the bar and the ladder', () => {
 
 describe('the NBA shuffle', () => {
   const games = [{ id: 'g1', date: '2026-10-21T23:30Z', away: 'BOS', home: 'NY', final: false, state: 'pre' }];
-  const defense = { teams: { NY: { SF: { gp: 0, pts: 24, reb: 6 } }, BOS: { SF: { gp: 0, pts: 20, reb: 7 } } }, ranks: { NY: { SF: { pts: 1, reb: 2 } }, BOS: { SF: { pts: 2, reb: 1 } } }, count: 2, league: { SF: { pts: 22, reb: 6.5 } }, windows: {} };
+  // Sixty games behind each table: the matchup counts at 60 / (60 + 40) = 0.6 of itself (the NBA's cocktail, matchupK 40).
+  const defense = { teams: { NY: { SF: { gp: 60, pts: 24, reb: 6 } }, BOS: { SF: { gp: 60, pts: 20, reb: 7 } } }, ranks: { NY: { SF: { pts: 1, reb: 2 } }, BOS: { SF: { pts: 2, reb: 1 } } }, count: 2, league: { SF: { pts: 22, reb: 6.5 } }, windows: {} };
   const pf = { at: '2026-10-20T14:00:00Z', data: { players: [
     { id: 'p1', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SF', games: logs, props: [prop] },
     { id: 'p2', name: 'Sam Hauser', key: 'sam hauser', team: 'BOS', pos: 'SF', games: logs.map((g) => ({ ...g, pts: 8 })), props: [] },
@@ -66,8 +69,9 @@ describe('the NBA shuffle', () => {
     expect(sh.players.map((p) => p.player)).toEqual(['Jaylen Brown', 'Sam Hauser']);
     const brown = sh.players[0];
     expect(brown).toMatchObject({ team: 'BOS', opp: 'NY', venue: 'A', pos: 'SF', spot: { pos: 'SF', rank: 1, value: 24, count: 2, held: false }, main: { line: 25.5, odds: -110 } });
-    expect(brown.env).toBeCloseTo(1.055, 3);   // NY gives up 24 to SFs against a league of 22, damped
-    expect(brown.matchup).toBeCloseTo(1.055, 3);   // the matchup alone; no team totals in this pull, so no side factor
+    expect(brown.env).toBeCloseTo(1.033, 3);   // NY gives up 24 to SFs against a league of 22: × 1.055 at 0.6 of itself
+    expect(brown.matchup).toBeCloseTo(1.033, 3);   // the matchup alone; no team totals in this pull, so no side factor
+    expect(brown.matchupFrom).toMatchObject({ from: 'propfinder', raw: 1.055, weight: 0.6, gp: 60 });
     expect(brown.teamFactor).toBeNull();
     expect(brown.spot.league).toBe(22);
     expect(brown.at).toHaveLength(sh.heights.length);
@@ -76,7 +80,7 @@ describe('the NBA shuffle', () => {
     // The chance falls as the bar rises.
     for (let i = 1; i < brown.at.length; i++) expect(brown.at[i].p).toBeLessThanOrEqual(brown.at[i - 1].p);
     expect(brown.book.map((b) => [b.line, b.odds, b.main])).toEqual([[19.5, -400, false], [25.5, -110, true], [31.5, 300, false]]);
-    expect(brown.exp).toBeCloseTo(26 * 1.055, 0);
+    expect(brown.exp).toBeCloseTo(26 * 1.033, 0);
   });
   test('every row carries his health in one word, with the status and detail beside it', () => {
     const listed = { ...pf, data: { ...pf.data, players: [
@@ -151,16 +155,16 @@ describe('the NBA shuffle', () => {
     const totals = { BOS: { for: { gp: 82, pts: 110, reb: 44, ast: 26 }, against: { gp: 82, pts: 112 } }, NY: { for: { gp: 82, pts: 115 }, against: { gp: 82, pts: 120 } } };
     const withMin = (mins, pts = null) => ({ ...pf, data: { ...pf.data, players: pf.data.players.map((p, i) => ({ ...p, games: p.games.map((g) => ({ ...g, min: mins[i], ...(pts && i === 1 ? { pts } : {}) })) })), defense: { ...defense, totals, leagueFor: { pts: 115, reb: 44, ast: 26 } } } });
     const few = nbaShuffle({ market: 'pts', board: nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 24]), results: {} }), pf: withMin([36, 24]), season: 2026 }).players.find((p) => p.player === 'Jaylen Brown');
-    expect(few.matchup).toBeCloseTo(1.055, 3);
+    expect(few.matchup).toBeCloseTo(1.033, 3);
     expect(few.teamFactor).toBeNull();
-    expect(few.env).toBeCloseTo(1.055, 3);
+    expect(few.env).toBeCloseTo(1.033, 3);
     const most = nbaShuffle({ market: 'pts', board: nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 180]), results: {} }), pf: withMin([36, 180]), season: 2026 }).players.find((p) => p.player === 'Jaylen Brown');
     expect(most.teamFactor).toBeNull();
-    expect(most.exp).toBeCloseTo(26 * 1.055, 0);
+    expect(most.exp).toBeCloseTo(26 * 1.033, 0);
     const crowd = nbaShuffle({ market: 'pts', board: nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 180], 100), results: {} }), pf: withMin([36, 180], 100), season: 2026 }).players.find((p) => p.player === 'Jaylen Brown');
-    expect(crowd.matchup).toBeCloseTo(1.055, 3);
+    expect(crowd.matchup).toBeCloseTo(1.033, 3);
     expect(crowd.teamFactor).toBeCloseTo(112.9 / 126, 3);
-    expect(crowd.env).toBeCloseTo(1.055 * (112.9 / 126), 2);
+    expect(crowd.env).toBeCloseTo(1.033 * (112.9 / 126), 2);
     expect(crowd.exp).toBeCloseTo(26 * crowd.env, 0);
     expect(crowd.own.blend).toBe(26);
   });
@@ -265,10 +269,10 @@ describe('reading from his own results', () => {
     const fromL5 = pAt(brown, sh.heights, i, 'l5');
     const fromLine = pAt(brown, sh.heights, i, 'line');
     expect(fromBlend).toBe(brown.at[i].p);
-    expect(fromL5).toBeGreaterThan(fromBlend);     // his last five (34 a game) sit over 30; the blend (31.5 with last season's 20s) does not by as much
-    expect(fromLine).toBeLessThan(fromBlend);      // the line (25.5) sits under 30
-    // The hit-rate half is the same in all three: only the model half moves.
-    expect(fromL5 - fromBlend).toBeCloseTo(0.5 * (upperTail((29.5 - 34) / brown.sd) - brown.at[i].model), 2);
+    expect(fromL5).toBeGreaterThan(fromBlend);     // his last five (34 a game) sit over 30; the blend (his windows with last season's 20s in them) well under
+    expect(Math.sign(fromLine - fromBlend)).toBe(Math.sign(25.5 - brown.exp));   // the higher centre reads the higher chance
+    // The hit-rate half is the same in all three: only the model half moves, at the rung's own weight on it.
+    expect(fromL5 - fromBlend).toBeCloseTo(brown.at[i].wModel * (upperTail((29.5 - 34) / brown.sd) - brown.at[i].model), 2);
     const r = read(brown, sh.heights, 30, 'l5');
     expect(r).toMatchObject({ from: 'l5', centre: 34, p: fromL5 });
     expect(read(brown, sh.heights, 30).centre).toBe(brown.exp);

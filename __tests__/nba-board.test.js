@@ -4,7 +4,9 @@ import { teamAbbrFromText, parseMatchup, teamLogo } from '../lib/nba/teams';
 import { parseCheatSheet, classifyHeader, parsePlayerCell } from '../lib/nba/cheatsheet';
 import { parseSummary, parseScoreboard, seasonOfDate, derived } from '../lib/nba/espn';
 import { gameRow, mapPlayers, defenseAllowed, fieldsSeen, depthChart, fetchInjuries, applyInjuries } from '../lib/nba/propfinder-nba';
-import { buildBoard, statOf, logRates } from '../lib/nba/picks';
+import { buildBoard, statOf, logRates, nbaBoard, COCKTAIL } from '../lib/nba/picks';
+import { FACTOR_MAX } from '../lib/picks/rotations';
+import { VACATED_SHARE } from '../lib/picks/injuries';
 import { dateFromFileName } from '../lib/nba/store';
 import summary from './fixtures/espn-nba-summary.json';
 
@@ -309,15 +311,26 @@ describe('NBA board', () => {
     expect(side.without).toMatchObject({ names: ['Tatum'], n: 3, weight: 0.429 });
     // The split first: Brown's 25.3 moves toward his 34 without Tatum at 3 / (3 + 4) → 29.0. Tatum's minutes go to
     // the ones who play: his 34 a game, for the 5 of Brown's 8 games he was part of, Brown's share of the game (35 of
-    // 240) → +3.1 on Brown's 35, 38.1 capped at 38: × 1.086 → 31.5. His production too: 28 a game × 0.625 × 60% to the
-    // priced players (Brown alone here) at 1 − the split's weight = 6.0, less the 2.5 points Brown's extra minutes
-    // already add = 3.5 on top. Brown's rate 35.0, the ladder's centre and the range with it.
-    expect(side.minutes).toMatchObject({ base: 35, recent: 35, vacated: 3, tonight: 38, factor: 1.086, from: ['Jayson Tatum'] });
-    expect(side.own.pts).toMatchObject({ lift: 3.5, liftFrom: ['Jayson Tatum'], minFactor: 1.086 });
-    expect(side.ranges.pts).toMatchObject({ rate: 35, lift: 3.5, liftFrom: ['Jayson Tatum'], minutes: 1.086, exp: 35 });
-    expect(side.ladders.pts[0].rate).toBe(35);
-    expect(b.notes.find((n) => n.startsWith('Vacated production'))).toContain('BOS: Jaylen Brown +3.5 pts (Tatum out)');
-    expect(b.notes.find((n) => n.startsWith('Rotation'))).toContain('BOS: Jaylen Brown 38 min (35 behind his rate, +3 with Tatum out) × 1.086');
+    // 240) → +3.1 on Brown's 35, 38.1 capped at 38; the NBA's minutes factor lifts no rate (`factorMax` 1), so the
+    // minutes are read and stand at × 1. His production: 28 a game × 0.625 × 20% (the NBA's vacated share) to the
+    // priced players (Brown alone here) at 1 − the split's weight = 2.0 on top, whole, since no extra minutes add any
+    // of it. Brown's rate 31.2 (his windows at the NBA's cocktail: the season 0.4, last ten 0.2, last five 0.1, last
+    // twenty 0.3), the ladder's centre and the range with it.
+    expect(side.minutes).toMatchObject({ base: 35, recent: 35, vacated: 3, tonight: 38, factor: 1, from: ['Jayson Tatum'] });
+    expect(side.own.pts).toMatchObject({ lift: 2, liftFrom: ['Jayson Tatum'] });
+    expect(side.own.pts.minFactor).toBeUndefined();
+    expect(side.ranges.pts).toMatchObject({ rate: 31.2, lift: 2, liftFrom: ['Jayson Tatum'], minutes: null, exp: 31.2 });
+    expect(side.ladders.pts[0].rate).toBe(31.2);
+    expect(b.notes.find((n) => n.startsWith('Vacated production'))).toContain('BOS: Jaylen Brown +2 pts (Tatum out)');
+    expect(b.notes.find((n) => n.startsWith('Vacated production'))).toContain('20% of it to the priced players');
+    expect(b.notes.find((n) => n.startsWith('Rotation'))).toBeUndefined();
+    // With the minutes factor's ceiling and the vacated share as they were (1.3, 60%): × 1.086 → 31.5, and 6.0 of
+    // Tatum's production less the 2.5 points the extra minutes already add = 3.5 on top: 35.2.
+    const lifted = nbaBoard({ ...COCKTAIL, factorMax: FACTOR_MAX, vacatedShare: VACATED_SHARE }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pfInj, results: {} });
+    const liftedSide = lifted.games[0].sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
+    expect(liftedSide.minutes).toMatchObject({ tonight: 38, factor: 1.086 });
+    expect(liftedSide.ranges.pts).toMatchObject({ rate: 35.2, lift: 3.5, minutes: 1.086, exp: 35.2 });
+    expect(lifted.notes.find((n) => n.startsWith('Rotation'))).toContain('BOS: Jaylen Brown 38 min (35 behind his rate, +3 with Tatum out) × 1.086');
     // A season-long absence hands over nothing: Brown's averages were earned without him already.
     const gone = { ...pfInj, data: { ...pfInj.data, players: pfInj.data.players.map((p) => (p.key === 'jayson tatum' ? { ...p, games: p.games.map((g) => ({ ...g, gameId: 'old' + g.gameId })) } : p)) } };
     const goneSide = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: gone, results: {} }).games[0].sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
@@ -374,7 +387,7 @@ describe('NBA projection', () => {
 });
 
 describe('NBA ladders', () => {
-  const { ladderOf, buildBoard } = require('../lib/nba/picks');
+  const { ladderOf, buildBoard, nbaBoard, COCKTAIL } = require('../lib/nba/picks');
   const { upperTail } = require('../lib/picks/board');
   test('the normal tail', () => { expect(upperTail(0)).toBeCloseTo(0.5, 6); expect(upperTail(1.96)).toBeCloseTo(0.025, 3); expect(upperTail(-1)).toBeCloseTo(0.8413, 3); });
   const logs = Array.from({ length: 20 }, (_, i) => ({ date: `2026-01-${String(10 + i).padStart(2, '0')}`, season: 2026, type: 'REG', opp: 'NY', pts: 20 + (i % 5) * 3, reb: 8, ast: 5, tpm: 2 }));   // 20, 23, 26, 29, 32 repeating
@@ -387,11 +400,20 @@ describe('NBA ladders', () => {
     expect(l[1].rates).toMatchObject({ season: 0.6, n: 20 });   // 26, 29, 32 clear 25.5: 12 of 20
     expect(l[2].rates.season).toBe(0.2);
     expect(l[0].odds).toBe(-400);
-    // The number: half his distribution's tail over the rung (mean 26, sd 4.3), half how often he cleared it; no price in it.
+    // The number: his distribution's tail over the rung (mean 26) and how often he cleared it (0.6); no price in it.
     expect(l[1]).toMatchObject({ proj: 26, emp: 0.6 });
-    expect(l[1].sd).toBe(6.5);   // his own spread is 4.35; the floor, a quarter of the projection, keeps a scorer's tail
-    expect(l[1].model).toBeCloseTo(0.531, 2);
-    expect(l[1].p).toBeCloseTo(0.5 * 0.531 + 0.3, 2);
+    // His own spread is 4.35; the floor, a quarter of the projection, keeps a scorer's tail (6.5), widened a touch for the
+    // games this season behind it (the NBA's cocktail: × (1 + 0.2 · 5 / (20 + 5)) = × 1.04 → 6.76).
+    expect(l[1].sd).toBe(6.76);
+    expect(l[1].model).toBeCloseTo(0.529, 2);
+    // The tail carries the cocktail's 0.7 and the share the cleared-it half gives up for a 20-game season (6 / (20 capped
+    // at 17, + 6) of its 0.3): 0.778; the record the rest.
+    expect(l[1].wModel).toBeCloseTo(COCKTAIL.ladderModel + (1 - COCKTAIL.ladderModel) * 6 / 23, 3);
+    expect(l[1].p).toBeCloseTo(l[1].wModel * l[1].model + (1 - l[1].wModel) * 0.6, 2);
+    // The board as it was (the defaults, the NFL's): half and half, his spread as read.
+    const was = nbaBoard({}).ladderOf(logs, { market: 'pts', season: 2026, prop })[1];
+    expect(was).toMatchObject({ sd: 6.5, wModel: 0.5 });
+    expect(was.p).toBeCloseTo(0.5 * 0.531 + 0.3, 2);
     // The environment moves the centre: a soft spot (×1.12) lifts every rung.
     const soft = ladderOf(logs, { market: 'pts', season: 2026, prop, env: 1.12 });
     expect(soft[1].proj).toBeCloseTo(29.1, 1);
@@ -404,8 +426,9 @@ describe('NBA ladders', () => {
     expect(l.find((r) => r.main)).toMatchObject({ line: 25.5, odds: -110, books: 2 });
     const bare = ladderOf(logs, { market: 'reb', season: 2026 });
     expect(bare.map((r) => r.line)).toEqual([6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5]);
-    expect(bare.find((r) => r.line === 7.5).p).toBeGreaterThan(0.7);   // 8 every night: the floor on his spread keeps a tail
-    expect(bare.find((r) => r.line === 8.5).p).toBeLessThan(0.3);
+    // 8 every night: the floor on his spread keeps a tail (0.6 over 7.5, 0.4 over 8.5 off the tail; 1 and 0 off his record).
+    expect(bare.find((r) => r.line === 7.5).p).toBeGreaterThan(0.65);
+    expect(bare.find((r) => r.line === 8.5).p).toBeLessThan(0.35);
     expect(ladderOf(logs, { market: 'dd', season: 2026 })).toEqual([]);
     // Four games this season: the rungs' season rate reads those four (20, 23, 26, 29: none over 33.5), not the 24 across
     // the seasons; the spread behind the model half still comes from his last 82.
@@ -423,8 +446,8 @@ describe('NBA ladders', () => {
     expect(Object.keys(p.ladders).sort()).toEqual(['ast', 'pra', 'pts', 'reb', 'tpm']);
     expect(p.ladders.pts.find((r) => r.main).line).toBe(25.5);
     expect(p.ladders.pts[0].env).toBeNull();   // no defense table in this pull
-    // His range tonight: the expected figure, the quartiles of his distribution, the book's main rung with his chance.
-    expect(p.ranges.pts).toMatchObject({ exp: 26, floor: 22, ceiling: 30, line: 25.5, odds: -110 });
+    // His range tonight: the expected figure, the quartiles of his distribution (sd 6.76, above), the book's main rung with his chance.
+    expect(p.ranges.pts).toMatchObject({ exp: 26, floor: 21, ceiling: 31, line: 25.5, odds: -110 });
     expect(p.ranges.pts.p).toBe(p.ladders.pts.find((r) => r.main).p);
     expect(p.ranges.reb).toMatchObject({ exp: 8, line: null, p: null });
     // The arithmetic rides on the range (every view spells out the same figure): no table, no scale → his rate alone.
@@ -467,24 +490,27 @@ describe('NBA ladders', () => {
     const wild = { ...two, data: { ...two.data, players: two.data.players.map((p) => (p.key === 'derrick white' ? { ...p, games: p.games.map((g) => ({ ...g, pts: 300 })) } : p)) } };
     expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: wild, results: {} }).games[0].sides.BOS.scale.pts).toBe(0.5);
     // With a PropFinder table in, the cheat sheet's tiles ride on every cell as `sheet` beside PropFinder's rank.
-    const defense = { teams: { NY: { SF: { gp: 0, pts: 24, reb: 6 } }, BOS: { SF: { gp: 0, pts: 20, reb: 7 } } }, ranks: { NY: { SF: { pts: 1, reb: 2 } }, BOS: { SF: { pts: 2, reb: 1 } } }, count: 2, league: { SF: { pts: 22, reb: 6.5 } }, windows: {} };
+    // Sixty games behind each table: the matchup counts at 60 / (60 + 40) = 0.6 of itself (the NBA's cocktail, matchupK 40).
+    const defense = { teams: { NY: { SF: { gp: 60, pts: 24, reb: 6 } }, BOS: { SF: { gp: 60, pts: 20, reb: 7 } } }, ranks: { NY: { SF: { pts: 1, reb: 2 } }, BOS: { SF: { pts: 2, reb: 1 } } }, count: 2, league: { SF: { pts: 22, reb: 6.5 } }, windows: {} };
     const sheets = [{ id: 's', fileName: 'nba_20261021.pdf', rows: [], meta: { oppRanks: { BOS: { SF: { pts: 3, reb: 28 } } } } }];   // BOS's opponent (NY) gives up the 3rd most points to SFs, the 28th most rebounds
     const withSheet = buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf: { ...pf, data: { ...pf.data, defense } }, results: {} });
     const bos = withSheet.games[0].sides.BOS.allowed;
-    // With a table the ladder reads against NY's environment at SF: 24 over the league's 22 → ×1.055.
-    expect(withSheet.games[0].sides.BOS.players[0].ladders.pts[0].env).toBeCloseTo(1.055, 3);
-    // The range names the matchup apart from the side's factor, the season table's cell behind it: 26 × 1.055 = 27.4.
+    // With a table the ladder reads against NY's environment at SF: 24 over the league's 22 → ×1.055, at 0.6 of itself → ×1.033.
+    expect(withSheet.games[0].sides.BOS.players[0].ladders.pts[0].env).toBeCloseTo(1.033, 3);
+    // The range names the matchup apart from the side's factor, the season table's cell behind it: 26 × 1.033 = 26.9.
     const range = withSheet.games[0].sides.BOS.players[0].ranges.pts;
-    expect(range).toMatchObject({ rate: 26, team: null, exp: 27.4 });
-    expect(range.matchup).toBeCloseTo(1.055, 3);
+    expect(range).toMatchObject({ rate: 26, team: null, exp: 26.9 });
+    expect(range.matchup).toBeCloseTo(1.033, 3);
     expect(range.env).toBe(range.matchup);
     // The sheet's tile (#3 of 30) placed on PropFinder's two-team spread lands on the top value, 24: the two reads agree and blend to the same factor.
-    expect(range.matchupFrom).toEqual({ pf: 1.055, sheet: 1.055, from: 'blend' });
+    expect(range.matchupFrom).toEqual({ pf: 1.055, sheet: 1.055, from: 'blend', raw: 1.055, weight: 0.6, gp: 60 });
+    // The board as it was (the defaults, the NFL's): the table at full weight from the first game.
+    expect(nbaBoard({}).buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf: { ...pf, data: { ...pf.data, defense } }, results: {} }).games[0].sides.BOS.players[0].ranges.pts).toMatchObject({ matchup: 1.055, exp: 27.4 });
     expect(bos.rows.SF.pts).toEqual({ value: 24, rank: 1, sheet: 3, sheetValue: 24, rankBlend: 2 });
     // A tile that disagrees moves the number: NY's tile at #30 of 30 lands on the spread's bottom value, 20 → × 0.945, blended with PropFinder's × 1.055 → × 1.0.
     const sheetsLow = [{ id: 's', fileName: 'nba_20261021.pdf', rows: [], meta: { oppRanks: { BOS: { SF: { pts: 30, reb: 28 } } } } }];
     const low = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: sheetsLow, pf: { ...pf, data: { ...pf.data, defense } }, results: {} }).games[0].sides.BOS.players[0].ranges.pts;
-    expect(low.matchupFrom).toEqual({ pf: 1.055, sheet: 0.945, from: 'blend' });
+    expect(low.matchupFrom).toEqual({ pf: 1.055, sheet: 0.945, from: 'blend', raw: 1, weight: 0.6, gp: 60 });
     expect(low.matchup).toBe(1);
     expect(low.exp).toBe(26);
     // The sheet alone (a pull without a defense table): its rank on the standard spread, #3 of 30 → × 1.078.
@@ -502,7 +528,8 @@ describe('NBA volume read', () => {
   const log = (date, season, tpm, tpa) => ({ date, season, type: 'REG', opp: 'NY', pts: 20, reb: 5, ast: 3, tpm, tpa, pra: 28, pr: 25, pa: 23, ra: 8 });
   test('threes read off his attempts × his percentage, the season’s shrunk toward his long-run one', () => {
     // Three games this season at 4 of 8 (50%) over twenty last season at 2 of 8 (25%): attempts 8 a game, the
-    // percentage (12 + 40 × 0.283) / (24 + 40) = 36.4% → 2.9 threes; the made count alone said 0.65 × 4 + 0.35 × 2.6 = 3.5.
+    // percentage (12 + 40 × 0.283) / (24 + 40) = 36.4% → 2.9 threes; the made count alone, at the NBA's cocktail, says
+    // 0.4 × 4 (season) + 0.2 × 2.6 (last ten) + 0.1 × 3.2 (last five) + 0.3 × 2.3 (last twenty) = 3.1 (the board as it was: 3.5).
     const logs = [...[0, 1, 2].map((i) => log(`2026-10-${20 - i}`, 2026, 4, 8)), ...Array.from({ length: 20 }, (_, i) => log(`2026-04-${String(20 - i).padStart(2, '0')}`, 2025, 2, 8))];
     const pf = { at: '2026-10-21T14:00:00Z', data: { players: [{ id: 'p1', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SF', games: logs, props: [{ market: 'tpm', line: 2.5, odds: -110, underOdds: -110, isMain: true }] }], defense: null } };
     const p = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf, results: {} }).games[0].sides.BOS.players[0];
@@ -515,7 +542,7 @@ describe('NBA volume read', () => {
     const bare = { ...pf, data: { ...pf.data, players: pf.data.players.map((x) => ({ ...x, games: x.games.map(({ tpa, ...g }) => g) })) } };
     const q = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: bare, results: {} }).games[0].sides.BOS.players[0];
     expect(q.own.tpm.volume).toBeUndefined();
-    expect(q.ranges.tpm.rate).toBe(3.5);
+    expect(q.ranges.tpm.rate).toBe(3.1);
   });
 });
 

@@ -19,7 +19,7 @@ import path from 'node:path';
 import { parseSummary, parseScoreboard, derived } from '../../lib/nba/espn.js';
 import { teamAbbrFromText } from '../../lib/nba/teams.js';
 import { defenseAllowed } from '../../lib/nba/propfinder-nba.js';
-import { buildBoard, ownWindows, statOf, actualFor, LADDER_MARKETS } from '../../lib/nba/picks.js';
+import { nbaBoard, COCKTAIL, LADDER_MARKETS } from '../../lib/nba/picks.js';
 import { gradeBoard, gradePredictors, summarize, asOf, etDate, PREDICTORS } from '../../lib/picks/scorecard.js';
 import { normName } from '../../lib/nhl-data/names.js';
 import { OWN_WEIGHTS, ENV_WEIGHT, upperTail } from '../../lib/picks/projection.js';
@@ -33,7 +33,14 @@ const TOP = Number(arg('--top', '10'));
 const PRIOR = arg('--prior', null);   // last season's box scores (prior/games), for the prior defense table
 if (!DATE) { console.error('usage: --date YYYY-MM-DD [--raw dir] [--out dir] [--from YYYY-MM-DD]'); process.exit(2); }
 fs.mkdirSync(OUT, { recursive: true });
-const SEASON = 2026;
+const SEASON = Number(arg('--season', '2026'));
+// The board's cocktail: the site's (`site`, lib/nba/picks.js COCKTAIL), the board as it was before it (`old`), or a JSON object.
+const CK_ARG = arg('--cocktail', 'site');
+const CK = CK_ARG === 'site' ? COCKTAIL : CK_ARG === 'old' ? {} : JSON.parse(CK_ARG);
+const { buildBoard, ownWindows, statOf, actualFor } = nbaBoard(CK);
+// The folders: this season's scoreboards and box scores, last season's game logs (defaults under --raw).
+const DAYS = arg('--days', path.join(RAW, 'days')); const GAMES = arg('--games', path.join(RAW, 'games')); const LOGS = arg('--gamelogs', path.join(RAW, 'gamelogs'));
+const TAG = arg('--tag', '');
 const STATS = ['pts', 'reb', 'ast', 'tpm', 'pra'];
 const r1 = (v) => (v == null ? null : Math.round(v * 10) / 10);
 const r2 = (v) => (v == null ? null : Math.round(v * 100) / 100);
@@ -47,10 +54,10 @@ const readJson = (f) => JSON.parse(fs.readFileSync(f));
 
 // ---- the raw feeds ----
 const schedule = [];   // every game of the season with its ET slate date
-for (const f of fs.readdirSync(path.join(RAW, 'days')).sort()) for (const g of parseScoreboard(readJson(path.join(RAW, 'days', f))).games) schedule.push({ ...g, slate: etDate(g.date) });
+for (const f of fs.readdirSync(DAYS).sort()) for (const g of parseScoreboard(readJson(path.join(DAYS, f))).games) if (!g.preseason) schedule.push({ ...g, slate: etDate(g.date) });
 const results = {}; const reports = {};   // parsed box scores and ESPN's injury block per game
-for (const f of fs.readdirSync(path.join(RAW, 'games'))) {
-  const j = readJson(path.join(RAW, 'games', f));
+for (const f of fs.readdirSync(GAMES)) {
+  const j = readJson(path.join(GAMES, f));
   const r = parseSummary(j);
   if (!r.final) continue;
   results[r.id] = r;
@@ -75,7 +82,7 @@ for (const g of schedule) {
 let withLast = 0;
 const dash = (v, i) => { const x = Number(String(v ?? '').split('-')[i]); return Number.isFinite(x) ? x : 0; };
 for (const x of players.values()) {
-  const f = path.join(RAW, 'gamelogs', `${x.id}.json`);
+  const f = path.join(LOGS, `${x.id}.json`);
   if (!fs.existsSync(f)) continue;
   let gl; try { gl = readJson(f); } catch { continue; }
   const names = gl.names || []; const at = (stats, key) => stats[names.indexOf(key)];
@@ -401,9 +408,9 @@ else {
   if (dayPlays) { const s = sum.bySlate.find((x) => x.key === DATE); line(`The chance read on the slate: ${s.plays} plays, said ${pct(s.all.said)}, hit ${pct(s.all.hit)} (Brier ${s.all.brier}); on the board ${s.board.n}, said ${pct(s.board.said)}, hit ${pct(s.board.hit)}.`); line(); }
 }
 
-fs.writeFileSync(path.join(OUT, `nba-${DATE}.md`), md.join('\n'));
-fs.writeFileSync(path.join(OUT, `nba-${DATE}-summary.json`), JSON.stringify(sum, null, 1));
+fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}.md`), md.join('\n'));
+fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-summary.json`), JSON.stringify(sum, null, 1));
 const cols = Object.keys(extra[0] || {}).filter((k) => k !== 'minutes');
-fs.writeFileSync(path.join(OUT, `nba-${DATE}-rows.csv`), [cols.join(','), ...extra.map((r) => cols.map((c) => JSON.stringify(Array.isArray(r[c]) ? r[c].join('+') : r[c] ?? '')).join(','))].join('\n'));
+fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-rows.csv`), [cols.join(','), ...extra.map((r) => cols.map((c) => JSON.stringify(Array.isArray(r[c]) ? r[c].join('+') : r[c] ?? '')).join(','))].join('\n'));
 console.log(md.join('\n'));
 console.error(`written ${OUT}/nba-${DATE}.md, -summary.json and -rows.csv`);
