@@ -478,8 +478,20 @@ describe('NBA ladders', () => {
     expect(range).toMatchObject({ rate: 26, team: null, exp: 27.4 });
     expect(range.matchup).toBeCloseTo(1.055, 3);
     expect(range.env).toBe(range.matchup);
-    expect(bos.rows.SF.pts).toEqual({ value: 24, rank: 1, sheet: 3 });
-    expect(bos.rows.SF.reb).toEqual({ value: 6, rank: 2, sheet: 28 });
+    // The sheet's tile (#3 of 30) placed on PropFinder's two-team spread lands on the top value, 24: the two reads agree and blend to the same factor.
+    expect(range.matchupFrom).toEqual({ pf: 1.055, sheet: 1.055, from: 'blend' });
+    expect(bos.rows.SF.pts).toEqual({ value: 24, rank: 1, sheet: 3, sheetValue: 24, rankBlend: 2 });
+    // A tile that disagrees moves the number: NY's tile at #30 of 30 lands on the spread's bottom value, 20 → × 0.945, blended with PropFinder's × 1.055 → × 1.0.
+    const sheetsLow = [{ id: 's', fileName: 'nba_20261021.pdf', rows: [], meta: { oppRanks: { BOS: { SF: { pts: 30, reb: 28 } } } } }];
+    const low = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: sheetsLow, pf: { ...pf, data: { ...pf.data, defense } }, results: {} }).games[0].sides.BOS.players[0].ranges.pts;
+    expect(low.matchupFrom).toEqual({ pf: 1.055, sheet: 0.945, from: 'blend' });
+    expect(low.matchup).toBe(1);
+    expect(low.exp).toBe(26);
+    // The sheet alone (a pull without a defense table): its rank on the standard spread, #3 of 30 → × 1.078.
+    const sheetOnly = buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf, results: {} }).games[0].sides.BOS.players[0].ranges.pts;
+    expect(sheetOnly.matchupFrom).toEqual({ pf: null, sheet: 1.078, from: 'sheet' });
+    expect(sheetOnly.exp).toBe(28);
+    expect(bos.rows.SF.reb).toEqual({ value: 6, rank: 2, sheet: 28, sheetValue: 6, rankBlend: 15 });   // the tile's #28 of 30 on a two-team spread lands on the bottom value
     expect(bos.sheet).toBe('beside');
     expect(withSheet.games[0].sides.NY.allowed.rows.SF.pts).toEqual({ value: 20, rank: 2 });
   });

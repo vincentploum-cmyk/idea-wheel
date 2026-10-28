@@ -70,7 +70,8 @@ function projectionText(read, stat, opp, allowed, win) {
   if (read?.value == null) return '';
   const label = STAT_LABEL[stat] || stat;
   const table = read.held ? 'last season’s table, no game this season yet' : 'this season’s table';
-  const env = read.matchup != null ? ` × ${read.matchup} (${opp} gives up ${num(read.allowed)} ${label} to ${read.pos}s, #${read.rank ?? '—'} of ${read.count ?? '—'} on ${table}, the league ${num(read.league)})` : ' (no table for the environment)';
+  const mf = read.matchupFrom;
+  const env = read.matchup != null ? ` × ${read.matchup} (${mf?.from === 'blend' ? `the cheat sheet's tile #${read.sheetRank} × ${mf.sheet} and PropFinder × ${mf.pf} blended; ` : mf?.from === 'sheet' ? `the cheat sheet's tile #${read.sheetRank} alone; ` : ''}${opp} gives up ${read.allowed != null ? `${num(read.allowed)} ${label}` : `the #${read.rank} most ${label}`} to ${read.pos}s, #${read.rank ?? '—'} of ${read.count ?? '—'} on ${table}${read.league != null ? `, the league ${num(read.league)}` : ''})` : ' (no table for the environment)';
   const team = read.team != null ? ` × ${read.team} (the side's rates run past the team's expected total: scaled down to it)` : '';
   const lift = read.lift ? ` (+${num(read.lift)} of it ${(read.liftFrom || []).join(' + ')}'s production, out tonight)` : '';
   const vol = read.volume ? ` (${num(read.volume.att)} attempts at ${num(read.volume.pct * 100)}%)` : '';
@@ -134,10 +135,10 @@ function ZoneLabel({ zone, allowed, metric, opp, win }) {
   const [x, y, w, h] = ZONES[zone];
   const cell = allowed?.rows?.[zone]?.[metric];
   const count = allowed?.count || 30;
-  const tone = zoneTone(cell?.rank, count);
+  const tone = zoneTone(cell?.rankBlend ?? cell?.rank, count);
   const league = allowed?.league?.[zone]?.[metric];
   const check = allowed?.from === 'sheet' ? null : sheetCheck(cell, count);
-  const title = cell ? `${opp} gives up ${cell.value != null ? `${num(cell.value)} ${STAT_LABEL[metric] || metric} per game` : `the #${cell.rank} most ${STAT_LABEL[metric] || metric}`} to ${zone}s over ${WINDOW_TEXT[win] || win}${league != null ? ` (league ${num(league)})` : ''} · rank ${cell.rank} of ${count}, 1 = the most${allowed.from === 'sheet' ? ' · from the cheat sheet’s tiles' : ' · PropFinder'}${check ? ` · the cheat sheet's tile says #${cell.sheet}: ${check === 'yes' ? 'the same read' : 'a different read'}` : ''}` : `No defense table for ${opp} at ${zone}`;
+  const title = cell ? `${opp} gives up ${cell.value != null ? `${num(cell.value)} ${STAT_LABEL[metric] || metric} per game` : `the #${cell.rank} most ${STAT_LABEL[metric] || metric}`} to ${zone}s over ${WINDOW_TEXT[win] || win}${league != null ? ` (league ${num(league)})` : ''} · rank ${cell.rank} of ${count}, 1 = the most${allowed.from === 'sheet' ? ' · from the cheat sheet’s tiles' : ' · PropFinder'}${check ? ` · the cheat sheet's tile says #${cell.sheet} (${check === 'yes' ? 'the same read' : 'a different read'}); the tint and the matchup blend the two${cell.rankBlend ? `, #${cell.rankBlend} together` : ''}` : ''}` : `No defense table for ${opp} at ${zone}`;
   return (
     <div className={`nhlx-rk-zone is-${tone}`} style={{ left: `${((x + w / 2) / W) * 100}%`, top: `${((y + h - 2.2) / H) * 100}%` }} title={title}>
       <b>{zone}</b>{cell?.rank ? <span>#{cell.rank}{NB}{STAT_LABEL[metric] || metric}</span> : <span>no data</span>}
@@ -213,7 +214,7 @@ function AllowedTable({ side, win, metric, season }) {
             {positions.map((pos) => (
               <tr key={pos}>
                 <td><b>{pos}</b><small className="nhlx-auto-meta" title={a.rows[pos].held ? `Last season's table (${a.rows[pos].prior || 0} games) until ${side.opp} plays its first game this season` : win === 'prior' ? `${a.rows[pos].gp || 0} games last season` : `${a.rows[pos].gp || 0} games${win === 'season' ? ' this season' : ''}`}> {a.rows[pos].held ? 'last season' : `${a.rows[pos].gp || 0} GP`}</small></td>
-                {keys.map((k) => { const c = a.rows[pos][k]; const tone = zoneTone(c?.rank, count); const lg = league?.[pos]?.[k]; const check = a.from === 'sheet' ? null : sheetCheck(c, count); return <td key={k} className={`${c ? `is-${tone}` : ''}${k === metric ? ' is-on' : ''}`} title={`${c && lg != null ? `${num(c.value)} against the league's ${num(lg)} at ${pos}` : ''}${check ? ` · the cheat sheet's tile: #${c.sheet} (${check === 'yes' ? 'the same third' : 'a different third'})` : ''}`}>{c ? <><span className="nhlx-pfd-val">{c.value != null ? num(c.value) : '—'}</span>{c.rank ? <span className="nhlx-pfd-rank">#{c.rank}</span> : null}</> : '—'}</td>; })}
+                {keys.map((k) => { const c = a.rows[pos][k]; const tone = zoneTone(c?.rankBlend ?? c?.rank, count); const lg = league?.[pos]?.[k]; const check = a.from === 'sheet' ? null : sheetCheck(c, count); return <td key={k} className={`${c ? `is-${tone}` : ''}${k === metric ? ' is-on' : ''}`} title={`${c && lg != null ? `${num(c.value)} against the league's ${num(lg)} at ${pos}` : ''}${check ? ` · the cheat sheet's tile: #${c.sheet} (${check === 'yes' ? 'the same third' : 'a different third'})` : ''}`}>{c ? <><span className="nhlx-pfd-val">{c.value != null ? num(c.value) : '—'}</span>{c.rank ? <span className="nhlx-pfd-rank">#{c.rank}</span> : null}</> : '—'}</td>; })}
               </tr>
             ))}
           </tbody>
@@ -285,7 +286,7 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
   const allowed = tableFor(side.allowed, view);
   const { placed, extras } = layoutCourt(side.players);
   const count = allowed?.count || 30;
-  const tones = Object.fromEntries(Object.keys(ZONES).map((z) => [z, zoneTone(allowed?.rows?.[z]?.[metric]?.rank, count)]));
+  const tones = Object.fromEntries(Object.keys(ZONES).map((z) => [z, zoneTone(allowed?.rows?.[z]?.[metric]?.rankBlend ?? allowed?.rows?.[z]?.[metric]?.rank, count)]));
   const clipId = `court-${side.team}-${side.opp}`;
   return (
     <section className="nhlx-rk-card ir-court-card" aria-label={`${side.team} court`}>

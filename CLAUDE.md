@@ -408,11 +408,22 @@ config and keeps its own markets, teams, feeds and slate key:
   lifts above do player by player),
   the PropFinder players without a play too, and
   `allowed` = the opponent's rows with ranks, `league`, and `windows`, every cell carrying the cheat
-  sheet's tile for it as `sheet` when the sheet has one (`sheetCheck` in the court: the hover on a zone
-  foot or a table cell names the tile's rank and whether it reads the same third as PropFinder — nothing
-  drawn, no ticks, no dashed edges: the user reads the courts for the numbers; the sheet confirms the
-  environment, it never changes a number); or the sheet's tiles with ranks only when the slate has no
-  pull). A row standing in from last season reads "last season" in place of the GP count. PropFinder's NBA team rows are per-game figures already (`rowsPerGame: true` in
+  sheet's tile for it as `sheet` when the sheet has one, with `sheetValue` (the tile's rank placed on
+  PropFinder's spread for the position and stat: the value the defense of that rank allows, `sheetValueOf`
+  in `sidesOf`, a 30-team rank mapped onto the teams the table has) and `rankBlend` (the two ranks' mean,
+  the court's tint). **The matchup is the cheat sheet first, PropFinder next, blended** (`matchupOf` in
+  `lib/picks/projection.js`; Vincent, 2026-10-28: the sheets say how the matchups look, PropFinder adds
+  the player stats, everything combined into one figure a player): the sheet's read is its tile on
+  PropFinder's spread (`envFactor` of `sheetValue`), or on the standard spread without a table
+  (`sheetFactor`: rank 1 × 1.09, the last × 0.91, `SHEET_SPREAD` = 0.3 damped by `ENV_WEIGHT`), PropFinder's
+  its value over the league; with both the factor is their mean, with one it stands alone, so the sheet
+  alone now moves the number (a pull without a defense table read no matchup at all before). The
+  factor rides as `matchup` on the range and the shuffle row with `matchupFrom` { pf, sheet, from:
+  'blend' | 'propfinder' | 'sheet' }, the court's zones and table cells tint by `rankBlend`, the shuffle's
+  Matchup cell shows it, and the hovers on a zone foot, a chip, a card and a shuffle row name both reads
+  (`sheetCheck` still says whether the tile reads the same third). Until 2026-10-28 the sheet confirmed the
+  environment on a hover and never changed a number; or the sheet's tiles with ranks only when the
+  slate has no pull. A row standing in from last season reads "last season" in place of the GP count. PropFinder's NBA team rows are per-game figures already (`rowsPerGame: true` in
   `propfinder-nba.js`; 2026-10-20 the table read 0.3 points a game after a second division), and only
   regular-season rows (`seasonType` REG) make a season table. **A player's season window is this season's from his first game**
   (`SEASON_MIN` = 1 in `lib/picks/board.js` and in the card; Vincent, 2026-10-27: this season, never last
