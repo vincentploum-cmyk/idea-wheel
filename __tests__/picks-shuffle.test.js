@@ -244,7 +244,11 @@ describe('reading from his own results', () => {
   const lastSeason = Array.from({ length: 20 }, (_, i) => ({ date: `2026-03-${String(28 - i).padStart(2, '0')}`, season: 2025, type: 'REG', opp: 'NY', pts: 20, reb: 8, ast: 5, tpm: 2, pra: 33 }));
   const logs = [...lastSeason, ...thisSeason];   // oldest first on purpose: the windows sort
   test('the windows: last 3 / 5 / 10 / 20 and this season alone', () => {
-    expect(ownWindows(logs, { market: 'pts', season: 2026 })).toEqual({ l3: 35, l5: 34, l10: 31.5, l20: 25.8, season: 31.5, seasonN: 10, n: 30, h2h: null, h2hN: 0 });   // no opponent asked: no head to head
+    // The NBA's windows read this season's games alone (the cocktail's scope): his last twenty are his ten this season.
+    expect(ownWindows(logs, { market: 'pts', season: 2026 })).toEqual({ l3: 35, l5: 34, l10: 31.5, l20: 31.5, season: 31.5, seasonN: 10, n: 30, h2h: null, h2hN: 0 });   // no opponent asked: no head to head
+    // Across the seasons, as the board read before 2026-10-28: last season's twenty behind them.
+    const { nbaBoard: board, COCKTAIL } = require('../lib/nba/picks');
+    expect(board({ ...COCKTAIL, scope: 'all' }).ownWindows(logs, { market: 'pts', season: 2026 })).toMatchObject({ l10: 31.5, l20: 25.8 });
     expect(ownWindows(thisSeason.slice(0, 2), { market: 'pts', season: 2026 })).toMatchObject({ l3: 35.5, season: null, seasonN: 2 });
     expect(ownWindows([], { market: 'pts', season: 2026 })).toEqual({ l3: null, l5: null, l10: null, l20: null, season: null, seasonN: 0, n: 0, h2h: null, h2hN: 0 });
   });

@@ -8,6 +8,80 @@ Yes, with two seasons of box scores. The answer is now on the NBA board as `COCK
 [2026-10-28-nba-cocktail-tables.md](2026-10-28-nba-cocktail-tables.md). The NFL keeps the board as
 it was (`COCKTAIL_DEFAULTS` in `lib/picks/board.js`).
 
+## Update, later the same day: this season's games alone, and the backtest
+
+Vincent, before the merge: *we should look at the last 10 games for now. I don't want to blend with
+last season's games because playoffs were at the end. Did you test the new rules on the first games
+of this season, and how accurate were the predictions?*
+
+**What the board read.** His last 5 / 10 / 20 were his newest games whatever the season, and the pull
+keeps last season's playoff games (PropFinder's seasonType PST; only the preseason was dropped). A
+player on a playoff team therefore carried last spring's playoff nights into his last ten until he
+had ten games this season. The board as it was did this too.
+
+**The change.** The NBA's windows now read this season's regular-season games alone (`scope: 'season'`
+in the cocktail, `windowGames` in `board.js`): the season with his last ten at 0.65 / 0.35, and the hit
+rates, the minutes and the shuffle's windows the same way. The last twenty is gone. Inside a player's
+first ten games "his last ten" and "his season" are the same games. After that, blending the two
+read better than the last ten alone at every stretch of last season (below).
+
+**The backtest.** The site's own board was replayed night by night over this season, opening night
+included: 8 nights, 56 games, 986 player-games with a points projection, each night built only from
+the games before it (each player's logs cut at the date, the opponent's table as it stood that
+morning). Graded against what the players did:
+
+| This season, opening night to Oct 27 | Points miss | Rebounds | Assists | Threes | PRA | The tables' plays: said → hit |
+| --- | --- | --- | --- | --- | --- | --- |
+| The board as it was | 5.59 | 2.28 | 1.60 | 1.09 | 7.52 | 528 plays · 59% → 56% |
+| The first cut (last season in, playoffs too) | 5.08 | 2.09 | 1.48 | 1.01 | 6.80 | 622 · 60% → 57% |
+| Last season's regular season, the playoffs out | 5.11 | 2.09 | 1.49 | 1.02 | 6.84 | 720 · 61% → 57% |
+| **This season's games alone (on the branch)** | **5.39** | **2.20** | **1.58** | **1.02** | **7.08** | **897 · 61% → 55%** |
+| This season's games alone, his last ten alone | 5.46 | 2.22 | 1.60 | 1.03 | 7.21 | 897 · 61% → 55% |
+
+The misses are the average distance between the projection and his figure. For scale, a plain
+average of his last ten across the seasons missed points by 5.43, and of his last ten this season by
+5.67. Night by night the shipped read missed points by 4.98 to 5.85 (the appendix, section 7).
+
+**What it costs, and when.** The cost is all in the first two weeks of a season, while a player has
+one to six games. Last season gave the same pattern:
+
+| Points miss | 2025-26, days 1–14 | days 15–28 | the rest | 2026-27, days 1–14 |
+| --- | --- | --- | --- | --- |
+| The board as it was | 5.59 | 5.07 | 5.12 | 5.59 |
+| Last season in, playoffs too | 5.27 | 4.99 | 5.07 | 5.08 |
+| Last season's regular season, the playoffs out | 5.29 | 4.98 | 5.08 | 5.11 |
+| This season's games alone (on the branch) | 5.43 | 4.99 | 5.08 | 5.39 |
+| This season's games alone, his last ten alone | 5.48 | 5.01 | 5.10 | 5.46 |
+
+- **The playoffs themselves did no harm.** Taking them out and keeping last season's regular season
+  read the same as leaving them in: 5.11 against 5.08 this season, 5.29 against 5.27 last season.
+- **Last season's regular season is what carries the first two weeks.** Without it the projection
+  reads off one to six games. This week it gave back 60% of the cocktail's gain on points (5.59 →
+  5.39 instead of 5.08). The ladders' chances went back to about the old board's: rung Brier on
+  rebounds 0.1760 and assists 0.1485, against the old board's 0.1754 and 0.1471. The tables put
+  more plays up (897) at a higher said (61%) and a lower hit (55%).
+- **From the third week on, the choice makes no difference.**
+
+**How blind the test was.** The matchup's damping, the hit-rate weights, the tail's share and the
+spread were set from last season alone. The minutes cap and the vacated share were chosen with both
+seasons in view: both agreed, and this week agreed more strongly. The windows are now your call.
+
+**Where last season still enters, with the windows on this season's games** (none of these include
+the playoffs):
+
+- **Before his first game this season.** His last 82 regular-season games stand in, as on opening
+  night.
+- **His spread.** How much his nights vary, from his last 82 regular-season games. Five games cannot
+  measure it.
+- **His long-run shooting percentage.** The anchor this season's threes and free-throw percentage
+  shrink toward.
+
+Two reads outside the cocktail still take his newest games whatever the season, playoffs included:
+
+- the line the card shows as the book's main one (`playerProps`, the main-flagged line nearest his
+  last-ten average)
+- the first-basket starters' shares (`lib/nba/firstbasket.js`)
+
 ## How it was measured
 
 - **Data.** ESPN's box scores for every regular-season game of 2025-26 and of 2026-27 to October
@@ -38,11 +112,10 @@ last five reads better at every stage of the season. One set of weights held eve
 
 The numbers are MAE against the board's. Below 1.000 is better.
 
-**One thing for you to decide.** The last twenty reaches into last season's games until a player
-has twenty this season, as the last ten always did. That is where its gain comes from. Kept inside
-this season it reads worse than the board did (1.011 this season). Your call of 2026-10-27 keeps
-the *season* window this season's, and it still is. If you want the twenty inside the season too,
-the better choice is to leave the board's 0.65 / 0.35.
+The last twenty reaches into last season's games until a player has twenty this season, as the last
+ten always did. That is where its gain comes from. Kept inside this season it reads worse than the
+board did (1.011 this season). **Decided later the same day: the windows read this season's games
+alone, the season with his last ten at 0.65 / 0.35** (the update at the top).
 
 Not shipped:
 
@@ -146,10 +219,13 @@ So **`vacatedShare` is 0.2**. Even at 0.2 the lifted rows read a hair worse than
 that an out point guard's assists land on someone, and last season it moves those rows' bias the
 right way (−0.73 → −0.47). Below 0.2 was not replayed.
 
-## The cocktail on the site's board
+## The first cut on the site's board
 
-The board was replayed slate by slate with the cocktail, against the board as it was. Pseudo
-lines, no price.
+The board was replayed slate by slate with the first cut (the windows across the seasons, last
+season's playoffs in), against the board as it was, from the season's second night. Pseudo lines,
+no price. The windows inside this season are in the update at the top. In those runs ESPN's game
+logs carried last season's preseason as regular season, which the later runs leave out as the pull
+does.
 
 **This season (53 games):**
 
@@ -193,6 +269,8 @@ grade.
 ## What changed on the site
 
 - `lib/picks/board.js`: `makeBoard({ cocktail })`. `COCKTAIL_DEFAULTS` is the board as it was.
+  `windowGames` reads the cocktail's `scope` ('all' as before, 'regular', 'season') for every window
+  of his: the averages, the hit rates, the minutes and the shuffle's and scorecard's windows.
   `ladderOf` reads the tail's share, the shrink, the widening and the hit-rate weights. `chanceOf`
   reads the hit-rate weights. The tables carry `k`. The minutes and the lifts take the ceiling and
   the share, and the notes' "Vacated production" line says the share.
@@ -202,13 +280,18 @@ grade.
   untouched.
 - The court, the card and the shuffle: the hovers name the weights and the damping. The shuffle
   reads each rung's `wModel`.
-- Tests: `__tests__/nba-cocktail.test.js`, plus the NBA board and shuffle tests on the new numbers
-  (each also checks the old board's).
+- Tests: `__tests__/nba-cocktail.test.js` (the three scopes on a playoff team's logs among them),
+  plus the NBA board and shuffle tests on the new numbers (each also checks the old board's).
+- `tools/audit/nba-audit.mjs`: last season's preseason left out of ESPN's game logs, as the pull
+  leaves it out.
 
 ## Limits
 
-- **Test week.** One week of this season: 53 games, about 930 projections a market. The fit
-  season is what makes the weights trustworthy, and the test week is what makes them urgent.
+- **Test week.** One week of this season: 56 games with opening night, about 990 projections a
+  market. The fit season is what makes the weights trustworthy, and the test week is what makes
+  them urgent.
+- **The injury list.** The replay's players out are ESPN's list on each game's summary, fetched
+  after the game, not the pregame report the site reads.
 - **Pseudo lines.** No price, no book ladder. The real board's main lines are the books', nearer
   the median, where every read is hardest.
 - **Positions.** ESPN's G / F / C, read at SG / SF / C. PropFinder's depth chart slots are not in
@@ -220,7 +303,10 @@ grade.
 
 ```bash
 python3 -I tools/audit/nba_cocktail.py --raw .nhl-data/audit/nba --date 2026-10-27 --out .nhl-data/audit/out/nba-cocktail.md
-for ck in old site; do node --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --date 2026-10-27 --raw .nhl-data/audit/nba --out .nhl-data/audit/ab --prior .nhl-data/audit/nba/prior/games --cocktail $ck --tag -$ck; done
-for ck in old site; do node --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --season 2025 --date 2026-04-12 --raw .nhl-data/audit/nba --days .nhl-data/audit/nba/prior/days --games .nhl-data/audit/nba/prior/games --gamelogs .nhl-data/audit/nba/prior/gamelogs --out .nhl-data/audit/ab --cocktail $ck --tag -$ck; done
+for ck in old site; do node --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --date 2026-10-27 --from 2026-10-20 --raw .nhl-data/audit/nba --out .nhl-data/audit/ab --prior .nhl-data/audit/nba/prior/games --cocktail $ck --tag -$ck; done
+for ck in old site; do node --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --season 2025 --date 2026-04-12 --from 2025-10-21 --raw .nhl-data/audit/nba --days .nhl-data/audit/nba/prior/days --games .nhl-data/audit/nba/prior/games --gamelogs .nhl-data/audit/nba/prior/gamelogs --out .nhl-data/audit/ab --cocktail $ck --tag -$ck; done
 python3 -I tools/audit/nba_ab.py .nhl-data/audit/ab/nba-2026-10-27-old-summary.json .nhl-data/audit/ab/nba-2026-10-27-site-summary.json "2026-27"
 ```
+
+A variant is a JSON cocktail on top of the defaults: the playoffs out with last season's regular
+season kept is the shipped cocktail with `"scope": "regular"`.

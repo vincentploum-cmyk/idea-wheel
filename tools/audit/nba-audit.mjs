@@ -88,7 +88,9 @@ for (const x of players.values()) {
   const names = gl.names || []; const at = (stats, key) => stats[names.indexOf(key)];
   let any = false;
   for (const st of gl.seasonTypes || []) {
-    const type = /post/i.test(st.displayName || '') ? 'PST' : 'REG';
+    // ESPN's log carries the season's preseason too; the pull drops it (seasonType PRE), so does the replay.
+    const type = /post/i.test(st.displayName || '') ? 'PST' : /pre/i.test(st.displayName || '') ? 'PRE' : 'REG';
+    if (type === 'PRE') continue;
     for (const c of st.categories || []) for (const e of c.events || []) {
       const ev = gl.events?.[e.eventId]; if (!ev || !e.stats) continue;
       const s = e.stats;

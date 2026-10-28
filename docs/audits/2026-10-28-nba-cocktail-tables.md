@@ -277,3 +277,96 @@ The rows the vacated lift moved, the projection with it and without it (the ship
 | --- | --- | --- | --- | --- | --- |
 | 2026-27 | 910 | 0.22 | -0.02 | 4.64 | 4.62 |
 | 2025-26 | 25362 | -0.47 | -0.73 | 4.52 | 4.5 |
+
+## 7. The windows inside this season, and the backtest from opening night
+
+The site's board replayed night by night from each season's opening night with the windows reading different games (the cocktail's `scope`), everything else the shipped cocktail. ESPN's game logs without last season's preseason (the earlier runs above counted it as regular season). Section 5's numbers are the first cut from the second night; these supersede them for the shipped board.
+
+### 2026-27, opening night to October 27 (8 nights, 56 games, 986 player-games with points)
+
+| Windows | MAE pts / reb / ast / 3pm / PRA | rung Brier pts / reb / ast / 3pm / PRA | tables: n · said → hit |
+| --- | --- | --- | --- |
+| The board as it was | 5.59 / 2.28 / 1.60 / 1.09 / 7.52 | 0.1854 / 0.1754 / 0.1471 / 0.1161 / 0.1778 | 528 · 59.2% → 55.9% |
+| First cut: last season in, playoffs too | 5.08 / 2.09 / 1.48 / 1.01 / 6.80 | 0.1762 / 0.1667 / 0.1396 / 0.1122 / 0.1693 | 622 · 59.7% → 56.9% |
+| Last season’s regular season, no playoffs | 5.11 / 2.09 / 1.49 / 1.02 / 6.84 | 0.1773 / 0.1666 / 0.1399 / 0.1127 / 0.1702 | 720 · 60.9% → 56.9% |
+| This season alone: season 0.65 / last ten 0.35 (shipped) | 5.39 / 2.20 / 1.58 / 1.02 / 7.08 | 0.1843 / 0.1760 / 0.1485 / 0.1139 / 0.1747 | 897 · 61.2% → 54.5% |
+| This season alone: last ten alone | 5.46 / 2.22 / 1.60 / 1.03 / 7.21 | 0.1863 / 0.1773 / 0.1498 / 0.1147 / 0.1770 | 897 · 61.2% → 54.5% |
+| This season alone: season 0.4 / L10 0.4 / L5 0.2 | 5.41 / 2.21 / 1.59 / 1.03 / 7.12 | 0.1850 / 0.1765 / 0.1491 / 0.1143 / 0.1754 | 897 · 61.2% → 54.5% |
+| This season alone: season 0.4 / L10 0.2 / L5 0.1 / L20 0.3 | 5.39 / 2.21 / 1.59 / 1.03 / 7.11 | 0.1846 / 0.1764 / 0.1489 / 0.1141 / 0.1752 | 897 · 61.2% → 54.5% |
+
+### 2025-26, the whole season (1,231 games)
+
+| Windows | MAE pts / reb / ast / 3pm / PRA | rung Brier pts / reb / ast / 3pm / PRA | tables: n · said → hit |
+| --- | --- | --- | --- |
+| The board as it was | 5.15 / 2.05 / 1.50 / 1.03 / 6.77 | 0.1903 / 0.1688 / 0.1439 / 0.1140 / 0.1785 | 13971 · 61.2% → 53.4% |
+| First cut: last season in, playoffs too | 5.08 / 2.02 / 1.48 / 1.02 / 6.66 | 0.1896 / 0.1674 / 0.1433 / 0.1132 / 0.1787 | 13671 · 61.2% → 54.2% |
+| Last season’s regular season, no playoffs | 5.09 / 2.02 / 1.48 / 1.02 / 6.67 | 0.1896 / 0.1673 / 0.1433 / 0.1132 / 0.1787 | 13769 · 61.3% → 54.4% |
+| This season alone: season 0.65 / last ten 0.35 (shipped) | 5.10 / 2.03 / 1.49 / 1.02 / 6.68 | 0.1902 / 0.1681 / 0.1438 / 0.1133 / 0.1791 | 13939 · 61.5% → 54.2% |
+| This season alone: last ten alone | 5.12 / 2.04 / 1.50 / 1.02 / 6.69 | 0.1905 / 0.1690 / 0.1443 / 0.1135 / 0.1792 | 13939 · 61.5% → 54.2% |
+| This season alone: season 0.4 / L10 0.4 / L5 0.2 | 5.10 / 2.03 / 1.49 / 1.02 / 6.66 | 0.1900 / 0.1681 / 0.1437 / 0.1134 / 0.1787 | 13939 · 61.5% → 54.2% |
+| This season alone: season 0.4 / L10 0.2 / L5 0.1 / L20 0.3 | 5.10 / 2.03 / 1.49 / 1.02 / 6.67 | 0.1900 / 0.1680 / 0.1437 / 0.1133 / 0.1788 | 13939 · 61.5% → 54.2% |
+
+### Points MAE by the stretch of the season
+
+| Season | Stretch | rows | The board as it was | First cut: last season in, playoffs too | Last season’s regular season, no playoffs | This season alone: season 0.65 / last ten 0.35 (shipped) | This season alone: last ten alone | This season alone: season 0.4 / L10 0.4 / L5 0.2 | This season alone: season 0.4 / L10 0.2 / L5 0.1 / L20 0.3 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 2025-26 | days 1–14 | 1500 | 5.59 | 5.27 | 5.29 | 5.43 | 5.48 | 5.44 | 5.44 |
+| 2025-26 | days 15–28 | 1514 | 5.07 | 4.99 | 4.98 | 4.99 | 5.01 | 5.00 | 4.99 |
+| 2025-26 | the rest | 15745 | 5.12 | 5.07 | 5.08 | 5.08 | 5.10 | 5.08 | 5.08 |
+| 2026-27 | days 1–14 | 986 | 5.59 | 5.08 | 5.11 | 5.39 | 5.46 | 5.41 | 5.39 |
+
+### Night by night, this season (the shipped windows, and the first cut beside them)
+
+**This season alone (shipped)**
+
+| Night | games | players (pts) | pts MAE | reb MAE | ast MAE | within floor–ceiling (pts) | tables: n · said → hit |
+|---|---|---|---|---|---|---|---|
+| 2026-10-20 | 3 | 55 | 5.07 | 1.88 | 1.52 | 56% | 55 · 71% → 62% |
+| 2026-10-21 | 11 | 192 | 5.02 | 1.89 | 1.48 | 58% | 172 · 63% → 54% |
+| 2026-10-22 | 2 | 37 | 5.16 | 2.21 | 1.40 | 54% | 32 · 66% → 53% |
+| 2026-10-23 | 12 | 221 | 5.80 | 2.34 | 1.74 | 57% | 214 · 57% → 49% |
+| 2026-10-24 | 8 | 128 | 5.85 | 2.26 | 1.73 | 59% | 96 · 61% → 62% |
+| 2026-10-25 | 7 | 123 | 5.47 | 2.43 | 1.49 | 59% | 110 · 62% → 55% |
+| 2026-10-26 | 9 | 161 | 4.98 | 2.52 | 1.55 | 65% | 146 · 60% → 51% |
+| 2026-10-27 | 4 | 69 | 5.40 | 1.63 | 1.45 | 55% | 72 · 62% → 64% |
+| all | | 986 | 5.39 | 2.20 | 1.58 | 59% | 897 · 61% → 55% |
+
+**First cut: last season in, playoffs too**
+
+| Night | games | players (pts) | pts MAE | reb MAE | ast MAE | within floor–ceiling (pts) | tables: n · said → hit |
+|---|---|---|---|---|---|---|---|
+| 2026-10-20 | 3 | 55 | 5.13 | 1.91 | 1.48 | 58% | 52 · 66% → 62% |
+| 2026-10-21 | 11 | 192 | 5.12 | 1.88 | 1.49 | 57% | 159 · 61% → 53% |
+| 2026-10-22 | 2 | 37 | 4.75 | 2.25 | 1.34 | 62% | 28 · 61% → 57% |
+| 2026-10-23 | 12 | 221 | 5.15 | 2.15 | 1.46 | 58% | 50 · 56% → 68% |
+| 2026-10-24 | 8 | 128 | 5.34 | 1.98 | 1.61 | 62% | 76 · 58% → 60% |
+| 2026-10-25 | 7 | 123 | 5.11 | 2.22 | 1.46 | 58% | 103 · 58% → 52% |
+| 2026-10-26 | 9 | 161 | 4.70 | 2.46 | 1.50 | 65% | 103 · 58% → 52% |
+| 2026-10-27 | 4 | 69 | 5.26 | 1.68 | 1.40 | 61% | 51 · 60% → 67% |
+| all | | 986 | 5.08 | 2.09 | 1.48 | 60% | 622 · 60% → 57% |
+
+**The board as it was**
+
+| Night | games | players (pts) | pts MAE | reb MAE | ast MAE | within floor–ceiling (pts) | tables: n · said → hit |
+|---|---|---|---|---|---|---|---|
+| 2026-10-20 | 3 | 55 | 5.19 | 1.91 | 1.52 | 51% | 50 · 65% → 58% |
+| 2026-10-21 | 11 | 192 | 5.19 | 1.92 | 1.50 | 48% | 140 · 61% → 51% |
+| 2026-10-22 | 2 | 37 | 5.20 | 2.59 | 1.48 | 57% | 21 · 60% → 48% |
+| 2026-10-23 | 12 | 221 | 6.24 | 2.47 | 1.70 | 45% | 18 · 57% → 61% |
+| 2026-10-24 | 8 | 128 | 6.15 | 2.26 | 1.74 | 49% | 63 · 57% → 65% |
+| 2026-10-25 | 7 | 123 | 5.42 | 2.48 | 1.49 | 50% | 89 · 57% → 55% |
+| 2026-10-26 | 9 | 161 | 5.12 | 2.55 | 1.63 | 53% | 99 · 58% → 52% |
+| 2026-10-27 | 4 | 69 | 5.53 | 1.81 | 1.53 | 49% | 48 · 59% → 67% |
+| all | | 986 | 5.59 | 2.28 | 1.60 | 49% | 528 · 59% → 56% |
+
+
+### Plain averages beside the projection, points, this season (MAE)
+
+| Read | across the seasons, playoffs in (as the board read) | this season’s games alone |
+| --- | --- | --- |
+| His last 5 | 5.51 | 5.77 |
+| His last 10 | 5.43 | 5.67 |
+| His last 20 | 5.34 | 5.61 |
+| The stand-in line (last ten across the seasons, floored + ½) | 5.43 | 5.43 |
+| The board as it was (projection) | 5.59 | — |
+| The cocktail's projection | 5.08 (first cut) | 5.39 (shipped) |

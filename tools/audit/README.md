@@ -56,15 +56,16 @@ pandas and scipy; the rows are cached beside the report (`--rebuild` reads the f
 # last season's scoreboards and box scores, 2024-25 game logs: prior/days, prior/games, prior/gamelogs under --raw
 python3 -I tools/audit/nba_cocktail.py --raw .nhl-data/audit/nba --date 2026-10-27 --out .nhl-data/audit/out/nba-cocktail.md
 # the site's board with the shipped cocktail against the board as it was, this season and last
-for ck in old site; do node --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --date 2026-10-27 --raw .nhl-data/audit/nba --out .nhl-data/audit/ab --prior .nhl-data/audit/nba/prior/games --cocktail $ck --tag -$ck; done
-for ck in old site; do node --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --season 2025 --date 2026-04-12 --raw .nhl-data/audit/nba --days .nhl-data/audit/nba/prior/days --games .nhl-data/audit/nba/prior/games --gamelogs .nhl-data/audit/nba/prior/gamelogs --out .nhl-data/audit/ab --cocktail $ck --tag -$ck; done
+for ck in old site; do node --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --date 2026-10-27 --from 2026-10-20 --raw .nhl-data/audit/nba --out .nhl-data/audit/ab --prior .nhl-data/audit/nba/prior/games --cocktail $ck --tag -$ck; done
+for ck in old site; do node --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --season 2025 --date 2026-04-12 --from 2025-10-21 --raw .nhl-data/audit/nba --days .nhl-data/audit/nba/prior/days --games .nhl-data/audit/nba/prior/games --gamelogs .nhl-data/audit/nba/prior/gamelogs --out .nhl-data/audit/ab --cocktail $ck --tag -$ck; done
 python3 -I tools/audit/nba_ab.py .nhl-data/audit/ab/nba-2026-10-27-old-summary.json .nhl-data/audit/ab/nba-2026-10-27-site-summary.json "2026-27"
 ```
 
 `--cocktail` takes `site` (`COCKTAIL` in `lib/nba/picks.js`), `old` (`COCKTAIL_DEFAULTS`, the board
 before it) or a JSON object (`'{"factorMax":1.15}'` on top of the defaults, so pass the whole
-cocktail to vary one setting); `--season` / `--days` / `--games` / `--gamelogs` point the replay at
-another season, `--tag` names its files. The last season's replay takes about five minutes. The
+cocktail to vary one setting; `"scope": "all" | "regular" | "season"` sets the games his windows
+read); `--season` / `--days` / `--games` / `--gamelogs` point the replay at another season, `--tag`
+names its files, `--from` the first night graded (the season's opening night grades it too). The last season's replay takes about five minutes. The
 first run is written up in `docs/audits/2026-10-28-nba-cocktail.md`.
 
 ## NHL: the game script (`nhl_game_script.py`)

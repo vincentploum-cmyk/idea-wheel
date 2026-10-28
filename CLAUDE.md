@@ -84,8 +84,12 @@ config and keeps its own markets, teams, feeds and slate key:
   audit's A / B): the weights behind the projection and the chance, measured on two seasons of box scores
   (`docs/audits/2026-10-28-nba-cocktail.md`; Vincent, 2026-10-28: "can't you just figure out yourself what the best
   cocktail is"). `windows` = his windows' weights (`blendWindows` in `projection.js`, renormalised over the windows he
-  has; set, `logAverages` adds his last twenty, which reaches into last season's games until he has twenty, as the
-  last ten always did, and `w` on his windows; `blendText` words it for the hovers); `matchupK` = the opponent's table
+  has; set, `logAverages` puts `w` on his windows, with `scope` when not every game, and his last twenty when the
+  weights name it; `blendText` words it for the hovers); `scope` = the games every window of his reads (`windowGames`:
+  'all', his newest games whatever the season, last season's playoffs in — the board until 2026-10-28; 'regular', the
+  same without the playoffs; 'season', this season's regular season alone, his last `seasonCap` regular-season games
+  standing in until he has played — for the averages, the hit rates, the minutes, `ownWindows`; his spread and the
+  volume read's long-run percentage stay on his regular season across the boundary); `matchupK` = the opponent's table
   counted at gp / (gp + k) of itself (`matchupOf`'s `damp`, `dampOf(allowed, pos)`, `k` on the side's `allowed` and the
   card's tables; `matchupFrom` carries `raw` / `weight` / `gp`, `dampText` for the hovers; a cell without a count, the
   cheat sheet's tile alone, is not damped); `hitWeights` = the hit rates' L5 / L10 / season weights in the plays'
@@ -93,7 +97,9 @@ config and keeps its own markets, teams, feeds and slate key:
   half handing its weight to the tail in his first games (min(n, 17) / (… + empK) kept, n his games this season),
   `wModel` on every rung (the shuffle's `pAt` / `readAt` recentre the tail at it), `spreadA` / `spreadB` his spread
   × (1 + a · b / (n + b)); `vacatedShare` and `factorMax` (the minutes factor's ceiling, `minutesTonight`). The NBA:
-  windows season 0.4 · L10 0.2 · L5 0.1 · L20 0.3, matchupK 40, hitWeights 0.1 / 0.3 / 0.6, ladderModel 0.7, empK 6,
+  windows season 0.65 · L10 0.35 with scope 'season' (Vincent, 2026-10-28, before the merge: "look at the last 10
+  games for now; I don't want to blend with last season's games because playoffs were at the end"; the first cut
+  read season 0.4 · L10 0.2 · L5 0.1 · L20 0.3 across the seasons), matchupK 40, hitWeights 0.1 / 0.3 / 0.6, ladderModel 0.7, empK 6,
   spreadA 0.2 at 5 games, factorMax 1 (minutes that fell cut a rate, minutes that rose lift none; an out teammate's
   production still arrives through the vacated lift, whole since nothing comes off it for minutes), vacatedShare 0.2
   (the notes' "Vacated production" line says the share).
@@ -383,9 +389,8 @@ config and keeps its own markets, teams, feeds and slate key:
   team then the opponent, from `side.out` = PropFinder's injury report through `absentByTeam`, name, position,
   status and detail; Vincent's ask, 2026-10-27);
   every chip his **projection for tonight**: **the board's figure** (`ranges[stat].exp` on the side's
-  player, `boardRead` in the court: `lib/picks/projection.js`'s `ownRate` = his windows blended at the
-  cocktail's weights (season 0.4, last ten 0.2, last five 0.1, last twenty 0.3; the default, the season with
-  his last ten at 0.65 / 0.35), × `envFactor` = 1 + 0.6 × (the opponent's allowed at his spot over
+  player, `boardRead` in the court: `lib/picks/projection.js`'s `ownRate` = his season blended with his last
+  ten at 0.65 / 0.35, this season's games alone (the cocktail's `windows` and `scope`), × `envFactor` = 1 + 0.6 × (the opponent's allowed at his spot over
   the league's average − 1) **on the season table**, counted at gp / (gp + 40) of itself for the games behind
   the table (`matchupK`), × the side's factor; `rate` / `matchup` / `team` /
   `env` ride on the range so the hover spells it out; green over the line, red under). **A window moves
@@ -585,13 +590,16 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   the NBA ladder is over-confident above 60% (his spread ~1.4× too narrow, the hit-rate half unshrunk); "hot"
   plays hit 36% on a 55% said. No number was changed by the audit; the changes it asks for are listed there.
 - The NBA cocktail (`docs/audits/2026-10-28-nba-cocktail.md`, `tools/audit/nba_cocktail.py` and the board replayed
-  with `--cocktail old|site` on both seasons, `nba_ab.py` side by side): the windows, the matchup's damping, the
+  with `--cocktail old|site|<json>` on both seasons, `nba_ab.py` side by side): the windows, the matchup's damping, the
   hit-rate weights, the tail's share, the spread, the minutes cap and the vacated share tuned on 2025-26 and checked
-  unchanged on 2026-27's first week, shipped as the NBA's `COCKTAIL` (above). This season against the board as it
-  was: the projection's MAE on points 5.62 → 5.09, every ladder's rung Brier 3–5% lower, the 70–80% rungs on points
-  64% → 70% hit; last season every ladder but PRA's (0.1783 → 0.1786) a little better. Open: the team scale's ceiling
-  helps this season and costs last season (it is most of a −1.07 points bias there); a per-minute rate. The book's game total and spread, home, rest and a stronger teammates-out read were measured and left out;
-  last season's average behind his season to date was 3% better this season and is out by the 2026-10-27 call.
+  on 2026-27 from opening night, shipped as the NBA's `COCKTAIL` (above). The backtest, this season's 56 games night
+  by night: the points projection missed by 5.39 on average (the board as it was 5.59, a plain last ten 5.43), every
+  ladder but rebounds' and assists' a little better than the old board's. The windows on this season's games alone
+  cost the first two weeks of a season (5.08 with last season's games behind them this week, 5.27 against 5.43 over
+  2025-26's first two weeks) and nothing after; last season's playoffs themselves did no harm (the regular season
+  alone behind them, `scope: 'regular'`, 5.11). Open: the team scale's ceiling helps this season and costs last
+  season (most of a −1.05 points bias there); a per-minute rate. The book's game total and spread, home, rest and a
+  stronger teammates-out read were measured and left out.
 - The game script, tested (`docs/audits/2026-10-28-game-script.md`, `tools/audit/nhl_game_script.py`; Vincent's
   question of 2026-10-28: a team strong at home against a visitor leaking over its last ten dominates, and the shots
   and goals divide by the opponent's weaknesses). On 2025-26 and 2026-27's box scores: a team's shots tonight follow

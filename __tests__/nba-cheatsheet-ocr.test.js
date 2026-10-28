@@ -89,8 +89,8 @@ describe('NBA cheat sheet (OCR)', () => {
     expect(prit.plays[0]).toMatchObject({ market: 'pts', line: 15.5, side: 'over', confirmed: true });
     expect(prit.avg.pts).toBe(18.9);   // his logs' season average (18, 19, 20 repeating over ten games)
     // His own windows per stat ride along for the projection; a player without a play has them too.
-    // The last twenty and the NBA cocktail's window weights ride along (lib/nba/picks.js COCKTAIL).
-    expect(prit.own.pts).toEqual({ l5: 18.8, l10: 18.9, l20: 18.9, season: 18.9, seasonN: 10, w: { season: 0.4, l10: 0.2, l5: 0.1, l20: 0.3 } });
+    // The NBA cocktail's window weights ride along (lib/nba/picks.js COCKTAIL).
+    expect(prit.own.pts).toEqual({ l5: 18.8, l10: 18.9, season: 18.9, seasonN: 10, w: { season: 0.65, l10: 0.35, scope: 'season' } });
     expect(prit.own.pra).toMatchObject({ season: 27.9 });
     expect(bos.players.find((p) => p.player === 'Jaylen Brown').own.reb.season).toBe(4);
     expect(bos.allowed).toMatchObject({ from: 'sheet', count: 30 });

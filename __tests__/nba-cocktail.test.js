@@ -16,22 +16,49 @@ describe('his windows, blended', () => {
     expect(blendWindows({ l5: 12 })).toBe(12);
     expect(blendWindows(null)).toBeNull();
   });
-  test('with the NBA’s: season 0.4, last ten 0.2, last five 0.1, last twenty 0.3, renormalised over the windows he has', () => {
-    const w = COCKTAIL.windows;
+  test('with weights: renormalised over the windows he has', () => {
+    const w = { season: 0.4, l10: 0.2, l5: 0.1, l20: 0.3 };   // the cocktail's first cut, across the seasons
     expect(blendWindows({ season: 20, l10: 30, l5: 40, l20: 10, w })).toBeCloseTo(0.4 * 20 + 0.2 * 30 + 0.1 * 40 + 0.3 * 10, 6);
     // No last twenty in the windows: the other three carry it.
     expect(blendWindows({ season: 20, l10: 30, l5: 40, w })).toBeCloseTo((0.4 * 20 + 0.2 * 30 + 0.1 * 40) / 0.7, 6);
     expect(ownRate({ season: 20, l10: 30, l5: 40, l20: 10, w })).toBe(21);
-    // The weights ride on the windows the NBA board reads (logAverages), with the last twenty; the NFL's stay as they were.
+    // The NBA's: the season with his last ten at 0.65 / 0.35, this season's games alone; the NFL's windows stay as they were.
+    expect(ownRate({ season: 20, l10: 30, l5: 40, w: COCKTAIL.windows })).toBe(23.5);
     const logs = Array.from({ length: 25 }, (_, i) => ({ date: `2026-10-${String(30 - i).padStart(2, '0')}`, season: 2026, type: 'REG', pts: i < 5 ? 30 : 20, passYds: 200 }));
-    expect(nbaAverages(logs, { market: 'pts', season: 2026 })).toEqual({ l5: 30, l10: 25, l20: 22.5, season: 22, seasonN: 25, w: COCKTAIL.windows });
+    expect(nbaAverages(logs, { market: 'pts', season: 2026 })).toEqual({ l5: 30, l10: 25, season: 22, seasonN: 25, w: { season: 0.65, l10: 0.35, scope: 'season' } });
     const nfl = nflAverages(logs, { market: 'passYds', season: 2026 });
     expect(nfl).not.toHaveProperty('w');
     expect(nfl).not.toHaveProperty('l20');
   });
   test('in words, for the hovers', () => {
     expect(blendText(null)).toBe('the season blended with his last ten');
-    expect(blendText(COCKTAIL.windows)).toBe('his windows blended: the season 0.4, last ten 0.2, last five 0.1, last twenty 0.3');
+    expect(blendText(COCKTAIL.windows)).toBe('the season blended with his last ten at 0.65 / 0.35');
+    expect(blendText({ ...COCKTAIL.windows, scope: 'season' })).toBe("the season blended with his last ten at 0.65 / 0.35, this season's games alone");
+    expect(blendText({ season: 0.4, l10: 0.2, l5: 0.1, l20: 0.3 })).toBe('his windows blended: the season 0.4, last ten 0.2, last five 0.1, last twenty 0.3');
+  });
+});
+
+describe('the games his windows read (scope)', () => {
+  // Newest first: three games this season, last spring's two playoff games, then last season's regular season.
+  const g = (date, season, type, pts) => ({ date, season, type, pts });
+  const last = Array.from({ length: 10 }, (_, i) => g(`2026-04-${String(12 - i).padStart(2, '0')}`, 2025, 'REG', 15));
+  const logs = [g('2026-10-26', 2026, 'REG', 30), g('2026-10-24', 2026, 'REG', 20), g('2026-10-22', 2026, 'REG', 10), g('2026-05-02', 2025, 'PST', 40), g('2026-04-30', 2025, 'PST', 40), ...last];
+  const at = (scope) => nbaBoard({ ...COCKTAIL, scope, windows: { season: 0.65, l10: 0.35 } });
+  const avgs = (scope, list = logs) => at(scope).logAverages(list, { market: 'pts', season: 2026 });
+  test("'all': last spring's playoff nights fill his last five and ten, as the board read", () => {
+    expect(avgs('all')).toMatchObject({ l5: 28, l10: 21.5, season: 20, seasonN: 3 });
+    expect(at('all').logRates(logs, { market: 'pts', line: 19.5, side: 'over', season: 2026 })).toMatchObject({ l5: 0.8, season: 2 / 3 });
+  });
+  test("'regular': the playoffs left out, last season's regular season behind this season's games", () => {
+    expect(avgs('regular')).toMatchObject({ l5: 18, l10: 16.5, season: 20 });
+  });
+  test("'season': this season's games alone; last season's regular season only until he has played", () => {
+    expect(avgs('season')).toMatchObject({ l5: 20, l10: 20, season: 20, seasonN: 3 });
+    expect(at('season').logRates(logs, { market: 'pts', line: 19.5, side: 'over', season: 2026 })).toMatchObject({ l5: 2 / 3, l10: 2 / 3, l10N: 3 });
+    expect(at('season').ownWindows(logs, { market: 'pts', season: 2026 })).toMatchObject({ l3: 20, l5: 20, l10: 20 });
+    const before = logs.slice(3);   // opening night: no game this season yet
+    expect(avgs('season', before)).toMatchObject({ l5: 15, l10: 15, season: 15, seasonN: 10 });
+    expect(avgs('all', before)).toMatchObject({ l5: 25, season: 19.2 });   // the playoffs in the stand-in too, before
   });
 });
 
