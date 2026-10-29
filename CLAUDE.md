@@ -69,7 +69,12 @@ config and keeps its own markets, teams, feeds and slate key:
 - `cheatsheet.js` (`makeCheatSheetParser`): CSV / TSV / Excel / PDF in any column order; long layout
   = one row per prop with a market column, wide = one row per player with a column per market
   ("<market> odds" / "<market> L10 %" beside it); a sheet or file named after a market supplies
-  it; hit rates as 7/10, 70% or 0.7.
+  it; hit rates as 7/10, 70% or 0.7. **A wide market column that does not hold lines holds his
+  averages** (a book's line ends in .5; under 60% of a column's numbers on the .5 and the column is
+  averages, `isLine`): the row is a mention (market null, group `players`, `avg` keyed by stat, with
+  a MIN column as `avg.min`, the OCR sheets' shape), never a play, and the sheet's warnings say so —
+  2026-10-29 an NBA sheet's Name · POS · MIN · PTS · REB · AST · 3PM table read as text put "Watson
+  o3.4 Points" and "Allen o5 Points" on the board as PropFinder plays (his logs made them `pfBacked`).
 - `board.js` (`makeBoard`; the sport bindings in `lib/nba/picks.js` and `lib/nfl/picks.js` must stay out of client
   components, which read `markets.js` instead: `board.js` reaches the server store through `nhl-data/names.js`): the sheets' rows and PropFinder's lines merged per player + market +
   line + side; the chance = hit rates over the line (L5 0.3, L10 0.3, season 0.4 by default, the sport's
@@ -78,7 +83,11 @@ config and keeps its own markets, teams, feeds and slate key:
   `under`, a "next" line; flame / snowflake (`formOf`) and the soft spot (`softSpot`, the opponent
   in the soft third at the position for the stat) are colour only; a stored box score grades
   every row (`actual`, `hit`; a `played: false` line reads DNP) and the game head tallies the
-  plays over the floor. Notes written from the plays.
+  plays over the floor. Notes written from the plays. **A line the book prices past -400 is no play**
+  (`STEEP_IMPLIED` = 0.8 on the book's implied probability; 2026-10-29: o4.5 points at -10421 read 100% at
+  the top of the Points table, Vincent: "this is fucking useless"): the play carries `steep: true`, stays on
+  the side player's `plays` (the card's "His lines tonight") and off the tables, the "next" line, the
+  strips, the tally, the notes and the scorecard; the game carries `steep` = how many.
 - **The cocktail** (`makeBoard({ cocktail })`, `COCKTAIL_DEFAULTS` in `board.js` = the board as it was, which the NFL
   keeps; the NBA's is `COCKTAIL` in `lib/nba/picks.js`, `nbaBoard(cocktail)` builds the board with any other for the
   audit's A / B): the weights behind the projection and the chance, measured on two seasons of box scores
@@ -304,7 +313,12 @@ config and keeps its own markets, teams, feeds and slate key:
 - `store.js` (`makeStore`): `<sport>/<slate>/{schedule,sheets-index,propfinder}.json`,
   `sheets/<id>.json`, `results/<gameId>.json`, `<sport>/meta/*`; the schedule re-fetched when
   stale (6 h, 10 min while a game is on) with the finished games' box scores; a sheet with a
-  stored name replaces it; `boardFor`, `statusFor`, `pullPropfinder`.
+  stored name replaces it; `boardFor`, `statusFor`, `pullPropfinder`. **The pull is stored gzipped**
+  (`writeJson(…, { gzip: true })` in `lib/nhl-store.js`; `readJson` reads either form back by the gzip
+  magic bytes, so the path and every reader stay as they were): the NFL pull (28 teams' priced players
+  with their logs and ladders, the absent players read one by one) outgrew the bucket's 15 MB file
+  limit on 2026-10-28 — "The object exceeded the maximum allowed size" in `nfl/meta/propfinder-pull.json`,
+  the NFL board without a pull for two days. The store's limit stays 15 MB.
 - `http.js`: the browser-agent GET (ESPN answers 403 to a user agent carrying a URL).
 - UI: `components/picks/Board.jsx` (per game the sport's tables, a play-less game collapses to
   one line), `SidePicks.jsx` (the strip above a side's view, the NHL rink's model plays for the picks boards: the board's
@@ -499,7 +513,11 @@ config and keeps its own markets, teams, feeds and slate key:
   the whole ladder rides on the prop as `lines`; preseason rows, seasonType PRE, are left out of the logs
   and the anchor — they put LeBron on o14.5 points; markets the board does not settle whose names carry a
   market's word — "Player Made Two Pointers", "Player Fantasy Score", "… Attempted" — are skipped by
-  `NOT_A_MARKET`, the live pull of 2026-10-20 filed them under points and threes), one stat line, three
+  `NOT_A_MARKET`, the live pull of 2026-10-20 filed them under points and threes; **the main line is the one the
+  book prices nearest a coin flip** — `balance` in `playerProps`, the over's implied probability with the vig split
+  against 0.5 — before the one priced both ways by the most books and the one nearest his average: on 2026-10-29 the
+  books priced their whole alternate ladders both ways and "the most books" put Wiggins, Dort and Merrill on o4.5
+  points at 100% and -10421, Okongwu on o3.5 rebounds at -772), one stat line, three
   chips under the basket and four on the perimeter (`ZONE_MAX`). PropFinder's NBA depth chart arrives as a
   JSON string in `team.depthChart.data` (`depthChart` parses it; `starter` = `nba_com_starter`, `injury` =
   `espn_injury_status`); usage comes as `usagePct`, a fraction, read as a percentage. "Pull PropFinder" sits in the board head beside Reload (the same call as

@@ -70,6 +70,18 @@ describe('NBA cheat sheet', () => {
     const wide = 'Player,Team,Opp,PTS,PTS Odds,REB,AST,3PM\nJayson Tatum,BOS,@ NYK,27.5,-115,8.5,4.5,3.5\n';
     const w = parseCheatSheet({ text: wide, fileName: 'tonight.csv' });
     expect(w.rows.map((r) => [r.market, r.line, r.odds])).toEqual([['pts', 27.5, -115], ['reb', 8.5, null], ['ast', 4.5, null], ['tpm', 3.5, null]]);
+    // A market column that does not hold book lines holds his averages (an NBA sheet's season-average table,
+    // 2026-10-29: "Watson o3.4 Points" on the board): the row is a mention, with his minutes, no play.
+    expect(classifyHeader('MIN')).toEqual({ role: 'minutes' });
+    const avgs = 'Name,POS,MIN,PTS,REB,AST,3PM\nPeyton Watson,SF,18.2,3.4,2.8,0.9,0.6\nJarrett Allen,C,31:05,5.0,7.5,1.2,0\n';
+    const a = parseCheatSheet({ text: avgs, fileName: 'nba_2026-10-29.pdf' });
+    expect(a.rows).toHaveLength(2);
+    expect(a.rows[0]).toMatchObject({ player: 'Peyton Watson', pos: 'SF', market: null, group: 'players', line: null, mention: true, avg: { min: 18.2, pts: 3.4, reb: 2.8, ast: 0.9, tpm: 0.6 } });
+    expect(a.rows[1]).toMatchObject({ player: 'Jarrett Allen', market: null, avg: { pts: 5, reb: 7.5, ast: 1.2, tpm: 0 } });
+    expect(a.warnings.join(' ')).toMatch(/Points, Rebounds, Assists, 3-pointers read as season averages/);
+    // A column of lines with one whole number in it is still a column of lines.
+    const mixed = 'Player,PTS,REB\nJayson Tatum,27.5,8.5\nJaylen Brown,24,6.5\nDerrick White,15.5,4.5\n';
+    expect(parseCheatSheet({ text: mixed, fileName: 'tonight.csv' }).rows.map((r) => [r.player, r.market, r.line])).toEqual([['Jayson Tatum', 'pts', 27.5], ['Jayson Tatum', 'reb', 8.5], ['Jaylen Brown', 'pts', 24], ['Jaylen Brown', 'reb', 6.5], ['Derrick White', 'pts', 15.5], ['Derrick White', 'reb', 4.5]]);
     expect(dateFromFileName('props-2026-10-21.csv')).toBe('2026-10-21');
     expect(dateFromFileName('tonight.csv')).toBeNull();
   });
@@ -156,6 +168,20 @@ describe('NBA PropFinder mapping', () => {
     expect(preP.props.find((x) => x.market === 'pts').line).toBe(26.5);
     // Without a log the most books decide, and the flag still beats an unflagged line.
     expect(mapPlayers([{ ...ladder, stats: [] }])[0].props.find((x) => x.market === 'pts').line).toBe(8.5);
+    // The books price their whole ladder both ways (2026-10-29: four books on o4.5 points at -10421 / +2500, two on
+    // the real line): the main line is the one priced nearest a coin flip, never the rung with the most books.
+    const both = (book, line, over, under, main = true) => [item('Player Points', 'points', book, 'over', over, line, main), item('Player Points', 'points', book, 'under', under, line, main)];
+    const priced = { ...ladder, odds: [
+      ...both('Betano', 4.5, -10421, 2500), ...both('bet365', 4.5, -8000, 2000), ...both('Unibet', 4.5, -9000, 2200), ...both('Pinnacle', 4.5, -7500, 1900),
+      ...both('Betano', 8.5, -600, 400), ...both('DraftKings', 12.5, -115, -105), ...both('FanDuel', 12.5, -110, -110),
+      ...both('DraftKings', 16.5, 180, -240, false),
+    ] };
+    const main = mapPlayers([priced])[0].props.find((x) => x.market === 'pts');
+    expect(main).toMatchObject({ line: 12.5, odds: -110, underOdds: -105, books: 2, isMain: true });
+    expect(main.lines.map((x) => x.line)).toEqual([4.5, 8.5, 12.5, 16.5]);
+    // One side priced on the real line, the rung both ways: still the real line.
+    const oneSide = { ...ladder, odds: [...both('Betano', 4.5, -10421, 2500), item('Player Points', 'points', 'DraftKings', 'over', -112, 12.5)] };
+    expect(mapPlayers([oneSide])[0].props.find((x) => x.market === 'pts').line).toBe(12.5);
     expect(fieldsSeen([PLAYER], []).unread).toEqual(['oddStat']);
     const seen = fieldsSeen([PLAYER], []).markets;
     expect(Object.values(seen).reduce((s, m) => s + m.n, 0)).toBeGreaterThan(0);
@@ -374,6 +400,24 @@ describe('NBA board', () => {
     expect(g.tables.threes.rows).toEqual([]);
     expect(g.tally.of).toBeGreaterThanOrEqual(3);
     expect(b.notes.join(' ')).toMatch(/Softest spots: NY to SFs/);
+  });
+  test('a line the book prices past -400 is no play: off the tables, the strip, the tally and the notes, on the card flagged steep', () => {
+    const steepPf = { ...pf, data: { ...pf.data, players: [{ ...pf.data.players[0], props: [{ market: 'reb', line: 7.5, odds: -110, underOdds: -110 }, { market: 'pts', line: 4.5, odds: -10421, underOdds: 2500 }, { market: 'tpm', line: 0.5, odds: -2021, underOdds: 900 }] }] } };
+    const b = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: steepPf, results });
+    const g = b.games[0];
+    expect(g.tables.points.rows).toEqual([]);
+    expect(g.tables.threes.rows).toEqual([]);
+    expect(g.tables.points.next).toEqual([]);
+    expect(g.tables.rebounds.rows.map((x) => [x.line, !!x.under])).toEqual([[7.5, false]]);
+    expect(g).toMatchObject({ plays: 1, out: 0, steep: 2 });
+    expect(g.tally).toEqual({ hit: 1, of: 1 });
+    expect(g.sides.BOS.picks.map((x) => x.market)).toEqual(['reb']);
+    const tatum = g.sides.BOS.players.find((p) => p.player === 'Jayson Tatum');
+    expect(tatum.plays.map((x) => [x.market, x.steep])).toEqual(expect.arrayContaining([['pts', true], ['tpm', true], ['reb', false]]));
+    expect(b.notes.join(' ')).not.toMatch(/4\.5 Points/);
+    // The same line on a sheet (a sheet's own alternate at -10421) is no play either.
+    const sheetSteep = [{ id: 's2', fileName: 'alt.csv', at: '2026-10-21T12:00:00Z', rows: [{ player: 'Jayson Tatum', team: 'BOS', pos: 'SF', market: 'pts', group: 'points', line: 4.5, side: 'over', odds: -10421, hit: { l10: 1 }, avg: {} }] }];
+    expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: sheetSteep, pf: null, results }).games[0].tables.points.rows).toEqual([]);
   });
 });
 
