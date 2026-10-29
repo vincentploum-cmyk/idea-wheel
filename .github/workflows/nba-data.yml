@@ -3,6 +3,10 @@ name: NBA data refresh
 # Keeps the NBA board's public data current: the night's schedule and scores and the finished
 # games' box scores from ESPN (anonymous, throttled to one call per 15 minutes), and the
 # PropFinder pull for the slate (with the site token), morning and late afternoon.
+# The server runs these jobs on time itself (lib/scheduler.js, lib/schedule-jobs.js: the same calls at the same
+# Eastern times); this workflow is the backstop. A scheduled run names its job from the cron that fired it and
+# passes `job=<id>`, so the site skips a slot the server already ran (GitHub fires schedules hours late: the
+# 9:47 AM pull went at 3:12 PM on 2026-10-29). A manual run (workflow_dispatch) always runs.
 on:
   schedule:
     - cron: '47 13 * * *'   # ~9:47 ET: tonight's schedule, the PropFinder pull
@@ -33,6 +37,9 @@ jobs:
           INPUT_DATE="${{ github.event.inputs.date }}"
           WHAT="${{ github.event.inputs.what }}"; [ -z "$WHAT" ] && WHAT=all
           TODAY=$(TZ=America/New_York date +%F); YDAY=$(TZ=America/New_York date -d 'yesterday' +%F)
+          # The job from the cron that fired (not the hour it ran: the 2:11 AM slot fired at 8:53 AM on 2026-10-29).
+          JOB=""; case "${{ github.event.schedule }}" in '47 13 * * *') JOB=nba-morning ;; '23 21 * * *') JOB=nba-pregame ;; '11 6 * * *') JOB=nba-overnight ;; esac
+          J=""; [ -n "$JOB" ] && J="&job=$JOB"
           # The dates to refresh: the input (one date or a from..to range), else today, else
           # yesterday in the 2 AM slot.
           if [ -n "$INPUT_DATE" ]; then
@@ -40,7 +47,7 @@ jobs:
               *..*) FROM=${INPUT_DATE%..*}; TO=${INPUT_DATE#*..}; DATES=""; d=$FROM; while [[ "$d" < "$TO" || "$d" == "$TO" ]]; do DATES="$DATES $d"; d=$(date -d "$d + 1 day" +%F); done ;;
               *) DATES="$INPUT_DATE" ;;
             esac
-          elif [ "$(date -u +%H)" = "06" ]; then DATES="$YDAY"
+          elif [ "$JOB" = "nba-overnight" ]; then DATES="$YDAY"
           else DATES="$TODAY"; fi
           FORCE=""; [ "${{ github.event_name }}" = "workflow_dispatch" ] && FORCE="&force=1"
           call() { local c; for attempt in 1 2; do c=$(curl -sS -o "$2" -w '%{http_code}' -X POST --max-time 280 ${NHL_ACTIONS_TOKEN:+-H "Authorization: Bearer $NHL_ACTIONS_TOKEN"} "$1" || true); [ -n "$c" ] || c=000; case "$c" in 5*|000) [ "$attempt" = 1 ] && { echo "server answered $c; retrying in 60 s" >&2; sleep 60; } ;; *) break ;; esac; done; echo "$c"; }
@@ -49,13 +56,13 @@ jobs:
           # a slate after its games, so last night's finals and box scores were only stored when someone
           # opened that date's board. Idempotent: a box score already stored is skipped.
           if [ "${{ github.event_name }}" = "schedule" ] && [ "$DATES" != "$YDAY" ]; then
-            code=$(call "https://ideareels.io/api/nba/refresh?date=$YDAY&only=schedule" yday.json); echo "yesterday ($YDAY) schedule: $code $(head -c 600 yday.json)"
+            code=$(call "https://ideareels.io/api/nba/refresh?date=$YDAY&only=schedule$J" yday.json); echo "yesterday ($YDAY) schedule: $code $(head -c 600 yday.json)"
           fi
           for DATE in $DATES; do
             echo "Refreshing the NBA slate of $DATE"
-            code=$(call "https://ideareels.io/api/nba/refresh?date=$DATE&only=schedule" sched.json); echo "schedule: $code $(head -c 600 sched.json)"
+            code=$(call "https://ideareels.io/api/nba/refresh?date=$DATE&only=schedule$J" sched.json); echo "schedule: $code $(head -c 600 sched.json)"
             [ "$code" = "200" ] || [ "$code" = "429" ]
-            if [ "$WHAT" = "all" ] && [ -n "$NHL_ACTIONS_TOKEN" ] && [ "$(date -u +%H)" != "06" ]; then
-              pf=$(call "https://ideareels.io/api/nba/refresh?date=$DATE&only=propfinder${FORCE}" pf.json); echo "propfinder: $pf $(head -c 16000 pf.json)"
+            if [ "$WHAT" = "all" ] && [ -n "$NHL_ACTIONS_TOKEN" ] && [ "$JOB" != "nba-overnight" ]; then
+              pf=$(call "https://ideareels.io/api/nba/refresh?date=$DATE&only=propfinder${FORCE}$J" pf.json); echo "propfinder: $pf $(head -c 16000 pf.json)"
             fi
           done

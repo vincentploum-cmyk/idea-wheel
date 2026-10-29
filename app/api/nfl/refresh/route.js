@@ -1,6 +1,7 @@
 import { authorize } from '@/lib/nhl-data/util';
 import { readJson, writeJson } from '@/lib/nhl-store';
 import { resolveWeek, ensureSchedule, pullPropfinderWeek } from '@/lib/nfl/store';
+import { scheduledSlotDone } from '@/lib/scheduler';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,10 @@ async function handle(request) {
   const url = new URL(request.url);
   const auth = await authorize(request, { allowToken: true });
   const only = url.searchParams.get('only');
+  // The GitHub workflow is the backstop for the server's own clock (lib/scheduler.js): a scheduled run names its
+  // job and steps aside when the server already ran that slot (GitHub fires its schedules hours late).
+  const job = url.searchParams.get('job');
+  if (job) { const done = await scheduledSlotDone(job); if (done) return Response.json({ ok: true, skipped: `the server's scheduler ran ${job} for ${done.date} at ${done.finishedAt}` }, { headers: { 'Cache-Control': 'no-store' } }); }
   if (!auth.ok) {
     if (only === 'propfinder') return auth.response;
     const marker = 'nfl/meta/public-refresh.json';

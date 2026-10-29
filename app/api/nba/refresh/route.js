@@ -1,5 +1,6 @@
 import { authorize, DATE_RE } from '@/lib/nhl-data/util';
 import { resolveSlate, ensureSchedule, pullPropfinderSlate, publicRefreshAllowed } from '@/lib/nba/store';
+import { scheduledSlotDone } from '@/lib/scheduler';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,10 @@ async function handle(request) {
   const only = url.searchParams.get('only');
   const date = url.searchParams.get('date');
   if (date && !DATE_RE.test(date)) return Response.json({ error: 'bad date' }, { status: 400 });
+  // The GitHub workflow is the backstop for the server's own clock (lib/scheduler.js): a scheduled run names its
+  // job and steps aside when the server already ran that slot (GitHub fires its schedules hours late).
+  const job = url.searchParams.get('job');
+  if (job) { const done = await scheduledSlotDone(job); if (done) return Response.json({ ok: true, skipped: `the server's scheduler ran ${job} for ${done.date} at ${done.finishedAt}` }, { headers: { 'Cache-Control': 'no-store' } }); }
   if (!auth.ok) {
     if (only === 'propfinder') return auth.response;
     const gate = await publicRefreshAllowed(PUBLIC_MIN_GAP_MS);
