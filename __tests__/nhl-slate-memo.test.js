@@ -14,9 +14,9 @@ const store = {
     calls.download += 1;
     if (!files.has(path)) return { data: null, error: new Error('not found') };
     const text = files.get(path);
-    return { data: { text: async () => text, size: text.length }, error: null };
+    return { data: { text: async () => String(text), arrayBuffer: async () => { const b = Buffer.isBuffer(text) ? text : Buffer.from(text); return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength); }, size: text.length }, error: null };
   },
-  async upload(path, body) { files.set(path, await body.text()); return { data: { path }, error: null }; },
+  async upload(path, body) { files.set(path, body.type === 'application/gzip' ? Buffer.from(await body.arrayBuffer()) : await body.text()); return { data: { path }, error: null }; },
   async remove(paths) { for (const p of paths) files.delete(p); return { data: null, error: null }; },
 };
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
@@ -230,5 +230,21 @@ describe('the NBA board is kept per slate files', () => {
     expect((await nba.boardFor(slate, { refresh: false })).games[0].out).toBe(1);
     const same = await nba.boardFor(slate, { refresh: false });
     expect((await nba.boardFor(slate, { refresh: false })).games).toBe(same.games);
+  });
+});
+
+describe('a big file is stored gzipped', () => {
+  test('writeJson with gzip stores gzip bytes and readJson reads them back as JSON', async () => {
+    const value = { ok: true, data: { players: Array.from({ length: 200 }, (_, i) => ({ id: i, games: Array.from({ length: 20 }, (__, g) => ({ g, pts: g * 2 })) })) } };
+    await nhlStore.writeJson('nfl/2026/8/propfinder.json', value, { gzip: true });
+    const stored = files.get('nfl/2026/8/propfinder.json');
+    expect(Buffer.isBuffer(stored)).toBe(true);
+    expect([stored[0], stored[1]]).toEqual([0x1f, 0x8b]);
+    expect(stored.length).toBeLessThan(JSON.stringify(value).length / 5);
+    expect(await nhlStore.readJson('nfl/2026/8/propfinder.json')).toEqual(value);            // the copy cached on write
+    expect(await nhlStore.readJson('nfl/2026/8/propfinder.json', { fresh: true })).toEqual(value);   // read back from the bytes
+    await nhlStore.writeJson('nfl/2026/8/schedule.json', { games: [] });
+    expect(typeof files.get('nfl/2026/8/schedule.json')).toBe('string');
+    expect(await nhlStore.readJson('nfl/2026/8/schedule.json', { fresh: true })).toEqual({ games: [] });
   });
 });

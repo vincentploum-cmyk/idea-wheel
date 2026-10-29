@@ -301,7 +301,12 @@ config and keeps its own markets, teams, feeds and slate key:
 - `store.js` (`makeStore`): `<sport>/<slate>/{schedule,sheets-index,propfinder}.json`,
   `sheets/<id>.json`, `results/<gameId>.json`, `<sport>/meta/*`; the schedule re-fetched when
   stale (6 h, 10 min while a game is on) with the finished games' box scores; a sheet with a
-  stored name replaces it; `boardFor`, `statusFor`, `pullPropfinder`.
+  stored name replaces it; `boardFor`, `statusFor`, `pullPropfinder`. **The pull is stored gzipped**
+  (`writeJson(…, { gzip: true })` in `lib/nhl-store.js`; `readJson` reads either form back by the gzip
+  magic bytes, so the path and every reader stay as they were): the NFL pull (28 teams' priced players
+  with their logs and ladders, the absent players read one by one) outgrew the bucket's 15 MB file
+  limit on 2026-10-28 — "The object exceeded the maximum allowed size" in `nfl/meta/propfinder-pull.json`,
+  the NFL board without a pull for two days. The store's limit stays 15 MB.
 - `http.js`: the browser-agent GET (ESPN answers 403 to a user agent carrying a URL).
 - UI: `components/picks/Board.jsx` (per game the sport's tables, a play-less game collapses to
   one line), `SidePicks.jsx` (the strip above a side's view, the NHL rink's model plays for the picks boards: the board's
