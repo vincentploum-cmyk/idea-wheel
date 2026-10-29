@@ -183,7 +183,8 @@ describe('the predictors', () => {
     const line = rep.each.find((p) => p.key === 'line');
     expect(line).toMatchObject({ n: 1, avg: 27.5, bias: -1.5, mae: 1.5, said: 0.5, hit: 1, brier: 0.25 });
     expect(rep.common.n).toBe(1);
-    expect(rep.common.predictors.map((p) => p.key)).toEqual(PREDICTORS.map((p) => p.key));   // every predictor has its row here
+    // Every predictor has its row here but his role, which needs minutes in the logs (none in these).
+    expect(rep.common.predictors.map((p) => p.key)).toEqual(PREDICTORS.map((p) => p.key).filter((k) => k !== 'role'));
     // A market no row carries.
     expect(predictorReport(rows, 'stl').common).toEqual({ n: 0, predictors: [] });
   });

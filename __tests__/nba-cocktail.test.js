@@ -173,6 +173,51 @@ describe('his first games pulled toward his role, a stat at a time', () => {
   });
 });
 
+describe('his role from his own opportunity: usage, rebound chances, potential assists', () => {
+  const games = [{ id: 'g1', date: '2026-11-05T23:30Z', away: 'BOS', home: 'NY', final: false, state: 'pre' }];
+  // Ten games this season each, 30 minutes a night: a point guard on 30% usage, 7 rebound chances and 14 potential
+  // assists; a centre on 15% usage, 20 rebound chances and 4 potential assists.
+  const log = (i, x) => ({ date: `2026-11-${String(4 - Math.floor(i / 3)).padStart(2, '0')}`, gameId: `g${i}`, season: 2026, type: 'REG', opp: 'MIA', min: 30, ...x });
+  const pg = Array.from({ length: 10 }, (_, i) => log(i, { pts: 25, reb: 4, ast: 8, tpm: 2, tpa: 6, pra: 37, usg: 30, rebCh: 7, potAst: 14 }));
+  const c = Array.from({ length: 10 }, (_, i) => log(i, { pts: 12, reb: 11, ast: 2, tpm: 0, tpa: 0, pra: 25, usg: 15, rebCh: 20, potAst: 4 }));
+  const pf = { at: '2026-11-05T14:00:00Z', data: { players: [
+    { id: 'p1', name: 'Payton Pritchard', key: 'payton pritchard', team: 'BOS', pos: 'PG', games: pg, props: [] },
+    { id: 'p2', name: 'Neemias Queta', key: 'neemias queta', team: 'BOS', pos: 'C', games: c, props: [] },
+  ], defense: null } };
+  const side = nbaBoard().buildBoard({ date: '2026-11-05', season: 2026, games, sheets: [], pf, results: {} }).games[0].sides.BOS;
+  const guard = side.players.find((p) => p.key === 'payton pritchard'); const big = side.players.find((p) => p.key === 'neemias queta');
+  // His own opportunity earns the stronger pull (`pullOpportunity`: points 12, PRA 5 on its parts; rebounds and assists as the position's).
+  const w = (stat) => Math.round((10 / (10 + COCKTAIL.pullOpportunity[stat])) * 1000) / 1000;
+  test('points: his usage at the slate’s points per usage-minute × his minutes', () => {
+    // The slate's conversion: 370 points over (30 × 300 + 15 × 300) usage-minutes, with 2025-26's 0.02396 behind it
+    // at 500 minutes of 20% usage: (370 + 0.02396 × 10000) / (13500 + 10000) = 0.0259 a point per usage-minute.
+    expect(guard.own.pts.pull).toMatchObject({ basis: 'usage', opp: 30, oppGames: 10, prior: 23.3, w: w('pts') });   // 0.0259 × 30 × 30
+    expect(big.own.pts.pull).toMatchObject({ basis: 'usage', opp: 15, prior: 11.7 });
+  });
+  test('rebounds off his rebound chances, assists off his potential assists, at the slate’s conversion', () => {
+    // 150 rebounds on 270 chances (0.556): the guard's 7 a game → 3.9, the centre's 20 → 11.1.
+    expect(guard.own.reb.pull).toMatchObject({ basis: 'reboundChances', opp: 7, prior: 3.9, w: w('reb') });
+    expect(big.own.reb.pull).toMatchObject({ basis: 'reboundChances', opp: 20, prior: 11.1 });
+    // 100 assists on 180 potential (0.556): the guard's 14 → 7.8, the centre's 4 → 2.2.
+    expect(guard.own.ast.pull).toMatchObject({ basis: 'potentialAssists', opp: 14, prior: 7.8 });
+    expect(big.own.ast.pull).toMatchObject({ basis: 'potentialAssists', opp: 4, prior: 2.2 });
+    // PRA on its parts: 23.3 + 3.9 + 7.8.
+    expect(guard.own.pra.pull).toMatchObject({ basis: 'parts', prior: 35, w: w('pra') });
+    // Threes have no opportunity figure here: the position's rate, as before.
+    expect(guard.own.tpm.pull.basis).toBe('position');
+  });
+  test('the hovers name the role; without the figures the position’s rate stands in', () => {
+    expect(pullText(guard.own.pts.pull)).toContain('his 30% usage over 30 minutes');
+    expect(pullText(big.own.reb.pull)).toContain('his 20 rebound chances a game, 30 minutes');
+    const bare = { ...pf, data: { ...pf.data, players: pf.data.players.map((p) => ({ ...p, games: p.games.map(({ usg, rebCh, potAst, ...g }) => g) })) } };
+    const plain = nbaBoard().buildBoard({ date: '2026-11-05', season: 2026, games, sheets: [], pf: bare, results: {} }).games[0].sides.BOS.players.find((p) => p.key === 'payton pritchard');
+    expect(plain.own.pts.pull).toMatchObject({ basis: 'position', K: COCKTAIL.pull.pts, w: Math.round((10 / (10 + COCKTAIL.pull.pts)) * 1000) / 1000 });
+    expect(plain.own.pra.pull).toMatchObject({ basis: 'position', K: COCKTAIL.pull.pra });
+    // The NFL board reads no opportunity (the defaults).
+    expect(COCKTAIL_DEFAULTS.opportunity).toBeNull();
+  });
+});
+
 describe('the minutes and the defaults', () => {
   test('the minutes factor’s ceiling is the sport’s', () => {
     const active = [{ key: 'a', minutes: { l5: 30, l10: 20, season: 20 } }];

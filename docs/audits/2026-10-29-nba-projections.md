@@ -62,6 +62,64 @@ come first:
   matchup (points 5.09 either way): four games of a defense say little. The rows for the sheet fill
   in on the site.
 
+## Usage, rebound chances and potential assists in the role (later the same day)
+
+Vincent: *add usage, rebound chances and potential assists to the projections.* PropFinder's game rows
+carry all three (`usagePct`, `reboundChances`, `potentialAssists`, seen in a real pull on October 20).
+Until now they were shown on the player card and fed no number.
+
+**Where they go: his role.** The pull's anchor in a player's first games was his position's average
+rate a minute. It is now his own opportunity this season, converted at the rate the slate's players
+turn that opportunity into the stat. The conversion comes from PropFinder's rows for the slate:
+
+| Stat | His role | Conversion |
+| --- | --- | --- |
+| Points | His usage × his minutes | Points per usage-minute (2025-26's 0.024 behind the slate's own at 500 minutes) |
+| Rebounds | His rebound chances a minute × his minutes | Rebounds per rebound chance |
+| Assists | His potential assists a minute × his minutes | Assists per potential assist |
+| Pts + reb + ast | The three added up | — |
+| Threes | His position's rate a minute, as before (his attempts already drive the read) | — |
+
+- **What stays out.** These are opportunity figures, not outcomes. A hot shooting night moves his
+  points, not his usage. A lucky bounce moves his rebounds, not his chances. That is why they make a
+  steadier anchor in a player's first games than his own few outcomes.
+- **Fallback.** Where the rows lack a figure, the position's rate stands in as before.
+- **A stronger pull.** A player's own role earns a stronger pull than his position's
+  (`pullOpportunity`). The position's role keeps its K.
+
+**Measured: usage.** ESPN's box scores give usage: his shots, free throws and turnovers over his
+team's while he was on the floor. The replay computes it per game the standard way. Average miss on
+points and PRA, against the board as it was this morning:
+
+| | Points K | PRA K | Points, this season | Points, 2025-26 first two weeks | Points, 2025-26 after | PRA, this season | PRA, 2025-26 first two weeks |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Position's role (this morning) | 1 | 1 | 5.087 | 5.355 | 5.073 | 6.796 | 6.919 |
+| Usage role | 1 | 1 | 5.147 | 5.326 | 5.067 | 6.808 | 6.850 |
+| Usage role | 5 | 1 | 5.015 | 5.266 | 5.053 | — | — |
+| Usage role | 12 | 1 | 4.997 | 5.265 | 5.044 | 6.825 | 6.857 |
+| Usage role | 20 | 1 | 4.999 | 5.271 | 5.039 | — | — |
+| **Usage role (shipped)** | **12** | **5** | **4.991** | **5.265** | **5.044** | **6.698** | **6.796** |
+
+- **Points** gain from K 5 on and level off between 8 and 20. 12 sits in the middle: his own games
+  count at n / (n + 12), a third after six games, half after twelve. Over all of 2025-26: 5.095 →
+  5.062.
+- **PRA** on its parts is best at K 5: 6.796 → 6.698 this season, 6.676 → 6.652 over 2025-26.
+- **The ladders** gain too. Rung scores this season, lower is better: points 0.1755 → 0.1717, PRA
+  0.1689 → 0.1662.
+- **As a read of its own** (the scorecard's new "His role"), usage × the conversion × his minutes
+  missed points by 4.42 on the rows where every read is available. The projection missed by 4.46 on
+  those same rows.
+
+**Not measured: rebound chances and potential assists.**
+
+- They are NBA.com's tracking figures. No public box score here carries them, and NBA.com's stats
+  API was not reachable from this session.
+- They are in on PropFinder's figures, at the K fitted on the position's role (rebounds 2, assists
+  0.5). Usage earned a stronger K, so these may deserve one too. That is the next thing to check.
+- **How they get graded.** The scorecard's predictor table now carries **"His role"** for every
+  stat, with the projection and the blend beside it on the same rows. If rebound chances or potential
+  assists beat the projection there over a few weeks, their K goes up.
+
 ## How it was measured
 
 - **The board.** The site's own board, replayed night by night with `tools/audit/nba-audit.mjs`,

@@ -70,6 +70,10 @@ first run is written up in `docs/audits/2026-10-28-nba-cocktail.md`.
 
 ## NBA: the projections stat by stat (`nba_stats.py`)
 
+The replay's game rows carry each player's usage, computed from the box score the standard way
+(100 × (FGA + 0.44 FTA + TOV) × team minutes / 5 / (minutes × the team's)), so the board's role read
+off usage runs as on the site; ESPN carries no rebound chances or potential assists.
+
 `report <rows.csv> [label]` reads a replay's rows (`nba-audit.mjs` writes them with each player's
 games this season, his own windows, the minutes read and the matchup undamped): how far off each stat
 is in its own units, how much of the miss is his minutes, by the size of the projection and his games

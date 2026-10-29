@@ -71,12 +71,17 @@ const players = new Map();   // espnId → { id, key, name, team, pos, games: []
 const playerOf = (p, team) => { let x = players.get(p.espnId); if (!x) { x = { id: p.espnId, key: normName(p.name), name: p.name, team, pos: p.pos, games: [] }; players.set(p.espnId, x); } return x; };
 for (const g of schedule) {
   const r = results[g.id]; if (!r) continue;
+  // His usage in the game (PropFinder's usagePct, read as a percent): his shots, free throws and turnovers over the
+  // team's, while he was on the floor — 100 × (FGA + 0.44 FTA + TOV) × (team minutes / 5) / (min × the team's).
+  const teamUse = {}; const teamMin = {};
+  for (const p of r.players) if (p.played) { teamUse[p.team] = (teamUse[p.team] || 0) + (p.fga || 0) + 0.44 * (p.fta || 0) + (p.tov || 0); teamMin[p.team] = (teamMin[p.team] || 0) + (p.min || 0); }
+  const usgOf = (p) => (p.min > 0 && teamUse[p.team] > 0 ? Math.round((1000 * ((p.fga || 0) + 0.44 * (p.fta || 0) + (p.tov || 0)) * (teamMin[p.team] / 5)) / (p.min * teamUse[p.team])) / 10 : null);
   for (const p of r.players) {
     if (!p.espnId) continue;
     const x = playerOf(p, p.team);
     if (g.slate >= (x.latest || '')) { x.team = p.team; x.pos = p.pos || x.pos; x.latest = g.slate; }
     if (!p.played) continue;
-    x.games.push({ date: g.slate, gameId: g.id, season: SEASON, type: 'REG', home: p.team === r.home, opp: p.team === r.home ? r.away : r.home, min: p.min, pts: p.pts, reb: p.reb, ast: p.ast, tpm: p.tpm, tpa: p.tpa, fgm: p.fgm, fga: p.fga, ftm: p.ftm, fta: p.fta, stl: p.stl, blk: p.blk, tov: p.tov, oreb: p.oreb, dreb: p.dreb, pf: p.pf, pra: p.pra, pr: p.pr, pa: p.pa, ra: p.ra, stlBlk: p.stlBlk, dd: p.dd, td3: p.td3 });
+    x.games.push({ date: g.slate, gameId: g.id, season: SEASON, type: 'REG', home: p.team === r.home, opp: p.team === r.home ? r.away : r.home, min: p.min, pts: p.pts, reb: p.reb, ast: p.ast, tpm: p.tpm, tpa: p.tpa, fgm: p.fgm, fga: p.fga, ftm: p.ftm, fta: p.fta, stl: p.stl, blk: p.blk, tov: p.tov, oreb: p.oreb, dreb: p.dreb, pf: p.pf, pra: p.pra, pr: p.pr, pa: p.pa, ra: p.ra, stlBlk: p.stlBlk, dd: p.dd, td3: p.td3, usg: usgOf(p) });
   }
 }
 let withLast = 0;

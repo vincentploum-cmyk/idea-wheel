@@ -113,8 +113,17 @@ config and keeps its own markets, teams, feeds and slate key:
   PropFinder's players' games this season — with 2025-26's rates behind them at `roleMinutes` = 500 (`roleRatesOf`,
   `from` { sheet, propfinder, reference } minutes on the pull), × the minutes behind his rate — his own read counting at n / (n + K),
   n his games this season, K per stat: points 1, rebounds 2 (the position says the most), assists 0.5 (his role is his
-  own), threes 1.5, PRA 1; none before his first game (last season's regular season stands in as it is). `pull` {
-  prior, w, n, K, group, min } rides on `own[stat]`, `ranges[market]` and the shuffle row, `ladderOf` takes it,
+  own), threes 1.5, PRA 1; none before his first game (last season's regular season stands in as it is). **His role off
+  his own opportunity** where PropFinder's game rows carry it (`opportunity`: { pts: 'usg', reb: 'rebCh', ast: 'potAst' };
+  Vincent, 2026-10-29: "add usage, rebound chances and potential assists to the projections"): points = his usage
+  (minutes-weighted, this season) × the slate's points per usage-minute (`roleConv.pts` = 2025-26's 0.02396 behind it
+  at 500 minutes of 20% usage), rebounds = his rebound chances a minute × the slate's rebounds per chance, assists =
+  his potential assists a minute × the slate's assists per potential assist (no reference: the slate's alone, from
+  `OPP_MIN` = 500 minutes), each × the minutes behind his rate; PRA on the three (`basis: 'parts'`); the position's
+  rate where the rows lack them (`basis: 'position'`). A player's own role pulls harder (`pullOpportunity`: points
+  12, PRA 5 — replayed with usage computed from ESPN's box scores: points 5.09 → 4.99 this season, 5.095 → 5.062 over
+  2025-26; rebounds 2 and assists 0.5 as the position's, no public tracking to fit them on). `pull` {
+  prior, w, n, K, group, min, basis, opp, oppGames } rides on `own[stat]`, `ranges[market]` and the shuffle row, `ladderOf` takes it,
   `ownRate` applies it, `pullText` words it for the court's, the card's and the shuffle's hovers. `volume` (true)
   switches the volume read off for the audit's A / B.
 - `shuffle.js` (`makeShuffle` → `shuffleOf`, and the pure readers the panel runs: `readAt`, `pAt`, `survivorsAt`,
@@ -164,7 +173,10 @@ config and keeps its own markets, teams, feeds and slate key:
   scored on those same rows beside it, `against`, and the panel's bold is not for it), the last 5 / 10 / season × the
   matchup (the centres the shuffle reads from), the board's blend, the projection with the matchup in it and the book's
   line, each against his figure (bias, MAE, RMSE) and as an over-the-line read (said / hit / Brier), on the rows every
-  predictor covers. Descriptive only; the question it answers is whether a plain window
+  predictor covers, and **his role** (`role`, sparse: the pull's anchor as a read of its own — his opportunity at the
+  league's conversion × the minutes factor, plus the lift, × the environment — scored on the rows that have it with
+  the projection and the blend beside it; the read that says whether rebound chances and potential assists earn a
+  stronger pull). Descriptive only; the question it answers is whether a plain window
   of his own results beats the board's read, in which case the board should read from it. Beside it **the matchup,
   graded** (`matchupReport`, `matchups` per market in the summary, `MatchupTable` in `Scorecard.jsx`; every predictor
   row carries `mFrom` and `matchup`): per stat and by where the matchup came from (the cheat sheet, the cheat sheet
@@ -627,7 +639,9 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   pull a player's first games ran to the ends (each projected point over the middle worth 0.77 this season, a three
   0.62), the pull's K fitted per stat on 2025-26's first two weeks. Window weights, the matchup and the minutes lift
   read the same way for every stat; the team ceiling splits (helps every stat this season, cost points, assists and PRA
-  over 2025-26), kept and to read again at mid-season. Next lever: the minutes read.
+  over 2025-26), kept and to read again at mid-season. Next lever: the minutes read. The same day the role went to
+  his own opportunity (usage, rebound chances, potential assists; the replay computes usage from ESPN's box scores,
+  `usg` on its rows): points 4.99 this season, PRA 6.70.
 - The game script, tested (`docs/audits/2026-10-28-game-script.md`, `tools/audit/nhl_game_script.py`; Vincent's
   question of 2026-10-28: a team strong at home against a visitor leaking over its last ten dominates, and the shots
   and goals divide by the opponent's weaknesses). On 2025-26 and 2026-27's box scores: a team's shots tonight follow
