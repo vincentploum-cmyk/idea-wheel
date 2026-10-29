@@ -4,6 +4,7 @@ import { dispatchLinesWorkflow } from '@/lib/nhl-data/github-dispatch';
 import { authorize, todayET, DATE_RE } from '@/lib/nhl-data/util';
 import { readJson, writeJson } from '@/lib/nhl-store';
 import { buildScorecard } from '@/lib/nhl-data/scorecard';
+import { scheduledSlotDone } from '@/lib/scheduler';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,6 +20,10 @@ async function handle(request) {
   const date = url.searchParams.get('date') || todayET();
   const only = url.searchParams.get('only'); // games | lineups (&due=<minutes>: only games starting within that window) | settle (a played date: previews' last update + re-stamp) | restamp (stored games follow the snapshot) | firstgoals (stored games get their first goal) | propfinder | (default) daily
   if (!DATE_RE.test(date)) return Response.json({ error: 'bad date' }, { status: 400 });
+  // The GitHub workflow is the backstop for the server's own clock (lib/scheduler.js): a scheduled run names its
+  // job and steps aside when the server already ran that slot (GitHub fires its schedules hours late).
+  const job = url.searchParams.get('job');
+  if (job) { const done = await scheduledSlotDone(job); if (done) return Response.json({ ok: true, skipped: `the server's scheduler ran ${job} for ${done.date} at ${done.finishedAt}` }, { headers: { 'Cache-Control': 'no-store' } }); }
 
   if (!auth.ok) {
     // One anonymous call per 15 minutes per mode, so the schedule can run the PropFinder
