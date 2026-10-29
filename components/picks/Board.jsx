@@ -129,7 +129,7 @@ export default function Board({ board, sport, empty = 'No games on this slate.',
             <div className="ir-nfl-grid">
               {sport.groups.map(([key, label]) => <GroupTable key={key} label={label} t={g.tables[key]} final={g.final} sport={sport} />)}
             </div>
-          ) : <p className="ir-nfl-nogame">No plays yet: no cheat-sheet row or PropFinder line for either team.</p>}
+          ) : <p className="ir-nfl-nogame">{g.steep ? `No plays: the ${g.steep} line${g.steep === 1 ? '' : 's'} PropFinder lists ${g.steep === 1 ? 'is' : 'are'} priced past -400, no play at that price.` : 'No plays yet: no cheat-sheet row or PropFinder line for either team.'}</p>}
         </article>
       ))}
       {board.notes?.length ? (
