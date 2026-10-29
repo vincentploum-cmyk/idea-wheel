@@ -196,6 +196,43 @@ function PredictorsTable({ predictors }) {
   );
 }
 
+/**
+ * The matchup graded on the stored nights, per stat and by where it came from — the cheat sheet's tile,
+ * PropFinder's table, both — the projection's average miss as it stood beside the same projection with
+ * the matchup taken out; green where the matchup brought the figure closer to what he did.
+ */
+function MatchupTable({ matchups }) {
+  const sources = (matchups[0]?.by || []).filter((s) => matchups.some((m) => m.by.find((b) => b.key === s.key)?.n));
+  if (!sources.length) return null;
+  return (
+    <div className="nhlx-db-table-wrap">
+      <table className="nhlx-db-table nhlx-mu-table nhlx-sc-table">
+        <thead>
+          <tr>
+            <th>Matchup from</th>
+            {matchups.map((m) => <th key={m.key} className="is-num" title={`${m.label}: the projection's average miss with the matchup, and without it`}>{m.label}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {sources.map((s) => (
+            <tr key={s.key}>
+              <td><b>{s.label}</b></td>
+              {matchups.map((m) => {
+                const b = m.by.find((x) => x.key === s.key);
+                return (
+                  <td key={m.key} className={`is-num${b?.n && b.mae < b.without ? ' is-best' : ''}`} title={b?.n ? `${b.n} player-games; the matchup moved the projection ${(b.moved * 100).toFixed(1)}% on average; it runs ${b.bias > 0 ? 'high' : 'low'} by ${Math.abs(b.bias)}` : undefined}>
+                    {b?.n ? <>{b.mae} <small>without {b.without}</small></> : '—'}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function Scorecard({ sport }) {
   const { api, kind, season = null, to = null, label = '' } = sport;
   const [open, setOpen] = useState(true);
@@ -281,6 +318,12 @@ export default function Scorecard({ sport }) {
               <>
                 <h3 className="nhlx-sc-h">Which number predicts best <small>his own games over a window, his head to head, the board’s blend, the projection with the matchup in it, and the book’s line, each against the box scores</small></h3>
                 <PredictorsTable predictors={report.predictors} />
+              </>
+            ) : null}
+            {report.matchups?.some((m) => m.by.some((b) => b.n)) ? (
+              <>
+                <h3 className="nhlx-sc-h">The matchup, graded <small>the projection’s average miss with the matchup and without it, by where the matchup came from; green where it brought the figure closer to what he did</small></h3>
+                <MatchupTable matchups={report.matchups} />
               </>
             ) : null}
             {report.ladders?.length ? (

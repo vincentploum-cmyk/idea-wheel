@@ -89,10 +89,13 @@ config and keeps its own markets, teams, feeds and slate key:
   'all', his newest games whatever the season, last season's playoffs in — the board until 2026-10-28; 'regular', the
   same without the playoffs; 'season', this season's regular season alone, his last `seasonCap` regular-season games
   standing in until he has played — for the averages, the hit rates, the minutes, `ownWindows`; his spread and the
-  volume read's long-run percentage stay on his regular season across the boundary); `matchupK` = the opponent's table
+  volume read's long-run percentage stay on his regular season across the boundary); `matchupK` = PropFinder's table
   counted at gp / (gp + k) of itself (`matchupOf`'s `damp`, `dampOf(allowed, pos)`, `k` on the side's `allowed` and the
-  card's tables; `matchupFrom` carries `raw` / `weight` / `gp`, `dampText` for the hovers; a cell without a count, the
-  cheat sheet's tile alone, is not damped); `hitWeights` = the hit rates' L5 / L10 / season weights in the plays'
+  card's tables; `matchupFrom` carries `raw` / `weight` / `gp`, `dampText` for the hovers); **the cheat sheet's tile
+  counts in full**, alone or beside PropFinder's, which comes in at its weight: 1 + ((sheet − 1) + w (pf − 1)) / (1 + w)
+  (Vincent, 2026-10-29: "the cheat sheets and the data from PropFinder should be the start of everything in
+  basketball"; on 2026-10-28 the damping applied to the two's mean and cut the sheet's tile to a tenth in the first
+  week, measured on PropFinder's tables alone — the replay has no sheets); `hitWeights` = the hit rates' L5 / L10 / season weights in the plays'
   chance and a rung's cleared-it half; `ladderModel` = the tail's share of a rung's chance, `empK` the cleared-it
   half handing its weight to the tail in his first games (min(n, 17) / (… + empK) kept, n his games this season),
   `wModel` on every rung (the shuffle's `pAt` / `readAt` recentre the tail at it), `spreadA` / `spreadB` his spread
@@ -105,8 +108,10 @@ config and keeps its own markets, teams, feeds and slate key:
   (the notes' "Vacated production" line says the share), and `pull` (Vincent, 2026-10-29: "we can't treat them all
   the same, they depend on different dynamics"): in his first games this season his read, after the without split
   and the volume read and before the minutes factor and the lift, moves toward his role — `roleRates[stat][G|F|C]`,
-  the league's rate a minute at his position group (2025-26's, the slate's own players' games this season taking
-  over at `roleMinutes` = 2000, `roleRatesOf`), × the minutes behind his rate — his own read counting at n / (n + K),
+  the league's rate a minute at his position group from the slate's own sources first — the cheat sheets' player tables
+  (`mentionsOf`, each row a game's worth of his minutes and averages, a row past what a minute can hold left out) and
+  PropFinder's players' games this season — with 2025-26's rates behind them at `roleMinutes` = 500 (`roleRatesOf`,
+  `from` { sheet, propfinder, reference } minutes on the pull), × the minutes behind his rate — his own read counting at n / (n + K),
   n his games this season, K per stat: points 1, rebounds 2 (the position says the most), assists 0.5 (his role is his
   own), threes 1.5, PRA 1; none before his first game (last season's regular season stands in as it is). `pull` {
   prior, w, n, K, group, min } rides on `own[stat]`, `ranges[market]` and the shuffle row, `ladderOf` takes it,
@@ -160,7 +165,11 @@ config and keeps its own markets, teams, feeds and slate key:
   matchup (the centres the shuffle reads from), the board's blend, the projection with the matchup in it and the book's
   line, each against his figure (bias, MAE, RMSE) and as an over-the-line read (said / hit / Brier), on the rows every
   predictor covers. Descriptive only; the question it answers is whether a plain window
-  of his own results beats the board's read, in which case the board should read from it.
+  of his own results beats the board's read, in which case the board should read from it. Beside it **the matchup,
+  graded** (`matchupReport`, `matchups` per market in the summary, `MatchupTable` in `Scorecard.jsx`; every predictor
+  row carries `mFrom` and `matchup`): per stat and by where the matchup came from (the cheat sheet, the cheat sheet
+  and PropFinder, PropFinder alone, no table), the projection's average miss as it stood and with the matchup taken
+  out, green where the matchup helped — the cheat sheets graded on the stored nights, which the replay cannot do.
 - `propfinder.js` (`makePropfinder`): `/<LEAGUE>/teams` and `/<LEAGUE>/players?teamIds=…&hydrate=stats&withOddsOnly=true`
   through `pfGetJson` in `lib/nhl-data/propfinder-api.js`. The NHL endpoints were checked; the
   NFL / NBA game-row field names have not been seen yet, so every stat is read through the

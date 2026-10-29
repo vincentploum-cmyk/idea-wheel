@@ -9,6 +9,59 @@ stat's own units. No hit rates and no lines. It then asks what each stat needs. 
 toward each player's role in his first games with a different strength per stat, is now on the NBA
 board as the cocktail's `pull` (`lib/nba/picks.js`).
 
+## PropFinder and the cheat sheets first (later the same day)
+
+Vincent: *the cheat sheets and the data from PropFinder should be the start of everything in
+basketball.* Both were in every number. Where the model's own reads had pushed them back, they now
+come first:
+
+| PropFinder / the cheat sheet | Where it enters | Changed today |
+| --- | --- | --- |
+| PropFinder's game logs | His averages, minutes, attempts, hit rates: the base of every projection | The hovers say "in PropFinder's logs" |
+| PropFinder's lines and prices | The main line, the ladder, the chance leaning on the book's price early, the edge | — |
+| The cheat sheet's rank tiles | The matchup, first | Counted in full again |
+| PropFinder's defense table | The matchup, beside the sheet, by the games behind it | Weighted against the sheet, not averaged with it |
+| The cheat sheet's player table | Confirms plays (✓); since today the role behind the pull | New: the role's first source |
+| PropFinder's games this season | The role behind the pull | Now ahead of the 2025-26 reference |
+| Injury report, depth chart, team totals | Who is out, the splits, the lifts, minutes, starters, the team ceiling | — |
+
+**The matchup, the cheat sheet first.**
+
+- **What went wrong.** From October 28 the damping by the games behind the table (gp / (gp + 40))
+  applied to the average of the sheet's tile and PropFinder's number. In the first week that cut the
+  sheet's say to about a tenth. The damping was measured on PropFinder's tables. The replay had no
+  sheets, so it never measured them.
+- **Now** the sheet's tile counts in full, alone or beside PropFinder. PropFinder's number counts at
+  its games' weight beside it: 1 + ((sheet − 1) + w × (PropFinder − 1)) / (1 + w).
+  - In week one the matchup is the sheet's read.
+  - Over a season the two come to near-equal say.
+  - Without a sheet, PropFinder's table is damped as before.
+  - Example: a tile at the league's average beside a PropFinder × 1.12 on four games reads × 1.01.
+
+**The role behind the pull, from the sheets and PropFinder.**
+
+- Each stat's rate a minute by position group now comes first from the slate's cheat-sheet player
+  tables (each player's minutes and averages, a game's worth a row). A row past what a minute can
+  hold, an OCR misread, is left out.
+- PropFinder's players' games this season come next.
+- The 2025-26 reference is a starter at 500 minutes, down from 2000. The misses are the same at
+  2000, 500 or 200 minutes (points 5.087 this season, 5.352 / 5.355 / 5.357 over 2025-26's first
+  two weeks), so the slate's own sources can lead from the first nights.
+
+**The sheets graded on real nights.**
+
+- The replay cannot grade the sheets. The past ones live in the site's store, as do the books'
+  lines.
+- The site's scorecard now does it. Under "Which number predicts best", **"The matchup, graded"**
+  shows, per stat and by where the matchup came from (the cheat sheet, the cheat sheet and
+  PropFinder, PropFinder alone, no table), the projection's average miss as it stood and with the
+  matchup taken out. It is green where the matchup brought the figure closer to what he did.
+- The scorecard rebuilds every stored night with today's code, so the nights already stored are
+  graded from the first load.
+- On this season's replay, with PropFinder's table alone, the miss is the same with and without the
+  matchup (points 5.09 either way): four games of a defense say little. The rows for the sheet fill
+  in on the site.
+
 ## How it was measured
 
 - **The board.** The site's own board, replayed night by night with `tools/audit/nba-audit.mjs`,
@@ -129,8 +182,10 @@ In a player's first games this season his own read is pulled toward his role:
 | Assists | 0.5 | 67% / 80% / 91% / 95% | His role is his own |
 
 - **The league rates.** Each stat and position group's rate a minute comes from the slate's own
-  players' games this season, starting from 2025-26's rates (`roleRates`) and taking over as the
-  minutes pile up (at 2000 minutes it counts half).
+  sources: the cheat sheets' player tables and PropFinder's games this season. 2025-26's rates
+  (`roleRates`) count as 500 minutes behind them. Until this afternoon it was 2000, with
+  PropFinder's games alone; the numbers in this section are from that first version, and the misses
+  are the same.
 - **What stays out.** Nothing of the player's own last season enters it. Before his first game this
   season, last season's regular season still stands in as it is.
 - **Example.** A guard with one game this season (40 points, 2 rebounds, 10 assists in 30 minutes)
@@ -166,7 +221,7 @@ In a player's first games this season his own read is pulled toward his role:
 | Ingredient | What it does per stat | Decision |
 | --- | --- | --- |
 | Window weights (season against last ten, last five) | Differences of hundredths, the same direction for every stat | Season 0.65 / last ten 0.35 |
-| The matchup (the opponent's table) | Worth about nothing for any stat, damped or not; undamped it costs every stat (points 5.39 → 5.72 this week) | Damped as shipped |
+| The matchup (PropFinder's table, rebuilt from the box scores) | Worth about nothing for any stat, damped or not; undamped it costs every stat (points 5.39 → 5.72 this week). The cheat sheet's tile was not in the replay. | PropFinder's table damped; the sheet's tile in full (above) |
 | Letting extra minutes raise a figure | Worse for every stat, both seasons | Stays capped |
 | An out teammate's production handed on | A hair worse for every stat (points 5.37 without it against 5.39) | Kept at 0.2, your ask |
 | The team ceiling (a side scaled to the team's expected total) | See below | Kept, revisit at mid-season |
@@ -187,6 +242,7 @@ it.
   minutes from his last five and the out players' minutes. A better minutes read (the depth chart,
   the coach's rotation, blowout risk from the spread) is where the next gain on points is.
 - **The team ceiling**, as above.
+- **The cheat sheet's matchup**, on the site's scorecard (above), as the stored nights add up.
 - **October 28.** Its 12 games were not all final when this was run, so the backtest stops at
   October 27.
 

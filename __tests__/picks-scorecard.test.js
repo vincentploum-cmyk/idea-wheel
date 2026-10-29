@@ -156,6 +156,22 @@ describe('the predictors', () => {
     expect(rep.common.predictors.find((p) => p.key === 'proj').n).toBe(2);   // the dense ones on both rows
     expect(rep.common.predictors.find((p) => p.key === 'own5').against).toBeUndefined();
   });
+  test('the matchup graded by where it came from: the projection with it and without it', () => {
+    const { matchupReport } = require('../lib/picks/scorecard');
+    const pts = rows.find((r) => r.market === 'pts');
+    expect(pts.mFrom).toBe('propfinder');   // NY's table, no cheat sheet on this slate
+    expect(pts.matchup).toBe(board.games[0].sides.BOS.players[0].ranges.pts.matchup);
+    const fake = [
+      { market: 'pts', proj: 22, actual: 24, matchup: 1.1, mFrom: 'sheet' },   // the sheet's 20 × 1.1: 2 off, 4 without
+      { market: 'pts', proj: 18, actual: 20, matchup: 0.9, mFrom: 'sheet' },   // 20 × 0.9: 2 off, 0 without
+      { market: 'pts', proj: 20, actual: 20, matchup: 1, mFrom: 'none' },
+    ];
+    const rep = matchupReport(fake, 'pts', 'Points');
+    expect(rep.by.map((b) => b.key)).toEqual(['sheet', 'blend', 'propfinder', 'none']);
+    expect(rep.by[0]).toMatchObject({ label: 'The cheat sheet', n: 2, mae: 2, without: 2, bias: -2, moved: 0.1 });
+    expect(rep.by[1]).toMatchObject({ n: 0, mae: null });
+    expect(rep.by[3]).toMatchObject({ n: 1, mae: 0, without: 0 });
+  });
   test('the report: bias, MAE, RMSE and the over-the-line read per predictor, on common rows', () => {
     const rep = predictorReport(rows, 'pts', 'Points');
     expect(rep).toMatchObject({ key: 'pts', label: 'Points', n: 1 });
@@ -176,5 +192,9 @@ describe('the predictors', () => {
     const rep = summarize([graded], { markets: ['pts', 'reb', 'ast', 'tpm', 'pra', 'stl'], labels: { pts: 'Points', reb: 'Rebounds', ast: 'Assists', tpm: '3-pointers', pra: 'Pts + reb + ast' } });
     expect(rep.predictors.map((p) => [p.key, p.label, p.n])).toEqual([['pts', 'Points', 1], ['reb', 'Rebounds', 1], ['ast', 'Assists', 1], ['tpm', '3-pointers', 1], ['pra', 'Pts + reb + ast', 1]]);
     expect(summarize([gradeBoard(board, { key: 'x', actualOf })]).predictors).toEqual([]);
+    // The matchup graded beside them, per stat, the cheat sheet first.
+    // NY's table carries points at SF alone: the other stats read no matchup.
+    const n = (m, key) => m.by.find((b) => b.key === key).n;
+    expect(rep.matchups.map((m) => [m.key, n(m, 'propfinder'), n(m, 'none')])).toEqual([['pts', 1, 0], ['reb', 0, 1], ['ast', 0, 1], ['tpm', 0, 1], ['pra', 0, 1]]);
   });
 });

@@ -348,12 +348,12 @@ describe('NBA board', () => {
     const plain = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: { ...pfInj, data: { ...pfInj.data, injuries: { rows: [] }, players: pfInj.data.players.map((p) => ({ ...p, injury: null })) } }, results: {} });
     expect(plain.games[0].out).toBe(0);
     expect([...plain.games[0].tables.points.rows, ...plain.games[0].tables.points.next].find((x) => x.player === 'Jaylen Brown')).toMatchObject({ without: null, rates: { season: 0.375 } });
-    // The site's board pulls his first games toward his role: a guard's rate a minute (the slate's guard games, 202
-    // points in 280 minutes, blended with the reference 0.4998 at 2000 minutes: 0.527) × his 35 minutes = 18.4, his
-    // own 29.0 (the split in) counting at 8 / (8 + 1) of the way → 27.9, plus the 2.0 lift: 29.9.
+    // The site's board pulls his first games toward his role: a guard's rate a minute (the slate's guard games in
+    // PropFinder, 202 points in 280 minutes, with the reference 0.4998 at 500 minutes: 0.579) × his 35 minutes = 20.3,
+    // his own 29.07 (the split in) counting at 8 / (8 + 1) of the way → 28.1, plus the 2.0 lift: 30.1.
     const pulled = nbaBoard().buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pfInj, results: {} }).games[0].sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
-    expect(pulled.ranges.pts.pull).toMatchObject({ group: 'G', min: 35, n: 8, K: 1, w: 0.889, prior: 18.4 });
-    expect(pulled.ranges.pts.rate).toBe(29.9);
+    expect(pulled.ranges.pts.pull).toMatchObject({ group: 'G', min: 35, n: 8, K: 1, w: 0.889, prior: 20.3 });
+    expect(pulled.ranges.pts.rate).toBe(30.1);
     expect(plain.notes.find((n) => n.startsWith('Nobody on the slate is out'))).toBeUndefined();
   });
   test('tables per group from the logs and the sheet, graded', () => {
@@ -505,24 +505,27 @@ describe('NBA ladders', () => {
     const sheets = [{ id: 's', fileName: 'nba_20261021.pdf', rows: [], meta: { oppRanks: { BOS: { SF: { pts: 3, reb: 28 } } } } }];   // BOS's opponent (NY) gives up the 3rd most points to SFs, the 28th most rebounds
     const withSheet = buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf: { ...pf, data: { ...pf.data, defense } }, results: {} });
     const bos = withSheet.games[0].sides.BOS.allowed;
-    // With a table the ladder reads against NY's environment at SF: 24 over the league's 22 → ×1.055, at 0.6 of itself → ×1.033.
-    expect(withSheet.games[0].sides.BOS.players[0].ladders.pts[0].env).toBeCloseTo(1.033, 3);
-    // The range names the matchup apart from the side's factor, the season table's cell behind it: 26 × 1.033 = 26.9.
+    // The ladder reads against NY's environment at SF, the cheat sheet first: its tile (#3, on PropFinder's spread the 24
+    // NY allows) × 1.055 in full, PropFinder's 24 over the league's 22 → × 1.055 at 0.6 of itself (sixty games) beside
+    // it: (0.055 + 0.6 × 0.055) / 1.6 → × 1.055, the two reads agreeing.
+    expect(withSheet.games[0].sides.BOS.players[0].ladders.pts[0].env).toBeCloseTo(1.055, 3);
+    // The range names the matchup apart from the side's factor, the season table's cell behind it: 26 × 1.055 = 27.4.
     const range = withSheet.games[0].sides.BOS.players[0].ranges.pts;
-    expect(range).toMatchObject({ rate: 26, team: null, exp: 26.9 });
-    expect(range.matchup).toBeCloseTo(1.033, 3);
+    expect(range).toMatchObject({ rate: 26, team: null, exp: 27.4 });
+    expect(range.matchup).toBeCloseTo(1.055, 3);
     expect(range.env).toBe(range.matchup);
     // The sheet's tile (#3 of 30) placed on PropFinder's two-team spread lands on the top value, 24: the two reads agree and blend to the same factor.
     expect(range.matchupFrom).toEqual({ pf: 1.055, sheet: 1.055, from: 'blend', raw: 1.055, weight: 0.6, gp: 60 });
     // The board as it was (the defaults, the NFL's): the table at full weight from the first game.
     expect(nbaBoard({}).buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf: { ...pf, data: { ...pf.data, defense } }, results: {} }).games[0].sides.BOS.players[0].ranges.pts).toMatchObject({ matchup: 1.055, exp: 27.4 });
     expect(bos.rows.SF.pts).toEqual({ value: 24, rank: 1, sheet: 3, sheetValue: 24, rankBlend: 2 });
-    // A tile that disagrees moves the number: NY's tile at #30 of 30 lands on the spread's bottom value, 20 → × 0.945, blended with PropFinder's × 1.055 → × 1.0.
+    // A tile that disagrees leads: NY's tile at #30 of 30 lands on the spread's bottom value, 20 → × 0.945 in full, PropFinder's
+    // × 1.055 at 0.6 beside it: 1 + (−0.055 + 0.6 × 0.055) / 1.6 → × 0.986 (the two at 1 each, before 2026-10-28: × 1.0).
     const sheetsLow = [{ id: 's', fileName: 'nba_20261021.pdf', rows: [], meta: { oppRanks: { BOS: { SF: { pts: 30, reb: 28 } } } } }];
     const low = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: sheetsLow, pf: { ...pf, data: { ...pf.data, defense } }, results: {} }).games[0].sides.BOS.players[0].ranges.pts;
     expect(low.matchupFrom).toEqual({ pf: 1.055, sheet: 0.945, from: 'blend', raw: 1, weight: 0.6, gp: 60 });
-    expect(low.matchup).toBe(1);
-    expect(low.exp).toBe(26);
+    expect(low.matchup).toBe(0.986);
+    expect(low.exp).toBe(25.6);
     // The sheet alone (a pull without a defense table): its rank on the standard spread, #3 of 30 → × 1.078.
     const sheetOnly = buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf, results: {} }).games[0].sides.BOS.players[0].ranges.pts;
     expect(sheetOnly.matchupFrom).toEqual({ pf: null, sheet: 1.078, from: 'sheet' });

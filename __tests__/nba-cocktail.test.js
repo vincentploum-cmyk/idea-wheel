@@ -77,8 +77,26 @@ describe('the matchup, counted by the games behind it', () => {
     const allowed = { rows: { SF: { gp: 4, pts: cell } }, league: { SF: { pts: 22 } }, k: 40 };
     expect(dampOf(allowed, 'SF')).toEqual({ gp: 4, k: 40 });
     expect(dampOf({ ...allowed, k: undefined }, 'SF')).toBeNull();
-    expect(dampText(matchupOf(cell, 22, 30, dampOf(allowed, 'SF')))).toBe(', counted at 0.091 of × 1.12 for the 4 games behind the table');
+    expect(dampText(matchupOf(cell, 22, 30, dampOf(allowed, 'SF')))).toBe(", PropFinder's table counted at 0.091 of × 1.12 for the 4 games behind it");
     expect(dampText(matchupOf(cell, 22))).toBe('');
+  });
+});
+
+describe('the cheat sheet first, PropFinder beside it by its games', () => {
+  // NY gives up 26.4 to SFs against a league of 22 on PropFinder's table (× 1.12) after four games.
+  const damp = { gp: 4, k: 40 };
+  test('the sheet’s tile counts in full; PropFinder’s table at gp / (gp + 40) beside it', () => {
+    // The sheet agrees (its tile placed on PropFinder's spread at the same 26.4): × 1.12, whatever the games.
+    expect(matchupOf({ value: 26.4, rank: 1, sheet: 1, sheetValue: 26.4 }, 22, 30, damp)).toMatchObject({ factor: 1.12, from: 'blend', weight: 0.091 });
+    // The sheet reads the league's average (× 1.0), PropFinder × 1.12 on four games: the sheet leads, 1 + 0.091 × 0.12 / 1.091.
+    expect(matchupOf({ value: 26.4, rank: 1, sheet: 15, sheetValue: 22 }, 22, 30, damp).factor).toBe(1.01);
+    // The sheet alone stands in full; PropFinder alone is damped.
+    expect(matchupOf({ value: null, rank: null, sheet: 1, sheetValue: 26.4 }, 22, 30, damp).factor).toBe(1.12);
+    expect(matchupOf({ value: 26.4, rank: 1 }, 22, 30, damp).factor).toBe(1.011);
+    // A season behind PropFinder's table (eighty games, 0.667): the two near each other's weight.
+    expect(matchupOf({ value: 26.4, rank: 1, sheet: 15, sheetValue: 22 }, 22, 30, { gp: 80, k: 40 }).factor).toBe(1.048);
+    // The hover says how much PropFinder's table counted (the court's and the card's name the sheet's tile before it).
+    expect(dampText(matchupOf({ value: 26.4, rank: 1, sheet: 15, sheetValue: 22 }, 22, 30, damp))).toBe(", PropFinder's table counted at 0.091 of × 1.12 for the 4 games behind it");
   });
 });
 
@@ -129,16 +147,24 @@ describe('his first games pulled toward his role, a stat at a time', () => {
   });
   test('one game in: points halfway, rebounds a third of the way, assists two thirds (K 1, 2, 0.5)', () => {
     const p = sideOf(nbaBoard(), [one, ...last]);
-    // A guard's rate a minute: the slate's guard minutes (40 points in 30) on the reference's 0.4998 at 2000 → 0.512 × 30 = 15.4.
-    expect(p.own.pts.pull).toMatchObject({ prior: 15.4, w: 0.5, n: 1, K: 1, group: 'G', min: 30 });
-    expect(p.ranges.pts.rate).toBe(27.7);   // 15.4 + 0.5 × (40 − 15.4)
-    expect(p.own.reb.pull).toMatchObject({ prior: 4.1, w: 0.333, K: 2 });
-    expect(p.ranges.reb.rate).toBe(3.4);    // 4.1 + 1/3 × (2 − 4.1): the position says much about rebounds
-    expect(p.own.ast.pull).toMatchObject({ prior: 4.2, w: 0.667, K: 0.5 });
-    expect(p.ranges.ast.rate).toBe(8.1);    // 4.2 + 2/3 × (10 − 4.2): who handles the ball is his own
+    // A guard's rate a minute: the slate's guard games in PropFinder (40 points in 30 minutes) on the reference's 0.4998
+    // at 500 minutes → (40 + 250) / 530 = 0.547 × 30 = 16.4.
+    expect(p.own.pts.pull).toMatchObject({ prior: 16.4, w: 0.5, n: 1, K: 1, group: 'G', min: 30, from: { sheet: 0, propfinder: 30, reference: 500 } });
+    expect(p.ranges.pts.rate).toBe(28.2);   // 16.4 + 0.5 × (40 − 16.4)
+    expect(p.own.reb.pull).toMatchObject({ prior: 4, w: 0.333, K: 2 });
+    expect(p.ranges.reb.rate).toBe(3.3);    // 4.0 + 1/3 × (2 − 4.0): the position says much about rebounds
+    expect(p.own.ast.pull).toMatchObject({ prior: 4.4, w: 0.667, K: 0.5 });
+    expect(p.ranges.ast.rate).toBe(8.1);    // 4.4 + 2/3 × (10 − 4.4): who handles the ball is his own
     expect(p.ranges.pts.pull).toEqual(p.own.pts.pull);   // the range carries it for the hovers
     // The board as it was reads his one game as it is.
     expect(sideOf(nbaBoard({ ...COCKTAIL, pull: null }), [one, ...last]).ranges.pts.rate).toBe(40);
+  });
+  test('the cheat sheet’s player table reads into the role first; a row past what a minute holds is left out', () => {
+    // The slate's sheet lists two guards: 20 points in 30 minutes and 10 in 20 (30 points in 50 minutes), and a
+    // misread row (300 points in 30). With PropFinder's 40 in 30: (30 + 40 + 0.4998 × 500) / (50 + 30 + 500) = 0.5516.
+    const rows = [{ player: 'Jaylen Brown', pos: 'SG', avg: { min: 30, pts: 20, reb: 5, ast: 3, tpm: 2 } }, { player: 'Derrick White', pos: 'PG', avg: { min: 20, pts: 10, reb: 3, ast: 4, tpm: 2 } }, { player: 'Sam Hauser', pos: 'SG', avg: { min: 30, pts: 300, reb: 3, ast: 1, tpm: 3 } }];
+    const p = nbaBoard().buildBoard({ date: '2026-10-25', season: 2026, games, sheets: [{ id: 's', fileName: 'nba_20261025.pdf', rows, meta: {} }], pf: pfOf([one, ...last]), results: {} }).games[0].sides.BOS.players[0];
+    expect(p.own.pts.pull).toMatchObject({ perMin: 0.5516, prior: 16.5, from: { sheet: 80, propfinder: 30, reference: 500 } });
   });
   test('no game this season, no pull: last season’s regular season stands in as it is', () => {
     const p = sideOf(nbaBoard(), last);
