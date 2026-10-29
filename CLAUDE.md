@@ -149,9 +149,10 @@ config and keeps its own markets, teams, feeds and slate key:
   points / rebounds / yards per player must be on the row); the Centre column, the window × the matchup the chance is read
   around, shows only when the read is not the board's blend — and Got once final) and the fallen strip (each with the bar he
   still clears), each row with a **Health** word first (`healthOf` in `injuries.js`, `health` on every side player and
-  shuffle row: In = nothing listed or listed active, DTD = on the report but not ruled out, Out = `isOut`; the pill's
-  hover names the status and detail as listed, and only an Out row is dimmed — before 2026-10-27 any listed status
-  dimmed the row, so a day-to-day player read like one ruled out);
+  shuffle row: In = nothing listed or listed active, DTD = on the report but not ruled out; the pill's hover names the
+  status and detail as listed; **a player out tonight is left off the shuffle** — no row, no count at the floor, no
+  place on the curve or in the fallen strip (Vincent, 2026-10-29: "I don't need the players listed who are out in the
+  shuffle view"; until then an Out row was dimmed, and before 2026-10-27 any listed status dimmed the row);
   it sits on each board's Shuffle tab (`#shuffle`; `NflShuffle` in `NflBoard.jsx`,
   `NbaShuffle` in `NbaBoard.jsx` with its own card host), mounted on the tab's first visit and kept. The Matchup cell
   carries the opponent's rank at his spot with its factor on his rate

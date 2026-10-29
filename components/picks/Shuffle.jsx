@@ -193,7 +193,7 @@ export default function Shuffle({ sport, onOpen = null }) {
                   <thead>
                     <tr>
                       <th>Player</th>
-                      <th title="In: nothing listed, or listed active · DTD: on the report but not ruled out (day-to-day, questionable, probable, a game-time decision) · Out: out, doubtful, suspended or on an injured list; the hover names the status as listed">Health</th>
+                      <th title="In: nothing listed, or listed active · DTD: on the report but not ruled out (day-to-day, questionable, probable, a game-time decision) · a player out, doubtful, suspended or on an injured list is left off the shuffle; the hover names the status as listed">Health</th>
                       <th title="The opponent’s rank at his position for the stat on the season table (the court’s and the card’s first tab; their other tabs compare against it and move no figure), 1 = gives up the most, with its factor on his rate — the cheat sheet’s tile first, in full, PropFinder’s table beside it by the games behind it (the hover names each); ‘team ×’ is his side’s ceiling (the team’s expected total over its players’ own rates, shown only when the rates run past it: it scales a side down, never up), the two multiplied into his projection">Matchup</th>
                       {showCentre ? <th className="is-num" title={`The centre his chance is read around: ${fromLabel.toLowerCase()}${from === 'line' || from === 'h2h' ? '' : ' × the matchup'} (the board’s projection when he lacks the window)`}>Centre</th> : null}
                       <th className="is-num" title={`His chance of ${height}+ and the break-even price under it`}>Chance at {height}+</th>
@@ -210,7 +210,7 @@ export default function Shuffle({ sport, onOpen = null }) {
                       const tone = toneOf(p.spot?.rank, p.spot?.count);
                       const grade = r.hit == null ? '' : r.hit ? ' is-hit' : ' is-miss';
                       return (
-                        <tr key={p.key} className={`${onOpen ? 'is-click' : ''}${p.health === 'Out' ? ' is-under' : ''}${grade}`} onClick={() => onOpen?.(p, active)}>
+                        <tr key={p.key} className={`${onOpen ? 'is-click' : ''}${grade}`} onClick={() => onOpen?.(p, active)}>
                           <td>
                             <div className="nhlx-db-player">
                               {p.espnId ? <img src={headshotUrl(p.espnId)} alt="" width="30" height="30" loading="lazy" /> : <img src={teamLogo(p.team)} alt="" width="30" height="30" loading="lazy" className="ir-nfl-logo" />}

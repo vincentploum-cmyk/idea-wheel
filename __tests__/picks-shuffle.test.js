@@ -34,7 +34,7 @@ describe('the bar and the ladder', () => {
     expect(side.ranges.pts.exp).toBe(31.6);
     const row = nbaShuffle({ market: 'pts', board: b, pf, season: 2026 }).players.find((p) => p.key === 'jaylen brown');
     expect(row).toMatchObject({ exp: 31.6, lift: 5.6, liftFrom: ['Jayson Tatum'], minutes: { tonight: 38, factor: 1 } });
-    expect(nbaShuffle({ market: 'pts', board: b, pf, season: 2026 }).players.find((p) => p.key === 'jayson tatum')).toMatchObject({ health: 'Out', lift: null });
+    expect(nbaShuffle({ market: 'pts', board: b, pf, season: 2026 }).players.find((p) => p.key === 'jayson tatum')).toBeUndefined();   // out tonight: off the shuffle
   });
   test('the ladder takes the shuffle’s lines as rungs and keeps the book’s rungs priced beside them', () => {
     const l = nbaLadder(logs, { market: 'pts', season: 2026, prop, lines: [27.5, 29.5, 33.5] });
@@ -84,7 +84,7 @@ describe('the NBA shuffle', () => {
     expect(brown.book.map((b) => [b.line, b.odds, b.main])).toEqual([[19.5, -400, false], [25.5, -110, true], [31.5, 300, false]]);
     expect(brown.exp).toBeCloseTo(26 * 1.033, 0);
   });
-  test('every row carries his health in one word, with the status and detail beside it', () => {
+  test('every row carries his health in one word, with the status and detail beside it; a player out is left off', () => {
     const listed = { ...pf, data: { ...pf.data, players: [
       { ...pf.data.players[0], injury: 'Out', injuryDetail: 'Achilles' },
       { ...pf.data.players[1], injury: 'Day-To-Day' },
@@ -93,7 +93,8 @@ describe('the NBA shuffle', () => {
     const b = nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: listed, results: {} });
     const s = nbaShuffle({ market: 'pts', board: b, pf: listed, season: 2026 });
     const by = Object.fromEntries(s.players.map((p) => [p.player, p]));
-    expect(by['Jaylen Brown']).toMatchObject({ health: 'Out', injury: 'Out', injuryDetail: 'Achilles' });
+    expect(by['Jaylen Brown']).toBeUndefined();   // out tonight: no row, no count at the floor
+    expect(s.players).toHaveLength(2);
     expect(by['Sam Hauser']).toMatchObject({ health: 'DTD', injury: 'Day-To-Day', injuryDetail: null });
     expect(by['Josh Hart']).toMatchObject({ health: 'In', injury: null, injuryDetail: null });
     expect(sh.players.every((p) => p.health === 'In')).toBe(true);   // nothing listed on the plain pull
