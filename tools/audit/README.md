@@ -68,6 +68,19 @@ read); `--season` / `--days` / `--games` / `--gamelogs` point the replay at anot
 names its files, `--from` the first night graded (the season's opening night grades it too). The last season's replay takes about five minutes. The
 first run is written up in `docs/audits/2026-10-28-nba-cocktail.md`.
 
+## NBA: the projections stat by stat (`nba_stats.py`)
+
+`report <rows.csv> [label]` reads a replay's rows (`nba-audit.mjs` writes them with each player's
+games this season, his own windows, the minutes read and the matchup undamped): how far off each stat
+is in its own units, how much of the miss is his minutes, by the size of the projection and his games
+this season, each ingredient taken out. `pull <fit rows> <test rows>` fits the pull toward his role a
+stat at a time on rows built without it (`--cocktail` with `"pull": null`). Written up in
+`docs/audits/2026-10-29-nba-projections.md`.
+
+```bash
+python3 -I tools/audit/nba_stats.py report .nhl-data/audit/ab3/nba-2026-10-27-pull-rows.csv "This season"
+```
+
 ## NHL: the game script (`nhl_game_script.py`)
 
 The team layer and the split tested on two seasons: what sets a team's shots and goals tonight

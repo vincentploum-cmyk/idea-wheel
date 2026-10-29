@@ -217,6 +217,7 @@ for (const slate of slates.filter((d) => d >= from)) {
   const pf = pullFor(slate);
   const cut = asOf(pf, games);
   const board = buildBoard({ season: SEASON, date: slate, games, sheets: [], pf: cut, results });
+  const logsOf = new Map(cut.data.players.map((x) => [x.key, x.games || []]));
   boards[slate] = board;
   const g = gradeBoard(board, { key: slate, label: slate, actualOf });
   g.pred = gradePredictors(board, cut, { key: slate, season: SEASON, actualOf, ownWindows });
@@ -229,7 +230,10 @@ for (const slate of slates.filter((d) => d >= from)) {
     const matchupPrior = pr?.value != null && prL > 0 ? r3(1 + ENV_WEIGHT * (pr.value / prL - 1)) : null;
     const gp = side.allowed?.rows?.[p.envPos]?.gp ?? null;
     for (const rung of p.ladders?.[market] || []) rungs.push({ slate, market, line: rung.line, model: rung.model, emp: rung.emp, p: rung.p, proj: rung.proj, sd: rung.sd, n: rung.rates?.n ?? 0, main: !!rung.main, hit: actual > rung.line ? 1 : 0 });
-    extra.push({ slate, game: bg.id, team: side.team, opp: side.opp, key: p.key, player: p.player, pos: p.pos, envPos: p.envPos, market, matchupPrior, gp, exp: r.exp, rate: r.rate, matchup: r.matchup, teamScale: r.team, env: r.env, floor: r.floor, ceiling: r.ceiling, sd: p.ladders?.[market]?.[0]?.sd ?? null, lift: r.lift || 0, liftFrom: r.liftFrom || null, minFactor: r.minutes || null, minutes: p.minutes || null, out: !!p.out, actual, actualMin: line?.min ?? null, withoutN: p.without?.n || 0, withoutW: p.without?.weight || 0 });
+    extra.push({ slate, game: bg.id, team: side.team, opp: side.opp, key: p.key, player: p.player, pos: p.pos, envPos: p.envPos, market, matchupPrior, gp, exp: r.exp, rate: r.rate, matchup: r.matchup, teamScale: r.team, env: r.env, floor: r.floor, ceiling: r.ceiling, sd: p.ladders?.[market]?.[0]?.sd ?? null, lift: r.lift || 0, liftFrom: r.liftFrom || null, minFactor: r.minutes || null, minutes: p.minutes || null, out: !!p.out, actual, actualMin: line?.min ?? null, withoutN: p.without?.n || 0, withoutW: p.without?.weight || 0,
+      // for the per-stat read (docs/audits/2026-10-29-nba-projections.md): his games this season, his own windows, the minutes read, the matchup undamped
+      nThis: (logsOf.get(p.key) || []).filter((x) => x.season === SEASON && (x.type === 'REG' || !x.type)).length, ownSeason: p.own?.[stat]?.season ?? null, ownL10: p.own?.[stat]?.l10 ?? null, ownL5: p.own?.[stat]?.l5 ?? null,
+      minTonight: p.minutes?.tonight ?? null, minBase: p.minutes?.base ?? null, rawMatchup: r.matchupFrom?.raw ?? r.matchup ?? null, matchupWeight: r.matchupFrom?.weight ?? null });
   }
 }
 const sum = summarize(graded, {});

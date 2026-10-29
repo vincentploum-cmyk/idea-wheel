@@ -282,6 +282,9 @@ describe('NBA board', () => {
     { name: 'Jalen Brunson', team: 'NY', played: true, pts: 24, reb: 3, ast: 9, pra: 36, dd: 0, td3: 0 },
   ] } };
   test('the injury report: a player out keeps his chip but loses his table rows; a teammate reads w/o him', () => {
+    // The arithmetic below on the board without the pull toward his role (its own check at the end, and
+    // __tests__/nba-cocktail.test.js), so the split, the minutes and the lift read as they add up.
+    const buildBoard = nbaBoard({ ...COCKTAIL, pull: null }).buildBoard;
     const gid = (i) => `g${i}`;
     // Brown's eight games (newest first): 34 points in the three without Tatum, 20 in the five with him.
     const brownLogs = logs.map((g, i) => ({ ...log(g.date, i < 3 ? 34 : 20, 6, 4), gameId: gid(i), min: 35 }));
@@ -326,7 +329,7 @@ describe('NBA board', () => {
     expect(b.notes.find((n) => n.startsWith('Rotation'))).toBeUndefined();
     // With the minutes factor's ceiling and the vacated share as they were (1.3, 60%): × 1.086 → 31.5, and 6.0 of
     // Tatum's production less the 2.5 points the extra minutes already add = 3.5 on top: 35.0.
-    const lifted = nbaBoard({ ...COCKTAIL, factorMax: FACTOR_MAX, vacatedShare: VACATED_SHARE }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pfInj, results: {} });
+    const lifted = nbaBoard({ ...COCKTAIL, factorMax: FACTOR_MAX, vacatedShare: VACATED_SHARE, pull: null }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pfInj, results: {} });
     const liftedSide = lifted.games[0].sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
     expect(liftedSide.minutes).toMatchObject({ tonight: 38, factor: 1.086 });
     expect(liftedSide.ranges.pts).toMatchObject({ rate: 35, lift: 3.5, minutes: 1.086, exp: 35 });
@@ -345,6 +348,12 @@ describe('NBA board', () => {
     const plain = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: { ...pfInj, data: { ...pfInj.data, injuries: { rows: [] }, players: pfInj.data.players.map((p) => ({ ...p, injury: null })) } }, results: {} });
     expect(plain.games[0].out).toBe(0);
     expect([...plain.games[0].tables.points.rows, ...plain.games[0].tables.points.next].find((x) => x.player === 'Jaylen Brown')).toMatchObject({ without: null, rates: { season: 0.375 } });
+    // The site's board pulls his first games toward his role: a guard's rate a minute (the slate's guard games, 202
+    // points in 280 minutes, blended with the reference 0.4998 at 2000 minutes: 0.527) × his 35 minutes = 18.4, his
+    // own 29.0 (the split in) counting at 8 / (8 + 1) of the way → 27.9, plus the 2.0 lift: 29.9.
+    const pulled = nbaBoard().buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pfInj, results: {} }).games[0].sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
+    expect(pulled.ranges.pts.pull).toMatchObject({ group: 'G', min: 35, n: 8, K: 1, w: 0.889, prior: 18.4 });
+    expect(pulled.ranges.pts.rate).toBe(29.9);
     expect(plain.notes.find((n) => n.startsWith('Nobody on the slate is out'))).toBeUndefined();
   });
   test('tables per group from the logs and the sheet, graded', () => {
@@ -470,7 +479,8 @@ describe('NBA ladders', () => {
     expect(sc.share).toBeNull();   // no minutes in these logs: no measure of the roster the pull covers
     // The minutes the priced players play ride along as the share of the game they cover; they move no figure.
     const withMin = (mins) => ({ ...two, data: { ...two.data, players: two.data.players.map((p, i) => ({ ...p, games: p.games.map((g) => ({ ...g, min: mins[i] })) })) } });
-    const cov = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 144]), results: {} }).games[0].sides.BOS;
+    // (without the pull toward his role, which minutes in the logs switch on: the ceiling's arithmetic alone)
+    const cov = nbaBoard({ ...COCKTAIL, pull: null }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 144]), results: {} }).games[0].sides.BOS;
     expect(cov.minutes).toBe(180);
     expect(cov.share).toBe(0.75);
     expect(cov.teamProj.pts).toBeCloseTo(112.9, 1);

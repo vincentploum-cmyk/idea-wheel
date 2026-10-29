@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { blendWindows, ownRate, matchupOf, dampOf, blendText, dampText, OWN_WEIGHTS } from '../lib/picks/projection';
+import { blendWindows, ownRate, matchupOf, dampOf, blendText, dampText, pullText, OWN_WEIGHTS } from '../lib/picks/projection';
 import { COCKTAIL_DEFAULTS, chanceOf, WEIGHTS } from '../lib/picks/board';
 import { minutesTonight, FACTOR_MAX } from '../lib/picks/rotations';
 import { pAt } from '../lib/picks/shuffle';
@@ -114,6 +114,39 @@ describe('the chance', () => {
   });
 });
 
+describe('his first games pulled toward his role, a stat at a time', () => {
+  const games = [{ id: 'g1', date: '2026-10-25T23:30Z', away: 'BOS', home: 'NY', final: false, state: 'pre' }];
+  // One game this season (40 points, 2 rebounds, 10 assists in 30 minutes) over last season's twenty.
+  const one = { date: '2026-10-22', season: 2026, type: 'REG', opp: 'MIA', min: 30, pts: 40, reb: 2, ast: 10, tpm: 6, tpa: 10, pra: 52 };
+  const last = Array.from({ length: 20 }, (_, i) => ({ date: `2026-03-${String(28 - i).padStart(2, '0')}`, season: 2025, type: 'REG', opp: 'NY', min: 30, pts: 18, reb: 4, ast: 5, tpm: 2, tpa: 6, pra: 27 }));
+  const pfOf = (logs) => ({ at: '2026-10-25T14:00:00Z', data: { players: [{ id: 'p1', name: 'Payton Pritchard', key: 'payton pritchard', team: 'BOS', pos: 'PG', games: logs, props: [] }], defense: null } });
+  const sideOf = (board, logs) => board.buildBoard({ date: '2026-10-25', season: 2026, games, sheets: [], pf: pfOf(logs), results: {} }).games[0].sides.BOS.players[0];
+  test('ownRate: the read moved toward the role at the pull’s weight, before the minutes and the lift', () => {
+    expect(ownRate({ season: 20, l10: 20, pull: { prior: 10, w: 0.5 } })).toBe(15);
+    expect(ownRate({ season: 20, l10: 20, pull: { prior: 10, w: 0.5 }, minFactor: 0.9, lift: 1 })).toBe(14.5);
+    expect(pullText({ prior: 15.4, w: 0.5, n: 1, group: 'G', min: 30 })).toBe(", pulled toward 15.4 (his role: 30 minutes at a guard's rate) with his own games at 0.5 of the way, 1 game in");
+    expect(pullText(null)).toBe('');
+  });
+  test('one game in: points halfway, rebounds a third of the way, assists two thirds (K 1, 2, 0.5)', () => {
+    const p = sideOf(nbaBoard(), [one, ...last]);
+    // A guard's rate a minute: the slate's guard minutes (40 points in 30) on the reference's 0.4998 at 2000 → 0.512 × 30 = 15.4.
+    expect(p.own.pts.pull).toMatchObject({ prior: 15.4, w: 0.5, n: 1, K: 1, group: 'G', min: 30 });
+    expect(p.ranges.pts.rate).toBe(27.7);   // 15.4 + 0.5 × (40 − 15.4)
+    expect(p.own.reb.pull).toMatchObject({ prior: 4.1, w: 0.333, K: 2 });
+    expect(p.ranges.reb.rate).toBe(3.4);    // 4.1 + 1/3 × (2 − 4.1): the position says much about rebounds
+    expect(p.own.ast.pull).toMatchObject({ prior: 4.2, w: 0.667, K: 0.5 });
+    expect(p.ranges.ast.rate).toBe(8.1);    // 4.2 + 2/3 × (10 − 4.2): who handles the ball is his own
+    expect(p.ranges.pts.pull).toEqual(p.own.pts.pull);   // the range carries it for the hovers
+    // The board as it was reads his one game as it is.
+    expect(sideOf(nbaBoard({ ...COCKTAIL, pull: null }), [one, ...last]).ranges.pts.rate).toBe(40);
+  });
+  test('no game this season, no pull: last season’s regular season stands in as it is', () => {
+    const p = sideOf(nbaBoard(), last);
+    expect(p.own.pts.pull).toBeUndefined();
+    expect(p.ranges.pts.rate).toBe(18);
+  });
+});
+
 describe('the minutes and the defaults', () => {
   test('the minutes factor’s ceiling is the sport’s', () => {
     const active = [{ key: 'a', minutes: { l5: 30, l10: 20, season: 20 } }];
@@ -124,7 +157,7 @@ describe('the minutes and the defaults', () => {
     expect(minutesTonight([{ key: 'b', minutes: { l5: 10, l10: 20, season: 20 } }], [], { factorMax: COCKTAIL.factorMax }).b.factor).toBe(0.75);
   });
   test('the defaults are the board as it was; the NBA’s cocktail is its own', () => {
-    expect(COCKTAIL_DEFAULTS).toMatchObject({ windows: null, hitWeights: WEIGHTS, matchupK: 0, ladderModel: 0.5, empK: 0, spreadA: 0, factorMax: FACTOR_MAX });
+    expect(COCKTAIL_DEFAULTS).toMatchObject({ windows: null, hitWeights: WEIGHTS, matchupK: 0, ladderModel: 0.5, empK: 0, spreadA: 0, factorMax: FACTOR_MAX, scope: 'all', volume: true, pull: null });
     expect(nbaBoard().COCKTAIL).toMatchObject(COCKTAIL);
     expect(nbaBoard({}).COCKTAIL).toEqual(COCKTAIL_DEFAULTS);
     // The NFL board builds as before (its tables carry no k: the matchup at full weight).

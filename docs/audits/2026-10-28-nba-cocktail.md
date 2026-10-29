@@ -82,6 +82,10 @@ Two reads outside the cocktail still take his newest games whatever the season, 
   last-ten average)
 - the first-basket starters' shares (`lib/nba/firstbasket.js`)
 
+**The next day:** the projections stat by stat, and each stat's first games pulled toward the
+player's role, in [2026-10-29-nba-projections.md](2026-10-29-nba-projections.md). With the pull,
+this season's games alone match keeping last season's regular season.
+
 ## How it was measured
 
 - **Data.** ESPN's box scores for every regular-season game of 2025-26 and of 2026-27 to October

@@ -102,7 +102,16 @@ config and keeps its own markets, teams, feeds and slate key:
   read season 0.4 · L10 0.2 · L5 0.1 · L20 0.3 across the seasons), matchupK 40, hitWeights 0.1 / 0.3 / 0.6, ladderModel 0.7, empK 6,
   spreadA 0.2 at 5 games, factorMax 1 (minutes that fell cut a rate, minutes that rose lift none; an out teammate's
   production still arrives through the vacated lift, whole since nothing comes off it for minutes), vacatedShare 0.2
-  (the notes' "Vacated production" line says the share).
+  (the notes' "Vacated production" line says the share), and `pull` (Vincent, 2026-10-29: "we can't treat them all
+  the same, they depend on different dynamics"): in his first games this season his read, after the without split
+  and the volume read and before the minutes factor and the lift, moves toward his role — `roleRates[stat][G|F|C]`,
+  the league's rate a minute at his position group (2025-26's, the slate's own players' games this season taking
+  over at `roleMinutes` = 2000, `roleRatesOf`), × the minutes behind his rate — his own read counting at n / (n + K),
+  n his games this season, K per stat: points 1, rebounds 2 (the position says the most), assists 0.5 (his role is his
+  own), threes 1.5, PRA 1; none before his first game (last season's regular season stands in as it is). `pull` {
+  prior, w, n, K, group, min } rides on `own[stat]`, `ranges[market]` and the shuffle row, `ladderOf` takes it,
+  `ownRate` applies it, `pullText` words it for the court's, the card's and the shuffle's hovers. `volume` (true)
+  switches the volume read off for the audit's A / B.
 - `shuffle.js` (`makeShuffle` → `shuffleOf`, and the pure readers the panel runs: `readAt`, `pAt`, `survivorsAt`,
   `fallenAt`, `curveOf`, `thinsAt`, `centreOf`): the shuffle, a bar per stat (`SHUFFLE_MARKETS` in each sport's
   `markets.js`: market, min, max, step, start). `GET /api/<sport>/shuffle?…&market=pts` reads every player on the
@@ -600,6 +609,16 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   alone behind them, `scope: 'regular'`, 5.11). Open: the team scale's ceiling helps this season and costs last
   season (most of a −1.05 points bias there); a per-minute rate. The book's game total and spread, home, rest and a
   stronger teammates-out read were measured and left out.
+- The NBA projections, stat by stat (`docs/audits/2026-10-29-nba-projections.md`, `tools/audit/nba_stats.py report |
+  pull`; Vincent, 2026-10-29: look at how far off the projected points / rebounds / assists / threes are, separately).
+  This season with the pull, the average miss: points 5.09 (his typical figure 11.7), rebounds 2.06, assists 1.53,
+  threes 1.01, PRA 6.79; last season even his whole season's average known in hindsight missed by 4.80 / 1.93 / 1.42
+  / 0.99, the rest is the game's own swing. A sixth of the points miss is his minutes (12% of rebounds', 9% of
+  assists', 7% of threes'); threes read off attempts × percentage (1.02 against 1.09 off the made count). Before the
+  pull a player's first games ran to the ends (each projected point over the middle worth 0.77 this season, a three
+  0.62), the pull's K fitted per stat on 2025-26's first two weeks. Window weights, the matchup and the minutes lift
+  read the same way for every stat; the team ceiling splits (helps every stat this season, cost points, assists and PRA
+  over 2025-26), kept and to read again at mid-season. Next lever: the minutes read.
 - The game script, tested (`docs/audits/2026-10-28-game-script.md`, `tools/audit/nhl_game_script.py`; Vincent's
   question of 2026-10-28: a team strong at home against a visitor leaking over its last ten dominates, and the shots
   and goals divide by the opponent's weaknesses). On 2025-26 and 2026-27's box scores: a team's shots tonight follow
