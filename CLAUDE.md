@@ -205,7 +205,10 @@ config and keeps its own markets, teams, feeds and slate key:
   `fieldsSeen.unread`, shown under Data sources after the first pull. Fix the spellings there
   once a real pull shows them; never guess silently. `defenseAllowed` per position (the
   positions the Opponent rows carry), ranks 1 = most allowed, this season's rows as published (last
-  season's only before a team's first game, `held`).
+  season's only before a team's first game, `held`). **A stat a team row leaves out is 0 when other rows of
+  the pull carry it** (PropFinder drops a zero: on 2026-10-30 WSH, LAL and HOU had allowed no blocks to PGs
+  and their rows had no `blocks` key, so the board had no cell and the matchup read as no table; a stat no
+  row carries stays unread, in `fieldsSeen.unread`, never a guessed 0).
 - `injuries.js`: PropFinder's injury report and the without-teammate ("w/o") splits, pulled live with
   the slate, never from a file. The report is `injuryReport` on the games payload the site's own
   pages load (`GET /<LEAGUE>/v2?sportsbooks=…`, read from the bundle 2026-10-27: a JSON string whose
@@ -432,9 +435,12 @@ config and keeps its own markets, teams, feeds and slate key:
   makes it so incredibly difficult to find good match ups easily"): `NbaBoard` draws `SlateList` (every play on the
   night ranked, a row opening the card with the side's entry for the player), then the games folded to a line each
   (`components/nba/NbaGame.jsx`, `GameFold`: the teams, the tip or the score, how many are out, the plays over the
-  floor and the best one). Opened: the characteristics card, then a column per team — who is out, what the opponent
-  gives up to each position for PTS · REB · AST · 3PM · PRA (the rank, rankBlend, tinted by third: the season table the
-  projections read) and every active player's projection per stat (`ranges[stat].exp`) tinted soft / tough by the
+  floor and the best one). Opened: the characteristics card, then a column per team — who is out, **PropFinder's table
+  of what the opponent gives up per game to each position** (the court's `AllowedTable`, exported: every stat the table
+  carries with its figure and rank chip tinted by third, the window tabs '26-'27 · '25-'26 · L5 / L10 / L15 / L20 over
+  it (`onWin`; the season table the projections read is the default), the league's average in a last row, Lg; a
+  ranks-only grid for five stats stood there on 2026-10-30 for a day — Vincent: "I need the propfinder data above each
+  court again like how we had it") and every active player's projection per stat (`ranges[stat].exp`) tinted soft / tough by the
   matchup at his envPos, a play over the floor ringed with its line and chance under the figure, a row opening the card
   — and "Show the courts and the tables" for the courts below and the five group tables. A player listed day-to-day
   is no longer greyed on the court or in the Tonight table (`p.out`, not any injury listing). Class names `ir-gf-*`:
@@ -448,7 +454,22 @@ config and keeps its own markets, teams, feeds and slate key:
   player and orders the side starters first, the chip's badge reads "PG1", `lineup: 'propfinder'` on the
   side; else the roster position — three chips a front zone, four a back one, the rest listed under it) — each tinted by what
   tonight's opponent gives up to that position for the stat picked in the tabs above each court (Points ·
-  Rebounds · Assists · Threes, `COURT_METRICS`, one setting for the slate as the rink's Shots / Goals switch)
+  Rebounds · Assists · Threes · Steals · Blocks, `COURT_METRICS`, one setting for the slate as the rink's Shots / Goals
+  switch; steals and blocks since 2026-10-30, `LADDER_MARKETS` in `lib/nba/picks.js` and `SHUFFLE_MARKETS` carry them,
+  so every player has a range and a ladder for both). **Under the tabs the stat's shuffle bar** (`CourtBar`, Vincent,
+  2026-10-30: "a shuffle bar that I can move … the % displayed next to the player on the court"): the Shuffle tab's
+  heights for the stat (`SHUFFLE_MARKETS`), one height per stat for the slate (`CourtShuffleProvider` in `NbaCourt.jsx`,
+  wrapping the board in `NbaBoard.jsx`: the bar heights and the night's shuffle payload per stat — `GET /api/nba/shuffle`,
+  read once a stat when a court first asks for it, every court sharing it), every chip carrying his chance to clear the
+  bar from his shuffle row (`readAt` in `lib/picks/shuffle.js`, so the court's figure is the Shuffle tab's; the book's price
+  beside it when a book prices that exact line; "out" or "no logs" for a player the shuffle has no row for; once the game is
+  final his figure against the bar's line), the bar's note counting the side's players at 50% or better. **Every chip
+  shows his four projections** (`CHIP_STATS`: PTS · REB · AST · 3PM as P · R · A · 3P, the picked stat appended when it is
+  steals or blocks, the picked one marked; `ranges[stat].exp` through `boardRead`; Vincent: "by default I need to see per
+  player the projected number for points / assists / threes / rebounds"), so the chips flow in a column per zone
+  (`.ir-court-stack`, no two overlap; `ZONE_MAX` three a zone, the rest under the court). **A row of the PropFinder table
+  above the court pressed rings that position's chips and fades the others** (`onPos` / `hiPos` on `AllowedTable`,
+  `is-hi` / `is-dim`; press again to show everyone)
   over the tab picked beside them (**this season's table as PropFinder publishes it**, the default and the table the
   board reads, labelled by its years, "'26-'27"; last season's in full, "'25-'26", `allowed.prior` from
   `defense.prior`, a comparison only; then L5 / L10 / L15 / L20 = PropFinder's `lastNGames` rows as published,
@@ -595,6 +616,7 @@ config and keeps its own markets, teams, feeds and slate key:
   (`firstBasketOdds` in `lib/picks/propfinder.js`: the items naming a first basket / first field goal, not a team's or
   first points, the best price as `firstBasket` on the player, never a market), with the edge; the score is the chance
   × 4 on 0–100. Once stored, who scored first, the first points and the tip are on the game and the rows are graded.
+- `tools/check-defensive-matchups.mjs <export.csv> <picks.json>` compares PropFinder's Defensive Matchups page export (what each team allows per position, with ranks) against the board's `sides[].allowed` table in a saved `GET /api/nba/picks?date` payload, cell by cell; the export itself is never ingested (its "OPPOSING PLAYER" header is no player column, the parser reads zero rows and the store rejects it).
 - Routes: `GET /api/nba/picks?date`, `GET /api/nba/shuffle?date&market`, `GET /api/nba/scorecard?from&to`, `GET|POST|DELETE /api/nba/sheets?date`,
   `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`,
   `GET|POST /api/nba/injuries?date` (the admin's injury overrides).
@@ -621,7 +643,12 @@ config and keeps its own markets, teams, feeds and slate key:
   `NHL_ACTIONS_TOKEN`, so a refresh takes the one path it always took; one job at a time (a pull and a model
   run each need most of the memory), `gc()` between calls. Each run is recorded in `meta/scheduler.json` (slot,
   attempts, the calls with status, time and the reply's start), read past the cache and written only when a job
-  runs (a write bumps the store's revision); a claim settles two processes overlapping in a deploy.
+  runs (a write bumps the store's revision). **What the process wrote is its truth** (`local`, merged with the
+  stored copy job by job, the newer record kept, `mergeStates`): Supabase Storage hands back the copy from before a
+  write for a while, even read past the cache. On 2026-10-30, its first morning, that made the scheduler step aside
+  from its own claim (re-read two seconds after writing it: four jobs ran on the 15-minute retry, 16 minutes late)
+  and let the NFL late run's write wipe the NHL late run's record, so the backstop ran that job again at 7 AM; the
+  claim's re-read is gone (one instance on Render; a slot run twice in a deploy's overlap is one extra refresh).
   `GET /api/site/scheduler` (admin or token) lists each job's last and next slot and its last run.
 - The GitHub workflows (`nba-data.yml`, `nfl-data.yml`, `nhl-data.yml`) stay as the backstop: a scheduled run
   names its job from the cron that fired it (`github.event.schedule`, no longer the UTC hour it happened to run
