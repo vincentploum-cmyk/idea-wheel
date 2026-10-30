@@ -5,7 +5,7 @@ import { TeamLogo, Headshot } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { PfTable, SortTh, Sel, UnderlineTabs, rankTone } from './pf-ui';
 import { TeamLink } from './links';
-import { GROUPS, OVERVIEW_COLS, boardTables, overviewRows, matchupReads, groupKeyFor, shootersAt, figureFor, resultsAt } from '@/lib/nhl-data/defense-board';
+import { GROUPS, OVERVIEW_COLS, SLOT_LINES, boardTables, overviewRows, matchupReads, groupKeyFor, shootersAt, figureFor, resultsAt, slotBoard, facingAt } from '@/lib/nhl-data/defense-board';
 
 // The Defense tab: ShotPropz-style cheat sheets from the stored box scores. What every
 // team gives up to each position group, ranked softest first (1 = the most allowed),
@@ -173,6 +173,68 @@ function Reads({ reads, keys, digits, metric, active, onPick, games, group }) {
               </tr>
             );
           })}
+        </tbody>
+      </PfTable>
+    </div>
+  );
+}
+
+/**
+ * What every team gives up to each line slot, per skater at the slot a game, every column tinted by rank thirds
+ * (1 = the most allowed); the softest line first — the slot where the team ranks highest against the league — with the
+ * opponent's skater at that slot tonight. A header sorts the teams by that slot. Goals per slot are small counts: read
+ * the rank over a span with games behind it.
+ */
+function LineTable({ board, digits, metric, playing, view, active, onPick, games }) {
+  const open = usePlayerCard();
+  const [sort, setSort] = useState('softest');
+  const rows = useMemo(() => {
+    const list = view === 'tonight' && playing.size ? board.teams.filter((t) => playing.has(t.abbr)) : board.teams;
+    const rank = (t) => (sort === 'softest' ? t.softest?.rank : t.cells[sort]?.rank) ?? 99;
+    const ratio = (t) => (sort === 'softest' ? t.softest?.ratio : t.cells[sort]?.ratio) ?? 0;
+    return [...list].sort((a, b) => rank(a) - rank(b) || ratio(b) - ratio(a) || a.abbr.localeCompare(b.abbr));
+  }, [board, sort, view, playing]);
+  const unit = metric === 'g' ? 'goals' : 'shots';
+  if (!board.teams.length) return <p className="nhlx-auto-meta">No line slots on record for this span yet: the stored games carry a line once a lineup placed the skater.</p>;
+  return (
+    <div className="nhlx-df-table nhlx-df-lines">
+      <PfTable className="nhlx-da-table">
+        <thead>
+          <tr className="is-group">
+            <th colSpan={3} />
+            {SLOT_LINES.map(([label, slots]) => <th key={label} colSpan={slots.length}>{label}</th>)}
+          </tr>
+          <tr>
+            <th className="is-left">Team</th>
+            <th>GP</th>
+            <SortTh k="softest" label="Softest line" sort={sort} onSort={setSort} title="The slot where the team ranks highest against the league (a tie to the one furthest over the league's mean), with its rank, and the opponent's skater at that slot tonight" />
+            {board.slots.map((slot) => <SortTh key={slot} k={slot} label={slot} sort={sort} onSort={setSort} title={`${unit[0].toUpperCase()}${unit.slice(1)} allowed to the ${slot} a game; the league ${fmt(board.league[slot], digits)}`} />)}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((t) => {
+            const soft = t.softest;
+            const facing = soft ? facingAt(games, t.abbr, soft.slot) : null;
+            return (
+              <tr key={t.abbr} className={active === t.abbr ? 'is-active' : ''}>
+                <td className="is-left"><button type="button" className="nhlx-df-team" onClick={() => onPick(t.abbr)} title={`Highlight ${t.abbr} in every table`}><TeamLogo abbr={t.abbr} size={20} />{t.abbr}</button></td>
+                <td>{t.gp}</td>
+                <td className={`is-left ${soft ? rankTone(soft.rank, soft.of) : ''}${sort === 'softest' ? ' is-sorted' : ''}`} title={soft ? `${t.abbr} gives up ${fmt(soft.value, digits)} ${unit} a game to the ${soft.slot}, #${soft.rank} of ${soft.of}, ${soft.ratio != null ? `${Math.round(soft.ratio * 100)}% of the league's ${fmt(board.league[soft.slot], digits)}` : ''} over ${soft.n} skater-games${facing ? ` · tonight: ${facing.name}` : ''}` : ''}>
+                  {soft ? <span className="nhlx-df-cell"><b>{soft.slot}</b><RankChip rank={soft.rank} n={soft.of} /></span> : <small>—</small>}
+                  {facing ? <button type="button" className="nhlx-df-shooter" onClick={() => open({ id: facing.id, opp: t.abbr, pos: facing.pos, line: facing.line })}>{String(facing.name).split(' ').slice(-1)[0]}</button> : null}
+                </td>
+                {board.slots.map((slot) => {
+                  const c = t.cells[slot];
+                  return (
+                    <td key={slot} className={`${c ? rankTone(c.rank, c.of) : ''}${sort === slot ? ' is-sorted' : ''}${soft?.slot === slot ? ' is-best' : ''}`} title={c ? `${t.abbr} to the ${slot}: ${fmt(c.value, digits)} ${unit} a game, #${c.rank} of ${c.of} (the league ${fmt(board.league[slot], digits)}), ${c.n} skater-games` : `No ${slot} on record against ${t.abbr}`}>
+                      {c ? <b>{fmt(c.value, digits)}</b> : <small>—</small>}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+          <tr className="is-league"><td className="is-left">League</td><td /><td />{board.slots.map((slot) => <td key={slot}>{fmt(board.league[slot], digits)}</td>)}</tr>
         </tbody>
       </PfTable>
     </div>
@@ -418,6 +480,7 @@ export default function DefensePanel() {
   const reads = useMemo(() => (byVenue ? matchupReads(data?.tonight || [], byVenue, { venueMatched: venue !== 'ALL' }) : []), [byVenue, data, venue]);
   const playing = useMemo(() => new Set((data?.tonight || []).flatMap((g) => [g.away, g.home])), [data]);
   const overview = useMemo(() => (defense ? overviewRows(defense, data?.moneypuck?.teams, { venue }) : []), [defense, data, venue]);
+  const lines = useMemo(() => slotBoard(data?.slots?.[span], { metric, venue }), [data, span, metric, venue]);
   const thin = defense ? Object.values(defense.teams || {}).filter((t) => (t[venue]?.All?.gp || 0) < 10).length : 0;
 
   if (err) return <div className="nhlx-empty">{err}</div>;
@@ -444,6 +507,9 @@ export default function DefensePanel() {
       <div className="nhlx-df-grid">
         {keys.map((k) => <RankTable key={k} title={`${metric === 'g' ? 'Goals' : 'Shots'} against ${k}`} table={tables?.[k]} digits={digits} playing={playing} view={view} active={active} onPick={pick} />)}
       </div>
+
+      <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>{metric === 'g' ? 'Goals' : 'Shots'} against by line</h3><small>{SPANS.find(([k]) => k === span)[1]} · defender {venue === 'ALL' ? 'anywhere' : venue === 'H' ? 'at home' : 'away'} · what each team gives up to the skater at each line slot a game (LW1 … RW4, D1 … D3, the slot the lineup placed him in) · every column ranked, 1 gives up the most · the softest line is the slot where the team ranks highest against the league — a first line shoots the most everywhere, the rank says where this team leaks — with the opponent’s skater at that slot tonight · press a slot to sort by it{metric === 'g' ? ' · goals per slot are small counts, so read the season span' : ''}</small></div>
+      <LineTable board={lines} digits={digits} metric={metric} playing={playing} view={view} active={active} onPick={pick} games={data.tonight || []} />
 
       <div className="nhlx-df-section"><h3 className="nhlx-db-h3" style={{ margin: 0 }}>Track record</h3><small>Every stored skater-game this season through {date}, graded against each table as it stood that morning · the cell is the skaters’ {metric === 'g' ? 'goals' : 'shots'} against their own rate going in (lift), the {metric === 'g' ? '1+ goal' : '3+ SOG'} rate and the count · a table that works pulls the soft third up and the tough third down · under it the same by the opponent’s rank: the bold figure is ranks 1 through that one together (how far down the table the soft read holds), the small one the rank alone</small></div>
       <TrackRecord grade={grade} metric={metric} loading={grading} />

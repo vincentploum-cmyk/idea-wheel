@@ -1747,3 +1747,10 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
   .ir-roster td, .ir-def-grid td { padding-left: 3px; padding-right: 3px; }
   .ir-roster-play { white-space: normal; }
 }
+
+/* The Defense tab's By line table (2026-10-30): the line group heads over the slot columns, the softest line's cell marked. */
+.nhlx-df-lines .nhlx-pft tr.is-group th { padding-bottom: 0; border-bottom: 0; font-size: 11.5px; color: var(--muted); text-align: center; }
+.nhlx-df-lines .nhlx-pft td { text-align: center; white-space: nowrap; }
+.nhlx-df-lines .nhlx-pft td.is-left { text-align: left; }
+.nhlx-df-lines .nhlx-pft td.is-best b { text-decoration: underline; text-decoration-color: var(--primary); text-underline-offset: 3px; }
+.nhlx-df-lines .nhlx-df-shooter { margin-left: 8px; }

@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
-import { defenseByPosition, seasonDefense } from '../lib/nhl-data/defense';
-import { boardTables, overviewRows, matchupReads, rankDesc, groupKeyFor, shootersAt, figureFor, resultsAt } from '../lib/nhl-data/defense-board';
+import { defenseByPosition, defenseBySlot, seasonDefense } from '../lib/nhl-data/defense';
+import { boardTables, overviewRows, matchupReads, rankDesc, groupKeyFor, shootersAt, figureFor, resultsAt, slotBoard, facingAt, SLOT_LINES } from '../lib/nhl-data/defense-board';
 
 // Three games: NYR at NJD, BOS at NJD, NJD at BOS. One skater per position per side.
 const row = (date, gameId, team, opp, venue, pos, sog, g) => ({ date, gameId, team, opp, venue, pos, sog, g, a: 0, icf: sog, iff: sog, iscf: 0, ihdcf: 0 });
@@ -14,6 +14,43 @@ const rows = [
   ...side('2026-10-05', 3, 'BOS', 'NJD', 'H', { C: [1, 0], LW: [1, 0], RW: [1, 0], D: [1, 0] }),
 ];
 const defense = defenseByPosition(rows);
+
+describe('defense board by line', () => {
+  // Three games each for NJD and BOS defending; the skaters logged with their line slot.
+  const at = (date, gameId, team, opp, venue, slots) => Object.entries(slots).map(([slot, [sog, g]]) => ({ ...row(date, gameId, team, opp, venue, slot.replace(/\d/, ''), sog, g), line: Number(slot.slice(-1)) }));
+  const lined = [
+    ...at('2026-10-01', 1, 'NYR', 'NJD', 'A', { LW1: [3, 0], LW2: [4, 1], C1: [3, 0], D1: [1, 0] }),
+    ...at('2026-10-03', 2, 'BOS', 'NJD', 'A', { LW1: [3, 1], LW2: [5, 0], C1: [2, 0], D1: [2, 0] }),
+    ...at('2026-10-05', 3, 'NYR', 'NJD', 'H', { LW1: [4, 0], LW2: [3, 0], C1: [3, 1], D1: [1, 0] }),
+    ...at('2026-10-01', 4, 'NJD', 'BOS', 'A', { LW1: [5, 0], LW2: [1, 0], C1: [4, 1], D1: [2, 1] }),
+    ...at('2026-10-03', 5, 'NYR', 'BOS', 'A', { LW1: [4, 1], LW2: [1, 0], C1: [5, 0], D1: [3, 0] }),
+    ...at('2026-10-05', 6, 'NJD', 'BOS', 'H', { LW1: [6, 0], LW2: [2, 0], C1: [3, 0], D1: [2, 0] }),
+  ];
+  const board = slotBoard(defenseBySlot(lined), { metric: 'sog' });
+  const team = (abbr) => board.teams.find((t) => t.abbr === abbr);
+  test('per skater at the slot a game, ranked per slot, the league mean beside it', () => {
+    expect(team('NJD').cells.LW2).toMatchObject({ value: 4, n: 3, rank: 1, of: 2 });
+    expect(team('BOS').cells.LW1).toMatchObject({ value: 5, rank: 1 });
+    expect(board.league.LW2).toBe(2.667);
+    expect(team('NJD').cells.LW2.ratio).toBe(1.5);
+    expect(team('NJD').cells.RW1).toBeNull();   // nobody logged there
+    expect(SLOT_LINES.flatMap(([, s]) => s)).toEqual(board.slots);
+  });
+  test('the softest line is the best rank, a tie to the slot furthest over the league, not the busiest line', () => {
+    // NJD's busiest slot is LW1 (3.33 a game) but BOS gives up more there; NJD leaks at LW2: 4 a game, 1.5× the league.
+    expect(team('NJD').softest).toMatchObject({ slot: 'LW2', rank: 1, value: 4 });
+    // BOS ranks first at LW1, C1 and D1: D1 runs furthest over the league (2.33 against 1.83).
+    expect(team('BOS').softest.slot).toBe('D1');
+    expect(slotBoard(defenseBySlot(lined), { metric: 'g' }).teams.find((t) => t.abbr === 'NJD').cells.LW2.value).toBeCloseTo(0.333, 3);
+    expect(slotBoard(defenseBySlot(lined), { metric: 'sog', minSkaterGames: 4 }).teams[0].cells.LW1).toBeNull();
+  });
+  test('who the defending team faces at a slot tonight', () => {
+    const games = [{ away: 'NYR', home: 'NJD', sides: [{ team: 'NYR', skaters: [{ id: 1, name: 'A Winger', pos: 'LW', line: 2 }, { id: 2, name: 'C One', pos: 'C', line: 1 }] }, { team: 'NJD', skaters: [] }] }];
+    expect(facingAt(games, 'NJD', 'LW2')).toMatchObject({ name: 'A Winger' });
+    expect(facingAt(games, 'NJD', 'RW1')).toBeNull();
+    expect(facingAt(games, 'BOS', 'LW2')).toBeNull();
+  });
+});
 
 describe('defense board', () => {
   test('ranks share ties and 1 is the most', () => {
