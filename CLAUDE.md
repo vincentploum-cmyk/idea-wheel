@@ -454,7 +454,22 @@ config and keeps its own markets, teams, feeds and slate key:
   player and orders the side starters first, the chip's badge reads "PG1", `lineup: 'propfinder'` on the
   side; else the roster position — three chips a front zone, four a back one, the rest listed under it) — each tinted by what
   tonight's opponent gives up to that position for the stat picked in the tabs above each court (Points ·
-  Rebounds · Assists · Threes, `COURT_METRICS`, one setting for the slate as the rink's Shots / Goals switch)
+  Rebounds · Assists · Threes · Steals · Blocks, `COURT_METRICS`, one setting for the slate as the rink's Shots / Goals
+  switch; steals and blocks since 2026-10-30, `LADDER_MARKETS` in `lib/nba/picks.js` and `SHUFFLE_MARKETS` carry them,
+  so every player has a range and a ladder for both). **Under the tabs the stat's shuffle bar** (`CourtBar`, Vincent,
+  2026-10-30: "a shuffle bar that I can move … the % displayed next to the player on the court"): the Shuffle tab's
+  heights for the stat (`SHUFFLE_MARKETS`), one height per stat for the slate (`CourtShuffleProvider` in `NbaCourt.jsx`,
+  wrapping the board in `NbaBoard.jsx`: the bar heights and the night's shuffle payload per stat — `GET /api/nba/shuffle`,
+  read once a stat when a court first asks for it, every court sharing it), every chip carrying his chance to clear the
+  bar from his shuffle row (`readAt` in `lib/picks/shuffle.js`, so the court's figure is the Shuffle tab's; the book's price
+  beside it when a book prices that exact line; "out" or "no logs" for a player the shuffle has no row for; once the game is
+  final his figure against the bar's line), the bar's note counting the side's players at 50% or better. **Every chip
+  shows his four projections** (`CHIP_STATS`: PTS · REB · AST · 3PM as P · R · A · 3P, the picked stat appended when it is
+  steals or blocks, the picked one marked; `ranges[stat].exp` through `boardRead`; Vincent: "by default I need to see per
+  player the projected number for points / assists / threes / rebounds"), so the chips flow in a column per zone
+  (`.ir-court-stack`, no two overlap; `ZONE_MAX` three a zone, the rest under the court). **A row of the PropFinder table
+  above the court pressed rings that position's chips and fades the others** (`onPos` / `hiPos` on `AllowedTable`,
+  `is-hi` / `is-dim`; press again to show everyone)
   over the tab picked beside them (**this season's table as PropFinder publishes it**, the default and the table the
   board reads, labelled by its years, "'26-'27"; last season's in full, "'25-'26", `allowed.prior` from
   `defense.prior`, a comparison only; then L5 / L10 / L15 / L20 = PropFinder's `lastNGames` rows as published,

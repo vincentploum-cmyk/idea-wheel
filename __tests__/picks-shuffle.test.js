@@ -5,7 +5,7 @@ import { buildBoard as nflBoard, shuffleOf as nflShuffle, SHUFFLE_MARKETS as NFL
 import { MARKETS as NFL_MARKETS } from '../lib/nfl/markets';
 
 // A scorer whose last 20 games read 20, 23, 26, 29, 32 in turn: mean 26, so a 28+ bar clears in 8 of 20.
-const logs = Array.from({ length: 20 }, (_, i) => ({ date: `2026-01-${String(10 + i).padStart(2, '0')}`, season: 2026, type: 'REG', opp: 'NY', pts: 20 + (i % 5) * 3, reb: 8, ast: 5, tpm: 2, pra: 33 + (i % 5) * 3 }));
+const logs = Array.from({ length: 20 }, (_, i) => ({ date: `2026-01-${String(10 + i).padStart(2, '0')}`, season: 2026, type: 'REG', opp: 'NY', pts: 20 + (i % 5) * 3, reb: 8, ast: 5, tpm: 2, pra: 33 + (i % 5) * 3, stl: 1 + (i % 3), blk: i % 2 }));
 const prop = { market: 'pts', line: 25.5, odds: -110, underOdds: -110, books: 3, isMain: true, lines: [{ line: 19.5, odds: -400, underOdds: 280, books: 1, main: false }, { line: 25.5, odds: -110, underOdds: -110, books: 3, main: true }, { line: 31.5, odds: 300, underOdds: -400, books: 2, main: false }] };
 
 describe('the bar and the ladder', () => {
@@ -63,6 +63,25 @@ describe('the NBA shuffle', () => {
   ], defense } };
   const board = nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf, results: {} });
   const sh = nbaShuffle({ market: 'pts', board, pf, season: 2026 });
+  test('steals and blocks have a ladder, a range and a bar (the court’s tabs and its shuffle bar, 2026-10-30)', () => {
+    const { LADDER_MARKETS } = require('../lib/nba/picks');
+    expect(LADDER_MARKETS).toEqual(expect.arrayContaining(['stl', 'blk']));
+    const brown = board.games[0].sides.BOS.players.find((p) => p.key === 'jaylen brown');
+    expect(brown.ranges.stl?.exp).toBeGreaterThan(0);
+    expect(brown.ranges.blk?.exp).toBeGreaterThanOrEqual(0);
+    expect(brown.ladders.stl.length).toBeGreaterThan(0);
+    for (const market of ['stl', 'blk']) {
+      const bar = NBA_BARS.find((m) => m.market === market);
+      expect(bar).toMatchObject({ min: 1, max: 5, step: 1, start: 2 });
+      const s = nbaShuffle({ market, board, pf, season: 2026 });
+      expect(s.heights).toEqual([1, 2, 3, 4, 5]);
+      const row = s.players.find((p) => p.key === 'jaylen brown');
+      expect(row.at).toHaveLength(5);
+      // 2+ clears o1.5; the chance falls as the bar rises.
+      const ps = s.heights.map((h) => readAt(row, s.heights, h)?.p ?? 0);
+      for (let i = 1; i < ps.length; i++) expect(ps[i]).toBeLessThanOrEqual(ps[i - 1]);
+    }
+  });
   const pts = NBA_BARS.find((m) => m.market === 'pts');
   test('every player read at every height, the book’s rungs and the matchup beside him', () => {
     expect(sh).toMatchObject({ market: 'pts', label: 'Points', unit: 'pts', stat: 'pts', step: 1, start: pts.start, games: 1, finals: 0 });
@@ -202,7 +221,7 @@ describe('the NBA shuffle', () => {
   });
   test('a market without a bar, or a yes-no market, reads as nothing', () => {
     expect(nbaShuffle({ market: 'dd', board, pf, season: 2026 })).toBeNull();
-    expect(nbaShuffle({ market: 'stl', board, pf, season: 2026 })).toBeNull();
+    expect(nbaShuffle({ market: 'tov', board, pf, season: 2026 })).toBeNull();
   });
 });
 

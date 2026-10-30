@@ -8,6 +8,7 @@ import { GROUPS, MARKETS, SHUFFLE_MARKETS, labelOf } from '@/lib/nba/markets';
 import { teamLogo, teamName } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
 import GameFold from './NbaGame';
+import { CourtShuffleProvider } from './NbaCourt';
 import { NbaPlayerCardProvider, useNbaPlayerCard } from './NbaPlayerCard';
 
 const SPORT = { groups: GROUPS, teamLogo, teamName, headshotUrl, totalStat: 'pts', totalUnit: 'points' };
@@ -32,7 +33,7 @@ export function NbaShuffle({ date }) {
 /** The slate: every play ranked, then the games folded to a line each; needs an NbaPlayerCardProvider above it. */
 function NbaSlate({ board }) {
   const open = useNbaPlayerCard();
-  const [metric, setMetric] = useState('pts');
+  const [metric, setMetric] = useState('pts');   // the courts' stat (the tabs above each court, one setting for the slate); the bar's height per stat lives in CourtShuffleProvider
   if (!board?.games?.length) return <div className="nhlx-empty">No games on this date.</div>;
   // A row of the list opens the card with the side's entry for the player (his ladders and projection), as a court chip does.
   const openRow = (r) => {
@@ -55,7 +56,9 @@ function NbaSlate({ board }) {
 export default function NbaBoard({ board }) {
   return (
     <NbaPlayerCardProvider date={board?.date}>
-      <NbaSlate board={board} />
+      <CourtShuffleProvider date={board?.date}>
+        <NbaSlate board={board} />
+      </CourtShuffleProvider>
     </NbaPlayerCardProvider>
   );
 }
