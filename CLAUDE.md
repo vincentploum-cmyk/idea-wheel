@@ -738,14 +738,17 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   allows at the position toward multi-goal nights; the goalie's save % nothing; home a little. The rare marks' rules
   fell back to the base rate on the check week. Descriptive; nothing changed.
 - Patterns (`docs/audits/2026-10-30-nhl-patterns.md`, `tools/predictors/patterns-rows.mjs` → `patterns.py`; Vincent, 2026-10-30:
-  every data point, rules per line, pills): 6,576 skater-games of this season, 239 figures each, a beam search of one- to
-  three-condition rules per line on Oct 1–22 (12+ skaters a rule, every condition worth two points), checked on Oct 23–29:
-  the check week kept 78% / 75% / 64% / 73% of the lift for 3+ / 4+ / 5+ / 6+ SOG and 92% / 70% for 1+ / 2+ goals. 3+ SOG
-  is volume and minutes (20+ min over his last three, a 6+ shot game on record, chances at the venue: 57–64%); 4+ SOG adds
-  the opponent's goals against (a top-10 GA team +10–15 points, 35–38%); 1+ goal adds his venue split (18%+ more shots at
-  tonight's venue +15–21 points, 39–51%); among 2+ shots-a-game skaters the opponent's attempts / chances / shots allowed
-  move 3+ SOG 9–12 points bottom fifth to top; streaks are colour but for the point streak; no rule clears the bar at 5+ /
-  6+ SOG or 2+ goals (the 3.5+ shots-a-game tier fills 5+ / 6+). The rules feed the Patterns tab (above).
+  every data point, rules per line, pills; then "expand to October 16 through October 29", the check weeks): 6,576
+  skater-games of this season, 239 figures each, a beam search of one- to three-condition rules per line on Oct 1–15
+  (12+ skaters a rule, every condition worth two points), checked on Oct 16–29 (3,298 skater-games; the first cut
+  checked on Oct 23–29 alone): the check weeks kept 89% / 95% / 100% / 87% of the lift for 3+ / 4+ / 5+ / 6+ SOG and
+  88% / 60% for 1+ / 2+ goals. 3+ SOG is volume, minutes and a ceiling (a 6+ shot game on record, 18–20+ minutes lately,
+  chances at the venue: 55–63%); 4+ SOG attempts per 60 or unblocked attempts with minutes (34–42%); 1+ goal his volume
+  at tonight's venue with first-line minutes (40–48%); the opponent's goals against L5 adds 3–5 points inside the shot
+  rules; among 2+ shots-a-game skaters the opponent's attempts / chances / shots allowed move 3+ SOG 6–9 points bottom
+  fifth to top on Oct 1–15 and 11–16 on Oct 16–29, as the tables fill; streaks are colour but for the point streak; one
+  rule clears 20% for 5+ SOG, none the bar at 6+ SOG or 2+ goals (the 3.5+ shots-a-game tier fills 6+). The rules feed
+  the Patterns tab (above).
 
 ## Canonical locations
 
