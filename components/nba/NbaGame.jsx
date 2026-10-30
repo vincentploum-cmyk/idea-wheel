@@ -3,15 +3,16 @@
 import { useState } from 'react';
 import { GameCharacteristics } from '@/components/nhl/Characteristics';
 import { GroupTable, teamMark, expectedPill, playLabel } from '@/components/picks/Board';
-import CourtPair, { zoneTone, envPos } from './NbaCourt';
+import CourtPair, { AllowedTable, zoneTone, envPos, windowsOf } from './NbaCourt';
 import { useNbaPlayerCard } from './NbaPlayerCard';
 
 // One game of the NBA board, folded to a line under the slate's list (2026-10-30, Vincent: the courts made the
 // matchups hard to find): the teams, the tip or the score, who is out, how many plays and the best one. Opened: the
-// teams' strengths and weaknesses, then a column per team — who is out, what the opponent gives up to each position
-// for the five stats (ranked, tinted by third: the table the board's projections read), and every active player's
-// projection per stat tinted by the matchup at his spot, a play's line and chance under its figure. The courts and the
-// five tables sit behind a switch.
+// teams' strengths and weaknesses, then a column per team — who is out, PropFinder's table of what the opponent gives
+// up to each position (the court's `AllowedTable`: every stat with its figure and rank, the window tabs, the league's
+// average; the ranks-only grid drawn here on 2026-10-30 lasted a day, Vincent: "I need the propfinder data above each
+// court again like how we had it"), and every active player's projection per stat tinted by the matchup at his spot, a
+// play's line and chance under its figure. The courts and the five tables sit behind a switch.
 
 const STATS = [['pts', 'PTS'], ['reb', 'REB'], ['ast', 'AST'], ['tpm', '3PM'], ['pra', 'PRA']];
 const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
@@ -23,34 +24,6 @@ function statusOf(g) {
   if (g.final) return `Final ${g.awayScore}–${g.homeScore}`;
   if (g.state === 'in') return `Live ${g.awayScore}–${g.homeScore}`;
   return fmtTip(g.date);
-}
-
-/** What the opponent gives up to each position for the five stats: the rank (the cheat sheet's tile and PropFinder's table together), tinted by third, the figure on the hover. */
-function DefenseGrid({ side }) {
-  const a = side.allowed;
-  const positions = POSITIONS.filter((p) => a?.rows?.[p]);
-  if (!positions.length) return <p className="nhlx-auto-meta">No defense table for {side.opp} yet: pull PropFinder.</p>;
-  const count = a.count || 30;
-  return (
-    <div className="nhlx-pfd-wrap">
-      <table className="nhlx-pfd-table ir-def-grid">
-        <thead><tr><th>Pos</th>{STATS.map(([k, l]) => <th key={k}>{l}</th>)}</tr></thead>
-        <tbody>
-          {positions.map((pos) => (
-            <tr key={pos}>
-              <td><b>{pos}</b></td>
-              {STATS.map(([k]) => {
-                const c = a.rows[pos][k];
-                const rank = c?.rankBlend ?? c?.rank ?? null;
-                const lg = a.league?.[pos]?.[k];
-                return <td key={k} className={rank ? `is-${zoneTone(rank, count)}` : ''} title={c?.value != null ? `${num(c.value)} a game to ${pos}s${lg != null ? `, the league ${num(lg)}` : ''}${c.sheet != null ? ` · the cheat sheet’s tile #${c.sheet}` : ''}` : ''}>{rank ? `#${rank}` : '—'}</td>;
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
 }
 
 /** Every active player's projection per stat, the cell tinted by the matchup at his spot (soft or tough), a play's line and chance under the figure. */
@@ -93,8 +66,9 @@ function Roster({ side, final }) {
   );
 }
 
-function TeamColumn({ side, sport, final }) {
-  const count = side.allowed?.count || 30;
+function TeamColumn({ side, sport, final, metric, season }) {
+  const [win, setWin] = useState('season');
+  const view = windowsOf(side.allowed).includes(win) ? win : 'season';
   return (
     <section className="ir-gf-team" aria-label={`${side.team} ${side.venue === 'H' ? 'vs' : 'at'} ${side.opp}`}>
       <div className="ir-gf-team-head">
@@ -103,8 +77,7 @@ function TeamColumn({ side, sport, final }) {
         <small className="nhlx-auto-meta">{side.venue === 'H' ? 'vs' : 'at'} {side.opp}</small>
       </div>
       <p className="ir-gf-out"><b>Out</b> {side.out?.length ? side.out.map((a) => `${a.name}${a.status && a.status !== 'Out' ? ` (${a.status})` : ''}`).join(' · ') : 'nobody listed'}</p>
-      <div className="nhlx-pfd-head"><b>What {side.opp} gives up</b><small className="nhlx-auto-meta">its rank of {count} by position, #1 gives up the most · this season’s table</small></div>
-      <DefenseGrid side={side} />
+      <AllowedTable side={side} win={view} metric={metric} season={season} onWin={setWin} />
       <div className="nhlx-pfd-head"><b>Projected tonight</b><small className="nhlx-auto-meta">tinted by the matchup at his spot · a play’s line and chance under the figure · click a row for the card</small></div>
       <Roster side={side} final={final} />
     </section>
@@ -138,7 +111,7 @@ export default function GameFold({ g, best = [], sport, metric, onMetric }) {
         <div className="ir-gf-body" id={bodyId}>
           {g.characteristics ? <GameCharacteristics game={g} renderTeam={teamMark(sport)} pill={expectedPill(g, sport)} /> : null}
           <div className="ir-gf-cols">
-            {sides.map((side) => <TeamColumn key={side.team} side={side} sport={sport} final={g.final} />)}
+            {sides.map((side) => <TeamColumn key={side.team} side={side} sport={sport} final={g.final} metric={metric} season={g.season || null} />)}
           </div>
           <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-gf-more" aria-expanded={more} onClick={() => setMore((v) => !v)}>{more ? 'Hide the courts and the tables' : 'Show the courts and the tables'}</button>
           {more ? (

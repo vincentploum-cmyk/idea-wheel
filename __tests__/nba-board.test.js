@@ -322,6 +322,49 @@ describe('NBA PropFinder mapping', () => {
     // The season table is untouched by the window rows.
     expect(w.teams.NY.PG.pts).toBe(30);
   });
+  test('a zero PropFinder leaves off the row reads 0 once the pull confirms the key, never before', () => {
+    // 2026-10-30: the PG rows of WSH, LAL and HOU carried no `blocks` key where the Defensive Matchups
+    // export showed 0.0 (rank 27), so their blocks and stocks cells were missing and a guard's matchup
+    // against them read as no table (factor 1) instead of the hardest in the league.
+    const row = (pos, extra = {}) => ({ type: 'Opponent', position: pos, seasonYear: 2026, seasonType: 'REG', gamesPlayed: 5, points: 24, rebounds: 6, assists: 4, steals: 1.5, ...extra });
+    const teams = [
+      { code: 'BOS', stats: [row('PG', { blocks: 0.8 })] },
+      { code: 'NYK', stats: [row('PG', { blocks: 0.4 })] },
+      { code: 'WAS', stats: [row('PG')] },
+    ];
+    const d = defenseAllowed(teams, { season: 2026 });
+    expect(d.teams.WSH.PG).toMatchObject({ stl: 1.5, blk: 0, stlBlk: 1.5 });
+    expect(d.ranks.WSH.PG.blk).toBe(3);
+    expect(d.ranks.WSH.PG.stlBlk).toBe(3);
+    expect(d.ranks.BOS.PG.blk).toBe(1);
+    expect(d.league.PG.blk).toBeCloseTo(0.4, 2);
+    // No row in the pull carries blocks: the key stays off every row (the spelling is unknown, `fieldsSeen.unread` says so).
+    const none = defenseAllowed(teams.map((t) => ({ ...t, stats: t.stats.map(({ blocks, ...r }) => r) })), { season: 2026 });
+    expect(none.teams.WSH.PG.blk).toBeUndefined();
+    expect(none.teams.BOS.PG.stlBlk).toBeUndefined();
+    expect(none.ranks.BOS.PG.blk).toBeUndefined();
+    // The same on last season's table, the windows and the totals: a Team row's keys are confirmed by the Team rows.
+    const more = [
+      { code: 'BOS', stats: [row('PG', { blocks: 0.8 }), row('PG', { blocks: 0.6, seasonYear: 2025, gamesPlayed: 82 }), row('PG', { blocks: 0.7, lastNGames: 5 }), { ...row('All', { blocks: 5 }), type: 'Team' }, row('All', { blocks: 4.5 })] },
+      { code: 'WAS', stats: [row('PG'), row('PG', { seasonYear: 2025, gamesPlayed: 82 }), row('PG', { lastNGames: 5 }), { ...row('All'), type: 'Team' }, row('All')] },
+    ];
+    const m = defenseAllowed(more, { season: 2026 });
+    expect(m.prior.teams.WSH.PG).toMatchObject({ blk: 0, stlBlk: 1.5 });
+    expect(m.prior.ranks.WSH.PG.blk).toBe(2);
+    expect(m.windows.l5.teams.WSH.PG).toMatchObject({ blk: 0, stlBlk: 1.5 });
+    expect(m.windows.l5.ranks.WSH.PG.blk).toBe(2);
+    expect(m.totals.WSH.for.blk).toBe(0);
+    expect(m.totals.WSH.against.blk).toBe(0);
+    // One pull, one spelling: a key the Opponent rows carry is read as 0 on a Team row with figures that lacks it too.
+    const oppOnly = [
+      { code: 'BOS', stats: [row('PG', { blocks: 0.8 }), { ...row('All'), type: 'Team' }] },
+      { code: 'WAS', stats: [row('PG'), { ...row('All'), type: 'Team' }] },
+    ];
+    const o = defenseAllowed(oppOnly, { season: 2026 });
+    expect(o.teams.WSH.PG.blk).toBe(0);
+    expect(o.totals.BOS.for.blk).toBe(0);
+    expect(o.totals.WSH.for.blk).toBe(0);
+  });
 });
 
 describe('NBA board', () => {

@@ -435,9 +435,12 @@ config and keeps its own markets, teams, feeds and slate key:
   makes it so incredibly difficult to find good match ups easily"): `NbaBoard` draws `SlateList` (every play on the
   night ranked, a row opening the card with the side's entry for the player), then the games folded to a line each
   (`components/nba/NbaGame.jsx`, `GameFold`: the teams, the tip or the score, how many are out, the plays over the
-  floor and the best one). Opened: the characteristics card, then a column per team — who is out, what the opponent
-  gives up to each position for PTS · REB · AST · 3PM · PRA (the rank, rankBlend, tinted by third: the season table the
-  projections read) and every active player's projection per stat (`ranges[stat].exp`) tinted soft / tough by the
+  floor and the best one). Opened: the characteristics card, then a column per team — who is out, **PropFinder's table
+  of what the opponent gives up per game to each position** (the court's `AllowedTable`, exported: every stat the table
+  carries with its figure and rank chip tinted by third, the window tabs '26-'27 · '25-'26 · L5 / L10 / L15 / L20 over
+  it (`onWin`; the season table the projections read is the default), the league's average in a last row, Lg; a
+  ranks-only grid for five stats stood there on 2026-10-30 for a day — Vincent: "I need the propfinder data above each
+  court again like how we had it") and every active player's projection per stat (`ranges[stat].exp`) tinted soft / tough by the
   matchup at his envPos, a play over the floor ringed with its line and chance under the figure, a row opening the card
   — and "Show the courts and the tables" for the courts below and the five group tables. A player listed day-to-day
   is no longer greyed on the court or in the Tonight table (`p.out`, not any injury listing). Class names `ir-gf-*`:
