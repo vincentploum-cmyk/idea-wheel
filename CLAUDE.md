@@ -758,6 +758,11 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   landed 46% (30 a night), their 1+ goal picks 33% — the pills' figures run high. Environment + streak: for goals the
   environment adds a point on top of the run (a goal last game 21%, with a top-10 opponent 22%); for shots it adds 5–9
   (3+ SOG in two straight 41%, with a top-10 high-danger-chances opponent over its last five 50%).
+- The top of the night (`docs/audits/2026-10-30-nhl-top-of-night.md`, `tools/predictors/precision_curve.py`; Vincent, 2026-10-30:
+  "it's always 46%. I don't buy this"): on 2025-26 from November (40,524 skater-games, every rate a month in), the top 1–3
+  picks a night land 3+ SOG 64–67% whatever the read (his rate, the model, his true rate in hindsight) and 1+ goal 37–48%;
+  the league's best shooter (MacKinnon, 4.41 a game) went 3+ in 76% of his games, its best scorers scored in 42–49% of
+  theirs. The 46% of the season backtest was every pick over the bar, 30 a night, not the top of the night.
 
 ## Canonical locations
 
