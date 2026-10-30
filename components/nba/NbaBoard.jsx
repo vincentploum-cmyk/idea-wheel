@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { BoardNotes } from '@/components/picks/Board';
 import Shuffle from '@/components/picks/Shuffle';
 import SlateList from '@/components/picks/SlateList';
@@ -34,8 +34,10 @@ export function NbaShuffle({ date }) {
 function NbaSlate({ board }) {
   const open = useNbaPlayerCard();
   const [metric, setMetric] = useState('pts');   // the courts' stat (the tabs above each court, one setting for the slate); the bar's height per stat lives in CourtShuffleProvider
-  const gamesRef = useRef(null);
+  // Every game open by default (Vincent, 2026-10-30: "too many clicks"); the set of closed ones is the state, so a new slate opens again.
+  const [closed, setClosed] = useState(() => new Set());
   if (!board?.games?.length) return <div className="nhlx-empty">No games on this date.</div>;
+  const allClosed = board.games.every((g) => closed.has(g.id));
   // A row of the list opens the card with the side's entry for the player (his ladders and projection), as a court chip does.
   const openRow = (r) => {
     const side = board.games.find((g) => g.id === r.game)?.sides?.[r.team];
@@ -43,16 +45,16 @@ function NbaSlate({ board }) {
   };
   return (
     <>
-      {/* The games and their courts sit under the list (2026-10-30, Vincent: "I don't see the courts nor the shuffle bars in the best plays tab"): a jump to them at the top. A button, not an anchor: the URL hash is the tab. */}
-      <p className="ir-gf-jump nhlx-auto-meta">
-        <b>{board.games.length} game{board.games.length === 1 ? '' : 's'}</b> under the list, each opening to the two courts with the shuffle bar ·{' '}
-        <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" onClick={() => gamesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Jump to the games</button>
-      </p>
-      <SlateList board={board} sport={SPORT} onOpen={openRow} />
-      <section className="ir-gf-list" aria-label="Games" ref={gamesRef}>
-        <div className="nhlx-pfd-head"><b>Games</b><small className="nhlx-auto-meta">open a game for the two courts: the stat tabs, the shuffle bar, every player’s projections and his chance at the bar, PropFinder’s table above each; the team columns and the tables sit behind a switch inside it</small></div>
-        {board.games.map((g) => <GameFold key={g.id} g={{ ...g, season: board.season }} best={board.best} sport={SPORT} metric={metric} onMetric={setMetric} />)}
+      {/* The games first, open (2026-10-30, Vincent: "too many clicks. I need the games listed first along with the best bets"), the ranked list under them. */}
+      <section className="ir-gf-list" aria-label="Games">
+        <div className="nhlx-pfd-head">
+          <b>Games</b>
+          <small className="nhlx-auto-meta">each with its profile, its best bets and the two courts: the stat tabs, the shuffle bar, every player’s projections and his chance at the bar, PropFinder’s table above each · the ranked list of every play is under the games</small>
+          <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-gf-all" onClick={() => setClosed(allClosed ? new Set() : new Set(board.games.map((g) => g.id)))}>{allClosed ? 'Expand all' : 'Collapse all'}</button>
+        </div>
+        {board.games.map((g) => <GameFold key={g.id} g={{ ...g, season: board.season }} best={board.best} sport={SPORT} metric={metric} onMetric={setMetric} open={!closed.has(g.id)} onToggle={(next) => setClosed((prev) => { const s = new Set(prev); if (next) s.delete(g.id); else s.add(g.id); return s; })} />)}
       </section>
+      <SlateList board={board} sport={SPORT} onOpen={openRow} />
       <BoardNotes notes={board.notes} />
     </>
   );
