@@ -9,7 +9,7 @@ import { Flags } from './flags';
 import { TeamLink } from './links';
 import { oppClass } from './MoneyPuck';
 import { Rink, RinkLegend } from './Rink';
-import { GameCharacteristics } from './Characteristics';
+import { MatchupProfile } from './MatchupProfile';
 import { defenseCardFromTabs } from '@/lib/nhl-data/propfinder-csv';
 
 const POS = ['LW', 'C', 'RW', 'D'];
@@ -152,9 +152,9 @@ function SkaterRows({ skaters, showTeam, teamCount, sort, card = null }) {
 }
 
 /**
- * The game-total read and the two defense verdicts under a game head. With the characteristics
- * above them they fold away (the traits are the digest; these are the numbers they were read
- * from); without them they stand open as before.
+ * The game-total read and the two defense verdicts under a game head. With the matchup profile
+ * above them they fold away (the profile is the digest; these are the numbers it was read
+ * from); without it they stand open as before.
  */
 function GameNumbers({ folded, children }) {
   if (!folded) return children;
@@ -389,9 +389,9 @@ export default function MatchupsPanel() {
                     : fmtTime(g.startTimeUTC)}
                 </small>
               </div>
-              {g.characteristics && Object.values(g.characteristics).some(Boolean) && <GameCharacteristics game={g} />}
+              {g.profile ? <MatchupProfile profile={g.profile} /> : null}
               {(g.total || (g.verdicts && Object.values(g.verdicts).some(Boolean))) && (
-              <GameNumbers folded={!!(g.characteristics && Object.values(g.characteristics).some(Boolean))}>
+              <GameNumbers folded={!!g.profile}>
               {g.total && (
                 <div className="nhlx-mu-verdict nhlx-mu-total">
                   <div className="nhlx-mu-verdict-head">

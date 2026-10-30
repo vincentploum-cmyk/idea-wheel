@@ -851,9 +851,38 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   each play washed green (hit the floor) or red (fell short) with the box-score figure once the game is stored, dashed and dimmed when the skater has no box-score row, nothing shown without a run; finished games show the
   box score; above each game's team verdicts a game-total read, `gameTotalRead` in
   `lib/nhl-data/verdict.js`: the stored meetings' totals blended with MoneyPuck's expected
-  goals and pace, high / low half a goal either side of the league average; and above both, each
-  team's **characteristics** (`lib/nhl-data/characteristics.js`, `teamCharacteristics`, `characteristics`
-  per team on every slate game; drawn by `components/nhl/Characteristics.jsx`, WhoScored's layout): its
+  goals and pace, high / low half a goal either side of the league average; and above both, the **matchup
+  profile** (`lib/nhl-data/matchup-profile.js`, `matchupProfile`, `profile` on every slate game; drawn by
+  `components/nhl/MatchupProfile.jsx`; Vincent, 2026-10-30, with a soccer first-half profile as the form: "remove this
+  and replace it with a summary of data from both the rink and propfinder"): the two teams side by side, a row per
+  read, each cell a word with its rank line — Elite · Strong · Average · Weak · Poor for an attack, Elite · Tight ·
+  Average · Leaky · Very leaky for a defense (`levelOf`: the top three, the top quarter, the bottom quarter, the bottom
+  three), Rising / Falling, Loosening / Tightening, Fast / Slow, Often / Rarely concedes — and the same read from every
+  source beside it (`figures`: the rink's stored box scores, PropFinder, MoneyPuck, the last ten). **Green = more shots
+  and goals likely in the game from that side's angle, red = fewer** (a strong attack and a leaky defense green, a tight
+  defense and an elite goalie red), the rink's one colour rule. Attack: shot volume and scoring (the team's own shots
+  and goals a game from its skaters' rows, `teamRates`, leading from `MIN_OWN_GAMES` = 5 this season, PropFinder's team
+  table (`pf.teams`) and MoneyPuck's per-60 beside them), chance quality (xGF/60, PropFinder's scoring chances, the
+  finishing ratio), special teams (PP% / PK%, PropFinder's ranks), attack form (the last five against the season).
+  Defense tonight: shots and goals allowed (**PropFinder's table above the rink on the tab it opens on leads**,
+  `pfDefenseOf` / `defaultDefenseTab`, the rink's venue table and the L10 tab beside it; the venue table leads without
+  one), by position (a pill a position with PropFinder's rank, tinted by third — the word names the soft spots), the
+  defense trend (the stored last ten against the season rank, `TREND_DRIFT` = 5), the first goal (conceded at the venue
+  from `FG_MIN_GAMES` = 5, scored from `shotProfiles`), goaltending (`ratioRanks`). The game: pace, the head to head
+  (`h2hOf` over `h2hTotals`: goals for / against a meeting, the record, the last score) and the model tonight (`modelOf`:
+  the saved run's λ summed over the lineup, the plays strip's count and best play). Every row's cell carries `word`,
+  `tone`, `value` / `unit`, `detail` lines and `figures` (with the source's own rank and a tone), so the three layouts
+  are one data model: **Profile** (the word over its rank line, the form Vincent showed), **Sources** (every source's
+  figure with its rank in the cell, the word under them) and **Tape** (the tale of the tape: the figure first, the label
+  in the middle, the away cell mirrored), picked in the card head and kept in localStorage (`LAYOUTS`,
+  `useProfileLayout`) — the three options of 2026-10-30, to be cut to the one Vincent keeps. Tests:
+  `__tests__/nhl-matchup-profile.test.js` (the builder on the MTL @ DAL fixture, `fixtures/matchup-profile-mtl-dal.js`)
+  and `nhl-matchup-profile-render.test.js` (the card server-rendered in each layout; with `MOCK_OUT=<dir>` it writes
+  standalone mock-up pages that `tools/mock/screenshot-profile.mjs` photographs at 1440 and 390 — the `.jsx` files go
+  through Next's SWC transformer in `jest.config.js`). The game-total read and the verdicts fold under it as "The numbers
+  behind the reads". The former card, each team's **characteristics** (`lib/nhl-data/characteristics.js`,
+  `teamCharacteristics`; drawn by `components/nhl/Characteristics.jsx`, WhoScored's layout), stays on the Teams tab and
+  the picks boards: its
   strengths and weaknesses as traits with a badge (`levelOf` in `lib/picks/levels.js`: the top quarter of the league
   Strong, the top three Very strong, the bottom quarter Weak, the bottom three Very weak — thirds and a top four
   wore a dozen badges on a bad team, 2026-10-27; no number in the line, the figures ride on the trait as `detail`
