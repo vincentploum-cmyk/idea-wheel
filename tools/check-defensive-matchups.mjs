@@ -2,7 +2,8 @@
 // Compare PropFinder's "Defensive Matchups" CSV export against the board's allowed table for the
 // same night: node tools/check-defensive-matchups.mjs <export.csv> <picks.json>
 //   export.csv  the page's export (TEAM, POS, OPPOSING PLAYER, LINE, …, POINTS "39.7 #1", …)
-//   picks.json  GET /api/nba/picks?date=YYYY-MM-DD saved to a file
+//   picks.json  GET /api/nba/picks?date=YYYY-MM-DD saved to a file (open it in a signed-in browser and save the
+//               page: the route takes the admin session, not the sync token)
 // Each export row is what TEAM allows to POS; on the board that is the opponent's side's
 // `allowed.rows[POS]` (the table the court, the Tonight table and the projections read).
 import fs from 'node:fs';
@@ -31,6 +32,12 @@ const rows = lines.slice(hi + 1).map(splitCsv).filter((c) => c.length >= head.le
 
 const board = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 const games = board.games || board.board?.games || [];
+if (!games.length) {
+  const raw = fs.readFileSync(jsonPath, 'utf8');
+  console.error(`no games in ${jsonPath}: top-level keys ${JSON.stringify(Object.keys(board))}; the file starts ${JSON.stringify(raw.slice(0, 300))}`);
+  console.error(board.error ? `The route answered "${board.error}", not the board: /api/nba/picks takes the admin session only, so open the URL in a signed-in browser and save the page as the JSON file.` : 'Expected GET /api/nba/picks?date=YYYY-MM-DD saved whole.');
+  process.exit(1);
+}
 // what each team allows = the table on its opponent's side
 const allowedBy = {}; const meta = {};
 for (const g of games) {
