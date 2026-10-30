@@ -1674,6 +1674,22 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-range-band.is-key, .ir-range-tick.is-key, .ir-range-dot.is-key { position: static; margin: 0; }
 .ir-range-band.is-key { width: 26px; }
 .ir-gf-list { margin: 8px 0 22px; }
+.ir-gf-all { margin-left: auto; }
+/* The game profile: one row per aspect, the two teams side by side, a rating word over the figures (firsthalfscore.com's layout). */
+.ir-prof { margin: 12px 0 14px; }
+.ir-prof-table { text-align: left; table-layout: fixed; }
+.ir-prof-table th:first-child, .ir-prof-table td:first-child { width: 160px; }
+.ir-prof-table tbody th { padding: 7px 10px; font-family: var(--font-display); font-size: 14.5px; font-weight: 700; color: var(--heading); text-transform: none; letter-spacing: 0; border-bottom: 1px solid var(--line); vertical-align: top; white-space: normal; cursor: help; }
+.ir-prof-team { text-align: left; text-transform: none; letter-spacing: 0; font-size: 15px; }
+.ir-prof-team img { vertical-align: middle; margin-right: 6px; }
+.ir-prof-team b { color: var(--heading); font-family: var(--font-display); }
+.ir-prof-team small { margin-left: 6px; font-weight: 400; }
+.ir-prof-cell { text-align: left; white-space: normal; vertical-align: top; padding: 7px 10px; }
+.ir-prof-word { display: block; font-weight: 700; font-size: 15px; color: var(--primary); line-height: 1.2; }
+.ir-prof-word.is-up { color: var(--ok-fg); }
+.ir-prof-word.is-down { color: var(--bad-fg); }
+.ir-prof-cell small { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.35; color: var(--muted); }
+@media (max-width: 700px) { .ir-prof-table th:first-child, .ir-prof-table td:first-child { width: 96px; } .ir-prof-table tbody th { font-size: 13px; } }
 .ir-gf { margin: 0 0 10px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--card); }
 .ir-gf-head { all: unset; box-sizing: border-box; width: 100%; min-height: 56px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 20px; padding: 10px 16px; cursor: pointer; color: var(--body); }
 .ir-gf-head:hover { background: var(--bg-soft); border-radius: var(--radius-lg); }

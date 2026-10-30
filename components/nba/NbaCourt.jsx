@@ -433,7 +433,6 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
         {windows.length === 1 ? <small className="nhlx-rk-toggle-note">{side.allowed ? 'no last-N rows in the pull yet' : 'no table yet'}</small> : view !== 'season' ? <small className="nhlx-rk-toggle-note">tint and table only: the chips keep the board’s read off this season’s table</small> : null}
       </div>
       {sh ? <CourtBar metric={metric} side={side} sh={sh} rows={rows} /> : null}
-      <OutLines side={side} oppOut={oppOut} />
       <AllowedTable side={side} win={view} metric={metric} season={season} onPos={setHiPos} hiPos={hiPos} />
       <div className={`nhlx-rk ir-court${hiPos ? ' is-picking' : ''}`}>
         <CourtMarkings clipId={clipId} tones={tones} />
@@ -447,6 +446,8 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
         })}
         {Object.keys(ZONES).map((z) => <ZoneLabel key={z} zone={z} allowed={allowed} metric={metric} opp={side.opp} win={view} />)}
       </div>
+      {/* Who is out, under the court (Vincent, 2026-10-30: "who is out should be under the court"). */}
+      <OutLines side={side} oppOut={oppOut} />
       {extras.length ? <p className="nhlx-rk-extras nhlx-auto-meta"><b>Also:</b> {extras.map((p) => { const read = readFor(p); const proj = boardRead(p, metric, side.allowed, envPos(p)); return `${p.player} (${p.pos || '—'}${proj.value != null ? `, ${num(proj.value)} ${STAT_LABEL[metric]} tonight` : ''}${read ? `, ${height}+ ${pct(read.p)}` : ''})`; }).join(' · ')}</p> : null}
       <PlayersTable side={side} final={final} />
     </section>

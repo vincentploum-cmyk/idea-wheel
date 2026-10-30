@@ -464,7 +464,23 @@ config and keeps its own markets, teams, feeds and slate key:
   ranks-only grid for five stats stood there on 2026-10-30 for a day — Vincent: "I need the propfinder data above each
   court again like how we had it") and every active player's projection per stat (`ranges[stat].exp`) tinted soft / tough by the
   matchup at his envPos, a play over the floor ringed with its line and chance under the figure, a row opening the card
-  — and "Show the courts and the tables" for the courts below and the five group tables. A player listed day-to-day
+  — and "Show the courts and the tables" for the courts below and the five group tables. **Since that evening the games
+  come first, open** (Vincent, after the courts gained the bar: "I don't see the courts nor the shuffle bars in the best
+  plays tab", then "too many clicks. I need the games listed first along with the best bets"): `NbaBoard` draws the games
+  before the ranked list, every game open (`closed` set in `NbaSlate`, Collapse all / Expand all in the head, `GameFold`
+  takes `open` / `onToggle`), and an opened game shows **the game profile** (`components/nba/NbaProfile.jsx` from
+  `profile` on the board game, `lib/nba/profile.js` `gameProfile(g, defense, sides)` through `makeBoard({ profile })`:
+  firsthalfscore.com's layout, Vincent's ask the same night in place of the characteristics card — one row per aspect,
+  the two teams side by side, each cell a word (Elite · Strong · Average · Weak · Very weak by `levelOf`, Average for the
+  middle half; High / Low on the expected points; Tightening / Loosening / Steady on the last ten; the positions a
+  defense leaks to, "Holds" when none) over the figures — expected points, scoring, defense, the last ten, what it gives
+  up to each position for points / rebounds / assists / threes from the opponent side's `allowed` table (PropFinder's
+  rank and the cheat sheet's tile named, `rankBlend` deciding), rebounding, ball movement, threes with their share of the
+  points, the line, ball security, forcing turnovers, the defensive glass, defending the three, and the players the cheat
+  sheet names on the side; `__tests__/nba-profile.test.js`; the characteristics card stays as the fallback for a game
+  without a profile and on the NFL board), then the two courts (each with PropFinder's table, the stat tabs and the
+  shuffle bar, every player's projections, **who is out under the court** — Vincent, the same night — and the Tonight
+  table), and "Show the team columns and the tables" folds the columns and the five group tables. A player listed day-to-day
   is no longer greyed on the court or in the Tonight table (`p.out`, not any injury listing). Class names `ir-gf-*`:
   the start screen owns `ir-game` / `ir-games`.
 - The courts (`components/nba/NbaCourt.jsx`, the rink's basketball twin, drawn by `GameFold` behind the opened
