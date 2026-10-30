@@ -355,15 +355,15 @@ describe('NBA PropFinder mapping', () => {
     expect(m.windows.l5.ranks.WSH.PG.blk).toBe(2);
     expect(m.totals.WSH.for.blk).toBe(0);
     expect(m.totals.WSH.against.blk).toBe(0);
-    // A Team row's zero is read only when a Team row confirms the key: with it on the Opponent rows alone, the Team row stays without it.
+    // One pull, one spelling: a key the Opponent rows carry is read as 0 on a Team row with figures that lacks it too.
     const oppOnly = [
       { code: 'BOS', stats: [row('PG', { blocks: 0.8 }), { ...row('All'), type: 'Team' }] },
       { code: 'WAS', stats: [row('PG'), { ...row('All'), type: 'Team' }] },
     ];
     const o = defenseAllowed(oppOnly, { season: 2026 });
     expect(o.teams.WSH.PG.blk).toBe(0);
-    expect(o.totals.BOS.for.blk).toBeUndefined();
-    expect(o.totals.WSH.for.blk).toBeUndefined();
+    expect(o.totals.BOS.for.blk).toBe(0);
+    expect(o.totals.WSH.for.blk).toBe(0);
   });
 });
 

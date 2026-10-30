@@ -191,10 +191,17 @@ function OutLines({ side, oppOut }) {
   return <div className="ir-court-outs" aria-label="Players out tonight">{line(side.team, side.out)}{line(side.opp, oppOut)}</div>;
 }
 
-/** What the opponent gives up per game to each position, with the league rank in every cell. */
-function AllowedTable({ side, win, metric, season }) {
+/**
+ * What the opponent gives up per game to each position: PropFinder's table with the figure and the league rank in
+ * every cell, the league's average in a last row (Lg), and, with `onWin`, the window tabs over it (this season's as
+ * published, last season's in full, L5 / L10 / L15 / L20). Above each court and, since 2026-10-30, in each team's column of
+ * the opened game (Vincent: "I need the propfinder data above each court again like how we had it" — the column had
+ * been drawing the ranks alone for five stats).
+ */
+export function AllowedTable({ side, win, metric, season, onWin = null }) {
   const a = tableFor(side.allowed, win);
   if (!a) return <p className="nhlx-auto-meta ir-court-none">No defense table for {side.opp} yet: pull PropFinder (the button above the board, or under Data sources).</p>;
+  const windows = onWin ? windowsOf(side.allowed) : [];
   const keys = [...new Set(Object.values(a.rows).flatMap((r) => Object.keys(r)))].filter((k) => !['gp', 'prior'].includes(k)).sort((x, y) => (STAT_ORDER.indexOf(x) + 1 || 99) - (STAT_ORDER.indexOf(y) + 1 || 99)).slice(0, 8);
   const positions = [...POSITIONS.filter((p) => a.rows[p]), ...Object.keys(a.rows).filter((p) => !POSITIONS.includes(p))];
   const count = a.count || 30;
@@ -206,7 +213,12 @@ function AllowedTable({ side, win, metric, season }) {
         : `PropFinder, ${WINDOW_TEXT[win]}${a.season && season && a.season < season ? ' of last season (no games this season yet)' : ''} · a comparison: the board reads this season’s table`;
   return (
     <div className="nhlx-pfd">
-      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position · {windowLabel(win, side.allowed, season)}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {note}{league ? ' · hover a cell for the league’s average' : ''}</small></div>
+      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position{onWin ? '' : ` · ${windowLabel(win, side.allowed, season)}`}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {note}{league ? ' · Lg = the league’s average' : ''}</small></div>
+      {windows.length > 1 ? (
+        <div className="nhlx-tabs nhlx-rk-tabs nhlx-pfd-tabs" role="tablist" aria-label={`Window of ${side.opp}'s table`}>
+          {windows.map((k) => <button key={k} type="button" role="tab" aria-selected={win === k} className={`nhlx-tab${win === k ? ' is-active' : ''}`} onClick={() => onWin(k)} title={`${WINDOW_TEXT[k]}${k === 'season' ? ': the table the board’s projections read' : ': a comparison, the projections keep this season’s table'}`}>{windowLabel(k, side.allowed, season)}</button>)}
+        </div>
+      ) : null}
       <div className="nhlx-pfd-wrap">
         <table className="nhlx-pfd-table">
           <thead><tr><th>Pos</th>{keys.map((k) => <th key={k} className={k === metric ? 'is-on' : ''}>{STAT_LABEL[k] || k.toUpperCase()}</th>)}</tr></thead>
@@ -217,6 +229,7 @@ function AllowedTable({ side, win, metric, season }) {
                 {keys.map((k) => { const c = a.rows[pos][k]; const tone = zoneTone(c?.rankBlend ?? c?.rank, count); const lg = league?.[pos]?.[k]; const check = a.from === 'sheet' ? null : sheetCheck(c, count); return <td key={k} className={`${c ? `is-${tone}` : ''}${k === metric ? ' is-on' : ''}`} title={`${c && lg != null ? `${num(c.value)} against the league's ${num(lg)} at ${pos}` : ''}${check ? ` · the cheat sheet's tile: #${c.sheet} (${check === 'yes' ? 'the same third' : 'a different third'})` : ''}`}>{c ? <><span className="nhlx-pfd-val">{c.value != null ? num(c.value) : '—'}</span>{c.rank ? <span className="nhlx-pfd-rank">#{c.rank}</span> : null}</> : '—'}</td>; })}
               </tr>
             ))}
+            {league ? <tr className="ir-court-league"><td><b>Lg</b></td>{keys.map((k) => { const v = Object.values(league).map((r) => r[k]).filter((x) => x != null); return <td key={k} className={k === metric ? 'is-on' : ''} title={v.length ? `The league's average ${STAT_LABEL[k] || k.toUpperCase()} a game over the positions` : ''}><span className="nhlx-pfd-val">{v.length ? num(v.reduce((x, y) => x + y, 0) / v.length) : '—'}</span></td>; })}</tr> : null}
           </tbody>
         </table>
       </div>
