@@ -1,13 +1,24 @@
 import { describe, expect, test, jest, beforeEach } from '@jest/globals';
 import { JOBS, jobById, etInstant, etParts, latestSlot, nextSlot, callsFor, dueOf, slotDoneIn, RETRY_AFTER_MS } from '../lib/schedule-jobs';
 
-// The scheduler's state lives in the store; an in-memory stand-in.
+// The scheduler's state lives in the store; an in-memory stand-in. With `mockLag.reads` set, the
+// reads right after a write hand back the copy from before it, as Supabase Storage did on 2026-10-30.
 const mockFiles = new Map();
+const mockLag = { reads: 0, prev: new Map(), left: new Map() };
 jest.mock('../lib/nhl-store', () => ({
-  readJson: async (path) => (mockFiles.has(path) ? JSON.parse(mockFiles.get(path)) : null),
-  writeJson: async (path, value) => { mockFiles.set(path, JSON.stringify(value)); },
+  readJson: async (path) => {
+    const left = mockLag.left.get(path) || 0;
+    if (left > 0) { mockLag.left.set(path, left - 1); const old = mockLag.prev.get(path); return old == null ? null : JSON.parse(old); }
+    return mockFiles.has(path) ? JSON.parse(mockFiles.get(path)) : null;
+  },
+  writeJson: async (path, value) => {
+    if (mockLag.reads) { mockLag.prev.set(path, mockFiles.get(path) ?? null); mockLag.left.set(path, mockLag.reads); }
+    mockFiles.set(path, JSON.stringify(value));
+  },
 }));
-const { tick, scheduledSlotDone, STATE_PATH } = require('../lib/scheduler');
+const { STATE_PATH, mergeStates } = require('../lib/scheduler');
+/** A fresh scheduler module (its own records), as a new server process has. */
+const freshScheduler = () => { let m; jest.isolateModules(() => { m = require('../lib/scheduler'); }); return m; };
 
 const job = (id) => jobById(id);
 const iso = (s) => new Date(s);
@@ -64,12 +75,13 @@ describe('the jobs’ clock, in Eastern time', () => {
 });
 
 describe('the runner', () => {
-  beforeEach(() => { mockFiles.clear(); jest.useRealTimers(); });
+  beforeEach(() => { mockFiles.clear(); mockLag.reads = 0; mockLag.prev.clear(); mockLag.left.clear(); jest.useRealTimers(); });
   const quiet = { log: () => {}, error: () => {} };
 
   test('runs a due job’s calls in order with the token, records it, and does not run it twice', async () => {
     const seen = [];
     global.fetch = jest.fn(async (url, opts) => { seen.push([url, opts.method, opts.headers.Authorization]); return { ok: true, status: 200, text: async () => '{"ok":true}' }; });
+    const { tick, scheduledSlotDone } = freshScheduler();
     const now = () => iso('2026-10-29T13:48:00Z');
     // At 9:48 AM ET the three morning jobs are due (9:17, 9:33, 9:47), one after the other; the late and
     // overnight runs are past their windows.
@@ -93,10 +105,33 @@ describe('the runner', () => {
 
   test('a failed call marks the run failed, so it is tried again later and the backstop does not skip', async () => {
     global.fetch = jest.fn(async (url) => (url.includes('propfinder') ? { ok: false, status: 500, text: async () => 'boom' } : { ok: true, status: 200, text: async () => '{}' }));
+    const { tick, scheduledSlotDone } = freshScheduler();
     await tick({ base: 'http://x', token: 'tok', log: quiet, now: () => iso('2026-10-29T13:48:00Z') });
     const rec = JSON.parse(mockFiles.get(STATE_PATH)).jobs['nba-morning'];
     expect(rec.ok).toBe(false);
     expect(rec.calls.at(-1)).toMatchObject({ status: 500, ok: false, reply: 'boom' });
     expect(await scheduledSlotDone('nba-morning', iso('2026-10-29T19:12:00Z'))).toBeNull();
   }, 15000);
+
+  test('a store that hands back the copy from before a write neither delays a job nor wipes the one before it (2026-10-30)', async () => {
+    mockLag.reads = 3;
+    const seen = [];
+    global.fetch = jest.fn(async (url) => { seen.push(url.replace('http://x', '')); return { ok: true, status: 200, text: async () => '{}' }; });
+    const { tick } = freshScheduler();
+    // 12:42 AM ET on a Friday: the NHL and NFL late runs are both due, one after the other.
+    await tick({ base: 'http://x', token: 'tok', log: quiet, now: () => iso('2026-10-30T04:42:00Z') });
+    expect(seen).toEqual(['/api/nhl/data/refresh?date=2026-10-29', '/api/nfl/refresh?date=2026-10-29&only=schedule']);   // each on its first attempt
+    const jobs = JSON.parse(mockFiles.get(STATE_PATH)).jobs;
+    expect(jobs['nhl-late']).toMatchObject({ ok: true, attempts: 1, date: '2026-10-30' });   // not wiped by the NFL run's write
+    expect(jobs['nfl-late']).toMatchObject({ ok: true, attempts: 1 });
+    // A minute later nothing runs again.
+    await tick({ base: 'http://x', token: 'tok', log: quiet, now: () => iso('2026-10-30T04:43:00Z') });
+    expect(seen).toHaveLength(2);
+  }, 15000);
+
+  test('two copies of the state merge job by job, the newer record kept', () => {
+    const a = { jobs: { x: { startedAt: '2026-10-30T04:41:00Z', ok: false }, y: { finishedAt: '2026-10-30T05:00:00Z', ok: true } } };
+    const b = { jobs: { x: { startedAt: '2026-10-30T04:41:00Z', finishedAt: '2026-10-30T04:43:00Z', ok: true }, y: { startedAt: '2026-10-29T05:00:00Z', ok: false } } };
+    expect(mergeStates(a, b).jobs).toEqual({ x: b.jobs.x, y: a.jobs.y });
+  });
 });
