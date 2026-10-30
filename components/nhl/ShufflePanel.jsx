@@ -126,7 +126,8 @@ export default function ShufflePanel() {
     return () => { cancelled = true; };
   }, [data, stored]);
 
-  const allRows = useMemo(() => (data?.games || []).flatMap((g) => g.skaters.map((s) => ({ ...s, game: g.id, start: g.startTimeUTC, final: g.final }))), [data]);
+  // The board's read prints through the calibration Best bets prints with (`data.calibration.fits`, shared by every row).
+  const allRows = useMemo(() => { const cal = data?.calibration?.fits || null; return (data?.games || []).flatMap((g) => g.skaters.map((s) => ({ ...s, cal, game: g.id, start: g.startTimeUTC, final: g.final }))); }, [data]);
   // The position picked beside "Matchup from": the bars, the curve, the list and the fallen strip all read it.
   const rows = useMemo(() => atPosition(allRows, pos), [allRows, pos]);
   const bar = NHL_BARS.find((b) => b.market === active);
@@ -173,7 +174,7 @@ export default function ShufflePanel() {
       <div className="ir-sh">
       <div className="ir-sh-head">
         <div>
-          <p className="nhlx-auto-meta">A bar for shots and one for goals. The list keeps the skaters whose chance of the bar holds over the floor, off the board’s own λ: the 3+ figure here is the board’s 3+ figure, and 5+ or 6+ is the same λ read further up. No price in the number; the break-even price sits under it.</p>
+          <p className="nhlx-auto-meta">A bar for shots and one for goals. The list keeps the skaters whose chance of the bar holds over the floor, off the board’s own λ: the 3+ figure here is the board’s 3+ figure, and 5+ or 6+ is the same λ read further up. No price in the number; the break-even price sits under it.{data?.calibration ? ` The board’s chances are calibrated to what its stated chances have landed this season (${data.calibration.games} graded skater-games${data.calibration.to ? ` through ${data.calibration.to}` : ''}); hover a chance for the figure as stated.` : ''}</p>
         </div>
         <div className="ir-sh-floor">
           <label>Keep skaters at <select className="nhlx-input nhlx-input-sm" value={floor} onChange={(e) => setFloors((f) => ({ ...f, [active]: Number(e.target.value) }))} aria-label={`The ${statLabel} floor`}>{FLOORS.map((f) => <option key={f} value={f}>{Math.round(f * 100)}%</option>)}</select> or better <small className="nhlx-auto-meta">({bar.label.toLowerCase()})</small></label>
@@ -277,7 +278,7 @@ export default function ShufflePanel() {
                           </td>
                           <td>{m ? <span className={`ir-spot is-${tone}`} title={mTitle}>#{m.rank} {c.pos}</span> : <span className="ir-spot is-none" title={mTitle}>no table</span>}{m?.value != null ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }} title={mTitle}>{num(m.value, dec)}{m.source === 'stored' ? ' · stored' : ''}</small> : null}</td>
                           {showCentre ? <td className="is-num" title={`Board ${num(lam)} · ${windows}`}><b>{num(r.lambda)}</b>{r.fellBack ? <small>board’s</small> : null}</td> : null}
-                          <td className="is-num is-lead"><b>{pct(r.p)}</b><small>{r.fair}</small></td>
+                          <td className="is-num is-lead" title={r.raw != null ? `The board's read as stated: ${pct(r.raw)}. Shown calibrated to what its stated chances have landed this season.` : undefined}><b>{pct(r.p)}</b><small>{r.fair}</small></td>
                           <td className="small">{r.cleared ? `${r.cleared.n} of last ${r.cleared.of}` : '—'}{r.season?.of ? <small className="nhlx-auto-meta"> · {pct(r.season.n / r.season.of)} this season ({r.season.of})</small> : null}</td>
                           <td className="is-num" title={`${modelTitle} · ${windows}`}><b>{num(lam)}</b><small>{bar.unit}</small></td>
                           {final ? <td className="is-num nhlx-pk-got">{r.got === undefined ? <small>—</small> : r.got === null ? <small>DNP</small> : <><b>{r.got}</b><small>{bar.unit}</small></>}</td> : null}

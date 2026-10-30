@@ -768,8 +768,10 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   skater-games against the run saved before each puck drop. It ranks the night right (3+ SOG: its top pick a night 73%,
   16 of 22) but overstates the top: 60%+ calls said 73% and landed 57%, 80%+ said 86% and landed 61%; 4+ SOG at 50%+ said
   61%, landed 43%. Its 1+ goal figure does not hold: 35%+ calls said 50%, landed 25%; 50–60% calls landed 18%. The
-  study's read on the same rows says it straight (1+ goal at 35%+: 40% said, 37% landed). Calibrating the published
-  figure, learned from the graded runs, is the open fix; nothing changed.
+  study's read on the same rows says it straight (1+ goal at 35%+: 40% said, 37% landed). The same day Best bets and the
+  shuffle print the board's chances calibrated (Vincent: "yes build the calibration and merge it"; the bullet
+  "Calibration" under Automation): a logistic recalibration per height, fitted before Oct 22 and read after it, landed
+  where it says (3+ SOG said 54% → landed 53%, said 45% → 50%; the run's own figures said 65% → 46%, 79% → 59%).
 
 ## Canonical locations
 
@@ -1000,6 +1002,28 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   shuffle listed him fourth), and the panel's head says when `NHL_PICKS_STUDY_WEIGHT` blends the study into the λ;
   only the Top 5 boards, the rinks' strips and the scorecard's replay keep `boardPlays`' rule (4+ / 5+ with the attack
   score, 1+ / 2+ with a slice of it), so they can reorder near-ties.
+- **Calibration** (`lib/nhl-data/calibration-pure.js` + `calibration.js`; Vincent, 2026-10-30, after the model's own figures
+  were graded on this season — its 60%+ 3+ SOG calls said 73% and landed 57%, its 35%+ goal calls said 50% and landed
+  25% —: "yes build the calibration and merge it"): **Best bets and the shuffle print the board's chances calibrated** to
+  what the same stated chance has landed this season. Per read (`board` = the run's λ blended with the study's at the
+  board's weights, `study` = the study's alone, for a slate without a run) and per height (1+ … 8+ SOG, 1+ … 3+ goals) a
+  logistic recalibration of the stated chance on the season's graded runs, landed = σ(a + b · logit(stated)) by maximum
+  likelihood with a light ridge toward the identity (`fitHeight`, `CAL_RIDGE` = 2; a height under `CAL_MIN` = 300 games
+  or 25 hits keeps the stated chance); a skater's chance at a height through it, never above his chance one height lower
+  (`calibratedChance`). On this season's runs the run's 3+ / 4+ SOG tails came out at b ≈ 0.5 on every split (a stated
+  80% prints about 62%), the study's goal read at b ≈ 0.9; binned rates shrunk toward the stated chance were tried first
+  and kept too much of the overstatement at the top on the held-out week. **The model's math is untouched**: the run's λ
+  and its own odds stay the run's (the Model tab, the rinks' strips, the scorecard grade them as they are); only the
+  printed chance moves. `computePicks` reads it with the slate (`loadCalibration`: `data/scorecard/calibration.json`, else
+  the seed `lib/nhl-data/seed/calibration.json`, fitted on the scorecard export of Oct 30 by
+  `tools/predictors/calibration-seed.mjs`) and runs every candidate through `calibrateProjection` — p2 / p3 / p4 / p1g
+  calibrated, the stated ones as `raw`, the floors and the notes on the calibrated figure — when the stored fit was
+  learned at the board's weights (`calibrationFits`: another `NHL_PICKS_STUDY_WEIGHT` is another read, printed as stated
+  until the next build); the payload's `calibration` { read, at, from, to, games, fits } goes to the panel's head and the
+  shuffle, whose rows carry the fits (`row.cal`) so `chanceAt` / `readAt` print the board's read calibrated (every other
+  "Read from" as its Poisson tail; `raw` on the read for the hover). Learned again by every season-range `buildScorecard`
+  (`saveCalibration` beside `saveBestRead`: the History tab's first grade, the morning refresh), never rewritten
+  unchanged. Hover a chance on Best bets or the shuffle for the figure as stated.
 - **Patterns** (`#patterns`, `components/nhl/PatternsPanel.jsx` with its own slate-date picker, `GET /api/nhl/data/patterns?date=`
   → `buildPatterns` in `lib/nhl-data/patterns.js`; Vincent, 2026-10-30: "look at literally every data point that is
   available to detect patterns … rules per line … the outcome should be pills like firsthalfscore.com"): every skater in

@@ -12,8 +12,10 @@ const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const last = (name) => String(name || '').split(' ').slice(-1)[0];
 
 /** A probability with its break-even price under it; once the box score is in, green when the skater reached the market's floor, red when he fell short. */
-function Prob({ p, lead = false, wide = false, hit = null }) {
-  return <td className={`is-num${lead ? ' is-lead' : ''}${wide ? ' is-wide' : ''}${hit == null ? '' : hit ? ' is-hit' : ' is-miss'}`}><b>{pct(p)}</b><small>{fairOdds(p)}</small></td>;
+// A chance as the board prints it: calibrated to what its stated chances have landed this season (lib/nhl-data/calibration.js),
+// the figure as stated on the hover.
+function Prob({ p, raw = null, lead = false, wide = false, hit = null }) {
+  return <td className={`is-num${lead ? ' is-lead' : ''}${wide ? ' is-wide' : ''}${hit == null ? '' : hit ? ' is-hit' : ' is-miss'}`} title={raw != null ? `As stated: ${pct(raw)}. Shown calibrated to what such calls have landed this season.` : undefined}><b>{pct(p)}</b><small>{fairOdds(p)}</small></td>;
 }
 
 // The row's own grade follows its table's lead market (3+ SOG, 1+ G); a skater with no box-score row reads DNP.
@@ -62,7 +64,7 @@ function ShotsTable({ g }) {
           {g.shots.map((c) => (
             <tr key={c.id} className={`${c.under ? 'is-under' : ''}${rowGrade(c, 'sog', 3)}`} title={[c.under ? 'Under the 50% floor for 3+ shots: listed to make three' : null, rowTitle(c, 'sog', 3, 'SOG')].filter(Boolean).join(' · ') || undefined}>
               <Player c={c} stat="sog" />
-              <Prob p={c.p2} wide hit={hitOf(c, 'sog', 2)} /><Prob p={c.p3} lead hit={hitOf(c, 'sog', 3)} /><Prob p={c.p4} hit={hitOf(c, 'sog', 4)} />
+              <Prob p={c.p2} raw={c.raw?.p2} wide hit={hitOf(c, 'sog', 2)} /><Prob p={c.p3} raw={c.raw?.p3} lead hit={hitOf(c, 'sog', 3)} /><Prob p={c.p4} raw={c.raw?.p4} hit={hitOf(c, 'sog', 4)} />
               {g.final ? <Got c={c} stat="sog" unit="SOG" /> : null}
             </tr>
           ))}
@@ -88,7 +90,7 @@ function GoalsTable({ g }) {
           {g.goals.map((c) => (
             <tr key={c.id} className={`${c.under ? 'is-under' : ''}${rowGrade(c, 'g', 1)}`} title={[c.under ? 'Under the 35% floor for a goal: listed to make three' : null, rowTitle(c, 'g', 1, 'G')].filter(Boolean).join(' · ') || undefined}>
               <Player c={c} stat="g" />
-              <Prob p={c.p1g} lead hit={hitOf(c, 'g', 1)} />
+              <Prob p={c.p1g} raw={c.raw?.p1g} lead hit={hitOf(c, 'g', 1)} />
               {g.final ? <Got c={c} stat="g" unit="G" /> : null}
             </tr>
           ))}
@@ -122,7 +124,7 @@ export default function PicksPanel() {
         <div>
           <div className="nhlx-today-date">{pretty || 'Loading…'}</div>
           <div className="nhlx-auto-sub">
-            {board ? `${board.games.length} game${board.games.length === 1 ? '' : 's'} · ${board.source === 'model' ? `model run saved ${board.modelRun?.createdAt ? fmtTime(board.modelRun.createdAt) : ''}` : 'no model run yet: own rates'}` : ''}
+            {board ? `${board.games.length} game${board.games.length === 1 ? '' : 's'} · ${board.source === 'model' ? `model run saved ${board.modelRun?.createdAt ? fmtTime(board.modelRun.createdAt) : ''}` : 'no model run yet: own rates'}${board.calibration ? ` · chances calibrated on ${board.calibration.games} graded skater-games${board.calibration.to ? ` through ${board.calibration.to}` : ''} (hover one for the figure as stated)` : ''}` : ''}
           </div>
         </div>
         <div className="nhlx-auto-actions">
