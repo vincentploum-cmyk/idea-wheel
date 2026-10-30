@@ -205,7 +205,10 @@ config and keeps its own markets, teams, feeds and slate key:
   `fieldsSeen.unread`, shown under Data sources after the first pull. Fix the spellings there
   once a real pull shows them; never guess silently. `defenseAllowed` per position (the
   positions the Opponent rows carry), ranks 1 = most allowed, this season's rows as published (last
-  season's only before a team's first game, `held`).
+  season's only before a team's first game, `held`). **A stat a team row leaves out is 0 when other rows of
+  the pull carry it** (PropFinder drops a zero: on 2026-10-30 WSH, LAL and HOU had allowed no blocks to PGs
+  and their rows had no `blocks` key, so the board had no cell and the matchup read as no table; a stat no
+  row carries stays unread, in `fieldsSeen.unread`, never a guessed 0).
 - `injuries.js`: PropFinder's injury report and the without-teammate ("w/o") splits, pulled live with
   the slate, never from a file. The report is `injuryReport` on the games payload the site's own
   pages load (`GET /<LEAGUE>/v2?sportsbooks=…`, read from the bundle 2026-10-27: a JSON string whose

@@ -253,6 +253,22 @@ describe('NBA PropFinder mapping', () => {
     expect(d.ranks.MIA.PG.pts).toBe(2);
     expect(d.ranks.BOS.PG.pts).toBe(3);
     expect(d.ranks.NY.C.pts).toBe(1);
+    // A stat a row leaves out is 0 when other rows of the pull carry it (PropFinder drops a zero: 2026-10-30 WSH,
+    // LAL and HOU had allowed no blocks to PGs and their rows had no `blocks` key), so the cell, the combined stat
+    // and a bottom rank are there; a stat no row carries stays unread, and a row with no figures stays empty.
+    const zeroed = [
+      { code: 'BOS', stats: [{ ...row('PG', 120), steals: 2, blocks: 0.8 }] },
+      { code: 'NYK', stats: [{ ...row('PG', 150), steals: 1.5 }] },
+      { code: 'MIA', stats: [{ ...row('PG', 135), steals: 1, blocks: 0.4 }] },
+    ];
+    const z = defenseAllowed(zeroed, { season: 2026 });
+    expect(z.teams.NY.PG).toMatchObject({ stl: 1.5, blk: 0, stlBlk: 1.5 });
+    expect(z.teams.NY.PG.tov).toBeUndefined();
+    expect(z.ranks.NY.PG.blk).toBe(3);
+    expect(z.ranks.BOS.PG.blk).toBe(1);
+    expect(z.league.PG.blk).toBeCloseTo(0.4, 5);
+    expect(defenseAllowed(zeroed, { season: 2026 }).teams.BOS.PG.ftm).toBeUndefined();
+    expect(defenseAllowed([{ code: 'BOS', stats: [{ type: 'Opponent', position: 'PG', seasonYear: 2026, seasonType: 'REG', gamesPlayed: 5 }, row('C', 100)] }], { season: 2026 }).teams.BOS.PG.pts).toBeUndefined();
     // The team's own totals and what it gives up in all ride along, with the league's average of the former.
     const withTotals = teams.map((t) => ({ ...t, stats: [...t.stats, { ...row('All', t.code === 'BOS' ? 600 : 550), type: 'Team' }, { ...row('All', 560) }, { ...row('All', 580), type: 'Team', lastNGames: 10, gamesPlayed: 10 }, { ...row('All', 540), lastNGames: 10, gamesPlayed: 10 }] }));
     const wt = defenseAllowed(withTotals, { season: 2026 });
