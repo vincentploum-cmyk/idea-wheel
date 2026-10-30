@@ -5,12 +5,12 @@ played in the last 3 weeks").
 
 Reads the leak-free rows of build_rows.py (every feature from games before the row's), so each figure is what a props
 screen showed that morning: his shots, attempts, chances and ice time a game this season and over his last 5 / 10, how
-often he reached the mark, last season's rates, and the environment — what tonight's opponent gives up per skater at his
+often he reached the mark, and the environment — what tonight's opponent gives up per skater at his
 position (PropFinder's defense table, per game), its shots and goals against, the opposing goalie, home, rest.
 
 For each mark: the base rate; what the hitters looked like going in against everyone (medians); which numbers separate
-hitters best (AUC, the top fifth against the bottom fifth); the hit rate by his shot rate (the ladder); the environment
-inside each shot-rate tier (the opponent's third at his position, home, the goalie); and plain rules from a shallow tree
+hitters best (AUC, the top fifth against the bottom fifth), and the environment's numbers on their own; the hit rate by his
+shot rate (the ladder), split by how many games stand behind it; the environment inside each shot-rate tier (the opponent's third at his position, home, the goalie); and plain rules from a shallow tree
 fitted on the window's first part and checked on its last week. The rarest marks (3 goals) list the games.
 
 Usage: python3 -I tools/predictors/thresholds.py <rows.csv> <from YYYY-MM-DD> <to YYYY-MM-DD> <split YYYY-MM-DD> [--out report.md]
@@ -43,9 +43,14 @@ w['slot'] = w.p_slot_l5.round().clip(1, 4)
 # of his position's skater-games against the opponents giving up the most, tough = the least.
 w['opp_third'] = w.groupby('pos').opp_pos_sog_per.transform(lambda s: pd.qcut(s.rank(method='first', ascending=False), 3, labels=['soft', 'mid', 'tough']).astype(str))
 w['opp_third_g'] = w.groupby('pos').opp_pos_g_per.transform(lambda s: pd.qcut(s.rank(method='first', ascending=False), 3, labels=['soft', 'mid', 'tough']).astype(str))
+# The opponent's tables read against the league's at his position: a defenseman's table runs at two thirds of a
+# forward's in shots and a third in goals, so the raw figure sorts forwards from defensemen before it sorts opponents.
+for k in ('opp_pos_sog_per', 'opp_pos_g_per', 'opp_pos_sog_l5'):
+    w[k + '_rel'] = w[k] / w.groupby('pos')[k].transform('mean')
 w['gk_third'] = pd.qcut(w.gk_std_svpct.rank(method='first'), 3, labels=['weak goalie', 'mid goalie', 'strong goalie']).astype(str)
 
-# The numbers a props screen shows, by family: his own (this season and windows), last season, the environment.
+# The numbers a props screen shows, by family: his own (this season and its windows) and the environment. This season
+# alone (Vincent, 2026-10-30: "forget about last season"): the rows' last-season reads (pls_*, ls_*, opp_pls_*) stay out.
 FEATURES = [
     ('p_sog_avg', 'Shots a game, season'), ('p_sog_l5', 'Shots a game, last 5'), ('p_sog_l10', 'Shots a game, last 10'),
     ('p_icf_avg', 'Shot attempts a game (iCF), season'), ('p_iff_avg', 'Unblocked attempts a game (iFF), season'),
@@ -54,15 +59,16 @@ FEATURES = [
     ('p_s3_rate', 'Share of his games at 3+ shots'), ('p_s2_rate', 'Share of his games at 2+ shots'),
     ('p_g_avg', 'Goals a game, season'), ('p_g1_rate', 'Share of his games with a goal'), ('p_shpct', 'Shooting %, season'),
     ('p_sog_max', 'His most shots in a game this season'),
-    ('pls_sog_pg', 'Shots a game, last season'), ('pls_g_pg', 'Goals a game, last season'), ('pls_toi_pg', 'Ice time, last season'),
-    ('opp_pos_sog_per', 'Opponent: shots allowed per skater at his position'), ('opp_pos_sog_l5', 'Opponent: shots to his position a game, last 5'),
-    ('opp_sa_pg', 'Opponent: shots against a game'), ('opp_pos_g_per', 'Opponent: goals allowed per skater at his position'),
+    ('opp_pos_sog_per_rel', 'Opponent: shots allowed at his position, × the league’s'), ('opp_pos_sog_l5_rel', 'Opponent: shots to his position, last 5, × the league’s'),
+    ('opp_sa_pg', 'Opponent: shots against a game'), ('opp_pos_g_per_rel', 'Opponent: goals allowed at his position, × the league’s'),
     ('opp_ga_pg', 'Opponent: goals against a game'), ('gk_std_svpct', 'Opposing goalie: save % this season'),
     ('team_sf_pg', 'His team: shots for a game'), ('pace_game_std', 'Game pace (both teams’ shots)'), ('home', 'Home'), ('b2b', 'Back-to-back'),
 ]
 FEATURES = [(k, l) for k, l in FEATURES if k in w.columns]
 LABEL = dict(FEATURES)
-TREE_FEATURES = ['p_sog_avg', 'p_sog_l5', 'p_icf_avg', 'p_toi_avg', 'p_s3_rate', 'p_iscf_avg', 'p_ihdcf_avg', 'p_g_avg', 'pls_sog_pg', 'opp_pos_sog_per', 'opp_sa_pg', 'opp_pos_g_per', 'gk_std_svpct', 'home']
+LABEL.update({'opp_pos_sog_per': 'Opponent: shots allowed per skater at his position', 'opp_pos_g_per': 'Opponent: goals allowed per skater at his position'})
+ENV_LABELS = {l for k, l in FEATURES if k.startswith(('opp_', 'gk_', 'team_', 'pace_')) or k in ('home', 'b2b')}
+TREE_FEATURES = ['p_sog_avg', 'p_sog_l5', 'p_icf_avg', 'p_toi_avg', 'p_s3_rate', 'p_iscf_avg', 'p_ihdcf_avg', 'p_g_avg', 'opp_pos_sog_per_rel', 'opp_sa_pg', 'opp_pos_g_per_rel', 'gk_std_svpct', 'home']
 MARKS = [('sog', 3, 'shots'), ('sog', 4, 'shots'), ('sog', 5, 'shots'), ('sog', 6, 'shots'), ('g', 1, 'goal'), ('g', 2, 'goals'), ('g', 3, 'goals')]
 pct = lambda v: '—' if v is None or (isinstance(v, float) and np.isnan(v)) else f'{v * 100:.1f}%'
 f2 = lambda v: '—' if v is None or (isinstance(v, float) and np.isnan(v)) else f'{v:.2f}'
@@ -70,6 +76,7 @@ f2 = lambda v: '—' if v is None or (isinstance(v, float) and np.isnan(v)) else
 def fmt_feat(k, v):
     if k in ('p_s3_rate', 'p_s2_rate', 'p_g1_rate', 'p_shpct'): return pct(v)
     if k == 'gk_std_svpct': return f'{v:.3f}'
+    if k.endswith('_rel'): return f'× {v:.2f}'
     if k in ('home', 'b2b'): return pct(v)
     return f2(v)
 
@@ -77,7 +84,7 @@ line(f'# What it takes: 3 / 4 / 5 / 6 shots and 1 / 2 / 3 goals, {d_from} to {d_
 line()
 line(f'{len(w)} skater-games over {w.gameId.nunique()} games ({skipped_first} more were a skater’s first game this season and carry no figures). '
      'Every number on a row is what was known that morning: his own figures from his earlier games this season (the way PropFinder’s '
-     'Season / L5 / L10 read), last season’s from its box scores, and the environment from the opponent’s earlier games. '
+     'Season / L5 / L10 read) and the environment from the opponent’s earlier games this season; nothing from last season. '
      'Built from the NHL’s public box scores and play-by-play with the same definitions as the site’s stored rows; '
      'PropFinder’s own export was not read (its login is the server’s), but its columns are these same counts.')
 line()
@@ -92,7 +99,7 @@ for stat, k, unit in MARKS:
     line()
     # What the hitters looked like going in.
     rows = []
-    keys = ['p_sog_avg', 'p_sog_l5', 'p_icf_avg', 'p_iscf_avg', 'p_toi_avg', 'p_s3_rate', 'p_g_avg', 'pls_sog_pg', 'opp_pos_sog_per', 'opp_sa_pg', 'opp_pos_g_per', 'gk_std_svpct']
+    keys = ['p_sog_avg', 'p_sog_l5', 'p_icf_avg', 'p_iscf_avg', 'p_toi_avg', 'p_s3_rate', 'p_g_avg', 'opp_pos_sog_per_rel', 'opp_sa_pg', 'opp_pos_g_per_rel', 'opp_ga_pg', 'gk_std_svpct']
     for key in keys:
         hv = w.loc[y == 1, key]; av = w[key]
         rows.append([LABEL[key], fmt_feat(key, hv.median()), f'{fmt_feat(key, hv.quantile(0.25))} – {fmt_feat(key, hv.quantile(0.75))}', fmt_feat(key, av.median())])
@@ -115,6 +122,10 @@ for stat, k, unit in MARKS:
     line('**Which numbers separate them** (AUC: 0.5 is a coin flip, 1 is perfect; under 0.5 the lower number is the better sign; the hit rate in the top and bottom fifth of the number):')
     line()
     table(['Number', 'AUC', 'Top fifth', 'Bottom fifth'], [[label, f'{auc:.3f}', pct(top), pct(bot)] for _, label, auc, top, bot, n in sep[:10]])
+    env_rows = [r for r in sep if r[1] in ENV_LABELS]
+    line('**The environment alone** (the same read for tonight’s opponent, goalie, game and venue):')
+    line()
+    table(['Number', 'AUC', 'Top fifth', 'Bottom fifth'], [[label, f'{auc:.3f}', pct(top), pct(bot)] for _, label, auc, top, bot, n in env_rows])
     # The ladder by his shot rate, and the environment inside each tier.
     bins = [0, 1, 1.5, 2, 2.5, 3, 3.5, 99]
     names = ['under 1', '1 – 1.5', '1.5 – 2', '2 – 2.5', '2.5 – 3', '3 – 3.5', '3.5 +']
@@ -127,11 +138,13 @@ for stat, k, unit in MARKS:
         by = {th: (sub[third] == th) for th in ('soft', 'mid', 'tough')}
         cells = [f'{pct(yy[m].mean())} ({int(m.sum())})' if m.sum() >= 15 else f'— ({int(m.sum())})' for m in by.values()]
         home = yy[sub.home == 1].mean(); away = yy[sub.home == 0].mean()
-        rows.append([t, len(sub), pct(yy.mean()), *cells, f'{pct(home)} / {pct(away)}'])
+        few = sub.n_prior < 5
+        gp = ' / '.join(f'{pct(yy[m].mean())} ({int(m.sum())})' if m.sum() >= 15 else f'— ({int(m.sum())})' for m in (few, ~few))
+        rows.append([t, len(sub), pct(yy.mean()), gp, *cells, f'{pct(home)} / {pct(away)}'])
     env = 'shots allowed per skater at his position' if stat == 'sog' else 'goals allowed per skater at his position'
-    line(f'**By his shots a game this season** (the ladder), and inside each tier by the opponent’s third on {env} (soft = gives up the most), and home / away:')
+    line(f'**By his shots a game this season** (the ladder), split by the games behind that rate (1–4 / 5+), and inside each tier by the opponent’s third on {env} (soft = gives up the most), and home / away:')
     line()
-    table(['His shots a game', 'Games', 'Hit', 'Soft opp.', 'Mid opp.', 'Tough opp.', 'Home / away'], rows)
+    table(['His shots a game', 'Games', 'Hit', '1–4 games / 5+ games', 'Soft opp.', 'Mid opp.', 'Tough opp.', 'Home / away'], rows)
     if stat == 'g':
         # Goals: the goalie and his chances matter beside the shots.
         rows = []
@@ -187,8 +200,8 @@ for stat, k, unit in MARKS:
         hits = w[w[stat] >= k].sort_values('date')
         line('**Every one of them**, with what he carried in:')
         line()
-        table(['Date', 'Skater', 'Team', 'vs', 'Shots', 'His shots a game', 'His goals a game', 'Chances a game', 'Ice time', 'Opp. goals allowed to his position (per skater)', 'Goalie sv %'],
-              [[r.date, r['name'], r.team, r.opp, int(r.sog), f2(r.p_sog_avg), f2(r.p_g_avg), f2(r.p_iscf_avg), f2(r.p_toi_avg), f2(r.opp_pos_g_per), f'{r.gk_std_svpct:.3f}' if not np.isnan(r.gk_std_svpct) else '—'] for _, r in hits.iterrows()])
+        table(['Date', 'Skater', 'Team', 'vs', 'Shots', 'His shots a game', 'His goals a game', 'Chances a game', 'Ice time', 'Opp. shots allowed at his position', 'Opp. goals allowed at his position', 'Goalie sv %'],
+              [[r.date, r['name'], r.team, r.opp, int(r.sog), f2(r.p_sog_avg), f2(r.p_g_avg), f2(r.p_iscf_avg), f2(r.p_toi_avg), fmt_feat('opp_pos_sog_per_rel', r.opp_pos_sog_per_rel), fmt_feat('opp_pos_g_per_rel', r.opp_pos_g_per_rel), f'{r.gk_std_svpct:.3f}' if not np.isnan(r.gk_std_svpct) else '—'] for _, r in hits.iterrows()])
 
 text = '\n'.join(out_lines)
 if opts.get('out'):
