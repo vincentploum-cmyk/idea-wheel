@@ -621,7 +621,12 @@ config and keeps its own markets, teams, feeds and slate key:
   `NHL_ACTIONS_TOKEN`, so a refresh takes the one path it always took; one job at a time (a pull and a model
   run each need most of the memory), `gc()` between calls. Each run is recorded in `meta/scheduler.json` (slot,
   attempts, the calls with status, time and the reply's start), read past the cache and written only when a job
-  runs (a write bumps the store's revision); a claim settles two processes overlapping in a deploy.
+  runs (a write bumps the store's revision). **What the process wrote is its truth** (`local`, merged with the
+  stored copy job by job, the newer record kept, `mergeStates`): Supabase Storage hands back the copy from before a
+  write for a while, even read past the cache. On 2026-10-30, its first morning, that made the scheduler step aside
+  from its own claim (re-read two seconds after writing it: four jobs ran on the 15-minute retry, 16 minutes late)
+  and let the NFL late run's write wipe the NHL late run's record, so the backstop ran that job again at 7 AM; the
+  claim's re-read is gone (one instance on Render; a slot run twice in a deploy's overlap is one extra refresh).
   `GET /api/site/scheduler` (admin or token) lists each job's last and next slot and its last run.
 - The GitHub workflows (`nba-data.yml`, `nfl-data.yml`, `nhl-data.yml`) stay as the backstop: a scheduled run
   names its job from the cron that fired it (`github.event.schedule`, no longer the UTC hour it happened to run
