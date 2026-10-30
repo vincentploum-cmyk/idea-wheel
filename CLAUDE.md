@@ -972,7 +972,28 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   players, lone first names included) is applied onto the newest full lines tweet before it
   (`applyLineChanges`: each group lands on the line it shares players with, stayers keep their
   slots, newcomers fill the vacated slots in the order named, a lone move swaps); the read
-  carries the change tweet's time and link (`meta.changed`, `meta.linesFrom`).
+  carries the change tweet's time and link (`meta.changed`, `meta.linesFrom`). **Lines posted as a picture** are read
+  off the photo (`lib/nhl-data/tweet-pictures.js`; Vincent, 2026-10-30, of @NJDevils' handwritten notebook page:
+  "how can we make sure pictures on X are read by our website for the lineups?" — that page then held 29 picture
+  tweets against 7 with text lines, the newest text lines thirteen days old): the block's status id goes to X's
+  public syndication endpoint (`cdn.syndication.twimg.com/tweet-result?id&token`, `syndicationToken`; it resolves a
+  repost to the original and lists `photos`), each photo (two at most) is handed to Claude through the SDK
+  (`readPhoto`, `ANTHROPIC_API_KEY` on Render, `claude-opus-5-5` unless `NHL_LINES_VISION_MODEL`, the roster by
+  position group in the prompt, "NONE" when the photo shows no lines) and the answer, normalised to one unit a line
+  (`transcriptionText`), goes through `parseLineTweet` with the roster like a text tweet — the same three-lines /
+  two-hits rule, so a misread never dresses a stranger. `pictureCandidates` picks the picture tweets (a t.co link,
+  no lines in the text) newer than the newest text lines tweet inside the reader's date window, three a team;
+  `pictureLinesFor` reads them newest first until one holds lines, each tweet once — the record is stored at
+  `data/lineups/pictures/<id>.json` (`status` lines / none / nophoto / error, the transcription, the photo URL, the
+  model; an error is retried after ten minutes), `MAX_READS_PER_RUN` = 12 model calls a run — and
+  `latestTeamLines(html, roster, { pictures })` reads the tweet from the transcription, the read carrying
+  `meta.picture` { photo, text, model } (the position snapshot's `meta.picture`, the rink's hover says "read off the
+  tweet's picture", `gdtSummary` "· from the picture", a team without lines says what the pictures gave). All three
+  paths read them (`ingestGdtPages`, `settleGdtPages`, the direct `fetchGdtLines` through `fetchTeamLines`'s
+  `pictures` resolver), the refresh response carries `pictures` { enabled, model, reads, teams }. Tesseract read the
+  notebook as "© BUD, Gritsyus5-u ESE i=", so the cheat sheets' OCR is not the tool for handwriting. `npm run
+  lines:picture -- <tweet url> NJD` reads one tweet by hand against the NHL API's roster (the first thing to run once
+  the key is on Render). `__tests__/nhl-tweet-pictures.test.js`.
   gamedaytweets.com challenges cloud addresses (Cloudflare "Just a moment": Render and the GitHub
   runner alike), so its pages are fetched elsewhere and posted: the Mac sync (`tools/mac-sync/nhl-sync.sh`,
   hourly and every 15 minutes from an hour before a game until ten minutes after, sync token, multipart `date` + one file per team code) and both workflows via
