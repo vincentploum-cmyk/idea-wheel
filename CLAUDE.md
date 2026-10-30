@@ -595,6 +595,7 @@ config and keeps its own markets, teams, feeds and slate key:
   (`firstBasketOdds` in `lib/picks/propfinder.js`: the items naming a first basket / first field goal, not a team's or
   first points, the best price as `firstBasket` on the player, never a market), with the edge; the score is the chance
   × 4 on 0–100. Once stored, who scored first, the first points and the tip are on the game and the rows are graded.
+- `tools/check-defensive-matchups.mjs <export.csv> <picks.json>` compares PropFinder's Defensive Matchups page export (what each team allows per position, with ranks) against the board's `sides[].allowed` table in a saved `GET /api/nba/picks?date` payload, cell by cell; the export itself is never ingested (its "OPPOSING PLAYER" header is no player column, the parser reads zero rows and the store rejects it).
 - Routes: `GET /api/nba/picks?date`, `GET /api/nba/shuffle?date&market`, `GET /api/nba/scorecard?from&to`, `GET|POST|DELETE /api/nba/sheets?date`,
   `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`,
   `GET|POST /api/nba/injuries?date` (the admin's injury overrides).
