@@ -726,6 +726,14 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   model's Stage 1 steps (−6% at most for a tight defense) lose to the fitted elasticity (deviance 1.47 vs 1.27 this
   season) and its team goals read loses to the league average early; the script read at the skater level puts the
   Best bets rows from 62% said → 55% hit to 60% → 58% (goals 40% → 35% to 39% → 39%). Proposals there; nothing changed.
+- What it takes (`docs/audits/2026-10-30-nhl-what-it-takes.md`, `tools/predictors/thresholds.py`; Vincent, 2026-10-30:
+  what a skater needs in stats and environment to get 3 / 4 / 5 / 6 shots and 1 / 2 / 3 goals, the last three weeks).
+  5,159 skater-games, Oct 9–29, rules fitted on the first two weeks and checked on the third. Base rates 21.6% / 9.7% /
+  4.1% / 1.7% for 3+ … 6+ SOG, 15.1% / 2.0% / 13 games for 1+ … 3+ goals. At 3.5+ shots a game this season: 3+ 52%,
+  4+ 34%, 5+ 22%, 6+ 11.5%, 1+ goal 33%. Last season's rate separated every mark best (AUC 0.73–0.84), ahead of this
+  season's 2–14 games; goals follow scoring chances (iSCF); the opponent's third at his position and the goalie's save %
+  moved the rates a few points with no steady direction, home a little. The rare marks' rules fell back to the base rate
+  on the check week. Descriptive; nothing changed.
 
 ## Canonical locations
 
