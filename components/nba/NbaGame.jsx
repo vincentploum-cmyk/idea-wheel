@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { GameCharacteristics } from '@/components/nhl/Characteristics';
+import GameProfile from './NbaProfile';
 import { GroupTable, teamMark, expectedPill, playLabel } from '@/components/picks/Board';
 import CourtPair, { AllowedTable, zoneTone, envPos, windowsOf } from './NbaCourt';
 import { useNbaPlayerCard } from './NbaPlayerCard';
@@ -16,7 +17,11 @@ import { useNbaPlayerCard } from './NbaPlayerCard';
 // 2026-10-30: Vincent, after the courts gained the shuffle bar and the projections, "I don't see the courts nor the
 // shuffle bars in the best plays tab". Now an opened game shows the characteristics card and then the courts (each with
 // the out lines, PropFinder's table, the bar, every player's projections and the Tonight table); the team columns and
-// the five group tables sit behind the switch.
+// the five group tables sit behind the switch. — And since that night (Vincent: "too many clicks. I need the games
+// listed first along with the best bets … replace the characteristics with a summary from PropFinder and cheat sheet
+// data like firsthalfscore.com"): the games come before the ranked list, open by default (the board's Collapse all /
+// Expand all), the game profile table (NbaProfile.jsx) stands where the characteristics card was (the card stays as
+// the fallback for a game without a profile), and who is out sits under each court.
 
 const STATS = [['pts', 'PTS'], ['reb', 'REB'], ['ast', 'AST'], ['tpm', '3PM'], ['pra', 'PRA']];
 const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
@@ -89,8 +94,10 @@ function TeamColumn({ side, sport, final, metric, season }) {
 }
 
 /** A game folded to one line; pressed, the characteristics and both courts, the team columns and the tables behind a switch. */
-export default function GameFold({ g, best = [], sport, metric, onMetric }) {
-  const [open, setOpen] = useState(false);
+export default function GameFold({ g, best = [], sport, metric, onMetric, open: openProp = null, onToggle = null }) {
+  const [openOwn, setOpenOwn] = useState(false);
+  const open = openProp ?? openOwn;
+  const setOpen = (fn) => { const next = typeof fn === 'function' ? fn(open) : fn; if (onToggle) onToggle(next); else setOpenOwn(next); };
   const [more, setMore] = useState(false);
   const mine = best.filter((r) => r.game === g.id);
   const top = mine[0] || null;
@@ -113,7 +120,7 @@ export default function GameFold({ g, best = [], sport, metric, onMetric }) {
       </button>
       {open ? (
         <div className="ir-gf-body" id={bodyId}>
-          {g.characteristics ? <GameCharacteristics game={g} renderTeam={teamMark(sport)} pill={expectedPill(g, sport)} /> : null}
+          {g.profile ? <GameProfile g={g} sport={sport} /> : g.characteristics ? <GameCharacteristics game={g} renderTeam={teamMark(sport)} pill={expectedPill(g, sport)} /> : null}
           <CourtPair g={g} metric={metric} onMetric={onMetric} sport={sport} />
           <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-gf-more" aria-expanded={more} onClick={() => setMore((v) => !v)}>{more ? 'Hide the team columns and the tables' : 'Show the team columns and the tables'}</button>
           {more ? (
