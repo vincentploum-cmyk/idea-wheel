@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import Board from '@/components/picks/Board';
+import { BoardNotes } from '@/components/picks/Board';
 import Shuffle from '@/components/picks/Shuffle';
+import SlateList from '@/components/picks/SlateList';
 import { GROUPS, MARKETS, SHUFFLE_MARKETS, labelOf } from '@/lib/nba/markets';
 import { teamLogo, teamName } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
-import CourtPair, { COURT_METRICS } from './NbaCourt';
+import GameFold from './NbaGame';
 import { NbaPlayerCardProvider, useNbaPlayerCard } from './NbaPlayerCard';
 
 const SPORT = { groups: GROUPS, teamLogo, teamName, headshotUrl, totalStat: 'pts', totalUnit: 'points' };
@@ -28,21 +29,33 @@ export function NbaShuffle({ date }) {
   );
 }
 
-/** The night's board: per game the two courts (the matchup view) over the five tables. */
-export default function NbaBoard({ board }) {
+/** The slate: every play ranked, then the games folded to a line each; needs an NbaPlayerCardProvider above it. */
+function NbaSlate({ board }) {
+  const open = useNbaPlayerCard();
   const [metric, setMetric] = useState('pts');
+  if (!board?.games?.length) return <div className="nhlx-empty">No games on this date.</div>;
+  // A row of the list opens the card with the side's entry for the player (his ladders and projection), as a court chip does.
+  const openRow = (r) => {
+    const side = board.games.find((g) => g.id === r.game)?.sides?.[r.team];
+    open({ key: r.key, player: side?.players?.find((p) => p.key === r.key) || r, team: r.team, opp: r.opp, venue: r.venue, market: r.market });
+  };
+  return (
+    <>
+      <SlateList board={board} sport={SPORT} onOpen={openRow} />
+      <section className="ir-gf-list" aria-label="Games">
+        <div className="nhlx-pfd-head"><b>Games</b><small className="nhlx-auto-meta">open a game for both rosters against both defenses; the courts and the tables sit behind a switch inside it</small></div>
+        {board.games.map((g) => <GameFold key={g.id} g={{ ...g, season: board.season }} best={board.best} sport={SPORT} metric={metric} onMetric={setMetric} />)}
+      </section>
+      <BoardNotes notes={board.notes} />
+    </>
+  );
+}
+
+/** The night's board: the slate's plays in one ranked list over the games, each folded to a line (2026-10-30). */
+export default function NbaBoard({ board }) {
   return (
     <NbaPlayerCardProvider date={board?.date}>
-      {board?.games?.length ? (
-        <div className="ir-court-switch nhlx-rk-toggle">
-          <small>Courts</small>
-          <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Court metric">
-            {COURT_METRICS.map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={metric === key} className={`nhlx-tab${metric === key ? ' is-active' : ''}`} onClick={() => setMetric(key)}>{label}</button>)}
-          </div>
-          <span className="nhlx-rk-toggle-note">One stat for every court (the tabs above each court change it too). Zones: what the opponent gives up to that position over the window picked above the court (green = the most permissive third of the league, red = the stingiest). Chips: what the player can get tonight (his rate × that environment, green when over the line), the book’s main line and the chance. Under each court, per player and market: what he is expected to get tonight, his floor–ceiling, and the book’s line with his chance to clear it.</span>
-        </div>
-      ) : null}
-      <Board board={board} sport={SPORT} empty="No games on this date." before={(g) => <CourtPair g={{ ...g, season: board?.season }} metric={metric} onMetric={setMetric} sport={SPORT} />} />
+      <NbaSlate board={board} />
     </NbaPlayerCardProvider>
   );
 }

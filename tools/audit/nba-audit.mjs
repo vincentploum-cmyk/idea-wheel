@@ -19,7 +19,8 @@ import path from 'node:path';
 import { parseSummary, parseScoreboard, derived } from '../../lib/nba/espn.js';
 import { teamAbbrFromText } from '../../lib/nba/teams.js';
 import { defenseAllowed } from '../../lib/nba/propfinder-nba.js';
-import { nbaBoard, COCKTAIL, LADDER_MARKETS } from '../../lib/nba/picks.js';
+import { nbaBoard, COCKTAIL, LADDER_MARKETS, SHUFFLE_MARKETS } from '../../lib/nba/picks.js';
+import { makeShuffle } from '../../lib/picks/shuffle.js';
 import { gradeBoard, gradePredictors, summarize, asOf, etDate, PREDICTORS } from '../../lib/picks/scorecard.js';
 import { normName } from '../../lib/nhl-data/names.js';
 import { OWN_WEIGHTS, ENV_WEIGHT, upperTail } from '../../lib/picks/projection.js';
@@ -41,6 +42,7 @@ const { buildBoard, ownWindows, statOf, actualFor } = nbaBoard(CK);
 // The folders: this season's scoreboards and box scores, last season's game logs (defaults under --raw).
 const DAYS = arg('--days', path.join(RAW, 'days')); const GAMES = arg('--games', path.join(RAW, 'games')); const LOGS = arg('--gamelogs', path.join(RAW, 'gamelogs'));
 const TAG = arg('--tag', '');
+const DUMP = process.argv.includes('--board');   // also write the slate's board and its shuffle payloads as JSON (the page's data, for a look at the views)
 const STATS = ['pts', 'reb', 'ast', 'tpm', 'pra'];
 const r1 = (v) => (v == null ? null : Math.round(v * 10) / 10);
 const r2 = (v) => (v == null ? null : Math.round(v * 100) / 100);
@@ -224,6 +226,12 @@ for (const slate of slates.filter((d) => d >= from)) {
   const board = buildBoard({ season: SEASON, date: slate, games, sheets: [], pf: cut, results });
   const logsOf = new Map(cut.data.players.map((x) => [x.key, x.games || []]));
   boards[slate] = board;
+  if (DUMP && slate === DATE) {
+    const sh = makeShuffle({ board: nbaBoard(CK), markets: SHUFFLE_MARKETS });
+    const shuffle = Object.fromEntries(SHUFFLE_MARKETS.map(({ market }) => [market, sh.shuffleOf({ market, board, pf: cut, season: SEASON, results })]));
+    fs.mkdirSync(OUT, { recursive: true });
+    fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-board.json`), JSON.stringify({ board: { ...board, date: slate }, shuffle }));
+  }
   const g = gradeBoard(board, { key: slate, label: slate, actualOf });
   g.pred = gradePredictors(board, cut, { key: slate, season: SEASON, actualOf, ownWindows });
   graded.push(g);

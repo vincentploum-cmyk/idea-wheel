@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { heightsOf, lineOf, readAt, survivorsAt, fallenAt, curveOf, thinsAt, returnOf } from '../lib/picks/shuffle';
+import { heightsOf, lineOf, readAt, survivorsAt, fallenAt, curveOf, thinsAt, linesAt, pAt, returnOf } from '../lib/picks/shuffle';
 import { buildBoard as nbaBoard, ladderOf as nbaLadder, shuffleOf as nbaShuffle, SHUFFLE_MARKETS as NBA_BARS, envPosFor } from '../lib/nba/picks';
 import { buildBoard as nflBoard, shuffleOf as nflShuffle, SHUFFLE_MARKETS as NFL_BARS, LADDER_MARKETS as NFL_LADDERS } from '../lib/nfl/picks';
 import { MARKETS as NFL_MARKETS } from '../lib/nfl/markets';
@@ -110,6 +110,32 @@ describe('the NBA shuffle', () => {
     expect(r28.cleared).toEqual({ of: 10, n: 4 });
     expect(r28.got).toBeUndefined();
     expect(readAt(brown, sh.heights, 999)).toBeNull();
+  });
+  test('the shuffle turned over: each player’s highest line at the chance, the highest first', () => {
+    for (const chance of [0.5, 0.7, 0.9]) {
+      const lines = linesAt(sh.players, sh.heights, chance);
+      for (const x of lines) {
+        expect(x.height).toBe(thinsAt(x.player, sh.heights, chance));
+        expect(x.read.p).toBeGreaterThanOrEqual(chance);
+        expect(x.read).toEqual(readAt(x.player, sh.heights, x.height));
+        const i = sh.heights.indexOf(x.height);
+        for (let j = i + 1; j < sh.heights.length; j++) expect(pAt(x.player, sh.heights, j) ?? 0).toBeLessThan(chance);   // nothing higher holds
+        if (x.next) expect(x.next).toEqual({ height: sh.heights[i + 1], p: pAt(x.player, sh.heights, i + 1) });
+      }
+      for (let k = 1; k < lines.length; k++) expect(lines[k].height).toBeLessThanOrEqual(lines[k - 1].height);
+      // Everyone with a height at the chance is listed, nobody else.
+      expect(lines.map((x) => x.player.key).sort()).toEqual(sh.players.filter((p) => thinsAt(p, sh.heights, chance) != null).map((p) => p.key).sort());
+    }
+    // A lower chance reads a higher line, never a lower one.
+    const at = (chance) => Object.fromEntries(linesAt(sh.players, sh.heights, chance).map((x) => [x.player.key, x.height]));
+    const lo = at(0.5); const hi = at(0.8);
+    for (const [key, h] of Object.entries(hi)) expect(lo[key]).toBeGreaterThanOrEqual(h);
+    // By edge: the rows with a price first, the best edge on top.
+    const priced = { ...sh.players[0], key: 'priced', player: 'Priced' };
+    const bare = { ...sh.players[0], key: 'bare', player: 'Bare', book: [], exp: sh.players[0].exp + 10 };
+    const byEdge = linesAt([bare, priced], sh.heights, 0.5, 'blend', { sort: 'edge' });
+    expect(byEdge.map((x) => x.player.key)).toEqual(byEdge[0].read.edge == null ? ['bare', 'priced'] : ['priced', 'bare']);
+    expect(byEdge[byEdge.length - 1].read.edge ?? null).toBeNull();
   });
   test('survivors, the fallen and the curve at a floor', () => {
     const floor = 0.35;

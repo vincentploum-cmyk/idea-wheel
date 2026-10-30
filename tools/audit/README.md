@@ -65,7 +65,9 @@ python3 -I tools/audit/nba_ab.py .nhl-data/audit/ab/nba-2026-10-27-old-summary.j
 before it) or a JSON object (`'{"factorMax":1.15}'` on top of the defaults, so pass the whole
 cocktail to vary one setting; `"scope": "all" | "regular" | "season"` sets the games his windows
 read); `--season` / `--days` / `--games` / `--gamelogs` point the replay at another season, `--tag`
-names its files, `--from` the first night graded (the season's opening night grades it too). The last season's replay takes about five minutes. The
+names its files, `--from` the first night graded (the season's opening night grades it too), `--board` also writes
+the `--date` slate's board and its shuffle payloads as `nba-<date><tag>-board.json` (the pages' data: serve it in
+place of `/api/nba/picks` and `/api/nba/shuffle` to look at the views on a replayed night). The last season's replay takes about five minutes. The
 first run is written up in `docs/audits/2026-10-28-nba-cocktail.md`.
 
 ## NBA: the projections stat by stat (`nba_stats.py`)

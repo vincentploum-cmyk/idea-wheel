@@ -2,14 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fmtOdds } from '@/lib/nfl/odds';
-import { survivorsAt, fallenAt, curveOf, READ_FROM, bestReadFrom, readFromOf, BEST_MIN } from '@/lib/picks/shuffle';
+import { survivorsAt, fallenAt, curveOf, linesAt, thinsAt, READ_FROM, bestReadFrom, readFromOf, BEST_MIN } from '@/lib/picks/shuffle';
 import { blendText, dampText, pullText } from '@/lib/picks/projection';
 
 // The shuffle (each board's Shuffle tab): a bar per stat. Raise it and the field falls away; what
 // stays are the players whose chance of clearing the bar holds over the floor, each with his chance
 // there, how often he has actually cleared it, the book's rung at or above the bar with its price and
-// edge, and his projection for the game (the board's). One request per market (/api/<sport>/shuffle),
-// every bar move local; the tab mounts the panel on its first visit and keeps it.
+// edge, and his projection for the game (the board's). Turned over ("Pick the chance", the panel's first view since
+// 2026-10-30): the chance is set and every player shows the highest line he clears at it (`linesAt`), with the book's
+// rung there. One request per market (/api/<sport>/shuffle), every bar move local; the tab mounts the panel on its
+// first visit and keeps it.
 //   sport: { api, query, markets: [{ market, label, unit, min, max, step, start }], teamLogo, headshotUrl, withDay }
 //   onOpen(player, market): open the player's card (the NBA), optional.
 
@@ -17,6 +19,8 @@ const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
 const fmtStart = (iso, withDay) => (iso ? new Date(iso).toLocaleString(undefined, withDay ? { weekday: 'short', hour: 'numeric', minute: '2-digit' } : { hour: 'numeric', minute: '2-digit' }) : '');
 const FLOORS = [0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.6];
+const MODES = [['chance', 'Pick the chance'], ['line', 'Pick the line']];
+const SORTS = [['line', 'Highest line'], ['edge', 'Best edge']];
 const FELL_MAX = 14;
 const cardCache = new Map();   // scorecard url → promise of its predictors: one read a session per sport and season
 const readLabel = (k) => READ_FROM.find(([key]) => key === k)?.[1] || k;
@@ -58,11 +62,43 @@ function Curve({ curve, height, onPick }) {
   );
 }
 
+/** The figures behind his projection, for the hovers. */
+const windowsText = (p) => `Spread ${num(p.sd)} over his games · last 5 ${num(p.own?.l5)} · last 10 ${num(p.own?.l10)} · season ${num(p.own?.season)} (${p.own?.seasonN ?? 0} games) · vs ${p.opp} ${num(p.own?.h2h)} (${p.own?.h2hN ?? 0} meetings) · blend ${num(p.own?.blend)}`;
+
+/** A shuffle row's cells, the same in both directions; `lineCell` (the chance mode's line) goes in front of the chance, `where` names the height in the hovers. */
+function RowCells({ p, r, unit, teamLogo, headshotUrl, withDay, showCentre, final, lineCell = null, where = 'the bar' }) {
+  const windows = windowsText(p);
+  const tone = toneOf(p.spot?.rank, p.spot?.count);
+  return (
+    <>
+      <td>
+        <div className="nhlx-db-player">
+          {p.espnId ? <img src={headshotUrl(p.espnId)} alt="" width="30" height="30" loading="lazy" /> : <img src={teamLogo(p.team)} alt="" width="30" height="30" loading="lazy" className="ir-nfl-logo" />}
+          <span><b>{p.player}{p.confirmed ? <small className="ir-sh-check" title={`On the cheat sheet: ${p.sheet.join(', ')}`}> ✓</small> : null}</b><small>{p.team}{p.slot && p.depth ? ` · ${p.slot}${p.depth}` : p.pos ? ` · ${p.pos}` : ''} · {p.venue === 'H' ? 'vs' : 'at'} {p.opp}{p.start ? ` · ${fmtStart(p.start, withDay)}` : ''}</small></span>
+        </div>
+      </td>
+      <td><span className={`ir-health is-${(p.health || 'In').toLowerCase()}`} title={p.injury ? `${p.injury}${p.injuryDetail ? ` · ${p.injuryDetail}` : ''}${p.injuryFrom === 'override' ? ' · marked by hand on the card' : p.injuryFrom === 'depth' ? ' · the depth chart’s flag' : p.injuryFrom === 'report' ? ` · PropFinder’s report${p.injuryDate ? `, ${String(p.injuryDate).slice(0, 10)}` : ''}` : ''}` : p.injuryStale ? `Listed ${p.injuryStale.status} on ${String(p.injuryStale.date).slice(0, 10)} but played on ${p.injuryStale.playedOn}: left aside` : 'Nothing listed'}>{p.health || 'In'}</span></td>
+      <td>{p.spot?.rank ? <span className={`ir-spot is-${tone}`} title={`${p.opp} gives up ${p.spot.value != null ? `${num(p.spot.value)} ${unit} a game` : `the #${p.spot.rank} most ${unit}`} to ${p.spot.pos}s, #${p.spot.rank} of ${p.spot.count}${p.spot.league != null ? ` (the league ${num(p.spot.league)})` : ''} on ${p.spot.held ? `last season’s table (${p.opp} has no game this season yet)` : 'this season’s table'}, the table the board reads: the court’s other tabs compare against it${p.matchupFrom?.from === 'blend' ? ` · the cheat sheet’s tile #${p.spot.sheetRank} × ${num(p.matchupFrom.sheet, 3)} in full, PropFinder’s × ${num(p.matchupFrom.pf, 3)} beside it by its games${p.matchupFrom.weight != null ? ` (at ${p.matchupFrom.weight} for ${p.matchupFrom.gp} games)` : ''}` : p.matchupFrom?.from === 'sheet' ? ' · the cheat sheet’s tile alone' : ''}${p.matchup != null ? ` · × ${num(p.matchup, 2)} on his rate${dampText(p.matchupFrom)}` : ''}`}>#{p.spot.rankBlend ?? p.spot.rank} {p.spot.pos}</span> : <span className="ir-spot is-none">no table</span>}{p.matchup != null ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }}>× {num(p.matchup, 2)}</small> : null}{p.teamFactor != null && p.teamFactor !== 1 ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }} title={`${p.team}’s players’ own rates add up to more than the team is expected to get tonight: × ${num(p.teamFactor, 2)} on every projection of the side, down to the total (a ceiling, never a lift)`}>team × {num(p.teamFactor, 2)}</small> : null}</td>
+      {showCentre ? <td className="is-num" title={windows}><b>{num(r.centre)}</b></td> : null}
+      {lineCell}
+      <td className="is-num is-lead" title={`Model tail ${pct(r.model)} · hit rate ${pct(r.emp)} over ${r.n} games`}><b>{pct(r.p)}</b><small>{r.fair} fair</small></td>
+      <td className="small">{r.cleared ? `${r.cleared.n} of last ${r.cleared.of}` : '—'}{r.season != null ? <small className="nhlx-auto-meta"> · {pct(r.season)} season</small> : null}</td>
+      <td className="is-num" title={r.book ? `${r.exact ? `The book’s rung at ${where}` : `The nearest rung above ${where}`}: ${r.book.main ? 'the main line, ' : ''}${r.book.books} book${r.book.books === 1 ? '' : 's'} · its chance ${pct(r.book.p)}` : `No rung at or above ${where}`}>{r.book ? <><b>{r.exact ? '' : '↑ '}o{r.book.line}</b><small>{fmtOdds(r.book.odds)}{r.book.main ? ' · main' : ''}</small></> : <small>no line</small>}</td>
+      <td className={`is-num${r.edge != null && r.edge > 0 ? ' is-best' : ''}`}>{r.edge == null ? '—' : <b>{r.edge >= 0 ? '+' : '−'}{Math.abs(Math.round(r.edge * 100))} pts</b>}</td>
+      <td className="is-num" title={`The board’s projection${p.volume ? ` · ${num(p.volume.att)} attempts a game at ${num(p.volume.pct * 100)}% (this season ${p.volume.pctSeason != null ? num(p.volume.pctSeason * 100) : '—'}% on ${p.volume.attN}, his long run ${num(p.volume.pctLong * 100)}%)` : ''}${p.minutes && p.minutes.factor !== 1 ? ` · ${num(p.minutes.tonight)} minutes tonight over the ${num(p.minutes.base)} behind his rate (× ${num(p.minutes.factor, 3)}${p.minutes.vacated ? `, +${num(p.minutes.vacated)} with ${(p.minutes.from || []).join(' + ')} out` : ', his last five'})` : ''}${p.lift ? ` · +${num(p.lift)} ${unit} of ${(p.liftFrom || []).join(' + ')}’s production handed to him (out tonight)` : ''}${p.pull ? ` · his read${pullText(p.pull)}` : ''} · ${windows}`}><b>{num(p.exp)}</b><small>{unit}{p.floor != null ? ` · ${p.floor}–${p.ceiling}` : ''}{p.lift ? <span className="ir-lift" title={`+${num(p.lift)} with ${(p.liftFrom || []).join(' + ')} out`}> ↑</span> : null}{p.minutes && p.minutes.factor !== 1 ? <span className={p.minutes.factor > 1 ? 'ir-lift' : 'ir-dip'} title={`${num(p.minutes.tonight)} minutes tonight over the ${num(p.minutes.base)} behind his rate: × ${num(p.minutes.factor, 3)}`}> {num(p.minutes.tonight)}′</span> : null}</small></td>
+      {final ? <td className="is-num nhlx-pk-got">{r.got === undefined ? <small>—</small> : r.got === null ? <small>DNP</small> : <><b>{r.got}</b><small>{unit}</small></>}</td> : null}
+    </>
+  );
+}
+
 export default function Shuffle({ sport, onOpen = null }) {
   const { api, query, markets, teamLogo, headshotUrl, withDay = false } = sport;
   const [active, setActive] = useState(markets[0].market);
   const [bars, setBars] = useState(() => Object.fromEntries(markets.map((m) => [m.market, m.start])));
   const [floor, setFloor] = useState(0.35);
+  const [mode, setMode] = useState('chance');   // 'chance': the chance set, each player's highest line at it; 'line': the bar set, who clears it
+  const [chance, setChance] = useState(0.7);
+  const [sortBy, setSortBy] = useState('line');
   const [picked, setPicked] = useState(null);   // the tab pressed this session; until then the panel follows the scorecard's verdict
   const [card, setCard] = useState(null);   // the season's scorecard on the reads: { best, n, scores, ranked }, null until read
   const from = readFromOf(picked, card);
@@ -133,16 +169,34 @@ export default function Shuffle({ sport, onOpen = null }) {
   const fromLabel = READ_FROM.find(([k]) => k === from)?.[1] || from;
   // The board's projection is the Projected column; the centre column shows only when the chance is read from somewhere else.
   const showCentre = from !== 'blend';
+  // The chance mode: every player's highest line at the chance, and how many have one per market.
+  const lines = useMemo(() => (d && mode === 'chance' ? linesAt(d.players, heights, chance, from, { sort: sortBy }) : []), [d, heights, chance, from, sortBy, mode]);
+  const linedAt = (m) => { const dd = data[m]; return dd ? dd.players.filter((p) => thinsAt(p, dd.heights, chance, from) != null).length : null; };
+  const activeCfg = markets.find((m) => m.market === active);
+  const chancePct = Math.round(chance * 100);
 
   return (
     <section className="ir-sh" aria-label="Shuffle">
       <div className="ir-sh-head">
         <div>
-          <p className="nhlx-auto-meta">Set a height per stat; the list keeps the players whose chance of clearing it holds over the floor. The chance is his ladder read at that line (half his own distribution over it, centred on tonight’s projection with the matchup inside it, half how often he actually cleared it); the price is the book’s rung at or above the bar.</p>
+          <div className="nhlx-tabs nhlx-rk-tabs ir-sh-mode" role="tablist" aria-label="Shuffle by">
+            {MODES.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={mode === k} className={`nhlx-tab${mode === k ? ' is-active' : ''}`} onClick={() => setMode(k)}>{l}</button>)}
+          </div>
+          {mode === 'chance'
+            ? <p className="nhlx-auto-meta">Set the chance; every player shows the highest line he clears at it, with the book’s rung there, its price and the edge. The chance is his ladder read at that line (his own distribution over it, centred on tonight’s projection with the matchup inside it, beside how often he actually cleared it).</p>
+            : <p className="nhlx-auto-meta">Set a height per stat; the list keeps the players whose chance of clearing it holds over the floor. The chance is his ladder read at that line (half his own distribution over it, centred on tonight’s projection with the matchup inside it, half how often he actually cleared it); the price is the book’s rung at or above the bar.</p>}
         </div>
-        <div className="ir-sh-floor">
-          <label>Keep players at <select className="nhlx-input nhlx-input-sm" value={floor} onChange={(e) => setFloor(Number(e.target.value))} aria-label="The floor">{FLOORS.map((f) => <option key={f} value={f}>{Math.round(f * 100)}%</option>)}</select> or better</label>
-        </div>
+        {mode === 'chance' ? (
+          <div className="ir-sh-floor ir-sh-chance">
+            <label htmlFor="ir-sh-chance">Chance at least</label>
+            <input id="ir-sh-chance" type="range" min={0.5} max={0.9} step={0.05} value={chance} onChange={(e) => setChance(Number(e.target.value))} />
+            <b>{chancePct}%</b>
+          </div>
+        ) : (
+          <div className="ir-sh-floor">
+            <label>Keep players at <select className="nhlx-input nhlx-input-sm" value={floor} onChange={(e) => setFloor(Number(e.target.value))} aria-label="The floor">{FLOORS.map((f) => <option key={f} value={f}>{Math.round(f * 100)}%</option>)}</select> or better</label>
+          </div>
+        )}
       </div>
       <div className="nhlx-rk-toggle ir-sh-from">
           <small>Read from</small>
@@ -160,6 +214,62 @@ export default function Shuffle({ sport, onOpen = null }) {
           <span className="nhlx-rk-toggle-note">{readNote(card, from)} The tab sets the centre of each player’s distribution; the hit-rate half of the chance stays as it is.</span>
         </div>
       {err ? <div className="nhlx-alert" style={{ marginTop: 12 }}>{err}</div> : null}
+      {mode === 'chance' ? (
+        <>
+          <div className="nhlx-tabs nhlx-rk-tabs ir-sh-markets" role="tablist" aria-label="Stat">
+            {markets.map((m) => {
+              const n = linedAt(m.market);
+              return <button key={m.market} type="button" role="tab" aria-selected={m.market === active} className={`nhlx-tab${m.market === active ? ' is-active' : ''}`} onClick={() => setActive(m.market)} title={n == null ? 'reading…' : `${n} players clear ${m.min}+ ${m.unit} at ${chancePct}% or better`}>{m.label}<i>{n ?? (busy === m.market ? '…' : '—')}</i></button>;
+            })}
+          </div>
+          {d ? (
+            <>
+              <div className="nhlx-pfd-head" style={{ marginTop: 14 }}>
+                <b>At {chancePct}%: each player’s highest {activeCfg?.label.toLowerCase()} line</b>
+                <small className="nhlx-auto-meta">{lines.length} of {d.players.length} players clear {activeCfg?.min}+ {unitOf(active)} at {chancePct}% or better · read from {fromLabel.toLowerCase()} · the book column is the rung at his line, or the nearest one above it{onOpen ? ' · click a row for the card' : ''}</small>
+                <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Sort">
+                  {SORTS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={sortBy === k} className={`nhlx-tab${sortBy === k ? ' is-active' : ''}`} onClick={() => setSortBy(k)}>{l}</button>)}
+                </div>
+              </div>
+              <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
+                <table className="nhlx-db-table nhlx-pk-table ir-sh-table">
+                  <thead>
+                    <tr>
+                      <th>Player</th>
+                      <th title="In: nothing listed, or listed active · DTD: on the report but not ruled out · a player out tonight is left off the shuffle; the hover names the status as listed">Health</th>
+                      <th title="The opponent’s rank at his position for the stat on the season table, 1 = gives up the most, with its factor on his rate (the cheat sheet’s tile first, PropFinder’s table beside it by its games); ‘team ×’ is his side’s ceiling">Matchup</th>
+                      {showCentre ? <th className="is-num" title={`The centre his chance is read around: ${fromLabel.toLowerCase()}`}>Centre</th> : null}
+                      <th title={`The highest line he clears at ${chancePct}% or better, and his chance one step higher`}>His line</th>
+                      <th className="is-num" title="His chance at that line and the break-even price under it">Chance</th>
+                      <th title="How often he cleared that line: his last ten, and the season rate">Cleared it</th>
+                      <th className="is-num" title="The book’s rung at his line, or the nearest rung above it, with its price">Book</th>
+                      <th className="is-num" title="The rung’s chance minus the price’s implied probability, in points">Edge</th>
+                      <th className="is-num" title="His projection for the game, the board’s, with the quartiles of his range">Projected</th>
+                      {final ? <th className="is-num" title="The box-score figure">Got</th> : null}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lines.length ? lines.map(({ player: p, height: h, read: r, next }) => {
+                      const grade = r.hit == null ? '' : r.hit ? ' is-hit' : ' is-miss';
+                      const lineCell = (
+                        <td className="ir-sh-line" title={`${p.player}: ${pct(r.p)} to clear ${h}+ (over ${r.line})${next ? `, ${pct(next.p)} at ${next.height}+` : ''}`}>
+                          <b>{h}+</b><small>{unitOf(active)}{next?.p != null ? ` · ${next.height}+ at ${pct(next.p)}` : ''}</small>
+                        </td>
+                      );
+                      return (
+                        <tr key={p.key} className={`${onOpen ? 'is-click' : ''}${grade}`} onClick={() => onOpen?.(p, active)}>
+                          <RowCells p={p} r={r} unit={unitOf(active)} teamLogo={teamLogo} headshotUrl={headshotUrl} withDay={withDay} showCentre={showCentre} final={final} lineCell={lineCell} where="his line" />
+                        </tr>
+                      );
+                    }) : <tr><td colSpan={9 + (showCentre ? 1 : 0) + (final ? 1 : 0)}><small className="ir-nfl-none">Nobody clears {activeCfg?.min}+ at {chancePct}% or better. Lower the chance.</small></td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : <div className="ir-sh-curve is-empty">{busy ? 'Reading the slate…' : 'No pull for this slate yet'}</div>}
+        </>
+      ) : (
+        <>
           <div className="ir-sh-grid">
             <div className="ir-sh-bars">
               {markets.map((m) => {
@@ -206,26 +316,10 @@ export default function Shuffle({ sport, onOpen = null }) {
                   </thead>
                   <tbody>
                     {survivors.length ? survivors.map(({ player: p, read: r }) => {
-                      const windows = `Spread ${num(p.sd)} over his games · last 5 ${num(p.own?.l5)} · last 10 ${num(p.own?.l10)} · season ${num(p.own?.season)} (${p.own?.seasonN ?? 0} games) · vs ${p.opp} ${num(p.own?.h2h)} (${p.own?.h2hN ?? 0} meetings) · blend ${num(p.own?.blend)}`;
-                      const tone = toneOf(p.spot?.rank, p.spot?.count);
                       const grade = r.hit == null ? '' : r.hit ? ' is-hit' : ' is-miss';
                       return (
                         <tr key={p.key} className={`${onOpen ? 'is-click' : ''}${grade}`} onClick={() => onOpen?.(p, active)}>
-                          <td>
-                            <div className="nhlx-db-player">
-                              {p.espnId ? <img src={headshotUrl(p.espnId)} alt="" width="30" height="30" loading="lazy" /> : <img src={teamLogo(p.team)} alt="" width="30" height="30" loading="lazy" className="ir-nfl-logo" />}
-                              <span><b>{p.player}{p.confirmed ? <small className="ir-sh-check" title={`On the cheat sheet: ${p.sheet.join(', ')}`}> ✓</small> : null}</b><small>{p.team}{p.slot && p.depth ? ` · ${p.slot}${p.depth}` : p.pos ? ` · ${p.pos}` : ''} · {p.venue === 'H' ? 'vs' : 'at'} {p.opp}{p.start ? ` · ${fmtStart(p.start, withDay)}` : ''}</small></span>
-                            </div>
-                          </td>
-                          <td><span className={`ir-health is-${(p.health || 'In').toLowerCase()}`} title={p.injury ? `${p.injury}${p.injuryDetail ? ` · ${p.injuryDetail}` : ''}${p.injuryFrom === 'override' ? ' · marked by hand on the card' : p.injuryFrom === 'depth' ? ' · the depth chart’s flag' : p.injuryFrom === 'report' ? ` · PropFinder’s report${p.injuryDate ? `, ${String(p.injuryDate).slice(0, 10)}` : ''}` : ''}` : p.injuryStale ? `Listed ${p.injuryStale.status} on ${String(p.injuryStale.date).slice(0, 10)} but played on ${p.injuryStale.playedOn}: left aside` : 'Nothing listed'}>{p.health || 'In'}</span></td>
-                          <td>{p.spot?.rank ? <span className={`ir-spot is-${tone}`} title={`${p.opp} gives up ${p.spot.value != null ? `${num(p.spot.value)} ${unitOf(active)} a game` : `the #${p.spot.rank} most ${unitOf(active)}`} to ${p.spot.pos}s, #${p.spot.rank} of ${p.spot.count}${p.spot.league != null ? ` (the league ${num(p.spot.league)})` : ''} on ${p.spot.held ? `last season’s table (${p.opp} has no game this season yet)` : 'this season’s table'}, the table the board reads: the court’s other tabs compare against it${p.matchupFrom?.from === 'blend' ? ` · the cheat sheet’s tile #${p.spot.sheetRank} × ${num(p.matchupFrom.sheet, 3)} in full, PropFinder’s × ${num(p.matchupFrom.pf, 3)} beside it by its games${p.matchupFrom.weight != null ? ` (at ${p.matchupFrom.weight} for ${p.matchupFrom.gp} games)` : ''}` : p.matchupFrom?.from === 'sheet' ? ' · the cheat sheet’s tile alone' : ''}${p.matchup != null ? ` · × ${num(p.matchup, 2)} on his rate${dampText(p.matchupFrom)}` : ''}`}>#{p.spot.rankBlend ?? p.spot.rank} {p.spot.pos}</span> : <span className="ir-spot is-none">no table</span>}{p.matchup != null ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }}>× {num(p.matchup, 2)}</small> : null}{p.teamFactor != null && p.teamFactor !== 1 ? <small className="nhlx-auto-meta" style={{ marginLeft: 6 }} title={`${p.team}’s players’ own rates add up to more than the team is expected to get tonight: × ${num(p.teamFactor, 2)} on every projection of the side, down to the total (a ceiling, never a lift)`}>team × {num(p.teamFactor, 2)}</small> : null}</td>
-                          {showCentre ? <td className="is-num" title={windows}><b>{num(r.centre)}</b></td> : null}
-                          <td className="is-num is-lead" title={`Model tail ${pct(r.model)} · hit rate ${pct(r.emp)} over ${r.n} games`}><b>{pct(r.p)}</b><small>{r.fair} fair</small></td>
-                          <td className="small">{r.cleared ? `${r.cleared.n} of last ${r.cleared.of}` : '—'}{r.season != null ? <small className="nhlx-auto-meta"> · {pct(r.season)} season</small> : null}</td>
-                          <td className="is-num" title={r.book ? `${r.exact ? 'The book’s rung at the bar' : 'The nearest rung above the bar'}: ${r.book.main ? 'the main line, ' : ''}${r.book.books} book${r.book.books === 1 ? '' : 's'} · its chance ${pct(r.book.p)}` : 'No rung at or above the bar'}>{r.book ? <><b>{r.exact ? '' : '↑ '}o{r.book.line}</b><small>{fmtOdds(r.book.odds)}{r.book.main ? ' · main' : ''}</small></> : <small>no line</small>}</td>
-                          <td className={`is-num${r.edge != null && r.edge > 0 ? ' is-best' : ''}`}>{r.edge == null ? '—' : <b>{r.edge >= 0 ? '+' : '−'}{Math.abs(Math.round(r.edge * 100))} pts</b>}</td>
-                          <td className="is-num" title={`The board’s projection${p.volume ? ` · ${num(p.volume.att)} attempts a game at ${num(p.volume.pct * 100)}% (this season ${p.volume.pctSeason != null ? num(p.volume.pctSeason * 100) : '—'}% on ${p.volume.attN}, his long run ${num(p.volume.pctLong * 100)}%)` : ''}${p.minutes && p.minutes.factor !== 1 ? ` · ${num(p.minutes.tonight)} minutes tonight over the ${num(p.minutes.base)} behind his rate (× ${num(p.minutes.factor, 3)}${p.minutes.vacated ? `, +${num(p.minutes.vacated)} with ${(p.minutes.from || []).join(' + ')} out` : ', his last five'})` : ''}${p.lift ? ` · +${num(p.lift)} ${unitOf(active)} of ${(p.liftFrom || []).join(' + ')}’s production handed to him (out tonight)` : ''}${p.pull ? ` · his read${pullText(p.pull)}` : ''} · ${windows}`}><b>{num(p.exp)}</b><small>{unitOf(active)}{p.floor != null ? ` · ${p.floor}–${p.ceiling}` : ''}{p.lift ? <span className="ir-lift" title={`+${num(p.lift)} with ${(p.liftFrom || []).join(' + ')} out`}> ↑</span> : null}{p.minutes && p.minutes.factor !== 1 ? <span className={p.minutes.factor > 1 ? 'ir-lift' : 'ir-dip'} title={`${num(p.minutes.tonight)} minutes tonight over the ${num(p.minutes.base)} behind his rate: × ${num(p.minutes.factor, 3)}`}> {num(p.minutes.tonight)}′</span> : null}</small></td>
-                          {final ? <td className="is-num nhlx-pk-got">{r.got === undefined ? <small>—</small> : r.got === null ? <small>DNP</small> : <><b>{r.got}</b><small>{unitOf(active)}</small></>}</td> : null}
+                          <RowCells p={p} r={r} unit={unitOf(active)} teamLogo={teamLogo} headshotUrl={headshotUrl} withDay={withDay} showCentre={showCentre} final={final} />
                         </tr>
                       );
                     }) : <tr><td colSpan={8 + (showCentre ? 1 : 0) + (final ? 1 : 0)}><small className="ir-nfl-none">Nobody clears {height}+ at {Math.round(floor * 100)}% or better. Lower the bar or the floor.</small></td></tr>}
@@ -241,6 +335,8 @@ export default function Shuffle({ sport, onOpen = null }) {
               ) : null}
             </>
           ) : null}
+        </>
+      )}
     </section>
   );
 }

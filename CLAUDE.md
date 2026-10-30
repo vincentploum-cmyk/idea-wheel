@@ -20,7 +20,8 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
 - Every app's tabs are the URL hash (`components/site/hash-tab.js`: `tabOf`, `useHashTab(keys, fallback)`
   → `[tab, mounted]`, a visited panel stays mounted hidden so it keeps its state; `components/site/TabBar.jsx`
   draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard, the data
-  sources, the default) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
+  sources, the default; on the NBA page the night's plays in one ranked list over the games folded to a line each,
+  below) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
   drawn on both panels); the NBA page a third, `#firstbasket`. The NHL app has eight (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
@@ -83,7 +84,8 @@ config and keeps its own markets, teams, feeds and slate key:
   `under`, a "next" line; flame / snowflake (`formOf`) and the soft spot (`softSpot`, the opponent
   in the soft third at the position for the stat) are colour only; a stored box score grades
   every row (`actual`, `hit`; a `played: false` line reads DNP) and the game head tallies the
-  plays over the floor. Notes written from the plays. **A line the book prices past -400 is no play**
+  plays over the floor. Notes written from the plays. `best` on the board: every play over the floor across the
+  slate, one a player, market and side, the chance first, with his projection and the matchup at his spot (`SlateList`). **A line the book prices past -400 is no play**
   (`STEEP_IMPLIED` = 0.8 on the book's implied probability; 2026-10-29: o4.5 points at -10421 read 100% at
   the top of the Points table, Vincent: "this is fucking useless"): the play carries `steep: true`, stays on
   the side player's `plays` (the card's "His lines tonight") and off the tables, the "next" line, the
@@ -136,13 +138,17 @@ config and keeps its own markets, teams, feeds and slate key:
   `ownRate` applies it, `pullText` words it for the court's, the card's and the shuffle's hovers. `volume` (true)
   switches the volume read off for the audit's A / B.
 - `shuffle.js` (`makeShuffle` → `shuffleOf`, and the pure readers the panel runs: `readAt`, `pAt`, `survivorsAt`,
-  `fallenAt`, `curveOf`, `thinsAt`, `centreOf`): the shuffle, a bar per stat (`SHUFFLE_MARKETS` in each sport's
+  `fallenAt`, `curveOf`, `thinsAt`, `linesAt`, `centreOf`): the shuffle, a bar per stat (`SHUFFLE_MARKETS` in each sport's
   `markets.js`: market, min, max, step, start). `GET /api/<sport>/shuffle?…&market=pts` reads every player on the
   slate with logs at every height of the bar through `ladderOf` with the heights as rungs (`lines`; a height h
   clears the line h − 0.5), the book's priced rungs beside them, his windows (`ownWindows`: last 3 / 5 / 10 / 20,
   this season alone from three games), the opponent's rank at his spot and, once final, his figure; one request a
   market, every bar move local. `components/picks/Shuffle.jsx` (on both boards, above the tables; the NBA's rows open
-  the card): the bars with the count of survivors at the floor ("keep players at 35% or better"), the curve of
+  the card) opens on **Pick the chance** (Vincent, 2026-10-30: "shuffle with the % chance instead so reverse the
+  shuffling"): a chance slider (50–90%, 70% to start) and the stat, every player showing the highest height of the bar
+  he clears at it (`linesAt`, `thinsAt` per player: the line, his chance there, the chance one step higher, the book's
+  rung at it or the nearest above with its price and edge), the highest line first or the best edge first (the rows
+  without a price last), a player without a height at the chance left off; **Pick the line** is the shuffle as it was: the bars with the count of survivors at the floor ("keep players at 35% or better"), the curve of
   survivors per height, the survivors at the bar sorted by the projection, the highest on top (Vincent, 2026-10-27; by edge before), then the chance (the chance there with its fair price, how often he
   cleared it, the book's rung at the bar or the nearest above it with its price and edge, his projection — the board's, with
   its unit and the quartiles of his range, the Projected column that replaced Thins out on 2026-10-27 (Vincent: the projected
@@ -322,7 +328,12 @@ config and keeps its own markets, teams, feeds and slate key:
   the NFL board without a pull for two days. The store's limit stays 15 MB.
 - `http.js`: the browser-agent GET (ESPN answers 403 to a user agent carrying a URL).
 - UI: `components/picks/Board.jsx` (per game the sport's tables, a play-less game collapses to
-  one line), `SidePicks.jsx` (the strip above a side's view, the NHL rink's model plays for the picks boards: the board's
+  one line; the NFL's view, its `GroupTable`, `BoardNotes`, `teamMark` and `expectedPill` reused by the NBA's), `SlateList.jsx`
+  (the slate in one ranked list from `board.best`: every play over the floor on the night, his likeliest line a
+  player, market and side (the tables' dedupe), the chance first, with `proj` { exp, floor, ceiling } off the side's
+  `ranges` drawn as a bar against the line (`rangeBar`) and `spot` { pos, rank, value, count } = the side's allowed
+  table at his envPos (rankBlend, the court's and the shuffle's read; the play's own soft spot without one, `spotTone`
+  by third); stat tabs by group with counts, "Soft matchups only", 25 rows then "Show all"; the NBA's first view), `SidePicks.jsx` (the strip above a side's view, the NHL rink's model plays for the picks boards: the board's
   best plays for the team, `side.picks` in `board.js` = the table rows over the floor for its players, one a player by
   chance, `PICKS_MAX` = 4, with the price and the edge, graded with the rows once the game is stored; the NBA draws it at
   the top of each court card with the picked players' chips ringed and a play opening the card, the NFL between the game
@@ -415,8 +426,19 @@ config and keeps its own markets, teams, feeds and slate key:
   (`fixAvg`: "38" → 3.8, "1156" → 11.5; `fixMinutes`: "2744" → 27.7). Rows are mentions (market
   null, group `players`, `avg: { min, pts, reb, ast, tpm }`), so the board marks the sheet's
   players' PropFinder plays confirmed. Fixture: `__tests__/fixtures/ocr-nba-page1.json` (BOS · DET).
-- The courts (`components/nba/NbaCourt.jsx`, the rink's basketball twin, drawn by `NbaBoard` through
-  `Board`'s `before` slot above each game's tables): per team a half court (50 × 47 ft, the basket on
+- **The board's layout** (Vincent, 2026-10-30, of the courts and the per-game tables: "you have built a website which
+  makes it so incredibly difficult to find good match ups easily"): `NbaBoard` draws `SlateList` (every play on the
+  night ranked, a row opening the card with the side's entry for the player), then the games folded to a line each
+  (`components/nba/NbaGame.jsx`, `GameFold`: the teams, the tip or the score, how many are out, the plays over the
+  floor and the best one). Opened: the characteristics card, then a column per team — who is out, what the opponent
+  gives up to each position for PTS · REB · AST · 3PM · PRA (the rank, rankBlend, tinted by third: the season table the
+  projections read) and every active player's projection per stat (`ranges[stat].exp`) tinted soft / tough by the
+  matchup at his envPos, a play over the floor ringed with its line and chance under the figure, a row opening the card
+  — and "Show the courts and the tables" for the courts below and the five group tables. A player listed day-to-day
+  is no longer greyed on the court or in the Tonight table (`p.out`, not any injury listing). Class names `ir-gf-*`:
+  the start screen owns `ir-game` / `ir-games`.
+- The courts (`components/nba/NbaCourt.jsx`, the rink's basketball twin, drawn by `GameFold` behind the opened
+  game's switch, above the five tables): per team a half court (50 × 47 ft, the basket on
   top) with five zones — PF · C · SF under the basket, SG · PG on the perimeter (`ZONES`; G joins the
   guards, F the wings, `layoutCourt`; PropFinder's depth chart places a player by his slot when the pull
   carries one — `depthChart` in `lib/picks/propfinder.js` reads `team.depthChart.positions[SLOT].players`

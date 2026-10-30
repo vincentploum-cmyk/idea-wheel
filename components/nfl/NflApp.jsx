@@ -98,7 +98,7 @@ export default function NflApp({ email }) {
               <div>
                 <span className="nhlx-eyebrow">NFL</span>
                 <h1>The <span>shuffle</span></h1>
-                <p>Raise the bar and the field falls away. A bar per market over every player on the week’s slate with a PropFinder log: the list keeps the players whose chance of clearing the bar holds over the floor, with the book’s rung at the bar and its edge.</p>
+                <p>Pick the chance and every player shows the highest line he clears at it, with the book’s rung there and its edge; or pick the line and the field falls away as the bar rises. Every player on the week’s slate with a PropFinder log.</p>
               </div>
             </div>
             <section className="nhlx-pk" aria-label="The week’s shuffle">

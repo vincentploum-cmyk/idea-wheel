@@ -401,6 +401,26 @@ describe('NBA board', () => {
     expect(g.tally.of).toBeGreaterThanOrEqual(3);
     expect(b.notes.join(' ')).toMatch(/Softest spots: NY to SFs/);
   });
+  test('the slate in one list: every play over the floor, his likeliest line a market, the chance first, with his projection and the matchup', () => {
+    const b = buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf, results });
+    const over = b.games.flatMap((g) => Object.values(g.tables).flatMap((t) => [...t.rows, ...t.next])).filter((x) => x.p >= x.floor && !x.under);
+    expect(b.best.length).toBeGreaterThan(0);
+    expect(b.best.every((r) => r.p >= MARKETS[r.market].floor)).toBe(true);
+    for (let i = 1; i < b.best.length; i++) expect(b.best[i].p).toBeLessThanOrEqual(b.best[i - 1].p);
+    expect(new Set(b.best.map((r) => `${r.key}|${r.market}|${r.side}`)).size).toBe(b.best.length);
+    expect(b.best.map((r) => r.id).sort()).toEqual([...new Set(over.map((x) => x.id))].sort());
+    const pts = b.best.find((r) => r.player === 'Jayson Tatum' && r.market === 'pts');
+    const range = b.games[0].sides.BOS.players.find((p) => p.key === 'jayson tatum').ranges.pts;
+    expect(pts).toMatchObject({ game: 'g1', team: 'BOS', opp: 'NY', line: 27.5, final: true, actual: 29, hit: true, confirmed: true, proj: { exp: range.exp, floor: range.floor, ceiling: range.ceiling } });
+    // The matchup off the side's table at his spot, else the play's own soft spot: NY gives up the most points to SFs.
+    expect(pts.spot).toMatchObject({ pos: 'SF', rank: 1 });
+    // Under the floor (his rebounds at o8.5, a coin flip against the 55% floor) stays off it; a sheet-only play is marked.
+    expect(b.best.find((r) => r.market === 'reb')).toBeUndefined();
+    expect(b.best.find((r) => r.player === 'Jalen Brunson')).toMatchObject({ market: 'ast', sheetOnly: true });
+    // A player out tonight and a steep line stay off it.
+    const steepPf = { ...pf, data: { ...pf.data, players: [{ ...pf.data.players[0], props: [{ market: 'pts', line: 4.5, odds: -10421, underOdds: 2500 }] }] } };
+    expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: steepPf, results }).best).toEqual([]);
+  });
   test('a line the book prices past -400 is no play: off the tables, the strip, the tally and the notes, on the card flagged steep', () => {
     const steepPf = { ...pf, data: { ...pf.data, players: [{ ...pf.data.players[0], props: [{ market: 'reb', line: 7.5, odds: -110, underOdds: -110 }, { market: 'pts', line: 4.5, odds: -10421, underOdds: 2500 }, { market: 'tpm', line: 0.5, odds: -2021, underOdds: 900 }] }] } };
     const b = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: steepPf, results });

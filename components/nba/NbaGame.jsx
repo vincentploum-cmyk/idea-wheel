@@ -1,0 +1,154 @@
+'use client';
+
+import { useState } from 'react';
+import { GameCharacteristics } from '@/components/nhl/Characteristics';
+import { GroupTable, teamMark, expectedPill, playLabel } from '@/components/picks/Board';
+import CourtPair, { zoneTone, envPos } from './NbaCourt';
+import { useNbaPlayerCard } from './NbaPlayerCard';
+
+// One game of the NBA board, folded to a line under the slate's list (2026-10-30, Vincent: the courts made the
+// matchups hard to find): the teams, the tip or the score, who is out, how many plays and the best one. Opened: the
+// teams' strengths and weaknesses, then a column per team — who is out, what the opponent gives up to each position
+// for the five stats (ranked, tinted by third: the table the board's projections read), and every active player's
+// projection per stat tinted by the matchup at his spot, a play's line and chance under its figure. The courts and the
+// five tables sit behind a switch.
+
+const STATS = [['pts', 'PTS'], ['reb', 'REB'], ['ast', 'AST'], ['tpm', '3PM'], ['pra', 'PRA']];
+const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
+const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
+const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
+const fmtTip = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
+
+function statusOf(g) {
+  if (g.final) return `Final ${g.awayScore}–${g.homeScore}`;
+  if (g.state === 'in') return `Live ${g.awayScore}–${g.homeScore}`;
+  return fmtTip(g.date);
+}
+
+/** What the opponent gives up to each position for the five stats: the rank (the cheat sheet's tile and PropFinder's table together), tinted by third, the figure on the hover. */
+function DefenseGrid({ side }) {
+  const a = side.allowed;
+  const positions = POSITIONS.filter((p) => a?.rows?.[p]);
+  if (!positions.length) return <p className="nhlx-auto-meta">No defense table for {side.opp} yet: pull PropFinder.</p>;
+  const count = a.count || 30;
+  return (
+    <div className="nhlx-pfd-wrap">
+      <table className="nhlx-pfd-table ir-def-grid">
+        <thead><tr><th>Pos</th>{STATS.map(([k, l]) => <th key={k}>{l}</th>)}</tr></thead>
+        <tbody>
+          {positions.map((pos) => (
+            <tr key={pos}>
+              <td><b>{pos}</b></td>
+              {STATS.map(([k]) => {
+                const c = a.rows[pos][k];
+                const rank = c?.rankBlend ?? c?.rank ?? null;
+                const lg = a.league?.[pos]?.[k];
+                return <td key={k} className={rank ? `is-${zoneTone(rank, count)}` : ''} title={c?.value != null ? `${num(c.value)} a game to ${pos}s${lg != null ? `, the league ${num(lg)}` : ''}${c.sheet != null ? ` · the cheat sheet’s tile #${c.sheet}` : ''}` : ''}>{rank ? `#${rank}` : '—'}</td>;
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** Every active player's projection per stat, the cell tinted by the matchup at his spot (soft or tough), a play's line and chance under the figure. */
+function Roster({ side, final }) {
+  const open = useNbaPlayerCard();
+  const count = side.allowed?.count || 30;
+  const players = side.players.filter((p) => !p.out && Object.keys(p.ranges || {}).length);
+  if (!players.length) return <p className="nhlx-auto-meta">No projections for {side.team} yet: pull PropFinder.</p>;
+  return (
+    <div className="nhlx-pfd-wrap">
+      <table className="nhlx-pfd-table ir-roster">
+        <thead><tr><th>Player</th><th title="His minutes tonight">Min</th>{STATS.map(([k, l]) => <th key={k}>{l}</th>)}</tr></thead>
+        <tbody>
+          {players.map((p) => {
+            const pos = p.envPos || envPos(p);
+            return (
+              <tr key={p.key} className="is-click" onClick={() => open({ key: p.key, player: p, team: side.team, opp: side.opp, venue: side.venue })}>
+                <td><b>{p.player}</b><small className="nhlx-auto-meta"> {p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</small>{p.health === 'DTD' ? <> <span className="ir-health is-dtd" title={`${p.injury || ''}${p.injuryDetail ? ` · ${p.injuryDetail}` : ''}`}>DTD</span></> : null}</td>
+                <td>{p.minutes?.tonight != null ? num(p.minutes.tonight, 0) : '—'}</td>
+                {STATS.map(([k]) => {
+                  const r = p.ranges?.[k];
+                  const cell = pos ? side.allowed?.rows?.[pos]?.[k] : null;
+                  const rank = cell?.rankBlend ?? cell?.rank ?? null;
+                  const tone = zoneTone(rank, count);
+                  const play = (p.plays || []).find((x) => x.market === k && x.side === 'over' && !x.steep && x.p >= (x.floor ?? 0)) || null;
+                  const title = r ? `${p.player} · ${num(r.exp)} ${k.toUpperCase()} projected, ${r.floor}–${r.ceiling} half the nights${rank ? ` · ${side.opp} #${rank} of ${count} to ${pos}s` : ''}${play ? ` · o${play.line} at ${pct(play.p)}` : r.line != null ? ` · the book’s o${r.line}: ${pct(r.p)}` : ''}${final && play?.actual != null ? ` · got ${play.actual}` : ''}` : '';
+                  return (
+                    <td key={k} className={`${r && (tone === 'soft' || tone === 'tough') ? `is-${tone}` : ''}${play ? ' is-play' : ''}`} title={title}>
+                      {r ? num(r.exp) : '—'}
+                      {play ? <small className="ir-roster-play">o{play.line} · {pct(play.p)}{final && play.hit != null ? ` · ${play.hit ? 'hit' : 'miss'}` : ''}</small> : null}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function TeamColumn({ side, sport, final }) {
+  const count = side.allowed?.count || 30;
+  return (
+    <section className="ir-gf-team" aria-label={`${side.team} ${side.venue === 'H' ? 'vs' : 'at'} ${side.opp}`}>
+      <div className="ir-gf-team-head">
+        <img src={sport.teamLogo(side.team)} alt="" width="28" height="28" loading="lazy" />
+        <b>{sport.teamName(side.team)}</b>
+        <small className="nhlx-auto-meta">{side.venue === 'H' ? 'vs' : 'at'} {side.opp}</small>
+      </div>
+      <p className="ir-gf-out"><b>Out</b> {side.out?.length ? side.out.map((a) => `${a.name}${a.status && a.status !== 'Out' ? ` (${a.status})` : ''}`).join(' · ') : 'nobody listed'}</p>
+      <div className="nhlx-pfd-head"><b>What {side.opp} gives up</b><small className="nhlx-auto-meta">its rank of {count} by position, #1 gives up the most · this season’s table</small></div>
+      <DefenseGrid side={side} />
+      <div className="nhlx-pfd-head"><b>Projected tonight</b><small className="nhlx-auto-meta">tinted by the matchup at his spot · a play’s line and chance under the figure · click a row for the card</small></div>
+      <Roster side={side} final={final} />
+    </section>
+  );
+}
+
+/** A game folded to one line; pressed, both rosters against both defenses, the courts and the tables behind a switch. */
+export default function GameFold({ g, best = [], sport, metric, onMetric }) {
+  const [open, setOpen] = useState(false);
+  const [more, setMore] = useState(false);
+  const mine = best.filter((r) => r.game === g.id);
+  const top = mine[0] || null;
+  const sides = [g.sides?.[g.away], g.sides?.[g.home]].filter(Boolean);
+  const outs = sides.reduce((n, s) => n + (s.out?.length || 0), 0);
+  const bodyId = `nba-game-${g.id}`;
+  return (
+    <article className={`ir-gf${open ? ' is-open' : ''}`}>
+      <button type="button" className="ir-gf-head" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen((v) => !v)}>
+        <span className="ir-gf-teams">
+          <img src={sport.teamLogo(g.away)} alt="" width="24" height="24" loading="lazy" />{g.away}
+          <i>@</i>
+          <img src={sport.teamLogo(g.home)} alt="" width="24" height="24" loading="lazy" />{g.home}
+        </span>
+        <span className="ir-gf-meta">{statusOf(g)}</span>
+        <span className="ir-gf-meta">{outs ? `${outs} out` : 'nobody out'}</span>
+        <span className="ir-gf-meta">{mine.length} play{mine.length === 1 ? '' : 's'}{g.tally ? ` · ${g.tally.hit} of ${g.tally.of} hit` : ''}</span>
+        <span className="ir-gf-best">{top ? <>Best: <b>{top.player}</b> {playLabel(top)} · {pct(top.p)}</> : 'No play over the floor'}</span>
+        <svg className="ir-gf-caret" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+      </button>
+      {open ? (
+        <div className="ir-gf-body" id={bodyId}>
+          {g.characteristics ? <GameCharacteristics game={g} renderTeam={teamMark(sport)} pill={expectedPill(g, sport)} /> : null}
+          <div className="ir-gf-cols">
+            {sides.map((side) => <TeamColumn key={side.team} side={side} sport={sport} final={g.final} />)}
+          </div>
+          <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-gf-more" aria-expanded={more} onClick={() => setMore((v) => !v)}>{more ? 'Hide the courts and the tables' : 'Show the courts and the tables'}</button>
+          {more ? (
+            <>
+              <CourtPair g={g} metric={metric} onMetric={onMetric} sport={sport} />
+              {g.plays ? <div className="ir-nfl-grid">{sport.groups.map(([key, label]) => <GroupTable key={key} label={label} t={g.tables[key]} final={g.final} sport={sport} />)}</div> : null}
+            </>
+          ) : null}
+        </div>
+      ) : null}
+    </article>
+  );
+}

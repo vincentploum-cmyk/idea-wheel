@@ -55,7 +55,7 @@ function Row({ r, final, sport }) {
   );
 }
 
-function GroupTable({ label, t, final, sport }) {
+export function GroupTable({ label, t, final, sport }) {
   return (
     <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
       <table className="nhlx-db-table nhlx-pk-table ir-nfl-table">
@@ -96,17 +96,28 @@ function GameHead({ g, sport }) {
 }
 
 /** The characteristics card's team mark on a picks board: the sport's logo and the code. */
-const teamMark = (sport) => function TeamMark(abbr) {
+export const teamMark = (sport) => function TeamMark(abbr) {
   return <><img src={sport.teamLogo(abbr)} alt="" width="22" height="22" loading="lazy" className="ir-nfl-logo" /><b>{abbr}</b></>;
 };
 
 /** The card's head pill: the sides' expected total tonight for the sport's total stat (the NBA's points), when both carry one. */
-function expectedPill(g, sport) {
+export function expectedPill(g, sport) {
   if (!sport.totalStat) return null;
   const a = g.sides?.[g.away]?.teamProj?.[sport.totalStat]; const h = g.sides?.[g.home]?.teamProj?.[sport.totalStat];
   if (a == null || h == null) return null;
   const unit = sport.totalUnit || sport.totalStat;
   return { text: `${Math.round(a + h)} ${unit} expected · ${g.away} ${Math.round(a)} · ${g.home} ${Math.round(h)}`, tone: '', title: `Each side's expected ${unit} tonight: its own per-game figure through the opponent's environment, pro-rated to its priced players (PropFinder)` };
+}
+
+/** The notes under a slate, written from the plays. */
+export function BoardNotes({ notes }) {
+  if (!notes?.length) return null;
+  return (
+    <section className="nhlx-pk-notes" aria-label="Notes">
+      <h3>Notes</h3>
+      <ul>{notes.map((n, i) => <li key={i}>{n}</li>)}</ul>
+    </section>
+  );
 }
 
 /**
@@ -132,12 +143,7 @@ export default function Board({ board, sport, empty = 'No games on this slate.',
           ) : <p className="ir-nfl-nogame">{g.steep ? `No plays: the ${g.steep} line${g.steep === 1 ? '' : 's'} PropFinder lists ${g.steep === 1 ? 'is' : 'are'} priced past -400, no play at that price.` : 'No plays yet: no cheat-sheet row or PropFinder line for either team.'}</p>}
         </article>
       ))}
-      {board.notes?.length ? (
-        <section className="nhlx-pk-notes" aria-label="Notes">
-          <h3>Notes</h3>
-          <ul>{board.notes.map((n, i) => <li key={i}>{n}</li>)}</ul>
-        </section>
-      ) : null}
+      <BoardNotes notes={board.notes} />
     </>
   );
 }

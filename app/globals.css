@@ -1624,3 +1624,57 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 @media (min-width: 900px) { .ir-sc-wide { grid-column: span 2; } }
 .ir-sc .nhlx-sc-table td small { display: inline; margin-left: 4px; }
 @media (max-width: 575px) { .ir-sc-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* The NBA board's first view (2026-10-30): the slate's plays in one ranked list, the games folded under it. */
+.ir-slate { margin: 18px 0 22px; }
+.ir-slate-bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; margin: 0 0 10px; }
+.ir-slate-bar .nhlx-tab i, .ir-sh-markets .nhlx-tab i { font-style: normal; margin-left: 6px; font-weight: 500; color: var(--muted); }
+.ir-slate-soft[aria-pressed="true"] { background: var(--ok-bg); border-color: var(--ok-line); color: var(--ok-fg); }
+.ir-slate-legend { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 0 0 10px; font-size: 14px; color: var(--muted); }
+.ir-slate-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.ir-slate-table td { vertical-align: middle; }
+.ir-slate-table td b, .ir-slate-table td .ir-slate-sub { display: block; }
+.ir-slate-sub { font-size: 13px; color: var(--muted); }
+.ir-slate-rank { width: 28px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ir-slate-proj { display: flex; align-items: center; gap: 12px; min-width: 220px; }
+.ir-slate-proj > span:first-child { min-width: 52px; font-variant-numeric: tabular-nums; }
+.ir-slate-more { margin-top: 10px; }
+.ir-range-bar { position: relative; flex: 1; min-width: 120px; height: 16px; }
+.ir-range-bar::before { content: ''; position: absolute; left: 0; right: 0; top: 7px; height: 2px; border-radius: 1px; background: var(--line); }
+.ir-range-band, .ir-range-tick, .ir-range-dot { position: absolute; display: block; }
+.ir-range-band { top: 3px; height: 10px; border-radius: 3px; background: color-mix(in oklab, var(--primary) 32%, var(--bg-soft)); }
+.ir-range-tick { top: 0; width: 2px; height: 16px; margin-left: -1px; background: var(--heading); }
+.ir-range-dot { top: 3px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--primary); }
+.ir-range-band.is-key, .ir-range-tick.is-key, .ir-range-dot.is-key { position: static; margin: 0; }
+.ir-range-band.is-key { width: 26px; }
+.ir-gf-list { margin: 8px 0 22px; }
+.ir-gf { margin: 0 0 10px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--card); }
+.ir-gf-head { all: unset; box-sizing: border-box; width: 100%; min-height: 56px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 20px; padding: 10px 16px; cursor: pointer; color: var(--body); }
+.ir-gf-head:hover { background: var(--bg-soft); border-radius: var(--radius-lg); }
+.ir-gf-head:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; border-radius: var(--radius-lg); }
+.ir-gf-teams { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 700; color: var(--heading); }
+.ir-gf-teams i { font-style: normal; color: var(--muted); font-weight: 500; }
+.ir-gf-meta { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ir-gf-best { flex: 1 1 260px; font-size: 15px; }
+.ir-gf-best b { color: var(--heading); }
+.ir-gf-caret { margin-left: auto; color: var(--muted); transition: transform 0.15s ease; }
+.ir-gf.is-open .ir-gf-caret { transform: rotate(90deg); }
+.ir-gf-body { padding: 12px 16px 16px; border-top: 1px solid var(--line); }
+.ir-gf-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 500px), 1fr)); gap: 18px 28px; margin-top: 12px; }
+.ir-gf-team { min-width: 0; }
+.ir-gf-team-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.ir-gf-team-head b { font-family: var(--font-display); font-size: 18px; color: var(--heading); }
+.ir-gf-out { margin: 0 0 12px; font-size: 14px; color: var(--body); }
+.ir-gf-out b { color: var(--bad-fg); margin-right: 4px; }
+.ir-def-grid, .ir-roster { margin-bottom: 14px; }
+.ir-roster td { font-variant-numeric: tabular-nums; }
+.ir-roster td:first-child { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.ir-roster td.is-play { box-shadow: inset 0 0 0 1.5px var(--primary); }
+.ir-roster-play { display: block; font-size: 12px; line-height: 1.2; color: var(--heading); }
+.ir-gf-more { margin-top: 4px; }
+.ir-sh-mode { margin-bottom: 8px; }
+.ir-sh-chance input[type="range"] { width: min(220px, 40vw); accent-color: var(--primary); }
+.ir-sh-chance b { min-width: 48px; font-family: var(--font-display); font-size: 22px; color: var(--heading); font-variant-numeric: tabular-nums; }
+.ir-sh-markets { margin-top: 12px; }
+.ir-sh-line b { display: block; font-family: var(--font-display); font-size: 17px; color: var(--heading); }
+.ir-sh-line small { display: block; font-size: 13px; color: var(--muted); }

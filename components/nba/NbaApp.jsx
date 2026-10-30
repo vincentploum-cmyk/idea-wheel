@@ -23,9 +23,9 @@ const TABS = [
 const TAB_KEYS = TABS.map(([key]) => key);
 
 /**
- * The NBA page, two hash tabs over one date picker: Best plays (the night's board with the courts,
- * the notes, the scorecard and the data sources under it) and Shuffle (a bar per market over the
- * night's players, a row opening the player's card).
+ * The NBA page, three hash tabs over one date picker: Best plays (the night's plays in one ranked list,
+ * the games folded under it, the notes, the scorecard and the data sources), Shuffle (each player's
+ * line at a chance, or who clears a bar; a row opening the player's card) and First basket.
  */
 export default function NbaApp({ email }) {
   const [tab, mounted] = useHashTab(TAB_KEYS, 'board');
@@ -99,7 +99,7 @@ export default function NbaApp({ email }) {
               <div>
                 <span className="nhlx-eyebrow">NBA</span>
                 <h1>Tonight&apos;s <span>best plays</span></h1>
-                <p>Per game, five tables: points, rebounds, assists, threes, and the combos. The chance is a hit-rate read against the line from PropFinder’s logs and the cheat sheets, shrunk toward the book’s price; the row greys when under the floor, greens or reds once the box score is in.</p>
+                <p>Every play on the night over the floor, the likeliest first: the line, his projection with his floor and ceiling drawn against it, the chance, the book’s price and the opponent’s rank at his spot. Under it the games, one line each: open one for both rosters against both defenses, the courts and the tables behind a switch.</p>
               </div>
             </div>
             <section className="nhlx-pk" aria-label="Tonight’s picks">
@@ -119,7 +119,7 @@ export default function NbaApp({ email }) {
               <div>
                 <span className="nhlx-eyebrow">NBA</span>
                 <h1>The <span>shuffle</span></h1>
-                <p>Raise the bar and the field falls away. A bar per market over every player on the night’s slate with a PropFinder log: the list keeps the players whose chance of clearing the bar holds over the floor, with the book’s rung at the bar and its edge. Click a row for his card.</p>
+                <p>Pick the chance and every player shows the highest line he clears at it, with the book’s rung there and its edge; or pick the line and the field falls away as the bar rises. Every player on the night’s slate with a PropFinder log. Click a row for his card.</p>
               </div>
             </div>
             <section className="nhlx-pk" aria-label="Tonight’s shuffle">

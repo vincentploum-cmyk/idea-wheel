@@ -164,7 +164,7 @@ function Chip({ p, x, y, metric, sport, team, opp, venue, final, allowed, season
   const all = (p.plays || []).filter((x) => x.side === 'over' || x.side === 'yes').map((x) => `${x.side === 'yes' ? '' : 'o'}${x.line} ${x.label} ${pct(x.p)}${x.odds != null ? ` at ${fmtOdds(x.odds)}` : ''}${x.hit == null ? '' : x.hit ? ' hit' : ' miss'}`);
   const title = `${p.player} · ${p.pos || '—'}${p.depth ? ` · ${p.slot}${p.depth} on the depth chart${p.depth === 1 ? ' (starter)' : ''}` : ''}${p.injury ? ` · ${p.injury}` : ''}${avg != null ? ` · ${num(avg)} ${STAT_LABEL[metric]} a game this season` : ''}${projText ? `\n${projText}` : ''}${woText ? `\n${woText}` : ''}${all.length ? `\n${all.join('\n')}` : '\nNo PropFinder line yet'}`;
   return (
-    <button type="button" className={`nhlx-rk-chip${p.injury ? ' is-out' : ''}${p.picked ? ' is-pick' : ''}`} style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }} title={title} onClick={() => open({ key: p.key, player: p, team, opp, venue, market: MARKET_OF[metric] })}>
+    <button type="button" className={`nhlx-rk-chip${p.out ? ' is-out' : ''}${p.picked ? ' is-pick' : ''}`} style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }} title={title} onClick={() => open({ key: p.key, player: p, team, opp, venue, market: MARKET_OF[metric] })}>
       <span className="nhlx-rk-pic">
         {p.espnId ? <img src={sport.headshotUrl(p.espnId)} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <img src={sport.teamLogo(team)} alt="" loading="lazy" className="is-logo" />}
         <i className="nhlx-rk-num" title={p.depth ? `${p.slot}${p.depth} on PropFinder’s depth chart` : 'roster position'}>{p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</i>
@@ -265,7 +265,7 @@ function PlayersTable({ side, final }) {
           <thead><tr><th>Player</th><th>Pos</th>{TABLE_MARKETS.map(([k, l]) => <th key={k}>{l}</th>)}</tr></thead>
           <tbody>
             {players.map((p) => (
-              <tr key={p.key} className={`is-click${p.injury ? ' is-muted' : ''}`} onClick={() => open({ key: p.key, player: p, team: side.team, opp: side.opp, venue: side.venue })}>
+              <tr key={p.key} className={`is-click${p.out ? ' is-muted' : ''}`} onClick={() => open({ key: p.key, player: p, team: side.team, opp: side.opp, venue: side.venue })}>
                 <td><b>{p.player}</b>{p.injury ? <small className="nhlx-auto-meta" title={p.injuryDetail || ''}> {p.injury}</small> : null}{p.without ? <small className="nhlx-auto-meta" title={`His season read moves toward his ${p.without.n} games without ${p.without.names.join(' + ')} (weight ${p.without.weight})`}> w/o {p.without.names.join(' + ')}</small> : null}</td>
                 <td>{p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</td>
                 {TABLE_MARKETS.map(([k]) => <RangeCell key={k} p={p} market={k} final={final} />)}
