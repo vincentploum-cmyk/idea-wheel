@@ -2,6 +2,11 @@ name: NHL data refresh
 
 # Pulls finished games (box scores + play-by-play) and NHL.com projected
 # lineups into Supabase so the model's inputs build themselves.
+# The server runs these jobs on time itself (lib/scheduler.js, lib/schedule-jobs.js: the same calls at the same
+# Eastern times); this workflow is the backstop for those two calls and still the only way the beat writers' pages
+# arrive (gamedaytweets.com refuses the server), so its first step always runs. A scheduled run names its job from the cron that fired it and
+# passes `job=<id>`, so the site skips a slot the server already ran (GitHub fires schedules hours late: the
+# 9:17 AM run went at 2:57 PM on 2026-10-29). A manual run (workflow_dispatch) always runs.
 on:
   schedule:
     # Uncrowded minutes: GitHub delays schedules at :00 by hours on busy days.
@@ -38,13 +43,15 @@ jobs:
           DATE="${{ github.event.inputs.date }}"
           [ -z "$DATE" ] && DATE=$(TZ=America/New_York date +%F)
           # The late run belongs to the previous ET day.
-          if [ "$(date -u +%H)" = "04" ] && [ -z "${{ github.event.inputs.date }}" ]; then DATE=$(TZ=America/New_York date -d 'yesterday' +%F); fi
+          JOB=""; case "${{ github.event.schedule }}" in '17 13 * * *') JOB=nhl-morning ;; '41 4 * * *') JOB=nhl-late ;; esac
+          J=""; [ -n "$JOB" ] && J="&job=$JOB"
+          if [ "$JOB" = "nhl-late" ] && [ -z "${{ github.event.inputs.date }}" ]; then DATE=$(TZ=America/New_York date -d 'yesterday' +%F); fi
           echo "Refreshing $DATE"
           # A 5xx is usually the server restarting for a deploy: one more try after a minute.
           # Only the status code goes to stdout: the caller captures it, so the retry note goes to stderr (2026-10-17: the note landed in $code and a throttled 429 retry failed the job).
           call() { local c; for attempt in 1 2; do c=$(curl -sS -o "$2" -w '%{http_code}' -X POST --max-time 280 "$1" || true); [ -n "$c" ] || c=000; case "$c" in 5*|000) [ "$attempt" = 1 ] && { echo "server answered $c; retrying in 60 s" >&2; sleep 60; } ;; *) break ;; esac; done; echo "$c"; }
           # PropFinder first, as its own request: the pull and the model run each need most of the instance's memory.
-          pf=$(call "https://ideareels.io/api/nhl/data/refresh?date=$DATE&only=propfinder" pf.json); echo "propfinder: $pf $(head -c 400 pf.json)"
-          code=$(call "https://ideareels.io/api/nhl/data/refresh?date=$DATE" resp.json)
+          pf=$(call "https://ideareels.io/api/nhl/data/refresh?date=$DATE&only=propfinder$J" pf.json); echo "propfinder: $pf $(head -c 400 pf.json)"
+          code=$(call "https://ideareels.io/api/nhl/data/refresh?date=$DATE$J" resp.json)
           head -c 4000 resp.json; echo
           [ "$code" = "200" ] || [ "$code" = "429" ]
