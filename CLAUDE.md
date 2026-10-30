@@ -738,17 +738,26 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   allows at the position toward multi-goal nights; the goalie's save % nothing; home a little. The rare marks' rules
   fell back to the base rate on the check week. Descriptive; nothing changed.
 - Patterns (`docs/audits/2026-10-30-nhl-patterns.md`, `tools/predictors/patterns-rows.mjs` → `patterns.py`; Vincent, 2026-10-30:
-  every data point, rules per line, pills; then "expand to October 16 through October 29", the check weeks): 6,576
-  skater-games of this season, 239 figures each, a beam search of one- to three-condition rules per line on Oct 1–15
-  (12+ skaters a rule, every condition worth two points), checked on Oct 16–29 (3,298 skater-games; the first cut
-  checked on Oct 23–29 alone): the check weeks kept 89% / 95% / 100% / 87% of the lift for 3+ / 4+ / 5+ / 6+ SOG and
-  88% / 60% for 1+ / 2+ goals. 3+ SOG is volume, minutes and a ceiling (a 6+ shot game on record, 18–20+ minutes lately,
-  chances at the venue: 55–63%); 4+ SOG attempts per 60 or unblocked attempts with minutes (34–42%); 1+ goal his volume
-  at tonight's venue with first-line minutes (40–48%); the opponent's goals against L5 adds 3–5 points inside the shot
-  rules; among 2+ shots-a-game skaters the opponent's attempts / chances / shots allowed move 3+ SOG 6–9 points bottom
-  fifth to top on Oct 1–15 and 11–16 on Oct 16–29, as the tables fill; streaks are colour but for the point streak; one
-  rule clears 20% for 5+ SOG, none the bar at 6+ SOG or 2+ goals (the 3.5+ shots-a-game tier fills 6+). The rules feed
-  the Patterns tab (above).
+  every data point, rules per line, pills; then "expand to October 16 through October 29", the check weeks): 6,648
+  skater-games of this season (all 148 games), 239 figures each, a beam search of one- to three-condition rules per line
+  on Oct 1–15 (12+ skaters a rule, every condition worth two points), checked on Oct 16–29 (3,370 skater-games): the
+  check weeks kept 90% / 99% / 100% / 94% of the lift for 3+ / 4+ / 5+ / 6+ SOG and 90% / 66% for 1+ / 2+ goals. 3+ SOG
+  is volume, minutes and a ceiling (a 6+ shot game on record, 18–20+ minutes lately, chances at the venue: 55–63%); 4+
+  SOG attempts per 60 or unblocked attempts with minutes (36–44%); 1+ goal his volume at tonight's venue with first-line
+  minutes (40–49%); the opponent's goals against L5 adds 3–5 points inside the shot rules; among 2+ shots-a-game skaters
+  the opponent's attempts / chances / shots allowed move 3+ SOG 6–8 points bottom fifth to top on Oct 1–15 and 11–14 on
+  Oct 16–29, as the tables fill; streaks are colour but for the point streak; one rule clears 20% for 5+ SOG, none the
+  bar at 6+ SOG or 2+ goals (the 3.5+ shots-a-game tier fills 6+). The rules feed the Patterns tab (above).
+- The season backtest (`docs/audits/2026-10-30-nhl-season-backtest.md`, `tools/predictors/patterns_backtest.py`; Vincent,
+  2026-10-30: "did you backtest and improve / combine rules to get as close as possible to 100%", then "just backtest it on
+  all games of the 26/27 season"): every night from Oct 8 graded with what was known that morning — the Patterns rules
+  re-mined weekly on the weeks before, a logistic + boosted-trees model on all 239 figures retrained every morning, volume
+  alone, Vincent's environment + streak picks, and the hindsight ceiling (Poisson at each skater's true season rate, his
+  future games in). The ceiling's best three a night land 3+ SOG 61% and 1+ goal 35%: 100% is not on the table. The
+  model's 60%+ calls landed 61% at 3+ SOG (8 a night), its 70%+ 66% (2 a night); the walk-forward pills' 50%+ picks
+  landed 46% (30 a night), their 1+ goal picks 33% — the pills' figures run high. Environment + streak: for goals the
+  environment adds a point on top of the run (a goal last game 21%, with a top-10 opponent 22%); for shots it adds 5–9
+  (3+ SOG in two straight 41%, with a top-10 high-danger-chances opponent over its last five 50%).
 
 ## Canonical locations
 

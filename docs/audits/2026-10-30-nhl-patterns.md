@@ -18,7 +18,7 @@ firsthalfscore.com website." This season's games alone.
 - **Rules per line** (`tools/predictors/patterns.py`): every figure cut at its tenths both ways (2,308 conditions). A
   beam search found the best one-, two- and three-condition rules for each line on **Oct 1–15** (3,278 skater-games).
   A rule must fire for 12 skaters or more, and a condition that adds under two points is dropped. It was then checked
-  on **Oct 16–29** (3,298 skater-games, two weeks the search never saw; Vincent, 2026-10-30: "expand to October 16
+  on **Oct 16–29** (3,370 skater-games, two weeks the search never saw; Vincent, 2026-10-30: "expand to October 16
   through October 29" — the first cut checked on Oct 23–29 alone).
 - **The pill's figure** is honest about the search: the fit weeks' lift, cut to the share of it the check weeks kept
   over every rule found, then updated by the rule's own check weeks. On the site each rule's rate keeps moving with the
@@ -28,12 +28,12 @@ firsthalfscore.com website." This season's games alone.
 
 | Line | Happens | Rules found → held | Lift kept on the weeks they never saw | Filled pills come from |
 | --- | --- | --- | --- | --- |
-| 3+ SOG | 21.4% | 99 → 98 | 89% | 15 rules at 55–63%: a 6+ shot game already this season, 18–20+ minutes lately or at tonight's venue, chances at tonight's venue; the 3.5+ shots-a-game tier (5+ games) at 56% |
-| 4+ SOG | 9.5% | 105 → 100 | 95% | 15 rules at 34–42%: 18.9+ minutes a game with 19.6+ attempts per 60 (42%), 4.4+ unblocked attempts a game with his minutes; the 3.5+ tier at 37% |
-| 5+ SOG | 4.0% | 41 → 41 | 100% | one rule: 4.4+ unblocked attempts a game over his last five, his attempts not running above his season (21%) |
-| 6+ SOG | 1.7% | 40 → 38 | 87% | no rule clears 11%; the 3.5+ shots-a-game tier (5+ games), 14% |
-| 1+ goal | 14.9% | 117 → 113 | 88% | 15 rules at 40–48%: his volume **at tonight's venue** (4.7+ unblocked attempts a game there), first-line minutes, a point a game |
-| 2+ goals | 2.0% | 41 → 39 | 60% | none clears 9%: the best, 2.5+ chances a game, 5% |
+| 3+ SOG | 21.5% | 99 → 98 | 90% | 15 rules at 55–63%: a 6+ shot game already this season, 18–20+ minutes lately or at tonight's venue, chances at tonight's venue; the 3.5+ shots-a-game tier (5+ games) at 56%, 3–3.5 at 50% |
+| 4+ SOG | 9.6% | 107 → 103 | 99% | 15 rules at 36–44%: 18.9+ minutes a game with 19.6+ attempts per 60 (44%), 4.4+ unblocked attempts a game with his minutes; the 3.5+ tier at 39% |
+| 5+ SOG | 4.0% | 41 → 41 | 100% | one rule: 4.4+ unblocked attempts a game over his last five, his attempts not running above his season, the opponent under 1.5× the league's attempts to his slot (23%) |
+| 6+ SOG | 1.8% | 41 → 39 | 94% | no rule clears 11%; the 3.5+ shots-a-game tier (5+ games), 14% |
+| 1+ goal | 15.0% | 117 → 112 | 90% | 15 rules at 40–49%: his volume **at tonight's venue** (4.7+ unblocked attempts a game there), first-line minutes, a point a game |
+| 2+ goals | 2.0% | 41 → 39 | 66% | none clears 9%: the best, 2.5+ chances a game, 6% |
 | 3+ goals | 13 games | — | — | too few to mine; the ladder only |
 
 What each part of a rule adds (the rate with the rule against the rule without that condition, whole window):
@@ -47,114 +47,115 @@ What each part of a rule adds (the rate with the rule against the rule without t
 3. **His volume at tonight's venue is the goal signal.** 4.7+ unblocked attempts a game at the venue he plays tonight
    adds 10–25 points to 1+ goal rules; first-line minutes add 5–11, the opponent in the top half of goals against over
    its last five 6. The plain split (shooting 18%+ more at tonight's venue) reads the same way across its fifths
-   (24% → 32% among 2+ shots-a-game skaters, 20% → 33% on the check weeks).
+   (24% → 31% among 2+ shots-a-game skaters, 21% → 32% on the check weeks).
 4. **The opponent's attempts, chances and shots allowed: real, and sharper as the tables fill.** Among skaters with 2+
-   shots a game, the opponent's bottom fifth against its top fifth (ranked within his position) moves 3+ SOG by 6–9
-   points on Oct 1–15 and by 11–16 points on Oct 16–29, when every table has a few more games behind it:
-   - high-danger chances allowed to his position over the last five: 33% → 48% on Oct 16–29;
+   shots a game, the opponent's bottom fifth against its top fifth (ranked within his position) moves 3+ SOG by 6–8
+   points on Oct 1–15 and by 11–14 points on Oct 16–29, when every table has a few more games behind it:
+   - high-danger chances allowed to his position over the last five: 34% → 47% on Oct 16–29;
    - chances against a game over its last five (SCA L5): 36% → 47%;
-   - attempts against (CA L5 / L10, FA L10): 31–32% → 44–46%;
-   - shots against L5 and goals against L5: 34% → 45% and 36% → 48%.
+   - attempts against (CA L5 / L10, FA L10): 31–32% → 43–45%;
+   - goals against over its last five: 36% → 49%.
 
-   For 1+ goal the same reads move it 5–10 points (unblocked attempts allowed to his position L5: 21% → 29%). Inside a
+   For 1+ goal the same reads move it 5–10 points (unblocked attempts allowed to his position L5: 22% → 30% on the check weeks). Inside a
    rule, on top of his volume, they add 2–6 points when they survive the two-point cut: his own numbers still decide.
 5. **Streaks are colour, mostly.** Inside his shot tier the 3+ SOG run he comes in on moves 3+ SOG by a few points with
-   no steady direction. A **point streak** is the one that leans: 3+ shots a game and a point in 3+ straight, 55% on
-   3+ SOG against 39% with none; points a game and a point in four of his last five also appear in the goal rules.
+   no steady direction. A **point streak** is the one that leans: 3+ shots a game and a point in 3+ straight, 56% on
+   3+ SOG against 40% with none; points a game and a point in four of his last five also appear in the goal rules.
 
-Caveats: four weeks of one season, 6,576 skater-games, fitted on the first two and checked on the last two. Enough for
+Caveats: four weeks of one season, 6,648 skater-games (all 148 games; the first cut missed two of Oct 29's, pulled before they were final), fitted on the first two and checked on the last two. Enough for
 3+ / 4+ SOG and 1+ goal; the rare lines' rules held in direction, but under the bars (5+ SOG has one rule over 20%).
 "Line" in the study is the skater's ice-time rank in the game; the site reads the beat writers' lineups. The check
 weeks decided which rules were kept, so they are not a clean test of the kept set; the site's record (games after
 Oct 29) is. No book prices: a filled pill says the rate clears about what a book asks for the line, not that tonight's
-price pays.
+price pays. How the picks did night by night over the whole season, against a model on every figure and the hindsight
+ceiling: `docs/audits/2026-10-30-nhl-season-backtest.md`.
 
 ## The tables
 
-6576 skater-games, 239 figures each (158 searched: the opponent’s reads at his position and slot as × the league’s and as ranks), cut into 2308 conditions. Rules searched on 2026-10-02 to 2026-10-15 (3278 skater-games) and checked on 2026-10-16 to 2026-10-29 (3298 skater-games the search never saw).
+6648 skater-games, 239 figures each (158 searched: the opponent’s reads at his position and slot as × the league’s and as ranks), cut into 2308 conditions. Rules searched on 2026-10-02 to 2026-10-15 (3278 skater-games) and checked on 2026-10-16 to 2026-10-29 (3370 skater-games the search never saw).
 
 | Line | Base | Rules found | Lift kept on the check week | Held | Kept | Fill the pill | The strongest that held |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 3+ SOG | 21.4% | 99 | 89% | 98 | 15 | 15 | toi_l5 ≥ 17.619 · sog_max ≥ 6 · ven_iscf ≥ 3.5 (fit 71.0% on 62, check 62.2% on 98; pill 63.3%) |
-| 4+ SOG | 9.5% | 105 | 95% | 100 | 15 | 15 | toi_avg ≥ 18.88 · icf60 ≥ 19.648 (fit 38.4% on 112, check 44.6% on 83; pill 42.1%) |
-| 5+ SOG | 4.0% | 41 | 100% | 41 | 15 | 1 | iff_l5 ≥ 4.4 · icf_trend ≤ 1 (fit 15.5% on 317, check 22.8% on 114; pill 20.9%) |
-| 6+ SOG | 1.7% | 40 | 87% | 38 | 15 | 0 | s2_rate ≥ 0.8 (fit 5.1% on 670, check 6.3% on 350; pill 6.1%) |
-| 1+ goal | 14.9% | 117 | 88% | 113 | 15 | 15 | iscf_l10 ≥ 3.333 · sog_sd ≥ 1.414 · ven_s3 ≥ 1 (fit 48.6% on 70, check 51.2% on 41; pill 48.2%) |
-| 2+ goals | 2.0% | 41 | 60% | 39 | 15 | 0 | iscf_avg ≥ 2.5 (fit 6.8% on 690, check 5.4% on 593; pill 5.4%) |
+| 3+ SOG | 21.5% | 99 | 90% | 98 | 15 | 15 | toi_l5 ≥ 17.619 · sog_max ≥ 6 · ven_iscf ≥ 3.5 (fit 71.0% on 62, check 62.0% on 100; pill 63.3%) |
+| 4+ SOG | 9.6% | 107 | 99% | 103 | 15 | 15 | toi_avg ≥ 18.88 · icf60 ≥ 19.648 (fit 38.4% on 112, check 46.4% on 84; pill 43.9%) |
+| 5+ SOG | 4.0% | 41 | 100% | 41 | 15 | 1 | iff_l5 ≥ 4.4 · icf_trend ≤ 1 · opp_slot_icf_x ≤ 1.511 (fit 17.8% on 269, check 24.6% on 118; pill 22.9%) |
+| 6+ SOG | 1.8% | 41 | 94% | 39 | 15 | 0 | s2_rate ≥ 0.8 (fit 5.1% on 670, check 7.0% on 355; pill 6.8%) |
+| 1+ goal | 15.0% | 117 | 90% | 112 | 15 | 15 | iscf_l10 ≥ 3.333 · sog_sd ≥ 1.414 · ven_s3 ≥ 1 (fit 48.6% on 70, check 51.2% on 41; pill 48.5%) |
+| 2+ goals | 2.0% | 41 | 66% | 39 | 15 | 0 | iscf_avg ≥ 2.5 (fit 6.8% on 690, check 5.8% on 607; pill 5.7%) |
 | 3+ goals | 0.2% | 0 | 0% | 0 | 0 | 0 | — |
 
 ## 3+ SOG
 
-Base rate 21.4% (1407 of 6576); fit weeks 21.2%, check week 21.6%. The bar a pill must clear to be filled: 50.0% (about the price a book usually asks for the line). 99 rules found on the fit weeks (10+ hits on 60+ games, 12+ skaters, every condition worth two points); the check week kept **89% of their lift**; **98 held**, 15 kept after near-duplicates.
+Base rate 21.5% (1426 of 6648); fit weeks 21.2%, check week 21.7%. The bar a pill must clear to be filled: 50.0% (about the price a book usually asks for the line). 99 rules found on the fit weeks (10+ hits on 60+ games, 12+ skaters, every condition worth two points); the check week kept **90% of their lift**; **98 held**, 15 kept after near-duplicates.
 
 **The rules that held.** "Each part adds" = the rate over the whole window with the rule against the rule without that condition. The pill starts from the fit weeks’ lift cut to what the check week kept, updated by the rule’s own check week.
 
 | When | Skaters | Fit: games | Fit: hit | Check: games | Check: hit | Each part adds (pts) | Pill starts at | Fills |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| toi_l5 ≥ 17.619 · sog_max ≥ 6 · ven_iscf ≥ 3.5 | 26 | 62 | 71.0% | 98 | 62.2% | toi_l5 ≥ 17.619 +8.1; sog_max ≥ 6 +14.0; ven_iscf ≥ 3.5 +11.6 | 63.3% | ✓ |
-| ihdcf_l3 ≥ 1 · toi_l5 ≥ 18.91 · sog_max ≥ 6 | 24 | 61 | 73.8% | 121 | 60.3% | ihdcf_l3 ≥ 1 +8.1; toi_l5 ≥ 18.91 +14.4; sog_max ≥ 6 +19.5 | 62.3% | ✓ |
-| fwd = 1 · toi_l5 ≥ 18.91 · sog_max ≥ 6 | 25 | 74 | 70.3% | 151 | 58.9% | fwd = 1 +5.9; toi_l5 ≥ 18.91 +15.1; sog_max ≥ 6 +16.0 | 60.2% | ✓ |
-| blk_l10 ≤ 1 · sog_max ≥ 6 · ven_toi ≥ 18.87 | 28 | 61 | 73.8% | 164 | 57.9% | blk_l10 ≤ 1 +5.2; sog_max ≥ 6 +23.5; ven_toi ≥ 18.87 +14.9 | 59.9% | ✓ |
-| a_l5 ≥ 1 · sog_max ≥ 5 | 26 | 63 | 63.5% | 71 | 59.2% | a_l5 ≥ 1 +19.7; sog_max ≥ 5 +26.6 | 59.1% | ✓ |
-| sog_max ≥ 6 · ven_toi ≥ 18.87 · opp_ga_l5_rk ≤ 26 | 30 | 61 | 72.1% | 160 | 56.9% | sog_max ≥ 6 +28.3; ven_toi ≥ 18.87 +10.8; opp_ga_l5_rk ≤ 26 +4.0 | 58.9% | ✓ |
-| sog_max ≥ 6 · ven_iscf ≥ 3.5 · opp_ga_l5_rk ≤ 26 | 26 | 60 | 71.7% | 97 | 55.7% | sog_max ≥ 6 +14.6; ven_iscf ≥ 3.5 +11.5; opp_ga_l5_rk ≤ 26 +4.3 | 58.8% | ✓ |
-| iscf_avg ≥ 3.333 · ven_toi ≥ 20.357 | 32 | 74 | 63.5% | 104 | 58.7% | iscf_avg ≥ 3.333 +28.3; ven_toi ≥ 20.357 +11.9 | 58.8% | ✓ |
-| iscf_l10 ≥ 3.333 · sog_max ≥ 6 | 35 | 108 | 59.3% | 144 | 59.7% | iscf_l10 ≥ 3.333 +13.0; sog_max ≥ 6 +10.3 | 58.8% | ✓ |
-| toi_l5 ≥ 18.91 · blk_l3 ≤ 1 · sog_max ≥ 6 | 29 | 66 | 71.2% | 167 | 56.3% | toi_l5 ≥ 18.91 +13.5; blk_l3 ≤ 1 +3.7; sog_max ≥ 6 +24.8 | 58.2% | ✓ |
-| toi_l3 ≥ 20.257 · sog_max ≥ 6 | 22 | 65 | 64.6% | 148 | 57.4% | toi_l3 ≥ 20.257 +13.1; sog_max ≥ 6 +28.2 | 58.0% | ✓ |
-| a_avg ≥ 1 · sog_max ≥ 5 | 26 | 63 | 63.5% | 69 | 56.5% | a_avg ≥ 1 +18.4; sog_max ≥ 5 +26.4 | 57.5% | ✓ |
-| iff_l5 ≥ 4.4 · ven_toi ≥ 20.357 | 49 | 102 | 59.8% | 143 | 55.2% | iff_l5 ≥ 4.4 +24.7; ven_toi ≥ 20.357 +8.5 | 55.4% | ✓ |
-| sog_max ≥ 6 · ven_iscf ≥ 3.5 | 33 | 86 | 61.6% | 121 | 54.5% | sog_max ≥ 6 +13.2; ven_iscf ≥ 3.5 +11.0 | 55.3% | ✓ |
-| iff_l5 ≥ 4.4 · sog_max ≥ 6 | 39 | 115 | 59.1% | 176 | 55.1% | iff_l5 ≥ 4.4 +10.2; sog_max ≥ 6 +8.1 | 55.1% | ✓ |
+| toi_l5 ≥ 17.619 · sog_max ≥ 6 · ven_iscf ≥ 3.5 | 26 | 62 | 71.0% | 100 | 62.0% | toi_l5 ≥ 17.619 +8.1; sog_max ≥ 6 +13.7; ven_iscf ≥ 3.5 +11.3 | 63.3% | ✓ |
+| ihdcf_l3 ≥ 1 · toi_l5 ≥ 18.91 · sog_max ≥ 6 | 24 | 61 | 73.8% | 123 | 61.0% | ihdcf_l3 ≥ 1 +8.4; toi_l5 ≥ 18.91 +14.5; sog_max ≥ 6 +19.4 | 63.0% | ✓ |
+| fwd = 1 · sog_max ≥ 6 · ven_toi ≥ 18.87 | 26 | 65 | 72.3% | 158 | 59.5% | fwd = 1 +5.8; sog_max ≥ 6 +14.7; ven_toi ≥ 18.87 +15.3 | 61.2% | ✓ |
+| iscf_avg ≥ 3.333 · ven_toi ≥ 20.357 | 32 | 74 | 63.5% | 105 | 60.0% | iscf_avg ≥ 3.333 +28.8; ven_toi ≥ 20.357 +12.4 | 59.9% | ✓ |
+| a_l5 ≥ 1 · sog_max ≥ 5 | 26 | 63 | 63.5% | 72 | 59.7% | a_l5 ≥ 1 +19.9; sog_max ≥ 5 +26.8 | 59.7% | ✓ |
+| iscf_l10 ≥ 3.333 · sog_max ≥ 6 | 35 | 108 | 59.3% | 147 | 60.5% | iscf_l10 ≥ 3.333 +13.3; sog_max ≥ 6 +10.4 | 59.6% | ✓ |
+| sog_max ≥ 6 · ven_toi ≥ 18.87 · opp_ga_l5_rk ≤ 26 | 30 | 61 | 72.1% | 167 | 57.5% | sog_max ≥ 6 +28.2; ven_toi ≥ 18.87 +10.9; opp_ga_l5_rk ≤ 26 +4.0 | 59.4% | ✓ |
+| toi_l5 ≥ 18.91 · blk_l5 ≤ 1 · sog_max ≥ 6 | 28 | 68 | 70.6% | 165 | 57.6% | toi_l5 ≥ 18.91 +14.0; blk_l5 ≤ 1 +4.6; sog_max ≥ 6 +23.9 | 59.2% | ✓ |
+| ihdcf_l5 ≥ 0.6 · toi_l10 ≥ 18.88 · sog_max ≥ 6 | 25 | 68 | 70.6% | 160 | 57.5% | ihdcf_l5 ≥ 0.6 +4.9; toi_l10 ≥ 18.88 +13.6; sog_max ≥ 6 +16.5 | 59.2% | ✓ |
+| sog_max ≥ 6 · ven_iscf ≥ 3.5 · opp_ga_l5_rk ≤ 26 | 26 | 60 | 71.7% | 101 | 55.4% | sog_max ≥ 6 +14.1; ven_iscf ≥ 3.5 +11.0; opp_ga_l5_rk ≤ 26 +4.1 | 58.8% | ✓ |
+| toi_l3 ≥ 20.257 · sog_max ≥ 6 | 22 | 65 | 64.6% | 151 | 57.0% | toi_l3 ≥ 20.257 +12.6; sog_max ≥ 6 +27.9 | 57.7% | ✓ |
+| a_avg ≥ 1 · sog_max ≥ 5 | 26 | 63 | 63.5% | 69 | 56.5% | a_avg ≥ 1 +18.2; sog_max ≥ 5 +26.4 | 57.7% | ✓ |
+| iff_l5 ≥ 4.4 · ven_toi ≥ 20.357 | 49 | 102 | 59.8% | 146 | 56.8% | iff_l5 ≥ 4.4 +25.4; ven_toi ≥ 20.357 +8.9 | 56.8% | ✓ |
+| iff_l5 ≥ 4.4 · sog_max ≥ 6 | 39 | 115 | 59.1% | 179 | 56.4% | iff_l5 ≥ 4.4 +10.8; sog_max ≥ 6 +8.3 | 56.3% | ✓ |
+| icf_l10 ≥ 6 | 132 | 365 | 45.5% | 233 | 57.5% | — | 55.4% | ✓ |
 
 **The strongest on the fit weeks that did not hold** (noise the search found):
 
 | When | Skaters | Fit: games | Fit: hit | Check: games | Check: hit |
 | --- | --- | --- | --- | --- | --- |
-| sog_max ≥ 6 · rest ≥ 1 · opp_ga_l5_rk ≤ 20 | 38 | 66 | 74.2% | 182 | 47.3% |
+| sog_max ≥ 6 · rest ≥ 1 · opp_ga_l5_rk ≤ 20 | 38 | 66 | 74.2% | 190 | 47.4% |
 
 **The ladder** (his shots a game this season; 1–4 or 5+ games behind the rate):
 
 | Shots a game | Games behind | Skater-games | Hit | Fit | Check | Held |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0–1 | 1–4 | 811 | 11.1% | 11.6% | 8.5% | ✓ |
-| 0–1 | 5+ | 876 | 8.8% | 9.2% | 8.7% | ✓ |
+| 0–1 | 1–4 | 816 | 11.0% | 11.6% | 8.2% | ✓ |
+| 0–1 | 5+ | 891 | 8.8% | 9.2% | 8.6% | ✓ |
 | 1–1.5 | 1–4 | 718 | 15.3% | 15.9% | 11.9% | ✓ |
-| 1–1.5 | 5+ | 1193 | 14.6% | 15.1% | 14.4% | ✓ |
+| 1–1.5 | 5+ | 1218 | 14.6% | 15.1% | 14.5% | ✓ |
 | 1.5–2 | 1–4 | 291 | 20.6% | 20.9% | 18.2% | ✓ |
-| 1.5–2 | 5+ | 780 | 24.9% | 26.6% | 24.4% | ✓ |
-| 2–2.5 | 1–4 | 364 | 23.6% | 24.5% | 13.8% | ✓ |
-| 2–2.5 | 5+ | 463 | 32.4% | 24.0% | 34.7% | ✓ |
+| 1.5–2 | 5+ | 786 | 24.9% | 26.6% | 24.5% | ✓ |
+| 2–2.5 | 1–4 | 365 | 23.6% | 24.5% | 13.3% | ✓ |
+| 2–2.5 | 5+ | 476 | 32.8% | 24.0% | 35.1% | ✓ |
 | 2.5–3 | 1–4 | 144 | 37.5% | 39.7% | 15.4% |  |
-| 2.5–3 | 5+ | 274 | 44.2% | 40.6% | 45.2% | ✓ |
-| 3–3.5 | 1–4 | 176 | 33.0% | 34.5% | 9.1% |  |
-| 3–3.5 | 5+ | 195 | 48.7% | 51.0% | 47.9% | ✓ |
+| 2.5–3 | 5+ | 275 | 44.0% | 40.6% | 45.0% | ✓ |
+| 3–3.5 | 1–4 | 177 | 32.8% | 34.5% | 8.3% |  |
+| 3–3.5 | 5+ | 199 | 50.3% | 51.0% | 50.0% | ✓ |
 | 3.5+ | 1–4 | 173 | 41.6% | 42.0% | 25.0% |  |
-| 3.5+ | 5+ | 118 | 55.9% | 50.0% | 58.1% | ✓ |
+| 3.5+ | 5+ | 119 | 56.3% | 50.0% | 58.6% | ✓ |
 
 ## 4+ SOG
 
-Base rate 9.5% (624 of 6576); fit weeks 9.4%, check week 9.6%. The bar a pill must clear to be filled: 33.0% (about the price a book usually asks for the line). 105 rules found on the fit weeks (10+ hits on 107+ games, 12+ skaters, every condition worth two points); the check week kept **95% of their lift**; **100 held**, 15 kept after near-duplicates.
+Base rate 9.6% (637 of 6648); fit weeks 9.4%, check week 9.8%. The bar a pill must clear to be filled: 33.0% (about the price a book usually asks for the line). 107 rules found on the fit weeks (10+ hits on 107+ games, 12+ skaters, every condition worth two points); the check week kept **99% of their lift**; **103 held**, 15 kept after near-duplicates.
 
 **The rules that held.** "Each part adds" = the rate over the whole window with the rule against the rule without that condition. The pill starts from the fit weeks’ lift cut to what the check week kept, updated by the rule’s own check week.
 
 | When | Skaters | Fit: games | Fit: hit | Check: games | Check: hit | Each part adds (pts) | Pill starts at | Fills |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| toi_avg ≥ 18.88 · icf60 ≥ 19.648 | 46 | 112 | 38.4% | 83 | 44.6% | toi_avg ≥ 18.88 +16.1; icf60 ≥ 19.648 +25.8 | 42.1% | ✓ |
-| iff_l5 ≥ 4.4 · toi_l5 ≥ 20.236 · opp_ga_l5_rk ≤ 26 | 49 | 117 | 40.2% | 114 | 36.8% | iff_l5 ≥ 4.4 +21.8; toi_l5 ≥ 20.236 +7.0; opp_ga_l5_rk ≤ 26 +5.0 | 37.3% | ✓ |
-| iff_avg ≥ 4.409 · toi_l10 ≥ 18.88 · pt1_l5 ≤ 0.8 | 43 | 119 | 40.3% | 166 | 36.1% | iff_avg ≥ 4.409 +22.9; toi_l10 ≥ 18.88 +5.6; pt1_l5 ≤ 0.8 +3.2 | 36.7% | ✓ |
-| iff_avg ≥ 4.409 · a_l3 ≥ 0.667 · team_gf_l5 ≤ 4.6 | 52 | 111 | 41.4% | 139 | 35.3% | iff_avg ≥ 4.409 +21.5; a_l3 ≥ 0.667 +7.2; team_gf_l5 ≤ 4.6 +2.3 | 36.3% | ✓ |
-| icf_l5 ≥ 6 · s4_l5 ≥ 0.6 · opp_ga_l5_rk ≤ 29 | 56 | 109 | 40.4% | 78 | 34.6% | icf_l5 ≥ 6 +6.5; s4_l5 ≥ 0.6 +8.9; opp_ga_l5_rk ≤ 29 +3.4 | 36.1% | ✓ |
-| iff_avg ≥ 4.409 · toi_l10 ≥ 18.88 · team_cf ≤ 66.5 | 50 | 137 | 39.4% | 176 | 35.2% | iff_avg ≥ 4.409 +21.5; toi_l10 ≥ 18.88 +4.3; team_cf ≤ 66.5 +2.3 | 35.7% | ✓ |
-| icf_l10 ≥ 6 · s4_l5 ≥ 0.6 · team_gf_l5 ≤ 4.6 | 49 | 107 | 40.2% | 72 | 33.3% | icf_l10 ≥ 6 +6.0; s4_l5 ≥ 0.6 +8.2; team_gf_l5 ≤ 4.6 +2.4 | 35.3% | ✓ |
-| iff_avg ≥ 4.409 · toi_l3 ≥ 20.257 | 52 | 139 | 34.5% | 134 | 35.8% | iff_avg ≥ 4.409 +19.8; toi_l3 ≥ 20.257 +5.5 | 35.3% | ✓ |
-| iff_l5 ≥ 4.4 · toi_avg ≥ 20.246 · pace ≥ 51.85 | 48 | 110 | 40.0% | 140 | 34.3% | iff_l5 ≥ 4.4 +19.4; toi_avg ≥ 20.246 +6.3; pace ≥ 51.85 +3.0 | 35.2% | ✓ |
-| iff_l5 ≥ 4.4 · a_l3 ≥ 0.667 · opp_hdca_rk ≤ 29 | 55 | 118 | 39.8% | 120 | 34.2% | iff_l5 ≥ 4.4 +20.4; a_l3 ≥ 0.667 +7.1; opp_hdca_rk ≤ 29 +2.1 | 35.2% | ✓ |
-| iff_avg ≥ 4.409 · toi_l10 ≥ 18.88 · pace ≤ 55.75 | 50 | 118 | 39.8% | 132 | 34.1% | iff_avg ≥ 4.409 +21.1; toi_l10 ≥ 18.88 +5.3; pace ≤ 55.75 +2.1 | 35.1% | ✓ |
-| iff_avg ≥ 4.409 · ven_toi ≥ 18.87 | 59 | 144 | 34.7% | 195 | 35.4% | iff_avg ≥ 4.409 +19.6; ven_toi ≥ 18.87 +5.4 | 35.1% | ✓ |
-| icf_l5 ≥ 6 · s4_l5 ≥ 0.6 · b2b = 0 | 55 | 107 | 40.2% | 77 | 32.5% | icf_l5 ≥ 6 +5.7; s4_l5 ≥ 0.6 +8.6; b2b = 0 +2.4 | 34.6% | ✓ |
-| fwd = 1 · icf_l5 ≥ 6 · s4_l5 ≥ 0.6 | 52 | 110 | 40.0% | 78 | 32.1% | fwd = 1 +2.1; icf_l5 ≥ 6 +5.5; s4_l5 ≥ 0.6 +7.4 | 34.2% | ✓ |
-| sog_max ≥ 5 · ven_icf ≥ 6 · opp_slot_iscf_x ≤ 1.224 | 48 | 107 | 41.1% | 170 | 32.9% | sog_max ≥ 5 +8.4; ven_icf ≥ 6 +12.9; opp_slot_iscf_x ≤ 1.224 +3.0 | 34.2% | ✓ |
+| toi_avg ≥ 18.88 · icf60 ≥ 19.648 | 46 | 112 | 38.4% | 84 | 46.4% | toi_avg ≥ 18.88 +16.4; icf60 ≥ 19.648 +26.3 | 43.9% | ✓ |
+| iff_l5 ≥ 4.4 · toi_l5 ≥ 20.236 · opp_ga_l5_rk ≤ 26 | 49 | 117 | 40.2% | 115 | 38.3% | iff_l5 ≥ 4.4 +22.3; toi_l5 ≥ 20.236 +6.8; opp_ga_l5_rk ≤ 26 +5.1 | 38.8% | ✓ |
+| iff_avg ≥ 4.409 · toi_l10 ≥ 18.88 · pt1_l5 ≤ 0.8 | 43 | 119 | 40.3% | 169 | 37.9% | iff_avg ≥ 4.409 +23.6; toi_l10 ≥ 18.88 +5.7; pt1_l5 ≤ 0.8 +3.4 | 38.4% | ✓ |
+| icf_l5 ≥ 6 · s4_l5 ≥ 0.6 · opp_ga_l5_rk ≤ 29 | 56 | 109 | 40.4% | 80 | 36.2% | icf_l5 ≥ 6 +6.0; s4_l5 ≥ 0.6 +9.1; opp_ga_l5_rk ≤ 29 +3.4 | 37.6% | ✓ |
+| icf_l10 ≥ 6 · s4_l5 ≥ 0.6 · team_gf_l5 ≤ 4.6 | 49 | 107 | 40.2% | 75 | 36.0% | icf_l10 ≥ 6 +6.0; s4_l5 ≥ 0.6 +8.5; team_gf_l5 ≤ 4.6 +2.5 | 37.5% | ✓ |
+| iff_avg ≥ 4.409 · toi_l5 ≥ 18.91 · team_cf ≤ 66.5 | 51 | 138 | 39.1% | 176 | 36.9% | iff_avg ≥ 4.409 +22.6; toi_l5 ≥ 18.91 +4.3; team_cf ≤ 66.5 +2.6 | 37.3% | ✓ |
+| iff_avg ≥ 4.409 · toi_l10 ≥ 18.88 · pace ≤ 55.75 | 50 | 118 | 39.8% | 135 | 36.3% | iff_avg ≥ 4.409 +21.9; toi_l10 ≥ 18.88 +5.4; pace ≤ 55.75 +2.5 | 37.1% | ✓ |
+| iff_avg ≥ 4.409 · a_l3 ≥ 0.667 · team_gf_l5 ≤ 4.6 | 52 | 111 | 41.4% | 140 | 35.7% | iff_avg ≥ 4.409 +21.6; a_l3 ≥ 0.667 +6.7; team_gf_l5 ≤ 4.6 +2.3 | 37.0% | ✓ |
+| iff_avg ≥ 4.409 · a_l3 ≥ 0.667 · opp_hdca_l10_rk ≤ 29 | 53 | 117 | 40.2% | 128 | 35.9% | iff_avg ≥ 4.409 +21.3; a_l3 ≥ 0.667 +6.3; opp_hdca_l10_rk ≤ 29 +2.0 | 37.0% | ✓ |
+| iff_l5 ≥ 4.4 · toi_avg ≥ 20.246 · pace ≥ 51.85 | 48 | 110 | 40.0% | 142 | 35.9% | iff_l5 ≥ 4.4 +20.1; toi_avg ≥ 20.246 +6.4; pace ≥ 51.85 +3.1 | 36.8% | ✓ |
+| iff_avg ≥ 4.409 · ven_toi ≥ 18.87 | 59 | 144 | 34.7% | 199 | 37.2% | iff_avg ≥ 4.409 +20.3; ven_toi ≥ 18.87 +5.8 | 36.8% | ✓ |
+| iff_avg ≥ 4.409 · toi_l3 ≥ 20.257 | 52 | 139 | 34.5% | 135 | 37.0% | iff_avg ≥ 4.409 +20.3; toi_l3 ≥ 20.257 +5.4 | 36.5% | ✓ |
+| icf_l5 ≥ 6 · s4_l5 ≥ 0.6 · b2b = 0 | 55 | 107 | 40.2% | 79 | 34.2% | icf_l5 ≥ 6 +5.2; s4_l5 ≥ 0.6 +8.8; b2b = 0 +2.4 | 36.2% | ✓ |
+| iff_l5 ≥ 4.4 · a_l3 ≥ 0.667 · opp_hdca_rk ≤ 29 | 55 | 118 | 39.8% | 121 | 34.7% | iff_l5 ≥ 4.4 +20.6; a_l3 ≥ 0.667 +6.7; opp_hdca_rk ≤ 29 +2.1 | 36.0% | ✓ |
+| fwd = 1 · icf_l5 ≥ 6 · s4_l5 ≥ 0.6 | 52 | 110 | 40.0% | 80 | 33.8% | fwd = 1 +2.2; icf_l5 ≥ 6 +5.3; s4_l5 ≥ 0.6 +7.4 | 35.9% | ✓ |
 
 **The strongest on the fit weeks that did not hold** (noise the search found):
 
@@ -164,244 +165,244 @@ Base rate 9.5% (624 of 6576); fit weeks 9.4%, check week 9.6%. The bar a pill mu
 | s4_l5 ≥ 0.667 | 76 | 139 | 28.8% | 25 | 8.0% |
 | s4_l5 ≥ 0.75 | 75 | 120 | 28.3% | 24 | 8.3% |
 | s4_l5 ≥ 0.8 | 75 | 111 | 27.9% | 23 | 8.7% |
-| str_s3 ≥ 2 | 109 | 179 | 24.6% | 238 | 16.8% |
 
 **The ladder** (his shots a game this season; 1–4 or 5+ games behind the rate):
 
 | Shots a game | Games behind | Skater-games | Hit | Fit | Check | Held |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0–1 | 1–4 | 811 | 3.3% | 3.4% | 3.1% | ✓ |
-| 0–1 | 5+ | 876 | 2.7% | 2.3% | 2.9% | ✓ |
+| 0–1 | 1–4 | 816 | 3.3% | 3.4% | 3.0% | ✓ |
+| 0–1 | 5+ | 891 | 2.7% | 2.3% | 2.8% | ✓ |
 | 1–1.5 | 1–4 | 718 | 5.7% | 6.2% | 3.0% | ✓ |
-| 1–1.5 | 5+ | 1193 | 5.2% | 4.7% | 5.4% | ✓ |
+| 1–1.5 | 5+ | 1218 | 5.3% | 4.7% | 5.4% | ✓ |
 | 1.5–2 | 1–4 | 291 | 10.0% | 10.5% | 6.1% | ✓ |
-| 1.5–2 | 5+ | 780 | 10.4% | 13.6% | 9.5% | ✓ |
-| 2–2.5 | 1–4 | 364 | 10.4% | 10.7% | 6.9% | ✓ |
-| 2–2.5 | 5+ | 463 | 14.7% | 9.0% | 16.3% | ✓ |
+| 1.5–2 | 5+ | 786 | 10.4% | 13.6% | 9.5% | ✓ |
+| 2–2.5 | 1–4 | 365 | 10.4% | 10.7% | 6.7% | ✓ |
+| 2–2.5 | 5+ | 476 | 14.9% | 9.0% | 16.5% | ✓ |
 | 2.5–3 | 1–4 | 144 | 17.4% | 18.3% | 7.7% |  |
-| 2.5–3 | 5+ | 274 | 22.6% | 20.3% | 23.3% | ✓ |
-| 3–3.5 | 1–4 | 176 | 13.6% | 14.5% | 0.0% |  |
-| 3–3.5 | 5+ | 195 | 28.2% | 33.3% | 26.4% | ✓ |
+| 2.5–3 | 5+ | 275 | 22.9% | 20.3% | 23.7% | ✓ |
+| 3–3.5 | 1–4 | 177 | 13.6% | 14.5% | 0.0% |  |
+| 3–3.5 | 5+ | 199 | 29.6% | 33.3% | 28.4% | ✓ |
 | 3.5+ | 1–4 | 173 | 25.4% | 26.0% | 0.0% |  |
-| 3.5+ | 5+ | 118 | 37.3% | 31.2% | 39.5% | ✓ |
+| 3.5+ | 5+ | 119 | 38.7% | 31.2% | 41.4% | ✓ |
 
 ## 5+ SOG
 
-Base rate 4.0% (261 of 6576); fit weeks 3.9%, check week 4.0%. The bar a pill must clear to be filled: 20.0% (about the price a book usually asks for the line). 41 rules found on the fit weeks (10+ hits on 257+ games, 12+ skaters, every condition worth two points); the check week kept **100% of their lift**; **41 held**, 15 kept after near-duplicates.
+Base rate 4.0% (268 of 6648); fit weeks 3.9%, check week 4.2%. The bar a pill must clear to be filled: 20.0% (about the price a book usually asks for the line). 41 rules found on the fit weeks (10+ hits on 257+ games, 12+ skaters, every condition worth two points); the check week kept **100% of their lift**; **41 held**, 15 kept after near-duplicates.
 
 **The rules that held.** "Each part adds" = the rate over the whole window with the rule against the rule without that condition. The pill starts from the fit weeks’ lift cut to what the check week kept, updated by the rule’s own check week.
 
 | When | Skaters | Fit: games | Fit: hit | Check: games | Check: hit | Each part adds (pts) | Pill starts at | Fills |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| iff_l5 ≥ 4.4 · icf_trend ≤ 1 | 116 | 317 | 15.5% | 114 | 22.8% | iff_l5 ≥ 4.4 +13.2; icf_trend ≤ 1 +2.3 | 20.9% | ✓ |
-| iff_l10 ≥ 4.409 | 116 | 328 | 14.6% | 246 | 17.5% | — | 17.1% |  |
-| icf60 ≥ 19.648 | 138 | 328 | 12.2% | 169 | 17.8% | — | 16.7% |  |
-| icf_l10 ≥ 6 | 132 | 365 | 13.2% | 229 | 17.0% | — | 16.5% |  |
-| iscf_avg ≥ 3.333 | 118 | 344 | 12.8% | 253 | 17.0% | — | 16.4% |  |
-| ven_iff ≥ 4.667 | 132 | 276 | 13.4% | 228 | 16.7% | — | 16.2% |  |
-| s3_rate ≥ 0.667 | 167 | 380 | 12.4% | 164 | 17.1% | — | 16.2% |  |
-| sog_l10 ≥ 3 | 166 | 417 | 11.5% | 244 | 16.4% | — | 15.7% |  |
-| s4_l10 ≥ 0.333 | 149 | 473 | 11.0% | 289 | 16.3% | — | 15.6% |  |
-| ven_icf ≥ 6 | 158 | 363 | 11.8% | 266 | 16.2% | — | 15.6% |  |
-| icf_l3 ≥ 6 | 151 | 389 | 11.3% | 282 | 14.9% | — | 14.5% |  |
-| sog60 ≥ 10.471 | 137 | 328 | 11.3% | 161 | 14.9% | — | 14.2% |  |
-| iff_l3 ≥ 4.5 | 132 | 329 | 13.1% | 272 | 14.0% | — | 13.9% |  |
-| s3_l5 ≥ 0.75 | 151 | 284 | 11.6% | 150 | 13.3% | — | 13.0% |  |
-| sog_l5 ≥ 3 | 169 | 417 | 11.0% | 281 | 13.2% | — | 12.9% |  |
+| iff_l5 ≥ 4.4 · icf_trend ≤ 1 · opp_slot_icf_x ≤ 1.511 | 105 | 269 | 17.8% | 118 | 24.6% | iff_l5 ≥ 4.4 +15.5; icf_trend ≤ 1 +3.3; opp_slot_icf_x ≤ 1.511 +2.0 | 22.9% | ✓ |
+| iff_l10 ≥ 4.409 | 116 | 328 | 14.6% | 249 | 18.1% | — | 17.6% |  |
+| icf_l10 ≥ 6 | 132 | 365 | 13.2% | 233 | 18.0% | — | 17.3% |  |
+| icf60 ≥ 19.648 | 138 | 328 | 12.2% | 172 | 18.0% | — | 16.9% |  |
+| iscf_avg ≥ 3.333 | 118 | 344 | 12.8% | 257 | 17.1% | — | 16.6% |  |
+| sog_l10 ≥ 3 | 166 | 417 | 11.5% | 250 | 17.2% | — | 16.4% |  |
+| s3_rate ≥ 0.667 | 167 | 380 | 12.4% | 168 | 17.3% | — | 16.3% |  |
+| ven_iff ≥ 4.667 | 132 | 276 | 13.4% | 232 | 16.8% | — | 16.3% |  |
+| s4_l10 ≥ 0.333 | 149 | 473 | 11.0% | 296 | 16.9% | — | 16.2% |  |
+| ven_icf ≥ 6 | 158 | 363 | 11.8% | 272 | 16.5% | — | 16.0% |  |
+| icf_l3 ≥ 6 | 151 | 389 | 11.3% | 288 | 14.9% | — | 14.5% |  |
+| sog60 ≥ 10.471 | 137 | 328 | 11.3% | 164 | 15.2% | — | 14.5% |  |
+| iff_l3 ≥ 4.5 | 132 | 329 | 13.1% | 273 | 13.9% | — | 13.8% |  |
+| s3_l5 ≥ 0.75 | 151 | 284 | 11.6% | 154 | 13.6% | — | 13.2% |  |
+| sog_l5 ≥ 3 | 169 | 417 | 11.0% | 289 | 13.5% | — | 13.2% |  |
 
 **The ladder** (his shots a game this season; 1–4 or 5+ games behind the rate):
 
 | Shots a game | Games behind | Skater-games | Hit | Fit | Check | Held |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0–1 | 1–4 | 811 | 1.1% | 1.0% | 1.6% | ✓ |
-| 0–1 | 5+ | 876 | 0.5% | 0.9% | 0.3% | ✓ |
+| 0–1 | 1–4 | 816 | 1.1% | 1.0% | 1.5% | ✓ |
+| 0–1 | 5+ | 891 | 0.4% | 0.9% | 0.3% | ✓ |
 | 1–1.5 | 1–4 | 718 | 1.5% | 1.5% | 2.0% | ✓ |
-| 1–1.5 | 5+ | 1193 | 1.5% | 0.4% | 1.9% | ✓ |
+| 1–1.5 | 5+ | 1218 | 1.6% | 0.4% | 1.9% | ✓ |
 | 1.5–2 | 1–4 | 291 | 4.5% | 4.3% | 6.1% | ✓ |
-| 1.5–2 | 5+ | 780 | 4.4% | 6.2% | 3.8% | ✓ |
-| 2–2.5 | 1–4 | 364 | 4.9% | 5.4% | 0.0% | ✓ |
-| 2–2.5 | 5+ | 463 | 6.5% | 5.0% | 6.9% | ✓ |
+| 1.5–2 | 5+ | 786 | 4.3% | 6.2% | 3.8% | ✓ |
+| 2–2.5 | 1–4 | 365 | 4.9% | 5.4% | 0.0% | ✓ |
+| 2–2.5 | 5+ | 476 | 6.9% | 5.0% | 7.4% | ✓ |
 | 2.5–3 | 1–4 | 144 | 8.3% | 8.4% | 7.7% |  |
-| 2.5–3 | 5+ | 274 | 8.8% | 7.8% | 9.0% | ✓ |
-| 3–3.5 | 1–4 | 176 | 5.7% | 6.1% | 0.0% |  |
-| 3–3.5 | 5+ | 195 | 12.8% | 19.6% | 10.4% | ✓ |
+| 2.5–3 | 5+ | 275 | 8.7% | 7.8% | 9.0% | ✓ |
+| 3–3.5 | 1–4 | 177 | 5.6% | 6.1% | 0.0% |  |
+| 3–3.5 | 5+ | 199 | 14.1% | 19.6% | 12.2% | ✓ |
 | 3.5+ | 1–4 | 173 | 13.3% | 13.6% | 0.0% |  |
-| 3.5+ | 5+ | 118 | 25.4% | 15.6% | 29.1% |  |
+| 3.5+ | 5+ | 119 | 25.2% | 15.6% | 28.7% |  |
 
 ## 6+ SOG
 
-Base rate 1.7% (115 of 6576); fit weeks 2.0%, check week 1.5%. The bar a pill must clear to be filled: 11.0% (about the price a book usually asks for the line). 40 rules found on the fit weeks (5+ hits on 513+ games, 12+ skaters, every condition worth two points); the check week kept **87% of their lift**; **38 held**, 15 kept after near-duplicates.
+Base rate 1.8% (118 of 6648); fit weeks 2.0%, check week 1.6%. The bar a pill must clear to be filled: 11.0% (about the price a book usually asks for the line). 41 rules found on the fit weeks (5+ hits on 513+ games, 12+ skaters, every condition worth two points); the check week kept **94% of their lift**; **39 held**, 15 kept after near-duplicates.
 
 **The rules that held.** "Each part adds" = the rate over the whole window with the rule against the rule without that condition. The pill starts from the fit weeks’ lift cut to what the check week kept, updated by the rule’s own check week.
 
 | When | Skaters | Fit: games | Fit: hit | Check: games | Check: hit | Each part adds (pts) | Pill starts at | Fills |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| s2_rate ≥ 0.8 | 266 | 670 | 5.1% | 350 | 6.3% | — | 6.1% |  |
-| ven_icf ≥ 5 | 234 | 593 | 5.7% | 536 | 5.8% | — | 5.7% |  |
-| icf_avg ≥ 4.833 | 197 | 663 | 5.6% | 521 | 5.8% | — | 5.7% |  |
-| sog_l10 ≥ 2.333 | 211 | 675 | 5.8% | 554 | 5.6% | — | 5.6% |  |
-| s3_l10 ≥ 0.5 | 231 | 722 | 5.0% | 475 | 5.5% | — | 5.4% |  |
-| iff_l10 ≥ 3.5 | 216 | 705 | 6.2% | 544 | 5.3% | — | 5.3% |  |
-| ven_iff ≥ 3.667 | 239 | 545 | 6.2% | 547 | 5.3% | — | 5.3% |  |
-| s4_l5 ≥ 0.25 | 172 | 582 | 5.5% | 391 | 5.1% | — | 5.1% |  |
-| ven_sog ≥ 2.5 | 253 | 565 | 5.1% | 561 | 5.0% | — | 5.0% |  |
-| iff_l3 ≥ 3.667 | 240 | 664 | 5.9% | 610 | 4.9% | — | 4.9% |  |
-| icf60 ≥ 16.461 | 219 | 656 | 5.2% | 494 | 4.9% | — | 4.8% |  |
-| iscf_avg ≥ 2.5 | 203 | 690 | 5.8% | 593 | 4.7% | — | 4.7% |  |
-| icf_l3 ≥ 4.867 | 222 | 656 | 5.6% | 549 | 4.6% | — | 4.6% |  |
-| s4_l10 ≥ 0.2 | 202 | 722 | 4.8% | 721 | 4.6% | — | 4.6% |  |
-| iff_avg ≥ 3 | 301 | 1031 | 4.8% | 860 | 4.4% | — | 4.4% |  |
+| s2_rate ≥ 0.8 | 266 | 670 | 5.1% | 355 | 7.0% | — | 6.8% |  |
+| ven_icf ≥ 5 | 234 | 593 | 5.7% | 549 | 6.2% | — | 6.1% |  |
+| icf_avg ≥ 4.833 | 197 | 663 | 5.6% | 531 | 6.0% | — | 6.0% |  |
+| sog_l10 ≥ 2.333 | 211 | 675 | 5.8% | 566 | 5.8% | — | 5.8% |  |
+| toi_l3 ≥ 16.42 · icf60 ≥ 14.245 | 166 | 567 | 6.9% | 524 | 5.7% | toi_l3 ≥ 16.42 +2.1; icf60 ≥ 14.245 +3.3 | 5.8% |  |
+| iff_avg ≥ 3.5 | 216 | 705 | 6.2% | 556 | 5.8% | — | 5.8% |  |
+| s3_rate ≥ 0.5 | 231 | 722 | 5.0% | 466 | 5.8% | — | 5.7% |  |
+| ven_iff ≥ 3.667 | 239 | 545 | 6.2% | 561 | 5.5% | — | 5.5% |  |
+| iff_l3 ≥ 3.667 | 240 | 664 | 5.9% | 625 | 5.3% | — | 5.3% |  |
+| s4_l5 ≥ 0.25 | 172 | 582 | 5.5% | 401 | 5.2% | — | 5.2% |  |
+| ven_sog ≥ 2.5 | 253 | 565 | 5.1% | 573 | 5.2% | — | 5.2% |  |
+| icf60 ≥ 16.461 | 219 | 656 | 5.2% | 503 | 5.2% | — | 5.1% |  |
+| iscf_avg ≥ 2.5 | 203 | 690 | 5.8% | 607 | 5.1% | — | 5.1% |  |
+| icf_l3 ≥ 4.867 | 222 | 656 | 5.6% | 563 | 4.8% | — | 4.8% |  |
+| s4_l10 ≥ 0.2 | 202 | 722 | 4.8% | 739 | 4.7% | — | 4.7% |  |
 
 **The strongest on the fit weeks that did not hold** (noise the search found):
 
 | When | Skaters | Fit: games | Fit: hit | Check: games | Check: hit |
 | --- | --- | --- | --- | --- | --- |
-| str_s3 ≥ 1 | 361 | 697 | 4.9% | 722 | 2.2% |
-| since_s3 ≤ 0 | 361 | 697 | 4.9% | 722 | 2.2% |
+| str_s3 ≥ 1 | 361 | 697 | 4.9% | 735 | 2.4% |
+| since_s3 ≤ 0 | 361 | 697 | 4.9% | 735 | 2.4% |
 
 **The ladder** (his shots a game this season; 1–4 or 5+ games behind the rate):
 
 | Shots a game | Games behind | Skater-games | Hit | Fit | Check | Held |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0–1 | 1–4 | 811 | 0.5% | 0.6% | 0.0% | ✓ |
-| 0–1 | 5+ | 876 | 0.0% | 0.0% | 0.0% | ✓ |
+| 0–1 | 1–4 | 816 | 0.5% | 0.6% | 0.0% | ✓ |
+| 0–1 | 5+ | 891 | 0.0% | 0.0% | 0.0% | ✓ |
 | 1–1.5 | 1–4 | 718 | 0.3% | 0.3% | 0.0% | ✓ |
-| 1–1.5 | 5+ | 1193 | 0.4% | 0.0% | 0.5% | ✓ |
+| 1–1.5 | 5+ | 1218 | 0.4% | 0.0% | 0.5% | ✓ |
 | 1.5–2 | 1–4 | 291 | 1.7% | 1.6% | 3.0% | ✓ |
-| 1.5–2 | 5+ | 780 | 2.1% | 4.0% | 1.5% | ✓ |
-| 2–2.5 | 1–4 | 364 | 2.5% | 2.7% | 0.0% | ✓ |
-| 2–2.5 | 5+ | 463 | 2.6% | 3.0% | 2.5% | ✓ |
+| 1.5–2 | 5+ | 786 | 2.0% | 4.0% | 1.5% | ✓ |
+| 2–2.5 | 1–4 | 365 | 2.5% | 2.7% | 0.0% | ✓ |
+| 2–2.5 | 5+ | 476 | 2.7% | 3.0% | 2.7% | ✓ |
 | 2.5–3 | 1–4 | 144 | 4.2% | 4.6% | 0.0% |  |
-| 2.5–3 | 5+ | 274 | 4.4% | 3.1% | 4.8% | ✓ |
-| 3–3.5 | 1–4 | 176 | 4.0% | 4.2% | 0.0% |  |
-| 3–3.5 | 5+ | 195 | 4.1% | 5.9% | 3.5% | ✓ |
+| 2.5–3 | 5+ | 275 | 4.4% | 3.1% | 4.7% | ✓ |
+| 3–3.5 | 1–4 | 177 | 4.0% | 4.2% | 0.0% |  |
+| 3–3.5 | 5+ | 199 | 5.0% | 5.9% | 4.7% | ✓ |
 | 3.5+ | 1–4 | 173 | 7.5% | 7.7% | 0.0% |  |
-| 3.5+ | 5+ | 118 | 13.6% | 12.5% | 14.0% | ✓ |
+| 3.5+ | 5+ | 119 | 13.4% | 12.5% | 13.8% | ✓ |
 
 ## 1+ goal
 
-Base rate 14.9% (978 of 6576); fit weeks 14.4%, check week 15.3%. The bar a pill must clear to be filled: 35.0% (about the price a book usually asks for the line). 117 rules found on the fit weeks (10+ hits on 70+ games, 12+ skaters, every condition worth two points); the check week kept **88% of their lift**; **113 held**, 15 kept after near-duplicates.
+Base rate 15.0% (998 of 6648); fit weeks 14.4%, check week 15.6%. The bar a pill must clear to be filled: 35.0% (about the price a book usually asks for the line). 117 rules found on the fit weeks (10+ hits on 70+ games, 12+ skaters, every condition worth two points); the check week kept **90% of their lift**; **112 held**, 15 kept after near-duplicates.
 
 **The rules that held.** "Each part adds" = the rate over the whole window with the rule against the rule without that condition. The pill starts from the fit weeks’ lift cut to what the check week kept, updated by the rule’s own check week.
 
 | When | Skaters | Fit: games | Fit: hit | Check: games | Check: hit | Each part adds (pts) | Pill starts at | Fills |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| iscf_l10 ≥ 3.333 · sog_sd ≥ 1.414 · ven_s3 ≥ 1 | 38 | 70 | 48.6% | 41 | 51.2% | iscf_l10 ≥ 3.333 +16.8; sog_sd ≥ 1.414 +12.4; ven_s3 ≥ 1 +13.5 | 48.2% | ✓ |
-| ven_iff ≥ 4.667 · opp_ga_l5_rk ≤ 16 · line ≤ 1 | 51 | 73 | 47.9% | 75 | 44.0% | ven_iff ≥ 4.667 +23.8; opp_ga_l5_rk ≤ 16 +6.2; line ≤ 1 +9.2 | 44.2% | ✓ |
-| ven_iff ≥ 4.667 · opp_slot_sog_x ≤ 0.96 · line ≤ 1 | 47 | 73 | 47.9% | 64 | 43.8% | ven_iff ≥ 4.667 +24.6; opp_slot_sog_x ≤ 0.96 +6.3; line ≤ 1 +11.1 | 44.0% | ✓ |
-| fwd = 1 · toi_l5 ≥ 20.236 · ven_iff ≥ 4.667 | 34 | 71 | 49.3% | 104 | 43.3% | fwd = 1 +7.1; toi_l5 ≥ 20.236 +10.3; ven_iff ≥ 4.667 +10.1 | 43.9% | ✓ |
-| iscf_l5 ≥ 3.333 · sog_max ≥ 6 · ven_s3 ≥ 0.667 | 26 | 70 | 48.6% | 80 | 41.2% | iscf_l5 ≥ 3.333 +6.2; sog_max ≥ 6 +8.2; ven_s3 ≥ 0.667 +8.6 | 42.5% | ✓ |
-| pts_avg ≥ 1 · ven_iff ≥ 4.667 · line ≤ 1 | 46 | 92 | 46.7% | 95 | 42.1% | pts_avg ≥ 1 +4.7; ven_iff ≥ 4.667 +16.9; line ≤ 1 +4.8 | 42.5% | ✓ |
-| iff_avg ≥ 4.409 · sog_sd ≥ 1.414 · pt1_l5 ≥ 0.75 | 32 | 70 | 50.0% | 83 | 39.8% | iff_avg ≥ 4.409 +12.0; sog_sd ≥ 1.414 +7.2; pt1_l5 ≥ 0.75 +8.2 | 41.9% | ✓ |
-| pts_avg ≥ 1 · sog_sd ≥ 1.169 · ven_iff ≥ 4.667 | 45 | 93 | 47.3% | 107 | 41.1% | pts_avg ≥ 1 +8.9; sog_sd ≥ 1.169 +4.4; ven_iff ≥ 4.667 +12.3 | 41.9% | ✓ |
-| pts_l5 ≥ 1 · sog_sd ≥ 1.414 · ven_iff ≥ 4.667 | 44 | 86 | 47.7% | 98 | 40.8% | pts_l5 ≥ 1 +7.9; sog_sd ≥ 1.414 +5.4; ven_iff ≥ 4.667 +12.7 | 41.8% | ✓ |
-| iff_avg ≥ 4.409 · pts_l5 ≥ 1 · sog_sd ≥ 1.414 | 42 | 98 | 46.9% | 133 | 40.6% | iff_avg ≥ 4.409 +12.0; pts_l5 ≥ 1 +7.0; sog_sd ≥ 1.414 +5.8 | 41.3% | ✓ |
-| pts_avg ≥ 1 · ven_iff ≥ 4.667 · opp_sa_l5 ≥ 25 | 49 | 93 | 47.3% | 84 | 39.3% | pts_avg ≥ 1 +8.8; ven_iff ≥ 4.667 +17.4; opp_sa_l5 ≥ 25 +3.9 | 40.8% | ✓ |
-| iscf_l10 ≥ 3.333 · toi_l3 ≥ 20.257 · team_cf_l5 ≤ 66.5 | 30 | 75 | 48.0% | 105 | 39.0% | iscf_l10 ≥ 3.333 +25.5; toi_l3 ≥ 20.257 +9.7; team_cf_l5 ≤ 66.5 +3.8 | 40.6% | ✓ |
-| pts_avg ≥ 1 · ven_iff ≥ 4.667 · opp_slot_sog_x ≥ 0.733 | 53 | 94 | 46.8% | 105 | 39.0% | pts_avg ≥ 1 +7.8; ven_iff ≥ 4.667 +17.0; opp_slot_sog_x ≥ 0.733 +3.1 | 40.3% | ✓ |
-| sog_sd ≥ 1.414 · pt1_l10 ≥ 0.667 · ven_iff ≥ 4.667 | 43 | 74 | 48.6% | 82 | 37.8% | sog_sd ≥ 1.414 +6.8; pt1_l10 ≥ 0.667 +6.8; ven_iff ≥ 4.667 +9.9 | 40.2% | ✓ |
-| pts_avg ≥ 1 · ven_iff ≥ 4.667 | 70 | 144 | 38.9% | 121 | 40.5% | pts_avg ≥ 1 +6.7; ven_iff ≥ 4.667 +15.4 | 39.5% | ✓ |
+| iscf_l10 ≥ 3.333 · sog_sd ≥ 1.414 · ven_s3 ≥ 1 | 38 | 70 | 48.6% | 41 | 51.2% | iscf_l10 ≥ 3.333 +16.5; sog_sd ≥ 1.414 +12.4; ven_s3 ≥ 1 +13.3 | 48.5% | ✓ |
+| ven_iff ≥ 4.667 · opp_ga_l5_rk ≤ 16 · line ≤ 1 | 51 | 73 | 47.9% | 76 | 44.7% | ven_iff ≥ 4.667 +24.0; opp_ga_l5_rk ≤ 16 +6.0; line ≤ 1 +9.1 | 44.9% | ✓ |
+| ven_iff ≥ 4.667 · opp_slot_sog_x ≤ 0.96 · line ≤ 1 | 47 | 73 | 47.9% | 64 | 43.8% | ven_iff ≥ 4.667 +24.3; opp_slot_sog_x ≤ 0.96 +5.7; line ≤ 1 +11.1 | 44.3% | ✓ |
+| fwd = 1 · toi_l5 ≥ 20.236 · ven_iff ≥ 4.667 | 34 | 71 | 49.3% | 104 | 43.3% | fwd = 1 +7.1; toi_l5 ≥ 20.236 +9.7; ven_iff ≥ 4.667 +10.0 | 44.1% | ✓ |
+| iscf_l5 ≥ 3.333 · sog_max ≥ 6 · ven_s3 ≥ 0.667 | 26 | 70 | 48.6% | 80 | 41.2% | iscf_l5 ≥ 3.333 +5.6; sog_max ≥ 6 +8.2; ven_s3 ≥ 0.667 +8.5 | 42.8% | ✓ |
+| pts_avg ≥ 1 · ven_iff ≥ 4.667 · line ≤ 1 | 46 | 92 | 46.7% | 95 | 42.1% | pts_avg ≥ 1 +4.1; ven_iff ≥ 4.667 +16.8; line ≤ 1 +4.8 | 42.7% | ✓ |
+| iff_avg ≥ 4.409 · sog_sd ≥ 1.414 · pt1_l5 ≥ 0.75 | 32 | 70 | 50.0% | 83 | 39.8% | iff_avg ≥ 4.409 +11.7; sog_sd ≥ 1.414 +6.9; pt1_l5 ≥ 0.75 +8.0 | 42.1% | ✓ |
+| pts_avg ≥ 1 · sog_sd ≥ 1.169 · ven_iff ≥ 4.667 | 45 | 93 | 47.3% | 107 | 41.1% | pts_avg ≥ 1 +8.2; sog_sd ≥ 1.169 +4.4; ven_iff ≥ 4.667 +12.3 | 42.1% | ✓ |
+| pts_l5 ≥ 1 · sog_sd ≥ 1.414 · ven_iff ≥ 4.667 | 44 | 86 | 47.7% | 98 | 40.8% | pts_l5 ≥ 1 +7.3; sog_sd ≥ 1.414 +5.2; ven_iff ≥ 4.667 +12.6 | 42.0% | ✓ |
+| iff_avg ≥ 4.409 · pts_l5 ≥ 1 · sog_sd ≥ 1.414 | 42 | 98 | 46.9% | 133 | 40.6% | iff_avg ≥ 4.409 +11.8; pts_l5 ≥ 1 +6.8; sog_sd ≥ 1.414 +5.6 | 41.5% | ✓ |
+| pts_avg ≥ 1 · ven_iff ≥ 4.667 · opp_sa_l5 ≥ 25 | 49 | 93 | 47.3% | 84 | 39.3% | pts_avg ≥ 1 +8.1; ven_iff ≥ 4.667 +17.3; opp_sa_l5 ≥ 25 +3.9 | 41.0% | ✓ |
+| sog_max ≥ 6 · ven_iscf ≥ 3.5 · ven_s3 ≥ 0.667 | 29 | 70 | 48.6% | 94 | 38.3% | sog_max ≥ 6 +9.6; ven_iscf ≥ 3.5 +3.6; ven_s3 ≥ 0.667 +5.2 | 40.5% | ✓ |
+| iscf_l10 ≥ 3.333 · toi_l3 ≥ 20.257 · team_cf_l5 ≤ 66.5 | 30 | 75 | 48.0% | 106 | 38.7% | iscf_l10 ≥ 3.333 +25.2; toi_l3 ≥ 20.257 +9.3; team_cf_l5 ≤ 66.5 +3.7 | 40.5% | ✓ |
+| pts_avg ≥ 1 · ven_iff ≥ 4.667 · opp_slot_sog_x ≥ 0.733 | 53 | 94 | 46.8% | 105 | 39.0% | pts_avg ≥ 1 +7.1; ven_iff ≥ 4.667 +16.9; opp_slot_sog_x ≥ 0.733 +3.1 | 40.5% | ✓ |
+| sog_sd ≥ 1.414 · pt1_l10 ≥ 0.667 · ven_iff ≥ 4.667 | 43 | 74 | 48.6% | 82 | 37.8% | sog_sd ≥ 1.414 +6.8; pt1_l10 ≥ 0.667 +6.3; ven_iff ≥ 4.667 +9.9 | 40.4% | ✓ |
 
 **The strongest on the fit weeks that did not hold** (noise the search found):
 
 | When | Skaters | Fit: games | Fit: hit | Check: games | Check: hit |
 | --- | --- | --- | --- | --- | --- |
-| sog_max ≥ 6 · ven_pts ≥ 1 | 36 | 85 | 43.5% | 176 | 29.5% |
-| sog_max ≥ 6 · ven_pts ≥ 0.667 | 39 | 93 | 40.9% | 235 | 28.5% |
+| pts_l10 ≥ 1 · sog_max ≥ 6 · ven_icf ≥ 3.333 | 27 | 70 | 48.6% | 146 | 33.6% |
+| sog_max ≥ 6 · ven_pts ≥ 1 | 36 | 85 | 43.5% | 178 | 30.3% |
+| sog_max ≥ 6 · ven_pts ≥ 0.667 | 39 | 93 | 40.9% | 239 | 28.9% |
 | ven_iff ≥ 4.667 · team_sa ≤ 24.34 | 48 | 95 | 40.0% | 35 | 28.6% |
-| str_s3 ≥ 2 | 109 | 179 | 28.5% | 238 | 18.9% |
+| str_s3 ≥ 2 | 109 | 179 | 28.5% | 240 | 19.6% |
 
 **The ladder** (his shots a game this season; 1–4 or 5+ games behind the rate):
 
 | Shots a game | Games behind | Skater-games | Hit | Fit | Check | Held |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0–1 | 1–4 | 811 | 6.9% | 7.8% | 2.3% | ✓ |
-| 0–1 | 5+ | 876 | 8.0% | 7.8% | 8.1% | ✓ |
+| 0–1 | 1–4 | 816 | 7.0% | 7.8% | 3.0% | ✓ |
+| 0–1 | 5+ | 891 | 8.1% | 7.8% | 8.2% | ✓ |
 | 1–1.5 | 1–4 | 718 | 12.7% | 13.6% | 6.9% | ✓ |
-| 1–1.5 | 5+ | 1193 | 13.3% | 15.4% | 12.7% | ✓ |
+| 1–1.5 | 5+ | 1218 | 13.3% | 15.4% | 12.7% | ✓ |
 | 1.5–2 | 1–4 | 291 | 9.3% | 8.9% | 12.1% | ✓ |
-| 1.5–2 | 5+ | 780 | 17.1% | 19.2% | 16.4% | ✓ |
-| 2–2.5 | 1–4 | 364 | 13.2% | 14.0% | 3.4% |  |
-| 2–2.5 | 5+ | 463 | 23.8% | 21.0% | 24.5% | ✓ |
+| 1.5–2 | 5+ | 786 | 17.3% | 19.2% | 16.7% | ✓ |
+| 2–2.5 | 1–4 | 365 | 13.2% | 14.0% | 3.3% |  |
+| 2–2.5 | 5+ | 476 | 24.6% | 21.0% | 25.5% | ✓ |
 | 2.5–3 | 1–4 | 144 | 25.0% | 26.0% | 15.4% |  |
-| 2.5–3 | 5+ | 274 | 25.2% | 21.9% | 26.2% | ✓ |
-| 3–3.5 | 1–4 | 176 | 19.3% | 20.6% | 0.0% |  |
-| 3–3.5 | 5+ | 195 | 32.3% | 25.5% | 34.7% | ✓ |
+| 2.5–3 | 5+ | 275 | 25.5% | 21.9% | 26.5% | ✓ |
+| 3–3.5 | 1–4 | 177 | 19.2% | 20.6% | 0.0% |  |
+| 3–3.5 | 5+ | 199 | 32.7% | 25.5% | 35.1% | ✓ |
 | 3.5+ | 1–4 | 173 | 23.7% | 24.3% | 0.0% |  |
-| 3.5+ | 5+ | 118 | 34.7% | 46.9% | 30.2% | ✓ |
+| 3.5+ | 5+ | 119 | 35.3% | 46.9% | 31.0% | ✓ |
 
 ## 2+ goals
 
-Base rate 2.0% (133 of 6576); fit weeks 2.2%, check week 1.8%. The bar a pill must clear to be filled: 9.0% (about the price a book usually asks for the line). 41 rules found on the fit weeks (5+ hits on 456+ games, 12+ skaters, every condition worth two points); the check week kept **60% of their lift**; **39 held**, 15 kept after near-duplicates.
+Base rate 2.0% (136 of 6648); fit weeks 2.2%, check week 1.9%. The bar a pill must clear to be filled: 9.0% (about the price a book usually asks for the line). 41 rules found on the fit weeks (5+ hits on 456+ games, 12+ skaters, every condition worth two points); the check week kept **66% of their lift**; **39 held**, 15 kept after near-duplicates.
 
 **The rules that held.** "Each part adds" = the rate over the whole window with the rule against the rule without that condition. The pill starts from the fit weeks’ lift cut to what the check week kept, updated by the rule’s own check week.
 
 | When | Skaters | Fit: games | Fit: hit | Check: games | Check: hit | Each part adds (pts) | Pill starts at | Fills |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| iscf_avg ≥ 2.5 | 203 | 690 | 6.8% | 593 | 5.4% | — | 5.4% |  |
-| s4_l10 ≥ 0.333 | 149 | 473 | 7.0% | 289 | 5.2% | — | 5.2% |  |
-| icf_l10 ≥ 4.833 | 197 | 663 | 6.0% | 512 | 5.1% | — | 5.0% |  |
-| iff_l10 ≥ 3.5 | 216 | 705 | 6.0% | 544 | 5.0% | — | 4.9% |  |
-| ven_iff ≥ 3.667 | 239 | 545 | 7.2% | 547 | 4.8% | — | 4.8% |  |
-| ven_icf ≥ 5 | 234 | 593 | 6.4% | 536 | 4.7% | — | 4.7% |  |
-| icf60 ≥ 16.461 | 219 | 656 | 5.8% | 494 | 4.7% | — | 4.6% |  |
-| s3_l10 ≥ 0.5 | 231 | 722 | 5.4% | 475 | 4.6% | — | 4.6% |  |
-| ven_s3 ≥ 0.5 | 281 | 667 | 5.8% | 634 | 4.6% | — | 4.6% |  |
-| ven_sog ≥ 2.5 | 253 | 565 | 6.7% | 561 | 4.5% | — | 4.5% |  |
-| ven_iscf ≥ 2.5 | 243 | 602 | 6.6% | 652 | 4.4% | — | 4.5% |  |
-| iscf_l3 ≥ 2.5 | 233 | 695 | 6.0% | 640 | 4.4% | — | 4.4% |  |
-| s4_rate ≥ 0.2 | 202 | 722 | 6.4% | 640 | 4.2% | — | 4.2% |  |
-| sog_l10 ≥ 2.333 | 211 | 675 | 6.7% | 554 | 4.2% | — | 4.2% |  |
-| iff_avg ≥ 3 | 301 | 1031 | 5.2% | 860 | 4.2% | — | 4.2% |  |
+| iscf_avg ≥ 2.5 | 203 | 690 | 6.8% | 607 | 5.8% | — | 5.7% |  |
+| s4_l10 ≥ 0.333 | 149 | 473 | 7.0% | 296 | 5.7% | — | 5.7% |  |
+| icf_l10 ≥ 4.833 | 197 | 663 | 6.0% | 521 | 5.6% | — | 5.5% |  |
+| iff_l10 ≥ 3.5 | 216 | 705 | 6.0% | 557 | 5.2% | — | 5.2% |  |
+| icf60 ≥ 16.461 | 219 | 656 | 5.8% | 503 | 5.2% | — | 5.1% |  |
+| ven_icf ≥ 5 | 234 | 593 | 6.4% | 549 | 5.1% | — | 5.1% |  |
+| ven_iff ≥ 3.667 | 239 | 545 | 7.2% | 561 | 5.0% | — | 5.0% |  |
+| s3_l10 ≥ 0.5 | 231 | 722 | 5.4% | 485 | 4.9% | — | 4.9% |  |
+| ven_iscf ≥ 2.5 | 243 | 602 | 6.6% | 666 | 4.8% | — | 4.8% |  |
+| ven_s3 ≥ 0.5 | 281 | 667 | 5.8% | 647 | 4.8% | — | 4.8% |  |
+| ven_sog ≥ 2.5 | 253 | 565 | 6.7% | 573 | 4.7% | — | 4.7% |  |
+| iscf_l3 ≥ 2.5 | 233 | 695 | 6.0% | 657 | 4.6% | — | 4.6% |  |
+| s4_l5 ≥ 0.333 | 151 | 465 | 7.1% | 386 | 4.4% | — | 4.5% |  |
+| sog_l10 ≥ 2.333 | 211 | 675 | 6.7% | 566 | 4.4% | — | 4.5% |  |
+| s4_rate ≥ 0.2 | 202 | 722 | 6.4% | 656 | 4.4% | — | 4.4% |  |
 
 **The strongest on the fit weeks that did not hold** (noise the search found):
 
 | When | Skaters | Fit: games | Fit: hit | Check: games | Check: hit |
 | --- | --- | --- | --- | --- | --- |
-| s4_l5 ≥ 0.2 | 214 | 810 | 5.8% | 1101 | 2.9% |
-| sog_max ≥ 4 | 214 | 837 | 5.7% | 1499 | 2.8% |
+| s4_l5 ≥ 0.2 | 214 | 810 | 5.8% | 1126 | 3.1% |
+| sog_max ≥ 4 | 214 | 837 | 5.7% | 1535 | 2.9% |
 
 **The ladder** (his shots a game this season; 1–4 or 5+ games behind the rate):
 
 | Shots a game | Games behind | Skater-games | Hit | Fit | Check | Held |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0–1 | 1–4 | 811 | 0.6% | 0.6% | 0.8% | ✓ |
-| 0–1 | 5+ | 876 | 0.1% | 0.0% | 0.2% | ✓ |
+| 0–1 | 1–4 | 816 | 0.6% | 0.6% | 0.7% | ✓ |
+| 0–1 | 5+ | 891 | 0.1% | 0.0% | 0.1% | ✓ |
 | 1–1.5 | 1–4 | 718 | 1.0% | 0.8% | 2.0% | ✓ |
-| 1–1.5 | 5+ | 1193 | 1.6% | 2.2% | 1.4% | ✓ |
+| 1–1.5 | 5+ | 1218 | 1.6% | 2.2% | 1.4% | ✓ |
 | 1.5–2 | 1–4 | 291 | 1.0% | 1.2% | 0.0% | ✓ |
-| 1.5–2 | 5+ | 780 | 1.7% | 0.6% | 2.0% | ✓ |
-| 2–2.5 | 1–4 | 364 | 1.9% | 2.1% | 0.0% | ✓ |
-| 2–2.5 | 5+ | 463 | 4.1% | 8.0% | 3.0% | ✓ |
+| 1.5–2 | 5+ | 786 | 1.7% | 0.6% | 2.0% | ✓ |
+| 2–2.5 | 1–4 | 365 | 1.9% | 2.1% | 0.0% | ✓ |
+| 2–2.5 | 5+ | 476 | 4.2% | 8.0% | 3.2% | ✓ |
 | 2.5–3 | 1–4 | 144 | 6.9% | 7.6% | 0.0% |  |
-| 2.5–3 | 5+ | 274 | 5.5% | 9.4% | 4.3% | ✓ |
-| 3–3.5 | 1–4 | 176 | 2.8% | 3.0% | 0.0% |  |
-| 3–3.5 | 5+ | 195 | 6.2% | 5.9% | 6.2% | ✓ |
+| 2.5–3 | 5+ | 275 | 5.5% | 9.4% | 4.3% | ✓ |
+| 3–3.5 | 1–4 | 177 | 2.8% | 3.0% | 0.0% |  |
+| 3–3.5 | 5+ | 199 | 6.5% | 5.9% | 6.8% | ✓ |
 | 3.5+ | 1–4 | 173 | 6.4% | 6.5% | 0.0% |  |
-| 3.5+ | 5+ | 118 | 5.1% | 9.4% | 3.5% | ✓ |
+| 3.5+ | 5+ | 119 | 5.9% | 9.4% | 4.6% | ✓ |
 
 ## 3+ goals
 
-Base rate 0.2% (15 of 6576); fit weeks 0.3%, check week 0.2%. The bar a pill must clear to be filled: 3.0% (about the price a book usually asks for the line). 0 rules found on the fit weeks (5+ hits on 3643+ games, 12+ skaters, every condition worth two points); the check week kept **0% of their lift**; **0 held**, 0 kept after near-duplicates.
+Base rate 0.2% (16 of 6648); fit weeks 0.3%, check week 0.2%. The bar a pill must clear to be filled: 3.0% (about the price a book usually asks for the line). 0 rules found on the fit weeks (5+ hits on 3643+ games, 12+ skaters, every condition worth two points); the check week kept **0% of their lift**; **0 held**, 0 kept after near-duplicates.
 
 **The ladder** (his shots a game this season; 1–4 or 5+ games behind the rate):
 
 | Shots a game | Games behind | Skater-games | Hit | Fit | Check | Held |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0–1 | 1–4 | 811 | 0.0% | 0.0% | 0.0% | ✓ |
-| 0–1 | 5+ | 876 | 0.0% | 0.0% | 0.0% | ✓ |
+| 0–1 | 1–4 | 816 | 0.0% | 0.0% | 0.0% | ✓ |
+| 0–1 | 5+ | 891 | 0.0% | 0.0% | 0.0% | ✓ |
 | 1–1.5 | 1–4 | 718 | 0.0% | 0.0% | 0.0% | ✓ |
-| 1–1.5 | 5+ | 1193 | 0.2% | 0.0% | 0.2% | ✓ |
+| 1–1.5 | 5+ | 1218 | 0.2% | 0.0% | 0.2% | ✓ |
 | 1.5–2 | 1–4 | 291 | 0.0% | 0.0% | 0.0% | ✓ |
-| 1.5–2 | 5+ | 780 | 0.1% | 0.0% | 0.2% | ✓ |
-| 2–2.5 | 1–4 | 364 | 0.3% | 0.3% | 0.0% | ✓ |
-| 2–2.5 | 5+ | 463 | 0.9% | 2.0% | 0.6% | ✓ |
+| 1.5–2 | 5+ | 786 | 0.1% | 0.0% | 0.2% | ✓ |
+| 2–2.5 | 1–4 | 365 | 0.3% | 0.3% | 0.0% | ✓ |
+| 2–2.5 | 5+ | 476 | 0.8% | 2.0% | 0.5% | ✓ |
 | 2.5–3 | 1–4 | 144 | 0.7% | 0.8% | 0.0% |  |
-| 2.5–3 | 5+ | 274 | 0.7% | 1.6% | 0.5% | ✓ |
-| 3–3.5 | 1–4 | 176 | 0.6% | 0.6% | 0.0% |  |
-| 3–3.5 | 5+ | 195 | 0.5% | 2.0% | 0.0% | ✓ |
+| 2.5–3 | 5+ | 275 | 0.7% | 1.6% | 0.5% | ✓ |
+| 3–3.5 | 1–4 | 177 | 0.6% | 0.6% | 0.0% |  |
+| 3–3.5 | 5+ | 199 | 0.5% | 2.0% | 0.0% | ✓ |
 | 3.5+ | 1–4 | 173 | 0.6% | 0.6% | 0.0% |  |
-| 3.5+ | 5+ | 118 | 0.8% | 3.1% | 0.0% | ✓ |
+| 3.5+ | 5+ | 119 | 1.7% | 3.1% | 1.1% | ✓ |
 
 ## The environment, his venue, his streaks: each read across its fifths
 
@@ -411,151 +412,151 @@ The hit rate in the bottom and top fifth of each read, the fifths taken within h
 
 | Read | Bottom fifth | Top fifth | Bottom, 2+ SOG a game | Top, 2+ SOG a game | Bottom (fit) | Top (fit) | Bottom (check) | Top (check) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ven_toi | 10.1% (1178) | 42.0% (1181) | 10.3% (68) | 49.3% (743) | 10.6% (47) | 47.9% (328) | 9.5% (21) | 50.4% (415) |
-| ven_iscf | 10.9% (1178) | 37.6% (1181) | 18.1% (83) | 45.8% (807) | 18.3% (71) | 42.4% (356) | — | 48.6% (451) |
-| ven_icf | 10.7% (1178) | 41.4% (1181) | 23.1% (26) | 45.8% (930) | — | 42.7% (454) | — | 48.7% (476) |
-| ven_s3 | 17.2% (1178) | 36.7% (1181) | 25.9% (193) | 42.5% (896) | 25.9% (193) | 39.3% (399) | — | 45.1% (497) |
-| ven_iff | 11.8% (1178) | 39.6% (1181) | 30.3% (33) | 44.5% (921) | 30.8% (26) | 40.8% (453) | — | 48.1% (468) |
-| opp_pos_ihdcf_l5 | 18.6% (1299) | 23.6% (1303) | 28.9% (401) | 41.3% (361) | 27.3% (275) | 35.6% (202) | 32.5% (126) | 48.4% (159) |
-| ven_sog_x | 17.3% (1137) | 21.2% (1141) | 34.2% (193) | 46.5% (230) | 34.6% (107) | 44.2% (113) | 33.7% (86) | 48.7% (117) |
-| ven_g1 | 18.8% (1178) | 31.4% (1181) | 30.2% (311) | 42.4% (625) | 30.2% (311) | 36.8% (299) | — | 47.5% (326) |
-| ven_g | 18.8% (1178) | 31.8% (1181) | 30.2% (311) | 42.0% (640) | 30.2% (311) | 37.4% (286) | — | 45.8% (354) |
-| ven_pts | 17.7% (1178) | 32.5% (1181) | 32.5% (243) | 44.1% (658) | 31.9% (238) | 41.5% (277) | — | 45.9% (381) |
-| opp_slot_g | 19.2% (1294) | 23.0% (1306) | 29.9% (461) | 40.2% (376) | 29.8% (447) | 35.0% (220) | — | 47.4% (156) |
-| opp_sca_l5 | 18.9% (1299) | 23.9% (1303) | 31.6% (389) | 41.7% (386) | 29.2% (243) | 38.3% (235) | 35.6% (146) | 47.0% (151) |
-| opp_pos_ihdcf | 19.8% (1299) | 24.0% (1303) | 29.6% (423) | 39.6% (379) | 28.7% (310) | 35.3% (241) | 31.9% (113) | 47.1% (138) |
-| opp_pos_ihdcf_l10 | 19.6% (1299) | 24.2% (1303) | 29.9% (425) | 39.6% (381) | 28.9% (311) | 35.2% (244) | 32.5% (114) | 47.4% (137) |
-| opp_sa_l5 | 18.9% (1299) | 22.9% (1303) | 31.4% (392) | 40.7% (371) | 29.8% (255) | 36.7% (196) | 34.3% (137) | 45.1% (175) |
-| opp_sca | 19.0% (1299) | 23.9% (1303) | 32.2% (395) | 41.5% (386) | 31.3% (262) | 38.9% (247) | 33.8% (133) | 46.0% (139) |
-| opp_ca_l5 | 18.3% (1299) | 23.6% (1303) | 31.1% (373) | 40.4% (394) | 30.3% (228) | 37.6% (258) | 32.4% (145) | 45.6% (136) |
-| opp_pos_ihdcf_l5_x | 18.8% (1299) | 22.9% (1303) | 29.2% (411) | 38.3% (363) | 27.4% (270) | 32.5% (228) | 32.6% (141) | 48.1% (135) |
-| opp_ca_l10 | 18.5% (1299) | 24.0% (1303) | 31.3% (393) | 40.4% (399) | 31.6% (272) | 38.8% (273) | 30.6% (121) | 43.7% (126) |
-| opp_ga_l5 | 19.6% (1299) | 21.9% (1303) | 29.9% (412) | 38.9% (391) | 26.9% (271) | 32.9% (240) | 35.5% (141) | 48.3% (151) |
-| opp_pos_iscf | 19.2% (1299) | 24.0% (1303) | 30.6% (409) | 39.6% (402) | 30.0% (293) | 36.1% (280) | 31.9% (116) | 47.5% (122) |
-| opp_fa_l10 | 17.7% (1299) | 22.8% (1303) | 30.4% (398) | 39.3% (384) | 30.1% (286) | 36.3% (251) | 31.2% (112) | 45.1% (133) |
-| opp_sca_l10 | 19.2% (1299) | 23.9% (1303) | 32.2% (395) | 40.9% (396) | 31.0% (268) | 37.2% (261) | 34.6% (127) | 48.1% (135) |
-| opp_fa_l5 | 18.6% (1299) | 22.7% (1303) | 31.4% (398) | 40.2% (381) | 30.0% (263) | 35.9% (248) | 34.1% (135) | 48.1% (133) |
-| opp_pos_iff_l5 | 18.2% (1299) | 24.6% (1303) | 31.1% (389) | 39.8% (397) | 30.9% (269) | 35.3% (258) | 31.7% (120) | 48.2% (139) |
+| ven_toi | 9.8% (1193) | 42.3% (1195) | 8.8% (68) | 49.6% (754) | 8.7% (46) | 47.5% (326) | 9.1% (22) | 51.2% (428) |
+| ven_iscf | 10.9% (1193) | 37.7% (1195) | 19.0% (84) | 46.0% (821) | 19.7% (71) | 42.4% (356) | — | 48.8% (465) |
+| ven_icf | 10.6% (1193) | 41.8% (1195) | 23.1% (26) | 46.2% (942) | — | 42.8% (456) | — | 49.4% (486) |
+| ven_s3 | 17.0% (1193) | 37.0% (1195) | 25.9% (193) | 42.7% (906) | 25.9% (193) | 39.4% (396) | — | 45.3% (510) |
+| ven_iff | 11.7% (1193) | 39.8% (1195) | 30.3% (33) | 44.7% (931) | 30.8% (26) | 41.0% (454) | — | 48.2% (477) |
+| ven_g1 | 18.8% (1193) | 31.5% (1195) | 30.3% (314) | 42.3% (633) | 30.3% (314) | 36.8% (299) | — | 47.3% (334) |
+| ven_g | 18.8% (1193) | 31.9% (1195) | 30.3% (314) | 42.0% (647) | 30.3% (314) | 37.4% (286) | — | 45.7% (361) |
+| ven_pts | 17.5% (1193) | 32.6% (1195) | 32.7% (245) | 44.2% (665) | 32.1% (240) | 41.4% (278) | — | 46.3% (387) |
+| ven_sog_x | 17.5% (1151) | 21.1% (1154) | 35.0% (197) | 46.5% (230) | 34.6% (107) | 43.8% (112) | 35.6% (90) | 49.2% (118) |
+| opp_pos_ihdcf_l5 | 18.7% (1314) | 23.2% (1317) | 29.4% (408) | 40.5% (365) | 27.5% (280) | 34.8% (198) | 33.6% (128) | 47.3% (167) |
+| opp_slot_g | 19.0% (1309) | 23.1% (1320) | 29.8% (467) | 40.2% (378) | 29.4% (452) | 35.0% (220) | — | 47.5% (158) |
+| opp_pos_ihdcf_l10 | 19.7% (1314) | 24.3% (1317) | 30.0% (430) | 40.0% (385) | 29.1% (316) | 35.2% (244) | 32.5% (114) | 48.2% (141) |
+| opp_pos_ihdcf | 20.0% (1314) | 24.1% (1317) | 30.1% (429) | 39.8% (384) | 29.5% (315) | 35.0% (243) | 31.6% (114) | 48.2% (141) |
+| opp_pos_iscf | 19.2% (1314) | 24.1% (1317) | 30.4% (414) | 40.1% (404) | 30.5% (295) | 36.1% (280) | 30.3% (119) | 49.2% (124) |
+| opp_ga_l5 | 19.6% (1314) | 22.1% (1317) | 29.6% (415) | 39.3% (397) | 26.6% (274) | 33.1% (239) | 35.5% (141) | 48.7% (158) |
+| opp_sca_l5 | 18.9% (1314) | 23.8% (1317) | 32.1% (393) | 41.6% (392) | 30.0% (247) | 38.0% (229) | 35.6% (146) | 46.6% (163) |
+| opp_fa_l10 | 17.6% (1314) | 22.7% (1317) | 29.9% (405) | 39.4% (386) | 29.4% (293) | 36.3% (251) | 31.2% (112) | 45.2% (135) |
+| opp_ca_l5 | 18.2% (1314) | 23.3% (1317) | 30.7% (378) | 40.2% (396) | 29.9% (231) | 37.8% (254) | 32.0% (147) | 44.4% (142) |
+| opp_pos_ihdcf_l5_x | 18.8% (1314) | 22.9% (1317) | 29.2% (415) | 38.3% (368) | 27.3% (271) | 32.6% (227) | 32.6% (144) | 47.5% (141) |
+| opp_sca_l10 | 19.2% (1314) | 24.1% (1317) | 32.4% (398) | 41.4% (399) | 31.2% (269) | 37.2% (261) | 34.9% (129) | 49.3% (138) |
+| opp_ca_l10 | 18.4% (1314) | 23.8% (1317) | 31.4% (395) | 40.3% (402) | 31.8% (274) | 38.8% (273) | 30.6% (121) | 43.4% (129) |
+| opp_pos_ihdcf_x | 19.9% (1314) | 23.8% (1317) | 29.8% (423) | 38.7% (380) | 29.4% (306) | 33.5% (254) | 30.8% (117) | 49.2% (126) |
+| opp_sca | 19.0% (1314) | 23.8% (1317) | 32.1% (399) | 41.0% (393) | 31.2% (266) | 38.2% (254) | 33.8% (133) | 46.0% (139) |
+| opp_slot_g_x | 19.0% (1309) | 22.3% (1320) | 29.8% (467) | 38.5% (382) | 29.4% (452) | 34.6% (234) | — | 44.6% (148) |
+| opp_fa_l5 | 18.6% (1314) | 22.5% (1317) | 31.3% (403) | 39.9% (386) | 30.0% (267) | 36.0% (247) | 33.8% (136) | 46.8% (139) |
 
 ### 4+ SOG, the 25 reads that split the 2+ shots-a-game skaters most
 
 | Read | Bottom fifth | Top fifth | Bottom, 2+ SOG a game | Top, 2+ SOG a game | Bottom (fit) | Top (fit) | Bottom (check) | Top (check) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ven_toi | 3.6% (1178) | 22.6% (1181) | 7.4% (68) | 27.6% (743) | 6.4% (47) | 27.4% (328) | 9.5% (21) | 27.7% (415) |
-| ven_iscf | 3.7% (1178) | 19.1% (1181) | 8.4% (83) | 24.7% (807) | 9.9% (71) | 21.6% (356) | — | 27.1% (451) |
-| ven_sog | 4.2% (1178) | 19.9% (1181) | 12.5% (24) | 23.1% (960) | — | 20.8% (452) | — | 25.2% (508) |
-| opp_sca_l5 | 7.3% (1299) | 12.0% (1303) | 14.7% (389) | 23.8% (386) | 14.4% (243) | 20.9% (235) | 15.1% (146) | 28.5% (151) |
-| ven_sog_x | 7.1% (1137) | 9.4% (1141) | 16.6% (193) | 25.7% (230) | 18.7% (107) | 24.8% (113) | 14.0% (86) | 26.5% (117) |
-| ven_icf | 3.3% (1178) | 21.2% (1181) | 15.4% (26) | 24.3% (930) | — | 22.7% (454) | — | 25.8% (476) |
-| opp_sca | 7.5% (1299) | 12.0% (1303) | 15.2% (395) | 23.8% (386) | 16.0% (262) | 20.6% (247) | 13.5% (133) | 29.5% (139) |
-| team_scf | 6.9% (1314) | 11.9% (1317) | 11.7% (248) | 20.3% (537) | 10.8% (186) | 19.4% (376) | 14.5% (62) | 22.4% (161) |
-| opp_fa_l5 | 7.2% (1299) | 11.3% (1303) | 14.1% (398) | 22.6% (381) | 13.7% (263) | 19.8% (248) | 14.8% (135) | 27.8% (133) |
-| ven_s3 | 7.6% (1178) | 18.4% (1181) | 14.0% (193) | 22.2% (896) | 14.0% (193) | 20.1% (399) | — | 23.9% (497) |
-| opp_fa_l10 | 7.0% (1299) | 11.1% (1303) | 13.8% (398) | 21.9% (384) | 14.3% (286) | 19.1% (251) | 12.5% (112) | 27.1% (133) |
-| opp_pos_ihdcf_l5 | 8.4% (1299) | 10.4% (1303) | 14.7% (401) | 22.7% (361) | 14.9% (275) | 17.3% (202) | 14.3% (126) | 29.6% (159) |
-| opp_sca_l10 | 7.5% (1299) | 12.0% (1303) | 14.9% (395) | 22.7% (396) | 16.0% (268) | 19.5% (261) | 12.6% (127) | 28.9% (135) |
-| opp_pos_sog_l5_x | 8.5% (1299) | 10.7% (1303) | 15.4% (377) | 22.9% (385) | 14.2% (240) | 21.6% (231) | 17.5% (137) | 24.7% (154) |
-| opp_fa | 7.2% (1299) | 11.1% (1303) | 14.2% (400) | 21.7% (383) | 14.1% (283) | 19.1% (251) | 14.5% (117) | 26.5% (132) |
-| opp_ca_l5 | 7.2% (1299) | 11.5% (1303) | 15.3% (373) | 22.6% (394) | 15.4% (228) | 20.2% (258) | 15.2% (145) | 27.2% (136) |
-| opp_pos_iscf_l5_x | 7.6% (1299) | 11.4% (1303) | 14.8% (391) | 22.1% (385) | 13.7% (256) | 19.8% (257) | 17.0% (135) | 26.6% (128) |
-| opp_pos_sog_l5 | 8.1% (1299) | 10.7% (1303) | 14.9% (377) | 22.0% (381) | 13.9% (245) | 21.5% (219) | 16.7% (132) | 22.8% (162) |
-| opp_slot_g | 8.5% (1294) | 10.0% (1306) | 14.1% (461) | 21.3% (376) | 14.1% (447) | 20.0% (220) | — | 23.1% (156) |
-| opp_pos_sog_l10 | 8.0% (1299) | 10.8% (1303) | 15.3% (391) | 22.5% (383) | 15.2% (276) | 21.7% (240) | 15.7% (115) | 23.8% (143) |
-| opp_sa_l10 | 7.2% (1299) | 10.8% (1303) | 15.1% (391) | 22.2% (383) | 16.0% (287) | 19.0% (232) | 12.5% (104) | 27.2% (151) |
-| team_scf_l5 | 7.2% (1314) | 12.3% (1317) | 13.8% (260) | 20.9% (530) | 9.9% (172) | 20.1% (348) | 21.6% (88) | 22.5% (182) |
-| opp_sa_l5 | 7.6% (1299) | 11.1% (1303) | 15.1% (392) | 22.1% (371) | 14.5% (255) | 18.4% (196) | 16.1% (137) | 26.3% (175) |
-| opp_pos_iff_l5 | 7.9% (1299) | 10.9% (1303) | 13.9% (389) | 20.9% (397) | 13.4% (269) | 19.8% (258) | 15.0% (120) | 23.0% (139) |
-| ven_pts | 7.7% (1178) | 16.0% (1181) | 15.6% (243) | 22.6% (658) | 15.1% (238) | 21.7% (277) | — | 23.4% (381) |
+| ven_toi | 3.5% (1193) | 23.0% (1195) | 7.4% (68) | 28.1% (754) | 6.5% (46) | 27.3% (326) | 9.1% (22) | 28.7% (428) |
+| ven_iscf | 3.7% (1193) | 19.6% (1195) | 9.5% (84) | 25.2% (821) | 11.3% (71) | 21.6% (356) | — | 28.0% (465) |
+| ven_sog | 4.3% (1193) | 20.3% (1195) | 12.5% (24) | 23.5% (971) | — | 20.8% (451) | — | 25.8% (520) |
+| ven_icf | 3.3% (1193) | 21.7% (1195) | 15.4% (26) | 24.9% (942) | — | 22.8% (456) | — | 27.0% (486) |
+| opp_sca_l5 | 7.2% (1314) | 11.8% (1317) | 14.5% (393) | 23.5% (392) | 14.2% (247) | 20.1% (229) | 15.1% (146) | 28.2% (163) |
+| team_scf | 6.8% (1329) | 11.9% (1331) | 11.6% (251) | 20.1% (546) | 10.8% (186) | 19.2% (380) | 13.8% (65) | 22.3% (166) |
+| ven_s3 | 7.5% (1193) | 18.7% (1195) | 14.0% (193) | 22.5% (906) | 14.0% (193) | 19.9% (396) | — | 24.5% (510) |
+| opp_fa_l5 | 7.2% (1314) | 11.2% (1317) | 13.9% (403) | 22.3% (386) | 13.5% (267) | 19.8% (247) | 14.7% (136) | 26.6% (139) |
+| opp_fa_l10 | 6.9% (1314) | 11.0% (1317) | 13.6% (405) | 21.8% (386) | 14.0% (293) | 19.1% (251) | 12.5% (112) | 26.7% (135) |
+| opp_sca | 7.5% (1314) | 11.9% (1317) | 15.3% (399) | 23.4% (393) | 16.2% (266) | 20.1% (254) | 13.5% (133) | 29.5% (139) |
+| ven_sog_x | 7.5% (1151) | 9.4% (1154) | 17.8% (197) | 25.7% (230) | 18.7% (107) | 24.1% (112) | 16.7% (90) | 27.1% (118) |
+| opp_sca_l10 | 7.6% (1314) | 12.1% (1317) | 15.6% (398) | 23.3% (399) | 16.4% (269) | 19.5% (261) | 14.0% (129) | 30.4% (138) |
+| opp_ca_l5 | 7.2% (1314) | 11.4% (1317) | 15.1% (378) | 22.5% (396) | 15.2% (231) | 20.5% (254) | 15.0% (147) | 26.1% (142) |
+| opp_pos_ihdcf_l10 | 9.6% (1314) | 11.6% (1317) | 16.0% (430) | 23.4% (385) | 15.5% (316) | 18.4% (244) | 17.5% (114) | 31.9% (141) |
+| opp_fa | 7.2% (1314) | 11.1% (1317) | 14.4% (403) | 21.7% (387) | 14.3% (286) | 19.0% (252) | 14.5% (117) | 26.7% (135) |
+| opp_pos_ihdcf_l5 | 8.6% (1314) | 10.3% (1317) | 15.4% (408) | 22.7% (365) | 15.4% (280) | 17.2% (198) | 15.6% (128) | 29.3% (167) |
+| opp_pos_sog_l10 | 8.1% (1314) | 10.8% (1317) | 15.4% (396) | 22.6% (385) | 14.9% (281) | 21.8% (239) | 16.5% (115) | 24.0% (146) |
+| opp_slot_g | 8.5% (1309) | 10.0% (1320) | 14.1% (467) | 21.2% (378) | 13.9% (452) | 20.0% (220) | — | 22.8% (158) |
+| opp_ga_l5 | 8.4% (1314) | 11.2% (1317) | 15.2% (415) | 22.2% (397) | 15.0% (274) | 17.2% (239) | 15.6% (141) | 29.7% (158) |
+| opp_pos_sog | 8.1% (1314) | 10.7% (1317) | 15.5% (400) | 22.5% (383) | 14.8% (283) | 20.8% (240) | 17.1% (117) | 25.2% (143) |
+| ven_pts | 7.7% (1193) | 16.2% (1195) | 15.9% (245) | 22.9% (665) | 15.4% (240) | 21.6% (278) | — | 23.8% (387) |
+| team_scf_l5 | 7.2% (1329) | 12.2% (1331) | 13.8% (261) | 20.7% (536) | 9.9% (172) | 20.1% (348) | 21.3% (89) | 21.8% (188) |
+| opp_pos_iscf | 8.4% (1314) | 11.5% (1317) | 15.5% (414) | 22.3% (404) | 14.6% (295) | 18.9% (280) | 17.6% (119) | 29.8% (124) |
+| opp_pos_iscf_l5_x | 7.8% (1314) | 11.3% (1317) | 15.4% (396) | 22.2% (388) | 13.9% (259) | 20.1% (254) | 18.2% (137) | 26.1% (134) |
+| opp_pos_sog_l5_x | 8.8% (1314) | 10.6% (1317) | 16.3% (381) | 23.0% (391) | 13.9% (238) | 21.6% (231) | 20.3% (143) | 25.0% (160) |
 
 ### 5+ SOG, the 25 reads that split the 2+ shots-a-game skaters most
 
 | Read | Bottom fifth | Top fifth | Bottom, 2+ SOG a game | Top, 2+ SOG a game | Bottom (fit) | Top (fit) | Bottom (check) | Top (check) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ven_toi | 1.1% (1178) | 11.5% (1181) | 2.9% (68) | 14.8% (743) | 4.3% (47) | 15.5% (328) | 0.0% (21) | 14.2% (415) |
-| ven_icf | 0.9% (1178) | 10.4% (1181) | 3.8% (26) | 11.8% (930) | — | 10.8% (454) | — | 12.8% (476) |
-| ven_iscf | 1.4% (1178) | 9.2% (1181) | 6.0% (83) | 12.0% (807) | 7.0% (71) | 9.6% (356) | — | 14.0% (451) |
-| ven_s3 | 2.5% (1178) | 9.3% (1181) | 6.2% (193) | 11.6% (896) | 6.2% (193) | 10.3% (399) | — | 12.7% (497) |
-| opp_slot_g | 3.0% (1294) | 4.4% (1306) | 5.9% (461) | 10.6% (376) | 6.0% (447) | 10.5% (220) | — | 10.9% (156) |
-| opp_slot_g_x | 3.0% (1294) | 4.3% (1306) | 5.9% (461) | 10.6% (377) | 6.0% (447) | 11.0% (236) | — | 9.9% (141) |
-| team_ff_l5 | 2.3% (1314) | 5.2% (1317) | 4.9% (245) | 9.6% (520) | 5.0% (179) | 8.0% (337) | 4.5% (66) | 12.6% (183) |
-| team_scf | 2.5% (1314) | 4.9% (1317) | 5.6% (248) | 9.9% (537) | 5.4% (186) | 9.6% (376) | 6.5% (62) | 10.6% (161) |
-| team_scf_l5 | 2.6% (1314) | 4.9% (1317) | 5.8% (260) | 9.8% (530) | 4.7% (172) | 9.8% (348) | 8.0% (88) | 9.9% (182) |
-| opp_pos_g | 3.1% (1299) | 4.9% (1303) | 6.2% (405) | 10.1% (398) | 6.3% (319) | 8.3% (254) | 5.8% (86) | 13.2% (144) |
-| opp_pos_g_x | 3.3% (1299) | 5.2% (1303) | 6.8% (410) | 10.6% (396) | 6.2% (307) | 8.4% (249) | 8.7% (103) | 14.3% (147) |
-| opp_ga | 3.5% (1299) | 4.8% (1303) | 7.5% (413) | 11.2% (385) | 7.4% (282) | 9.5% (263) | 7.6% (131) | 14.8% (122) |
-| team_cf_l5 | 2.5% (1314) | 5.0% (1317) | 5.6% (269) | 9.1% (537) | 5.9% (187) | 8.5% (366) | 4.9% (82) | 10.5% (171) |
-| opp_pos_g_l10 | 3.1% (1299) | 4.7% (1303) | 6.1% (408) | 9.6% (394) | 5.8% (311) | 8.4% (249) | 7.2% (97) | 11.7% (145) |
-| opp_ga_l5 | 3.5% (1299) | 4.8% (1303) | 7.3% (412) | 10.7% (391) | 7.7% (271) | 9.2% (240) | 6.4% (141) | 13.2% (151) |
-| opp_ga_l10 | 3.3% (1299) | 4.8% (1303) | 7.4% (417) | 10.9% (386) | 7.1% (297) | 9.0% (256) | 8.3% (120) | 14.6% (130) |
-| team_sa | 5.0% (1314) | 2.7% (1317) | 9.9% (444) | 6.7% (330) | 10.4% (307) | 5.5% (217) | 8.8% (137) | 8.8% (113) |
-| opp_pos_g_l10_x | 3.2% (1299) | 4.9% (1303) | 6.6% (407) | 9.9% (395) | 5.7% (299) | 8.4% (249) | 9.3% (108) | 12.3% (146) |
-| ven_sog | 1.5% (1178) | 9.7% (1181) | 8.3% (24) | 11.6% (960) | — | 11.1% (452) | — | 12.0% (508) |
-| opp_pos_g_l5_x | 3.3% (1299) | 4.7% (1303) | 7.5% (413) | 10.6% (377) | 6.3% (269) | 8.1% (210) | 9.7% (144) | 13.8% (167) |
-| opp_pos_ihdcf_l5 | 3.5% (1299) | 4.3% (1303) | 7.7% (401) | 10.8% (361) | 8.4% (275) | 8.4% (202) | 6.3% (126) | 13.8% (159) |
-| team_hdcf | 2.6% (1314) | 5.1% (1317) | 6.6% (256) | 9.7% (516) | 4.7% (172) | 8.6% (336) | 10.7% (84) | 11.7% (180) |
-| opp_pos_iscf_l5_x | 2.9% (1299) | 4.2% (1303) | 6.9% (391) | 9.9% (385) | 6.6% (256) | 9.3% (257) | 7.4% (135) | 10.9% (128) |
-| opp_pos_sog_l5_x | 3.6% (1299) | 4.5% (1303) | 8.2% (377) | 11.2% (385) | 7.9% (240) | 10.8% (231) | 8.8% (137) | 11.7% (154) |
-| team_cf | 2.4% (1314) | 5.1% (1317) | 6.0% (250) | 8.8% (543) | 6.5% (201) | 9.3% (364) | 4.1% (49) | 7.8% (179) |
+| ven_toi | 1.1% (1193) | 11.8% (1195) | 2.9% (68) | 15.1% (754) | 4.3% (46) | 15.6% (326) | 0.0% (22) | 14.7% (428) |
+| ven_icf | 0.9% (1193) | 10.7% (1195) | 3.8% (26) | 12.2% (942) | — | 11.0% (456) | — | 13.4% (486) |
+| ven_iscf | 1.4% (1193) | 9.5% (1195) | 6.0% (84) | 12.3% (821) | 7.0% (71) | 9.6% (356) | — | 14.4% (465) |
+| ven_s3 | 2.4% (1193) | 9.3% (1195) | 6.2% (193) | 11.6% (906) | 6.2% (193) | 10.1% (396) | — | 12.7% (510) |
+| opp_slot_g | 3.1% (1309) | 4.3% (1320) | 6.0% (467) | 10.3% (378) | 6.0% (452) | 10.5% (220) | — | 10.1% (158) |
+| team_ff_l5 | 2.4% (1329) | 5.2% (1331) | 5.3% (246) | 9.5% (526) | 5.1% (178) | 7.9% (340) | 5.9% (68) | 12.4% (186) |
+| opp_slot_g_x | 3.1% (1309) | 4.2% (1320) | 6.0% (467) | 10.2% (382) | 6.0% (452) | 10.7% (234) | — | 9.5% (148) |
+| team_scf | 2.5% (1329) | 4.8% (1331) | 5.6% (251) | 9.7% (546) | 5.4% (186) | 9.5% (380) | 6.2% (65) | 10.2% (166) |
+| opp_ga | 3.4% (1314) | 4.9% (1317) | 7.4% (418) | 11.3% (388) | 7.3% (287) | 9.8% (266) | 7.6% (131) | 14.8% (122) |
+| opp_pos_g_x | 3.3% (1314) | 5.2% (1317) | 6.8% (412) | 10.7% (403) | 6.2% (308) | 8.5% (248) | 8.7% (104) | 14.2% (155) |
+| opp_pos_g | 3.0% (1314) | 4.8% (1317) | 6.1% (408) | 10.0% (402) | 6.2% (320) | 8.2% (256) | 5.7% (88) | 13.0% (146) |
+| opp_ga_l5 | 3.5% (1314) | 4.8% (1317) | 7.2% (415) | 10.8% (397) | 7.7% (274) | 9.2% (239) | 6.4% (141) | 13.3% (158) |
+| opp_ga_l10 | 3.3% (1314) | 4.9% (1317) | 7.4% (421) | 10.9% (393) | 7.0% (301) | 9.0% (256) | 8.3% (120) | 14.6% (137) |
+| team_scf_l5 | 2.7% (1329) | 4.8% (1331) | 6.1% (261) | 9.7% (536) | 4.7% (172) | 9.8% (348) | 9.0% (89) | 9.6% (188) |
+| team_cf_l5 | 2.5% (1329) | 5.0% (1331) | 5.5% (274) | 9.0% (542) | 5.9% (188) | 8.5% (366) | 4.7% (86) | 10.2% (176) |
+| team_gf | 4.0% (1329) | 3.5% (1331) | 10.9% (359) | 7.4% (460) | 8.9% (237) | 6.4% (297) | 14.8% (122) | 9.2% (163) |
+| ven_sog | 1.6% (1193) | 9.8% (1195) | 8.3% (24) | 11.6% (971) | — | 11.1% (451) | — | 12.1% (520) |
+| opp_pos_g_l5_x | 3.3% (1314) | 4.7% (1317) | 7.5% (416) | 10.7% (383) | 6.3% (269) | 8.5% (212) | 9.5% (147) | 13.5% (171) |
+| team_sa | 5.0% (1329) | 2.6% (1331) | 9.8% (449) | 6.6% (334) | 10.4% (308) | 5.4% (221) | 8.5% (141) | 8.8% (113) |
+| opp_pos_g_l10_x | 3.2% (1314) | 4.9% (1317) | 6.6% (409) | 9.8% (400) | 5.7% (300) | 8.5% (248) | 9.2% (109) | 11.8% (152) |
+| team_hdcf | 2.6% (1329) | 5.0% (1331) | 6.6% (259) | 9.6% (519) | 4.6% (173) | 8.6% (337) | 10.5% (86) | 11.5% (182) |
+| opp_pos_g_l10 | 3.2% (1314) | 4.6% (1317) | 6.6% (412) | 9.6% (397) | 6.4% (313) | 8.4% (249) | 7.1% (99) | 11.5% (148) |
+| team_cf | 2.4% (1329) | 5.1% (1331) | 6.0% (252) | 8.9% (548) | 6.4% (203) | 9.3% (366) | 4.1% (49) | 8.2% (182) |
+| opp_pos_ihdcf_l5 | 3.7% (1314) | 4.3% (1317) | 8.1% (408) | 11.0% (365) | 8.6% (280) | 8.6% (198) | 7.0% (128) | 13.8% (167) |
+| opp_pos_g_l5 | 3.5% (1314) | 4.7% (1317) | 8.0% (412) | 10.7% (391) | 6.6% (271) | 8.9% (214) | 10.6% (141) | 13.0% (177) |
 
 ### 1+ goal, the 25 reads that split the 2+ shots-a-game skaters most
 
 | Read | Bottom fifth | Top fifth | Bottom, 2+ SOG a game | Top, 2+ SOG a game | Bottom (fit) | Top (fit) | Bottom (check) | Top (check) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ven_toi | 7.2% (1178) | 25.6% (1181) | 7.4% (68) | 31.8% (743) | 10.6% (47) | 30.5% (328) | 0.0% (21) | 32.8% (415) |
-| ven_iscf | 8.6% (1178) | 22.9% (1181) | 14.5% (83) | 27.9% (807) | 15.5% (71) | 25.6% (356) | — | 29.7% (451) |
-| ven_iff | 9.7% (1178) | 24.3% (1181) | 15.2% (33) | 27.0% (921) | 19.2% (26) | 25.2% (453) | — | 28.8% (468) |
-| ven_icf | 8.7% (1178) | 24.0% (1181) | 15.4% (26) | 26.7% (930) | — | 24.4% (454) | — | 28.8% (476) |
-| ven_sog_x | 12.5% (1137) | 15.6% (1141) | 23.8% (193) | 31.7% (230) | 27.1% (107) | 31.0% (113) | 19.8% (86) | 32.5% (117) |
-| opp_pos_iff_l5 | 13.1% (1299) | 17.2% (1303) | 19.0% (389) | 25.7% (397) | 18.2% (269) | 24.0% (258) | 20.8% (120) | 28.8% (139) |
-| opp_pos_iff_l5_x | 13.2% (1299) | 16.7% (1303) | 18.9% (381) | 25.4% (393) | 17.9% (257) | 24.0% (258) | 21.0% (124) | 28.1% (135) |
-| opp_ca | 13.3% (1299) | 16.7% (1303) | 19.6% (393) | 25.8% (395) | 19.5% (267) | 24.0% (271) | 19.8% (126) | 29.8% (124) |
-| ven_s3 | 13.4% (1178) | 22.4% (1181) | 20.2% (193) | 26.2% (896) | 20.2% (193) | 24.8% (399) | — | 27.4% (497) |
-| opp_ca_l10 | 13.2% (1299) | 16.6% (1303) | 19.6% (393) | 25.3% (399) | 19.9% (272) | 23.8% (273) | 19.0% (121) | 28.6% (126) |
-| ven_pts | 13.5% (1178) | 20.7% (1181) | 22.6% (243) | 27.4% (658) | 21.8% (238) | 26.0% (277) | — | 28.3% (381) |
-| opp_pos_sog_l10 | 14.3% (1299) | 16.9% (1303) | 22.0% (391) | 26.4% (383) | 20.7% (276) | 23.3% (240) | 25.2% (115) | 31.5% (143) |
-| team_gf_l5 | 15.0% (1314) | 14.1% (1317) | 25.4% (331) | 21.0% (447) | 23.4% (214) | 19.9% (281) | 29.1% (117) | 22.9% (166) |
-| pace | 14.3% (1299) | 15.3% (1303) | 25.8% (337) | 21.5% (461) | 24.6% (264) | 20.1% (284) | 30.1% (73) | 23.7% (177) |
-| ven_g | 14.9% (1178) | 19.6% (1181) | 22.5% (311) | 26.7% (640) | 22.5% (311) | 23.4% (286) | — | 29.4% (354) |
-| opp_pos_icf_l5_x | 13.2% (1299) | 16.8% (1303) | 20.1% (393) | 24.3% (399) | 18.0% (261) | 22.6% (274) | 24.2% (132) | 28.0% (125) |
-| opp_pos_iscf_l5 | 13.5% (1299) | 17.0% (1303) | 20.4% (393) | 24.5% (392) | 18.3% (263) | 21.6% (259) | 24.6% (130) | 30.1% (133) |
-| team_hdcf_l5 | 13.9% (1314) | 16.6% (1317) | 20.7% (270) | 24.8% (505) | 19.8% (192) | 22.8% (311) | 23.1% (78) | 27.8% (194) |
-| opp_pos_g_l5_x | 13.4% (1299) | 15.0% (1303) | 20.1% (413) | 23.9% (377) | 18.6% (269) | 21.4% (210) | 22.9% (144) | 26.9% (167) |
-| team_hdcf | 13.5% (1314) | 16.5% (1317) | 20.3% (256) | 24.0% (516) | 19.8% (172) | 22.6% (336) | 21.4% (84) | 26.7% (180) |
-| opp_pos_iff | 13.9% (1299) | 16.7% (1303) | 21.4% (401) | 25.1% (394) | 18.1% (288) | 23.2% (284) | 30.1% (113) | 30.0% (110) |
-| opp_pos_icf_l5 | 12.6% (1299) | 16.2% (1303) | 19.7% (391) | 23.4% (394) | 17.2% (261) | 22.1% (263) | 24.6% (130) | 26.0% (131) |
-| opp_fa_l10 | 13.5% (1299) | 16.0% (1303) | 21.1% (398) | 24.7% (384) | 19.6% (286) | 22.7% (251) | 25.0% (112) | 28.6% (133) |
-| team_ff_l5 | 12.3% (1314) | 16.4% (1317) | 17.6% (245) | 21.2% (520) | 16.2% (179) | 18.7% (337) | 21.2% (66) | 25.7% (183) |
-| team_gf | 14.5% (1314) | 14.7% (1317) | 24.1% (353) | 20.5% (459) | 22.4% (237) | 19.2% (297) | 27.6% (116) | 22.8% (162) |
+| ven_toi | 7.4% (1193) | 26.0% (1195) | 7.4% (68) | 32.4% (754) | 10.9% (46) | 30.4% (326) | 0.0% (22) | 33.9% (428) |
+| ven_iscf | 8.6% (1193) | 23.3% (1195) | 15.5% (84) | 28.3% (821) | 16.9% (71) | 25.6% (356) | — | 30.3% (465) |
+| ven_iff | 9.7% (1193) | 24.7% (1195) | 15.2% (33) | 27.3% (931) | 19.2% (26) | 25.1% (454) | — | 29.4% (477) |
+| ven_icf | 8.8% (1193) | 24.5% (1195) | 15.4% (26) | 27.2% (942) | — | 24.6% (456) | — | 29.6% (486) |
+| opp_pos_iff_l5_x | 13.3% (1314) | 16.8% (1317) | 18.7% (385) | 25.9% (398) | 17.8% (259) | 24.0% (258) | 20.6% (126) | 29.3% (140) |
+| ven_sog_x | 12.5% (1151) | 15.7% (1154) | 24.4% (197) | 31.3% (230) | 27.1% (107) | 30.4% (112) | 21.1% (90) | 32.2% (118) |
+| opp_pos_iff_l5 | 13.2% (1314) | 17.2% (1317) | 19.1% (392) | 26.0% (400) | 17.9% (268) | 24.0% (258) | 21.8% (124) | 29.6% (142) |
+| opp_ca | 13.2% (1314) | 16.6% (1317) | 19.6% (397) | 25.9% (398) | 19.3% (269) | 23.8% (273) | 20.3% (128) | 30.4% (125) |
+| ven_s3 | 13.4% (1193) | 22.7% (1195) | 20.2% (193) | 26.4% (906) | 20.2% (193) | 24.5% (396) | — | 27.8% (510) |
+| opp_ca_l10 | 13.2% (1314) | 16.5% (1317) | 19.5% (395) | 25.4% (402) | 19.7% (274) | 23.8% (273) | 19.0% (121) | 28.7% (129) |
+| ven_pts | 13.5% (1193) | 20.8% (1195) | 22.9% (245) | 27.7% (665) | 22.1% (240) | 25.9% (278) | — | 28.9% (387) |
+| ven_g | 14.7% (1193) | 19.7% (1195) | 22.3% (314) | 27.0% (647) | 22.3% (314) | 23.4% (286) | — | 29.9% (361) |
+| opp_pos_icf_l5_x | 13.1% (1314) | 16.7% (1317) | 19.8% (398) | 24.3% (399) | 17.7% (260) | 22.1% (272) | 23.9% (138) | 29.1% (127) |
+| pace | 14.5% (1314) | 15.3% (1317) | 25.9% (340) | 21.5% (465) | 24.6% (264) | 20.2% (287) | 30.3% (76) | 23.6% (178) |
+| team_hdcf_l5 | 13.8% (1329) | 16.6% (1331) | 20.7% (270) | 25.1% (510) | 19.8% (192) | 22.9% (310) | 23.1% (78) | 28.5% (200) |
+| opp_pos_iscf_l5 | 13.6% (1314) | 17.1% (1317) | 20.6% (399) | 24.9% (394) | 18.1% (265) | 21.7% (258) | 25.4% (134) | 30.9% (136) |
+| opp_pos_sog_l10 | 14.4% (1314) | 16.9% (1317) | 22.0% (396) | 26.2% (385) | 20.6% (281) | 23.0% (239) | 25.2% (115) | 31.5% (146) |
+| team_gf_l5 | 14.9% (1329) | 14.3% (1331) | 25.4% (331) | 21.2% (453) | 23.4% (214) | 20.0% (285) | 29.1% (117) | 23.2% (168) |
+| opp_pos_sog_l5_x | 13.9% (1314) | 16.2% (1317) | 21.0% (381) | 25.1% (391) | 19.7% (238) | 22.9% (231) | 23.1% (143) | 28.1% (160) |
+| opp_fa_l5 | 13.2% (1314) | 16.0% (1317) | 19.9% (403) | 23.8% (386) | 19.1% (267) | 23.1% (247) | 21.3% (136) | 25.2% (139) |
+| opp_pos_icf_l5 | 12.9% (1314) | 16.4% (1317) | 20.1% (394) | 23.9% (397) | 17.1% (263) | 22.1% (263) | 26.0% (131) | 27.6% (134) |
+| opp_hdca_l5 | 13.3% (1314) | 16.7% (1317) | 20.6% (393) | 24.4% (414) | 19.9% (251) | 21.1% (204) | 21.8% (142) | 27.6% (210) |
+| team_ff | 12.3% (1329) | 16.2% (1331) | 17.4% (241) | 21.1% (546) | 16.6% (181) | 19.6% (341) | 20.0% (60) | 23.4% (205) |
+| opp_fa_l10 | 13.5% (1314) | 15.9% (1317) | 21.0% (405) | 24.6% (386) | 19.5% (293) | 22.7% (251) | 25.0% (112) | 28.1% (135) |
+| opp_pos_g_l5_x | 13.5% (1314) | 15.0% (1317) | 20.4% (416) | 24.0% (383) | 18.6% (269) | 21.7% (212) | 23.8% (147) | 26.9% (171) |
 
 ### 2+ goals, the 25 reads that split the 2+ shots-a-game skaters most
 
 | Read | Bottom fifth | Top fifth | Bottom, 2+ SOG a game | Top, 2+ SOG a game | Bottom (fit) | Top (fit) | Bottom (check) | Top (check) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ven_toi | 0.5% (1178) | 5.7% (1181) | 0.0% (68) | 7.9% (743) | 0.0% (47) | 10.1% (328) | 0.0% (21) | 6.3% (415) |
-| ven_icf | 0.8% (1178) | 5.2% (1181) | 0.0% (26) | 6.3% (930) | — | 7.7% (454) | — | 5.0% (476) |
-| ven_sog_x | 1.4% (1137) | 2.8% (1141) | 4.1% (193) | 10.4% (230) | 6.5% (107) | 11.5% (113) | 1.2% (86) | 9.4% (117) |
-| ven_iscf | 0.4% (1178) | 5.2% (1181) | 1.2% (83) | 7.3% (807) | 1.4% (71) | 8.7% (356) | — | 6.2% (451) |
-| ven_sog | 0.6% (1178) | 4.6% (1181) | 0.0% (24) | 5.4% (960) | — | 6.2% (452) | — | 4.7% (508) |
-| opp_slot_g | 1.2% (1294) | 2.8% (1306) | 2.4% (461) | 6.1% (376) | 2.5% (447) | 6.4% (220) | — | 5.8% (156) |
-| opp_slot_g_x | 1.2% (1294) | 2.8% (1306) | 2.4% (461) | 6.1% (377) | 2.5% (447) | 5.9% (236) | — | 6.4% (141) |
-| ven_iff | 0.6% (1178) | 5.3% (1181) | 3.0% (33) | 6.4% (921) | 3.8% (26) | 7.5% (453) | — | 5.3% (468) |
-| ven_s3 | 1.1% (1178) | 5.0% (1181) | 3.1% (193) | 6.4% (896) | 3.1% (193) | 7.3% (399) | — | 5.6% (497) |
-| opp_pos_iff_l5_x | 0.8% (1299) | 3.1% (1303) | 2.1% (381) | 5.3% (393) | 1.9% (257) | 5.8% (258) | 2.4% (124) | 4.4% (135) |
-| opp_pos_iff_l5 | 0.8% (1299) | 3.0% (1303) | 2.1% (389) | 5.3% (397) | 2.2% (269) | 5.8% (258) | 1.7% (120) | 4.3% (139) |
-| opp_slot_icf_x | 1.5% (1294) | 2.9% (1306) | 3.5% (397) | 6.5% (400) | 4.2% (288) | 7.1% (283) | 1.8% (109) | 5.1% (117) |
-| opp_pos_iff_ven_x | 1.3% (1197) | 2.5% (1200) | 2.8% (361) | 5.6% (340) | 2.6% (233) | 6.4% (203) | 3.1% (128) | 4.4% (137) |
-| opp_slot_icf | 1.6% (1294) | 2.8% (1306) | 3.7% (403) | 6.3% (394) | 4.4% (298) | 6.9% (277) | 1.9% (105) | 5.1% (117) |
-| opp_pos_iscf_l5 | 0.9% (1299) | 3.0% (1303) | 2.3% (393) | 4.8% (392) | 2.7% (263) | 5.4% (259) | 1.5% (130) | 3.8% (133) |
-| opp_slot_sog_x | 1.5% (1294) | 2.8% (1306) | 4.0% (399) | 6.4% (389) | 4.3% (300) | 6.9% (275) | 3.0% (99) | 5.3% (114) |
-| opp_slot_sog | 1.5% (1294) | 2.8% (1306) | 3.8% (395) | 6.2% (387) | 4.2% (306) | 6.7% (269) | 2.2% (89) | 5.1% (118) |
-| opp_pos_icf_l5_x | 0.9% (1299) | 2.5% (1303) | 2.3% (393) | 4.5% (399) | 2.3% (261) | 5.5% (274) | 2.3% (132) | 2.4% (125) |
-| team_sf | 1.9% (1314) | 2.6% (1317) | 5.8% (224) | 3.7% (543) | 5.2% (153) | 5.1% (331) | 7.0% (71) | 1.4% (212) |
-| opp_pos_iscf_l5_x | 1.0% (1299) | 2.9% (1303) | 2.6% (391) | 4.7% (385) | 3.1% (256) | 5.4% (257) | 1.5% (135) | 3.1% (128) |
-| opp_pos_iscf | 1.3% (1299) | 3.2% (1303) | 3.2% (409) | 5.2% (402) | 3.1% (293) | 5.4% (280) | 3.4% (116) | 4.9% (122) |
-| opp_pos_icf_l5 | 0.9% (1299) | 2.5% (1303) | 2.3% (391) | 4.3% (394) | 2.3% (261) | 5.7% (263) | 2.3% (130) | 1.5% (131) |
-| opp_pos_iff_ven | 1.4% (1197) | 2.4% (1200) | 3.3% (365) | 5.3% (340) | 3.3% (242) | 6.2% (195) | 3.3% (123) | 4.1% (145) |
-| opp_pos_sog_l10 | 1.6% (1299) | 3.1% (1303) | 4.1% (391) | 6.0% (383) | 4.0% (276) | 6.2% (240) | 4.3% (115) | 5.6% (143) |
-| team_sf_l5 | 1.8% (1314) | 2.4% (1317) | 5.9% (222) | 4.0% (525) | 5.1% (156) | 5.4% (315) | 7.6% (66) | 1.9% (210) |
+| ven_toi | 0.5% (1193) | 5.9% (1195) | 0.0% (68) | 8.2% (754) | 0.0% (46) | 10.1% (326) | 0.0% (22) | 6.8% (428) |
+| ven_icf | 0.8% (1193) | 5.4% (1195) | 0.0% (26) | 6.6% (942) | — | 7.7% (456) | — | 5.6% (486) |
+| ven_sog_x | 1.4% (1151) | 2.8% (1154) | 4.1% (197) | 10.4% (230) | 6.5% (107) | 10.7% (112) | 1.1% (90) | 10.2% (118) |
+| ven_iscf | 0.4% (1193) | 5.4% (1195) | 1.2% (84) | 7.6% (821) | 1.4% (71) | 8.7% (356) | — | 6.7% (465) |
+| ven_sog | 0.6% (1193) | 4.7% (1195) | 0.0% (24) | 5.6% (971) | — | 6.2% (451) | — | 5.0% (520) |
+| opp_slot_g | 1.2% (1309) | 2.8% (1320) | 2.4% (467) | 6.1% (378) | 2.4% (452) | 6.4% (220) | — | 5.7% (158) |
+| opp_slot_g_x | 1.2% (1309) | 2.7% (1320) | 2.4% (467) | 6.0% (382) | 2.4% (452) | 6.0% (234) | — | 6.1% (148) |
+| ven_iff | 0.6% (1193) | 5.4% (1195) | 3.0% (33) | 6.6% (931) | 3.8% (26) | 7.5% (454) | — | 5.7% (477) |
+| opp_pos_iff_l5_x | 0.8% (1314) | 3.0% (1317) | 1.8% (385) | 5.3% (398) | 1.9% (259) | 5.8% (258) | 1.6% (126) | 4.3% (140) |
+| ven_s3 | 1.2% (1193) | 5.1% (1195) | 3.1% (193) | 6.5% (906) | 3.1% (193) | 7.3% (396) | — | 5.9% (510) |
+| opp_pos_iff_l5 | 0.8% (1314) | 3.0% (1317) | 2.0% (392) | 5.2% (400) | 2.2% (268) | 5.8% (258) | 1.6% (124) | 4.2% (142) |
+| opp_slot_icf_x | 1.6% (1309) | 2.9% (1320) | 3.7% (405) | 6.5% (402) | 4.1% (292) | 7.1% (282) | 2.7% (113) | 5.0% (120) |
+| team_sf | 2.0% (1329) | 2.6% (1331) | 6.2% (225) | 3.7% (546) | 5.3% (152) | 5.1% (331) | 8.2% (73) | 1.4% (215) |
+| opp_slot_icf | 1.7% (1309) | 2.8% (1320) | 3.9% (409) | 6.3% (397) | 4.3% (301) | 6.8% (278) | 2.8% (108) | 5.0% (119) |
+| team_sf_l5 | 1.9% (1329) | 2.4% (1331) | 6.3% (222) | 4.0% (527) | 5.3% (150) | 5.4% (315) | 8.3% (72) | 1.9% (212) |
+| opp_pos_iscf_l5 | 0.9% (1314) | 2.9% (1317) | 2.3% (399) | 4.6% (394) | 2.6% (265) | 5.4% (258) | 1.5% (134) | 2.9% (136) |
+| opp_pos_iff_ven_x | 1.5% (1211) | 2.5% (1214) | 3.3% (366) | 5.5% (344) | 3.0% (235) | 6.4% (203) | 3.8% (131) | 4.3% (141) |
+| opp_slot_sog | 1.5% (1309) | 2.8% (1320) | 4.0% (400) | 6.1% (392) | 4.2% (308) | 6.7% (270) | 3.3% (92) | 4.9% (122) |
+| opp_slot_sog_x | 1.6% (1309) | 3.0% (1320) | 4.2% (402) | 6.3% (394) | 4.3% (299) | 6.9% (276) | 3.9% (103) | 5.1% (118) |
+| opp_pos_icf_l5_x | 0.9% (1314) | 2.4% (1317) | 2.3% (398) | 4.3% (399) | 2.3% (260) | 5.5% (272) | 2.2% (138) | 1.6% (127) |
+| opp_pos_icf_l5 | 0.9% (1314) | 2.6% (1317) | 2.3% (394) | 4.3% (397) | 2.3% (263) | 5.7% (263) | 2.3% (131) | 1.5% (134) |
+| opp_sf | 2.7% (1314) | 1.6% (1317) | 6.0% (398) | 4.1% (369) | 5.8% (259) | 4.1% (221) | 6.5% (139) | 4.1% (148) |
+| opp_pos_sog_l10 | 1.6% (1314) | 3.1% (1317) | 4.0% (396) | 6.0% (385) | 3.9% (281) | 6.3% (239) | 4.3% (115) | 5.5% (146) |
+| opp_pos_iscf_l5_x | 1.1% (1314) | 2.9% (1317) | 2.8% (396) | 4.6% (388) | 3.5% (259) | 5.5% (254) | 1.5% (137) | 3.0% (134) |
+| opp_pos_iscf | 1.4% (1314) | 3.2% (1317) | 3.4% (414) | 5.2% (404) | 3.1% (295) | 5.4% (280) | 4.2% (119) | 4.8% (124) |
 
 ## Streaks, inside his shot tier
 
@@ -565,97 +566,97 @@ A 3+ SOG streak mostly marks a high-volume shooter, so each streak is read insid
 
 | Run | His shots a game | 0 | 1 | 2 | 3+ |
 | --- | --- | --- | --- | --- | --- |
-| 2+ SOG streak | under 2 | 14.3% (3380) | 15.2% (920) | 18.9% (254) | 27.8% (115) |
-| 2+ SOG streak | 2 – 3 | 32.5% (351) | 29.4% (371) | 30.6% (216) | 39.7% (307) |
-| 2+ SOG streak | 3+ | 63.2% (57) | 33.2% (211) | 44.0% (125) | 48.3% (269) |
-| 3+ SOG streak | under 2 | 14.8% (4216) | 16.9% (414) | 29.7% (37) | — (2) |
-| 3+ SOG streak | 2 – 3 | 32.5% (782) | 35.1% (316) | 28.2% (110) | 40.5% (37) |
-| 3+ SOG streak | 3+ | 49.7% (159) | 37.1% (272) | 47.4% (116) | 48.7% (115) |
-| 4+ SOG streak | under 2 | 14.9% (4542) | 20.3% (123) | — (4) | — (0) |
-| 4+ SOG streak | 2 – 3 | 33.0% (1040) | 33.2% (184) | — (18) | — (3) |
-| 4+ SOG streak | 3+ | 42.1% (349) | 43.6% (227) | 51.7% (60) | 53.8% (26) |
-| goal streak | under 2 | 14.5% (4205) | 20.8% (408) | 19.1% (47) | — (9) |
-| goal streak | 2 – 3 | 32.1% (951) | 36.1% (227) | 32.1% (53) | — (14) |
-| goal streak | 3+ | 44.0% (414) | 41.0% (183) | 48.9% (47) | — (18) |
-| point streak | under 2 | 13.6% (3364) | 18.0% (898) | 20.9% (268) | 22.3% (139) |
-| point streak | 2 – 3 | 32.7% (648) | 30.1% (312) | 35.4% (144) | 38.3% (141) |
-| point streak | 3+ | 39.1% (258) | 42.3% (213) | 49.5% (93) | 55.1% (98) |
-| under 2 SOG streak | under 2 | 17.1% (1289) | 15.8% (1342) | 14.2% (832) | 12.9% (1206) |
-| under 2 SOG streak | 2 – 3 | 33.2% (894) | 31.7% (287) | 35.0% (60) | — (4) |
-| under 2 SOG streak | 3+ | 42.1% (605) | 62.3% (53) | — (4) | — (0) |
-| pointless streak | under 2 | 19.1% (1305) | 15.8% (1124) | 13.1% (757) | 12.1% (1483) |
-| pointless streak | 2 – 3 | 33.3% (597) | 34.0% (341) | 33.1% (166) | 29.1% (141) |
-| pointless streak | 3+ | 47.0% (404) | 38.7% (181) | 41.8% (55) | 36.4% (22) |
-| games since a goal | under 2 | 20.5% (464) | 15.7% (788) | 13.1% (686) | 14.5% (2731) |
-| games since a goal | 2 – 3 | 36.1% (294) | 30.6% (314) | 34.2% (225) | 32.0% (412) |
-| games since a goal | 3+ | 44.0% (248) | 43.5% (207) | 37.9% (95) | 50.0% (112) |
-| games since 3+ SOG | under 2 | 18.1% (453) | 17.1% (840) | 13.7% (774) | 14.3% (2602) |
-| games since 3+ SOG | 2 – 3 | 33.9% (463) | 30.9% (473) | 31.2% (192) | 41.0% (117) |
-| games since 3+ SOG | 3+ | 42.1% (503) | 50.0% (122) | 56.7% (30) | — (7) |
+| 2+ SOG streak | under 2 | 14.3% (3413) | 15.2% (933) | 19.3% (259) | 27.8% (115) |
+| 2+ SOG streak | 2 – 3 | 32.1% (358) | 29.6% (372) | 31.5% (219) | 39.5% (311) |
+| 2+ SOG streak | 3+ | 65.0% (60) | 33.3% (213) | 44.0% (125) | 48.9% (270) |
+| 3+ SOG streak | under 2 | 14.8% (4264) | 17.0% (417) | 29.7% (37) | — (2) |
+| 3+ SOG streak | 2 – 3 | 32.3% (790) | 35.7% (322) | 28.2% (110) | 42.1% (38) |
+| 3+ SOG streak | 3+ | 50.6% (162) | 37.2% (274) | 48.7% (117) | 48.7% (115) |
+| 4+ SOG streak | under 2 | 14.9% (4592) | 20.2% (124) | — (4) | — (0) |
+| 4+ SOG streak | 2 – 3 | 33.0% (1050) | 33.9% (189) | — (18) | — (3) |
+| 4+ SOG streak | 3+ | 42.6% (352) | 43.7% (229) | 54.1% (61) | 53.8% (26) |
+| goal streak | under 2 | 14.5% (4251) | 20.7% (411) | 20.4% (49) | — (9) |
+| goal streak | 2 – 3 | 32.2% (962) | 36.1% (230) | 31.5% (54) | — (14) |
+| goal streak | 3+ | 44.5% (420) | 41.5% (183) | 48.9% (47) | — (18) |
+| point streak | under 2 | 13.5% (3403) | 17.9% (905) | 21.3% (272) | 22.1% (140) |
+| point streak | 2 – 3 | 32.8% (658) | 30.0% (313) | 35.4% (147) | 38.7% (142) |
+| point streak | 3+ | 39.7% (262) | 42.5% (214) | 50.0% (94) | 56.1% (98) |
+| under 2 SOG streak | under 2 | 17.1% (1307) | 15.7% (1354) | 14.2% (839) | 12.8% (1220) |
+| under 2 SOG streak | 2 – 3 | 33.5% (902) | 31.4% (290) | 35.5% (62) | — (6) |
+| under 2 SOG streak | 3+ | 42.4% (608) | 64.3% (56) | — (4) | — (0) |
+| pointless streak | under 2 | 19.1% (1317) | 15.8% (1144) | 13.0% (759) | 12.1% (1500) |
+| pointless streak | 2 – 3 | 33.4% (602) | 34.4% (349) | 33.1% (166) | 28.7% (143) |
+| pointless streak | 3+ | 47.5% (406) | 39.3% (183) | 42.1% (57) | 36.4% (22) |
+| games since a goal | under 2 | 20.5% (469) | 15.8% (797) | 13.0% (690) | 14.5% (2764) |
+| games since a goal | 2 – 3 | 35.9% (298) | 30.8% (321) | 34.2% (225) | 32.2% (416) |
+| games since a goal | 3+ | 44.4% (248) | 43.8% (208) | 37.5% (96) | 51.7% (116) |
+| games since 3+ SOG | under 2 | 18.2% (456) | 17.0% (845) | 13.6% (778) | 14.4% (2641) |
+| games since 3+ SOG | 2 – 3 | 34.5% (470) | 30.8% (474) | 31.3% (195) | 39.7% (121) |
+| games since 3+ SOG | 3+ | 42.5% (506) | 51.2% (125) | 56.7% (30) | — (7) |
 
 ### 4+ SOG
 
 | Run | His shots a game | 0 | 1 | 2 | 3+ |
 | --- | --- | --- | --- | --- | --- |
-| 2+ SOG streak | under 2 | 5.3% (3380) | 5.7% (920) | 7.5% (254) | 13.0% (115) |
-| 2+ SOG streak | 2 – 3 | 13.4% (351) | 14.0% (371) | 15.7% (216) | 19.5% (307) |
-| 2+ SOG streak | 3+ | 40.4% (57) | 18.5% (211) | 20.8% (125) | 29.4% (269) |
-| 3+ SOG streak | under 2 | 5.5% (4216) | 6.8% (414) | 8.1% (37) | — (2) |
-| 3+ SOG streak | 2 – 3 | 15.7% (782) | 16.1% (316) | 11.8% (110) | 16.2% (37) |
-| 3+ SOG streak | 3+ | 30.2% (159) | 21.0% (272) | 25.9% (116) | 27.8% (115) |
-| 4+ SOG streak | under 2 | 5.6% (4542) | 8.1% (123) | — (4) | — (0) |
-| 4+ SOG streak | 2 – 3 | 16.1% (1040) | 12.5% (184) | — (18) | — (3) |
-| 4+ SOG streak | 3+ | 24.4% (349) | 25.1% (227) | 30.0% (60) | 26.9% (26) |
-| goal streak | under 2 | 5.4% (4205) | 8.3% (408) | 6.4% (47) | — (9) |
-| goal streak | 2 – 3 | 14.5% (951) | 19.4% (227) | 13.2% (53) | — (14) |
-| goal streak | 3+ | 26.3% (414) | 21.3% (183) | 27.7% (47) | — (18) |
-| point streak | under 2 | 4.9% (3364) | 6.7% (898) | 9.3% (268) | 10.1% (139) |
-| point streak | 2 – 3 | 15.3% (648) | 13.1% (312) | 18.8% (144) | 18.4% (141) |
-| point streak | 3+ | 22.5% (258) | 23.5% (213) | 32.3% (93) | 29.6% (98) |
-| under 2 SOG streak | under 2 | 6.7% (1289) | 5.8% (1342) | 5.6% (832) | 4.4% (1206) |
-| under 2 SOG streak | 2 – 3 | 16.3% (894) | 13.6% (287) | 11.7% (60) | — (4) |
-| under 2 SOG streak | 3+ | 23.8% (605) | 39.6% (53) | — (4) | — (0) |
-| pointless streak | under 2 | 7.6% (1305) | 6.2% (1124) | 4.0% (757) | 4.4% (1483) |
-| pointless streak | 2 – 3 | 15.7% (597) | 17.3% (341) | 15.1% (166) | 10.6% (141) |
-| pointless streak | 3+ | 27.0% (404) | 22.1% (181) | 23.6% (55) | 22.7% (22) |
-| games since a goal | under 2 | 8.2% (464) | 6.9% (788) | 4.7% (686) | 5.1% (2731) |
-| games since a goal | 2 – 3 | 18.7% (294) | 15.3% (314) | 11.6% (225) | 15.5% (412) |
-| games since a goal | 3+ | 23.4% (248) | 27.1% (207) | 22.1% (95) | 28.6% (112) |
-| games since 3+ SOG | under 2 | 6.8% (453) | 6.4% (840) | 5.9% (774) | 5.1% (2602) |
-| games since 3+ SOG | 2 – 3 | 15.1% (463) | 14.8% (473) | 17.2% (192) | 17.1% (117) |
-| games since 3+ SOG | 3+ | 23.7% (503) | 29.5% (122) | 40.0% (30) | — (7) |
+| 2+ SOG streak | under 2 | 5.3% (3413) | 5.6% (933) | 7.3% (259) | 13.0% (115) |
+| 2+ SOG streak | 2 – 3 | 13.4% (358) | 14.0% (372) | 16.4% (219) | 19.6% (311) |
+| 2+ SOG streak | 3+ | 43.3% (60) | 18.8% (213) | 20.8% (125) | 30.0% (270) |
+| 3+ SOG streak | under 2 | 5.5% (4264) | 6.7% (417) | 8.1% (37) | — (2) |
+| 3+ SOG streak | 2 – 3 | 15.7% (790) | 16.5% (322) | 11.8% (110) | 18.4% (38) |
+| 3+ SOG streak | 3+ | 31.5% (162) | 21.2% (274) | 26.5% (117) | 28.7% (115) |
+| 4+ SOG streak | under 2 | 5.6% (4592) | 8.1% (124) | — (4) | — (0) |
+| 4+ SOG streak | 2 – 3 | 16.1% (1050) | 13.2% (189) | — (18) | — (3) |
+| 4+ SOG streak | 3+ | 25.3% (352) | 25.3% (229) | 31.1% (61) | 26.9% (26) |
+| goal streak | under 2 | 5.4% (4251) | 8.3% (411) | 8.2% (49) | — (9) |
+| goal streak | 2 – 3 | 14.8% (962) | 19.1% (230) | 13.0% (54) | — (14) |
+| goal streak | 3+ | 27.4% (420) | 21.3% (183) | 27.7% (47) | — (18) |
+| point streak | under 2 | 4.9% (3403) | 6.6% (905) | 9.6% (272) | 10.0% (140) |
+| point streak | 2 – 3 | 15.7% (658) | 13.1% (313) | 18.4% (147) | 18.3% (142) |
+| point streak | 3+ | 23.7% (262) | 23.8% (214) | 33.0% (94) | 29.6% (98) |
+| under 2 SOG streak | under 2 | 6.6% (1307) | 5.9% (1354) | 5.6% (839) | 4.4% (1220) |
+| under 2 SOG streak | 2 – 3 | 16.5% (902) | 13.4% (290) | 12.9% (62) | — (6) |
+| under 2 SOG streak | 3+ | 24.2% (608) | 42.9% (56) | — (4) | — (0) |
+| pointless streak | under 2 | 7.6% (1317) | 6.2% (1144) | 4.0% (759) | 4.4% (1500) |
+| pointless streak | 2 – 3 | 15.6% (602) | 17.8% (349) | 15.1% (166) | 11.2% (143) |
+| pointless streak | 3+ | 27.3% (406) | 23.0% (183) | 26.3% (57) | 22.7% (22) |
+| games since a goal | under 2 | 8.3% (469) | 6.8% (797) | 4.6% (690) | 5.1% (2764) |
+| games since a goal | 2 – 3 | 18.5% (298) | 15.6% (321) | 11.6% (225) | 15.9% (416) |
+| games since a goal | 3+ | 23.4% (248) | 27.4% (208) | 22.9% (96) | 31.0% (116) |
+| games since 3+ SOG | under 2 | 6.8% (456) | 6.4% (845) | 5.9% (778) | 5.1% (2641) |
+| games since 3+ SOG | 2 – 3 | 15.5% (470) | 14.8% (474) | 17.4% (195) | 16.5% (121) |
+| games since 3+ SOG | 3+ | 24.1% (506) | 31.2% (125) | 40.0% (30) | — (7) |
 
 ### 1+ goal
 
 | Run | His shots a game | 0 | 1 | 2 | 3+ |
 | --- | --- | --- | --- | --- | --- |
-| 2+ SOG streak | under 2 | 10.5% (3380) | 12.6% (920) | 17.3% (254) | 18.3% (115) |
-| 2+ SOG streak | 2 – 3 | 20.8% (351) | 19.9% (371) | 22.2% (216) | 22.1% (307) |
-| 2+ SOG streak | 3+ | 38.6% (57) | 19.4% (211) | 32.0% (125) | 28.3% (269) |
-| 3+ SOG streak | under 2 | 11.2% (4216) | 14.0% (414) | 10.8% (37) | — (2) |
-| 3+ SOG streak | 2 – 3 | 20.1% (782) | 25.6% (316) | 20.0% (110) | 8.1% (37) |
-| 3+ SOG streak | 3+ | 33.3% (159) | 21.7% (272) | 27.6% (116) | 30.4% (115) |
-| 4+ SOG streak | under 2 | 11.3% (4542) | 16.3% (123) | — (4) | — (0) |
-| 4+ SOG streak | 2 – 3 | 20.5% (1040) | 25.5% (184) | — (18) | — (3) |
-| 4+ SOG streak | 3+ | 25.8% (349) | 26.9% (227) | 28.3% (60) | 42.3% (26) |
-| goal streak | under 2 | 11.1% (4205) | 15.2% (408) | 12.8% (47) | — (9) |
-| goal streak | 2 – 3 | 20.2% (951) | 24.2% (227) | 24.5% (53) | — (14) |
-| goal streak | 3+ | 27.5% (414) | 25.1% (183) | 27.7% (47) | — (18) |
-| point streak | under 2 | 10.3% (3364) | 14.0% (898) | 15.3% (268) | 16.5% (139) |
-| point streak | 2 – 3 | 19.0% (648) | 23.1% (312) | 25.7% (144) | 22.0% (141) |
-| point streak | 3+ | 25.2% (258) | 25.4% (213) | 26.9% (93) | 35.7% (98) |
-| under 2 SOG streak | under 2 | 14.0% (1289) | 11.7% (1342) | 10.5% (832) | 9.2% (1206) |
-| under 2 SOG streak | 2 – 3 | 21.3% (894) | 20.2% (287) | 25.0% (60) | — (4) |
-| under 2 SOG streak | 3+ | 26.0% (605) | 39.6% (53) | — (4) | — (0) |
-| pointless streak | under 2 | 14.6% (1305) | 12.0% (1124) | 10.3% (757) | 9.0% (1483) |
-| pointless streak | 2 – 3 | 23.5% (597) | 19.6% (341) | 15.7% (166) | 21.3% (141) |
-| pointless streak | 3+ | 28.2% (404) | 26.0% (181) | 25.5% (55) | 18.2% (22) |
-| games since a goal | under 2 | 15.3% (464) | 12.2% (788) | 10.2% (686) | 10.9% (2731) |
-| games since a goal | 2 – 3 | 24.1% (294) | 20.1% (314) | 19.1% (225) | 20.9% (412) |
-| games since a goal | 3+ | 26.2% (248) | 28.5% (207) | 25.3% (95) | 27.7% (112) |
-| games since 3+ SOG | under 2 | 13.7% (453) | 11.1% (840) | 12.7% (774) | 10.9% (2602) |
-| games since 3+ SOG | 2 – 3 | 22.9% (463) | 17.3% (473) | 25.0% (192) | 23.1% (117) |
-| games since 3+ SOG | 3+ | 25.0% (503) | 32.8% (122) | 36.7% (30) | — (7) |
+| 2+ SOG streak | under 2 | 10.5% (3413) | 12.6% (933) | 17.8% (259) | 18.3% (115) |
+| 2+ SOG streak | 2 – 3 | 21.5% (358) | 19.9% (372) | 22.8% (219) | 22.5% (311) |
+| 2+ SOG streak | 3+ | 38.3% (60) | 19.7% (213) | 32.0% (125) | 28.5% (270) |
+| 3+ SOG streak | under 2 | 11.3% (4264) | 13.9% (417) | 10.8% (37) | — (2) |
+| 3+ SOG streak | 2 – 3 | 20.4% (790) | 26.1% (322) | 20.0% (110) | 10.5% (38) |
+| 3+ SOG streak | 3+ | 33.3% (162) | 21.9% (274) | 28.2% (117) | 30.4% (115) |
+| 4+ SOG streak | under 2 | 11.4% (4592) | 16.1% (124) | — (4) | — (0) |
+| 4+ SOG streak | 2 – 3 | 20.8% (1050) | 26.5% (189) | — (18) | — (3) |
+| 4+ SOG streak | 3+ | 25.9% (352) | 27.1% (229) | 29.5% (61) | 42.3% (26) |
+| goal streak | under 2 | 11.2% (4251) | 15.1% (411) | 12.2% (49) | — (9) |
+| goal streak | 2 – 3 | 20.5% (962) | 24.8% (230) | 25.9% (54) | — (14) |
+| goal streak | 3+ | 27.9% (420) | 25.1% (183) | 27.7% (47) | — (18) |
+| point streak | under 2 | 10.4% (3403) | 13.9% (905) | 15.4% (272) | 16.4% (140) |
+| point streak | 2 – 3 | 19.3% (658) | 23.3% (313) | 26.5% (147) | 22.5% (142) |
+| point streak | 3+ | 25.2% (262) | 25.7% (214) | 27.7% (94) | 35.7% (98) |
+| under 2 SOG streak | under 2 | 14.2% (1307) | 11.7% (1354) | 10.4% (839) | 9.3% (1220) |
+| under 2 SOG streak | 2 – 3 | 21.5% (902) | 21.0% (290) | 25.8% (62) | — (6) |
+| under 2 SOG streak | 3+ | 26.2% (608) | 39.3% (56) | — (4) | — (0) |
+| pointless streak | under 2 | 14.5% (1317) | 12.1% (1144) | 10.3% (759) | 9.2% (1500) |
+| pointless streak | 2 – 3 | 23.9% (602) | 20.1% (349) | 15.7% (166) | 21.7% (143) |
+| pointless streak | 3+ | 28.6% (406) | 26.2% (183) | 24.6% (57) | 18.2% (22) |
+| games since a goal | under 2 | 15.1% (469) | 12.3% (797) | 10.1% (690) | 11.1% (2764) |
+| games since a goal | 2 – 3 | 24.8% (298) | 20.9% (321) | 19.1% (225) | 20.9% (416) |
+| games since a goal | 3+ | 26.2% (248) | 28.8% (208) | 25.0% (96) | 28.4% (116) |
+| games since 3+ SOG | under 2 | 13.6% (456) | 11.1% (845) | 12.6% (778) | 11.0% (2641) |
+| games since 3+ SOG | 2 – 3 | 23.4% (470) | 17.5% (474) | 25.6% (195) | 23.1% (121) |
+| games since 3+ SOG | 3+ | 25.3% (506) | 32.8% (125) | 36.7% (30) | — (7) |
 
 ## By line slot
 
@@ -663,18 +664,18 @@ How often each slot reached each line (slot = ice-time rank in the game within h
 
 | Slot | Skater-games | 3+ SOG | 4+ SOG | 5+ SOG | 6+ SOG | 1+ goal | 2+ goals | 3+ goals | 3+ SOG: the rule firing most there | 1+ goal: the rule firing most there |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| C1 | 372 | 37.9% | 21.2% | 10.2% | 6.5% | 29.6% | 4.3% | 0.0% | fwd = 1 · toi_l5 ≥ 18.91 · sog_max ≥ 6: 58.0% of 81 | iff_avg ≥ 4.409 · pts_l5 ≥ 1 · sog_sd ≥ 1.414: 47.2% of 72 |
-| LW1 | 372 | 45.7% | 21.5% | 9.9% | 4.0% | 25.0% | 5.1% | 0.8% | iff_l5 ≥ 4.4 · sog_max ≥ 6: 74.6% of 59 | fwd = 1 · toi_l5 ≥ 20.236 · ven_iff ≥ 4.667: 47.7% of 44 |
-| RW1 | 374 | 42.8% | 22.2% | 10.4% | 4.3% | 32.1% | 7.5% | 0.8% | iscf_l10 ≥ 3.333 · sog_max ≥ 6: 55.8% of 43 | pts_avg ≥ 1 · ven_iff ≥ 4.667 · line ≤ 1: 46.7% of 45 |
-| C2 | 373 | 28.4% | 14.7% | 7.8% | 2.7% | 22.3% | 2.4% | 0.3% | iscf_l10 ≥ 3.333 · sog_max ≥ 6: 59.3% of 27 | pts_avg ≥ 1 · ven_iff ≥ 4.667: 34.6% of 26 |
-| LW2 | 371 | 28.6% | 14.8% | 6.2% | 3.5% | 21.6% | 3.0% | 1.1% | iff_l5 ≥ 4.4 · sog_max ≥ 6: 56.0% of 25 | iff_avg ≥ 4.409 · pts_l5 ≥ 1 · sog_sd ≥ 1.414: 47.4% of 19 |
-| RW2 | 370 | 30.5% | 11.1% | 4.6% | 2.2% | 18.1% | 2.7% | 0.3% | iscf_l10 ≥ 3.333 · sog_max ≥ 6: 50.0% of 32 | iscf_l5 ≥ 3.333 · sog_max ≥ 6 · ven_s3 ≥ 0.667: 23.5% of 17 |
-| C3 | 371 | 18.3% | 8.4% | 3.8% | 1.3% | 16.2% | 1.3% | 0.0% | — | — |
-| LW3 | 361 | 17.7% | 7.2% | 2.8% | 0.8% | 13.0% | 1.9% | 0.0% | — | — |
-| RW3 | 359 | 16.4% | 5.3% | 1.7% | 0.6% | 15.9% | 2.2% | 0.6% | — | — |
-| C4 | 359 | 11.4% | 4.5% | 0.6% | 0.0% | 10.9% | 0.6% | 0.0% | — | — |
-| LW4 | 342 | 7.6% | 2.0% | 1.5% | 0.3% | 9.4% | 1.2% | 0.0% | — | — |
-| RW4 | 331 | 8.5% | 2.7% | 0.0% | 0.0% | 11.5% | 1.2% | 0.3% | — | — |
-| D1 | 746 | 25.9% | 11.0% | 3.9% | 2.0% | 8.7% | 0.7% | 0.0% | iff_l5 ≥ 4.4 · ven_toi ≥ 20.357: 51.0% of 51 | pts_avg ≥ 1 · ven_iff ≥ 4.667 · line ≤ 1: 30.0% of 30 |
-| D2 | 745 | 11.7% | 3.6% | 1.3% | 0.4% | 6.4% | 0.5% | 0.0% | — | — |
-| D3 | 730 | 6.2% | 1.9% | 0.3% | 0.0% | 5.3% | 0.1% | 0.0% | — | — |
+| C1 | 376 | 38.0% | 21.5% | 10.6% | 6.6% | 29.8% | 4.3% | 0.0% | icf_l10 ≥ 6: 50.5% of 101 | iff_avg ≥ 4.409 · pts_l5 ≥ 1 · sog_sd ≥ 1.414: 47.2% of 72 |
+| LW1 | 376 | 46.0% | 22.1% | 10.4% | 4.5% | 25.8% | 5.6% | 0.8% | icf_l10 ≥ 6: 71.7% of 92 | fwd = 1 · toi_l5 ≥ 20.236 · ven_iff ≥ 4.667: 47.7% of 44 |
+| RW1 | 378 | 43.1% | 22.5% | 10.6% | 4.2% | 32.5% | 7.4% | 0.8% | icf_l10 ≥ 6: 50.0% of 96 | ven_iff ≥ 4.667 · opp_ga_l5_rk ≤ 16 · line ≤ 1: 55.6% of 45 |
+| C2 | 377 | 28.6% | 15.1% | 8.2% | 2.7% | 22.5% | 2.4% | 0.3% | icf_l10 ≥ 6: 63.2% of 38 | pts_avg ≥ 1 · sog_sd ≥ 1.169 · ven_iff ≥ 4.667: 35.0% of 20 |
+| LW2 | 375 | 28.8% | 14.9% | 6.1% | 3.5% | 21.9% | 3.2% | 1.3% | icf_l10 ≥ 6: 65.7% of 35 | iff_avg ≥ 4.409 · pts_l5 ≥ 1 · sog_sd ≥ 1.414: 47.4% of 19 |
+| RW2 | 374 | 30.7% | 11.2% | 4.5% | 2.1% | 17.9% | 2.7% | 0.3% | icf_l10 ≥ 6: 44.7% of 47 | sog_max ≥ 6 · ven_iscf ≥ 3.5 · ven_s3 ≥ 0.667: 22.2% of 18 |
+| C3 | 375 | 18.1% | 8.3% | 3.7% | 1.3% | 16.0% | 1.3% | 0.0% | icf_l10 ≥ 6: 31.6% of 19 | — |
+| LW3 | 365 | 17.5% | 7.1% | 2.7% | 0.8% | 12.9% | 1.9% | 0.0% | — | — |
+| RW3 | 363 | 16.5% | 5.2% | 1.7% | 0.6% | 16.0% | 2.2% | 0.6% | — | — |
+| C4 | 363 | 11.6% | 4.7% | 0.6% | 0.0% | 11.6% | 0.6% | 0.0% | — | — |
+| LW4 | 346 | 7.5% | 2.0% | 1.4% | 0.3% | 9.2% | 1.2% | 0.0% | — | — |
+| RW4 | 335 | 8.4% | 2.7% | 0.0% | 0.0% | 11.3% | 1.2% | 0.3% | — | — |
+| D1 | 754 | 26.0% | 11.0% | 3.8% | 2.0% | 8.8% | 0.7% | 0.0% | icf_l10 ≥ 6: 43.4% of 113 | pts_avg ≥ 1 · ven_iff ≥ 4.667 · line ≤ 1: 30.0% of 30 |
+| D2 | 753 | 11.6% | 3.6% | 1.3% | 0.4% | 6.5% | 0.5% | 0.0% | icf_l10 ≥ 6: 18.8% of 16 | — |
+| D3 | 738 | 6.1% | 1.9% | 0.3% | 0.0% | 5.4% | 0.1% | 0.0% | — | — |
