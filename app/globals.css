@@ -1754,3 +1754,59 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .nhlx-df-lines .nhlx-pft td.is-left { text-align: left; }
 .nhlx-df-lines .nhlx-pft td.is-best b { text-decoration: underline; text-decoration-color: var(--primary); text-underline-offset: 3px; }
 .nhlx-df-lines .nhlx-df-shooter { margin-left: 8px; }
+
+/* The NHL Patterns tab (2026-10-30, after firsthalfscore.com's pills): a pill per line, solid with a check when a
+   rule the study kept fires over the line's bar (a pick), outlined with the figure otherwise; graded once final. The
+   facts behind a pick are small outlined pills, toned only when they say soft / tough / hot. */
+.ir-pt-how { max-width: 92ch; line-height: 1.6; }
+.ir-pt-record { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 6px 0 18px; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ir-pt-record b { color: var(--heading); }
+.ir-pt-strong .nhlx-tab i { font-style: normal; margin-left: 6px; font-weight: 500; color: var(--muted); }
+.ir-pt-strong { margin-bottom: 26px; }
+.ir-pt-games-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; }
+.ir-pill { display: inline-flex; align-items: center; gap: 5px; min-height: 26px; padding: 2px 9px; border: 1px solid var(--line-strong); border-radius: 100px; font-size: 13px; line-height: 1; color: var(--muted); background: transparent; font-variant-numeric: tabular-nums; white-space: nowrap; vertical-align: middle; }
+.ir-pill b { font-weight: 700; color: var(--body); }
+.ir-pill i { font-style: normal; font-weight: 700; }
+.ir-pill.is-on { background: var(--primary); border-color: var(--primary); color: var(--bg); }
+.ir-pill.is-on b, .ir-pill.is-on span { color: var(--bg); font-weight: 700; }
+.ir-pill.is-hit { box-shadow: 0 0 0 2px var(--mark-over); }
+.ir-pill.is-miss { box-shadow: 0 0 0 2px var(--mark-under); }
+.ir-pills { display: inline-flex; flex-wrap: wrap; gap: 5px; }
+.ir-facts { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.ir-fact { display: inline-block; padding: 3px 7px; border: 1px solid var(--line); border-radius: 6px; font-size: 12.5px; line-height: 1.2; color: var(--body); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ir-fact.is-soft { color: var(--ok-fg); border-color: var(--ok-line); }
+.ir-fact.is-tough { color: var(--bad-fg); border-color: var(--bad-line); }
+.ir-fact.is-hot { color: var(--hot-fg); border-color: color-mix(in oklab, var(--hot-fg) 40%, var(--line)); }
+button.ir-fact.is-more { all: unset; box-sizing: border-box; display: inline-block; padding: 3px 7px; border: 1px dashed var(--line-strong); border-radius: 6px; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+button.ir-fact.is-more:focus-visible { outline: 2px solid var(--primary); }
+.ir-pt-table td { vertical-align: middle; }
+.ir-pt-table tr.is-hit .ir-pt-got { color: var(--ok-fg); font-weight: 600; }
+.ir-pt-table tr.is-miss .ir-pt-got { color: var(--bad-fg); }
+.ir-pt-rank { width: 28px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ir-pt-player { display: flex; align-items: center; gap: 10px; }
+.ir-pt-player b, .ir-pt-player small { display: block; }
+.ir-pt-why { white-space: normal !important; min-width: 240px; }
+.ir-pt-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.ir-pt-list li { display: grid; grid-template-columns: minmax(150px, 190px) 1fr; gap: 6px 14px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.ir-pt-list li:last-child { border-bottom: 0; }
+.ir-pt-list li > .ir-facts { grid-column: 2; }
+.ir-pt-who { all: unset; box-sizing: border-box; cursor: pointer; min-width: 0; }
+.ir-pt-who b { display: block; color: var(--heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ir-pt-who small { display: block; }
+.ir-pt-who:hover b { color: var(--primary); }
+.ir-pt-who:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+@media (max-width: 700px) {
+  .ir-pt-strong .nhlx-db-table-wrap { overflow-x: visible; }
+  .ir-pt-table, .ir-pt-table tbody { display: block; width: 100%; }
+  .ir-pt-table thead { display: none; }
+  .ir-pt-table tr { display: grid; grid-template-columns: 24px 1fr auto; grid-template-areas: "rank player pill" "rank game got" "rank why why"; column-gap: 10px; row-gap: 6px; align-items: center; padding: 12px 4px; border-bottom: 1px solid var(--line); }
+  .ir-pt-table td { display: block; padding: 0; border: 0; min-width: 0; white-space: normal; }
+  .ir-pt-rank { grid-area: rank; align-self: start; padding-top: 4px !important; }
+  .ir-pt-table td.ir-pt-player { grid-area: player; display: flex; }
+  .ir-pt-game { grid-area: game; }
+  .ir-pt-pill { grid-area: pill; justify-self: end; }
+  .ir-pt-got { grid-area: got; justify-self: end; font-size: 13px; }
+  .ir-pt-why { grid-area: why; min-width: 0; }
+  .ir-pt-list li { grid-template-columns: 1fr; }
+  .ir-pt-list li > .ir-facts { grid-column: 1; }
+}

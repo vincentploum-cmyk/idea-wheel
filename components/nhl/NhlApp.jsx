@@ -11,6 +11,7 @@ import MatchupsPanel from './MatchupsPanel';
 import FirstGoalPanel from './FirstGoalPanel';
 import PicksPanel from './PicksPanel';
 import ShufflePanel from './ShufflePanel';
+import PatternsPanel from './PatternsPanel';
 import LeaguePanel from './LeaguePanel';
 import DefensePanel from './DefensePanel';
 import { PlayerCardHost } from './PlayerCard';
@@ -27,6 +28,7 @@ const TABS = [
   ['firstgoal', '1st goal'],
   ['model', 'Best bets'],
   ['shuffle', 'Shuffle'],
+  ['patterns', 'Patterns'],
   ['league', 'League'],
   ['history', 'Run history'],
 ];
@@ -333,6 +335,15 @@ export default function NhlApp({ email }) {
             <h2 className="nhlx-h2">The <span>shuffle</span></h2>
             <p className="nhlx-lede">Raise the bar and the field falls away. A bar for shots and one for goals; the list keeps the skaters whose chance of the bar holds over the floor, off the same λ as Best bets, so a skater’s 1+ goal chance here is his Best bets figure and the order is the order of the chance.</p>
             <div style={{ marginTop: 28 }}>{mounted('shuffle') && <ShufflePanel />}</div>
+          </div>
+        </section>
+
+        <section className="nhlx-section nhlx-tabpanel" id="patterns" role="tabpanel" aria-labelledby="tab-patterns" hidden={tab !== 'patterns'}>
+          <div className="nhlx-wrap">
+            <span className="nhlx-eyebrow">Tonight</span>
+            <h2 className="nhlx-h2">The <span>patterns</span></h2>
+            <p className="nhlx-lede">Every line a skater can go over, 3+ to 6+ shots and 1+ to 3+ goals, read from what his numbers, his venue split, his streaks and tonight’s opponent have said this season. A filled pill is a pick.</p>
+            <div style={{ marginTop: 28 }}>{mounted('patterns') && <PatternsPanel />}</div>
           </div>
         </section>
 

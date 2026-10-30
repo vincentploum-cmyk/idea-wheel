@@ -22,7 +22,7 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard, the data
   sources, the default; on the NBA page the night's plays in one ranked list over the games folded to a line each,
   below) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
-  drawn on both panels); the NBA page a third, `#firstbasket`. The NHL app has eight (below).
+  drawn on both panels); the NBA page a third, `#firstbasket`. The NHL app has nine (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)
@@ -737,6 +737,15 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   one goal (0.50–0.55); the opponent's goals against a game leaned toward the big shot nights (0.53–0.60), the shots it
   allows at the position toward multi-goal nights; the goalie's save % nothing; home a little. The rare marks' rules
   fell back to the base rate on the check week. Descriptive; nothing changed.
+- Patterns (`docs/audits/2026-10-30-nhl-patterns.md`, `tools/predictors/patterns-rows.mjs` → `patterns.py`; Vincent, 2026-10-30:
+  every data point, rules per line, pills): 6,576 skater-games of this season, 239 figures each, a beam search of one- to
+  three-condition rules per line on Oct 1–22 (12+ skaters a rule, every condition worth two points), checked on Oct 23–29:
+  the check week kept 78% / 75% / 64% / 73% of the lift for 3+ / 4+ / 5+ / 6+ SOG and 92% / 70% for 1+ / 2+ goals. 3+ SOG
+  is volume and minutes (20+ min over his last three, a 6+ shot game on record, chances at the venue: 57–64%); 4+ SOG adds
+  the opponent's goals against (a top-10 GA team +10–15 points, 35–38%); 1+ goal adds his venue split (18%+ more shots at
+  tonight's venue +15–21 points, 39–51%); among 2+ shots-a-game skaters the opponent's attempts / chances / shots allowed
+  move 3+ SOG 9–12 points bottom fifth to top; streaks are colour but for the point streak; no rule clears the bar at 5+ /
+  6+ SOG or 2+ goals (the 3.5+ shots-a-game tier fills 5+ / 6+). The rules feed the Patterns tab (above).
 
 ## Canonical locations
 
@@ -765,7 +774,7 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   skater's games-played count in as his away shot base and his shots as goals.
 - Scheduled by `.github/workflows/nhl-data.yml` (daily results + lineups) and
   `nhl-lineups.yml` (hourly pre-game lineup reads); Mac folder sync in `tools/mac-sync`.
-- Signed-in page = eight hash tabs (`#teams`, `#matchups`, `#defense`, `#firstgoal`, `#model`, `#shuffle`, `#league`,
+- Signed-in page = nine hash tabs (`#teams`, `#matchups`, `#defense`, `#firstgoal`, `#model`, `#shuffle`, `#patterns`, `#league`,
   `#history`); it opens on Matchups. The Defense tab (`components/nhl/DefensePanel.jsx`, helpers in `lib/nhl-data/defense-board.js`, data from
   `/api/nhl/data/defense`, which also carries the date's games and MoneyPuck's team rates) is the ShotPropz-style cheat sheet:
   what every team gives up to each position group (C / LW / RW / D, C / W / D, F / D) in shots or goals **per skater at the
@@ -967,6 +976,29 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   shuffle listed him fourth), and the panel's head says when `NHL_PICKS_STUDY_WEIGHT` blends the study into the λ;
   only the Top 5 boards, the rinks' strips and the scorecard's replay keep `boardPlays`' rule (4+ / 5+ with the attack
   score, 1+ / 2+ with a slice of it), so they can reorder near-ties.
+- **Patterns** (`#patterns`, `components/nhl/PatternsPanel.jsx` with its own slate-date picker, `GET /api/nhl/data/patterns?date=`
+  → `buildPatterns` in `lib/nhl-data/patterns.js`; Vincent, 2026-10-30: "look at literally every data point that is
+  available to detect patterns … rules per line … the outcome should be pills like firsthalfscore.com"): every skater in
+  tonight's lineups gets a pill per line — 3+ / 4+ / 5+ / 6+ SOG, 1+ / 2+ / 3+ goals — solid with a check (a pick) when a
+  rule the study kept fires and its rate clears the line's bar (`bar` per mark: 50 / 33 / 20 / 11%, 35 / 9 / 3%, about
+  what a book asks), outlined with his figure otherwise (the strongest rule he meets, else his shots-a-game tier, else the
+  base rate); the conditions behind the picks underneath as small pills (`describe`, his values), with notes beside them
+  (a point / 3+ SOG / goal run, his venue split at ±20%, the opponent's high-danger chances allowed to his position over
+  the last five in its top or bottom sixth, a top-five goals-against team); "Strongest tonight" per line, then every game
+  folded to a line; picks ringed green / red once the game is stored; hover a pill for its rule, its check week and its
+  record since. The features: `lib/nhl-data/patterns-pure.js` (pure, shared with the study): `makeTracker` / `patternTable`
+  walk this season's stored rows date by date (`seasonStart`; nothing from last season, Vincent's call of the same day),
+  each skater-game's 239 figures from the games before it — his sog / icf / iff / iscf / ihdcf / g / a / pts / toi / hits
+  / blk over the season and his last 3 / 5 / 10, per 60, his hit shares and runs (`str_*`, `cold_*`, `since_*`), his split
+  at tonight's venue (`ven_*`), his head to head, what the opponent gives up per skater at his position by window and at
+  the venue (`opp_pos_<stat>[_l5|_l10|_ven]`, `_x` = × the league's at the position, `_rk` = rank, 1 the most), to his slot
+  (`opp_slot_*`), the teams' totals for and against with ranks (`opp_{s,c,f,sc,hdc,g}a`, `team_*f`), pace, rest. The rules:
+  `lib/nhl-data/patterns-rules.json`, written by `tools/predictors/patterns.py` (below, Audits); `pillsFor` picks the
+  strongest rule a skater meets, `rulesCatalog` sends each rule once and the pills carry `rule` + `vals`. A rule's rate
+  moves with the games after the study (`patternRecord`: from `rules.builtThrough` on, each night read with the rates as
+  they stood that morning, the study's out-of-sample figure carried in at 30 skater-games), and those nights are the
+  record shown under the head. The season walked once per stored rows and date (`memoByRows`), the build per store state.
+  Re-mine with the study's commands (the README in `tools/predictors/`) to move `builtThrough`.
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching: the roster decides a row's group, a pair
   holds a defenseman and two forwards side by side are a short forward line, three pairs at most, and a
