@@ -542,7 +542,10 @@ config and keeps its own markets, teams, feeds and slate key:
   book prices nearest a coin flip** — `balance` in `playerProps`, the over's implied probability with the vig split
   against 0.5 — before the one priced both ways by the most books and the one nearest his average: on 2026-10-29 the
   books priced their whole alternate ladders both ways and "the most books" put Wiggins, Dort and Merrill on o4.5
-  points at 100% and -10421, Okongwu on o3.5 rebounds at -772), one stat line, three
+  points at 100% and -10421, Okongwu on o3.5 rebounds at -772; **a window of minutes is no game line** — "Points in the
+  First 3 Minutes", "first5MinPoints", "points3min" are skipped as the quarters are (`WINDOW`), and a line under 40% of his
+  own last-ten average (4 a game and up) stays on the ladder and out of the pick: 2026-10-30 the list's top read Coward
+  o0.5 and Boozer o1.5 points, projected 14.6 and 23.5), one stat line, three
   chips under the basket and four on the perimeter (`ZONE_MAX`). PropFinder's NBA depth chart arrives as a
   JSON string in `team.depthChart.data` (`depthChart` parses it; `starter` = `nba_com_starter`, `injury` =
   `espn_injury_status`); usage comes as `usagePct`, a fraction, read as a percentage. "Pull PropFinder" sits in the board head beside Reload (the same call as

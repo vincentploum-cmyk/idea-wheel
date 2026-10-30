@@ -158,6 +158,21 @@ describe('NBA PropFinder mapping', () => {
       item('Player Made Threes', 'threePointsMade', 'DraftKings', 'over', -120, 2.5), item('Player Points', 'points', 'DraftKings', 'over', -110, 26.5),
     ] };
     expect(mapPlayers([stray])[0].props.map((x) => `${x.market} ${x.line}`)).toEqual(['tpm 2.5', 'pts 26.5']);
+    // A window of minutes is no game line (2026-10-30: o0.5 / o1.5 points at the top of the list for a 14.6 and a 23.5
+    // projection), whatever the spelling; nor, whatever its market's name, a main line under 40% of his own average.
+    const windows = { ...PLAYER, odds: [
+      ...['Player Points - First 3 Minutes', 'Points in First 5 Minutes', '1st 3 Min Points'].flatMap((m) => [item(m, 'points', 'DraftKings', 'over', -110, 1.5), item(m, 'points', 'DraftKings', 'under', -110, 1.5)]),
+      item('Player Points', 'first3MinPoints', 'FanDuel', 'over', -105, 0.5), item('Player Points', 'points3min', 'Betano', 'over', -105, 0.5),
+      item('Player Points', 'points', 'DraftKings', 'over', -125, 26.5), item('Player Points', 'points', 'DraftKings', 'under', -105, 26.5),
+    ] };
+    expect(mapPlayers([windows])[0].props.map((x) => `${x.market} ${x.line}`)).toEqual(['pts 26.5']);
+    const low = { ...PLAYER, odds: [
+      item('Player Points', 'points', 'Book A', 'over', -110, 1.5), item('Player Points', 'points', 'Book A', 'under', -110, 1.5),
+      item('Player Points', 'points', 'DraftKings', 'over', -130, 26.5), item('Player Points', 'points', 'DraftKings', 'under', 100, 26.5),
+    ] };
+    const lowPts = mapPlayers([low])[0].props.find((x) => x.market === 'pts');   // his last ten: 31 and 22 a game
+    expect(lowPts.line).toBe(26.5);
+    expect(lowPts.lines.map((x) => x.line)).toEqual([1.5, 26.5]);
     // Preseason rows are left out of the logs and the anchor (LeBron's o14.5 points, 2026-10-20), and the
     // main line priced both ways by the most books wins before the one nearest his average.
     const pre = { ...ladder, stats: [{ ...GAME, points: 9, seasonType: 'PRE' }, { ...GAME, gameDate: '2026-10-19T23:30:00Z', points: 10, seasonType: 'PRE' }, { ...GAME, gameDate: '2026-04-10T23:30:00Z', points: 28, season: 2025 }], odds: [
