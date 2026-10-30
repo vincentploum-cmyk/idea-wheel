@@ -29,7 +29,7 @@ const et = (iso) => (iso ? `${new Date(iso).toLocaleTimeString('en-US', { hour: 
 /** "lines from … · NHL.com lineup updated 5:30 PM ET · captured 7:20 PM ET" (the card's hover title). */
 function sourceText(side) {
   const m = side.sourceMeta || {};
-  const gdt = m.handle ? `the beat writers via GameDayTweets (@${m.handle}${m.at ? `, ${et(m.at)}` : m.date ? `, ${m.date}` : ''})` : null;
+  const gdt = m.handle ? `the beat writers via GameDayTweets (@${m.handle}${m.at ? `, ${et(m.at)}` : m.date ? `, ${m.date}` : ''}${m.picture ? ', read off the tweet’s picture' : ''})` : null;
   const nhl = m.nhlUpdated ? `NHL.com lineup updated ${et(m.nhlUpdated)}` : null;
   if (side.source === 'gamedaytweets') return `lines from ${gdt}${nhl ? ` · ${nhl}` : ''}${m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}`;
   if (side.source === 'lineup') return `lines from the NHL.com projected lineup${nhl ? ` (updated ${et(m.nhlUpdated)})` : ''}${gdt ? ` · older tweet from ${gdt}` : ''}${m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}${carriedText(side)}`;

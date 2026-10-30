@@ -38,6 +38,11 @@ services:
     # Token the GitHub Actions workflows send when posting GameDayTweets pages
     # (any random string of 20+ characters; the same value is the repo secret):
     #   NHL_ACTIONS_TOKEN
+    # Anthropic API key, so a lineup tweeted as a picture (a handwritten page, a lineup graphic)
+    # is read off the photo (lib/nhl-data/tweet-pictures.js; claude-opus-5-5 unless
+    # NHL_LINES_VISION_MODEL names another; NHL_LINES_PICTURES=off turns it off). Without it the
+    # lineups file says "pictures off" and such tweets are skipped as before:
+    #   ANTHROPIC_API_KEY
     # Fine-grained GitHub token (this repo, Actions: read and write) so "Refresh lines" can
     # start the nhl-lineups.yml run that fetches the GameDayTweets pages on demand;
     # GITHUB_REPO (default vincentploum-cmyk/idea-wheel) and GITHUB_DISPATCH_REF (default main):
