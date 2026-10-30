@@ -775,6 +775,13 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   model's Stage 1 steps (−6% at most for a tight defense) lose to the fitted elasticity (deviance 1.47 vs 1.27 this
   season) and its team goals read loses to the league average early; the script read at the skater level puts the
   Best bets rows from 62% said → 55% hit to 60% → 58% (goals 40% → 35% to 39% → 39%). Proposals there; nothing changed.
+- The NBA board's chances, calibrated (`docs/audits/2026-10-30-nba-calibration.md`, `nba-audit.mjs`'s walk-forward section;
+  Vincent, 2026-10-30: "do the same calibration for the NBA board"). The replay is at stand-in lines without a price. Over
+  2025-26, walked forward (refitted weekly, with the site's check), every market printed at or under its stated Brier
+  (plays 0.2381 → 0.2366, rungs 0.1408 → 0.1404). The play read overstates (a stated 60–70% landed 55%; 57% as printed,
+  b 0.52–0.68 for points, rebounds, assists, PRA). The rungs were near honest (b 0.82–0.88), steals and blocks less so
+  (0.71–0.74). This season's first week overstated more than the nights after, so the check kept points, rebounds,
+  assists and PRA rungs as stated through Oct 29. The site's own fit, on book lines, is the one the board prints.
 - What it takes (`docs/audits/2026-10-30-nhl-what-it-takes.md`, `tools/predictors/thresholds.py`; Vincent, 2026-10-30:
   what a skater needs in stats and environment to get 3 / 4 / 5 / 6 shots and 1 / 2 / 3 goals, the last three weeks,
   then "forget about last season": this season's numbers alone). 5,159 skater-games, Oct 9–29, rules fitted on the
