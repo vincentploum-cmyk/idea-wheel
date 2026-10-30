@@ -1673,7 +1673,9 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-range-dot { top: 3px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--primary); }
 .ir-range-band.is-key, .ir-range-tick.is-key, .ir-range-dot.is-key { position: static; margin: 0; }
 .ir-range-band.is-key { width: 26px; }
-.ir-gf-list { margin: 8px 0 22px; }
+.ir-gf-list { margin: 8px 0 22px; scroll-margin-top: 12px; }
+.ir-gf-jump { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 0 12px; }
+.ir-gf-jump b { color: var(--heading); font-weight: 600; }
 .ir-gf { margin: 0 0 10px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--card); }
 .ir-gf-head { all: unset; box-sizing: border-box; width: 100%; min-height: 56px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 20px; padding: 10px 16px; cursor: pointer; color: var(--body); }
 .ir-gf-head:hover { background: var(--bg-soft); border-radius: var(--radius-lg); }
