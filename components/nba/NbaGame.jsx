@@ -12,7 +12,11 @@ import { useNbaPlayerCard } from './NbaPlayerCard';
 // up to each position (the court's `AllowedTable`: every stat with its figure and rank, the window tabs, the league's
 // average; the ranks-only grid drawn here on 2026-10-30 lasted a day, Vincent: "I need the propfinder data above each
 // court again like how we had it"), and every active player's projection per stat tinted by the matchup at his spot, a
-// play's line and chance under its figure. The courts and the five tables sit behind a switch.
+// play's line and chance under its figure. The courts and the five tables sit behind a switch. — Until the evening of
+// 2026-10-30: Vincent, after the courts gained the shuffle bar and the projections, "I don't see the courts nor the
+// shuffle bars in the best plays tab". Now an opened game shows the characteristics card and then the courts (each with
+// the out lines, PropFinder's table, the bar, every player's projections and the Tonight table); the team columns and
+// the five group tables sit behind the switch.
 
 const STATS = [['pts', 'PTS'], ['reb', 'REB'], ['ast', 'AST'], ['tpm', '3PM'], ['pra', 'PRA']];
 const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
@@ -84,7 +88,7 @@ function TeamColumn({ side, sport, final, metric, season }) {
   );
 }
 
-/** A game folded to one line; pressed, both rosters against both defenses, the courts and the tables behind a switch. */
+/** A game folded to one line; pressed, the characteristics and both courts, the team columns and the tables behind a switch. */
 export default function GameFold({ g, best = [], sport, metric, onMetric }) {
   const [open, setOpen] = useState(false);
   const [more, setMore] = useState(false);
@@ -110,13 +114,13 @@ export default function GameFold({ g, best = [], sport, metric, onMetric }) {
       {open ? (
         <div className="ir-gf-body" id={bodyId}>
           {g.characteristics ? <GameCharacteristics game={g} renderTeam={teamMark(sport)} pill={expectedPill(g, sport)} /> : null}
-          <div className="ir-gf-cols">
-            {sides.map((side) => <TeamColumn key={side.team} side={side} sport={sport} final={g.final} metric={metric} season={g.season || null} />)}
-          </div>
-          <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-gf-more" aria-expanded={more} onClick={() => setMore((v) => !v)}>{more ? 'Hide the courts and the tables' : 'Show the courts and the tables'}</button>
+          <CourtPair g={g} metric={metric} onMetric={onMetric} sport={sport} />
+          <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-gf-more" aria-expanded={more} onClick={() => setMore((v) => !v)}>{more ? 'Hide the team columns and the tables' : 'Show the team columns and the tables'}</button>
           {more ? (
             <>
-              <CourtPair g={g} metric={metric} onMetric={onMetric} sport={sport} />
+              <div className="ir-gf-cols">
+                {sides.map((side) => <TeamColumn key={side.team} side={side} sport={sport} final={g.final} metric={metric} season={g.season || null} />)}
+              </div>
               {g.plays ? <div className="ir-nfl-grid">{sport.groups.map(([key, label]) => <GroupTable key={key} label={label} t={g.tables[key]} final={g.final} sport={sport} />)}</div> : null}
             </>
           ) : null}

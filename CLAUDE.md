@@ -442,7 +442,11 @@ config and keeps its own markets, teams, feeds and slate key:
   ranks-only grid for five stats stood there on 2026-10-30 for a day — Vincent: "I need the propfinder data above each
   court again like how we had it") and every active player's projection per stat (`ranges[stat].exp`) tinted soft / tough by the
   matchup at his envPos, a play over the floor ringed with its line and chance under the figure, a row opening the card
-  — and "Show the courts and the tables" for the courts below and the five group tables. A player listed day-to-day
+  — and "Show the courts and the tables" for the courts below and the five group tables. **Since that evening the courts
+  come first**: an opened game shows the characteristics card, then the two courts (each with the out lines, PropFinder's
+  table, the stat tabs and the shuffle bar, every player's projections and the Tonight table), and "Show the team columns
+  and the tables" folds the columns and the five group tables (Vincent, after the courts gained the bar: "I don't see the
+  courts nor the shuffle bars in the best plays tab"). A player listed day-to-day
   is no longer greyed on the court or in the Tonight table (`p.out`, not any injury listing). Class names `ir-gf-*`:
   the start screen owns `ir-game` / `ir-games`.
 - The courts (`components/nba/NbaCourt.jsx`, the rink's basketball twin, drawn by `GameFold` behind the opened
