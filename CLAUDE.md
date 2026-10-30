@@ -763,6 +763,13 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   picks a night land 3+ SOG 64–67% whatever the read (his rate, the model, his true rate in hindsight) and 1+ goal 37–48%;
   the league's best shooter (MacKinnon, 4.41 a game) went 3+ in 76% of his games, its best scorers scored in 42–49% of
   theirs. The 46% of the season backtest was every pick over the bar, 30 a night, not the top of the night.
+- The model, checked on this season (`docs/audits/2026-10-30-nhl-model-check.md`, `tools/predictors/model_check.py` on the
+  scorecard export; Vincent, 2026-10-30: "test whether the model still works on this season's games"): 158 games, 5,371
+  skater-games against the run saved before each puck drop. It ranks the night right (3+ SOG: its top pick a night 73%,
+  16 of 22) but overstates the top: 60%+ calls said 73% and landed 57%, 80%+ said 86% and landed 61%; 4+ SOG at 50%+ said
+  61%, landed 43%. Its 1+ goal figure does not hold: 35%+ calls said 50%, landed 25%; 50–60% calls landed 18%. The
+  study's read on the same rows says it straight (1+ goal at 35%+: 40% said, 37% landed). Calibrating the published
+  figure, learned from the graded runs, is the open fix; nothing changed.
 
 ## Canonical locations
 

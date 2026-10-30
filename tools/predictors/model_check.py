@@ -97,17 +97,47 @@ for label, prob, stat, at, bars in MARKETS:
     line()
     table(['Week of', 'Calls', 'Said', 'Landed', f'At {int(bars[0] * 100)}%+'], rows)
 
-line('## Best bets calls')
+line('## The model’s best market per skater')
 line()
+line('Every row carries the market the model rates best for that skater (`best`, with its own chance): graded on that market, by the chance it gave.')
+line()
+import re
+def market_of(label):
+    m = re.match(r'(\d)\+ (shot|sog)', label, re.I)
+    if m: return 'sog', int(m.group(1))
+    m = re.match(r'(\d)\+ point', label, re.I)
+    if m: return 'pts', int(m.group(1))
+    if re.search(r'goal', label, re.I):
+        m = re.match(r'(\d)\+', label); return 'g', int(m.group(1)) if m else 1
+    return None
 rows = []
 for name, df in seasons:
     b = df[df.best.notna()]
     for lab, sub in b.groupby('best'):
-        mk = next((m for m in MARKETS if m[0].split()[0] in lab), None)
+        mk = market_of(lab)
         if not mk: continue
-        hit = sub[mk[2]] >= mk[3]
-        rows.append([name, lab, len(sub), pct(sub.bestProb.mean()), f'{pct(hit.mean())} ({int(hit.sum())}/{len(sub)})'])
-table(['', 'Call', 'Calls', 'Said', 'Landed'], rows)
+        hit = sub[mk[0]] >= mk[1]
+        hi = sub.bestProb >= 0.5
+        rows.append([name, lab, len(sub), pct(sub.bestProb.mean()), f'{pct(hit.mean())} ({int(hit.sum())}/{len(sub)})',
+                     f'said {pct(sub.bestProb[hi].mean())} · landed {pct(hit[hi].mean())} ({int(hit[hi].sum())}/{int(hi.sum())})' if hi.sum() else '—'])
+table(['', 'Market', 'Skaters', 'Said', 'Landed', 'Rated 50%+'], rows)
+
+# The study's read on the same rows (Best bets' 1+ goal figure since 2026-10-27; its shots read stands beside the run's).
+import math
+def tail(l, k): return 1 - sum(np.exp(-l) * l ** i / math.factorial(i) for i in range(k))
+line('## Beside it: the study’s read on the same skater-games')
+line()
+line('Best bets has read 1+ goal off the study (`studyG`) since 2026-10-27; its shots stay on the run’s λ unless NHL_PICKS_STUDY_WEIGHT is set. Poisson tails of the study’s λ, graded the same way.')
+line()
+rows = []
+for label, col, stat, at, bars in [('3+ SOG', 'studyS', 'sog', 3, [0.5, 0.6, 0.7]), ('4+ SOG', 'studyS', 'sog', 4, [0.3, 0.4, 0.5]), ('1+ goal', 'studyG', 'g', 1, [0.35, 0.45])]:
+    prob = {'sog': {3: 'p3s', 4: 'p4s'}, 'g': {1: 'p1g'}}[stat][at]
+    df = cur[cur[col].notna()].copy(); df['ps'] = tail(df[col].astype(float), at); hit = df[stat] >= at
+    for b in bars:
+        ms = df.ps >= b; mm = df[prob] >= b
+        rows.append([label, f'{int(b * 100)}%+', f'said {pct(df.ps[ms].mean())} · landed {pct(hit[ms].mean())} ({int(hit[ms].sum())}/{int(ms.sum())})' if ms.sum() else '—',
+                     f'said {pct(df[prob][mm].mean())} · landed {pct(hit[mm].mean())} ({int(hit[mm].sum())}/{int(mm.sum())})' if mm.sum() else '—'])
+table(['Line', 'Calls at', 'The study', 'The model (same rows)'], rows)
 text = '\n'.join(out)
 if opt.get('out'): open(opt['out'], 'w').write(text); print('written', opt['out'])
 else: print(text)
