@@ -333,7 +333,9 @@ config and keeps its own markets, teams, feeds and slate key:
   player, market and side (the tables' dedupe), the chance first, with `proj` { exp, floor, ceiling } off the side's
   `ranges` drawn as a bar against the line (`rangeBar`) and `spot` { pos, rank, value, count } = the side's allowed
   table at his envPos (rankBlend, the court's and the shuffle's read; the play's own soft spot without one, `spotTone`
-  by third); stat tabs by group with counts, "Soft matchups only", 25 rows then "Show all"; the NBA's first view), `SidePicks.jsx` (the strip above a side's view, the NHL rink's model plays for the picks boards: the board's
+  by third); stat tabs by group with counts, "Soft matchups only", 25 rows then "Show all"; the NBA's first view; under 700 px
+  each row stacks into four short lines — name · chance, game · price, play · matchup, projection · got — by CSS grid areas
+  on the `ir-sl-*` cells, and the shuffle's rows the same way on its `sh-*` cells, Health shown only when not In), `SidePicks.jsx` (the strip above a side's view, the NHL rink's model plays for the picks boards: the board's
   best plays for the team, `side.picks` in `board.js` = the table rows over the floor for its players, one a player by
   chance, `PICKS_MAX` = 4, with the price and the edge, graded with the rows once the game is stored; the NBA draws it at
   the top of each court card with the picked players' chips ringed and a play opening the card, the NFL between the game

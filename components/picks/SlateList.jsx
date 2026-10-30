@@ -68,7 +68,7 @@ export default function SlateList({ board, sport, onOpen = null }) {
         <span><i className="ir-range-band is-key" />his floor to ceiling, half his nights</span>
         <span><i className="ir-range-dot is-key" />his projection</span>
         <span><i className="ir-range-tick is-key" />the line</span>
-        <span>Matchup: the opponent’s rank at his spot for the stat, #1 gives up the most; soft the top third, tough the bottom third</span>
+        <span className="ir-slate-legend-note">Matchup: the opponent’s rank at his spot for the stat, #1 gives up the most; soft the top third, tough the bottom third</span>
       </div>
       <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
         <table className="nhlx-db-table nhlx-pk-table ir-slate-table">
@@ -93,16 +93,16 @@ export default function SlateList({ board, sport, onOpen = null }) {
               const grade = r.hit == null ? (r.final && r.actual === null ? ' is-dnp' : '') : r.hit ? ' is-hit' : ' is-miss';
               return (
                 <tr key={r.id} className={`${onOpen ? 'is-click' : ''}${grade}`} onClick={() => onOpen?.(r)}>
-                  <td className="ir-slate-rank">{i + 1}</td>
-                  <td>
+                  <td className="ir-slate-rank ir-sl-rank">{i + 1}</td>
+                  <td className="ir-sl-player">
                     <div className="nhlx-db-player">
                       {r.espnId ? <img src={sport.headshotUrl(r.espnId)} alt="" width="30" height="30" loading="lazy" /> : <img src={sport.teamLogo(r.team)} alt="" width="30" height="30" loading="lazy" className="ir-nfl-logo" />}
                       <span><b>{r.player}{r.confirmed ? <small className="ir-sh-check" title="On the cheat sheet"> ✓</small> : null}</b><small>{r.team} · {r.slot && r.depth ? `${r.slot}${r.depth}` : r.pos || '—'}{r.health === 'DTD' ? <> · <span className="ir-health is-dtd" title={r.injury || ''}>DTD</span></> : null}{r.sheetOnly ? ' · sheet only' : ''}</small></span>
                     </div>
                   </td>
-                  <td><b>{r.venue === 'H' ? 'vs' : 'at'} {r.opp}</b><small className="ir-slate-sub">{r.final ? 'final' : fmtTip(r.start)}</small></td>
-                  <td className="ir-nfl-play"><b>{playLabel(r)}</b></td>
-                  <td>
+                  <td className="ir-sl-game"><b>{r.venue === 'H' ? 'vs' : 'at'} {r.opp}</b><small className="ir-slate-sub">{r.final ? 'final' : fmtTip(r.start)}</small></td>
+                  <td className="ir-nfl-play ir-sl-play"><b>{playLabel(r)}</b></td>
+                  <td className="ir-sl-proj">
                     {r.proj ? (
                       <div className="ir-slate-proj" title={`Projected ${num(r.proj.exp)} ${r.unit}, between ${r.proj.floor} and ${r.proj.ceiling} half the nights${over != null ? ` · ${over >= 0 ? '+' : '−'}${num(Math.abs(over))} over the line` : ''}`}>
                         <span><b>{num(r.proj.exp)}</b><small className="ir-slate-sub">{r.proj.floor}–{r.proj.ceiling}</small></span>
@@ -116,10 +116,10 @@ export default function SlateList({ board, sport, onOpen = null }) {
                       </div>
                     ) : <small className="ir-slate-sub">no projection</small>}
                   </td>
-                  <td className="is-num is-lead"><b>{pct(r.p)}</b><small>{r.fair}</small></td>
-                  <td className="is-num"><b>{fmtOdds(r.odds)}</b><small>{r.edge == null ? (r.book || '—') : `${r.edge >= 0 ? '+' : '−'}${Math.abs(Math.round(r.edge * 100))} pts`}</small></td>
-                  <td>{r.spot?.rank ? <span className={`ir-spot is-${tone}`} title={`${r.opp} gives up ${r.spot.value != null ? `${num(r.spot.value)} ${r.unit} a game` : `the #${r.spot.rank} most`} to ${r.spot.pos}s, #${r.spot.rank} of ${r.spot.count}`}>#{r.spot.rank} {r.spot.pos} · {TONE_WORD[tone] || ''}</span> : <span className="ir-spot is-none">no table</span>}</td>
-                  {final ? <td className="is-num nhlx-pk-got">{r.actual === undefined ? <small>—</small> : r.actual === null ? <small>DNP</small> : <><b>{r.actual}</b><small>{r.unit}</small></>}</td> : null}
+                  <td className="is-num is-lead ir-sl-chance"><b>{pct(r.p)}</b><small>{r.fair}</small></td>
+                  <td className="is-num ir-sl-price"><b>{fmtOdds(r.odds)}</b><small>{r.edge == null ? (r.book || '—') : `${r.edge >= 0 ? '+' : '−'}${Math.abs(Math.round(r.edge * 100))} pts`}</small></td>
+                  <td className="ir-sl-spot">{r.spot?.rank ? <span className={`ir-spot is-${tone}`} title={`${r.opp} gives up ${r.spot.value != null ? `${num(r.spot.value)} ${r.unit} a game` : `the #${r.spot.rank} most`} to ${r.spot.pos}s, #${r.spot.rank} of ${r.spot.count}`}>#{r.spot.rank} {r.spot.pos} · {TONE_WORD[tone] || ''}</span> : <span className="ir-spot is-none">no table</span>}</td>
+                  {final ? <td className="is-num nhlx-pk-got ir-sl-got">{r.actual === undefined ? <small>—</small> : r.actual === null ? <small>DNP</small> : <><b>{r.actual}</b><small>{r.unit}</small></>}</td> : null}
                 </tr>
               );
             }) : <tr><td colSpan={final ? 9 : 8}><small className="ir-nfl-none">No play over the floor{softOnly ? ' in a soft matchup' : ''} for this stat.</small></td></tr>}

@@ -80,7 +80,7 @@ function Roster({ side, final }) {
                   return (
                     <td key={k} className={`${r && (tone === 'soft' || tone === 'tough') ? `is-${tone}` : ''}${play ? ' is-play' : ''}`} title={title}>
                       {r ? num(r.exp) : '—'}
-                      {play ? <small className="ir-roster-play">o{play.line} · {pct(play.p)}{final && play.hit != null ? ` · ${play.hit ? 'hit' : 'miss'}` : ''}</small> : null}
+                      {play ? <small className="ir-roster-play">o{play.line} {pct(play.p)}{final && play.hit != null ? <span className={play.hit ? 'is-hit' : 'is-miss'}> {play.hit ? 'hit' : 'miss'}</span> : null}</small> : null}
                     </td>
                   );
                 })}

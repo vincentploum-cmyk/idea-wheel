@@ -1671,6 +1671,8 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-roster td:first-child { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
 .ir-roster td.is-play { box-shadow: inset 0 0 0 1.5px var(--primary); }
 .ir-roster-play { display: block; font-size: 12px; line-height: 1.2; color: var(--heading); }
+.ir-roster-play .is-hit { color: var(--ok-fg); font-weight: 600; }
+.ir-roster-play .is-miss { color: var(--bad-fg); font-weight: 600; }
 .ir-gf-more { margin-top: 4px; }
 .ir-sh-mode { margin-bottom: 8px; }
 .ir-sh-chance input[type="range"] { width: min(220px, 40vw); accent-color: var(--primary); }
@@ -1678,3 +1680,70 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-sh-markets { margin-top: 12px; }
 .ir-sh-line b { display: block; font-family: var(--font-display); font-size: 17px; color: var(--heading); }
 .ir-sh-line small { display: block; font-size: 13px; color: var(--muted); }
+
+/* Phones (Vincent, 2026-10-30: "Optimize for mobile"): the slate list's and the shuffle's rows stacked into a few
+   short lines each, every figure on screen, no sideways scroll; the open game's roster table tightened. */
+@media (max-width: 700px) {
+  .ir-slate .nhlx-db-table-wrap, .ir-sh .nhlx-db-table-wrap { overflow-x: visible; }
+  .ir-slate-table, .ir-slate-table tbody, .ir-sh-table, .ir-sh-table tbody { display: block; width: 100%; }
+  .ir-slate-table thead, .ir-sh-table thead { display: none; }
+  .ir-slate-table tr, .ir-sh-table tr { display: grid; column-gap: 12px; row-gap: 4px; align-items: center; padding: 12px; border-bottom: 1px solid var(--line); }
+  .ir-slate-table tr:last-child, .ir-sh-table tr:last-child { border-bottom: 0; }
+  .ir-slate-table td, .ir-sh-table td { display: block; min-width: 0; padding: 0; border: 0; white-space: normal; }
+  .ir-slate-table td[colspan], .ir-sh-table td[colspan] { grid-column: 1 / -1; }
+  .ir-slate-table .nhlx-db-player, .ir-sh-table .nhlx-db-player { gap: 8px; min-width: 0; }
+  .ir-slate-table .nhlx-db-player img, .ir-sh-table .nhlx-db-player img { width: 26px; height: 26px; }
+  .ir-slate-table .nhlx-db-player > span, .ir-sh-table .nhlx-db-player > span { min-width: 0; }
+  .ir-slate-table .nhlx-db-player b, .ir-sh-table .nhlx-db-player b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* The list: name · chance / game · price / play · matchup / projection · got. */
+  .ir-slate-table tr { grid-template-columns: 18px minmax(0, 1fr) auto; grid-template-areas: "rank player chance" "rank game price" "rank play spot" "rank proj got"; }
+  .ir-slate-table td.ir-sl-rank { grid-area: rank; align-self: start; padding-top: 4px; width: auto; }
+  .ir-sl-player { grid-area: player; }
+  .ir-sl-game { grid-area: game; }
+  .ir-sl-play { grid-area: play; }
+  .ir-sl-proj { grid-area: proj; }
+  .ir-sl-chance { grid-area: chance; }
+  .ir-sl-price { grid-area: price; }
+  .ir-sl-spot { grid-area: spot; justify-self: end; }
+  .ir-sl-got { grid-area: got; }
+  .ir-slate-table td.ir-sl-chance b { font-size: 19px; }
+  .ir-slate-table td.ir-sl-game b, .ir-slate-table td.ir-sl-game .ir-slate-sub,
+  .ir-slate-table td.ir-sl-price b, .ir-slate-table td.ir-sl-price small,
+  .ir-slate-table td.ir-sl-got b, .ir-slate-table td.ir-sl-got small { display: inline; }
+  .ir-slate-table td.ir-sl-game .ir-slate-sub, .ir-slate-table td.ir-sl-price small, .ir-slate-table td.ir-sl-got small { margin-left: 6px; }
+  .ir-slate-table td.ir-sl-game b { font-weight: 500; color: var(--body); }
+  .ir-slate-proj { min-width: 0; gap: 10px; }
+  .ir-slate-table .ir-slate-proj > span:first-child { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+  .ir-slate-table .ir-slate-proj > span:first-child b, .ir-slate-table .ir-slate-proj > span:first-child .ir-slate-sub { display: inline; }
+  .ir-slate-proj .ir-range-bar { min-width: 90px; }
+  .ir-slate-legend-note { display: none; }
+
+  /* The shuffle: name · chance / his line · the book / projection · edge / matchup · got / cleared it · health. */
+  .ir-sh-table tr { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "player chance" "line book" "proj edge" "spot got" "cleared health" "centre centre"; }
+  .sh-player { grid-area: player; }
+  .sh-chance { grid-area: chance; }
+  .sh-line { grid-area: line; }
+  .sh-book { grid-area: book; }
+  .sh-proj { grid-area: proj; }
+  .sh-edge { grid-area: edge; }
+  .sh-spot { grid-area: spot; }
+  .sh-got { grid-area: got; }
+  .sh-cleared { grid-area: cleared; font-size: 14px; color: var(--muted); }
+  .sh-health { grid-area: health; justify-self: end; }
+  .sh-centre { grid-area: centre; }
+  .ir-sh-table td.sh-health:has(.is-in) { display: none; }
+  .ir-sh-table td.sh-chance b { font-size: 19px; }
+  .ir-sh-table td.sh-proj, .ir-sh-table td.sh-centre { text-align: left; }
+  .ir-sh-table td.sh-proj b, .ir-sh-table td.sh-proj small, .ir-sh-table td.sh-book b, .ir-sh-table td.sh-book small,
+  .ir-sh-table td.sh-got b, .ir-sh-table td.sh-got small, .ir-sh-table td.sh-line b, .ir-sh-table td.sh-line small { display: inline; }
+  .ir-sh-table td.sh-proj small, .ir-sh-table td.sh-book small, .ir-sh-table td.sh-got small, .ir-sh-table td.sh-line small { margin-left: 6px; }
+  .ir-sh-table td.sh-proj b::before { content: 'proj '; font-weight: 400; color: var(--muted); }
+
+  /* An open game: the roster table and the head tightened. */
+  .ir-gf-head { gap: 4px 14px; padding: 10px 12px; }
+  .ir-gf-body { padding: 10px 12px 14px; }
+  .ir-roster td:first-child { max-width: 112px; }
+  .ir-roster td, .ir-def-grid td { padding-left: 3px; padding-right: 3px; }
+  .ir-roster-play { white-space: normal; }
+}
