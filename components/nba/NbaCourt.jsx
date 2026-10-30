@@ -7,6 +7,7 @@ import { boardRead, windowRead, blendText, dampText, pullText } from '@/lib/pick
 import { seasonTag } from '@/lib/nba/teams';
 import { SHUFFLE_MARKETS } from '@/lib/nba/markets';
 import { heightsOf, lineOf, readAt } from '@/lib/picks/shuffle';
+import { asStated } from '@/lib/picks/calibration';
 import SidePicks from '@/components/picks/SidePicks';
 import { useNbaPlayerCard } from './NbaPlayerCard';
 
@@ -210,7 +211,7 @@ function barText(read, height, metric) {
   const book = read.book ? ` · the book's o${read.book.line}${read.exact ? '' : ' (the nearest rung above)'} at ${fmtOdds(read.book.odds)}${read.edge != null ? `, edge ${read.edge >= 0 ? '+' : ''}${Math.round(read.edge * 100)}` : ''}` : ' · no price at this line';
   const cleared = read.cleared ? ` · cleared it in ${read.cleared.n} of his last ${read.cleared.of}` : '';
   const got = read.got === undefined ? '' : read.got == null ? ' · did not play' : ` · got ${read.got}: ${read.hit ? 'cleared' : 'short'}`;
-  return `At the bar, ${height}+ ${label} (o${read.line}): ${pct(read.p)} to clear it, the shuffle's read (fair ${fmtOdds(read.fair)})${book}${cleared}${got}`;
+  return `At the bar, ${height}+ ${label} (o${read.line}): ${pct(read.p)} to clear it, the shuffle's read (fair ${fmtOdds(read.fair)})${asStated(read.raw)}${book}${cleared}${got}`;
 }
 
 /**
@@ -323,7 +324,7 @@ function RangeCell({ p, market, final }) {
   const play = playFor(p, market);
   const got = final && play?.actual != null ? play.actual : null;
   const ladder = p.ladders?.[market] || [];
-  const title = `${p.player} · ${STAT_LABEL[market]} tonight: expected ${num(r.exp)}, between ${r.floor} and ${r.ceiling} half the nights (his own games, centred on the matchup)${r.line != null ? ` · the book's o${r.line}: ${pct(r.p)} to clear${r.odds != null ? ` at ${fmtOdds(r.odds)}` : ''}` : ''}${got != null ? ` · got ${got}` : ''}\n${ladder.map((x) => `o${x.line} ${pct(x.p)}`).join(' · ')}`;
+  const title = `${p.player} · ${STAT_LABEL[market]} tonight: expected ${num(r.exp)}, between ${r.floor} and ${r.ceiling} half the nights (his own games, centred on the matchup)${r.line != null ? ` · the book's o${r.line}: ${pct(r.p)} to clear${r.odds != null ? ` at ${fmtOdds(r.odds)}` : ''}${asStated(r.raw)}` : ''}${got != null ? ` · got ${got}` : ''}\n${ladder.map((x) => `o${x.line} ${pct(x.p)}`).join(' · ')}`;
   const tone = r.p == null ? '' : r.p >= 0.55 ? 'soft' : r.p < 0.35 ? 'tough' : 'mid';
   return (
     <td className={`ir-range-cell${got != null ? (got > (r.line ?? -1) ? ' is-hit' : ' is-miss') : ''}`} title={title}>

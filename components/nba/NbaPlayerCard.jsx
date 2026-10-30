@@ -6,6 +6,7 @@ import { teamLogo, teamName, seasonTag } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { boardRead, windowRead, blendText, dampText, pullText } from '@/lib/picks/projection';
+import { asStated } from '@/lib/picks/calibration';
 
 // The NBA player card, laid out as the NHL card (components/nhl/PlayerCard.jsx): the top bar
 // (team logo, position, tonight's game, the season averages), market tabs carrying the hit rate for
@@ -258,7 +259,7 @@ function Card({ req, date, onClose }) {
             <div className="nhlx-pc-prop">
               <span className="nhlx-pc-over">OVER</span>
               <b>{line} {STAT_LABEL[market] || market}</b>
-              {play ? <span className="nhlx-pc-chip" title={`The board's chance for this line (${play.rates?.n || 0} games behind it, shrunk toward the book's price)${play.odds != null ? ` · ${fmtOdds(play.odds)}${play.book ? ` at ${play.book}` : ''}` : ''}`}><b>{pct(play.p)}</b> chance{play.odds != null ? ` · ${fmtOdds(play.odds)}` : ''}</span> : null}
+              {play ? <span className="nhlx-pc-chip" title={`The board's chance for this line (${play.rates?.n || 0} games behind it, shrunk toward the book's price)${asStated(play.raw)}${play.odds != null ? ` · ${fmtOdds(play.odds)}${play.book ? ` at ${play.book}` : ''}` : ''}`}><b>{pct(play.p)}</b> chance{play.odds != null ? ` · ${fmtOdds(play.odds)}` : ''}</span> : null}
               <label className="nhlx-sel nhlx-pc-line"><small>Line</small><select value={line} onChange={(e) => setLines({ ...lines, [market]: Number(e.target.value) })}>{lineChoices.map((l) => { const b = priced.get(l); return <option key={l} value={l}>{l}{b ? `${b.odds != null ? ` (${fmtOdds(b.odds)})` : ''}${b.main ? ' main' : ''}` : ''}</option>; })}</select></label>
               {proj.value != null ? <span className={`nhlx-pc-chip ir-pc-proj${proj.value > line ? ' is-up' : ' is-down'}`} title={projTitle}><b>{num(proj.value)}</b> tonight{proj.env != null ? ` · ×${proj.env}` : ''}</span> : null}
             </div>
@@ -272,7 +273,7 @@ function Card({ req, date, onClose }) {
               <div className="ir-pc-ladder" aria-label="Ladder">
                 {bp.ladders[market].map((r) => {
                   const tone = r.p >= 0.55 ? 'soft' : r.p < 0.35 ? 'tough' : 'mid';
-                  return <button key={r.line} type="button" className={`ir-ladder-rung is-${tone}${r.main ? ' is-main' : ''}${r.line === line ? ' is-active' : ''}`} onClick={() => setLines({ ...lines, [market]: r.line })} title={`o${r.line}: ${pct(r.p)} tonight = ½ his distribution over it (${pct(r.model)}: ${num(r.proj)} ± ${num(r.sd)}${r.env != null ? `, matchup × ${r.env}` : ''}) + ½ how often he cleared it (${pct(r.emp)}: L5 ${pct(r.rates.l5)} · L10 ${pct(r.rates.l10)} · season ${pct(r.rates.season)}, ${r.rates.n} games)${r.odds != null ? ` · ${fmtOdds(r.odds)}` : ` · break-even ${r.fair}`}${r.main ? ' · the book’s main line' : ''}`}><b>o{r.line}</b><i>{pct(r.p)}</i><small>{r.odds != null ? fmtOdds(r.odds) : r.fair}</small></button>;
+                  return <button key={r.line} type="button" className={`ir-ladder-rung is-${tone}${r.main ? ' is-main' : ''}${r.line === line ? ' is-active' : ''}`} onClick={() => setLines({ ...lines, [market]: r.line })} title={`o${r.line}: ${pct(r.p)} tonight = ½ his distribution over it (${pct(r.model)}: ${num(r.proj)} ± ${num(r.sd)}${r.env != null ? `, matchup × ${r.env}` : ''}) + ½ how often he cleared it (${pct(r.emp)}: L5 ${pct(r.rates.l5)} · L10 ${pct(r.rates.l10)} · season ${pct(r.rates.season)}, ${r.rates.n} games)${r.odds != null ? ` · ${fmtOdds(r.odds)}` : ` · break-even ${r.fair}`}${r.main ? ' · the book’s main line' : ''}${asStated(r.raw)}`}><b>o{r.line}</b><i>{pct(r.p)}</i><small>{r.odds != null ? fmtOdds(r.odds) : r.fair}</small></button>;
                 })}
               </div>
             ) : null}

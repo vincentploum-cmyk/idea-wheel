@@ -198,6 +198,28 @@ config and keeps its own markets, teams, feeds and slate key:
   row carries `mFrom` and `matchup`): per stat and by where the matchup came from (the cheat sheet, the cheat sheet
   and PropFinder, PropFinder alone, no table), the projection's average miss as it stood and with the matchup taken
   out, green where the matchup helped — the cheat sheets graded on the stored nights, which the replay cannot do.
+- **The calibration** (`calibration.js`; Vincent, 2026-10-30, after the NHL's: "do the same calibration for the NBA board"):
+  the NBA board prints its chances calibrated to what the same stated chance has landed on this season's graded nights.
+  Two reads, fitted per market: a play's chance (`chanceOf`; over / yes and under / no apart, `playKey`) and a rung's
+  (`ladderOf`'s tail + cleared-it mix, which the Tonight table, the court's bar, the card's ladder and the shuffle print);
+  the NHL's fit (`fitHeight` in `lib/nhl-data/calibration-pure.js`: landed = σ(a + b · logit(stated)), ridge toward the
+  identity, 300 chances and 25 hits at least). **A fit prints only after it has beaten the stated chance on nights it never
+  saw** (`fitChecked`: fitted again on the nights before the last `CHECK_NIGHTS` = 3 and scored there, Brier, `CHECK_MIN` =
+  100 chances; `use` on the fit), since no export of the site's graded nights had been read when it shipped. The
+  board's math is untouched: `makeBoard`'s `buildBoard({ calibration })` moves a play's `p` (the floors, the order, the
+  edge and the fair price read it) and every rung's `p` (`ladderOf(…, { cal })`, `rungFit`), the stated chance beside it as
+  `raw` on the play, the rung, `ranges[market]`, the side's picks and `best`; `board.calibration` = `appliedOf` + the
+  fits; the shuffle reads the market's rung fit off the board (`calibrated` on its payload): the board's blend prints
+  calibrated, a window or the line under Read from as stated (`readAt`'s `raw` only on the blend). Every hover of a
+  printed chance names the stated figure (`asStated`). Learned by the store's `scorecardFor(…, { save: true })`
+  (`nba/meta/calibration.json`, `calibrate: true` in the NBA store's config; never rewritten unchanged): the scorecard
+  route's season-to-date read (the Scorecard panel and the shuffle's verdict on open) and `relearnCalibration` in the
+  background whenever a refresh stores new box scores (the 2:11 AM job). The scorecard grades the chances as stated
+  (`gradeSlate` replays without it, `raw ?? p` on its records) and shows the calibration under "The calibration"
+  (`CalibrationTable`: a stated 50 / 60 / 70 / 80% → printed, the check, on the board or not); `GET
+  /api/nba/scorecard?rows=1` (the sync token reads it too) exports every graded play and rung as stated. Replayed walk-forward
+  (`nba-audit.mjs`'s "The calibration, walked forward", `--graded` writes the rows): `docs/audits/2026-10-30-nba-calibration.md`.
+  The NFL board passes none: its chances print as stated.
 - `propfinder.js` (`makePropfinder`): `/<LEAGUE>/teams` and `/<LEAGUE>/players?teamIds=…&hydrate=stats&withOddsOnly=true`
   through `pfGetJson` in `lib/nhl-data/propfinder-api.js`. The NHL endpoints were checked; the
   NFL / NBA game-row field names have not been seen yet, so every stat is read through the
