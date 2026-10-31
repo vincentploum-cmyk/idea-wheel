@@ -27,6 +27,15 @@ async function handle(request) {
     if (!gate.ok) return Response.json({ skipped: true, reason: 'throttled', lastRun: gate.lastRun }, { status: 429 });
   }
   try {
+    // `only=calibration` (token or admin): the season's scorecard graded again now and the board's calibration and
+    // reliability learned from it, without waiting for new box scores (Vincent, 2026-10-31: "open the shuffle tab to
+    // relearn the calibration"; the GitHub workflow's `what: calibration` runs it with the site's token).
+    if (only === 'calibration') {
+      if (!auth.ok) return auth.response;
+      const cal = await relearnCalibration();
+      const rel = cal?.reliability || null;
+      return Response.json({ ok: true, calibration: cal ? { at: cal.at, from: cal.from, to: cal.to, nights: cal.nights, plays: cal.plays, rungs: cal.rungs, stored: !!cal.stored, plays_fits: Object.keys(cal.reads?.plays || {}).length, rung_fits: Object.keys(cal.reads?.rungs || {}).length } : null, reliability: rel ? Object.fromEntries(Object.entries(rel.markets || {}).map(([m, x]) => [m, { threshold: x.threshold, n: x.n, landed: x.landed, breakEven: x.breakEven, plays: x.plays }])) : null }, { headers: { 'Cache-Control': 'no-store' } });
+    }
     const slate = await resolveSlate({ date });
     const out = { slate };
     if (only !== 'propfinder') {

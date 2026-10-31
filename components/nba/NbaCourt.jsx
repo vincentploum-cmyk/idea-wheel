@@ -7,6 +7,7 @@ import { boardRead, windowRead, blendText, dampText, pullText } from '@/lib/pick
 import { seasonTag } from '@/lib/nba/teams';
 import { SHUFFLE_MARKETS } from '@/lib/nba/markets';
 import { heightsOf, lineOf, readAt } from '@/lib/picks/shuffle';
+import { reliableTone, reliableFor, reliabilityText } from '@/lib/picks/reliability';
 import { asStated } from '@/lib/picks/calibration';
 import SidePicks from '@/components/picks/SidePicks';
 import { useNbaPlayerCard } from './NbaPlayerCard';
@@ -211,7 +212,7 @@ function barText(read, height, metric) {
   const book = read.book ? ` · the book's o${read.book.line}${read.exact ? '' : ' (the nearest rung above)'} at ${fmtOdds(read.book.odds)}${read.edge != null ? `, edge ${read.edge >= 0 ? '+' : ''}${Math.round(read.edge * 100)}` : ''}` : ' · no price at this line';
   const cleared = read.cleared ? ` · cleared it in ${read.cleared.n} of his last ${read.cleared.of}` : '';
   const got = read.got === undefined ? '' : read.got == null ? ' · did not play' : ` · got ${read.got}: ${read.hit ? 'cleared' : 'short'}`;
-  return `At the bar, ${height}+ ${label} (o${read.line}): ${pct(read.p)} to clear it, the shuffle's read (fair ${fmtOdds(read.fair)})${asStated(read.raw)}${book}${cleared}${got}`;
+  return `At the bar, ${height}+ ${label} (o${read.line}): ${pct(read.p)} to clear it, ${read.play ? "the board's play on the book's line (the strip's and the list's figure)" : "the shuffle's read"} (fair ${fmtOdds(read.fair)})${asStated(read.raw)}${book}${cleared}${got}`;
 }
 
 /**
@@ -220,7 +221,7 @@ function barText(read, height, metric) {
  * (`read`: null while the payload loads, `false` when the shuffle has no row for him — out tonight, or no logs). Once the
  * game is final the bar's line grades him. `hi` rings the chips of the position pressed in the table, `dim` fades the rest.
  */
-function Chip({ p, metric, height, read, sport, team, opp, venue, final, allowed, seasonAllowed, win, hi = false, dim = false }) {
+function Chip({ p, metric, height, read, sport, team, opp, venue, final, allowed, seasonAllowed, win, hi = false, dim = false, reliability = null }) {
   const open = useNbaPlayerCard();
   const play = playFor(p, MARKET_OF[metric]);
   const avg = p.avg?.[metric];
@@ -237,11 +238,11 @@ function Chip({ p, metric, height, read, sport, team, opp, venue, final, allowed
   if (play?.form === 'cold') flags.push(['cold', `Cold: ${pct(play.rates.l5)} of his last 5 over this line`, ICON.cold]);
   if (play?.spot?.soft) flags.push(['soft', `Soft spot: the opponent is in the permissive third at his position for this stat (#${play.spot.rank})`, ICON.soft]);
   const all = (p.plays || []).filter((x) => x.side === 'over' || x.side === 'yes').map((x) => `${x.side === 'yes' ? '' : 'o'}${x.line} ${x.label} ${pct(x.p)}${x.odds != null ? ` at ${fmtOdds(x.odds)}` : ''}${x.hit == null ? '' : x.hit ? ' hit' : ' miss'}`);
-  const title = `${p.player} · ${p.pos || '—'}${p.depth ? ` · ${p.slot}${p.depth} on the depth chart${p.depth === 1 ? ' (starter)' : ''}` : ''}${p.injury ? ` · ${p.injury}` : ''}${avg != null ? ` · ${num(avg)} ${STAT_LABEL[metric]} a game this season` : ''}\nTonight: ${projs.map(([k, v]) => `${num(v)} ${STAT_LABEL[k] || k}`).join(' · ')}${projText ? `\n${projText}` : ''}${woText ? `\n${woText}` : ''}${read ? `\n${barText(read, height, metric)}` : read === false ? (p.out ? '\nOut tonight: off the shuffle' : '\nNo logs in the pull: no chance at the bar') : ''}${all.length ? `\n${all.join('\n')}` : '\nNo PropFinder line yet'}`;
+  const title = `${p.player} · ${p.pos || '—'}${p.depth ? ` · ${p.slot}${p.depth} on the depth chart${p.depth === 1 ? ' (starter)' : ''}` : ''}${p.injury ? ` · ${p.injury}` : ''}${avg != null ? ` · ${num(avg)} ${STAT_LABEL[metric]} a game this season` : ''}\nTonight: ${projs.map(([k, v]) => `${num(v)} ${STAT_LABEL[k] || k}`).join(' · ')}${projText ? `\n${projText}` : ''}${woText ? `\n${woText}` : ''}${read ? `\n${barText(read, height, metric)}${reliableFor(reliability, MARKET_OF[metric]) != null ? ` · ${reliabilityText(reliability, MARKET_OF[metric], STAT_LABEL[metric])}` : ''}` : read === false ? (p.out ? '\nOut tonight: off the shuffle' : '\nNo logs in the pull: no chance at the bar') : ''}${all.length ? `\n${all.join('\n')}` : '\nNo PropFinder line yet'}`;
   const bar = read
     ? final && read.got !== undefined
       ? <span className={`nhlx-rk-stat is-actual${read.hit ? ' is-over' : ''}`}><em>{read.got == null ? 'DNP' : read.got}</em>{NB}got{NB}·{NB}{height}+{NB}<i>{pct(read.p)}</i></span>
-      : <span className={`nhlx-rk-stat is-model${read.p >= 0.5 ? ' is-over' : ''}`}>{height}+{NB}<em>{pct(read.p)}</em>{read.book?.odds != null && read.exact ? <i>{fmtOdds(read.book.odds)}</i> : null}</span>
+      : <span className={`nhlx-rk-stat is-model${read.p >= 0.5 ? ' is-over' : ''}`}>{height}+{NB}<em className={reliableTone(reliability, MARKET_OF[metric], read.p, read.raw) ? `ir-rel-${reliableTone(reliability, MARKET_OF[metric], read.p, read.raw)}` : undefined}>{pct(read.p)}</em>{read.book?.odds != null && read.exact ? <i>{fmtOdds(read.book.odds)}</i> : null}</span>
     : read === false
       ? <span className="nhlx-rk-stat">{p.out ? p.injury || 'out' : 'no logs'}</span>
       : height != null ? <span className="nhlx-rk-stat is-read">{height}+{NB}<em>…</em></span> : null;
@@ -318,16 +319,20 @@ export function AllowedTable({ side, win, metric, season, onWin = null, onPos = 
 
 /** Every player of the side with his props read against the matchup: the line and the chance per market. */
 /** One line per player and market: his expected figure tonight, his range (floor–ceiling), and the book's line with his chance. */
-function RangeCell({ p, market, final }) {
+function RangeCell({ p, market, final, reliability = null }) {
   const r = p.ranges?.[market];
   if (!r) return <td>—</td>;
   const play = playFor(p, market);
   const got = final && play?.actual != null ? play.actual : null;
   const ladder = p.ladders?.[market] || [];
   const title = `${p.player} · ${STAT_LABEL[market]} tonight: expected ${num(r.exp)}, between ${r.floor} and ${r.ceiling} half the nights (his own games, centred on the matchup)${r.line != null ? ` · the book's o${r.line}: ${pct(r.p)} to clear${r.odds != null ? ` at ${fmtOdds(r.odds)}` : ''}${asStated(r.raw)}` : ''}${got != null ? ` · got ${got}` : ''}\n${ladder.map((x) => `o${x.line} ${pct(x.p)}`).join(' · ')}`;
-  const tone = r.p == null ? '' : r.p >= 0.55 ? 'soft' : r.p < 0.35 ? 'tough' : 'mid';
+  // The chance coloured by the market's reliable threshold when the season has one (green at or over it, red under; the
+  // cell filled green: a best bet as the model reads it), the old thirds without one.
+  const rt = play && (play.side === 'over' || play.side === 'yes') && !play.steep ? reliableTone(reliability, market, r.p, r.raw) : null;
+  const tone = rt ? (rt === 'yes' ? 'soft' : 'tough') : r.p == null ? '' : r.p >= 0.55 ? 'soft' : r.p < 0.35 ? 'tough' : 'mid';
+  const relText = reliableFor(reliability, market) != null ? ` · ${reliabilityText(reliability, market, STAT_LABEL[market])}` : '';
   return (
-    <td className={`ir-range-cell${got != null ? (got > (r.line ?? -1) ? ' is-hit' : ' is-miss') : ''}`} title={title}>
+    <td className={`ir-range-cell${got != null ? (got > (r.line ?? -1) ? ' is-hit' : ' is-miss') : ''}${rt === 'yes' ? ' is-best' : ''}`} title={title + relText}>
       <span className="ir-range"><b>{num(r.exp, 0)}</b><small>{r.floor}–{r.ceiling}</small></span>
       {r.line != null ? <span className={`ir-range-line is-${tone}`}>o{r.line} <i>{pct(r.p)}</i></span> : <span className="ir-range-line">no line</span>}
       {got != null ? <span className="ir-range-got">got {got}</span> : null}
@@ -345,7 +350,7 @@ function sideNote(side) {
   return ` · the side adds up to ${num(T, 0)} points`;
 }
 
-function PlayersTable({ side, final }) {
+function PlayersTable({ side, final, reliability = null }) {
   const open = useNbaPlayerCard();
   const players = side.players.filter((p) => Object.keys(p.ranges || {}).length);
   if (!players.length) return null;
@@ -360,7 +365,7 @@ function PlayersTable({ side, final }) {
               <tr key={p.key} className={`is-click${p.out ? ' is-muted' : ''}`} onClick={() => open({ key: p.key, player: p, team: side.team, opp: side.opp, venue: side.venue })}>
                 <td><b>{p.player}</b>{p.injury ? <small className="nhlx-auto-meta" title={p.injuryDetail || ''}> {p.injury}</small> : null}{p.without ? <small className="nhlx-auto-meta" title={`His season read moves toward his ${p.without.n} games without ${p.without.names.join(' + ')} (weight ${p.without.weight})`}> w/o {p.without.names.join(' + ')}</small> : null}</td>
                 <td>{p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</td>
-                {TABLE_MARKETS.map(([k]) => <RangeCell key={k} p={p} market={k} final={final} />)}
+                {TABLE_MARKETS.map(([k]) => <RangeCell key={k} p={p} market={k} final={final} reliability={reliability} />)}
               </tr>
             ))}
           </tbody>
@@ -393,7 +398,7 @@ function CourtBar({ metric, side, sh, rows }) {
   );
 }
 
-function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season }) {
+function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season, reliability = null }) {
   const open = useNbaPlayerCard();
   const sh = useCourtShuffle();
   const windows = windowsOf(side.allowed);
@@ -420,10 +425,10 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
         <img src={sport.teamLogo(side.team)} alt="" width="40" height="40" loading="lazy" />
         <div><b>{sport.teamName(side.team)} <small>{side.venue === 'H' ? 'vs' : 'at'} {sport.teamName(side.opp)}</small></b></div>
       </div>
-      <SidePicks side={side} sport={sport} final={final} heading={false} onOpen={(pl) => open({ key: pl.key, player: side.players.find((p) => p.key === pl.key) || null, team: side.team, opp: side.opp, venue: side.venue, market: pl.market })} />
-      {/* The table, then the stat tabs with the bar, then the court: one view (Vincent, 2026-10-30: "put the shuffle bar right
-          under the propfinder table so I can see the table, the bar (incl type) and the court in 1 view"). The window tabs
-          ride on the table (`onWin`); a window tints the zones and fills the table, the chips keep the board's figure. */}
+      <SidePicks side={side} sport={sport} final={final} heading={false} reliability={reliability} onOpen={(pl) => open({ key: pl.key, player: side.players.find((p) => p.key === pl.key) || null, team: side.team, opp: side.opp, venue: side.venue, market: pl.market })} />
+      {/* The table, the players picker, the stat tabs with the bar, then the court: one view (Vincent, 2026-10-30: "put the
+          shuffle bar right under the propfinder table so I can see the table, the bar (incl type) and the court in 1 view").
+          The window tabs ride on the table (`onWin`); a window tints the zones and fills the table, the chips keep the board's figure. */}
       <AllowedTable side={side} win={view} metric={metric} season={season} onWin={setWin} onPos={setHiPos} hiPos={hiPos} />
       {/* Which players the court shows (Vincent, 2026-10-31: "an 'all' option to select all players"): All, or one position's
           chips picked out and the rest faded, the same as pressing that row of the table. */}
@@ -435,8 +440,8 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
       </div>
       <div className="nhlx-rk-toggle ir-court-stat">
         <small>Stat</small>
-        <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Which stat the court reads">
-          {COURT_METRICS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={metric === k} className={`nhlx-tab${metric === k ? ' is-active' : ''}`} onClick={() => onMetric?.(k)} title={`Zones by the ${l.toLowerCase()} ${side.opp} gives up to each position; the bar asks for ${l.toLowerCase()}, every chip showing his chance to clear it`}>{l}</button>)}
+        <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Which stat the table, the bar and the court read">
+          {COURT_METRICS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={metric === k} className={`nhlx-tab${metric === k ? ' is-active' : ''}`} onClick={() => onMetric?.(k)} title={`Marks the ${l.toLowerCase()} ${side.opp} gives up to each position in the table and tints the zones by it; the bar asks for ${l.toLowerCase()}, every chip showing his chance to clear it`}>{l}</button>)}
         </div>
         {view !== 'season' ? <small className="nhlx-rk-toggle-note">zones tinted by {windowLabel(view, side.allowed, season)}; the chips keep the board’s read off this season’s table</small> : null}
       </div>
@@ -447,7 +452,7 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
           const [x, y, w, h] = ZONES[z];
           return (
             <div key={z} className={`ir-court-stack${hiPos === z ? ' is-hi' : ''}`} style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%`, width: `${(w / W) * 100}%`, height: `${(h / H) * 100}%` }}>
-              {placed.filter((it) => it.zone === z).map(({ p }) => <Chip key={p.key} p={p} metric={metric} height={height} read={readFor(p)} sport={sport} team={side.team} opp={side.opp} venue={side.venue} final={final} allowed={allowed} seasonAllowed={side.allowed} win={view} hi={hiPos === z} dim={!!hiPos && hiPos !== z} />)}
+              {placed.filter((it) => it.zone === z).map(({ p }) => <Chip key={p.key} p={p} metric={metric} height={height} read={readFor(p)} sport={sport} team={side.team} opp={side.opp} venue={side.venue} final={final} allowed={allowed} seasonAllowed={side.allowed} win={view} hi={hiPos === z} dim={!!hiPos && hiPos !== z} reliability={reliability} />)}
             </div>
           );
         })}
@@ -456,19 +461,19 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
       {/* Who is out, under the court (Vincent, 2026-10-30: "who is out should be under the court"). */}
       <OutLines side={side} oppOut={oppOut} />
       {extras.length ? <p className="nhlx-rk-extras nhlx-auto-meta"><b>Also:</b> {extras.map((p) => { const read = readFor(p); const proj = boardRead(p, metric, side.allowed, envPos(p)); return `${p.player} (${p.pos || '—'}${proj.value != null ? `, ${num(proj.value)} ${STAT_LABEL[metric]} tonight` : ''}${read ? `, ${height}+ ${pct(read.p)}` : ''})`; }).join(' · ')}</p> : null}
-      <PlayersTable side={side} final={final} />
+      <PlayersTable side={side} final={final} reliability={reliability} />
     </section>
   );
 }
 
 /** The two courts of a game: the away team first, as the game head reads. */
-export default function CourtPair({ g, metric, onMetric, sport }) {
+export default function CourtPair({ g, metric, onMetric, sport, reliability = null }) {
   const sides = g.sides || {};
   const list = [sides[g.away], sides[g.home]].filter(Boolean);
   if (!list.length) return null;
   return (
     <div className="nhlx-rink-pair ir-court-pair">
-      {list.map((side) => <CourtCard key={side.team} side={side} oppOut={sides[side.opp]?.out || null} metric={metric} onMetric={onMetric} sport={sport} final={g.final} season={g.season || null} />)}
+      {list.map((side) => <CourtCard key={side.team} side={side} oppOut={sides[side.opp]?.out || null} metric={metric} onMetric={onMetric} sport={sport} final={g.final} season={g.season || null} reliability={reliability} />)}
     </div>
   );
 }

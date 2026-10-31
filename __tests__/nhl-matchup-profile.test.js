@@ -71,6 +71,9 @@ describe('matchup profile: MTL @ DAL with ShotPropz', () => {
     expect(dal.title).toContain('PropFinder 2026: 25.1 shots (30th of 32 most) and 2.40 goals allowed a game');
     expect(dal.title).toContain('stored box scores at home: 24.2 shots (31st of 32 most) and 2.10 goals allowed a game over 6 games');
     expect(cellOf(p, 'allows', 'MTL')).toMatchObject({ word: 'Very leaky', level: 'poor', tone: 'is-soft', text: '32.5 shots · 3.17 goals allowed a game on the road · 3rd of 32 most' });
+    // The line is parts: the figures plain, the rank phrase in the tone of its level (the card colours it).
+    expect(dal.parts).toEqual([{ t: '24.3 shots · 2.17 goals allowed a game at home · ' }, { t: '31st of 32 most', tone: 'is-tough' }]);
+    expect(mtl.parts[1]).toEqual({ t: '9th of 32 in shots', tone: '' });
   });
   test('power play and penalty kill: the venue board from four games there; rank 1 = the softest kill', () => {
     expect(cellOf(p, 'powerplay', 'MTL')).toMatchObject({ word: 'Average', tone: '', text: '22.2% · draws 3.0 power plays a game on the road · 12th of 32' });
@@ -82,6 +85,9 @@ describe('matchup profile: MTL @ DAL with ShotPropz', () => {
   });
   test('last 10: shots for and against, the word on the shots for against the season', () => {
     expect(cellOf(p, 'last10', 'MTL')).toMatchObject({ word: 'Steady', tone: '', text: '32.4 shots for (4th) · 30.8 against (7th most) · 3.40–3.10 goals a game' });
+    // Two ranks in one line, each in its own tone: shots for 4th (strong, green), allowed 7th most (leaky, green).
+    expect(cellOf(p, 'last10', 'MTL').parts.filter((x) => x.tone != null)).toEqual([{ t: '4th', tone: 'is-soft' }, { t: '7th most', tone: 'is-soft' }]);
+    expect(cellOf(p, 'last10', 'DAL').parts.filter((x) => x.tone != null)).toEqual([{ t: '24th', tone: '' }, { t: '26th most', tone: 'is-tough' }]);
     // DAL: 26.1 over 27.9 on the season = 0.935, steady; a tenth down reads Falling.
     expect(cellOf(p, 'last10', 'DAL')).toMatchObject({ word: 'Steady', text: '26.1 shots for (24th) · 26.0 against (26th most) · 2.70–2.60 goals a game' });
     const cold = JSON.parse(JSON.stringify(shotpropz));

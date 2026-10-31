@@ -1499,7 +1499,7 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .nhlx-pfd-table tr.is-click:hover td:first-child b { color: var(--primary); }
 .nhlx-pfd-table tr.is-active td:first-child { box-shadow: inset 3px 0 0 var(--primary); }
 /* The shuffle bar under the court's stat tabs: the Shuffle tab's heights for the stat, the chips' chance read at it. */
-.ir-court-stat { margin: 10px 0 6px; }
+.ir-court-stat { margin: 4px 0 8px; }
 .ir-court-pos { margin: 10px 0 0; }
 .ir-court-bar { display: grid; grid-template-columns: auto minmax(120px, 1fr) auto; gap: 6px 12px; align-items: center; margin: 0 0 8px; padding: 8px 12px; border-radius: var(--radius); background: var(--bg-tint); }
 .ir-court-bar > small { color: var(--muted); font-size: 13px; white-space: nowrap; }
@@ -1568,6 +1568,16 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-range-line i { font-style: normal; font-weight: 600; }
 .ir-range-line.is-soft i { color: var(--ok-fg); }
 .ir-range-line.is-tough i { color: var(--bad-fg); }
+/* The reliable chance per market (lib/picks/reliability.js): green at or over the market's threshold, red under it; a Tonight cell filled green is a best bet as the model reads it. */
+.ir-rel-yes { color: var(--ok-fg) !important; }
+.ir-rel-no { color: var(--bad-fg) !important; }
+.ir-range-cell.is-best { background: var(--pf-soft-bg); }
+.ir-range-cell.is-best .ir-range b, .ir-range-cell.is-best .ir-range-line i { color: var(--ok-fg); }
+.ir-rel-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 2px 0 10px; }
+.ir-rel-line b { color: var(--heading); font-weight: 600; }
+.ir-rel-pill { padding: 1px 8px; border-radius: 100px; border: 1px solid var(--line); font-size: 13px; font-weight: 600; }
+.ir-rel-pill.ir-rel-none { color: var(--muted) !important; }
+.ir-rel-line small { color: var(--muted); font-size: 12.5px; }
 .ir-range-got { display: block; font-size: 12px; color: var(--muted); }
 .ir-range-cell.is-hit .ir-range-got { color: var(--ok-fg); }
 .ir-range-cell.is-miss .ir-range-got { color: var(--bad-fg); }
@@ -1679,32 +1689,6 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-range-band.is-key { width: 26px; }
 .ir-gf-list { margin: 8px 0 22px; }
 .ir-gf-all { margin-left: auto; }
-/* The game profile: two views of five rows (offense / defense), the two teams side by side, a rating word and one
-   short figure on a line (firsthalfscore.com's layout); the full reading on the cell's hover. */
-.ir-prof { margin: 12px 0 14px; }
-.ir-prof-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 8px; }
-.ir-prof-script b { font-weight: 700; }
-.ir-prof-script.is-up b { color: var(--ok-fg); }
-.ir-prof-script.is-down b { color: var(--bad-fg); }
-.ir-prof-table { text-align: left; table-layout: fixed; }
-.ir-prof-table th:first-child, .ir-prof-table td:first-child { width: 170px; }
-.ir-prof-table tbody th { padding: 8px 10px; font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--heading); text-transform: none; letter-spacing: 0; border-bottom: 1px solid var(--line); vertical-align: baseline; white-space: normal; cursor: help; }
-.ir-prof-team { text-align: left; text-transform: none; letter-spacing: 0; font-size: 14.5px; }
-.ir-prof-team img { vertical-align: middle; margin-right: 6px; }
-.ir-prof-team b { color: var(--heading); font-family: var(--font-display); }
-.ir-prof-team small { margin-left: 6px; font-weight: 400; }
-.ir-prof-table td.ir-prof-cell { text-align: left; white-space: normal; vertical-align: baseline; padding: 8px 10px; cursor: help; }
-.ir-prof-word { font-weight: 700; font-size: 14.5px; color: var(--primary); line-height: 1.3; }
-.ir-prof-word.is-up { color: var(--ok-fg); }
-.ir-prof-word.is-down { color: var(--bad-fg); }
-.ir-prof-cell small { margin-left: 8px; font-size: 13px; line-height: 1.35; color: var(--muted); font-variant-numeric: tabular-nums; }
-@media (max-width: 700px) {
-  .ir-prof-table th:first-child, .ir-prof-table td:first-child { width: 92px; }
-  .ir-prof-table tbody th { font-size: 13px; }
-  .ir-prof-word { display: block; }
-  .ir-prof-cell small { display: block; margin: 2px 0 0; font-size: 12px; }
-  .ir-prof-team small { display: block; margin: 2px 0 0; }
-}
 .ir-gf { margin: 0 0 10px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--card); }
 .ir-gf-head { all: unset; box-sizing: border-box; width: 100%; min-height: 56px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 20px; padding: 10px 16px; cursor: pointer; color: var(--body); }
 .ir-gf-head:hover { background: var(--bg-soft); border-radius: var(--radius-lg); }
@@ -1813,13 +1797,17 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .nhlx-prof-rows { margin-top: 8px; }
 .nhlx-prof-row { display: grid; grid-template-columns: var(--prof-cols); column-gap: 16px; align-items: start; padding: 8px 0; border-top: 1px solid var(--line); }
 .nhlx-prof-row.is-head { border-top: 0; padding-top: 2px; padding-bottom: 6px; align-items: end; }
-.nhlx-prof-label { align-self: start; padding-top: 1px; font-size: 14.5px; font-weight: 600; line-height: 1.3; color: var(--heading); min-width: 0; }
+.nhlx-prof-label { align-self: start; padding-top: 1px; font-size: 15.5px; font-weight: 600; line-height: 1.3; color: var(--heading); min-width: 0; }
 .nhlx-prof-label.is-head { color: var(--muted); font-weight: 400; font-size: 13px; }
-.nhlx-prof-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; font-size: 14px; line-height: 1.35; color: var(--body); font-variant-numeric: tabular-nums; }
-.nhlx-prof-word { min-width: 0; font-size: 13px; font-weight: 700; padding: 1px 9px; white-space: nowrap; }
+.nhlx-prof-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; font-size: 15px; line-height: 1.4; color: var(--heading); font-variant-numeric: tabular-nums; }
+.nhlx-prof-word { min-width: 0; font-size: 13.5px; font-weight: 700; padding: 1px 10px; white-space: nowrap; }
 .nhlx-prof-word.is-very.is-soft { box-shadow: inset 0 0 0 1px var(--ok-line); }
 .nhlx-prof-word.is-very.is-tough { box-shadow: inset 0 0 0 1px var(--bad-line); }
-.nhlx-prof-detail { font-size: 13px; line-height: 1.35; color: var(--muted); }
+.nhlx-prof-detail { font-size: 15px; line-height: 1.4; color: var(--heading); }
+/* The rank phrase in the line ("14th of 32 most") in the tone of its level: green = more shots and goals likely, red = fewer. */
+.nhlx-prof-rank { font-weight: 700; color: var(--heading); }
+.nhlx-prof-rank.is-soft { color: var(--ok-fg); }
+.nhlx-prof-rank.is-tough { color: var(--bad-fg); }
 .nhlx-prof-team { gap: 2px; }
 .nhlx-prof-team-name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-weight: 600; color: var(--heading); }
 .nhlx-prof-team-name small { color: var(--muted); font-weight: 400; }
@@ -1827,9 +1815,9 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 @media (max-width: 700px) {
   .nhlx-prof { --prof-cols: 74px minmax(0, 1fr) minmax(0, 1fr); }
   .nhlx-prof-row { column-gap: 10px; padding: 7px 0; }
-  .nhlx-prof-label { font-size: 13px; }
-  .nhlx-prof-cell { font-size: 13px; }
-  .nhlx-prof-detail { font-size: 12px; }
+  .nhlx-prof-label { font-size: 14px; }
+  .nhlx-prof-cell { font-size: 14px; }
+  .nhlx-prof-detail { font-size: 13.5px; }
   .nhlx-prof-head small { flex-basis: 100%; }
   .nhlx-prof-team-name .nhlx-edge { white-space: normal; text-align: left; line-height: 1.25; border-radius: 8px; font-size: 12px; }
 }

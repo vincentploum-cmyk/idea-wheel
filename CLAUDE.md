@@ -102,6 +102,17 @@ config and keeps its own markets, teams, feeds and slate key:
   "the biggest edge over the book first" and every row's projection cell shows the gap to the line ("+3.3 vs line",
   green when it backs the side). `nbaBoard(cocktail, { bestBy: 'chance' })` is the hit-rate list as it was (the plays
   over the floor, the likeliest first), the per-game tables still the chance read; `__tests__/nba-best-edge.test.js`.
+  **The reliable chance per market** (`lib/picks/reliability.js`, `reliabilityOf` from the season's graded nights, the over /
+  yes plays as the board stated them; Vincent, 2026-10-31: "keep track of what % is reliable to bet on for threes, assists,
+  rebounds and based on that the % for the players should be colored green / red", then "fill the cells green that are
+  the best bets as per the model"): per market the lowest chance step (50% up by 5) from which `RELIABLE_MIN` = 25 plays
+  or more landed at least their break-even at the book's prices (`RELIABLE_BAR` = 60% without a price); learned with the
+  calibration in `scorecardFor` (`reliability` inside `nba/meta/calibration.json`, `sameCalibration` compares it) and on
+  the board as `board.reliability`; the games' head line names each market's threshold ("Reliable from · REB 65% · AST
+  70% · 3PM not yet", the figures on the hover), and `reliableTone` colours every chance — the ranked list, the strips,
+  the court's chips, the Tonight table (its cell filled green when a play clears the threshold, `is-best`) — green at or
+  over the market's threshold, red under it, by the chance as the model states it (`raw`); a market without one keeps the
+  old colouring. `__tests__/picks-reliability.test.js`.
   **A line the book prices past -400 is no play**
   (`STEEP_IMPLIED` = 0.8 on the book's implied probability; 2026-10-29: o4.5 points at -10421 read 100% at
   the top of the Points table, Vincent: "this is fucking useless"): the play carries `steep: true`, stays on
@@ -440,6 +451,18 @@ config and keeps its own markets, teams, feeds and slate key:
   yards, pass TDs, targets, rush attempts, completions) with a `step` per market in `markets.js` (pass yards 25, rush and
   receiving yards 10, receptions 1 …), so each side's players carry `ladders` and `ranges`; the environment is the
   opponent's row at the depth-chart slot when PropFinder lists one (WR1 … RB2, `envPosFor`), else the position.
+- **The matchup profile** under each game head (`lib/nfl/profile.js`, `gameProfile(g, defense, sides)` through
+  `makeBoard({ profile })`, drawn by the shared `components/nhl/MatchupProfile.jsx` from `components/picks/Board.jsx`;
+  Vincent, 2026-10-31: "now do the same profile for the NFL board"): the two teams side by side, five rows — Passing
+  (yards a game with the passing touchdowns), Rushing (yards with the rushing touchdowns), End zone (touchdowns a game
+  with the interceptions thrown, 1st = the fewest), Allows (yards allowed, passing and rushing, 1 = the most, with the
+  touchdowns allowed and the last ten when the pull carries them), Soft spots (passing to the quarterbacks, rushing to
+  the backs, receiving to the receivers and tight ends in the soft third, from the opponent side's `allowed` table,
+  PropFinder's rank with the cheat sheet's tile blended) — each cell a word over one line with the rank phrases toned
+  (`lib/picks/profile-words.js`, the NHL's and the NBA's words), the defense pill in each head (yards allowed in
+  thirds), the expected touchdowns as the card's pill when the sides carry `teamProj.td`; the characteristics card stays
+  as the fallback for a game without a profile. `__tests__/nfl-profile.test.js` (the builder, the render; `MOCK_OUT`
+  writes `profile-nfl-<theme>.html` for `tools/mock/screenshot-profile.mjs`).
 - Routes (`authorize()`, admin session or sync token): `GET /api/nfl/picks?season&week&type|date`,
   `GET /api/nfl/shuffle?season&week&type&market`, `GET /api/nfl/scorecard?season&from&to`,
   `GET|POST|DELETE /api/nfl/sheets`, `POST /api/nfl/refresh?only=schedule|propfinder`
@@ -487,28 +510,30 @@ config and keeps its own markets, teams, feeds and slate key:
   come first, open** (Vincent, after the courts gained the bar: "I don't see the courts nor the shuffle bars in the best
   plays tab", then "too many clicks. I need the games listed first along with the best bets"): `NbaBoard` draws the games
   before the ranked list, every game open (`closed` set in `NbaSlate`, Collapse all / Expand all in the head, `GameFold`
-  takes `open` / `onToggle`), and an opened game shows **the game profile** (`components/nba/NbaProfile.jsx` from
-  `profile` on the board game, `lib/nba/profile.js` `gameProfile(g, defense, sides)` through `makeBoard({ profile })`:
-  firsthalfscore.com's layout, Vincent's ask the same night in place of the characteristics card — the two teams side
-  by side, each cell a word (Elite · Strong · Average · Weak · Very weak by `levelOf`, Average for the middle half; the
-  positions a defense leaks to, "Holds" when none) and one short figure on the line (`short`: "101.0 a game · 30th",
-  "#2 · #10 of 30"), the full reading on the cell's hover (`text`). **Two views of five rows, an Offense / Defense
-  toggle** (`GROUPS`; Vincent, 2026-10-31, of the seventeen rows it had: "This is way too much. I need only 5 rows. Maybe
-  add an offense / defense toggle"; the view picked holds for every game on the page): Offense = scoring, threes,
-  rebounding, assists, free throws (PropFinder's team rows ranked over the league); Defense = points allowed (its last
-  ten on the same cell, "tightening" / "loosening" at five ranks' drift) and the positions it gives points, rebounds,
-  assists and threes to, from the opponent side's `allowed` table (PropFinder's rank and the cheat sheet's tile,
-  `rankBlend` deciding, both named on the hover); the expected points stay in the head pill, and **the game script** beside
-  them (`gameScript`; Vincent, 2026-10-31: "I need to know the game script. Will it be a fast paced game or not"): the two
-  teams' pace this season from PropFinder (`paceStats` on its team objects → `pace` on the pull, `paceTable` in
-  `lib/picks/propfinder.js`: possessions a game with rank and offensive / defensive efficiency, last season's for a team
+  takes `open` / `onToggle`), and an opened game shows **the matchup profile** (`components/nba/NbaProfile.jsx` = the NHL card,
+  `components/nhl/MatchupProfile.jsx`, on `profile` from the board game; `lib/nba/profile.js` `gameProfile(g, defense,
+  sides)` through `makeBoard({ profile })`; Vincent, 2026-10-31: "now do the same profile for the NBA board" — the
+  firsthalfscore layout of 2026-10-30 and its offense / defense toggle are gone): the two teams side by side, **five rows**
+  — Scoring (points a game with the threes and their share of its points), Rebounding, Playmaking (assists with the
+  turnovers, 1st = the fewest), Allows (points allowed, 1 = the most, with the last ten and tightening / loosening at
+  `TREND_DRIFT` = 5 ranks), Soft spots (the positions in the soft third it gives points, rebounds, assists and threes to,
+  from the opponent side's `allowed` table, PropFinder's rank with the cheat sheet's tile blended, `rankBlend`) — each
+  cell a word over one line with the rank phrases toned (`lib/picks/profile-words.js`, shared with the NHL's builder:
+  `levelOf`, `badgeOf`, `cellOf`, `rankPart`; Elite · Strong · Average · Weak · Poor for an attack, Elite · Tight ·
+  Average · Leaky · Very leaky for a defense; green = more points likely from that side's angle, red = fewer), the
+  defense pill in each head, the game script and the expected points as the card's pill, both reads on the hover;
+  **the game script** (`gameScript`; Vincent, 2026-10-31: "I need to know the game script. Will it be a fast paced game or
+  not"): the two teams' pace this season from PropFinder (`paceStats` on its team objects → `pace` on the pull, `paceTable`
+  in `lib/picks/propfinder.js`: possessions a game with rank and offensive / defensive efficiency, last season's for a team
   without a row, `held`), their mean against the league's — Fast / Average / Slow at `PACE_EDGE` = 1.5 — and the book's total
-  and spread as the schedule carries them (ESPN's line, `odds` on the game), High / Average / Low against twice the
-  league's points a game at `TOTAL_EDGE` = 5: "Fast pace · high total · 105.6 possessions · total 236.5 · DET -2.5", green
-  when both point up, red when both point down, the figures on the hover; the game line carries the words too. A pull
-  made before 2026-10-31 has no pace (the next pull adds it); ball security, forcing
-  turnovers, the defensive glass, defending the three and the sheet's named players were dropped with the rows;
-  `__tests__/nba-profile.test.js`, `nba-profile-render.test.js` (MOCK_OUT writes its pages for `tools/mock/screenshot-profile.mjs`); the characteristics card stays as the fallback for a game
+  and spread as the schedule carries them (ESPN's line, `odds` on the game), High / Average / Low against twice the league's
+  points a game at `TOTAL_EDGE` = 5: the pill reads "Fast pace · high total · total 236.5 · DET -2.5 · 212 points expected
+  · …", green (`tier: 'high'`) when both point up, red when both point down, the possessions on the hover; the game line
+  carries the words too (`script` on the profile); a pull made before 2026-10-31 has no pace (the next pull adds it); the profile passes its own
+  `title`, `legend` and head `sub` to the shared card. `__tests__/nba-profile.test.js`, `nba-profile-render.test.js`
+  (`MOCK_OUT` pages `profile-nba-<theme>.html` for `tools/mock/screenshot-profile.mjs`); the Offense / Defense toggle that
+  opened on Defense that morning (`profileView` held in `NbaSlate`, still threaded to the card and ignored there) is gone with the
+  two views; the characteristics card stays as the fallback for a game
   without a profile and on the NFL board), then the two courts (each with PropFinder's table, the stat tabs and the
   shuffle bar, every player's projections, **who is out under the court** — Vincent, the same night — and the Tonight
   table), and "Show the team columns and the tables" folds the columns and the five group tables. A player listed day-to-day
@@ -525,8 +550,8 @@ config and keeps its own markets, teams, feeds and slate key:
   tonight's opponent gives up to that position for the stat picked in the tabs above each court (Points ·
   Rebounds · Assists · Threes · Steals · Blocks, `COURT_METRICS`, one setting for the slate as the rink's Shots / Goals
   switch; steals and blocks since 2026-10-30, `LADDER_MARKETS` in `lib/nba/picks.js` and `SHUFFLE_MARKETS` carry them,
-  so every player has a range and a ladder for both). **The card's order since that night: PropFinder's table with its
-  window tabs, then the stat tabs with the shuffle bar under them, then the court** (Vincent: "put the shuffle bar right
+  so every player has a range and a ladder for both). **The card's order since that night: PropFinder's table with its window tabs, the Players picker, the stat tabs
+  (Points to start) with the shuffle bar under them, then the court** (Vincent: "put the shuffle bar right
   under the propfinder table so I can see the table, the bar (incl type) and the court in 1 view"). **The stat's shuffle bar** (`CourtBar`, Vincent,
   2026-10-30: "a shuffle bar that I can move … the % displayed next to the player on the court"): the Shuffle tab's
   heights for the stat (`SHUFFLE_MARKETS`), one height per stat for the slate (`CourtShuffleProvider` in `NbaCourt.jsx`,
@@ -534,7 +559,11 @@ config and keeps its own markets, teams, feeds and slate key:
   read once a stat when a court first asks for it, every court sharing it), every chip carrying his chance to clear the
   bar from his shuffle row (`readAt` in `lib/picks/shuffle.js`, so the court's figure is the Shuffle tab's; the book's price
   beside it when a book prices that exact line; "out" or "no logs" for a player the shuffle has no row for; once the game is
-  final his figure against the bar's line), the bar's note counting the side's players at 50% or better. **Every chip
+  final his figure against the bar's line), the bar's note counting the side's players at 50% or better. **At the book's
+  main line the chip prints the board's play chance** (`mainAt` in `shuffle.js`: `pAt` / `readAt` return `main.p` on the
+  blend read when the height's line is the player's main line, `play: true` on the read, the rung's edge on it too; the
+  Shuffle tab's rows the same; Vincent, 2026-10-31, "conflict": the strip said Schröder o2.5 rebounds 72%, the chip 3+
+  80% on the same line — two reads of one line, the play's `chanceOf` and the ladder's rung; one number now). **Every chip
   shows his four projections** (`CHIP_STATS`: PTS · REB · AST · 3PM as P · R · A · 3P, the picked stat appended when it is
   steals or blocks, the picked one marked; `ranges[stat].exp` through `boardRead`; Vincent: "by default I need to see per
   player the projected number for points / assists / threes / rebounds"), so the chips flow in a column per zone
@@ -691,7 +720,10 @@ config and keeps its own markets, teams, feeds and slate key:
 - `tools/check-defensive-matchups.mjs <export.csv> <picks.json>` compares PropFinder's Defensive Matchups page export (what each team allows per position, with ranks) against the board's `sides[].allowed` table in a saved `GET /api/nba/picks?date` payload, cell by cell; the export itself is never ingested (its "OPPOSING PLAYER" header is no player column, the parser reads zero rows and the store rejects it).
 - Routes: `GET /api/nba/picks?date`, `GET /api/nba/shuffle?date&market`, `GET /api/nba/scorecard?from&to`, `GET|POST|DELETE /api/nba/sheets?date`,
   `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`,
-  `GET|POST /api/nba/injuries?date` (the admin's injury overrides).
+  `GET|POST /api/nba/injuries?date` (the admin's injury overrides); `POST /api/nba/refresh?only=calibration` (token or
+  admin) grades the season again now and relearns the calibration and the reliable chances without waiting for new box
+  scores — the workflow's `what: calibration` runs it with the site's token (Vincent, 2026-10-31: "open the shuffle tab
+  to relearn the calibration", which this container cannot).
   `.github/workflows/nba-data.yml`: 9:47 ET and 5:23 PM ET (schedule + PropFinder), 2:11 AM ET
   (last night's box scores). UI: `components/nba/NbaApp.jsx` (date picker), `NbaBoard.jsx`,
   `NbaSources.jsx`. Tests: `__tests__/nba-board.test.js` (`fixtures/espn-nba-summary.json`).
