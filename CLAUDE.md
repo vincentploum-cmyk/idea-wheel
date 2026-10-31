@@ -493,7 +493,14 @@ config and keeps its own markets, teams, feeds and slate key:
   and the pull records `fieldsSeen.unread` (game-row keys this file does not read), shown under
   Data sources after the first pull. Fix the spellings there once a real pull shows them; never
   guess silently. Stored at `nfl/<season>/<wk>/propfinder.json` (players with logs and lines,
-  `defenseAllowed` per position with ranks 1 = most allowed).
+  `defenseAllowed` per position with ranks 1 = most allowed). **Injuries come from ESPN's league feed, not PropFinder**
+  (`injuryReport: 'espn'` on `makePropfinder` in `propfinder-nfl.js`; Vincent, 2026-10-31: "fix the NFL injury report so
+  it reads injuries"): PropFinder's NFL report sits behind a route only its signed-in pages reach — its bundle, read that
+  day, builds the NFL games from an `injuryReports` JSON string, while `/NFL/v2` and `/injuries/nfl/<teamId>` answered 404
+  to the API on every pull from 2026-10-28 — so the pull asks it nothing (`fetchInjuries` returns `source: 'espn'`, Data
+  sources says so) and ESPN's feed (`fetchInjuries` in `lib/nfl/espn.js`, `ensureInjuries`, `applyEspnInjuries`) sets
+  every pulled player's status. The pull lists every rostered player (3,776 for 28 teams), so a player out is in it with
+  his logs and reaches the out lists, the without splits and the vacated lifts with no one-by-one read.
 - The board: `picks.js` (`buildBoard`, pure): the sheets' rows and PropFinder's lines merged per
   player + market + line + side; the chance = hit rates over the line (L5 0.3, L10 0.3, season
   0.4; PropFinder's logs when pulled, else the sheet's columns), shrunk toward the book's implied
