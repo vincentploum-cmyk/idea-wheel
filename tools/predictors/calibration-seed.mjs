@@ -4,19 +4,32 @@
 // and after it) so the calibrated chance is shown to land where it says.
 //
 //   node --import ./tools/audit/register.mjs tools/predictors/calibration-seed.mjs <export.json> \
-//     [--holdout YYYY-MM-DD] [--w 0] [--wG 1] [--out lib/nhl-data/seed/calibration.json]
+//     [--holdout YYYY-MM-DD] [--w 0] [--wG 1] [--learn] [--out lib/nhl-data/seed/calibration.json]
+//
+// `--learn` runs the board's own verdict on the export first (lib/nhl-data/board-weights-pure.js: which share of the
+// study's λ predicts best for shots and for goals, walked forward night by night with the calibration on top), prints
+// every share's score, and fits the seed at the shares it picks (`--w` / `--wG` still override, as the server env does).
 import fs from 'node:fs';
 import { calibrationOf, calibratedChance, readsOf, calibrate } from '../../lib/nhl-data/calibration-pure.js';
 import { poissonAtLeast } from '../../lib/nhl-data/picks-pure.js';
+import { learnWeights, verdictText, shareText } from '../../lib/nhl-data/board-weights-pure.js';
 
 const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const file = process.argv[2];
 const holdout = arg('--holdout'); const out = arg('--out');
-const weights = { w: Number(arg('--w', 0)), wG: Number(arg('--wG', 1)) };
 const j = JSON.parse(fs.readFileSync(file, 'utf8'));
 const rows = (j.rows || []).map((r) => ({ date: r.date, lamS: r.lambdaS, lamG: r.lambdaG, studyS: r.studyS, studyG: r.studyG, sog: r.sog, g: r.g }));
 if (!rows.length) { console.error('no rows: export with ?rows=1'); process.exit(2); }
 const pct = (v) => (v == null || Number.isNaN(v) ? '—' : `${Math.round(v * 100)}%`);
+
+let learned = null;
+if (process.argv.includes('--learn')) {
+  learned = learnWeights(rows);
+  console.log(`the board's read, learned on ${learned.rows} graded skater-games (${learned.from} → ${learned.to}):`);
+  for (const stat of ['sog', 'g']) console.log(`  ${verdictText(learned, stat)}`);
+  console.log(`  → shots ${shareText(learned.weights.w)}, goals ${shareText(learned.weights.wG)}`);
+}
+const weights = { w: Number(arg('--w', learned ? learned.weights.w : 0)), wG: Number(arg('--wG', learned ? learned.weights.wG : 1)) };
 
 function check(cal, test, read, stat, height, bands) {
   const list = test.map((r) => ({ lam: readsOf(r, weights)[read][stat], y: (Number(r[stat]) || 0) >= height })).filter((x) => x.lam > 0)
@@ -46,4 +59,4 @@ for (const read of ['board', 'study']) {
     console.log(`${read} ${stat}: ${fits.join(' | ') || 'too few games'}`);
   }
 }
-if (out) { fs.writeFileSync(out, JSON.stringify({ ...cal, source: 'seed', export: file.split('/').pop() })); console.log('written', out); }
+if (out) { fs.writeFileSync(out, JSON.stringify({ ...cal, ...(learned ? { learned } : {}), source: 'seed', export: file.split('/').pop() })); console.log('written', out); }

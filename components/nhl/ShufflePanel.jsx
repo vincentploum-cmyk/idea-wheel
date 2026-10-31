@@ -6,6 +6,7 @@ import { usePlayerCard } from './PlayerCard';
 import { Flags } from './flags';
 import { LEAGUE_POS } from '@/lib/nhl-data/picks-pure';
 import { NHL_BARS, READ_FROM, HEIGHTS, POSITIONS, atPosition, survivorsAt, fallenAt, curveOf, bestReadFrom, readFromOf, BEST_MIN, matchupTabs, matchupTabOf, matchupOf } from '@/lib/nhl-data/shuffle-pure';
+import { shareText, verdictText } from '@/lib/nhl-data/board-weights-pure';
 
 // The NHL shuffle (its own tab, with its own slate date): a bar for shots and one for goals. Raise
 // it and the field falls away; what stays are the skaters whose chance of the bar holds over the
@@ -149,10 +150,13 @@ export default function ShufflePanel() {
   const statLabel = active === 'sog' ? 'shots' : 'goals';
   // The board's λ is the projection column; the centre column shows only when the chance is read from somewhere else.
   const showCentre = from !== 'model';
-  // The board's λ is the run's alone unless NHL_PICKS_STUDY_WEIGHT blends the study in on the server.
+  // Whose λ the board reads, per stat: the share of the study the graded nights say predicts best (`boardWeights` on the
+  // payload, lib/nhl-data/board-weights-pure.js), the server env over it when set.
+  const bw = data?.boardWeights || null;
   const blended = data?.studyWeight ? `${Math.round(data.studyWeight * 100)}%` : null;
   const blendedG = data?.studyWeightGoals ? `${Math.round(data.studyWeightGoals * 100)}%` : null;
-  const modelTitle = data?.source === 'study' ? 'No run saved for the date: the study’s read stands in' : blended || blendedG ? `As the board reads it: shots ${blended ? `the run’s λ blended with the study’s at ${blended}` : 'the run’s λ'}; goals ${blendedG === '100%' ? 'the study’s λ (his goal rate, chances and shots this season, home ice, the opponent at his position)' : blendedG ? `the run’s λ blended with the study’s at ${blendedG}` : 'the run’s λ'}` : 'The saved run’s λ, as the board reads it';
+  const fromText = (k) => (bw?.from?.[k] === 'env' ? 'set on the server' : bw?.from?.[k] === 'learned' ? 'the read that has predicted best on the graded nights' : 'the default');
+  const modelTitle = data?.source === 'study' ? 'No run saved for the date: the study’s read stands in' : bw ? `As the board reads it: shots ${shareText(bw.w)} (${fromText('w')}); goals ${shareText(bw.wG)}${bw.wG >= 1 ? ' (his goal rate, chances and shots this season, home ice, the opponent at his position)' : ''} (${fromText('wG')}).${bw.learned ? ` ${verdictText(bw.learned, 'sog')} ${verdictText(bw.learned, 'g')}` : ''}` : 'The saved run’s λ, as the board reads it';
 
   return (
     <section className="nhlx-pk" aria-label="Shuffle">
@@ -194,7 +198,7 @@ export default function ShufflePanel() {
               })}
             </div>
             {grading ? <i className="ir-sh-grading" role="status">grading the season’s games…</i> : null}
-            <span className="nhlx-rk-toggle-note">{readNote(card, best, active, from, { stored, grading })} A window he does not have yet falls back to the board’s λ.{blended || blendedG ? ` The board’s λ: shots ${blended ? `the run’s blended with the study’s at ${blended} (NHL_PICKS_STUDY_WEIGHT)` : 'the run’s'}; goals ${blendedG === '100%' ? 'the study’s read' : blendedG ? `the run’s blended with the study’s at ${blendedG}` : 'the run’s'} (NHL_PICKS_STUDY_WEIGHT_GOALS, 1 unless set).` : ''}</span>
+            <span className="nhlx-rk-toggle-note">{readNote(card, best, active, from, { stored, grading })} A window he does not have yet falls back to the board’s λ.{bw && data?.source === 'model' ? <> The board’s λ: <span title={modelTitle}>shots {shareText(bw.w)}, goals {shareText(bw.wG)}</span>{bw.learned ? ` — the reads that have predicted best on ${bw.learned.rows} graded skater-games (hover for every read’s score)` : bw.from?.w === 'env' || bw.from?.wG === 'env' ? ' (set on the server)' : ' (the defaults until the season’s scorecard has judged the reads)'}.</> : blended || blendedG ? ` The board’s λ: shots ${blended ? `the run’s blended with the study’s at ${blended}` : 'the run’s'}; goals ${blendedG === '100%' ? 'the study’s read' : blendedG ? `the run’s blended with the study’s at ${blendedG}` : 'the run’s'}.` : ''}</span>
           </div>
           <div className="nhlx-rk-toggle ir-sh-from">
             {mTabs.length ? (

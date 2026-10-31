@@ -1362,6 +1362,29 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   "Read from" as its Poisson tail; `raw` on the read for the hover). Learned again by every season-range `buildScorecard`
   (`saveCalibration` beside `saveBestRead`: the History tab's first grade, the morning refresh), never rewritten
   unchanged. Hover a chance on Best bets or the shuffle for the figure as stated.
+- **The most accurate read, learned** (`lib/nhl-data/board-weights-pure.js`, pure; Vincent, 2026-10-31: "I need to have the
+  most accurate % for both shots and goals"): whose λ the board's chances are read off — the run's, the study's or a blend —
+  is **learned per stat from the site's own graded nights**, not set by hand. `learnWeights(rows)` (rows = `fitRow` with the
+  night: the run's λ, the study's that morning, what he got) scores every share of the study in `SHARES` (0, ¼, ½, ¾, 1)
+  **walked forward**: for each night after the first `LEARN.warmNights` = 6 the calibration is fitted at that share on the
+  nights before it (`fitHeight` per height) and the night's skaters are read through it at the bars' floors and the rung
+  above (`SCORED`: 3+ and 4+ SOG, 1+ and 2+ goals), the Brier pooled (`walkForward`; a calibration under `CAL_MIN` reads the
+  stated chance, as the board would have); the lowest Brier is the board's share once `minNights` = 8 scored nights and
+  `minRows` = 1500 chances are behind it, **and only when it beats the share the board is on by `margin` = 0.0005** (a tie
+  is called for the board's own share, then the nearest; the board never moves on noise), the incumbent being the stored
+  verdict's share, else `DEFAULT_WEIGHTS` { w: 0, wG: 1 } (the run's shots, the study's goals, as since 2026-10-27). Learned
+  with the calibration in `saveCalibration` (every season-range `buildScorecard`: the History tab's first grade, the morning
+  refresh), stored on `data/scorecard/calibration.json` as `learned` { at, from, to, rows, learn, stats: { sog | g: { share,
+  from, best, moved, reason, scores } } } with the fits made at the chosen weights (`weights`); `boardWeightsOf(cal, env)`
+  is what `computePicks` reads at — the server env (`NHL_PICKS_STUDY_WEIGHT`, `_GOALS`) over the verdict when set (another
+  share than the fits were made at prints as stated until the next build, as before), the verdict over the defaults (the
+  seed has none) — and rides on the picks and shuffle payloads as `boardWeights` { w, wG, from, learned, calibrationFits }.
+  The Best bets head names it ("shots the run's λ, goals the study's λ (learned on N graded skater-games)", every share's
+  score on the hover, `BoardRead` in `PicksPanel.jsx`), the shuffle's note the same (`shareText`, `verdictText`).
+  `tools/predictors/calibration-seed.mjs --learn` runs the verdict on a scorecard export and prints the table. No export was
+  readable from the container when this shipped, so no verdict is in the seed: the board stays on the defaults until the
+  site's next scorecard build judges the reads. `__tests__/nhl-board-weights.test.js` (synthetic seasons where one read is
+  the truth), the end-to-end case in `nhl-picks-score.test.js`.
 - **One number per skater** (`lib/nhl-data/board-reads.js`, pure; Vincent, 2026-10-31, with the Model tab's dashboard
   saying McDavid 61% for a goal and Draisaitl 56% for 4+ shots while Best bets on the same page said 30% and 36%: "how can I
   trust our website if I see these conflicts" — the dashboard printed the run's own figures as stated, Best bets the board's,
@@ -1541,11 +1564,12 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   run's matchup goal λ (`modelOpp`, `goalOpportunityLambda` on the result rows, goals only; `lambdaGOpp` on the
   `?rows=1` export) —
   scored beside λ on the rows every covered predictor shares (MAE, bias, Poisson 3+ SOG / 1+ G Brier).
-  Descriptive only; nothing feeds the model. The board's shots blend only through `NHL_PICKS_STUDY_WEIGHT` on
-  Render (the study's share, `blendProjection` in `picks-pure.js`, `studyWeight` in `picks.js`; unset =
-  the model alone), to be set once that table shows the blend beating the model. **The board's goals read the
+  Descriptive only; nothing feeds the model. The board's shots blend through the share the graded nights say predicts best (the bullet "The most
+  accurate read, learned" under Automation; `NHL_PICKS_STUDY_WEIGHT` on Render overrides it, `blendProjection` in
+  `picks-pure.js`). **The board's goals read the
   study's λ** since 2026-10-27 (`studyWeightGoals`: `NHL_PICKS_STUDY_WEIGHT_GOALS`, 1 unless set, 0 = the run's goal λ
-  back; `blendProjection`'s fourth argument; the shuffle's head and note say so): Vincent's call on the FLA @ WPG board
+  back; `blendProjection`'s fourth argument; the shuffle's head and note say so; since 2026-10-31 the share is the learned
+  verdict's unless the env sets it): Vincent's call on the FLA @ WPG board
   after the day's input changes — the run's published goal λ is built from his points rate, so Connor on nine goals in
   eleven games read 28% and Reinhart fell from 28% to 21% on an unchanged goal rate as his assists dropped, while the
   study's λ reads his goal rate, chances and shots this season, home ice and the opponent's row at his position (the

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { shareText, verdictText } from '@/lib/nhl-data/board-weights-pure';
 import { Headshot, TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { SlateDateContext } from './player-card-context';
@@ -14,6 +15,14 @@ const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const last = (name) => String(name || '').split(' ').slice(-1)[0];
 
 /** A probability with its break-even price under it; once the box score is in, green when the skater reached the market's floor, red when he fell short. */
+// Whose λ the board reads, per stat (`boardWeights` on the payload, lib/nhl-data/board-weights-pure.js): the share of the
+// study the graded nights say predicts best, walked forward with the calibration on top; the server env over it when set.
+function BoardRead({ bw }) {
+  const from = (k) => (bw.from?.[k] === 'env' ? 'set on the server' : bw.from?.[k] === 'learned' ? 'the read that has predicted best on the graded nights' : 'the default until the season’s scorecard has judged the reads');
+  const title = `Shots: ${shareText(bw.w)} (${from('w')}). Goals: ${shareText(bw.wG)} (${from('wG')}).${bw.learned ? ` ${verdictText(bw.learned, 'sog')} ${verdictText(bw.learned, 'g')}` : ''}`;
+  return <span title={title}>shots {shareText(bw.w)}, goals {shareText(bw.wG)}{bw.learned ? ` (learned on ${bw.learned.rows} graded skater-games)` : ''}</span>;
+}
+
 // A chance as the board prints it: calibrated to what its stated chances have landed this season (lib/nhl-data/calibration.js),
 // the figure as stated on the hover.
 function Prob({ p, raw = null, lead = false, wide = false, hit = null }) {
@@ -213,7 +222,7 @@ export default function PicksPanel() {
         <div>
           <div className="nhlx-today-date">{pretty || 'Loading…'}</div>
           <div className="nhlx-auto-sub">
-            {board ? `${board.games.length} game${board.games.length === 1 ? '' : 's'} · ${board.source === 'model' ? `model run saved ${board.modelRun?.createdAt ? fmtTime(board.modelRun.createdAt) : ''}` : 'no model run yet: own rates'}${board.calibration ? ` · chances calibrated on ${board.calibration.games} graded skater-games${board.calibration.to ? ` through ${board.calibration.to}` : ''} (hover one for the figure as stated)` : ''}` : ''}
+            {board ? <>{board.games.length} game{board.games.length === 1 ? '' : 's'} · {board.source === 'model' ? `model run saved ${board.modelRun?.createdAt ? fmtTime(board.modelRun.createdAt) : ''}` : 'no model run yet: own rates'}{board.source === 'model' && board.boardWeights ? <> · <BoardRead bw={board.boardWeights} /></> : null}{board.calibration ? ` · chances calibrated on ${board.calibration.games} graded skater-games${board.calibration.to ? ` through ${board.calibration.to}` : ''} (hover one for the figure as stated)` : ''}</> : ''}
           </div>
         </div>
         <div className="nhlx-auto-actions">

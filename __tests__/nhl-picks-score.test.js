@@ -30,6 +30,39 @@ const side = (list, team, opp, venue) => ({ team, opp, venue, source: 'lineup', 
 const game = (log = null) => ({ id: 2026020200, away: 'MTL', home: 'DAL', startTimeUTC: '2026-11-01T00:00:00Z', sides: [side(mtl, 'MTL', 'DAL', 'A'), side(dal, 'DAL', 'MTL', 'H')], total: { expected: { away: 3.1, home: 2.9, total: 6.0 } }, log });
 const slate = (log) => ({ date: DATE, games: [game(log)], modelRun: null, gamesStored: 12 });
 
+describe('the board reads the λ at the weights the calibration learned', () => {
+  // A slate with a run: every skater carries the run's figures, so the board's λ is the run's blended with the study's at the weights.
+  const withRun = () => { const sl = slate(); sl.modelRun = { id: 'run-1', createdAt: '2026-10-31T14:00:00Z' }; for (const g of sl.games) for (const sd of g.sides) for (const p of sd.skaters) p.model = { sog: 3.2, g: 0.45, p3s: 0.62, p4s: 0.4, p1g: 0.36, gateOpen: true }; return sl; };
+  const fits = { sog: {}, g: {} };
+  test('the verdict’s share, the env over it, the defaults without one', () => {
+    const learned = { at: '2026-10-31T06:00:00Z', from: '2026-10-08', to: '2026-10-30', rows: 5000, stats: { sog: { share: 0.5, from: 0, best: 0.5, moved: true, reason: 'test', scores: {} }, g: { share: 1, from: 1, best: 1, moved: false, reason: 'test', scores: {} } } };
+    const cal = { games: 5000, weights: { w: 0.5, wG: 1 }, learned, reads: { board: fits, study: fits } };
+    const board = computePicks(DATE, withRun(), rows, { withSkaters: true, spz, cal });
+    expect(board.source).toBe('model');
+    expect(board.boardWeights).toMatchObject({ w: 0.5, wG: 1, from: { w: 'learned', wG: 'learned' }, calibrationFits: true, learned: { rows: 5000, stats: { sog: { share: 0.5 } } } });
+    expect(board.studyWeight).toBe(0.5); expect(board.studyWeightGoals).toBe(1);
+    const c = board.games[0].all.find((x) => x.id === 101);
+    // Half the run's 3.2 and half the study's λ for him; the goals the study's alone.
+    expect(c.model.lamS).toBe(3.2);
+    expect(c.lamS).toBeCloseTo((3.2 + c.study.lamS) / 2 + (c.st?.dS || 0), 1);
+    expect(c.lamG).toBeCloseTo(c.study.lamG + (c.st?.dG || 0), 2);
+    // The seed-shaped calibration (no verdict): the defaults, the run's shots and the study's goals.
+    const plain = computePicks(DATE, withRun(), rows, { withSkaters: true, spz, cal: { games: 5000, weights: { w: 0, wG: 1 }, reads: { board: fits, study: fits } } });
+    expect(plain.boardWeights).toMatchObject({ w: 0, wG: 1, from: { w: 'default', wG: 'default' } });
+    expect(plain.games[0].all.find((x) => x.id === 101).lamS).toBeCloseTo(3.2 + (c.st?.dS || 0), 1);
+    // A calibration learned at other weights than the env now names is another read: the chances print as stated.
+    process.env.NHL_PICKS_STUDY_WEIGHT = '0.25';
+    try {
+      const over = computePicks(DATE, withRun(), rows, { withSkaters: true, spz, cal });
+      expect(over.boardWeights).toMatchObject({ w: 0.25, wG: 1, from: { w: 'env', wG: 'learned' }, calibrationFits: false });
+      expect(over.calibration).toBeNull();
+    } finally { delete process.env.NHL_PICKS_STUDY_WEIGHT; }
+    // Without a run the weights do not apply: the study's read alone.
+    const noRun = computePicks(DATE, slate(), rows, { withSkaters: true, spz, cal });
+    expect(noRun.source).toBe('study'); expect(noRun.studyWeight).toBeNull();
+  });
+});
+
 describe('the picks board carries the special teams and the predicted score', () => {
   test('every candidate’s λ moves by his power-play slot, the side adding up to the team factor; the game gets a projected score', () => {
     const board = computePicks(DATE, slate(), rows, { withSkaters: true, spz });
