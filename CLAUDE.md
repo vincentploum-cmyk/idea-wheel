@@ -1023,6 +1023,14 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   published for the league that lacks a team short of its games this season — CBJ had L5 and L15 and no L10
   above its rink on 2026-10-27 — gets that team's row from the stored window, ranked among the table's teams,
   `stood` on the table and the tab marked `source: 'stored'`, `withStoodTeams`),
+  **the by-line read on the ice** (Vincent, 2026-10-31, of the Defense tab's slot badges LW1 · C2 · D2: "How can we
+  make this visible on the matchup view?"): every chip carries his slot tonight as a badge (`SlotBadge` in `Rink.jsx`,
+  `.nhlx-rk-slot`) tinted by the opponent's rank against that slot for the rink's metric — the Defense tab's by-line
+  table, `slotBoard(defenseBySlot(rows, { season }))` at both venues, read once a slate in `buildSlate` and carried per
+  side as `side.lines = linesOf(boards, opp)` ({ sog, g } → { gp, cells, softest, league }, `linesOf` in
+  `defense-board.js`), green = top third, red = bottom third, grey = no record (the hover: the figure, the rank, the
+  league's mean, the skater-games) — and the rink head names the opponent's softest line with its rank and figure and
+  this side's skater at that slot (`SoftestLine`, click to his card); colour only, no number moves;
   chips carrying the latest saved model run's λ shots / goals for the slate date from
   `lib/nhl-data/model-runs.js`, or a matchup read when no run exists; at the top of each rink card the model's plays
   for that team (`sidePlays` in `slate.js`, `ModelPlays` in `Rink.jsx`): the Best bets boards' rule, `boardPlays` in

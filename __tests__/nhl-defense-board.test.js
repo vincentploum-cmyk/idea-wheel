@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import { defenseByPosition, defenseBySlot, seasonDefense } from '../lib/nhl-data/defense';
-import { boardTables, overviewRows, matchupReads, rankDesc, groupKeyFor, shootersAt, figureFor, resultsAt, slotBoard, facingAt, SLOT_LINES } from '../lib/nhl-data/defense-board';
+import { boardTables, overviewRows, matchupReads, rankDesc, groupKeyFor, shootersAt, figureFor, resultsAt, slotBoard, facingAt, linesOf, SLOT_LINES } from '../lib/nhl-data/defense-board';
 
 // Three games: NYR at NJD, BOS at NJD, NJD at BOS. One skater per position per side.
 const row = (date, gameId, team, opp, venue, pos, sog, g) => ({ date, gameId, team, opp, venue, pos, sog, g, a: 0, icf: sog, iff: sog, iscf: 0, ihdcf: 0 });
@@ -43,6 +43,16 @@ describe('defense board by line', () => {
     expect(team('BOS').softest.slot).toBe('D1');
     expect(slotBoard(defenseBySlot(lined), { metric: 'g' }).teams.find((t) => t.abbr === 'NJD').cells.LW2.value).toBeCloseTo(0.333, 3);
     expect(slotBoard(defenseBySlot(lined), { metric: 'sog', minSkaterGames: 4 }).teams[0].cells.LW1).toBeNull();
+  });
+  test('the rink reads one team\'s row per metric: its cells, its softest slot, the league beside it; null for a team without a row', () => {
+    const boards = { sog: board, g: slotBoard(defenseBySlot(lined), { metric: 'g' }) };
+    const lines = linesOf(boards, 'NJD');
+    expect(lines.sog.cells.LW2).toMatchObject({ rank: team('NJD').cells.LW2.rank, of: 2 });
+    expect(lines.sog.softest.slot).toBe(team('NJD').softest.slot);
+    expect(lines.sog.league.LW1).toBe(board.league.LW1);
+    expect(lines.g.cells.LW2.value).toBeCloseTo(0.333, 3);
+    expect(linesOf(boards, 'NYR')).toBeNull();
+    expect(linesOf(null, 'NJD')).toBeNull();
   });
   test('who the defending team faces at a slot tonight', () => {
     const games = [{ away: 'NYR', home: 'NJD', sides: [{ team: 'NYR', skaters: [{ id: 1, name: 'A Winger', pos: 'LW', line: 2 }, { id: 2, name: 'C One', pos: 'C', line: 1 }] }, { team: 'NJD', skaters: [] }] }];
