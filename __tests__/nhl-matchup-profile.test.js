@@ -1,7 +1,7 @@
 import { describe, expect, test } from '@jest/globals';
 import { levelOf, ordinal, badgeOf, teamRates, modelOf, h2hOf, pfDefenseOf, matchupProfile, PROFILE_ROWS, WORDS } from '../lib/nhl-data/matchup-profile';
 import { rowObj, ROW_FIELDS } from '../lib/nhl-data/ingest';
-import { game, moneypuck, ratios, profiles, rates, pfTeams, h2h } from './fixtures/matchup-profile-mtl-dal';
+import { game, moneypuck, ratios, profiles, rates, pfTeams, h2h, shotpropz } from './fixtures/matchup-profile-mtl-dal';
 
 const row = (over) => rowObj(ROW_FIELDS.map((k) => ({ date: '2026-10-20', gameId: 2026020100, playerId: 1, name: 'A', team: 'MTL', opp: 'DAL', venue: 'A', pos: 'C', toi: 15, g: 0, a: 0, sog: 2, hits: 0, blk: 0, icf: 3, iff: 2, isf: 2, iscf: 1, ihdcf: 0, result: 'W', posSrc: 'lineup', boxPos: 'C', line: 1, fg: 0, ...over }[k])));
 const cellOf = (p, key, team) => p.rows.find((r) => r.key === key)?.cells[team] || null;
@@ -104,10 +104,12 @@ describe('matchup profile: MTL @ DAL', () => {
     expect(cellOf(p, 'chances', 'MTL')).toMatchObject({ word: 'Strong', value: '3.05', unit: 'xGF/60', source: 'mp' });
     expect(cellOf(p, 'chances', 'MTL').detail[1]).toBe('finishing ×1.08 on expected (9th of 28) · PropFinder 28.4 scoring chances a game (4th)');
     expect(cellOf(p, 'chances', 'DAL').figures.map((f) => f.label)).toEqual(['xGF/60', 'SC/G', 'Finish']);
-    expect(cellOf(p, 'special', 'MTL')).toMatchObject({ word: 'Elite', tone: 'is-soft', value: '27.5%', unit: 'PP' });
-    expect(cellOf(p, 'special', 'MTL').detail).toEqual(['3rd of 32 · 27.5% on the power play · PropFinder 2026-27', 'penalty kill 76.1% (24th of 32)']);
+    // Without a ShotPropz snapshot the power play and penalty kill rows read PropFinder's season table alone.
+    expect(cellOf(p, 'powerplay', 'MTL')).toMatchObject({ word: 'Elite', tone: 'is-soft', value: '27.5%', unit: 'PP', source: 'pf' });
+    expect(cellOf(p, 'powerplay', 'MTL').detail).toEqual(['3rd of 32 · 27.5% on the power play · PropFinder 2026-27 (no ShotPropz snapshot yet)']);
     // A strong kill reads red: fewer goals against it.
-    expect(cellOf(p, 'special', 'DAL').figures.find((f) => f.label === 'PK%').tone).toBe('is-tough');
+    expect(cellOf(p, 'penaltykill', 'DAL')).toMatchObject({ word: 'Tight', tone: 'is-tough', value: '84.2%', unit: 'PK', source: 'pf' });
+    expect(cellOf(p, 'penaltykill', 'MTL')).toMatchObject({ word: 'Average', tone: '' });
     expect(cellOf(p, 'form', 'MTL')).toMatchObject({ word: 'Rising', tone: 'is-soft', value: '34.5' });
     expect(cellOf(p, 'form', 'DAL')).toMatchObject({ word: 'Falling', tone: 'is-tough' });
     expect(cellOf(p, 'form', 'DAL').detail[0]).toBe('last 5 vs season · 24.9 shots and 2.60 goals a game against 28.0 and 3.10 over 11 games');
@@ -165,6 +167,45 @@ describe('matchup profile: MTL @ DAL', () => {
     expect(cellOf(p, 'tonight', 'MTL')).toMatchObject({ word: '2 plays', tone: 'is-soft', value: '32.3', unit: 'λ SOG' });
     expect(cellOf(p, 'tonight', 'MTL').detail[0]).toBe('32.3 shots and 3.04 goals expected over 18 skaters · best play Cole Caufield 3+ SOG 62%');
     expect(cellOf(p, 'tonight', 'DAL')).toMatchObject({ word: '1 play' });
+  });
+  test('with ShotPropz: the power play and the penalty kill lead on the venue board from four games there, the shots rows carry the venue split', () => {
+    const q = matchupProfile({ game, moneypuck, ratios, profiles, rates, pfTeams, h2h, shotpropz });
+    expect(q.teams.MTL.shotpropz).toEqual({ updated: 'Oct 30, 2026', venueGames: 6 });
+    expect(q.teams.DAL.shotpropz.venueGames).toBe(6);
+    // Shot volume: the rink still leads; ShotPropz's venue split and last ten ride on a third line and two figures.
+    const shots = cellOf(q, 'shots', 'MTL');
+    expect(shots.source).toBe('rink');
+    expect(shots.detail[2]).toBe('ShotPropz on the road 29.7 (9th of 32, 6 games) · last 10 32.4 (4th)');
+    expect(shots.figures.map((f) => f.label)).toEqual(['Rink', 'PF', 'SF/60', 'SPZ away', 'SPZ L10']);
+    expect(shots.figures[3]).toMatchObject({ value: '29.7', rank: 9, tone: '' });
+    expect(cellOf(q, 'goals', 'DAL').detail[2]).toBe('ShotPropz at home 3.50 (9th of 32, 6 games) · last 10 2.70 (22nd)');
+    // Power play: MTL on the road (6 games there), DAL at home.
+    const pp = cellOf(q, 'powerplay', 'MTL');
+    expect(pp).toMatchObject({ word: 'Average', tone: '', value: '22.2%', unit: 'PP on the road', source: 'spz' });
+    expect(pp.detail).toEqual(['12th of 32 · 22.2% on the power play on the road · gets 3.0 power plays a game (13th) · ShotPropz 2026-27, 6 games', 'all games 25.6% (6th) · last 10 28.6% (4th) · PropFinder 27.5% (3rd)']);
+    expect(pp.figures.map((f) => [f.label, f.value, f.rank])).toEqual([['PP%', '22.2', 12], ['PP/G', '3.0', 13], ['L10', '28.6', 4], ['PF', '27.5', 3]]);
+    expect(cellOf(q, 'powerplay', 'DAL')).toMatchObject({ word: 'Strong', tone: 'is-soft', value: '27.8%', unit: 'PP at home' });
+    expect(cellOf(q, 'powerplay', 'DAL').figures[1]).toMatchObject({ label: 'PP/G', value: '3.0', rank: 17, tone: '' });
+    // Penalty kill: rank 1 = the softest, so DAL's 92.9% at home (32nd) is Elite and red, MTL's 68.4% on the road (3rd) Very leaky and green.
+    const dal = cellOf(q, 'penaltykill', 'DAL');
+    expect(dal).toMatchObject({ word: 'Elite', level: 'elite', tone: 'is-tough', value: '92.9%', unit: 'PK at home', source: 'spz' });
+    expect(dal.detail[0]).toBe('32nd of 32 softest · 92.9% on the penalty kill at home · gives 2.3 power plays a game (29th most) · ShotPropz 2026-27, 6 games');
+    expect(dal.detail[1]).toBe('all games 86.7% (29th) · last 10 88.9% (30th) · PropFinder 84.2% (4th)');
+    expect(dal.figures.map((f) => [f.label, f.value, f.rank, f.tone])).toEqual([['PK%', '92.9', 32, 'is-tough'], ['PP given/G', '2.3', 29, 'is-tough'], ['L10', '88.9', 30, 'is-tough'], ['PF', '84.2', 4, 'is-tough']]);
+    const mtl = cellOf(q, 'penaltykill', 'MTL');
+    expect(mtl).toMatchObject({ word: 'Very leaky', level: 'poor', tone: 'is-soft', value: '68.4%' });
+    expect(mtl.figures[1]).toMatchObject({ label: 'PP given/G', value: '3.3', rank: 7, tone: 'is-soft' });
+    // Shots allowed: the venue split and the last ten from ShotPropz on a third line, rank 1 = the softest.
+    const sa = cellOf(q, 'shotsAllowed', 'DAL');
+    expect(sa.detail[2]).toBe('ShotPropz at home 24.3 allowed (31st of 32 most, 6 games) · last 10 26.0 (26th)');
+    expect(sa.figures.slice(3).map((f) => [f.label, f.value, f.rank, f.tone])).toEqual([['SPZ home', '24.3', 31, 'is-tough'], ['SPZ L10', '26.0', 26, 'is-tough']]);
+    expect(cellOf(q, 'goalsAllowed', 'MTL').figures.find((f) => f.label === 'SPZ away')).toMatchObject({ value: '3.17', rank: 10 });
+    // Under four games at the venue the all-games board leads and the venue figure follows on the second line.
+    const thin = JSON.parse(JSON.stringify(shotpropz));
+    for (const k of Object.keys(thin.boards.offense.home.ytd)) thin.boards.offense.home.ytd[k].teams.DAL.gp = 3;
+    const t = cellOf(matchupProfile({ game, moneypuck, ratios, profiles, rates, pfTeams, h2h, shotpropz: thin }), 'powerplay', 'DAL');
+    expect(t).toMatchObject({ word: 'Average', value: '21.2%', unit: 'PP all games' });
+    expect(t.detail[1]).toBe('at home 27.8% over 3 games · last 10 15.4% (25th) · PropFinder 21.0% (15th)');
   });
   test('without meetings or a run the game rows say so; without any read at all the profile is null', () => {
     const bare = { ...game, sides: game.sides.map((s) => ({ ...s, skaters: s.skaters.map((k) => ({ ...k, model: null })), plays: null })) };

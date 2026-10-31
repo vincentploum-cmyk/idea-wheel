@@ -93,3 +93,29 @@ export const h2h = [
   { gameId: 2025020310, date: '2025-11-20', goals: { MTL: 2, DAL: 4 }, home: 'DAL', total: 6 },
   { gameId: 2025020880, date: '2026-02-14', goals: { MTL: 5, DAL: 2 }, home: 'MTL', total: 7 },
 ];
+
+// ShotPropz's boards as the snapshot stores them: per board, location and span the stat tables with
+// { gp, value, rank } a team (32 teams on each; only the two are filled, the count says 32). MTL at
+// home 7 games, away 6; DAL home 6, away 5. Rank 1 = the most on offense, the softest on defense.
+const spzTable = (cells) => ({ count: 32, heat: { min: null, mid: null, max: null }, teams: Object.fromEntries(Object.entries(cells).map(([t, [gp, value, rank]]) => [t, { gp, value, rank }])) });
+export const shotpropz = {
+  updatedAt: '2026-10-30T13:40:00Z', year: 2026, source: 'ShotPropz.com', pageUpdated: 'Oct 30, 2026', pages: 12, failed: [],
+  boards: {
+    offense: {
+      all: {
+        ytd: { gf: spzTable({ MTL: [13, 3.15, 14], DAL: [12, 3.08, 16] }), sf: spzTable({ MTL: [13, 31.0, 6], DAL: [12, 27.9, 18] }), ppo: spzTable({ MTL: [13, 3.31, 9], DAL: [12, 2.75, 24] }), ppPct: spzTable({ MTL: [13, 25.6, 6], DAL: [12, 21.2, 15] }) },
+        l10: { gf: spzTable({ MTL: [10, 3.4, 11], DAL: [10, 2.7, 22] }), sf: spzTable({ MTL: [10, 32.4, 4], DAL: [10, 26.1, 24] }), ppo: spzTable({ MTL: [10, 3.5, 7], DAL: [10, 2.6, 26] }), ppPct: spzTable({ MTL: [10, 28.6, 4], DAL: [10, 15.4, 25] }) },
+      },
+      home: { ytd: { gf: spzTable({ MTL: [7, 3.43, 10], DAL: [6, 3.5, 9] }), sf: spzTable({ MTL: [7, 32.1, 5], DAL: [6, 29.2, 14] }), ppo: spzTable({ MTL: [7, 3.57, 6], DAL: [6, 3.0, 17] }), ppPct: spzTable({ MTL: [7, 28.0, 5], DAL: [6, 27.8, 6] }) } },
+      away: { ytd: { gf: spzTable({ MTL: [6, 2.83, 18], DAL: [5, 2.6, 22] }), sf: spzTable({ MTL: [6, 29.7, 9], DAL: [5, 26.4, 23] }), ppo: spzTable({ MTL: [6, 3.0, 13], DAL: [5, 2.4, 28] }), ppPct: spzTable({ MTL: [6, 22.2, 12], DAL: [5, 8.3, 30] }) } },
+    },
+    defense: {
+      all: {
+        ytd: { ga: spzTable({ MTL: [13, 2.92, 15], DAL: [12, 2.5, 25] }), sa: spzTable({ MTL: [13, 31.2, 5], DAL: [12, 25.4, 29] }), ppoa: spzTable({ MTL: [13, 3.15, 11], DAL: [12, 2.5, 27] }), pkPct: spzTable({ MTL: [13, 75.6, 8], DAL: [12, 86.7, 29] }) },
+        l10: { ga: spzTable({ MTL: [10, 3.1, 12], DAL: [10, 2.6, 23] }), sa: spzTable({ MTL: [10, 30.8, 7], DAL: [10, 26.0, 26] }), ppoa: spzTable({ MTL: [10, 3.3, 8], DAL: [10, 2.7, 24] }), pkPct: spzTable({ MTL: [10, 72.7, 5], DAL: [10, 88.9, 30] }) },
+      },
+      home: { ytd: { ga: spzTable({ MTL: [7, 2.71, 19], DAL: [6, 2.17, 29] }), sa: spzTable({ MTL: [7, 30.1, 9], DAL: [6, 24.3, 31] }), ppoa: spzTable({ MTL: [7, 3.0, 14], DAL: [6, 2.33, 29] }), pkPct: spzTable({ MTL: [7, 81.0, 17], DAL: [6, 92.9, 32] }) } },
+      away: { ytd: { ga: spzTable({ MTL: [6, 3.17, 10], DAL: [5, 2.9, 15] }), sa: spzTable({ MTL: [6, 32.5, 3], DAL: [5, 26.7, 24] }), ppoa: spzTable({ MTL: [6, 3.33, 7], DAL: [5, 2.7, 21] }), pkPct: spzTable({ MTL: [6, 68.4, 3], DAL: [5, 80.0, 14] }) } },
+    },
+  },
+};

@@ -113,7 +113,7 @@ function TeamHead({ head, side, renderTeam }) {
         <small>{VENUE[head.venue] || ''}</small>
         {v?.headline ? <span className={`nhlx-edge ${v.tier === 'leaky' ? 'is-soft' : v.tier === 'tight' ? 'is-tough' : ''}`}>{v.headline}</span> : null}
       </span>
-      <span className="nhlx-prof-team-sub">{head.games ? `${head.games} stored game${head.games === 1 ? '' : 's'} ${head.seasonLabel}` : 'no stored game this season'}{head.pf ? ` · PropFinder ${head.pf.label}${head.pf.stored ? ' (stored)' : ''}` : ''}</span>
+      <span className="nhlx-prof-team-sub">{head.games ? `${head.games} stored game${head.games === 1 ? '' : 's'} ${head.seasonLabel}` : 'no stored game this season'}{head.pf ? ` · PropFinder ${head.pf.label}${head.pf.stored ? ' (stored)' : ''}` : ''}{head.shotpropz ? ` · ShotPropz${head.shotpropz.venueGames != null ? ` ${head.shotpropz.venueGames} ${VENUE[head.venue] || ''} games` : ''}${head.shotpropz.updated ? `, ${head.shotpropz.updated}` : ''}` : ''}</span>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { slateMetaPath } from '@/lib/nhl-data/matchups';
 import { STANDINGS_PATH } from '@/lib/nhl-data/league';
 import { fetchSchedule } from '@/lib/nhl-data/api';
 import { loadMoneyPuck } from '@/lib/nhl-data/moneypuck';
+import { loadShotpropz } from '@/lib/nhl-data/shotpropz';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,12 +28,13 @@ export async function GET(request) {
   if (!auth.ok) return auth.response;
   const today = todayET();
   const { current, previous, startYear } = seasons();
-  const [teamsFile, ref, lastRoster, media, curRows, prevRows, standings, lineups, positions, slate, token, refresh, mp] = await Promise.all([
+  const [teamsFile, ref, lastRoster, media, curRows, prevRows, standings, lineups, positions, slate, token, refresh, mp, spz] = await Promise.all([
     readJson(TEAMS_PATH), loadPlayers(), readJson('data/meta/last-roster-update.json'), mediaTodo().catch(() => null),
     readJson(rowsPath(current)), readJson(rowsPath(previous)), readJson(STANDINGS_PATH),
     readJson(lineupsPath(today)), readJson(positionsPath(today)), readJson(slateMetaPath(today)), syncTokenInfo(),
     readJson('data/meta/last-refresh.json'),
     loadMoneyPuck().catch(() => ({ teams: null, games: null })),
+    loadShotpropz().catch(() => null),
   ]);
 
   // 1. Rosters
@@ -85,6 +87,12 @@ export async function GET(request) {
       done: !!mp.teams?.updatedAt && Date.now() - Date.parse(mp.teams.updatedAt) < 3 * DAY && (mp.teams.teams || 0) >= 30,
       updatedAt: mp.teams?.updatedAt || null, teams: mp.teams?.teams || 0, year: mp.teams?.year || null,
       splits: mp.games ? { updatedAt: mp.games.updatedAt, rows: mp.games.rows, failed: mp.games.failed || [] } : null,
+    },
+    shotpropz: {
+      // The team boards behind the matchup profile's power play / penalty kill rows and venue splits; pulled by the morning refresh.
+      done: !!spz?.updatedAt && Date.now() - Date.parse(spz.updatedAt) < 3 * DAY && (spz.boards?.offense?.all?.ytd?.gf?.count || 0) >= 30,
+      updatedAt: spz?.updatedAt || null, pageUpdated: spz?.pageUpdated || null, year: spz?.year || null,
+      teams: spz?.boards?.offense?.all?.ytd?.gf?.count || 0, pages: spz?.pages || 0, failed: spz?.failed || [], optional: true,
     },
     today: {
       done: gamesToday === 0 || (withLineup === gamesToday && withLineup > 0),

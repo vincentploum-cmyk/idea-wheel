@@ -8,12 +8,12 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MatchupProfile, LAYOUTS } from '../components/nhl/MatchupProfile';
 import { matchupProfile } from '../lib/nhl-data/matchup-profile';
-import { game, moneypuck, ratios, profiles, rates, pfTeams, h2h } from './fixtures/matchup-profile-mtl-dal';
+import { game, moneypuck, ratios, profiles, rates, pfTeams, h2h, shotpropz } from './fixtures/matchup-profile-mtl-dal';
 
 // The card rendered the way the server first paints it, in each layout, from the MTL @ DAL fixture.
 // With MOCK_OUT=<dir> each layout is also written as a standalone page (the site's CSS and fonts
 // inlined, the dark theme) for the mock-up screenshots: tools/mock/screenshot-profile.mjs.
-const profile = matchupProfile({ game, moneypuck, ratios, profiles, rates, pfTeams, h2h });
+const profile = matchupProfile({ game, moneypuck, ratios, profiles, rates, pfTeams, h2h, shotpropz });
 const mark = (abbr) => React.createElement('b', { className: 'nhlx-prof-mark' }, abbr);
 const render = (layout, showTabs = true) => renderToStaticMarkup(React.createElement(MatchupProfile, { profile, layout, renderTeam: mark, showTabs }));
 
@@ -25,7 +25,8 @@ describe('MatchupProfile renders', () => {
     expect(html).toContain('Average scoring · 6.0 goals');
     for (const g of ['Attack', 'Defense tonight', 'The game']) expect(html).toContain(`<div class="nhlx-prof-group">${g}</div>`);
     expect(html).toContain('Leaky defense away'); expect(html).toContain('Tight defense at home');
-    expect(html).toContain('10 stored games 2026-27 · PropFinder 2026');
+    expect(html).toContain('10 stored games 2026-27 · PropFinder 2026 · ShotPropz 6 away games, Oct 30, 2026');
+    expect(html).toContain('>Power play</div>'); expect(html).toContain('>Penalty kill</div>');
     expect(html).toMatch(/nhlx-prof-word is-soft[^>]*>Strong</);
     expect(html).toContain('5th of 32 · 31.2 shots a game · over 10 stored games');
     expect(html).toMatch(/nhlx-prof-word is-tough is-very[^>]*>Elite</);
@@ -43,10 +44,12 @@ describe('MatchupProfile renders', () => {
     expect(html).toContain('<small>Rink</small><b>31.2</b><i>#5</i>');
     expect(html).toContain('<small>PF</small><b>25.1</b><i>#30</i>');
     expect(html).toContain('<small>Rink home</small><b>24.2</b><i>#31</i>');
+    expect(html).toContain('<small>SPZ home</small><b>24.3</b><i>#31</i>');
+    expect(html).toContain('<small>PK%</small><b>92.9</b><i>#32</i>');
     expect(html).toMatch(/nhlx-prof-word is-tough is-very is-small[^>]*>Elite</);
     // No rank line in the cell; it rides on the hover.
     expect(html).not.toContain('5th of 32 · 31.2 shots a game · over 10 stored games</span>');
-    expect(html).toContain('title="5th of 32 · 31.2 shots a game · over 10 stored games · PropFinder 31.0 (6th) · MoneyPuck 30.1 per 60 (7th)"');
+    expect(html).toContain('title="5th of 32 · 31.2 shots a game · over 10 stored games · PropFinder 31.0 (6th) · MoneyPuck 30.1 per 60 (7th) · ShotPropz on the road 29.7 (9th of 32, 6 games) · last 10 32.4 (4th)"');
   });
   test('the tape layout: the figure first, the label in the middle, the away cell mirrored', () => {
     const html = render('tape');
