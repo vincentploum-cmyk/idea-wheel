@@ -5,7 +5,8 @@ import { groupStandings, mapStandingRow, shotLeaders } from '../lib/nhl-data/lea
 import { scoreSkater, h2hByOpponent, h2hHot, h2hShotsHot, sidePlays } from '../lib/nhl-data/slate';
 import { lineupRows } from '../lib/nhl-data/lineups';
 import { rowObj } from '../lib/nhl-data/ingest';
-import { PREVIEW_MD } from './fixtures/nhl';
+import { PREVIEW_MD, PREVIEW_MD_11_7 } from './fixtures/nhl';
+import { dressedText } from '../components/nhl/Rink';
 
 describe('lineup positions', () => {
   test('lineup rows become LW/C/RW by slot, D by pair, G', () => {
@@ -19,6 +20,37 @@ describe('lineup positions', () => {
     expect(teams.OTT['tim stutzle'].pos).toBe('C');
     // Scratches and status text never become players.
     expect(teams.ANA['frank vatrano']).toBeUndefined();
+  });
+
+  test('an 11-forward, 7-defenseman night: a two-name row above the pairs is a short forward line, the lone name before the goalies the seventh defenseman', () => {
+    // TBL at NSH, 2026-10-31: read as pairs, Stamkos and O'Reilly were the first pair, every real pair slid down one and Hague was in goal.
+    const teams = parseLineupRows(lineupRows(PREVIEW_MD_11_7));
+    expect(teams.NSH['steven stamkos']).toMatchObject({ pos: 'LW', line: 1 });
+    expect(teams.NSH['ryan oreilly']).toMatchObject({ pos: 'C', line: 1 });
+    expect(Object.values(teams.NSH).find((p) => p.pos === 'RW' && p.line === 1)).toBeUndefined();   // the slot the rink leaves empty
+    expect(teams.NSH['filip forsberg']).toMatchObject({ pos: 'LW', line: 2 });
+    expect(teams.NSH['mavrik bourque']).toMatchObject({ pos: 'RW', line: 2 });
+    expect(teams.NSH['adam edstrom']).toMatchObject({ pos: 'RW', line: 4 });
+    expect(teams.NSH['roman josi']).toMatchObject({ pos: 'D', line: 1 });
+    expect(teams.NSH['jayden struble']).toMatchObject({ pos: 'D', line: 3 });
+    expect(teams.NSH['nicolas hague']).toMatchObject({ pos: 'D', line: null });
+    expect(teams.NSH['juuse saros']).toMatchObject({ pos: 'G', line: 1 });
+    expect(teams.NSH['justus annunen']).toMatchObject({ pos: 'G', line: 2 });
+    // Tampa Bay's short line is its fourth.
+    expect(teams.TBL['jeffrey viel']).toMatchObject({ pos: 'LW', line: 4 });
+    expect(teams.TBL['conor geekie']).toMatchObject({ pos: 'C', line: 4 });
+    expect(teams.TBL['jj moser']).toMatchObject({ pos: 'D', line: 1 });
+    expect(teams.TBL['emil lilleberg']).toMatchObject({ pos: 'D', line: 3 });
+    expect(teams.TBL['charle edouard dastous']).toMatchObject({ pos: 'D', line: null });
+    expect(teams.TBL['andrei vasilevskiy']).toMatchObject({ pos: 'G', line: 1 });
+    expect(Object.values(teams.TBL).filter((p) => p.pos === 'D')).toHaveLength(7);
+    expect(Object.values(teams.TBL).filter((p) => ['LW', 'C', 'RW'].includes(p.pos))).toHaveLength(11);
+    // The rink head says why a slot is empty.
+    const skaters = Object.values(teams.NSH).filter((p) => p.pos !== 'G').map((p) => ({ ...p, inLineup: true }));
+    expect(dressedText({ skaters, source: 'lineup' })).toBe('11 forwards and 7 defensemen dressed: a forward slot stays empty on the ice');
+    const twelve = Object.values(parseLineupRows(lineupRows(PREVIEW_MD)).ANA).filter((p) => p.pos !== 'G').map((p) => ({ ...p, inLineup: true }));
+    expect(dressedText({ skaters: twelve, source: 'lineup' })).toBeNull();   // a fixture of a few names: not an 11-forward night
+    expect(dressedText({ skaters: [], source: 'roster' })).toBeNull();
   });
 
   test('a stored skater takes the snapshot position; a newer snapshot replaces it or hands back the box code', () => {

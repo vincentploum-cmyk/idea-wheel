@@ -1,5 +1,7 @@
 import { describe, expect, test } from '@jest/globals';
-import { lineupRowsFromSnapshot } from '../lib/nhl-data/positions';
+import { lineupRowsFromSnapshot, SHORT_LINE_FILL } from '../lib/nhl-data/positions';
+import { parseLineups } from '../components/nhl/model-core';
+import * as XLSX from 'xlsx';
 import { coveredTeams, autoRunKey, attemptBlocks } from '../lib/nhl-data/autorun';
 
 const team = {
@@ -19,6 +21,27 @@ describe('automatic model run inputs', () => {
     expect(rows[2]).toBe('Adam Fox -- Vladislav Gavrikov');
     expect(rows).toHaveLength(3);
     expect(lineupRowsFromSnapshot('NYR', { players: {} })).toEqual([]);
+  });
+  test('an 11-forward night: the two-forward line goes out with a placeholder third name, so the model reads it as a line and keeps both forwards', () => {
+    const nsh = { source: 'lineup', players: {
+      's': { id: 1, name: 'Steven Stamkos', pos: 'LW', line: 1 }, 'o': { id: 2, name: "Ryan O'Reilly", pos: 'C', line: 1 },
+      'f': { id: 3, name: 'Filip Forsberg', pos: 'LW', line: 2 }, 'k': { id: 4, name: 'Alexander Kerfoot', pos: 'C', line: 2 }, 'b': { id: 5, name: 'Mavrik Bourque', pos: 'RW', line: 2 },
+      'j': { id: 6, name: 'Roman Josi', pos: 'D', line: 1 }, 'w': { id: 7, name: 'Adam Wilsby', pos: 'D', line: 1 },
+      'h': { id: 8, name: 'Nicolas Hague', pos: 'D', line: null },
+    } };
+    const rows = lineupRowsFromSnapshot('NSH', nsh);
+    expect(rows[1]).toBe(`Steven Stamkos -- Ryan O'Reilly -- ${SHORT_LINE_FILL}`);
+    expect(rows[2]).toBe('Filip Forsberg -- Alexander Kerfoot -- Mavrik Bourque');
+    expect(rows[3]).toBe('Roman Josi -- Adam Wilsby');
+    expect(rows).toHaveLength(4);   // the seventh defenseman has no pair row
+    // Through the model's own parser (untouched): a forward line at line 1, the pair at pair 1, nothing for the placeholder.
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows.map((r) => [r])), 'Lineups');
+    const parsed = parseLineups(XLSX.write(wb, { type: 'binary', bookType: 'xlsx' }));
+    const of = (name) => parsed[Object.keys(parsed).find((k) => k.toLowerCase().includes(name))];
+    expect(of('stamkos')).toMatchObject({ pos: 'LW', line: 1 });
+    expect(of("o'reilly") || of('oreilly')).toMatchObject({ pos: 'C', line: 1 });
+    expect(of('josi')).toMatchObject({ pos: 'D', line: 1 });
+    expect(Object.values(parsed).filter((p) => p.pos === 'D')).toHaveLength(2);
   });
   test('only teams with real lines count, and the key changes when lines or files change', () => {
     const snap = { games: { 1: { away: 'NYR', home: 'FLA', teams: { NYR: team, FLA: { source: 'roster', players: {} } } } } };

@@ -40,6 +40,20 @@ function sourceText(side) {
 
 /** " · 3 slots carried from the last known lineup (2026-09-30)". */
 const carriedText = (side) => (side.carried ? ` · ${side.carried.count} slot${side.carried.count === 1 ? '' : 's'} carried from the last known lineup${side.carried.date ? ` (${side.carried.date})` : ''}` : '');
+/**
+ * How many forwards and defensemen the lineup dresses when it is not the usual twelve and six: an 11-forward, 7-defenseman
+ * night leaves a forward slot empty on the ice (TBL at NSH, 2026-10-31: "Stamkos -- O'Reilly" on top, no RW1), so the head
+ * says why. Null for a twelve-and-six lineup or a side without lines.
+ */
+export function dressedText(side) {
+  const inL = (side?.skaters || []).filter((p) => p.inLineup && p.line);
+  if (!inL.length) return null;
+  const f = inL.filter((p) => p.pos !== 'D').length;
+  const d = inL.filter((p) => p.pos === 'D').length + (side.skaters || []).filter((p) => p.inLineup && !p.line && p.pos === 'D' && !p.carried && side.source !== 'roster').length;
+  if (f === 12 && d === 6) return null;
+  if (f < 12 && f >= 9) return `${f} forwards and ${d} defensemen dressed: a forward slot stays empty on the ice`;
+  return null;
+}
 
 /** League rank (1 = most permissive) → 'soft' | 'mid' | 'tough' | 'none'. */
 export function zoneTone(rank, teams) {
@@ -320,6 +334,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
           <b><TeamLink abbr={side.team}>{side.team}</TeamLink> <small>{side.venue === 'H' ? 'home' : 'away'}{score ? ` · final ${score[0]}–${score[1]} vs ${side.opp} · chips show the game's shots, goals, assists` : ' · attacking upwards'}</small></b>
           {/* The chips' source and the lines' source stay in the title attribute: the head shows the team and the softest line. */}
           <SoftestLine side={side} metric={metric} />
+          {dressedText(side) ? <small className="nhlx-rk-line" title="NHL.com's projected lineup or the beat writers' lines list a two-forward line: the third spot rotates through the game, so no skater sits in it on the ice">{dressedText(side)}</small> : null}
         </div>
       </div>
       {side.propfinder ? <PropfinderDefense abbr={side.opp} data={side.propfinder} posFilter={posFilter} tabKey={pfTab?.key ?? null} onTabChange={setPfKey} drivesRink={fromPf} /> : null}

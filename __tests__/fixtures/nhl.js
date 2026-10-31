@@ -76,3 +76,67 @@ Linus Ullmark
 **Status report**
 
 Carlsson is likely to play. [Read more](https://www.nhl.com/news/x)`;
+
+// TBL at NSH, 2026-10-31, as NHL.com published it: both teams dress 11 forwards and 7 defensemen. Nashville's short
+// line is listed first ("Stamkos -- O'Reilly"), Tampa Bay's fourth ("Viel -- Geekie"); the seventh defenseman is a single
+// name before the goalies (Hague, D'Astous).
+export const PREVIEW_MD_11_7 = `## **LIGHTNING (8-3-1) at PREDATORS (4-4-5)**
+
+**2 p.m. ET; The Spot, SCRIPPS**
+
+**Lightning projected lineup**
+
+Jake Guentzel -- Brayden Point -- Nikita Kucherov
+
+Brandon Hagel -- Anthony Cirelli -- Pontus Holmberg
+
+Ilya Mikheyev -- Dominic James -- Gage Goncalves
+
+Jeffrey Viel -- Conor Geekie
+
+J.J. Moser -- John Carlson
+
+Ryan McDonagh -- Erik Cernak
+
+Victor Hedman -- Emil Lilleberg
+
+Charle-Edouard D'Astous
+
+Andrei Vasilevskiy
+
+Dennis Hildeby
+
+**Scratched:** Max Crozier, Scott Sabourin
+
+**Injured:** Zemgus Girgensons (lower body), Yanni Gourde (hip)
+
+**Predators projected lineup**
+
+Steven Stamkos -- Ryan O’Reilly
+
+Filip Forsberg -- Alexander Kerfoot -- Mavrik Bourque
+
+Nils Hoglander -- Matthew Wood -- Jonathan Marchessault
+
+Ross Colton -- Jack Drury -- Adam Edstrom
+
+Roman Josi -- Adam Wilsby
+
+Brady Skjei -- Nick Perbix
+
+Daemon Hunt -- Jayden Struble
+
+Nicolas Hague
+
+Juuse Saros
+
+Justus Annunen
+
+**Scratched:** Ilya Lyubushkin, Vitali Pinchuk, Reid Schaefer
+
+**Injured:** William Trudeau (upper body)
+
+**Status report**
+
+Each team dressed 11 forwards and seven defensemen in its last game Thursday and could do so again.
+`;

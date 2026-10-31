@@ -1409,7 +1409,16 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   shared surname is the player the tweet did not place elsewhere; `applyPositions` keeps the box score's
   forward / defense group over a lineup slot that contradicts it) for every slate team; a
   game-day tweet beats the NHL.com preview, otherwise the preview, then an older tweet, then
-  the roster; "game-day" is decided by timestamp (tweet id vs the preview's updated time), and a tweet
+  the roster; **the preview parser reads an 11-forward, 7-defenseman night** (`parseLineupRows` in `positions.js`;
+  TBL at NSH, 2026-10-31: NHL.com listed "Stamkos -- O'Reilly" on top of Nashville's lines and "Viel -- Geekie" under
+  Tampa Bay's third, and read as pairs they pushed every real pair down a slot and made Hague a goalie): a two-name row is a
+  pair only when it is one of the team's last three two-name rows, an earlier one is a short forward line; of the single
+  names after the lines the last two are the goalies, any before them a seventh defenseman (D, no pair, placed under the
+  rink); the rink head says "11 forwards and 7 defensemen dressed: a forward slot stays empty on the ice" (`dressedText` in
+  `Rink.jsx`), since the gap on the ice is the lineup's, not a missing read; and the model's lineup rows carry the short
+  line with a placeholder third name (`SHORT_LINE_FILL` in `lineupRowsFromSnapshot`: the model's parser, untouched, takes a
+  two-name row as a pair and drops every skater its lineup rows lack, so until then the short line's two forwards were out of
+  the auto run); "game-day" is decided by timestamp (tweet id vs the preview's updated time), and a tweet
   from the warm-up window (`GDT_FINAL_WORD_MIN`, 90 minutes before puck drop, or after it) beats the
   preview whatever its updated time. A tweet
   that only confirms the lines ("Same lineup, Swayman in net", "no changes", `confirmsSameLines`)
