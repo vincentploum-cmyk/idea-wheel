@@ -144,3 +144,19 @@ moves a team's shots and goals beyond its own volume and the opponent's allowed 
 own goals × allowed, the fitted team layer, Σ of the skaters' study λ goals, the blends), per team and per game,
 fitted on 2025-26 and scored unchanged on 2026-27. The JSON at the end is what `lib/nhl-data/special-teams.js`
 (`ST`) and `lib/nhl-data/score.js` (`SCORE`) carry. Needs numpy, pandas and statsmodels.
+
+## NHL: the by-line read (`nhl_lines.py`)
+
+Vincent, 2026-10-31: do the slot badges on the rink (the opponent's rank against the LW1, the C2, the D1 …) help —
+was the LW1 the top shooter? Every skater-game replayed against the opponent's by-slot table as it stood that
+morning (this season's games alone, a cell from three skater-games, ranked 1 = allows the most, the softest
+slot the best rank) and graded; the slot is the ice-time rank inside the position that night (the public box
+score carries no lines), the positions the relabelled ones. Report: `docs/audits/2026-10-31-nhl-lines.md`.
+
+```bash
+python3 -I tools/audit/nhl_lines.py --games .nhl-data/predictors --dir games-pos --out .nhl-data/audit/out/nhl-lines.md
+```
+
+Four sections: the softest slot against the top shooter (and the slot's base rate, and the highest own rate as the
+yardstick); the lift by third of the slot table beside the position table; the slot cell on top of his own rate and
+the position cell (a Poisson fit, 2025-26 fitted, 2026-27 scored); the odd / even persistence of the cells.
