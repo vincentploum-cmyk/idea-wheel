@@ -1128,8 +1128,13 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   table, `slotBoard(defenseBySlot(rows, { season }))` at both venues, read once a slate in `buildSlate` and carried per
   side as `side.lines = linesOf(boards, opp)` ({ sog, g } → { gp, cells, softest, league }, `linesOf` in
   `defense-board.js`), green = top third, red = bottom third, grey = no record (the hover: the figure, the rank, the
-  league's mean, the skater-games) — and the rink head names the opponent's softest line with its rank and figure and
-  this side's skater at that slot (`SoftestLine`, click to his card); colour only, no number moves — and checked the same
+  league's mean, the skater-games) — and the rink head names the slot where the opponent ranks highest against the league, as a rank
+  ("PIT ranks #7 of 32 against the C3 · 1.8 shots a game"), **the slot it gives the most to beside it** when that is another
+  slot ("· most shots to the C1, 2.9"; `most` on each `slotBoard` team and on `linesOf`'s read; Vincent, 2026-10-31: PIT
+  gave its C1 2.9 shots a game, #3 of 32 on the public box scores, and the head said "leaks most to the C3" on a #7 rank at
+  1.8 — every team's first line shoots the most, so the rank is the read and the raw leader is named, never called the
+  leak; `__tests__/nhl-rink-line.test.jsx`) and this side's skater at the softest slot (`SoftestLine`, click to his card);
+  colour only, no number moves — and checked the same
   day on both seasons' box scores (`docs/audits/2026-10-31-nhl-lines.md`, under Audits): the softest slot's skater was the
   top shooter at the slot's base rate (9.4%), the slot cell adds nothing to the position table, so the badges stay colour;
   chips carrying the latest saved model run's λ shots / goals for the slate date from
