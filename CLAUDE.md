@@ -1418,6 +1418,18 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   Slots a capture leaves empty (no lineup yet, or a partial one) are filled from the team's last
   known lineup (`data/lineups/last/<ABBR>.json`, written from each team's own capture) with
   players still on the roster, marked `carried`; the slate does the same for a game with no snapshot.
+  **Each rink says where its lines came from** (`LineupSource` in `Rink.jsx`, a pill under the team; Vincent,
+  2026-10-31: "per rink whether the lineup was updated through GameDayTweets; now it's guessing"): `lineupRead` in
+  `lib/nhl-data/lineup-read.js` (pure, client-safe; `lineup` on every slate side from `buildSlate`, the rink reading it
+  itself from `startTimeUTC` when the payload lacks it) turns the snapshot's source and meta into a verdict — the
+  lineup audit's rule, `lineupVerdict`, which `lineup-audit.js` now imports —: green "GameDayTweets @handle · 6:42 PM
+  ET · 18 min before puck drop" for a tweet from the warm-up window (`GDT_FINAL_WORD_MIN` = 90 before puck drop) or the
+  game (`TWEET_AFTER_MAX_MIN` = 4 h after it); amber "GameDayTweets @handle · 2:10 PM ET · 4 h 50 before puck drop ·
+  projected" for an earlier tweet and "NHL.com projected · updated 5:30 PM ET" for the preview (an older tweet named
+  beside it); red "A guess · PropFinder's depth chart / the roster, by projected shots / the last known lineup (date)"
+  until a tweet or preview arrives; carried slots appended; the pill links the tweet, the hover spells the read out
+  (a "same lineup" confirmation or a line-change tweet named: the snapshot meta carries `gdtConfirmed` / `gdtChanged`).
+  `__tests__/nhl-lineup-read.test.js`.
   `nhl-lineups.yml` re-reads lineups (`only=lineups&due=150` on a cron tick) on the rule: from 60 minutes
   before puck drop, every 15 minutes until the game's lineups are found (`linesFound` in
   `lib/nhl-data/lines-chain.js`: both teams have a tweet from the 45 minutes before the start, the warm-up window, so an afternoon
