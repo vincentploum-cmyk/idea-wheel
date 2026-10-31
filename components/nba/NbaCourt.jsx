@@ -211,7 +211,7 @@ function barText(read, height, metric) {
   const book = read.book ? ` · the book's o${read.book.line}${read.exact ? '' : ' (the nearest rung above)'} at ${fmtOdds(read.book.odds)}${read.edge != null ? `, edge ${read.edge >= 0 ? '+' : ''}${Math.round(read.edge * 100)}` : ''}` : ' · no price at this line';
   const cleared = read.cleared ? ` · cleared it in ${read.cleared.n} of his last ${read.cleared.of}` : '';
   const got = read.got === undefined ? '' : read.got == null ? ' · did not play' : ` · got ${read.got}: ${read.hit ? 'cleared' : 'short'}`;
-  return `At the bar, ${height}+ ${label} (o${read.line}): ${pct(read.p)} to clear it, the shuffle's read (fair ${fmtOdds(read.fair)})${asStated(read.raw)}${book}${cleared}${got}`;
+  return `At the bar, ${height}+ ${label} (o${read.line}): ${pct(read.p)} to clear it, ${read.play ? "the board's play on the book's line (the strip's and the list's figure)" : "the shuffle's read"} (fair ${fmtOdds(read.fair)})${asStated(read.raw)}${book}${cleared}${got}`;
 }
 
 /**

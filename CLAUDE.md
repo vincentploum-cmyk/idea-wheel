@@ -517,7 +517,11 @@ config and keeps its own markets, teams, feeds and slate key:
   read once a stat when a court first asks for it, every court sharing it), every chip carrying his chance to clear the
   bar from his shuffle row (`readAt` in `lib/picks/shuffle.js`, so the court's figure is the Shuffle tab's; the book's price
   beside it when a book prices that exact line; "out" or "no logs" for a player the shuffle has no row for; once the game is
-  final his figure against the bar's line), the bar's note counting the side's players at 50% or better. **Every chip
+  final his figure against the bar's line), the bar's note counting the side's players at 50% or better. **At the book's
+  main line the chip prints the board's play chance** (`mainAt` in `shuffle.js`: `pAt` / `readAt` return `main.p` on the
+  blend read when the height's line is the player's main line, `play: true` on the read, the rung's edge on it too; the
+  Shuffle tab's rows the same; Vincent, 2026-10-31, "conflict": the strip said Schröder o2.5 rebounds 72%, the chip 3+
+  80% on the same line — two reads of one line, the play's `chanceOf` and the ladder's rung; one number now). **Every chip
   shows his four projections** (`CHIP_STATS`: PTS · REB · AST · 3PM as P · R · A · 3P, the picked stat appended when it is
   steals or blocks, the picked one marked; `ranges[stat].exp` through `boardRead`; Vincent: "by default I need to see per
   player the projected number for points / assists / threes / rebounds"), so the chips flow in a column per zone
