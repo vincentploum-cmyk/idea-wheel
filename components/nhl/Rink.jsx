@@ -183,12 +183,12 @@ function ModelPlays({ side, actualFor }) {
   const unit = (pl) => (pl.stat === 'g' ? 'G' : 'SOG');
   const outcome = (pl) => (pl.hit == null ? (pl.dnp ? ' · did not play' : '') : ` · ${pl.hit ? 'HIT' : 'MISS'}: ${pl.got} ${unit(pl)}`);
   return (
-    <div className="nhlx-plays" title="The model's plays for this team, by the Best bets boards' rule: shots plays need the gate open and 4+ SOG at 40% or 3+ SOG at 60%; goal plays need 1+ G at 18%. Two of each at most; the pill is the play tier from the attack score.">
+    <div className="nhlx-plays" title={`This team's plays by the Best bets boards' rule — a shots play needs the gate open and 4+ SOG at 40% or 3+ SOG at 60%, a goal play 1+ G at 18% — ${list.some((pl) => pl.board) ? 'on the chances as Best bets prints them: the board’s read over the saved run (the goals the study’s read, every chance calibrated to what such calls have landed this season), the run’s own on each play’s hover' : 'on the saved run’s own chances'}. Two of each at most; the pill is the play tier from the attack score.`}>
       <div className="nhlx-plays-head"><b>Model’s plays · {side.team} vs {side.opp}</b><small className="nhlx-auto-meta">{note}</small></div>
       {list.length > 0 && (
         <div className="nhlx-plays-row">
           {graded.map((pl) => (
-            <button key={`${pl.kind}-${pl.name}`} type="button" className={`nhlx-play${pl.id ? '' : ' is-static'}${pl.hit == null ? (pl.dnp ? ' is-dnp' : '') : pl.hit ? ' is-hit' : ' is-miss'}`} onClick={() => pl.id && open({ id: pl.id, opp: side.opp, venue: side.venue, pos: pl.pos, line: pl.line })} title={`${pl.name} · ${pl.market} ${Math.round(pl.prob * 100)}% · play score ${pl.attack ?? '—'} (${pl.tier})${outcome(pl)}`}>
+            <button key={`${pl.kind}-${pl.name}`} type="button" className={`nhlx-play${pl.id ? '' : ' is-static'}${pl.hit == null ? (pl.dnp ? ' is-dnp' : '') : pl.hit ? ' is-hit' : ' is-miss'}`} onClick={() => pl.id && open({ id: pl.id, opp: side.opp, venue: side.venue, pos: pl.pos, line: pl.line })} title={`${pl.name} · ${pl.market} ${Math.round(pl.prob * 100)}%${pl.runProb != null && Math.round(pl.runProb * 100) !== Math.round(pl.prob * 100) ? ` (the run as stated: ${Math.round(pl.runProb * 100)}%; shown as Best bets prints it)` : ''} · play score ${pl.attack ?? '—'} (${pl.tier})${outcome(pl)}`}>
               <Headshot id={pl.id} size={26} />
               <span className="nhlx-play-meta"><b>{shortName(pl.name)}<Flags c={pl} stat={pl.stat} /></b><span>{pl.market} <em>{Math.round(pl.prob * 100)}%</em>{pl.hit != null ? <> · <strong className="nhlx-play-got">{pl.got} {unit(pl)}</strong></> : pl.dnp ? <> · DNP</> : null}</span></span>
               <span className="nhlx-edge">{pl.tier}</span>
@@ -220,7 +220,8 @@ function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false, 
   const m = p.model;
   // Probability as "42%" (not `pct`, which converts rink feet to % and places the chip below).
   const prob = (v) => (v == null ? null : `${Math.round(v * 100)}%`);
-  const modelText = m ? ` · model: ${num(m.sog)} SOG, ${num(m.g, 2)} G${m.p3s != null ? `, 3+ SOG ${prob(m.p3s)}` : ''}${m.p1g != null ? `, 1+ G ${prob(m.p1g)}` : ''}${m.gateOpen === false ? ' (gate closed)' : ''}${m.fire ? ' · ON FIRE (1+ point ≥ 50%, 2.0+ iSCF/G, 16+ min)' : ''}` : '';
+  // The figures as Best bets prints them when the board's read rides on the chip (`m.run` = the run as stated, lib/nhl-data/board-reads.js).
+  const modelText = m ? ` · ${m.run ? 'board' : 'model'}: ${num(m.sog)} SOG, ${num(m.g, 2)} G${m.p3s != null ? `, 3+ SOG ${prob(m.p3s)}` : ''}${m.p1g != null ? `, 1+ G ${prob(m.p1g)}` : ''}${m.gateOpen === false ? ' (gate closed)' : ''}${m.fire ? ' · ON FIRE (1+ point ≥ 50%, 2.0+ iSCF/G, 16+ min)' : ''}${m.run ? ` · the run as stated: ${num(m.run.sog)} SOG, ${num(m.run.g, 2)} G${m.run.p3s != null ? `, 3+ SOG ${prob(m.run.p3s)}` : ''}${m.run.p1g != null ? `, 1+ G ${prob(m.run.p1g)}` : ''}` : ''}` : '';
   // Head to head: his stored games against this opponent; the mark when he scores more than a goal a game on them.
   const h2hText = p.h2h ? ` · vs ${p.opp}: ${p.h2h.g} G, ${p.h2h.sog} SOG in ${p.h2h.gp} GP${p.h2h.hot ? ' (scores on them)' : ''}${p.h2h.shotsHot ? ' (fires at them)' : ''}` : '';
   // The h2h mark follows the rink's metric: scorers when the ice shows goals, shooters when it shows shots.
@@ -287,19 +288,27 @@ function BandLabel({ pos, d, opp, view, windowText = null, teamCount, x, y, metr
 
 /** One side of a game: `side` is an entry of a slate game's `sides`. */
 /**
- * The Defense tab's softest line, in the rink head: the slot where tonight's opponent ranks highest against the league
- * for the rink's metric, with its rank and figure, and this side's skater at that slot (Vincent, 2026-10-31).
+ * The by-line read in the rink head: the slot tonight's opponent gives the most shots (or goals) to per skater a game,
+ * with its rank against the league at that slot and this side's skater there tonight (Vincent, 2026-10-31: the rank-based
+ * "softest line" named a C3 at 1.8 shots on a #7 rank while the C1 took 2.9 a game, and the two reads side by side
+ * confused; "some teams allow more shots against lines 2 or 3" — 6 of 32 teams led at a second-line slot on the
+ * season's box scores — so the raw leader is the read and the rank gives it a scale). The per-slot ranks stay on the
+ * chips' badges; colour only, no number moves.
  */
 function SoftestLine({ side, metric = 'sog' }) {
   const open = usePlayerCard();
-  const soft = side.lines?.[metric]?.softest || null;
-  if (!soft) return null;
+  const lines = side.lines?.[metric] || null;
+  const most = lines?.most || lines?.softest || null;
+  if (!most) return null;
   const unit = metric === 'g' ? 'goals' : 'shots';
-  const facing = side.skaters.find((p) => p.inLineup && `${p.pos}${p.line || ''}` === soft.slot) || null;
-  const tone = zoneTone(soft.rank, soft.of);
+  const dp = metric === 'g' ? 2 : 1;
+  const facing = side.skaters.find((p) => p.inLineup && `${p.pos}${p.line || ''}` === most.slot) || null;
+  const tone = zoneTone(most.rank, most.of);
+  const league = lines?.league?.[most.slot];
+  const title = `${side.opp} gives up ${num(most.value, dp)} ${unit} a game to the skater at ${most.slot}, more than to any other slot, over ${most.n} skater-games this season at both venues; #${most.rank} of ${most.of} teams at that slot${league != null ? ` (the league gives ${num(league, dp)})` : ''}. A cell this early is a dozen skater-games and moves with every night, so it says where the ${unit} went, not where they will go; the chips' slot badges carry every slot's rank.`;
   return (
-    <small className="nhlx-rk-line" title={`${side.opp} gives up ${num(soft.value, metric === 'g' ? 2 : 1)} ${unit} a game to the ${soft.slot}, #${soft.rank} of ${soft.of}${soft.ratio != null ? `, ${Math.round(soft.ratio * 100)}% of the league's` : ''}, over ${soft.n} skater-games this season at both venues: the Defense tab's softest line (the slot where ${side.opp} ranks highest against the league); the chips' slot badges carry every slot's rank`}>
-      {side.opp} leaks most to the <i className={`nhlx-rk-slot is-${tone}`}>{soft.slot}</i> <b>#{soft.rank}</b> of {soft.of} · {num(soft.value, metric === 'g' ? 2 : 1)} {unit} a game
+    <small className="nhlx-rk-line" title={title}>
+      {side.opp} gives the most {unit} to the <i className={`nhlx-rk-slot is-${tone}`}>{most.slot}</i> · {num(most.value, dp)} a game · <b>#{most.rank}</b> of {most.of} at that slot
       {facing ? <> · tonight <button type="button" className={`nhlx-rk-facing${facing.id ? '' : ' is-static'}`} onClick={() => facing.id && open({ id: facing.id, opp: facing.opp, venue: facing.venue, pos: facing.pos, line: facing.line })}>{shortName(facing.name)}</button></> : null}
     </small>
   );
@@ -419,7 +428,7 @@ export function RinkLegend({ metric = 'sog' }) {
       <span>on each player: the model’s projected SOG and goals from the latest saved run for this slate (3+ SOG and 1+ G odds in the tooltip), or a matchup read when no run exists; once the game is final, the actual shots, goals and assists with the model’s number after “m”; click for the player card</span>
       <span>🔥 on fire, by the model’s rule: 1+ point at 50% or better, 2.0+ scoring chances per game, 16+ minutes</span>
       <span><i className="nhlx-rk-lines-pill is-ok is-legend">GameDayTweets</i> under the team: where the lines came from — green, the beat writers’ tweet from the warm-up window (90 minutes before puck drop) or the game; amber, an earlier tweet (projected lines) or NHL.com’s projected lineup; red, a guess (PropFinder’s depth chart, the roster or the last known lineup) until a tweet or preview arrives; hover for the time and the link</span>
-      <span><i className="nhlx-rk-slot is-soft is-legend">LW1</i> his line slot tonight, tinted by the {word} the opponent gives up to that slot per skater a game this season (the Defense tab’s by-line table, both venues; green = top third of the league, red = bottom third; grey = no record yet); the rink head names the opponent’s softest line and who sits there tonight</span>
+      <span><i className="nhlx-rk-slot is-soft is-legend">LW1</i> his line slot tonight, tinted by the {word} the opponent gives up to that slot per skater a game this season (the Defense tab’s by-line table, both venues; green = top third of the league, red = bottom third; grey = no record yet); the rink head names the slot the opponent gives the most to, with its rank against the league there, and who sits at that slot tonight</span>
       <span><i className="nhlx-pk-flag is-hot is-legend">{ICON.hot}</i> hot going in ({metric === 'g' ? '3+ goals in his last five' : 'his last five at 1.4× his shot rate or more'}) · <i className="nhlx-pk-flag is-cold is-legend">{ICON.cold}</i> cold ({metric === 'g' ? 'no goal in ten games when his rate owed him one' : 'his last five at 0.7× or under'}) ; on the plays above the rink and in the skater table, <i className="nhlx-pk-flag is-soft is-legend">{ICON.soft}</i> marks the opponent in the soft third of the league at his position for {word} on PropFinder’s table above the rink, the tab it opens on (on the ice the band under a chip already shows it); colour only, the numbers already carry his rate</span>
       {metric === 'g'
         ? <span><i className="nhlx-rk-h2h is-legend">h2h</i> scores on this opponent: more than a goal a game against them over 2+ stored games, or 2+ goals in the one game stored (this season and last)</span>

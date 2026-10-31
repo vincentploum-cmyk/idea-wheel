@@ -185,6 +185,61 @@ function ScoresTable({ scores }) {
   );
 }
 
+/** A return per unit staked, tinted. */
+const Ret = ({ s }) => <td className={`is-num${s?.n >= 20 && s.ret != null ? (s.ret > 0 ? ' is-over' : s.ret < 0 ? ' is-under' : '') : ''}`} title="A flat stake on every play at the book’s price: the return per unit (+0.05 = five cents won per unit staked)">{s?.n ? signed(s.ret) : '—'}</td>;
+
+function EdgeRows({ label, rows }) {
+  return (
+    <div className="nhlx-db-table-wrap">
+      <table className="nhlx-db-table nhlx-mu-table nhlx-sc-table">
+        <thead>
+          <tr><th>{label}</th><th className="is-num" title="Priced skater-games">Plays</th><th className="is-num" title="The board’s chance, on average">Board said</th><th className="is-num" title="What the book’s prices implied, on average: the break-even">Book asked</th><th className="is-num" title="How often the line was cleared">Landed</th><th className="is-num" title="Landed minus asked: positive means a flat stake made money">vs asked</th><th className="is-num" title="Return per unit staked at the book’s price">Return</th></tr>
+        </thead>
+        <tbody>
+          {rows.map(([k, s]) => (
+            <tr key={k}>
+              <td><b>{k}</b></td>
+              <td className="is-num">{s?.n || 0}</td>
+              <td className="is-num">{s?.n ? pct(s.said) : '—'}</td>
+              <td className="is-num">{s?.n ? pct(s.implied) : '—'}</td>
+              <td className="is-num"><b>{s?.n ? pct(s.hit) : '—'}</b></td>
+              <td className={`is-num${s?.n >= 20 && s.hit != null ? (s.hit > s.implied ? ' is-over' : ' is-under') : ''}`}>{s?.n ? `${s.hit - s.implied > 0 ? '+' : ''}${((s.hit - s.implied) * 100).toFixed(0)} pts` : '—'}</td>
+              <Ret s={s} />
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** The edge over the book, per market: overall and the board's plays, by the edge the board saw, by what the book asked, and up the board's chance. */
+function EdgeTable({ edges }) {
+  if (!edges) return null;
+  return (
+    <>
+      {['sog', 'g'].map((k) => {
+        const e = edges[k];
+        if (!e) return null;
+        const label = k === 'sog' ? 'Shots at the book’s line' : 'Anytime goal';
+        return (
+          <div key={k}>
+            <h4 className="nhlx-sc-h">{label} <small>{e.n ? `${e.n} priced skater-games · ${e.reliable ? `plays have paid from a board chance of ${pct(e.reliable.step)} (${e.reliable.n} plays landed ${pct(e.reliable.hit)} against ${pct(e.reliable.implied)} asked, ${signed(e.reliable.ret)} a unit)` : `no chance step with ${e.min} plays at or over it has paid yet`}` : 'no priced skater-game graded yet: the book’s lines are stored with the pull from 2026-10-31 on'}</small></h4>
+            {e.n ? (
+              <div className="nhlx-sc-grid">
+                <EdgeRows label="The board’s plays" rows={[['Every priced skater-game', e], ['An edge over the book (the board’s plays)', e.plays]]} />
+                <EdgeRows label="By the edge the board saw" rows={e.byEdge.map((b) => [b.label, b])} />
+                <EdgeRows label="By what the book asked" rows={e.byImplied.map((b) => [b.label, b])} />
+                <EdgeRows label="From a board chance of" rows={e.steps.filter((x) => x.n).map((x) => [`${pct(x.step)} and up${x.ok ? ' ✓' : ''}`, x])} />
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 const POS_ORDER = ['C', 'LW', 'RW', 'D'];
 const slotOrder = (a, b) => {
   const pa = POS_ORDER.indexOf(a.replace(/\d+$/, ''));
@@ -389,6 +444,12 @@ export default function Scorecard() {
           <PredictorsTable report={card.predictors[stat]} />
           <p className="nhlx-auto-meta">
             The blend wins when its Brier (and MAE) sits under the model’s on these rows; the board carries it only once that holds. Own L5 / L10 / L15 need the full window of stored games (across seasons: in October the last five are last season’s); own season needs three games this season; PropFinder’s season rate is carried on runs saved from now on. Coverage on all rows: {card.predictors[stat].each.map((p) => `${p.label} ${p.n}`).join(' · ')}.
+          </p>
+
+          <h3 className="nhlx-sc-h">The edge over the book <small>every priced skater-game: the board’s chance at the book’s line against the price, and whether a flat stake paid</small></h3>
+          <EdgeTable edges={card.edges} />
+          <p className="nhlx-auto-meta">
+            The book’s main shots line and anytime-goal price on each skater come from PropFinder’s pull, stored with the slate before puck drop (lib/nhl-data/skater-props.js). “Board said” is the chance as the board prints it for that line — the λ at the board’s weights through the calibration as it stands now —, “Book asked” the break-even the price implies, and the return a flat stake at the price. A market is reliable from the lowest chance step at which 25 plays or more have landed at least their break-even; Best bets rings a Book cell that clears it. The run’s own stated chance rides on the CSV export beside the board’s.
           </p>
 
           <h3 className="nhlx-sc-h">Projected scores <small>each team’s goals as projected before the game against the final</small></h3>

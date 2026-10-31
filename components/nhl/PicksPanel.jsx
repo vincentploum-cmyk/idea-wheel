@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { shareText, verdictText } from '@/lib/nhl-data/board-weights-pure';
 import { Headshot, TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { SlateDateContext } from './player-card-context';
@@ -14,6 +15,14 @@ const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const last = (name) => String(name || '').split(' ').slice(-1)[0];
 
 /** A probability with its break-even price under it; once the box score is in, green when the skater reached the market's floor, red when he fell short. */
+// Whose λ the board reads, per stat (`boardWeights` on the payload, lib/nhl-data/board-weights-pure.js): the share of the
+// study the graded nights say predicts best, walked forward with the calibration on top; the server env over it when set.
+function BoardRead({ bw }) {
+  const from = (k) => (bw.from?.[k] === 'env' ? 'set on the server' : bw.from?.[k] === 'learned' ? 'the read that has predicted best on the graded nights' : 'the default until the season’s scorecard has judged the reads');
+  const title = `Shots: ${shareText(bw.w)} (${from('w')}). Goals: ${shareText(bw.wG)} (${from('wG')}).${bw.learned ? ` ${verdictText(bw.learned, 'sog')} ${verdictText(bw.learned, 'g')}` : ''}`;
+  return <span title={title}>shots {shareText(bw.w)}, goals {shareText(bw.wG)}{bw.learned ? ` (learned on ${bw.learned.rows} graded skater-games)` : ''}</span>;
+}
+
 // A chance as the board prints it: calibrated to what its stated chances have landed this season (lib/nhl-data/calibration.js),
 // the figure as stated on the hover.
 function Prob({ p, raw = null, lead = false, wide = false, hit = null }) {
@@ -31,6 +40,23 @@ const stTitle = (c, stat) => {
   const moved = stat === 'sog' ? c.stTeam.shift.shots : c.stTeam.shift.goals;
   return `Special teams: ${d > 0 ? '+' : ''}${d.toFixed(2)} ${stat === 'sog' ? 'shots' : 'goals'} on his λ. ${c.team} should get about ${c.stTeam.ppFor.expected} power plays tonight (${c.stTeam.ppFor.usual} against an average opponent) and kill about ${c.stTeam.ppAgainst.expected} (${c.stTeam.ppAgainst.usual}): ${moved > 0 ? '+' : ''}${moved.toFixed(2)} ${stat === 'sog' ? 'shots' : 'power-play goals'} moved to its power-play units by slot (his slot ${Math.round(c.st.share * 100)}% of the units), the same off everyone evenly — the side's total is untouched, the opponent's penalties being in the shots it allows already.`;
 };
+
+// The book's line on him and the board's edge at it (`book` on the row, lib/nhl-data/edge-pure.js): the chance at the book's
+// mark with the price, the edge under it, green on an edge and ringed when the chance clears the market's reliable threshold
+// (the edge audit's verdict, `reliable` on the payload); once the game is stored, hit or miss at the book's mark.
+function BookCell({ b, stat, c, reliable }) {
+  if (!b) return <td className="is-num nhlx-pk-book"><small>—</small></td>;
+  const mark = stat === 'sog' ? b.mark : 1;
+  const hit = c.actual === undefined ? null : c.actual === null ? null : hitOf(c, stat, mark);
+  const ok = reliable?.step != null && b.p != null && b.p >= reliable.step;
+  const edgeText = b.edge == null ? '—' : `${b.edge > 0 ? '+' : ''}${Math.round(b.edge * 100)}% edge`;
+  const title = `${stat === 'sog' ? `The book's main shots line o${b.line} (${mark}+)` : 'The book’s anytime-goal price'}${b.book ? ` at ${b.book}` : ''}${b.books > 1 ? ` (${b.books} books)` : ''}: ${fmtOdds(b.odds)} implies ${pct(b.implied)}; the board gives ${pct(b.p)}, an edge of ${b.edge == null ? '—' : `${Math.round(b.edge * 100)} points`}.${reliable?.step != null ? ` ${stat === 'sog' ? 'Shots at the book’s line' : 'Anytime goal'} plays have paid from ${pct(reliable.step)} this season (${reliable.n} priced plays landed ${pct(reliable.hit)} against ${pct(reliable.implied)} asked).` : ' No reliable threshold yet for this market.'}${hit == null ? '' : hit ? ' Hit.' : ' Missed.'}`;
+  return (
+    <td className={`is-num nhlx-pk-book${b.edge > 0 ? ' is-edge' : b.edge != null ? ' is-noedge' : ''}${ok ? ' is-reliable' : ''}${hit == null ? '' : hit ? ' is-hit' : ' is-miss'}`} title={title}>
+      <b>{stat === 'sog' ? `${mark}+ ${pct(b.p)} · ` : ''}{fmtOdds(b.odds)}</b><small>{edgeText}</small>
+    </td>
+  );
+}
 
 /** Finished game: the skater's box-score figure for the table's stat. */
 function Got({ c, stat, unit }) {
@@ -136,7 +162,8 @@ function SavesTable({ g }) {
   );
 }
 
-function ShotsTable({ g }) {
+function ShotsTable({ g, reliable = null }) {
+  const booked = g.shots.some((c) => c.book?.sog);
   return (
     <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
       <table className="nhlx-db-table nhlx-pk-table">
@@ -146,6 +173,7 @@ function ShotsTable({ g }) {
             <th className="is-num is-wide" title="2+ shots: the chance, and the break-even price under it">2+</th>
             <th className="is-num" title="3+ shots: the chance, and the break-even price under it">3+</th>
             <th className="is-num" title="4+ shots: the chance, and the break-even price under it">4+</th>
+            {booked ? <th className="is-num" title="The book’s main shots line (PropFinder’s pull): the board’s chance at it with the price, and the edge under it (the chance minus what the price implies)">Book</th> : null}
             {g.final ? <th className="is-num" title="Shots on goal in the box score">Got</th> : null}
           </tr>
         </thead>
@@ -154,6 +182,7 @@ function ShotsTable({ g }) {
             <tr key={c.id} className={`${c.under ? 'is-under' : ''}${rowGrade(c, 'sog', 3)}`} title={[c.under ? 'Under the 50% floor for 3+ shots: listed to make three' : null, rowTitle(c, 'sog', 3, 'SOG'), stTitle(c, 'sog')].filter(Boolean).join(' · ') || undefined}>
               <Player c={c} stat="sog" />
               <Prob p={c.p2} raw={c.raw?.p2} wide hit={hitOf(c, 'sog', 2)} /><Prob p={c.p3} raw={c.raw?.p3} lead hit={hitOf(c, 'sog', 3)} /><Prob p={c.p4} raw={c.raw?.p4} hit={hitOf(c, 'sog', 4)} />
+              {booked ? <BookCell b={c.book?.sog || null} stat="sog" c={c} reliable={reliable} /> : null}
               {g.final ? <Got c={c} stat="sog" unit="SOG" /> : null}
             </tr>
           ))}
@@ -164,7 +193,8 @@ function ShotsTable({ g }) {
   );
 }
 
-function GoalsTable({ g }) {
+function GoalsTable({ g, reliable = null }) {
+  const booked = g.goals.some((c) => c.book?.goal);
   return (
     <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
       <table className="nhlx-db-table nhlx-pk-table">
@@ -172,6 +202,7 @@ function GoalsTable({ g }) {
           <tr>
             <th>Goals{g.goalsFallback ? <i className="nhlx-fg-rank"> nobody over 35%: best available</i> : null}</th>
             <th className="is-num" title="1+ goal: the chance, and the break-even price under it">1+ G</th>
+            {booked ? <th className="is-num" title="The book’s anytime-goal price (PropFinder’s pull), and under it the edge: the board’s 1+ G chance minus what the price implies">Book</th> : null}
             {g.final ? <th className="is-num" title="Goals in the box score">Got</th> : null}
           </tr>
         </thead>
@@ -180,6 +211,7 @@ function GoalsTable({ g }) {
             <tr key={c.id} className={`${c.under ? 'is-under' : ''}${rowGrade(c, 'g', 1)}`} title={[c.under ? 'Under the 35% floor for a goal: listed to make three' : null, rowTitle(c, 'g', 1, 'G'), stTitle(c, 'g')].filter(Boolean).join(' · ') || undefined}>
               <Player c={c} stat="g" />
               <Prob p={c.p1g} raw={c.raw?.p1g} lead hit={hitOf(c, 'g', 1)} />
+              {booked ? <BookCell b={c.book?.goal || null} stat="g" c={c} reliable={reliable} /> : null}
               {g.final ? <Got c={c} stat="g" unit="G" /> : null}
             </tr>
           ))}
@@ -213,7 +245,7 @@ export default function PicksPanel() {
         <div>
           <div className="nhlx-today-date">{pretty || 'Loading…'}</div>
           <div className="nhlx-auto-sub">
-            {board ? `${board.games.length} game${board.games.length === 1 ? '' : 's'} · ${board.source === 'model' ? `model run saved ${board.modelRun?.createdAt ? fmtTime(board.modelRun.createdAt) : ''}` : 'no model run yet: own rates'}${board.calibration ? ` · chances calibrated on ${board.calibration.games} graded skater-games${board.calibration.to ? ` through ${board.calibration.to}` : ''} (hover one for the figure as stated)` : ''}` : ''}
+            {board ? <>{board.games.length} game{board.games.length === 1 ? '' : 's'} · {board.source === 'model' ? `model run saved ${board.modelRun?.createdAt ? fmtTime(board.modelRun.createdAt) : ''}` : 'no model run yet: own rates'}{board.source === 'model' && board.boardWeights ? <> · <BoardRead bw={board.boardWeights} /></> : null}{board.calibration ? ` · chances calibrated on ${board.calibration.games} graded skater-games${board.calibration.to ? ` through ${board.calibration.to}` : ''} (hover one for the figure as stated)` : ''}{board.book ? ` · the book’s lines on ${board.book.withSog} shooters and ${board.book.withGoal} scorers` : ''}{board.reliable ? <> · <span title={`The edge audit (the History tab’s scorecard): the lowest chance from which 25 priced plays or more landed at least the break-even their prices asked, ${board.reliable.n.sog} priced shots plays and ${board.reliable.n.g} goal plays graded${board.reliable.to ? ` through ${board.reliable.to}` : ''}.`}>reliable from · shots {board.reliable.sog ? pct(board.reliable.sog.step) : 'not yet'} · goals {board.reliable.g ? pct(board.reliable.g.step) : 'not yet'}</span></> : null}</> : ''}
           </div>
         </div>
         <div className="nhlx-auto-actions">
@@ -238,7 +270,7 @@ export default function PicksPanel() {
               <ProjectedLine g={g} />
             </small>
           </div>
-          {g.skaters ? <div className={`nhlx-pk-grid${g.saves?.length ? ' has-saves' : ''}`}><ShotsTable g={g} /><GoalsTable g={g} /><SavesTable g={g} /></div> : <p className="nhlx-auto-meta">{board.source === 'model' ? 'The run projected nobody in this game.' : 'No lineups yet.'}</p>}
+          {g.skaters ? <div className={`nhlx-pk-grid${g.saves?.length ? ' has-saves' : ''}`}><ShotsTable g={g} reliable={board.reliable?.sog || null} /><GoalsTable g={g} reliable={board.reliable?.g || null} /><SavesTable g={g} /></div> : <p className="nhlx-auto-meta">{board.source === 'model' ? 'The run projected nobody in this game.' : 'No lineups yet.'}</p>}
         </article>
       ))}
       {board?.notes?.length ? (

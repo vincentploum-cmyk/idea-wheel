@@ -1922,3 +1922,10 @@ button.ir-fact.is-more:focus-visible { outline: 2px solid var(--primary); }
   .ir-pt-list li { grid-template-columns: 1fr; }
   .ir-pt-list li > .ir-facts { grid-column: 1; }
 }
+
+/* Best bets: the book's line and the board's edge at it (lib/nhl-data/edge-pure.js). */
+.nhlx-pk-table td.nhlx-pk-book b { font-weight: 600; }
+.nhlx-pk-table td.nhlx-pk-book.is-edge small { color: var(--ok-fg); }
+.nhlx-pk-table td.nhlx-pk-book.is-noedge small { color: var(--bad-fg); }
+.nhlx-pk-table td.nhlx-pk-book.is-reliable b { box-shadow: inset 0 0 0 1px var(--ok-fg); border-radius: 6px; padding: 1px 4px; }
+.nhlx-sc h4.nhlx-sc-h { font-size: 16px; margin-top: 14px; }

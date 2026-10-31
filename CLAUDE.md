@@ -493,7 +493,14 @@ config and keeps its own markets, teams, feeds and slate key:
   and the pull records `fieldsSeen.unread` (game-row keys this file does not read), shown under
   Data sources after the first pull. Fix the spellings there once a real pull shows them; never
   guess silently. Stored at `nfl/<season>/<wk>/propfinder.json` (players with logs and lines,
-  `defenseAllowed` per position with ranks 1 = most allowed).
+  `defenseAllowed` per position with ranks 1 = most allowed). **Injuries come from ESPN's league feed, not PropFinder**
+  (`injuryReport: 'espn'` on `makePropfinder` in `propfinder-nfl.js`; Vincent, 2026-10-31: "fix the NFL injury report so
+  it reads injuries"): PropFinder's NFL report sits behind a route only its signed-in pages reach — its bundle, read that
+  day, builds the NFL games from an `injuryReports` JSON string, while `/NFL/v2` and `/injuries/nfl/<teamId>` answered 404
+  to the API on every pull from 2026-10-28 — so the pull asks it nothing (`fetchInjuries` returns `source: 'espn'`, Data
+  sources says so) and ESPN's feed (`fetchInjuries` in `lib/nfl/espn.js`, `ensureInjuries`, `applyEspnInjuries`) sets
+  every pulled player's status. The pull lists every rostered player (3,776 for 28 teams), so a player out is in it with
+  his logs and reaches the out lists, the without splits and the vacated lifts with no one-by-one read.
 - The board: `picks.js` (`buildBoard`, pure): the sheets' rows and PropFinder's lines merged per
   player + market + line + side; the chance = hit rates over the line (L5 0.3, L10 0.3, season
   0.4; PropFinder's logs when pulled, else the sheet's columns), shrunk toward the book's implied
@@ -1077,15 +1084,19 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   "against which line a team allows the most goals / shots, LW1, LW2 …"; `LineTable` off the API's `slots` =
   `defenseBySlot` for the span, `slotBoard` / `facingAt` / `SLOT_LINES` in `defense-board.js`): every team's shots or
   goals given up to the skater at each slot a game, LW1 … RW4 under their line and D1 … D3 under the pairs, every column
-  ranked and tinted by third, a cell from 3 skater-games, and the **softest line** first — the slot where the team ranks
-  highest against the league, a tie to the one furthest over the league's mean (its raw highest is nearly always its
-  first line) — with the opponent's skater at that slot tonight, clickable to his card; a slot's header sorts by it, and a team overview
+  ranked and tinted by third, a cell from 3 skater-games, and first **the slot the team gives the most to** (`most` on each
+  `slotBoard` team: the raw leader with its figure and its rank against the league at that slot, the teams sorted by the
+  figure; Vincent, 2026-10-31, after the rink head's line: the rank-based `softest` — the slot where the team ranks highest
+  against the league, a tie to the one furthest over the league's mean — stays on the board for the sort it gave and names
+  nothing on the page) with the opponent's skater at that slot tonight, clickable to his card; a slot's header sorts by it
+  (`__tests__/nhl-defense-line-table.test.jsx`), and a team overview
   (GA / GP, SA / GP from the stored box scores; xGA / 60, high-danger shots against and pace from MoneyPuck), each column ranked;
   between them "Running hot" (`lib/nhl-data/streaks.js`, `streaks` in the defense API): every skater's current goal / point /
   3+ SOG streak from this season's stored games, his last game and tonight's opponent read off the same tables at his
   position (the study found no carry-over from a goal last game, so the streak is colour, the Tonight cell the matchup). The 1st goal tab (`lib/nhl-data/firstgoal.js`, `/api/nhl/data/firstgoal`, `FirstGoalPanel.jsx`) ranks
   tonight's skaters as first-goal candidates: own first-goal record from the rows' `fg` flag, the opponent's first
-  goals given up to the position and slot at the venue, head to head, and the model's 1+ goal odds (score 0–100). The stored data (rosters, media, game history, league, MoneyPuck) is kept fresh by the
+  goals given up to the position and slot at the venue, head to head, and the 1+ goal odds as Best bets prints them for
+  the saved run (the board's read, `slateWithBoardReads`; the run's own on the hover) (score 0–100). The stored data (rosters, media, game history, league, MoneyPuck) is kept fresh by the
   morning run and shown, with repair buttons and the backfill, under Best bets → "Data sources"
   (`/api/nhl/data/setup`); there is no setup tab.
   Positions are captured per game from the newest lineup dated at or before it
@@ -1128,15 +1139,22 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   table, `slotBoard(defenseBySlot(rows, { season }))` at both venues, read once a slate in `buildSlate` and carried per
   side as `side.lines = linesOf(boards, opp)` ({ sog, g } → { gp, cells, softest, league }, `linesOf` in
   `defense-board.js`), green = top third, red = bottom third, grey = no record (the hover: the figure, the rank, the
-  league's mean, the skater-games) — and the rink head names the opponent's softest line with its rank and figure and
-  this side's skater at that slot (`SoftestLine`, click to his card); colour only, no number moves — and checked the same
+  league's mean, the skater-games) — and **the rink head names the slot the opponent gives the most to** ("PIT gives the most shots to the C1 · 2.9 a game ·
+  #3 of 32 at that slot · tonight Kapanen": `most` on each `slotBoard` team and on `linesOf`'s read, the raw leader with its
+  rank against the league at that slot and this side's skater there, `SoftestLine`, click to his card; the hover says the
+  cell is a dozen skater-games that say where the shots went, not where they will go; `__tests__/nhl-rink-line.test.jsx`.
+  Vincent, 2026-10-31, twice: "leaks most to the C3" on a #7 rank at 1.8 shots while the C1 took 2.9 a game, then the
+  rank read and the raw leader side by side were confusing, and "some teams allow more shots against lines 2 or 3" —
+  6 of 32 teams led at a second-line slot on the season's box scores — so the rank-based `softest` stays on the Defense
+  tab's by-line table and off the rink head); colour only, no number moves — and checked the same
   day on both seasons' box scores (`docs/audits/2026-10-31-nhl-lines.md`, under Audits): the softest slot's skater was the
   top shooter at the slot's base rate (9.4%), the slot cell adds nothing to the position table, so the badges stay colour;
   chips carrying the latest saved model run's λ shots / goals for the slate date from
-  `lib/nhl-data/model-runs.js`, or a matchup read when no run exists; at the top of each rink card the model's plays
-  for that team (`sidePlays` in `slate.js`, `ModelPlays` in `Rink.jsx`): the Best bets boards' rule, `boardPlays` in
-  `model-core.js` (shared with the Model tab's boards and the scorecard's replay), two shots plays and two goal plays at
-  most from the saved run, each on the floor it cleared with the attack-score tier, the picked skaters ringed on the ice,
+  `lib/nhl-data/model-runs.js` — printed as the board reads them since 2026-10-31 (`slateWithBoardReads`, the bullet
+  "One number per skater" under Automation; the run's own on the hover) —, or a matchup read when no run exists; at the
+  top of each rink card the model's plays for that team (`sidePlays` in `slate.js`, `ModelPlays` in `Rink.jsx`): the
+  Best bets boards' rule, `boardPlays` in `model-core.js` (shared with the Model tab's boards and the scorecard's
+  replay), two shots plays and two goal plays at most from the saved run on the board's figures, each on the floor it cleared with the attack-score tier, the picked skaters ringed on the ice,
   each play washed green (hit the floor) or red (fell short) with the box-score figure once the game is stored, dashed and dimmed when the skater has no box-score row, nothing shown without a run; finished games show the
   box score; above each game's team verdicts a game-total read, `gameTotalRead` in
   `lib/nhl-data/verdict.js`: the stored meetings' totals blended with MoneyPuck's expected
@@ -1285,7 +1303,7 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   a row under `SAVES_FLOOR` = 50% there is dimmed as under the floor, `pickSaves`); once the game is stored the goalie's
   own line grades the row (`withSavesActuals`: 30+ hit or miss, "another goalie played" when the read was on the wrong
   man, `played: false`), and the game head's tally counts the saves plays with the shots and goal plays. **The book's saves lines come from PropFinder's
-  pull** (`lib/nhl-data/goalie-props.js`; Vincent, 2026-10-31: "pull the goalie saves lines from PropFinder and show the
+  pull** (`lib/nhl-data/goalie-props.js`, the ladder reader shared with the skaters' lines in `prop-lines.js` since 2026-10-31; Vincent, 2026-10-31: "pull the goalie saves lines from PropFinder and show the
   edge... I just need over x saves with a %"): the odds-only players call lists the goalies with their props, `goalieSavesProps`
   reads the items whose market names saves (a period's or a window's left out) with the NBA reader's spellings, the main
   line the one priced nearest a coin flip, and the pull stores them at `data/propfinder/goalie-props.json` ({ at, date,
@@ -1394,8 +1412,9 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   (`calibratedChance`). On this season's runs the run's 3+ / 4+ SOG tails came out at b ≈ 0.5 on every split (a stated
   80% prints about 62%), the study's goal read at b ≈ 0.9; binned rates shrunk toward the stated chance were tried first
   and kept too much of the overstatement at the top on the held-out week. **The model's math is untouched**: the run's λ
-  and its own odds stay the run's (the Model tab, the rinks' strips, the scorecard grade them as they are); only the
-  printed chance moves. `computePicks` reads it with the slate (`loadCalibration`: `data/scorecard/calibration.json`, else
+  and its own odds stay the run's (the saved run's rows and the scorecard's grading are the run as computed); only the
+  printed chance moves — and since 2026-10-31 it moves everywhere the site prints one (the bullet "One number per
+  skater" below). `computePicks` reads it with the slate (`loadCalibration`: `data/scorecard/calibration.json`, else
   the seed `lib/nhl-data/seed/calibration.json`, fitted on the scorecard export of Oct 30 by
   `tools/predictors/calibration-seed.mjs`) and runs every candidate through `calibrateProjection` — p2 / p3 / p4 / p1g
   calibrated, the stated ones as `raw`, the floors and the notes on the calibrated figure — when the stored fit was
@@ -1405,6 +1424,88 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   "Read from" as its Poisson tail; `raw` on the read for the hover). Learned again by every season-range `buildScorecard`
   (`saveCalibration` beside `saveBestRead`: the History tab's first grade, the morning refresh), never rewritten
   unchanged. Hover a chance on Best bets or the shuffle for the figure as stated.
+- **The edge over the book, graded** (`lib/nhl-data/skater-props.js`, `prop-lines.js`, `edge-pure.js`, `edge.js`; Vincent,
+  2026-10-31: "run that edge audit for shots and goals" — no skater price had ever been stored, so nothing could be graded
+  against the book; the goalies' saves lines were the only prices read). **The book's lines on the skaters**: the pull reads
+  each skater's shots-on-goal ladder and anytime-goal price off the same odds-only players call (`skaterPropsOf`; the ladder
+  reader `propLinesOf` in `prop-lines.js` is the goalies' reader factored out: the main line nearest a coin flip, the best
+  price a side, a period's or a window's line left out; "Player Shots on Goal" / "SOG" / "Shots" without blocked shots or
+  attempts, "Anytime Goal Scorer" / "To Score" / "Goals" at 0.5 without the first scorer, 2+ goals or points) and stores
+  them per slate at `data/propfinder/skater-props/<date>.json` ({ at, date, skaters: [{ pfId, name, key, team, pos, sog,
+  goal }], withSog, withGoal, `sample` = the first priced skater's items as sent, for the spelling check — no NHL skater
+  item had been seen when it shipped; the pull meta's `skaterProps` counts show in the pull's message). The slate puts
+  them on each skater as `prop` (`skaterPropFor`: the NHL name against PropFinder's through `normName`, the surname on the
+  team as the fallback; only a pull made for the slate's date; `book` on the slate counts them). **The board's edge**
+  (`bookRead` in `edge-pure.js`, `book` on every candidate and shuffle row): at the book's main shots line (o2.5 = 3+,
+  `markOf`) the board's chance of clearing it (`chanceAtHeight`: the board's own 2+ … 4+, else his λ through the
+  calibration's fits, never above the rung below) against what the price implies, and his anytime price against his 1+ G,
+  `edge` = the chance minus the implied probability; Best bets' Shots and Goals tables carry a **Book** column when any row
+  has a line ("3+ 58% · -140", the edge under it green on an edge, red without; `BookCell` in `PicksPanel.jsx`, ringed
+  when the chance clears the market's reliable threshold; once the game is stored, hit or miss at the book's mark). **The
+  audit** (`bookRecord` + `edgeReport`): the scorecard reads the slate's stored lines on every graded skater-game (only
+  when stored before the game's puck drop, `props.at` against the positions file's start time) and grades the board's chance
+  as the board prints it now — the λ at the board's weights (`readsOf`) through the calibration as it stands, the run's own
+  stated figure beside it as `raw` — against the price: per market (shots at the book's line, anytime goal) every priced
+  play, the board's plays (an edge over 0), by the edge the board saw (`EDGE_BUCKETS`), by what the book asked
+  (`IMPLIED_BUCKETS`), and step by step up the board's chance with the **reliable threshold** — the lowest step from which
+  `RELIABLE.min` = 25 priced plays landed at least the break-even their prices asked (a flat stake did not lose; `ret` = the
+  flat-stake return per unit, `flatReturn`); `edges` on the report, drawn on the History tab ("The edge over the book",
+  `EdgeTable` in `Scorecard.jsx`), the book's figures on the `?rows=1` export (`sogLine`, `sogOdds`, `sogImplied`,
+  `sogBoard`, `goalOdds`, `goalImplied`, `goalBoard`), the report stored by every season-range `buildScorecard` at
+  `data/scorecard/edge.json` (`saveEdge`) and read by the picks board (`loadEdge` → `reliable` on the payload: the Best bets
+  head says "reliable from · shots 60% · goals not yet"). `tools/predictors/edge_audit.mjs <export.json>` prints the same
+  tables offline. The first priced night is the first pull after this shipped (2026-10-31); the audit fills from there and
+  nothing here was graded on real prices when it shipped. `__tests__/nhl-skater-props.test.js`, `nhl-edge.test.js`, the
+  board's case in `nhl-picks-score.test.js`.
+- **The most accurate read, learned** (`lib/nhl-data/board-weights-pure.js`, pure; Vincent, 2026-10-31: "I need to have the
+  most accurate % for both shots and goals"): whose λ the board's chances are read off — the run's, the study's or a blend —
+  is **learned per stat from the site's own graded nights**, not set by hand. `learnWeights(rows)` (rows = `fitRow` with the
+  night: the run's λ, the study's that morning, what he got) scores every share of the study in `SHARES` (0, ¼, ½, ¾, 1)
+  **walked forward**: for each night after the first `LEARN.warmNights` = 6 the calibration is fitted at that share on the
+  nights before it (`fitHeight` per height) and the night's skaters are read through it at the bars' floors and the rung
+  above (`SCORED`: 3+ and 4+ SOG, 1+ and 2+ goals), the Brier pooled (`walkForward`; a calibration under `CAL_MIN` reads the
+  stated chance, as the board would have); the lowest Brier is the board's share once `minNights` = 8 scored nights and
+  `minRows` = 1500 chances are behind it, **and only when it beats the share the board is on by `margin` = 0.0005** (a tie
+  is called for the board's own share, then the nearest; the board never moves on noise), the incumbent being the stored
+  verdict's share, else `DEFAULT_WEIGHTS` { w: 0, wG: 1 } (the run's shots, the study's goals, as since 2026-10-27). Learned
+  with the calibration in `saveCalibration` (every season-range `buildScorecard`: the History tab's first grade, the morning
+  refresh), stored on `data/scorecard/calibration.json` as `learned` { at, from, to, rows, learn, stats: { sog | g: { share,
+  from, best, moved, reason, scores } } } with the fits made at the chosen weights (`weights`); `boardWeightsOf(cal, env)`
+  is what `computePicks` reads at — the server env (`NHL_PICKS_STUDY_WEIGHT`, `_GOALS`) over the verdict when set (another
+  share than the fits were made at prints as stated until the next build, as before), the verdict over the defaults (the
+  seed has none) — and rides on the picks and shuffle payloads as `boardWeights` { w, wG, from, learned, calibrationFits }.
+  The Best bets head names it ("shots the run's λ, goals the study's λ (learned on N graded skater-games)", every share's
+  score on the hover, `BoardRead` in `PicksPanel.jsx`), the shuffle's note the same (`shareText`, `verdictText`).
+  `tools/predictors/calibration-seed.mjs --learn` runs the verdict on a scorecard export and prints the table. No export was
+  readable from the container when this shipped, so no verdict is in the seed: the board stays on the defaults until the
+  site's next scorecard build judges the reads. `__tests__/nhl-board-weights.test.js` (synthetic seasons where one read is
+  the truth), the end-to-end case in `nhl-picks-score.test.js`.
+- **One number per skater** (`lib/nhl-data/board-reads.js`, pure; Vincent, 2026-10-31, with the Model tab's dashboard
+  saying McDavid 61% for a goal and Draisaitl 56% for 4+ shots while Best bets on the same page said 30% and 36%: "how can I
+  trust our website if I see these conflicts" — the dashboard printed the run's own figures as stated, Best bets the board's,
+  the study's goal read calibrated): every place the site prints a skater's chance for the slate prints **the board's read**,
+  the figure Best bets and the shuffle print, the run's own beside it on the hover. `GET /api/nhl/data/reads?date=` →
+  `boardReadsOf(buildPicks(date, { withSkaters: true }))`: per skater, keyed by the model's own key (`modelKey` in
+  `lib/nhl-data/model-key.js`, pure, team + normalised name, re-exported by `model-runs.js` and `names.js`; the shuffle
+  row carries it as `key` with the board's `chances`), his λ shots / goals and 2+ … 5+ SOG and 1+ / 2+ G — 2+ … 4+ and 1+
+  G the board's own, 5+ and 2+ G read off the same λ through the same calibration (what the shuffle prints at those
+  heights), `raw` the run's figures where the board is calibrated — with the run, the calibration and the study weights
+  behind them (`boardReadsMeta`). **The Model tab** (`NhlApp` reads the route for the run it shows — after a save every
+  five seconds until the board names that run, since the runs route and the board hold their own copy of the run index;
+  once for a run replayed from history — and hands it to `NhlModel` as `board`): every board and table there draws
+  `withBoardRows(results, reads)` — λ, 2+ … 5+ SOG and 1+ / 2+ G the board's, the run's own under `row.run`, the gate,
+  the attack score and the tags the run's — while `results` stays the run as computed (what is saved and graded); the
+  slate strip's chip says "Chances as Best bets prints them" with how many rows the board read, the goals' and the
+  calibration's provenance, or "The run as stated" when the board does not name this run (unsaved, another run newest for
+  the date, the board unreadable) and why; the dashboard headlines, the Best by Game figures and the All Players cells
+  name the run's figure on the hover. **The rinks and the first-goal board**: `slateWithBoardReads(slate, reads)` in
+  `slate.js` (applied by `app/api/nhl/data/slate/route.js` and by `buildFirstGoalBoard`, since the slate is built before
+  the picks that read it) puts the board's λ and chances on every skater's `model` (`withBoardModel`, the run's under
+  `model.run`), picks each side's plays strip again on the printed figures (the boards' floors unchanged, so a 4+ the run
+  stated at 44% that prints 30% is no shots play any more; `runProb` on the play for the hover) and the chip's hover
+  reads "board: … · the run as stated: …"; the first-goal candidate's 1+ G and score read the same figure. The Run
+  history cards keep the run's figures as saved, named as such on the hover. `__tests__/nhl-board-reads.test.js`, the
+  slate overlay in `nhl-slate-memo.test.js`.
 - **Patterns** (`#patterns`, `components/nhl/PatternsPanel.jsx` with its own slate-date picker, `GET /api/nhl/data/patterns?date=`
   → `buildPatterns` in `lib/nhl-data/patterns.js`; Vincent, 2026-10-30: "look at literally every data point that is
   available to detect patterns … rules per line … the outcome should be pills like firsthalfscore.com"): every skater in
@@ -1588,11 +1689,12 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   run's matchup goal λ (`modelOpp`, `goalOpportunityLambda` on the result rows, goals only; `lambdaGOpp` on the
   `?rows=1` export) —
   scored beside λ on the rows every covered predictor shares (MAE, bias, Poisson 3+ SOG / 1+ G Brier).
-  Descriptive only; nothing feeds the model. The board's shots blend only through `NHL_PICKS_STUDY_WEIGHT` on
-  Render (the study's share, `blendProjection` in `picks-pure.js`, `studyWeight` in `picks.js`; unset =
-  the model alone), to be set once that table shows the blend beating the model. **The board's goals read the
+  Descriptive only; nothing feeds the model. The board's shots blend through the share the graded nights say predicts best (the bullet "The most
+  accurate read, learned" under Automation; `NHL_PICKS_STUDY_WEIGHT` on Render overrides it, `blendProjection` in
+  `picks-pure.js`). **The board's goals read the
   study's λ** since 2026-10-27 (`studyWeightGoals`: `NHL_PICKS_STUDY_WEIGHT_GOALS`, 1 unless set, 0 = the run's goal λ
-  back; `blendProjection`'s fourth argument; the shuffle's head and note say so): Vincent's call on the FLA @ WPG board
+  back; `blendProjection`'s fourth argument; the shuffle's head and note say so; since 2026-10-31 the share is the learned
+  verdict's unless the env sets it): Vincent's call on the FLA @ WPG board
   after the day's input changes — the run's published goal λ is built from his points rate, so Connor on nine goals in
   eleven games read 28% and Reinhart fell from 28% to 21% on an unchanged goal rate as his assists dropped, while the
   study's λ reads his goal rate, chances and shots this season, home ice and the opponent's row at his position (the
