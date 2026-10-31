@@ -1,4 +1,5 @@
 import { dailyRefresh, ingestGames, ingestLineups, restampPositions, stampFirstGoals } from '@/lib/nhl-data/ingest';
+import { refreshShotpropz } from '@/lib/nhl-data/shotpropz';
 import { pullPropfinder, propfinderConfigured } from '@/lib/nhl-data/propfinder-api';
 import { dispatchLinesWorkflow } from '@/lib/nhl-data/github-dispatch';
 import { authorize, todayET, DATE_RE } from '@/lib/nhl-data/util';
@@ -18,7 +19,7 @@ async function handle(request) {
   const url = new URL(request.url);
   const auth = await authorize(request, { allowToken: true });
   const date = url.searchParams.get('date') || todayET();
-  const only = url.searchParams.get('only'); // games | lineups (&due=<minutes>: only games starting within that window) | settle (a played date: previews' last update + re-stamp) | restamp (stored games follow the snapshot) | firstgoals (stored games get their first goal) | propfinder | (default) daily
+  const only = url.searchParams.get('only'); // games | lineups (&due=<minutes>: only games starting within that window) | settle (a played date: previews' last update + re-stamp) | restamp (stored games follow the snapshot) | firstgoals (stored games get their first goal) | propfinder | shotpropz (the team boards) | (default) daily
   if (!DATE_RE.test(date)) return Response.json({ error: 'bad date' }, { status: 400 });
   // The GitHub workflow is the backstop for the server's own clock (lib/scheduler.js): a scheduled run names its
   // job and steps aside when the server already ran that slot (GitHub fires its schedules hours late).
@@ -70,6 +71,7 @@ async function handle(request) {
     else if (only === 'settle') result = await ingestLineups(date, { settle: true });
     else if (only === 'restamp') result = await restampPositions(date);
     else if (only === 'firstgoals') result = await stampFirstGoals(date);
+    else if (only === 'shotpropz') result = await refreshShotpropz();
     else if (only === 'propfinder') result = propfinderConfigured() && date >= todayET() ? await pullPropfinder(date) : { ok: false, skipped: propfinderConfigured() ? 'past date' : 'PropFinder credentials are not configured' };
     else {
       result = await dailyRefresh(date);

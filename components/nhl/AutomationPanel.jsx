@@ -82,6 +82,12 @@ function healthRows(h) {
         ? `${st.moneypuck.teams} teams · ${fmt(st.moneypuck.updatedAt)}${st.moneypuck.splits ? ` · home/away splits from ${num(st.moneypuck.splits.rows)} game rows, ${fmt(st.moneypuck.splits.updatedAt)}` : ' · no home/away splits yet'}`
         : 'Not loaded yet',
     },
+    {
+      key: 'shotpropz', label: 'ShotPropz', ok: st.shotpropz?.done ?? false, action: 'shotpropz',
+      text: st.shotpropz?.teams
+        ? `${st.shotpropz.teams} teams · ${st.shotpropz.pages} of 12 boards (offense / defense × all / home / away × season / last 10) · pulled ${fmt(st.shotpropz.updatedAt)}${st.shotpropz.pageUpdated ? ` · site updated ${st.shotpropz.pageUpdated}` : ''}${st.shotpropz.failed?.length ? ` · failed: ${st.shotpropz.failed.map((f) => `${f.board} ${f.location} ${f.span}`).join(', ')}` : ''}`
+        : 'Not pulled yet · the team offense and defense boards behind the matchup profile',
+    },
   ];
 }
 
@@ -223,6 +229,10 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
             break;
           }
         }
+      } else if (what === 'shotpropz') {
+        setHealthMsg('Reading the ShotPropz team boards (12 pages)…');
+        const j = await post('/api/nhl/data/shotpropz');
+        setHealthMsg(`ShotPropz: ${j.result.teams} teams over ${j.result.pages} boards${j.result.pageUpdated ? `, the site's tables updated ${j.result.pageUpdated}` : ''}${j.result.failed?.length ? `; failed: ${j.result.failed.map((f) => `${f.board} ${f.location} ${f.span}`).join(', ')}` : ''}.`);
       } else if (what === 'moneypuck') {
         setHealthMsg('Pulling the MoneyPuck season summary and all 32 game logs…');
         const j = await post('/api/nhl/data/moneypuck?games=1');
