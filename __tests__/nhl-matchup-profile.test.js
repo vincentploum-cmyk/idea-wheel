@@ -99,6 +99,12 @@ describe('matchup profile: MTL @ DAL with ShotPropz', () => {
     const f = cellOf(matchupProfile({ game: done, rates, pfTeams, shotpropz }), 'saves', 'DAL');
     expect(f.text).toBe('~29 saves expected · 32.3 shots faced · Oettinger likely · .910 over 9 starts · got Oettinger 30 of 33');
     expect(f.title).toContain('the box score: Jake Oettinger 30 saves on 33 shots');
+    // The book's saves line on him from PropFinder's pull: the over with his chance, green on an edge over the price.
+    const lined = { ...game, sides: game.sides.map((s) => (s.team === 'MTL' ? { ...s, goalie: { ...s.goalie, prop: { line: 25.5, odds: -120, underOdds: 100, book: 'DraftKings', books: 1 } } } : s)) };
+    const l = cellOf(matchupProfile({ game: lined, rates, pfTeams, shotpropz }), 'saves', 'MTL');
+    expect(l.text).toBe('~27 saves expected · 29.5 shots faced · Montembeault likely · .908 over 7 starts · o25.5 59% at -120');
+    expect(l.parts.find((x) => x.t.startsWith('o25.5'))).toMatchObject({ tone: 'is-soft' });
+    expect(l.title).toContain('the book: over 25.5 saves at -120 / under +100 (DraftKings) · 59% to clear it against 55% implied: edge +5 points · PropFinder');
   });
   test('power play and penalty kill: the venue board from four games there; rank 1 = the softest kill', () => {
     // The special-teams read ends the line: how many power plays the team should get tonight (lib/nhl-data/special-teams.js; the fixture's two-team league reads about the league's 3.0).

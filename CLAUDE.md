@@ -1194,9 +1194,21 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   the projection, `SAVES_SD` = 6 shots × the save percentage) with the break-even price, **30+ the play** (`SAVES_LEAD`,
   a row under `SAVES_FLOOR` = 50% there is dimmed as under the floor, `pickSaves`); once the game is stored the goalie's
   own line grades the row (`withSavesActuals`: 30+ hit or miss, "another goalie played" when the read was on the wrong
-  man, `played: false`), and the game head's tally counts the saves plays with the shots and goal plays. No book line for
-  saves is in the data (the NHL PropFinder pull keeps skaters' stats and no props), so the play is the chance of the
-  30-save mark, not an edge over a price. `__tests__/nhl-goalies.test.js`.
+  man, `played: false`), and the game head's tally counts the saves plays with the shots and goal plays. **The book's saves lines come from PropFinder's
+  pull** (`lib/nhl-data/goalie-props.js`; Vincent, 2026-10-31: "pull the goalie saves lines from PropFinder and show the
+  edge... I just need over x saves with a %"): the odds-only players call lists the goalies with their props, `goalieSavesProps`
+  reads the items whose market names saves (a period's or a window's left out) with the NBA reader's spellings, the main
+  line the one priced nearest a coin flip, and the pull stores them at `data/propfinder/goalie-props.json` ({ at, date,
+  goalies: [{ pfId, name, key, team, line, odds, underOdds, book, books, implied, lines }], withLines, `sample` = the
+  first goalie's raw items for the spelling check — no NHL goalie item had been seen when it shipped; the pull meta's
+  `goalieProps` counts show under Data sources). The slate puts the line on each side's `goalie.prop` (`savesLineFor`,
+  the NHL name against PropFinder's through `normName`, the surname on the team as the fallback; only a pull made for
+  the slate's date), `savesRow` reads it (`line`, `mark` = o27.5 → 28+, `pLine` his chance of clearing it, `odds`,
+  `implied`, `edge` = pLine − implied, the ladder as `lines`): **the over is the play when the edge is positive**
+  (`isSavesPlay`; the 50% floor on the line without a price, the 30-save mark without a line), `pickSaves` orders by the
+  edge, `savesHit` grades over the line. The Saves table shows one Over cell ("o27.5 · 61%", the price and the edge
+  under it) when any row has a line, the three marks otherwise; the profile's Saves row appends "o25.5 59% at -120",
+  green on an edge. The lines arrive with the next pull. `__tests__/nhl-goalies.test.js`, `nhl-goalie-props.test.js`.
   The **shuffle** on its own tab (`#shuffle`, `components/nhl/ShufflePanel.jsx` with its own slate-date picker, the
   date riding on every card open; `GET /api/nhl/data/shuffle?date=` → `buildShuffle` in `picks.js`, which is
   `buildPicks(date, { withSkaters: true })` reshaped; the pure readers in `lib/nhl-data/shuffle-pure.js`): a bar for
