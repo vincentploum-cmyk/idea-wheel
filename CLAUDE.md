@@ -472,14 +472,18 @@ config and keeps its own markets, teams, feeds and slate key:
   before the ranked list, every game open (`closed` set in `NbaSlate`, Collapse all / Expand all in the head, `GameFold`
   takes `open` / `onToggle`), and an opened game shows **the game profile** (`components/nba/NbaProfile.jsx` from
   `profile` on the board game, `lib/nba/profile.js` `gameProfile(g, defense, sides)` through `makeBoard({ profile })`:
-  firsthalfscore.com's layout, Vincent's ask the same night in place of the characteristics card — one row per aspect,
-  the two teams side by side, each cell a word (Elite · Strong · Average · Weak · Very weak by `levelOf`, Average for the
-  middle half; High / Low on the expected points; Tightening / Loosening / Steady on the last ten; the positions a
-  defense leaks to, "Holds" when none) over the figures — expected points, scoring, defense, the last ten, what it gives
-  up to each position for points / rebounds / assists / threes from the opponent side's `allowed` table (PropFinder's
-  rank and the cheat sheet's tile named, `rankBlend` deciding), rebounding, ball movement, threes with their share of the
-  points, the line, ball security, forcing turnovers, the defensive glass, defending the three, and the players the cheat
-  sheet names on the side; `__tests__/nba-profile.test.js`; the characteristics card stays as the fallback for a game
+  firsthalfscore.com's layout, Vincent's ask the same night in place of the characteristics card — the two teams side
+  by side, each cell a word (Elite · Strong · Average · Weak · Very weak by `levelOf`, Average for the middle half; the
+  positions a defense leaks to, "Holds" when none) and one short figure on the line (`short`: "101.0 a game · 30th",
+  "#2 · #10 of 30"), the full reading on the cell's hover (`text`). **Two views of five rows, an Offense / Defense
+  toggle** (`GROUPS`; Vincent, 2026-10-31, of the seventeen rows it had: "This is way too much. I need only 5 rows. Maybe
+  add an offense / defense toggle"; the view picked holds for every game on the page): Offense = scoring, threes,
+  rebounding, assists, free throws (PropFinder's team rows ranked over the league); Defense = points allowed (its last
+  ten on the same cell, "tightening" / "loosening" at five ranks' drift) and the positions it gives points, rebounds,
+  assists and threes to, from the opponent side's `allowed` table (PropFinder's rank and the cheat sheet's tile,
+  `rankBlend` deciding, both named on the hover); the expected points stay in the head pill; ball security, forcing
+  turnovers, the defensive glass, defending the three and the sheet's named players were dropped with the rows;
+  `__tests__/nba-profile.test.js`, `nba-profile-render.test.js` (MOCK_OUT writes its pages for `tools/mock/screenshot-profile.mjs`); the characteristics card stays as the fallback for a game
   without a profile and on the NFL board), then the two courts (each with PropFinder's table, the stat tabs and the
   shuffle bar, every player's projections, **who is out under the court** — Vincent, the same night — and the Tonight
   table), and "Show the team columns and the tables" folds the columns and the five group tables. A player listed day-to-day
