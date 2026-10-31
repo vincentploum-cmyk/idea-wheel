@@ -22,7 +22,7 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard (the NFL's alone since
   2026-10-31), the data sources, the default; on the NBA page the night's plays in one ranked list over the games folded to a line each,
   below) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
-  drawn on both panels); the NBA page a third, `#firstbasket`. The NHL app has nine (below).
+  drawn on both panels); the NBA page also `#sheet` (Cheat sheet, below) and `#firstbasket`. The NHL app has nine (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)
@@ -809,6 +809,16 @@ config and keeps its own markets, teams, feeds and slate key:
   (`firstBasketOdds` in `lib/picks/propfinder.js`: the items naming a first basket / first field goal, not a team's or
   first points, the best price as `firstBasket` on the player, never a market), with the edge; the score is the chance
   × 4 on 0–100. Once stored, who scored first, the first points and the tip are on the game and the rows are graded.
+- **Cheat sheet** (`#sheet`, `components/nba/NbaSheetMatchups.jsx`, the pure reader `lib/nba/sheet-matchups.js`; Vincent,
+  2026-10-31: "create a new view with best cheat sheet matchups per game"): per game the cheat sheet's soft tiles — the
+  cells of each side's `allowed` table carrying the sheet's rank (`sheet`, 1 = the opponent gives up the most of 30) for
+  points, rebounds, assists or threes at a position, the top `SHEET_SOFT` = 10 — both sides ranked together, the sheet's
+  rank first, then whether PropFinder's season table puts the cell in its soft third too (`agree`), then PropFinder's
+  rank; each row with PropFinder's figure, rank and the league's, and the side's active players at that spot (`envPos`,
+  the highest projection first, `PER_SPOT` = 3): his projection for the stat, the book's main line with the board's chance,
+  the price and the edge, and "best bet" when the play is in `board.best`; a player opens his card. Six rows a game, then
+  "Show all"; the head's game dropdown picks one game as on Best plays. Read off the board the page already holds, no
+  request of its own; without a sheet for the date the tab says where to drop one. `__tests__/nba-sheet-matchups.test.js`.
 - `tools/check-defensive-matchups.mjs <export.csv> <picks.json>` compares PropFinder's Defensive Matchups page export (what each team allows per position, with ranks) against the board's `sides[].allowed` table in a saved `GET /api/nba/picks?date` payload, cell by cell; the export itself is never ingested (its "OPPOSING PLAYER" header is no player column, the parser reads zero rows and the store rejects it).
 - Routes: `GET /api/nba/picks?date`, `GET /api/nba/shuffle?date&market`, `GET /api/nba/scorecard?from&to`, `GET|POST|DELETE /api/nba/sheets?date`,
   `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`,

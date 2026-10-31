@@ -10,20 +10,23 @@ import { useHashTab } from '@/components/site/hash-tab';
 import NbaBoard, { NbaShuffle } from './NbaBoard';
 import NbaSources from './NbaSources';
 import NbaFirstBasket from './NbaFirstBasket';
+import NbaSheetMatchups from './NbaSheetMatchups';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : '');
 
 const TABS = [
   ['board', 'Best plays'],
+  ['sheet', 'Cheat sheet'],
   ['shuffle', 'Shuffle'],
   ['firstbasket', 'First basket'],
 ];
 const TAB_KEYS = TABS.map(([key]) => key);
 
 /**
- * The NBA page, three hash tabs over one date picker: Best plays (the night's plays in one ranked list,
- * the games folded under it, the notes, the scorecard and the data sources), Shuffle (each player's
+ * The NBA page, four hash tabs over one date picker: Best plays (the night's plays in one ranked list,
+ * the games folded under it, the notes, the scorecard and the data sources), Cheat sheet (each game's softest
+ * spots on the night's cheat sheet with the players there, off the same board), Shuffle (each player's
  * line at a chance, or who clears a bar; a row opening the player's card) and First basket.
  */
 export default function NbaApp({ email }) {
@@ -119,6 +122,24 @@ export default function NbaApp({ email }) {
               {board ? <NbaBoard board={board} game={gameId || null} onGame={setGameId} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null}
             </section>
             {date ? <NbaSources date={date} onChange={() => go(date)} /> : null}
+          </div>
+        </section>
+
+        <section className="nhlx-bench nhlx-tabpanel" id="sheet" role="tabpanel" aria-labelledby="tab-sheet" hidden={tab !== 'sheet'}>
+          <div className="nhlx-wrap">
+            <div className="nhlx-bench-head">
+              <div>
+                <span className="nhlx-eyebrow">NBA</span>
+                <h1>Cheat sheet <span>matchups</span></h1>
+                <p>Each game’s best matchups on the night’s cheat sheet: where a defense gives up the most points, rebounds, assists or threes to a position, both teams ranked together, PropFinder’s table beside it, and the players at that spot with their projection, the book’s line and the board’s chance.</p>
+              </div>
+            </div>
+            <section className="nhlx-pk" aria-label="Cheat sheet matchups">
+              {head({ games: true })}
+              {pull.msg ? <p className="nhlx-auto-msg">{pull.msg}</p> : null}
+              {err ? <div className="nhlx-alert">{err}</div> : null}
+              {mounted('sheet') ? (board ? <NbaSheetMatchups board={board} game={gameId || null} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null) : null}
+            </section>
           </div>
         </section>
 
