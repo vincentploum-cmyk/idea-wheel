@@ -928,6 +928,15 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   "Calibration" under Automation): a logistic recalibration per height, fitted before Oct 22 and read after it, landed
   where it says (3+ SOG said 54% → landed 53%, said 45% → 50%; the run's own figures said 65% → 46%, 79% → 59%).
 
+- The by-line read, checked (`docs/audits/2026-10-31-nhl-lines.md`, `tools/audit/nhl_lines.py` on the predictors' relabelled
+  box scores, the slot = the ice-time rank inside the position that night; Vincent, 2026-10-31: "was it indeed true that the
+  LW1 had the most shots in that game tonight?"): no. The skater at the opponent's softest slot was his team's top shooter in
+  9.4% of 2,390 team-games last season, the slot's own base rate (9.6%; the softest slots named are mostly third- and
+  fourth-line cells, where a handful of skater-games swings the rank); the highest own rate was the top shooter 32.5%. The
+  slot table's soft third reads +2.8% shots over his own rate and its tough third −4.9%, the position table's +3.7% / −7.3%
+  on the same rows; on top of his own rate and the position cell the slot cell carries −0.01 (z −0.3) for shots, 0.03 (z
+  0.8) for goals; the slot cells persist at 0.21 odd / even last season (0.01 this season) against the position cells' 0.48.
+  The rink's slot badges and the "softest line" head are colour, not a read; nothing changed.
 - Special teams and the predicted score (`docs/audits/2026-10-31-nhl-special-teams-and-score.md`, `tools/audit/nhl_special_teams.py`
   on the NHL API's right-rail team stats, `tools/audit/nhl-pp-fetch.mjs`, and the predictors' box scores; Vincent, 2026-10-31):
   3,052 team-games of both seasons. Inside a game a power play is worth +0.99 shots and a kill −0.71, in goals +0.06 (power-play
@@ -1041,7 +1050,9 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   side as `side.lines = linesOf(boards, opp)` ({ sog, g } → { gp, cells, softest, league }, `linesOf` in
   `defense-board.js`), green = top third, red = bottom third, grey = no record (the hover: the figure, the rank, the
   league's mean, the skater-games) — and the rink head names the opponent's softest line with its rank and figure and
-  this side's skater at that slot (`SoftestLine`, click to his card); colour only, no number moves;
+  this side's skater at that slot (`SoftestLine`, click to his card); colour only, no number moves — and checked the same
+  day on both seasons' box scores (`docs/audits/2026-10-31-nhl-lines.md`, under Audits): the softest slot's skater was the
+  top shooter at the slot's base rate (9.4%), the slot cell adds nothing to the position table, so the badges stay colour;
   chips carrying the latest saved model run's λ shots / goals for the slate date from
   `lib/nhl-data/model-runs.js`, or a matchup read when no run exists; at the top of each rink card the model's plays
   for that team (`sidePlays` in `slate.js`, `ModelPlays` in `Rink.jsx`): the Best bets boards' rule, `boardPlays` in
