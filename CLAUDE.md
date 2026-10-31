@@ -1136,15 +1136,20 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   `components/nhl/Rink.jsx`, ice bands tinted by the opponent's SOG-allowed or goals-allowed rank per position (the slate-wide
   Shots / Goals switch above each rink, `metric` state in `MatchupsPanel`; the band labels, legend and the chips'
   h2h mark follow it: scorers (`h2hHot`) under Goals, shooters (`h2hShotsHot`) under Shots)
-  for the window picked above the rink — home / away / L5 / L10 / L5 home / L5 away, defaulting to
-  tonight's venue —
+  for the window picked above the rink — home / away / L5 / L10 / L5 home / L5 away, opening on L10 since
+  2026-10-31 (tonight's venue before, still marked with a dot) —
   above each rink the opponent's PropFinder defense table (`propfinderDefenseTabs` in
   `lib/nhl-data/propfinder.js`, drawn by `PropfinderDefense` in `components/nhl/Propfinder.jsx`:
   All/C/LW/RW/D rows, season tabs then L5 / L10 / L15, per game or total, PropFinder's ranks, sortable; **the table
-  and the PropFinder tint open on this season's tab** whenever PropFinder has published it (Vincent's call, 2026-10-27:
-  the teams on the ice are this season's; last season's tab is there to compare against, never the default; a window
-  is never the default), `defaultDefenseTab` in `propfinder-csv.js`; the rink's tint defaults to PropFinder (this
-  season's tab) when the opponent has a table, else to the Rink's stored games;
+  and the PropFinder tint open on the L10 tab** whenever the team has one (Vincent, 2026-10-31: "make sure that last 10
+  is the default when loading the matchup view"; `defaultDefenseTab` in `propfinder-csv.js`: L10, else this season's,
+  else last season's — the stored window stands in for an L10 PropFinder has not published, so a team without it is
+  rare; from 2026-10-27 until then this season's table led, Vincent's call that the teams on the ice are this season's,
+  and `seasonDefenseTab` keeps that read for the matchup profile's Allows stand-in, whose Last 10 row carries the window
+  already); the same default opens the rink's own stored-games window picker on L10 (the venue window keeps its dot, and
+  stands in while the tables lack an L10 window), the shuffle's "Matchup from" column, the fold's defense card and the
+  soft-spot flags, since they all read the tab the rink opens on; colour only, no number moves with it. The rink's tint
+  defaults to PropFinder (that tab) when the opponent has a table, else to the Rink's stored games;
   a window PropFinder's API has not published for the current season is rolled from the stored
   box scores across the season boundary by `withStoredWindows`, the way PropFinder's own L5 counts; a window
   published for the league that lacks a team short of its games this season — CBJ had L5 and L15 and no L10
@@ -1346,7 +1351,7 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   replaced Thins out on 2026-10-27; the Centre column, the λ the chance is read from, shows only when the read is not the
   board's) and Got once final; the fallen strip under it, each with the bar he still clears. The **Matchup column reads the
   opponent's PropFinder defense table**, the one above each rink on Matchups, on the same tabs (a "Matchup from" row under
-  Read from: last season, this season, L5, L10, L15, L5 home, L5 away, opening on the Matchups tab's default, this season's;
+  Read from: last season, this season, L5, L10, L15, L5 home, L5 away, opening on the Matchups tab's default, L10 since 2026-10-31;
   `defense` on the shuffle payload = each team's table trimmed, keyed by the defending team, `trimDefenseTabs` /
   `matchupTabs` / `matchupTabOf` / `matchupOf` in `shuffle-pure.js`), so the rank it shows is the rank that tab shows on
   Matchups (Vincent, 2026-10-27: the shuffle read Boldy at UTA as #25 RW off the study's per-skater table while the Matchups

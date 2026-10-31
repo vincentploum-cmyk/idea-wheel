@@ -156,21 +156,21 @@ describe('the Matchup column reads the Matchups tab’s PropFinder table', () =>
     expect(trimDefenseTabs(null)).toBeNull();
     expect(trimDefenseTabs({ tabs: [] })).toBeNull();
   });
-  test('the tabs on offer are the union over the slate’s teams, and the column opens on this season’s, as the rink does', () => {
+  test('the tabs on offer are the union over the slate’s teams, and the column opens on the last 10, as the rink does', () => {
     expect(matchupTabs(defense).map((t) => [t.key, t.text])).toEqual([['season-2025', 'the 2025 season'], ['season-2026', 'the 2026 season'], ['l10', 'the last 10 games']]);
     expect(matchupTabs({ MIN: defense.MIN, UTA: defense.UTA }).map((t) => t.key)).toEqual(['season-2025', 'season-2026', 'l10']);   // whatever the order of the teams
     expect(matchupTabs(null)).toEqual([]);
     const tabs = matchupTabs(defense);
-    expect(matchupTabOf(null, tabs).key).toBe('season-2026');
+    expect(matchupTabOf(null, tabs).key).toBe('l10');
     expect(matchupTabOf('l10', tabs).key).toBe('l10');
-    expect(matchupTabOf('nope', tabs).key).toBe('season-2026');
+    expect(matchupTabOf('nope', tabs).key).toBe('l10');
     expect(matchupTabOf(null, [])).toBeNull();
   });
   test('the read is PropFinder’s figure and rank on the tab: L10 says #20 for a RW at UTA, this season #15, never the study’s #25', () => {
     expect(matchupOf(boldy, defense, 'l10', 'sog')).toEqual({ source: 'propfinder', pos: 'RW', rank: 20, value: 6.6, gp: 10, teams: 32, tab: { key: 'l10', label: 'L10', text: 'the last 10 games', stored: true } });
     expect(matchupOf(boldy, defense, 'season-2026', 'sog')).toMatchObject({ rank: 15, value: 6.9, tab: { key: 'season-2026', stored: false } });
     expect(matchupOf(boldy, defense, 'l10', 'g')).toMatchObject({ rank: 2, value: 1.5 });
-    expect(matchupOf(boldy, defense, null, 'sog').tab.key).toBe('season-2026');   // no tab picked: the default, as above the rink
+    expect(matchupOf(boldy, defense, null, 'sog').tab.key).toBe('l10');   // no tab picked: the default, as above the rink
   });
   test('a team without the tab falls back to the study’s per-skater table, marked stored with the tab it lacks', () => {
     const atMin = { ...boldy, team: 'UTA', opp: 'MIN' };

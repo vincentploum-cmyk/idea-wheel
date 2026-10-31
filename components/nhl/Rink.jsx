@@ -332,14 +332,17 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
   const picked = useMemo(() => new Set([...(side.plays?.shots || []), ...(side.plays?.goals || [])].map((pl) => (pl.id != null ? `id:${pl.id}` : `nm:${String(pl.name).toLowerCase()}`))), [side.plays]);
   const isPicked = (p) => picked.has(`id:${p.id}`) || picked.has(`nm:${String(p.name).toLowerCase()}`);
   const score = log?.score ? (side.venue === 'H' ? [log.score.home, log.score.away] : [log.score.away, log.score.home]) : null;
-  // Default window = where the opponent actually plays tonight (its home table when we're away).
+  // The venue window = where the opponent actually plays tonight (its home table when we're away), marked with a dot;
+  // the picker opens on the last ten games when the stored tables carry that window (Vincent, 2026-10-31: "make sure
+  // that last 10 is the default when loading the matchup view"), the venue until then.
   const defaultView = side.venue === 'A' ? 'home' : 'away';
+  const hasL10 = ZONES.some((z) => side.defense?.[z]?.windows?.l10);
   const [view, setView] = useState(null);
-  const v = view || defaultView;
+  const v = view || (hasL10 ? 'l10' : defaultView);
   // What tints the ice: the PropFinder table above (its selected tab, which the rink then owns;
-  // this season's tab by default) when the opponent has one, else our stored games (the window
-  // toggle). On the opponents with 10+ games this season's table was the best tint by deviance
-  // (docs/shots-goals-predictors.md section 10, refreshed 2026-10-27).
+  // the last 10 games by default since 2026-10-31, `defaultDefenseTab`) when the opponent has one, else our
+  // stored games (the window toggle). On the opponents with 10+ games this season's table was the best tint
+  // by deviance (docs/shots-goals-predictors.md section 10, refreshed 2026-10-27); the tint is colour only.
   const [tint, setTint] = useState('propfinder');
   // The PropFinder tab: owned here, or by the panel (`pfKey` / `onPfKey`) so the defense card under the rink reads the same tab.
   const [ownKey, setOwnKey] = useState(null);

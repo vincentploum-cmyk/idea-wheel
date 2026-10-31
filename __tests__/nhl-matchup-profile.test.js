@@ -43,7 +43,7 @@ describe('matchup profile: the rink side', () => {
     expect(t.league.sog).toBe(30.67);
     expect(teamRates(rows, 2026)).toBe(t);
   });
-  test('pfDefenseOf: the tab the rink opens on (this season’s) and its L10', () => {
+  test('pfDefenseOf: this season’s table (the Allows stand-in, whatever tab the rink opens on) and its L10', () => {
     const d = pfDefenseOf(game.sides[0].propfinder.tabs);
     expect(d.tab.key).toBe('season-2026');
     expect(d.l10.key).toBe('l10');
