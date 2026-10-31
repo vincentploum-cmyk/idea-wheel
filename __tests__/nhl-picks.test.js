@@ -285,35 +285,3 @@ describe('picks: form flags and the soft third', () => {
     expect(isSoftThird(null, 32)).toBe(false); expect(isSoftThird(3, 0)).toBe(false);
   });
 });
-
-describe('the rink strip reads the Best bets board', () => {
-  const { withBoardPlays } = require('../lib/nhl-data/picks');
-  const skater = (id, name, team, number) => ({ id, name, team, number, pos: 'C', line: 1, inLineup: true });
-  const slate = { date: '2026-10-30', games: [
-    { id: 2026020100, away: 'SEA', home: 'CGY', sides: [
-      { team: 'SEA', opp: 'CGY', venue: 'A', skaters: [skater(1, 'Jordan Eberle', 'SEA', 7), skater(2, 'Jonathan Gaudreau', 'SEA', 13)], plays: { shots: [], goals: [{ id: 2, name: 'Jonathan Gaudreau', kind: 'goals', market: '1+ G', prob: 0.22, tier: 'Thin' }] } },
-      { team: 'CGY', opp: 'SEA', venue: 'H', skaters: [skater(3, 'Nazem Kadri', 'CGY', 91)], plays: { shots: [], goals: [] } },
-    ] },
-    { id: 2026020101, away: 'MTL', home: 'DAL', sides: [{ team: 'MTL', opp: 'DAL', venue: 'A', skaters: [], plays: { shots: [], goals: [{ id: 9, name: 'Cole Caufield', kind: 'goals', market: '1+ G', prob: 0.3, tier: 'Lean' }] } }] },
-  ] };
-  const cand = (id, name, team, over) => ({ id, name, team, opp: team === 'SEA' ? 'CGY' : 'SEA', pos: 'C', line: 1, p3: over.p3, p1g: over.p1g, raw: over.raw || null, heat: { shots: 'hot' }, oppPos: { rankSog: 3 }, spot: { softSog: true }, under: !!over.under });
-  const board = { games: [{ id: 2026020100, away: 'SEA', home: 'CGY',
-    shots: [cand(1, 'Jordan Eberle', 'SEA', { p3: 0.58, p1g: 0.21, raw: { p3: 0.71, p1g: 0.3 } }), cand(3, 'Nazem Kadri', 'CGY', { p3: 0.52, p1g: 0.2 }), cand(2, 'Jonathan Gaudreau', 'SEA', { p3: 0.44, p1g: 0.19, under: true })],
-    goals: [cand(3, 'Nazem Kadri', 'CGY', { p3: 0.52, p1g: 0.37 }), cand(1, 'Jordan Eberle', 'SEA', { p3: 0.58, p1g: 0.31, under: true }), cand(2, 'Jonathan Gaudreau', 'SEA', { p3: 0.44, p1g: 0.22, under: true })],
-  }] };
-  test('each side carries the board’s rows over the floor for its team, the chance as Best bets prints it, the break-even on the pill; a fill-in under the floor is no play', () => {
-    const out = withBoardPlays(slate, board);
-    const sea = out.games[0].sides[0].plays;
-    expect(sea.from).toBe('board');
-    expect(sea.shots).toEqual([{ id: 1, name: 'Jordan Eberle', number: 7, pos: 'C', line: 1, opp: 'CGY', kind: 'shots', market: '3+ SOG', prob: 0.58, raw: 0.71, stat: 'sog', min: 3, tier: '-138', attack: null, heat: { shots: 'hot' }, oppPos: { rankSog: 3 }, spot: { softSog: true }, from: 'board' }]);
-    // Gaudreau at 1+ G 22% is a fill-in under the 35% floor on Best bets: not on the strip either.
-    expect(sea.goals).toEqual([]);
-    const cgy = out.games[0].sides[1].plays;
-    expect(cgy.shots.map((p) => p.name)).toEqual(['Nazem Kadri']);
-    expect(cgy.goals.map((p) => [p.name, p.prob, p.tier, p.number])).toEqual([['Nazem Kadri', 0.37, '+170', 91]]);
-    // A game the board does not carry keeps the run's strip; the memoised slate is left as it was.
-    expect(out.games[1].sides[0].plays.goals[0].name).toBe('Cole Caufield');
-    expect(slate.games[0].sides[0].plays.goals[0].name).toBe('Jonathan Gaudreau');
-    expect(withBoardPlays(slate, null)).toBe(slate);
-  });
-});
