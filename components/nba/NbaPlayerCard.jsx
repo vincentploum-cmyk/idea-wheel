@@ -7,7 +7,7 @@ import { headshotUrl } from '@/lib/nba/espn';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { boardRead, windowRead, blendText, dampText, pullText, reachText } from '@/lib/picks/projection';
 import { asStated } from '@/lib/picks/calibration';
-import { POS_TABS, atPosition, vsPositionSummary } from '@/lib/nba/vs-position-pure';
+import { POS_TABS, atPosition, vsPositionSummary, profileText, LIKE_RULE } from '@/lib/nba/vs-position-pure';
 
 // The NBA player card, laid out as the NHL card (components/nhl/PlayerCard.jsx): the top bar
 // (team logo, position, tonight's game, the season averages), market tabs carrying the hit rate for
@@ -145,6 +145,11 @@ export function VsPosition({ data, opp, myPos, market, line, allowed }) {
   const table = allowed?.[pos]?.[market]?.value ?? null;
   const cols = ['min', 'pts', 'reb', 'ast', 'tpm', 'pra', 'stl', 'blk'];
   const label = (p) => `${p}s`;
+  // The players like him washed purple (the NHL card's look-alikes): his averages this season beside theirs, `like` from the server.
+  const like = data.like?.profile ? data.like : null;
+  const alike = like?.alike || {};
+  const isLike = (r) => !r.mine && !!alike[r.key];
+  const likeCount = like ? new Set(rows.filter(isLike).map((r) => r.key)).size : 0;
   return (
     <div className="nhlx-pfd ir-pc-vs">
       <div className="nhlx-pfd-head">
@@ -155,6 +160,12 @@ export function VsPosition({ data, opp, myPos, market, line, allowed }) {
           {sum.perGame != null ? ` · ${num(sum.perGame)} a game to ${label(pos)}${table != null ? ` (PropFinder's table: ${num(table)})` : ''}` : ''}
         </small>
       </div>
+      {like ? (
+        <p className="nhlx-gl-like" title={LIKE_RULE}>
+          <i className="nhlx-gl-like-swatch" aria-hidden="true" />
+          {likeCount ? `${likeCount} player${likeCount === 1 ? '' : 's'} at ${pos} like him` : `No player at ${pos} like him`} · his line: {profileText(like.profile)}
+        </p>
+      ) : null}
       <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Position" style={{ marginBottom: 8 }}>
         {POS_TABS.map((k) => <button key={k} type="button" role="tab" aria-selected={pos === k} className={`nhlx-tab${pos === k ? ' is-active' : ''}`} onClick={() => setPick(k)} title={k === myPos ? 'His spot tonight' : `The ${k}s who faced ${opp}`}>{k}{k === myPos ? ' ·' : ''}</button>)}
       </div>
@@ -167,9 +178,9 @@ export function VsPosition({ data, opp, myPos, market, line, allowed }) {
                 const v = valueOf(r);
                 const over = v == null || line == null ? null : v > line;
                 return (
-                  <tr key={`${r.gameId}-${r.key}`} className={r.mine ? 'is-active' : ''} title={`${r.name} (${r.team}) ${r.venue === 'H' ? 'vs' : 'at'} ${opp} on ${r.date}${r.result ? `, ${r.result} ${r.score}` : ''}${r.starter ? ' · started' : ''}${r.posFrom === 'espn' ? ` · ESPN lists him as a ${r.pos}: no PropFinder position on record, shown at both ${r.pos === 'G' ? 'guard' : 'forward'} spots` : r.posFrom === 'depth' ? ` · ${r.pos} on PropFinder's depth chart` : ''}${r.mine ? ' · his own game against them' : ''}`}>
+                  <tr key={`${r.gameId}-${r.key}`} className={[r.mine ? 'is-active' : '', isLike(r) ? 'is-like' : ''].filter(Boolean).join(' ') || undefined} title={`${isLike(r) ? `Like him: ${profileText(alike[r.key])}. ` : ''}${r.name} (${r.team}) ${r.venue === 'H' ? 'vs' : 'at'} ${opp} on ${r.date}${r.result ? `, ${r.result} ${r.score}` : ''}${r.starter ? ' · started' : ''}${r.posFrom === 'espn' ? ` · ESPN lists him as a ${r.pos}: no PropFinder position on record, shown at both ${r.pos === 'G' ? 'guard' : 'forward'} spots` : r.posFrom === 'depth' ? ` · ${r.pos} on PropFinder's depth chart` : ''}${r.mine ? ' · his own game against them' : ''}`}>
                     <td>{mdy(r.date)}<small>{r.venue === 'H' ? 'vs' : '@'} {opp}{r.result ? ` · ${r.result}` : ''}</small></td>
-                    <td><b>{r.name}</b><small>{r.team}{r.posFrom === 'espn' ? ` · ${r.pos}` : ''}{r.starter ? ' · started' : ''}{r.mine ? ' · him' : ''}</small></td>
+                    <td><b>{r.name}</b><small>{r.team}{r.posFrom === 'espn' ? ` · ${r.pos}` : ''}{r.starter ? ' · started' : ''}{r.mine ? ' · him' : ''}{isLike(r) ? ' · like him' : ''}</small></td>
                     {cols.map((k) => <td key={k} className={`${k === market ? 'is-on' : ''}${k === market && over != null ? (over ? ' is-soft' : ' is-tough') : ''}`}><span className="nhlx-pfd-val">{k === 'min' ? num(r.min, 0) : num(RAW.has(k) ? r[k] : statOf(r, k), 0)}</span></td>)}
                   </tr>
                 );
