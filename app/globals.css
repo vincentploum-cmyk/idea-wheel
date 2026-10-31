@@ -1548,6 +1548,10 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-pc-top { grid-template-columns: 40px minmax(200px, 1.6fr) repeat(6, minmax(70px, 0.5fr)); }
 @media (max-width: 1100px) { .ir-pc-top { grid-template-columns: 40px minmax(160px, 1.4fr) repeat(3, minmax(70px, 0.5fr)); } .ir-pc-top .nhlx-pc-stat:nth-child(n+6) { display: none; } }
 .ir-pc-plays { margin-top: 16px; }
+.ir-pc-vs { margin-top: 16px; }
+.ir-pc-vs .nhlx-pfd-table td small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+.ir-pc-vs .nhlx-pfd-table tr.is-active td { background: var(--bg-tint); }
+.ir-pc-vs .nhlx-pfd-table td.is-soft { background: var(--pf-soft-bg); } .ir-pc-vs .nhlx-pfd-table td.is-tough { background: var(--pf-tough-bg); }
 .ir-court-table tr.is-click { cursor: pointer; }
 .ir-court-table tr.is-click:hover td { background: var(--bg-tint); }
 .nhlx-pc-stats .nhlx-pfd-table td.is-soft { background: var(--pf-soft-bg); } .nhlx-pc-stats .nhlx-pfd-table td.is-tough { background: var(--pf-tough-bg); }

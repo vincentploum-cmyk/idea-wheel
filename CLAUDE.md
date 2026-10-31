@@ -752,7 +752,19 @@ config and keeps its own markets, teams, feeds and slate key:
   under, the average pill), the split tiles (L5 · L10 · L20 · season · vs opp · home / away; press one
   to draw its games), the splits table (GP, MIN, PTS, REB, AST, 3PM, PRA, over %), and on the right
   the opponent's allowed table (Season / L5 / L10 … tabs, his position marked, the league's average at
-  his spot under it) and "His lines tonight" (every play the board has on him, click one to draw it).
+  his spot under it), **what other players at his position did against the opponent** (`VsPosition` in the card,
+  `vsPosition` on the payload from `lib/nba/store.js` `playerFor` → `lib/nba/vs-position.js`; Vincent, 2026-10-31: "on the
+  individual player card, I need to see what other players in the same position did"): the opponent's stored games this
+  season before the slate (`datesWithData` + `seasonResults`), every opposing player who played with his line (MIN · PTS ·
+  REB · AST · 3PM · PRA · STL · BLK), position tabs PG … C opening on his spot (`myPos`), the card's market column read
+  against the card's line (green over, red under), his own games against them tinted ("· him"), the head counting the
+  player-games, the average a player, how many cleared the line and the position's total per game beside PropFinder's table
+  figure for it. ESPN's box score places a player only as G / F / C, so the positions come from the stored PropFinder pulls
+  of those nights (`positionBook`: the depth chart's slot first, else the roster position, G → SG and F → SF as `envPosFor`);
+  a player no pull knows keeps ESPN's group and shows at both spots it covers (`atPosition`, `WIDE` in the client-safe
+  `vs-position-pure.js`), marked "· G" / "· F". The read is kept ten minutes per opponent and date (`vsMemo`: a dozen pulls
+  read once). `__tests__/nba-vs-position.test.js` (the builder on the MIA at ORL fixture, the table rendered) and "His
+  lines tonight" (every play the board has on him, click one to draw it).
   Data: `GET /api/nba/player?key&date` → `playerFor` in `lib/picks/store.js` (the slate's PropFinder
   pull: his logs newest first, his props with their ladders, the game, the opponent's rows with ranks,
   `league` and `windows`); the plays ride in from the opener. Hit rates and splits are
