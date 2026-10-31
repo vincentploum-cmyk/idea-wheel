@@ -472,7 +472,9 @@ config and keeps its own markets, teams, feeds and slate key:
   tonight's opponent gives up to that position for the stat picked in the tabs above each court (Points ·
   Rebounds · Assists · Threes · Steals · Blocks, `COURT_METRICS`, one setting for the slate as the rink's Shots / Goals
   switch; steals and blocks since 2026-10-30, `LADDER_MARKETS` in `lib/nba/picks.js` and `SHUFFLE_MARKETS` carry them,
-  so every player has a range and a ladder for both). **Under the tabs the stat's shuffle bar** (`CourtBar`, Vincent,
+  so every player has a range and a ladder for both). **The card's order since that night: PropFinder's table with its
+  window tabs, then the stat tabs with the shuffle bar under them, then the court** (Vincent: "put the shuffle bar right
+  under the propfinder table so I can see the table, the bar (incl type) and the court in 1 view"). **The stat's shuffle bar** (`CourtBar`, Vincent,
   2026-10-30: "a shuffle bar that I can move … the % displayed next to the player on the court"): the Shuffle tab's
   heights for the stat (`SHUFFLE_MARKETS`), one height per stat for the slate (`CourtShuffleProvider` in `NbaCourt.jsx`,
   wrapping the board in `NbaBoard.jsx`: the bar heights and the night's shuffle payload per stat — `GET /api/nba/shuffle`,
