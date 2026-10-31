@@ -421,9 +421,18 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
         <div><b>{sport.teamName(side.team)} <small>{side.venue === 'H' ? 'vs' : 'at'} {sport.teamName(side.opp)}</small></b></div>
       </div>
       <SidePicks side={side} sport={sport} final={final} heading={false} onOpen={(pl) => open({ key: pl.key, player: side.players.find((p) => p.key === pl.key) || null, team: side.team, opp: side.opp, venue: side.venue, market: pl.market })} />
-      {/* The table, then the stat tabs with the bar, then the court: one view (Vincent, 2026-10-30: "put the shuffle bar right
-          under the propfinder table so I can see the table, the bar (incl type) and the court in 1 view"). The window tabs
-          ride on the table (`onWin`); a window tints the zones and fills the table, the chips keep the board's figure. */}
+      {/* The stat tabs, the table, the players picker, the bar, then the court: one view (Vincent, 2026-10-30: "put the shuffle
+          bar right under the propfinder table so I can see the table, the bar (incl type) and the court in 1 view"). The
+          window tabs ride on the table (`onWin`); a window tints the zones and fills the table, the chips keep the board's figure. */}
+      {/* The stat tabs first, Points to start (Vincent, 2026-10-31: "have the defense tab defaulted above the propfinder
+          table"): the picked stat marks the table's column, the bar asks for it, the court tints by it. */}
+      <div className="nhlx-rk-toggle ir-court-stat">
+        <small>Stat</small>
+        <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Which stat the table, the bar and the court read">
+          {COURT_METRICS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={metric === k} className={`nhlx-tab${metric === k ? ' is-active' : ''}`} onClick={() => onMetric?.(k)} title={`Marks the ${l.toLowerCase()} ${side.opp} gives up to each position in the table and tints the zones by it; the bar asks for ${l.toLowerCase()}, every chip showing his chance to clear it`}>{l}</button>)}
+        </div>
+        {view !== 'season' ? <small className="nhlx-rk-toggle-note">zones tinted by {windowLabel(view, side.allowed, season)}; the chips keep the board’s read off this season’s table</small> : null}
+      </div>
       <AllowedTable side={side} win={view} metric={metric} season={season} onWin={setWin} onPos={setHiPos} hiPos={hiPos} />
       {/* Which players the court shows (Vincent, 2026-10-31: "an 'all' option to select all players"): All, or one position's
           chips picked out and the rest faded, the same as pressing that row of the table. */}
@@ -432,13 +441,6 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Which players the court picks out">
           {[null, ...POSITIONS].map((pos) => <button key={pos || 'all'} type="button" role="tab" aria-selected={hiPos === pos} className={`nhlx-tab${hiPos === pos ? ' is-active' : ''}`} onClick={() => setHiPos(pos)} title={pos ? `Pick out the ${pos}s on the court, the rest faded` : 'Every player on the court'}>{pos || 'All'}</button>)}
         </div>
-      </div>
-      <div className="nhlx-rk-toggle ir-court-stat">
-        <small>Stat</small>
-        <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Which stat the court reads">
-          {COURT_METRICS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={metric === k} className={`nhlx-tab${metric === k ? ' is-active' : ''}`} onClick={() => onMetric?.(k)} title={`Zones by the ${l.toLowerCase()} ${side.opp} gives up to each position; the bar asks for ${l.toLowerCase()}, every chip showing his chance to clear it`}>{l}</button>)}
-        </div>
-        {view !== 'season' ? <small className="nhlx-rk-toggle-note">zones tinted by {windowLabel(view, side.allowed, season)}; the chips keep the board’s read off this season’s table</small> : null}
       </div>
       {sh ? <CourtBar metric={metric} side={side} sh={sh} rows={rows} /> : null}
       <div className={`nhlx-rk ir-court${hiPos ? ' is-picking' : ''}`}>
