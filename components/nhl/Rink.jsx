@@ -7,6 +7,7 @@ import { TeamLink } from './links';
 import { usePlayerCard } from './PlayerCard';
 import { PropfinderDefense } from './Propfinder';
 import { defaultDefenseTab, defenseBandFromTab, defenseTabText } from '@/lib/nhl-data/propfinder-csv';
+import { lineupRead } from '@/lib/nhl-data/lineup-read';
 
 // Tactical board: one team's whole lineup on a full vertical rink (85 × 200 ft,
 // attacking goal at the top). Forward lines stack in the attacking half with
@@ -36,6 +37,23 @@ function sourceText(side) {
   if (side.source === 'propfinder') return `lines from PropFinder’s depth chart${m.pfAt ? ` (pulled ${et(m.pfAt)})` : ''} · no beat-writer or NHL.com lines yet${m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}${carriedText(side)}`;
   if (side.carried) return `no lines yet: ${carriedText(side).slice(3)}${m.capturedAt ? ` · last checked ${et(m.capturedAt)}` : ''}`;
   return `lines from the roster, ordered by projected shots (no lines yet${m.capturedAt ? `, last checked ${et(m.capturedAt)}` : ''})`;
+}
+
+/**
+ * Where the lines came from, as a pill under the team (Vincent, 2026-10-31: "per rink whether the lineup was
+ * updated through GameDayTweets; now it's guessing"): green = the beat writers' tweet from the warm-up window
+ * or the game, amber = an earlier tweet or NHL.com's projected lineup, red = a guess (the depth chart, the
+ * roster, the last known lineup); the hover spells it out. `side.lineup` from the slate, else read here.
+ */
+export function LineupSource({ read }) {
+  if (!read) return null;
+  return (
+    <small className={`nhlx-rk-lines is-${read.tone}`} title={read.title}>
+      <span>Lines</span>
+      {read.url ? <a className="nhlx-rk-lines-pill" href={read.url} target="_blank" rel="noreferrer">{read.label}</a> : <b className="nhlx-rk-lines-pill">{read.label}</b>}
+      {read.note ? <i>{read.note}</i> : null}
+    </small>
+  );
 }
 
 /** " · 3 slots carried from the last known lineup (2026-09-30)". */
@@ -287,7 +305,9 @@ function SoftestLine({ side, metric = 'sog' }) {
   );
 }
 
-export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, modelRun = null, metric = 'sog', onMetric = null, pfKey: controlledKey = undefined, onPfKey = null }) {
+export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, modelRun = null, metric = 'sog', onMetric = null, pfKey: controlledKey = undefined, onPfKey = null, startTimeUTC = null }) {
+  // The lines' source as a pill: the slate's read, else read here from the side's source and the game's start.
+  const lineup = side.lineup || lineupRead(side, startTimeUTC);
   // Kept for the card's title (hover): where the chip numbers and the lines come from.
   const numSrc = modelRun ? `Numbers on the chips: the model, ${modelRun.source === 'auto' ? 'run automatically' : 'run'} ${et(modelRun.createdAt)}${modelRun.players ? ` (${modelRun.players} players)` : ''}.` : 'No model run for this slate yet: chips show a matchup read (own SOG/G × opponent ratio).';
   const { placed, extras } = useMemo(() => layoutSide(side.skaters), [side.skaters]);
@@ -332,7 +352,8 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
         <TeamLink abbr={side.team} logo={28} />
         <div>
           <b><TeamLink abbr={side.team}>{side.team}</TeamLink> <small>{side.venue === 'H' ? 'home' : 'away'}{score ? ` · final ${score[0]}–${score[1]} vs ${side.opp} · chips show the game's shots, goals, assists` : ' · attacking upwards'}</small></b>
-          {/* The chips' source and the lines' source stay in the title attribute: the head shows the team and the softest line. */}
+          {/* The chips' source stays in the title attribute: the head shows the team, where the lines came from and the softest line. */}
+          <LineupSource read={lineup} />
           <SoftestLine side={side} metric={metric} />
           {dressedText(side) ? <small className="nhlx-rk-line" title="NHL.com's projected lineup or the beat writers' lines list a two-forward line: the third spot rotates through the game, so no skater sits in it on the ice">{dressedText(side)}</small> : null}
         </div>
@@ -397,6 +418,7 @@ export function RinkLegend({ metric = 'sog' }) {
       <span><i className="is-tough" /> stingy: bottom third</span>
       <span>on each player: the model’s projected SOG and goals from the latest saved run for this slate (3+ SOG and 1+ G odds in the tooltip), or a matchup read when no run exists; once the game is final, the actual shots, goals and assists with the model’s number after “m”; click for the player card</span>
       <span>🔥 on fire, by the model’s rule: 1+ point at 50% or better, 2.0+ scoring chances per game, 16+ minutes</span>
+      <span><i className="nhlx-rk-lines-pill is-ok is-legend">GameDayTweets</i> under the team: where the lines came from — green, the beat writers’ tweet from the warm-up window (90 minutes before puck drop) or the game; amber, an earlier tweet (projected lines) or NHL.com’s projected lineup; red, a guess (PropFinder’s depth chart, the roster or the last known lineup) until a tweet or preview arrives; hover for the time and the link</span>
       <span><i className="nhlx-rk-slot is-soft is-legend">LW1</i> his line slot tonight, tinted by the {word} the opponent gives up to that slot per skater a game this season (the Defense tab’s by-line table, both venues; green = top third of the league, red = bottom third; grey = no record yet); the rink head names the opponent’s softest line and who sits there tonight</span>
       <span><i className="nhlx-pk-flag is-hot is-legend">{ICON.hot}</i> hot going in ({metric === 'g' ? '3+ goals in his last five' : 'his last five at 1.4× his shot rate or more'}) · <i className="nhlx-pk-flag is-cold is-legend">{ICON.cold}</i> cold ({metric === 'g' ? 'no goal in ten games when his rate owed him one' : 'his last five at 0.7× or under'}) ; on the plays above the rink and in the skater table, <i className="nhlx-pk-flag is-soft is-legend">{ICON.soft}</i> marks the opponent in the soft third of the league at his position for {word} on PropFinder’s table above the rink, the tab it opens on (on the ice the band under a chip already shows it); colour only, the numbers already carry his rate</span>
       {metric === 'g'
