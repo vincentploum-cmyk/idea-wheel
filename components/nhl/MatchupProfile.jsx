@@ -32,9 +32,10 @@ function TeamHead({ head, side, renderTeam }) {
   if (!head) return <div className={`nhlx-prof-cell is-${side}`} />;
   const v = head.verdict;
   const spz = head.shotpropz;
-  const sub = spz
+  // The NHL head says where its boards stand; a profile that writes its own line (the NBA's) passes `sub`.
+  const sub = head.sub ?? (spz
     ? `ShotPropz${spz.venueGames != null ? ` · ${spz.venueGames} ${VENUE[head.venue] || ''} game${spz.venueGames === 1 ? '' : 's'}` : ''}${spz.leadAt === 'all' ? ' (all games until four there)' : ''}${spz.updated ? ` · ${spz.updated}` : ''}`
-    : head.games ? `${head.games} stored game${head.games === 1 ? '' : 's'} · no ShotPropz snapshot yet` : 'no ShotPropz snapshot yet';
+    : head.games ? `${head.games} stored game${head.games === 1 ? '' : 's'} · no ShotPropz snapshot yet` : 'no ShotPropz snapshot yet');
   return (
     <div className={`nhlx-prof-cell nhlx-prof-team is-${side}`}>
       <span className="nhlx-prof-team-name">
@@ -47,7 +48,7 @@ function TeamHead({ head, side, renderTeam }) {
   );
 }
 
-/** The card. `profile` from the slate game; `renderTeam(abbr)` draws a team mark in place of the TeamLink (the mock renders). */
+/** The card. `profile` from the slate game (or the NBA board game); `renderTeam(abbr)` draws a team mark in place of the TeamLink (the picks boards, the mock renders). */
 export function MatchupProfile({ profile, renderTeam = null }) {
   if (!profile?.rows?.length) return null;
   const [away, home] = profile.order;
@@ -55,9 +56,9 @@ export function MatchupProfile({ profile, renderTeam = null }) {
   return (
     <div className="nhlx-prof">
       <div className="nhlx-prof-head">
-        <b>Matchup profile</b>
-        {t?.headline ? <span className={`nhlx-edge ${t.tier === 'high' ? 'is-soft' : t.tier === 'low' ? 'is-tough' : ''}`} title={t.league != null ? `${t.projected} goals read against a league average of ${t.league}` : undefined}>{t.headline}</span> : null}
-        <small>tonight’s venue · green = more shots and goals likely, red = fewer · hover a cell for every source</small>
+        <b>{profile.title || 'Matchup profile'}</b>
+        {t?.headline ? <span className={`nhlx-edge ${t.tier === 'high' ? 'is-soft' : t.tier === 'low' ? 'is-tough' : ''}`} title={t.title || (t.league != null ? `${t.projected} goals read against a league average of ${t.league}` : undefined)}>{t.headline}</span> : null}
+        <small>{profile.legend || 'tonight’s venue · green = more shots and goals likely, red = fewer · hover a cell for every source'}</small>
       </div>
       <div className="nhlx-prof-rows">
         <div className="nhlx-prof-row is-head">

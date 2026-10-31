@@ -61,6 +61,6 @@ describe('MatchupProfile renders', () => {
 .mock-page { max-width: 1180px; margin: 0 auto; padding: 24px var(--gutter) 48px; }</style></head><body><main class="mock-page nhlx"><div class="nhlx-mu"><article class="nhlx-mu-game is-first">${head}${render()}${numbers}</article></div></main></body></html>`;
       fs.writeFileSync(path.join(out, `profile-${theme}.html`), page);
     }
-    expect(fs.readdirSync(out).filter((f) => f.endsWith('.html')).length).toBe(2);
+    expect(fs.readdirSync(out).filter((f) => /^profile-(dark|light)\.html$/.test(f)).length).toBe(2);
   });
 });
