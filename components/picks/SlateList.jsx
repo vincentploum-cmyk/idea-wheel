@@ -108,7 +108,7 @@ export default function SlateList({ board, sport, onOpen = null }) {
                   <td className="ir-nfl-play ir-sl-play"><b>{playLabel(r)}</b></td>
                   <td className="ir-sl-proj">
                     {r.proj ? (
-                      <div className="ir-slate-proj" title={`Projected ${num(r.proj.exp)} ${r.unit}, between ${r.proj.floor} and ${r.proj.ceiling} half the nights${over != null ? ` · ${over >= 0 ? '+' : '−'}${num(Math.abs(over))} over the line` : ''}`}>
+                      <div className="ir-slate-proj" title={`Projected ${num(r.proj.exp)} ${r.unit}, between ${r.proj.floor} and ${r.proj.ceiling} half the nights${r.proj.reach ? ` · ${num(r.proj.base)} before the ceiling read, ${r.proj.reach > 0 ? '+' : '−'}${num(Math.abs(r.proj.reach))} toward his ${r.proj.reach > 0 ? 'ceiling' : 'floor'} for the matchup at his spot` : ''}${over != null ? ` · ${over >= 0 ? '+' : '−'}${num(Math.abs(over))} over the line` : ''}`}>
                         <span><b>{num(r.proj.exp)}</b><small className="ir-slate-sub">{r.gap != null ? <span className={r.gap * (r.side === 'under' ? -1 : 1) > 0 ? 'ir-slate-gap is-up' : 'ir-slate-gap'} title={`The projection ${num(Math.abs(r.gap))} ${r.unit} ${r.gap >= 0 ? 'over' : 'under'} the book's line`}>{r.gap >= 0 ? '+' : '−'}{num(Math.abs(r.gap))} vs line · </span> : null}{r.proj.floor}–{r.proj.ceiling}</small></span>
                         {bar ? (
                           <span className="ir-range-bar" aria-hidden="true">

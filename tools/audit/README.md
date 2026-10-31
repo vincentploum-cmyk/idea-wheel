@@ -92,6 +92,15 @@ stat at a time on rows built without it (`--cocktail` with `"pull": null`). Writ
 python3 -I tools/audit/nba_stats.py report .nhl-data/audit/ab3/nba-2026-10-27-pull-rows.csv "This season"
 ```
 
+## NBA: the ceiling read
+
+`nba-audit.mjs` carries on every projection row the stated centre before the ceiling read (`base`), his upside and downside
+(the top and bottom quarter of his nights over his mean, `up` / `down`), the opponent's rank at his spot and `reachAdd`,
+and on every rung `base`, `up`, `down`, `where`, `gp`; its "The ceiling read" section asks whether a player beats his centre
+in a soft matchup, then grids the cocktail's `reach` / `reachK` / `reachDown` over the projections and the rungs. Run the
+two replays above (`--cocktail site`, or a JSON cocktail with `"reach": 0` for the board without it). Written up in
+`docs/audits/2026-10-31-nba-ceiling.md` (shipped at 0.3, K 10, no pull toward the floor).
+
 ## NBA: the minutes read (`nba_minutes.py`)
 
 The replay's rows say what the projection would miss had the board known his minutes; this script tries to get there:

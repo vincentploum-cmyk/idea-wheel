@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { ICON } from '@/components/nhl/flags';
-import { boardRead, windowRead, blendText, dampText, pullText } from '@/lib/picks/projection';
+import { boardRead, windowRead, blendText, dampText, pullText, reachText } from '@/lib/picks/projection';
 import { seasonTag } from '@/lib/nba/teams';
 import { SHUFFLE_MARKETS } from '@/lib/nba/markets';
 import { heightsOf, lineOf, readAt } from '@/lib/picks/shuffle';
@@ -137,7 +137,9 @@ function projectionText(read, stat, opp, allowed, win) {
   const mins = read.minutes?.factor && read.minutes.factor !== 1 ? ` (${num(read.minutes.tonight)} minutes tonight over the ${num(read.minutes.base)} behind his rate, × ${num(read.minutes.factor, 3)}${read.minutes.vacated ? `: +${num(read.minutes.vacated)} with ${(read.minutes.from || []).join(' + ')} out` : ''})` : '';
   const w = win && win !== 'season' ? windowRead(read, allowed, stat) : null;
   const window = w ? ` · over ${WINDOW_TEXT[win] || win} ${opp} gives up ${num(w.allowed)} (#${w.rank ?? '—'}): the matchup would read × ${w.factor}, ${num(w.value)} ${label}; the window tints the court, the figure stays the board's` : '';
-  return `Tonight ${num(read.value)} ${label}, the board's read: his ${num(read.rate)} a game in PropFinder's logs (${blendText(read.weights)}${pullText(read.pull)})${vol}${mins}${lift}${env}${team}${window}`;
+  // The ceiling read (the cocktail's reach, lib/picks/board.js ladderOf): the centre moved toward his ceiling in a soft matchup.
+  const reach = read.reach?.add ? ` = ${num(read.value - read.reach.add)}${reachText(read.reach, read.pos)}` : '';
+  return `Tonight ${num(read.value)} ${label}, the board's read: his ${num(read.rate)} a game in PropFinder's logs (${blendText(read.weights)}${pullText(read.pull)})${vol}${mins}${lift}${env}${team}${reach}${window}`;
 }
 
 /** The player's play for a market: the book's main line on the over (or yes) side first, else his best over, else any. */

@@ -128,7 +128,8 @@ describe('the predictors', () => {
     const lad = board.games[0].sides.BOS.players[0].ladders.pts;
     expect(pts.proj).toBe(lad[0].proj);
     expect(pts.sd).toBe(lad[0].sd);
-    expect(pts.blend).toBeCloseTo(lad[0].proj / lad[0].env, 1);
+    // The blend is his rate (the windows with the minutes and the lift in), the centre before the matchup and the ceiling read.
+    expect(pts.blend).toBe(lad[0].rate);
     expect(rows.map((r) => r.market).sort()).toEqual(['ast', 'pra', 'pts', 'reb', 'tpm']);
     // No row without a box score.
     expect(gradePredictors(board, pf, { key: 'x', season: 2026, actualOf: () => undefined, ownWindows })).toEqual([]);

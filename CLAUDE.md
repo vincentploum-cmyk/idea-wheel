@@ -151,7 +151,20 @@ config and keeps its own markets, teams, feeds and slate key:
   read season 0.4 · L10 0.2 · L5 0.1 · L20 0.3 across the seasons), matchupK 40, hitWeights 0.1 / 0.3 / 0.6, ladderModel 0.7, empK 6,
   spreadA 0.2 at 5 games, factorMax 1 (minutes that fell cut a rate, minutes that rose lift none; an out teammate's
   production still arrives through the vacated lift, whole since nothing comes off it for minutes), vacatedShare 0.2
-  (the notes' "Vacated production" line says the share), and `pull` (Vincent, 2026-10-29: "we can't treat them all
+  (the notes' "Vacated production" line says the share), **the ceiling read** (`reach` 0.3, `reachDown` 0, `reachK` 10;
+  Vincent, 2026-10-31: "look at what a player is capable of and then determine the ceiling … Dosunmu has a great matchup
+  today, his line is over 3.5 rebounds but he is capable of getting more when the matchup is good"): in a soft matchup the
+  ladder's centre moves from the stated figure (his rate × the matchup × the side's factor, `base` on every rung and range)
+  toward his ceiling — the top quarter of his nights over his last 82 as a ratio on tonight's figure (`up`) — by reach ×
+  `where`, the opponent's rank at his spot placed in the league (1 the softest, 0 the middle; `reachOf` in `projection.js`:
+  the cheat sheet's tile in full, PropFinder's rank at gp / (gp + reachK), blended as the matchup factor is); a steady
+  player has no ceiling over his rate and does not move; the hovers spell it out (`reachText`), the shuffle's Projected cell
+  carries ⇡, the scorecard's "Before the ceiling read" row (sparse, the nights it moved) grades it against the projection.
+  Measured on 2025-26 (125,045 projections, `docs/audits/2026-10-31-nba-ceiling.md`): a player with upside clears his
+  ceiling as often in the soft third as in the tough one (26.7% / 27.5% / 27.6%) — the table says how much a defense gives
+  up, not on which night his big game comes — so the read is set where it helps (MAE 2.513 → 2.505, most of it the board's
+  low bias; the rungs 0.1393 → 0.1391, the main rung as it was) and no further (reach 1: 2.542, the 60–70% rungs landing
+  55%); the pull toward his floor cost at every weight and is off, and `pull` (Vincent, 2026-10-29: "we can't treat them all
   the same, they depend on different dynamics"): in his first games this season his read, after the without split
   and the volume read and before the minutes factor and the lift, moves toward his role — `roleRates[stat][G|F|C]`,
   the league's rate a minute at his position group from the slate's own sources first — the cheat sheets' player tables
@@ -886,6 +899,14 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   over 2025-26), kept and to read again at mid-season. Next lever: the minutes read. The same day the role went to
   his own opportunity (usage, rebound chances, potential assists; the replay computes usage from ESPN's box scores,
   `usg` on its rows): points 4.99 this season, PRA 6.70.
+- The NBA ceiling read (`docs/audits/2026-10-31-nba-ceiling.md`, `nba-audit.mjs`'s "The ceiling read" section on both seasons;
+  Vincent, 2026-10-31: "look at what a player is capable of and then determine the ceiling … I would expect our projections
+  to be higher for him today"): on 2025-26's 125,045 projections a player beats his stated centre by the same third of a unit
+  in the soft, middle and tough third of the matchup table and clears his ceiling (the top quarter of his nights) as often
+  in each (26.7 / 27.5 / 27.6%); the centre moved toward his ceiling by 0.3 × where × his upside shaves the miss
+  (2.513 → 2.505, the board's −0.74 bias behind it) and leaves the ladder as it was, by 1 × costs (2.542, the main rung's
+  60–70% band 59% → 55%), toward his floor in a tough spot costs at every weight; this season's 1–8-game tables are noise
+  undamped (2.704 → 2.732 at 0.3). Shipped at 0.3 with PropFinder's rank at gp / (gp + 10), the sheet's tile in full.
 - The NBA projections, what else moves them (`docs/audits/2026-10-31-nba-accuracy.md`, `tools/audit/nba-fetch.mjs` for the
   raw feeds, `tools/audit/nba_minutes.py`; Vincent, 2026-10-31: "increase accuracy where possible"): this season's 71
   games replayed with the cocktail as shipped. The points miss is 5.00 (4.10 had the board known his minutes); last

@@ -715,7 +715,11 @@ describe('NBA ladders', () => {
     // The sheet alone (a pull without a defense table): its rank on the standard spread, #3 of 30 → × 1.078.
     const sheetOnly = buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf, results: {} }).games[0].sides.BOS.players[0].ranges.pts;
     expect(sheetOnly.matchupFrom).toEqual({ pf: null, sheet: 1.078, from: 'sheet' });
-    expect(sheetOnly.exp).toBe(28);
+    // The stated centre 28; the sheet's #3 tile is a soft spot, so the ceiling read (the site's reach 0.3, the tile in full) moves the figure toward his ceiling.
+    expect(sheetOnly.base).toBe(28);
+    expect(sheetOnly.reach).toMatchObject({ from: 'sheet', where: 0.862 });
+    expect(sheetOnly.exp).toBe(Math.round((28 + sheetOnly.reach.add) * 10) / 10);
+    expect(sheetOnly.reach.add).toBeGreaterThan(0);
     expect(bos.rows.SF.reb).toEqual({ value: 6, rank: 2, sheet: 28, sheetValue: 6, rankBlend: 15 });   // the tile's #28 of 30 on a two-team spread lands on the bottom value
     expect(bos.sheet).toBe('beside');
     expect(withSheet.games[0].sides.NY.allowed.rows.SF.pts).toEqual({ value: 20, rank: 2 });
