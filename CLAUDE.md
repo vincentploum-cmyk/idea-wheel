@@ -795,6 +795,16 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   over 2025-26), kept and to read again at mid-season. Next lever: the minutes read. The same day the role went to
   his own opportunity (usage, rebound chances, potential assists; the replay computes usage from ESPN's box scores,
   `usg` on its rows): points 4.99 this season, PRA 6.70.
+- The NBA projections, what else moves them (`docs/audits/2026-10-31-nba-accuracy.md`, `tools/audit/nba-fetch.mjs` for the
+  raw feeds, `tools/audit/nba_minutes.py`; Vincent, 2026-10-31: "increase accuracy where possible"): this season's 71
+  games replayed with the cocktail as shipped. The points miss is 5.00 (4.10 had the board known his minutes); last
+  season's regular season behind the windows 5.03, a last-five window 5.01, the matchup / ceiling / lift each worth
+  nothing measurable, the undamped matchup 5.46. Better minutes predictors exist (his season to date misses by 4.36
+  minutes against the board's 4.75) but re-projecting on them moves no stat (points 5.05 against 5.03): the minutes are
+  the night's own swing. A linear shrink of the spread overfits a week. A wider rung spread (`spreadA` 0.5) trades the
+  main rung (Brier 0.2374 → 0.2350) for the tail rungs (the 20–35% band lands 21% instead of 25%), the ladder as a whole
+  unmoved; the hit-rate half shrunk to ½ lands the 60–80% bands but drags the low rungs (0.152 against 0.1405). Nothing
+  changed; the next audit is the site's own graded nights with real lines and prices, by market and edge.
 - The game script, tested (`docs/audits/2026-10-28-game-script.md`, `tools/audit/nhl_game_script.py`; Vincent's
   question of 2026-10-28: a team strong at home against a visitor leaking over its last ten dominates, and the shots
   and goals divide by the opponent's weaknesses). On 2025-26 and 2026-27's box scores: a team's shots tonight follow
