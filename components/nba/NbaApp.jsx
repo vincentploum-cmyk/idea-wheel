@@ -7,7 +7,6 @@ import ThemeToggle from '@/components/nhl/ThemeToggle';
 import SportNav from '@/components/site/SportNav';
 import TabBar from '@/components/site/TabBar';
 import { useHashTab } from '@/components/site/hash-tab';
-import Scorecard from '@/components/picks/Scorecard';
 import NbaBoard, { NbaShuffle } from './NbaBoard';
 import NbaSources from './NbaSources';
 import NbaFirstBasket from './NbaFirstBasket';
@@ -108,7 +107,6 @@ export default function NbaApp({ email }) {
               {err ? <div className="nhlx-alert">{err}</div> : null}
               {board ? <NbaBoard board={board} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null}
             </section>
-            {date ? <Scorecard sport={{ api: '/api/nba', kind: 'date', to: date, label: 'NBA' }} /> : null}
             {date ? <NbaSources date={date} onChange={() => go(date)} /> : null}
           </div>
         </section>

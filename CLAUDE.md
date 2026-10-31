@@ -19,8 +19,8 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   for the mark and carries `components/site/SportNav.jsx` (NFL · NBA · NHL, the start screen's order).
 - Every app's tabs are the URL hash (`components/site/hash-tab.js`: `tabOf`, `useHashTab(keys, fallback)`
   → `[tab, mounted]`, a visited panel stays mounted hidden so it keeps its state; `components/site/TabBar.jsx`
-  draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard, the data
-  sources, the default; on the NBA page the night's plays in one ranked list over the games folded to a line each,
+  draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard (the NFL's alone since
+  2026-10-31), the data sources, the default; on the NBA page the night's plays in one ranked list over the games folded to a line each,
   below) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
   drawn on both panels); the NBA page a third, `#firstbasket`. The NHL app has nine (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
@@ -177,7 +177,9 @@ config and keeps its own markets, teams, feeds and slate key:
 - `scorecard.js` (`asOf`, `gradeBoard`, `gradePredictors`, `summarize`; the store's `gradeSlate` / `scorecardFor`,
   one finished slate memoised ten minutes): the picks scorecard, `GET /api/nba/scorecard?from&to` (ET dates, the
   season to date by default) and `GET /api/nfl/scorecard?season&from&to` (week ordinals, 19–22 the postseason), drawn
-  by `components/picks/Scorecard.jsx` under each board. Every stored slate's board is rebuilt from its files with each
+  by `components/picks/Scorecard.jsx` under the NFL board. **The NBA page draws no scorecard** (Vincent, 2026-10-31: "Why
+  do we have grading now? I never asked for that"): the NBA's grading runs out of sight, behind the calibration and the
+  shuffle's verdict, and the route stays for them. Every stored slate's board is rebuilt from its files with each
   player's PropFinder log cut before the ET date of his team's game (`asOf`: a pull run after the games cannot grade a
   game with its own line in the rates) and graded: every play (chance, price, edge, whether it made a table) → said /
   hit / diff / Brier overall, on the board, by chance bucket, market, matchup third, source (confirmed / PropFinder
@@ -213,10 +215,10 @@ config and keeps its own markets, teams, feeds and slate key:
   calibrated, a window or the line under Read from as stated (`readAt`'s `raw` only on the blend). Every hover of a
   printed chance names the stated figure (`asStated`). Learned by the store's `scorecardFor(…, { save: true })`
   (`nba/meta/calibration.json`, `calibrate: true` in the NBA store's config; never rewritten unchanged): the scorecard
-  route's season-to-date read (the Scorecard panel and the shuffle's verdict on open) and `relearnCalibration` in the
-  background whenever a refresh stores new box scores (the 2:11 AM job). The scorecard grades the chances as stated
-  (`gradeSlate` replays without it, `raw ?? p` on its records) and shows the calibration under "The calibration"
-  (`CalibrationTable`: a stated 50 / 60 / 70 / 80% → printed, the check, on the board or not); `GET
+  route's season-to-date read (the shuffle's verdict on open) and `relearnCalibration` in the
+  background whenever a refresh stores new box scores (the 2:11 AM job). The grading reads the chances as stated
+  (`gradeSlate` replays without it, `raw ?? p` on its records); the route's report carries the calibration (`calibration`,
+  no panel draws it since the NBA scorecard came off the page on 2026-10-31); `GET
   /api/nba/scorecard?rows=1` (the sync token reads it too) exports every graded play and rung as stated. Replayed walk-forward
   (`nba-audit.mjs`'s "The calibration, walked forward", `--graded` writes the rows): `docs/audits/2026-10-30-nba-calibration.md`.
   The NFL board passes none: its chances print as stated.
