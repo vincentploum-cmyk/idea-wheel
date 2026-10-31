@@ -32,8 +32,13 @@ needs the History tab's export (`/api/nhl/data/scorecard?rows=1&from=<date>`, si
 ```bash
 # ESPN: the season's scoreboards and box scores, every player's last-season game log, last season's box scores (the prior table)
 #   .nhl-data/audit/nba/days/<YYYYMMDD>.json, games/<eventId>.json, gamelogs/<espnId>.json, prior/games/<eventId>.json
+node tools/audit/nba-fetch.mjs --from 2026-10-20 --to 2026-10-30 --raw .nhl-data/audit/nba --season 2026
+node tools/audit/nba-fetch.mjs --from 2025-10-21 --to 2026-04-12 --raw .nhl-data/audit/nba/prior --season 2025 --no-logs
 npm run audit:nba -- --date 2026-10-27 --prior .nhl-data/audit/nba/prior/games
 ```
+
+`nba-fetch.mjs` is resumable (a file on disk is not fetched again); `--season` is ESPN's label for the game logs (2026 =
+2025-26). This season through Oct 30 is 71 games, 455 players, 260 MB; last season's box scores 1,235 games.
 
 The pull is built from the logs the way PropFinder's would be read (`asOf` cuts each player's
 logs before his game), the opponent's per-position table through `defenseAllowed`, the injury
@@ -86,6 +91,19 @@ stat at a time on rows built without it (`--cocktail` with `"pull": null`). Writ
 ```bash
 python3 -I tools/audit/nba_stats.py report .nhl-data/audit/ab3/nba-2026-10-27-pull-rows.csv "This season"
 ```
+
+## NBA: the minutes read (`nba_minutes.py`)
+
+The replay's rows say what the projection would miss had the board known his minutes; this script tries to get there:
+each player's minutes history from the box scores and his last-season log, a dozen predictors (season, last 3 / 5,
+EWMA, last season behind the season) against the minutes he played, each stat re-projected as his per-minute read ×
+the prediction, and a straight shrink of the projection's spread — chosen on the fit slates, scored on the held-out ones.
+
+```bash
+python3 -I tools/audit/nba_minutes.py --rows .nhl-data/audit/out/nba-2026-10-30-site-rows.csv --raw .nhl-data/audit/nba --test-from 2026-10-27
+```
+
+Written up in `docs/audits/2026-10-31-nba-accuracy.md` (nothing changed: the minutes are the game's own swing).
 
 ## NHL: the game script (`nhl_game_script.py`)
 
