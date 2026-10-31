@@ -9,6 +9,10 @@ import { teamLogo, teamName } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
 import GameFold from './NbaGame';
 import { DEFAULT_VIEW } from './NbaProfile';
+import { reliabilityText, reliableFor } from '@/lib/picks/reliability';
+
+/** The markets the reliability line names, the best-bets markets first. */
+const RELIABLE_ORDER = ['reb', 'ast', 'tpm', 'pts', 'pra'];
 import { CourtShuffleProvider } from './NbaCourt';
 import { NbaPlayerCardProvider, useNbaPlayerCard } from './NbaPlayerCard';
 
@@ -54,7 +58,16 @@ function NbaSlate({ board }) {
           <small className="nhlx-auto-meta">each with its profile, its best bets and the two courts: the stat tabs, the shuffle bar, every player’s projections and his chance at the bar, PropFinder’s table above each · the ranked list of every play is under the games</small>
           <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-gf-all" onClick={() => setClosed(allClosed ? new Set() : new Set(board.games.map((g) => g.id)))}>{allClosed ? 'Expand all' : 'Collapse all'}</button>
         </div>
-        {board.games.map((g) => <GameFold key={g.id} g={{ ...g, season: board.season }} best={board.best} sport={SPORT} metric={metric} onMetric={setMetric} profileView={profileView} onProfileView={setProfileView} open={!closed.has(g.id)} onToggle={(next) => setClosed((prev) => { const s = new Set(prev); if (next) s.delete(g.id); else s.add(g.id); return s; })} />)}
+        {/* What chance has been reliable to bet on, per market, from the season's graded nights (lib/picks/reliability.js; Vincent,
+            2026-10-31): every percentage on the page is green at or over its market's threshold, red under it. */}
+        {board.reliability ? (
+          <p className="ir-rel-line nhlx-auto-meta" title={`Learned from ${board.reliability.nights} graded nights (${board.reliability.from} → ${board.reliability.to}, ${board.reliability.plays} over / yes plays as the board stated them): the lowest chance from which ${board.reliability.min} plays or more landed at least their break-even at the book's prices. Hover a market for its figures.`}>
+            <b>Reliable from</b>
+            {RELIABLE_ORDER.filter((m) => board.reliability.markets?.[m]).map((m) => { const t = reliableFor(board.reliability, m); return <span key={m} className={`ir-rel-pill${t != null ? ' ir-rel-yes' : ' ir-rel-none'}`} title={reliabilityText(board.reliability, m, labelOf(m))}>{labelOf(m)} {t != null ? `${Math.round(t * 100)}%` : 'not yet'}</span>; })}
+            <small>green = a chance at or over its market’s threshold, red = under it, by the chance as the model states it</small>
+          </p>
+        ) : null}
+        {board.games.map((g) => <GameFold key={g.id} g={{ ...g, season: board.season }} best={board.best} sport={SPORT} metric={metric} onMetric={setMetric} profileView={profileView} onProfileView={setProfileView} reliability={board.reliability || null} open={!closed.has(g.id)} onToggle={(next) => setClosed((prev) => { const s = new Set(prev); if (next) s.delete(g.id); else s.add(g.id); return s; })} />)}
       </section>
       <SlateList board={board} sport={SPORT} onOpen={openRow} />
       <BoardNotes notes={board.notes} />
