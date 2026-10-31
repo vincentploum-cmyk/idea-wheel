@@ -102,6 +102,13 @@ config and keeps its own markets, teams, feeds and slate key:
   the court's chips, the Tonight table (its cell filled green when a play clears the threshold, `is-best`) — green at or
   over the market's threshold, red under it, by the chance as the model states it (`raw`); a market without one keeps the
   old colouring. `__tests__/picks-reliability.test.js`.
+  **A best bet needs an edge over the book's price** (`BEST_EDGE_MIN` = 0 in `board.js`, `inBest`; Vincent, 2026-10-31:
+  "I only want to see profitable bets with an edge"): `best`, each side's `picks`, the game line's count and best play
+  carry only the plays over the floor whose chance (calibrated where the fit applies) beats the price's implied
+  probability; a play without a price makes no best bet; the per-game tables, the cards and the grading keep every row.
+  The Tonight table's cell is filled green on an edge and its chance red when priced without one; a court chip's chance
+  on the book's line the same; the ranked list's and the strips' chances keep the reliability colour (every row there
+  has an edge by construction).
   **A line the book prices past -400 is no play**
   (`STEEP_IMPLIED` = 0.8 on the book's implied probability; 2026-10-29: o4.5 points at -10421 read 100% at
   the top of the Points table, Vincent: "this is fucking useless"): the play carries `steep: true`, stays on

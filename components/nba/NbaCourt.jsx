@@ -242,7 +242,7 @@ function Chip({ p, metric, height, read, sport, team, opp, venue, final, allowed
   const bar = read
     ? final && read.got !== undefined
       ? <span className={`nhlx-rk-stat is-actual${read.hit ? ' is-over' : ''}`}><em>{read.got == null ? 'DNP' : read.got}</em>{NB}got{NB}·{NB}{height}+{NB}<i>{pct(read.p)}</i></span>
-      : <span className={`nhlx-rk-stat is-model${read.p >= 0.5 ? ' is-over' : ''}`}>{height}+{NB}<em className={reliableTone(reliability, MARKET_OF[metric], read.p, read.raw) ? `ir-rel-${reliableTone(reliability, MARKET_OF[metric], read.p, read.raw)}` : undefined}>{pct(read.p)}</em>{read.book?.odds != null && read.exact ? <i>{fmtOdds(read.book.odds)}</i> : null}</span>
+      : <span className={`nhlx-rk-stat is-model${read.p >= 0.5 ? ' is-over' : ''}`}>{height}+{NB}<em className={read.exact && read.edge != null ? (read.edge > 0 ? 'ir-rel-yes' : 'ir-rel-no') : reliableTone(reliability, MARKET_OF[metric], read.p, read.raw) ? `ir-rel-${reliableTone(reliability, MARKET_OF[metric], read.p, read.raw)}` : undefined}>{pct(read.p)}</em>{read.book?.odds != null && read.exact ? <i>{fmtOdds(read.book.odds)}</i> : null}</span>
     : read === false
       ? <span className="nhlx-rk-stat">{p.out ? p.injury || 'out' : 'no logs'}</span>
       : height != null ? <span className="nhlx-rk-stat is-read">{height}+{NB}<em>…</em></span> : null;
@@ -328,11 +328,14 @@ function RangeCell({ p, market, final, reliability = null }) {
   const title = `${p.player} · ${STAT_LABEL[market]} tonight: expected ${num(r.exp)}, between ${r.floor} and ${r.ceiling} half the nights (his own games, centred on the matchup)${r.line != null ? ` · the book's o${r.line}: ${pct(r.p)} to clear${r.odds != null ? ` at ${fmtOdds(r.odds)}` : ''}${asStated(r.raw)}` : ''}${got != null ? ` · got ${got}` : ''}\n${ladder.map((x) => `o${x.line} ${pct(x.p)}`).join(' · ')}`;
   // The chance coloured by the market's reliable threshold when the season has one (green at or over it, red under; the
   // cell filled green: a best bet as the model reads it), the old thirds without one.
-  const rt = play && (play.side === 'over' || play.side === 'yes') && !play.steep ? reliableTone(reliability, market, r.p, r.raw) : null;
-  const tone = rt ? (rt === 'yes' ? 'soft' : 'tough') : r.p == null ? '' : r.p >= 0.55 ? 'soft' : r.p < 0.35 ? 'tough' : 'mid';
-  const relText = reliableFor(reliability, market) != null ? ` · ${reliabilityText(reliability, market, STAT_LABEL[market])}` : '';
+  // Green when the play beats the book's price (an edge: a best bet, Vincent, 2026-10-31: "I only want to see profitable
+  // bets with an edge"), red when priced without one, the old thirds without a price; the market's reliable chance on the hover.
+  const over = play && (play.side === 'over' || play.side === 'yes') && !play.steep ? play : null;
+  const edge = over?.edge ?? null;
+  const tone = edge != null ? (edge > 0 ? 'soft' : 'tough') : r.p == null ? '' : r.p >= 0.55 ? 'soft' : r.p < 0.35 ? 'tough' : 'mid';
+  const relText = `${edge != null ? ` · edge ${edge > 0 ? '+' : ''}${Math.round(edge * 100)} pts over the price${edge > 0 ? ': a best bet' : ': no bet'}` : ''}${reliableFor(reliability, market) != null ? ` · ${reliabilityText(reliability, market, STAT_LABEL[market])}` : ''}`;
   return (
-    <td className={`ir-range-cell${got != null ? (got > (r.line ?? -1) ? ' is-hit' : ' is-miss') : ''}${rt === 'yes' ? ' is-best' : ''}`} title={title + relText}>
+    <td className={`ir-range-cell${got != null ? (got > (r.line ?? -1) ? ' is-hit' : ' is-miss') : ''}${edge != null && edge > 0 ? ' is-best' : ''}`} title={title + relText}>
       <span className="ir-range"><b>{num(r.exp, 0)}</b><small>{r.floor}–{r.ceiling}</small></span>
       {r.line != null ? <span className={`ir-range-line is-${tone}`}>o{r.line} <i>{pct(r.p)}</i></span> : <span className="ir-range-line">no line</span>}
       {got != null ? <span className="ir-range-got">got {got}</span> : null}
