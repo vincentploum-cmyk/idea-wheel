@@ -527,7 +527,7 @@ config and keeps its own markets, teams, feeds and slate key:
   in `lib/picks/propfinder.js`: possessions a game with rank and offensive / defensive efficiency, last season's for a team
   without a row, `held`), their mean against the league's — Fast / Average / Slow at `PACE_EDGE` = 1.5 — and the book's total
   and spread as the schedule carries them (ESPN's line, `odds` on the game), High / Average / Low against twice the league's
-  points a game at `TOTAL_EDGE` = 5: the pill reads "Fast pace · high total · total 236.5 · DET -2.5 · 212 points expected
+  points a game at `TOTAL_EDGE` = 5: the pill reads "Fast pace · high total 236.5 · DET -2.5 · 212 points expected
   · …", green (`tier: 'high'`) when both point up, red when both point down, the possessions on the hover; the game line
   carries the words too (`script` on the profile); a pull made before 2026-10-31 has no pace (the next pull adds it); the profile passes its own
   `title`, `legend` and head `sub` to the shared card. `__tests__/nba-profile.test.js`, `nba-profile-render.test.js`

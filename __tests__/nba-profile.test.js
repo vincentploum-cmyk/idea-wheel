@@ -99,7 +99,7 @@ describe('the NBA game script', () => {
     const g = gameProfile({ away: 'BOS', home: 'NY', odds: { total: 229.5, spread: 'BOS -6' } }, defense, sides, { pace: { league: 100, teams: { BOS: { pace: 101 }, NY: { pace: 102 } } } });
     expect(g.script).toMatchObject({ word: 'Fast pace · average total', tier: 'high', spread: 'BOS -6' });
     expect(g.total).toMatchObject({ tier: 'high' });
-    expect(g.total.headline).toBe('Fast pace · average total · total 229.5 · BOS -6 · 225 points expected · BOS 121 · NY 104');
+    expect(g.total.headline).toBe('Fast pace · average total 229.5 · BOS -6 · 225 points expected · BOS 121 · NY 104');
     expect(g.total.title).toContain('101.5 possessions a game between them');
     // Without a script the pill is the expected points, as before.
     expect(gameProfile({ away: 'BOS', home: 'NY' }, defense, sides).total.headline).toBe('225 points expected · BOS 121 · NY 104');
