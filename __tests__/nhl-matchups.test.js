@@ -21,6 +21,26 @@ describe('lineup positions', () => {
     expect(teams.ANA['frank vatrano']).toBeUndefined();
   });
 
+  test('a two-name row of roster forwards is a short fourth line, never a pair (NSH 2026-10-31: Stamkos -- O’Reilly)', () => {
+    const rows = ['Predators projected lineup', 'Filip Forsberg -- Alexander Kerfoot -- Mavrik Bourque', 'Nick Hoglander -- Miles Wood -- Jack Marchessault',
+      'Ross Colton -- Jack Drury -- Joakim Edstrom', "Steven Stamkos -- Ryan O'Reilly", 'Brady Skjei -- Roman Josi', 'Nicolas Hague -- Nick Blankenburg', 'Justin Barron -- Andreas Englund', 'Juuse Saros'];
+    const pos = (n) => (/skjei|josi|hague|blankenburg|barron|englund/i.test(n) ? 'D' : /saros/i.test(n) ? 'G' : 'C');
+    // The roster map is keyed by normName, as the snapshot's is.
+    const { normName } = require('../lib/nhl-data/names');
+    const rosters = { NSH: Object.fromEntries(rows.slice(1).flatMap((r) => r.split(' -- ')).filter((n) => !/lineup/i.test(n)).map((n) => [normName(n), { pos: pos(n) }])) };
+    const t = parseLineupRows(rows, rosters).NSH;
+    expect(t['steven stamkos']).toMatchObject({ pos: 'LW', line: 4 });
+    expect(t[normName("Ryan O'Reilly")]).toMatchObject({ pos: 'C', line: 4 });
+    expect(t['brady skjei']).toMatchObject({ pos: 'D', line: 1 });
+    expect(t['justin barron']).toMatchObject({ pos: 'D', line: 3 });
+    expect(t['juuse saros']).toMatchObject({ pos: 'G', line: 1 });
+    // A pair with one spelling the roster does not know stays a pair; without a roster a two-name row is a pair, as before.
+    const odd = parseLineupRows(['Predators projected lineup', ...rows.slice(1, 4), 'Brady Skjei -- R. Josi', "Steven Stamkos -- Ryan O'Reilly"], rosters).NSH;
+    expect(odd['brady skjei']).toMatchObject({ pos: 'D', line: 1 });
+    expect(odd['steven stamkos']).toMatchObject({ pos: 'LW', line: 4 });
+    expect(parseLineupRows(rows).NSH['steven stamkos']).toMatchObject({ pos: 'D', line: 1 });
+  });
+
   test('a stored skater takes the snapshot position; a newer snapshot replaces it or hands back the box code', () => {
     const snap = { games: { 7: { teams: { OTT: { players: { 'brady tkachuk': { name: 'Brady Tkachuk', pos: 'LW', line: 1 } } } } } } };
     expect(snapshotPos(snap, 7, 'OTT', 'Brady Tkachuk')).toBe('LW');
@@ -304,6 +324,12 @@ describe('last known lineup', () => {
     expect(players['timo meier']).toMatchObject({ pos: 'RW', line: 1, carried: true });
     expect(carried).toBe(5); // C2, RW1, D1 ×2, D2
     expect(fillFromLastLineup(today, roster, null)).toEqual({ players: today, carried: 0 });
+  });
+  test('a forward stored on a pair slot (a read before the roster rule) is not carried onto defense', () => {
+    const stale = { ...last, players: { ...last.players, 'timo meier': { name: 'Timo Meier', pos: 'D', line: 2 } } };
+    const { players } = fillFromLastLineup(roster, roster, stale);
+    expect(players['timo meier']).toMatchObject({ inLineup: false });
+    expect(players['brett pesce']).toMatchObject({ pos: 'D', line: 2, carried: true });
   });
   test('only a team’s own capture is remembered, never the carried slots or a bare roster', () => {
     const { players } = fillFromLastLineup(roster, roster, last);
