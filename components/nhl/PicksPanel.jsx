@@ -22,6 +22,14 @@ function Prob({ p, raw = null, lead = false, wide = false, hit = null }) {
 // The row's own grade follows its table's lead market (3+ SOG, 1+ G); a skater with no box-score row reads DNP.
 const rowGrade = (c, stat, min) => (c.actual === undefined ? '' : c.actual === null ? ' is-dnp' : hitOf(c, stat, min) ? ' is-hit' : ' is-miss');
 const rowTitle = (c, stat, min, unit) => (c.actual === undefined ? null : c.actual === null ? 'Did not play' : `${hitOf(c, stat, min) ? 'Hit' : 'Miss'}: ${c.actual[stat]} ${unit} in the box score`);
+// The special-teams read on the row (lib/nhl-data/special-teams.js): what tonight's power plays do to his λ, in words.
+const stTitle = (c, stat) => {
+  if (!c.st || !c.stTeam) return null;
+  const d = stat === 'sog' ? c.st.dS : c.st.dG;
+  if (!d) return null;
+  const moved = stat === 'sog' ? c.stTeam.shift.shots : c.stTeam.shift.goals;
+  return `Special teams: ${d > 0 ? '+' : ''}${d.toFixed(2)} ${stat === 'sog' ? 'shots' : 'goals'} on his λ. ${c.team} should get about ${c.stTeam.ppFor.expected} power plays tonight (${c.stTeam.ppFor.usual} against an average opponent) and kill about ${c.stTeam.ppAgainst.expected} (${c.stTeam.ppAgainst.usual}): ${moved > 0 ? '+' : ''}${moved.toFixed(2)} ${stat === 'sog' ? 'shots' : 'power-play goals'} moved to its power-play units by slot (his slot ${Math.round(c.st.share * 100)}% of the units), the same off everyone evenly — the side's total is untouched, the opponent's penalties being in the shots it allows already.`;
+};
 
 /** Finished game: the skater's box-score figure for the table's stat. */
 function Got({ c, stat, unit }) {
@@ -39,6 +47,24 @@ function Player({ c, stat }) {
       </div>
     </td>
   );
+}
+
+/**
+ * The predicted score beside the game head (lib/nhl-data/score.js, `projected` on the game): before the game the live
+ * projection with the home side's chance; once final, the projection stored before puck drop (the one the scorecard
+ * grades), green when it called the winner, red when not — the live rebuild after the game would read the game's own rows.
+ */
+function ProjectedLine({ g }) {
+  const p = g.projected;
+  if (!p?.exp) return null;
+  const f1 = (v) => (v == null ? '—' : Number(v).toFixed(1));
+  if (g.final) {
+    const s = p.stored;
+    if (!s?.exp) return <span title={`${p.title} Rebuilt after the game: the live read now carries the game's own rows, so it is not graded.`}> · projected {g.away} {f1(p.exp[g.away])} – {f1(p.exp[g.home])} {g.home} (rebuilt after the game)</span>;
+    const tone = s.final?.called == null ? '' : s.final.called ? ' is-hit' : ' is-miss';
+    return <span className={`nhlx-pk-proj${tone}`} title={`${s.title || ''} Stored ${new Date(s.at).toLocaleString()}, before puck drop.`}> · projected <b>{g.away} {f1(s.exp[g.away])} – {f1(s.exp[g.home])} {g.home}</b>{s.final ? ` · ${s.final.called ? 'winner called' : 'winner missed'}, total off by ${s.final.err.total > 0 ? '+' : ''}${s.final.err.total.toFixed(1)}` : ''}</span>;
+  }
+  return <span className="nhlx-pk-proj" title={p.title}> · projected <b>{g.away} {f1(p.exp[g.away])} – {f1(p.exp[g.home])} {g.home}</b> · {g.home} {Math.round((p.win?.[g.home] ?? 0.5) * 100)}%</span>;
 }
 
 /** "3 of 4 shots plays hit, 1 of 3 goal plays" for a finished game: the rows over the floor, on their lead market. */
@@ -111,7 +137,7 @@ function ShotsTable({ g }) {
         </thead>
         <tbody>
           {g.shots.map((c) => (
-            <tr key={c.id} className={`${c.under ? 'is-under' : ''}${rowGrade(c, 'sog', 3)}`} title={[c.under ? 'Under the 50% floor for 3+ shots: listed to make three' : null, rowTitle(c, 'sog', 3, 'SOG')].filter(Boolean).join(' · ') || undefined}>
+            <tr key={c.id} className={`${c.under ? 'is-under' : ''}${rowGrade(c, 'sog', 3)}`} title={[c.under ? 'Under the 50% floor for 3+ shots: listed to make three' : null, rowTitle(c, 'sog', 3, 'SOG'), stTitle(c, 'sog')].filter(Boolean).join(' · ') || undefined}>
               <Player c={c} stat="sog" />
               <Prob p={c.p2} raw={c.raw?.p2} wide hit={hitOf(c, 'sog', 2)} /><Prob p={c.p3} raw={c.raw?.p3} lead hit={hitOf(c, 'sog', 3)} /><Prob p={c.p4} raw={c.raw?.p4} hit={hitOf(c, 'sog', 4)} />
               {g.final ? <Got c={c} stat="sog" unit="SOG" /> : null}
@@ -137,7 +163,7 @@ function GoalsTable({ g }) {
         </thead>
         <tbody>
           {g.goals.map((c) => (
-            <tr key={c.id} className={`${c.under ? 'is-under' : ''}${rowGrade(c, 'g', 1)}`} title={[c.under ? 'Under the 35% floor for a goal: listed to make three' : null, rowTitle(c, 'g', 1, 'G')].filter(Boolean).join(' · ') || undefined}>
+            <tr key={c.id} className={`${c.under ? 'is-under' : ''}${rowGrade(c, 'g', 1)}`} title={[c.under ? 'Under the 35% floor for a goal: listed to make three' : null, rowTitle(c, 'g', 1, 'G'), stTitle(c, 'g')].filter(Boolean).join(' · ') || undefined}>
               <Player c={c} stat="g" />
               <Prob p={c.p1g} raw={c.raw?.p1g} lead hit={hitOf(c, 'g', 1)} />
               {g.final ? <Got c={c} stat="g" unit="G" /> : null}
@@ -193,7 +219,10 @@ export default function PicksPanel() {
             <TeamLogo abbr={g.away} size={28} />
             <b>{g.away} @ {g.home}</b>
             <TeamLogo abbr={g.home} size={28} />
-            <small>{g.final ? <>Final · <b className="nhlx-mu-score">{g.away} {g.score.away} – {g.home} {g.score.home}</b>{tally(g) ? <> · {tally(g)}</> : null}</> : fmtTime(g.startTimeUTC)}</small>
+            <small>
+              {g.final ? <>Final · <b className="nhlx-mu-score">{g.away} {g.score.away} – {g.home} {g.score.home}</b>{tally(g) ? <> · {tally(g)}</> : null}</> : fmtTime(g.startTimeUTC)}
+              <ProjectedLine g={g} />
+            </small>
           </div>
           {g.skaters ? <div className={`nhlx-pk-grid${g.saves?.length ? ' has-saves' : ''}`}><ShotsTable g={g} /><GoalsTable g={g} /><SavesTable g={g} /></div> : <p className="nhlx-auto-meta">{board.source === 'model' ? 'The run projected nobody in this game.' : 'No lineups yet.'}</p>}
         </article>

@@ -48,8 +48,31 @@ function TeamHead({ head, side, renderTeam }) {
   );
 }
 
-/** The card. `profile` from the slate game (or the NBA board game); `renderTeam(abbr)` draws a team mark in place of the TeamLink (the picks boards, the mock renders). */
-export function MatchupProfile({ profile, renderTeam = null }) {
+/**
+ * The projected score as the head's pill (lib/nhl-data/score.js, `projected` on the slate game): "MTL 2.8 – 3.3 DAL · 6.1 goals",
+ * the home side's chance to win beside it, every part on the hover; once the game is final, the stored pre-game projection
+ * (the one the scorecard grades) with the final beside it, green when it called the winner, red when not.
+ */
+export function ProjectedScore({ projected, final = null, away, home }) {
+  if (!projected?.exp) return null;
+  const p = projected.stored && final ? projected.stored : projected;
+  const f1 = (v) => (v == null ? '—' : Number(v).toFixed(1));
+  const pHome = p.win?.[home];
+  const graded = p.final || (final && projected.final) || null;
+  const tone = graded?.called == null ? '' : graded.called ? 'is-soft' : 'is-tough';
+  const title = `${p.title || projected.title || ''}${projected.stored && final ? ` Stored ${new Date(projected.stored.at).toLocaleString()} before puck drop; the live read with tonight's data says ${projected.headline}.` : ''}`.trim();
+  return (
+    <span className={`nhlx-edge nhlx-prof-score ${tone}`} title={title || undefined}>
+      {final ? <>Final {away} {final.away} – {final.home} {home} · projected </> : 'Projected '}
+      <b>{away} {f1(p.exp?.[away])} – {f1(p.exp?.[home])} {home}</b>
+      {!final && p.total != null ? <> · {f1(p.total)} goals</> : null}
+      {pHome != null ? <> · {home} {Math.round(pHome * 100)}%</> : null}
+    </span>
+  );
+}
+
+/** The card. `profile` from the slate game (or the NBA board game); `renderTeam(abbr)` draws a team mark in place of the TeamLink (the picks boards, the mock renders); `projected` the game's predicted score, `final` its stored score. */
+export function MatchupProfile({ profile, renderTeam = null, projected = null, final = null }) {
   if (!profile?.rows?.length) return null;
   const [away, home] = profile.order;
   const t = profile.total;
@@ -57,7 +80,9 @@ export function MatchupProfile({ profile, renderTeam = null }) {
     <div className="nhlx-prof">
       <div className="nhlx-prof-head">
         <b>{profile.title || 'Matchup profile'}</b>
-        {t?.headline ? <span className={`nhlx-edge ${t.tier === 'high' ? 'is-soft' : t.tier === 'low' ? 'is-tough' : ''}`} title={t.title || (t.league != null ? `${t.projected} goals read against a league average of ${t.league}` : undefined)}>{t.headline}</span> : null}
+        {projected?.exp
+          ? <ProjectedScore projected={projected} final={final} away={away} home={home} />
+          : t?.headline ? <span className={`nhlx-edge ${t.tier === 'high' ? 'is-soft' : t.tier === 'low' ? 'is-tough' : ''}`} title={t.title || (t.league != null ? `${t.projected} goals read against a league average of ${t.league}` : undefined)}>{t.headline}</span> : null}
         <small>{profile.legend || 'tonight’s venue · green = more shots and goals likely, red = fewer · hover a cell for every source'}</small>
       </div>
       <div className="nhlx-prof-rows">
