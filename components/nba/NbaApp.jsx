@@ -33,11 +33,12 @@ export default function NbaApp({ email }) {
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
   const [pull, setPull] = useState({ busy: false, msg: '' });
+  const [gameId, setGameId] = useState('');   // the game picked in the head's dropdown ('' = every game; Vincent, 2026-10-31)
 
   // The fetch sets state only in its callbacks, so the first load can run from the effect.
   const load = useCallback((d) => fetch(`/api/nba/picks${d ? `?date=${d}` : ''}`, { cache: 'no-store' })
     .then(async (res) => { const j = await res.json(); if (!res.ok) throw new Error(j.detail || j.error || `${res.status}`); return j; })
-    .then((j) => { setBoard(j); setDate(j.date); })
+    .then((j) => { setBoard(j); setDate(j.date); setGameId((cur) => (cur && (j.games || []).some((g) => g.id === cur) ? cur : '')); })
     .catch((e) => setErr(`Couldn’t load the slate: ${e.message}`))
     .finally(() => setBusy(false)), []);
   useEffect(() => { load(''); }, [load]);
@@ -67,8 +68,10 @@ export default function NbaApp({ email }) {
   const finals = games.filter((g) => g.final).length;
   const src = board?.sources;
 
-  // The slate head, the same on both tabs: the date and its figures, the picker, the PropFinder pull.
-  const head = () => (
+  // The slate head, the same on every tab: the date and its figures, the picker, the PropFinder pull; on the board
+  // the game dropdown first (the Matchups tab's `nhlx-mu-gamepick`; Vincent, 2026-10-31: "I need to be able to
+  // select the games from a dropdown on top of the screen"), a pick showing that game alone with its plays.
+  const head = ({ games: withGames = false } = {}) => (
     <div className="nhlx-today-head">
       <div>
         <div className="nhlx-today-date">{pretty || 'Loading…'}</div>
@@ -77,6 +80,14 @@ export default function NbaApp({ email }) {
         </div>
       </div>
       <div className="nhlx-auto-actions">
+        {withGames ? (
+          <select className="nhlx-input nhlx-input-sm nhlx-mu-gamepick" value={gameId} onChange={(e) => { setGameId(e.target.value); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Game" disabled={!games.length}>
+            <option value="">All games{games.length ? ` (${games.length})` : ''}</option>
+            {games.map((g) => (
+              <option key={g.id} value={String(g.id)}>{g.away} @ {g.home}{g.final ? ` · final ${g.awayScore}–${g.homeScore}` : g.state === 'in' ? ` · live ${g.awayScore}–${g.homeScore}` : g.date ? ` · ${fmtTime(g.date)}` : ''}</option>
+            ))}
+          </select>
+        ) : null}
         <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !date} onClick={() => shift(-1)} aria-label="Previous day">‹</button>
         <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && go(e.target.value)} aria-label="Slate date" />
         <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !date} onClick={() => shift(1)} aria-label="Next day">›</button>
@@ -102,10 +113,10 @@ export default function NbaApp({ email }) {
               </div>
             </div>
             <section className="nhlx-pk" aria-label="Tonight’s picks">
-              {head()}
+              {head({ games: true })}
               {pull.msg ? <p className="nhlx-auto-msg">{pull.msg}</p> : null}
               {err ? <div className="nhlx-alert">{err}</div> : null}
-              {board ? <NbaBoard board={board} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null}
+              {board ? <NbaBoard board={board} game={gameId || null} onGame={setGameId} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null}
             </section>
             {date ? <NbaSources date={date} onChange={() => go(date)} /> : null}
           </div>

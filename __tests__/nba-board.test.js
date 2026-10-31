@@ -381,6 +381,43 @@ describe('NBA board', () => {
     { name: 'Jayson Tatum', team: 'BOS', played: true, pts: 29, reb: 12, ast: 4, pra: 45, dd: 1, td3: 0 },
     { name: 'Jalen Brunson', team: 'NY', played: true, pts: 24, reb: 3, ast: 9, pra: 36, dd: 0, td3: 0 },
   ] } };
+  test('the stored box score settles who played: a player listed out who played is back on the board (Nembhard, 2026-10-30)', () => {
+    const buildBoard = nbaBoard({ ...COCKTAIL, pull: null }).buildBoard;
+    const gid = (i) => `g${i}`;
+    const brownLogs = logs.map((g, i) => ({ ...log(g.date, i < 3 ? 34 : 20, 6, 4), gameId: gid(i), min: 35 }));
+    const tatumLogs = logs.map((g, i) => ({ ...g, gameId: gid(i), min: 34 })).filter((_, i) => i >= 3);
+    const pfInj = { at: pf.at, data: { ...pf.data, players: [
+      { id: 'p1', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', games: tatumLogs, props: [{ market: 'reb', line: 8.5, odds: -110, underOdds: -110 }], injury: 'Out', injuryDetail: 'Achilles', injuryFrom: 'report' },
+      { id: 'p2', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SG', games: brownLogs, props: [{ market: 'pts', line: 24.5, odds: -110, underOdds: -110 }] },
+    ], injuries: { source: 'v2', rows: [{ id: 'p1', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', status: 'Out', detail: 'Achilles', date: '2026-10-21' }] } } };
+    const before = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pfInj, results: {} }).games[0];
+    expect(before.out).toBe(1);
+    expect(before.sides.BOS.players.find((p) => p.player === 'Jayson Tatum').out).toBe(true);
+    // The game stored: Tatum played 36 minutes, Brown did not play.
+    const stored = { g1: { id: 'g1', final: true, players: [
+      { name: 'Jayson Tatum', team: 'BOS', played: true, min: 36, pts: 29, reb: 12, ast: 4, pra: 45, dd: 1, td3: 0 },
+      { name: 'Jaylen Brown', team: 'BOS', played: false, min: null, pts: null, reb: null, ast: null },
+    ] } };
+    const after = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pfInj, results: stored }).games[0];
+    const tatum = after.sides.BOS.players.find((p) => p.player === 'Jayson Tatum');
+    expect(tatum.out).toBe(false);
+    expect(tatum.injury).toBeNull();
+    expect(tatum.injuryFrom).toBe('boxscore');
+    expect(tatum.health).toBe('In');
+    expect(after.tables.rebounds.rows.concat(after.tables.rebounds.next).find((x) => x.player === 'Jayson Tatum')).toMatchObject({ actual: 12, hit: true });
+    // Brown sat: out on the box score, his rows off the tables, Tatum's split no longer reads w/o Brown's absence.
+    const brown = after.sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
+    expect(brown.out).toBe(true);
+    expect(brown.injury).toBe('Out');
+    expect(brown.injuryDetail).toBe('did not play');
+    expect(after.out).toBe(1);
+    expect(after.sides.BOS.out.map((a) => a.name)).toEqual(['Jaylen Brown']);
+    expect(after.tables.points.rows.concat(after.tables.points.next).find((x) => x.player === 'Jaylen Brown')).toBeUndefined();
+    const b = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pfInj, results: stored });
+    expect(b.notes.find((n) => n.startsWith('Played despite the report'))).toMatch(/Jayson Tatum \(BOS, listed Out\)/);
+    expect(b.notes.find((n) => n.startsWith('Out tonight'))).toMatch(/Jaylen Brown \(BOS, Out, did not play\)/);
+    expect(pfInj.data.players[0].injury).toBe('Out');   // the stored pull untouched
+  });
   test('the injury report: a player out keeps his chip but loses his table rows; a teammate reads w/o him', () => {
     // The arithmetic below on the board without the pull toward his role (its own check at the end, and
     // __tests__/nba-cocktail.test.js), so the split, the minutes and the lift read as they add up.

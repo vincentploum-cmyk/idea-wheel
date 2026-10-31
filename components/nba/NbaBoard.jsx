@@ -34,13 +34,25 @@ export function NbaShuffle({ date }) {
   );
 }
 
-/** The slate: every play ranked, then the games folded to a line each; needs an NbaPlayerCardProvider above it. */
-function NbaSlate({ board }) {
+/**
+ * The slate: every play ranked, then the games folded to a line each; needs an NbaPlayerCardProvider above it.
+ * `game` (a game id from the head's dropdown) shows that game alone, open, with the ranked list cut to its plays;
+ * `onGame` clears it ("All games").
+ */
+function NbaSlate({ board: whole, game = null, onGame = null }) {
   const open = useNbaPlayerCard();
+  const picked = game ? (whole?.games || []).find((g) => g.id === game) || null : null;
+  const board = picked ? { ...whole, games: [picked], best: (whole.best || []).filter((r) => r.game === picked.id) } : whole;
   const [metric, setMetric] = useState('pts');   // the courts' stat (the tabs above each court, one setting for the slate); the bar's height per stat lives in CourtShuffleProvider
   // Every game open by default (Vincent, 2026-10-30: "too many clicks"); the set of closed ones is the state, so a new slate opens again.
   const [closed, setClosed] = useState(() => new Set());
-  if (!board?.games?.length) return <div className="nhlx-empty">No games on this date.</div>;
+  // A game picked in the dropdown opens, whatever it was before (the state adjusted as the pick changes, during render); its caret still folds it.
+  const [lastGame, setLastGame] = useState(game);
+  if (game !== lastGame) {
+    setLastGame(game);
+    if (game && closed.has(game)) { const s = new Set(closed); s.delete(game); setClosed(s); }
+  }
+  if (!whole?.games?.length) return <div className="nhlx-empty">No games on this date.</div>;
   const allClosed = board.games.every((g) => closed.has(g.id));
   // A row of the list opens the card with the side's entry for the player (his ladders and projection), as a court chip does.
   const openRow = (r) => {
@@ -52,9 +64,10 @@ function NbaSlate({ board }) {
       {/* The games first, open (2026-10-30, Vincent: "too many clicks. I need the games listed first along with the best bets"), the ranked list under them. */}
       <section className="ir-gf-list" aria-label="Games">
         <div className="nhlx-pfd-head">
-          <b>Games</b>
-          <small className="nhlx-auto-meta">each with its profile, its best bets and the two courts: the stat tabs, the shuffle bar, every player’s projections and his chance at the bar, PropFinder’s table above each · the ranked list of every play is under the games</small>
-          <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-gf-all" onClick={() => setClosed(allClosed ? new Set() : new Set(board.games.map((g) => g.id)))}>{allClosed ? 'Expand all' : 'Collapse all'}</button>
+          <b>{picked ? `${picked.away} @ ${picked.home}` : 'Games'}</b>
+          <small className="nhlx-auto-meta">{picked ? `one game, picked in the dropdown above · its plays ranked under it` : 'each with its profile, its best bets and the two courts: the stat tabs, the shuffle bar, every player’s projections and his chance at the bar, PropFinder’s table above each · the ranked list of every play is under the games'}</small>
+          {picked && onGame ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-gf-all" onClick={() => onGame('')}>All games ({whole.games.length})</button>
+            : <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-gf-all" onClick={() => setClosed(allClosed ? new Set() : new Set(board.games.map((g) => g.id)))}>{allClosed ? 'Expand all' : 'Collapse all'}</button>}
         </div>
         {/* What chance has been reliable to bet on, per market, from the season's graded nights (lib/picks/reliability.js; Vincent,
             2026-10-31): every percentage on the page is green at or over its market's threshold, red under it. */}
@@ -74,11 +87,11 @@ function NbaSlate({ board }) {
 }
 
 /** The night's board: the slate's plays in one ranked list over the games, each folded to a line (2026-10-30). */
-export default function NbaBoard({ board }) {
+export default function NbaBoard({ board, game = null, onGame = null }) {
   return (
     <NbaPlayerCardProvider date={board?.date}>
       <CourtShuffleProvider date={board?.date}>
-        <NbaSlate board={board} />
+        <NbaSlate board={board} game={game} onGame={onGame} />
       </CourtShuffleProvider>
     </NbaPlayerCardProvider>
   );

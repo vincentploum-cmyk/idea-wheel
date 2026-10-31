@@ -193,7 +193,9 @@ describe('the NBA shuffle', () => {
     expect(readAt(brown, s.heights, 30)).toMatchObject({ got: 29, hit: false });
     expect(returnOf(readAt(brown, s.heights, 26))).toBeCloseTo(0.909, 3);   // o25.5 at -110, hit
     expect(returnOf(readAt(brown, s.heights, 32))).toBe(-1);               // o31.5 at +300, missed
-    expect(s.players.find((p) => p.player === 'Sam Hauser').actual).toBeNull();
+    // Hauser did not play: the box score marks him out, so he is left off the shuffle as an out player is (applyBoxScores).
+    expect(s.players.find((p) => p.player === 'Sam Hauser')).toBeUndefined();
+    expect(b.games[0].sides.BOS.players.find((p) => p.player === 'Sam Hauser')).toMatchObject({ out: true, injuryFrom: 'boxscore' });
   });
   test('the matchup column keeps the opponent’s factor apart from the side’s', () => {
     // BOS scores 110 a game against NY's 120 allowed (league 115): 112.9 expected. Brown and Hauser's
