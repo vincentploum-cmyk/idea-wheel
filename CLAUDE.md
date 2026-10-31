@@ -1414,6 +1414,11 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   `POST /api/nhl/data/lineups/gdt` (Bearer `NHL_ACTIONS_TOKEN`, a repo secret that must equal the
   Render env var; `authorize()` accepts it beside the stored sync token), where `ingestGdtPages`
   parses them against the rosters, merges (never erasing earlier lines), snapshots and auto-runs.
+  **The NHL.com preview's two-name rows ask the roster** (`parseLineupRows(rows, rosters)`, the snapshot's `rosterMap`;
+  Vincent, 2026-10-31, of the NSH rink: "Stamkos is never a defender" — "Stamkos -- O'Reilly", the fourth line of an
+  11-forward night, sat on pair 1): no roster defenseman among the two and a roster forward known → a short forward
+  line (LW, C of the next line), as the tweet parser reads it; else a pair; a stored last lineup lends a slot only to a
+  player of the slot's own group (`fillFromLastLineup`), so a pair slot read before the rule never carries a forward.
   Without a tweet or preview the snapshot uses PropFinder's depth chart (`propfinder-depth.json`).
   Slots a capture leaves empty (no lineup yet, or a partial one) are filled from the team's last
   known lineup (`data/lineups/last/<ABBR>.json`, written from each team's own capture) with
