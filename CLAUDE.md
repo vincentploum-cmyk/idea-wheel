@@ -91,6 +91,17 @@ config and keeps its own markets, teams, feeds and slate key:
   threes"): `best`, each side's `picks` and the game line's count, best play and hit tally (counted on `best` in
   `NbaGame.jsx`) carry those markets; every market keeps its rows in the per-game tables, the cards and the scorecard's
   grading; the list's stat tabs are the groups it carries; `nbaBoard(cocktail, { bestMarkets: null })` lists every market.
+  **The NBA's best bets are ranked by edge over the book** (`bestBy: 'edge'`, `edgeRows` in `board.js`; Vincent, 2026-10-31:
+  "the best bets per game should be the ones with the biggest edge compared to the lines known … projected to get 30
+  points and his line is 15 … that is where I can beat the books"): per active player and best-bets market, the book's
+  main line read on his ladder — the rung's chance (his distribution centred on tonight's projection beside how often he
+  cleared it, calibrated when the season's fit holds) for the over, its complement for the under — against each side's
+  implied probability; the side the board gives 50% or better with the larger positive edge is the play (a line past
+  `STEEP_IMPLIED` or without a price is none), `gap` = the projection minus the line, `implied` beside the price. `best`
+  (the slate ranked by edge), each side's `picks` and the game line's best bet (its edge beside it) read it; the list says
+  "the biggest edge over the book first" and every row's projection cell shows the gap to the line ("+3.3 vs line",
+  green when it backs the side). `nbaBoard(cocktail, { bestBy: 'chance' })` is the hit-rate list as it was (the plays
+  over the floor, the likeliest first), the per-game tables still the chance read; `__tests__/nba-best-edge.test.js`.
   **The reliable chance per market** (`lib/picks/reliability.js`, `reliabilityOf` from the season's graded nights, the over /
   yes plays as the board stated them; Vincent, 2026-10-31: "keep track of what % is reliable to bet on for threes, assists,
   rebounds and based on that the % for the players should be colored green / red", then "fill the cells green that are
@@ -102,6 +113,13 @@ config and keeps its own markets, teams, feeds and slate key:
   the court's chips, the Tonight table (its cell filled green when a play clears the threshold, `is-best`) — green at or
   over the market's threshold, red under it, by the chance as the model states it (`raw`); a market without one keeps the
   old colouring. `__tests__/picks-reliability.test.js`.
+  **A best bet needs an edge over the book's price** (`BEST_EDGE_MIN` = 0 in `board.js`, `inBest`; Vincent, 2026-10-31:
+  "I only want to see profitable bets with an edge"): `best`, each side's `picks`, the game line's count and best play
+  carry only the plays over the floor whose chance (calibrated where the fit applies) beats the price's implied
+  probability; a play without a price makes no best bet; the per-game tables, the cards and the grading keep every row.
+  The Tonight table's cell is filled green on an edge and its chance red when priced without one; a court chip's chance
+  on the book's line the same; the ranked list's and the strips' chances keep the reliability colour (every row there
+  has an edge by construction).
   **A line the book prices past -400 is no play**
   (`STEEP_IMPLIED` = 0.8 on the book's implied probability; 2026-10-29: o4.5 points at -10421 read 100% at
   the top of the Points table, Vincent: "this is fucking useless"): the play carries `steep: true`, stays on
@@ -440,6 +458,18 @@ config and keeps its own markets, teams, feeds and slate key:
   yards, pass TDs, targets, rush attempts, completions) with a `step` per market in `markets.js` (pass yards 25, rush and
   receiving yards 10, receptions 1 …), so each side's players carry `ladders` and `ranges`; the environment is the
   opponent's row at the depth-chart slot when PropFinder lists one (WR1 … RB2, `envPosFor`), else the position.
+- **The matchup profile** under each game head (`lib/nfl/profile.js`, `gameProfile(g, defense, sides)` through
+  `makeBoard({ profile })`, drawn by the shared `components/nhl/MatchupProfile.jsx` from `components/picks/Board.jsx`;
+  Vincent, 2026-10-31: "now do the same profile for the NFL board"): the two teams side by side, five rows — Passing
+  (yards a game with the passing touchdowns), Rushing (yards with the rushing touchdowns), End zone (touchdowns a game
+  with the interceptions thrown, 1st = the fewest), Allows (yards allowed, passing and rushing, 1 = the most, with the
+  touchdowns allowed and the last ten when the pull carries them), Soft spots (passing to the quarterbacks, rushing to
+  the backs, receiving to the receivers and tight ends in the soft third, from the opponent side's `allowed` table,
+  PropFinder's rank with the cheat sheet's tile blended) — each cell a word over one line with the rank phrases toned
+  (`lib/picks/profile-words.js`, the NHL's and the NBA's words), the defense pill in each head (yards allowed in
+  thirds), the expected touchdowns as the card's pill when the sides carry `teamProj.td`; the characteristics card stays
+  as the fallback for a game without a profile. `__tests__/nfl-profile.test.js` (the builder, the render; `MOCK_OUT`
+  writes `profile-nfl-<theme>.html` for `tools/mock/screenshot-profile.mjs`).
 - Routes (`authorize()`, admin session or sync token): `GET /api/nfl/picks?season&week&type|date`,
   `GET /api/nfl/shuffle?season&week&type&market`, `GET /api/nfl/scorecard?season&from&to`,
   `GET|POST|DELETE /api/nfl/sheets`, `POST /api/nfl/refresh?only=schedule|propfinder`
@@ -498,7 +528,15 @@ config and keeps its own markets, teams, feeds and slate key:
   cell a word over one line with the rank phrases toned (`lib/picks/profile-words.js`, shared with the NHL's builder:
   `levelOf`, `badgeOf`, `cellOf`, `rankPart`; Elite · Strong · Average · Weak · Poor for an attack, Elite · Tight ·
   Average · Leaky · Very leaky for a defense; green = more points likely from that side's angle, red = fewer), the
-  defense pill in each head, the expected points as the card's pill, both reads on the hover; the profile passes its own
+  defense pill in each head, the game script and the expected points as the card's pill, both reads on the hover;
+  **the game script** (`gameScript`; Vincent, 2026-10-31: "I need to know the game script. Will it be a fast paced game or
+  not"): the two teams' pace this season from PropFinder (`paceStats` on its team objects → `pace` on the pull, `paceTable`
+  in `lib/picks/propfinder.js`: possessions a game with rank and offensive / defensive efficiency, last season's for a team
+  without a row, `held`), their mean against the league's — Fast / Average / Slow at `PACE_EDGE` = 1.5 — and the book's total
+  and spread as the schedule carries them (ESPN's line, `odds` on the game), High / Average / Low against twice the league's
+  points a game at `TOTAL_EDGE` = 5: the pill reads "Fast pace · high total 236.5 · DET -2.5 · 212 points expected
+  · …", green (`tier: 'high'`) when both point up, red when both point down, the possessions on the hover; the game line
+  carries the words too (`script` on the profile); a pull made before 2026-10-31 has no pace (the next pull adds it); the profile passes its own
   `title`, `legend` and head `sub` to the shared card. `__tests__/nba-profile.test.js`, `nba-profile-render.test.js`
   (`MOCK_OUT` pages `profile-nba-<theme>.html` for `tools/mock/screenshot-profile.mjs`); the Offense / Defense toggle that
   opened on Defense that morning (`profileView` held in `NbaSlate`, still threaded to the card and ignored there) is gone with the
@@ -689,7 +727,10 @@ config and keeps its own markets, teams, feeds and slate key:
 - `tools/check-defensive-matchups.mjs <export.csv> <picks.json>` compares PropFinder's Defensive Matchups page export (what each team allows per position, with ranks) against the board's `sides[].allowed` table in a saved `GET /api/nba/picks?date` payload, cell by cell; the export itself is never ingested (its "OPPOSING PLAYER" header is no player column, the parser reads zero rows and the store rejects it).
 - Routes: `GET /api/nba/picks?date`, `GET /api/nba/shuffle?date&market`, `GET /api/nba/scorecard?from&to`, `GET|POST|DELETE /api/nba/sheets?date`,
   `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`,
-  `GET|POST /api/nba/injuries?date` (the admin's injury overrides).
+  `GET|POST /api/nba/injuries?date` (the admin's injury overrides); `POST /api/nba/refresh?only=calibration` (token or
+  admin) grades the season again now and relearns the calibration and the reliable chances without waiting for new box
+  scores — the workflow's `what: calibration` runs it with the site's token (Vincent, 2026-10-31: "open the shuffle tab
+  to relearn the calibration", which this container cannot).
   `.github/workflows/nba-data.yml`: 9:47 ET and 5:23 PM ET (schedule + PropFinder), 2:11 AM ET
   (last night's box scores). UI: `components/nba/NbaApp.jsx` (date picker), `NbaBoard.jsx`,
   `NbaSources.jsx`. Tests: `__tests__/nba-board.test.js` (`fixtures/espn-nba-summary.json`).
@@ -993,6 +1034,14 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   published for the league that lacks a team short of its games this season — CBJ had L5 and L15 and no L10
   above its rink on 2026-10-27 — gets that team's row from the stored window, ranked among the table's teams,
   `stood` on the table and the tab marked `source: 'stored'`, `withStoodTeams`),
+  **the by-line read on the ice** (Vincent, 2026-10-31, of the Defense tab's slot badges LW1 · C2 · D2: "How can we
+  make this visible on the matchup view?"): every chip carries his slot tonight as a badge (`SlotBadge` in `Rink.jsx`,
+  `.nhlx-rk-slot`) tinted by the opponent's rank against that slot for the rink's metric — the Defense tab's by-line
+  table, `slotBoard(defenseBySlot(rows, { season }))` at both venues, read once a slate in `buildSlate` and carried per
+  side as `side.lines = linesOf(boards, opp)` ({ sog, g } → { gp, cells, softest, league }, `linesOf` in
+  `defense-board.js`), green = top third, red = bottom third, grey = no record (the hover: the figure, the rank, the
+  league's mean, the skater-games) — and the rink head names the opponent's softest line with its rank and figure and
+  this side's skater at that slot (`SoftestLine`, click to his card); colour only, no number moves;
   chips carrying the latest saved model run's λ shots / goals for the slate date from
   `lib/nhl-data/model-runs.js`, or a matchup read when no run exists; at the top of each rink card the model's plays
   for that team (`sidePlays` in `slate.js`, `ModelPlays` in `Rink.jsx`): the Best bets boards' rule, `boardPlays` in
@@ -1007,7 +1056,14 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   and replace it with a summary of data from both the rink and propfinder", then "the summary needs to be compact. 5 rows
   max."): the two teams side by side, **five rows at tonight's venue** — Shooting (shots and goals a game), Allows (shots
   and goals allowed), Power play (PP% and the power plays drawn a game), Penalty kill (PK% and the power plays given,
-  rank 1 = the softest kill), Last 10 (shots for and against over the last ten) — each cell a word over one line of
+  rank 1 = the softest kill), Last 10 (shots for and against over the last ten), and since 2026-10-31 **Saves** between
+  Allows and Power play (Vincent: "I should be able to see the projected goalkeeper saves for NHL games in the short game
+  summary"): the shots the opponent is expected to put on the team's goalie — the saved run's λ shots summed over the
+  opponent's lineup (ten skaters at least), else ShotPropz's boards (the opponent's shots a game at its venue and the
+  team's shots allowed at its own, the geometric mean) — × the team's save percentage this season (`spzSavePct` in
+  `shotpropz-pure.js`: 1 − GA/SA on the defense board, all games, ranked 1 = the best, the `goalie` kind's words, a
+  strong goalie red; the rink's venue table without a snapshot, unranked). The boards carry no goalies, so the team's
+  figure stands for the starter's and the hover says so — each cell a word over one line of
   figures: Elite · Strong · Average · Weak · Poor for an attack, Elite · Tight · Average · Leaky · Very leaky for a
   defense (`levelOf`: the top three, the top quarter, the bottom quarter, the bottom three; the word on the shots),
   Rising / Steady / Falling for the last ten against the season (`FORM_EDGE` a tenth). **Green = more shots and goals
@@ -1115,6 +1171,32 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   short, the row on its lead market, a "Got" column with the figure and a tally in the game head. The model's math is untouched.
   Study: `docs/shots-goals-predictors.md` (section 13 is the every-angle scan and the replay; `tools/predictors/run.sh <year>`
   rebuilds it, `explain.py` reads one skater-game).
+  **Goalies and the Saves table** (`lib/nhl-data/goalies-pure.js` + `goalies.js`; Vincent, 2026-10-31: "record the saves as part
+  of the box scores … they should be listed as a best bet if it's applicable"): the game records have carried every goalie's
+  line since the first ingest (`game.goalies` in `game.js`: shots against `sa`, saves `sv`, goals against `ga`, `toi`, the
+  `starter` flag, the `decision`); `writeGoalieRows` (every `ingestGames`) indexes them per season at
+  `data/goalie-rows/<season>.json` (`GOALIE_ROW_FIELDS`, the skater rows' shape) and `POST /api/nhl/data/refresh?only=goalies
+  [&season=]` rebuilds a season's file from every stored game (`rebuildGoalieRows`, run once on 2026-10-31 for 2026);
+  `loadGoalieRows(date)` reads this season's and last season's. `goalieBook(rows, season, { through })` reads every team's
+  goalies before the date (appearances, starts, shots, saves, the raw and the **shrunk save percentage** — his own toward
+  the league's at shots / (shots + `SV_K` = 150), the league's this season from 2,000 shots, `LEAGUE_SV` = .900 before —,
+  saves a start, his last five starts, starts in the team's last `STARTER_WINDOW` = 10 games; last season's goalies stand in
+  for a team without a game, `held`) and `likelyStarter(book, team, date)` names the goalie likely in net: the most starts
+  over the team's last ten, **the other goalie on the second night of a back-to-back when the usual one started last night**
+  (`reason` says which; no confirmed starter is read anywhere — the beat writers' goalie lines are skipped by the lineup
+  parser, so the rink's "in net" is a read, not a report). The slate puts him on every side as `goalie` (with `other`, the
+  team's second goalie) and the stored game's goalie lines on `log.goalies`. **The profile's Saves row** reads his own
+  percentage from three starts (the team's from ShotPropz until then), names him ("Montembeault likely · .908 over 7
+  starts") and, once stored, the goalie who played and his line ("got Oettinger 30 of 33"). **Best bets' Saves table**
+  (`saves` on every board game in `picks.js`, `SavesTable` in `PicksPanel.jsx`, the third table of the grid): each side's
+  likely starter facing the shots the board expects of the opponent (its lineup's λ shots summed, ten skaters at least) ×
+  his save percentage = the projected saves (`savesRow`), the chance of 25 / 30 / 35 saves (`savesChance`: a normal around
+  the projection, `SAVES_SD` = 6 shots × the save percentage) with the break-even price, **30+ the play** (`SAVES_LEAD`,
+  a row under `SAVES_FLOOR` = 50% there is dimmed as under the floor, `pickSaves`); once the game is stored the goalie's
+  own line grades the row (`withSavesActuals`: 30+ hit or miss, "another goalie played" when the read was on the wrong
+  man, `played: false`), and the game head's tally counts the saves plays with the shots and goal plays. No book line for
+  saves is in the data (the NHL PropFinder pull keeps skaters' stats and no props), so the play is the chance of the
+  30-save mark, not an edge over a price. `__tests__/nhl-goalies.test.js`.
   The **shuffle** on its own tab (`#shuffle`, `components/nhl/ShufflePanel.jsx` with its own slate-date picker, the
   date riding on every card open; `GET /api/nhl/data/shuffle?date=` → `buildShuffle` in `picks.js`, which is
   `buildPicks(date, { withSkaters: true })` reshaped; the pure readers in `lib/nhl-data/shuffle-pure.js`): a bar for

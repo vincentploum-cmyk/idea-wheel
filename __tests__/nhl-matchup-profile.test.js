@@ -55,8 +55,8 @@ describe('matchup profile: MTL @ DAL with ShotPropz', () => {
   const p = matchupProfile({ game, rates, pfTeams, shotpropz });
   test('five rows, the heads, the total', () => {
     expect(p.order).toEqual(['MTL', 'DAL']);
-    expect(p.rows.map((r) => r.key)).toEqual(['shooting', 'allows', 'powerplay', 'penaltykill', 'last10']);
-    expect(PROFILE_ROWS).toHaveLength(5);
+    expect(p.rows.map((r) => r.key)).toEqual(['shooting', 'allows', 'saves', 'powerplay', 'penaltykill', 'last10']);
+    expect(PROFILE_ROWS).toHaveLength(6);
     expect(p.rows.every((r) => r.label && r.hint)).toBe(true);
     expect(p.teams.MTL).toMatchObject({ venue: 'A', opp: 'DAL', games: 10, shotpropz: { updated: 'Oct 30, 2026', venueGames: 6, leadAt: 'away' }, verdict: { headline: 'Leaky defense away', tier: 'leaky' } });
     expect(p.total).toEqual({ headline: 'Average scoring · 6.0 goals', tier: 'average', projected: 6.0, league: 6.1 });
@@ -74,6 +74,31 @@ describe('matchup profile: MTL @ DAL with ShotPropz', () => {
     // The line is parts: the figures plain, the rank phrase in the tone of its level (the card colours it).
     expect(dal.parts).toEqual([{ t: '24.3 shots · 2.17 goals allowed a game at home · ' }, { t: '31st of 32 most', tone: 'is-tough' }]);
     expect(mtl.parts[1]).toEqual({ t: '9th of 32 in shots', tone: '' });
+  });
+  test('saves: the run’s λ over the opponent’s lineup × the likely starter’s save percentage; the team’s without one; the box score once final', () => {
+    // DAL's eighteen skaters' λ add to 29.5 shots on Montembeault, .908 over 7 starts → 26.8 saves. The word is the team's ShotPropz rank.
+    const mtl = cellOf(p, 'saves', 'MTL');
+    expect(mtl).toMatchObject({ word: 'Elite', tone: 'is-tough', source: 'rink', text: '~27 saves expected · 29.5 shots faced · Montembeault likely · .908 over 7 starts' });
+    expect(mtl.title).toContain('29.5 shots faced expected (the run’s λ over 18 DAL skaters) × .908 = 26.8 saves');
+    expect(mtl.title).toContain("Sam Montembeault likely in net: 7 of the team's last 10 starts; 7 starts, 192 saves on 210 shots (.914, shrunk to .908), 27.4 saves a start · the other way: Jakub Dobes, 3 starts");
+    expect(mtl.title).toContain('2.92 goals on 31.2 shots allowed a game, 1st of 2 · ShotPropz');
+    expect(cellOf(p, 'saves', 'DAL')).toMatchObject({ text: '~29 saves expected · 32.3 shots faced · Oettinger likely · .910 over 9 starts' });
+    // Without a goalie on record the team's save percentage stands in, ranked on the line.
+    const noGk = { ...game, sides: game.sides.map((s) => ({ ...s, goalie: null })) };
+    const t = cellOf(matchupProfile({ game: noGk, rates, pfTeams, shotpropz }), 'saves', 'MTL');
+    expect(t).toMatchObject({ source: 'spz', text: '~27 saves expected · 29.5 shots faced · team .906 save % (1st of 2)' });
+    expect(t.parts.find((x) => x.tone != null)).toEqual({ t: '1st of 2', tone: 'is-tough' });
+    // Without a run the shots come from ShotPropz's boards: the opponent's shots at its venue and the team's allowed at its own, the geometric mean.
+    const noRun = { ...game, sides: game.sides.map((s) => ({ ...s, skaters: s.skaters.map((k) => ({ ...k, model: null })), plays: null })) };
+    const q = cellOf(matchupProfile({ game: noRun, rates, pfTeams, shotpropz }), 'saves', 'MTL');
+    // DAL at home 29.2 shots a game, MTL on the road 32.5 allowed: √(29.2 × 32.5) = 30.8.
+    expect(q.text).toBe('~28 saves expected · 30.8 shots faced · Montembeault likely · .908 over 7 starts');
+    expect(q.title).toContain('ShotPropz: DAL 29.2 shots a game at home, MTL 32.5 allowed on the road');
+    // Final: the goalie who played and his line.
+    const done = { ...game, log: { score: { away: 3, home: 2 }, goalies: [{ id: 8479193, name: 'Jake Oettinger', team: 'DAL', sa: 33, sv: 30, ga: 3, starter: true }, { id: 8478470, name: 'Sam Montembeault', team: 'MTL', sa: 28, sv: 26, ga: 2, starter: true }] } };
+    const f = cellOf(matchupProfile({ game: done, rates, pfTeams, shotpropz }), 'saves', 'DAL');
+    expect(f.text).toBe('~29 saves expected · 32.3 shots faced · Oettinger likely · .910 over 9 starts · got Oettinger 30 of 33');
+    expect(f.title).toContain('the box score: Jake Oettinger 30 saves on 33 shots');
   });
   test('power play and penalty kill: the venue board from four games there; rank 1 = the softest kill', () => {
     // The special-teams read ends the line: how many power plays the team should get tonight (lib/nhl-data/special-teams.js; the fixture's two-team league reads about the league's 3.0).
@@ -115,14 +140,19 @@ describe('matchup profile: without a ShotPropz snapshot', () => {
     expect(cellOf(p, 'penaltykill', 'DAL')).toMatchObject({ word: 'Tight', tone: 'is-tough', source: 'pf', text: '84.2% on the penalty kill · 4th of 32 · PropFinder 2026-27' });
     expect(cellOf(p, 'penaltykill', 'MTL')).toMatchObject({ word: 'Average', tone: '' });
     expect(p.teams.MTL.shotpropz).toBeNull();
-    // The fixture's rates carry no l10 window; the last-ten row is left out rather than guessed.
-    expect(p.rows.map((r) => r.key)).toEqual(['shooting', 'allows', 'powerplay', 'penaltykill']);
+    // The fixture's rates carry no l10 window; the last-ten row is left out rather than guessed. The saves read the
+    // rink's venue table for the save percentage (no rank, no word) and the run's λ for the shots.
+    expect(p.rows.map((r) => r.key)).toEqual(['shooting', 'allows', 'saves', 'powerplay', 'penaltykill']);
+    expect(cellOf(p, 'saves', 'DAL')).toMatchObject({ word: null, source: 'rink', text: '~29 saves expected · 32.3 shots faced · Oettinger likely · .910 over 9 starts' });
+    // Without a goalie either, the rink's venue table gives the percentage, unranked.
+    const noGk = { ...game, sides: game.sides.map((s) => ({ ...s, goalie: null })) };
+    expect(cellOf(matchupProfile({ game: noGk, rates, pfTeams }), 'saves', 'DAL')).toMatchObject({ word: null, text: '~30 saves expected · 32.3 shots faced · team .913 save % (at home, stored games)' });
   });
   test('without PropFinder either: the shooting from the rink, allows from the stored venue table, no special teams', () => {
     const bare = { ...game, sides: game.sides.map((s) => ({ ...s, propfinder: null })) };
     const q = matchupProfile({ game: bare, rates });
     expect(cellOf(q, 'allows', 'DAL')).toMatchObject({ source: 'rink', word: 'Elite', text: '24.2 shots · 2.10 goals allowed a game at home over 6 stored games · 31st of 32 most' });
-    expect(q.rows.map((r) => r.key)).toEqual(['shooting', 'allows']);
+    expect(q.rows.map((r) => r.key)).toEqual(['shooting', 'allows', 'saves']);
     const withL10 = { ...rates, teams: { ...rates.teams, MTL: { ...rates.teams.MTL, l10: { gp: 10, sog: 35.0, g: 3.9 } } } };
     const l10 = cellOf(matchupProfile({ game: bare, rates: withL10 }), 'last10', 'MTL');
     expect(l10).toMatchObject({ word: 'Rising', tone: 'is-soft', source: 'rink', text: '35.0 shots for · 31.8 against (6th most) · 3.90–2.90 goals a game · stored games' });

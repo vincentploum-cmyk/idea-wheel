@@ -56,8 +56,8 @@ export default function SlateList({ board, sport, onOpen = null }) {
   return (
     <section className="ir-slate" aria-label="Every play tonight">
       <div className="nhlx-pfd-head">
-        <b>Every play tonight, the likeliest first</b>
-        <small className="nhlx-auto-meta">{rows.length} play{rows.length === 1 ? '' : 's'} over the floor across {board.games.length} game{board.games.length === 1 ? '' : 's'}{onOpen ? ' · click a row for the card' : ''}{board.calibration?.plays?.length ? <span title={calibrationNote(board.calibration)}> · chances calibrated</span> : null}</small>
+        <b>{board.bestBy === 'edge' ? 'Best bets tonight, the biggest edge over the book first' : 'Every play tonight, the likeliest first'}</b>
+        <small className="nhlx-auto-meta">{rows.length} play{rows.length === 1 ? '' : 's'} {board.bestBy === 'edge' ? 'where the board’s chance at the book’s line beats its price' : 'with an edge over the book’s price'} across {board.games.length} game{board.games.length === 1 ? '' : 's'}{onOpen ? ' · click a row for the card' : ''}{board.calibration?.plays?.length ? <span title={calibrationNote(board.calibration)}> · chances calibrated</span> : null}</small>
       </div>
       <div className="ir-slate-bar">
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Stat">
@@ -92,7 +92,7 @@ export default function SlateList({ board, sport, onOpen = null }) {
           <tbody>
             {shown.length ? shown.map((r, i) => {
               const tone = spotTone(r.spot);
-              const bar = rangeBar(r.proj, r.side === 'over' ? r.line : null);
+              const bar = rangeBar(r.proj, r.side === 'over' || r.side === 'under' ? r.line : null);
               const over = r.proj?.exp != null && r.side === 'over' ? r.proj.exp - r.line : null;
               const grade = r.hit == null ? (r.final && r.actual === null ? ' is-dnp' : '') : r.hit ? ' is-hit' : ' is-miss';
               return (
@@ -109,7 +109,7 @@ export default function SlateList({ board, sport, onOpen = null }) {
                   <td className="ir-sl-proj">
                     {r.proj ? (
                       <div className="ir-slate-proj" title={`Projected ${num(r.proj.exp)} ${r.unit}, between ${r.proj.floor} and ${r.proj.ceiling} half the nights${over != null ? ` · ${over >= 0 ? '+' : '−'}${num(Math.abs(over))} over the line` : ''}`}>
-                        <span><b>{num(r.proj.exp)}</b><small className="ir-slate-sub">{r.proj.floor}–{r.proj.ceiling}</small></span>
+                        <span><b>{num(r.proj.exp)}</b><small className="ir-slate-sub">{r.gap != null ? <span className={r.gap * (r.side === 'under' ? -1 : 1) > 0 ? 'ir-slate-gap is-up' : 'ir-slate-gap'} title={`The projection ${num(Math.abs(r.gap))} ${r.unit} ${r.gap >= 0 ? 'over' : 'under'} the book's line`}>{r.gap >= 0 ? '+' : '−'}{num(Math.abs(r.gap))} vs line · </span> : null}{r.proj.floor}–{r.proj.ceiling}</small></span>
                         {bar ? (
                           <span className="ir-range-bar" aria-hidden="true">
                             <i className="ir-range-band" style={{ left: `${bar.floor}%`, width: `${bar.band}%` }} />
@@ -126,7 +126,7 @@ export default function SlateList({ board, sport, onOpen = null }) {
                   {final ? <td className="is-num nhlx-pk-got ir-sl-got">{r.actual === undefined ? <small>—</small> : r.actual === null ? <small>DNP</small> : <><b>{r.actual}</b><small>{r.unit}</small></>}</td> : null}
                 </tr>
               );
-            }) : <tr><td colSpan={final ? 9 : 8}><small className="ir-nfl-none">No play over the floor{softOnly ? ' in a soft matchup' : ''} for this stat.</small></td></tr>}
+            }) : <tr><td colSpan={final ? 9 : 8}><small className="ir-nfl-none">No play with an edge{softOnly ? ' in a soft matchup' : ''} for this stat.</small></td></tr>}
           </tbody>
         </table>
       </div>

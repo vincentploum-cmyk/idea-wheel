@@ -477,10 +477,14 @@ describe('NBA board', () => {
   });
   test('the slate in one list: every play over the floor, his likeliest line a market, the chance first, with his projection and the matchup', () => {
     // The list's mechanics on every market (the site's NBA board lists rebounds, assists and threes alone: below).
-    const b = nbaBoard(COCKTAIL, { bestMarkets: null }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf, results });
-    const over = b.games.flatMap((g) => Object.values(g.tables).flatMap((t) => [...t.rows, ...t.next])).filter((x) => x.p >= x.floor && !x.under);
+    const b = nbaBoard(COCKTAIL, { bestMarkets: null, bestBy: 'chance' }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf, results });
+    // A best bet is a play over the floor with an edge over the book's price (Vincent, 2026-10-31: "I only want to see
+    // profitable bets with an edge"); a row without a price, or priced past its chance, stays in its table alone.
+    const over = b.games.flatMap((g) => Object.values(g.tables).flatMap((t) => [...t.rows, ...t.next])).filter((x) => x.p >= x.floor && !x.under && x.edge != null && x.edge > 0);
+    const allOver = b.games.flatMap((g) => Object.values(g.tables).flatMap((t) => [...t.rows, ...t.next])).filter((x) => x.p >= x.floor && !x.under);
+    expect(allOver.length).toBeGreaterThan(over.length);   // at least one play over the floor has no edge
     expect(b.best.length).toBeGreaterThan(0);
-    expect(b.best.every((r) => r.p >= MARKETS[r.market].floor)).toBe(true);
+    expect(b.best.every((r) => r.p >= MARKETS[r.market].floor && r.edge > 0)).toBe(true);
     for (let i = 1; i < b.best.length; i++) expect(b.best[i].p).toBeLessThanOrEqual(b.best[i - 1].p);
     expect(new Set(b.best.map((r) => `${r.key}|${r.market}|${r.side}`)).size).toBe(b.best.length);
     expect(b.best.map((r) => r.id).sort()).toEqual([...new Set(over.map((x) => x.id))].sort());
@@ -495,12 +499,12 @@ describe('NBA board', () => {
     // A player out tonight and a steep line stay off it.
     const steepPf = { ...pf, data: { ...pf.data, players: [{ ...pf.data.players[0], props: [{ market: 'pts', line: 4.5, odds: -10421, underOdds: 2500 }] }] } };
     expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: steepPf, results }).best).toEqual([]);
-    // The site's board (Vincent, 2026-10-31: "I don't need turnovers in the best bets. Only rebounds / assists / threes"):
-    // Tatum's points and double-double leave the list and stay in their tables.
+    // The chance read on rebounds, assists and threes alone (Vincent, 2026-10-31: "I don't need turnovers in the best
+    // bets. Only rebounds / assists / threes"): Tatum's points and double-double leave the list and stay in their tables.
     expect(BEST_MARKETS).toEqual(['reb', 'ast', 'tpm']);
-    const site = buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf, results });
-    expect(site.best.map((r) => r.id)).toEqual(['jalen brunson|ast|6.5|over']);
-    expect(site.games[0].tables.points.rows.map((r) => r.id)).toContain('jayson tatum|pts|27.5|over');
+    const three = nbaBoard(COCKTAIL, { bestBy: 'chance' }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf, results });
+    expect(three.best.map((r) => r.id)).toEqual(['jalen brunson|ast|6.5|over']);
+    expect(three.games[0].tables.points.rows.map((r) => r.id)).toContain('jayson tatum|pts|27.5|over');
   });
   test('a line the book prices past -400 is no play: off the tables, the strip, the tally and the notes, on the card flagged steep', () => {
     const steepPf = { ...pf, data: { ...pf.data, players: [{ ...pf.data.players[0], props: [{ market: 'reb', line: 7.5, odds: -110, underOdds: -110 }, { market: 'pts', line: 4.5, odds: -10421, underOdds: 2500 }, { market: 'tpm', line: 0.5, odds: -2021, underOdds: 900 }] }] } };

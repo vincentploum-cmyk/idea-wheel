@@ -1204,6 +1204,18 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-rk-fire { flex: none; font-size: max(11px, 2.6cqw); line-height: 1; }
 .nhlx-rk-h2h { flex: none; display: inline-block; font-family: var(--font-ui); font-size: max(9.5px, 2.3cqw); font-weight: 700; line-height: 1.35; letter-spacing: 0.02em; text-transform: uppercase; color: var(--info-fg); background: var(--info-bg); border-radius: 4px; padding: 0 0.5cqw; vertical-align: 1px; }
 .nhlx-rk-legend i.nhlx-rk-h2h { width: auto; height: auto; font-size: 11px; padding: 0 5px; margin-right: 6px; vertical-align: 0; font-style: normal; }
+/* The chip's slot badge (LW1, C2, D2 …), tinted by the opponent's rank against that slot: the Defense tab's by-line read on the ice. */
+.nhlx-rk-slot { flex: none; display: inline-block; font-family: var(--font-ui); font-size: max(9.5px, 2.3cqw); font-weight: 700; line-height: 1.35; letter-spacing: 0.02em; font-style: normal; color: var(--muted); background: var(--bg-soft); border: 1px solid var(--line); border-radius: 4px; padding: 0 0.5cqw; vertical-align: 1px; font-variant-numeric: tabular-nums; }
+.nhlx-rk-slot.is-soft { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-line); }
+.nhlx-rk-slot.is-mid { color: var(--warn-fg); background: var(--warn-bg); border-color: var(--warn-line); }
+.nhlx-rk-slot.is-tough { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-line); }
+.nhlx-rk-legend i.nhlx-rk-slot, .nhlx-rk-line .nhlx-rk-slot { width: auto; height: auto; font-size: 11px; padding: 0 5px; vertical-align: 0; }
+.nhlx-rk-legend i.nhlx-rk-slot { margin-right: 6px; }
+.nhlx-rk-line { display: block; margin-top: 2px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.nhlx-rk-line b { color: var(--heading); font-weight: 600; }
+.nhlx-rk-facing { font: inherit; font-weight: 600; color: var(--primary); background: none; border: 0; padding: 0; cursor: pointer; }
+.nhlx-rk-facing:hover { text-decoration: underline; }
+.nhlx-rk-facing.is-static { color: var(--heading); cursor: default; text-decoration: none; }
 /* Marks first, then the name; a name the marks leave no room for drops under them, and only one wider than the whole row is ellipsised. */
 .nhlx-rk-name { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3cqw 0.6cqw; min-width: 0; font-family: var(--font-display); font-weight: 700; font-size: max(12px, 3.3cqw); line-height: 1.1; white-space: nowrap; letter-spacing: -0.01em; }
 .nhlx-rk-nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -1298,6 +1310,7 @@ body.nhlx-modal-open { overflow: hidden; }
 /* Tonight's picks (Best bets): one row of two tables per game, the notes under the slate. */
 .nhlx-pk { margin: 28px 0 36px; }
 .nhlx-pk-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 14px; margin-top: 12px; align-items: start; }
+.nhlx-pk-grid.has-saves { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 3fr); }
 .nhlx-pk-table-wrap { padding-bottom: 6px; }
 .nhlx-pk-table td { white-space: nowrap; vertical-align: middle; }
 .nhlx-pk-table th.is-num, .nhlx-pk-table td.is-num { text-align: right; font-variant-numeric: tabular-nums; }
@@ -1320,7 +1333,8 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-pk-notes h3 { font-family: var(--font-display); font-weight: 600; font-size: 20px; color: var(--heading); margin: 0 0 10px; }
 .nhlx-pk-notes ul { margin: 0; padding-left: 20px; }
 .nhlx-pk-notes li { margin: 0 0 8px; line-height: 1.5; color: var(--body); }
-@media (max-width: 900px) { .nhlx-pk-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1100px) { .nhlx-pk-grid.has-saves { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } .nhlx-pk-grid.has-saves > :last-child { grid-column: 1 / -1; } }
+@media (max-width: 900px) { .nhlx-pk-grid, .nhlx-pk-grid.has-saves { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 640px) { .nhlx-pk-table .is-wide { display: none; } .nhlx-pk-table td { white-space: normal; } .nhlx-pk-table th, .nhlx-pk-table td { padding-left: 8px; padding-right: 8px; } }
 
 .nhlx-pc-slot { font-size: 13.5px; color: var(--muted); white-space: nowrap; }
@@ -1676,6 +1690,8 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-slate-table td { vertical-align: middle; }
 .ir-slate-table td b, .ir-slate-table td .ir-slate-sub { display: block; }
 .ir-slate-sub { font-size: 13px; color: var(--muted); }
+.ir-slate-gap { font-variant-numeric: tabular-nums; }
+.ir-slate-gap.is-up { color: var(--ok-fg); font-weight: 600; }
 .ir-slate-rank { width: 28px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .ir-slate-proj { display: flex; align-items: center; gap: 12px; min-width: 220px; }
 .ir-slate-proj > span:first-child { min-width: 52px; font-variant-numeric: tabular-nums; }
