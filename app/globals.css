@@ -1852,6 +1852,7 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
   .nhlx-prof-pill { min-width: 38px; padding: 2px 4px; }
   .nhlx-prof-head small { flex-basis: 100%; }
   .nhlx-prof-team-name .nhlx-edge { white-space: normal; text-align: left; line-height: 1.25; border-radius: 8px; font-size: 12px; }
+}
 
 /* The Defense tab's By line table (2026-10-30): the line group heads over the slot columns, the softest line's cell marked. */
 .nhlx-df-lines .nhlx-pft tr.is-group th { padding-bottom: 0; border-bottom: 0; font-size: 11.5px; color: var(--muted); text-align: center; }
