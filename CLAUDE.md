@@ -1241,7 +1241,7 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   a row under `SAVES_FLOOR` = 50% there is dimmed as under the floor, `pickSaves`); once the game is stored the goalie's
   own line grades the row (`withSavesActuals`: 30+ hit or miss, "another goalie played" when the read was on the wrong
   man, `played: false`), and the game head's tally counts the saves plays with the shots and goal plays. **The book's saves lines come from PropFinder's
-  pull** (`lib/nhl-data/goalie-props.js`; Vincent, 2026-10-31: "pull the goalie saves lines from PropFinder and show the
+  pull** (`lib/nhl-data/goalie-props.js`, the ladder reader shared with the skaters' lines in `prop-lines.js` since 2026-10-31; Vincent, 2026-10-31: "pull the goalie saves lines from PropFinder and show the
   edge... I just need over x saves with a %"): the odds-only players call lists the goalies with their props, `goalieSavesProps`
   reads the items whose market names saves (a period's or a window's left out) with the NBA reader's spellings, the main
   line the one priced nearest a coin flip, and the pull stores them at `data/propfinder/goalie-props.json` ({ at, date,
@@ -1362,6 +1362,39 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   "Read from" as its Poisson tail; `raw` on the read for the hover). Learned again by every season-range `buildScorecard`
   (`saveCalibration` beside `saveBestRead`: the History tab's first grade, the morning refresh), never rewritten
   unchanged. Hover a chance on Best bets or the shuffle for the figure as stated.
+- **The edge over the book, graded** (`lib/nhl-data/skater-props.js`, `prop-lines.js`, `edge-pure.js`, `edge.js`; Vincent,
+  2026-10-31: "run that edge audit for shots and goals" — no skater price had ever been stored, so nothing could be graded
+  against the book; the goalies' saves lines were the only prices read). **The book's lines on the skaters**: the pull reads
+  each skater's shots-on-goal ladder and anytime-goal price off the same odds-only players call (`skaterPropsOf`; the ladder
+  reader `propLinesOf` in `prop-lines.js` is the goalies' reader factored out: the main line nearest a coin flip, the best
+  price a side, a period's or a window's line left out; "Player Shots on Goal" / "SOG" / "Shots" without blocked shots or
+  attempts, "Anytime Goal Scorer" / "To Score" / "Goals" at 0.5 without the first scorer, 2+ goals or points) and stores
+  them per slate at `data/propfinder/skater-props/<date>.json` ({ at, date, skaters: [{ pfId, name, key, team, pos, sog,
+  goal }], withSog, withGoal, `sample` = the first priced skater's items as sent, for the spelling check — no NHL skater
+  item had been seen when it shipped; the pull meta's `skaterProps` counts show in the pull's message). The slate puts
+  them on each skater as `prop` (`skaterPropFor`: the NHL name against PropFinder's through `normName`, the surname on the
+  team as the fallback; only a pull made for the slate's date; `book` on the slate counts them). **The board's edge**
+  (`bookRead` in `edge-pure.js`, `book` on every candidate and shuffle row): at the book's main shots line (o2.5 = 3+,
+  `markOf`) the board's chance of clearing it (`chanceAtHeight`: the board's own 2+ … 4+, else his λ through the
+  calibration's fits, never above the rung below) against what the price implies, and his anytime price against his 1+ G,
+  `edge` = the chance minus the implied probability; Best bets' Shots and Goals tables carry a **Book** column when any row
+  has a line ("3+ 58% · -140", the edge under it green on an edge, red without; `BookCell` in `PicksPanel.jsx`, ringed
+  when the chance clears the market's reliable threshold; once the game is stored, hit or miss at the book's mark). **The
+  audit** (`bookRecord` + `edgeReport`): the scorecard reads the slate's stored lines on every graded skater-game (only
+  when stored before the game's puck drop, `props.at` against the positions file's start time) and grades the board's chance
+  as the board prints it now — the λ at the board's weights (`readsOf`) through the calibration as it stands, the run's own
+  stated figure beside it as `raw` — against the price: per market (shots at the book's line, anytime goal) every priced
+  play, the board's plays (an edge over 0), by the edge the board saw (`EDGE_BUCKETS`), by what the book asked
+  (`IMPLIED_BUCKETS`), and step by step up the board's chance with the **reliable threshold** — the lowest step from which
+  `RELIABLE.min` = 25 priced plays landed at least the break-even their prices asked (a flat stake did not lose; `ret` = the
+  flat-stake return per unit, `flatReturn`); `edges` on the report, drawn on the History tab ("The edge over the book",
+  `EdgeTable` in `Scorecard.jsx`), the book's figures on the `?rows=1` export (`sogLine`, `sogOdds`, `sogImplied`,
+  `sogBoard`, `goalOdds`, `goalImplied`, `goalBoard`), the report stored by every season-range `buildScorecard` at
+  `data/scorecard/edge.json` (`saveEdge`) and read by the picks board (`loadEdge` → `reliable` on the payload: the Best bets
+  head says "reliable from · shots 60% · goals not yet"). `tools/predictors/edge_audit.mjs <export.json>` prints the same
+  tables offline. The first priced night is the first pull after this shipped (2026-10-31); the audit fills from there and
+  nothing here was graded on real prices when it shipped. `__tests__/nhl-skater-props.test.js`, `nhl-edge.test.js`, the
+  board's case in `nhl-picks-score.test.js`.
 - **The most accurate read, learned** (`lib/nhl-data/board-weights-pure.js`, pure; Vincent, 2026-10-31: "I need to have the
   most accurate % for both shots and goals"): whose λ the board's chances are read off — the run's, the study's or a blend —
   is **learned per stat from the site's own graded nights**, not set by hand. `learnWeights(rows)` (rows = `fitRow` with the

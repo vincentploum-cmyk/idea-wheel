@@ -63,6 +63,31 @@ describe('the board reads the λ at the weights the calibration learned', () => 
   });
 });
 
+describe('the board reads the edge at the book’s lines', () => {
+  test('a skater with lines on the slate carries the chance at the book’s mark and for a goal against the prices; the verdict rides on the payload', () => {
+    const sl = slate();
+    const prop = { sog: { line: 2.5, odds: -140, underOdds: 110, book: 'DK', books: 2, lines: [{ line: 2.5, odds: -140 }] }, goal: { line: 0.5, odds: 150, book: 'DK', books: 1 } };
+    sl.games[0].sides[0].skaters[0].prop = prop;
+    sl.book = { at: '2026-10-31T13:00:00Z', skaters: 1, withSog: 1, withGoal: 1 };
+    const edge = { at: '2026-10-31T06:00:00Z', from: '2026-10-08', to: '2026-10-30', sog: { n: 400, reliable: { step: 0.6, n: 40, hit: 0.65, implied: 0.56, ret: 0.1 } }, g: { n: 300, reliable: null } };
+    const board = computePicks(DATE, sl, rows, { withSkaters: true, spz, edge });
+    const c = board.games[0].all.find((x) => x.id === 101);
+    // The shuffle row keeps λ, not the rungs: the chance at the mark is the board's 3+ figure, read back off the λ.
+    expect(c.book.sog).toMatchObject({ line: 2.5, mark: 3, odds: -140, implied: 0.583 });
+    expect(c.book.sog.p).toBeGreaterThan(0.3); expect(c.book.sog.p).toBeLessThan(0.9);
+    expect(c.book.sog.edge).toBeCloseTo(c.book.sog.p - 0.583, 3);
+    expect(c.book.goal).toMatchObject({ odds: 150, implied: 0.4 });
+    expect(c.book.goal.p).toBeGreaterThan(0); expect(c.book.goal.edge).toBeCloseTo(c.book.goal.p - 0.4, 3);
+    // The board's own row (the per-game tables) carries the same read.
+    const onBoard = [...board.games[0].shots, ...board.games[0].nextShots].find((x) => x.id === 101);
+    if (onBoard) { expect(onBoard.book.sog.p).toBe(onBoard.p3); expect(onBoard.book.goal.p).toBe(onBoard.p1g); }
+    expect(board.games[0].all.find((x) => x.id === 102).book).toBeNull();
+    expect(board.book).toEqual(sl.book);
+    expect(board.reliable).toEqual({ at: edge.at, from: edge.from, to: edge.to, sog: edge.sog.reliable, g: null, n: { sog: 400, g: 300 } });
+    expect(computePicks(DATE, slate(), rows, { withSkaters: false, spz }).reliable).toBeNull();
+  });
+});
+
 describe('the picks board carries the special teams and the predicted score', () => {
   test('every candidate’s λ moves by his power-play slot, the side adding up to the team factor; the game gets a projected score', () => {
     const board = computePicks(DATE, slate(), rows, { withSkaters: true, spz });

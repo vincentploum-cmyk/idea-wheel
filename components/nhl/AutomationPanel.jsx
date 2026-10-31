@@ -183,7 +183,7 @@ export default function AutomationPanel({ runs, onLoad, busy: parentBusy }) {
       const r = j.result;
       setBusy(false);
       await loadSlate(date);
-      setMsg(`PropFinder pulled: ${r.games} games, ${r.players} players, ${r.teamTables} team tables.${r.injuries?.source ? ` Injury report: ${r.injuries.slate} on the slate, ${r.injuries.out} out.` : r.injuries?.error ? ` Injury report not read (${r.injuries.error}).` : ''}${r.goalieProps ? ` Saves lines on ${r.goalieProps.withLines} of ${r.goalieProps.goalies} goalies.` : ''}${j.model?.ran ? ` Model run saved (${j.model.players} players).` : j.model?.skipped ? ` Model not run yet: ${j.model.skipped}.` : ''}`);
+      setMsg(`PropFinder pulled: ${r.games} games, ${r.players} players, ${r.teamTables} team tables.${r.injuries?.source ? ` Injury report: ${r.injuries.slate} on the slate, ${r.injuries.out} out.` : r.injuries?.error ? ` Injury report not read (${r.injuries.error}).` : ''}${r.goalieProps ? ` Saves lines on ${r.goalieProps.withLines} of ${r.goalieProps.goalies} goalies.` : ''}${r.skaterProps ? ` The book’s lines on ${r.skaterProps.withSog} shooters and ${r.skaterProps.withGoal} scorers.` : ''}${j.model?.ran ? ` Model run saved (${j.model.players} players).` : j.model?.skipped ? ` Model not run yet: ${j.model.skipped}.` : ''}`);
     } catch (err) {
       setMsg(`PropFinder pull failed: ${err.message}`);
       setBusy(false);
