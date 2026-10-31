@@ -9,12 +9,12 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import GameProfile from '../components/nba/NbaProfile';
 import { gameProfile } from '../lib/nba/profile';
 
-// The NBA game profile as the server first paints it: the Offense view, five rows, a word and one short figure a cell.
-// With MOCK_OUT=<dir> it is also written as a standalone page (the site's CSS and fonts inlined) in both themes, for a
-// look at 1440 and 390 wide: node tools/mock/screenshot-profile.mjs <dir>
+// The NBA matchup profile as the server first paints it: the NHL card on the NBA's rows. With MOCK_OUT=<dir> it is
+// also written as a standalone page (the site's CSS and fonts inlined) in both themes:
+// node tools/mock/screenshot-profile.mjs <dir>
 const teams = ['CHA', 'WSH', ...Array.from({ length: 28 }, (_, i) => `T${String(i).padStart(2, '0')}`)];
 const totals = Object.fromEntries(teams.map((t, i) => [t, {
-  for: { gp: 5, pts: 101 + i * 0.5, reb: 40 + (i * 7) % 9, ast: 20.6 + (i * 5) % 8, tpm: 9 + (i * 3) % 7, ftm: 15 + (i * 11) % 9 },
+  for: { gp: 5, pts: 101 + i * 0.5, reb: 40 + (i * 7) % 9, ast: 20.6 + (i * 5) % 8, tpm: 9 + (i * 3) % 7, ftm: 15 + (i * 11) % 9, tov: 12 + (i * 3) % 6 },
   against: { gp: 5, pts: 108.2 + (i * 13) % 12 },
   l10: { against: { gp: 5, pts: 108.2 + (i * 17) % 12 } },
 }]));
@@ -28,16 +28,21 @@ const g = { id: 'g1', away: 'CHA', home: 'WSH', sides, profile: gameProfile({ aw
 const sport = { teamLogo: () => `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#8899aa"/></svg>')}`, teamName: (t) => ({ CHA: 'Hornets', WSH: 'Wizards' }[t] || t) };
 const render = () => renderToStaticMarkup(React.createElement(GameProfile, { g, sport }));
 
-describe('the NBA game profile renders', () => {
-  test('the offense view first: the toggle, the expected points, five rows of a word and a short figure', () => {
+describe('the NBA matchup profile renders', () => {
+  test('the NHL card: the expected points, the heads with the defense pill, five rows of a word over a toned line', () => {
     const html = render();
-    expect(html).toMatch(/aria-selected="true"[^>]*>Offense</);
-    expect(html).toContain('>Defense</button>');
+    expect(html).toContain('class="nhlx-prof"');
     expect(html).toContain('212 points expected · CHA 102 · WSH 110');
-    expect((html.match(/<th scope="row"/g) || []).length).toBe(5);
-    for (const label of ['Scoring', 'Threes', 'Rebounding', 'Assists', 'Free throws']) expect(html).toContain(`>${label}</th>`);
-    expect(html).toMatch(/class="ir-prof-word is-down is-very">Very weak<\/span><small>101\.0 a game · 30th<\/small>/);
-    expect(html).not.toContain('Gives up points to');
+    expect(html).toContain('this season · green = more points likely, red = fewer');
+    expect(html).toContain('5 games · 5 out · PropFinder');
+    expect((html.match(/class="nhlx-prof-row is-(?!head)/g) || []).length).toBe(5);
+    for (const label of ['Scoring', 'Rebounding', 'Playmaking', 'Allows', 'Soft spots']) expect(html).toContain(`>${label}</div>`);
+    // CHA scores the least of thirty: Poor, red, the rank phrase red too.
+    expect(html).toMatch(/nhlx-prof-word is-tough is-very[^>]*>Poor</);
+    expect(html).toContain('<b class="nhlx-prof-rank is-tough">30th of 30</b>');
+    // What CHA gives up: SG #2 on points and threes, PG and PF #3 on rebounds, in green.
+    expect(html).toContain('<b class="nhlx-prof-rank is-soft">SG #2</b>');
+    expect(html).not.toContain('role="tablist"');
   });
   test('mock-up pages (MOCK_OUT)', () => {
     const out = process.env.MOCK_OUT;
@@ -49,14 +54,11 @@ describe('the NBA game profile renders', () => {
       return fs.readFileSync(path.join(dir, 'index.css'), 'utf8').replace(/url\(\.\/files\//g, `url(file://${dir}/files/`);
     };
     const css = [fontCss('@fontsource-variable/schibsted-grotesk'), fontCss('@fontsource-variable/source-sans-3'), fs.readFileSync(path.join(root, 'app/globals.css'), 'utf8')].join('\n');
-    const views = { offense: render(), defense: renderToStaticMarkup(React.createElement(GameProfile, { g, sport, initial: 'defense' })) };
-    for (const [view, body] of Object.entries(views)) {
-      for (const theme of ['dark', 'light']) {
-        const page = `<!doctype html><html lang="en" data-theme="${theme}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>NBA profile · ${view}</title><style>${css}
-.mock-page { max-width: 1180px; margin: 0 auto; padding: 24px var(--gutter) 48px; }</style></head><body><main class="mock-page nhlx"><div class="nhlx-mu-game">${body}</div></main></body></html>`;
-        fs.writeFileSync(path.join(out, `profile-nba-${view}-${theme}.html`), page);
-      }
+    for (const theme of ['dark', 'light']) {
+      const page = `<!doctype html><html lang="en" data-theme="${theme}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>NBA profile</title><style>${css}
+.mock-page { max-width: 1180px; margin: 0 auto; padding: 24px var(--gutter) 48px; }</style></head><body><main class="mock-page nhlx"><div class="nhlx-mu-game">${render()}</div></main></body></html>`;
+      fs.writeFileSync(path.join(out, `profile-nba-${theme}.html`), page);
     }
-    expect(fs.readdirSync(out).filter((f) => f.startsWith('profile-nba-')).length).toBe(4);
+    expect(fs.readdirSync(out).filter((f) => f.startsWith('profile-nba-')).length).toBe(2);
   });
 });
