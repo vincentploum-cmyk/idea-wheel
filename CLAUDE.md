@@ -349,7 +349,16 @@ config and keeps its own markets, teams, feeds and slate key:
   `GET` lists them; `pfFor` in `store.js` reads the pull through them (`applyOverrides`, a fresh object per pull +
   overrides, `injuryFrom: 'override'`, the rows replaced), so the board, the shuffle and the card follow at once;
   the card's slot line carries "He plays" / "Mark out" / "Back to the report" (the page's board reloads on the
-  `nba:injury-override` event). **With and without each teammate** (`teammateSplits`, PropFinder's Lineup Lab as
+  `nba:injury-override` event). **The stored box score settles who played** (`applyBoxScores` in `injuries.js`, run by
+  `buildBoard` on the pull it is given, by `shuffleOf` and by `playerFor`; Vincent, 2026-10-31: Nembhard played for IND on
+  Oct 30 and the court still showed him out — the report's row was read at the pull, and `markStale` only sees the logs
+  the pull carries, never the game itself): once a slate game has a stored result, a pulled player with minutes in it is
+  in whatever the report, the depth chart or an override said (`injury` null, `injuryFrom: 'boxscore'`, `injuryPlayed`
+  { min, date }, the listing kept as `injuryListed`; his report row marked `stale: { playedOn, boxscore: true }`), and a
+  player on the box score who did not play is out ('Out', "did not play", a `boxscore: true` row added), so he leaves the
+  tables, the shuffle and the lifts as any out player does; the notes say "Played despite the report: …"; the card's slot
+  line names the box score and draws no override buttons. The replay in `gradeSlate` reads the same correction (the
+  board graded knows who sat, the pre-game board did not). **With and without each teammate** (`teammateSplits`, PropFinder's Lineup Lab as
   far as the logs reach; Vincent's ask, 2026-10-27): `teammates` on the card's payload = for every pulled teammate
   who took part in three of his games at least, his averages (minutes, points, rebounds, assists, threes) over the
   games they shared and over his games the teammate sat, the gap, and the teammate's health tonight; drawn under
@@ -503,7 +512,12 @@ config and keeps its own markets, teams, feeds and slate key:
   null, group `players`, `avg: { min, pts, reb, ast, tpm }`), so the board marks the sheet's
   players' PropFinder plays confirmed. Fixture: `__tests__/fixtures/ocr-nba-page1.json` (BOS · DET).
 - **The board's layout** (Vincent, 2026-10-30, of the courts and the per-game tables: "you have built a website which
-  makes it so incredibly difficult to find good match ups easily"): `NbaBoard` draws `SlateList` (every play on the
+  makes it so incredibly difficult to find good match ups easily"; and 2026-10-31, "I need to be able to select the
+  games from a dropdown on top of the screen": the slate head's first control on the Best plays tab is a game dropdown
+  (`gameId` in `NbaApp`, the Matchups tab's `nhlx-mu-gamepick` styles, "All games (n)" then "IND @ DET · 7:00 PM" /
+  "· final 110–104"), a pick showing that game alone, open, with the ranked list cut to its plays and an "All games"
+  button in the games head; the pick is kept across reloads of the same slate and cleared when the date changes):
+  `NbaBoard` draws `SlateList` (every play on the
   night ranked, a row opening the card with the side's entry for the player), then the games folded to a line each
   (`components/nba/NbaGame.jsx`, `GameFold`: the teams, the tip or the score, how many are out, the plays over the
   floor and the best one). Opened: the characteristics card, then a column per team — who is out, **PropFinder's table

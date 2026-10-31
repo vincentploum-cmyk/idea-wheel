@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { statusOf, isOut, healthOf, parseInjuryReport, gamesPlayed, keyAbsences, withoutGames, blendWithout, withoutWeight, absentByTeam, withoutOf, shortNames, WITHOUT_K, WITHOUT_MIN, playedShare, vacatedLifts, VACATED_SHARE, latestReport, markStale, applyOverrides, teammateSplits, injurySplits } from '../lib/picks/injuries';
+import { statusOf, isOut, healthOf, parseInjuryReport, gamesPlayed, keyAbsences, withoutGames, blendWithout, withoutWeight, absentByTeam, withoutOf, shortNames, WITHOUT_K, WITHOUT_MIN, playedShare, vacatedLifts, VACATED_SHARE, latestReport, markStale, applyOverrides, applyBoxScores, teammateSplits, injurySplits } from '../lib/picks/injuries';
 import { ownRate } from '../lib/picks/projection';
 
 describe('PropFinder injury report', () => {
@@ -218,3 +218,53 @@ describe('without-teammate splits', () => {
     expect(injurySplits([{ ...rui, games: rui.games.slice(2) }], [luka], { season: 2026 })).toEqual([]);
   });
 });
+
+describe('the stored box scores over the report (applyBoxScores)', () => {
+  const games = [{ id: 'g1', date: '2026-10-30T23:00:00Z', away: 'IND', home: 'DET' }, { id: 'g2', date: '2026-10-30T23:00:00Z', away: 'BOS', home: 'NY' }];
+  const pf = { at: '2026-10-30T14:00:00Z', data: { players: [
+    { id: 'p1', name: 'Andrew Nembhard', key: 'andrew nembhard', team: 'IND', pos: 'PG', games: [{ gameId: 'x', date: '2026-10-28', min: 30 }], injury: 'Out', injuryDetail: 'shoulder', injuryFrom: 'report', injuryDate: '2026-10-29' },
+    { id: 'p2', name: 'Pascal Siakam', key: 'pascal siakam', team: 'IND', pos: 'PF', games: [], injury: null },
+    { id: 'p3', name: 'Bennedict Mathurin', key: 'bennedict mathurin', team: 'IND', pos: 'SG', games: [], injury: 'DTD', injuryDetail: 'ankle', injuryFrom: 'report' },
+    { id: 'p4', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', games: [], injury: 'Out', injuryDetail: 'Achilles', injuryFrom: 'report' },
+  ], injuries: { source: 'v2', rows: [
+    { id: 'p1', name: 'Andrew Nembhard', key: 'andrew nembhard', team: 'IND', status: 'Out', detail: 'shoulder', date: '2026-10-29' },
+    { id: 'p4', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', status: 'Out', detail: 'Achilles', date: null },
+  ] } } };
+  const results = { g1: { id: 'g1', final: true, players: [
+    { name: 'Andrew Nembhard', team: 'IND', played: true, min: 31, pts: 16 },
+    { name: 'Pascal Siakam', team: 'IND', played: false, min: null, pts: null },
+    { name: 'Bennedict Mathurin', team: 'IND', played: true, min: 28, pts: 20 },
+  ] } };
+  test('a listed player who played is in, a player who did not play is out, the report follows', () => {
+    const out = applyBoxScores(pf, games, results);
+    expect(out).not.toBe(pf);
+    expect(pf.data.players[0].injury).toBe('Out');   // the stored pull untouched
+    const byKey = Object.fromEntries(out.data.players.map((p) => [p.key, p]));
+    expect(byKey['andrew nembhard']).toMatchObject({ injury: null, injuryFrom: 'boxscore', injuryPlayed: { min: 31, date: '2026-10-30' }, injuryListed: { status: 'Out', detail: 'shoulder', from: 'report' } });
+    expect(isOut(byKey['andrew nembhard'].injury)).toBe(false);
+    expect(byKey['bennedict mathurin']).toMatchObject({ injury: null, injuryFrom: 'boxscore', injuryListed: { status: 'DTD' } });
+    expect(byKey['pascal siakam']).toMatchObject({ injury: 'Out', injuryDetail: 'did not play', injuryFrom: 'boxscore', injuryDate: '2026-10-30' });
+    expect(byKey['jayson tatum']).toMatchObject({ injury: 'Out', injuryFrom: 'report' });   // his game has no stored result: as listed
+    const rows = out.data.injuries.rows;
+    expect(rows.find((r) => r.key === 'andrew nembhard').stale).toEqual({ playedOn: '2026-10-30', boxscore: true });
+    expect(rows.find((r) => r.key === 'pascal siakam')).toMatchObject({ status: 'Out', detail: 'did not play', boxscore: true, team: 'IND' });
+    expect(rows.find((r) => r.key === 'jayson tatum').stale).toBeUndefined();
+    // absentByTeam reads the corrected pull: Siakam out for IND, Nembhard not; Tatum still out for BOS.
+    const absent = absentByTeam(out);
+    expect(absent.IND.map((a) => a.key)).toEqual(['pascal siakam']);
+    expect(absent.BOS.map((a) => a.key)).toEqual(['jayson tatum']);
+  });
+  test('the same object back without a stored result, or when nothing changes', () => {
+    expect(applyBoxScores(pf, games, {})).toBe(pf);
+    expect(applyBoxScores(pf, games, { g2: { players: [{ name: 'Jaylen Brown', team: 'BOS', played: true, min: 34 }] } })).toBe(pf);   // Brown is not in the pull
+    expect(applyBoxScores(null, games, results)).toBeNull();
+    // Run twice: the second pass has nothing to correct.
+    const once = applyBoxScores(pf, games, results);
+    expect(applyBoxScores(once, games, results)).toBe(once);
+  });
+  test('a box-score line on another team’s player of the same name is not his', () => {
+    const r = { g1: { players: [{ name: 'Andrew Nembhard', team: 'DET', played: true, min: 20 }] } };
+    expect(applyBoxScores(pf, games, r)).toBe(pf);
+  });
+});
+
