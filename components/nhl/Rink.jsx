@@ -169,7 +169,20 @@ function ModelPlays({ side, actualFor }) {
   );
 }
 
-function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false }) {
+/** The chip's slot badge (LW1, C2, D2 …) tinted by what tonight's opponent gives up to that slot: the Defense tab's by-line read. */
+function SlotBadge({ p, lines, metric = 'sog' }) {
+  const slot = p.line ? `${p.pos}${p.line}` : null;
+  if (!slot) return null;
+  const c = lines?.cells?.[slot] || null;
+  const tone = c ? zoneTone(c.rank, c.of) : 'none';
+  const unit = metric === 'g' ? 'goals' : 'shots';
+  const title = c
+    ? `${p.opp} gives up ${num(c.value, metric === 'g' ? 2 : 1)} ${unit} a game to the ${slot}, #${c.rank} of ${c.of}${lines?.league?.[slot] != null ? ` (the league ${num(lines.league[slot], metric === 'g' ? 2 : 1)})` : ''}, ${c.n} skater-games this season at both venues; rank 1 = the most allowed`
+    : `${slot} tonight · no ${slot} on record against ${p.opp} this season yet`;
+  return <i className={`nhlx-rk-slot is-${tone}`} title={title}>{slot}</i>;
+}
+
+function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false, lines = null }) {
   const open = usePlayerCard();
   const thin = (p.gp || 0) < minGp;
   const m = p.model;
@@ -201,7 +214,7 @@ function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false }
         <i className="nhlx-rk-num">{p.number ?? p.pos}</i>
       </span>
       <span className="nhlx-rk-meta">
-        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{h2hMark ? <span className="nhlx-rk-h2h" title={h2hTitle}>h2h</span> : null}<Flags c={p} stat={metric} className="nhlx-rk-flags" soft={false} /><span className="nhlx-rk-nm">{shortName(p.name)}</span></b>
+        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{h2hMark ? <span className="nhlx-rk-h2h" title={h2hTitle}>h2h</span> : null}<Flags c={p} stat={metric} className="nhlx-rk-flags" soft={false} /><SlotBadge p={p} lines={lines} metric={metric} /><span className="nhlx-rk-nm">{shortName(p.name)}</span></b>
         {played ? (actual
           ? <span className={`nhlx-rk-stat is-actual${(m?.sog ?? p.projSog) != null && actual.sog >= (m?.sog ?? p.projSog) ? ' is-over' : ''}`}><em>{actual.sog}</em>{NB}SOG{NB}· <em>{actual.g}</em>{NB}G{actual.a ? <>{NB}· <em>{actual.a}</em>{NB}A</> : null}{m?.sog != null ? <i>m{NB}{num(m.sog)}</i> : p.projSog != null ? <i>p{NB}{num(p.projSog)}</i> : null}</span>
           : <span className="nhlx-rk-stat">did not play</span>)
@@ -241,6 +254,25 @@ function BandLabel({ pos, d, opp, view, windowText = null, teamCount, x, y, metr
 }
 
 /** One side of a game: `side` is an entry of a slate game's `sides`. */
+/**
+ * The Defense tab's softest line, in the rink head: the slot where tonight's opponent ranks highest against the league
+ * for the rink's metric, with its rank and figure, and this side's skater at that slot (Vincent, 2026-10-31).
+ */
+function SoftestLine({ side, metric = 'sog' }) {
+  const open = usePlayerCard();
+  const soft = side.lines?.[metric]?.softest || null;
+  if (!soft) return null;
+  const unit = metric === 'g' ? 'goals' : 'shots';
+  const facing = side.skaters.find((p) => p.inLineup && `${p.pos}${p.line || ''}` === soft.slot) || null;
+  const tone = zoneTone(soft.rank, soft.of);
+  return (
+    <small className="nhlx-rk-line" title={`${side.opp} gives up ${num(soft.value, metric === 'g' ? 2 : 1)} ${unit} a game to the ${soft.slot}, #${soft.rank} of ${soft.of}${soft.ratio != null ? `, ${Math.round(soft.ratio * 100)}% of the league's` : ''}, over ${soft.n} skater-games this season at both venues: the Defense tab's softest line (the slot where ${side.opp} ranks highest against the league); the chips' slot badges carry every slot's rank`}>
+      {side.opp} leaks most to the <i className={`nhlx-rk-slot is-${tone}`}>{soft.slot}</i> <b>#{soft.rank}</b> of {soft.of} · {num(soft.value, metric === 'g' ? 2 : 1)} {unit} a game
+      {facing ? <> · tonight <button type="button" className={`nhlx-rk-facing${facing.id ? '' : ' is-static'}`} onClick={() => facing.id && open({ id: facing.id, opp: facing.opp, venue: facing.venue, pos: facing.pos, line: facing.line })}>{shortName(facing.name)}</button></> : null}
+    </small>
+  );
+}
+
 export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, modelRun = null, metric = 'sog', onMetric = null, pfKey: controlledKey = undefined, onPfKey = null }) {
   // Kept for the card's title (hover): where the chip numbers and the lines come from.
   const numSrc = modelRun ? `Numbers on the chips: the model, ${modelRun.source === 'auto' ? 'run automatically' : 'run'} ${et(modelRun.createdAt)}${modelRun.players ? ` (${modelRun.players} players)` : ''}.` : 'No model run for this slate yet: chips show a matchup read (own SOG/G × opponent ratio).';
@@ -286,7 +318,8 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
         <TeamLink abbr={side.team} logo={28} />
         <div>
           <b><TeamLink abbr={side.team}>{side.team}</TeamLink> <small>{side.venue === 'H' ? 'home' : 'away'}{score ? ` · final ${score[0]}–${score[1]} vs ${side.opp} · chips show the game's shots, goals, assists` : ' · attacking upwards'}</small></b>
-          {/* The chips' source and the lines' source stay in the title attribute: the head shows only the team. */}
+          {/* The chips' source and the lines' source stay in the title attribute: the head shows the team and the softest line. */}
+          <SoftestLine side={side} metric={metric} />
         </div>
       </div>
       {side.propfinder ? <PropfinderDefense abbr={side.opp} data={side.propfinder} posFilter={posFilter} tabKey={pfTab?.key ?? null} onTabChange={setPfKey} drivesRink={fromPf} /> : null}
@@ -323,7 +356,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
         <BandLabel pos="D" d={defAt('D')} opp={side.opp} view={v} windowText={windowText} teamCount={teamCount} x={50} y={100} metric={metric} />
         {F_Y.map((y, i) => <div key={`l${i}`} className="nhlx-rk-tag" style={{ top: `${pct(y - 8.3)}%` }}>Line {i + 1}</div>)}
         {D_Y.map((y, i) => <div key={`d${i}`} className="nhlx-rk-tag" style={{ top: `${pct(y - 8.3)}%` }}>Pair {i + 1}</div>)}
-        {placed.map(({ p, x, y }) => <Chip key={`${p.team}-${p.name}`} p={p} x={x} y={y} minGp={minGp} played={!!actual} actual={actualFor(p)} metric={metric} picked={isPicked(p)} />)}
+        {placed.map(({ p, x, y }) => <Chip key={`${p.team}-${p.name}`} p={p} x={x} y={y} minGp={minGp} played={!!actual} actual={actualFor(p)} metric={metric} picked={isPicked(p)} lines={side.lines?.[metric] || null} />)}
       </div>
       {extras.length > 0 && (
         <p className="nhlx-rk-extras nhlx-auto-meta">
@@ -349,6 +382,7 @@ export function RinkLegend({ metric = 'sog' }) {
       <span><i className="is-tough" /> stingy: bottom third</span>
       <span>on each player: the model’s projected SOG and goals from the latest saved run for this slate (3+ SOG and 1+ G odds in the tooltip), or a matchup read when no run exists; once the game is final, the actual shots, goals and assists with the model’s number after “m”; click for the player card</span>
       <span>🔥 on fire, by the model’s rule: 1+ point at 50% or better, 2.0+ scoring chances per game, 16+ minutes</span>
+      <span><i className="nhlx-rk-slot is-soft is-legend">LW1</i> his line slot tonight, tinted by the {word} the opponent gives up to that slot per skater a game this season (the Defense tab’s by-line table, both venues; green = top third of the league, red = bottom third; grey = no record yet); the rink head names the opponent’s softest line and who sits there tonight</span>
       <span><i className="nhlx-pk-flag is-hot is-legend">{ICON.hot}</i> hot going in ({metric === 'g' ? '3+ goals in his last five' : 'his last five at 1.4× his shot rate or more'}) · <i className="nhlx-pk-flag is-cold is-legend">{ICON.cold}</i> cold ({metric === 'g' ? 'no goal in ten games when his rate owed him one' : 'his last five at 0.7× or under'}) ; on the plays above the rink and in the skater table, <i className="nhlx-pk-flag is-soft is-legend">{ICON.soft}</i> marks the opponent in the soft third of the league at his position for {word} on PropFinder’s table above the rink, the tab it opens on (on the ice the band under a chip already shows it); colour only, the numbers already carry his rate</span>
       {metric === 'g'
         ? <span><i className="nhlx-rk-h2h is-legend">h2h</i> scores on this opponent: more than a goal a game against them over 2+ stored games, or 2+ goals in the one game stored (this season and last)</span>
