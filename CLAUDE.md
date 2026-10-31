@@ -620,10 +620,16 @@ config and keeps its own markets, teams, feeds and slate key:
   bar from his shuffle row (`readAt` in `lib/picks/shuffle.js`, so the court's figure is the Shuffle tab's; the book's price
   beside it when a book prices that exact line; "out" or "no logs" for a player the shuffle has no row for; once the game is
   final his figure against the bar's line), the bar's note counting the side's players at 50% or better. **At the book's
-  main line the chip prints the board's play chance** (`mainAt` in `shuffle.js`: `pAt` / `readAt` return `main.p` on the
+  main line the chip prints the board's figure for that line** (`mainAt` in `shuffle.js`: `pAt` / `readAt` return `main.p` on the
   blend read when the height's line is the player's main line, `play: true` on the read, the rung's edge on it too; the
   Shuffle tab's rows the same; Vincent, 2026-10-31, "conflict": the strip said Schröder o2.5 rebounds 72%, the chip 3+
-  80% on the same line — two reads of one line, the play's `chanceOf` and the ladder's rung; one number now). **Every chip
+  80% on the same line — two reads of one line, the play's `chanceOf` and the ladder's rung; one number now). **On the
+  NBA board that figure is the ladder's main rung** (`mainOf` in `shuffle.js`, `main.from: 'ladder'`, since the best bets
+  rank by edge and the strip and the list read the rung there, `board.bestBy` on the binding; the game table's hit-rate
+  read rides beside it as `main.hitRate` for the hover): the same evening Holiday at POR read 51% at 14+ (the play's hit
+  rates, shrunk toward -133) and 39% at 13+ (the ladder) — a lower bar can never be less likely — so the chip is the
+  ladder at every height and its chances fall as the bar rises; a board ranked by chance (the NFL's) keeps the play's
+  figure at the main line, the tables' and the strip's number there. **Every chip
   shows his four projections** (`CHIP_STATS`: PTS · REB · AST · 3PM as P · R · A · 3P, the picked stat appended when it is
   steals or blocks, the picked one marked; `ranges[stat].exp` through `boardRead`; Vincent: "by default I need to see per
   player the projected number for points / assists / threes / rebounds"), so the chips flow in a column per zone

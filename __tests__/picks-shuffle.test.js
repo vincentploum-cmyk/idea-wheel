@@ -101,6 +101,14 @@ describe('the NBA shuffle', () => {
     // The chance falls as the bar rises.
     for (let i = 1; i < brown.at.length; i++) expect(brown.at[i].p).toBeLessThanOrEqual(brown.at[i - 1].p);
     expect(brown.book.map((b) => [b.line, b.odds, b.main])).toEqual([[19.5, -400, false], [25.5, -110, true], [31.5, 300, false]]);
+    // The NBA board ranks by edge, so the main line's figure is the ladder's main rung (the strip's and the list's number),
+    // and the chip's chances fall as the bar rises through it (2026-10-31, Holiday: 51% at 14+ off the play, 39% at 13+ off the ladder).
+    expect(brown.main).toMatchObject({ line: 25.5, from: 'ladder', p: brown.book.find((b) => b.main).p });
+    expect(typeof brown.main.hitRate).toBe('number');
+    const chances = sh.heights.map((_, i) => pAt(brown, sh.heights, i));
+    for (let i = 1; i < chances.length; i++) expect(chances[i]).toBeLessThanOrEqual(chances[i - 1]);
+    expect(readAt(brown, sh.heights, 26).p).toBe(brown.main.p);
+    expect(readAt(brown, sh.heights, 26).hitRate).toBe(brown.main.hitRate);
     // The stated centre is his rate × the matchup; the ceiling read moves the figure toward his ceiling at the #1 spot (the site's reach 0.3).
     expect(brown.base).toBeCloseTo(26 * 1.033, 0);
     expect(brown.exp).toBeCloseTo(brown.base + brown.reach.add, 5);
