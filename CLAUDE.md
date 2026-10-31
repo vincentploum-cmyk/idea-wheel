@@ -770,7 +770,14 @@ config and keeps its own markets, teams, feeds and slate key:
   of those nights (`positionBook`: the depth chart's slot first, else the roster position, G → SG and F → SF as `envPosFor`);
   a player no pull knows keeps ESPN's group and shows at both spots it covers (`atPosition`, `WIDE` in the client-safe
   `vs-position-pure.js`), marked "· G" / "· F". The read is kept ten minutes per opponent and date (`vsMemo`: a dozen pulls
-  read once). `__tests__/nba-vs-position.test.js` (the builder on the MIA at ORL fixture, the table rendered) and "His
+  read once). **The players like him are washed purple** (Vincent, 2026-10-31: "mark the players in purple when they are
+  similar to the player on the player's card"; the NHL card's violet look-alikes, the `--like-*` tokens): every player's
+  averages this season before tonight from the same stored box scores (`seasonProfiles` in `vs-position.js`: minutes,
+  points, rebounds, assists, threes a game, any opponent), the card's own beside each opposing player's (`likeHim`,
+  `similarLine` in `vs-position-pure.js`: every figure inside his band — minutes ±20% (4 at least), points ±25% (3),
+  rebounds and assists ±35% (1.5), threes ±40% (0.8), `LIKE_BAND` — read off `LIKE_MIN_GAMES` = 3); `like` { profile,
+  alike } on the payload, the rows `is-like` (the market cell keeps its green / red), a line over the tabs ("2 players at
+  PF like him · his line: …"), the look-alike's line on the row's hover. `__tests__/nba-vs-position.test.js` (the builder on the MIA at ORL fixture, the table rendered, the look-alikes) and "His
   lines tonight" (every play the board has on him, click one to draw it).
   Data: `GET /api/nba/player?key&date` → `playerFor` in `lib/picks/store.js` (the slate's PropFinder
   pull: his logs newest first, his props with their ladders, the game, the opponent's rows with ranks,

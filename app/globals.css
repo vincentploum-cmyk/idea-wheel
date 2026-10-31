@@ -1551,6 +1551,10 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-pc-vs { margin-top: 16px; }
 .ir-pc-vs .nhlx-pfd-table td small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
 .ir-pc-vs .nhlx-pfd-table tr.is-active td { background: var(--bg-tint); }
+/* The players like the card's own, the NHL card's violet: the row washed, the name and its note in the violet ink; the market's cell keeps its green / red. */
+.ir-pc-vs .nhlx-pfd-table tr.is-like td:not(.is-soft):not(.is-tough) { background: var(--like-bg); }
+.ir-pc-vs .nhlx-pfd-table tr.is-like td b, .ir-pc-vs .nhlx-pfd-table tr.is-like td small { color: var(--like-fg); }
+.ir-pc-vs .nhlx-gl-like { margin: 0 0 8px; }
 /* The market column read against the card's line: the strong tints, the figure coloured and bold (Vincent, 2026-10-31: "brighten these colors"). */
 .ir-pc-vs .nhlx-pfd-table td.is-soft { background: var(--ok-bg); box-shadow: inset 0 0 0 1px var(--ok-line); } .ir-pc-vs .nhlx-pfd-table td.is-soft .nhlx-pfd-val { color: var(--ok-fg); font-weight: 700; }
 .ir-pc-vs .nhlx-pfd-table td.is-tough { background: var(--bad-bg); box-shadow: inset 0 0 0 1px var(--bad-line); } .ir-pc-vs .nhlx-pfd-table td.is-tough .nhlx-pfd-val { color: var(--bad-fg); font-weight: 700; }
