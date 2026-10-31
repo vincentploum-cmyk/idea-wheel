@@ -1,0 +1,755 @@
+{
+ "timestamp": "2026-10-31T16:02:34Z",
+ "status": "success",
+ "season": {
+  "year": 2027,
+  "type": 2,
+  "name": "Regular Season",
+  "displayName": "2026-27"
+ },
+ "injuries": [
+  {
+   "id": "11",
+   "displayName": "Indiana Pacers",
+   "injuries": [
+    {
+     "id": "-60159",
+     "date": "2026-10-31T05:01Z",
+     "status": "Day-To-Day",
+     "type": {
+      "id": "6",
+      "name": "INJURY_STATUS_DAYTODAY",
+      "description": "day-to-day",
+      "abbreviation": "DD"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "GTD",
+       "abbreviation": "GTD"
+      },
+      "type": "Back",
+      "location": "Torso",
+      "detail": "Soreness",
+      "returnDate": "2026-11-01"
+     },
+     "shortComment": "Toppin (back) has been ruled out for Friday's game against Miami.",
+     "longComment": "Toppin was a late addition to the injury report before being ruled out due to lower-back soreness. His next chance to pl",
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "athlete": {
+      "id": null,
+      "displayName": "Obi Toppin",
+      "shortName": "O. Toppin",
+      "position": {
+       "id": "7",
+       "name": "Forward",
+       "displayName": "Forward",
+       "abbreviation": "F",
+       "leaf": false
+      },
+      "status": {
+       "id": "1",
+       "name": "Active",
+       "type": "active",
+       "abbreviation": "Active"
+      },
+      "team": {
+       "id": "11",
+       "abbreviation": "IND",
+       "displayName": "Indiana Pacers"
+      }
+     }
+    },
+    {
+     "id": "536815",
+     "date": "2026-10-30T19:09Z",
+     "status": "Out",
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Hamstring",
+      "location": "Leg",
+      "detail": "Strain",
+      "side": "Right",
+      "returnDate": "2026-11-02"
+     },
+     "shortComment": "McConnell (hamstring) is practicing in the G League at Noblesville Boom training camp, per Alex Golden of SI.com.",
+     "longComment": "McConnell appears to closing in on making his season debut for the Pacers, though it won't come Friday in Miami. Indiana",
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "athlete": {
+      "id": null,
+      "displayName": "T.J. McConnell",
+      "shortName": "T.J. McConnell",
+      "position": {
+       "id": "3",
+       "name": "Guard",
+       "displayName": "Guard",
+       "abbreviation": "G",
+       "leaf": false
+      },
+      "status": {
+       "id": "1",
+       "name": "Active",
+       "type": "active",
+       "abbreviation": "Active"
+      },
+      "team": {
+       "id": "11",
+       "abbreviation": "IND",
+       "displayName": "Indiana Pacers"
+      }
+     }
+    },
+    {
+     "id": "536814",
+     "date": "2026-10-30T19:06Z",
+     "status": "Out",
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Knee",
+      "location": "Leg",
+      "detail": "Surgery",
+      "side": "Right",
+      "returnDate": "2027-01-02"
+     },
+     "shortComment": "Furphy (knee) is practicing with the G League's Noblesville Boom, per Alex Golden of SI.com.",
+     "longComment": "The Pacers have been pretty quiet regarding Furphy's ACL recovery since the offseason, but it's encouraging to hear some",
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "athlete": {
+      "id": null,
+      "displayName": "Johnny Furphy",
+      "shortName": "J. Furphy",
+      "position": {
+       "id": "3",
+       "name": "Guard",
+       "displayName": "Guard",
+       "abbreviation": "G",
+       "leaf": false
+      },
+      "status": {
+       "id": "1",
+       "name": "Active",
+       "type": "active",
+       "abbreviation": "Active"
+      },
+      "team": {
+       "id": "11",
+       "abbreviation": "IND",
+       "displayName": "Indiana Pacers"
+      }
+     }
+    },
+    {
+     "id": "536736",
+     "date": "2026-10-29T21:04Z",
+     "status": "Out",
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "GTD",
+       "abbreviation": "GTD"
+      },
+      "type": "Ankle",
+      "location": "Leg",
+      "detail": "Sprain",
+      "side": "Left",
+      "returnDate": "2026-11-01"
+     },
+     "shortComment": "Zubac (ankle) is out for Friday's game against the Heat.",
+     "longComment": "The Pacers continue to view the veteran big man as day-to-day due to an ankle sprain. Jay Huff figures to continue to st",
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "athlete": {
+      "id": null,
+      "displayName": "Ivica Zubac",
+      "shortName": "I. Zubac",
+      "position": {
+       "id": "9",
+       "name": "Center",
+       "displayName": "Center",
+       "abbreviation": "C",
+       "leaf": false
+      },
+      "status": {
+       "id": "1",
+       "name": "Active",
+       "type": "active",
+       "abbreviation": "Active"
+      },
+      "team": {
+       "id": "11",
+       "abbreviation": "IND",
+       "displayName": "Indiana Pacers"
+      }
+     }
+    },
+    {
+     "id": "536529",
+     "date": "2026-10-28T21:41Z",
+     "status": "Out",
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Knee",
+      "location": "Leg",
+      "side": "Left",
+      "returnDate": "2027-01-02"
+     },
+     "shortComment": "Head coach Rick Carlise confirmed Sheppard will miss \"months\" after undergoing surgery to repair a torn meniscus in his left knee, Tony East of Forbes.com reports.",
+     "longComment": "Sheppard required a full repair and is without a definitive timetable for a return to action. With Tyrese Haliburton (ha",
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "athlete": {
+      "id": null,
+      "displayName": "Ben Sheppard",
+      "shortName": "B. Sheppard",
+      "position": {
+       "id": "3",
+       "name": "Guard",
+       "displayName": "Guard",
+       "abbreviation": "G",
+       "leaf": false
+      },
+      "status": {
+       "id": "1",
+       "name": "Active",
+       "type": "active",
+       "abbreviation": "Active"
+      },
+      "team": {
+       "id": "11",
+       "abbreviation": "IND",
+       "displayName": "Indiana Pacers"
+      }
+     }
+    },
+    {
+     "id": "536527",
+     "date": "2026-10-28T21:30Z",
+     "status": "Out",
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Hamstring",
+      "location": "Leg",
+      "detail": "Strain",
+      "side": "Left",
+      "returnDate": "2026-11-13"
+     },
+     "shortComment": "Haliburton (hamstring) will miss at least the next two weeks of action, Shams Charania of ESPN reports.",
+     "longComment": "Given the tricky nature of hamstring injuries, the Pacers will likely take their time bringing Haliburton back to the co",
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "athlete": {
+      "id": null,
+      "displayName": "Tyrese Haliburton",
+      "shortName": "T. Haliburton",
+      "position": {
+       "id": "3",
+       "name": "Guard",
+       "displayName": "Guard",
+       "abbreviation": "G",
+       "leaf": false
+      },
+      "status": {
+       "id": "1",
+       "name": "Active",
+       "type": "active",
+       "abbreviation": "Active"
+      },
+      "team": {
+       "id": "11",
+       "abbreviation": "IND",
+       "displayName": "Indiana Pacers"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "22",
+   "displayName": "Portland Trail Blazers",
+   "injuries": [
+    {
+     "id": "536860",
+     "date": "2026-10-30T23:11Z",
+     "status": "Day-To-Day",
+     "type": {
+      "id": "6",
+      "name": "INJURY_STATUS_DAYTODAY",
+      "description": "day-to-day",
+      "abbreviation": "DD"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "GTD",
+       "abbreviation": "GTD"
+      },
+      "type": "Knee",
+      "location": "Leg",
+      "side": "Left",
+      "returnDate": "2026-10-31"
+     },
+     "shortComment": "Williams (knee) is questionable for Saturday's game against the Jazz.",
+     "longComment": "Williams missed Thursday's game against the Grizzlies,  but since the decision was precautionary, the upgrade to questio",
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "athlete": {
+      "id": null,
+      "displayName": "Robert Williams III",
+      "shortName": "R. Williams III",
+      "position": {
+       "id": "9",
+       "name": "Center",
+       "displayName": "Center",
+       "abbreviation": "C",
+       "leaf": false
+      },
+      "status": {
+       "id": "1",
+       "name": "Active",
+       "type": "active",
+       "abbreviation": "Active"
+      },
+      "team": {
+       "id": "22",
+       "abbreviation": "POR",
+       "displayName": "Portland Trail Blazers"
+      }
+     }
+    },
+    {
+     "id": "536859",
+     "date": "2026-10-30T23:09Z",
+     "status": "Out",
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "GTD",
+       "abbreviation": "GTD"
+      },
+      "type": "Ankle",
+      "location": "Leg",
+      "detail": "Soreness",
+      "side": "Left",
+      "returnDate": "2026-10-31"
+     },
+     "shortComment": "Youngblood (ankle) is questionable for Saturday's game against Utah.",
+     "longComment": "Youngblood has yet to make his 2026-27 regular-season debut due to a left ankle injury. However, his potential absence w",
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "athlete": {
+      "id": null,
+      "displayName": "Chris Youngblood",
+      "shortName": "C. Youngblood",
+      "position": {
+       "id": "3",
+       "name": "Guard",
+       "displayName": "Guard",
+       "abbreviation": "G",
+       "leaf": false
+      },
+      "status": {
+       "id": "1",
+       "name": "Active",
+       "type": "active",
+       "abbreviation": "Active"
+      },
+      "team": {
+       "id": "22",
+       "abbreviation": "POR",
+       "displayName": "Portland Trail Blazers"
+      }
+     }
+    },
+    {
+     "id": "536813",
+     "date": "2026-10-30T18:45Z",
+     "status": "Out",
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Hamstring",
+      "location": "Leg",
+      "detail": "Not Specified",
+      "side": "Left",
+      "returnDate": "2026-12-01"
+     },
+     "shortComment": "Morant has been diagnosed with a Grade 2 left hamstring strain and is expected to miss four weeks, Portland announced Friday.",
+     "longComment": "Morant left Thursday's game early with a hamstring injury, which has since been revealed to be a strain that will result",
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "athlete": {
+      "id": null,
+      "displayName": "Ja Morant",
+      "shortName": "J. Morant",
+      "position": {
+       "id": "3",
+       "name": "Guard",
+       "displayName": "Guard",
+       "abbreviation": "G",
+       "leaf": false
+      },
+      "status": {
+       "id": "1",
+       "name": "Active",
+       "type": "active",
+       "abbreviation": "Active"
+      },
+      "team": {
+       "id": "22",
+       "abbreviation": "POR",
+       "displayName": "Portland Trail Blazers"
+      }
+     }
+    },
+    {
+     "id": "532395",
+     "date": "2026-08-24T20:23Z",
+     "status": "Out",
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Knee",
+      "location": "Leg",
+      "detail": "Surgery",
+      "side": "Right",
+      "returnDate": "2027-03-02"
+     },
+     "shortComment": "Sharpe suffered a torn meniscus in his knee and is expected to miss six months, per Shams Charania of ESPN.",
+     "longComment": "It's a tough blow to the Trail Blazers' depth on the wing ahead of training camp. Sharpe, who is now likely to be sideli",
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "athlete": {
+      "id": null,
+      "displayName": "Shaedon Sharpe",
+      "shortName": "S. Sharpe",
+      "position": {
+       "id": "3",
+       "name": "Guard",
+       "displayName": "Guard",
+       "abbreviation": "G",
+       "leaf": false
+      },
+      "status": {
+       "id": "1",
+       "name": "Active",
+       "type": "active",
+       "abbreviation": "Active"
+      },
+      "team": {
+       "id": "22",
+       "abbreviation": "POR",
+       "displayName": "Portland Trail Blazers"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "26",
+   "displayName": "Utah Jazz",
+   "injuries": [
+    {
+     "id": "536862",
+     "date": "2026-10-30T23:13Z",
+     "status": "Day-To-Day",
+     "type": {
+      "id": "6",
+      "name": "INJURY_STATUS_DAYTODAY",
+      "description": "day-to-day",
+      "abbreviation": "DD"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "GTD",
+       "abbreviation": "GTD"
+      },
+      "type": "Wrist",
+      "location": "Arm",
+      "detail": "Not Specified",
+      "side": "Right",
+      "returnDate": "2026-10-31"
+     },
+     "shortComment": "Markkanen (wrist) is listed as questionable for Saturday's game against Portland.",
+     "longComment": "Markkanen suffered a right wrist sprain during the 110-105 loss to Memphis on Monday. As a result, he didn't play in Wed",
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "athlete": {
+      "id": null,
+      "displayName": "Lauri Markkanen",
+      "shortName": "L. Markkanen",
+      "position": {
+       "id": "7",
+       "name": "Forward",
+       "displayName": "Forward",
+       "abbreviation": "F",
+       "leaf": false
+      },
+      "status": {
+       "id": "1",
+       "name": "Active",
+       "type": "active",
+       "abbreviation": "Active"
+      },
+      "team": {
+       "id": "26",
+       "abbreviation": "UTAH",
+       "displayName": "Utah Jazz"
+      }
+     }
+    },
+    {
+     "id": "536354",
+     "date": "2026-10-27T19:25Z",
+     "status": "Out",
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Knee",
+      "location": "Leg",
+      "detail": "Not Specified",
+      "side": "Right",
+      "returnDate": "2026-12-14"
+     },
+     "shortComment": "Jackson has been diagnosed with a torn MCL in his right knee and will be sidelined for 6-to-8 weeks, per Shams Charania of ESPN.",
+     "longComment": "Jackson sustained the injury early in Monday's loss to Memphis, and he's now expected to miss at least a month and a hal",
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "athlete": {
+      "id": null,
+      "displayName": "Jaren Jackson Jr.",
+      "shortName": "J. Jackson Jr.",
+      "position": {
+       "id": "7",
+       "name": "Forward",
+       "displayName": "Forward",
+       "abbreviation": "F",
+       "leaf": false
+      },
+      "status": {
+       "id": "1",
+       "name": "Active",
+       "type": "active",
+       "abbreviation": "Active"
+      },
+      "team": {
+       "id": "26",
+       "abbreviation": "UTAH",
+       "displayName": "Utah Jazz"
+      }
+     }
+    },
+    {
+     "id": "-59834",
+     "date": "2026-10-24T23:18Z",
+     "status": "Out",
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Knee",
+      "location": "Leg",
+      "detail": "Bruise",
+      "side": "Left",
+      "returnDate": "2026-11-06"
+     },
+     "shortComment": "Alexander won't play Wednesday against the Grizzlies due to a left knee bone bruise.",
+     "longComment": "Alexander sat out Friday's preseason finale with what the team initially described as a left knee injury, but we now kno",
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "athlete": {
+      "id": null,
+      "displayName": "Trey Alexander",
+      "shortName": "T. Alexander",
+      "position": {
+       "id": "3",
+       "name": "Guard",
+       "displayName": "Guard",
+       "abbreviation": "G",
+       "leaf": false
+      },
+      "status": {
+       "id": "1",
+       "name": "Active",
+       "type": "active",
+       "abbreviation": "Active"
+      },
+      "team": {
+       "id": "26",
+       "abbreviation": "UTAH",
+       "displayName": "Utah Jazz"
+      }
+     }
+    },
+    {
+     "id": "533498",
+     "date": "2026-10-07T23:07Z",
+     "status": "Out",
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Foot",
+      "location": "Leg",
+      "detail": "Strain",
+      "side": "Right",
+      "returnDate": "2026-11-04"
+     },
+     "shortComment": "Nurkic will miss at least the next four weeks due to a partial plantar plate tear of second toe in right foot, Chris Haynes of NBA TV reports.",
+     "longComment": "Nurkic will begin the 2026-27 season on the sidelines, and given the tricky nature of foot injuries for big men, it woul",
+     "source": {
+      "id": "1",
+      "description": "basic/manual",
+      "state": "basic"
+     },
+     "athlete": {
+      "id": null,
+      "displayName": "Jusuf Nurkic",
+      "shortName": "J. Nurkic",
+      "position": {
+       "id": "9",
+       "name": "Center",
+       "displayName": "Center",
+       "abbreviation": "C",
+       "leaf": false
+      },
+      "status": {
+       "id": "1",
+       "name": "Active",
+       "type": "active",
+       "abbreviation": "Active"
+      },
+      "team": {
+       "id": "26",
+       "abbreviation": "UTAH",
+       "displayName": "Utah Jazz"
+      }
+     }
+    }
+   ]
+  }
+ ]
+}
