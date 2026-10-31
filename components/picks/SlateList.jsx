@@ -49,7 +49,8 @@ export default function SlateList({ board, sport, onOpen = null }) {
   const final = best.some((r) => r.final);
   if (!best.length) return null;
 
-  const tabs = [['all', 'All'], ...sport.groups];
+  // A tab per stat group the list carries (the NBA's best bets are rebounds, assists and threes alone).
+  const tabs = [['all', 'All'], ...sport.groups.filter(([k]) => best.some((r) => r.group === k))];
   return (
     <section className="ir-slate" aria-label="Every play tonight">
       <div className="nhlx-pfd-head">
