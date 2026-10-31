@@ -151,12 +151,12 @@ function ModelPlays({ side, actualFor }) {
   const unit = (pl) => (pl.stat === 'g' ? 'G' : 'SOG');
   const outcome = (pl) => (pl.hit == null ? (pl.dnp ? ' · did not play' : '') : ` · ${pl.hit ? 'HIT' : 'MISS'}: ${pl.got} ${unit(pl)}`);
   return (
-    <div className="nhlx-plays" title="The model's plays for this team, by the Best bets boards' rule: shots plays need the gate open and 4+ SOG at 40% or 3+ SOG at 60%; goal plays need 1+ G at 18%. Two of each at most; the pill is the play tier from the attack score.">
-      <div className="nhlx-plays-head"><b>Model’s plays · {side.team} vs {side.opp}</b><small className="nhlx-auto-meta">{note}</small></div>
+    <div className="nhlx-plays" title={plays.from === 'board' ? "The team's rows on Best bets: every skater over the floor there (3+ SOG at 50%, 1+ goal at 35%), the chance as Best bets prints it (calibrated to what the same stated chance has landed this season), the break-even price on the pill. Hover a play for the figure as stated." : "The model's plays for this team, by the Best bets boards' rule: shots plays need the gate open and 4+ SOG at 40% or 3+ SOG at 60%; goal plays need 1+ G at 18%. Two of each at most; the pill is the play tier from the attack score."}>
+      <div className="nhlx-plays-head"><b>{plays.from === 'board' ? 'Best bets' : 'Model’s plays'} · {side.team} vs {side.opp}</b><small className="nhlx-auto-meta">{note}</small></div>
       {list.length > 0 && (
         <div className="nhlx-plays-row">
           {graded.map((pl) => (
-            <button key={`${pl.kind}-${pl.name}`} type="button" className={`nhlx-play${pl.id ? '' : ' is-static'}${pl.hit == null ? (pl.dnp ? ' is-dnp' : '') : pl.hit ? ' is-hit' : ' is-miss'}`} onClick={() => pl.id && open({ id: pl.id, opp: side.opp, venue: side.venue, pos: pl.pos, line: pl.line })} title={`${pl.name} · ${pl.market} ${Math.round(pl.prob * 100)}% · play score ${pl.attack ?? '—'} (${pl.tier})${outcome(pl)}`}>
+            <button key={`${pl.kind}-${pl.name}`} type="button" className={`nhlx-play${pl.id ? '' : ' is-static'}${pl.hit == null ? (pl.dnp ? ' is-dnp' : '') : pl.hit ? ' is-hit' : ' is-miss'}`} onClick={() => pl.id && open({ id: pl.id, opp: side.opp, venue: side.venue, pos: pl.pos, line: pl.line })} title={`${pl.name} · ${pl.market} ${Math.round(pl.prob * 100)}%${pl.from === 'board' ? `${pl.raw != null && Math.round(pl.raw * 100) !== Math.round(pl.prob * 100) ? ` (as stated ${Math.round(pl.raw * 100)}%)` : ''} · break-even ${pl.tier}` : ` · play score ${pl.attack ?? '—'} (${pl.tier})`}${outcome(pl)}`}>
               <Headshot id={pl.id} size={26} />
               <span className="nhlx-play-meta"><b>{shortName(pl.name)}<Flags c={pl} stat={pl.stat} /></b><span>{pl.market} <em>{Math.round(pl.prob * 100)}%</em>{pl.hit != null ? <> · <strong className="nhlx-play-got">{pl.got} {unit(pl)}</strong></> : pl.dnp ? <> · DNP</> : null}</span></span>
               <span className="nhlx-edge">{pl.tier}</span>
