@@ -139,6 +139,39 @@ describe('the NHL builders are kept per store state', () => {
     expect(await buildSlate(DATE)).toBe(s3);
   });
 
+  test('the slate printed with the board’s reads: every chip’s model figures and each side’s plays strip follow the board, the run’s own kept', async () => {
+    const { slateWithBoardReads } = require('../lib/nhl-data/slate');
+    const { modelKey } = require('../lib/nhl-data/model-key');
+    const model = (over) => ({ sog: 3.4, g: 0.94, p2s: 0.85, p3s: 0.66, p4s: 0.44, p5s: 0.26, p1g: 0.61, p2g: 0.24, gateOpen: true, attack: 54, ...over });
+    const mcdavid = { id: 1, name: 'Connor McDavid', team: 'EDM', opp: 'NYI', venue: 'A', pos: 'C', line: 1, inLineup: true, model: model({}) };
+    const hyman = { id: 2, name: 'Zach Hyman', team: 'EDM', opp: 'NYI', venue: 'A', pos: 'LW', line: 1, inLineup: true, model: model({ p1g: 0.3, p4s: 0.41, attack: 70 }) };
+    const noRun = { id: 3, name: 'Scratch Guy', team: 'EDM', opp: 'NYI', venue: 'A', pos: 'D', line: 3, inLineup: true, model: null };
+    const side = { team: 'EDM', opp: 'NYI', venue: 'A', skaters: [mcdavid, hyman, noRun], plays: { shots: [{ name: 'Connor McDavid', market: '4+ SOG', prob: 0.44 }], goals: [{ name: 'Connor McDavid', market: '1+ G', prob: 0.61 }] } };
+    const slate = { date: DATE, games: [{ id: 9, away: 'EDM', home: 'NYI', sides: [side] }], top: { shots: [mcdavid], goals: [mcdavid] } };
+    // The board says McDavid 30% for a goal and 30% for 4+ (the study's goal read, calibrated shots); Hyman keeps his run figures on the board too.
+    const reads = {
+      [modelKey('EDM', 'Connor McDavid')]: { id: 1, lamS: 3.4, lamG: 0.36, p2: 0.83, p3: 0.52, p4: 0.3, p5: 0.14, p1g: 0.3, p2g: 0.05, raw: { p4: 0.44, p1g: 0.61 }, calibrated: 'board', source: 'model' },
+      [modelKey('Oilers', 'Zach Hyman')]: { id: 2, lamS: 3.0, lamG: 0.3, p2: 0.8, p3: 0.61, p4: 0.41, p5: 0.15, p1g: 0.26, p2g: 0.04, raw: null, calibrated: 'board', source: 'model' },
+    };
+    const out = slateWithBoardReads(slate, reads);
+    expect(out.boardReads).toEqual({ skaters: 2 });
+    const [a, b, c] = out.games[0].sides[0].skaters;
+    expect(a.model).toMatchObject({ sog: 3.4, g: 0.36, p4s: 0.3, p1g: 0.3, p5s: 0.14, p2g: 0.05, gateOpen: true, attack: 54, board: { calibrated: 'board' } });
+    expect(a.model.run).toEqual({ sog: 3.4, g: 0.94, p2s: 0.85, p3s: 0.66, p4s: 0.44, p5s: 0.26, p1g: 0.61, p2g: 0.24 });
+    expect(b.model).toMatchObject({ p4s: 0.41, p1g: 0.26 });
+    expect(c).toBe(noRun);
+    // The strip is picked again on the printed figures, the boards' floors unchanged (4+ at 40% or 3+ at 60%, 1+ G at 18%):
+    // McDavid's 4+, 44% as the run stated it and 30% printed, is no shots play any more; Hyman's 41% is. Both are goal
+    // plays, Hyman first once his attack score counts, McDavid's 30% with the run's 61% beside it for the hover.
+    const plays = out.games[0].sides[0].plays;
+    expect(plays.shots.map((p) => [p.name, p.market, p.prob, p.runProb])).toEqual([['Zach Hyman', '4+ SOG', 0.41, 0.41]]);
+    expect(plays.goals.map((p) => [p.name, p.market, p.prob, p.runProb])).toEqual([['Zach Hyman', '1+ G', 0.26, 0.3], ['Connor McDavid', '1+ G', 0.3, 0.61]]);
+    expect(plays.goals[1].board).toEqual({ calibrated: 'board', source: 'model' });
+    expect(out.top.shots[0].model.p1g).toBe(0.3);
+    // The slate itself is untouched, and comes back as it is without reads.
+    expect(mcdavid.model.p1g).toBe(0.61);
+    expect(slateWithBoardReads(slate, null)).toBe(slate);
+  });
   test('the defense tables of a rows array are built from one aggregate and kept', async () => {
     const { loadRows } = require('../lib/nhl-data/build');
     const { defenseByPosition, defenseBySlot, seasonDefense } = require('../lib/nhl-data/defense');

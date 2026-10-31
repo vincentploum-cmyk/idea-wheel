@@ -151,12 +151,12 @@ function ModelPlays({ side, actualFor }) {
   const unit = (pl) => (pl.stat === 'g' ? 'G' : 'SOG');
   const outcome = (pl) => (pl.hit == null ? (pl.dnp ? ' · did not play' : '') : ` · ${pl.hit ? 'HIT' : 'MISS'}: ${pl.got} ${unit(pl)}`);
   return (
-    <div className="nhlx-plays" title="The model's plays for this team, by the Best bets boards' rule: shots plays need the gate open and 4+ SOG at 40% or 3+ SOG at 60%; goal plays need 1+ G at 18%. Two of each at most; the pill is the play tier from the attack score.">
+    <div className="nhlx-plays" title={`This team's plays by the Best bets boards' rule — a shots play needs the gate open and 4+ SOG at 40% or 3+ SOG at 60%, a goal play 1+ G at 18% — ${list.some((pl) => pl.board) ? 'on the chances as Best bets prints them: the board’s read over the saved run (the goals the study’s read, every chance calibrated to what such calls have landed this season), the run’s own on each play’s hover' : 'on the saved run’s own chances'}. Two of each at most; the pill is the play tier from the attack score.`}>
       <div className="nhlx-plays-head"><b>Model’s plays · {side.team} vs {side.opp}</b><small className="nhlx-auto-meta">{note}</small></div>
       {list.length > 0 && (
         <div className="nhlx-plays-row">
           {graded.map((pl) => (
-            <button key={`${pl.kind}-${pl.name}`} type="button" className={`nhlx-play${pl.id ? '' : ' is-static'}${pl.hit == null ? (pl.dnp ? ' is-dnp' : '') : pl.hit ? ' is-hit' : ' is-miss'}`} onClick={() => pl.id && open({ id: pl.id, opp: side.opp, venue: side.venue, pos: pl.pos, line: pl.line })} title={`${pl.name} · ${pl.market} ${Math.round(pl.prob * 100)}% · play score ${pl.attack ?? '—'} (${pl.tier})${outcome(pl)}`}>
+            <button key={`${pl.kind}-${pl.name}`} type="button" className={`nhlx-play${pl.id ? '' : ' is-static'}${pl.hit == null ? (pl.dnp ? ' is-dnp' : '') : pl.hit ? ' is-hit' : ' is-miss'}`} onClick={() => pl.id && open({ id: pl.id, opp: side.opp, venue: side.venue, pos: pl.pos, line: pl.line })} title={`${pl.name} · ${pl.market} ${Math.round(pl.prob * 100)}%${pl.runProb != null && Math.round(pl.runProb * 100) !== Math.round(pl.prob * 100) ? ` (the run as stated: ${Math.round(pl.runProb * 100)}%; shown as Best bets prints it)` : ''} · play score ${pl.attack ?? '—'} (${pl.tier})${outcome(pl)}`}>
               <Headshot id={pl.id} size={26} />
               <span className="nhlx-play-meta"><b>{shortName(pl.name)}<Flags c={pl} stat={pl.stat} /></b><span>{pl.market} <em>{Math.round(pl.prob * 100)}%</em>{pl.hit != null ? <> · <strong className="nhlx-play-got">{pl.got} {unit(pl)}</strong></> : pl.dnp ? <> · DNP</> : null}</span></span>
               <span className="nhlx-edge">{pl.tier}</span>
@@ -188,7 +188,8 @@ function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false, 
   const m = p.model;
   // Probability as "42%" (not `pct`, which converts rink feet to % and places the chip below).
   const prob = (v) => (v == null ? null : `${Math.round(v * 100)}%`);
-  const modelText = m ? ` · model: ${num(m.sog)} SOG, ${num(m.g, 2)} G${m.p3s != null ? `, 3+ SOG ${prob(m.p3s)}` : ''}${m.p1g != null ? `, 1+ G ${prob(m.p1g)}` : ''}${m.gateOpen === false ? ' (gate closed)' : ''}${m.fire ? ' · ON FIRE (1+ point ≥ 50%, 2.0+ iSCF/G, 16+ min)' : ''}` : '';
+  // The figures as Best bets prints them when the board's read rides on the chip (`m.run` = the run as stated, lib/nhl-data/board-reads.js).
+  const modelText = m ? ` · ${m.run ? 'board' : 'model'}: ${num(m.sog)} SOG, ${num(m.g, 2)} G${m.p3s != null ? `, 3+ SOG ${prob(m.p3s)}` : ''}${m.p1g != null ? `, 1+ G ${prob(m.p1g)}` : ''}${m.gateOpen === false ? ' (gate closed)' : ''}${m.fire ? ' · ON FIRE (1+ point ≥ 50%, 2.0+ iSCF/G, 16+ min)' : ''}${m.run ? ` · the run as stated: ${num(m.run.sog)} SOG, ${num(m.run.g, 2)} G${m.run.p3s != null ? `, 3+ SOG ${prob(m.run.p3s)}` : ''}${m.run.p1g != null ? `, 1+ G ${prob(m.run.p1g)}` : ''}` : ''}` : '';
   // Head to head: his stored games against this opponent; the mark when he scores more than a goal a game on them.
   const h2hText = p.h2h ? ` · vs ${p.opp}: ${p.h2h.g} G, ${p.h2h.sog} SOG in ${p.h2h.gp} GP${p.h2h.hot ? ' (scores on them)' : ''}${p.h2h.shotsHot ? ' (fires at them)' : ''}` : '';
   // The h2h mark follows the rink's metric: scorers when the ice shows goals, shooters when it shows shots.

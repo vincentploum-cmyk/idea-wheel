@@ -85,7 +85,7 @@ function RunCard({ run, active, busy, onLoad, onDelete }) {
           {run.topPicks.slice(0, 4).map((p, i) => (
             <div className="nhlx-run-pick" key={`${p.name}-${i}`}>
               <b>{p.name}</b>
-              <em>{Math.round((p.prob || 0) * 100)}% {p.market}</em>
+              <em title="The run as it stated this when saved. Best bets, the rinks and the Model tab print the board’s read of the run: the goals the study’s read, every chance calibrated to what such calls have landed this season.">{Math.round((p.prob || 0) * 100)}% {p.market}</em>
             </div>
           ))}
         </div>
@@ -123,6 +123,12 @@ export default function NhlApp({ email }) {
   const [busy, setBusy] = useState(false);
   const [latest, setLatest] = useState(null);
   const [autoSlots, setAutoSlots] = useState(null);
+  // The board's read of the run shown (`/api/nhl/data/reads`, lib/nhl-data/board-reads.js): the chances as Best bets
+  // prints them, keyed by the model's key, so the Model tab prints one figure per skater with the site (Vincent,
+  // 2026-10-31: the dashboard said McDavid 61% for a goal while Best bets said 30%). { state: 'loading' | 'ready' |
+  // 'error', runId, date, matches (the board's newest run is the one shown), reads, calibration, modelRun }.
+  const [board, setBoard] = useState(null);
+  const boardSeq = useRef(0);
   // The URL hash is the tab state (`#teams/BUF` is the Teams tab with a team picked, see links.jsx);
   // a visited panel stays mounted so the model keeps its loaded files when you switch away.
   const [tab, mounted] = useHashTab(TAB_KEYS, DEFAULT_TAB);
@@ -137,14 +143,38 @@ export default function NhlApp({ email }) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  // Read the board for the run shown. A run just saved reaches the board within a minute (the runs route and the
+  // board hold their own copy of the run index), so a fresh save is asked again every few seconds until the
+  // board names it; a replayed run is asked once (it is the board's only when it is the newest for its date).
+  const loadBoard = useCallback(async (date, runId, { tries = 14, delayMs = 5000 } = {}) => {
+    const seq = ++boardSeq.current;
+    if (!date) { setBoard(null); return; }
+    setBoard({ state: 'loading', date, runId });
+    for (let i = 0; i < tries; i++) {
+      if (boardSeq.current !== seq) return;
+      try {
+        const b = await api(`/api/nhl/data/reads?date=${encodeURIComponent(date)}`);
+        if (boardSeq.current !== seq) return;
+        const matches = !!runId && b.modelRun?.id === runId;
+        if (matches || i === tries - 1) { setBoard({ ...b, state: 'ready', date, runId, matches }); return; }
+      } catch (err) {
+        if (boardSeq.current !== seq) return;
+        if (i === tries - 1) { setBoard({ state: 'error', date, runId, matches: false, error: err.message, reads: {} }); return; }
+      }
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }, []);
+
   const onRunComplete = useCallback(async ({ files, results, summary, runId }) => {
     setLatest(summary);
     if (runId) {
-      // Replayed from history: nothing new to store.
+      // Replayed from history: nothing new to store; the board's read is asked once.
       setActiveRunId(runId);
       setSave({ state: 'ok', text: 'Loaded from history' });
+      loadBoard(summary?.slateDate, runId, { tries: 1 });
       return;
     }
+    setBoard(null);
     setSave({ state: 'busy', text: 'Saving run to Supabase…' });
     try {
       const form = new FormData();
@@ -160,10 +190,11 @@ export default function NhlApp({ email }) {
       setActiveRunId(run.id);
       setSave({ state: 'ok', text: 'Saved to run history' });
       setRuns((prev) => [run, ...(prev || []).filter((r) => r.id !== run.id)]);
+      loadBoard(run.slateDate || summary?.slateDate, run.id);
     } catch (err) {
       setSave({ state: 'err', text: `Not saved: ${err.message}` });
     }
-  }, []);
+  }, [loadBoard]);
 
   // Inputs added after a run (box scores, rankings) are attached to that run.
   const onFileAdded = useCallback(async (slot, file) => {
@@ -318,6 +349,7 @@ export default function NhlApp({ email }) {
                   <NhlModel
                     loadRequest={loadRequest}
                     autoSlots={autoSlots}
+                    board={board}
                     onRunComplete={onRunComplete}
                     onFileAdded={onFileAdded}
                     onFilesChange={onFilesChange}

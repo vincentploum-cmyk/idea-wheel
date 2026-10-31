@@ -6,6 +6,7 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import * as XLSX from "xlsx";
 import { TEAM_LOGO_ABBR, TEAM_SHORT, bestBetLabel, boardPlays, buildProjections, clamp, isOnFire, normShort, normTeam, normalizeName, normalizePlayerName, parseBoxScoresWorkbook, parseHistoricalProfiles, parseLineups, parseMatchups, parsePaceWorkbook, parsePlayerHomeAway, parseRankingsFile, poissonAtLeast, summarizeRun } from "./model-core";
+import { withBoardRows, boardCoverage } from "@/lib/nhl-data/board-reads";
 export { summarizeRun };
 
 
@@ -542,9 +543,12 @@ function labelColor(label) {
   return "#80828d";
 }
 
-function ProbCell({ p, hist, highlight, onHover, onLeave, prop, fire }) {
+function ProbCell({ p, hist, highlight, onHover, onLeave, prop, fire, stated = null }) {
   const safeP = clamp(Number.isFinite(Number(p)) ? Number(p) : 0, 0, 0.999);
   const pct = Math.round(safeP * 100);
+  // `stated`: the run's own figure when the cell prints the board's read (lib/nhl-data/board-reads.js); named on the hover.
+  const statedPct = stated == null || !Number.isFinite(Number(stated)) ? null : Math.round(Number(stated) * 100);
+  const statedTitle = statedPct != null && statedPct !== pct ? `The run as stated: ${statedPct}%. Shown as Best bets prints it.` : undefined;
   const { fg, bg } = probColor(safeP);
   const label = prop ? getPropLabel(prop, safeP) : null;
 
@@ -564,6 +568,7 @@ function ProbCell({ p, hist, highlight, onHover, onLeave, prop, fire }) {
         <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
           {fire && <span style={{ fontSize: "19px", lineHeight: 1 }}>🔥</span>}
           <span
+            title={statedTitle}
             style={{
               display: "inline-block",
               fontFamily: "'Outfit Variable','Outfit',sans-serif",
@@ -1800,13 +1805,13 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                         {r.oppAvgGoals != null ? r.oppAvgGoals.toFixed(3) : ""}
                       </td>
 
-                      <ProbCell p={r.p3s} hist={r.hist.s3} highlight={sortCol === "p3s"} onHover={showTip} onLeave={hideTip} prop="p3s" />
-                      <ProbCell p={r.p4s} hist={r.hist.s4} highlight={sortCol === "p4s"} onHover={showTip} onLeave={hideTip} prop="p4s" />
-                      <ProbCell p={r.p5s} hist={r.hist.s5} highlight={sortCol === "p5s"} onHover={showTip} onLeave={hideTip} prop="p5s" />
+                      <ProbCell p={r.p3s} stated={r.run?.p3s} hist={r.hist.s3} highlight={sortCol === "p3s"} onHover={showTip} onLeave={hideTip} prop="p3s" />
+                      <ProbCell p={r.p4s} stated={r.run?.p4s} hist={r.hist.s4} highlight={sortCol === "p4s"} onHover={showTip} onLeave={hideTip} prop="p4s" />
+                      <ProbCell p={r.p5s} stated={r.run?.p5s} hist={r.hist.s5} highlight={sortCol === "p5s"} onHover={showTip} onLeave={hideTip} prop="p5s" />
                       <ProbCell p={r.p1p} hist={null} highlight={sortCol === "p1p"} onHover={showTip} onLeave={hideTip} prop="p1p" />
                       <ProbCell p={r.p2p} hist={null} highlight={sortCol === "p2p"} onHover={showTip} onLeave={hideTip} prop="p2p" />
-                      <ProbCell p={r.p1g} hist={r.hist.g1} highlight={sortCol === "p1g"} onHover={showTip} onLeave={hideTip} prop="p1g" fire={isOnFire(r)} />
-                      <ProbCell p={r.p2g} hist={r.hist.g2} highlight={sortCol === "p2g"} onHover={showTip} onLeave={hideTip} prop="p2g" />
+                      <ProbCell p={r.p1g} stated={r.run?.p1g} hist={r.hist.g1} highlight={sortCol === "p1g"} onHover={showTip} onLeave={hideTip} prop="p1g" fire={isOnFire(r)} />
+                      <ProbCell p={r.p2g} stated={r.run?.p2g} hist={r.hist.g2} highlight={sortCol === "p2g"} onHover={showTip} onLeave={hideTip} prop="p2g" />
                       <ProbCell p={r.p3g} hist={null} highlight={sortCol === "p3g"} onHover={showTip} onLeave={hideTip} />
                     </tr>
 
@@ -1920,6 +1925,9 @@ function BestBetsCard({ title, accent, rows, market }) {
         {rows.map((r, idx) => {
           const prob = market === "shots" ? Math.max(r.p4s || 0, r.p3s || 0) : market === "goals2" ? (r.p2g || 0) : (r.p1g || 0);
           const headline = market === "shots" ? `${Math.round((r.p4s || 0) * 100)}% 4+` : market === "goals2" ? `${Math.round((r.p2g || 0) * 100)}% 2G` : `${Math.round((r.p1g || 0) * 100)}% 1G`;
+          // The run's own figure for the headline's market when the board's read is printed (lib/nhl-data/board-reads.js).
+          const stated = r.run ? (market === "shots" ? r.run.p4s : market === "goals2" ? r.run.p2g : r.run.p1g) : null;
+          const statedTitle = stated != null && Math.round(stated * 100) !== Math.round(prob * 100) ? `The run as stated: ${Math.round(stated * 100)}%. Shown as Best bets prints it.` : r.run ? "As Best bets prints it; the run said the same." : undefined;
           // 2+ goals is read against the model's own ladder (≥14% Legit, 10–13% Sprinkle), not the generic likely scale.
           const tail = market === "goals2"
             ? `${getPropLabel("p2g", r.p2g) || "Below the 10% sprinkle floor"} · 1G ${Math.round((r.p1g || 0) * 100)}% · Pred G ${r.lambdaG != null ? r.lambdaG.toFixed(2) : "—"}`
@@ -1928,7 +1936,7 @@ function BestBetsCard({ title, accent, rows, market }) {
             <div key={`${market}-${r.name}-${idx}`} style={{ background: "#f8fafb", border: "1px solid #e9e8f3", borderRadius: "12px", padding: "12px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center" }}>
                 <div style={{ fontSize: "20px", fontWeight: 800, color: "#05011c" }}>{idx + 1}. {r.name} <span style={{ color: "#636977", fontWeight: 600 }}>{r.venue}</span></div>
-                <div style={{ fontSize: "19px", fontWeight: 800, color: accent }}>{headline}</div>
+                <div style={{ fontSize: "19px", fontWeight: 800, color: accent }} title={statedTitle}>{headline}</div>
               </div>
               <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginTop: "6px" }}>
                 <span style={{ padding: "4px 8px", borderRadius: "999px", background: getPlayScoreLabel(r.attackScore).bg, color: getPlayScoreLabel(r.attackScore).fg, fontSize: "17px", fontWeight: 800, fontFamily: "'Outfit Variable','Outfit',sans-serif" }}>
@@ -2219,6 +2227,13 @@ function AuditView({ data, actualResults = {} }) {
   );
 }
 
+/** The hover on a printed chance: the run's own figure when the board's read is printed over it (`row.run`, lib/nhl-data/board-reads.js). */
+function statedTitle(r, field) {
+  if (!r?.run || r.run[field] == null) return undefined;
+  const shown = Math.round((r[field] || 0) * 100); const stated = Math.round(r.run[field] * 100);
+  return shown === stated ? "As Best bets prints it; the run said the same." : `The run as stated: ${stated}%. Shown as Best bets prints it.`;
+}
+
 function BestByGame({ data }) {
   const games = useMemo(() => {
     const grouped = new Map();
@@ -2362,7 +2377,7 @@ function BestByGame({ data }) {
                         <div style={{ fontSize: "19px", fontWeight: 700, color: "#05011c" }}>
                           {r.name} <span style={{ color: "#636977", fontWeight: 600 }}>{r.venue}</span>
                         </div>
-                        <div style={{ fontSize: "19px", fontWeight: 800, color: "#166534" }}>
+                        <div style={{ fontSize: "19px", fontWeight: 800, color: "#166534" }} title={statedTitle(r, "p4s")}>
                           {Math.round((r.p4s || 0) * 100)}% for 4+
                         </div>
                       </div>
@@ -2436,7 +2451,7 @@ function BestByGame({ data }) {
                         <div style={{ fontSize: "19px", fontWeight: 700, color: "#05011c" }}>
                           {r.name} <span style={{ color: "#636977", fontWeight: 600 }}>{r.venue}</span>
                         </div>
-                        <div style={{ fontSize: "19px", fontWeight: 800, color: "#b45309" }}>
+                        <div style={{ fontSize: "19px", fontWeight: 800, color: "#b45309" }} title={statedTitle(r, "p1g")}>
                           {Math.round((r.p1g || 0) * 100)}% for 1G
                         </div>
                       </div>
@@ -3878,7 +3893,7 @@ const CORE_SLOTS = new Set(["season", "l5", "hist", "playerStats", "lineups", "p
 // onRunComplete({ files, results, matchups, runId }) — fired after each run.
 // onFileAdded(slot, file) — fired when an input is added after a run.
 
-export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdded, onFilesChange, statusSlot = null, autoSlots = null }) {
+export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdded, onFilesChange, statusSlot = null, autoSlots = null, board = null }) {
   const [files, setFiles] = useState({});
   const [actualResults, setActualResults] = useState({});
   const [rankingsData, setRankingsData] = useState(null);
@@ -4004,6 +4019,26 @@ export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdde
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadRequest]);
 
+  // What every board here prints: the run's rows with the board's read over them when the board names this run
+  // (lib/nhl-data/board-reads.js) — the chances as Best bets prints them, the run's own kept under `run` for the
+  // hovers — else the run as stated. `results` stays the run as computed: it is what gets saved and graded.
+  const applied = !!(board?.state === 'ready' && board.matches && board.reads && results);
+  const shown = useMemo(() => (applied ? withBoardRows(results, board.reads) : results), [applied, results, board]);
+  const coverage = useMemo(() => (applied ? boardCoverage(shown) : null), [applied, shown]);
+  const boardNote = (() => {
+    if (!results) return null;
+    if (applied) {
+      const cal = board.calibration;
+      const goals = board.studyWeightGoals > 0 ? `the goals ${board.studyWeightGoals >= 1 ? 'the study’s read' : `${Math.round(board.studyWeightGoals * 100)}% the study’s read`}` : 'the goals the run’s';
+      const shots = board.studyWeight > 0 ? `, the shots ${Math.round(board.studyWeight * 100)}% the study’s` : '';
+      return { tone: 'blue', chip: 'Chances as Best bets prints them', text: `${coverage.read} of ${coverage.rows} skaters read on the board for ${board.date} (the rest are not dressed tonight): ${goals}${shots}${cal ? `, every chance calibrated on ${cal.games} graded skater-games${cal.to ? ` through ${cal.to}` : ''}` : ''}. Hover a chance for the run as stated.` };
+    }
+    if (board?.state === 'loading') return { tone: 'amber', chip: 'Reading the board…', text: 'The figures below are the run as stated until the board names this run; Best bets prints the board’s read (the goals the study’s read, every chance calibrated).' };
+    if (board?.state === 'error') return { tone: 'amber', chip: 'The run as stated', text: `The board could not be read (${board.error}); Best bets prints the board’s read of the newest saved run.` };
+    if (board?.state === 'ready' && !board.matches) return { tone: 'amber', chip: 'The run as stated', text: `Best bets prints the board’s read of the newest saved run for ${board.date}${board.modelRun?.createdAt ? ` (saved ${new Date(board.modelRun.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })})` : ''}, and this is not that run: its figures are the run’s own.` };
+    return { tone: 'amber', chip: 'The run as stated', text: 'The figures below are the run’s own; once the run is saved, Best bets and this tab print the board’s read of it (the goals the study’s read, every chance calibrated).' };
+  })();
+
   const canRun = !!(files.season && files.l5);
   const loadedCount = NHL_UPLOAD_SLOTS.filter((x) => files[x.key]).length;
   const hasAudit = Object.keys(actualResults || {}).length > 0;
@@ -4062,6 +4097,8 @@ export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdde
             {hasHist && <span className="nhlx-chip nhlx-chip-amber">Historical profiles</span>}
             {hasPace && <span className="nhlx-chip nhlx-chip-blue">Pace active</span>}
             {rankingsData && <span className="nhlx-chip nhlx-chip-violet">Defense rankings</span>}
+            {boardNote && <span className={`nhlx-chip nhlx-chip-${boardNote.tone}`} title={boardNote.text}>{boardNote.chip}</span>}
+            {boardNote && <small className="nhlx-auto-meta" style={{ flexBasis: "100%" }}>{boardNote.text}</small>}
           </div>
 
           <div className="nhlx-tabs" role="tablist">
@@ -4082,24 +4119,24 @@ export default function NhlModel({ loadRequest = null, onRunComplete, onFileAdde
           <div className="nhlx-view">
             {activeView === "dashboard" && (
               <>
-                <OverallBestBets data={results} />
-                <ConclusionBoard data={results} />
-                <BestByGame data={results} />
-                <GoalieSavesBoard data={results} />
+                <OverallBestBets data={shown} />
+                <ConclusionBoard data={shown} />
+                <BestByGame data={shown} />
+                <GoalieSavesBoard data={shown} />
               </>
             )}
-            {activeView === "best" && <BestByGame data={results} />}
-            {activeView === "goalies" && <GoalieSavesBoard data={results} />}
+            {activeView === "best" && <BestByGame data={shown} />}
+            {activeView === "goalies" && <GoalieSavesBoard data={shown} />}
             {activeView === "players" && (
               <>
-                <OverallBestBets data={results} />
-                <ResultsTable data={results} hasHist={hasHist} matchups={matchups} rankingsData={rankingsData} />
+                <OverallBestBets data={shown} />
+                <ResultsTable data={shown} hasHist={hasHist} matchups={matchups} rankingsData={rankingsData} />
               </>
             )}
-            {activeView === "roles" && <DefenseRoleProfiles data={results} />}
-            {activeView === "cheat" && <ModelCheatSheet data={results} />}
-            {activeView === "bets" && <BetIdeas data={results} />}
-            {activeView === "audit" && <AuditView data={results} actualResults={actualResults} />}
+            {activeView === "roles" && <DefenseRoleProfiles data={shown} />}
+            {activeView === "cheat" && <ModelCheatSheet data={shown} />}
+            {activeView === "bets" && <BetIdeas data={shown} />}
+            {activeView === "audit" && <AuditView data={shown} actualResults={actualResults} />}
           </div>
         </div>
       )}
