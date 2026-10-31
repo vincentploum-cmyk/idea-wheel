@@ -1037,7 +1037,14 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   and replace it with a summary of data from both the rink and propfinder", then "the summary needs to be compact. 5 rows
   max."): the two teams side by side, **five rows at tonight's venue** — Shooting (shots and goals a game), Allows (shots
   and goals allowed), Power play (PP% and the power plays drawn a game), Penalty kill (PK% and the power plays given,
-  rank 1 = the softest kill), Last 10 (shots for and against over the last ten) — each cell a word over one line of
+  rank 1 = the softest kill), Last 10 (shots for and against over the last ten), and since 2026-10-31 **Saves** between
+  Allows and Power play (Vincent: "I should be able to see the projected goalkeeper saves for NHL games in the short game
+  summary"): the shots the opponent is expected to put on the team's goalie — the saved run's λ shots summed over the
+  opponent's lineup (ten skaters at least), else ShotPropz's boards (the opponent's shots a game at its venue and the
+  team's shots allowed at its own, the geometric mean) — × the team's save percentage this season (`spzSavePct` in
+  `shotpropz-pure.js`: 1 − GA/SA on the defense board, all games, ranked 1 = the best, the `goalie` kind's words, a
+  strong goalie red; the rink's venue table without a snapshot, unranked). The boards carry no goalies, so the team's
+  figure stands for the starter's and the hover says so — each cell a word over one line of
   figures: Elite · Strong · Average · Weak · Poor for an attack, Elite · Tight · Average · Leaky · Very leaky for a
   defense (`levelOf`: the top three, the top quarter, the bottom quarter, the bottom three; the word on the shots),
   Rising / Steady / Falling for the last ten against the season (`FORM_EDGE` a tenth). **Green = more shots and goals
