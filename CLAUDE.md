@@ -85,7 +85,13 @@ config and keeps its own markets, teams, feeds and slate key:
   in the soft third at the position for the stat) are colour only; a stored box score grades
   every row (`actual`, `hit`; a `played: false` line reads DNP) and the game head tallies the
   plays over the floor. Notes written from the plays. `best` on the board: every play over the floor across the
-  slate, one a player, market and side, the chance first, with his projection and the matchup at his spot (`SlateList`). **A line the book prices past -400 is no play**
+  slate, one a player, market and side, the chance first, with his projection and the matchup at his spot (`SlateList`).
+  **The NBA's best bets are rebounds, assists and threes alone** (`BEST_MARKETS` in `lib/nba/picks.js` →
+  `makeBoard({ bestMarkets })`; Vincent, 2026-10-31: "I don't need turnovers in the best bets. Only rebounds / assists /
+  threes"): `best`, each side's `picks` and the game line's count, best play and hit tally (counted on `best` in
+  `NbaGame.jsx`) carry those markets; every market keeps its rows in the per-game tables, the cards and the scorecard's
+  grading; the list's stat tabs are the groups it carries; `nbaBoard(cocktail, { bestMarkets: null })` lists every market.
+  **A line the book prices past -400 is no play**
   (`STEEP_IMPLIED` = 0.8 on the book's implied probability; 2026-10-29: o4.5 points at -10421 read 100% at
   the top of the Points table, Vincent: "this is fucking useless"): the play carries `steep: true`, stays on
   the side player's `plays` (the card's "His lines tonight") and off the tables, the "next" line, the
