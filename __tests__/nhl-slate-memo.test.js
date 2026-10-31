@@ -90,8 +90,8 @@ describe('the NHL builders are kept per store state', () => {
     expect(s1.games[0].sides[0].skaters.length).toBe(18);
     // The matchup profile rides on every game (lib/nhl-data/matchup-profile.js), the characteristics card no longer does.
     expect(s1.games[0].profile.order).toEqual([s1.games[0].away, s1.games[0].home]);
-    expect(s1.games[0].profile.rows.map((r) => r.key)).toEqual(expect.arrayContaining(['shots', 'shotsAllowed', 'trend', 'h2h', 'tonight']));
-    expect(s1.games[0].profile.rows.find((r) => r.key === 'shots').cells[s1.games[0].away].source).toBe('rink');
+    expect(s1.games[0].profile.rows.map((r) => r.key)).toEqual(expect.arrayContaining(['shooting', 'allows', 'last10']));
+    expect(s1.games[0].profile.rows.find((r) => r.key === 'shooting').cells[s1.games[0].away].source).toBe('rink');
     expect(s1.games[0].characteristics).toBeUndefined();
     // The soft-spot flag's read on every skater: PropFinder's table above the rink, on the tab it opens on, at his position.
     const { defaultDefenseTab } = require('../lib/nhl-data/propfinder-csv');

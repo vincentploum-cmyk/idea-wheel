@@ -1791,65 +1791,31 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
   .ir-roster-play { white-space: normal; }
 }
 
-/* Matchup profile (the soccer first-half profile's form): label · away · home, a row per read, the word over its
-   rank line; `is-sources` puts every source's figure in the cell, `is-tape` mirrors the figures around the label. */
-.nhlx-prof { margin-top: 14px; --prof-cols: minmax(96px, 150px) minmax(0, 1fr) minmax(0, 1fr); }
-.nhlx-prof.is-tape { --prof-cols: minmax(0, 1fr) minmax(96px, 132px) minmax(0, 1fr); }
+/* Matchup profile (the soccer first-half profile's form, cut to five rows 2026-10-30): label · away · home, a row a
+   read, the word over one line of figures; every other source rides on the cell's hover. */
+.nhlx-prof { margin-top: 14px; --prof-cols: minmax(96px, 140px) minmax(0, 1fr) minmax(0, 1fr); }
 .nhlx-prof-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; color: var(--heading); font-weight: 600; }
 .nhlx-prof-head small { color: var(--muted); font-weight: 400; }
-.nhlx-prof-head .nhlx-tabs { margin: 0; }
-.nhlx-prof-rows { margin-top: 10px; }
-.nhlx-prof-row { display: grid; grid-template-columns: var(--prof-cols); column-gap: 16px; align-items: start; padding: 9px 0; border-top: 1px solid var(--line); }
+.nhlx-prof-rows { margin-top: 8px; }
+.nhlx-prof-row { display: grid; grid-template-columns: var(--prof-cols); column-gap: 16px; align-items: start; padding: 8px 0; border-top: 1px solid var(--line); }
 .nhlx-prof-row.is-head { border-top: 0; padding-top: 2px; padding-bottom: 6px; align-items: end; }
-.nhlx-prof-group { grid-column: 1 / -1; margin-top: 10px; padding: 8px 0 4px; font-family: var(--font-ui); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--primary); }
 .nhlx-prof-label { align-self: start; padding-top: 1px; font-size: 14.5px; font-weight: 600; line-height: 1.3; color: var(--heading); min-width: 0; }
 .nhlx-prof-label.is-head { color: var(--muted); font-weight: 400; font-size: 13px; }
-.nhlx-prof-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; font-size: 14px; line-height: 1.35; color: var(--body); font-variant-numeric: tabular-nums; }
+.nhlx-prof-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; font-size: 14px; line-height: 1.35; color: var(--body); font-variant-numeric: tabular-nums; }
 .nhlx-prof-word { min-width: 0; font-size: 13px; font-weight: 700; padding: 1px 9px; white-space: nowrap; }
 .nhlx-prof-word.is-very.is-soft { box-shadow: inset 0 0 0 1px var(--ok-line); }
 .nhlx-prof-word.is-very.is-tough { box-shadow: inset 0 0 0 1px var(--bad-line); }
-.nhlx-prof-word.is-small { font-size: 12px; padding: 0 8px; }
-.nhlx-prof-detail { display: flex; flex-direction: column; gap: 1px; font-size: 13px; line-height: 1.35; color: var(--muted); }
-.nhlx-prof-figs { display: flex; flex-wrap: wrap; gap: 4px 14px; }
-.nhlx-prof-fig { display: inline-flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
-.nhlx-prof-fig small { font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-.nhlx-prof-fig b { font-size: 15px; font-weight: 700; color: var(--heading); }
-.nhlx-prof-fig i { font-style: normal; font-size: 11px; color: var(--muted); }
-.nhlx-prof-fig.is-soft b { color: var(--ok-fg); }
-.nhlx-prof-fig.is-tough b { color: var(--bad-fg); }
-.nhlx-prof-pills { display: flex; flex-wrap: wrap; gap: 6px; }
-.nhlx-prof-pill { display: inline-flex; flex-direction: column; align-items: center; min-width: 44px; padding: 3px 6px; border-radius: 6px; background: var(--bg-soft); color: var(--muted); line-height: 1.2; }
-.nhlx-prof-pill b { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; }
-.nhlx-prof-pill span { font-size: 13px; font-weight: 700; color: var(--heading); }
-.nhlx-prof-pill.is-soft { background: var(--ok-bg); color: var(--ok-fg); }
-.nhlx-prof-pill.is-soft span { color: var(--ok-fg); }
-.nhlx-prof-pill.is-tough { background: var(--bad-bg); color: var(--bad-fg); }
-.nhlx-prof-pill.is-tough span { color: var(--bad-fg); }
+.nhlx-prof-detail { font-size: 13px; line-height: 1.35; color: var(--muted); }
 .nhlx-prof-team { gap: 2px; }
 .nhlx-prof-team-name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-weight: 600; color: var(--heading); }
 .nhlx-prof-team-name small { color: var(--muted); font-weight: 400; }
 .nhlx-prof-team-sub { font-size: 12.5px; color: var(--muted); }
-/* The tale of the tape: the away cell reads right to left toward the label in the middle. */
-.nhlx-prof.is-tape .nhlx-prof-label { align-self: center; text-align: center; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
-.nhlx-prof.is-tape .nhlx-prof-cell.is-away { align-items: flex-end; text-align: right; }
-.nhlx-prof.is-tape .nhlx-prof-cell.is-away .nhlx-prof-team-name, .nhlx-prof.is-tape .nhlx-prof-cell.is-away .nhlx-prof-vline { flex-direction: row-reverse; justify-content: flex-start; }
-.nhlx-prof.is-tape .nhlx-prof-cell.is-away .nhlx-prof-pills { justify-content: flex-end; }
-.nhlx-prof.is-tape .nhlx-prof-group { text-align: center; }
-.nhlx-prof-vline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
-.nhlx-prof-value { font-family: var(--font-display); font-size: 20px; font-weight: 700; line-height: 1.1; color: var(--heading); font-variant-numeric: proportional-nums; }
-.nhlx-prof-unit { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
 @media (max-width: 700px) {
   .nhlx-prof { --prof-cols: 74px minmax(0, 1fr) minmax(0, 1fr); }
-  .nhlx-prof.is-tape { --prof-cols: minmax(0, 1fr) 64px minmax(0, 1fr); }
-  .nhlx-prof-row { column-gap: 10px; padding: 8px 0; }
+  .nhlx-prof-row { column-gap: 10px; padding: 7px 0; }
   .nhlx-prof-label { font-size: 13px; }
-  .nhlx-prof.is-tape .nhlx-prof-label { font-size: 11px; }
   .nhlx-prof-cell { font-size: 13px; }
   .nhlx-prof-detail { font-size: 12px; }
-  .nhlx-prof-figs { gap: 2px 10px; }
-  .nhlx-prof-fig b { font-size: 14px; }
-  .nhlx-prof-value { font-size: 18px; }
-  .nhlx-prof-pill { min-width: 38px; padding: 2px 4px; }
   .nhlx-prof-head small { flex-basis: 100%; }
   .nhlx-prof-team-name .nhlx-edge { white-space: normal; text-align: left; line-height: 1.25; border-radius: 8px; font-size: 12px; }
 }
