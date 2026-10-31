@@ -5,6 +5,8 @@ import { parseInjuries } from '../lib/nba/espn';
 import { parseInjuries as parseNflInjuries } from '../lib/nfl/espn';
 import { applyEspnInjuries, applyOverrides, applyBoxScores, absentByTeam, isOut, statusOf, healthOf } from '../lib/picks/injuries';
 import { normName } from '../lib/nhl-data/names';
+import { fetchInjuries as fetchNflReport } from '../lib/nfl/propfinder-nfl';
+import { fetchInjuries as fetchNbaReport } from '../lib/nba/propfinder-nba';
 
 // ESPN's league injury feed as served on 2026-10-31 16:02Z, trimmed to IND, POR and UTA (the logos and links dropped).
 const feedJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/espn-nba-injuries.json'), 'utf8'));
@@ -143,5 +145,22 @@ describe('ESPN’s NFL injury feed', () => {
     expect(absentByTeam(out).DEN.map((a) => a.name)).toEqual(['Tyler Badie']);
     expect(absentByTeam(out).SEA).toBeUndefined();
   });
+  test('the NFL asks PropFinder for no injury report: the pull lists everyone, ESPN’s feed says who is out', async () => {
+    // PropFinder's NFL report answered 404 at /NFL/v2 and /injuries/nfl/<teamId> on every pull (2026-10-28 → 10-31).
+    const calls = [];
+    const get = async (p) => { calls.push(p); throw new Error('404'); };
+    const teams = [{ id: 1, code: 'SEA' }, { id: 2, code: 'DEN' }];
+    const byAbbr = { SEA: teams[0], DEN: teams[1] };
+    expect(await fetchNflReport({ teams, byAbbr, slateAbbrs: ['SEA', 'DEN'], get })).toEqual({ rows: [], source: 'espn', keys: [], sample: null, errors: [] });
+    expect(calls).toEqual([]);
+    await fetchNbaReport({ teams, byAbbr, slateAbbrs: ['SEA'], get });   // the NBA still reads PropFinder's own report
+    expect(calls[0]).toMatch(/^\/NBA\/v2\?sportsbooks=/);
+    // The NFL pull's shape: every rostered player of both teams, no report rows, no flag; ESPN's feed over it.
+    const roster = feed.rows.map((r) => ({ id: `pf-${normName(r.name)}`, name: r.name, key: normName(r.name), team: r.team, pos: r.pos, games: [], props: [] }));
+    const pf = { at: '2026-10-31T13:00:00Z', data: { players: [...roster, { id: 'pf-x', name: 'Not Listed', key: 'not listed', team: 'SEA', pos: 'WR', games: [], props: [] }], injuries: { rows: [] } } };
+    const absent = absentByTeam(applyEspnInjuries(pf, feed));
+    const names = Object.values(absent).flat().map((a) => a.name).sort();
+    expect(names).toEqual(['Charles Cross', 'Jadarian Price', 'Jonah Elliss', 'RJ Harvey', 'Talanoa Hufanga', 'Tyler Badie']);
+    expect(absent.DEN.find((a) => a.name === 'Talanoa Hufanga')).toMatchObject({ status: 'Out', detail: 'Ankle' });
+  });
 });
-
