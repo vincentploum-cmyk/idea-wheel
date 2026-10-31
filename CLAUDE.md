@@ -482,7 +482,9 @@ config and keeps its own markets, teams, feeds and slate key:
   by side, each cell a word (Elite · Strong · Average · Weak · Very weak by `levelOf`, Average for the middle half; the
   positions a defense leaks to, "Holds" when none) and one short figure on the line (`short`: "101.0 a game · 30th",
   "#2 · #10 of 30"), the full reading on the cell's hover (`text`). **Two views of five rows, an Offense / Defense
-  toggle** (`GROUPS`; Vincent, 2026-10-31, of the seventeen rows it had: "This is way too much. I need only 5 rows. Maybe
+  toggle, opening on Defense** (`GROUPS`; `DEFAULT_VIEW` in `NbaProfile.jsx`, the view held in `NbaSlate` as
+  `profileView` for every game on the page; Vincent, 2026-10-31, of the toggle above the courts: "have the defense tab
+  defaulted above the propfinder table"; Vincent, 2026-10-31, of the seventeen rows it had: "This is way too much. I need only 5 rows. Maybe
   add an offense / defense toggle"; the view picked holds for every game on the page): Offense = scoring, threes,
   rebounding, assists, free throws (PropFinder's team rows ranked over the league); Defense = points allowed (its last
   ten on the same cell, "tightening" / "loosening" at five ranks' drift) and the positions it gives points, rebounds,
@@ -506,9 +508,8 @@ config and keeps its own markets, teams, feeds and slate key:
   tonight's opponent gives up to that position for the stat picked in the tabs above each court (Points ·
   Rebounds · Assists · Threes · Steals · Blocks, `COURT_METRICS`, one setting for the slate as the rink's Shots / Goals
   switch; steals and blocks since 2026-10-30, `LADDER_MARKETS` in `lib/nba/picks.js` and `SHUFFLE_MARKETS` carry them,
-  so every player has a range and a ladder for both). **The card's order since that night: the stat tabs (Points to start; moved over the table the morning after,
-  Vincent: "have the defense tab defaulted above the propfinder table"), PropFinder's table with its window tabs, the
-  Players picker, the shuffle bar, then the court** (Vincent: "put the shuffle bar right
+  so every player has a range and a ladder for both). **The card's order since that night: PropFinder's table with its window tabs, the Players picker, the stat tabs
+  (Points to start) with the shuffle bar under them, then the court** (Vincent: "put the shuffle bar right
   under the propfinder table so I can see the table, the bar (incl type) and the court in 1 view"). **The stat's shuffle bar** (`CourtBar`, Vincent,
   2026-10-30: "a shuffle bar that I can move … the % displayed next to the player on the court"): the Shuffle tab's
   heights for the stat (`SHUFFLE_MARKETS`), one height per stat for the slate (`CourtShuffleProvider` in `NbaCourt.jsx`,
@@ -516,7 +517,11 @@ config and keeps its own markets, teams, feeds and slate key:
   read once a stat when a court first asks for it, every court sharing it), every chip carrying his chance to clear the
   bar from his shuffle row (`readAt` in `lib/picks/shuffle.js`, so the court's figure is the Shuffle tab's; the book's price
   beside it when a book prices that exact line; "out" or "no logs" for a player the shuffle has no row for; once the game is
-  final his figure against the bar's line), the bar's note counting the side's players at 50% or better. **Every chip
+  final his figure against the bar's line), the bar's note counting the side's players at 50% or better. **At the book's
+  main line the chip prints the board's play chance** (`mainAt` in `shuffle.js`: `pAt` / `readAt` return `main.p` on the
+  blend read when the height's line is the player's main line, `play: true` on the read, the rung's edge on it too; the
+  Shuffle tab's rows the same; Vincent, 2026-10-31, "conflict": the strip said Schröder o2.5 rebounds 72%, the chip 3+
+  80% on the same line — two reads of one line, the play's `chanceOf` and the ladder's rung; one number now). **Every chip
   shows his four projections** (`CHIP_STATS`: PTS · REB · AST · 3PM as P · R · A · 3P, the picked stat appended when it is
   steals or blocks, the picked one marked; `ranges[stat].exp` through `boardRead`; Vincent: "by default I need to see per
   player the projected number for points / assists / threes / rebounds"), so the chips flow in a column per zone

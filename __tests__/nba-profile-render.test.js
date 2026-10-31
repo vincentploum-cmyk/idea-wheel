@@ -26,11 +26,15 @@ const sides = {
 };
 const g = { id: 'g1', away: 'CHA', home: 'WSH', sides, profile: gameProfile({ away: 'CHA', home: 'WSH' }, defense, sides) };
 const sport = { teamLogo: () => `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#8899aa"/></svg>')}`, teamName: (t) => ({ CHA: 'Hornets', WSH: 'Wizards' }[t] || t) };
-const render = () => renderToStaticMarkup(React.createElement(GameProfile, { g, sport }));
+const render = (props = {}) => renderToStaticMarkup(React.createElement(GameProfile, { g, sport, ...props }));
 
 describe('the NBA game profile renders', () => {
-  test('the offense view first: the toggle, the expected points, five rows of a word and a short figure', () => {
-    const html = render();
+  test('opens on Defense (Vincent, 2026-10-31: "have the defense tab defaulted"); the view from the board holds', () => {
+    expect(render()).toMatch(/aria-selected="true"[^>]*>Defense</);
+    expect(render({ view: 'offense' })).toMatch(/aria-selected="true"[^>]*>Offense</);
+  });
+  test('the offense view: the toggle, the expected points, five rows of a word and a short figure', () => {
+    const html = render({ view: 'offense' });
     expect(html).toMatch(/aria-selected="true"[^>]*>Offense</);
     expect(html).toContain('>Defense</button>');
     expect(html).toContain('212 points expected · CHA 102 · WSH 110');
