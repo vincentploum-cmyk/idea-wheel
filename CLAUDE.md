@@ -887,6 +887,17 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   "Calibration" under Automation): a logistic recalibration per height, fitted before Oct 22 and read after it, landed
   where it says (3+ SOG said 54% → landed 53%, said 45% → 50%; the run's own figures said 65% → 46%, 79% → 59%).
 
+- Special teams and the predicted score (`docs/audits/2026-10-31-nhl-special-teams-and-score.md`, `tools/audit/nhl_special_teams.py`
+  on the NHL API's right-rail team stats, `tools/audit/nhl-pp-fetch.mjs`, and the predictors' box scores; Vincent, 2026-10-31):
+  3,052 team-games of both seasons. Inside a game a power play is worth +0.99 shots and a kill −0.71, in goals +0.06 (power-play
+  goals replace even-strength ones). Tonight's count is foreseeable a little (own drawn^0.46 × opponent gives^0.42, K = 10; the
+  rates persist at 0.28 odd / even). On top of own volume × the opponent's allowed table the opponent's discipline moves a team's
+  shots and goals by nothing (the mechanical factor 0.25, z 0.2; −0.46, z −1.1): the shots a leaky kill gives up are in the
+  shots-allowed table already. The predicted score: the skaters' λ goals added up read 2% low and too wide; rescaled with the
+  team's goals a game and the opponent's allowed (0.621 · log Σλ + 0.214 + 0.113) they miss a team's goals by 1.37 on 2026-27
+  (the league's 1.38, own × allowed 1.40) and call the winner 58% (the bare sum 61%, ±4 points of noise on 128 games). Shipped
+  as above (the special-teams bullet under Automation).
+
 ## Canonical locations
 
 - Local repo: `/Users/vincent/.openclaw/workspace/projects/idea-wheel`
@@ -1019,7 +1030,12 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   in: the team's own stored shots and goals a game (`teamRates`, from `MIN_OWN_GAMES` = 5 this season, PropFinder's team
   table before that), PropFinder's table above the rink for Allows (the stored venue table without one), PropFinder's
   season PP% / PK%, the stored last ten; every source rides on the cell's hover (`title`), nothing else is drawn. The
-  game-total read and the verdicts fold under it as "The numbers behind the reads". Tests:
+  game-total read and the verdicts fold under it as "The numbers behind the reads". **Tonight's power plays end the Power
+  play and Penalty kill rows** ("tonight ≈ 3.6", "kills ≈ 2.9 tonight"; `lib/nhl-data/special-teams.js`, `specialTeamsRead`,
+  the bullet under Automation) and **the predicted score is the head pill** (`ProjectedScore` in `MatchupProfile.jsx`: "MTL
+  2.8 – 3.3 DAL · 6.1 goals · DAL 56%", the final beside the pre-game projection stored before puck drop once the game is
+  stored, green when it called the winner; `projected` on every slate game, which `app/api/nhl/data/slate/route.js` takes
+  from `buildPicks`; the same line sits beside the time in every game head on Matchups and Best bets). Tests:
   `__tests__/nhl-matchup-profile.test.js` (the builder on the MTL @ DAL fixture, `fixtures/matchup-profile-mtl-dal.js`,
   with and without the snapshot), `nhl-matchup-profile-render.test.js` (the card server-rendered; with `MOCK_OUT=<dir>` it
   writes standalone mock-up pages that `tools/mock/screenshot-profile.mjs` photographs at 1440 and 390 — the `.jsx` files
@@ -1150,6 +1166,39 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   shuffle listed him fourth), and the panel's head says when `NHL_PICKS_STUDY_WEIGHT` blends the study into the λ;
   only the Top 5 boards, the rinks' strips and the scorecard's replay keep `boardPlays`' rule (4+ / 5+ with the attack
   score, 1+ / 2+ with a slice of it), so they can reorder near-ties.
+- **Special teams and the predicted score** (`lib/nhl-data/special-teams.js`, `score.js`, `scores-store.js`; Vincent,
+  2026-10-31: "if a team allows a lot of penalties, the other team gets a lot of extra minutes on the ice … I bet it has an
+  impact on shots / goals prediction", and "a predicted score based on all the data available, that way I can test whether
+  our predictions for goals make sense"; measured first on both seasons' box scores, `tools/audit/nhl_special_teams.py`,
+  `docs/audits/2026-10-31-nhl-special-teams-and-score.md`). **The special-teams read** (`specialTeamsRead(spz, team, opp)`,
+  from ShotPropz's all-games boards): the power plays a side should get tonight = the league's rate × its drawn rate^0.46
+  × the opponent's given rate^0.42 (each ratio shrunk toward 1 at gp / (gp + `ST.K` = 10), the elasticities a Poisson fit on
+  2025-26 checked on 2026-27 — the forecast beats the league rate; the rates are weak traits, odd / even games 0.28), the
+  same for the kills, the opponent's kill leak (goals allowed per kill, shrunk at 40 kills), and what the difference is
+  worth inside a game (`ST.worth`: +0.99 shots a power play, −0.71 a kill, +0.06 goals a power play — power-play goals
+  replace even-strength ones). **Measured on top of own volume × the opponent's allowed table it moves a team's shots and
+  goals by nothing** (the mechanical factor's coefficient 0.25, z 0.2, for shots; −0.46, z −1.1, for goals: the shots a
+  leaky kill gives up are already in the shots-allowed table every read carries), so `ST.teamWeight` = 0 and the read is a
+  **redistribution inside the team** (`splitSpecialTeams`, `withSpecialTeams` in `computePicks`, before the calibration):
+  the shots and power-play goals the forecast moves go to the skaters by power-play slot (`PP_WEIGHTS`: F1 1.0 · F2 0.65
+  · F3 0.3 · F4 0.05; D1 0.8 · D2 0.35 · D3 0.05) and the same comes off everyone evenly, Σ λ unchanged (a first-unit
+  forward against the most undisciplined opponent +0.05 shots, a fourth-liner −0.02); `st` on the candidate and the
+  shuffle row ({ dS, dG, w, share }), `stTeam` the side's read, `beforeSt` the figures before it; the Best bets and
+  shuffle hovers spell it out. **The predicted score** (`gameScore`, `projected` on every picks game and every slate game):
+  each team's goals = exp(0.448 + 0.621 · log Σλ + 0.214 · log(own GF / L) + 0.113 · log(opp GA / L)) — Σλ the dressed
+  skaters' λ goals added up (`sumSkaters`, a skater without a read at `LEAGUE_POS[pos].g`), the team reads from ShotPropz's
+  boards (the stored `teamRates` standing in) shrunk at gp / (gp + 10), home ice and the special-teams terms at 0 (home ice
+  is in the skaters' λ, the special teams measured nothing); fitted on 2025-26's team-games, checked on 2026-27 (MAE 1.37 a
+  team against the league's 1.38; the skaters' sum rescaled alone read 1.364, within noise, the team reads kept for the
+  goaltending they carry) — the total, each side's win chance (`winProbability`: a Poisson race, a tie split in half) with
+  the fair price, MoneyPuck's expected goals on the hover as a comparison. **Stored before puck drop** (`stampProjectedScores`
+  in `ingest.js` after every lineup read and model run → `stampScores`, `data/scores/<date>.json`: a game still to start
+  takes the newest projection, a started or final game keeps its entry) and **graded on the History tab's scorecard**
+  (`scoresReport` in `scorecard.js`, `scores` on the report: the stored projections, the run's Σ λ goals over the graded
+  skaters of each side and the study's, `MIN_GRADED` = 14 a side, each against the finals — bias and miss per team, the
+  total's, the winner called, the Brier of the home chance — and the last thirty graded games; `ScoresTable` in
+  `Scorecard.jsx`). Tests: `__tests__/nhl-special-teams.test.js`, `nhl-score.test.js`, `nhl-scores-store.test.js`,
+  `nhl-picks-score.test.js` (computePicks end to end on a synthetic slate), the scorecard's "predicted scores graded".
 - **Calibration** (`lib/nhl-data/calibration-pure.js` + `calibration.js`; Vincent, 2026-10-30, after the model's own figures
   were graded on this season — its 60%+ 3+ SOG calls said 73% and landed 57%, its 35%+ goal calls said 50% and landed
   25% —: "yes build the calibration and merge it"): **Best bets and the shuffle print the board's chances calibrated** to

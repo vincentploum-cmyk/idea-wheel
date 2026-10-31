@@ -205,3 +205,34 @@ describe('scorecard: the study read', () => {
     expect(() => study.at('2026-10-09')).toThrow();
   });
 });
+
+describe('scorecard: the predicted scores graded', () => {
+  const { scoresReport, MIN_GRADED } = require('../lib/nhl-data/scorecard');
+  // Two graded games: 16 skaters a side with the run's λ goals 0.2 each (Σ 3.2) and the study's 0.18 (Σ 2.88); the home side of the first at 0.25 (Σ 4.0).
+  const rows = [];
+  const add = (date, gameId, team, lamG, studyG, n = 16) => { for (let i = 0; i < n; i++) rows.push({ date, gameId, team, m: { lambdaG: lamG }, study: studyG == null ? null : { lamG: studyG } }); };
+  add('2026-10-20', 1, 'AWY', 0.2, 0.18); add('2026-10-20', 1, 'HOM', 0.25, 0.18);
+  add('2026-10-21', 2, 'AAA', 0.2, 0.18); add('2026-10-21', 2, 'BBB', 0.2, null, 10); // too few graded skaters on the home side
+  const finals = { 1: { away: 'AWY', home: 'HOM', score: { away: 2, home: 5 } }, 2: { away: 'AAA', home: 'BBB', score: { away: 3, home: 1 } }, 3: { away: 'X', home: 'Y', score: { away: 1, home: 1 } } };
+  const stored = { 1: { at: '2026-10-20T20:00:00Z', exp: { AWY: 2.9, HOM: 3.4 }, total: 6.3, win: { HOM: 0.56 } }, 2: { at: '2026-10-21T20:00:00Z', exp: { AAA: 3.3, BBB: 2.6 } } };
+  test('the run’s and the study’s sums per side need MIN_GRADED graded skaters; the stored projection grades on its own', () => {
+    const r = scoresReport(rows, stored, finals);
+    expect(MIN_GRADED).toBe(14);
+    expect(r.run.n).toBe(1); expect(r.study.n).toBe(1); expect(r.stored.n).toBe(2);
+    // Game 1: run says 3.2 – 4.0 against 2 – 5: biases +1.2 and −1.0.
+    expect(r.run.team.bias).toBeCloseTo((1.2 - 1.0) / 2, 3); expect(r.run.team.mae).toBeCloseTo(1.1, 3);
+    expect(r.run.total).toMatchObject({ projected: 7.2, actual: 7 });
+    expect(r.run.winner).toMatchObject({ n: 1, called: 1 });
+    expect(r.study.team.bias).toBeCloseTo((0.88 - 2.12) / 2, 2);
+    // Stored: game 1 called (home favoured, won 5–2), game 2 called (away favoured, won 3–1).
+    expect(r.stored.winner).toMatchObject({ n: 2, called: 1 });
+    expect(r.stored.total.projected).toBeCloseTo((6.3 + 5.9) / 2, 2);
+    // The games list, newest first, each read beside the final; the home chance off the stored projection, the run's without one.
+    expect(r.games.map((g) => g.gameId)).toEqual([2, 1]);
+    expect(r.games[1]).toMatchObject({ away: 'AWY', home: 'HOM', final: { away: 2, home: 5 }, run: { AWY: 3.2, HOM: 4 }, study: { AWY: 2.88, HOM: 2.88 }, stored: { AWY: 2.9, HOM: 3.4 } });
+    expect(r.games[0].run).toBeNull(); expect(r.games[0].stored).toMatchObject({ AAA: 3.3, BBB: 2.6 });
+    expect(r.games[1].homeWin).toBeGreaterThan(0.5); expect(r.games[0].homeWin).toBeLessThan(0.5);
+    // Nothing graded: empty reads.
+    expect(scoresReport([], {}, {})).toMatchObject({ stored: { n: 0 }, run: { n: 0 }, study: { n: 0 }, games: [] });
+  });
+});

@@ -121,3 +121,26 @@ python3 -I tools/audit/nhl_game_script.py --fit-games .nhl-data/predictors/2025/
 ```
 
 The first run is written up in `docs/audits/2026-10-28-game-script.md`.
+
+## NHL: special teams and the predicted score (`nhl_special_teams.py`)
+
+Vincent, 2026-10-31: whether the power plays a team draws and gives (ShotPropz's boards) move the shots and goals
+read, and a predicted score to grade the goals reads against. The team power-play counts come from the NHL API's
+right-rail (`gamecenter/<id>/right-rail`: SOG, power plays as goals/opportunities, PIM, the score), one file a game;
+the skater rows from `tools/predictors/fetch.mjs`. Report: `docs/audits/2026-10-31-nhl-special-teams-and-score.md`.
+
+```bash
+# the right-rail stats per game id (resumable; a 404 ends a season's run)  →  .nhl-data/pp/<season>/<gameId>.json
+node tools/audit/nhl-pp-fetch.mjs 2025 1 1312 .nhl-data/pp/2025
+node tools/audit/nhl-pp-fetch.mjs 2026 1 400 .nhl-data/pp/2026
+python3 -I tools/audit/nhl_special_teams.py --pp .nhl-data/pp --games .nhl-data/predictors --out .nhl-data/audit/out/nhl-special-teams.md
+```
+
+Four sections: what a power play is worth inside a game (OLS of a team's shots and goals on the power plays it got
+and killed); whether tonight's count can be foreseen (a Poisson fit of a team's power plays on its drawn rate and the
+opponent's given rate, shrunk at K, with the odd / even persistence of every rate); whether the opponent's discipline
+moves a team's shots and goals beyond its own volume and the opponent's allowed table, with the mechanical factor
+(the forecast's extra power plays × a power play's worth) tested the same way; and the predicted score (the league,
+own goals × allowed, the fitted team layer, Σ of the skaters' study λ goals, the blends), per team and per game,
+fitted on 2025-26 and scored unchanged on 2026-27. The JSON at the end is what `lib/nhl-data/special-teams.js`
+(`ST`) and `lib/nhl-data/score.js` (`SCORE`) carry. Needs numpy, pandas and statsmodels.
