@@ -57,7 +57,7 @@ export default function SlateList({ board, sport, onOpen = null }) {
     <section className="ir-slate" aria-label="Every play tonight">
       <div className="nhlx-pfd-head">
         <b>Every play tonight, the likeliest first</b>
-        <small className="nhlx-auto-meta">{rows.length} play{rows.length === 1 ? '' : 's'} over the floor across {board.games.length} game{board.games.length === 1 ? '' : 's'}{onOpen ? ' · click a row for the card' : ''}{board.calibration?.plays?.length ? <span title={calibrationNote(board.calibration)}> · chances calibrated</span> : null}</small>
+        <small className="nhlx-auto-meta">{rows.length} play{rows.length === 1 ? '' : 's'} with an edge over the book’s price across {board.games.length} game{board.games.length === 1 ? '' : 's'}{onOpen ? ' · click a row for the card' : ''}{board.calibration?.plays?.length ? <span title={calibrationNote(board.calibration)}> · chances calibrated</span> : null}</small>
       </div>
       <div className="ir-slate-bar">
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Stat">
@@ -126,7 +126,7 @@ export default function SlateList({ board, sport, onOpen = null }) {
                   {final ? <td className="is-num nhlx-pk-got ir-sl-got">{r.actual === undefined ? <small>—</small> : r.actual === null ? <small>DNP</small> : <><b>{r.actual}</b><small>{r.unit}</small></>}</td> : null}
                 </tr>
               );
-            }) : <tr><td colSpan={final ? 9 : 8}><small className="ir-nfl-none">No play over the floor{softOnly ? ' in a soft matchup' : ''} for this stat.</small></td></tr>}
+            }) : <tr><td colSpan={final ? 9 : 8}><small className="ir-nfl-none">No play with an edge{softOnly ? ' in a soft matchup' : ''} for this stat.</small></td></tr>}
           </tbody>
         </table>
       </div>

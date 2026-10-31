@@ -27,9 +27,9 @@ export default function SidePicks({ side, sport, final = false, onOpen = null, h
   if (!picks) return null;
   const graded = picks.map((pl) => ({ ...pl, dnp: !!final && pl.hit == null && pl.actual == null }));
   const scored = graded.filter((pl) => pl.hit != null);
-  const note = !picks.length ? 'No play clears the floor' : scored.length ? `${scored.filter((pl) => pl.hit).length} of ${scored.length} hit` : final ? 'Not in the box score' : `${picks.length} over the floor`;
+  const note = !picks.length ? 'No play with an edge over the book’s price' : scored.length ? `${scored.filter((pl) => pl.hit).length} of ${scored.length} hit` : final ? 'Not in the box score' : `${picks.length} with an edge`;
   return (
-    <div className="nhlx-plays ir-side-picks" title="The board’s best plays for this team: the table rows over the floor, one a player, four at most; the pill is the book’s price with the edge over its implied chance in points">
+    <div className="nhlx-plays ir-side-picks" title="The board’s best plays for this team: the plays over the floor whose chance beats the book’s price, one a player, four at most; the pill is the price with the edge over its implied chance in points">
       <div className="nhlx-plays-head">{heading && <b>Best plays · {side.team} {side.venue === 'H' ? 'vs' : 'at'} {side.opp}</b>}<small className="nhlx-auto-meta">{note}</small></div>
       {graded.length > 0 && (
         <div className="nhlx-plays-row">
