@@ -4,6 +4,7 @@ import { fmtOdds } from '@/lib/nfl/odds';
 import { ICON } from '@/components/nhl/flags';
 import { playLabel } from './Board';
 import { asStated } from '@/lib/picks/calibration';
+import { reliableTone, reliableFor, reliabilityText } from '@/lib/picks/reliability';
 
 // The strip above a side's view (the top of each NBA court card; the NFL game, both sides side by
 // side), the NHL rink's model plays for the picks boards: the board's best plays for the team
@@ -21,7 +22,7 @@ function flagsOf(pl) {
   return out;
 }
 
-export default function SidePicks({ side, sport, final = false, onOpen = null, heading = true }) {
+export default function SidePicks({ side, sport, final = false, onOpen = null, heading = true, reliability = null }) {
   const picks = side?.picks;
   if (!picks) return null;
   const graded = picks.map((pl) => ({ ...pl, dnp: !!final && pl.hit == null && pl.actual == null }));
@@ -37,11 +38,11 @@ export default function SidePicks({ side, sport, final = false, onOpen = null, h
             const outcome = pl.hit == null ? (pl.dnp ? ' · did not play' : '') : ` · ${pl.hit ? 'HIT' : 'MISS'}: ${pl.actual} ${pl.unit}`;
             const price = pl.odds != null ? `${fmtOdds(pl.odds)}${pl.edge != null ? `, ${pl.edge >= 0 ? '+' : ''}${Math.round(pl.edge * 100)} pts of edge` : ''}` : 'no price';
             return (
-              <button key={pl.id} type="button" className={`nhlx-play${onOpen ? '' : ' is-static'}${pl.hit == null ? (pl.dnp ? ' is-dnp' : '') : pl.hit ? ' is-hit' : ' is-miss'}`} onClick={() => onOpen?.(pl)} title={`${pl.player} · ${playLabel(pl)} ${pct(pl.p)}${asStated(pl.raw)}, break-even ${pl.fair} · ${price}${pl.confirmed ? ' · on the cheat sheet' : ''}${outcome}`}>
+              <button key={pl.id} type="button" className={`nhlx-play${onOpen ? '' : ' is-static'}${pl.hit == null ? (pl.dnp ? ' is-dnp' : '') : pl.hit ? ' is-hit' : ' is-miss'}`} onClick={() => onOpen?.(pl)} title={`${pl.player} · ${playLabel(pl)} ${pct(pl.p)}${asStated(pl.raw)}, break-even ${pl.fair} · ${price}${reliableFor(reliability, pl.market) != null ? ` · ${reliabilityText(reliability, pl.market, pl.label || pl.market)}` : ''}${pl.confirmed ? ' · on the cheat sheet' : ''}${outcome}`}>
                 {pl.espnId ? <img src={sport.headshotUrl(pl.espnId)} alt="" width="26" height="26" loading="lazy" /> : <img src={sport.teamLogo(side.team)} alt="" width="26" height="26" loading="lazy" className="ir-nfl-logo" />}
                 <span className="nhlx-play-meta">
                   <b>{shortName(pl.player)}{flags.length ? <span className="nhlx-pk-flags">{flags.map(([k, t]) => <i key={k} className={`nhlx-pk-flag is-${k}`} title={t} aria-label={t}>{ICON[k]}</i>)}</span> : null}</b>
-                  <span>{playLabel(pl)} <em>{pct(pl.p)}</em>{pl.hit != null ? <> · <strong className="nhlx-play-got">{pl.actual} {pl.unit}</strong></> : pl.dnp ? <> · DNP</> : null}</span>
+                  <span>{playLabel(pl)} <em className={reliableTone(reliability, pl.market, pl.p, pl.raw) ? `ir-rel-${reliableTone(reliability, pl.market, pl.p, pl.raw)}` : undefined}>{pct(pl.p)}</em>{pl.hit != null ? <> · <strong className="nhlx-play-got">{pl.actual} {pl.unit}</strong></> : pl.dnp ? <> · DNP</> : null}</span>
                 </span>
                 {pl.odds != null ? <span className={`nhlx-edge${pl.edge != null && pl.edge > 0 ? ' is-soft' : ''}`}>{fmtOdds(pl.odds)}{pl.edge != null ? ` · ${pl.edge >= 0 ? '+' : '−'}${Math.abs(Math.round(pl.edge * 100))}` : ''}</span> : null}
                 {pl.hit != null ? <i className={`nhlx-play-mark ${pl.hit ? 'is-hit' : 'is-miss'}`} aria-label={pl.hit ? 'hit' : 'miss'}>{pl.hit ? '✓' : '✗'}</i> : null}

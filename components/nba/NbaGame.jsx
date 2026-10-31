@@ -94,7 +94,7 @@ function TeamColumn({ side, sport, final, metric, season }) {
 }
 
 /** A game folded to one line; pressed, the characteristics and both courts, the team columns and the tables behind a switch. */
-export default function GameFold({ g, best = [], sport, metric, onMetric, open: openProp = null, onToggle = null }) {
+export default function GameFold({ g, best = [], sport, metric, onMetric, open: openProp = null, onToggle = null, reliability = null }) {
   const [openOwn, setOpenOwn] = useState(false);
   const open = openProp ?? openOwn;
   const setOpen = (fn) => { const next = typeof fn === 'function' ? fn(open) : fn; if (onToggle) onToggle(next); else setOpenOwn(next); };
@@ -122,7 +122,7 @@ export default function GameFold({ g, best = [], sport, metric, onMetric, open: 
       {open ? (
         <div className="ir-gf-body" id={bodyId}>
           {g.profile ? <GameProfile g={g} sport={sport} /> : g.characteristics ? <GameCharacteristics game={g} renderTeam={teamMark(sport)} pill={expectedPill(g, sport)} /> : null}
-          <CourtPair g={g} metric={metric} onMetric={onMetric} sport={sport} />
+          <CourtPair g={g} metric={metric} onMetric={onMetric} sport={sport} reliability={reliability} />
           <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-gf-more" aria-expanded={more} onClick={() => setMore((v) => !v)}>{more ? 'Hide the team columns and the tables' : 'Show the team columns and the tables'}</button>
           {more ? (
             <>

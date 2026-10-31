@@ -1568,6 +1568,16 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-range-line i { font-style: normal; font-weight: 600; }
 .ir-range-line.is-soft i { color: var(--ok-fg); }
 .ir-range-line.is-tough i { color: var(--bad-fg); }
+/* The reliable chance per market (lib/picks/reliability.js): green at or over the market's threshold, red under it; a Tonight cell filled green is a best bet as the model reads it. */
+.ir-rel-yes { color: var(--ok-fg) !important; }
+.ir-rel-no { color: var(--bad-fg) !important; }
+.ir-range-cell.is-best { background: var(--pf-soft-bg); }
+.ir-range-cell.is-best .ir-range b, .ir-range-cell.is-best .ir-range-line i { color: var(--ok-fg); }
+.ir-rel-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 2px 0 10px; }
+.ir-rel-line b { color: var(--heading); font-weight: 600; }
+.ir-rel-pill { padding: 1px 8px; border-radius: 100px; border: 1px solid var(--line); font-size: 13px; font-weight: 600; }
+.ir-rel-pill.ir-rel-none { color: var(--muted) !important; }
+.ir-rel-line small { color: var(--muted); font-size: 12.5px; }
 .ir-range-got { display: block; font-size: 12px; color: var(--muted); }
 .ir-range-cell.is-hit .ir-range-got { color: var(--ok-fg); }
 .ir-range-cell.is-miss .ir-range-got { color: var(--bad-fg); }

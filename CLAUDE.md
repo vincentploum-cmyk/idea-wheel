@@ -91,6 +91,17 @@ config and keeps its own markets, teams, feeds and slate key:
   threes"): `best`, each side's `picks` and the game line's count, best play and hit tally (counted on `best` in
   `NbaGame.jsx`) carry those markets; every market keeps its rows in the per-game tables, the cards and the scorecard's
   grading; the list's stat tabs are the groups it carries; `nbaBoard(cocktail, { bestMarkets: null })` lists every market.
+  **The reliable chance per market** (`lib/picks/reliability.js`, `reliabilityOf` from the season's graded nights, the over /
+  yes plays as the board stated them; Vincent, 2026-10-31: "keep track of what % is reliable to bet on for threes, assists,
+  rebounds and based on that the % for the players should be colored green / red", then "fill the cells green that are
+  the best bets as per the model"): per market the lowest chance step (50% up by 5) from which `RELIABLE_MIN` = 25 plays
+  or more landed at least their break-even at the book's prices (`RELIABLE_BAR` = 60% without a price); learned with the
+  calibration in `scorecardFor` (`reliability` inside `nba/meta/calibration.json`, `sameCalibration` compares it) and on
+  the board as `board.reliability`; the games' head line names each market's threshold ("Reliable from · REB 65% · AST
+  70% · 3PM not yet", the figures on the hover), and `reliableTone` colours every chance — the ranked list, the strips,
+  the court's chips, the Tonight table (its cell filled green when a play clears the threshold, `is-best`) — green at or
+  over the market's threshold, red under it, by the chance as the model states it (`raw`); a market without one keeps the
+  old colouring. `__tests__/picks-reliability.test.js`.
   **A line the book prices past -400 is no play**
   (`STEEP_IMPLIED` = 0.8 on the book's implied probability; 2026-10-29: o4.5 points at -10421 read 100% at
   the top of the Points table, Vincent: "this is fucking useless"): the play carries `steep: true`, stays on
@@ -690,7 +701,10 @@ config and keeps its own markets, teams, feeds and slate key:
 - `tools/check-defensive-matchups.mjs <export.csv> <picks.json>` compares PropFinder's Defensive Matchups page export (what each team allows per position, with ranks) against the board's `sides[].allowed` table in a saved `GET /api/nba/picks?date` payload, cell by cell; the export itself is never ingested (its "OPPOSING PLAYER" header is no player column, the parser reads zero rows and the store rejects it).
 - Routes: `GET /api/nba/picks?date`, `GET /api/nba/shuffle?date&market`, `GET /api/nba/scorecard?from&to`, `GET|POST|DELETE /api/nba/sheets?date`,
   `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`,
-  `GET|POST /api/nba/injuries?date` (the admin's injury overrides).
+  `GET|POST /api/nba/injuries?date` (the admin's injury overrides); `POST /api/nba/refresh?only=calibration` (token or
+  admin) grades the season again now and relearns the calibration and the reliable chances without waiting for new box
+  scores — the workflow's `what: calibration` runs it with the site's token (Vincent, 2026-10-31: "open the shuffle tab
+  to relearn the calibration", which this container cannot).
   `.github/workflows/nba-data.yml`: 9:47 ET and 5:23 PM ET (schedule + PropFinder), 2:11 AM ET
   (last night's box scores). UI: `components/nba/NbaApp.jsx` (date picker), `NbaBoard.jsx`,
   `NbaSources.jsx`. Tests: `__tests__/nba-board.test.js` (`fixtures/espn-nba-summary.json`).
