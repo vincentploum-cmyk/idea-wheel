@@ -94,7 +94,7 @@ function TeamColumn({ side, sport, final, metric, season }) {
 }
 
 /** A game folded to one line; pressed, the characteristics and both courts, the team columns and the tables behind a switch. */
-export default function GameFold({ g, best = [], byEdge = false, sport, metric, onMetric, open: openProp = null, onToggle = null, reliability = null }) {
+export default function GameFold({ g, best = [], sport, metric, onMetric, open: openProp = null, onToggle = null, reliability = null }) {
   const [openOwn, setOpenOwn] = useState(false);
   const open = openProp ?? openOwn;
   const setOpen = (fn) => { const next = typeof fn === 'function' ? fn(open) : fn; if (onToggle) onToggle(next); else setOpenOwn(next); };
@@ -117,7 +117,7 @@ export default function GameFold({ g, best = [], byEdge = false, sport, metric, 
         <span className="ir-gf-meta">{outs ? `${outs} out` : 'nobody out'}</span>
         {g.profile?.script?.word ? <span className="ir-gf-meta" title={g.profile.script.text}>{g.profile.script.word}</span> : null}
         <span className="ir-gf-meta">{mine.length} play{mine.length === 1 ? '' : 's'}{graded.length ? ` · ${graded.filter((r) => r.hit).length} of ${graded.length} hit` : ''}</span>
-        <span className="ir-gf-best">{top ? <>Best: <b>{top.player}</b> {playLabel(top)} · {pct(top.p)}{byEdge && top.edge != null ? ` · +${Math.round(top.edge * 100)} pts edge` : ''}</> : byEdge ? 'No edge over the book' : 'No play over the floor'}</span>
+        <span className="ir-gf-best">{top ? <>Best: <b>{top.player}</b> {playLabel(top)} · {pct(top.p)}{top.edge != null ? <small> +{Math.round(top.edge * 100)}</small> : null}</> : 'No play with an edge'}</span>
         <svg className="ir-gf-caret" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
       </button>
       {open ? (

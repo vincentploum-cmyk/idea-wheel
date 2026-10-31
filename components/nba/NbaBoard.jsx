@@ -65,7 +65,7 @@ function NbaSlate({ board }) {
             <small>green = a chance at or over its market’s threshold, red = under it, by the chance as the model states it</small>
           </p>
         ) : null}
-        {board.games.map((g) => <GameFold key={g.id} g={{ ...g, season: board.season }} best={board.best} byEdge={board.bestBy === 'edge'} sport={SPORT} metric={metric} onMetric={setMetric} reliability={board.reliability || null} open={!closed.has(g.id)} onToggle={(next) => setClosed((prev) => { const s = new Set(prev); if (next) s.delete(g.id); else s.add(g.id); return s; })} />)}
+        {board.games.map((g) => <GameFold key={g.id} g={{ ...g, season: board.season }} best={board.best} sport={SPORT} metric={metric} onMetric={setMetric} reliability={board.reliability || null} open={!closed.has(g.id)} onToggle={(next) => setClosed((prev) => { const s = new Set(prev); if (next) s.delete(g.id); else s.add(g.id); return s; })} />)}
       </section>
       <SlateList board={board} sport={SPORT} onOpen={openRow} />
       <BoardNotes notes={board.notes} />
