@@ -1933,3 +1933,41 @@ button.ir-fact.is-more:focus-visible { outline: 2px solid var(--primary); }
 .nhlx-pk-table td.nhlx-pk-book.is-noedge small { color: var(--bad-fg); }
 .nhlx-pk-table td.nhlx-pk-book.is-reliable b { box-shadow: inset 0 0 0 1px var(--ok-fg); border-radius: 6px; padding: 1px 4px; }
 .nhlx-sc h4.nhlx-sc-h { font-size: 16px; margin-top: 14px; }
+
+/* The NBA Cheat sheet tab (components/nba/NbaSheetMatchups.jsx): a game a block, its soft tiles as rows —
+   the spot, the sheet's rank, PropFinder's table, the players there — stacked on a phone. */
+.ir-sm-legend { margin: 0 0 14px; max-width: 80ch; }
+.ir-sm-game { padding: 14px 0 18px; border-top: 1px solid var(--line); }
+.ir-sm-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin-bottom: 10px; }
+.ir-sm-teams { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--heading); font-size: 16px; }
+.ir-sm-teams i { font-style: normal; color: var(--muted); font-weight: 400; margin: 0 2px; }
+.ir-sm-rows { display: grid; gap: 0; }
+.ir-sm-row { display: grid; grid-template-columns: minmax(170px, 1.1fr) 64px minmax(120px, 0.8fr) minmax(0, 3fr); gap: 10px 14px; align-items: start; padding: 10px 0; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.ir-sm-row:first-child { border-top: 0; }
+.ir-sm-spot { display: flex; gap: 8px; align-items: flex-start; }
+.ir-sm-spot img { margin-top: 2px; flex: none; }
+.ir-sm-spot b { display: block; color: var(--heading); font-size: 15px; }
+.ir-sm-spot small, .ir-sm-rank small, .ir-sm-pf small { display: block; color: var(--muted); font-size: 12.5px; }
+.ir-sm-chip { display: inline-block; min-width: 40px; text-align: center; padding: 2px 6px; border-radius: 6px; font-weight: 700; background: var(--ok-bg); color: var(--ok-fg); border: 1px solid var(--ok-line); }
+.ir-sm-pf b { color: var(--heading); }
+.ir-sm-pf.is-soft b { color: var(--ok-fg); }
+.ir-sm-pf.is-tough b { color: var(--bad-fg); }
+.ir-sm-players { display: grid; gap: 6px; }
+.ir-sm-player { display: grid; grid-template-columns: minmax(0, 1.6fr) 64px minmax(0, 1.4fr) auto; gap: 8px; align-items: center; text-align: left; width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--body); font: inherit; cursor: pointer; }
+.ir-sm-player:hover, .ir-sm-player:focus-visible { border-color: var(--primary); }
+.ir-sm-name { font-weight: 600; color: var(--heading); overflow-wrap: anywhere; }
+.ir-sm-name small { margin-left: 6px; font-weight: 400; color: var(--muted); font-size: 12px; }
+.ir-sm-name small.ir-sm-dtd { color: var(--bad-fg); }
+.ir-sm-proj b { font-size: 15px; color: var(--heading); }
+.ir-sm-proj small, .ir-sm-line small { margin-left: 4px; color: var(--muted); font-size: 12px; }
+.ir-sm-line b.is-up { color: var(--ok-fg); }
+.ir-sm-line b.is-down { color: var(--bad-fg); }
+.ir-sm-bet { font-size: 12px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: var(--ok-bg); color: var(--ok-fg); border: 1px solid var(--ok-line); white-space: nowrap; }
+.ir-sm-more { margin-top: 8px; }
+@media (max-width: 700px) {
+  .ir-sm-row { grid-template-columns: 1fr auto; grid-template-areas: 'spot rank' 'pf pf' 'players players'; gap: 6px 10px; }
+  .ir-sm-spot { grid-area: spot; } .ir-sm-rank { grid-area: rank; text-align: right; } .ir-sm-pf { grid-area: pf; } .ir-sm-players { grid-area: players; }
+  .ir-sm-pf small { display: inline; margin-left: 6px; }
+  .ir-sm-player { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name proj' 'line bet'; }
+  .ir-sm-name { grid-area: name; } .ir-sm-proj { grid-area: proj; text-align: right; } .ir-sm-line { grid-area: line; } .ir-sm-bet { grid-area: bet; justify-self: end; }
+}
