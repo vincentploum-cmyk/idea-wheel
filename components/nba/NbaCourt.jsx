@@ -421,19 +421,18 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
         <div><b>{sport.teamName(side.team)} <small>{side.venue === 'H' ? 'vs' : 'at'} {sport.teamName(side.opp)}</small></b></div>
       </div>
       <SidePicks side={side} sport={sport} final={final} heading={false} onOpen={(pl) => open({ key: pl.key, player: side.players.find((p) => p.key === pl.key) || null, team: side.team, opp: side.opp, venue: side.venue, market: pl.market })} />
-      <div className="nhlx-rk-toggle">
+      {/* The table, then the stat tabs with the bar, then the court: one view (Vincent, 2026-10-30: "put the shuffle bar right
+          under the propfinder table so I can see the table, the bar (incl type) and the court in 1 view"). The window tabs
+          ride on the table (`onWin`); a window tints the zones and fills the table, the chips keep the board's figure. */}
+      <AllowedTable side={side} win={view} metric={metric} season={season} onWin={setWin} onPos={setHiPos} hiPos={hiPos} />
+      <div className="nhlx-rk-toggle ir-court-stat">
         <small>Stat</small>
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Which stat the court reads">
-          {COURT_METRICS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={metric === k} className={`nhlx-tab${metric === k ? ' is-active' : ''}`} onClick={() => onMetric?.(k)} title={`Zones by the ${l.toLowerCase()} ${side.opp} gives up to each position; the bar under the tabs asks for ${l.toLowerCase()}, every chip showing his chance to clear it`}>{l}</button>)}
+          {COURT_METRICS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={metric === k} className={`nhlx-tab${metric === k ? ' is-active' : ''}`} onClick={() => onMetric?.(k)} title={`Zones by the ${l.toLowerCase()} ${side.opp} gives up to each position; the bar asks for ${l.toLowerCase()}, every chip showing his chance to clear it`}>{l}</button>)}
         </div>
-        <small>{side.opp} allows over</small>
-        <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label={`Window of ${side.opp}'s defense`}>
-          {windows.map((k) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setWin(k)} title={`${WINDOW_TEXT[k]}${k === 'season' ? ': the table the board’s projections read' : ': tints the zones and fills the table; the chips keep the board’s figure, the hover says what this window would read'}`}>{windowLabel(k, side.allowed, season)}</button>)}
-        </div>
-        {windows.length === 1 ? <small className="nhlx-rk-toggle-note">{side.allowed ? 'no last-N rows in the pull yet' : 'no table yet'}</small> : view !== 'season' ? <small className="nhlx-rk-toggle-note">tint and table only: the chips keep the board’s read off this season’s table</small> : null}
+        {view !== 'season' ? <small className="nhlx-rk-toggle-note">zones tinted by {windowLabel(view, side.allowed, season)}; the chips keep the board’s read off this season’s table</small> : null}
       </div>
       {sh ? <CourtBar metric={metric} side={side} sh={sh} rows={rows} /> : null}
-      <AllowedTable side={side} win={view} metric={metric} season={season} onPos={setHiPos} hiPos={hiPos} />
       <div className={`nhlx-rk ir-court${hiPos ? ' is-picking' : ''}`}>
         <CourtMarkings clipId={clipId} tones={tones} />
         {Object.keys(ZONES).map((z) => {
