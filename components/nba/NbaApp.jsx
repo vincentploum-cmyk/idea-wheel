@@ -98,7 +98,7 @@ export default function NbaApp({ email }) {
               <div>
                 <span className="nhlx-eyebrow">NBA</span>
                 <h1>Tonight&apos;s <span>best plays</span></h1>
-                <p>Every play on the night over the floor, the likeliest first: the line, his projection with his floor and ceiling drawn against it, the chance, the book’s price and the opponent’s rank at his spot. Under it the games, one line each: open one for both rosters against both defenses, the courts and the tables behind a switch.</p>
+                <p>Every rebounds, assists and threes play on the night over the floor, the likeliest first: the line, his projection with his floor and ceiling drawn against it, the chance, the book’s price and the opponent’s rank at his spot. Under it the games, one line each: open one for both rosters against both defenses, the courts and the tables behind a switch.</p>
               </div>
             </div>
             <section className="nhlx-pk" aria-label="Tonight’s picks">

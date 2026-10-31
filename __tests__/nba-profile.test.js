@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { teamProfile, gameProfile, ROWS } from '../lib/nba/profile';
+import { teamProfile, gameProfile, GROUPS } from '../lib/nba/profile';
 import { buildBoard } from '../lib/nba/picks';
 
 // Sixteen teams: fourteen fillers near the average, BOS strong, NY weak.
@@ -22,42 +22,40 @@ const sides = {
 };
 
 describe('the NBA game profile (the firsthalfscore layout)', () => {
-  test('each team’s cells: a word and the figures, from the pull’s rows, the allowed tables and the sheet', () => {
-    const bos = teamProfile({ team: 'BOS', defense, side: sides.BOS, oppSide: sides.NY });
-    expect(bos.scoring).toMatchObject({ level: 'very', word: 'Elite' });
+  test('each team’s cells: a word, one short figure and the full reading for the hover', () => {
+    const bos = teamProfile({ team: 'BOS', defense, oppSide: sides.NY });
+    expect(bos.scoring).toMatchObject({ level: 'very', word: 'Elite', short: '120.0 a game · 1st' });
     expect(bos.scoring.text).toMatch(/^1st \/ 16 · 120\.0 points a game/);
     expect(bos.ptsAgainst).toMatchObject({ level: 'very', word: 'Elite' });   // allows the fewest
-    expect(bos.security).toMatchObject({ level: 'very' });   // the fewest turnovers
-    expect(bos.forcing).toMatchObject({ level: 'very' });   // forces the most
     expect(bos.threes.text).toContain('45% of its points');
-    expect(bos.expected).toMatchObject({ word: 'High' });
-    expect(bos.expected.text).toMatch(/^121 points expected tonight/);
-    // Its last ten: 118 allowed against 108 on the season → from 1st to last of 16: loosening.
-    expect(bos.trend).toMatchObject({ word: 'Loosening', level: 'veryWeak' });
+    // Its last ten: 118 allowed against 108 on the season → from 1st to last of 16: loosening, on the points-allowed cell.
+    expect(bos.ptsAgainst).toMatchObject({ trend: 'loosening', short: '108.0 a game · 1st · loosening' });
+    expect(bos.ptsAgainst.text).toContain('last 10: 118.0 allowed, 16th of 16, loosening');
     // What BOS gives up (NY's allowed table): nothing in the soft third, three positions in the tough third.
-    expect(bos.leaksPts).toMatchObject({ word: 'Holds', level: 'very' });
+    expect(bos.leaksPts).toMatchObject({ word: 'Holds', level: 'very', short: 'softest SF #9' });
     expect(bos.leaksPts.text).toContain('nothing in the soft third');
-    expect(bos.sheet).toMatchObject({ word: '1 named' });
-    expect(bos.sheet.text).toBe('Brown · nba_2026-10-30.pdf');
-    const ny = teamProfile({ team: 'NY', defense, side: sides.NY, oppSide: sides.BOS });
+    // The aspects the views no longer draw are not built.
+    for (const k of ['expected', 'security', 'forcing', 'trend', 'sheet', 'rebAgainst', 'tpmAgainst']) expect(bos[k]).toBeUndefined();
+    const ny = teamProfile({ team: 'NY', defense, oppSide: sides.BOS });
     expect(ny.scoring).toMatchObject({ level: 'veryWeak', word: 'Very weak' });
-    expect(ny.expected).toMatchObject({ word: 'Low' });
-    expect(ny.trend).toMatchObject({ word: 'Tightening' });
-    // What NY gives up: PG in the soft third (#2 blended of PropFinder's #2 and the sheet's #3), named with both reads.
-    expect(ny.leaksPts).toMatchObject({ word: 'PG', level: 'veryWeak' });
+    expect(ny.ptsAgainst).toMatchObject({ trend: 'tightening' });
+    // What NY gives up: PG in the soft third (#2 blended of PropFinder's #2 and the sheet's #3), both reads on the hover.
+    expect(ny.leaksPts).toMatchObject({ word: 'PG', level: 'veryWeak', short: '#3 of 16' });
     expect(ny.leaksPts.text).toBe('PG #3 (PropFinder #2, sheet #3) of 16');   // the blend of #2 and #3 rounds to 3
     expect(ny.leaksReb).toMatchObject({ word: 'C', level: 'veryWeak' });
-    expect(ny.sheet).toMatchObject({ word: 'No sheet' });
     // A filler team in the middle reads Average everywhere it has a row.
     const t = teamProfile({ team: 'T07', defense, side: null, oppSide: null });
     expect(t.scoring).toMatchObject({ level: 'average', word: 'Average' });
     expect(t.leaksPts).toBeUndefined();
     expect(teamProfile({ team: 'ZZZ', defense, side: null, oppSide: null })).toBeNull();
   });
-  test('the game: both teams, the rows either has, in the table’s order', () => {
+  test('the game: both teams, two views of five rows at most, the rows either team has', () => {
     const g = gameProfile({ away: 'BOS', home: 'NY' }, defense, sides);
     expect(g.teams).toEqual(['BOS', 'NY']);
-    expect(g.rows.map((r) => r.key)).toEqual(ROWS.map(([k]) => k).filter((k) => !['leaksAst', 'leaksTpm'].includes(k)));
+    expect(GROUPS.map(([k, , rows]) => [k, rows.length])).toEqual([['offense', 5], ['defense', 5]]);
+    expect(g.groups.map((x) => x.key)).toEqual(['offense', 'defense']);
+    expect(g.groups[0].rows.map((r) => r.key)).toEqual(['scoring', 'threes', 'rebounding', 'playmaking', 'line']);
+    expect(g.groups[1].rows.map((r) => r.key)).toEqual(['ptsAgainst', 'leaksPts', 'leaksReb']);   // no assists or threes cells in the fixture
     expect(g.cells.NY.ptsAgainst.word).toBe('Very weak');
     expect(gameProfile({ away: 'AAA', home: 'BBB' }, defense, {})).toBeNull();
   });
@@ -68,6 +66,5 @@ describe('the NBA game profile (the firsthalfscore layout)', () => {
     const b = buildBoard({ date: '2026-10-30', season: 2026, games, sheets: [], pf, results: {} });
     expect(b.games[0].profile.teams).toEqual(['BOS', 'NY']);
     expect(b.games[0].profile.cells.BOS.scoring.word).toBe('Elite');
-    expect(b.games[0].profile.cells.BOS.sheet.word).toBe('No sheet');
   });
 });

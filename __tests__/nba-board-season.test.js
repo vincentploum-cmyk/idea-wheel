@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { buildBoard } from '../lib/nba/picks';
+import { buildBoard, nbaBoard, COCKTAIL } from '../lib/nba/picks';
 import { teamCharacteristics } from '../lib/nba/characteristics';
 
 // The board's sides as the court reads them: who is out tonight, last season's table beside this season's.
@@ -48,7 +48,9 @@ describe('the best plays strip', () => {
     { id: 'p3', name: 'Payton Pritchard', key: 'payton pritchard', team: 'BOS', pos: 'PG', games: logs(16, 3), props: [{ market: 'pts', line: 12.5, odds: -130, underOdds: 110, isMain: true }] },
   ], defense: null } };
   test('one play a player over the floor, by chance; the picked players marked; graded once final', () => {
-    const b = buildBoard({ date: '2026-10-27', season: 2026, games: game(false), sheets: [], pf, results: {} });
+    // The strip's mechanics on every market; the site's board picks rebounds, assists and threes alone (the last check).
+    const allBoard = nbaBoard(COCKTAIL, { bestMarkets: null }).buildBoard;
+    const b = allBoard({ date: '2026-10-27', season: 2026, games: game(false), sheets: [], pf, results: {} });
     const g = b.games[0];
     // Brown clears 24.5 every night and Pritchard 12.5 (both 100%, so the shrink toward the book's price puts Pritchard's
     // −130 a hair above Brown's −110); Brown's 8 rebounds never clear 8.5 and White's 12 points never 24.5.
@@ -59,9 +61,11 @@ describe('the best plays strip', () => {
     expect(g.sides.NY.picks).toEqual([]);
     // Final: each pick graded on the box score; a pick without a row stays ungraded (the strip reads DNP).
     const results = { g1: { id: 'g1', final: true, players: [{ name: 'Jaylen Brown', team: 'BOS', played: true, pts: 26, reb: 7, ast: 4, pra: 37 }] } };
-    const f = buildBoard({ date: '2026-10-27', season: 2026, games: game(true), sheets: [], pf, results }).games[0];
+    const f = allBoard({ date: '2026-10-27', season: 2026, games: game(true), sheets: [], pf, results }).games[0];
     expect(f.sides.BOS.picks.find((x) => x.player === 'Jaylen Brown')).toMatchObject({ actual: 26, hit: true });
     expect(f.sides.BOS.picks.find((x) => x.player === 'Payton Pritchard')).toMatchObject({ actual: null, hit: null });
+    // On the site's board the points plays stay off the strip: nobody here clears a rebounds, assists or threes line.
+    expect(buildBoard({ date: '2026-10-27', season: 2026, games: game(false), sheets: [], pf, results: {} }).games[0].sides.BOS.picks).toEqual([]);
   });
 });
 

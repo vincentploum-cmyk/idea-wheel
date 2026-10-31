@@ -85,7 +85,13 @@ config and keeps its own markets, teams, feeds and slate key:
   in the soft third at the position for the stat) are colour only; a stored box score grades
   every row (`actual`, `hit`; a `played: false` line reads DNP) and the game head tallies the
   plays over the floor. Notes written from the plays. `best` on the board: every play over the floor across the
-  slate, one a player, market and side, the chance first, with his projection and the matchup at his spot (`SlateList`). **A line the book prices past -400 is no play**
+  slate, one a player, market and side, the chance first, with his projection and the matchup at his spot (`SlateList`).
+  **The NBA's best bets are rebounds, assists and threes alone** (`BEST_MARKETS` in `lib/nba/picks.js` →
+  `makeBoard({ bestMarkets })`; Vincent, 2026-10-31: "I don't need turnovers in the best bets. Only rebounds / assists /
+  threes"): `best`, each side's `picks` and the game line's count, best play and hit tally (counted on `best` in
+  `NbaGame.jsx`) carry those markets; every market keeps its rows in the per-game tables, the cards and the scorecard's
+  grading; the list's stat tabs are the groups it carries; `nbaBoard(cocktail, { bestMarkets: null })` lists every market.
+  **A line the book prices past -400 is no play**
   (`STEEP_IMPLIED` = 0.8 on the book's implied probability; 2026-10-29: o4.5 points at -10421 read 100% at
   the top of the Points table, Vincent: "this is fucking useless"): the play carries `steep: true`, stays on
   the side player's `plays` (the card's "His lines tonight") and off the tables, the "next" line, the
@@ -472,14 +478,18 @@ config and keeps its own markets, teams, feeds and slate key:
   before the ranked list, every game open (`closed` set in `NbaSlate`, Collapse all / Expand all in the head, `GameFold`
   takes `open` / `onToggle`), and an opened game shows **the game profile** (`components/nba/NbaProfile.jsx` from
   `profile` on the board game, `lib/nba/profile.js` `gameProfile(g, defense, sides)` through `makeBoard({ profile })`:
-  firsthalfscore.com's layout, Vincent's ask the same night in place of the characteristics card — one row per aspect,
-  the two teams side by side, each cell a word (Elite · Strong · Average · Weak · Very weak by `levelOf`, Average for the
-  middle half; High / Low on the expected points; Tightening / Loosening / Steady on the last ten; the positions a
-  defense leaks to, "Holds" when none) over the figures — expected points, scoring, defense, the last ten, what it gives
-  up to each position for points / rebounds / assists / threes from the opponent side's `allowed` table (PropFinder's
-  rank and the cheat sheet's tile named, `rankBlend` deciding), rebounding, ball movement, threes with their share of the
-  points, the line, ball security, forcing turnovers, the defensive glass, defending the three, and the players the cheat
-  sheet names on the side; `__tests__/nba-profile.test.js`; the characteristics card stays as the fallback for a game
+  firsthalfscore.com's layout, Vincent's ask the same night in place of the characteristics card — the two teams side
+  by side, each cell a word (Elite · Strong · Average · Weak · Very weak by `levelOf`, Average for the middle half; the
+  positions a defense leaks to, "Holds" when none) and one short figure on the line (`short`: "101.0 a game · 30th",
+  "#2 · #10 of 30"), the full reading on the cell's hover (`text`). **Two views of five rows, an Offense / Defense
+  toggle** (`GROUPS`; Vincent, 2026-10-31, of the seventeen rows it had: "This is way too much. I need only 5 rows. Maybe
+  add an offense / defense toggle"; the view picked holds for every game on the page): Offense = scoring, threes,
+  rebounding, assists, free throws (PropFinder's team rows ranked over the league); Defense = points allowed (its last
+  ten on the same cell, "tightening" / "loosening" at five ranks' drift) and the positions it gives points, rebounds,
+  assists and threes to, from the opponent side's `allowed` table (PropFinder's rank and the cheat sheet's tile,
+  `rankBlend` deciding, both named on the hover); the expected points stay in the head pill; ball security, forcing
+  turnovers, the defensive glass, defending the three and the sheet's named players were dropped with the rows;
+  `__tests__/nba-profile.test.js`, `nba-profile-render.test.js` (MOCK_OUT writes its pages for `tools/mock/screenshot-profile.mjs`); the characteristics card stays as the fallback for a game
   without a profile and on the NFL board), then the two courts (each with PropFinder's table, the stat tabs and the
   shuffle bar, every player's projections, **who is out under the court** — Vincent, the same night — and the Tonight
   table), and "Show the team columns and the tables" folds the columns and the five group tables. A player listed day-to-day
@@ -511,7 +521,8 @@ config and keeps its own markets, teams, feeds and slate key:
   player the projected number for points / assists / threes / rebounds"), so the chips flow in a column per zone
   (`.ir-court-stack`, no two overlap; `ZONE_MAX` three a zone, the rest under the court). **A row of the PropFinder table
   above the court pressed rings that position's chips and fades the others** (`onPos` / `hiPos` on `AllowedTable`,
-  `is-hi` / `is-dim`; press again to show everyone)
+  `is-hi` / `is-dim`; press again to show everyone; the **Players** picker under the table — All · PG · SG · SF · PF · C,
+  Vincent, 2026-10-31: "an 'all' option to select all players" — does the same, All bringing every player back)
   over the tab picked beside them (**this season's table as PropFinder publishes it**, the default and the table the
   board reads, labelled by its years, "'26-'27"; last season's in full, "'25-'26", `allowed.prior` from
   `defense.prior`, a comparison only; then L5 / L10 / L15 / L20 = PropFinder's `lastNGames` rows as published,
@@ -784,6 +795,16 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   over 2025-26), kept and to read again at mid-season. Next lever: the minutes read. The same day the role went to
   his own opportunity (usage, rebound chances, potential assists; the replay computes usage from ESPN's box scores,
   `usg` on its rows): points 4.99 this season, PRA 6.70.
+- The NBA projections, what else moves them (`docs/audits/2026-10-31-nba-accuracy.md`, `tools/audit/nba-fetch.mjs` for the
+  raw feeds, `tools/audit/nba_minutes.py`; Vincent, 2026-10-31: "increase accuracy where possible"): this season's 71
+  games replayed with the cocktail as shipped. The points miss is 5.00 (4.10 had the board known his minutes); last
+  season's regular season behind the windows 5.03, a last-five window 5.01, the matchup / ceiling / lift each worth
+  nothing measurable, the undamped matchup 5.46. Better minutes predictors exist (his season to date misses by 4.36
+  minutes against the board's 4.75) but re-projecting on them moves no stat (points 5.05 against 5.03): the minutes are
+  the night's own swing. A linear shrink of the spread overfits a week. A wider rung spread (`spreadA` 0.5) trades the
+  main rung (Brier 0.2374 → 0.2350) for the tail rungs (the 20–35% band lands 21% instead of 25%), the ladder as a whole
+  unmoved; the hit-rate half shrunk to ½ lands the 60–80% bands but drags the low rungs (0.152 against 0.1405). Nothing
+  changed; the next audit is the site's own graded nights with real lines and prices, by market and edge.
 - The game script, tested (`docs/audits/2026-10-28-game-script.md`, `tools/audit/nhl_game_script.py`; Vincent's
   question of 2026-10-28: a team strong at home against a visitor leaking over its last ten dominates, and the shots
   and goals divide by the opponent's weaknesses). On 2025-26 and 2026-27's box scores: a team's shots tonight follow

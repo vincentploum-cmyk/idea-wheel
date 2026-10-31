@@ -425,6 +425,14 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
           under the propfinder table so I can see the table, the bar (incl type) and the court in 1 view"). The window tabs
           ride on the table (`onWin`); a window tints the zones and fills the table, the chips keep the board's figure. */}
       <AllowedTable side={side} win={view} metric={metric} season={season} onWin={setWin} onPos={setHiPos} hiPos={hiPos} />
+      {/* Which players the court shows (Vincent, 2026-10-31: "an 'all' option to select all players"): All, or one position's
+          chips picked out and the rest faded, the same as pressing that row of the table. */}
+      <div className="nhlx-rk-toggle ir-court-pos">
+        <small>Players</small>
+        <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Which players the court picks out">
+          {[null, ...POSITIONS].map((pos) => <button key={pos || 'all'} type="button" role="tab" aria-selected={hiPos === pos} className={`nhlx-tab${hiPos === pos ? ' is-active' : ''}`} onClick={() => setHiPos(pos)} title={pos ? `Pick out the ${pos}s on the court, the rest faded` : 'Every player on the court'}>{pos || 'All'}</button>)}
+        </div>
+      </div>
       <div className="nhlx-rk-toggle ir-court-stat">
         <small>Stat</small>
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Which stat the court reads">
