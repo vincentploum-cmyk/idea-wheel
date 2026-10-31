@@ -7,7 +7,7 @@ jest.mock('../lib/nhl-store', () => ({
   memoizeByInputs: (load, compute) => async (...args) => compute(...(await load(...args))),
 }));
 
-const { snapshotPositions, positionsPath, slotOnSnapshot } = require('../lib/nhl-data/positions');
+const { snapshotPositions, positionsPath, slotOnSnapshot, mergeLineup, rosterKeyOf } = require('../lib/nhl-data/positions');
 const { PLAYERS_PATH } = require('../lib/nhl-data/rosters');
 const { lastLineupPath } = require('../lib/nhl-data/positions');
 const { PF_DEPTH_PATH } = require('../lib/nhl-data/propfinder-api');
@@ -25,11 +25,60 @@ describe('a skater’s slot on the snapshot (the player card’s badge)', () => 
       BUF: { source: 'gamedaytweets', players: { 'alex tuch': { name: 'Alex Tuch', id: 7, pos: 'LW', line: 1 }, 'tage thompson': { name: 'Tage Thompson', id: 8, pos: 'C', line: 1, inLineup: false } } },
       NYR: { source: 'lineup', players: { 'adam fox': { name: 'Adam Fox', id: 9, pos: 'D', line: 1 } } },
     } } } };
-    expect(slotOnSnapshot(file, { id: 7, name: 'Alex Tuch', team: 'BUF' })).toEqual({ date: '2026-10-10', team: 'BUF', opp: 'NYR', venue: 'A', pos: 'LW', line: 1, source: 'gamedaytweets', inLineup: true });
+    expect(slotOnSnapshot(file, { id: 7, name: 'Alex Tuch', team: 'BUF' })).toEqual({ date: '2026-10-10', team: 'BUF', opp: 'NYR', venue: 'A', pos: 'LW', line: 1, source: 'gamedaytweets', inLineup: true, carried: false });
     expect(slotOnSnapshot(file, { id: null, name: 'Adam Fox' })).toMatchObject({ team: 'NYR', venue: 'H', pos: 'D', line: 1, source: 'lineup' });
     expect(slotOnSnapshot(file, { id: 8, name: 'Tage Thompson' }).inLineup).toBe(false);
     expect(slotOnSnapshot(file, { id: 99, name: 'Nobody' })).toBeNull();
     expect(slotOnSnapshot(null, { id: 7 })).toBeNull();
+  });
+  test('a skater the snapshot holds twice reads at his lineup slot, not his roster entry (Chinakhov, 2026-10-31)', () => {
+    // A preview spelling the roster did not hold: the lineup's entry without an id, the roster's with the id and no line.
+    const file = { date: '2026-10-31', games: { 1: { away: 'PIT', home: 'MTL', teams: {
+      PIT: { source: 'lineup', players: {
+        'sidney crosby': { name: 'Sidney Crosby', id: 87, pos: 'C', line: 1 },
+        'egor chinakhov': { name: 'Egor Chinakhov', id: null, pos: 'LW', line: 2 },
+        'yegor chinakhov': { name: 'Yegor Chinakhov', id: 59, pos: 'RW', line: null, inLineup: false },
+      } },
+      MTL: { source: 'lineup', players: {} },
+    } } } };
+    expect(slotOnSnapshot(file, { id: 59, name: 'Yegor Chinakhov', team: 'PIT' })).toMatchObject({ pos: 'LW', line: 2, inLineup: true, venue: 'A', opp: 'MTL' });
+    // A player the lineup really leaves out still reads as such.
+    file.games[1].teams.PIT.players['egor chinakhov'].inLineup = false;
+    expect(slotOnSnapshot(file, { id: 59, name: 'Yegor Chinakhov', team: 'PIT' })).toMatchObject({ pos: 'RW', line: null, inLineup: false });
+  });
+});
+
+describe('the capture holds each skater once, under the roster’s key', () => {
+  const roster = { 'yegor chinakhov': { name: 'Yegor Chinakhov', id: 59, pos: 'RW', line: null }, 'sidney crosby': { name: 'Sidney Crosby', id: 87, pos: 'C', line: null }, 'evgeni malkin': { name: 'Evgeni Malkin', id: 71, pos: 'C', line: null } };
+  test('rosterKeyOf: the exact key, else the one player with the last name and a first name that starts alike', () => {
+    expect(rosterKeyOf(roster, 'Yegor Chinakhov')).toBe('yegor chinakhov');
+    expect(rosterKeyOf(roster, 'Egor Chinakhov')).toBe('yegor chinakhov');
+    expect(rosterKeyOf(roster, 'Sid Crosby')).toBe('sidney crosby');
+    expect(rosterKeyOf(roster, 'Nobody Here')).toBeNull();
+    expect(rosterKeyOf(roster, 'Boris Malkin')).toBeNull();
+  });
+  test('mergeLineup: a lineup spelling the roster lacks lands on the roster entry with its id; the rest keep their roster position', () => {
+    const players = mergeLineup({ 'egor chinakhov': { name: 'Egor Chinakhov', pos: 'LW', line: 2 }, 'sidney crosby': { name: 'Sidney Crosby', pos: 'C', line: 1 }, 'some rookie': { name: 'Some Rookie', pos: 'RW', line: 4 } }, roster, 'PIT');
+    expect(players['egor chinakhov']).toBeUndefined();
+    expect(players['yegor chinakhov']).toMatchObject({ name: 'Yegor Chinakhov', id: 59, pos: 'LW', line: 2, team: 'PIT' });
+    expect(players['yegor chinakhov'].inLineup).not.toBe(false);
+    expect(players['sidney crosby']).toMatchObject({ id: 87, pos: 'C', line: 1 });
+    expect(players['evgeni malkin']).toMatchObject({ id: 71, pos: 'C', line: null, inLineup: false });
+    // A name the roster does not know stays under its own key, without an id.
+    expect(players['some rookie']).toMatchObject({ id: null, pos: 'RW', line: 4 });
+    expect(Object.values(players).filter((p) => p.id === 59)).toHaveLength(1);
+  });
+  test("snapshotPositions: NHL.com's preview spelling a skater otherwise than the roster does not double him", async () => {
+    mockStored.set(PLAYERS_PATH, { players: { ...players, 59: { id: 59, name: 'Yegor Chinakhov', team: 'ANA', pos: 'RW' } } });
+    mockStored.delete(PF_DEPTH_PATH);
+    mockStored.delete(lastLineupPath('ANA'));
+    const nhlGame = { gameId: 1, away: 'ANA', home: 'OTT', updated: '2026-04-18T22:50:00Z', rows: ['Ducks projected lineup', 'Egor Chinakhov -- Leo Carlsson -- Troy Terry'] };
+    await snapshotPositions('2026-04-18', schedule, { games: [nhlGame], gdt: {} });
+    const ana = mockStored.get(positionsPath('2026-04-18')).games[1].teams.ANA;
+    expect(ana.source).toBe('lineup');
+    expect(ana.players['egor chinakhov']).toBeUndefined();
+    expect(ana.players['yegor chinakhov']).toMatchObject({ name: 'Yegor Chinakhov', id: 59, pos: 'LW', line: 1 });
+    expect(slotOnSnapshot(mockStored.get(positionsPath('2026-04-18')), { id: 59, name: 'Yegor Chinakhov', team: 'ANA' })).toMatchObject({ pos: 'LW', line: 1, inLineup: true });
   });
 });
 
