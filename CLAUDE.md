@@ -91,6 +91,17 @@ config and keeps its own markets, teams, feeds and slate key:
   threes"): `best`, each side's `picks` and the game line's count, best play and hit tally (counted on `best` in
   `NbaGame.jsx`) carry those markets; every market keeps its rows in the per-game tables, the cards and the scorecard's
   grading; the list's stat tabs are the groups it carries; `nbaBoard(cocktail, { bestMarkets: null })` lists every market.
+  **The NBA's best bets are ranked by edge over the book** (`bestBy: 'edge'`, `edgeRows` in `board.js`; Vincent, 2026-10-31:
+  "the best bets per game should be the ones with the biggest edge compared to the lines known … projected to get 30
+  points and his line is 15 … that is where I can beat the books"): per active player and best-bets market, the book's
+  main line read on his ladder — the rung's chance (his distribution centred on tonight's projection beside how often he
+  cleared it, calibrated when the season's fit holds) for the over, its complement for the under — against each side's
+  implied probability; the side the board gives 50% or better with the larger positive edge is the play (a line past
+  `STEEP_IMPLIED` or without a price is none), `gap` = the projection minus the line, `implied` beside the price. `best`
+  (the slate ranked by edge), each side's `picks` and the game line's best bet ("+35 pts edge") read it; the list says
+  "the biggest edge over the book first" and every row's projection cell shows the gap to the line ("+3.3 vs line",
+  green when it backs the side). `nbaBoard(cocktail, { bestBy: 'chance' })` is the hit-rate list as it was (the plays
+  over the floor, the likeliest first), the per-game tables still the chance read; `__tests__/nba-best-edge.test.js`.
   **A line the book prices past -400 is no play**
   (`STEEP_IMPLIED` = 0.8 on the book's implied probability; 2026-10-29: o4.5 points at -10421 read 100% at
   the top of the Points table, Vincent: "this is fucking useless"): the play carries `steep: true`, stays on
@@ -487,7 +498,15 @@ config and keeps its own markets, teams, feeds and slate key:
   rebounding, assists, free throws (PropFinder's team rows ranked over the league); Defense = points allowed (its last
   ten on the same cell, "tightening" / "loosening" at five ranks' drift) and the positions it gives points, rebounds,
   assists and threes to, from the opponent side's `allowed` table (PropFinder's rank and the cheat sheet's tile,
-  `rankBlend` deciding, both named on the hover); the expected points stay in the head pill; ball security, forcing
+  `rankBlend` deciding, both named on the hover); the expected points stay in the head pill, and **the game script** beside
+  them (`gameScript`; Vincent, 2026-10-31: "I need to know the game script. Will it be a fast paced game or not"): the two
+  teams' pace this season from PropFinder (`paceStats` on its team objects → `pace` on the pull, `paceTable` in
+  `lib/picks/propfinder.js`: possessions a game with rank and offensive / defensive efficiency, last season's for a team
+  without a row, `held`), their mean against the league's — Fast / Average / Slow at `PACE_EDGE` = 1.5 — and the book's total
+  and spread as the schedule carries them (ESPN's line, `odds` on the game), High / Average / Low against twice the
+  league's points a game at `TOTAL_EDGE` = 5: "Fast pace · high total · 105.6 possessions · total 236.5 · DET -2.5", green
+  when both point up, red when both point down, the figures on the hover; the game line carries the words too. A pull
+  made before 2026-10-31 has no pace (the next pull adds it); ball security, forcing
   turnovers, the defensive glass, defending the three and the sheet's named players were dropped with the rows;
   `__tests__/nba-profile.test.js`, `nba-profile-render.test.js` (MOCK_OUT writes its pages for `tools/mock/screenshot-profile.mjs`); the characteristics card stays as the fallback for a game
   without a profile and on the NFL board), then the two courts (each with PropFinder's table, the stat tabs and the

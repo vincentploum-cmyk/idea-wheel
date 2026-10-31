@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { teamProfile, gameProfile, GROUPS } from '../lib/nba/profile';
+import { teamProfile, gameProfile, gameScript, GROUPS } from '../lib/nba/profile';
 import { buildBoard } from '../lib/nba/picks';
 
 // Sixteen teams: fourteen fillers near the average, BOS strong, NY weak.
@@ -66,5 +66,29 @@ describe('the NBA game profile (the firsthalfscore layout)', () => {
     const b = buildBoard({ date: '2026-10-30', season: 2026, games, sheets: [], pf, results: {} });
     expect(b.games[0].profile.teams).toEqual(['BOS', 'NY']);
     expect(b.games[0].profile.cells.BOS.scoring.word).toBe('Elite');
+  });
+});
+
+describe('the NBA game script', () => {
+  const pace = { league: 103.3, count: 30, teams: { CHI: { season: 2026, pace: 108.4, rank: 1 }, MIL: { season: 2026, pace: 107.4, rank: 2 }, PHX: { season: 2026, pace: 98.3, rank: 30 }, DET: { season: 2025, pace: 98.8, rank: 29, held: true } } };
+  const lg = { leagueFor: { pts: 114.3 } };   // a game's points: 228.6
+  test('the two teams’ pace against the league’s, the book’s total against twice its points a game', () => {
+    const fast = gameScript({ away: 'CHI', home: 'MIL', odds: { total: 241.5, spread: 'MIL -4.5' } }, pace, lg);
+    expect(fast).toMatchObject({ word: 'Fast pace · high total', spread: 'MIL -4.5', pace: { game: 107.9, word: 'Fast' }, total: { line: 241.5, league: 228.6, word: 'High' } });
+    expect(fast.text).toContain('107.9 possessions a game between them');
+    const slow = gameScript({ away: 'PHX', home: 'DET', odds: { total: 219.5 } }, pace, lg);
+    expect(slow).toMatchObject({ word: 'Slow pace · low total', pace: { word: 'Slow', held: true } });
+    expect(slow.text).toContain('last season’s for a team without a row yet');
+    // One read alone stands; neither, no script.
+    const paceOnly = gameScript({ away: 'CHI', home: 'PHX', odds: null }, pace, lg);
+    expect(paceOnly.word).toBe('Average pace');
+    expect(paceOnly.total).toBeUndefined();
+    expect(gameScript({ away: 'AAA', home: 'BBB', odds: { total: 230 } }, pace, lg).word).toBe('average total');
+    expect(gameScript({ away: 'AAA', home: 'BBB' }, null, lg)).toBeNull();
+  });
+  test('the profile carries it; a game without team rows still gets its script', () => {
+    const g = gameProfile({ away: 'BOS', home: 'NY', odds: { total: 229.5, spread: 'BOS -6' } }, defense, sides, { pace: { league: 100, teams: { BOS: { pace: 101 }, NY: { pace: 102 } } } });
+    expect(g.script).toMatchObject({ word: 'Fast pace · average total', spread: 'BOS -6' });
+    expect(gameProfile({ away: 'CHI', home: 'MIL', odds: { total: 241.5 } }, { leagueFor: { pts: 114.3 } }, {}, { pace })).toMatchObject({ groups: [], script: { word: 'Fast pace · high total' } });
   });
 });

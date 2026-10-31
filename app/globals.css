@@ -1663,6 +1663,8 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-slate-table td { vertical-align: middle; }
 .ir-slate-table td b, .ir-slate-table td .ir-slate-sub { display: block; }
 .ir-slate-sub { font-size: 13px; color: var(--muted); }
+.ir-slate-gap { font-variant-numeric: tabular-nums; }
+.ir-slate-gap.is-up { color: var(--ok-fg); font-weight: 600; }
 .ir-slate-rank { width: 28px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .ir-slate-proj { display: flex; align-items: center; gap: 12px; min-width: 220px; }
 .ir-slate-proj > span:first-child { min-width: 52px; font-variant-numeric: tabular-nums; }
@@ -1681,6 +1683,9 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
    short figure on a line (firsthalfscore.com's layout); the full reading on the cell's hover. */
 .ir-prof { margin: 12px 0 14px; }
 .ir-prof-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 8px; }
+.ir-prof-script b { font-weight: 700; }
+.ir-prof-script.is-up b { color: var(--ok-fg); }
+.ir-prof-script.is-down b { color: var(--bad-fg); }
 .ir-prof-table { text-align: left; table-layout: fixed; }
 .ir-prof-table th:first-child, .ir-prof-table td:first-child { width: 170px; }
 .ir-prof-table tbody th { padding: 8px 10px; font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--heading); text-transform: none; letter-spacing: 0; border-bottom: 1px solid var(--line); vertical-align: baseline; white-space: normal; cursor: help; }

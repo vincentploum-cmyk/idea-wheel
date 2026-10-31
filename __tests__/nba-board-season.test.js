@@ -49,7 +49,7 @@ describe('the best plays strip', () => {
   ], defense: null } };
   test('one play a player over the floor, by chance; the picked players marked; graded once final', () => {
     // The strip's mechanics on every market; the site's board picks rebounds, assists and threes alone (the last check).
-    const allBoard = nbaBoard(COCKTAIL, { bestMarkets: null }).buildBoard;
+    const allBoard = nbaBoard(COCKTAIL, { bestMarkets: null, bestBy: 'chance' }).buildBoard;
     const b = allBoard({ date: '2026-10-27', season: 2026, games: game(false), sheets: [], pf, results: {} });
     const g = b.games[0];
     // Brown clears 24.5 every night and Pritchard 12.5 (both 100%, so the shrink toward the book's price puts Pritchard's
@@ -64,8 +64,8 @@ describe('the best plays strip', () => {
     const f = allBoard({ date: '2026-10-27', season: 2026, games: game(true), sheets: [], pf, results }).games[0];
     expect(f.sides.BOS.picks.find((x) => x.player === 'Jaylen Brown')).toMatchObject({ actual: 26, hit: true });
     expect(f.sides.BOS.picks.find((x) => x.player === 'Payton Pritchard')).toMatchObject({ actual: null, hit: null });
-    // On the site's board the points plays stay off the strip: nobody here clears a rebounds, assists or threes line.
-    expect(buildBoard({ date: '2026-10-27', season: 2026, games: game(false), sheets: [], pf, results: {} }).games[0].sides.BOS.picks).toEqual([]);
+    // On the chance read of rebounds, assists and threes alone the points plays stay off the strip.
+    expect(nbaBoard(COCKTAIL, { bestBy: 'chance' }).buildBoard({ date: '2026-10-27', season: 2026, games: game(false), sheets: [], pf, results: {} }).games[0].sides.BOS.picks).toEqual([]);
   });
 });
 
