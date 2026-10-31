@@ -39,6 +39,19 @@ describe('lineup positions', () => {
     expect(odd['brady skjei']).toMatchObject({ pos: 'D', line: 1 });
     expect(odd['steven stamkos']).toMatchObject({ pos: 'LW', line: 4 });
     expect(parseLineupRows(rows).NSH['steven stamkos']).toMatchObject({ pos: 'D', line: 1 });
+    // The preview as NHL.com published it that day: the short line first, a seventh defenseman on a row of his own
+    // before the goalies — he is the fourth pair's, not a goalie; the two goalies still read as the starter and the backup.
+    const asPublished = ['Predators projected lineup', "Steven Stamkos -- Ryan O’Reilly", ...rows.slice(1, 4), 'Brady Skjei -- Roman Josi', 'Nicolas Hague -- Nick Blankenburg', 'Justin Barron -- Andreas Englund', 'Daemon Hunt', 'Juuse Saros', 'Justus Annunen'];
+    const full = { NSH: { ...rosters.NSH, 'daemon hunt': { pos: 'D' }, 'justus annunen': { pos: 'G' } } };
+    const p = parseLineupRows(asPublished, full).NSH;
+    expect(p['steven stamkos']).toMatchObject({ pos: 'LW', line: 1 });
+    expect(p[normName('Ryan O’Reilly')]).toMatchObject({ pos: 'C', line: 1 });
+    expect(p['filip forsberg']).toMatchObject({ pos: 'LW', line: 2 });
+    expect(p['daemon hunt']).toMatchObject({ pos: 'D', line: 4 });
+    expect(p['juuse saros']).toMatchObject({ pos: 'G', line: 1 });
+    expect(p['justus annunen']).toMatchObject({ pos: 'G', line: 2 });
+    // Without a roster the lone row is a goalie, as before.
+    expect(parseLineupRows(asPublished).NSH['daemon hunt']).toMatchObject({ pos: 'G', line: 1 });
   });
 
   test('a stored skater takes the snapshot position; a newer snapshot replaces it or hands back the box code', () => {
