@@ -49,8 +49,11 @@ const dalG = [0.4, 0.34, 0.28, 0.26, 0.2, 0.18, 0.16, 0.14, 0.11, 0.1, 0.09, 0.0
 export const game = {
   id: 2026020150, away: 'MTL', home: 'DAL',
   sides: [
-    { team: 'MTL', opp: 'DAL', venue: 'A', skaters: skaters('MTL', 'DAL', 'A', mtlSog, mtlG), defense: dalDefense, propfinder: dalTabs, plays: { shots: [{ name: 'Cole Caufield', market: '3+ SOG', prob: 0.62, stat: 'sog', min: 3 }], goals: [{ name: 'Nick Suzuki', market: '1+ G', prob: 0.31, stat: 'g', min: 1 }] } },
-    { team: 'DAL', opp: 'MTL', venue: 'H', skaters: skaters('DAL', 'MTL', 'H', dalSog, dalG), defense: mtlDefense, propfinder: mtlTabs, plays: { shots: [{ name: 'Jason Robertson', market: '3+ SOG', prob: 0.58, stat: 'sog', min: 3 }], goals: [] } },
+    { team: 'MTL', opp: 'DAL', venue: 'A', skaters: skaters('MTL', 'DAL', 'A', mtlSog, mtlG), defense: dalDefense, propfinder: dalTabs, plays: { shots: [{ name: 'Cole Caufield', market: '3+ SOG', prob: 0.62, stat: 'sog', min: 3 }], goals: [{ name: 'Nick Suzuki', market: '1+ G', prob: 0.31, stat: 'g', min: 1 }] },
+      // The goalie likely in net (lib/nhl-data/goalies-pure.js `likelyStarter`): his season line from the stored box scores, the save percentage shrunk toward the league's.
+      goalie: { id: 8478470, name: 'Sam Montembeault', team: 'MTL', gp: 8, starts: 7, sa: 210, sv: 192, ga: 18, pct: 0.914, svPct: 0.908, savesPerStart: 27.4, l5: { starts: 5, sv: 27.6, sa: 30.2, pct: 0.914 }, startsRecent: 7, reason: "7 of the team's last 10 starts", b2b: false, held: false, other: { id: 8482487, name: 'Jakub Dobes', starts: 3, svPct: 0.9 } } },
+    { team: 'DAL', opp: 'MTL', venue: 'H', skaters: skaters('DAL', 'MTL', 'H', dalSog, dalG), defense: mtlDefense, propfinder: mtlTabs, plays: { shots: [{ name: 'Jason Robertson', market: '3+ SOG', prob: 0.58, stat: 'sog', min: 3 }], goals: [] },
+      goalie: { id: 8479193, name: 'Jake Oettinger', team: 'DAL', gp: 9, starts: 9, sa: 240, sv: 220, ga: 20, pct: 0.917, svPct: 0.91, savesPerStart: 24.4, l5: { starts: 5, sv: 24, sa: 26.4, pct: 0.909 }, startsRecent: 9, reason: "9 of the team's last 10 starts", b2b: false, held: false, other: { id: 8479496, name: 'Casey DeSmith', starts: 2, svPct: 0.9 } } },
   ],
   verdicts: { MTL: { headline: 'Leaky defense away', tier: 'leaky' }, DAL: { headline: 'Tight defense at home', tier: 'tight' } },
   total: { headline: 'Average scoring · 6.0 goals', tier: 'average', projected: 6.0, league: 6.1 },

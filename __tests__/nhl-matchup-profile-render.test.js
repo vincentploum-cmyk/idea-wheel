@@ -28,7 +28,7 @@ describe('MatchupProfile renders', () => {
     for (const label of ['Shooting', 'Allows', 'Saves', 'Power play', 'Penalty kill', 'Last 10']) expect(html).toContain(`>${label}</div>`);
     expect((html.match(/class="nhlx-prof-row is-(?!head)/g) || []).length).toBe(6);
     expect(html).toContain('>Saves</div>');
-    expect(html).toContain('~27 saves expected · 29.5 shots faced · .906 save % </span>');
+    expect(html).toContain('~27 saves expected · 29.5 shots faced · Montembeault likely · .908 over 7 starts</span>');
     expect(html).toMatch(/nhlx-prof-word is-soft[^>]*>Strong</);
     expect(html).toMatch(/nhlx-prof-word is-tough is-very[^>]*>Elite</);
     expect(html).toContain('<span class="nhlx-prof-detail"><span>29.7 shots · 2.83 goals a game on the road (6 games) · </span><span>9th of 32 in shots</span></span>');

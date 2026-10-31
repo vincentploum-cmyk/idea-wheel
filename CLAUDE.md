@@ -1155,6 +1155,32 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   short, the row on its lead market, a "Got" column with the figure and a tally in the game head. The model's math is untouched.
   Study: `docs/shots-goals-predictors.md` (section 13 is the every-angle scan and the replay; `tools/predictors/run.sh <year>`
   rebuilds it, `explain.py` reads one skater-game).
+  **Goalies and the Saves table** (`lib/nhl-data/goalies-pure.js` + `goalies.js`; Vincent, 2026-10-31: "record the saves as part
+  of the box scores … they should be listed as a best bet if it's applicable"): the game records have carried every goalie's
+  line since the first ingest (`game.goalies` in `game.js`: shots against `sa`, saves `sv`, goals against `ga`, `toi`, the
+  `starter` flag, the `decision`); `writeGoalieRows` (every `ingestGames`) indexes them per season at
+  `data/goalie-rows/<season>.json` (`GOALIE_ROW_FIELDS`, the skater rows' shape) and `POST /api/nhl/data/refresh?only=goalies
+  [&season=]` rebuilds a season's file from every stored game (`rebuildGoalieRows`, run once on 2026-10-31 for 2026);
+  `loadGoalieRows(date)` reads this season's and last season's. `goalieBook(rows, season, { through })` reads every team's
+  goalies before the date (appearances, starts, shots, saves, the raw and the **shrunk save percentage** — his own toward
+  the league's at shots / (shots + `SV_K` = 150), the league's this season from 2,000 shots, `LEAGUE_SV` = .900 before —,
+  saves a start, his last five starts, starts in the team's last `STARTER_WINDOW` = 10 games; last season's goalies stand in
+  for a team without a game, `held`) and `likelyStarter(book, team, date)` names the goalie likely in net: the most starts
+  over the team's last ten, **the other goalie on the second night of a back-to-back when the usual one started last night**
+  (`reason` says which; no confirmed starter is read anywhere — the beat writers' goalie lines are skipped by the lineup
+  parser, so the rink's "in net" is a read, not a report). The slate puts him on every side as `goalie` (with `other`, the
+  team's second goalie) and the stored game's goalie lines on `log.goalies`. **The profile's Saves row** reads his own
+  percentage from three starts (the team's from ShotPropz until then), names him ("Montembeault likely · .908 over 7
+  starts") and, once stored, the goalie who played and his line ("got Oettinger 30 of 33"). **Best bets' Saves table**
+  (`saves` on every board game in `picks.js`, `SavesTable` in `PicksPanel.jsx`, the third table of the grid): each side's
+  likely starter facing the shots the board expects of the opponent (its lineup's λ shots summed, ten skaters at least) ×
+  his save percentage = the projected saves (`savesRow`), the chance of 25 / 30 / 35 saves (`savesChance`: a normal around
+  the projection, `SAVES_SD` = 6 shots × the save percentage) with the break-even price, **30+ the play** (`SAVES_LEAD`,
+  a row under `SAVES_FLOOR` = 50% there is dimmed as under the floor, `pickSaves`); once the game is stored the goalie's
+  own line grades the row (`withSavesActuals`: 30+ hit or miss, "another goalie played" when the read was on the wrong
+  man, `played: false`), and the game head's tally counts the saves plays with the shots and goal plays. No book line for
+  saves is in the data (the NHL PropFinder pull keeps skaters' stats and no props), so the play is the chance of the
+  30-save mark, not an edge over a price. `__tests__/nhl-goalies.test.js`.
   The **shuffle** on its own tab (`#shuffle`, `components/nhl/ShufflePanel.jsx` with its own slate-date picker, the
   date riding on every card open; `GET /api/nhl/data/shuffle?date=` → `buildShuffle` in `picks.js`, which is
   `buildPicks(date, { withSkaters: true })` reshaped; the pure readers in `lib/nhl-data/shuffle-pure.js`): a bar for
