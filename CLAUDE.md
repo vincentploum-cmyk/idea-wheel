@@ -1024,11 +1024,19 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   above its rink on 2026-10-27 — gets that team's row from the stored window, ranked among the table's teams,
   `stood` on the table and the tab marked `source: 'stored'`, `withStoodTeams`),
   chips carrying the latest saved model run's λ shots / goals for the slate date from
-  `lib/nhl-data/model-runs.js`, or a matchup read when no run exists; at the top of each rink card the model's plays
-  for that team (`sidePlays` in `slate.js`, `ModelPlays` in `Rink.jsx`): the Best bets boards' rule, `boardPlays` in
-  `model-core.js` (shared with the Model tab's boards and the scorecard's replay), two shots plays and two goal plays at
-  most from the saved run, each on the floor it cleared with the attack-score tier, the picked skaters ringed on the ice,
-  each play washed green (hit the floor) or red (fell short) with the box-score figure once the game is stored, dashed and dimmed when the skater has no box-score row, nothing shown without a run; finished games show the
+  `lib/nhl-data/model-runs.js`, or a matchup read when no run exists; at the top of each rink card **the team's rows on
+  Best bets** (`withBoardPlays` in `picks.js`, applied by `GET /api/nhl/data/slate` over `buildPicks`; `ModelPlays` in
+  `Rink.jsx`, headed "Best bets · SEA vs CGY"): every skater of the team over the floor on that game's Best bets table
+  (3+ SOG at 50%, 1+ goal at 35%, a fill-in marked `under` is no play), the chance as Best bets prints it (calibrated;
+  the figure as stated on the hover) with the break-even price on the pill, the picked skaters ringed on the ice, each
+  play washed green (hit the floor) or red (fell short) with the box-score figure once the game is stored, dashed and
+  dimmed when the skater has no box-score row. Vincent, 2026-10-31: Gaudreau stood on the SEA strip at 1+ G 22%
+  ("Thin") and scored, and was nowhere on Best bets — until then the strip was the run's own plays by the Model tab's
+  boards' rule (`sidePlays` in `slate.js`, `boardPlays` in `model-core.js`: a goal play at the run's own 1+ G over 18%,
+  two of each at most, the attack-score tier on the pill), the run's goal figure the model check had found overstated;
+  `sidePlays` stays on the slate object and stands in for a game the board does not carry (the strip headed "Model's
+  plays" then), and `boardPlays` keeps the Model tab's boards and the scorecard's replay. Nothing shown without a run or
+  a board; finished games show the
   box score; above each game's team verdicts a game-total read, `gameTotalRead` in
   `lib/nhl-data/verdict.js`: the stored meetings' totals blended with MoneyPuck's expected
   goals and pace, high / low half a goal either side of the league average; and above both, the **matchup
