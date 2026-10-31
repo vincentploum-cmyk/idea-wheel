@@ -1,6 +1,6 @@
 import { authorize } from '@/lib/nhl-data/util';
 import { readJson, writeJson } from '@/lib/nhl-store';
-import { resolveWeek, ensureSchedule, pullPropfinderWeek } from '@/lib/nfl/store';
+import { resolveWeek, ensureSchedule, ensureInjuries, pullPropfinderWeek } from '@/lib/nfl/store';
 import { scheduledSlotDone } from '@/lib/scheduler';
 
 export const runtime = 'nodejs';
@@ -33,6 +33,9 @@ async function handle(request) {
     if (only !== 'propfinder') {
       const { schedule, fetched, resultsStored } = await ensureSchedule(wk, { force: true });
       out.schedule = { games: schedule?.games?.length || 0, finals: (schedule?.games || []).filter((g) => g.final).length, fetched, resultsStored };
+      // ESPN's league injury feed with the schedule: the second word on who plays (lib/picks/injuries.js applyEspnInjuries).
+      const inj = await ensureInjuries(wk, { force: true, schedule });
+      out.injuries = inj.feed ? { at: inj.feed.at, fetched: inj.fetched, rows: inj.feed.rows.length } : { fetched: false };
     }
     if (auth.ok && only !== 'schedule') out.propfinder = await pullPropfinderWeek(wk, { force: url.searchParams.get('force') === '1' });
     return Response.json({ ok: true, ...out }, { headers: { 'Cache-Control': 'no-store' } });

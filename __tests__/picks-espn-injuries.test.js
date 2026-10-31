@@ -2,7 +2,8 @@ import { describe, expect, test } from '@jest/globals';
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseInjuries } from '../lib/nba/espn';
-import { applyEspnInjuries, applyOverrides, applyBoxScores, absentByTeam, isOut } from '../lib/picks/injuries';
+import { parseInjuries as parseNflInjuries } from '../lib/nfl/espn';
+import { applyEspnInjuries, applyOverrides, applyBoxScores, absentByTeam, isOut, statusOf, healthOf } from '../lib/picks/injuries';
 import { normName } from '../lib/nhl-data/names';
 
 // ESPN's league injury feed as served on 2026-10-31 16:02Z, trimmed to IND, POR and UTA (the logos and links dropped).
@@ -95,3 +96,52 @@ describe('the feed over PropFinder’s report (applyEspnInjuries)', () => {
     expect(final.data.players.find((p) => p.name === 'Pascal Siakam')).toMatchObject({ injury: 'Out', injuryFrom: 'boxscore' });
   });
 });
+
+describe('ESPN’s NFL injury feed', () => {
+  // The feed as served on 2026-10-31 16:14Z, trimmed to SEA and DEN (the week 9 practice reports and reserve lists).
+  const feed = parseNflInjuries(JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/espn-nfl-injuries.json'), 'utf8')));
+  test('practice reports and reserve lists read into the board’s spellings', () => {
+    expect(feed.rows).toHaveLength(50);
+    const by = Object.fromEntries(feed.rows.map((r) => [r.name, r]));
+    expect(by['Talanoa Hufanga']).toMatchObject({ team: 'DEN', pos: 'S', status: 'Out', fantasy: 'OUT', detail: 'Ankle' });
+    expect(by['Zach Allen']).toMatchObject({ team: 'DEN', status: 'Questionable', raw: 'Questionable' });
+    expect(by['Tyler Badie']).toMatchObject({ team: 'DEN', status: 'IR', raw: 'Injured Reserve', fantasy: 'IR' });
+    expect(by['Jadarian Price']).toMatchObject({ team: 'SEA', status: 'IR', fantasy: 'IR-R', detail: 'Chest' });   // designated to return: still IR this week
+    expect(by['Charles Cross']).toMatchObject({ team: 'SEA', status: 'Doubtful' });
+    expect(by['Connor O\'Toole']).toMatchObject({ team: 'SEA', status: 'Active', fantasy: null, detail: null });   // a full practice: listed active, reads In
+    expect(healthOf(by['Connor O\'Toole'].status)).toBe('In');
+    expect(by['Zach Charbonnet'].detail).toBe('Knee - ACL Surgery');
+    for (const r of feed.rows) expect(['In', 'DTD', 'Out']).toContain(healthOf(statusOf(r.status)));
+    expect(feed.rows.filter((r) => isOut(statusOf(r.status))).map((r) => r.name).sort()).toEqual(['Charles Cross', 'Jadarian Price', 'Jonah Elliss', 'RJ Harvey', 'Talanoa Hufanga', 'Tyler Badie']);
+  });
+  test('the NFL spellings the feed uses elsewhere', () => {
+    const j = { timestamp: 't', injuries: [{ displayName: 'Buffalo Bills', injuries: [
+      { athlete: { displayName: 'A One', team: { abbreviation: 'BUF' } }, status: 'Out', details: { fantasyStatus: { abbreviation: 'INACTIVE' } } },
+      { athlete: { displayName: 'B Two', team: { abbreviation: 'BUF' } }, status: 'Out', details: { fantasyStatus: { abbreviation: 'PUP-R' }, type: 'Knee' } },
+      { athlete: { displayName: 'C Three', team: { abbreviation: 'BUF' } }, status: 'Suspension', details: { fantasyStatus: { abbreviation: 'RESERVE-SUS' } } },
+      { athlete: { displayName: 'D Four', team: { abbreviation: 'BUF' } }, status: 'Suspension', details: {} },
+    ] }] };
+    const rows = parseNflInjuries(j).rows;
+    expect(rows.map((r) => [r.name, r.status, statusOf(r.status)])).toEqual([['A One', 'Out', 'Out'], ['B Two', 'PUP', 'PUP'], ['C Three', 'Suspended', 'Suspended'], ['D Four', 'Suspension', 'Suspended']]);
+    expect(rows.every((r) => isOut(statusOf(r.status)))).toBe(true);
+  });
+  test('over PropFinder’s NFL report: Active clears a listing, Questionable stands in its class, IR comes in', () => {
+    const P = (name, team, extra = {}) => ({ id: `pf-${name}`, name, key: normName(name), team, pos: 'WR', games: [], props: [], ...extra });
+    const pf = { at: '2026-10-31T13:00:00Z', data: { players: [
+      P('Leonard Williams', 'SEA', { injury: 'Questionable', injuryDetail: 'Achilles', injuryFrom: 'report', injuryDate: '2026-10-29' }),   // ESPN: a full practice Friday, Active
+      P('Rashid Shaheed', 'SEA', { injury: 'Questionable', injuryDetail: 'knee', injuryFrom: 'report', injuryDate: '2026-10-29' }),        // both Questionable: PropFinder's stands
+      P('Tyler Badie', 'DEN'),                                                                                                                  // PropFinder has nothing, ESPN IR
+      P('Nobody Listed', 'DEN', { injury: 'Out', injuryDetail: 'hip', injuryFrom: 'report', injuryDate: null }),                              // not on ESPN's list: in
+    ], injuries: { rows: [] } } };
+    const out = applyEspnInjuries(pf, feed);
+    const by = Object.fromEntries(out.data.players.map((p) => [p.name, p]));
+    expect(by['Leonard Williams']).toMatchObject({ injury: 'Active', injuryFrom: 'espn', injuryListed: { status: 'Questionable' } });
+    expect(healthOf(by['Leonard Williams'].injury)).toBe('In');
+    expect(by['Rashid Shaheed']).toMatchObject({ injury: 'Questionable', injuryFrom: 'report' });
+    expect(by['Tyler Badie']).toMatchObject({ injury: 'IR', injuryFrom: 'espn', injuryDetail: 'Thumb Fracture' });
+    expect(by['Nobody Listed']).toMatchObject({ injury: null, injuryFrom: 'espn', injuryListed: { status: 'Out' } });
+    expect(absentByTeam(out).DEN.map((a) => a.name)).toEqual(['Tyler Badie']);
+    expect(absentByTeam(out).SEA).toBeUndefined();
+  });
+});
+
