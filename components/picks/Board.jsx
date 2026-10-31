@@ -1,6 +1,7 @@
 'use client';
 
 import { fmtOdds } from '@/lib/nfl/odds';
+import { asStated } from '@/lib/picks/calibration';
 import { ICON } from '@/components/nhl/flags';
 import { GameCharacteristics } from '@/components/nhl/Characteristics';
 
@@ -48,7 +49,7 @@ function Row({ r, final, sport }) {
         </div>
       </td>
       <td className="ir-nfl-play"><b>{playLabel(r)}</b><small title={sourceTitle} className={r.confirmed ? 'is-confirmed' : ''}>{source}</small></td>
-      <td className={`is-num is-lead${r.hit == null ? '' : r.hit ? ' is-hit' : ' is-miss'}`}><b>{pct(r.p)}</b><small>{r.fair}</small></td>
+      <td className={`is-num is-lead${r.hit == null ? '' : r.hit ? ' is-hit' : ' is-miss'}`} title={r.raw != null ? `${pct(r.p)} calibrated${asStated(r.raw)}` : undefined}><b>{pct(r.p)}</b><small>{r.fair}</small></td>
       <td className="is-num is-wide"><b>{fmtOdds(r.odds)}</b><small>{r.edge == null ? (r.book || '—') : `${r.edge >= 0 ? '+' : ''}${Math.round(r.edge * 100)} pts`}</small></td>
       {final ? <td className="is-num nhlx-pk-got">{r.actual === null || r.actual === undefined ? <small>DNP</small> : <><b>{r.actual}</b><small>{r.unit}</small></>}</td> : null}
     </tr>

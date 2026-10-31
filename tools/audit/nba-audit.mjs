@@ -24,6 +24,7 @@ import { makeShuffle } from '../../lib/picks/shuffle.js';
 import { gradeBoard, gradePredictors, summarize, asOf, etDate, PREDICTORS } from '../../lib/picks/scorecard.js';
 import { normName } from '../../lib/nhl-data/names.js';
 import { OWN_WEIGHTS, ENV_WEIGHT, upperTail } from '../../lib/picks/projection.js';
+import { calibrationOf, playChance, rungFit, calibrated, calibrate } from '../../lib/picks/calibration.js';
 
 const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const DATE = arg('--date'); const RAW = arg('--raw', '.nhl-data/audit/nba'); const OUT = arg('--out', '.nhl-data/audit/out'); const FROM = arg('--from', null);
@@ -427,6 +428,38 @@ else {
   if (dayPlays) { const s = sum.bySlate.find((x) => x.key === DATE); line(`The chance read on the slate: ${s.plays} plays, said ${pct(s.all.said)}, hit ${pct(s.all.hit)} (Brier ${s.all.brier}); on the board ${s.board.n}, said ${pct(s.board.said)}, hit ${pct(s.board.hit)}.`); line(); }
 }
 
+// The calibration the site learns from its graded nights (lib/picks/calibration.js), walked forward: each night printed
+// through the fit learned on the nights before it (refitted every night, every seven over a long replay), only the
+// keys whose own held-out check passed; the stated and printed chances graded side by side.
+{
+  line('## The calibration, walked forward (lib/picks/calibration.js)');
+  line();
+  const REFIT = graded.length > 40 ? 7 : 1;
+  let cal = null; const plays = []; const rungsOut = [];
+  for (let i = 0; i < graded.length; i++) {
+    if (i > 0 && i % REFIT === 0) cal = calibrationOf(graded.slice(0, i));
+    for (const x of graded[i].plays) plays.push({ market: x.market, side: x.side, stated: x.p, printed: playChance(cal, x.market, x.side, x.p), hit: x.hit, fitted: !!cal });
+    for (const r of graded[i].rungs) rungsOut.push({ market: r.market, stated: r.p, printed: calibrated(rungFit(cal, r.market), r.p), hit: r.hit, fitted: !!cal });
+  }
+  const brier = (rows, k) => r4(mean(rows.map((r) => (r[k] - r.hit) ** 2)));
+  const band = (rows, k, lo, hi) => { const list = rows.filter((r) => r[k] >= lo && r[k] < hi); return list.length ? `${list.length} · ${pct(mean(list.map((r) => r[k])))} → ${pct(mean(list.map((r) => r.hit)))}` : '—'; };
+  const report = (label, rows) => {
+    const on = rows.filter((r) => r.fitted);
+    line(`**${label}** (${on.length} graded after the first fit, ${on.filter((r) => r.printed !== r.stated).length} of them printed calibrated; refit every ${REFIT} night${REFIT === 1 ? '' : 's'}):`);
+    line();
+    table(['Chance', 'Brier', '50–60%: n · said → hit', '60–70%', '70–80%', '80%+'], [['As stated', 'stated'], ['As printed', 'printed']].map(([l, k]) => [l, brier(on, k), band(on, k, 0.5, 0.6), band(on, k, 0.6, 0.7), band(on, k, 0.7, 0.8), band(on, k, 0.8, 1.01)]));
+    const markets = [...new Set(on.map((r) => r.market))];
+    table(['Market', 'graded', 'printed calibrated', 'Brier as stated', 'Brier as printed'], markets.map((m) => { const list = on.filter((r) => r.market === m); return [m, list.length, list.filter((r) => r.printed !== r.stated).length, brier(list, 'stated'), brier(list, 'printed')]; }));
+  };
+  report('Plays', plays);
+  report('Ladder rungs', rungsOut);
+  const last = calibrationOf(graded);
+  line(`The calibration over every night replayed (${last.nights} nights, ${last.plays} plays, ${last.rungs} rungs): per read and market, what a stated 60% / 70% / 80% prints, the check on the last nights it never saw (Brier as stated → calibrated) and whether the board would print it.`);
+  line();
+  table(['Read', 'Key', 'n', 'a', 'b', '60%', '70%', '80%', 'check', 'printed'], [...Object.entries(last.reads.plays).map(([k, f]) => ['play', k, f]), ...Object.entries(last.reads.rungs).map(([k, f]) => ['rung', k, f])].map(([read, k, f]) => [read, k, f.n, f.a, f.b, pct(calibrate(f, 0.6)), pct(calibrate(f, 0.7)), pct(calibrate(f, 0.8)), f.check ? `${f.check.stated} → ${f.check.calibrated} (${f.check.n})` : '—', f.use ? 'yes' : 'no']));
+}
+// Every graded chance as stated (`--graded`), the shape the site's `/api/nba/scorecard?rows=1` exports.
+if (process.argv.includes('--graded')) fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-graded.json`), JSON.stringify({ rows: { plays: graded.flatMap((g) => g.plays.map((x) => ({ slate: g.key, key: x.key, market: x.market, side: x.side, line: x.line, p: x.p, odds: x.odds, onBoard: x.onBoard, hit: x.hit }))), rungs: graded.flatMap((g) => g.rungs.map((r) => ({ slate: g.key, key: r.key, market: r.market, line: r.line, p: r.p, model: r.model, emp: r.emp, main: r.main, hit: r.hit }))) } }));
 fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}.md`), md.join('\n'));
 fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-summary.json`), JSON.stringify(sum, null, 1));
 const cols = Object.keys(extra[0] || {}).filter((k) => k !== 'minutes');

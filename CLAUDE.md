@@ -22,7 +22,7 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard, the data
   sources, the default; on the NBA page the night's plays in one ranked list over the games folded to a line each,
   below) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
-  drawn on both panels); the NBA page a third, `#firstbasket`. The NHL app has eight (below).
+  drawn on both panels); the NBA page a third, `#firstbasket`. The NHL app has nine (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)
@@ -198,6 +198,28 @@ config and keeps its own markets, teams, feeds and slate key:
   row carries `mFrom` and `matchup`): per stat and by where the matchup came from (the cheat sheet, the cheat sheet
   and PropFinder, PropFinder alone, no table), the projection's average miss as it stood and with the matchup taken
   out, green where the matchup helped — the cheat sheets graded on the stored nights, which the replay cannot do.
+- **The calibration** (`calibration.js`; Vincent, 2026-10-30, after the NHL's: "do the same calibration for the NBA board"):
+  the NBA board prints its chances calibrated to what the same stated chance has landed on this season's graded nights.
+  Two reads, fitted per market: a play's chance (`chanceOf`; over / yes and under / no apart, `playKey`) and a rung's
+  (`ladderOf`'s tail + cleared-it mix, which the Tonight table, the court's bar, the card's ladder and the shuffle print);
+  the NHL's fit (`fitHeight` in `lib/nhl-data/calibration-pure.js`: landed = σ(a + b · logit(stated)), ridge toward the
+  identity, 300 chances and 25 hits at least). **A fit prints only after it has beaten the stated chance on nights it never
+  saw** (`fitChecked`: fitted again on the nights before the last `CHECK_NIGHTS` = 3 and scored there, Brier, `CHECK_MIN` =
+  100 chances; `use` on the fit), since no export of the site's graded nights had been read when it shipped. The
+  board's math is untouched: `makeBoard`'s `buildBoard({ calibration })` moves a play's `p` (the floors, the order, the
+  edge and the fair price read it) and every rung's `p` (`ladderOf(…, { cal })`, `rungFit`), the stated chance beside it as
+  `raw` on the play, the rung, `ranges[market]`, the side's picks and `best`; `board.calibration` = `appliedOf` + the
+  fits; the shuffle reads the market's rung fit off the board (`calibrated` on its payload): the board's blend prints
+  calibrated, a window or the line under Read from as stated (`readAt`'s `raw` only on the blend). Every hover of a
+  printed chance names the stated figure (`asStated`). Learned by the store's `scorecardFor(…, { save: true })`
+  (`nba/meta/calibration.json`, `calibrate: true` in the NBA store's config; never rewritten unchanged): the scorecard
+  route's season-to-date read (the Scorecard panel and the shuffle's verdict on open) and `relearnCalibration` in the
+  background whenever a refresh stores new box scores (the 2:11 AM job). The scorecard grades the chances as stated
+  (`gradeSlate` replays without it, `raw ?? p` on its records) and shows the calibration under "The calibration"
+  (`CalibrationTable`: a stated 50 / 60 / 70 / 80% → printed, the check, on the board or not); `GET
+  /api/nba/scorecard?rows=1` (the sync token reads it too) exports every graded play and rung as stated. Replayed walk-forward
+  (`nba-audit.mjs`'s "The calibration, walked forward", `--graded` writes the rows): `docs/audits/2026-10-30-nba-calibration.md`.
+  The NFL board passes none: its chances print as stated.
 - `propfinder.js` (`makePropfinder`): `/<LEAGUE>/teams` and `/<LEAGUE>/players?teamIds=…&hydrate=stats&withOddsOnly=true`
   through `pfGetJson` in `lib/nhl-data/propfinder-api.js`. The NHL endpoints were checked; the
   NFL / NBA game-row field names have not been seen yet, so every stat is read through the
@@ -442,7 +464,23 @@ config and keeps its own markets, teams, feeds and slate key:
   ranks-only grid for five stats stood there on 2026-10-30 for a day — Vincent: "I need the propfinder data above each
   court again like how we had it") and every active player's projection per stat (`ranges[stat].exp`) tinted soft / tough by the
   matchup at his envPos, a play over the floor ringed with its line and chance under the figure, a row opening the card
-  — and "Show the courts and the tables" for the courts below and the five group tables. A player listed day-to-day
+  — and "Show the courts and the tables" for the courts below and the five group tables. **Since that evening the games
+  come first, open** (Vincent, after the courts gained the bar: "I don't see the courts nor the shuffle bars in the best
+  plays tab", then "too many clicks. I need the games listed first along with the best bets"): `NbaBoard` draws the games
+  before the ranked list, every game open (`closed` set in `NbaSlate`, Collapse all / Expand all in the head, `GameFold`
+  takes `open` / `onToggle`), and an opened game shows **the game profile** (`components/nba/NbaProfile.jsx` from
+  `profile` on the board game, `lib/nba/profile.js` `gameProfile(g, defense, sides)` through `makeBoard({ profile })`:
+  firsthalfscore.com's layout, Vincent's ask the same night in place of the characteristics card — one row per aspect,
+  the two teams side by side, each cell a word (Elite · Strong · Average · Weak · Very weak by `levelOf`, Average for the
+  middle half; High / Low on the expected points; Tightening / Loosening / Steady on the last ten; the positions a
+  defense leaks to, "Holds" when none) over the figures — expected points, scoring, defense, the last ten, what it gives
+  up to each position for points / rebounds / assists / threes from the opponent side's `allowed` table (PropFinder's
+  rank and the cheat sheet's tile named, `rankBlend` deciding), rebounding, ball movement, threes with their share of the
+  points, the line, ball security, forcing turnovers, the defensive glass, defending the three, and the players the cheat
+  sheet names on the side; `__tests__/nba-profile.test.js`; the characteristics card stays as the fallback for a game
+  without a profile and on the NFL board), then the two courts (each with PropFinder's table, the stat tabs and the
+  shuffle bar, every player's projections, **who is out under the court** — Vincent, the same night — and the Tonight
+  table), and "Show the team columns and the tables" folds the columns and the five group tables. A player listed day-to-day
   is no longer greyed on the court or in the Tonight table (`p.out`, not any injury listing). Class names `ir-gf-*`:
   the start screen owns `ir-game` / `ir-games`.
 - The courts (`components/nba/NbaCourt.jsx`, the rink's basketball twin, drawn by `GameFold` behind the opened
@@ -456,7 +494,9 @@ config and keeps its own markets, teams, feeds and slate key:
   tonight's opponent gives up to that position for the stat picked in the tabs above each court (Points ·
   Rebounds · Assists · Threes · Steals · Blocks, `COURT_METRICS`, one setting for the slate as the rink's Shots / Goals
   switch; steals and blocks since 2026-10-30, `LADDER_MARKETS` in `lib/nba/picks.js` and `SHUFFLE_MARKETS` carry them,
-  so every player has a range and a ladder for both). **Under the tabs the stat's shuffle bar** (`CourtBar`, Vincent,
+  so every player has a range and a ladder for both). **The card's order since that night: PropFinder's table with its
+  window tabs, then the stat tabs with the shuffle bar under them, then the court** (Vincent: "put the shuffle bar right
+  under the propfinder table so I can see the table, the bar (incl type) and the court in 1 view"). **The stat's shuffle bar** (`CourtBar`, Vincent,
   2026-10-30: "a shuffle bar that I can move … the % displayed next to the player on the court"): the Shuffle tab's
   heights for the stat (`SHUFFLE_MARKETS`), one height per stat for the slate (`CourtShuffleProvider` in `NbaCourt.jsx`,
   wrapping the board in `NbaBoard.jsx`: the bar heights and the night's shuffle payload per stat — `GET /api/nba/shuffle`,
@@ -753,6 +793,59 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   model's Stage 1 steps (−6% at most for a tight defense) lose to the fitted elasticity (deviance 1.47 vs 1.27 this
   season) and its team goals read loses to the league average early; the script read at the skater level puts the
   Best bets rows from 62% said → 55% hit to 60% → 58% (goals 40% → 35% to 39% → 39%). Proposals there; nothing changed.
+- The NBA board's chances, calibrated (`docs/audits/2026-10-30-nba-calibration.md`, `nba-audit.mjs`'s walk-forward section;
+  Vincent, 2026-10-30: "do the same calibration for the NBA board"). The replay is at stand-in lines without a price. Over
+  2025-26, walked forward (refitted weekly, with the site's check), every market printed at or under its stated Brier
+  (plays 0.2381 → 0.2366, rungs 0.1408 → 0.1404). The play read overstates (a stated 60–70% landed 55%; 57% as printed,
+  b 0.52–0.68 for points, rebounds, assists, PRA). The rungs were near honest (b 0.82–0.88), steals and blocks less so
+  (0.71–0.74). This season's first week overstated more than the nights after, so the check kept points, rebounds,
+  assists and PRA rungs as stated through Oct 29. The site's own fit, on book lines, is the one the board prints.
+- What it takes (`docs/audits/2026-10-30-nhl-what-it-takes.md`, `tools/predictors/thresholds.py`; Vincent, 2026-10-30:
+  what a skater needs in stats and environment to get 3 / 4 / 5 / 6 shots and 1 / 2 / 3 goals, the last three weeks,
+  then "forget about last season": this season's numbers alone). 5,159 skater-games, Oct 9–29, rules fitted on the
+  first two weeks and checked on the third. Base rates 21.6% / 9.7% / 4.1% / 1.7% for 3+ … 6+ SOG, 15.1% / 2.0% / 13
+  games for 1+ … 3+ goals. At 3.5+ shots a game: 3+ 52%, 4+ 34%, 5+ 22%, 6+ 11.5%, 1+ goal 33% (56% / 37% / 25% / 14% /
+  35% with 5+ games behind the rate; a rate from one to four games reads well short). Attempts and shots a game sort
+  the shot nights (AUC 0.71–0.82), scoring chances the goals (0.68–0.88). The opponent's position table, read against
+  the league's at the position (the raw per-skater figure sorts forwards from defensemen), sorted nothing for shots or
+  one goal (0.50–0.55); the opponent's goals against a game leaned toward the big shot nights (0.53–0.60), the shots it
+  allows at the position toward multi-goal nights; the goalie's save % nothing; home a little. The rare marks' rules
+  fell back to the base rate on the check week. Descriptive; nothing changed.
+- Patterns (`docs/audits/2026-10-30-nhl-patterns.md`, `tools/predictors/patterns-rows.mjs` → `patterns.py`; Vincent, 2026-10-30:
+  every data point, rules per line, pills; then "expand to October 16 through October 29", the check weeks): 6,648
+  skater-games of this season (all 148 games), 239 figures each, a beam search of one- to three-condition rules per line
+  on Oct 1–15 (12+ skaters a rule, every condition worth two points), checked on Oct 16–29 (3,370 skater-games): the
+  check weeks kept 90% / 99% / 100% / 94% of the lift for 3+ / 4+ / 5+ / 6+ SOG and 90% / 66% for 1+ / 2+ goals. 3+ SOG
+  is volume, minutes and a ceiling (a 6+ shot game on record, 18–20+ minutes lately, chances at the venue: 55–63%); 4+
+  SOG attempts per 60 or unblocked attempts with minutes (36–44%); 1+ goal his volume at tonight's venue with first-line
+  minutes (40–49%); the opponent's goals against L5 adds 3–5 points inside the shot rules; among 2+ shots-a-game skaters
+  the opponent's attempts / chances / shots allowed move 3+ SOG 6–8 points bottom fifth to top on Oct 1–15 and 11–14 on
+  Oct 16–29, as the tables fill; streaks are colour but for the point streak; one rule clears 20% for 5+ SOG, none the
+  bar at 6+ SOG or 2+ goals (the 3.5+ shots-a-game tier fills 6+). The rules feed the Patterns tab (above).
+- The season backtest (`docs/audits/2026-10-30-nhl-season-backtest.md`, `tools/predictors/patterns_backtest.py`; Vincent,
+  2026-10-30: "did you backtest and improve / combine rules to get as close as possible to 100%", then "just backtest it on
+  all games of the 26/27 season"): every night from Oct 8 graded with what was known that morning — the Patterns rules
+  re-mined weekly on the weeks before, a logistic + boosted-trees model on all 239 figures retrained every morning, volume
+  alone, Vincent's environment + streak picks, and the hindsight ceiling (Poisson at each skater's true season rate, his
+  future games in). The ceiling's best three a night land 3+ SOG 61% and 1+ goal 35%: 100% is not on the table. The
+  model's 60%+ calls landed 61% at 3+ SOG (8 a night), its 70%+ 66% (2 a night); the walk-forward pills' 50%+ picks
+  landed 46% (30 a night), their 1+ goal picks 33% — the pills' figures run high. Environment + streak: for goals the
+  environment adds a point on top of the run (a goal last game 21%, with a top-10 opponent 22%); for shots it adds 5–9
+  (3+ SOG in two straight 41%, with a top-10 high-danger-chances opponent over its last five 50%).
+- The top of the night (`docs/audits/2026-10-30-nhl-top-of-night.md`, `tools/predictors/precision_curve.py`; Vincent, 2026-10-30:
+  "it's always 46%. I don't buy this"): on 2025-26 from November (40,524 skater-games, every rate a month in), the top 1–3
+  picks a night land 3+ SOG 64–67% whatever the read (his rate, the model, his true rate in hindsight) and 1+ goal 37–48%;
+  the league's best shooter (MacKinnon, 4.41 a game) went 3+ in 76% of his games, its best scorers scored in 42–49% of
+  theirs. The 46% of the season backtest was every pick over the bar, 30 a night, not the top of the night.
+- The model, checked on this season (`docs/audits/2026-10-30-nhl-model-check.md`, `tools/predictors/model_check.py` on the
+  scorecard export; Vincent, 2026-10-30: "test whether the model still works on this season's games"): 158 games, 5,371
+  skater-games against the run saved before each puck drop. It ranks the night right (3+ SOG: its top pick a night 73%,
+  16 of 22) but overstates the top: 60%+ calls said 73% and landed 57%, 80%+ said 86% and landed 61%; 4+ SOG at 50%+ said
+  61%, landed 43%. Its 1+ goal figure does not hold: 35%+ calls said 50%, landed 25%; 50–60% calls landed 18%. The
+  study's read on the same rows says it straight (1+ goal at 35%+: 40% said, 37% landed). The same day Best bets and the
+  shuffle print the board's chances calibrated (Vincent: "yes build the calibration and merge it"; the bullet
+  "Calibration" under Automation): a logistic recalibration per height, fitted before Oct 22 and read after it, landed
+  where it says (3+ SOG said 54% → landed 53%, said 45% → 50%; the run's own figures said 65% → 46%, 79% → 59%).
 
 ## Canonical locations
 
@@ -781,7 +874,7 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   skater's games-played count in as his away shot base and his shots as goals.
 - Scheduled by `.github/workflows/nhl-data.yml` (daily results + lineups) and
   `nhl-lineups.yml` (hourly pre-game lineup reads); Mac folder sync in `tools/mac-sync`.
-- Signed-in page = eight hash tabs (`#teams`, `#matchups`, `#defense`, `#firstgoal`, `#model`, `#shuffle`, `#league`,
+- Signed-in page = nine hash tabs (`#teams`, `#matchups`, `#defense`, `#firstgoal`, `#model`, `#shuffle`, `#patterns`, `#league`,
   `#history`); it opens on Matchups. The Defense tab (`components/nhl/DefensePanel.jsx`, helpers in `lib/nhl-data/defense-board.js`, data from
   `/api/nhl/data/defense`, which also carries the date's games and MoneyPuck's team rates) is the ShotPropz-style cheat sheet:
   what every team gives up to each position group (C / LW / RW / D, C / W / D, F / D) in shots or goals **per skater at the
@@ -800,7 +893,13 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   of the season replayed against each span's table as it stood that morning, by third of the opponent's table at the skater's
   position and at the side's softest spot, lift against the skaters' own blended rates and the 3+ SOG / 1+ G rate, and by the
   opponent's rank — `ranks` per span and metric, each rank's read with `top`, ranks 1 through it together, drawn as the strip
-  under the thirds table so the tab says how far down the table the soft read holds), and a team overview
+  under the thirds table so the tab says how far down the table the soft read holds), **by line** (Vincent, 2026-10-30:
+  "against which line a team allows the most goals / shots, LW1, LW2 …"; `LineTable` off the API's `slots` =
+  `defenseBySlot` for the span, `slotBoard` / `facingAt` / `SLOT_LINES` in `defense-board.js`): every team's shots or
+  goals given up to the skater at each slot a game, LW1 … RW4 under their line and D1 … D3 under the pairs, every column
+  ranked and tinted by third, a cell from 3 skater-games, and the **softest line** first — the slot where the team ranks
+  highest against the league, a tie to the one furthest over the league's mean (its raw highest is nearly always its
+  first line) — with the opponent's skater at that slot tonight, clickable to his card; a slot's header sorts by it, and a team overview
   (GA / GP, SA / GP from the stored box scores; xGA / 60, high-danger shots against and pace from MoneyPuck), each column ranked;
   between them "Running hot" (`lib/nhl-data/streaks.js`, `streaks` in the defense API): every skater's current goal / point /
   3+ SOG streak from this season's stored games, his last game and tonight's opponent read off the same tables at his
@@ -1028,6 +1127,51 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   shuffle listed him fourth), and the panel's head says when `NHL_PICKS_STUDY_WEIGHT` blends the study into the λ;
   only the Top 5 boards, the rinks' strips and the scorecard's replay keep `boardPlays`' rule (4+ / 5+ with the attack
   score, 1+ / 2+ with a slice of it), so they can reorder near-ties.
+- **Calibration** (`lib/nhl-data/calibration-pure.js` + `calibration.js`; Vincent, 2026-10-30, after the model's own figures
+  were graded on this season — its 60%+ 3+ SOG calls said 73% and landed 57%, its 35%+ goal calls said 50% and landed
+  25% —: "yes build the calibration and merge it"): **Best bets and the shuffle print the board's chances calibrated** to
+  what the same stated chance has landed this season. Per read (`board` = the run's λ blended with the study's at the
+  board's weights, `study` = the study's alone, for a slate without a run) and per height (1+ … 8+ SOG, 1+ … 3+ goals) a
+  logistic recalibration of the stated chance on the season's graded runs, landed = σ(a + b · logit(stated)) by maximum
+  likelihood with a light ridge toward the identity (`fitHeight`, `CAL_RIDGE` = 2; a height under `CAL_MIN` = 300 games
+  or 25 hits keeps the stated chance); a skater's chance at a height through it, never above his chance one height lower
+  (`calibratedChance`). On this season's runs the run's 3+ / 4+ SOG tails came out at b ≈ 0.5 on every split (a stated
+  80% prints about 62%), the study's goal read at b ≈ 0.9; binned rates shrunk toward the stated chance were tried first
+  and kept too much of the overstatement at the top on the held-out week. **The model's math is untouched**: the run's λ
+  and its own odds stay the run's (the Model tab, the rinks' strips, the scorecard grade them as they are); only the
+  printed chance moves. `computePicks` reads it with the slate (`loadCalibration`: `data/scorecard/calibration.json`, else
+  the seed `lib/nhl-data/seed/calibration.json`, fitted on the scorecard export of Oct 30 by
+  `tools/predictors/calibration-seed.mjs`) and runs every candidate through `calibrateProjection` — p2 / p3 / p4 / p1g
+  calibrated, the stated ones as `raw`, the floors and the notes on the calibrated figure — when the stored fit was
+  learned at the board's weights (`calibrationFits`: another `NHL_PICKS_STUDY_WEIGHT` is another read, printed as stated
+  until the next build); the payload's `calibration` { read, at, from, to, games, fits } goes to the panel's head and the
+  shuffle, whose rows carry the fits (`row.cal`) so `chanceAt` / `readAt` print the board's read calibrated (every other
+  "Read from" as its Poisson tail; `raw` on the read for the hover). Learned again by every season-range `buildScorecard`
+  (`saveCalibration` beside `saveBestRead`: the History tab's first grade, the morning refresh), never rewritten
+  unchanged. Hover a chance on Best bets or the shuffle for the figure as stated.
+- **Patterns** (`#patterns`, `components/nhl/PatternsPanel.jsx` with its own slate-date picker, `GET /api/nhl/data/patterns?date=`
+  → `buildPatterns` in `lib/nhl-data/patterns.js`; Vincent, 2026-10-30: "look at literally every data point that is
+  available to detect patterns … rules per line … the outcome should be pills like firsthalfscore.com"): every skater in
+  tonight's lineups gets a pill per line — 3+ / 4+ / 5+ / 6+ SOG, 1+ / 2+ / 3+ goals — solid with a check (a pick) when a
+  rule the study kept fires and its rate clears the line's bar (`bar` per mark: 50 / 33 / 20 / 11%, 35 / 9 / 3%, about
+  what a book asks), outlined with his figure otherwise (the strongest rule he meets, else his shots-a-game tier, else the
+  base rate); the conditions behind the picks underneath as small pills (`describe`, his values), with notes beside them
+  (a point / 3+ SOG / goal run, his venue split at ±20%, the opponent's high-danger chances allowed to his position over
+  the last five in its top or bottom sixth, a top-five goals-against team); "Strongest tonight" per line, then every game
+  folded to a line; picks ringed green / red once the game is stored; hover a pill for its rule, its check week and its
+  record since. The features: `lib/nhl-data/patterns-pure.js` (pure, shared with the study): `makeTracker` / `patternTable`
+  walk this season's stored rows date by date (`seasonStart`; nothing from last season, Vincent's call of the same day),
+  each skater-game's 239 figures from the games before it — his sog / icf / iff / iscf / ihdcf / g / a / pts / toi / hits
+  / blk over the season and his last 3 / 5 / 10, per 60, his hit shares and runs (`str_*`, `cold_*`, `since_*`), his split
+  at tonight's venue (`ven_*`), his head to head, what the opponent gives up per skater at his position by window and at
+  the venue (`opp_pos_<stat>[_l5|_l10|_ven]`, `_x` = × the league's at the position, `_rk` = rank, 1 the most), to his slot
+  (`opp_slot_*`), the teams' totals for and against with ranks (`opp_{s,c,f,sc,hdc,g}a`, `team_*f`), pace, rest. The rules:
+  `lib/nhl-data/patterns-rules.json`, written by `tools/predictors/patterns.py` (below, Audits); `pillsFor` picks the
+  strongest rule a skater meets, `rulesCatalog` sends each rule once and the pills carry `rule` + `vals`. A rule's rate
+  moves with the games after the study (`patternRecord`: from `rules.builtThrough` on, each night read with the rates as
+  they stood that morning, the study's out-of-sample figure carried in at 30 skater-games), and those nights are the
+  record shown under the head. The season walked once per stored rows and date (`memoByRows`), the build per store state.
+  Re-mine with the study's commands (the README in `tools/predictors/`) to move `builtThrough`.
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching: the roster decides a row's group, a pair
   holds a defenseman and two forwards side by side are a short forward line, three pairs at most, and a

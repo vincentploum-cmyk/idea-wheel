@@ -7,6 +7,7 @@ import { boardRead, windowRead, blendText, dampText, pullText } from '@/lib/pick
 import { seasonTag } from '@/lib/nba/teams';
 import { SHUFFLE_MARKETS } from '@/lib/nba/markets';
 import { heightsOf, lineOf, readAt } from '@/lib/picks/shuffle';
+import { asStated } from '@/lib/picks/calibration';
 import SidePicks from '@/components/picks/SidePicks';
 import { useNbaPlayerCard } from './NbaPlayerCard';
 
@@ -210,7 +211,7 @@ function barText(read, height, metric) {
   const book = read.book ? ` · the book's o${read.book.line}${read.exact ? '' : ' (the nearest rung above)'} at ${fmtOdds(read.book.odds)}${read.edge != null ? `, edge ${read.edge >= 0 ? '+' : ''}${Math.round(read.edge * 100)}` : ''}` : ' · no price at this line';
   const cleared = read.cleared ? ` · cleared it in ${read.cleared.n} of his last ${read.cleared.of}` : '';
   const got = read.got === undefined ? '' : read.got == null ? ' · did not play' : ` · got ${read.got}: ${read.hit ? 'cleared' : 'short'}`;
-  return `At the bar, ${height}+ ${label} (o${read.line}): ${pct(read.p)} to clear it, the shuffle's read (fair ${fmtOdds(read.fair)})${book}${cleared}${got}`;
+  return `At the bar, ${height}+ ${label} (o${read.line}): ${pct(read.p)} to clear it, the shuffle's read (fair ${fmtOdds(read.fair)})${asStated(read.raw)}${book}${cleared}${got}`;
 }
 
 /**
@@ -323,7 +324,7 @@ function RangeCell({ p, market, final }) {
   const play = playFor(p, market);
   const got = final && play?.actual != null ? play.actual : null;
   const ladder = p.ladders?.[market] || [];
-  const title = `${p.player} · ${STAT_LABEL[market]} tonight: expected ${num(r.exp)}, between ${r.floor} and ${r.ceiling} half the nights (his own games, centred on the matchup)${r.line != null ? ` · the book's o${r.line}: ${pct(r.p)} to clear${r.odds != null ? ` at ${fmtOdds(r.odds)}` : ''}` : ''}${got != null ? ` · got ${got}` : ''}\n${ladder.map((x) => `o${x.line} ${pct(x.p)}`).join(' · ')}`;
+  const title = `${p.player} · ${STAT_LABEL[market]} tonight: expected ${num(r.exp)}, between ${r.floor} and ${r.ceiling} half the nights (his own games, centred on the matchup)${r.line != null ? ` · the book's o${r.line}: ${pct(r.p)} to clear${r.odds != null ? ` at ${fmtOdds(r.odds)}` : ''}${asStated(r.raw)}` : ''}${got != null ? ` · got ${got}` : ''}\n${ladder.map((x) => `o${x.line} ${pct(x.p)}`).join(' · ')}`;
   const tone = r.p == null ? '' : r.p >= 0.55 ? 'soft' : r.p < 0.35 ? 'tough' : 'mid';
   return (
     <td className={`ir-range-cell${got != null ? (got > (r.line ?? -1) ? ' is-hit' : ' is-miss') : ''}`} title={title}>
@@ -420,20 +421,18 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
         <div><b>{sport.teamName(side.team)} <small>{side.venue === 'H' ? 'vs' : 'at'} {sport.teamName(side.opp)}</small></b></div>
       </div>
       <SidePicks side={side} sport={sport} final={final} heading={false} onOpen={(pl) => open({ key: pl.key, player: side.players.find((p) => p.key === pl.key) || null, team: side.team, opp: side.opp, venue: side.venue, market: pl.market })} />
-      <div className="nhlx-rk-toggle">
+      {/* The table, then the stat tabs with the bar, then the court: one view (Vincent, 2026-10-30: "put the shuffle bar right
+          under the propfinder table so I can see the table, the bar (incl type) and the court in 1 view"). The window tabs
+          ride on the table (`onWin`); a window tints the zones and fills the table, the chips keep the board's figure. */}
+      <AllowedTable side={side} win={view} metric={metric} season={season} onWin={setWin} onPos={setHiPos} hiPos={hiPos} />
+      <div className="nhlx-rk-toggle ir-court-stat">
         <small>Stat</small>
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Which stat the court reads">
-          {COURT_METRICS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={metric === k} className={`nhlx-tab${metric === k ? ' is-active' : ''}`} onClick={() => onMetric?.(k)} title={`Zones by the ${l.toLowerCase()} ${side.opp} gives up to each position; the bar under the tabs asks for ${l.toLowerCase()}, every chip showing his chance to clear it`}>{l}</button>)}
+          {COURT_METRICS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={metric === k} className={`nhlx-tab${metric === k ? ' is-active' : ''}`} onClick={() => onMetric?.(k)} title={`Zones by the ${l.toLowerCase()} ${side.opp} gives up to each position; the bar asks for ${l.toLowerCase()}, every chip showing his chance to clear it`}>{l}</button>)}
         </div>
-        <small>{side.opp} allows over</small>
-        <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label={`Window of ${side.opp}'s defense`}>
-          {windows.map((k) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setWin(k)} title={`${WINDOW_TEXT[k]}${k === 'season' ? ': the table the board’s projections read' : ': tints the zones and fills the table; the chips keep the board’s figure, the hover says what this window would read'}`}>{windowLabel(k, side.allowed, season)}</button>)}
-        </div>
-        {windows.length === 1 ? <small className="nhlx-rk-toggle-note">{side.allowed ? 'no last-N rows in the pull yet' : 'no table yet'}</small> : view !== 'season' ? <small className="nhlx-rk-toggle-note">tint and table only: the chips keep the board’s read off this season’s table</small> : null}
+        {view !== 'season' ? <small className="nhlx-rk-toggle-note">zones tinted by {windowLabel(view, side.allowed, season)}; the chips keep the board’s read off this season’s table</small> : null}
       </div>
       {sh ? <CourtBar metric={metric} side={side} sh={sh} rows={rows} /> : null}
-      <OutLines side={side} oppOut={oppOut} />
-      <AllowedTable side={side} win={view} metric={metric} season={season} onPos={setHiPos} hiPos={hiPos} />
       <div className={`nhlx-rk ir-court${hiPos ? ' is-picking' : ''}`}>
         <CourtMarkings clipId={clipId} tones={tones} />
         {Object.keys(ZONES).map((z) => {
@@ -446,6 +445,8 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
         })}
         {Object.keys(ZONES).map((z) => <ZoneLabel key={z} zone={z} allowed={allowed} metric={metric} opp={side.opp} win={view} />)}
       </div>
+      {/* Who is out, under the court (Vincent, 2026-10-30: "who is out should be under the court"). */}
+      <OutLines side={side} oppOut={oppOut} />
       {extras.length ? <p className="nhlx-rk-extras nhlx-auto-meta"><b>Also:</b> {extras.map((p) => { const read = readFor(p); const proj = boardRead(p, metric, side.allowed, envPos(p)); return `${p.player} (${p.pos || '—'}${proj.value != null ? `, ${num(proj.value)} ${STAT_LABEL[metric]} tonight` : ''}${read ? `, ${height}+ ${pct(read.p)}` : ''})`; }).join(' · ')}</p> : null}
       <PlayersTable side={side} final={final} />
     </section>

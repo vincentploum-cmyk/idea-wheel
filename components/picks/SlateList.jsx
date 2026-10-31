@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { playLabel } from './Board';
+import { asStated, calibrationNote } from '@/lib/picks/calibration';
 
 // The slate in one list (the NBA board's first view since 2026-10-30; Vincent: "you have built a website which makes
 // it so incredibly difficult to find good match ups easily"): every play over the floor on the night, ranked by its
@@ -53,7 +54,7 @@ export default function SlateList({ board, sport, onOpen = null }) {
     <section className="ir-slate" aria-label="Every play tonight">
       <div className="nhlx-pfd-head">
         <b>Every play tonight, the likeliest first</b>
-        <small className="nhlx-auto-meta">{rows.length} play{rows.length === 1 ? '' : 's'} over the floor across {board.games.length} game{board.games.length === 1 ? '' : 's'}{onOpen ? ' · click a row for the card' : ''}</small>
+        <small className="nhlx-auto-meta">{rows.length} play{rows.length === 1 ? '' : 's'} over the floor across {board.games.length} game{board.games.length === 1 ? '' : 's'}{onOpen ? ' · click a row for the card' : ''}{board.calibration?.plays?.length ? <span title={calibrationNote(board.calibration)}> · chances calibrated</span> : null}</small>
       </div>
       <div className="ir-slate-bar">
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Stat">
@@ -116,7 +117,7 @@ export default function SlateList({ board, sport, onOpen = null }) {
                       </div>
                     ) : <small className="ir-slate-sub">no projection</small>}
                   </td>
-                  <td className="is-num is-lead ir-sl-chance"><b>{pct(r.p)}</b><small>{r.fair}</small></td>
+                  <td className="is-num is-lead ir-sl-chance" title={r.raw != null ? `${pct(r.p)} calibrated to what this season's ${r.label} plays have landed${asStated(r.raw)}` : undefined}><b>{pct(r.p)}</b><small>{r.fair}</small></td>
                   <td className="is-num ir-sl-price"><b>{fmtOdds(r.odds)}</b><small>{r.edge == null ? (r.book || '—') : `${r.edge >= 0 ? '+' : '−'}${Math.abs(Math.round(r.edge * 100))} pts`}</small></td>
                   <td className="ir-sl-spot">{r.spot?.rank ? <span className={`ir-spot is-${tone}`} title={`${r.opp} gives up ${r.spot.value != null ? `${num(r.spot.value)} ${r.unit} a game` : `the #${r.spot.rank} most`} to ${r.spot.pos}s, #${r.spot.rank} of ${r.spot.count}`}>#{r.spot.rank} {r.spot.pos} · {TONE_WORD[tone] || ''}</span> : <span className="ir-spot is-none">no table</span>}</td>
                   {final ? <td className="is-num nhlx-pk-got ir-sl-got">{r.actual === undefined ? <small>—</small> : r.actual === null ? <small>DNP</small> : <><b>{r.actual}</b><small>{r.unit}</small></>}</td> : null}

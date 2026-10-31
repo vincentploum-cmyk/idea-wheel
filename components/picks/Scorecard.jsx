@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { plainSummary } from '@/lib/picks/scorecard-words';
+import { calibrate, CHECK_NIGHTS } from '@/lib/picks/calibration';
 
 // The picks scorecard (/api/<sport>/scorecard): every stored slate's board replayed with only what
 // was known before the games and graded against the box scores. The verdict at the top says it in
@@ -29,6 +30,44 @@ function OffBy({ s }) {
   return <td className={`is-num${cls}`} title={`Actually hit minus board said over ${s.n} plays; green = hit more often than the board said, red = less often`}>{d > 0 ? '+' : ''}{d.toFixed(0)} pts</td>;
 }
 const Hit = ({ s }) => <td className="is-num">{s?.n ? <><b>{pct(s.hit)}</b><small>{s.n}</small></> : '—'}</td>;
+
+/**
+ * The calibration learned from the graded nights (lib/picks/calibration.js, `report.calibration`): per read and market,
+ * what a stated chance prints after it, and the check on the newest nights the fit never saw that decides whether the
+ * board prints it.
+ */
+function CalibrationTable({ cal, labels }) {
+  const rows = [
+    ...Object.entries(cal.reads?.plays || {}).map(([k, f]) => ({ k: `p:${k}`, read: 'Play', label: `${labels[k.split(':')[0]] || k.split(':')[0]}${k.endsWith(':under') ? ' (under / no)' : ''}`, f })),
+    ...Object.entries(cal.reads?.rungs || {}).map(([k, f]) => ({ k: `r:${k}`, read: 'Ladder', label: labels[k] || k, f })),
+  ];
+  if (!rows.length) return null;
+  const at = (f, p) => pct(calibrate(f, p));
+  return (
+    <div className="nhlx-db-table-wrap">
+      <table className="nhlx-db-table nhlx-mu-table nhlx-sc-table">
+        <thead>
+          <tr>
+            <th>Read</th><th>Stat</th><th className="is-num" title="Graded chances behind the fit">Graded</th>
+            <th className="is-num" title="What a stated 50% prints after the calibration">50% →</th><th className="is-num">60% →</th><th className="is-num">70% →</th><th className="is-num">80% →</th>
+            <th className="is-num" title={`The fit learned on the nights before the last ${CHECK_NIGHTS}, scored on those ${CHECK_NIGHTS}: accuracy as stated → calibrated (${ACCURACY})`}>Check on unseen nights</th>
+            <th title="The board prints this read calibrated only when the check came out better">On the board</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ k, read, label, f }) => (
+            <tr key={k} className={f.use ? '' : 'is-muted'}>
+              <td>{read}</td><td><b>{label}</b></td><td className="is-num">{f.n.toLocaleString()}</td>
+              <td className="is-num">{at(f, 0.5)}</td><td className="is-num">{at(f, 0.6)}</td><td className="is-num">{at(f, 0.7)}</td><td className="is-num">{at(f, 0.8)}</td>
+              <td className="is-num">{f.check ? <>{acc(f.check.stated)} → <b>{acc(f.check.calibrated)}</b><small>{f.check.n}</small></> : '—'}</td>
+              <td>{f.use ? 'calibrated' : 'as stated'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 /** Rows of { label, all, board }: plays / board said / actually hit / off by, then the board's own plays. */
 function SplitTable({ title, rows, first = 'Split' }) {
@@ -330,6 +369,12 @@ export default function Scorecard({ sport }) {
               <>
                 <h3 className="nhlx-sc-h">The two halves of a chance <small>every rung of every player with a box score: read off his range, off his past, and the two together as the board shows it</small></h3>
                 <LaddersTable ladders={report.ladders} />
+              </>
+            ) : null}
+            {report.calibration?.reads ? (
+              <>
+                <h3 className="nhlx-sc-h">The calibration <small>what each chance the board states is printed as, learned from these {report.calibration.nights} graded nights; the tables above grade the chances as stated</small></h3>
+                <CalibrationTable cal={report.calibration} labels={Object.fromEntries([...(report.markets || []), ...(report.ladders || [])].map((m) => [m.key, m.label]))} />
               </>
             ) : null}
             <h3 className="nhlx-sc-h">By {unit}</h3>

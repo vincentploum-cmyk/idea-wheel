@@ -202,7 +202,20 @@ describe('the NBA board is kept per slate files', () => {
     expect(await nba.shuffleFor(slate, 'reb')).not.toBe(sh1);
     // A new pull is a new board.
     await nhlStore.writeJson('nba/2026-10-20/propfinder.json', pf);
-    expect((await nba.boardFor(slate, { refresh: false })).games).not.toBe(b1.games);
+    const b3 = await nba.boardFor(slate, { refresh: false });
+    expect(b3.games).not.toBe(b1.games);
+    expect(b3.calibration).toBeNull();
+    // A calibration the season's scorecard stored: a new board, its rungs printed through it, the stated chance beside.
+    const fit = { a: -0.4, b: 0.6, n: 2000, hits: 900, check: { from: '2026-10-18', n: 500, stated: 0.25, calibrated: 0.24 }, use: true };
+    await nhlStore.writeJson('nba/meta/calibration.json', { at: '2026-10-20T09:00:00Z', from: '2026-10-08', to: '2026-10-19', nights: 12, plays: 4000, rungs: 30000, reads: { plays: {}, rungs: { pts: fit } } });
+    const b4 = await nba.boardFor(slate, { refresh: false });
+    expect(b4.games).not.toBe(b3.games);
+    expect(b4.calibration).toMatchObject({ nights: 12, rungs: ['pts'] });
+    const rung = b4.games[0].sides.BOS.players[0].ladders.pts.find((r) => r.main);
+    expect(rung.raw).toBeGreaterThan(rung.p);
+    expect((await nba.shuffleFor(slate, 'pts')).calibrated).toMatchObject({ a: -0.4, b: 0.6 });
+    await nhlStore.writeJson('nba/meta/calibration.json', {});
+    expect((await nba.boardFor(slate, { refresh: false })).calibration).toBeNull();
   });
   test('the admin’s injury override reaches the board, the shuffle and the card through the stored pull', async () => {
     const nba = require('../lib/nba/store');
