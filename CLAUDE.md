@@ -440,6 +440,18 @@ config and keeps its own markets, teams, feeds and slate key:
   yards, pass TDs, targets, rush attempts, completions) with a `step` per market in `markets.js` (pass yards 25, rush and
   receiving yards 10, receptions 1 …), so each side's players carry `ladders` and `ranges`; the environment is the
   opponent's row at the depth-chart slot when PropFinder lists one (WR1 … RB2, `envPosFor`), else the position.
+- **The matchup profile** under each game head (`lib/nfl/profile.js`, `gameProfile(g, defense, sides)` through
+  `makeBoard({ profile })`, drawn by the shared `components/nhl/MatchupProfile.jsx` from `components/picks/Board.jsx`;
+  Vincent, 2026-10-31: "now do the same profile for the NFL board"): the two teams side by side, five rows — Passing
+  (yards a game with the passing touchdowns), Rushing (yards with the rushing touchdowns), End zone (touchdowns a game
+  with the interceptions thrown, 1st = the fewest), Allows (yards allowed, passing and rushing, 1 = the most, with the
+  touchdowns allowed and the last ten when the pull carries them), Soft spots (passing to the quarterbacks, rushing to
+  the backs, receiving to the receivers and tight ends in the soft third, from the opponent side's `allowed` table,
+  PropFinder's rank with the cheat sheet's tile blended) — each cell a word over one line with the rank phrases toned
+  (`lib/picks/profile-words.js`, the NHL's and the NBA's words), the defense pill in each head (yards allowed in
+  thirds), the expected touchdowns as the card's pill when the sides carry `teamProj.td`; the characteristics card stays
+  as the fallback for a game without a profile. `__tests__/nfl-profile.test.js` (the builder, the render; `MOCK_OUT`
+  writes `profile-nfl-<theme>.html` for `tools/mock/screenshot-profile.mjs`).
 - Routes (`authorize()`, admin session or sync token): `GET /api/nfl/picks?season&week&type|date`,
   `GET /api/nfl/shuffle?season&week&type&market`, `GET /api/nfl/scorecard?season&from&to`,
   `GET|POST|DELETE /api/nfl/sheets`, `POST /api/nfl/refresh?only=schedule|propfinder`
