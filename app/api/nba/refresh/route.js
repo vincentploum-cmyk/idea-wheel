@@ -1,5 +1,5 @@
 import { authorize, DATE_RE } from '@/lib/nhl-data/util';
-import { resolveSlate, ensureSchedule, pullPropfinderSlate, publicRefreshAllowed, relearnCalibration } from '@/lib/nba/store';
+import { resolveSlate, ensureSchedule, ensureInjuries, pullPropfinderSlate, publicRefreshAllowed, relearnCalibration } from '@/lib/nba/store';
 import { scheduledSlotDone } from '@/lib/scheduler';
 
 export const runtime = 'nodejs';
@@ -41,6 +41,9 @@ async function handle(request) {
     if (only !== 'propfinder') {
       const { schedule, fetched, resultsStored } = await ensureSchedule(slate, { force: true });
       out.schedule = { games: schedule?.games?.length || 0, finals: (schedule?.games || []).filter((g) => g.final).length, fetched, resultsStored };
+      // ESPN's league injury feed with the schedule: the second word on who plays tonight (lib/picks/injuries.js applyEspnInjuries).
+      const inj = await ensureInjuries(slate, { force: true, schedule });
+      out.injuries = inj.feed ? { at: inj.feed.at, fetched: inj.fetched, rows: inj.feed.rows.length } : { fetched: false };
       // New box scores: the season's scorecard graded again in the background, the board's calibration learned from it.
       if (resultsStored) relearnCalibration().catch((err) => console.warn('[nba] calibration relearn failed:', err.message));
     }

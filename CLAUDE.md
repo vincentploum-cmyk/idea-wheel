@@ -358,7 +358,26 @@ config and keeps its own markets, teams, feeds and slate key:
   player on the box score who did not play is out ('Out', "did not play", a `boxscore: true` row added), so he leaves the
   tables, the shuffle and the lifts as any out player does; the notes say "Played despite the report: …"; the card's slot
   line names the box score and draws no override buttons. The replay in `gradeSlate` reads the same correction (the
-  board graded knows who sat, the pre-game board did not). **With and without each teammate** (`teammateSplits`, PropFinder's Lineup Lab as
+  board graded knows who sat, the pre-game board did not). **ESPN's league injury feed is the second word before the game**
+  (`parseInjuries` / `fetchInjuries` in `lib/nba/espn.js`, `site.api.espn.com/…/nba/injuries`, free, no login; Vincent,
+  2026-10-31: "Can't we just find another source for the confirmed NBA lineups?" — the NBA's own report PDF and NBA.com's
+  live data answer 403 to the server, ESPN's feeds are served): one dated entry a listed player with RotoWire's word for
+  tonight in `details.fantasyStatus` — OUT / OFS = Out, GTD = a game-time decision (the "Day-To-Day" players and the ones
+  "Out" for their last game who may go tonight), not out — the injury as detail, the expected return and the comment;
+  a player not listed is in. Stored per slate at `nba/<date>/injuries-espn.json` by the store's `ensureInjuries` (with
+  `boardFor`'s refresh and `POST /api/nba/refresh?only=schedule`, read again every `INJURIES_FRESH_MS` = 20 min while the
+  slate is today or later with a game to play, `cfg.injuriesLive`; a past slate keeps its copy) and merged by `pfFor`
+  (`applyEspnInjuries` in `injuries.js`, before the overrides: the hand beats the feed, the box score beats both): the
+  newer word wins — PropFinder's listing stands only when dated after ESPN's entry (or after the feed, for a player ESPN
+  does not list) or when it says the same health class; `injuryFrom: 'espn'`, `injuryEspn` { status, raw, fantasy,
+  returnDate, comment, date }, the listing it replaced as `injuryListed`, the report's rows following (`stale: { espn }`,
+  ESPN's rows `source: 'espn'`, `espnAt`). The notes say what the feed moved ("ESPN's injury feed (read …): Nembhard (IND)
+  in, PropFinder had him Out"), the card's slot line reads " · ESPN" with the entry on the hover, Data sources' PropFinder
+  block says when the feed was read and how many it lists on the slate (`injuries` on `statusFor`), `injuriesAt` rides on
+  the board payload. The feed has no starting fives (ESPN's pre-game summary carries `injuries` per team and no roster;
+  the box score's `starter` flag arrives at tip), so "confirmed" means the report an hour before tip, not the lineup
+  card. `__tests__/nba-espn-injuries.test.js` (`fixtures/espn-nba-injuries.json`, the feed of 2026-10-31 trimmed to IND,
+  POR and UTA). **With and without each teammate** (`teammateSplits`, PropFinder's Lineup Lab as
   far as the logs reach; Vincent's ask, 2026-10-27): `teammates` on the card's payload = for every pulled teammate
   who took part in three of his games at least, his averages (minutes, points, rebounds, assists, threes) over the
   games they shared and over his games the teammate sat, the gap, and the teammate's health tonight; drawn under
