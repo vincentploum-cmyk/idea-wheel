@@ -1661,7 +1661,14 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   PropFinder's player view — top bar (headshot, position badge, shot form, graph average, average
   TOI; the badge is the night's lineup slot, "LW1 tonight", read from the position snapshot for the
   panel's slate date (`slotOnSnapshot` → `tonight` in the payload; the panel's date rides on every open()
-  through `SlateDateContext`), the roster position noted when it differs), market tabs carrying the hit rate for the pressed split, the Over + line block, the
+  through `SlateDateContext`), the roster position noted when it differs; **the slot the opener passed wins when it carries a
+  line** — the rink chip's, the slate's skater — and the snapshot read stands in for an opener that knows no slot: Vincent,
+  2026-10-31, the rink had Chinakhov at LW2 and the card said "RW tonight" (the snapshot held him twice, the preview's
+  "Egor" without an id and the roster's "Yegor" without a line, and the id lookup landed on the roster's); `mergeLineup`
+  in `positions.js` now keys every lineup entry by the roster's spelling (`rosterKeyOf`: the exact key, else the one
+  rostered player with the last name and a first name that starts alike, Yegor / Egor read as one, `sameName`), so the
+  box score, the last-lineup fill and the card find him, and `slotOnSnapshot` prefers the entry placed in the lineup; a
+  player a real lineup leaves out reads "RW · not in the lineup"), market tabs carrying the hit rate for the pressed split, the Over + line block, the
   per-game bar graph (green over / red under, iCF outline with "Total shots", the average pill),
   the split tiles ('25-'26, H2H, Home/Away, L5, L10, L20; press one to draw its games), the splits
   table, and on the right the opponent's "Defense Allowed" panel (`DefenseAllowed` in

@@ -166,8 +166,16 @@ function Card({ req, onClose }) {
   // (his form first; H2H is one tile away when he was opened from a slate).
   const [pickedSpan, setSpan] = useState('l5');
   const [showTotal, setShowTotal] = useState(false);
-  // The night's lineup slot: the snapshot's (read by the server for the panel's date), else the opener's.
-  const tonight = p?.tonight?.pos ? p.tonight : req.pos ? { pos: req.pos, line: req.line ?? null, date: req.date || null, source: null } : null;
+  // The night's lineup slot. The opener's (the rink chip's, the slate's skater: `pos` with a `line`) wins, so the card
+  // reads the slot the rink drew — 2026-10-31 the rink had Chinakhov at LW2 and the card said "RW tonight" off a
+  // snapshot read that landed on his roster entry; then the snapshot's placed slot (read by the server for the
+  // panel's date, for an opener that knows no slot: the database, a league table); then whatever either holds.
+  const snap = p?.tonight?.pos ? p.tonight : null;
+  const mine = req.pos ? { pos: req.pos, line: req.line ?? null, date: req.date || snap?.date || null, source: null, inLineup: true } : null;
+  const tonight = mine?.line ? { ...(snap || {}), ...mine, source: snap && snap.pos === mine.pos && snap.line === mine.line ? snap.source : null }
+    : snap?.line ? snap : mine || snap;
+  // A player the lineup leaves out: the badge keeps his position, the line says so (a roster-only capture places nobody).
+  const scratched = !!tonight && tonight.inLineup === false && ['gamedaytweets', 'lineup', 'propfinder'].includes(tonight.source);
 
   useEffect(() => {
     let live = true;
@@ -230,7 +238,7 @@ function Card({ req, onClose }) {
                 <h3>{p.name}</h3>
                 <PosBadge pos={tonight?.pos || p.pos} />
                 {p.number != null ? <span className="nhlx-pc-num">#{p.number}</span> : null}
-                {tonight ? <span className="nhlx-pc-slot" title={`Lineup position for ${tonight.date || 'tonight'}${tonight.source ? ` (${tonight.source === 'gamedaytweets' ? 'beat writers' : tonight.source === 'lineup' ? 'NHL.com' : tonight.source})` : ''}${p.pos && p.pos !== tonight.pos ? `; listed as ${p.pos} on the roster` : ''}`}>{tonight.pos}{tonight.line || ''} tonight{p.pos && p.pos !== tonight.pos ? ` · ${p.pos} on the roster` : ''}</span> : null}
+                {tonight ? <span className="nhlx-pc-slot" title={`Lineup position for ${tonight.date || 'tonight'}${tonight.source ? ` (${tonight.source === 'gamedaytweets' ? 'beat writers' : tonight.source === 'lineup' ? 'NHL.com' : tonight.source})` : ''}${p.pos && p.pos !== tonight.pos ? `; listed as ${p.pos} on the roster` : ''}`}>{scratched ? `${tonight.pos} · not in the lineup` : `${tonight.pos}${tonight.line || ''} tonight`}{p.pos && p.pos !== tonight.pos ? ` · ${p.pos} on the roster` : ''}</span> : null}
               </div>
               <div className="nhlx-pc-stat" title="How often he reached 3+ and 4+ shots over his last five games">
                 <small>Shot form</small>
