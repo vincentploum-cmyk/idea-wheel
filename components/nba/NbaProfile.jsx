@@ -9,7 +9,6 @@ import { WORD } from '@/lib/nba/profile';
 // 2026-10-31: "I need only 5 rows. Maybe add an offense / defense toggle"), one setting for the slate.
 // Data: `profile` on the board game (lib/nba/profile.js).
 const TONE = { very: 'is-up is-very', strong: 'is-up', average: '', weak: 'is-down', veryWeak: 'is-down is-very' };
-let lastView = 'offense';   // the view picked last, so every game opens on it
 
 function Cell({ c }) {
   if (!c) return <td className="ir-prof-cell"><span className="ir-prof-word">—</span></td>;
@@ -21,12 +20,17 @@ function Cell({ c }) {
   );
 }
 
-export default function GameProfile({ g, sport, initial = null }) {
+/** The view the page opens on: Defense (Vincent, 2026-10-31: "have the defense tab defaulted above the propfinder table"). */
+export const DEFAULT_VIEW = 'defense';
+
+/** `view` / `onView` from the board hold one setting for every game on the page (NbaSlate); alone, the card keeps its own. */
+export default function GameProfile({ g, sport, view: viewProp = null, onView = null }) {
   const p = g.profile;
-  const [view, setView] = useState(initial || lastView);
+  const [own, setOwn] = useState(DEFAULT_VIEW);
+  const view = viewProp || own;
   if (!p?.groups?.length) return null;
   const group = p.groups.find((x) => x.key === view) || p.groups[0];
-  const pick = (k) => { lastView = k; setView(k); };
+  const pick = (k) => { if (onView) onView(k); else setOwn(k); };
   const exp = (team) => g.sides?.[team]?.teamProj?.pts;
   const total = p.teams.every((t) => exp(t) != null) ? Math.round(p.teams.reduce((s, t) => s + exp(t), 0)) : null;
   return (
