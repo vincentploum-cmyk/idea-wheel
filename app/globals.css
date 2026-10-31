@@ -1108,6 +1108,16 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-rk-head > div > b { display: block; color: var(--heading); font-size: 16px; }
 .nhlx-rk-head > div > b small { color: var(--muted); font-weight: 400; font-size: 14px; margin-left: 4px; }
 .nhlx-rk-head > div > small { display: block; color: var(--muted); font-size: 13px; line-height: 1.35; }
+/* Where the lines came from: a pill under the team, green = the writers' warm-up / game tweet, amber = an earlier tweet or the preview, red = a guess. */
+.nhlx-rk-head > div > small.nhlx-rk-lines { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 2px 0 1px; }
+.nhlx-rk-lines > span { color: var(--muted); }
+.nhlx-rk-lines > i { font-style: normal; color: var(--muted); }
+.nhlx-rk-lines-pill { display: inline-block; font-family: var(--font-ui); font-size: 11.5px; font-weight: 700; line-height: 1.5; letter-spacing: 0.02em; font-style: normal; text-decoration: none; color: var(--muted); background: var(--bg-soft); border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; }
+a.nhlx-rk-lines-pill:hover { text-decoration: underline; }
+.nhlx-rk-lines.is-ok .nhlx-rk-lines-pill, .nhlx-rk-lines-pill.is-ok { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-line); }
+.nhlx-rk-lines.is-warn .nhlx-rk-lines-pill { color: var(--warn-fg); background: var(--warn-bg); border-color: var(--warn-line); }
+.nhlx-rk-lines.is-bad .nhlx-rk-lines-pill { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-line); }
+.nhlx-rk-legend i.nhlx-rk-lines-pill { margin-right: 6px; }
 .nhlx-rk-toggle { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; }
 .nhlx-rk-toggle > small { color: var(--muted); font-size: 13px; white-space: nowrap; }
 .nhlx-rk-toggle { flex-wrap: wrap; }
@@ -1538,6 +1548,10 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-pc-top { grid-template-columns: 40px minmax(200px, 1.6fr) repeat(6, minmax(70px, 0.5fr)); }
 @media (max-width: 1100px) { .ir-pc-top { grid-template-columns: 40px minmax(160px, 1.4fr) repeat(3, minmax(70px, 0.5fr)); } .ir-pc-top .nhlx-pc-stat:nth-child(n+6) { display: none; } }
 .ir-pc-plays { margin-top: 16px; }
+.ir-pc-vs { margin-top: 16px; }
+.ir-pc-vs .nhlx-pfd-table td small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+.ir-pc-vs .nhlx-pfd-table tr.is-active td { background: var(--bg-tint); }
+.ir-pc-vs .nhlx-pfd-table td.is-soft { background: var(--pf-soft-bg); } .ir-pc-vs .nhlx-pfd-table td.is-tough { background: var(--pf-tough-bg); }
 .ir-court-table tr.is-click { cursor: pointer; }
 .ir-court-table tr.is-click:hover td { background: var(--bg-tint); }
 .nhlx-pc-stats .nhlx-pfd-table td.is-soft { background: var(--pf-soft-bg); } .nhlx-pc-stats .nhlx-pfd-table td.is-tough { background: var(--pf-tough-bg); }

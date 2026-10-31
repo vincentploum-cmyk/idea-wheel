@@ -53,6 +53,7 @@ const mean = (xs) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : nu
 const pct = (v) => (v == null ? '—' : `${(v * 100).toFixed(1)}%`);
 const f1 = (v) => (v == null ? '—' : Number(v).toFixed(1));
 const f2 = (v) => (v == null ? '—' : Number(v).toFixed(2));
+const f3 = (v) => (v == null ? "—" : Number(v).toFixed(3));
 const readJson = (f) => JSON.parse(fs.readFileSync(f));
 
 // ---- the raw feeds ----
@@ -243,11 +244,14 @@ for (const slate of slates.filter((d) => d >= from)) {
     const pr = side.allowed?.prior?.rows?.[p.envPos]?.[stat]; const prL = side.allowed?.prior?.league?.[p.envPos]?.[stat];
     const matchupPrior = pr?.value != null && prL > 0 ? r3(1 + ENV_WEIGHT * (pr.value / prL - 1)) : null;
     const gp = side.allowed?.rows?.[p.envPos]?.gp ?? null;
-    for (const rung of p.ladders?.[market] || []) rungs.push({ slate, market, line: rung.line, model: rung.model, emp: rung.emp, p: rung.p, proj: rung.proj, sd: rung.sd, n: rung.rates?.n ?? 0, main: !!rung.main, hit: actual > rung.line ? 1 : 0 });
+    const rk = side.allowed?.rows?.[p.envPos]?.[stat]?.rank ?? null; const cnt = side.allowed?.count || 30;
+    for (const rung of p.ladders?.[market] || []) rungs.push({ slate, market, line: rung.line, model: rung.model, emp: rung.emp, wModel: rung.wModel ?? 0.5, p: rung.p, proj: rung.proj, base: rung.base ?? rung.proj, up: rung.reach?.up ?? null, down: rung.reach?.down ?? null, where: rk != null && gp != null ? Math.max(-1, Math.min(1, 1 - (2 * (rk - 1)) / (cnt - 1))) : null, gp, sd: rung.sd, n: rung.rates?.n ?? 0, main: !!rung.main, hit: actual > rung.line ? 1 : 0 });
     extra.push({ slate, game: bg.id, team: side.team, opp: side.opp, key: p.key, player: p.player, pos: p.pos, envPos: p.envPos, market, matchupPrior, gp, exp: r.exp, rate: r.rate, matchup: r.matchup, teamScale: r.team, env: r.env, floor: r.floor, ceiling: r.ceiling, sd: p.ladders?.[market]?.[0]?.sd ?? null, lift: r.lift || 0, liftFrom: r.liftFrom || null, minFactor: r.minutes || null, minutes: p.minutes || null, out: !!p.out, actual, actualMin: line?.min ?? null, withoutN: p.without?.n || 0, withoutW: p.without?.weight || 0,
       // for the per-stat read (docs/audits/2026-10-29-nba-projections.md): his games this season, his own windows, the minutes read, the matchup undamped
       nThis: (logsOf.get(p.key) || []).filter((x) => x.season === SEASON && (x.type === 'REG' || !x.type)).length, ownSeason: p.own?.[stat]?.season ?? null, ownL10: p.own?.[stat]?.l10 ?? null, ownL5: p.own?.[stat]?.l5 ?? null,
-      minTonight: p.minutes?.tonight ?? null, minBase: p.minutes?.base ?? null, rawMatchup: r.matchupFrom?.raw ?? r.matchup ?? null, matchupWeight: r.matchupFrom?.weight ?? null });
+      minTonight: p.minutes?.tonight ?? null, minBase: p.minutes?.base ?? null, rawMatchup: r.matchupFrom?.raw ?? r.matchup ?? null, matchupWeight: r.matchupFrom?.weight ?? null,
+      // for the ceiling read (the cocktail's reach): the stated centre before it, his upside / downside ratios, the opponent's rank at his spot
+      base: r.base ?? r.exp, up: r.reach?.up ?? null, down: r.reach?.down ?? null, rank: side.allowed?.rows?.[p.envPos]?.[stat]?.rank ?? null, count: side.allowed?.count || 30, reachAdd: r.reach?.add || 0 });
   }
 }
 const sum = summarize(graded, {});
@@ -310,6 +314,56 @@ line();
   const rows = extra.filter((r) => r.matchup != null && r.rate != null && r.gp != null);
   const at = (r, K) => { const w = K === 0 ? 1 : r.gp / (r.gp + K); return r.rate * (1 + w * (r.matchup - 1)) * (r.teamScale ?? 1); };
   table(['K', 'n', 'MAE', 'bias'], [0, 3, 5, 10, 20, 40].map((K) => [K === 0 ? '0 (the board)' : K, rows.length, mae(rows, (r) => at(r, K) - r.actual), bias(rows, (r) => at(r, K) - r.actual)]));
+}
+line('### The ceiling read: the centre toward his ceiling in a soft matchup (the cocktail’s reach; Vincent, 2026-10-31)');
+line();
+{
+  // The rows with a table at his spot and his upside on record: the stated centre (before the reach), the opponent's rank placed in
+  // the league (1 = the softest), his top and bottom quarters as ratios on his mean.
+  const rows = extra.filter((r) => r.base > 0 && r.rank != null && r.gp != null && r.up != null && r.down != null && r.actual != null);
+  const whereOf = (r) => Math.max(-1, Math.min(1, 1 - (2 * (r.rank - 1)) / (r.count - 1)));
+  const at = (r, reach, K, down = 0) => { const w = K === 0 ? 1 : r.gp / (r.gp + K); const where = whereOf(r) * w; const add = where > 0 ? reach * where * (r.up - 1) * r.base : -down * -where * (1 - r.down) * r.base; return r.base + add; };
+  line(`${rows.length} projections with a table at his spot and his spread on record. First the question itself: does a player beat his stated centre in a soft matchup, and more so when his nights run high (his upside, the top quarter of his nights over his mean)?`);
+  line();
+  const third = (w) => (w > 1 / 3 ? 'soft' : w < -1 / 3 ? 'tough' : 'middle');
+  const upTier = (u) => (u >= 1.5 ? 'big upside (q75 ≥ 1.5× his mean)' : u >= 1.25 ? 'some upside (1.25–1.5×)' : 'steady (under 1.25×)');
+  const cells = [];
+  for (const t of ['soft', 'middle', 'tough']) for (const u of ['big upside (q75 ≥ 1.5× his mean)', 'some upside (1.25–1.5×)', 'steady (under 1.25×)']) {
+    const list = rows.filter((r) => third(whereOf(r)) === t && upTier(r.up) === u);
+    if (!list.length) continue;
+    cells.push([t, u, list.length, f2(mean(list.map((r) => r.actual - r.base))), pct(mean(list.map((r) => (r.actual - r.base) / r.base))), f2(mean(list.map((r) => Math.abs(r.actual - r.base)))), pct(mean(list.map((r) => (r.actual > r.base * r.up ? 1 : 0))))]);
+  }
+  table(['Matchup third (PropFinder’s rank at his spot)', 'His upside', 'n', 'actual − centre', 'as a share of the centre', 'MAE', 'nights over his ceiling (centre × q75 ratio)'], cells);
+  line('By stat, the soft third against the rest (actual − centre as a share of the centre):');
+  line();
+  table(['Stat', 'soft n', 'soft: actual − centre', 'share', 'middle share', 'tough n', 'tough share'], STATS.map((m) => { const mine = rows.filter((r) => r.market === m); const s = mine.filter((r) => third(whereOf(r)) === 'soft'); const mid = mine.filter((r) => third(whereOf(r)) === 'middle'); const t = mine.filter((r) => third(whereOf(r)) === 'tough'); const sh = (l) => (l.length ? pct(mean(l.map((r) => (r.actual - r.base) / r.base))) : '—'); return [m, s.length, s.length ? f2(mean(s.map((r) => r.actual - r.base))) : '—', sh(s), sh(mid), t.length, sh(t)]; }));
+  line('The reach, measured: the centre + reach × where × (his upside − 1) × the centre in a soft spot (where 1 at rank 1, 0 at the league’s middle), PropFinder’s rank counted at gp / (gp + K); `down` the same toward his floor in a tough spot. MAE over every stat in its own units, then per stat.');
+  line();
+  const grid = [];
+  for (const K of [0, 10, 40]) for (const down of [0, 'same']) for (const reach of [0, 0.1, 0.2, 0.3, 0.5, 0.75, 1]) {
+    if (reach === 0 && (K !== 0 || down !== 0)) continue;
+    const d = down === 'same' ? reach : 0;
+    const err = rows.map((r) => at(r, reach, K, d) - r.actual);
+    const per = STATS.map((m) => { const mine = rows.filter((r) => r.market === m); return mine.length ? f2(mean(mine.map((r) => Math.abs(at(r, reach, K, d) - r.actual)))) : '—'; });
+    const soft = rows.filter((r) => whereOf(r) > 1 / 3); const softErr = soft.map((r) => at(r, reach, K, d) - r.actual);
+    grid.push([reach === 0 ? '0 (the board)' : reach, reach === 0 ? '—' : K, reach === 0 ? '—' : down, rows.length, f3(mean(err.map(Math.abs))), f3(mean(err)), ...per, soft.length, f3(mean(softErr.map(Math.abs))), f3(mean(softErr))]);
+  }
+  table(['reach', 'K', 'down', 'n', 'MAE (all)', 'bias', ...STATS.map((m) => `MAE ${m}`), 'soft-third n', 'soft MAE', 'soft bias'], grid);
+  // The same at the rungs: the model half recentred on the moved centre, every rung of the rows above (the main rung apart).
+  const rungRows = rungs.filter((r) => r.sd > 0 && r.proj != null && r.base != null && r.up != null && r.where != null);
+  if (rungRows.length) {
+    line('At the rungs (the model half recentred, the cleared-it half as it was): the Brier of every rung and of the main rung, the 60–80% bands.');
+    line();
+    const brier = (list, f) => r4(mean(list.map((r) => (f(r) - r.hit) ** 2)));
+    const band = (list, f, lo, hi) => { const l = list.filter((r) => f(r) >= lo && f(r) < hi); return l.length ? `${l.length} · ${pct(mean(l.map(f)))} → ${pct(mean(l.map((r) => r.hit)))}` : '—'; };
+    const reads = [[0, 0, 0], [0.2, 0, 0], [0.3, 0, 0], [0.5, 0, 0], [0.3, 10, 0], [0.3, 40, 0], [0.3, 0, 0.3], [0.5, 0, 0.5]];
+    table(['reach', 'K', 'down', 'rungs', 'blend Brier', 'main rung Brier', 'main: 60–70% n · said → hit', '70–80%', '80%+', 'soft-third main Brier'], reads.map(([reach, K, down]) => {
+      const centre = (r) => { const w = K === 0 ? 1 : r.gp / (r.gp + K); const where = r.where * w; const add = where > 0 ? reach * where * (r.up - 1) * r.base : -down * -where * (1 - r.down) * r.base; return r.base + add; };
+      const f = (r) => { const m = upperTail((r.line - centre(r)) / r.sd); return r.emp == null ? m : r.wModel * m + (1 - r.wModel) * r.emp; };
+      const main = rungRows.filter((r) => r.main); const soft = main.filter((r) => r.where > 1 / 3);
+      return [reach, K, down, rungRows.length, brier(rungRows, f), brier(main, f), band(main, f, 0.6, 0.7), band(main, f, 0.7, 0.8), band(main, f, 0.8, 1.01), soft.length ? brier(soft, f) : '—'];
+    }));
+  }
 }
 line('### His spread widened: the model half at sd × k (every rung)');
 line();

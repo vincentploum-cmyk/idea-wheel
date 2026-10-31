@@ -429,7 +429,7 @@ export default function MatchupsPanel() {
               </GameNumbers>
               )}
               <div className="nhlx-rink-pair">
-                {g.rinkSides.map((s) => <Rink key={s.team} side={s} teamCount={slate.teamCount} posFilter={pos} minGp={minGp} log={g.log} modelRun={slate.modelRun} metric={metric} onMetric={setMetric} pfKey={pfKeys[`${g.id}|${s.team}`] ?? null} onPfKey={(k) => setPfKeys((m) => ({ ...m, [`${g.id}|${s.team}`]: k }))} />)}
+                {g.rinkSides.map((s) => <Rink key={s.team} side={s} teamCount={slate.teamCount} posFilter={pos} minGp={minGp} log={g.log} modelRun={slate.modelRun} startTimeUTC={g.startTimeUTC || null} metric={metric} onMetric={setMetric} pfKey={pfKeys[`${g.id}|${s.team}`] ?? null} onPfKey={(k) => setPfKeys((m) => ({ ...m, [`${g.id}|${s.team}`]: k }))} />)}
               </div>
               <RinkLegend metric={metric} />
               {g.log && <PositionLog game={g} />}

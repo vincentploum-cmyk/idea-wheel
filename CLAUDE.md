@@ -151,7 +151,20 @@ config and keeps its own markets, teams, feeds and slate key:
   read season 0.4 · L10 0.2 · L5 0.1 · L20 0.3 across the seasons), matchupK 40, hitWeights 0.1 / 0.3 / 0.6, ladderModel 0.7, empK 6,
   spreadA 0.2 at 5 games, factorMax 1 (minutes that fell cut a rate, minutes that rose lift none; an out teammate's
   production still arrives through the vacated lift, whole since nothing comes off it for minutes), vacatedShare 0.2
-  (the notes' "Vacated production" line says the share), and `pull` (Vincent, 2026-10-29: "we can't treat them all
+  (the notes' "Vacated production" line says the share), **the ceiling read** (`reach` 0.3, `reachDown` 0, `reachK` 10;
+  Vincent, 2026-10-31: "look at what a player is capable of and then determine the ceiling … Dosunmu has a great matchup
+  today, his line is over 3.5 rebounds but he is capable of getting more when the matchup is good"): in a soft matchup the
+  ladder's centre moves from the stated figure (his rate × the matchup × the side's factor, `base` on every rung and range)
+  toward his ceiling — the top quarter of his nights over his last 82 as a ratio on tonight's figure (`up`) — by reach ×
+  `where`, the opponent's rank at his spot placed in the league (1 the softest, 0 the middle; `reachOf` in `projection.js`:
+  the cheat sheet's tile in full, PropFinder's rank at gp / (gp + reachK), blended as the matchup factor is); a steady
+  player has no ceiling over his rate and does not move; the hovers spell it out (`reachText`), the shuffle's Projected cell
+  carries ⇡, the scorecard's "Before the ceiling read" row (sparse, the nights it moved) grades it against the projection.
+  Measured on 2025-26 (125,045 projections, `docs/audits/2026-10-31-nba-ceiling.md`): a player with upside clears his
+  ceiling as often in the soft third as in the tough one (26.7% / 27.5% / 27.6%) — the table says how much a defense gives
+  up, not on which night his big game comes — so the read is set where it helps (MAE 2.513 → 2.505, most of it the board's
+  low bias; the rungs 0.1393 → 0.1391, the main rung as it was) and no further (reach 1: 2.542, the 60–70% rungs landing
+  55%); the pull toward his floor cost at every weight and is off, and `pull` (Vincent, 2026-10-29: "we can't treat them all
   the same, they depend on different dynamics"): in his first games this season his read, after the without split
   and the volume read and before the minutes factor and the lift, moves toward his role — `roleRates[stat][G|F|C]`,
   the league's rate a minute at his position group from the slate's own sources first — the cheat sheets' player tables
@@ -376,8 +389,15 @@ config and keeps its own markets, teams, feeds and slate key:
   block says when the feed was read and how many it lists on the slate (`injuries` on `statusFor`), `injuriesAt` rides on
   the board payload. The feed has no starting fives (ESPN's pre-game summary carries `injuries` per team and no roster;
   the box score's `starter` flag arrives at tip), so "confirmed" means the report an hour before tip, not the lineup
-  card. `__tests__/nba-espn-injuries.test.js` (`fixtures/espn-nba-injuries.json`, the feed of 2026-10-31 trimmed to IND,
-  POR and UTA). **With and without each teammate** (`teammateSplits`, PropFinder's Lineup Lab as
+  card. **The NFL board reads the same feed** (Vincent, 2026-10-31: "do the same for the NFL board"; `parseInjuries` /
+  `fetchInjuries` in `lib/nfl/espn.js`, `fetchInjuries` / `injuriesLive` on the NFL store — live while the week has a game
+  to play —, the refresh route's schedule branch; `nfl/<season>/<wk>/injuries-espn.json`): the week's practice reports
+  (Active = he cleared, listed as such and read as In; Questionable; Doubtful; Out) and the reserve lists (`NFL_FANTASY`:
+  IR and IR-R = IR, PUP-R = PUP, NFI-R = NFI, RESERVE-SUS = Suspended, INACTIVE = Out; `statusOf` reads "Suspension" as
+  Suspended). The parser both sports share is `parseInjuryFeed` in `lib/picks/injury-feed.js` (client-safe: no names.js),
+  each sport passing its team-code reader and fantasy-status spellings. `__tests__/picks-espn-injuries.test.js`
+  (`fixtures/espn-nba-injuries.json`, the NBA feed of 2026-10-31 trimmed to IND, POR and UTA; `espn-nfl-injuries.json`, the
+  NFL's the same day trimmed to SEA and DEN). **With and without each teammate** (`teammateSplits`, PropFinder's Lineup Lab as
   far as the logs reach; Vincent's ask, 2026-10-27): `teammates` on the card's payload = for every pulled teammate
   who took part in three of his games at least, his averages (minutes, points, rebounds, assists, threes) over the
   games they shared and over his games the teammate sat, the gap, and the teammate's health tonight; drawn under
@@ -600,10 +620,16 @@ config and keeps its own markets, teams, feeds and slate key:
   bar from his shuffle row (`readAt` in `lib/picks/shuffle.js`, so the court's figure is the Shuffle tab's; the book's price
   beside it when a book prices that exact line; "out" or "no logs" for a player the shuffle has no row for; once the game is
   final his figure against the bar's line), the bar's note counting the side's players at 50% or better. **At the book's
-  main line the chip prints the board's play chance** (`mainAt` in `shuffle.js`: `pAt` / `readAt` return `main.p` on the
+  main line the chip prints the board's figure for that line** (`mainAt` in `shuffle.js`: `pAt` / `readAt` return `main.p` on the
   blend read when the height's line is the player's main line, `play: true` on the read, the rung's edge on it too; the
   Shuffle tab's rows the same; Vincent, 2026-10-31, "conflict": the strip said Schröder o2.5 rebounds 72%, the chip 3+
-  80% on the same line — two reads of one line, the play's `chanceOf` and the ladder's rung; one number now). **Every chip
+  80% on the same line — two reads of one line, the play's `chanceOf` and the ladder's rung; one number now). **On the
+  NBA board that figure is the ladder's main rung** (`mainOf` in `shuffle.js`, `main.from: 'ladder'`, since the best bets
+  rank by edge and the strip and the list read the rung there, `board.bestBy` on the binding; the game table's hit-rate
+  read rides beside it as `main.hitRate` for the hover): the same evening Holiday at POR read 51% at 14+ (the play's hit
+  rates, shrunk toward -133) and 39% at 13+ (the ladder) — a lower bar can never be less likely — so the chip is the
+  ladder at every height and its chances fall as the bar rises; a board ranked by chance (the NFL's) keeps the play's
+  figure at the main line, the tables' and the strip's number there. **Every chip
   shows his four projections** (`CHIP_STATS`: PTS · REB · AST · 3PM as P · R · A · 3P, the picked stat appended when it is
   steals or blocks, the picked one marked; `ranges[stat].exp` through `boardRead`; Vincent: "by default I need to see per
   player the projected number for points / assists / threes / rebounds"), so the chips flow in a column per zone
@@ -726,7 +752,19 @@ config and keeps its own markets, teams, feeds and slate key:
   under, the average pill), the split tiles (L5 · L10 · L20 · season · vs opp · home / away; press one
   to draw its games), the splits table (GP, MIN, PTS, REB, AST, 3PM, PRA, over %), and on the right
   the opponent's allowed table (Season / L5 / L10 … tabs, his position marked, the league's average at
-  his spot under it) and "His lines tonight" (every play the board has on him, click one to draw it).
+  his spot under it), **what other players at his position did against the opponent** (`VsPosition` in the card,
+  `vsPosition` on the payload from `lib/nba/store.js` `playerFor` → `lib/nba/vs-position.js`; Vincent, 2026-10-31: "on the
+  individual player card, I need to see what other players in the same position did"): the opponent's stored games this
+  season before the slate (`datesWithData` + `seasonResults`), every opposing player who played with his line (MIN · PTS ·
+  REB · AST · 3PM · PRA · STL · BLK), position tabs PG … C opening on his spot (`myPos`), the card's market column read
+  against the card's line (green over, red under), his own games against them tinted ("· him"), the head counting the
+  player-games, the average a player, how many cleared the line and the position's total per game beside PropFinder's table
+  figure for it. ESPN's box score places a player only as G / F / C, so the positions come from the stored PropFinder pulls
+  of those nights (`positionBook`: the depth chart's slot first, else the roster position, G → SG and F → SF as `envPosFor`);
+  a player no pull knows keeps ESPN's group and shows at both spots it covers (`atPosition`, `WIDE` in the client-safe
+  `vs-position-pure.js`), marked "· G" / "· F". The read is kept ten minutes per opponent and date (`vsMemo`: a dozen pulls
+  read once). `__tests__/nba-vs-position.test.js` (the builder on the MIA at ORL fixture, the table rendered) and "His
+  lines tonight" (every play the board has on him, click one to draw it).
   Data: `GET /api/nba/player?key&date` → `playerFor` in `lib/picks/store.js` (the slate's PropFinder
   pull: his logs newest first, his props with their ladders, the game, the opponent's rows with ranks,
   `league` and `windows`); the plays ride in from the opener. Hit rates and splits are
@@ -886,6 +924,14 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   over 2025-26), kept and to read again at mid-season. Next lever: the minutes read. The same day the role went to
   his own opportunity (usage, rebound chances, potential assists; the replay computes usage from ESPN's box scores,
   `usg` on its rows): points 4.99 this season, PRA 6.70.
+- The NBA ceiling read (`docs/audits/2026-10-31-nba-ceiling.md`, `nba-audit.mjs`'s "The ceiling read" section on both seasons;
+  Vincent, 2026-10-31: "look at what a player is capable of and then determine the ceiling … I would expect our projections
+  to be higher for him today"): on 2025-26's 125,045 projections a player beats his stated centre by the same third of a unit
+  in the soft, middle and tough third of the matchup table and clears his ceiling (the top quarter of his nights) as often
+  in each (26.7 / 27.5 / 27.6%); the centre moved toward his ceiling by 0.3 × where × his upside shaves the miss
+  (2.513 → 2.505, the board's −0.74 bias behind it) and leaves the ladder as it was, by 1 × costs (2.542, the main rung's
+  60–70% band 59% → 55%), toward his floor in a tough spot costs at every weight; this season's 1–8-game tables are noise
+  undamped (2.704 → 2.732 at 0.3). Shipped at 0.3 with PropFinder's rank at gp / (gp + 10), the sheet's tile in full.
 - The NBA projections, what else moves them (`docs/audits/2026-10-31-nba-accuracy.md`, `tools/audit/nba-fetch.mjs` for the
   raw feeds, `tools/audit/nba_minutes.py`; Vincent, 2026-10-31: "increase accuracy where possible"): this season's 71
   games replayed with the cocktail as shipped. The points miss is 5.00 (4.10 had the board known his minutes); last
@@ -1083,8 +1129,13 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   table, `slotBoard(defenseBySlot(rows, { season }))` at both venues, read once a slate in `buildSlate` and carried per
   side as `side.lines = linesOf(boards, opp)` ({ sog, g } → { gp, cells, softest, league }, `linesOf` in
   `defense-board.js`), green = top third, red = bottom third, grey = no record (the hover: the figure, the rank, the
-  league's mean, the skater-games) — and the rink head names the opponent's softest line with its rank and figure and
-  this side's skater at that slot (`SoftestLine`, click to his card); colour only, no number moves — and checked the same
+  league's mean, the skater-games) — and the rink head names the slot where the opponent ranks highest against the league, as a rank
+  ("PIT ranks #7 of 32 against the C3 · 1.8 shots a game"), **the slot it gives the most to beside it** when that is another
+  slot ("· most shots to the C1, 2.9"; `most` on each `slotBoard` team and on `linesOf`'s read; Vincent, 2026-10-31: PIT
+  gave its C1 2.9 shots a game, #3 of 32 on the public box scores, and the head said "leaks most to the C3" on a #7 rank at
+  1.8 — every team's first line shoots the most, so the rank is the read and the raw leader is named, never called the
+  leak; `__tests__/nhl-rink-line.test.jsx`) and this side's skater at the softest slot (`SoftestLine`, click to his card);
+  colour only, no number moves — and checked the same
   day on both seasons' box scores (`docs/audits/2026-10-31-nhl-lines.md`, under Audits): the softest slot's skater was the
   top shooter at the slot's base rate (9.4%), the slot cell adds nothing to the position table, so the badges stay colour;
   chips carrying the latest saved model run's λ shots / goals for the slate date from
@@ -1473,7 +1524,17 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   shared surname is the player the tweet did not place elsewhere; `applyPositions` keeps the box score's
   forward / defense group over a lineup slot that contradicts it) for every slate team; a
   game-day tweet beats the NHL.com preview, otherwise the preview, then an older tweet, then
-  the roster; "game-day" is decided by timestamp (tweet id vs the preview's updated time), and a tweet
+  the roster; **the preview parser reads an 11-forward, 7-defenseman night** (`parseLineupRows(rows, rosters)` in
+  `positions.js`; TBL at NSH, 2026-10-31: NHL.com listed "Stamkos -- O'Reilly" on top of Nashville's lines and "Viel --
+  Geekie" under Tampa Bay's third, and read as pairs they pushed every real pair down a slot and made Hague a goalie): the
+  roster decides a row's group when the snapshot has one (below); without a roster the order does — a two-name row is a
+  pair only when it is one of the team's last three two-name rows, an earlier one a short forward line, and of the single
+  names after the lines the last two are the goalies, any before them a seventh defenseman on the next pair (placed under
+  the rink); the rink head says "11 forwards and 7 defensemen dressed: a forward slot stays empty on the ice" (`dressedText` in
+  `Rink.jsx`), since the gap on the ice is the lineup's, not a missing read; and the model's lineup rows carry the short
+  line with a placeholder third name (`SHORT_LINE_FILL` in `lineupRowsFromSnapshot`: the model's parser, untouched, takes a
+  two-name row as a pair and drops every skater its lineup rows lack, so until then the short line's two forwards were out of
+  the auto run); "game-day" is decided by timestamp (tweet id vs the preview's updated time), and a tweet
   from the warm-up window (`GDT_FINAL_WORD_MIN`, 90 minutes before puck drop, or after it) beats the
   preview whatever its updated time. A tweet
   that only confirms the lines ("Same lineup, Swayman in net", "no changes", `confirmsSameLines`)
@@ -1492,10 +1553,30 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   `POST /api/nhl/data/lineups/gdt` (Bearer `NHL_ACTIONS_TOKEN`, a repo secret that must equal the
   Render env var; `authorize()` accepts it beside the stored sync token), where `ingestGdtPages`
   parses them against the rosters, merges (never erasing earlier lines), snapshots and auto-runs.
+  **The NHL.com preview's two-name rows ask the roster** (`parseLineupRows(rows, rosters)`, the snapshot's `rosterMap`;
+  Vincent, 2026-10-31, of the NSH rink: "Stamkos is never a defender" — "Stamkos -- O'Reilly", the fourth line of an
+  11-forward night, sat on pair 1): no roster defenseman among the two and a roster forward known → a short forward
+  line (LW, C of the next line), as the tweet parser reads it; else a pair; a lone roster defenseman is the next pair's,
+  a lone roster forward the next line's, a goalie or an unknown name a goalie (the order rule above stands in without a
+  roster, `__tests__/fixtures/nhl.js` PREVIEW_MD_11_7 is the TBL at NSH preview as published); a stored last lineup lends
+  a slot only to a player of the slot's own group (`fillFromLastLineup`), so a pair slot read before the rule never
+  carries a forward.
   Without a tweet or preview the snapshot uses PropFinder's depth chart (`propfinder-depth.json`).
   Slots a capture leaves empty (no lineup yet, or a partial one) are filled from the team's last
   known lineup (`data/lineups/last/<ABBR>.json`, written from each team's own capture) with
   players still on the roster, marked `carried`; the slate does the same for a game with no snapshot.
+  **Each rink says where its lines came from** (`LineupSource` in `Rink.jsx`, a pill under the team; Vincent,
+  2026-10-31: "per rink whether the lineup was updated through GameDayTweets; now it's guessing"): `lineupRead` in
+  `lib/nhl-data/lineup-read.js` (pure, client-safe; `lineup` on every slate side from `buildSlate`, the rink reading it
+  itself from `startTimeUTC` when the payload lacks it) turns the snapshot's source and meta into a verdict — the
+  lineup audit's rule, `lineupVerdict`, which `lineup-audit.js` now imports —: green "GameDayTweets @handle · 6:42 PM
+  ET · 18 min before puck drop" for a tweet from the warm-up window (`GDT_FINAL_WORD_MIN` = 90 before puck drop) or the
+  game (`TWEET_AFTER_MAX_MIN` = 4 h after it); amber "GameDayTweets @handle · 2:10 PM ET · 4 h 50 before puck drop ·
+  projected" for an earlier tweet and "NHL.com projected · updated 5:30 PM ET" for the preview (an older tweet named
+  beside it); red "A guess · PropFinder's depth chart / the roster, by projected shots / the last known lineup (date)"
+  until a tweet or preview arrives; carried slots appended; the pill links the tweet, the hover spells the read out
+  (a "same lineup" confirmation or a line-change tweet named: the snapshot meta carries `gdtConfirmed` / `gdtChanged`).
+  `__tests__/nhl-lineup-read.test.js`.
   `nhl-lineups.yml` re-reads lineups (`only=lineups&due=150` on a cron tick) on the rule: from 60 minutes
   before puck drop, every 15 minutes until the game's lineups are found (`linesFound` in
   `lib/nhl-data/lines-chain.js`: both teams have a tweet from the 45 minutes before the start, the warm-up window, so an afternoon

@@ -7,6 +7,7 @@ import { TeamLink } from './links';
 import { usePlayerCard } from './PlayerCard';
 import { PropfinderDefense } from './Propfinder';
 import { defaultDefenseTab, defenseBandFromTab, defenseTabText } from '@/lib/nhl-data/propfinder-csv';
+import { lineupRead } from '@/lib/nhl-data/lineup-read';
 
 // Tactical board: one team's whole lineup on a full vertical rink (85 × 200 ft,
 // attacking goal at the top). Forward lines stack in the attacking half with
@@ -38,8 +39,39 @@ function sourceText(side) {
   return `lines from the roster, ordered by projected shots (no lines yet${m.capturedAt ? `, last checked ${et(m.capturedAt)}` : ''})`;
 }
 
+/**
+ * Where the lines came from, as a pill under the team (Vincent, 2026-10-31: "per rink whether the lineup was
+ * updated through GameDayTweets; now it's guessing"): green = the beat writers' tweet from the warm-up window
+ * or the game, amber = an earlier tweet or NHL.com's projected lineup, red = a guess (the depth chart, the
+ * roster, the last known lineup); the hover spells it out. `side.lineup` from the slate, else read here.
+ */
+export function LineupSource({ read }) {
+  if (!read) return null;
+  return (
+    <small className={`nhlx-rk-lines is-${read.tone}`} title={read.title}>
+      <span>Lines</span>
+      {read.url ? <a className="nhlx-rk-lines-pill" href={read.url} target="_blank" rel="noreferrer">{read.label}</a> : <b className="nhlx-rk-lines-pill">{read.label}</b>}
+      {read.note ? <i>{read.note}</i> : null}
+    </small>
+  );
+}
+
 /** " · 3 slots carried from the last known lineup (2026-09-30)". */
 const carriedText = (side) => (side.carried ? ` · ${side.carried.count} slot${side.carried.count === 1 ? '' : 's'} carried from the last known lineup${side.carried.date ? ` (${side.carried.date})` : ''}` : '');
+/**
+ * How many forwards and defensemen the lineup dresses when it is not the usual twelve and six: an 11-forward, 7-defenseman
+ * night leaves a forward slot empty on the ice (TBL at NSH, 2026-10-31: "Stamkos -- O'Reilly" on top, no RW1), so the head
+ * says why. Null for a twelve-and-six lineup or a side without lines.
+ */
+export function dressedText(side) {
+  const inL = (side?.skaters || []).filter((p) => p.inLineup && p.line);
+  if (!inL.length) return null;
+  const f = inL.filter((p) => p.pos !== 'D').length;
+  const d = inL.filter((p) => p.pos === 'D').length + (side.skaters || []).filter((p) => p.inLineup && !p.line && p.pos === 'D' && !p.carried && side.source !== 'roster').length;
+  if (f === 12 && d === 6) return null;
+  if (f < 12 && f >= 9) return `${f} forwards and ${d} defensemen dressed: a forward slot stays empty on the ice`;
+  return null;
+}
 
 /** League rank (1 = most permissive) → 'soft' | 'mid' | 'tough' | 'none'. */
 export function zoneTone(rank, teams) {
@@ -257,24 +289,34 @@ function BandLabel({ pos, d, opp, view, windowText = null, teamCount, x, y, metr
 /** One side of a game: `side` is an entry of a slate game's `sides`. */
 /**
  * The Defense tab's softest line, in the rink head: the slot where tonight's opponent ranks highest against the league
- * for the rink's metric, with its rank and figure, and this side's skater at that slot (Vincent, 2026-10-31).
+ * for the rink's metric, said as a rank, with the slot it gives the most to beside it when that is another slot, and
+ * this side's skater at the softest slot (Vincent, 2026-10-31; the same day, of PIT: "leaks most to the C3" on a #7
+ * rank at 1.8 shots while the C1 took 2.9 a game — every team's first line shoots the most, so the rank is the read
+ * and the raw leader is named beside it, never called the leak).
  */
 function SoftestLine({ side, metric = 'sog' }) {
   const open = usePlayerCard();
-  const soft = side.lines?.[metric]?.softest || null;
+  const lines = side.lines?.[metric] || null;
+  const soft = lines?.softest || null;
   if (!soft) return null;
+  const most = lines.most && lines.most.slot !== soft.slot ? lines.most : null;
   const unit = metric === 'g' ? 'goals' : 'shots';
+  const dp = metric === 'g' ? 2 : 1;
   const facing = side.skaters.find((p) => p.inLineup && `${p.pos}${p.line || ''}` === soft.slot) || null;
   const tone = zoneTone(soft.rank, soft.of);
+  const title = `${side.opp} gives up ${num(soft.value, dp)} ${unit} a game to the ${soft.slot}, #${soft.rank} of ${soft.of}${soft.ratio != null ? `, ${Math.round(soft.ratio * 100)}% of the league's` : ''}, over ${soft.n} skater-games this season at both venues: the Defense tab's softest line, the slot where ${side.opp} ranks highest against the league${most ? `. Its most ${unit} go to the ${most.slot}, ${num(most.value, dp)} a game (#${most.rank} of ${most.of}): a first line shoots the most against everyone, so the rank is the read` : ''}; the chips' slot badges carry every slot's rank`;
   return (
-    <small className="nhlx-rk-line" title={`${side.opp} gives up ${num(soft.value, metric === 'g' ? 2 : 1)} ${unit} a game to the ${soft.slot}, #${soft.rank} of ${soft.of}${soft.ratio != null ? `, ${Math.round(soft.ratio * 100)}% of the league's` : ''}, over ${soft.n} skater-games this season at both venues: the Defense tab's softest line (the slot where ${side.opp} ranks highest against the league); the chips' slot badges carry every slot's rank`}>
-      {side.opp} leaks most to the <i className={`nhlx-rk-slot is-${tone}`}>{soft.slot}</i> <b>#{soft.rank}</b> of {soft.of} · {num(soft.value, metric === 'g' ? 2 : 1)} {unit} a game
+    <small className="nhlx-rk-line" title={title}>
+      {side.opp} ranks <b>#{soft.rank}</b> of {soft.of} against the <i className={`nhlx-rk-slot is-${tone}`}>{soft.slot}</i> · {num(soft.value, dp)} {unit} a game
+      {most ? <> · most {unit} to the <i className={`nhlx-rk-slot is-${zoneTone(most.rank, most.of)}`}>{most.slot}</i>, {num(most.value, dp)}</> : null}
       {facing ? <> · tonight <button type="button" className={`nhlx-rk-facing${facing.id ? '' : ' is-static'}`} onClick={() => facing.id && open({ id: facing.id, opp: facing.opp, venue: facing.venue, pos: facing.pos, line: facing.line })}>{shortName(facing.name)}</button></> : null}
     </small>
   );
 }
 
-export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, modelRun = null, metric = 'sog', onMetric = null, pfKey: controlledKey = undefined, onPfKey = null }) {
+export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, modelRun = null, metric = 'sog', onMetric = null, pfKey: controlledKey = undefined, onPfKey = null, startTimeUTC = null }) {
+  // The lines' source as a pill: the slate's read, else read here from the side's source and the game's start.
+  const lineup = side.lineup || lineupRead(side, startTimeUTC);
   // Kept for the card's title (hover): where the chip numbers and the lines come from.
   const numSrc = modelRun ? `Numbers on the chips: the model, ${modelRun.source === 'auto' ? 'run automatically' : 'run'} ${et(modelRun.createdAt)}${modelRun.players ? ` (${modelRun.players} players)` : ''}.` : 'No model run for this slate yet: chips show a matchup read (own SOG/G × opponent ratio).';
   const { placed, extras } = useMemo(() => layoutSide(side.skaters), [side.skaters]);
@@ -319,8 +361,10 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
         <TeamLink abbr={side.team} logo={28} />
         <div>
           <b><TeamLink abbr={side.team}>{side.team}</TeamLink> <small>{side.venue === 'H' ? 'home' : 'away'}{score ? ` · final ${score[0]}–${score[1]} vs ${side.opp} · chips show the game's shots, goals, assists` : ' · attacking upwards'}</small></b>
-          {/* The chips' source and the lines' source stay in the title attribute: the head shows the team and the softest line. */}
+          {/* The chips' source stays in the title attribute: the head shows the team, where the lines came from and the softest line. */}
+          <LineupSource read={lineup} />
           <SoftestLine side={side} metric={metric} />
+          {dressedText(side) ? <small className="nhlx-rk-line" title="NHL.com's projected lineup or the beat writers' lines list a two-forward line: the third spot rotates through the game, so no skater sits in it on the ice">{dressedText(side)}</small> : null}
         </div>
       </div>
       {side.propfinder ? <PropfinderDefense abbr={side.opp} data={side.propfinder} posFilter={posFilter} tabKey={pfTab?.key ?? null} onTabChange={setPfKey} drivesRink={fromPf} /> : null}
@@ -383,7 +427,8 @@ export function RinkLegend({ metric = 'sog' }) {
       <span><i className="is-tough" /> stingy: bottom third</span>
       <span>on each player: the model’s projected SOG and goals from the latest saved run for this slate (3+ SOG and 1+ G odds in the tooltip), or a matchup read when no run exists; once the game is final, the actual shots, goals and assists with the model’s number after “m”; click for the player card</span>
       <span>🔥 on fire, by the model’s rule: 1+ point at 50% or better, 2.0+ scoring chances per game, 16+ minutes</span>
-      <span><i className="nhlx-rk-slot is-soft is-legend">LW1</i> his line slot tonight, tinted by the {word} the opponent gives up to that slot per skater a game this season (the Defense tab’s by-line table, both venues; green = top third of the league, red = bottom third; grey = no record yet); the rink head names the opponent’s softest line and who sits there tonight</span>
+      <span><i className="nhlx-rk-lines-pill is-ok is-legend">GameDayTweets</i> under the team: where the lines came from — green, the beat writers’ tweet from the warm-up window (90 minutes before puck drop) or the game; amber, an earlier tweet (projected lines) or NHL.com’s projected lineup; red, a guess (PropFinder’s depth chart, the roster or the last known lineup) until a tweet or preview arrives; hover for the time and the link</span>
+      <span><i className="nhlx-rk-slot is-soft is-legend">LW1</i> his line slot tonight, tinted by the {word} the opponent gives up to that slot per skater a game this season (the Defense tab’s by-line table, both venues; green = top third of the league, red = bottom third; grey = no record yet); the rink head names the slot where the opponent ranks highest against the league, the slot it gives the most to, and who sits at the softest slot tonight</span>
       <span><i className="nhlx-pk-flag is-hot is-legend">{ICON.hot}</i> hot going in ({metric === 'g' ? '3+ goals in his last five' : 'his last five at 1.4× his shot rate or more'}) · <i className="nhlx-pk-flag is-cold is-legend">{ICON.cold}</i> cold ({metric === 'g' ? 'no goal in ten games when his rate owed him one' : 'his last five at 0.7× or under'}) ; on the plays above the rink and in the skater table, <i className="nhlx-pk-flag is-soft is-legend">{ICON.soft}</i> marks the opponent in the soft third of the league at his position for {word} on PropFinder’s table above the rink, the tab it opens on (on the ice the band under a chip already shows it); colour only, the numbers already carry his rate</span>
       {metric === 'g'
         ? <span><i className="nhlx-rk-h2h is-legend">h2h</i> scores on this opponent: more than a goal a game against them over 2+ stored games, or 2+ goals in the one game stored (this season and last)</span>

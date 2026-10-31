@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { ICON } from '@/components/nhl/flags';
-import { boardRead, windowRead, blendText, dampText, pullText } from '@/lib/picks/projection';
+import { boardRead, windowRead, blendText, dampText, pullText, reachText } from '@/lib/picks/projection';
 import { seasonTag } from '@/lib/nba/teams';
 import { SHUFFLE_MARKETS } from '@/lib/nba/markets';
 import { heightsOf, lineOf, readAt } from '@/lib/picks/shuffle';
@@ -137,7 +137,9 @@ function projectionText(read, stat, opp, allowed, win) {
   const mins = read.minutes?.factor && read.minutes.factor !== 1 ? ` (${num(read.minutes.tonight)} minutes tonight over the ${num(read.minutes.base)} behind his rate, × ${num(read.minutes.factor, 3)}${read.minutes.vacated ? `: +${num(read.minutes.vacated)} with ${(read.minutes.from || []).join(' + ')} out` : ''})` : '';
   const w = win && win !== 'season' ? windowRead(read, allowed, stat) : null;
   const window = w ? ` · over ${WINDOW_TEXT[win] || win} ${opp} gives up ${num(w.allowed)} (#${w.rank ?? '—'}): the matchup would read × ${w.factor}, ${num(w.value)} ${label}; the window tints the court, the figure stays the board's` : '';
-  return `Tonight ${num(read.value)} ${label}, the board's read: his ${num(read.rate)} a game in PropFinder's logs (${blendText(read.weights)}${pullText(read.pull)})${vol}${mins}${lift}${env}${team}${window}`;
+  // The ceiling read (the cocktail's reach, lib/picks/board.js ladderOf): the centre moved toward his ceiling in a soft matchup.
+  const reach = read.reach?.add ? ` = ${num(read.value - read.reach.add)}${reachText(read.reach, read.pos)}` : '';
+  return `Tonight ${num(read.value)} ${label}, the board's read: his ${num(read.rate)} a game in PropFinder's logs (${blendText(read.weights)}${pullText(read.pull)})${vol}${mins}${lift}${env}${team}${reach}${window}`;
 }
 
 /** The player's play for a market: the book's main line on the over (or yes) side first, else his best over, else any. */
@@ -212,7 +214,8 @@ function barText(read, height, metric) {
   const book = read.book ? ` · the book's o${read.book.line}${read.exact ? '' : ' (the nearest rung above)'} at ${fmtOdds(read.book.odds)}${read.edge != null ? `, edge ${read.edge >= 0 ? '+' : ''}${Math.round(read.edge * 100)}` : ''}` : ' · no price at this line';
   const cleared = read.cleared ? ` · cleared it in ${read.cleared.n} of his last ${read.cleared.of}` : '';
   const got = read.got === undefined ? '' : read.got == null ? ' · did not play' : ` · got ${read.got}: ${read.hit ? 'cleared' : 'short'}`;
-  return `At the bar, ${height}+ ${label} (o${read.line}): ${pct(read.p)} to clear it, ${read.play ? "the board's play on the book's line (the strip's and the list's figure)" : "the shuffle's read"} (fair ${fmtOdds(read.fair)})${asStated(read.raw)}${book}${cleared}${got}`;
+  const hit = read.play && read.hitRate != null && Math.round(read.hitRate * 100) !== Math.round(read.p * 100) ? `; the game table's hit-rate read ${pct(read.hitRate)}` : '';
+  return `At the bar, ${height}+ ${label} (o${read.line}): ${pct(read.p)} to clear it, ${read.play ? `the board's figure on the book's main line (the strip's and the list's number${hit})` : "the shuffle's read"} (fair ${fmtOdds(read.fair)})${asStated(read.raw)}${book}${cleared}${got}`;
 }
 
 /**

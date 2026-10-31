@@ -101,7 +101,18 @@ describe('the NBA shuffle', () => {
     // The chance falls as the bar rises.
     for (let i = 1; i < brown.at.length; i++) expect(brown.at[i].p).toBeLessThanOrEqual(brown.at[i - 1].p);
     expect(brown.book.map((b) => [b.line, b.odds, b.main])).toEqual([[19.5, -400, false], [25.5, -110, true], [31.5, 300, false]]);
-    expect(brown.exp).toBeCloseTo(26 * 1.033, 0);
+    // The NBA board ranks by edge, so the main line's figure is the ladder's main rung (the strip's and the list's number),
+    // and the chip's chances fall as the bar rises through it (2026-10-31, Holiday: 51% at 14+ off the play, 39% at 13+ off the ladder).
+    expect(brown.main).toMatchObject({ line: 25.5, from: 'ladder', p: brown.book.find((b) => b.main).p });
+    expect(typeof brown.main.hitRate).toBe('number');
+    const chances = sh.heights.map((_, i) => pAt(brown, sh.heights, i));
+    for (let i = 1; i < chances.length; i++) expect(chances[i]).toBeLessThanOrEqual(chances[i - 1]);
+    expect(readAt(brown, sh.heights, 26).p).toBe(brown.main.p);
+    expect(readAt(brown, sh.heights, 26).hitRate).toBe(brown.main.hitRate);
+    // The stated centre is his rate × the matchup; the ceiling read moves the figure toward his ceiling at the #1 spot (the site's reach 0.3).
+    expect(brown.base).toBeCloseTo(26 * 1.033, 0);
+    expect(brown.exp).toBeCloseTo(brown.base + brown.reach.add, 5);
+    expect(brown.reach.add).toBeGreaterThan(0);
   });
   test('every row carries his health in one word, with the status and detail beside it; a player out is left off', () => {
     const listed = { ...pf, data: { ...pf.data, players: [
@@ -213,12 +224,14 @@ describe('the NBA shuffle', () => {
     expect(few.env).toBeCloseTo(1.033, 3);
     const most = nbaShuffle({ market: 'pts', board: nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 180]), results: {} }), pf: withMin([36, 180]), season: 2026 }).players.find((p) => p.player === 'Jaylen Brown');
     expect(most.teamFactor).toBeNull();
-    expect(most.exp).toBeCloseTo(26 * 1.033, 0);
+    expect(most.base).toBeCloseTo(26 * 1.033, 0);
+    expect(most.exp).toBeCloseTo(most.base + most.reach.add, 5);
     const crowd = nbaShuffle({ market: 'pts', board: nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 180], 100), results: {} }), pf: withMin([36, 180], 100), season: 2026 }).players.find((p) => p.player === 'Jaylen Brown');
     expect(crowd.matchup).toBeCloseTo(1.033, 3);
     expect(crowd.teamFactor).toBeCloseTo(112.9 / 126, 3);
     expect(crowd.env).toBeCloseTo(1.033 * (112.9 / 126), 2);
-    expect(crowd.exp).toBeCloseTo(26 * crowd.env, 0);
+    expect(crowd.base).toBeCloseTo(26 * crowd.env, 0);
+    expect(crowd.exp).toBeCloseTo(crowd.base + crowd.reach.add, 5);
     expect(crowd.own.blend).toBe(26);
   });
   test('a market without a bar, or a yes-no market, reads as nothing', () => {

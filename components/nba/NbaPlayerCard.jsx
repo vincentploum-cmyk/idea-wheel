@@ -5,8 +5,9 @@ import { MARKETS, statOf } from '@/lib/nba/markets';
 import { teamLogo, teamName, seasonTag } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
 import { fmtOdds } from '@/lib/nfl/odds';
-import { boardRead, windowRead, blendText, dampText, pullText } from '@/lib/picks/projection';
+import { boardRead, windowRead, blendText, dampText, pullText, reachText } from '@/lib/picks/projection';
 import { asStated } from '@/lib/picks/calibration';
+import { POS_TABS, atPosition, vsPositionSummary } from '@/lib/nba/vs-position-pure';
 
 // The NBA player card, laid out as the NHL card (components/nhl/PlayerCard.jsx): the top bar
 // (team logo, position, tonight's game, the season averages), market tabs carrying the hit rate for
@@ -125,6 +126,62 @@ function Bars({ games, market, line, unit }) {
   );
 }
 
+/**
+ * What other players at a position did against tonight's opponent this season (Vincent, 2026-10-31: "on the individual
+ * player card, I need to see what other players in the same position did"): the opponent's stored games before the slate,
+ * every opposing player at the picked position with his line that night (`vsPosition` on the card's payload, placed by
+ * the stored PropFinder pulls; a player no pull knows shows under ESPN's group, G or F, at both positions it covers), the
+ * card's market column read against his line (green over, red under), his own games against them tinted, and the
+ * position's total per game beside PropFinder's table figure for it.
+ */
+export function VsPosition({ data, opp, myPos, market, line, allowed }) {
+  const [pick, setPick] = useState(null);
+  const pos = pick || (POS_TABS.includes(myPos) ? myPos : 'SG');
+  if (!data) return null;
+  const rows = atPosition(data.rows, pos);
+  const valueOf = (r) => (RAW.has(market) ? (r[market] == null ? null : Number(r[market])) : statOf(r, market));
+  const sum = vsPositionSummary(rows, valueOf, line);
+  const unit = STAT_LABEL[market] || market.toUpperCase();
+  const table = allowed?.[pos]?.[market]?.value ?? null;
+  const cols = ['min', 'pts', 'reb', 'ast', 'tpm', 'pra', 'stl', 'blk'];
+  const label = (p) => `${p}s`;
+  return (
+    <div className="nhlx-pfd ir-pc-vs">
+      <div className="nhlx-pfd-head">
+        <b>What {label(pos)} did against {opp}</b>
+        <small className="nhlx-auto-meta">
+          {data.games ? `${data.games} stored game${data.games === 1 ? '' : 's'} this season before tonight` : 'no stored game of theirs this season yet'}
+          {sum.n ? ` · ${sum.n} player-game${sum.n === 1 ? '' : 's'} at ${pos}: ${num(sum.avg)} ${unit} a player, ${sum.cleared} of ${sum.n} over o${line}` : ''}
+          {sum.perGame != null ? ` · ${num(sum.perGame)} a game to ${label(pos)}${table != null ? ` (PropFinder's table: ${num(table)})` : ''}` : ''}
+        </small>
+      </div>
+      <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Position" style={{ marginBottom: 8 }}>
+        {POS_TABS.map((k) => <button key={k} type="button" role="tab" aria-selected={pos === k} className={`nhlx-tab${pos === k ? ' is-active' : ''}`} onClick={() => setPick(k)} title={k === myPos ? 'His spot tonight' : `The ${k}s who faced ${opp}`}>{k}{k === myPos ? ' ·' : ''}</button>)}
+      </div>
+      {rows.length ? (
+        <div className="nhlx-pfd-wrap">
+          <table className="nhlx-pfd-table">
+            <thead><tr><th>Date</th><th>Player</th>{cols.map((k) => <th key={k} className={k === market ? 'is-on' : ''}>{STAT_LABEL[k] || k.toUpperCase()}</th>)}</tr></thead>
+            <tbody>
+              {rows.map((r) => {
+                const v = valueOf(r);
+                const over = v == null || line == null ? null : v > line;
+                return (
+                  <tr key={`${r.gameId}-${r.key}`} className={r.mine ? 'is-active' : ''} title={`${r.name} (${r.team}) ${r.venue === 'H' ? 'vs' : 'at'} ${opp} on ${r.date}${r.result ? `, ${r.result} ${r.score}` : ''}${r.starter ? ' · started' : ''}${r.posFrom === 'espn' ? ` · ESPN lists him as a ${r.pos}: no PropFinder position on record, shown at both ${r.pos === 'G' ? 'guard' : 'forward'} spots` : r.posFrom === 'depth' ? ` · ${r.pos} on PropFinder's depth chart` : ''}${r.mine ? ' · his own game against them' : ''}`}>
+                    <td>{mdy(r.date)}<small>{r.venue === 'H' ? 'vs' : '@'} {opp}{r.result ? ` · ${r.result}` : ''}</small></td>
+                    <td><b>{r.name}</b><small>{r.team}{r.posFrom === 'espn' ? ` · ${r.pos}` : ''}{r.starter ? ' · started' : ''}{r.mine ? ' · him' : ''}</small></td>
+                    {cols.map((k) => <td key={k} className={`${k === market ? 'is-on' : ''}${k === market && over != null ? (over ? ' is-soft' : ' is-tough') : ''}`}><span className="nhlx-pfd-val">{k === 'min' ? num(r.min, 0) : num(RAW.has(k) ? r[k] : statOf(r, k), 0)}</span></td>)}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : <div className="nhlx-empty">{data.games ? `No ${label(pos)} on record against ${opp} this season.` : `No stored game of ${opp} this season yet: the first box score fills this table.`}</div>}
+    </div>
+  );
+}
+
 function Card({ req, date, onClose }) {
   const [data, setData] = useState(null);
   const [err, setErr] = useState('');
@@ -225,7 +282,7 @@ function Card({ req, date, onClose }) {
   const WIN_TEXT = { prior: 'last season’s full table', l5: 'its last 5 games', l10: 'its last 10 games', l15: 'its last 15 games', l20: 'its last 20 games' };
   // The picked window's read at his spot, for the hover: its cell and factor in place of the season table's.
   const winRead = view !== 'season' ? windowRead(proj, table, market) : null;
-  const projTitle = proj.value == null ? '' : `Tonight ${num(proj.value)} ${STAT_LABEL[market] || market}, the board's read: his ${num(proj.rate)} a game in PropFinder's logs (${blendText(proj.weights)}${pullText(proj.pull)}${proj.volume ? `: ${num(proj.volume.att)} attempts a game at ${num(proj.volume.pct * 100)}%` : ''}${proj.minutes?.factor && proj.minutes.factor !== 1 ? `, × ${num(proj.minutes.factor, 3)} for ${num(proj.minutes.tonight)} minutes tonight over the ${num(proj.minutes.base)} behind it${proj.minutes.vacated ? `: +${num(proj.minutes.vacated)} with ${(proj.minutes.from || []).join(' + ')} out` : ''}` : ''}${proj.lift ? `, +${num(proj.lift)} of it ${(proj.liftFrom || []).join(' + ')}'s production handed to him, out tonight` : ''})${proj.matchup != null ? ` × ${proj.matchup} (${proj.matchupFrom?.from === 'blend' ? `the cheat sheet's tile #${proj.sheetRank} × ${proj.matchupFrom.sheet} in full, PropFinder's × ${proj.matchupFrom.pf} beside it by its games; ` : proj.matchupFrom?.from === 'sheet' ? `the cheat sheet's tile #${proj.sheetRank} alone; ` : ''}${opp} gives up ${proj.allowed != null ? num(proj.allowed) : `the #${proj.rank} most`} to ${myPos}s, #${proj.rank ?? '—'} of ${proj.count || data?.count || 30} on ${held ? 'last season’s table, no game this season yet' : 'this season’s table'}${proj.league != null ? `, the league ${num(proj.league)}` : ''}${dampText(proj.matchupFrom)})` : ' (no environment table)'}${proj.team != null ? ` × ${proj.team} (his side's rates run past the team's expected total: scaled down to it)` : ''}${proj.floor != null ? ` · between ${proj.floor} and ${proj.ceiling} half the nights` : ''}${winRead ? ` · over ${WIN_TEXT[view]} ${opp} gives up ${num(winRead.allowed)} (#${winRead.rank ?? '—'}): the matchup would read × ${winRead.factor}, ${num(winRead.value)}; the window fills the table on the right, the figure stays the board's` : ''} · his windows: season ${num(own?.season)}, last 10 ${num(own?.l10)}, last 5 ${num(own?.l5)}`;
+  const projTitle = proj.value == null ? '' : `Tonight ${num(proj.value)} ${STAT_LABEL[market] || market}, the board's read: his ${num(proj.rate)} a game in PropFinder's logs (${blendText(proj.weights)}${pullText(proj.pull)}${proj.volume ? `: ${num(proj.volume.att)} attempts a game at ${num(proj.volume.pct * 100)}%` : ''}${proj.minutes?.factor && proj.minutes.factor !== 1 ? `, × ${num(proj.minutes.factor, 3)} for ${num(proj.minutes.tonight)} minutes tonight over the ${num(proj.minutes.base)} behind it${proj.minutes.vacated ? `: +${num(proj.minutes.vacated)} with ${(proj.minutes.from || []).join(' + ')} out` : ''}` : ''}${proj.lift ? `, +${num(proj.lift)} of it ${(proj.liftFrom || []).join(' + ')}'s production handed to him, out tonight` : ''})${proj.matchup != null ? ` × ${proj.matchup} (${proj.matchupFrom?.from === 'blend' ? `the cheat sheet's tile #${proj.sheetRank} × ${proj.matchupFrom.sheet} in full, PropFinder's × ${proj.matchupFrom.pf} beside it by its games; ` : proj.matchupFrom?.from === 'sheet' ? `the cheat sheet's tile #${proj.sheetRank} alone; ` : ''}${opp} gives up ${proj.allowed != null ? num(proj.allowed) : `the #${proj.rank} most`} to ${myPos}s, #${proj.rank ?? '—'} of ${proj.count || data?.count || 30} on ${held ? 'last season’s table, no game this season yet' : 'this season’s table'}${proj.league != null ? `, the league ${num(proj.league)}` : ''}${dampText(proj.matchupFrom)})` : ' (no environment table)'}${proj.team != null ? ` × ${proj.team} (his side's rates run past the team's expected total: scaled down to it)` : ''}${proj.reach?.add ? ` = ${num(proj.value - proj.reach.add)}${reachText(proj.reach, myPos)}` : ''}${proj.floor != null ? ` · between ${proj.floor} and ${proj.ceiling} half the nights` : ''}${winRead ? ` · over ${WIN_TEXT[view]} ${opp} gives up ${num(winRead.allowed)} (#${winRead.rank ?? '—'}): the matchup would read × ${winRead.factor}, ${num(winRead.value)}; the window fills the table on the right, the figure stays the board's` : ''} · his windows: season ${num(own?.season)}, last 10 ${num(own?.l10)}, last 5 ${num(own?.l5)}`;
 
   return (
     <div className="nhlx-modal" role="dialog" aria-modal="true" onClick={onClose}>
@@ -336,6 +393,7 @@ function Card({ req, date, onClose }) {
                 </table>
               </div>
             ) : <div className="nhlx-empty">{data ? `No defense table for ${opp || 'the opponent'} in this pull.` : 'Loading…'}</div>}
+            {data?.vsPosition ? <VsPosition data={data.vsPosition} opp={opp} myPos={myPos} market={market} line={line} allowed={data.allowed} /> : null}
             {plays.length ? (
               <div className="nhlx-pfd ir-pc-plays">
                 <div className="nhlx-pfd-head"><b>His lines tonight</b><small className="nhlx-auto-meta">the board’s chance per line</small></div>

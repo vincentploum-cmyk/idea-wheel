@@ -37,10 +37,14 @@ describe('defense board by line', () => {
     expect(SLOT_LINES.flatMap(([, s]) => s)).toEqual(board.slots);
   });
   test('the softest line is the best rank, a tie to the slot furthest over the league, not the busiest line', () => {
-    // NJD's busiest slot is LW1 (3.33 a game) but BOS gives up more there; NJD leaks at LW2: 4 a game, 1.5× the league.
+    // BOS gives up more at LW1 than NJD (5 against 3.33); NJD leaks at LW2: 4 a game, 1.5× the league.
     expect(team('NJD').softest).toMatchObject({ slot: 'LW2', rank: 1, value: 4 });
     // BOS ranks first at LW1, C1 and D1: D1 runs furthest over the league (2.33 against 1.83).
     expect(team('BOS').softest.slot).toBe('D1');
+    // The raw leader is another thing: BOS's softest slot by rank is D1, its busiest LW1 at 5 a game (the rink names both);
+    // NJD's is LW2 either way (the rink names it once).
+    expect(team('BOS').most).toMatchObject({ slot: 'LW1', rank: 1, value: 5 });
+    expect(team('NJD').most).toMatchObject({ slot: 'LW2', value: 4 });
     expect(slotBoard(defenseBySlot(lined), { metric: 'g' }).teams.find((t) => t.abbr === 'NJD').cells.LW2.value).toBeCloseTo(0.333, 3);
     expect(slotBoard(defenseBySlot(lined), { metric: 'sog', minSkaterGames: 4 }).teams[0].cells.LW1).toBeNull();
   });
@@ -49,6 +53,8 @@ describe('defense board by line', () => {
     const lines = linesOf(boards, 'NJD');
     expect(lines.sog.cells.LW2).toMatchObject({ rank: team('NJD').cells.LW2.rank, of: 2 });
     expect(lines.sog.softest.slot).toBe(team('NJD').softest.slot);
+    expect(lines.sog.most.slot).toBe('LW2');
+    expect(linesOf(boards, 'BOS').sog).toMatchObject({ softest: { slot: 'D1' }, most: { slot: 'LW1', value: 5 } });
     expect(lines.sog.league.LW1).toBe(board.league.LW1);
     expect(lines.g.cells.LW2.value).toBeCloseTo(0.333, 3);
     expect(linesOf(boards, 'NYR')).toBeNull();
