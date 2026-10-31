@@ -376,8 +376,15 @@ config and keeps its own markets, teams, feeds and slate key:
   block says when the feed was read and how many it lists on the slate (`injuries` on `statusFor`), `injuriesAt` rides on
   the board payload. The feed has no starting fives (ESPN's pre-game summary carries `injuries` per team and no roster;
   the box score's `starter` flag arrives at tip), so "confirmed" means the report an hour before tip, not the lineup
-  card. `__tests__/nba-espn-injuries.test.js` (`fixtures/espn-nba-injuries.json`, the feed of 2026-10-31 trimmed to IND,
-  POR and UTA). **With and without each teammate** (`teammateSplits`, PropFinder's Lineup Lab as
+  card. **The NFL board reads the same feed** (Vincent, 2026-10-31: "do the same for the NFL board"; `parseInjuries` /
+  `fetchInjuries` in `lib/nfl/espn.js`, `fetchInjuries` / `injuriesLive` on the NFL store — live while the week has a game
+  to play —, the refresh route's schedule branch; `nfl/<season>/<wk>/injuries-espn.json`): the week's practice reports
+  (Active = he cleared, listed as such and read as In; Questionable; Doubtful; Out) and the reserve lists (`NFL_FANTASY`:
+  IR and IR-R = IR, PUP-R = PUP, NFI-R = NFI, RESERVE-SUS = Suspended, INACTIVE = Out; `statusOf` reads "Suspension" as
+  Suspended). The parser both sports share is `parseInjuryFeed` in `lib/picks/injury-feed.js` (client-safe: no names.js),
+  each sport passing its team-code reader and fantasy-status spellings. `__tests__/picks-espn-injuries.test.js`
+  (`fixtures/espn-nba-injuries.json`, the NBA feed of 2026-10-31 trimmed to IND, POR and UTA; `espn-nfl-injuries.json`, the
+  NFL's the same day trimmed to SEA and DEN). **With and without each teammate** (`teammateSplits`, PropFinder's Lineup Lab as
   far as the logs reach; Vincent's ask, 2026-10-27): `teammates` on the card's payload = for every pulled teammate
   who took part in three of his games at least, his averages (minutes, points, rebounds, assists, threes) over the
   games they shared and over his games the teammate sat, the gap, and the teammate's health tonight; drawn under
