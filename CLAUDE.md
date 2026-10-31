@@ -1077,9 +1077,12 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   "against which line a team allows the most goals / shots, LW1, LW2 …"; `LineTable` off the API's `slots` =
   `defenseBySlot` for the span, `slotBoard` / `facingAt` / `SLOT_LINES` in `defense-board.js`): every team's shots or
   goals given up to the skater at each slot a game, LW1 … RW4 under their line and D1 … D3 under the pairs, every column
-  ranked and tinted by third, a cell from 3 skater-games, and the **softest line** first — the slot where the team ranks
-  highest against the league, a tie to the one furthest over the league's mean (its raw highest is nearly always its
-  first line) — with the opponent's skater at that slot tonight, clickable to his card; a slot's header sorts by it, and a team overview
+  ranked and tinted by third, a cell from 3 skater-games, and first **the slot the team gives the most to** (`most` on each
+  `slotBoard` team: the raw leader with its figure and its rank against the league at that slot, the teams sorted by the
+  figure; Vincent, 2026-10-31, after the rink head's line: the rank-based `softest` — the slot where the team ranks highest
+  against the league, a tie to the one furthest over the league's mean — stays on the board for the sort it gave and names
+  nothing on the page) with the opponent's skater at that slot tonight, clickable to his card; a slot's header sorts by it
+  (`__tests__/nhl-defense-line-table.test.jsx`), and a team overview
   (GA / GP, SA / GP from the stored box scores; xGA / 60, high-danger shots against and pace from MoneyPuck), each column ranked;
   between them "Running hot" (`lib/nhl-data/streaks.js`, `streaks` in the defense API): every skater's current goal / point /
   3+ SOG streak from this season's stored games, his last game and tonight's opponent read off the same tables at his
