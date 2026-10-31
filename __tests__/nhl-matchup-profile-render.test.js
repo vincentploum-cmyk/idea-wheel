@@ -29,7 +29,9 @@ describe('MatchupProfile renders', () => {
     expect((html.match(/class="nhlx-prof-row is-(?!head)/g) || []).length).toBe(5);
     expect(html).toMatch(/nhlx-prof-word is-soft[^>]*>Strong</);
     expect(html).toMatch(/nhlx-prof-word is-tough is-very[^>]*>Elite</);
-    expect(html).toContain('<span class="nhlx-prof-detail">29.7 shots · 2.83 goals a game on the road (6 games) · 9th of 32 in shots</span>');
+    expect(html).toContain('<span class="nhlx-prof-detail"><span>29.7 shots · 2.83 goals a game on the road (6 games) · </span><span>9th of 32 in shots</span></span>');
+    expect(html).toContain('<b class="nhlx-prof-rank is-tough">31st of 32 most</b>');
+    expect(html).toContain('<b class="nhlx-prof-rank is-soft">3rd of 32 softest</b>');
     expect(html).toContain('title="ShotPropz 2026-27, Oct 30, 2026 · ShotPropz on the road: 29.7 shots (9th of 32)');
     expect(html).not.toContain('role="tablist"');
   });

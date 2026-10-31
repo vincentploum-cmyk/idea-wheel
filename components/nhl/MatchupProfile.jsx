@@ -23,7 +23,7 @@ function Cell({ cell, side }) {
   return (
     <div className={cls} title={cell.title || undefined}>
       <Word cell={cell} />
-      <span className="nhlx-prof-detail">{cell.text}</span>
+      <span className="nhlx-prof-detail">{(cell.parts || [{ t: cell.text }]).map((x, i) => (x.tone ? <b key={i} className={`nhlx-prof-rank ${x.tone}`}>{x.t}</b> : <span key={i}>{x.t}</span>))}</span>
     </div>
   );
 }
