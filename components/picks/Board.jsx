@@ -4,6 +4,7 @@ import { fmtOdds } from '@/lib/nfl/odds';
 import { asStated } from '@/lib/picks/calibration';
 import { ICON } from '@/components/nhl/flags';
 import { GameCharacteristics } from '@/components/nhl/Characteristics';
+import { MatchupProfile } from '@/components/nhl/MatchupProfile';
 
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const fmtStart = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
@@ -123,8 +124,8 @@ export function BoardNotes({ notes }) {
 
 /**
  * The board of one slate for a sport: { groups: [[key, label]], teamLogo, teamName, headshotUrl,
- * totalStat?, totalUnit? }. Per game the two teams' characteristics (when the pull carries team
- * rows), then the sport's tables; a game without a play collapses to one line; the notes under the
+ * totalStat?, totalUnit? }. Per game the matchup profile (the NHL card on the sport's `profile`, the NFL's from
+ * lib/nfl/profile.js; the characteristics card for a game without one), then the sport's tables; a game without a play collapses to one line; the notes under the
  * slate. `before(game)` renders a sport's own view (the NBA court pair) between the game head and the tables.
  */
 export default function Board({ board, sport, empty = 'No games on this slate.', before = null }) {
@@ -135,7 +136,7 @@ export default function Board({ board, sport, empty = 'No games on this slate.',
       {board.games.map((g, i) => (
         <article key={g.id} className={`nhlx-mu-game${i === 0 ? ' is-first' : ''}`}>
           <GameHead g={g} sport={sport} />
-          {g.characteristics ? <GameCharacteristics game={g} renderTeam={mark} pill={expectedPill(g, sport)} /> : null}
+          {g.profile ? <MatchupProfile profile={g.profile} renderTeam={mark} /> : g.characteristics ? <GameCharacteristics game={g} renderTeam={mark} pill={expectedPill(g, sport)} /> : null}
           {before ? before(g) : null}
           {g.plays ? (
             <div className="ir-nfl-grid">
