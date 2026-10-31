@@ -689,7 +689,10 @@ config and keeps its own markets, teams, feeds and slate key:
 - `tools/check-defensive-matchups.mjs <export.csv> <picks.json>` compares PropFinder's Defensive Matchups page export (what each team allows per position, with ranks) against the board's `sides[].allowed` table in a saved `GET /api/nba/picks?date` payload, cell by cell; the export itself is never ingested (its "OPPOSING PLAYER" header is no player column, the parser reads zero rows and the store rejects it).
 - Routes: `GET /api/nba/picks?date`, `GET /api/nba/shuffle?date&market`, `GET /api/nba/scorecard?from&to`, `GET|POST|DELETE /api/nba/sheets?date`,
   `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`,
-  `GET|POST /api/nba/injuries?date` (the admin's injury overrides).
+  `GET|POST /api/nba/injuries?date` (the admin's injury overrides); `POST /api/nba/refresh?only=calibration` (token or
+  admin) grades the season again now and relearns the calibration and the reliable chances without waiting for new box
+  scores — the workflow's `what: calibration` runs it with the site's token (Vincent, 2026-10-31: "open the shuffle tab
+  to relearn the calibration", which this container cannot).
   `.github/workflows/nba-data.yml`: 9:47 ET and 5:23 PM ET (schedule + PropFinder), 2:11 AM ET
   (last night's box scores). UI: `components/nba/NbaApp.jsx` (date picker), `NbaBoard.jsx`,
   `NbaSources.jsx`. Tests: `__tests__/nba-board.test.js` (`fixtures/espn-nba-summary.json`).

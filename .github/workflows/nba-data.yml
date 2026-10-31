@@ -18,11 +18,11 @@ on:
         description: 'Slate date (YYYY-MM-DD, ET) or a range (YYYY-MM-DD..YYYY-MM-DD). Blank = today (the 2 AM run: yesterday).'
         required: false
       what:
-        description: 'all = schedule, scores, box scores and the PropFinder pull (forced); schedule = scores and box scores only, safe for a past date (a forced pull would replace its pre-game lines and tables)'
+        description: 'all = schedule, scores, box scores and the PropFinder pull (forced); schedule = scores and box scores only, safe for a past date (a forced pull would replace its pre-game lines and tables); calibration = grade the season again now and relearn the board''s calibration and reliable chances (no slate touched)'
         required: false
         default: 'all'
         type: choice
-        options: [all, schedule]
+        options: [all, schedule, calibration]
 
 jobs:
   refresh:
@@ -57,6 +57,11 @@ jobs:
           # opened that date's board. Idempotent: a box score already stored is skipped.
           if [ "${{ github.event_name }}" = "schedule" ] && [ "$DATES" != "$YDAY" ]; then
             code=$(call "https://ideareels.io/api/nba/refresh?date=$YDAY&only=schedule$J" yday.json); echo "yesterday ($YDAY) schedule: $code $(head -c 600 yday.json)"
+          fi
+          if [ "$WHAT" = "calibration" ]; then
+            code=$(call "https://ideareels.io/api/nba/refresh?only=calibration" cal.json); echo "calibration: $code $(head -c 4000 cal.json)"
+            [ "$code" = "200" ]
+            exit 0
           fi
           for DATE in $DATES; do
             echo "Refreshing the NBA slate of $DATE"
