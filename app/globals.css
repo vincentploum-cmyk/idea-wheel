@@ -1499,7 +1499,7 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .nhlx-pfd-table tr.is-click:hover td:first-child b { color: var(--primary); }
 .nhlx-pfd-table tr.is-active td:first-child { box-shadow: inset 3px 0 0 var(--primary); }
 /* The shuffle bar under the court's stat tabs: the Shuffle tab's heights for the stat, the chips' chance read at it. */
-.ir-court-stat { margin: 10px 0 6px; }
+.ir-court-stat { margin: 4px 0 8px; }
 .ir-court-pos { margin: 10px 0 0; }
 .ir-court-bar { display: grid; grid-template-columns: auto minmax(120px, 1fr) auto; gap: 6px 12px; align-items: center; margin: 0 0 8px; padding: 8px 12px; border-radius: var(--radius); background: var(--bg-tint); }
 .ir-court-bar > small { color: var(--muted); font-size: 13px; white-space: nowrap; }
