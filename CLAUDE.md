@@ -521,7 +521,8 @@ config and keeps its own markets, teams, feeds and slate key:
   player the projected number for points / assists / threes / rebounds"), so the chips flow in a column per zone
   (`.ir-court-stack`, no two overlap; `ZONE_MAX` three a zone, the rest under the court). **A row of the PropFinder table
   above the court pressed rings that position's chips and fades the others** (`onPos` / `hiPos` on `AllowedTable`,
-  `is-hi` / `is-dim`; press again to show everyone)
+  `is-hi` / `is-dim`; press again to show everyone; the **Players** picker under the table — All · PG · SG · SF · PF · C,
+  Vincent, 2026-10-31: "an 'all' option to select all players" — does the same, All bringing every player back)
   over the tab picked beside them (**this season's table as PropFinder publishes it**, the default and the table the
   board reads, labelled by its years, "'26-'27"; last season's in full, "'25-'26", `allowed.prior` from
   `defense.prior`, a comparison only; then L5 / L10 / L15 / L20 = PropFinder's `lastNGames` rows as published,
