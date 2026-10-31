@@ -107,6 +107,84 @@ function ScoreRows({ rows, label }) {
   );
 }
 
+/**
+ * The predicted scores, graded: the stored pre-game projection (the board's blend before puck drop), the run's Σ λ goals
+ * and the study's Σ λ per side, each against the finals — the bias and the miss per team, the total's, how often the
+ * winner was called and the Brier of the home-win chance.
+ */
+function ScoresTable({ scores }) {
+  const reads = [
+    ['stored', 'Projected score', 'the board’s blend stored before puck drop: the skaters’ λ added up, the team reads, home ice, special teams'],
+    ['run', 'Run’s Σ λ goals', 'the saved run’s λ goals added over each side’s graded skaters'],
+    ['study', 'Study’s Σ λ goals', 'the study’s λ goals the same way, as it stood that morning'],
+  ];
+  const rows = reads.map(([k, label, how]) => [k, label, how, scores?.[k]]).filter(([, , , s]) => s);
+  return (
+    <>
+      <div className="nhlx-db-table-wrap">
+        <table className="nhlx-db-table nhlx-mu-table nhlx-sc-table">
+          <thead>
+            <tr>
+              <th>Read</th>
+              <th className="is-num" title="Games graded">Games</th>
+              <th className="is-num" title="Projected minus actual goals, per team (plus = over)">Team bias</th>
+              <th className="is-num" title="Mean absolute error per team, in goals">Team MAE</th>
+              <th className="is-num" title="Projected goals in the game, average">Total said</th>
+              <th className="is-num" title="Actual goals in the game, average">Total</th>
+              <th className="is-num" title="Mean absolute error on the total">Total MAE</th>
+              <th className="is-num" title="How often the side given the better chance won">Winner called</th>
+              <th className="is-num" title="Brier of the home side’s chance to win (0.25 = a coin flip)">Brier</th>
+              <th className="is-num" title="The home side’s chance as said, and how often it won">Home said · won</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(([k, label, how, s]) => (
+              <tr key={k} className={k === 'stored' ? 'is-model' : ''}>
+                <td><b>{label}</b> <small>{how}</small></td>
+                <td className="is-num">{s.n || 0}</td>
+                <td className="is-num">{s.n ? signed(s.team.bias) : '—'}</td>
+                <td className="is-num">{s.n ? num(s.team.mae) : '—'}</td>
+                <td className="is-num">{s.n ? num(s.total.projected, 1) : '—'}</td>
+                <td className="is-num">{s.n ? num(s.total.actual, 1) : '—'}</td>
+                <td className="is-num">{s.n ? num(s.total.mae) : '—'}</td>
+                <td className="is-num">{s.winner ? <><b>{pct(s.winner.called)}</b><small>{s.winner.n}</small></> : '—'}</td>
+                <td className="is-num">{s.winner ? s.winner.brier.toFixed(3) : '—'}</td>
+                <td className="is-num">{s.winner ? `${pct(s.winner.homeSaid)} · ${pct(s.winner.homeWon)}` : '—'}</td>
+              </tr>
+            ))}
+            {!rows.length || rows.every(([, , , s]) => !s.n) ? <tr><td colSpan={10}><small>No game graded yet: the projections are stored before puck drop from today on, and the run’s sums need {scores?.minGraded ?? 14} graded skaters a side.</small></td></tr> : null}
+          </tbody>
+        </table>
+      </div>
+      {scores?.games?.length ? (
+        <div className="nhlx-db-table-wrap">
+          <table className="nhlx-db-table nhlx-mu-table nhlx-sc-table">
+            <thead>
+              <tr><th>Game</th><th className="is-num">Final</th><th className="is-num" title="The stored pre-game projection">Projected</th><th className="is-num" title="The run’s Σ λ goals per side">Run</th><th className="is-num" title="The study’s Σ λ goals per side">Study</th><th className="is-num" title="The home side’s chance to win, off the projected score (the run’s without one)">Home win</th></tr>
+            </thead>
+            <tbody>
+              {scores.games.map((g) => {
+                const won = g.final.home > g.final.away;
+                const sc = (e) => (e ? `${e[g.away].toFixed(1)} – ${e[g.home].toFixed(1)}` : '—');
+                return (
+                  <tr key={`${g.date}-${g.gameId}`}>
+                    <td><b>{g.away} @ {g.home}</b> <small>{fmtDate(g.date)}</small></td>
+                    <td className="is-num"><b>{g.final.away} – {g.final.home}</b></td>
+                    <td className="is-num">{sc(g.stored)}</td>
+                    <td className="is-num">{sc(g.run)}</td>
+                    <td className="is-num">{sc(g.study)}</td>
+                    <td className={`is-num${g.homeWin == null ? '' : (g.homeWin >= 0.5) === won ? ' is-over' : ' is-under'}`}>{pct(g.homeWin)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 const POS_ORDER = ['C', 'LW', 'RW', 'D'];
 const slotOrder = (a, b) => {
   const pa = POS_ORDER.indexOf(a.replace(/\d+$/, ''));
@@ -311,6 +389,12 @@ export default function Scorecard() {
           <PredictorsTable report={card.predictors[stat]} />
           <p className="nhlx-auto-meta">
             The blend wins when its Brier (and MAE) sits under the model’s on these rows; the board carries it only once that holds. Own L5 / L10 / L15 need the full window of stored games (across seasons: in October the last five are last season’s); own season needs three games this season; PropFinder’s season rate is carried on runs saved from now on. Coverage on all rows: {card.predictors[stat].each.map((p) => `${p.label} ${p.n}`).join(' · ')}.
+          </p>
+
+          <h3 className="nhlx-sc-h">Projected scores <small>each team’s goals as projected before the game against the final</small></h3>
+          <ScoresTable scores={card.scores} />
+          <p className="nhlx-auto-meta">
+            The projected score is the board’s blend (lib/nhl-data/score.js): the skaters’ λ goals added up, the team’s goals a game, the opponent’s goals allowed, home ice and the special teams, at the weights fitted on 2025-26’s box scores; it is stored by the lineup reads before puck drop and graded here as stored. The run’s and the study’s sums are the two goals reads added over the graded skaters, a check on the sums alone.
           </p>
 
           <h3 className="nhlx-sc-h">By slate</h3>

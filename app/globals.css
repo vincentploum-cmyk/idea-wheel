@@ -1289,6 +1289,9 @@ body.nhlx-modal-open { overflow: hidden; }
 .nhlx-sc-table tr.is-blend td { background: var(--bg-tint); }
 
 /* Best bets: the flags beside a name — flame (hot), snowflake (cold), rink (soft spot at his position). */
+.nhlx-pk-proj b { color: var(--heading); font-variant-numeric: tabular-nums; }
+.nhlx-pk-proj.is-hit b { color: var(--ok-fg); }
+.nhlx-pk-proj.is-miss b { color: var(--bad-fg); }
 .nhlx-pk-flags { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: -2px; }
 .nhlx-pk-flag { display: inline-flex; width: 14px; height: 14px; }
 .nhlx-pk-flag svg { width: 14px; height: 14px; }
@@ -1808,6 +1811,10 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .nhlx-prof { margin-top: 14px; --prof-cols: minmax(96px, 140px) minmax(0, 1fr) minmax(0, 1fr); }
 .nhlx-prof-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; color: var(--heading); font-weight: 600; }
 .nhlx-prof-head small { color: var(--muted); font-weight: 400; }
+.nhlx-prof-score { min-width: 0; white-space: normal; text-align: left; line-height: 1.35; font-weight: 500; color: var(--heading); }
+.nhlx-prof-score b { font-weight: 700; font-variant-numeric: tabular-nums; }
+.nhlx-prof-score.is-soft b { color: var(--ok-fg); }
+.nhlx-prof-score.is-tough b { color: var(--bad-fg); }
 .nhlx-prof-rows { margin-top: 8px; }
 .nhlx-prof-row { display: grid; grid-template-columns: var(--prof-cols); column-gap: 16px; align-items: start; padding: 8px 0; border-top: 1px solid var(--line); }
 .nhlx-prof-row.is-head { border-top: 0; padding-top: 2px; padding-bottom: 6px; align-items: end; }

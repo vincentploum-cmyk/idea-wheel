@@ -107,11 +107,13 @@ describe('matchup profile: MTL @ DAL with ShotPropz', () => {
     expect(l.title).toContain('the book: over 25.5 saves at -120 / under +100 (DraftKings) · 59% to clear it against 55% implied: edge +5 points · PropFinder');
   });
   test('power play and penalty kill: the venue board from four games there; rank 1 = the softest kill', () => {
-    expect(cellOf(p, 'powerplay', 'MTL')).toMatchObject({ word: 'Average', tone: '', text: '22.2% · draws 3.0 power plays a game on the road · 12th of 32' });
-    expect(cellOf(p, 'powerplay', 'MTL').title).toBe('ShotPropz 2026-27, Oct 30, 2026 · ShotPropz on the road: 22.2% (12th of 32), 3.0 power plays a game, 6 games · all games 25.6% (6th), 3.3 a game · last 10 28.6% (4th) · PropFinder 2026-27: 27.5% (3rd of 32)');
-    expect(cellOf(p, 'powerplay', 'DAL')).toMatchObject({ word: 'Strong', tone: 'is-soft', text: '27.8% · draws 3.0 power plays a game at home · 6th of 32' });
-    expect(cellOf(p, 'penaltykill', 'DAL')).toMatchObject({ word: 'Elite', tone: 'is-tough', text: '92.9% · gives 2.3 power plays a game at home · 32nd of 32 softest' });
-    expect(cellOf(p, 'penaltykill', 'MTL')).toMatchObject({ word: 'Very leaky', level: 'poor', tone: 'is-soft', text: '68.4% · gives 3.3 power plays a game on the road · 3rd of 32 softest' });
+    // The special-teams read ends the line: how many power plays the team should get tonight (lib/nhl-data/special-teams.js; the fixture's two-team league reads about the league's 3.0).
+    expect(cellOf(p, 'powerplay', 'MTL')).toMatchObject({ word: 'Average', tone: '', text: '22.2% · draws 3.0 power plays a game on the road · 12th of 32 · tonight ≈ 3.0' });
+    expect(cellOf(p, 'powerplay', 'MTL').title).toContain('Power plays tonight: MTL should get about');
+    expect(cellOf(p, 'powerplay', 'MTL').title).toContain('ShotPropz 2026-27, Oct 30, 2026 · ShotPropz on the road: 22.2% (12th of 32), 3.0 power plays a game, 6 games · all games 25.6% (6th), 3.3 a game · last 10 28.6% (4th) · PropFinder 2026-27: 27.5% (3rd of 32)');
+    expect(cellOf(p, 'powerplay', 'DAL')).toMatchObject({ word: 'Strong', tone: 'is-soft', text: '27.8% · draws 3.0 power plays a game at home · 6th of 32 · tonight ≈ 3.0' });
+    expect(cellOf(p, 'penaltykill', 'DAL')).toMatchObject({ word: 'Elite', tone: 'is-tough', text: '92.9% · gives 2.3 power plays a game at home · 32nd of 32 softest · kills ≈ 3.0 tonight' });
+    expect(cellOf(p, 'penaltykill', 'MTL')).toMatchObject({ word: 'Very leaky', level: 'poor', tone: 'is-soft', text: '68.4% · gives 3.3 power plays a game on the road · 3rd of 32 softest · kills ≈ 3.0 tonight' });
     expect(cellOf(p, 'penaltykill', 'MTL').title).toContain('PropFinder 2026-27: 76.1% (24th of 32, 1 = the best kill)');
   });
   test('last 10: shots for and against, the word on the shots for against the season', () => {
@@ -130,7 +132,7 @@ describe('matchup profile: MTL @ DAL with ShotPropz', () => {
     for (const b of ['offense', 'defense']) for (const k of Object.keys(thin.boards[b].home.ytd)) thin.boards[b].home.ytd[k].teams.DAL.gp = 3;
     const q = matchupProfile({ game, rates, pfTeams, shotpropz: thin });
     expect(cellOf(q, 'shooting', 'DAL').text).toBe('27.9 shots · 3.08 goals a game all games (12 games) · 18th of 32 in shots');
-    expect(cellOf(q, 'penaltykill', 'DAL').text).toBe('86.7% · gives 2.5 power plays a game all games · 29th of 32 softest');
+    expect(cellOf(q, 'penaltykill', 'DAL').text).toBe('86.7% · gives 2.5 power plays a game all games · 29th of 32 softest · kills ≈ 3.0 tonight');
     expect(q.teams.DAL.shotpropz).toEqual({ updated: 'Oct 30, 2026', venueGames: 3, leadAt: 'all' });
   });
 });

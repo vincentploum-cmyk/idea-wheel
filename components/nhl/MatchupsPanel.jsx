@@ -385,11 +385,11 @@ export default function MatchupsPanel() {
                 <TeamLink abbr={g.home} logo={34} />
                 <small>
                   {g.log?.score
-                    ? <>Final · <b className="nhlx-mu-score">{g.away} {g.log.score.away} – {g.home} {g.log.score.home}</b>{g.startTimeUTC ? ` · ${fmtTime(g.startTimeUTC)}` : ''}</>
-                    : fmtTime(g.startTimeUTC)}
+                    ? <>Final · <b className="nhlx-mu-score">{g.away} {g.log.score.away} – {g.home} {g.log.score.home}</b>{g.startTimeUTC ? ` · ${fmtTime(g.startTimeUTC)}` : ''}{g.projected?.stored?.exp ? <span title={g.projected.stored.title || undefined}> · projected {g.away} {g.projected.stored.exp[g.away]?.toFixed(1)} – {g.projected.stored.exp[g.home]?.toFixed(1)} {g.home} before puck drop</span> : null}</>
+                    : <>{fmtTime(g.startTimeUTC)}{g.projected?.exp ? <span title={g.projected.title || undefined}> · projected {g.away} {g.projected.exp[g.away]?.toFixed(1)} – {g.projected.exp[g.home]?.toFixed(1)} {g.home}</span> : null}</>}
                 </small>
               </div>
-              {g.profile ? <MatchupProfile profile={g.profile} /> : null}
+              {g.profile ? <MatchupProfile profile={g.profile} projected={g.projected} final={g.log?.score || null} /> : null}
               {(g.total || (g.verdicts && Object.values(g.verdicts).some(Boolean))) && (
               <GameNumbers folded={!!g.profile}>
               {g.total && (
