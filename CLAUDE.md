@@ -1879,6 +1879,11 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   preview ("game-preview-islanders-vs-oilers-…", its lines under a bare "PROJECTED LINEUP") is listed first and gave
   neither team NHL.com's lines. "The same winning lineup" reads as a confirmation (`SAME_LINES`).
   `__tests__/nhl-lineups-keep.test.js`.
+  **Lines written with full stops and jersey nicknames read too** (`splitNames`, `JERSEY` in `gamedaytweets.js`; VAN vs TOR,
+  2026-10-31: @BatchHockey's warm-up tweet "DeBrusk. EP40. Boeser." read as nothing and the rink stood on the preview): a
+  dash-less line ending in a full stop splits on them (a lone initial joins the next name), and "EP40" is the roster
+  player with those initials wearing 40. Still open: a team's two players of one name (VAN's Elias Pettersson, #40 C and
+  #25 D) share one key in the roster map, the snapshot and the model's `modelKey`, so the later slot overwrites the other.
   Slots a capture leaves empty (no lineup yet, or a partial one) are filled from the team's last
   known lineup (`data/lineups/last/<ABBR>.json`, written from each team's own capture) with
   players still on the roster, marked `carried`; the slate does the same for a game with no snapshot.
