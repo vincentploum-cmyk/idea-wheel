@@ -9,6 +9,7 @@ import TabBar from '@/components/site/TabBar';
 import { useHashTab } from '@/components/site/hash-tab';
 import NbaBoard, { NbaShuffle, NbaBoards } from './NbaBoard';
 import NbaSources from './NbaSources';
+import NbaSearch from './NbaSearch';
 import NbaFirstBasket from './NbaFirstBasket';
 import NbaSheetMatchups from './NbaSheetMatchups';
 import NbaBigGames from './NbaBigGames';
@@ -86,6 +87,8 @@ export default function NbaApp({ email }) {
         </div>
       </div>
       <div className="nhlx-auto-actions">
+        {/* Search a player on the slate (Vincent, 2026-11-01): a pick opens his card. */}
+        {board ? <NbaSearch board={board} /> : null}
         {withGames ? (
           <select className="nhlx-input nhlx-input-sm nhlx-mu-gamepick" value={gameId} onChange={(e) => { setGameId(e.target.value); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Game" disabled={!games.length}>
             <option value="">All games{games.length ? ` (${games.length})` : ''}</option>

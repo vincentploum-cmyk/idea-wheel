@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import SiteHeader from '@/components/nhl/SiteHeader';
 import SignOutButton from '@/components/nhl/SignOutButton';
 import ThemeToggle from '@/components/nhl/ThemeToggle';
@@ -10,6 +10,11 @@ import { useHashTab } from '@/components/site/hash-tab';
 import { weekLabel, shiftWeek } from '@/lib/nfl/week';
 import { NflMatchups, NflList, NflBigGames } from './NflBoards';
 import NflSources from './NflSources';
+import NflPlayer from './NflPlayer';
+import PlayerSearch from '@/components/picks/PlayerSearch';
+import { nflSearchList } from '@/lib/picks/player-search';
+import { teamLogo } from '@/lib/nfl/teams';
+import { headshotUrl } from '@/lib/nfl/espn';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 const MARKET_WORD = { pass_yds: 'pass yds', rush_yds: 'rush yds', rec_yds: 'rec yds', receptions: 'rec', anytime_td: 'TD' };
@@ -74,6 +79,10 @@ export default function NflApp({ email }) {
     } catch (e) { setInj({ busy: false, msg: `Injuries: ${e.message}`, changes: null }); }
   };
 
+  // The head's player search (Vincent, 2026-11-01: "I should be able to search on players for both nba and nfl"): the week's
+  // projection rows, a pick opening his panel.
+  const searchList = useMemo(() => nflSearchList(board), [board]);
+  const [found, setFound] = useState(null);
   const games = board?.games || [];
   const span = games.length ? `${fmtDay(games[0].date)} – ${fmtDay(games[games.length - 1].date)}` : '';
   const finals = games.filter((g) => g.final).length;
@@ -89,6 +98,7 @@ export default function NflApp({ email }) {
         </div>
       </div>
       <div className="nhlx-auto-actions">
+        {searchList.length ? <PlayerSearch players={searchList} teamLogo={teamLogo} headshotUrl={headshotUrl} placeholder="Search a player this week" onPick={(p) => setFound(p.ref)} /> : null}
         <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !wk} onClick={() => go(shiftWeek(wk, -1))} aria-label="Previous week">‹</button>
         <span className="ir-nfl-weekpick">{wk ? weekLabel(wk) : ''}</span>
         <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !wk} onClick={() => go(shiftWeek(wk, 1))} aria-label="Next week">›</button>
@@ -155,6 +165,7 @@ export default function NflApp({ email }) {
           </div>
         </section>
       </main>
+      {found ? <NflPlayer row={found} onClose={() => setFound(null)} /> : null}
       <footer className="nhlx-footer">
         <div className="nhlx-wrap">
           <span>ideareels · NFL picks</span>
