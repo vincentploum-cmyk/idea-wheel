@@ -22,7 +22,7 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard (the NFL's alone since
   2026-10-31), the data sources, the default; on the NBA page the night's plays in one ranked list over the games folded to a line each,
   below) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
-  drawn on both panels); the NBA page also `#sheet` (Cheat sheet, below) and `#firstbasket`. The NHL app has nine (below).
+  drawn on both panels); the NBA page also `#boards` (Boards, below), `#sheet` (Cheat sheet, below) and `#firstbasket`. The NHL app has nine (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)
@@ -861,6 +861,18 @@ config and keeps its own markets, teams, feeds and slate key:
   (`firstBasketOdds` in `lib/picks/propfinder.js`: the items naming a first basket / first field goal, not a team's or
   first points, the best price as `firstBasket` on the player, never a market), with the edge; the score is the chance
   × 4 on 0–100. Once stored, who scored first, the first points and the tip are on the game and the rows are graded.
+- **Boards** (`#boards`, `NbaBoards` in `components/nba/NbaBoard.jsx` → `components/picks/Boards.jsx`, the pure builders in
+  `lib/picks/boards.js`; Vincent, 2026-11-01, with his own NFL lists as the form — "Best Receiving Ladders · 1. Puka Nacua
+  100+ / 110+ / 125+", "we should for assists, points, rebounds have the best candidates. Also, we should list the point
+  ladders. 20+, 25+" —, the NBA's built here, the NFL's elsewhere): per stat two numbered lists across the slate, read off
+  the board the page holds (`NBA_BOARDS`: points, rebounds, assists, threes, then PRA ladders) — **the best candidates**
+  (`candidateBoard`: every active player's over at the book's main line, the ladder's main rung as the NBA board prints it,
+  the likeliest first, the price, the EV and the projection beside him) and **the ladders** (`ladderBoard`: the marks he
+  clears at `LADDER_BAR` = 55% on the board's chance, the highest `MAX_MARKS` = 3 of them ascending, "20+ / 25+" — a line of
+  19.5 reads 20+, `markOf` —, ranked by the highest mark then the chance there; each mark with its chance and price, green
+  when the book's price leaves an EV, the main line dotted); a player out is off the boards, a game-time decision reads
+  "if he plays" and thin minutes "if role confirmed" (`caveatOf`); `PER_BOARD` = 10 then "Show all"; the head's game
+  dropdown cuts every board to one game (`gameId`); a name opens the card. `__tests__/picks-boards.test.js`.
 - **Cheat sheet** (`#sheet`, `components/nba/NbaSheetMatchups.jsx`, the pure reader `lib/nba/sheet-matchups.js`; Vincent,
   2026-10-31: "create a new view with best cheat sheet matchups per game"): per game the cheat sheet's soft tiles — the
   cells of each side's `allowed` table carrying the sheet's rank (`sheet`, 1 = the opponent gives up the most of 30) for
