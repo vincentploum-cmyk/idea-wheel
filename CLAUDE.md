@@ -635,7 +635,9 @@ config and keeps its own markets, teams, feeds and slate key:
   projection first. **Touchdowns from the team down**: the team's touchdowns tonight (`teamTd`) = its own touchdowns a game
   through the opponent's touchdowns allowed (`envFactor` on PropFinder's `totals.for/against.td`, `leagueFor.td`) at 0.75
   and the book's implied points (ESPN's total and spread, `impliedPoints`) × `TD_PER_POINT` = 0.105 at 0.25
-  (`LINE_WEIGHT`), its factor on his read clamped 0.6–1.6; his own rate = touchdowns a game (season 0.6 · last five 0.4)
+  (`LINE_WEIGHT`), its factor on his read clamped 0.6–1.6 — **inert on the live board**: PropFinder's NFL team objects
+  carry no Team row, so `totals[ABBR].for` is null on every pull and the factor is 1 (measured on PropFinder's own logs,
+  `docs/audits/2026-11-01-nfl-propfinder-backtest.md`: Brier 0.1237 with the team read, 0.1236 without); his own rate = touchdowns a game (season 0.6 · last five 0.4)
   pulled toward his projected carries + targets × his position's touchdowns per touch across the pull (`perTouch`) at
   n / (n + `RATE_K` = 16); `posShift` (the opponent's touchdowns allowed at his spot over what it allows in all) off,
   `POS_CLAMP` [1, 1]; P = 1 − e^(−λ) through the calibration `TD_CAL` (σ(−0.167 + 0.857 · logit p), `raw` the stated
@@ -1232,6 +1234,18 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   total and spread moved no projection for the better), the touchdown read on volume more than history with no position
   shift, a fitted calibration. Zero-stat games are not in ESPN's box score, so neither the replay's logs nor its grading
   carry them.
+- The NFL projections on PropFinder's own data (`docs/audits/2026-11-01-nfl-propfinder-backtest.md`,
+  `tools/audit/nfl-pf-audit.mjs`; Vincent, 2026-11-01: "Backtest it with the real PropFinder data"): the site's stored pulls
+  exported read-only (`GET /api/nfl/propfinder?export=1` — the pull, the sheets, the schedule, the teams' published rows,
+  gzipped; `?weeks=1` the stored weeks; `exportWeek` in `lib/nfl/store.js`; the `nfl-pf-export` workflow puts every week in
+  a two-day artifact). Each pull carries every rostered player's PropFinder logs back to 2024, zeros in, so every week of
+  2025 and 2026 replays on them with the defense tables rebuilt from the same logs (they match PropFinder's published
+  season table at 0.99+). On 2026's weeks 1–7: receiving 22.9, rushing 21.6, passing 70.2, receptions 1.6, the floor /
+  ceiling at a fifth each side, touchdowns Brier 0.1237; no re-searched constant beat the shipped ones. Week 7 on
+  PropFinder's tables as published that Wednesday read the same as the rebuilt ones; the books' main lines that day landed
+  a little nearer than the projections (receiving 23.7 against 24.3, rushing 25.1 / 26.8, passing 55 / 66.7) and their TD
+  prices beat the TD read (Brier 0.1175 / 0.1214). Only that week could be graded on pre-game PropFinder files: each
+  week's file is overwritten by the next day's pull.
 
 ## Canonical locations
 

@@ -184,3 +184,16 @@ run through the site's own board and projections, then graded on the week's box 
 script, the floor and ceiling and the touchdown read are searched on 2025's weeks 4–18 and checked unchanged on 2026's
 finished weeks; `nfl-backtest.json` carries every table. ESPN takes the season as `dates=<year>` (`year` is ignored);
 a past game's line is in the summary's pickcenter or ESPN's core odds. First run: `docs/audits/2026-11-01-nfl-backtest.md`.
+
+On PropFinder's own data: run the `NFL PropFinder export (audit)` workflow (GitHub → Actions; it calls
+`GET /api/nfl/propfinder?export=1` with the site token for every stored week), unzip its artifact into
+`.nhl-data/audit/nfl-pf`, then (with the ESPN files above for the schedule and the lines):
+
+```bash
+node --max-old-space-size=8192 --import ./tools/audit/register.mjs tools/audit/nfl-pf-audit.mjs --pf .nhl-data/audit/nfl-pf --raw .nhl-data/audit/nfl
+```
+
+The same replay on the pulls' PropFinder logs (zeros in) with the defense tables rebuilt from them, the rebuilt tables
+against PropFinder's published ones, the week whose pre-game pull survived on PropFinder's own tables and against the
+books' lines of that day, and the constants searched again; `nfl-pf-backtest.json`. First run:
+`docs/audits/2026-11-01-nfl-propfinder-backtest.md`.
