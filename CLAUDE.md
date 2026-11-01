@@ -553,6 +553,37 @@ config and keeps its own markets, teams, feeds and slate key:
   sources says so) and ESPN's feed (`fetchInjuries` in `lib/nfl/espn.js`, `ensureInjuries`, `applyEspnInjuries`) sets
   every pulled player's status. The pull lists every rostered player (3,776 for 28 teams), so a player out is in it with
   his logs and reaches the out lists, the without splits and the vacated lifts with no one-by-one read.
+  **The slots come from the players** (`depthFromPlayers` on `makePropfinder`, `depthFromRoster`; 2026-11-01): the NFL team
+  objects carry no depth chart (`depthCharts: 0` on the pull of 2026-10-31), every player object carries `fullPosition`
+  ("WR1", "RB2", "TE1"), so the pull builds `data.depth` from it (`depthFrom: 'players'` on the meta) and `envPosFor` reads
+  slot + depth ("WR1") on the opponent's slot rows, the position where the table has none; until then every receiver read
+  the WR table. `firstTouchdownScorer` on the game rows is `firstTd` (the First TD hit rates read 0 off the logs before).
+  **Everything PropFinder sends is loaded** (2026-11-01, Vincent: "We need to load all Propfinder data"; the pull's markets
+  printed in full by `nfl-data.yml` that night): every market on the pull is filed where it settles — PropFinder's own
+  category first (`CATEGORY_MARKETS` in `propfinder-nfl.js`, `categoryMarkets` on `makePropfinder`; until then "Kicking Points",
+  "Extra Points Made" and "Defensive Interceptions" read as a quarterback's interceptions, "points" holding the alias "ints",
+  and "Longest Passing Completion" as completions), the NBA's skip rule per sport (`notAMarket`: the NFL's skips the fantasy
+  score alone, which no game row carries, so rushing and passing attempts and field goals are read), the "Player Touchdowns"
+  ladder by its line (`lineMarket`: 0.5 the anytime TD, 1.5 2+ TD); **new markets** (`lib/nfl/markets.js`, three groups):
+  Defense (tackles = solo, tackle assists, tackles + assists, sacks, defensive INTs), Kicking (kicking points, field goals,
+  extra points) and Halves & quarters (`PERIODS`: the 1st half's and the 1st quarter's passing / rushing / receiving yards,
+  receptions, rush attempts, pass TDs and touchdowns, the 2nd half's touchdowns; `<period>_<market>`, the full game's
+  matchup table; `periodOf` reads "1st Half …" / "H1…"). The game rows' new fields are sparse (`sparse: true`: kept when not
+  0, null when the row lacks the key; `statOf` reads a null field as no figure, so a game without it is no game in a hit
+  rate and a box score without it grades nothing): the defense, the kicker (`kickPts` = 3 × FG + XP), the periods, his
+  opportunity (`tgtShare`, `rushShare`, `rzTgt`, `rzAtt`, `passRzAtt`, `airYds`, `passAirYds`, `yac`, `sacked`, `fumLost`:
+  loaded, not yet in any projection). ESPN's box score grades them (`parseSummary`: the defensive, interceptions and kicking
+  blocks; each period's rushing, receiving and passing touchdowns from the scoring plays, the passer after "pass from";
+  the period yards and the longest completion null, ungraded). The defense tables read the last 3 too (`windows`). **The
+  rest is kept as sent** (`keepExtra`, `extraOf`): per player his own fields, every game row's figures the board does not
+  read (the other quarters, the shares, the defense's details …; 0s left out) and the lines of the markets the board does
+  not settle (`otherProps`: the fantasy score, the other quarters, 3+ TD), per team every stats row as published (each
+  window, position and slot, PropFinder's ranks in), stored a team a file beside the pull
+  (`nfl/<season>/<wk>/propfinder-extra/<ABBR>.json` + `index.json`, gzipped; whole it was 16 MB gzipped and 400 MB of heap
+  on a synthetic pull of the size) and read by `GET /api/nfl/propfinder?…&player=<id | name>|team=ABBR` (`extraFor`), never
+  by the board; Data sources counts it, `fieldsSeen.stored` lists the keys kept that way. `__tests__/nfl-propfinder-all.test.js`
+  (every market name of that pull, `fixtures/espn-nfl-summary-dal-phi.json` the box score of DAL at PHI, 2026-10-26),
+  `nfl-propfinder-extra-store.test.js`.
 - The board: `picks.js` (`buildBoard`, pure): the sheets' rows and PropFinder's lines merged per
   player + market + line + side; the chance = hit rates over the line (L5 0.3, L10 0.3, season
   0.4; PropFinder's logs when pulled, else the sheet's columns), shrunk toward the book's implied

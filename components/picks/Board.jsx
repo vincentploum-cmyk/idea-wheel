@@ -57,7 +57,7 @@ function Row({ r, final, sport }) {
       <td className={`is-num is-lead ir-ev-${evTone}${r.hit == null ? '' : r.hit ? ' is-hit' : ' is-miss'}`} title={r.ev != null ? `${fmtEv(r.ev)} a unit at ${fmtOdds(r.odds)} on ${pct(r.p)}; the edge over the book's ${pct(r.implied)} under it` : 'No price: no value to read'}><b>{fmtEv(r.ev)}</b><small>{r.edge == null ? '—' : `${r.edge >= 0 ? '+' : ''}${Math.round(r.edge * 100)} pts`}</small></td>
       <td className="is-num"><b>{fmtOdds(r.odds)}</b><small>{r.odds == null ? (r.book || '—') : `implies ${pct(r.implied)}`}</small></td>
       <td className="is-num" title={r.raw != null ? `${pct(r.p)} calibrated${asStated(r.raw)}` : undefined}><b>{pct(r.p)}</b><small>{r.fair}</small></td>
-      {final ? <td className="is-num nhlx-pk-got">{r.actual === null || r.actual === undefined ? <small>DNP</small> : <><b>{r.actual}</b><small>{r.unit}</small></>}</td> : null}
+      {final ? <td className="is-num nhlx-pk-got">{r.actual === undefined ? <small title="The box score has no figure for this market">—</small> : r.actual === null ? <small>DNP</small> : <><b>{r.actual}</b><small>{r.unit}</small></>}</td> : null}
     </tr>
   );
 }

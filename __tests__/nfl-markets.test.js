@@ -26,7 +26,7 @@ describe('NFL markets', () => {
     expect(marketFromText('')).toBeNull();
   });
   test('groups and the box-score fields each market settles on', () => {
-    expect(GROUPS.map(([k]) => k)).toEqual(['touchdowns', 'passing', 'rushing', 'receiving']);
+    expect(GROUPS.map(([k]) => k)).toEqual(['touchdowns', 'passing', 'rushing', 'receiving', 'defense', 'kicking', 'periods']);
     expect(groupOf('anytime_td')).toBe('touchdowns');
     expect(groupOf('pass_td')).toBe('passing');
     expect(statFields('anytime_td')).toEqual(['rushTd', 'recTd', 'retTd']);

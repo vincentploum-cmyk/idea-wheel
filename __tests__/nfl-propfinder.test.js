@@ -1,5 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
-import { gameRow, playerProps, mapPlayers, defenseAllowed, fieldsSeen, pickRow } from '../lib/nfl/propfinder-nfl';
+import { gameRow, playerProps, mapPlayers, defenseAllowed, fieldsSeen, pickRow, depthFromRoster } from '../lib/nfl/propfinder-nfl';
+import { envPosFor } from '../lib/nfl/picks';
 
 const GAME = { gameDate: '2026-10-12T17:00:00Z', season: 2026, seasonType: 'REG', isHomeGame: true, opponent: { code: 'KC' }, passingYards: 301, passingTouchdowns: 2, completions: 24, passingAttempts: 33, interceptions: 1, rushingAttempts: 5, rushingYards: 22, rushingTouchdowns: 1, weirdStat: 3 };
 const PLAYER = { id: 'p1', name: 'Josh Allen', positionAbbreviation: 'QB', status: 'ACT', team: { code: 'BUF' }, stats: [GAME, { ...GAME, gameDate: '2026-10-05T17:00:00Z', passingYards: 210 }], odds: [{ market: 'Passing Yards', line: 245.5, overOdds: -115, underOdds: -105, book: 'DK' }, { marketName: 'Anytime Touchdown Scorer', value: 0.5, odds: '+150' }, { market: 'Nothing known', line: 1 }] };
@@ -12,6 +13,32 @@ describe('PropFinder NFL mapping', () => {
     // The spellings a real pull showed (2026-10-20).
     expect(gameRow({ gameDate: '2026-10-12T17:00:00Z', season: 2026, seasonType: 'REG', isHome: false, opposingTeamCode: 'KC', receivingReceptions: 7, receivingYards: 91, receivingTargets: 10, receivingLongest: 34, receivingTouchdowns: 1, rushingLongest: 12, passingLongest: 0, puntReturnsTouchdowns: 1, fumblesEzRecTds: 0 }))
       .toMatchObject({ opp: 'KC', home: false, rec: 7, recYds: 91, tgt: 10, recLong: 34, recTd: 1, rushLong: 12, retTd: 1, td: 2 });
+  });
+  test('the first touchdown scorer flag is read (it read 0 on every game until 2026-11-01)', () => {
+    expect(gameRow({ gameDate: '2026-10-12', firstTouchdownScorer: true, receivingTouchdowns: 1 })).toMatchObject({ firstTd: 1, td: 1 });
+    expect(gameRow({ gameDate: '2026-10-12', firstTouchdownScorer: false })).toMatchObject({ firstTd: 0 });
+    expect(fieldsSeen([{ name: 'X', stats: [{ gameDate: '2026-10-12', firstTouchdownScorer: 1 }] }], []).unread).not.toContain('firstTouchdownScorer');
+  });
+  test('the depth chart from the players\' own slots, and the slot table the environment reads', () => {
+    const team = { code: 'TB' };
+    const players = [
+      { id: 'a', name: 'Emeka Egbuka', fullPosition: 'WR1', position: 'WR', status: 'ACT', team },
+      { id: 'b', name: 'Chris Godwin', fullPosition: 'WR2', position: 'WR', team },
+      { id: 'c', name: 'Bucky Irving', fullPosition: 'RB1', position: 'RB', team },
+      { id: 'd', name: 'Someone Else', fullPosition: '', position: 'WR', team },
+      { id: 'e', name: 'A Linebacker', fullPosition: 'LB1', position: 'LB', team },
+      { id: 'f', name: 'Josh Allen', fullPosition: 'QB1', position: 'QB', team: { code: 'BUF' } },
+    ];
+    const d = depthFromRoster(players, 'TB');
+    expect(Object.keys(d).sort()).toEqual(['RB', 'WR']);
+    expect(d.WR.map((x) => [x.name, x.depth])).toEqual([['Emeka Egbuka', 1], ['Chris Godwin', 2]]);
+    expect(d.WR[0]).toMatchObject({ key: 'emeka egbuka', status: 'ACT', id: 'a' });
+    expect(depthFromRoster(players, 'KC')).toBeNull();
+    // The opponent's table keeps slot rows (WR1 …): the slot + depth reads first, the position when the table has no such row.
+    const rows = { WR: {}, WR1: {}, RB: {} };
+    expect(envPosFor('WR', 'WR', rows, 1)).toBe('WR1');
+    expect(envPosFor('WR', 'WR', rows, 4)).toBe('WR');
+    expect(envPosFor(null, 'RB', rows)).toBe('RB');
   });
   test('prop lines on a player, unknown markets dropped', () => {
     expect(playerProps(PLAYER)).toEqual([
@@ -26,7 +53,9 @@ describe('PropFinder NFL mapping', () => {
   test('the keys the API used, with the ones this file does not read', () => {
     const seen = fieldsSeen([PLAYER], []);
     expect(seen.game).toContain('passingYards');
-    expect(seen.unread).toEqual(['weirdStat']);
+    // The NFL keeps what the board does not read (`keepExtra`): listed as stored, not unread.
+    expect(seen.unread).toEqual([]);
+    expect(seen.stored).toEqual(['weirdStat']);
     expect(seen.prop).toContain('overOdds');
   });
   test('what each defense allows per position, ranked 1 = most', () => {

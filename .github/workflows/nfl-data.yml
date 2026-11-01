@@ -39,5 +39,11 @@ jobs:
           code=$(call "https://ideareels.io/api/nfl/refresh?date=$DATE&only=schedule$J" sched.json); echo "schedule: $code $(head -c 600 sched.json)"
           [ "$code" = "200" ] || [ "$code" = "429" ]
           if [ -n "$NHL_ACTIONS_TOKEN" ] && [ "$JOB" != "nfl-late" ]; then
-            pf=$(call "https://ideareels.io/api/nfl/refresh?date=$DATE&only=propfinder${FORCE}$J" pf.json); echo "propfinder: $pf $(head -c 16000 pf.json)"
+            pf=$(call "https://ideareels.io/api/nfl/refresh?date=$DATE&only=propfinder${FORCE}$J" pf.json); echo "propfinder: $pf $(head -c 3000 pf.json)"
+            # The rest of the pull's report in full (the 16 KB head cut it off before the markets): the odds markets with the
+            # one each was filed under (null = skipped), the team rows' type / position / season / window, the samples.
+            jq -c '.propfinder | {players, withProps, withGames, defenseTeams, depthCharts, depthFrom, extra}' pf.json 2>/dev/null || true
+            jq -c '.propfinder.fieldsSeen | {unread, stored, player, prop}' pf.json 2>/dev/null || true
+            jq -r '.propfinder.fieldsSeen.markets // {} | to_entries | sort_by(-.value.n) | .[] | "market \(.value.n)\t\(.value.market // "SKIPPED")\t\(.key)"' pf.json 2>/dev/null || true
+            jq -r '.propfinder.fieldsSeen.sample | to_entries[] | "sample \(.key): \(.value | tostring | .[0:4000])"' pf.json 2>/dev/null || true
           fi
