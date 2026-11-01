@@ -7,34 +7,41 @@ import ThemeToggle from '@/components/nhl/ThemeToggle';
 import SportNav from '@/components/site/SportNav';
 import TabBar from '@/components/site/TabBar';
 import { useHashTab } from '@/components/site/hash-tab';
-import NbaBoard, { NbaShuffle, NbaBoards } from './NbaBoard';
 import NbaSources from './NbaSources';
 import NbaSearch from './NbaSearch';
 import NbaFirstBasket from './NbaFirstBasket';
-import NbaSheetMatchups from './NbaSheetMatchups';
 import NbaBigGames from './NbaBigGames';
+import { NbaGames, NbaStatList, useNbaShuffles } from './NbaGames';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : '');
 
+// The NBA page laid out as the NFL's (Vincent, 2026-11-01: "for nba, I need the same layout as nfl with as addition the
+// propfinder tables for each game when clicking on the game"): plain tabs drawn as pills — the games first, each opening
+// on PropFinder's tables and its players' ladders, the same lists across the night per stat, the big games, the first
+// basket and the data sources. The Best plays board (EV, juice, the floors), the Boards, the Cheat sheet and the Shuffle
+// tabs are off the page; their components and routes stay, and an old #board / #shuffle link opens Games.
 const TABS = [
-  ['board', 'Best plays'],
-  ['boards', 'Boards'],
+  ['matchups', 'Games'],
+  ['pts', 'Points'],
+  ['reb', 'Rebounds'],
+  ['ast', 'Assists'],
+  ['tpm', 'Threes'],
+  ['pra', 'PRA'],
   ['big', 'Big games'],
-  ['sheet', 'Cheat sheet'],
-  ['shuffle', 'Shuffle'],
   ['firstbasket', 'First basket'],
+  ['sources', 'Data sources'],
 ];
+const STAT_TABS = ['pts', 'reb', 'ast', 'tpm', 'pra'];
 const TAB_KEYS = TABS.map(([key]) => key);
 
 /**
- * The NBA page, four hash tabs over one date picker: Best plays (the night's plays in one ranked list,
- * the games folded under it, the notes, the scorecard and the data sources), Cheat sheet (each game's softest
- * spots on the night's cheat sheet with the players there, off the same board), Shuffle (each player's
- * line at a chance, or who clears a bar; a row opening the player's card) and First basket.
+ * The NBA page, pill tabs over one date picker: Games (the night's games, each opening on PropFinder's tables for both
+ * teams and the players' ladders per stat), the same ladders across the night per stat, Big games, First basket and
+ * Data sources (the cheat sheets, the pulls).
  */
 export default function NbaApp({ email }) {
-  const [tab, mounted] = useHashTab(TAB_KEYS, 'board');
+  const [tab, mounted] = useHashTab(TAB_KEYS, 'matchups');
   const [date, setDate] = useState('');
   const [board, setBoard] = useState(null);
   const [err, setErr] = useState('');
@@ -71,6 +78,8 @@ export default function NbaApp({ email }) {
   const shift = (n) => { const d = new Date(`${date}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); go(d.toISOString().slice(0, 10)); };
   const pretty = date ? new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' }) : '';
 
+  // The slate's shuffle per stat, read once a night and shared by Games and the stat tabs (the ladders' round marks).
+  const shuffles = useNbaShuffles(board?.games?.length ? date : null);
   const games = board?.games || [];
   const finals = games.filter((g) => g.final).length;
   const src = board?.sources;
@@ -83,7 +92,7 @@ export default function NbaApp({ email }) {
       <div>
         <div className="nhlx-today-date">{pretty || 'Loading…'}</div>
         <div className="nhlx-auto-sub">
-          {board ? [`${games.length} game${games.length === 1 ? '' : 's'}`, finals ? `${finals} final` : null, `${board.plays} play${board.plays === 1 ? '' : 's'}`, src?.sheets?.length ? `${src.sheets.length} cheat sheet${src.sheets.length === 1 ? '' : 's'}` : 'no cheat sheet', src?.propfinder ? `PropFinder ${fmtDay(src.propfinder.at)} ${fmtTime(src.propfinder.at)}` : 'PropFinder not pulled'].filter(Boolean).join(' · ') : ''}
+          {board ? [`${games.length} game${games.length === 1 ? '' : 's'}`, finals ? `${finals} final` : null, src?.sheets?.length ? `${src.sheets.length} cheat sheet${src.sheets.length === 1 ? '' : 's'}` : 'no cheat sheet', src?.propfinder ? `PropFinder ${fmtDay(src.propfinder.at)} ${fmtTime(src.propfinder.at)}` : 'PropFinder not pulled'].filter(Boolean).join(' · ') : ''}
         </div>
       </div>
       <div className="nhlx-auto-actions">
@@ -110,55 +119,35 @@ export default function NbaApp({ email }) {
     <>
       <SiteHeader sport="NBA" nav={<SportNav />} right={<><span className="nhlx-user">{email}</span><ThemeToggle /><SignOutButton /></>} />
       <main>
-        <TabBar tabs={TABS} tab={tab} />
+        <TabBar tabs={TABS} tab={tab} pills />
 
-        <section className="nhlx-bench nhlx-tabpanel" id="board" role="tabpanel" aria-labelledby="tab-board" hidden={tab !== 'board'}>
+        <section className="nhlx-bench nhlx-tabpanel ir-nfl-panel" id="matchups" role="tabpanel" aria-labelledby="tab-matchups" hidden={tab !== 'matchups'}>
           <div className="nhlx-wrap">
-            <div className="nhlx-bench-head">
-              <div>
-                <span className="nhlx-eyebrow">NBA</span>
-                <h1>Tonight&apos;s <span>best matchups</span></h1>
-                <p>The games ranked by their Matchup Score and every +EV play on the night ranked by its expected value at the book’s price, the floors hiding the capital-dead locks (worse than -200, under +5% a unit); set your own floors above the cards. Under them the games, folded to a line each: press one for the profile, both courts, the tables and the alternate-line ladders.</p>
-              </div>
-            </div>
-            <section className="nhlx-pk" aria-label="Tonight’s picks">
-              {head({ games: true })}
+            <section className="nhlx-pk" aria-label="Games">
+              {head()}
               {pull.msg ? <p className="nhlx-auto-msg">{pull.msg}</p> : null}
               {err ? <div className="nhlx-alert">{err}</div> : null}
-              {board ? <NbaBoard board={board} game={gameId || null} onGame={setGameId} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null}
-            </section>
-            {date ? <NbaSources date={date} onChange={() => go(date)} /> : null}
-          </div>
-        </section>
-
-        <section className="nhlx-bench nhlx-tabpanel" id="boards" role="tabpanel" aria-labelledby="tab-boards" hidden={tab !== 'boards'}>
-          <div className="nhlx-wrap">
-            <div className="nhlx-bench-head">
-              <div>
-                <span className="nhlx-eyebrow">NBA</span>
-                <h1>Tonight&apos;s <span>boards</span></h1>
-                <p>What to bet on, per stat: every player’s ladder as three marks — the highest he clears <b>strong</b> (70%+), <b>lean</b> (55%+) and <b>thin</b> (40%+) — 20+ strong · 25+ lean · 30+ thin. The strongest ladders first. Pick a game above to cut every board to it; click a name for the card.</p>
-              </div>
-            </div>
-            <section className="nhlx-pk" aria-label="Tonight’s boards">
-              {head({ games: true })}
-              {pull.msg ? <p className="nhlx-auto-msg">{pull.msg}</p> : null}
-              {err ? <div className="nhlx-alert">{err}</div> : null}
-              {mounted('boards') ? (board ? <NbaBoards board={board} game={gameId || null} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null) : null}
+              {board ? <NbaGames board={board} shuffles={shuffles} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null}
             </section>
           </div>
         </section>
 
-        <section className="nhlx-bench nhlx-tabpanel" id="big" role="tabpanel" aria-labelledby="tab-big" hidden={tab !== 'big'}>
-          <div className="nhlx-wrap">
-            <div className="nhlx-bench-head">
-              <div>
-                <span className="nhlx-eyebrow">NBA</span>
-                <h1>Tonight&apos;s <span>big games</span></h1>
-                <p>Who is likeliest to go big tonight: 30+ / 40+ points, 12+ / 15+ rebounds, 10+ / 12+ assists, 5+ / 7+ threes, 40+ / 50+ PRA. Pick a game above to cut it to one game; click a name for the card.</p>
-              </div>
+        {STAT_TABS.map((key) => (
+          <section key={key} className="nhlx-bench nhlx-tabpanel ir-nfl-panel" id={key} role="tabpanel" aria-labelledby={`tab-${key}`} hidden={tab !== key}>
+            <div className="nhlx-wrap">
+              <section className="nhlx-pk" aria-label={TABS.find(([k]) => k === key)[1]}>
+                {head()}
+                {pull.msg ? <p className="nhlx-auto-msg">{pull.msg}</p> : null}
+                {err ? <div className="nhlx-alert">{err}</div> : null}
+                {mounted(key) ? (board ? <NbaStatList board={board} shuffles={shuffles} market={key} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null) : null}
+              </section>
             </div>
-            <section className="nhlx-pk" aria-label="Tonight’s big games">
+          </section>
+        ))}
+
+        <section className="nhlx-bench nhlx-tabpanel ir-nfl-panel" id="big" role="tabpanel" aria-labelledby="tab-big" hidden={tab !== 'big'}>
+          <div className="nhlx-wrap">
+            <section className="nhlx-pk" aria-label="Big games">
               {head({ games: true })}
               {err ? <div className="nhlx-alert">{err}</div> : null}
               {mounted('big') ? (board ? <NbaBigGames board={board} game={gameId || null} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null) : null}
@@ -166,53 +155,22 @@ export default function NbaApp({ email }) {
           </div>
         </section>
 
-        <section className="nhlx-bench nhlx-tabpanel" id="sheet" role="tabpanel" aria-labelledby="tab-sheet" hidden={tab !== 'sheet'}>
+        <section className="nhlx-bench nhlx-tabpanel ir-nfl-panel" id="firstbasket" role="tabpanel" aria-labelledby="tab-firstbasket" hidden={tab !== 'firstbasket'}>
           <div className="nhlx-wrap">
-            <div className="nhlx-bench-head">
-              <div>
-                <span className="nhlx-eyebrow">NBA</span>
-                <h1>Cheat sheet <span>matchups</span></h1>
-                <p>Each game’s best matchups on the night’s cheat sheet: where a defense gives up the most points, rebounds, assists or threes to a position, both teams ranked together, PropFinder’s table beside it, and the players at that spot with their projection, the book’s line and the board’s chance.</p>
-              </div>
-            </div>
-            <section className="nhlx-pk" aria-label="Cheat sheet matchups">
-              {head({ games: true })}
-              {pull.msg ? <p className="nhlx-auto-msg">{pull.msg}</p> : null}
-              {err ? <div className="nhlx-alert">{err}</div> : null}
-              {mounted('sheet') ? (board ? <NbaSheetMatchups board={board} game={gameId || null} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null) : null}
+            <section className="nhlx-pk" aria-label="First basket">
+              {head()}
+              {mounted('firstbasket') && date ? <NbaFirstBasket date={date} /> : null}
             </section>
           </div>
         </section>
 
-        <section className="nhlx-bench nhlx-tabpanel" id="shuffle" role="tabpanel" aria-labelledby="tab-shuffle" hidden={tab !== 'shuffle'}>
+        <section className="nhlx-bench nhlx-tabpanel ir-nfl-panel" id="sources" role="tabpanel" aria-labelledby="tab-sources" hidden={tab !== 'sources'}>
           <div className="nhlx-wrap">
-            <div className="nhlx-bench-head">
-              <div>
-                <span className="nhlx-eyebrow">NBA</span>
-                <h1>The <span>shuffle</span></h1>
-                <p>Pick the chance and every player shows the highest line he clears at it, with the book’s rung there and its edge; or pick the line and the field falls away as the bar rises. Every player on the night’s slate with a PropFinder log. Click a row for his card.</p>
-              </div>
-            </div>
-            <section className="nhlx-pk" aria-label="Tonight’s shuffle">
+            <section className="nhlx-pk" aria-label="Data sources">
               {head()}
               {pull.msg ? <p className="nhlx-auto-msg">{pull.msg}</p> : null}
               {err ? <div className="nhlx-alert">{err}</div> : null}
-              {mounted('shuffle') && date ? (games.length ? <NbaShuffle date={date} /> : board ? <div className="nhlx-empty">No games on this date.</div> : null) : null}
-            </section>
-          </div>
-        </section>
-        <section className="nhlx-bench nhlx-tabpanel" id="firstbasket" role="tabpanel" aria-labelledby="tab-firstbasket" hidden={tab !== 'firstbasket'}>
-          <div className="nhlx-wrap">
-            <div className="nhlx-bench-head">
-              <div>
-                <span className="nhlx-eyebrow">NBA</span>
-                <h1>First <span>basket</span></h1>
-                <p>Who scores the first field goal of each game: the tip, the team with first possession, each starter’s share of his team’s first shot and his own record this season, with the book’s price beside it.</p>
-              </div>
-            </div>
-            <section className="nhlx-pk" aria-label="First basket">
-              {head()}
-              {mounted('firstbasket') && date ? <NbaFirstBasket date={date} /> : null}
+              {date ? <NbaSources date={date} onChange={() => go(date)} /> : null}
             </section>
           </div>
         </section>

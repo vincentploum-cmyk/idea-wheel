@@ -286,7 +286,7 @@ function OutLines({ side, oppOut }) {
  * what the cheat sheet says, whether it confirms propfinder's data"): "✓ #4" green when the tile sits in the same third,
  * "✗ #19" red when it does not; nothing without a sheet. The hover said it before; now the cell does.
  */
-export function AllowedTable({ side, win, metric, season, onWin = null, onPos = null, hiPos = null, sheetMarks = false }) {
+export function AllowedTable({ side, win, metric, season, onWin = null, onPos = null, hiPos = null, sheetMarks = false, pickWord = 'on the court' }) {
   const a = tableFor(side.allowed, win);
   if (!a) return <p className="nhlx-auto-meta ir-court-none">No defense table for {side.opp} yet: pull PropFinder (the button above the board, or under Data sources).</p>;
   const windows = onWin ? windowsOf(side.allowed) : [];
@@ -312,8 +312,8 @@ export function AllowedTable({ side, win, metric, season, onWin = null, onPos = 
           <thead><tr><th>Pos</th>{keys.map((k) => <th key={k} className={k === metric ? 'is-on' : ''}>{STAT_LABEL[k] || k.toUpperCase()}</th>)}</tr></thead>
           <tbody>
             {positions.map((pos) => (
-              <tr key={pos} className={`${onPos ? 'is-click' : ''}${hiPos === pos ? ' is-active' : ''}`} onClick={onPos ? () => onPos(hiPos === pos ? null : pos) : undefined} aria-pressed={onPos ? hiPos === pos : undefined} title={onPos ? (hiPos === pos ? `Showing the ${pos}s on the court · press to show everyone` : `Press to pick out the ${pos}s on the court`) : undefined}>
-                <td><b>{pos}</b>{hiPos === pos ? <small className="nhlx-auto-meta"> on the court</small> : null}<small className="nhlx-auto-meta" title={a.rows[pos].held ? `Last season's table (${a.rows[pos].prior || 0} games) until ${side.opp} plays its first game this season` : win === 'prior' ? `${a.rows[pos].gp || 0} games last season` : `${a.rows[pos].gp || 0} games${win === 'season' ? ' this season' : ''}`}> {a.rows[pos].held ? 'last season' : `${a.rows[pos].gp || 0} GP`}</small></td>
+              <tr key={pos} className={`${onPos ? 'is-click' : ''}${hiPos === pos ? ' is-active' : ''}`} onClick={onPos ? () => onPos(hiPos === pos ? null : pos) : undefined} aria-pressed={onPos ? hiPos === pos : undefined} title={onPos ? (hiPos === pos ? `Showing the ${pos}s ${pickWord} · press to show everyone` : `Press to pick out the ${pos}s ${pickWord}`) : undefined}>
+                <td><b>{pos}</b>{hiPos === pos ? <small className="nhlx-auto-meta"> {pickWord}</small> : null}<small className="nhlx-auto-meta" title={a.rows[pos].held ? `Last season's table (${a.rows[pos].prior || 0} games) until ${side.opp} plays its first game this season` : win === 'prior' ? `${a.rows[pos].gp || 0} games last season` : `${a.rows[pos].gp || 0} games${win === 'season' ? ' this season' : ''}`}> {a.rows[pos].held ? 'last season' : `${a.rows[pos].gp || 0} GP`}</small></td>
                 {keys.map((k) => { const c = a.rows[pos][k]; const tone = zoneTone(c?.rankBlend ?? c?.rank, count); const lg = league?.[pos]?.[k]; const check = a.from === 'sheet' ? null : sheetCheck(c, count); return <td key={k} className={`${c ? `is-${tone}` : ''}${k === metric ? ' is-on' : ''}`} title={`${c && lg != null ? `${num(c.value)} against the league's ${num(lg)} at ${pos}` : ''}${check ? ` · the cheat sheet's tile: #${c.sheet} (${check === 'yes' ? 'the same third' : 'a different third'})` : ''}`}>{c ? <><span className="nhlx-pfd-val">{c.value != null ? num(c.value) : '—'}</span>{c.rank ? <span className="nhlx-pfd-rank">#{c.rank}</span> : null}{sheetMarks && check ? <span className={`nhlx-pfd-sheet is-${check}`} title={`The cheat sheet's tile: #${c.sheet} of 30, ${check === 'yes' ? 'the same third as PropFinder: confirmed' : 'a different third: not confirmed'}`}>{check === 'yes' ? '✓' : '✗'} #{c.sheet}</span> : null}</> : '—'}</td>; })}
               </tr>
             ))}

@@ -1873,6 +1873,13 @@ div.nhlx-auto-msg > p { margin: 0; }
   .nhlx-tabs.is-pills .nhlx-tab { padding: 9px 16px; font-size: 15px; }
 }
 
+/* The NBA's games (2026-11-01, the NFL's layout with PropFinder's tables in an opened game): the list wider for the two
+   tables side by side, the sportsbook rows kept at the NFL's width. */
+.ir-gm-list.is-wide { max-width: 1280px; }
+.ir-gm-list.is-wide .ir-gm-top, .ir-gm-list.is-wide > .ir-gm-cols { max-width: 880px; }
+.ir-gm-pf { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 16px; margin: 12px 0 4px; }
+.ir-gm-players { margin-top: 14px; flex-wrap: wrap; gap: 6px 12px; }
+
 /* The NFL's projection lists (Matchups, TDs, Receiving, Rushing; 2026-11-01): strong / lean / thin. */
 .ir-ml-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr)); gap: 14px; }
 .ir-ml-game { padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--card); min-width: 0; }
