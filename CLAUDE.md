@@ -21,13 +21,13 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   → `[tab, mounted]`, a visited panel stays mounted hidden so it keeps its state; `components/site/TabBar.jsx`
   draws the bar). The NBA page has `#board` (Best plays: the night's plays in one ranked list over the games folded to a
   line each, the data sources, the default) and `#shuffle` (the shuffle) over one date picker (the `head()`, drawn on
-  every panel), and `#boards` (Boards, below), `#sheet` (Cheat sheet, below) and `#firstbasket`. **The NFL page is six
+  every panel), and `#boards` (Boards, below), `#sheet` (Cheat sheet, below) and `#firstbasket`. **The NFL page is seven
   plain tabs drawn as pills** (Vincent, 2026-11-01: "way too complicated … Remove the edge, implies, juice, etc… I just need
   a simple list of games and per game, players listed with their ladders", then a sportsbook's games page as the form and
   "where are the passing yards?"; `TabBar`'s `pills`): `#matchups` (Games, the default: the week's games as a sportsbook
   lists them — the matchup, the kickoff in ET, a row a team with its logo, spread and the total, the line alone with no
   price; `GameRow` in `NflBoards.jsx`, press a game for its players), `#tds`, `#passing`, `#receiving`, `#rushing` (the
-  projection lists, below) and `#sources` (Data sources: the drop zone, the pulls); the Best plays board
+  projection lists, below), `#big` (Big games, below) and `#sources` (Data sources: the drop zone, the pulls); the Best plays board
   (EV, juice, the floors, the scorecard) and the shuffle are off the NFL page — `NflBoard` / `NflShuffle` and their routes
   stay, an old `#board` / `#shuffle` link opens Games. The NHL app has nine (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
@@ -645,7 +645,16 @@ config and keeps its own markets, teams, feeds and slate key:
   expected touchdowns (the book's total × `TD_PER_POINT`, ÷ (1 − `FIRST_OTHER` = 0.06) for the defenses' and the returns';
   the listed players' sum without a total — it runs high, counting every backup with a log) × the chance the game has one
   (`pFirst`); graded on `first_td` / `h1_anytime_td` / the count. On 2026's weeks 1–7: first TD said 4.1% landed 3.8%, 2+
-  said 2.8% landed 3.3%. A list carries receivers, tight ends and backs (receiving) or backs and quarterbacks (rushing)
+  said 2.8% landed 3.3%. **Big games** (`#big`, `NflBigGames`; Vincent, 2026-11-01: "how can I find the super matchups that
+  result in the big wins … 150 rushing yards", then "find out what the best cocktail is … by looking for patterns in the box
+  scores of players that reached these"; `docs/audits/2026-11-01-nfl-big-games.md`, `tools/audit/nfl_big.py`): per stat the
+  week's likeliest 100+ / 150+ rushing and receiving and 300+ / 350+ passing games (`BIG`, `bigChance`: σ(a + b · logit of
+  the board's chance at the mark + one context) — rushing his team's implied points, receiving his share of the targets
+  over his last five (`tgtShareOf`: each game's targets by side, keyed by the game and the opponent faced, a side under
+  `SIDE_TGT_MIN` = 20 targets in the pull left out), passing the game total; the only contexts that beat the board on both
+  checks, 2024 → 2025 and 2024–25 → 2026; the opponent's defense table and his own past big games added nothing, the
+  mined rules did not survive), `big` on every row, `lists.big` by market from `BIG_LIST_MIN` = 5%, the reason beside each
+  name; the week's top five at 100+ landed about one in three. A list carries receivers, tight ends and backs (receiving) or backs and quarterbacks (rushing)
   projected `LIST_YDS_MIN` = 10 yards and up, the highest
   projection first. **Touchdowns from the team down**: the team's touchdowns tonight (`teamTd`) = its own touchdowns a game
   through the opponent's touchdowns allowed (`envFactor` on PropFinder's `totals.for/against.td`, `leagueFor.td`) at 0.75
@@ -1261,6 +1270,11 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   a little nearer than the projections (receiving 23.7 against 24.3, rushing 25.1 / 26.8, passing 55 / 66.7) and their TD
   prices beat the TD read (Brier 0.1175 / 0.1214). Only that week could be graded on pre-game PropFinder files: each
   week's file is overwritten by the next day's pull.
+- The NFL's big games (`docs/audits/2026-11-01-nfl-big-games.md`, `tools/audit/nfl_big.py` on `nfl-pf-audit.mjs --dump`;
+  Vincent, 2026-11-01): 11,824 player-games of 2024–26 with everything known that morning; the board's chance plus one
+  context per stat (implied points, target share, game total) beat the board and its recalibration on both checks, the
+  defense table and the player's past big games did not, everything at once and the trees overfit, the rules mined on 2024
+  fell from 70% to 22–35%. Shipped as the Big games tab.
 
 ## Canonical locations
 

@@ -224,3 +224,78 @@ export function NflList({ board, kind }) {
 }
 
 export default NflMatchups;
+
+// ── Big games (Vincent, 2026-11-01: "how can I find the super matchups that result in the big wins", then "find out what
+// the best cocktail is … by looking for patterns in the box scores of players that reached these"): per stat the players
+// likeliest to reach 100+ / 150+ (300+ / 350+ passing) tonight, read with what predicted those games on 2024–26's box
+// scores (lib/nfl/projections.js BIG; docs/audits/2026-11-01-nfl-big-games.md).
+const BIG_KINDS = [['rush_yds', 'Rushing'], ['rec_yds', 'Receiving'], ['pass_yds', 'Passing']];
+const BIG_SHOW = 25;
+function bigWhy(market, b) {
+  const c = b.ctx || {};
+  if (market === 'rush_yds') return c.points != null ? `team expected ${c.points} pts` : 'no line yet';
+  if (market === 'rec_yds') return c.tgtShare != null ? `${Math.round(c.tgtShare * 100)}% of the targets lately` : 'target share unknown';
+  return c.total != null ? `game total ${c.total}` : 'no line yet';
+}
+function BigTable({ pj, ids, market, limit }) {
+  const [all, setAll] = useState(false);
+  const rows = ids.map((id) => pj.rows[id]).filter((r) => r?.big?.[market]);
+  if (!rows.length) return <p className="nhlx-auto-meta ir-ml-empty">No big-game candidate yet: the week needs a PropFinder pull.</p>;
+  const shown = all || !limit ? rows : rows.slice(0, BIG_SHOW);
+  const marks = rows[0].big[market].marks;
+  const final = rows.some((r) => r.final);
+  return (
+    <>
+      <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
+        <table className="nhlx-db-table nhlx-pk-table ir-ml-table ir-big-table">
+          <thead><tr>
+            <th className="ir-slate-rank">#</th><th>Player</th>
+            {marks.map((mk, i) => <th key={mk} className={`is-num${i === 0 ? ' is-lead' : ''}`} title={`His chance of ${mk}+ yards tonight`}>{mk}+</th>)}
+            <th className="is-num" title="Tonight’s projection">Proj</th>
+            <th className="ir-big-why">Why</th>
+            {final ? <th className="is-num">Got</th> : null}
+          </tr></thead>
+          <tbody>
+            {shown.map((r, i) => {
+              const b = r.big[market];
+              return (
+                <tr key={r.id}>
+                  <td className="ir-slate-rank">{i + 1}</td>
+                  <td><Who r={r} game /><small className="ir-big-why-m">{bigWhy(market, b)}</small></td>
+                  {marks.map((mk, j) => <td key={mk} className={`is-num${j === 0 ? ' is-lead' : ''}${b.hits ? (b.hits[mk] ? ' is-hit' : ' is-miss') : ''}`}><b>{b.p[mk] != null && b.p[mk] < 0.005 ? '<1%' : pct(b.p[mk])}</b></td>)}
+                  <td className="is-num">{b.proj == null ? '—' : Math.round(b.proj)}</td>
+                  <td className="ir-big-why"><small>{bigWhy(market, b)}</small></td>
+                  {final ? <td className="is-num nhlx-pk-got"><Got v={b.actual ?? undefined} /></td> : null}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {limit && !all && rows.length > BIG_SHOW ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-slate-more" onClick={() => setAll(true)}>Show all {rows.length}</button> : null}
+    </>
+  );
+}
+
+const BIG_LEGEND = (
+  <p className="nhlx-auto-meta ir-bd-legend">
+    The players likeliest to have a <b>big game</b> tonight. Checked on 2024–26’s box scores, what predicts one is his volume, plus: for rushing, how many points his team is expected to score; for receiving, his share of the targets; for passing, the game total. The opponent’s defense did not. Checked on seasons it never saw, the week’s top five at 100+ landed about one in three. These are long shots, not safe plays.
+  </p>
+);
+
+/** The Big games tab: per stat the week's likeliest big games. */
+export function NflBigGames({ board }) {
+  const [market, setMarket] = useState('rush_yds');
+  const pj = board?.projections;
+  if (!board?.games?.length) return <div className="nhlx-empty">No games in this week.</div>;
+  if (!pj) return <div className="nhlx-empty">{NO_DATA}</div>;
+  return (
+    <div className="ir-overview">
+      <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="Stat">
+        {BIG_KINDS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={market === k} className={`nhlx-tab${market === k ? ' is-active' : ''}`} onClick={() => setMarket(k)}>{l}</button>)}
+      </div>
+      <BigTable pj={pj} ids={pj.lists?.big?.[market] || []} market={market} limit />
+      {BIG_LEGEND}
+    </div>
+  );
+}

@@ -18,7 +18,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { parseSummary } from '../../lib/nfl/espn.js';
 import { nflBoard, makeBuild, reproject, COCKTAIL } from '../../lib/nfl/picks.js';
-import { PARAMS } from '../../lib/nfl/projections.js';
+import { PARAMS, chanceAtMark } from '../../lib/nfl/projections.js';
 
 const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const PF = arg('--pf', '.nhl-data/audit/nfl-pf');
@@ -48,11 +48,13 @@ function loadSeason(season) {
   }
   return games.sort((a, b) => String(a.date).localeCompare(String(b.date)));
 }
-const seasons = { 2025: loadSeason(2025), 2026: loadSeason(2026) };
+// 2024 too when its ESPN files are fetched (the big-game study's extra season: --dump replays its weeks 6–18).
+const SEASONS = [2024, 2025, 2026].filter((y) => fs.existsSync(path.join(RAW, String(y), 'games')));
+const seasons = Object.fromEntries(SEASONS.map((y) => [y, loadSeason(y)]));
 // PropFinder dates a game by its UTC day (the Thursday opener of Sept 10 ET is 2026-09-11).
 const gameAt = new Map();   // `${utcDay}|${team}` → { g, opp }
 const gameById = new Map();
-for (const s of [2025, 2026]) for (const g of seasons[s]) { const d = String(g.date).slice(0, 10); gameAt.set(`${d}|${g.away}`, { g, opp: g.home }); gameAt.set(`${d}|${g.home}`, { g, opp: g.away }); gameById.set(g.id, g); }
+for (const s of SEASONS) for (const g of seasons[s]) { const d = String(g.date).slice(0, 10); gameAt.set(`${d}|${g.away}`, { g, opp: g.home }); gameAt.set(`${d}|${g.home}`, { g, opp: g.away }); gameById.set(g.id, g); }
 
 // The pulls, newest last; every player once, his logs from the newest pull that has him (with the older pulls' rows a
 // newer one lacks), each REG row of 2025–26 placed on its ESPN game (his team that day = the opponent's opponent).
@@ -75,7 +77,7 @@ for (const pl of players.values()) {
     for (const k of STATS) row[k] = Number(row[k]) || 0;
     row.td = row.rushTd + row.recTd + (Number(row.retTd) || 0);
     row.rushRecYds = row.rushYds + row.recYds; row.passRushYds = row.passYds + row.rushYds;
-    if (row.type === 'REG' && (row.season === 2025 || row.season === 2026)) {
+    if (row.type === 'REG' && SEASONS.includes(row.season)) {
       const at = gameAt.get(`${row.date}|${row.opp}`);
       if (at) { row.espnId = at.g.id; row.team = at.opp; row.week = at.g.week; row.home = at.g.home === row.team; placed++; } else unplaced++;
     }
@@ -139,7 +141,7 @@ function weekInputs(season, week, { defense = 'rebuilt', noFor = false, depth = 
     if (!before.length) continue;
     pfPlayers.push({ id: pl.id, name: pl.name, key: pl.key, team, pos: pl.pos, status: null, injury: null, games: before, props: props?.get(pl.id) || [] });
   }
-  let def = defense === 'rebuilt' ? (seasons[season].some((g) => g.date < start) ? defenseOf(season, start) : defenseOf(season - 1, '9999')) : defense;
+  let def = defense === 'rebuilt' ? (seasons[season].some((g) => g.date < start) || !seasons[season - 1] ? defenseOf(season, start) : defenseOf(season - 1, '9999')) : defense;
   if (noFor && def) def = { ...def, totals: Object.fromEntries(Object.entries(def.totals || {}).map(([t, v]) => [t, { ...v, for: null }])), leagueFor: {} };
   const slate = games.map((g) => ({ id: g.id, date: g.date, away: g.away, home: g.home, final: false, state: 'pre', odds: g.odds }));
   return { args: { season, week, type: 2, games: slate, sheets: [], pf: { at: start, data: { players: pfPlayers, defense: def, depth: depth || {} } }, results: {} }, played };
@@ -150,23 +152,25 @@ const YARD_MARKETS = ['rec_yds', 'rush_yds', 'pass_yds', 'receptions'];
 const STAT = { rec_yds: 'recYds', rush_yds: 'rushYds', pass_yds: 'passYds', receptions: 'rec' };
 const LIST = { rec_yds: (r) => ['WR', 'TE', 'RB'].includes(r.pos) && r.yards.rec_yds?.proj >= 10, rush_yds: (r) => ['RB', 'QB'].includes(r.pos) && r.yards.rush_yds?.proj >= 10, pass_yds: (r) => r.pos === 'QB' && r.yards.pass_yds?.proj >= 100, receptions: (r) => ['WR', 'TE', 'RB'].includes(r.pos) && r.yards.receptions?.proj >= 1 };
 function gradeWeek(pj, played, tag, lines = null) {
-  const yards = []; const tds = []; const rungs = [];
+  const yards = []; const tds = []; const rungs = []; const bigs = [];
   for (const r of Object.values(pj.rows)) {
     const line = played.get(`${r.key}|${r.team}`);
     if (!line) continue;
     const book = lines?.get(`${r.key}|${r.team}`) || null;
     for (const m of YARD_MARKETS) {
       const y = r.yards[m];
-      if (!y || !LIST[m](r)) continue;
+      if (!y || (!DUMP && !LIST[m](r))) continue;
       const bl = book?.[m] || null;
       for (const [tier, t] of Object.entries(y.tiers || {})) if (t) rungs.push({ tag, m, tier, p: t.p, hit: line[STAT[m]] >= t.mark ? 1 : 0 });
-      yards.push({ tag, m, pos: r.pos, proj: y.proj, exp: y.exp, floor: y.floor, ceiling: y.ceiling, sd: y.sd, actual: line[STAT[m]], active: !!ACTIVE(line), line: bl?.line ?? null, odds: bl?.odds ?? null, underOdds: bl?.underOdds ?? null });
+      yards.push({ tag, m, pos: r.pos, key: r.key, team: r.team, opp: r.opp, matchup: y.matchup, proj: y.proj, exp: y.exp, floor: y.floor, ceiling: y.ceiling, sd: y.sd, actual: line[STAT[m]], active: !!ACTIVE(line), line: bl?.line ?? null, odds: bl?.odds ?? null, underOdds: bl?.underOdds ?? null });
     }
+    for (const [m, b] of Object.entries(r.big || {})) for (const mk of b.marks) if (b.p[mk] != null) bigs.push({ tag, m, mark: mk, first: mk === b.marks[0], p: b.p[mk], hit: line[STAT[m]] >= mk ? 1 : 0, player: r.player, share: b.ctx.tgtShare, proj: b.proj });
     if (r.td) tds.push({ tag, pos: r.pos, p: r.td.p, raw: r.td.raw, p1h: r.td.p1h, td: line.rushTd + line.recTd + (line.retTd || 0) > 0 ? 1 : 0, td1h: (Number(line.h1RushTd) || 0) + (Number(line.h1RecTd) || 0) > 0 ? 1 : 0, h1Known: !!line.h1Known, active: !!ACTIVE(line), odds: book?.anytime_td?.odds ?? null, p2: r.td.p2, two: line.rushTd + line.recTd + (line.retTd || 0) >= 2 ? 1 : 0, pFirst: r.td.pFirst, first: Number(line.firstTd) > 0 ? 1 : 0 });
   }
-  return { yards, tds, rungs };
+  return { yards, tds, rungs, bigs };
 }
 
+const DUMP = process.argv.includes('--dump');
 const BUILT = new Map(); let builtFor = null;
 const weeks = (range) => { const out = []; for (let w = range.weeks[0]; w <= range.weeks[1]; w++) out.push([range.season, w]); return out; };
 function built(cocktail, season, week, opts = {}) {
@@ -182,15 +186,15 @@ function built(cocktail, season, week, opts = {}) {
   return v;
 }
 function run(range, { cocktail = COCKTAIL, params = null, lines = null, ...opts } = {}) {
-  const yards = []; const tds = []; const rungs = [];
+  const yards = []; const tds = []; const rungs = []; const bigs = [];
   for (const [s, w] of weeks(range)) {
     const v = built(cocktail, s, w, opts);
     if (!v) continue;
     const pj = params ? reproject(v.b, v.inp.args, { ...PARAMS, ...params }, v.b0) : v.b.projections;
     const g = gradeWeek(pj, v.inp.played, `${s}w${w}`, lines);
-    yards.push(...g.yards); tds.push(...g.tds); rungs.push(...g.rungs);
+    yards.push(...g.yards); tds.push(...g.tds); rungs.push(...g.rungs); bigs.push(...g.bigs);
   }
-  return { yards, tds, rungs };
+  return { yards, tds, rungs, bigs };
 }
 
 const yardScore = (rows) => {
@@ -246,6 +250,14 @@ const propsOf = (pull) => new Map((pull.pull?.data?.players || []).filter((p) =>
 const base = { tune: run(TUNE), check: run(CHECK) };
 const baseMae = yardScore(base.tune.yards); const baseCheck = yardScore(base.check.yards);
 report.shipped = { tune: { yards: baseMae, td: tdScore(base.tune.tds) }, check: { yards: baseCheck, td: tdScore(base.check.tds) } };
+// --dump: every graded player-game's board read, for the big-game study (tools/audit/nfl_big.py).
+if (DUMP) {
+  fs.mkdirSync(OUT, { recursive: true });
+  const extra = seasons[2024] ? run({ season: 2024, weeks: [6, 18] }).yards : [];
+  const rows = [...extra, ...base.tune.yards, ...base.check.yards].map((r) => ({ tag: r.tag, m: r.m, pos: r.pos, key: r.key, team: r.team, opp: r.opp, proj: r.proj, sd: r.sd, matchup: r.matchup, actual: r.actual }));
+  fs.writeFileSync(path.join(OUT, 'nfl-board-rows.json'), JSON.stringify(rows));
+  say('dumped', rows.length); process.exit(0);
+}
 // The ladders' tiers and the other touchdown reads, said against landed.
 const ladderScore = (rows) => Object.fromEntries(['strong', 'lean', 'thin'].map((tier) => { const xs = rows.filter((r) => r.tier === tier); return [tier, { n: xs.length, said: r3(mean(xs.map((r) => r.p))), landed: r3(mean(xs.map((r) => r.hit))), byMarket: Object.fromEntries(YARD_MARKETS.map((m) => { const ys = xs.filter((r) => r.m === m); return [m, ys.length ? [ys.length, r3(mean(ys.map((r) => r.p))), r3(mean(ys.map((r) => r.hit)))] : null]; })) }]; }));
 const otherTd = (rows) => { const f = rows.filter((r) => r.h1Known && r.pFirst != null); return { two: { n: rows.length, brier: brier(rows, 'p2', 'two'), said: r3(mean(rows.map((r) => r.p2))), landed: r3(mean(rows.map((r) => r.two))), calib: calib(rows, 'p2', 'two') }, first: { n: f.length, brier: brier(f, 'pFirst', 'first'), said: r3(mean(f.map((r) => r.pFirst))), landed: r3(mean(f.map((r) => r.first))), calib: calib(f, 'pFirst', 'first') } }; };
@@ -256,6 +268,42 @@ report.resid = Object.fromEntries(YARD_MARKETS.map((m) => { const z = base.tune.
 say('resid', JSON.stringify(report.resid));
 report.otherTd = { tune: otherTd(base.tune.tds), check: otherTd(base.check.tds) };
 say('ladders', JSON.stringify(report.ladders.check), 'other td', JSON.stringify(report.otherTd.check));
+// The big games (Vincent, 2026-11-01: "how can I find the super matchups that result in the big wins … today's matchup can
+// lead up to 150 rushing yards"): the chance of a big mark, said against landed, overall and by the matchup's third.
+const BIG = { rush_yds: [75, 100, 125, 150], rec_yds: [75, 100, 125, 150], pass_yds: [250, 300, 350], receptions: [6, 8, 10] };
+function bigScore(rows) {
+  const out = {};
+  for (const [m, marks] of Object.entries(BIG)) {
+    const xs = rows.filter((r) => r.m === m && r.sd > 0);
+    out[m] = {};
+    for (const mark of marks) {
+      const all = xs.map((r) => ({ p: chanceAtMark(r, mark, m), hit: r.actual >= mark ? 1 : 0, mu: r.matchup ?? 1, proj: r.proj }));
+      const band = (lo, hi) => { const b = all.filter((x) => x.p >= lo && x.p < hi); return b.length ? [b.length, r3(mean(b.map((x) => x.p))), r3(mean(b.map((x) => x.hit)))] : null; };
+      const sorted = [...all].sort((a, b) => a.mu - b.mu); const n3 = Math.floor(sorted.length / 3);
+      const third = (arr) => { const b = arr.filter((x) => x.p >= 0.05); return b.length ? [b.length, r3(mean(b.map((x) => x.p))), r3(mean(b.map((x) => x.hit)))] : null; };
+      out[m][mark] = { n: all.length, bands: { '5–15%': band(0.05, 0.15), '15–30%': band(0.15, 0.3), '30–50%': band(0.3, 0.5), '50%+': band(0.5, 1.01) }, byMatchup: { tough: third(sorted.slice(0, n3)), middle: third(sorted.slice(n3, 2 * n3)), soft: third(sorted.slice(2 * n3)) } };
+    }
+  }
+  // At the same projection, does a soft matchup bring the big game more often? Pairs of projection band × matchup third.
+  return out;
+}
+report.big = { tune: bigScore(base.tune.yards), check: bigScore(base.check.yards) };
+// The top of the week: per week the 5 likeliest to reach the big mark, how many did.
+function topOfWeek(rows, m, mark, k = 5) {
+  const weeks2 = [...new Set(rows.map((r) => r.tag))]; let n = 0; let hit = 0; let said = 0;
+  for (const w of weeks2) { const xs = rows.filter((r) => r.tag === w && r.m === m && r.sd > 0).map((r) => ({ p: chanceAtMark(r, mark, m), hit: r.actual >= mark })).sort((a, b) => b.p - a.p).slice(0, k); n += xs.length; hit += xs.filter((x) => x.hit).length; said += xs.reduce((s2, x) => s2 + x.p, 0); }
+  return { n, said: r3(said / n), landed: r3(hit / n) };
+}
+report.bigTop = Object.fromEntries(['tune', 'check'].map((k) => [k, { rush100: topOfWeek(base[k].yards, 'rush_yds', 100), rush150: topOfWeek(base[k].yards, 'rush_yds', 150), rec100: topOfWeek(base[k].yards, 'rec_yds', 100), rec150: topOfWeek(base[k].yards, 'rec_yds', 150), pass300: topOfWeek(base[k].yards, 'pass_yds', 300) }]));
+// The site's big-game chances (lib/nfl/projections.js BIG), as the board prints them: said against landed, the week's top 5.
+const bigSite = (rows) => Object.fromEntries(['rush_yds|100', 'rush_yds|150', 'rec_yds|100', 'rec_yds|150', 'pass_yds|300', 'pass_yds|350'].map((k) => {
+  const [m, mk] = k.split('|'); const xs = rows.filter((r) => r.m === m && r.mark === Number(mk));
+  const top = [...new Set(xs.map((r) => r.tag))].flatMap((t) => xs.filter((r) => r.tag === t).sort((a, b) => b.p - a.p).slice(0, 5));
+  return [k, { n: xs.length, said: r3(mean(xs.map((r) => r.p))), landed: r3(mean(xs.map((r) => r.hit))), brier: brier(xs, 'p', 'hit'), top5: { said: r3(mean(top.map((r) => r.p))), landed: r3(mean(top.map((r) => r.hit))) } }];
+}));
+report.bigSite = { tune: bigSite(base.tune.bigs), check: bigSite(base.check.bigs) };
+if (process.argv.includes('--debug-share')) { console.log(JSON.stringify(base.check.bigs.filter((r) => r.m === 'rec_yds' && r.mark === 100 && r.tag === '2026w5').sort((a, b) => b.p - a.p).slice(0, 12))); process.exit(0); }
+if (process.argv.includes('--big')) { fs.mkdirSync(OUT, { recursive: true }); fs.writeFileSync(path.join(OUT, 'nfl-pf-big.json'), JSON.stringify({ big: report.big, top: report.bigTop, site: report.bigSite }, null, 1)); process.exit(0); }
 if (process.argv.includes('--ladders')) { fs.mkdirSync(OUT, { recursive: true }); fs.writeFileSync(path.join(OUT, 'nfl-pf-ladders.json'), JSON.stringify({ ladders: report.ladders, otherTd: report.otherTd }, null, 1)); process.exit(0); }
 say('shipped', JSON.stringify(baseCheck), JSON.stringify(report.shipped.check.td).slice(0, 200));
 const asLive = { tune: run(TUNE, { noFor: true }), check: run(CHECK, { noFor: true }) };

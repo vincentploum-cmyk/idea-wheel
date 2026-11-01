@@ -8,7 +8,7 @@ import SportNav from '@/components/site/SportNav';
 import TabBar from '@/components/site/TabBar';
 import { useHashTab } from '@/components/site/hash-tab';
 import { weekLabel, shiftWeek } from '@/lib/nfl/week';
-import { NflMatchups, NflList } from './NflBoards';
+import { NflMatchups, NflList, NflBigGames } from './NflBoards';
 import NflSources from './NflSources';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
@@ -24,9 +24,10 @@ const TABS = [
   ['passing', 'Pass Yards'],
   ['receiving', 'Receiving Yards'],
   ['rushing', 'Rushing Yards'],
+  ['big', 'Big games'],
   ['sources', 'Data sources'],
 ];
-const LIST_TABS = [['matchups', null], ['tds', 'td'], ['passing', 'passing'], ['receiving', 'receiving'], ['rushing', 'rushing']];
+const LIST_TABS = [['matchups', null], ['tds', 'td'], ['passing', 'passing'], ['receiving', 'receiving'], ['rushing', 'rushing'], ['big', 'big']];
 const TAB_KEYS = TABS.map(([key]) => key);
 
 /**
@@ -87,7 +88,7 @@ export default function NflApp({ email }) {
               <section className="nhlx-pk" aria-label={TABS.find(([k]) => k === key)[1]}>
                 {head()}
                 {err ? <div className="nhlx-alert">{err}</div> : null}
-                {mounted(key) ? (board ? (kind ? <NflList board={board} kind={kind} /> : <NflMatchups board={board} />) : !err ? <div className="nhlx-empty">Loading the week…</div> : null) : null}
+                {mounted(key) ? (board ? (kind === 'big' ? <NflBigGames board={board} /> : kind ? <NflList board={board} kind={kind} /> : <NflMatchups board={board} />) : !err ? <div className="nhlx-empty">Loading the week…</div> : null) : null}
               </section>
             </div>
           </section>

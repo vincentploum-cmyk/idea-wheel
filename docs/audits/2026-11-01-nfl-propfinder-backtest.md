@@ -151,3 +151,40 @@ on the same replay, said against landed.
 # The workflow (GitHub → Actions → NFL PropFinder export) uploads the stored weeks; unzip them into .nhl-data/audit/nfl-pf
 node --max-old-space-size=8192 --import ./tools/audit/register.mjs tools/audit/nfl-pf-audit.mjs --pf .nhl-data/audit/nfl-pf --raw .nhl-data/audit/nfl
 ```
+
+## The big games (added the same evening)
+
+Vincent, 2026-11-01: "how can I find the super matchups that result in the big wins? … today's matchup can lead up to 150
+rushing yards for player x". `tools/audit/nfl-pf-audit.mjs --big` grades the board's chance of a big mark (75 / 100 / 125
+/ 150 rushing and receiving yards, 250 / 300 / 350 passing, 6 / 8 / 10 receptions) on the same replay: said against
+landed, by the matchup factor's third (tough / middle / soft), and the week's five likeliest each week.
+
+**Rushing 100+ on 2026's weeks 1–7 (unseen), by the matchup's third:**
+
+| Matchup | Players | Said | Landed |
+|---|---|---|---|
+| Tough | 64 | 16.5% | 12.5% |
+| Middle | 84 | 19.6% | 15.5% |
+| Soft | 86 | 18.4% | 16.3% |
+
+**Receiving 100+ on the same weeks:** 12.2% tough, 12.9% middle, 13.5% soft. On 2025 the soft third did no better than
+the tough one for either.
+
+**Findings:**
+- **The matchup barely moves a big game.** Soft against tough is a couple of points either way. The defense table says
+  how much a defense gives up on average, not which back has the 150-yard day.
+- **What finds the big games is the player's own volume.** The likeliest players by projection hit the big marks two to
+  three times as often as the field.
+- **Even the best candidates land well below the shown chance:**
+
+  | Mark | Chances shown (2026) | Landed (2026) | Chances shown (2025) | Landed (2025) |
+  |---|---|---|---|---|
+  | 100+ rushing | 46% | 31% | 36% | 28% |
+  | 150+ rushing | 19% | 11% | — | — |
+  | 100+ receiving | 46% | 31% | — | — |
+  | 300+ passing | 46% | 17% | — | — |
+
+  The highest projections run high: the players ranked first are partly there because their projection overshoots.
+
+**Nothing changed on the site.** A "big games" view would need its long-shot chances calibrated (said 39% for 100+ rushing
+landed 22% in the 30–50% band) before it shows any.
