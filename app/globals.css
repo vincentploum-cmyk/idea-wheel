@@ -1836,15 +1836,24 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-ml-table td.is-lead b { font-family: var(--font-display); font-size: 17px; color: var(--heading); }
 .ir-ml-table td small { display: block; font-size: 12px; color: var(--muted); }
 .ir-ml-cell b { font-weight: 600; font-size: 15px; color: var(--body); }
-.ir-ml-cell.is-proj b { font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--heading); }
-.ir-ml-th.is-proj { color: var(--heading); }
+.ir-ml-rung { display: block; white-space: nowrap; }
+.ir-ml-rung + .ir-ml-rung { margin-top: 4px; }
+.ir-ml-rung b { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--heading); }
+.ir-ml-rung + .ir-ml-rung b { font-family: inherit; font-weight: 600; font-size: 13.5px; color: var(--body); }
+.ir-ml-table td .ir-ml-rung small { display: inline; margin-left: 6px; font-size: 12.5px; color: var(--muted); }
+.ir-ml-table td.is-strong .ir-ml-rung:first-child small { color: var(--ok-fg); font-weight: 600; }
+.ir-ml-table td .ir-ml-rung.is-hit b, .ir-ml-table td .ir-ml-rung.is-hit small { color: var(--ok-fg); }
+.ir-ml-table td .ir-ml-rung.is-miss b, .ir-ml-table td .ir-ml-rung.is-miss small { color: var(--bad-fg); }
+.ir-ml-th.is-strong { color: var(--ok-fg); }
+.ir-ml-th.is-lean { color: var(--warn-fg); }
+.ir-ml-table td small.ir-ml-tier { display: inline-block; margin-left: 6px; }
 .ir-ml-table td.nhlx-pk-got.is-hit b { color: var(--ok-fg); }
 .ir-ml-table td.nhlx-pk-got.is-miss b { color: var(--bad-fg); }
 .ir-ml-tier { display: inline-block; padding: 0 8px; border-radius: 100px; font-size: 12.5px; font-weight: 600; line-height: 20px; background: var(--bg-soft); color: var(--muted); }
 .ir-ml-tier.is-strong { background: var(--ok-bg); color: var(--ok-fg); }
 .ir-ml-tier.is-lean { background: var(--warn-bg); color: var(--warn-fg); }
-.ir-ml-table tr.is-hit td.is-lead b { color: var(--ok-fg); }
-.ir-ml-table tr.is-miss td.is-lead b { color: var(--bad-fg); }
+.ir-ml-table td.is-hit b { color: var(--ok-fg); }
+.ir-ml-table td.is-miss b { color: var(--bad-fg); }
 .ir-ml-empty { margin: 8px 0; }
 @media (max-width: 700px) {
   .ir-ml-game { padding: 10px; }
@@ -1853,6 +1862,9 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
   .ir-ml-table .nhlx-db-player img { display: none; }
   .ir-ml-table .nhlx-db-player b { white-space: normal; }
   .ir-ml-table .ir-bd-role { margin-left: 0; margin-right: 4px; }
+  .ir-ml-rung b { font-size: 14.5px; }
+  .ir-ml-table td .ir-ml-rung small { display: block; margin-left: 0; }
+  .ir-ml-table td small.ir-ml-tier { display: none; }
 }
 
 /* Phones (Vincent, 2026-10-30: "Optimize for mobile"): the slate list's and the shuffle's rows stacked into a few

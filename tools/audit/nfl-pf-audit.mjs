@@ -150,7 +150,7 @@ const YARD_MARKETS = ['rec_yds', 'rush_yds', 'pass_yds', 'receptions'];
 const STAT = { rec_yds: 'recYds', rush_yds: 'rushYds', pass_yds: 'passYds', receptions: 'rec' };
 const LIST = { rec_yds: (r) => ['WR', 'TE', 'RB'].includes(r.pos) && r.yards.rec_yds?.proj >= 10, rush_yds: (r) => ['RB', 'QB'].includes(r.pos) && r.yards.rush_yds?.proj >= 10, pass_yds: (r) => r.pos === 'QB' && r.yards.pass_yds?.proj >= 100, receptions: (r) => ['WR', 'TE', 'RB'].includes(r.pos) && r.yards.receptions?.proj >= 1 };
 function gradeWeek(pj, played, tag, lines = null) {
-  const yards = []; const tds = [];
+  const yards = []; const tds = []; const rungs = [];
   for (const r of Object.values(pj.rows)) {
     const line = played.get(`${r.key}|${r.team}`);
     if (!line) continue;
@@ -159,11 +159,12 @@ function gradeWeek(pj, played, tag, lines = null) {
       const y = r.yards[m];
       if (!y || !LIST[m](r)) continue;
       const bl = book?.[m] || null;
+      for (const [tier, t] of Object.entries(y.tiers || {})) if (t) rungs.push({ tag, m, tier, p: t.p, hit: line[STAT[m]] >= t.mark ? 1 : 0 });
       yards.push({ tag, m, pos: r.pos, proj: y.proj, exp: y.exp, floor: y.floor, ceiling: y.ceiling, sd: y.sd, actual: line[STAT[m]], active: !!ACTIVE(line), line: bl?.line ?? null, odds: bl?.odds ?? null, underOdds: bl?.underOdds ?? null });
     }
-    if (r.td) tds.push({ tag, pos: r.pos, p: r.td.p, raw: r.td.raw, p1h: r.td.p1h, td: line.rushTd + line.recTd + (line.retTd || 0) > 0 ? 1 : 0, td1h: (Number(line.h1RushTd) || 0) + (Number(line.h1RecTd) || 0) > 0 ? 1 : 0, h1Known: !!line.h1Known, active: !!ACTIVE(line), odds: book?.anytime_td?.odds ?? null });
+    if (r.td) tds.push({ tag, pos: r.pos, p: r.td.p, raw: r.td.raw, p1h: r.td.p1h, td: line.rushTd + line.recTd + (line.retTd || 0) > 0 ? 1 : 0, td1h: (Number(line.h1RushTd) || 0) + (Number(line.h1RecTd) || 0) > 0 ? 1 : 0, h1Known: !!line.h1Known, active: !!ACTIVE(line), odds: book?.anytime_td?.odds ?? null, p2: r.td.p2, two: line.rushTd + line.recTd + (line.retTd || 0) >= 2 ? 1 : 0, pFirst: r.td.pFirst, first: Number(line.firstTd) > 0 ? 1 : 0 });
   }
-  return { yards, tds };
+  return { yards, tds, rungs };
 }
 
 const BUILT = new Map(); let builtFor = null;
@@ -181,15 +182,15 @@ function built(cocktail, season, week, opts = {}) {
   return v;
 }
 function run(range, { cocktail = COCKTAIL, params = null, lines = null, ...opts } = {}) {
-  const yards = []; const tds = [];
+  const yards = []; const tds = []; const rungs = [];
   for (const [s, w] of weeks(range)) {
     const v = built(cocktail, s, w, opts);
     if (!v) continue;
     const pj = params ? reproject(v.b, v.inp.args, { ...PARAMS, ...params }, v.b0) : v.b.projections;
     const g = gradeWeek(pj, v.inp.played, `${s}w${w}`, lines);
-    yards.push(...g.yards); tds.push(...g.tds);
+    yards.push(...g.yards); tds.push(...g.tds); rungs.push(...g.rungs);
   }
-  return { yards, tds };
+  return { yards, tds, rungs };
 }
 
 const yardScore = (rows) => {
@@ -245,6 +246,17 @@ const propsOf = (pull) => new Map((pull.pull?.data?.players || []).filter((p) =>
 const base = { tune: run(TUNE), check: run(CHECK) };
 const baseMae = yardScore(base.tune.yards); const baseCheck = yardScore(base.check.yards);
 report.shipped = { tune: { yards: baseMae, td: tdScore(base.tune.tds) }, check: { yards: baseCheck, td: tdScore(base.check.tds) } };
+// The ladders' tiers and the other touchdown reads, said against landed.
+const ladderScore = (rows) => Object.fromEntries(['strong', 'lean', 'thin'].map((tier) => { const xs = rows.filter((r) => r.tier === tier); return [tier, { n: xs.length, said: r3(mean(xs.map((r) => r.p))), landed: r3(mean(xs.map((r) => r.hit))), byMarket: Object.fromEntries(YARD_MARKETS.map((m) => { const ys = xs.filter((r) => r.m === m); return [m, ys.length ? [ys.length, r3(mean(ys.map((r) => r.p))), r3(mean(ys.map((r) => r.hit)))] : null]; })) }]; }));
+const otherTd = (rows) => { const f = rows.filter((r) => r.h1Known && r.pFirst != null); return { two: { n: rows.length, brier: brier(rows, 'p2', 'two'), said: r3(mean(rows.map((r) => r.p2))), landed: r3(mean(rows.map((r) => r.two))), calib: calib(rows, 'p2', 'two') }, first: { n: f.length, brier: brier(f, 'pFirst', 'first'), said: r3(mean(f.map((r) => r.pFirst))), landed: r3(mean(f.map((r) => r.first))), calib: calib(f, 'pFirst', 'first') } }; };
+report.ladders = { tune: ladderScore(base.tune.rungs), check: ladderScore(base.check.rungs) };
+// Each market's residuals in his spreads ((got − projection) / spread) on the tuning season, at 5% steps: the ladder's curve.
+const qOf = (xs, q) => { const s2 = [...xs].sort((a, b) => a - b); const i = (s2.length - 1) * q; const lo = Math.floor(i); return s2[lo] + (s2[Math.ceil(i)] - s2[lo]) * (i - lo); };
+report.resid = Object.fromEntries(YARD_MARKETS.map((m) => { const z = base.tune.yards.filter((r) => r.m === m && r.sd > 0).map((r) => (r.actual - r.proj) / r.sd); return [m, Array.from({ length: 19 }, (_, i) => r3(qOf(z, (i + 1) * 0.05)))]; }));
+say('resid', JSON.stringify(report.resid));
+report.otherTd = { tune: otherTd(base.tune.tds), check: otherTd(base.check.tds) };
+say('ladders', JSON.stringify(report.ladders.check), 'other td', JSON.stringify(report.otherTd.check));
+if (process.argv.includes('--ladders')) { fs.mkdirSync(OUT, { recursive: true }); fs.writeFileSync(path.join(OUT, 'nfl-pf-ladders.json'), JSON.stringify({ ladders: report.ladders, otherTd: report.otherTd }, null, 1)); process.exit(0); }
 say('shipped', JSON.stringify(baseCheck), JSON.stringify(report.shipped.check.td).slice(0, 200));
 const asLive = { tune: run(TUNE, { noFor: true }), check: run(CHECK, { noFor: true }) };
 report.asLive = { note: 'the pulls carry no team row: totals.for null, leagueFor empty', tune: { td: tdScore(asLive.tune.tds) }, check: { td: tdScore(asLive.check.tds) } };

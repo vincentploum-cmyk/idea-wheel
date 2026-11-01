@@ -106,6 +106,35 @@ PropFinder.
 - **Read:** on one week the book's number is as good as ours or better. Leaning against it by 10% or more hit about half
   the time. That is one week of lines; it says nothing yet about an edge either way.
 
+## The ladders and the other touchdown reads (added the same evening)
+
+Vincent, 2026-11-01: "per game, players listed with their ladders: strong - 50+ yards (60%), lean - 60+ yards, thin 70+
+yards … For touchdowns, I need first touch down, first half touch and 2 touch downs".
+
+**How a rung was graded:** each player's strong, lean and thin rung (the highest round mark at 60% / 45% / 30%) was graded
+on the same replay, said against landed.
+
+**Yards rungs:**
+- **The first cut was too generous.** It read the chance off a symmetric curve between the floor and the ceiling, and
+  overstated by eight points: strong said 67% and landed 59%, lean 52% → 43%, thin 36% → 29%.
+- **Why:** a game's yards are skewed. The middle game lands a third of a spread under the projection, and the good games
+  run long.
+- **The fix:** the chance is now read off each market's real residuals at 5% steps (`RESID`), fitted on 2025.
+
+| Rung | 2025 (fitted): said → landed | 2026 weeks 1–7 (unseen): said → landed |
+|---|---|---|
+| Strong | 68.1% → 66.1% | 68.5% → 63.0% |
+| Lean | 51.3% → 51.4% | 51.3% → 50.4% |
+| Thin | 34.9% → 34.5% | 34.9% → 35.1% |
+
+- On 2026, strong rushing rungs ran the furthest high: 66.8% said, 55.9% landed. 2026's games have run wider than 2025's.
+
+**Touchdowns:**
+- **2+ TDs:** 1 − e^(−λ)(1 + λ) on his calibrated expected touchdowns. On 2026: said 2.8%, landed 3.3%.
+- **First TD, first cut:** his λ over the listed players' summed λ. That said 2.6% and landed 3.9%: the sum counts every
+  backup with a log.
+- **First TD, now:** his λ over the game's expected touchdowns from the book's total. On 2026: said 4.1%, landed 3.8%.
+
 ## What it cannot say yet
 
 - **One week of real pre-game tables and lines.** The store keeps one PropFinder file a week, and each day's pull

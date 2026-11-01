@@ -8,38 +8,36 @@ import SportNav from '@/components/site/SportNav';
 import TabBar from '@/components/site/TabBar';
 import { useHashTab } from '@/components/site/hash-tab';
 import { weekLabel, shiftWeek } from '@/lib/nfl/week';
-import Scorecard from '@/components/picks/Scorecard';
-import NflBoard, { NflShuffle } from './NflBoard';
 import { NflMatchups, NflList } from './NflBoards';
 import NflSources from './NflSources';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : '');
 
+// Vincent, 2026-11-01: "way too complicated … I just need a simple list of games and per game, players listed with their
+// ladders": the games first, the same lists across the week, the data sources last. The Best plays board (EV, juice, the
+// floors) and the shuffle are off the NFL page; their routes and components stay.
 const TABS = [
-  ['board', 'Best plays'],
-  ['matchups', 'Matchups'],
+  ['matchups', 'Games'],
   ['tds', 'TDs'],
   ['receiving', 'Receiving'],
   ['rushing', 'Rushing'],
-  ['shuffle', 'Shuffle'],
+  ['sources', 'Data sources'],
 ];
-// The projection tabs (Vincent, 2026-11-01): the games with their three lists, then each list across every game.
 const LIST_TABS = [
-  ['matchups', 'The week’s', 'matchups', 'Every game with three lists: the touchdown chances, the receiving and the rushing heights each player clears strong (60%), lean (45%) and thin (30%).', null],
-  ['tds', 'Every', 'touchdown', 'Every skill player’s chance of an anytime touchdown across the week, the likeliest first.', 'td'],
-  ['receiving', 'Every', 'receiver', 'Receiving yards and receptions across the week, strong / lean / thin, the highest projection first.', 'receiving'],
-  ['rushing', 'Every', 'rusher', 'Rushing yards across the week, quarterbacks included, strong / lean / thin, the highest projection first.', 'rushing'],
+  ['matchups', 'This week’s', 'games', 'Every game with its players: touchdowns, receiving and rushing.', null],
+  ['tds', 'Every', 'touchdown', 'Anytime, first half, first touchdown and two or more, the likeliest first.', 'td'],
+  ['receiving', 'Every', 'receiver', 'Receiving yards and receptions: strong, lean and thin.', 'receiving'],
+  ['rushing', 'Every', 'rusher', 'Rushing yards, quarterbacks included: strong, lean and thin.', 'rushing'],
 ];
 const TAB_KEYS = TABS.map(([key]) => key);
 
 /**
- * The NFL page, six hash tabs over one week picker: Best plays (the week's board, the notes, the scorecard and the data
- * sources under it), Matchups (each game's TDs, receiving and rushing lists), the same three lists across the week
- * (TDs, Receiving, Rushing; lib/nfl/projections.js) and Shuffle (a bar per market over the week's players).
+ * The NFL page, five hash tabs over one week picker: Games (each game's TDs, receiving and rushing lists), the same three
+ * lists across the week (TDs, Receiving, Rushing; lib/nfl/projections.js) and Data sources (the cheat sheets, the pulls).
  */
 export default function NflApp({ email }) {
-  const [tab, mounted] = useHashTab(TAB_KEYS, 'board');
+  const [tab, mounted] = useHashTab(TAB_KEYS, 'matchups');
   const [wk, setWk] = useState(null);     // { season, week, type }
   const [board, setBoard] = useState(null);
   const [err, setErr] = useState('');
@@ -68,7 +66,7 @@ export default function NflApp({ email }) {
       <div>
         <div className="nhlx-today-date">{wk ? `${weekLabel(wk)} · ${wk.season}` : 'Loading…'}</div>
         <div className="nhlx-auto-sub">
-          {board ? [`${games.length} game${games.length === 1 ? '' : 's'}`, span, finals ? `${finals} final` : null, `${board.plays} play${board.plays === 1 ? '' : 's'}`, src?.sheets?.length ? `${src.sheets.length} cheat sheet${src.sheets.length === 1 ? '' : 's'}` : 'no cheat sheet', src?.propfinder ? `PropFinder ${fmtDay(src.propfinder.at)} ${fmtTime(src.propfinder.at)}` : 'PropFinder not pulled', board.byes?.length ? `bye: ${board.byes.join(', ')}` : null].filter(Boolean).join(' · ') : ''}
+          {board ? [`${games.length} game${games.length === 1 ? '' : 's'}`, span, finals ? `${finals} final` : null, src?.sheets?.length ? `${src.sheets.length} cheat sheet${src.sheets.length === 1 ? '' : 's'}` : 'no cheat sheet', src?.propfinder ? `PropFinder ${fmtDay(src.propfinder.at)} ${fmtTime(src.propfinder.at)}` : 'PropFinder not pulled', board.byes?.length ? `bye: ${board.byes.join(', ')}` : null].filter(Boolean).join(' · ') : ''}
         </div>
       </div>
       <div className="nhlx-auto-actions">
@@ -85,25 +83,6 @@ export default function NflApp({ email }) {
       <SiteHeader sport="NFL" nav={<SportNav />} right={<><span className="nhlx-user">{email}</span><ThemeToggle /><SignOutButton /></>} />
       <main>
         <TabBar tabs={TABS} tab={tab} />
-
-        <section className="nhlx-bench nhlx-tabpanel" id="board" role="tabpanel" aria-labelledby="tab-board" hidden={tab !== 'board'}>
-          <div className="nhlx-wrap">
-            <div className="nhlx-bench-head">
-              <div>
-                <span className="nhlx-eyebrow">NFL</span>
-                <h1>This week&apos;s <span>best matchups</span></h1>
-                <p>The games ranked by their Matchup Score and every +EV play of the week ranked by its expected value at the book’s price, the floors hiding the capital-dead locks (worse than -200, under +5% a unit); set your own floors above the cards. Under them the games, folded to a line each: press one for the profile, both strips and the four tables — touchdowns, passing, rushing, receiving — each row leading with its EV, the marginal rows behind the switch.</p>
-              </div>
-            </div>
-            <section className="nhlx-pk" aria-label="The week’s picks">
-              {head()}
-              {err ? <div className="nhlx-alert">{err}</div> : null}
-              {board ? <NflBoard board={board} /> : !err ? <div className="nhlx-empty">Loading the week…</div> : null}
-            </section>
-            {wk ? <Scorecard sport={{ api: '/api/nfl', kind: 'week', season: wk.season, to: wk.type === 3 ? 18 + wk.week : wk.week, label: 'NFL' }} /> : null}
-            {wk ? <NflSources wk={wk} onChange={() => go(wk)} /> : null}
-          </div>
-        </section>
 
         {LIST_TABS.map(([key, lead, word, blurb, kind]) => (
           <section key={key} className="nhlx-bench nhlx-tabpanel" id={key} role="tabpanel" aria-labelledby={`tab-${key}`} hidden={tab !== key}>
@@ -124,19 +103,19 @@ export default function NflApp({ email }) {
           </section>
         ))}
 
-        <section className="nhlx-bench nhlx-tabpanel" id="shuffle" role="tabpanel" aria-labelledby="tab-shuffle" hidden={tab !== 'shuffle'}>
+        <section className="nhlx-bench nhlx-tabpanel" id="sources" role="tabpanel" aria-labelledby="tab-sources" hidden={tab !== 'sources'}>
           <div className="nhlx-wrap">
             <div className="nhlx-bench-head">
               <div>
                 <span className="nhlx-eyebrow">NFL</span>
-                <h1>The <span>shuffle</span></h1>
-                <p>Pick the chance and every player shows the highest line he clears at it, with the book’s rung there and its edge; or pick the line and the field falls away as the bar rises. Every player on the week’s slate with a PropFinder log.</p>
+                <h1>Data <span>sources</span></h1>
+                <p>Drop the week’s cheat sheets here; the PropFinder pull and ESPN’s schedule.</p>
               </div>
             </div>
-            <section className="nhlx-pk" aria-label="The week’s shuffle">
+            <section className="nhlx-pk" aria-label="Data sources">
               {head()}
               {err ? <div className="nhlx-alert">{err}</div> : null}
-              {mounted('shuffle') && wk ? (games.length ? <NflShuffle wk={wk} /> : board ? <div className="nhlx-empty">No games in this week.</div> : null) : null}
+              {wk ? <NflSources wk={wk} onChange={() => go(wk)} /> : null}
             </section>
           </div>
         </section>
