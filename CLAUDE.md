@@ -558,7 +558,7 @@ config and keeps its own markets, teams, feeds and slate key:
   day, builds the NFL games from an `injuryReports` JSON string, while `/NFL/v2` and `/injuries/nfl/<teamId>` answered 404
   to the API on every pull from 2026-10-28 — so the pull asks it nothing (`fetchInjuries` returns `source: 'espn'`, Data
   sources says so) and ESPN's feed (`fetchInjuries` in `lib/nfl/espn.js`, `ensureInjuries`, `applyEspnInjuries`) sets
-  every pulled player's status. The pull lists every rostered player (3,776 for 28 teams), so a player out is in it with
+  every pulled player's status. **"Pull injuries"** in the week head (`NflApp.jsx`; Vincent, 2026-11-01: "a button for NFL to pull the latest injury news and adjust the predictions") forces that read now — `POST /api/nfl/refresh?only=injuries` (admin or token) builds the board before and after `ensureInjuries(…, { force: true })` and returns `changes` (`injuryChanges` in `lib/picks/injury-diff.js`: who moved between In / DTD / Out, the projections that moved 0.5 or a TD point), shown under the head with "What changed"; the head names when the feed was last read. The pull lists every rostered player (3,776 for 28 teams), so a player out is in it with
   his logs and reaches the out lists, the without splits and the vacated lifts with no one-by-one read.
   **The slots come from the players** (`depthFromPlayers` on `makePropfinder`, `depthFromRoster`; 2026-11-01): the NFL team
   objects carry no depth chart (`depthCharts: 0` on the pull of 2026-10-31), every player object carries `fullPosition`

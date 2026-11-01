@@ -1,6 +1,7 @@
 import { authorize } from '@/lib/nhl-data/util';
 import { readJson, writeJson } from '@/lib/nhl-store';
-import { resolveWeek, ensureSchedule, ensureInjuries, pullPropfinderWeek } from '@/lib/nfl/store';
+import { resolveWeek, ensureSchedule, ensureInjuries, pullPropfinderWeek, boardFor } from '@/lib/nfl/store';
+import { injuryChanges } from '@/lib/picks/injury-diff';
 import { scheduledSlotDone } from '@/lib/scheduler';
 
 export const runtime = 'nodejs';
@@ -10,7 +11,8 @@ export const maxDuration = 300;
 const PUBLIC_MIN_GAP_MS = 15 * 60 * 1000;
 
 // ?only=schedule (ESPN: the week's games, scores and the finished games' box scores) | propfinder (the
-// week's players, lines and defenses) | (default) both. Called by the admin UI and the scheduled
+// week's players, lines and defenses) | injuries (ESPN's injury feed read now, the board rebuilt on it and what moved
+// reported: the board head's "Pull injuries", admin or token) | (default) both. Called by the admin UI and the scheduled
 // workflow; anonymous calls only refresh the public ESPN data, one per 15 minutes.
 async function handle(request) {
   const url = new URL(request.url);
@@ -21,7 +23,7 @@ async function handle(request) {
   const job = url.searchParams.get('job');
   if (job) { const done = await scheduledSlotDone(job); if (done) return Response.json({ ok: true, skipped: `the server's scheduler ran ${job} for ${done.date} at ${done.finishedAt}` }, { headers: { 'Cache-Control': 'no-store' } }); }
   if (!auth.ok) {
-    if (only === 'propfinder') return auth.response;
+    if (only === 'propfinder' || only === 'injuries') return auth.response;
     const marker = 'nfl/meta/public-refresh.json';
     const last = await readJson(marker);
     if (last?.at && Date.now() - Date.parse(last.at) < PUBLIC_MIN_GAP_MS) return Response.json({ skipped: true, reason: 'throttled', lastRun: last.at }, { status: 429 });
@@ -30,6 +32,16 @@ async function handle(request) {
   try {
     const wk = await resolveWeek({ date: url.searchParams.get('date') || undefined, season: url.searchParams.get('season'), week: url.searchParams.get('week'), type: url.searchParams.get('type') });
     const out = { week: wk };
+    if (only === 'injuries') {
+      // The board before and after the feed's read: the store reads the pull through the feed (pfFor), so the
+      // projections follow at once; the diff says who changed status and which projections moved with them.
+      const before = await boardFor(wk, { refresh: false });
+      const inj = await ensureInjuries(wk, { force: true });
+      const after = await boardFor(wk, { refresh: false });
+      out.injuries = inj.feed ? { at: inj.feed.at || null, fetchedAt: inj.feed.fetchedAt || null, fetched: inj.fetched, rows: inj.feed.rows?.length || 0 } : { fetched: false };
+      out.changes = injuryChanges(before, after);
+      return Response.json({ ok: true, ...out }, { headers: { 'Cache-Control': 'no-store' } });
+    }
     if (only !== 'propfinder') {
       const { schedule, fetched, resultsStored } = await ensureSchedule(wk, { force: true });
       out.schedule = { games: schedule?.games?.length || 0, finals: (schedule?.games || []).filter((g) => g.final).length, fetched, resultsStored };
