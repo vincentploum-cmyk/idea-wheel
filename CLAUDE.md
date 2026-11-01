@@ -595,6 +595,30 @@ config and keeps its own markets, teams, feeds and slate key:
   before 2026-11-01 reads unknown (`fieldOptional`, `statOf`). The side players' plays carry `ev`, `implied`, `derived`
   / `synthetic` and the without names. `__tests__/nfl-boards.test.jsx` (the read, the panel, the script; `MOCK_OUT`
   writes `boards-nfl-<theme>.html`).
+- **The cheat sheet's defense snapshot** (`lib/nfl/snapshot.js`; Vincent, 2026-11-01: "the cheat sheet should be used to
+  identify weaknesses in defenses"): each column of the detailed sheet opens with the opponent's defense — coverage shells
+  (Man% / Zone%, Cover 0 / 1 / 2 / 3 / 4 / 6, 2-Man) and ranked tiles (Pass Yds/G, Rush Yds/G, Rush Y/Play, the passing
+  field's Short L / M / R and Long L / M / R, "#N" of 32). `parseSnapshot` reads them off the column's OCR words (labels
+  as OCR spells them, `shellOf` / `tileOf`; the field's zones by place when a label misreads; a coverage share whose
+  decimal OCR dropped put back, and one read a digit long repaired by the shells' 100% sum, `repaired`);
+  `parseDetailedPages` stores them as `meta.defense[offense] = { of: defense, coverage, ranks, tiles }` (a column whose
+  tiles did not read is warned about: page 1's left column, DEN's, read its coverage and no tile). **Which way the sheet
+  ranks is not printed**: #1 = the defense allowing the fewest by default (`SHEET_RANK_DEFAULT`, the usual NFL reading),
+  checked against PropFinder's QB pass-yards and RB rush-yards ranks across the slate (`rankDirection`, Spearman, 6
+  ranks and |ρ| ≥ 0.2 to decide, else the default). `sheetDefense` (run by `buildBoard` in `lib/nfl/picks.js` before the
+  shared builder) converts the tiles to the site's convention (1 = gives up the most, `convertRanks`) and places them on
+  the offense's positions and slots as `meta.oppRanks` (`oppRanksOf`: QB pass and run, backs the run with their catches
+  on the short zones, WR the pass, WR1 / WR2 the outside zones, WR3 and the TE the middle, a zone blended half and half
+  with the pass rank; `meta.oppCount` = 32, `defenseFromSheets` reads it): the existing path puts them beside
+  PropFinder's cells (`sheet`, `sheetValue`, `rankBlend`) and `matchupOf` blends them into every yards projection and the
+  profile's Soft spots. The defenses in words ride as `board.sheetDefense` ({ direction, teams: { DEF: { weak, strong,
+  style } } }, `spotsOf`: the weakest and strongest thirds, man- / zone-heavy, the main shell) and on each projected side
+  as `defense` with `attack` (the top `ATTACK_MAX` = 4 weak spots and the players each opens up: the pass → the QB, the
+  run → the lead back, the outside → WR1 / WR2, the middle → the TE and the slot). The Boards tab leads with **Defenses
+  to attack** (the leakiest first, weak spots → players, strong spots, coverage; the printed rank and the direction on the
+  hover) and each By-game side names the defense's three weakest spots; the script prints the same. A sheet stored before
+  2026-11-01 gains its snapshot with "Read again" (the stored OCR words, no new read). Touchdowns do not read the
+  snapshot (it prints no touchdown tile). `__tests__/nfl-snapshot.test.js` (page 1's real words).
 - Routes (`authorize()`, admin session or sync token): `GET /api/nfl/picks?season&week&type|date`,
   `GET /api/nfl/shuffle?season&week&type&market`, `GET /api/nfl/scorecard?season&from&to`,
   `GET|POST|DELETE /api/nfl/sheets`, `POST /api/nfl/refresh?only=schedule|propfinder`

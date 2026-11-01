@@ -58,6 +58,22 @@ function boardLines(pj, key) {
   return out.join('\n');
 }
 
+const zoneOf = (w) => `${w.word} #${w.rank}`;
+function defenseLines(pj) {
+  const out = ['Defenses to Attack (cheat sheet; #1 = gives up the most)', ''];
+  let any = false;
+  for (const g of pj.games) for (const team of [g.away, g.home]) {
+    const d = g.teams[team]?.defense;
+    if (!d) continue;
+    any = true;
+    out.push(`${d.of} defense vs ${team}: weak ${d.attack.map((w) => `${zoneOf(w)}${w.ids.length ? ` → ${w.ids.map((id) => pj.rows[id].player).join(', ')}` : ''}`).join('; ') || '—'}${d.strong.length ? ` · strong ${d.strong.slice(0, 3).map(zoneOf).join(', ')}` : ''}${d.style.length ? ` · ${d.style.join(', ')}` : ''}`);
+  }
+  if (!any) out.push('(no defense snapshot on this week’s cheat sheets)');
+  const dir = pj.sheetDirection;
+  if (dir) out.push('', `The sheet's #1 read as the defense allowing the ${dir.convention}${dir.from === 'propfinder' ? ` (PropFinder agrees, correlation ${dir.rho} over ${dir.n} ranks)` : ' (the default reading)'}.`);
+  return out.join('\n');
+}
+
 function gameLines(pj) {
   const out = ['By Game', ''];
   for (const g of pj.games) {
@@ -66,7 +82,7 @@ function gameLines(pj) {
       const t = g.teams[team];
       if (!t) { out.push(`  ${team}: no PropFinder players`); continue; }
       const y = (ids, m) => ids.map((id) => `${pj.rows[id].player} ${n0(pj.rows[id].yards[m].exp)}`).join(', ') || '—';
-      out.push(`  ${team}${t.teamTd.tonight != null ? ` (${t.teamTd.tonight.toFixed(1)} TDs expected)` : ''}`);
+      out.push(`  ${team}${t.teamTd.tonight != null ? ` (${t.teamTd.tonight.toFixed(1)} TDs expected)` : ''}${t.defense?.weak?.length ? ` · vs ${t.defense.of}: ${t.defense.weak.slice(0, 3).map(zoneOf).join(', ')}` : ''}`);
       out.push(`    pass ${y(t.passing, 'pass_yds')} · rush ${y(t.rushing, 'rush_yds')} · rec ${y(t.receiving, 'rec_yds')}`);
       out.push(`    TD ${t.td.map((id) => `${pj.rows[id].player} ${pct(pj.rows[id].td.p)}${words(pj.rows[id]) ? ` (${words(pj.rows[id])})` : ''}`).join(', ') || '—'}`);
     }
@@ -79,5 +95,5 @@ const board = await load();
 const pj = board.projections;
 if (!pj) { console.error('The payload carries no projections (a board built before 2026-11-01, or no PropFinder pull for the week).'); process.exit(1); }
 const head = `NFL ${board.type === 3 ? `postseason round ${board.week}` : `week ${board.week}`}, ${board.season}`;
-const parts = flag('games') ? [gameLines(pj)] : [...Object.keys(TITLE).map((k) => boardLines(pj, k)), gameLines(pj)];
+const parts = flag('games') ? [gameLines(pj)] : [defenseLines(pj), ...Object.keys(TITLE).map((k) => boardLines(pj, k)), gameLines(pj)];
 console.log([head, ...parts].join('\n\n'));

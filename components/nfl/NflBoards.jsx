@@ -143,8 +143,61 @@ function YardsTable({ rows, market, shown }) {
   );
 }
 
+const PRINTED = { passYds: (p) => p.passYds, rushYds: (p) => p.rushYds, rushYpp: (p) => p.rushYpp };
+/** The rank as the sheet printed it, for the hover. */
+const printedOf = (printed, key) => { if (!printed) return null; if (PRINTED[key]) return PRINTED[key](printed); const zone = key.startsWith('short') ? 'short' : 'long'; return printed[zone]?.[key.slice(-1).toLowerCase()] ?? null; };
+const directionText = (d) => (!d ? '' : d.from === 'propfinder' ? `the sheet's #1 read as the defense allowing the ${d.convention}, as PropFinder's tables agree (correlation ${d.rho} over ${d.n} ranks)` : `the sheet's #1 read as the defense allowing the ${d.convention} (the usual NFL reading${d.n ? `; PropFinder's tables did not settle it, ${d.n} ranks` : '; no PropFinder table to check it against'})`);
+
+/** A weak or strong spot as a chip: "the pass #2" (1 = gives up the most), the printed rank on the hover. */
+function SpotChip({ w, tone, d, printed }) {
+  const p = printedOf(printed, w.key);
+  return <span className={`ir-spot is-${tone}`} title={`${w.word}: #${w.rank} of 32 by what it gives up (1 = the most)${p != null ? ` · the sheet prints #${p}` : ''} · ${directionText(d)}`}>{w.word} #{w.rank}</span>;
+}
+
+/** The defenses the cheat sheets' snapshots rank, the leakiest first: their weak spots and who each opens up, their strong spots, their coverage. */
+function Defenses({ pj }) {
+  const list = [];
+  for (const g of pj.games) for (const team of [g.away, g.home]) { const t = g.teams[team]; if (t?.defense) list.push({ g, t }); }
+  if (!list.length) return <p className="nhlx-auto-meta">No defense snapshot on this week’s cheat sheets yet: drop the detailed sheet under Data sources (or press “Read again” on a sheet uploaded before 2026-11-01).</p>;
+  const score = (d) => d.weak.reduce((s, w) => s + (12 - w.rank), 0);
+  list.sort((a, b) => score(b.t.defense) - score(a.t.defense));
+  const d = pj.sheetDirection;
+  return (
+    <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
+      <table className="nhlx-db-table nhlx-pk-table ir-bd-table ir-def-table">
+        <thead><tr><th>Defense</th><th>Facing</th><th>Weak spots → who it opens up</th><th>Strong spots</th><th>Coverage</th></tr></thead>
+        <tbody>
+          {list.map(({ g, t }) => {
+            const def = t.defense;
+            return (
+              <tr key={`${g.id}|${t.team}`}>
+                <td><span className="ir-def-team"><img src={teamLogo(def.of)} alt="" width="24" height="24" loading="lazy" className="ir-nfl-logo" /><b>{def.of}</b></span></td>
+                <td><b>{t.team}</b><small className="ir-slate-sub">{t.venue === 'H' ? 'at home' : 'away'} · {fmtDay(g.date)} {fmtTip(g.date)}</small></td>
+                <td>
+                  {def.attack.length ? (
+                    <ul className="ir-def-attack">
+                      {def.attack.map((w) => (
+                        <li key={w.key}>
+                          <SpotChip w={w} tone="soft" d={d} printed={def.printed} />
+                          {w.ids.length ? <span> → {w.ids.map((id) => { const r = pj.rows[id]; const y = w.key === 'passYds' ? r.yards.pass_yds : w.key.startsWith('rush') ? r.yards.rush_yds : r.yards.rec_yds; return `${r.player}${y ? ` ${num(y.exp)}` : ''}`; }).join(', ')}</span> : null}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : <small className="ir-slate-sub">none in the weakest third</small>}
+                </td>
+                <td>{def.strong.length ? <span className="ir-def-chips">{def.strong.slice(0, 3).map((w) => <SpotChip key={w.key} w={w} tone="tough" d={d} printed={def.printed} />)}</span> : <small className="ir-slate-sub">—</small>}</td>
+                <td><small className="ir-slate-sub">{def.style.join(' · ') || '—'}</small></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 /** One game: each side's team touchdowns tonight, its projected passer, runners, receivers and touchdown candidates. */
-function GameCard({ g, rows }) {
+function GameCard({ g, rows, directionRef = null }) {
   const total = g.odds?.total != null ? `total ${g.odds.total}` : null;
   const score = g.final ? `final ${g.awayScore}–${g.homeScore}` : `${fmtDay(g.date)} ${fmtTip(g.date)}`;
   const list = (ids, item) => (ids.length ? <ul>{ids.map(item)}</ul> : <span className="ir-slate-sub">—</span>);
@@ -163,6 +216,7 @@ function GameCard({ g, rows }) {
                 <img src={teamLogo(team)} alt="" width="22" height="22" loading="lazy" className="ir-nfl-logo" /><b>{team}</b>
                 <small className="nhlx-auto-meta" title={`Its own ${num(tt.own, 2)} touchdowns a game${tt.fromTable != null ? `, ${num(tt.fromTable, 2)} through ${t.opp}'s defense` : ''}${tt.fromLine != null ? `, ${num(tt.fromLine, 2)} off ${num(tt.points, 1)} implied points` : ''}`}>{tt.tonight != null ? `${num(tt.tonight, 1)} TDs expected` : 'no team read'}{tt.points != null ? ` · ${num(tt.points, 1)} pts implied` : ''}</small>
               </div>
+              {t.defense?.weak?.length ? <p className="ir-pj-def"><span className="ir-slate-sub">vs {t.defense.of}:</span> {t.defense.weak.slice(0, 3).map((w) => <SpotChip key={w.key} w={w} tone="soft" d={directionRef} printed={t.defense.printed} />)}</p> : null}
               <dl className="ir-pj-list">
                 <dt>Passing</dt><dd>{list(t.passing, (id) => line(id, 'pass_yds'))}</dd>
                 <dt>Rushing</dt><dd>{list(t.rushing, (id) => line(id, 'rush_yds'))}</dd>
@@ -185,6 +239,10 @@ export default function NflBoards({ board }) {
   return (
     <div className="ir-overview">
       <p className="nhlx-auto-meta ir-bd-legend">The board’s own projections from PropFinder’s logs and tables and the cheat sheets (✓ = on the sheet); the book’s prices play no part. <span className="ir-bd-role is-active">if active</span> a game-time decision · <span className="ir-bd-role is-role">if role confirmed</span> his read leans on a teammate out, hover for who. Hover a figure for its arithmetic.</p>
+      <section className="ir-slate ir-bd" aria-label="Defenses to attack">
+        <div className="nhlx-pfd-head"><b>Defenses to attack</b><small className="nhlx-auto-meta">the cheat sheet’s defense snapshots: where each defense gives up the most (pass and run yards, yards per carry, the six passing zones short and deep), the players each weak spot opens up and the coverage it plays. The same ranks sit beside PropFinder’s in every yards projection below. #1 = gives up the most.</small></div>
+        <Defenses pj={pj} />
+      </section>
       {BOARDS.map(([key, title, note]) => (
         <section key={key} className="ir-slate ir-bd" aria-label={title}>
           <div className="nhlx-pfd-head"><b>{title}</b><small className="nhlx-auto-meta">{note}</small></div>
@@ -193,7 +251,7 @@ export default function NflBoards({ board }) {
       ))}
       <section className="ir-pj" aria-label="By game">
         <div className="nhlx-pfd-head"><b>By game</b><small className="nhlx-auto-meta">each side’s team touchdowns tonight, its projected passer, top {PER_GAME.rushing} runners and {PER_GAME.receiving} receivers, and its {PER_GAME.td} likeliest scorers</small></div>
-        <div className="ir-pj-grid">{pj.games.map((g) => <GameCard key={g.id} g={g} rows={pj.rows} />)}</div>
+        <div className="ir-pj-grid">{pj.games.map((g) => <GameCard key={g.id} g={g} rows={pj.rows} directionRef={pj.sheetDirection} />)}</div>
       </section>
     </div>
   );

@@ -214,8 +214,46 @@ describe('NFL projections: the read', () => {
   });
 });
 
+describe('NFL projections: the cheat sheet’s defense snapshot', () => {
+  // SEA's defense as page 1 of the detailed sheet prints it, in LAR's column (for evaluating LAR's offense).
+  const snapshot = { of: 'SEA', ranks: { passYds: 31, rushYds: 22, rushYpp: 25, short: { l: 22, m: 30, r: 31 }, long: { l: 27, m: 21, r: 26 } }, coverage: { man: 11.1, zone: 88.9, c3: 33.3 }, tiles: 9 };
+  const sheets = [{ id: 's1', fileName: 'NFL_2026_W9_detailed.pdf', at: '2026-10-31T12:00:00Z', rows: [], meta: { defense: { LAR: snapshot } } }];
+  const b = buildBoard({ season: 2026, week: 9, games: GAMES, sheets, pf, results: {} });
+  test('the tiles sit beside PropFinder’s cells and move the yards projections', () => {
+    const allowed = b.games[0].sides.LAR.allowed;
+    expect(allowed.rows.WR.recYds).toMatchObject({ rank: 1, sheet: 2 });
+    expect(allowed.rows.QB.passYds).toMatchObject({ rank: 1, sheet: 2 });
+    const nacua = b.games[0].sides.LAR.players.find((p) => p.player === 'Puka Nacua');
+    expect(nacua.ranges.rec_yds.matchupFrom).toMatchObject({ from: 'blend' });
+    // A tile that disagrees with PropFinder moves the figure: SEA printed #2 against the pass (the stingiest but one).
+    const plain = build().games[0].sides.LAR.players.find((p) => p.player === 'Puka Nacua');
+    const stingy = { ...snapshot, ranks: { ...snapshot.ranks, passYds: 2, short: { l: 2, m: 2, r: 2 }, long: { l: 2, m: 2, r: 2 } } };
+    const b2 = buildBoard({ season: 2026, week: 9, games: GAMES, sheets: [{ ...sheets[0], meta: { defense: { LAR: stingy } } }], pf, results: {} });
+    const tight = b2.games[0].sides.LAR.players.find((p) => p.player === 'Puka Nacua');
+    expect(b2.games[0].sides.LAR.allowed.rows.WR.recYds).toMatchObject({ rank: 1, sheet: 31 });
+    expect(tight.ranges.rec_yds.exp).toBeLessThan(plain.ranges.rec_yds.exp);
+    expect(b2.sheetDefense.teams.SEA.strong[0]).toMatchObject({ word: 'the pass', rank: 31 });
+  });
+  test('the defense’s weak spots and the players they open up, per side and on the board', () => {
+    expect(b.sheetDefense.teams.SEA.weak[0]).toEqual({ key: 'passYds', word: 'the pass', rank: 2 });
+    const lar = b.projections.games.find((g) => g.id === 'g1').teams.LAR;
+    expect(lar.defense).toMatchObject({ of: 'SEA', style: ['zone-heavy (88.9% zone)', 'Cover 3 33.3%'] });
+    const who = (key) => lar.defense.attack.find((w) => w.key === key)?.ids.map((id) => b.projections.rows[id].player);
+    expect(who('passYds')).toEqual(['Matthew Stafford']);
+    expect(who('shortR')).toEqual(expect.arrayContaining(['Puka Nacua']));
+    expect(who('shortM')).toEqual(['Tyler Higbee']);
+    expect(b.projections.sheetDirection).toMatchObject({ convention: 'fewest', from: 'default' });
+    expect(b.projections.games.find((g) => g.id === 'g1').teams.SEA.defense).toBeNull();
+    const html = renderToStaticMarkup(<NflBoards board={b} />);
+    expect(html).toContain('Defenses to attack');
+    expect(html).toContain('the pass #2');
+    expect(html).toContain('zone-heavy (88.9% zone)');
+  });
+});
+
 describe('NFL projections: the panel and the script', () => {
-  const b = build();
+  const snapshot = { of: 'SEA', ranks: { passYds: 31, rushYds: 22, rushYpp: 25, short: { l: 22, m: 30, r: 31 }, long: { l: 27, m: 21, r: 26 } }, coverage: { man: 11.1, zone: 88.9, c3: 33.3 }, tiles: 9 };
+  const b = buildBoard({ season: 2026, week: 9, games: GAMES, sheets: [{ id: 's1', fileName: 'NFL_2026_W9_detailed.pdf', rows: [], meta: { defense: { LAR: snapshot } } }], pf, results: {} });
   test('the panel server-renders the six boards and the games, no price', () => {
     const html = renderToStaticMarkup(<NflBoards board={b} />);
     for (const [, title] of BOARDS) expect(html).toContain(title);
@@ -249,5 +287,6 @@ describe('NFL projections: the panel and the script', () => {
     expect(text).toMatch(/Blake Corum \(LAR @ SEA\), if active/);
     expect(text).toMatch(/LAR @ SEA · total 47\.5 · SEA -3/);
     expect(text).not.toContain('Kenneth Walker');
+    expect(text).toContain('Defenses to Attack');
   });
 });

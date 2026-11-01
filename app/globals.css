@@ -1801,6 +1801,21 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-pj-list li.is-miss b { color: var(--bad-fg); }
 .ir-pj-list li small { color: var(--muted); }
 @media (max-width: 520px) { .ir-pj-cols { grid-template-columns: 1fr; } }
+.ir-pj-def { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0 0 8px; font-size: 13px; }
+.ir-def-table td { vertical-align: top; }
+.ir-def-table td > b + .ir-slate-sub { display: block; }
+.ir-def-team { display: inline-flex; align-items: center; gap: 8px; }
+.ir-def-team b { font-family: var(--font-display); color: var(--heading); }
+.ir-def-attack { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px; }
+.ir-def-attack li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.ir-def-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+@media (max-width: 700px) {
+  .ir-def-table, .ir-def-table tbody, .ir-def-table tr, .ir-def-table td { display: block; width: 100%; }
+  .ir-def-table thead { display: none; }
+  .ir-def-table tr { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 12px; padding: 12px; border-bottom: 1px solid var(--line); }
+  .ir-def-table td { padding: 0; border: 0; min-width: 0; white-space: normal; }
+  .ir-def-table td:nth-child(n + 3) { grid-column: 1 / -1; }
+}
 .ir-bd-table .ir-bd-proj { min-width: 0; }
 .ir-bd-table td.ir-sl-play { white-space: normal; }
 .ir-bd-table td.ir-sl-play > b { white-space: nowrap; }
