@@ -353,6 +353,7 @@ describe('NFL projections: the panel and the script', () => {
     for (const kind of ['td', 'passing', 'receiving', 'rushing']) {
       const list = renderToStaticMarkup(<NflList board={b} kind={kind} />);
       expect(list).toContain(kind === 'receiving' ? 'Puka Nacua' : kind === 'passing' ? 'Matthew Stafford' : 'Kyren Williams');
+      expect(list).toContain('>Proj<');
       if (kind !== 'td') { for (const t of ['>Strong<', '>Lean<', '>Thin<']) expect(list).toContain(t); expect(list).toMatch(/\d+\+ yds<\/b><small>\d+%/); }
       else expect(list).toMatch(/ir-ml-tier is-(strong|lean|thin)/);
     }

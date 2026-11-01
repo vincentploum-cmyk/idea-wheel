@@ -50,7 +50,7 @@ function TdTable({ rows, game }) {
   return (
     <table className="nhlx-db-table nhlx-pk-table ir-ml-table">
       <thead><tr>
-        <th className="ir-slate-rank">#</th><th>Player</th>
+        <th className="ir-slate-rank">#</th><th>Player</th><th className="is-num ir-ml-proj" title="His touchdowns expected tonight">Proj</th>
         {cols.map(([k, l, t]) => <th key={k} className={`is-num${k === 'p' ? ' is-lead' : ''}`} title={t}>{l}</th>)}
         {final ? <th className="is-num">TDs</th> : null}
       </tr></thead>
@@ -60,7 +60,7 @@ function TdTable({ rows, game }) {
           return (
             <tr key={r.id}>
               <td className="ir-slate-rank">{i + 1}</td>
-              <td><Who r={r} game={game} /></td>
+              <td><Who r={r} game={game} /></td><td className="is-num ir-ml-proj"><b>{t.lambda == null ? '—' : Number(t.lambda).toFixed(2)}</b><small>TDs</small></td>
               {cols.map(([k, , , hit]) => (
                 <td key={k} className={`is-num${k === 'p' ? ' is-lead' : ''}${final ? hitOf(hit(t)) : ''}`}>
                   <b>{pct(t[k])}</b>{k === 'p' && t.tier ? <small className={`ir-ml-tier is-${t.tier}`}>{t.tier}</small> : null}
@@ -92,7 +92,7 @@ function YardsTable({ rows, kind, game }) {
   return (
     <table className="nhlx-db-table nhlx-pk-table ir-ml-table">
       <thead><tr>
-        <th className="ir-slate-rank">#</th><th>Player</th>
+        <th className="ir-slate-rank">#</th><th>Player</th><th className="is-num ir-ml-proj" title="Tonight’s projection: his skill × tonight’s matchup">Proj</th>
         {TIERS.map(([k, l]) => <th key={k} className={`ir-ml-th is-${k}`} title={`The highest mark he reaches tonight at ${k === 'strong' ? '60' : k === 'lean' ? '45' : '30'}% or better`}>{l}</th>)}
         {final ? <th className="is-num">Got</th> : null}
       </tr></thead>
@@ -103,7 +103,7 @@ function YardsTable({ rows, kind, game }) {
           return (
             <tr key={r.id}>
               <td className="ir-slate-rank">{i + 1}</td>
-              <td><Who r={r} game={game} /></td>
+              <td><Who r={r} game={game} /></td><td className="is-num ir-ml-proj"><b>{y?.proj == null ? '—' : Math.round(y.proj)}</b><small>{c?.proj != null ? `${Number(c.proj).toFixed(1)} rec` : 'yds'}</small></td>
               {TIERS.map(([k]) => (
                 <td key={k} className={`ir-ml-cell is-${k}`}>
                   <Rung y={y} market={market} tier={k} />
