@@ -74,7 +74,7 @@ for (const s of [2025, 2026]) for (const g of seasons[s]) for (const p of g.box.
   const row = { date: String(g.date).slice(0, 10), gameId: g.id, season: s, type: 'REG', week: g.week, home: p.team === g.home, opp, team: p.team, passLong: 0 };
   for (const k of STATS) row[k] = Number(p[k]) || 0;
   row.td = row.rushTd + row.recTd + (Number(p.retTd) || 0); row.retTd = Number(p.retTd) || 0;
-  row.rushRecYds = row.rushYds + row.recYds; row.passRushYds = row.passYds + row.rushYds; row.firstHalfTd = Number(p.firstHalfTd) || 0;
+  row.rushRecYds = row.rushYds + row.recYds; row.passRushYds = row.passYds + row.rushYds; row.h1Td = (Number(p.h1RushTd) || 0) + (Number(p.h1RecTd) || 0);
   pl.games.push(row);
   players.set(p.espnId, pl);
 }
@@ -134,7 +134,7 @@ function weekInputs(season, week) {
   const teamsOn = new Set(games.flatMap((g) => [g.away, g.home]));
   const pfPlayers = [];
   const played = new Map();   // key|team → his box line this week
-  for (const g of games) for (const p of g.box.players) { const pl = players.get(p.espnId); if (pl) played.set(`${pl.key}|${p.team}`, { ...p, firstHalfTd: p.firstHalfTd || 0 }); }
+  for (const g of games) for (const p of g.box.players) { const pl = players.get(p.espnId); if (pl) played.set(`${pl.key}|${p.team}`, { ...p, h1Td: (p.h1RushTd || 0) + (p.h1RecTd || 0) }); }
   for (const pl of players.values()) {
     const before = pl.games.filter((x) => x.date < day);
     if (!before.length) continue;
@@ -163,7 +163,7 @@ function gradeWeek(pj, played, tag) {
       if (!y || !LIST[m](r)) continue;
       yards.push({ tag, m, pos: r.pos, proj: y.proj, exp: y.exp, floor: y.floor, ceiling: y.ceiling, sd: y.sd, script: y.script, actual: Number(line[STAT[m]]) || 0 });
     }
-    if (r.td) tds.push({ tag, pos: r.pos, p: r.td.p, raw: r.td.raw, p1h: r.td.p1h, lambda: r.td.lambda, td: (line.rushTd || 0) + (line.recTd || 0) + (line.retTd || 0) > 0 ? 1 : 0, td1h: line.firstHalfTd > 0 ? 1 : 0 });
+    if (r.td) tds.push({ tag, pos: r.pos, p: r.td.p, raw: r.td.raw, p1h: r.td.p1h, lambda: r.td.lambda, td: (line.rushTd || 0) + (line.recTd || 0) + (line.retTd || 0) > 0 ? 1 : 0, td1h: line.h1Td > 0 ? 1 : 0 });
   }
   return { yards, tds };
 }

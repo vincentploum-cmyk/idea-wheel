@@ -11,7 +11,6 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { buildBoard } from '../lib/nfl/picks';
 import { markOf, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS } from '../lib/nfl/projections';
 import { reproject } from '../lib/nfl/picks';
-import { firstHalfOf } from '../lib/nfl/markets';
 import { envFactor } from '../lib/picks/projection';
 import { NflMatchups, NflList, KINDS } from '../components/nfl/NflBoards';
 
@@ -36,7 +35,7 @@ const pf = { at: '2026-10-31T14:00:00Z', data: {
   players: [
     // The lead back: scores most weeks, a priced first-half line.
     player('p1', 'Kyren Williams', 'LAR', 'RB', logs((i) => ({ rushAtt: 18, rushYds: 80 + (i % 4) * 10, rushTd: i % 3 === 2 ? 0 : 1, rec: 3, recYds: 20, tgt: 4 })),
-      [{ market: 'anytime_td', line: 0.5, odds: -150, isMain: true }, { market: 'first_half_td', line: 0.5, odds: 115, isMain: true }, { market: 'rush_yds', line: 79.5, odds: -110, underOdds: -110, isMain: true, lines: lines([[64.5, -220, 170], [79.5, -110, -110, true], [99.5, 170, -220], [124.5, 500, -900]]) }]),
+      [{ market: 'anytime_td', line: 0.5, odds: -150, isMain: true }, { market: 'h1_anytime_td', line: 0.5, odds: 115, isMain: true }, { market: 'rush_yds', line: 79.5, odds: -110, underOdds: -110, isMain: true, lines: lines([[64.5, -220, 170], [79.5, -110, -110, true], [99.5, 170, -220], [124.5, 500, -900]]) }]),
     // The receiver with a ladder the book prices up to 125.
     player('p2', 'Puka Nacua', 'LAR', 'WR', logs((i) => ({ rec: 8, recYds: 95 + (i % 5) * 12, recTd: i % 4 === 0 ? 1 : 0, tgt: 11 })),
       [{ market: 'anytime_td', line: 0.5, odds: 120, isMain: true }, { market: 'rec_yds', line: 89.5, odds: -110, underOdds: -110, isMain: true, lines: lines([[74.5, -180, 140], [89.5, -110, -110, true], [99.5, 140, -180], [109.5, 220, -300], [124.5, 400, -600]]) }]),
@@ -63,50 +62,17 @@ const pf = { at: '2026-10-31T14:00:00Z', data: {
 
 const build = (results = {}, games = GAMES) => buildBoard({ season: 2026, week: 9, games, sheets: [], pf, results });
 
-describe('NFL boards: the first-half read on the board', () => {
-  test('the first-half chance is derived from the anytime chance, priced by the book where it has a line, synthetic where not', () => {
-    expect(firstHalfOf(0.5)).toBeCloseTo(1 - Math.sqrt(0.5), 3);
-    expect(firstHalfOf(0)).toBe(0);
-    expect(firstHalfOf(null)).toBeNull();
-    const b = build();
-    const g1 = b.games[0];
-    const lar = g1.sides.LAR;
-    const kyren = lar.players.find((p) => p.player === 'Kyren Williams');
-    const atd = kyren.plays.find((x) => x.market === 'anytime_td');
-    const half = kyren.plays.find((x) => x.market === 'first_half_td');
-    expect(half).toMatchObject({ side: 'yes', line: 0.5, odds: 115, synthetic: false, derived: { from: 'anytime_td', p: atd.p, odds: -150 } });
-    expect(half.p).toBeCloseTo(firstHalfOf(atd.p), 3);
-    expect(half.edge).toBeCloseTo(half.p - 100 / 215, 3);
-    // No first-half line on Nacua: the read stands alone, no price, no edge.
-    const puka = lar.players.find((p) => p.player === 'Puka Nacua');
-    const pukaHalf = puka.plays.find((x) => x.market === 'first_half_td');
-    expect(pukaHalf).toMatchObject({ synthetic: true, odds: null, edge: null, ev: null, derived: { from: 'anytime_td' } });
-    expect(pukaHalf.fair).toMatch(/^[+-]\d+$/);
-    // A synthetic play is no table row, no count and no best bet; the priced one is a touchdowns row.
-    const tdRows = g1.tables.touchdowns.rows.concat(g1.tables.touchdowns.marginal, g1.tables.touchdowns.next);
-    expect(tdRows.some((r) => r.market === 'first_half_td' && r.player === 'Puka Nacua')).toBe(false);
-    expect(b.best.some((x) => x.synthetic)).toBe(false);
-    expect(g1.plays).toBe(lar.players.concat(g1.sides.SEA.players).filter((p) => !p.out).flatMap((p) => p.plays).filter((x) => !x.synthetic && !x.steep).length);
-  });
-  test('the market is graded on the scoring plays’ halves; a result stored before the field reads unknown', () => {
+describe('NFL boards: the first-half touchdown line', () => {
+  test('the book’s first-half line is a play of its own, graded on the scoring plays’ halves', () => {
     const results = { g1: { id: 'g1', final: true, players: [
-      { name: 'Kyren Williams', team: 'LAR', ...base, rushYds: 102, rushTd: 1, td: 1, firstTd: 0, firstHalfTd: 1 },
-      { name: 'Puka Nacua', team: 'LAR', ...base, recYds: 131, recTd: 1, td: 1, firstTd: 1, firstHalfTd: 0 },
-      { name: 'Matthew Stafford', team: 'LAR', ...base, passYds: 310, passTd: 2, rushYds: 11 },
+      { name: 'Kyren Williams', team: 'LAR', ...base, rushYds: 102, rushTd: 1, td: 1, firstTd: 0, h1RushTd: 1, h1RecTd: 0 },
+      { name: 'Puka Nacua', team: 'LAR', ...base, recYds: 131, recTd: 1, td: 1, firstTd: 1, h1RushTd: 0, h1RecTd: 0 },
     ] } };
     const games = [{ ...GAMES[0], final: true, state: 'post', awayScore: 27, homeScore: 20, detail: 'Final' }, GAMES[1]];
-    const b = build(results, games);
-    const lar = b.games[0].sides.LAR;
-    const play = (name, market) => lar.players.find((p) => p.player === name).plays.find((x) => x.market === market);
-    expect(play('Kyren Williams', 'first_half_td')).toMatchObject({ actual: 1, hit: true });
-    expect(play('Puka Nacua', 'first_half_td')).toMatchObject({ actual: 0, hit: false });
-    expect(play('Puka Nacua', 'anytime_td')).toMatchObject({ actual: 1, hit: true });
-    // A box score without the field (stored before 2026-11-01): the first-half row is not graded, the anytime one is.
-    const old = { g1: { id: 'g1', final: true, players: [{ name: 'Kyren Williams', team: 'LAR', ...base, rushYds: 102, rushTd: 1, td: 1 }] } };
-    const b2 = build(old, games);
-    const k = b2.games[0].sides.LAR.players.find((p) => p.player === 'Kyren Williams');
-    expect(k.plays.find((x) => x.market === 'first_half_td')).toMatchObject({ actual: null, hit: null });
-    expect(k.plays.find((x) => x.market === 'anytime_td')).toMatchObject({ actual: 1, hit: true });
+    const lar = build(results, games).games[0].sides.LAR;
+    const half = lar.players.find((p) => p.player === 'Kyren Williams').plays.find((x) => x.market === 'h1_anytime_td');
+    expect(half).toMatchObject({ side: 'yes', line: 0.5, odds: 115, actual: 1, hit: true });
+    expect(half.implied).toBeCloseTo(100 / 215, 3);
   });
 });
 
@@ -241,8 +207,8 @@ describe('NFL projections: the read', () => {
   });
   test('a stored game grades the touchdowns, the first half and the yards', () => {
     const results = { g1: { id: 'g1', final: true, players: [
-      { name: 'Kyren Williams', team: 'LAR', ...base, rushYds: 102, rushTd: 1, td: 1, firstTd: 0, firstHalfTd: 1 },
-      { name: 'Puka Nacua', team: 'LAR', ...base, recYds: 131, recTd: 1, td: 1, firstTd: 1, firstHalfTd: 0 },
+      { name: 'Kyren Williams', team: 'LAR', ...base, rushYds: 102, rushTd: 1, td: 1, firstTd: 0, h1RushTd: 1, h1RecTd: 0 },
+      { name: 'Puka Nacua', team: 'LAR', ...base, recYds: 131, recTd: 1, td: 1, firstTd: 1, h1RushTd: 0, h1RecTd: 0 },
       { name: 'Matthew Stafford', team: 'LAR', ...base, passYds: 210, passTd: 2, rushYds: 11 },
     ] } };
     const games = [{ ...GAMES[0], final: true, state: 'post', awayScore: 27, homeScore: 20, detail: 'Final' }, GAMES[1]];

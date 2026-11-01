@@ -2158,3 +2158,49 @@ button.ir-ladder-rung { cursor: pointer; }
 .ir-tm-link + .ir-tm-link::before { content: '· '; color: var(--muted); }
 .ir-slate-table td .ir-ladder b, .ir-slate-table td .ir-ladder-head small { display: inline; }
 @media (max-width: 700px) { .ir-vc-sort { flex: 1 1 100%; } }
+/* The cheat sheet's tile in PropFinder's cell (the team column, 2026-11-01): ✓ the same third, ✗ another. */
+.nhlx-pfd-sheet { display: inline-block; margin: 2px 0 0 4px; padding: 0 5px; border-radius: 4px; font-size: 11px; line-height: 15px; font-weight: 600; white-space: nowrap; }
+.nhlx-pfd-sheet.is-yes { background: var(--ok-bg); color: var(--ok-fg); }
+.nhlx-pfd-sheet.is-no { background: var(--bad-bg); color: var(--bad-fg); }
+.ir-roster-head { flex-wrap: wrap; gap: 6px 14px; }
+.ir-roster th.is-on, .ir-roster td.is-on { background: color-mix(in oklab, var(--primary) 7%, transparent); }
+.ir-roster-split b { font-variant-numeric: tabular-nums; }
+.ir-roster-play .ir-ev-good, .ir-roster-play .ir-ev-thin, .ir-roster-play .ir-ev-bad { font-weight: 600; }
+/* The slate's boards (lib/picks/boards.js, components/picks/Boards.jsx): numbered lists per stat. */
+.ir-bds { margin: 4px 0 22px; }
+.ir-bds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 12px 28px; }
+.ir-bd-list { margin: 0; padding-left: 26px; font-size: 15px; line-height: 1.5; list-style: decimal; }
+.ir-bd-list li::marker { color: var(--muted); font-variant-numeric: tabular-nums; }
+.ir-bd-line { margin: 0 0 4px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+.ir-bd-line.is-hit .ir-bd-name b { color: var(--ok-fg); }
+.ir-bd-line.is-miss .ir-bd-name b { color: var(--bad-fg); }
+.ir-bd-name { all: unset; cursor: pointer; }
+button.ir-bd-name:hover b { text-decoration: underline; }
+.ir-bd-name b { color: var(--heading); font-weight: 600; }
+.ir-bd-name small { color: var(--muted); font-size: 13px; }
+.ir-bd-marks { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; }
+.ir-bd-mark { display: inline-flex; align-items: baseline; gap: 4px; padding: 0 7px; border-radius: 5px; background: var(--bg-soft); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ir-bd-mark small { font-weight: 500; font-size: 12px; color: var(--muted); }
+.ir-bd-mark.is-value { background: var(--ok-bg); color: var(--ok-fg); }
+.ir-bd-mark.is-value small { color: var(--ok-fg); }
+.ir-bd-mark.is-main::before { content: '●'; font-size: 7px; vertical-align: 2px; color: var(--primary); margin-right: 2px; }
+.ir-bd-marks em { font-style: normal; font-weight: 600; font-size: 13px; }
+.ir-bd-proj { font-size: 12.5px; }
+.ir-bd-caveat { color: var(--warn-fg); font-size: 13px; }
+.ir-bd-got { color: var(--muted); font-size: 13px; }
+.ir-bd-mark.is-strong { background: var(--ok-bg); color: var(--ok-fg); }
+.ir-bd-mark.is-strong small { color: var(--ok-fg); }
+.ir-bd-mark.is-lean { background: var(--warn-bg); color: var(--warn-fg); }
+.ir-bd-mark.is-lean small { color: var(--warn-fg); }
+.ir-bd-mark.is-thin { background: var(--bg-soft); color: var(--muted); }
+.ir-bd-chance { display: inline-block; min-width: 42px; padding: 0 7px; border-radius: 5px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; background: var(--bg-soft); color: var(--body); }
+.ir-bd-chance.is-strong { background: var(--ok-bg); color: var(--ok-fg); }
+.ir-bd-chance.is-lean { background: var(--warn-bg); color: var(--warn-fg); }
+/* The matchup behind a board line (2026-11-01): his spot, PropFinder's season and L10 ranks, the cheat sheet's tile, the factor. */
+.ir-bd-mu { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 5px; font-size: 12.5px; color: var(--muted); }
+.ir-bd-mu > b { color: var(--body); font-weight: 600; }
+.ir-bd-rk { padding: 0 5px; border-radius: 4px; font-weight: 600; font-variant-numeric: tabular-nums; background: var(--bg-soft); }
+.ir-bd-rk.is-soft { background: var(--pf-soft-chip); color: var(--pf-soft-fg); }
+.ir-bd-rk.is-tough { background: var(--pf-tough-chip); color: var(--pf-tough-fg); }
+.ir-bd-fx { font-variant-numeric: tabular-nums; }
+.ir-bd-mu.is-none { font-style: italic; }

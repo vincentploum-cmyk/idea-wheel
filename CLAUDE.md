@@ -22,8 +22,8 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard (the NFL's alone since
   2026-10-31), the data sources, the default; on the NBA page the night's plays in one ranked list over the games folded to a line each,
   below) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
-  drawn on both panels); the NBA page also `#sheet` (Cheat sheet, below) and `#firstbasket`; the NFL page also `#matchups`,
-  `#tds`, `#receiving` and `#rushing` (the projection lists, below). The NHL app has nine (below).
+  drawn on both panels); the NBA page also `#boards` (Boards, below), `#sheet` (Cheat sheet, below) and `#firstbasket`; the
+  NFL page also `#matchups`, `#tds`, `#receiving` and `#rushing` (the projection lists, below). The NHL app has nine (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)
@@ -72,7 +72,17 @@ config and keeps its own markets, teams, feeds and slate key:
   EV, the score; Expand all / Collapse all; a Top Matchups card or the NBA head's dropdown opens one game alone); inside,
   the profile, the strips / the courts and the tables (`GroupTable`: EV · Price · Chance, the marginal rows behind the
   panel's switch, re-read at the user's floors). The games-first-and-open layout of 2026-10-30 gave way to this on
-  2026-11-01; `RowBadges` (`badges.jsx`) marks DTD, thin minutes and a back-to-back on every row.
+  2026-11-01; `RowBadges` (`badges.jsx`) marks DTD, thin minutes and a back-to-back on every row. **An opened NBA game
+  leads with PropFinder's tables, the players under them** (Vincent, 2026-11-01: "put the propfinder tables back. under
+  the tables, we just list the players", and his read — PropFinder's L10 per position, the cheat sheet to confirm it, then
+  the player's own home / away / h2h figures for the projected number): `TeamColumn` in `NbaGame.jsx` per side — who is
+  out, the `AllowedTable` opening on **L10** when PropFinder has one (`sheetMarks`: the cheat sheet's tile in every cell,
+  "✓ #4" green in the same third as PropFinder's rank, "✗ #19" red otherwise), the stat tabs (the slate's `metric`), and
+  `Roster`: every active player with his projection per stat (the book's line, chance and EV under it), and for the picked
+  stat his average at tonight's venue / in his last meetings with the opponent (`splits[market]` on the side player,
+  `venueSplits` in `board.js`: { venue: { avg, n, at }, h2h: { avg, n }, season: { avg, n, stand } } over this season's
+  regular-season games, his last `seasonCap` standing in until three; a pressed table row keeps that position's players,
+  a row opens the card); the courts and the five group tables behind "Show the courts and the tables".
 - `markets.js` (`makeMarkets`): a sport's markets ({ group, label, unit, fields (the box-score
   fields the market settles on, summed), yesNo, floor, defense, aliases }) → `marketFromText`
   (any spelling, whole-word match for short aliases like "PTS"), `statOf`, `defenseKey`.
@@ -544,6 +554,37 @@ config and keeps its own markets, teams, feeds and slate key:
   sources says so) and ESPN's feed (`fetchInjuries` in `lib/nfl/espn.js`, `ensureInjuries`, `applyEspnInjuries`) sets
   every pulled player's status. The pull lists every rostered player (3,776 for 28 teams), so a player out is in it with
   his logs and reaches the out lists, the without splits and the vacated lifts with no one-by-one read.
+  **The slots come from the players** (`depthFromPlayers` on `makePropfinder`, `depthFromRoster`; 2026-11-01): the NFL team
+  objects carry no depth chart (`depthCharts: 0` on the pull of 2026-10-31), every player object carries `fullPosition`
+  ("WR1", "RB2", "TE1"), so the pull builds `data.depth` from it (`depthFrom: 'players'` on the meta) and `envPosFor` reads
+  slot + depth ("WR1") on the opponent's slot rows, the position where the table has none; until then every receiver read
+  the WR table. `firstTouchdownScorer` on the game rows is `firstTd` (the First TD hit rates read 0 off the logs before).
+  **Everything PropFinder sends is loaded** (2026-11-01, Vincent: "We need to load all Propfinder data"; the pull's markets
+  printed in full by `nfl-data.yml` that night): every market on the pull is filed where it settles — PropFinder's own
+  category first (`CATEGORY_MARKETS` in `propfinder-nfl.js`, `categoryMarkets` on `makePropfinder`; until then "Kicking Points",
+  "Extra Points Made" and "Defensive Interceptions" read as a quarterback's interceptions, "points" holding the alias "ints",
+  and "Longest Passing Completion" as completions), the NBA's skip rule per sport (`notAMarket`: the NFL's skips the fantasy
+  score alone, which no game row carries, so rushing and passing attempts and field goals are read), the "Player Touchdowns"
+  ladder by its line (`lineMarket`: 0.5 the anytime TD, 1.5 2+ TD); **new markets** (`lib/nfl/markets.js`, three groups):
+  Defense (tackles = solo, tackle assists, tackles + assists, sacks, defensive INTs), Kicking (kicking points, field goals,
+  extra points) and Halves & quarters (`PERIODS`: the 1st half's and the 1st quarter's passing / rushing / receiving yards,
+  receptions, rush attempts, pass TDs and touchdowns, the 2nd half's touchdowns; `<period>_<market>`, the full game's
+  matchup table; `periodOf` reads "1st Half …" / "H1…"). The game rows' new fields are sparse (`sparse: true`: kept when not
+  0, null when the row lacks the key; `statOf` reads a null field as no figure, so a game without it is no game in a hit
+  rate and a box score without it grades nothing): the defense, the kicker (`kickPts` = 3 × FG + XP), the periods, his
+  opportunity (`tgtShare`, `rushShare`, `rzTgt`, `rzAtt`, `passRzAtt`, `airYds`, `passAirYds`, `yac`, `sacked`, `fumLost`:
+  loaded, not yet in any projection). ESPN's box score grades them (`parseSummary`: the defensive, interceptions and kicking
+  blocks; each period's rushing, receiving and passing touchdowns from the scoring plays, the passer after "pass from";
+  the period yards and the longest completion null, ungraded). The defense tables read the last 3 too (`windows`). **The
+  rest is kept as sent** (`keepExtra`, `extraOf`): per player his own fields, every game row's figures the board does not
+  read (the other quarters, the shares, the defense's details …; 0s left out) and the lines of the markets the board does
+  not settle (`otherProps`: the fantasy score, the other quarters, 3+ TD), per team every stats row as published (each
+  window, position and slot, PropFinder's ranks in), stored a team a file beside the pull
+  (`nfl/<season>/<wk>/propfinder-extra/<ABBR>.json` + `index.json`, gzipped; whole it was 16 MB gzipped and 400 MB of heap
+  on a synthetic pull of the size) and read by `GET /api/nfl/propfinder?…&player=<id | name>|team=ABBR` (`extraFor`), never
+  by the board; Data sources counts it, `fieldsSeen.stored` lists the keys kept that way. `__tests__/nfl-propfinder-all.test.js`
+  (every market name of that pull, `fixtures/espn-nfl-summary-dal-phi.json` the box score of DAL at PHI, 2026-10-26),
+  `nfl-propfinder-extra-store.test.js`.
 - The board: `picks.js` (`buildBoard`, pure): the sheets' rows and PropFinder's lines merged per
   player + market + line + side; the chance = hit rates over the line (L5 0.3, L10 0.3, season
   0.4; PropFinder's logs when pulled, else the sheet's columns), shrunk toward the book's implied
@@ -607,13 +648,10 @@ config and keeps its own markets, teams, feeds and slate key:
   prints the same lists as text, one line a player ("Puka Nacua (LAR @ SEA) — floor 98 · proj 125 · ceiling 151 yds ·
   rec 6 / 7.5 / 9"; "Kyren Williams (LAR) — 58% (strong) · 1st half 35%"; each side's script above its game), fetching `/api/nfl/picks` with
   `NHL_ACTIONS_TOKEN`. **Backtested** (`docs/audits/2026-11-01-nfl-backtest.md`, `tools/audit/nfl-audit.mjs`): every
-  constant above searched on 2025's weeks 4–18 and checked on 2026's weeks 1–7. The constants are set, not measured: no NFL
-  audit has graded them. **The first-half TD market** (`first_half_td` in `lib/nfl/markets.js`) stays on the board for
-  the grading: its chance derived from his anytime play (`chanceFrom`, 1 − √(1 − p)), priced when PropFinder carries a
-  first-half line (`period: true` lets the prop reader file it), else `synthetic` (off the tables, the counts and
-  `best`); graded off ESPN's scoring plays (`firstHalfTd` per player in `parseSummary`, periods 1–2), a result stored
-  before 2026-11-01 reads unknown (`fieldOptional`, `statOf`). The side players' plays carry `ev`, `implied`, `derived`
-  / `synthetic` and the without names. `__tests__/nfl-boards.test.jsx` (the read, the panel, the script; `MOCK_OUT`
+  constant above searched on 2025's weeks 4–18 and checked on 2026's weeks 1–7. The first-half chance is
+  his own (1 − e^(−0.48 λ)), graded on `h1_anytime_td` (the period fields `h1RushTd` + `h1RecTd` off ESPN's scoring plays);
+  the book's first-half line is that market's play like any other. The side players' plays carry `ev`, `implied` and the
+  without names. `__tests__/nfl-boards.test.jsx` (the read, the panel, the script; `MOCK_OUT`
   writes `boards-nfl-<theme>.html`).
 - **The cheat sheet's defense snapshot** (`lib/nfl/snapshot.js`; Vincent, 2026-11-01: "the cheat sheet should be used to
   identify weaknesses in defenses"): each column of the detailed sheet opens with the opponent's defense — coverage shells
@@ -921,6 +959,27 @@ config and keeps its own markets, teams, feeds and slate key:
   (`firstBasketOdds` in `lib/picks/propfinder.js`: the items naming a first basket / first field goal, not a team's or
   first points, the best price as `firstBasket` on the player, never a market), with the edge; the score is the chance
   × 4 on 0–100. Once stored, who scored first, the first points and the tip are on the game and the rows are graded.
+- **Boards** (`#boards`, `NbaBoards` in `components/nba/NbaBoard.jsx` → `components/picks/Boards.jsx`, the pure builders in
+  `lib/picks/boards.js`; Vincent, 2026-11-01, with his own NFL lists as the form — "Best Receiving Ladders · 1. Puka Nacua
+  100+ / 110+ / 125+" —, then "I don't care about edge etc… I just want to know what I should bet on: 10+ points (strong),
+  20+ points (lean), 30+ points (thin)" and "TD candidates we should list with chance%"; the NBA's built here, the NFL's
+  elsewhere): per stat a numbered list across the slate (`NBA_BOARDS`: points, rebounds, assists, threes, PRA), each player
+  with **the highest round mark he clears at each tier** — `TIERS`: strong 70%+, lean 55%+, thin 40%+ on the board's chance
+  (`tierOf`), a mark shared by two tiers listed once at the stronger — "15+ strong · 20+ lean · 25+ thin", ranked by the
+  strong mark, then the lean, then the thin. The marks are round (`step` per spec: points and PRA by 5, rebounds and
+  assists by 2, threes by 1) and read off the shuffle's payload (`tierBoard`: `GET /api/nba/shuffle?date&market` per
+  stat, fetched by the tab, every height read with `pAt`, the court's and the Shuffle tab's figure); until it arrives the
+  board reads the book's ladder rungs (`ladderBoard`, `round: false`, the note says so). No price and no EV on the line
+  (the price on a mark's hover). **Double-double candidates** (`candidateBoard`, the NBA's touchdown list) by his chance
+  alone, coloured by tier. A player out is off the boards, a game-time decision reads "if he plays" and thin minutes
+  "if role confirmed" (`caveatOf`); `PER_BOARD` = 10 then "Show all"; the head's game dropdown cuts every board to one
+  game (`gameId`); a name opens the card. **Every line carries the matchup its projection reads** (`matchupOf` /
+  `matchupText` in `boards.js`; Vincent, 2026-11-01: "I also need to know the matchup from propfinder / cheat sheet so I
+  know where the projection is coming from"): his spot (`envPos`), PropFinder's rank there on the season table the
+  projection reads ("PF #3", tinted by third, 1 = gives up the most), the last ten ("L10 #5") when PropFinder published
+  it, the cheat sheet's tile ("✓ sheet #4" when it sits in PropFinder's third, "✗" when not) and the factor on his rate
+  (`ranges[market].matchup`, "×1.06"); the hover names the figures, the league's average and whether the factor is the
+  sheet and PropFinder blended or one alone; "no table" when the pull has none. `__tests__/picks-boards.test.js`.
 - **Cheat sheet** (`#sheet`, `components/nba/NbaSheetMatchups.jsx`, the pure reader `lib/nba/sheet-matchups.js`; Vincent,
   2026-10-31: "create a new view with best cheat sheet matchups per game"): per game the cheat sheet's soft tiles — the
   cells of each side's `allowed` table carrying the sheet's rank (`sheet`, 1 = the opponent gives up the most of 30) for

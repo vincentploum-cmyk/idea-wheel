@@ -5,6 +5,8 @@ import { BoardNotes } from '@/components/picks/Board';
 import Shuffle from '@/components/picks/Shuffle';
 import SlateOverview, { useRanked } from '@/components/picks/SlateOverview';
 import { useValueFilters } from '@/components/picks/value-filters';
+import Boards from '@/components/picks/Boards';
+import { NBA_BOARDS } from '@/lib/picks/boards';
 import { GROUPS, MARKETS, SHUFFLE_MARKETS, labelOf } from '@/lib/nba/markets';
 import { teamLogo, teamName } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
@@ -82,6 +84,33 @@ function NbaSlate({ board: whole, game = null, onGame = null }) {
       </section>
       <BoardNotes notes={board.notes} />
     </>
+  );
+}
+
+const UNITS = Object.fromEntries(Object.entries(MARKETS).map(([k, m]) => [k, m.unit]));
+
+/** The boards' rows open the card with the side's entry for the player; needs an NbaPlayerCardProvider above it. */
+function NbaBoardsRows({ board, game = null }) {
+  const open = useNbaPlayerCard();
+  const openRow = (r) => {
+    const side = (board.games || []).find((g) => g.id === r.game)?.sides?.[r.team];
+    open({ key: r.key, player: side?.players?.find((p) => p.key === r.key) || r, team: r.team, opp: r.opp, venue: r.venue, market: r.market });
+  };
+  if (!board?.games?.length) return <div className="nhlx-empty">No games on this date.</div>;
+  return <Boards board={board} specs={NBA_BOARDS} units={UNITS} gameId={game || null} onOpen={openRow} title={game ? 'The game’s boards' : 'Tonight’s boards'} shuffleApi="/api/nba" query={board.date ? `date=${board.date}` : ''} />;
+}
+
+/**
+ * The Boards tab (Vincent, 2026-11-01, his own lists as the form: "we should for assists, points, rebounds have the best
+ * candidates. Also, we should list the point ladders. 20+, 25+"): per stat the best candidates over the book's main line
+ * and the ladders, the slate's players ranked, cut to one game by the head's dropdown.
+ */
+export function NbaBoards({ board, game = null }) {
+  if (!board) return null;
+  return (
+    <NbaPlayerCardProvider date={board.date}>
+      <NbaBoardsRows board={board} game={game} />
+    </NbaPlayerCardProvider>
   );
 }
 

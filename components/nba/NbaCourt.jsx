@@ -281,7 +281,12 @@ function OutLines({ side, oppOut }) {
  * the opened game (Vincent: "I need the propfinder data above each court again like how we had it" — the column had
  * been drawing the ranks alone for five stats).
  */
-export function AllowedTable({ side, win, metric, season, onWin = null, onPos = null, hiPos = null }) {
+/**
+ * `sheetMarks`: the cheat sheet's tile drawn in every cell beside PropFinder's rank (Vincent, 2026-11-01: "I'm looking at
+ * what the cheat sheet says, whether it confirms propfinder's data"): "✓ #4" green when the tile sits in the same third,
+ * "✗ #19" red when it does not; nothing without a sheet. The hover said it before; now the cell does.
+ */
+export function AllowedTable({ side, win, metric, season, onWin = null, onPos = null, hiPos = null, sheetMarks = false }) {
   const a = tableFor(side.allowed, win);
   if (!a) return <p className="nhlx-auto-meta ir-court-none">No defense table for {side.opp} yet: pull PropFinder (the button above the board, or under Data sources).</p>;
   const windows = onWin ? windowsOf(side.allowed) : [];
@@ -296,7 +301,7 @@ export function AllowedTable({ side, win, metric, season, onWin = null, onPos = 
         : `PropFinder, ${WINDOW_TEXT[win]}${a.season && season && a.season < season ? ' of last season (no games this season yet)' : ''} · a comparison: the board reads this season’s table`;
   return (
     <div className="nhlx-pfd">
-      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position{onWin ? '' : ` · ${windowLabel(win, side.allowed, season)}`}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {note}{league ? ' · Lg = the league’s average' : ''}{onPos ? ' · press a row to pick out that position’s players on the court' : ''}</small></div>
+      <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position{onWin ? '' : ` · ${windowLabel(win, side.allowed, season)}`}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {note}{league ? ' · Lg = the league’s average' : ''}{sheetMarks ? ' · ✓ / ✗ the cheat sheet’s tile, confirming the third or not' : ''}{onPos ? ` · press a row to pick out that position’s players${sheetMarks ? '' : ' on the court'}` : ''}</small></div>
       {windows.length > 1 ? (
         <div className="nhlx-tabs nhlx-rk-tabs nhlx-pfd-tabs" role="tablist" aria-label={`Window of ${side.opp}'s table`}>
           {windows.map((k) => <button key={k} type="button" role="tab" aria-selected={win === k} className={`nhlx-tab${win === k ? ' is-active' : ''}`} onClick={() => onWin(k)} title={`${WINDOW_TEXT[k]}${k === 'season' ? ': the table the board’s projections read' : ': a comparison, the projections keep this season’s table'}`}>{windowLabel(k, side.allowed, season)}</button>)}
@@ -309,7 +314,7 @@ export function AllowedTable({ side, win, metric, season, onWin = null, onPos = 
             {positions.map((pos) => (
               <tr key={pos} className={`${onPos ? 'is-click' : ''}${hiPos === pos ? ' is-active' : ''}`} onClick={onPos ? () => onPos(hiPos === pos ? null : pos) : undefined} aria-pressed={onPos ? hiPos === pos : undefined} title={onPos ? (hiPos === pos ? `Showing the ${pos}s on the court · press to show everyone` : `Press to pick out the ${pos}s on the court`) : undefined}>
                 <td><b>{pos}</b>{hiPos === pos ? <small className="nhlx-auto-meta"> on the court</small> : null}<small className="nhlx-auto-meta" title={a.rows[pos].held ? `Last season's table (${a.rows[pos].prior || 0} games) until ${side.opp} plays its first game this season` : win === 'prior' ? `${a.rows[pos].gp || 0} games last season` : `${a.rows[pos].gp || 0} games${win === 'season' ? ' this season' : ''}`}> {a.rows[pos].held ? 'last season' : `${a.rows[pos].gp || 0} GP`}</small></td>
-                {keys.map((k) => { const c = a.rows[pos][k]; const tone = zoneTone(c?.rankBlend ?? c?.rank, count); const lg = league?.[pos]?.[k]; const check = a.from === 'sheet' ? null : sheetCheck(c, count); return <td key={k} className={`${c ? `is-${tone}` : ''}${k === metric ? ' is-on' : ''}`} title={`${c && lg != null ? `${num(c.value)} against the league's ${num(lg)} at ${pos}` : ''}${check ? ` · the cheat sheet's tile: #${c.sheet} (${check === 'yes' ? 'the same third' : 'a different third'})` : ''}`}>{c ? <><span className="nhlx-pfd-val">{c.value != null ? num(c.value) : '—'}</span>{c.rank ? <span className="nhlx-pfd-rank">#{c.rank}</span> : null}</> : '—'}</td>; })}
+                {keys.map((k) => { const c = a.rows[pos][k]; const tone = zoneTone(c?.rankBlend ?? c?.rank, count); const lg = league?.[pos]?.[k]; const check = a.from === 'sheet' ? null : sheetCheck(c, count); return <td key={k} className={`${c ? `is-${tone}` : ''}${k === metric ? ' is-on' : ''}`} title={`${c && lg != null ? `${num(c.value)} against the league's ${num(lg)} at ${pos}` : ''}${check ? ` · the cheat sheet's tile: #${c.sheet} (${check === 'yes' ? 'the same third' : 'a different third'})` : ''}`}>{c ? <><span className="nhlx-pfd-val">{c.value != null ? num(c.value) : '—'}</span>{c.rank ? <span className="nhlx-pfd-rank">#{c.rank}</span> : null}{sheetMarks && check ? <span className={`nhlx-pfd-sheet is-${check}`} title={`The cheat sheet's tile: #${c.sheet} of 30, ${check === 'yes' ? 'the same third as PropFinder: confirmed' : 'a different third: not confirmed'}`}>{check === 'yes' ? '✓' : '✗'} #{c.sheet}</span> : null}</> : '—'}</td>; })}
               </tr>
             ))}
             {league ? <tr className="ir-court-league"><td><b>Lg</b></td>{keys.map((k) => { const v = Object.values(league).map((r) => r[k]).filter((x) => x != null); return <td key={k} className={k === metric ? 'is-on' : ''} title={v.length ? `The league's average ${STAT_LABEL[k] || k.toUpperCase()} a game over the positions` : ''}><span className="nhlx-pfd-val">{v.length ? num(v.reduce((x, y) => x + y, 0) / v.length) : '—'}</span></td>; })}</tr> : null}

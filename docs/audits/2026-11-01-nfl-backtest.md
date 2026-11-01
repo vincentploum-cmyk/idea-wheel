@@ -41,7 +41,7 @@ of `lib/nfl/picks.js`): each player's projected yards and receptions with a floo
 | Passing yards | 215 | 71.7 | 67.5 | 23.8% → 20.5% | 26.2% → 22.3% |
 | Receptions | 1,411 | 1.6 | 1.6 | 25.6% → 17.8% | 21.1% → 19.1% |
 
-Touchdowns (2,214 player-games): Brier 0.1472 → 0.1419, log loss 0.4667 → 0.4481. By band, said → landed:
+Touchdowns (2,217 player-games): Brier 0.1472 → 0.1419, log loss 0.4667 → 0.4481. By band, said → landed:
 
 | Band | before | after |
 |---|---|---|
@@ -51,7 +51,7 @@ Touchdowns (2,214 player-games): Brier 0.1472 → 0.1419, log loss 0.4667 → 0.
 | 30–45% | 36.2% → 31.1% | 36.4% → 35.6% |
 | 45%+ | 55.6% → 40.6% | 52.1% → 47.3% |
 
-First-half touchdowns: Brier 0.0865 → 0.0852.
+First-half touchdowns: Brier 0.0865 → 0.0848 (graded on the box score's `h1RushTd` + `h1RecTd`).
 
 Week by week the tuned read missed receiving yards by less in six of the seven weeks and touchdowns in all seven.
 
