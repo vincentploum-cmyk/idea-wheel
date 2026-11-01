@@ -7,6 +7,7 @@ import { headshotUrl } from '@/lib/nba/espn';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { boardRead, windowRead, blendText, dampText, pullText, reachText } from '@/lib/picks/projection';
 import { asStated } from '@/lib/picks/calibration';
+import { ladderValue, fmtEv } from '@/lib/picks/value';
 import { POS_TABS, atPosition, vsPositionSummary, profileText, LIKE_RULE } from '@/lib/nba/vs-position-pure';
 
 // The NBA player card, laid out as the NHL card (components/nhl/PlayerCard.jsx): the top bar
@@ -339,10 +340,12 @@ function Card({ req, date, onClose }) {
             </div>
             {(bp?.ladders?.[market] || []).length ? (
               <div className="ir-pc-ladder" aria-label="Ladder">
-                {bp.ladders[market].map((r) => {
+                {/* Every rung with the value of the over at its price (lib/picks/value.js ladderValue), the best-EV rung ringed: the brief's level 3, which rung to take. */}
+                {(() => { const vals = new Map(ladderValue(bp.ladders[market], 'over').map((v) => [v.line, v])); return bp.ladders[market].map((r) => {
                   const tone = r.p >= 0.55 ? 'soft' : r.p < 0.35 ? 'tough' : 'mid';
-                  return <button key={r.line} type="button" className={`ir-ladder-rung is-${tone}${r.main ? ' is-main' : ''}${r.line === line ? ' is-active' : ''}`} onClick={() => setLines({ ...lines, [market]: r.line })} title={`o${r.line}: ${pct(r.p)} tonight = ½ his distribution over it (${pct(r.model)}: ${num(r.proj)} ± ${num(r.sd)}${r.env != null ? `, matchup × ${r.env}` : ''}) + ½ how often he cleared it (${pct(r.emp)}: L5 ${pct(r.rates.l5)} · L10 ${pct(r.rates.l10)} · season ${pct(r.rates.season)}, ${r.rates.n} games)${r.odds != null ? ` · ${fmtOdds(r.odds)}` : ` · break-even ${r.fair}`}${r.main ? ' · the book’s main line' : ''}${asStated(r.raw)}`}><b>o{r.line}</b><i>{pct(r.p)}</i><small>{r.odds != null ? fmtOdds(r.odds) : r.fair}</small></button>;
-                })}
+                  const v = vals.get(r.line);
+                  return <button key={r.line} type="button" className={`ir-ladder-rung is-${tone}${r.main ? ' is-main' : ''}${r.line === line ? ' is-active' : ''}${v?.best ? ' is-best' : ''}${v?.ev != null ? (v.ev > 0 ? ' is-value' : ' is-novalue') : ''}`} onClick={() => setLines({ ...lines, [market]: r.line })} title={`o${r.line}: ${pct(r.p)} tonight = ½ his distribution over it (${pct(r.model)}: ${num(r.proj)} ± ${num(r.sd)}${r.env != null ? `, matchup × ${r.env}` : ''}) + ½ how often he cleared it (${pct(r.emp)}: L5 ${pct(r.rates.l5)} · L10 ${pct(r.rates.l10)} · season ${pct(r.rates.season)}, ${r.rates.n} games)${r.odds != null ? ` · ${fmtOdds(r.odds)} · EV ${fmtEv(v?.ev)} a unit${v?.best ? ' · the best value on the ladder' : ''}` : ` · break-even ${r.fair}`}${r.main ? ' · the book’s main line' : ''}${asStated(r.raw)}`}><b>o{r.line}</b><i>{pct(r.p)}</i><small>{r.odds != null ? fmtOdds(r.odds) : r.fair}</small>{v?.ev != null ? <em>{fmtEv(v.ev)}</em> : null}</button>;
+                }); })()}
               </div>
             ) : null}
             {!data && !err ? <div className="nhlx-empty">Loading the logs…</div> : spanGames.length ? <Bars games={spanGames} market={market} line={line} unit={STAT_LABEL[market] || market} /> : <div className="nhlx-empty">{span === 'h2h' ? `No logged games vs ${opp}.` : 'No logged games for this player yet.'}</div>}

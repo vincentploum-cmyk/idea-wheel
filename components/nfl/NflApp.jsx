@@ -78,8 +78,8 @@ export default function NflApp({ email }) {
             <div className="nhlx-bench-head">
               <div>
                 <span className="nhlx-eyebrow">NFL</span>
-                <h1>This week&apos;s <span>best plays</span></h1>
-                <p>Per game, four tables: touchdowns, passing, rushing and receiving. The chance is a hit-rate read against the line from PropFinder’s logs and the cheat sheets, shrunk toward the book’s price; the row greys when under the floor, greens or reds once the box score is in.</p>
+                <h1>This week&apos;s <span>best matchups</span></h1>
+                <p>The games ranked by their Matchup Score and every +EV play of the week ranked by its expected value at the book’s price, the floors hiding the capital-dead locks (worse than -200, under +5% a unit); set your own floors above the cards. Under them the games, folded to a line each: press one for the profile, both strips and the four tables — touchdowns, passing, rushing, receiving — each row leading with its EV, the marginal rows behind the switch.</p>
               </div>
             </div>
             <section className="nhlx-pk" aria-label="The week’s picks">

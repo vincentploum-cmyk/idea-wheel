@@ -53,10 +53,12 @@ describe('the best plays strip', () => {
     const b = allBoard({ date: '2026-10-27', season: 2026, games: game(false), sheets: [], pf, results: {} });
     const g = b.games[0];
     // Brown clears 24.5 every night and Pritchard 12.5 (both 100%, so the shrink toward the book's price puts Pritchard's
-    // −130 a hair above Brown's −110); Brown's 8 rebounds never clear 8.5 and White's 12 points never 24.5.
-    expect(g.sides.BOS.picks.map((x) => [x.player, x.market, x.line, x.side])).toEqual([['Payton Pritchard', 'pts', 12.5, 'over'], ['Jaylen Brown', 'pts', 24.5, 'over']]);
-    expect(g.sides.BOS.picks[1]).toMatchObject({ key: 'jaylen brown', label: 'Points', unit: 'pts', odds: -110, confirmed: false, hit: null });
-    expect(g.sides.BOS.picks[0].p).toBeGreaterThan(g.sides.BOS.picks[1].p);
+    // −130 a hair above Brown's −110 on the chance, and Brown's longer price above Pritchard's on the value, the strip's
+    // order since the value layer); Brown's 8 rebounds never clear 8.5 and White's 12 points never 24.5.
+    expect(g.sides.BOS.picks.map((x) => [x.player, x.market, x.line, x.side])).toEqual([['Jaylen Brown', 'pts', 24.5, 'over'], ['Payton Pritchard', 'pts', 12.5, 'over']]);
+    expect(g.sides.BOS.picks[0]).toMatchObject({ key: 'jaylen brown', label: 'Points', unit: 'pts', odds: -110, confirmed: false, hit: null });
+    expect(g.sides.BOS.picks[1].p).toBeGreaterThan(g.sides.BOS.picks[0].p);
+    expect(g.sides.BOS.picks[0].ev).toBeGreaterThan(g.sides.BOS.picks[1].ev);
     expect(g.sides.BOS.players.map((p) => [p.player, p.picked]).sort()).toEqual([['Derrick White', false], ['Jaylen Brown', true], ['Payton Pritchard', true]]);
     expect(g.sides.NY.picks).toEqual([]);
     // Final: each pick graded on the box score; a pick without a row stays ungraded (the strip reads DNP).

@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { asStated } from '@/lib/picks/calibration';
+import { fmtEv, passes, orderBy, DEFAULTS } from '@/lib/picks/value';
+import { RowBadges } from './badges';
 import { ICON } from '@/components/nhl/flags';
 import { GameCharacteristics } from '@/components/nhl/Characteristics';
 import { MatchupProfile } from '@/components/nhl/MatchupProfile';
@@ -37,63 +40,106 @@ function Row({ r, final, sport }) {
     r.avg?.season != null ? `Average: L5 ${r.avg.l5 ?? '—'} · L10 ${r.avg.l10 ?? '—'} · season ${r.avg.season}` : null,
     r.proj != null ? `Sheet projection ${r.proj}` : null, r.rating ? `Sheet rating ${r.rating}` : null, r.injury ? `Injury report: ${r.injury}${r.injuryDetail ? ` (${r.injuryDetail})` : ''}` : null,
     r.without ? `Without ${r.without.names.join(' + ')} (${r.without.absent.map((a) => a.status).join(', ')}): ${pct(r.without.rate)} over in ${r.without.n} game${r.without.n === 1 ? '' : 's'}, ${r.without.avg ?? '—'} ${r.unit} a game; the season read moved from ${pct(r.without.seasonAll)} to ${pct(r.rates.season)} (weight ${r.without.weight})` : null,
-    r.under ? 'Under the floor: listed to make three' : null,
+    r.under ? `Marginal: ${r.fails ? FAIL_WORD[r.fails] || r.fails : 'fails a floor'}, listed to make three` : null,
     r.sheetOnly ? 'Sheet only: PropFinder lists no line or log for it, so it fills in behind PropFinder’s plays' : null,
     r.hit == null ? (final && r.actual === null ? 'No box-score line (did not play)' : null) : `${r.hit ? 'Hit' : 'Miss'}: ${r.actual} ${r.unit} in the box score`,
   ].filter(Boolean).join('\n');
+  const evTone = r.ev == null ? 'none' : r.ev >= DEFAULTS.minEv ? 'good' : r.ev > 0 ? 'thin' : 'bad';
   return (
     <tr className={`${r.under || r.sheetOnly ? 'is-under' : ''}${r.confirmed ? ' is-confirmed' : ''}${grade}`} title={title}>
       <td>
         <div className="nhlx-db-player">
           {r.espnId ? <img src={sport.headshotUrl(r.espnId)} alt="" width="30" height="30" loading="lazy" /> : <img src={sport.teamLogo(r.team)} alt="" width="30" height="30" loading="lazy" className="ir-nfl-logo" />}
-          <span><b>{r.player}<Flags r={r} /></b><small>{r.team}{r.pos ? ` · ${r.pos}` : ''} · {r.venue === 'H' ? 'vs' : 'at'} {r.opp}{r.injury ? ` · ${r.injury}` : ''}{r.without ? ` · w/o ${r.without.names.join(' + ')}` : ''}</small></span>
+          <span><b>{r.player}<Flags r={r} /></b><small>{r.team}{r.pos ? ` · ${r.pos}` : ''} · {r.venue === 'H' ? 'vs' : 'at'} {r.opp}{r.injury ? ` · ${r.injury}` : ''}{r.without ? ` · w/o ${r.without.names.join(' + ')}` : ''}<RowBadges r={r} /></small></span>
         </div>
       </td>
-      <td className="ir-nfl-play"><b>{playLabel(r)}</b><small title={sourceTitle} className={r.confirmed ? 'is-confirmed' : ''}>{source}</small></td>
-      <td className={`is-num is-lead${r.hit == null ? '' : r.hit ? ' is-hit' : ' is-miss'}`} title={r.raw != null ? `${pct(r.p)} calibrated${asStated(r.raw)}` : undefined}><b>{pct(r.p)}</b><small>{r.fair}</small></td>
-      <td className="is-num is-wide"><b>{fmtOdds(r.odds)}</b><small>{r.edge == null ? (r.book || '—') : `${r.edge >= 0 ? '+' : ''}${Math.round(r.edge * 100)} pts`}</small></td>
+      <td className="ir-nfl-play"><b>{playLabel(r)}</b><small title={sourceTitle} className={r.confirmed ? 'is-confirmed' : ''}>{source}{r.fails ? ` · ${FAIL_WORD[r.fails] || r.fails}` : ''}</small></td>
+      <td className={`is-num is-lead ir-ev-${evTone}${r.hit == null ? '' : r.hit ? ' is-hit' : ' is-miss'}`} title={r.ev != null ? `${fmtEv(r.ev)} a unit at ${fmtOdds(r.odds)} on ${pct(r.p)}; the edge over the book's ${pct(r.implied)} under it` : 'No price: no value to read'}><b>{fmtEv(r.ev)}</b><small>{r.edge == null ? '—' : `${r.edge >= 0 ? '+' : ''}${Math.round(r.edge * 100)} pts`}</small></td>
+      <td className="is-num"><b>{fmtOdds(r.odds)}</b><small>{r.odds == null ? (r.book || '—') : `implies ${pct(r.implied)}`}</small></td>
+      <td className="is-num" title={r.raw != null ? `${pct(r.p)} calibrated${asStated(r.raw)}` : undefined}><b>{pct(r.p)}</b><small>{r.fair}</small></td>
       {final ? <td className="is-num nhlx-pk-got">{r.actual === null || r.actual === undefined ? <small>DNP</small> : <><b>{r.actual}</b><small>{r.unit}</small></>}</td> : null}
     </tr>
   );
 }
+const FAIL_WORD = { price: 'no price', juice: 'past the juice ceiling', ev: 'under the EV floor', chance: 'under the chance floor', thin: 'thin minutes', out: 'out' };
 
-export function GroupTable({ label, t, final, sport }) {
+/**
+ * One market group's table: the rows clearing the value floors, the best value first, EV the lead column with the
+ * price beside it (the brief of 2026-10-31); the marginal rows (failing a floor) behind "show marginal" — the panel's
+ * switch (`marginal`), or the table's own button without one. With `filters` the rows are read again at the user's
+ * floors (a row the server shows that fails them moves to marginal, and the other way round).
+ */
+export function GroupTable({ label, t, final, sport, marginal: marginalProp = null, filters = null }) {
+  const [ownMarginal, setOwnMarginal] = useState(false);
+  const showMarginal = marginalProp ?? ownMarginal;
+  const all = [...t.rows, ...(t.marginal || t.next || [])];
+  const f = filters ? { ...DEFAULTS, ...filters } : null;
+  const order = orderBy(f?.sort === 'chance' ? 'chance' : 'ev');
+  const rows = f ? all.filter((r) => passes(r, f) && !r.under).sort(order) : t.rows;
+  const rest = f ? all.filter((r) => !rows.some((x) => x.id === r.id)).map((r) => ({ ...r, under: true })).sort(order) : (t.marginal || t.next || []);
+  const cols = final ? 6 : 5;
   return (
     <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
       <table className="nhlx-db-table nhlx-pk-table ir-nfl-table">
         <thead>
           <tr>
-            <th>{label}{t.fallback ? <i className="nhlx-fg-rank"> nobody over the floor: best available</i> : null}</th>
+            <th>{label}{t.fallback && !rows.length ? <i className="nhlx-fg-rank"> nobody clears the floors</i> : null}</th>
             <th title="The side and the line">Play</th>
-            <th className="is-num" title="The chance of the hit, and the break-even price under it">Chance</th>
-            <th className="is-num is-wide" title="The book’s price, and the edge over its implied chance under it (points)">Price</th>
+            <th className="is-num is-lead" title="Expected value: the return a unit staked at the book’s price on the board’s chance; the edge over the book’s implied chance under it (points)">EV</th>
+            <th className="is-num" title="The book’s price, and the chance it implies under it">Price</th>
+            <th className="is-num" title="The board’s chance of the hit, and the break-even price under it">Chance</th>
             {final ? <th className="is-num" title="The box-score figure">Got</th> : null}
           </tr>
         </thead>
         <tbody>
-          {t.rows.length ? t.rows.map((r) => <Row key={r.id} r={r} final={final} sport={sport} />) : <tr><td colSpan={final ? 5 : 4}><small className="ir-nfl-none">No {label.toLowerCase()} line for this game yet.</small></td></tr>}
+          {rows.length ? rows.map((r) => <Row key={r.id} r={r} final={final} sport={sport} />) : <tr><td colSpan={cols}><small className="ir-nfl-none">{all.length ? `No ${label.toLowerCase()} play clears the floors${rest.length ? ` · ${rest.length} marginal` : ''}.` : `No ${label.toLowerCase()} line for this game yet.`}</small></td></tr>}
+          {showMarginal && rest.length ? rest.map((r) => <Row key={r.id} r={r} final={final} sport={sport} />) : null}
         </tbody>
       </table>
-      {t.next.length ? <p className="nhlx-pk-next">Next: {t.next.map((r) => `${last(r.player)} ${playLabel(r)} ${pct(r.p)}${r.sheetOnly ? ' (sheet)' : ''}`).join(' · ')}</p> : null}
+      {rest.length && marginalProp == null ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-marginal-btn" aria-pressed={ownMarginal} onClick={() => setOwnMarginal((v) => !v)}>{ownMarginal ? 'Hide' : 'Show'} marginal ({rest.length})</button>
+        : rest.length && !showMarginal ? <p className="nhlx-pk-next">Marginal: {rest.slice(0, 4).map((r) => `${last(r.player)} ${playLabel(r)} ${fmtEv(r.ev)}${r.sheetOnly ? ' (sheet)' : ''}`).join(' · ')}{rest.length > 4 ? ` · ${rest.length - 4} more` : ''}</p> : null}
     </div>
   );
 }
 
-function GameHead({ g, sport }) {
+/** The one-line summary of a game (the brief's level 2 header): the leak badge, how many +EV plays, the top one with its EV. */
+export function GameSummary({ g, matchup = null }) {
+  const m = matchup || g.matchup || null;
+  const leak = m?.leak || null;
+  const top = m?.topPlay || null;
   return (
-    <div className="nhlx-mu-game-head ir-nfl-game-head">
-      <img src={sport.teamLogo(g.away)} alt="" width="34" height="34" loading="lazy" />
-      <span>{sport.teamName(g.away)}</span>
-      <i>@</i>
-      <img src={sport.teamLogo(g.home)} alt="" width="34" height="34" loading="lazy" />
-      <span>{sport.teamName(g.home)}</span>
-      <small className="ir-nfl-game-meta">
+    <>
+      {leak ? Object.entries(leak.teams || {}).filter(([, t]) => t.tier > 0).map(([abbr, t]) => <span key={abbr} className="nhlx-edge is-soft ir-gf-meta" title={[t.from?.allows, t.from?.spots ? `soft spots ${t.from.spots.toLowerCase()}` : null].filter(Boolean).join(' · ') || t.word}>{abbr} {t.word.toLowerCase()}</span>) : null}
+      {m ? <span className="ir-gf-meta" title="Plays clearing the value floors">{m.breadth} +EV</span> : null}
+      <span className="ir-gf-best">{top ? <>Top: <b>{top.player}</b> {playLabel(top)} · <em className={`ir-ev-${top.ev >= DEFAULTS.minEv ? 'good' : 'thin'}`}>{fmtEv(top.ev)}</em> at {fmtOdds(top.odds)}</> : 'No play clears the floors'}</span>
+      {m ? <span className="ir-gf-score" title="Matchup Score: the top three plays’ EV, the breadth, the leak tier, the spread"><b>{m.score}</b></span> : null}
+    </>
+  );
+}
+
+function GameHead({ g, sport, open = null, onToggle = null, matchup = null, bodyId = null }) {
+  const head = (
+    <>
+      <span className="ir-gf-teams">
+        <img src={sport.teamLogo(g.away)} alt="" width="28" height="28" loading="lazy" />{g.away}
+        <i>@</i>
+        <img src={sport.teamLogo(g.home)} alt="" width="28" height="28" loading="lazy" />{g.home}
+      </span>
+      <span className="ir-gf-meta">
         {g.final ? `Final ${g.awayScore}–${g.homeScore}` : g.state === 'in' ? `Live ${g.awayScore}–${g.homeScore} · ${g.detail}` : fmtStart(g.date)}
         {g.preseason ? ' · preseason' : ''}
         {g.odds?.spread ? ` · ${g.odds.spread}${g.odds.total ? `, o/u ${g.odds.total}` : ''}` : ''}
-        {g.tally ? ` · ${g.tally.hit} of ${g.tally.of} plays hit` : ''}
-      </small>
-    </div>
+        {g.tally ? ` · ${g.tally.hit} of ${g.tally.of} hit` : ''}
+      </span>
+      <GameSummary g={g} matchup={matchup} />
+    </>
+  );
+  if (!onToggle) return <div className="ir-gf-head is-static">{head}</div>;
+  return (
+    <button type="button" className="ir-gf-head" aria-expanded={!!open} aria-controls={bodyId || undefined} onClick={() => onToggle(!open)}>
+      {head}
+      <svg className="ir-gf-caret" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+    </button>
   );
 }
 
@@ -128,23 +174,41 @@ export function BoardNotes({ notes }) {
  * lib/nfl/profile.js; the characteristics card for a game without one), then the sport's tables; a game without a play collapses to one line; the notes under the
  * slate. `before(game)` renders a sport's own view (the NBA court pair) between the game head and the tables.
  */
-export default function Board({ board, sport, empty = 'No games on this slate.', before = null }) {
+/**
+ * Since the restructure of 2026-10-31 every game is folded to one line (the matchup, the tip, the leak badge, how many
+ * +EV plays, the top one with its EV, the Matchup Score) and opens on a press; `ranked` ([{ game, matchup }], the
+ * overview's order) sorts them, `open` (a Set of ids) and `onToggle(id, next)` hold the state when the parent does,
+ * `filters` re-reads the tables at the user's floors, `marginal` shows the rows that fail them.
+ */
+export default function Board({ board, sport, empty = 'No games on this slate.', before = null, ranked = null, open = null, onToggle = null, filters = null, marginal = null, picked = null }) {
+  const [ownOpen, setOwnOpen] = useState(() => new Set());
   if (!board?.games?.length) return <div className="nhlx-empty">{empty}</div>;
   const mark = teamMark(sport);
+  const list = ranked ? ranked.map((r) => ({ g: r.game, matchup: r.matchup })) : board.games.map((g) => ({ g, matchup: g.matchup || null }));
+  const openSet = open || ownOpen;
+  const toggle = (id, next) => { if (onToggle) onToggle(id, next); else setOwnOpen((prev) => { const s = new Set(prev); if (next) s.add(id); else s.delete(id); return s; }); };
   return (
     <>
-      {board.games.map((g, i) => (
-        <article key={g.id} className={`nhlx-mu-game${i === 0 ? ' is-first' : ''}`}>
-          <GameHead g={g} sport={sport} />
-          {g.profile ? <MatchupProfile profile={g.profile} renderTeam={mark} /> : g.characteristics ? <GameCharacteristics game={g} renderTeam={mark} pill={expectedPill(g, sport)} /> : null}
-          {before ? before(g) : null}
-          {g.plays ? (
-            <div className="ir-nfl-grid">
-              {sport.groups.map(([key, label]) => <GroupTable key={key} label={label} t={g.tables[key]} final={g.final} sport={sport} />)}
-            </div>
-          ) : <p className="ir-nfl-nogame">{g.steep ? `No plays: the ${g.steep} line${g.steep === 1 ? '' : 's'} PropFinder lists ${g.steep === 1 ? 'is' : 'are'} priced past -400, no play at that price.` : 'No plays yet: no cheat-sheet row or PropFinder line for either team.'}</p>}
-        </article>
-      ))}
+      {list.filter(({ g }) => !picked || g.id === picked).map(({ g, matchup }, i) => {
+        const isOpen = picked ? true : openSet.has(g.id);
+        const bodyId = `game-${g.id}`;
+        return (
+          <article key={g.id} className={`ir-gf${isOpen ? ' is-open' : ''}`} id={bodyId}>
+            <GameHead g={g} sport={sport} open={isOpen} onToggle={picked ? null : (next) => toggle(g.id, next)} matchup={matchup} bodyId={`${bodyId}-body`} />
+            {isOpen ? (
+              <div className="ir-gf-body" id={`${bodyId}-body`}>
+                {g.profile ? <MatchupProfile profile={g.profile} renderTeam={mark} /> : g.characteristics ? <GameCharacteristics game={g} renderTeam={mark} pill={expectedPill(g, sport)} /> : null}
+                {before ? before(g) : null}
+                {g.plays ? (
+                  <div className="ir-nfl-grid">
+                    {sport.groups.map(([key, label]) => <GroupTable key={key} label={label} t={g.tables[key]} final={g.final} sport={sport} filters={filters} marginal={marginal} />)}
+                  </div>
+                ) : <p className="ir-nfl-nogame">{g.steep ? `No plays: the ${g.steep} line${g.steep === 1 ? '' : 's'} PropFinder lists ${g.steep === 1 ? 'is' : 'are'} priced past -400, no play at that price.` : 'No plays yet: no cheat-sheet row or PropFinder line for either team.'}</p>}
+              </div>
+            ) : null}
+          </article>
+        );
+      })}
       <BoardNotes notes={board.notes} />
     </>
   );

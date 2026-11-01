@@ -78,13 +78,15 @@ describe('NFL picks: the board', () => {
     const g1 = b.games[0];
     expect(g1).toMatchObject({ id: 'g1', awayName: 'Bills', homeName: 'Chiefs', plays: 9, tally: null });
     const passing = g1.tables.passing;
-    // Allen's logs clear both lines 8 of 10; the TD line's shorter price pulls its chance higher.
-    expect(passing.rows.map((r) => [r.player, r.label, r.under || false])).toEqual([['Josh Allen', 'Pass TDs', false], ['Josh Allen', 'Pass yards', false], ['Patrick Mahomes', 'Pass yards', true]]);
+    // Allen's logs clear both lines 8 of 10; the yards line's longer price (-115 against the TD line's) makes it the better
+    // value, and the tables rank by the value at the book's price (lib/picks/value.js), the chance breaking ties.
+    expect(passing.rows.map((r) => [r.player, r.label, r.under || false])).toEqual([['Josh Allen', 'Pass yards', false], ['Josh Allen', 'Pass TDs', false], ['Patrick Mahomes', 'Pass yards', true]]);
+    expect(passing.rows[0].ev).toBeGreaterThan(passing.rows[1].ev);
     // PropFinder first: Allen's plays are backed by its logs and confirmed by the sheet; Mahomes is sheet-only, a fill-in.
     expect(passing.rows[0]).toMatchObject({ pfBacked: true, confirmed: true, sheetFiles: ['props-wk7.csv'] });
     expect(passing.rows[2]).toMatchObject({ pfBacked: false, sheetOnly: true, under: true });
     expect(passing.pfFirst).toBe(true);
-    const allen = passing.rows[1];
+    const allen = passing.rows[0];
     // The logs win over the sheet's columns: 4/5, 8/10, 8/10 against -115.
     expect(allen.rates).toMatchObject({ l5: 0.8, l10: 0.8, season: 0.8, n: 10, from: 'logs' });
     expect(allen.p).toBeCloseTo((10 * 0.8 + 6 * (115 / 215)) / 16, 3);
