@@ -2270,3 +2270,32 @@ button.ir-bd-name:hover b { text-decoration: underline; }
 .ir-bd-rk.is-tough { background: var(--pf-tough-chip); color: var(--pf-tough-fg); }
 .ir-bd-fx { font-variant-numeric: tabular-nums; }
 .ir-bd-mu.is-none { font-style: italic; }
+/* The player search in each board's head (2026-11-01) and the NFL player panel. */
+.ir-ps { position: relative; min-width: 220px; flex: 1 1 220px; max-width: 320px; }
+.ir-ps-input { width: 100%; }
+.ir-ps-list { position: absolute; z-index: 40; top: calc(100% + 4px); left: 0; right: 0; min-width: 300px; margin: 0; padding: 4px; list-style: none; background: var(--card); border: 1px solid var(--line-strong); border-radius: var(--radius); box-shadow: var(--shadow-hover); max-height: 70vh; overflow-y: auto; }
+.ir-ps-hit { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+.ir-ps-hit img { border-radius: 50%; flex: none; }
+.ir-ps-hit span { display: flex; flex-direction: column; min-width: 0; }
+.ir-ps-hit b { color: var(--heading); font-weight: 600; }
+.ir-ps-hit small { color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ir-ps-hit.is-at { background: var(--bg-soft); }
+.ir-ps-hit.is-out { opacity: 0.6; }
+.ir-ps-none { padding: 8px; color: var(--muted); font-size: 14px; }
+.ir-np { width: min(760px, 100%); }
+.ir-np-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px 12px 0; border-bottom: 1px solid var(--line); background: var(--card); }
+.ir-np-head h3 { margin: 0; font-family: var(--font-display); color: var(--heading); font-size: 20px; }
+.ir-np-face { border-radius: 50%; }
+.ir-np-body { padding: 12px 18px 18px; }
+.ir-np-sec { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.ir-np-sec:last-child { border-bottom: 0; }
+.ir-np-sec h4 { margin: 0 0 8px; font-size: 15px; color: var(--heading); display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.ir-np-sec h4 small { font-weight: 400; }
+.ir-np-tds { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.ir-np-td { display: flex; flex-direction: column; }
+.ir-np-td small { color: var(--muted); font-size: 12.5px; }
+.ir-np-td b { font-size: 20px; font-variant-numeric: tabular-nums; color: var(--heading); }
+.ir-np-tiers { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; }
+.ir-bd-mark.is-hit { box-shadow: inset 0 0 0 1.5px var(--ok-fg); }
+.ir-bd-mark.is-miss { box-shadow: inset 0 0 0 1.5px var(--bad-fg); }
+@media (max-width: 700px) { .ir-ps { max-width: none; flex-basis: 100%; } }

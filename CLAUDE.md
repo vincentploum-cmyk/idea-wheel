@@ -31,6 +31,15 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   (EV, juice, the floors, the scorecard) and the shuffle are off the NFL page — `NflBoard` / `NflShuffle` and their routes
   stay, an old `#board` / `#shuffle` link opens Games. The NHL app has nine (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
+- **Player search on the NFL and NBA pages** (Vincent, 2026-11-01: "I should be able to search on players for both nba
+  and nfl"): a box in each page's head (`components/picks/PlayerSearch.jsx`, the matcher in `lib/picks/player-search.js`:
+  every word of the query starts a word of his name or is his team's code — "cun", "det jalen" —, accents ignored, the
+  surname first, a player out last; arrows, Enter, Escape). The NBA's list is every side player of the slate
+  (`nbaSearchList`, his projected PTS / REB / AST on the line), a pick opening the player card (`components/nba/NbaSearch.jsx`);
+  the NFL's is the week's projection rows (`nflSearchList`, his main yards projection and TD chance), a pick opening
+  `components/nfl/NflPlayer.jsx`: his TD chances (anytime, 1st half, first TD, 2+), each yards market's projection,
+  floor–ceiling, the book's line, the strong / lean / thin marks, the matchup at his spot and the factor on his rate, and
+  his big-game chances, graded once the game is in; hidden until the week has projections. `__tests__/picks-player-search.test.jsx`.
 
 ## The picks core (NFL and NBA)
 
