@@ -11,8 +11,8 @@ import { dateFromFileName } from '../lib/nba/store';
 import summary from './fixtures/espn-nba-summary.json';
 
 describe('NBA markets and teams', () => {
-  test('spellings land on one key, in five groups', () => {
-    expect(GROUPS.map(([k]) => k)).toEqual(['points', 'rebounds', 'assists', 'threes', 'combos']);
+  test('spellings land on one key, in seven groups', () => {
+    expect(GROUPS.map(([k]) => k)).toEqual(['points', 'rebounds', 'assists', 'threes', 'combos', 'shooting', 'periods']);
     expect(marketFromText('Points')).toBe('pts');
     expect(marketFromText('PTS')).toBe('pts');
     expect(marketFromText('player_points')).toBe('pts');
@@ -135,6 +135,8 @@ describe('NBA PropFinder mapping', () => {
       item('Double Double', 'doubleDouble', 'DraftKings', 'yes', 140, 0.5),
     ] };
     expect(mapPlayers([api])[0].props).toEqual([
+      // The first quarter's line is its own market since 2026-11-01 (it was skipped: the full game's must never take it).
+      { market: 'q1_ast', line: 0.5, odds: 195, underOdds: null, book: 'Betano', books: 1, isMain: true },
       { market: 'pts', line: 27.5, odds: -110, underOdds: -105, book: 'FanDuel', books: 2, isMain: true, lines: [{ line: 27.5, odds: -110, underOdds: -105, books: 2, main: true }, { line: 29.5, odds: 120, underOdds: null, books: 1, main: false }] },
       { market: 'pra', line: 39.5, odds: -120, underOdds: null, book: 'DraftKings', books: 1, isMain: true },
       { market: 'tpm', line: 2.5, odds: -130, underOdds: null, book: 'DraftKings', books: 1, isMain: true },
@@ -150,14 +152,16 @@ describe('NBA PropFinder mapping', () => {
     const pts = mapPlayers([ladder])[0].props.find((x) => x.market === 'pts');
     expect(pts).toMatchObject({ line: 8.5, odds: -115, underOdds: -105, isMain: true });
     expect(pts.lines.map((x) => x.line)).toEqual([1.5, 3.5, 8.5, 11.5]);
-    // Markets the board does not settle whose names carry a market's word (the live pull, 2026-10-20) are skipped.
+    // The shooting lines whose names carry a market's word (the live pull, 2026-10-20: "Made Two Pointers" read as points,
+    // "Threes Attempted" as threes) are markets of their own since 2026-11-01, each where it settles; the fantasy score
+    // is no market.
     const stray = { ...PLAYER, odds: [
       item('Player Made Two Pointers', 'twoPointsMade', 'Betano', 'over', -150, 1.5), item('Player Two Pointers Attempted', 'twoPointsAtt', 'Betano', 'over', -150, 3.5),
       item('Player Fantasy Score (All)', 'fantasyPoints', 'Betano', 'over', -110, 30.5), item('Player Threes Attempted', 'threePointsAtt', 'Betano', 'over', -110, 4.5),
       item('Player Free Throws Attempted', 'freeThrowsAtt', 'Betano', 'over', -110, 3.5), item('Player Field Goals Made', 'fieldGoalsMade', 'Betano', 'over', -110, 7.5),
       item('Player Made Threes', 'threePointsMade', 'DraftKings', 'over', -120, 2.5), item('Player Points', 'points', 'DraftKings', 'over', -110, 26.5),
     ] };
-    expect(mapPlayers([stray])[0].props.map((x) => `${x.market} ${x.line}`)).toEqual(['tpm 2.5', 'pts 26.5']);
+    expect(mapPlayers([stray])[0].props.map((x) => `${x.market} ${x.line}`)).toEqual(['fg2m 1.5', 'fg2a 3.5', 'tpa 4.5', 'fta 3.5', 'fgm 7.5', 'tpm 2.5', 'pts 26.5']);
     // A window of minutes is no game line (2026-10-30: o0.5 / o1.5 points at the top of the list for a 14.6 and a 23.5
     // projection), whatever the spelling; nor, whatever its market's name, a main line under 40% of his own average.
     const windows = { ...PLAYER, odds: [
@@ -165,7 +169,9 @@ describe('NBA PropFinder mapping', () => {
       item('Player Points', 'first3MinPoints', 'FanDuel', 'over', -105, 0.5), item('Player Points', 'points3min', 'Betano', 'over', -105, 0.5),
       item('Player Points', 'points', 'DraftKings', 'over', -125, 26.5), item('Player Points', 'points', 'DraftKings', 'under', -105, 26.5),
     ] };
-    expect(mapPlayers([windows])[0].props.map((x) => `${x.market} ${x.line}`)).toEqual(['pts 26.5']);
+    // Since 2026-11-01 the first three minutes are a market of their own (the game rows carry the figure), whatever the
+    // spelling; a window with no figure (the first five) is still no line, and none reaches the full game's points.
+    expect(mapPlayers([windows])[0].props.map((x) => `${x.market} ${x.line}`).sort()).toEqual(['m3_pts 1.5', 'pts 26.5']);
     const low = { ...PLAYER, odds: [
       item('Player Points', 'points', 'Book A', 'over', -110, 1.5), item('Player Points', 'points', 'Book A', 'under', -110, 1.5),
       item('Player Points', 'points', 'DraftKings', 'over', -130, 26.5), item('Player Points', 'points', 'DraftKings', 'under', 100, 26.5),
@@ -197,7 +203,9 @@ describe('NBA PropFinder mapping', () => {
     // One side priced on the real line, the rung both ways: still the real line.
     const oneSide = { ...ladder, odds: [...both('Betano', 4.5, -10421, 2500), item('Player Points', 'points', 'DraftKings', 'over', -112, 12.5)] };
     expect(mapPlayers([oneSide])[0].props.find((x) => x.market === 'pts').line).toBe(12.5);
-    expect(fieldsSeen([PLAYER], []).unread).toEqual(['oddStat']);
+    // The NBA keeps what the board does not read (`keepExtra`): listed as stored, not unread.
+    expect(fieldsSeen([PLAYER], []).unread).toEqual([]);
+    expect(fieldsSeen([PLAYER], []).stored).toEqual(['oddStat']);
     const seen = fieldsSeen([PLAYER], []).markets;
     expect(Object.values(seen).reduce((s, m) => s + m.n, 0)).toBeGreaterThan(0);
     expect(Object.values(seen).every((m) => typeof m.n === 'number')).toBe(true);
