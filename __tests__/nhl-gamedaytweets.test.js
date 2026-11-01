@@ -260,3 +260,46 @@ describe('a tweet that changes some lines without reposting them', () => {
     expect(latestTeamLines(page, NJD, { since: '2026-10-13', until: '2026-10-13T20:00:00.000Z' }).players['dawson mercer']).toMatchObject({ pos: 'RW', line: 3 });
   });
 });
+
+describe('lines written with full stops and jersey nicknames', () => {
+  // @BatchHockey's warm-up lines for VAN vs TOR, 2026-10-31, as posted: read as nothing, so the rink fell back to the preview.
+  const TWEET = [
+    'Warmup #Canucks lines vs. @MapleLeafs',
+    'DeBrusk. EP40. Boeser.', 'O’Connor. Rossi. Lekkerimäki.', 'Öhgren. Quillan. Karlsson.', 'Cotter. Sasson. Gallagher.',
+    'EP25. Hronek.', 'Oleksiak. Willander.', 'Buium. Schenn.', '🥅Meriläinen🥅', '4pm on @KiSSWestCoast and Seekr',
+  ].join('\n');
+  let id = 1;
+  const p = (name, pos, number) => ({ id: id++, name, pos, number });
+  const VAN = [
+    p('Jake DeBrusk', 'LW', 74), p('Elias Pettersson', 'C', 40), p('Brock Boeser', 'RW', 6), p("Drew O'Connor", 'LW', 18),
+    p('Marco Rossi', 'C', 23), p('Jonathan Lekkerimäki', 'RW', 32), p('Liam Ohgren', 'LW', 92), p('Jacob Quillan', 'C', 62),
+    p('Linus Karlsson', 'C', 94), p('Paul Cotter', 'LW', 43), p('Max Sasson', 'C', 63), p('Brendan Gallagher', 'RW', 11),
+    p('Elias Pettersson', 'D', 25), p('Filip Hronek', 'D', 17), p('Jamie Oleksiak', 'D', 24), p('Tom Willander', 'D', 28),
+    p('Zeev Buium', 'D', 49), p('Luke Schenn', 'D', 2), p('Kevin Lankinen', 'G', 32),
+  ];
+
+  test('a full-stop line splits into names; prose and a lone initial do not break it', () => {
+    expect(splitNames('DeBrusk. EP40. Boeser.')).toEqual(['DeBrusk', 'EP40', 'Boeser']);
+    expect(splitNames('J. Hughes. Bratt. Mercer.')).toEqual(['J. Hughes', 'Bratt', 'Mercer']);
+    expect(splitNames('Kirby Dach n\'est pas sur la glace pour l\'échauffement.')).toBeNull();
+    expect(splitNames('Gibson starting')).toBeNull();
+  });
+
+  test('a jersey nickname is the roster player with those initials and that number', () => {
+    const match = rosterMatcher(VAN);
+    expect(match('EP40', 'F')).toMatchObject({ pos: 'C', number: 40 });
+    expect(match('EP25', 'D')).toMatchObject({ pos: 'D', number: 25 });
+    expect(match('EP99', 'F')).toBeNull();
+  });
+
+  test('the warm-up tweet reads as four lines and three pairs', () => {
+    const lines = parseLineTweet(TWEET, VAN);
+    expect(lines.forwards.map((r) => r.map((x) => x.name))).toEqual([
+      ['Jake DeBrusk', 'Elias Pettersson', 'Brock Boeser'], ["Drew O'Connor", 'Marco Rossi', 'Jonathan Lekkerimäki'],
+      ['Liam Ohgren', 'Jacob Quillan', 'Linus Karlsson'], ['Paul Cotter', 'Max Sasson', 'Brendan Gallagher'],
+    ]);
+    expect(lines.forwards[0][1].id).toBe(VAN[1].id); // the forward, #40
+    expect(lines.defense.map((r) => r.map((x) => x.name))).toEqual([['Elias Pettersson', 'Filip Hronek'], ['Jamie Oleksiak', 'Tom Willander'], ['Zeev Buium', 'Luke Schenn']]);
+    expect(lines.defense[0][0].id).toBe(VAN[12].id); // the defenseman, #25
+  });
+});
