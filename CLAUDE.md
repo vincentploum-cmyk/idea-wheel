@@ -553,6 +553,13 @@ config and keeps its own markets, teams, feeds and slate key:
   sources says so) and ESPN's feed (`fetchInjuries` in `lib/nfl/espn.js`, `ensureInjuries`, `applyEspnInjuries`) sets
   every pulled player's status. The pull lists every rostered player (3,776 for 28 teams), so a player out is in it with
   his logs and reaches the out lists, the without splits and the vacated lifts with no one-by-one read.
+  **The slots come from the players** (`depthFromPlayers` on `makePropfinder`, `depthFromRoster`; 2026-11-01): the NFL team
+  objects carry no depth chart (`depthCharts: 0` on the pull of 2026-10-31), every player object carries `fullPosition`
+  ("WR1", "RB2", "TE1"), so the pull builds `data.depth` from it (`depthFrom: 'players'` on the meta) and `envPosFor` reads
+  slot + depth ("WR1") on the opponent's slot rows, the position where the table has none; until then every receiver read
+  the WR table. `firstTouchdownScorer` on the game rows is `firstTd` (the First TD hit rates read 0 off the logs before).
+  Read by nothing yet, on the pull's unread list: the target / rush shares and red-zone looks, air yards and YAC, the
+  quarter and half splits (period markets are skipped by design), the kicking and defensive lines (no market for them).
 - The board: `picks.js` (`buildBoard`, pure): the sheets' rows and PropFinder's lines merged per
   player + market + line + side; the chance = hit rates over the line (L5 0.3, L10 0.3, season
   0.4; PropFinder's logs when pulled, else the sheet's columns), shrunk toward the book's implied
