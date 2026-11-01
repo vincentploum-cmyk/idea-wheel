@@ -19,9 +19,19 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   for the mark and carries `components/site/SportNav.jsx` (NFL · NBA · NHL, the start screen's order).
 - Every app's tabs are the URL hash (`components/site/hash-tab.js`: `tabOf`, `useHashTab(keys, fallback)`
   → `[tab, mounted]`, a visited panel stays mounted hidden so it keeps its state; `components/site/TabBar.jsx`
-  draws the bar). The NBA page has `#board` (Best plays: the night's plays in one ranked list over the games folded to a
-  line each, the data sources, the default) and `#shuffle` (the shuffle) over one date picker (the `head()`, drawn on
-  every panel), and `#boards` (Boards, below), `#big` (Big games, below), `#sheet` (Cheat sheet, below) and `#firstbasket`. **The NFL page is seven
+  draws the bar). **The NBA page is laid out as the NFL's** (Vincent, 2026-11-01: "for nba, I need the same layout as nfl
+  with as addition the propfinder tables for each game when clicking on the game"; `components/nba/NbaGames.jsx`): pill
+  tabs over one date picker (the `head()`, drawn on every panel) — `#matchups` (Games, the default: the night's games as a
+  sportsbook lists them, a row a team with its logo, spread and total, the tip in ET; press one for the stat pills Points ·
+  Rebounds · Assists · Threes · PRA, **PropFinder's table for each team** — the court's `AllowedTable`, what the opponent
+  gives up per position, opening on L10, the cheat sheet's ✓ / ✗ in each cell, who is out above it; a pressed row keeps
+  that team's players at that position, `pickWord` "in the list" — and both teams' players with his projection and the
+  strong / lean / thin marks, 70 / 55 / 40% as the Boards tab read them: round marks off the shuffle's payload per stat,
+  `useNbaShuffles` / `tierRows` over `tierBoard`, the book's rungs (`ladderBoard`) until they load, the highest projection
+  first, a name opening the card), `#pts`, `#reb`, `#ast`, `#tpm`, `#pra` (`NbaStatList`: the same list across the night,
+  40 rows then "Show all"), `#big` (Big games, below, with the game dropdown), `#firstbasket` and `#sources` (Data sources).
+  The Best plays board, Boards, Cheat sheet and Shuffle tabs are off the page (their components and routes stay; an old
+  `#board` / `#shuffle` link opens Games). `__tests__/nba-games.test.jsx` (`MOCK_OUT` writes `games-nba-<theme>.html`). **The NFL page is seven
   plain tabs drawn as pills** (Vincent, 2026-11-01: "way too complicated … Remove the edge, implies, juice, etc… I just need
   a simple list of games and per game, players listed with their ladders", then a sportsbook's games page as the form and
   "where are the passing yards?"; `TabBar`'s `pills`): `#matchups` (Games, the default: the week's games as a sportsbook
