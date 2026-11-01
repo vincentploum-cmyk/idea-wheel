@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { teamLogo } from '@/lib/nfl/teams';
+import { teamLogo, teamName } from '@/lib/nfl/teams';
+import { spreadOf } from '@/lib/nfl/projections';
 import { headshotUrl } from '@/lib/nfl/espn';
 
 // The NFL page's lists (Vincent, 2026-11-01: "I just need a simple list of games and per game, players listed with their
@@ -14,10 +15,8 @@ import { headshotUrl } from '@/lib/nfl/espn';
 
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const num = (v, d = 0) => (v == null ? '—' : Number(v).toFixed(d));
-const fmtTip = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
-const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { weekday: 'short' }) : '');
-export const KINDS = [['td', 'TDs'], ['receiving', 'Receiving'], ['rushing', 'Rushing']];
-const MARKET = { receiving: 'rec_yds', rushing: 'rush_yds' };
+export const KINDS = [['td', 'TDs'], ['passing', 'Pass Yards'], ['receiving', 'Receiving Yards'], ['rushing', 'Rushing Yards']];
+const MARKET = { passing: 'pass_yds', receiving: 'rec_yds', rushing: 'rush_yds' };
 const SHOW = 40;
 
 function Who({ r, game = false }) {
@@ -135,22 +134,58 @@ function ListOf({ pj, ids, kind, game = false, limit = false, empty }) {
 
 const NO_DATA = 'No projection yet: the week needs a PropFinder pull.';
 
-/** One game: its head, the defenses' weak spots off the cheat sheet, and its three lists behind tabs. */
-function GameCard({ g, pj }) {
+/** A team's spread as the book writes it on its row ("+1.5", "-1.5", "PK"), from ESPN's "NYJ -1.5". */
+function spreadFor(odds, team) {
+  const sp = spreadOf(odds?.spread);
+  if (!sp) return null;
+  if (!sp.team || !sp.pts) return 'PK';
+  return sp.team === team ? `-${sp.pts}` : `+${sp.pts}`;
+}
+const kickoff = (iso) => (iso ? `${new Date(iso).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/New_York' })} ${new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }).replace(' ', '')} ET` : '');
+
+/**
+ * One game as a sportsbook lists it (Vincent, 2026-11-01, with a sportsbook's games page as the form): the matchup and
+ * the kickoff, a row a team with its logo, its spread and the total (the line alone, no price); press it for the
+ * players — TDs, Pass Yards, Receiving Yards, Rushing Yards — and the cheat sheet's read on each defense.
+ */
+function GameRow({ g, pj, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
   const [kind, setKind] = useState('td');
-  const status = g.final ? `final ${g.awayScore}–${g.homeScore}` : `${fmtDay(g.date)} ${fmtTip(g.date)}`;
+  const live = !g.final && g.state === 'in';
+  const scored = g.final || live;
+  const status = g.final ? 'Final' : live ? 'Live' : kickoff(g.date);
+  const total = g.odds?.total != null ? g.odds.total : null;
   const weak = [g.away, g.home].map((team) => ({ team, d: g.teams?.[team]?.defense })).filter((x) => x.d?.weak?.length);
+  const team = (abbr, side) => {
+    const score = side === 'away' ? g.awayScore : g.homeScore;
+    const sp = spreadFor(g.odds, abbr);
+    return (
+      <span className="ir-gm-team">
+        <img src={teamLogo(abbr)} alt="" width="34" height="34" className="ir-nfl-logo" />
+        <span className="ir-gm-name">{teamName(abbr)}</span>
+        {scored && score != null ? <b className="ir-gm-score">{score}</b> : <span />}
+        <span className={`ir-gm-box${sp ? '' : ' is-empty'}`}>{sp || '—'}</span>
+        <span className={`ir-gm-box${total != null ? '' : ' is-empty'}`}>{total != null ? `${side === 'away' ? 'O' : 'U'} ${total}` : '—'}</span>
+      </span>
+    );
+  };
   return (
-    <section className="ir-ml-game" aria-label={`${g.away} at ${g.home}`}>
-      <div className="ir-ml-head">
-        <span className="ir-ml-teams"><img src={teamLogo(g.away)} alt="" width="22" height="22" className="ir-nfl-logo" />{g.away}<i>@</i><img src={teamLogo(g.home)} alt="" width="22" height="22" className="ir-nfl-logo" />{g.home}</span>
-        <small className="nhlx-auto-meta">{status}</small>
-      </div>
-      {weak.length ? <p className="ir-ml-def">{weak.map(({ team, d }) => <span key={team} title="From the cheat sheet’s defense snapshot"><b>{d.of} defense</b> gives up the most to {d.weak.slice(0, 3).map((w) => `${w.word} (#${w.rank})`).join(', ')}</span>)}</p> : null}
-      <div className="nhlx-tabs nhlx-rk-tabs ir-ml-tabs" role="tablist" aria-label="List">
-        {KINDS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={kind === k} className={`nhlx-tab${kind === k ? ' is-active' : ''}`} onClick={() => setKind(k)}>{l}<i>{g.lists?.[k]?.length || 0}</i></button>)}
-      </div>
-      <ListOf pj={pj} ids={g.lists?.[kind] || []} kind={kind} empty={NO_DATA} />
+    <section className={`ir-gm${open ? ' is-open' : ''}`} aria-label={`${g.away} at ${g.home}`}>
+      <button type="button" className="ir-gm-top" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <span className="ir-gm-title">{g.away} {teamName(g.away)} @ {g.home} {teamName(g.home)}<i aria-hidden="true">›</i></span>
+        <span className="ir-gm-time">{status}</span>
+        {team(g.away, 'away')}
+        {team(g.home, 'home')}
+      </button>
+      {open ? (
+        <div className="ir-gm-detail">
+          {weak.length ? <p className="ir-ml-def">{weak.map(({ team: t, d }) => <span key={t} title="From the cheat sheet’s defense snapshot"><b>{d.of} defense</b> gives up the most to {d.weak.slice(0, 3).map((w) => `${w.word} (#${w.rank})`).join(', ')}</span>)}</p> : null}
+          <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="List">
+            {KINDS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={kind === k} className={`nhlx-tab${kind === k ? ' is-active' : ''}`} onClick={() => setKind(k)}>{l}</button>)}
+          </div>
+          <ListOf pj={pj} ids={g.lists?.[kind] || []} kind={kind} empty={NO_DATA} />
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -161,20 +196,21 @@ const LEGEND = (
   </p>
 );
 
-/** The Matchups tab: every game with its TDs, Receiving and Rushing lists. */
-export function NflMatchups({ board }) {
+/** The Games tab: the week's games as a sportsbook lists them, each opening on its players. */
+export function NflMatchups({ board, openFirst = false }) {
   const pj = board?.projections;
   if (!board?.games?.length) return <div className="nhlx-empty">No games in this week.</div>;
   if (!pj) return <div className="nhlx-empty">{NO_DATA}</div>;
   return (
-    <div className="ir-overview">
+    <div className="ir-gm-list">
+      <div className="ir-gm-cols" aria-hidden="true"><span>Spread</span><span>Total</span></div>
+      {pj.games.map((g, i) => <GameRow key={g.id} g={g} pj={pj} defaultOpen={openFirst && i === 0} />)}
       {LEGEND}
-      <div className="ir-ml-grid">{pj.games.map((g) => <GameCard key={g.id} g={g} pj={pj} />)}</div>
     </div>
   );
 }
 
-/** One list across every game of the week: 'td' | 'receiving' | 'rushing'. */
+/** One list across every game of the week: 'td' | 'passing' | 'receiving' | 'rushing'. */
 export function NflList({ board, kind }) {
   const pj = board?.projections;
   if (!board?.games?.length) return <div className="nhlx-empty">No games in this week.</div>;

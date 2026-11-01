@@ -17,24 +17,21 @@ const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { wee
 // Vincent, 2026-11-01: "way too complicated … I just need a simple list of games and per game, players listed with their
 // ladders": the games first, the same lists across the week, the data sources last. The Best plays board (EV, juice, the
 // floors) and the shuffle are off the NFL page; their routes and components stay.
+// The tabs as pills, a sportsbook's games page the form (Vincent, the same day).
 const TABS = [
   ['matchups', 'Games'],
   ['tds', 'TDs'],
-  ['receiving', 'Receiving'],
-  ['rushing', 'Rushing'],
+  ['passing', 'Pass Yards'],
+  ['receiving', 'Receiving Yards'],
+  ['rushing', 'Rushing Yards'],
   ['sources', 'Data sources'],
 ];
-const LIST_TABS = [
-  ['matchups', 'This week’s', 'games', 'Every game with its players: touchdowns, receiving and rushing.', null],
-  ['tds', 'Every', 'touchdown', 'Anytime, first half, first touchdown and two or more, the likeliest first.', 'td'],
-  ['receiving', 'Every', 'receiver', 'Receiving yards and receptions: strong, lean and thin.', 'receiving'],
-  ['rushing', 'Every', 'rusher', 'Rushing yards, quarterbacks included: strong, lean and thin.', 'rushing'],
-];
+const LIST_TABS = [['matchups', null], ['tds', 'td'], ['passing', 'passing'], ['receiving', 'receiving'], ['rushing', 'rushing']];
 const TAB_KEYS = TABS.map(([key]) => key);
 
 /**
- * The NFL page, five hash tabs over one week picker: Games (each game's TDs, receiving and rushing lists), the same three
- * lists across the week (TDs, Receiving, Rushing; lib/nfl/projections.js) and Data sources (the cheat sheets, the pulls).
+ * The NFL page, six hash tabs over one week picker: Games (the week's games, each opening on its TDs, pass, receiving and
+ * rushing lists), the same four lists across the week (lib/nfl/projections.js) and Data sources (the cheat sheets, the pulls).
  */
 export default function NflApp({ email }) {
   const [tab, mounted] = useHashTab(TAB_KEYS, 'matchups');
@@ -82,19 +79,12 @@ export default function NflApp({ email }) {
     <>
       <SiteHeader sport="NFL" nav={<SportNav />} right={<><span className="nhlx-user">{email}</span><ThemeToggle /><SignOutButton /></>} />
       <main>
-        <TabBar tabs={TABS} tab={tab} />
+        <TabBar tabs={TABS} tab={tab} pills />
 
-        {LIST_TABS.map(([key, lead, word, blurb, kind]) => (
-          <section key={key} className="nhlx-bench nhlx-tabpanel" id={key} role="tabpanel" aria-labelledby={`tab-${key}`} hidden={tab !== key}>
+        {LIST_TABS.map(([key, kind]) => (
+          <section key={key} className="nhlx-bench nhlx-tabpanel ir-nfl-panel" id={key} role="tabpanel" aria-labelledby={`tab-${key}`} hidden={tab !== key}>
             <div className="nhlx-wrap">
-              <div className="nhlx-bench-head">
-                <div>
-                  <span className="nhlx-eyebrow">NFL</span>
-                  <h1>{lead} <span>{word}</span></h1>
-                  <p>{blurb}</p>
-                </div>
-              </div>
-              <section className="nhlx-pk" aria-label={`${lead} ${word}`}>
+              <section className="nhlx-pk" aria-label={TABS.find(([k]) => k === key)[1]}>
                 {head()}
                 {err ? <div className="nhlx-alert">{err}</div> : null}
                 {mounted(key) ? (board ? (kind ? <NflList board={board} kind={kind} /> : <NflMatchups board={board} />) : !err ? <div className="nhlx-empty">Loading the week…</div> : null) : null}
@@ -103,15 +93,8 @@ export default function NflApp({ email }) {
           </section>
         ))}
 
-        <section className="nhlx-bench nhlx-tabpanel" id="sources" role="tabpanel" aria-labelledby="tab-sources" hidden={tab !== 'sources'}>
+        <section className="nhlx-bench nhlx-tabpanel ir-nfl-panel" id="sources" role="tabpanel" aria-labelledby="tab-sources" hidden={tab !== 'sources'}>
           <div className="nhlx-wrap">
-            <div className="nhlx-bench-head">
-              <div>
-                <span className="nhlx-eyebrow">NFL</span>
-                <h1>Data <span>sources</span></h1>
-                <p>Drop the week’s cheat sheets here; the PropFinder pull and ESPN’s schedule.</p>
-              </div>
-            </div>
             <section className="nhlx-pk" aria-label="Data sources">
               {head()}
               {err ? <div className="nhlx-alert">{err}</div> : null}

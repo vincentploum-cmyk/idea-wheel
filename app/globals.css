@@ -1821,6 +1821,42 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-bd-table td.ir-sl-play > b { white-space: nowrap; }
 .ir-bd-table td.ir-sl-play .ir-bd-rungs { max-width: 330px; }
 
+/* Pill tabs (the NFL page, a sportsbook's games page the form; 2026-11-01). */
+.nhlx-tabs.is-pills { gap: 10px; padding: 0; background: none; border: 0; border-radius: 0; }
+.nhlx-tabs.is-pills .nhlx-tab { padding: 10px 20px; border-radius: 100px; background: var(--bg-soft); color: var(--heading); font-weight: 600; box-shadow: none; }
+.nhlx-tabs.is-pills .nhlx-tab:hover { background: var(--bg-tint); }
+.nhlx-tabs.is-pills .nhlx-tab.is-active { background: var(--primary); color: var(--card); }
+.nhlx-tabs.is-pills.is-small { gap: 6px; margin: 10px 0 8px; }
+.nhlx-tabs.is-pills.is-small .nhlx-tab { padding: 6px 14px; font-size: 14px; }
+.ir-nfl-panel { padding-top: 16px; }
+
+/* The NFL games as a sportsbook lists them: the matchup and the kickoff, a row a team with its spread and the total. */
+.ir-gm-list { display: grid; max-width: 880px; }
+.ir-gm-cols, .ir-gm-team { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto 92px 92px; align-items: center; gap: 0 10px; }
+.ir-gm-cols { padding: 0 2px 10px; border-bottom: 1px solid var(--line-strong); }
+.ir-gm-cols span { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); text-align: center; }
+.ir-gm-cols span:first-child { grid-column: 4; }
+.ir-gm { border-bottom: 1px solid var(--line); }
+.ir-gm-top { display: grid; gap: 8px; width: 100%; padding: 16px 2px; border: 0; background: none; text-align: left; color: inherit; font: inherit; cursor: pointer; }
+.ir-gm-title { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--primary); }
+.ir-gm-title i { font-style: normal; margin-left: 8px; display: inline-block; transition: transform 0.2s ease; }
+.ir-gm.is-open .ir-gm-title i { transform: rotate(90deg); }
+.ir-gm-time { margin-top: -4px; font-size: 13.5px; letter-spacing: 0.04em; color: var(--muted); }
+.ir-gm-name { font-size: 17px; color: var(--heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ir-gm-score { font-family: var(--font-display); font-size: 18px; color: var(--heading); font-variant-numeric: tabular-nums; }
+.ir-gm-box { display: grid; place-items: center; min-height: 44px; border: 1.5px solid var(--primary-line); border-radius: 8px; font-weight: 600; font-size: 15.5px; color: var(--heading); font-variant-numeric: tabular-nums; }
+.ir-gm-box.is-empty { color: var(--muted); border-color: var(--line); }
+.ir-gm-top:hover .ir-gm-title { text-decoration: underline; }
+.ir-gm-detail { padding: 0 2px 16px; }
+.ir-gm-list > .ir-bd-legend { margin-top: 14px; }
+@media (max-width: 700px) {
+  .ir-gm-cols, .ir-gm-team { grid-template-columns: 30px minmax(0, 1fr) auto 76px 76px; gap: 0 8px; }
+  .ir-gm-team img { width: 30px; height: 30px; }
+  .ir-gm-title { font-size: 16px; }
+  .ir-gm-name { font-size: 16px; }
+  .nhlx-tabs.is-pills .nhlx-tab { padding: 9px 16px; font-size: 15px; }
+}
+
 /* The NFL's projection lists (Matchups, TDs, Receiving, Rushing; 2026-11-01): strong / lean / thin. */
 .ir-ml-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr)); gap: 14px; }
 .ir-ml-game { padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--card); min-width: 0; }
