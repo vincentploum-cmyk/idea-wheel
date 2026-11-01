@@ -23,6 +23,16 @@ describe('PropFinder NFL mapping', () => {
     expect(players[0]).toMatchObject({ id: 'p1', name: 'Josh Allen', key: 'josh allen', team: 'BUF', pos: 'QB' });
     expect(players[0].games.map((g) => g.date)).toEqual(['2026-10-12', '2026-10-05']); // newest first
   });
+  test('a first-half touchdown line is read (the market is a period’s own); other first-half markets are skipped', () => {
+    const p = { name: 'Kyren Williams', odds: [
+      { market: '1st Half Anytime Touchdown Scorer', sportsbook: 'DK', selectionLine: 'over', price: 115, points: 0.5, isMain: true },
+      { market: 'Anytime Touchdown Scorer', sportsbook: 'DK', selectionLine: 'over', price: -150, points: 0.5, isMain: true },
+      { market: '1st Half Rushing Yards', sportsbook: 'DK', selectionLine: 'over', price: -110, points: 39.5, isMain: true },
+      { market: '1st Quarter Anytime TD', sportsbook: 'DK', selectionLine: 'over', price: 260, points: 0.5, isMain: true },
+    ] };
+    const props = playerProps(p);
+    expect(props.map((x) => [x.market, x.line, x.odds])).toEqual([['first_half_td', 0.5, 115], ['anytime_td', 0.5, -150]]);
+  });
   test('the keys the API used, with the ones this file does not read', () => {
     const seen = fieldsSeen([PLAYER], []);
     expect(seen.game).toContain('passingYards');

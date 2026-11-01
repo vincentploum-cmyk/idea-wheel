@@ -22,7 +22,8 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard (the NFL's alone since
   2026-10-31), the data sources, the default; on the NBA page the night's plays in one ranked list over the games folded to a line each,
   below) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
-  drawn on both panels); the NBA page also `#sheet` (Cheat sheet, below) and `#firstbasket`. The NHL app has nine (below).
+  drawn on both panels); the NBA page also `#sheet` (Cheat sheet, below) and `#firstbasket`; the NFL page also `#boards`
+  (Boards, below). The NHL app has nine (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)
@@ -567,6 +568,26 @@ config and keeps its own markets, teams, feeds and slate key:
   thirds), the expected touchdowns as the card's pill when the sides carry `teamProj.td`; the characteristics card stays
   as the fallback for a game without a profile. `__tests__/nfl-profile.test.js` (the builder, the render; `MOCK_OUT`
   writes `profile-nfl-<theme>.html` for `tools/mock/screenshot-profile.mjs`).
+- **The week's boards** (`#boards`, `components/nfl/NflBoards.jsx`, the pure builder `lib/nfl/boards.js` `weekBoards(board,
+  filters)`; Vincent, 2026-11-01: "for NFL, I think we will need to follow the following structure based on the cheat sheet
+  and propfinder data"): six ranked tables in his order — **Top TD** (every anytime-TD play, one a player), **Best first-half
+  TD**, **Best receiving / rushing / passing ladders** (per player the priced rungs of his `rec_yds` / `rush_yds` /
+  `pass_yds` ladder that clear the floors, three at most, "100+" for o99.5, the best EV ringed, the main line dotted;
+  quarterbacks on the rushing board) and **TE touchdowns across the slate** (the tight ends' TD rows, three shown, with his
+  projected targets and receiving yards and the opponent's rank to TEs). Everything by EV at the book's price at the user's
+  own floors (`useValueFilters('nfl')`, shared with Best plays; the failing rows behind "Show marginal"); `board.boards` =
+  the same at the defaults (`buildBoard` in `lib/nfl/picks.js` attaches it). Beside a name the words of his lists: **"if
+  active"** for a game-time decision (DTD), **"if role confirmed"** when his read leans on a teammate out (a without split
+  or a vacated lift, `roleOf`; the hover names who). **The first-half TD market** (`first_half_td` in `lib/nfl/markets.js`):
+  no log carries it, so the chance is derived from his anytime play (`chanceFrom: { market: 'anytime_td', fn: firstHalfOf }`,
+  1 − √(1 − p), a touchdown count with half its rate in the half; `makeBoard` builds these plays after the others, through
+  the market's calibration when one is learned, `derived` on the play); priced when PropFinder carries a first-half line
+  (`period: true` lets the prop reader file it despite "1st half", every other period market still skipped), else
+  `synthetic` (fair price only: off the tables, the counts and `best`, kept on the side player's `plays`; the board keeps
+  it on the chance, not failed for the missing price). Graded off ESPN's scoring plays (`firstHalfTd` per player in
+  `parseSummary`, periods 1–2); a result stored before 2026-11-01 lacks the field and reads unknown (`fieldOptional`,
+  `statOf` in `lib/picks/markets.js`). The side players' plays now carry `ev`, `implied`, `derived` / `synthetic` and the
+  without names. `__tests__/nfl-boards.test.jsx` (`MOCK_OUT` writes `boards-nfl-<theme>.html`).
 - Routes (`authorize()`, admin session or sync token): `GET /api/nfl/picks?season&week&type|date`,
   `GET /api/nfl/shuffle?season&week&type&market`, `GET /api/nfl/scorecard?season&from&to`,
   `GET|POST|DELETE /api/nfl/sheets`, `POST /api/nfl/refresh?only=schedule|propfinder`

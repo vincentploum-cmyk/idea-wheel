@@ -14,6 +14,10 @@ describe('ESPN NFL feeds', () => {
     const dobbins = g.players.find((p) => p.name === 'J.K. Dobbins');
     expect(dobbins).toMatchObject({ rushTd: 1, td: 1, firstTd: 1 });
     expect(g.players.filter((p) => p.td > 0).map((p) => p.name).sort()).toEqual(['George Holani', 'J.K. Dobbins', 'RJ Harvey']);
+    // The first-half touchdowns from the scoring plays' periods (2026-11-01): Dobbins and Harvey in the 2nd, Holani in the 4th.
+    expect(g.players.filter((p) => p.firstHalfTd > 0).map((p) => p.name).sort()).toEqual(['J.K. Dobbins', 'RJ Harvey']);
+    expect(g.players.find((p) => p.name === 'George Holani')).toMatchObject({ td: 1, firstHalfTd: 0 });
+    expect(darnold.firstHalfTd).toBe(0);
   });
   test('scoring-play text', () => {
     expect(tdScorer('J.K. Dobbins 4 Yd Rush (Wil Lutz Kick)')).toBe('J.K. Dobbins');

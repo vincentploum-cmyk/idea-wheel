@@ -10,6 +10,7 @@ import { useHashTab } from '@/components/site/hash-tab';
 import { weekLabel, shiftWeek } from '@/lib/nfl/week';
 import Scorecard from '@/components/picks/Scorecard';
 import NflBoard, { NflShuffle } from './NflBoard';
+import NflBoards from './NflBoards';
 import NflSources from './NflSources';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
@@ -17,13 +18,15 @@ const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { wee
 
 const TABS = [
   ['board', 'Best plays'],
+  ['boards', 'Boards'],
   ['shuffle', 'Shuffle'],
 ];
 const TAB_KEYS = TABS.map(([key]) => key);
 
 /**
- * The NFL page, two hash tabs over one week picker: Best plays (the week's board, the notes, the
- * scorecard and the data sources under it) and Shuffle (a bar per market over the week's players).
+ * The NFL page, three hash tabs over one week picker: Best plays (the week's board, the notes, the
+ * scorecard and the data sources under it), Boards (the six boards of 2026-11-01: Top TD, first-half TD,
+ * the receiving / rushing / passing ladders, TE touchdowns) and Shuffle (a bar per market over the week's players).
  */
 export default function NflApp({ email }) {
   const [tab, mounted] = useHashTab(TAB_KEYS, 'board');
@@ -89,6 +92,23 @@ export default function NflApp({ email }) {
             </section>
             {wk ? <Scorecard sport={{ api: '/api/nfl', kind: 'week', season: wk.season, to: wk.type === 3 ? 18 + wk.week : wk.week, label: 'NFL' }} /> : null}
             {wk ? <NflSources wk={wk} onChange={() => go(wk)} /> : null}
+          </div>
+        </section>
+
+        <section className="nhlx-bench nhlx-tabpanel" id="boards" role="tabpanel" aria-labelledby="tab-boards" hidden={tab !== 'boards'}>
+          <div className="nhlx-wrap">
+            <div className="nhlx-bench-head">
+              <div>
+                <span className="nhlx-eyebrow">NFL</span>
+                <h1>The week&apos;s <span>boards</span></h1>
+                <p>Six boards off the cheat sheets and PropFinder: the Top TD board, the first-half TD board, the best receiving, rushing and passing ladders, and three TE touchdowns across the slate — each ranked by the value at the book’s price, a name carrying “if active” when he is a game-time decision and “if role confirmed” when his read leans on a teammate out.</p>
+              </div>
+            </div>
+            <section className="nhlx-pk" aria-label="The week’s boards">
+              {head()}
+              {err ? <div className="nhlx-alert">{err}</div> : null}
+              {mounted('boards') ? (board ? <NflBoards board={board} /> : !err ? <div className="nhlx-empty">Loading the week…</div> : null) : null}
+            </section>
           </div>
         </section>
 

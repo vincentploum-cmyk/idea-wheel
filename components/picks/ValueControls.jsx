@@ -35,7 +35,7 @@ export default function ValueControls({ filters, onChange, onReset = null, count
       </div>
       <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-vc-marginal" aria-pressed={!!f.marginal} onClick={() => onChange({ marginal: !f.marginal })} title="Show the rows that fail a floor: priced past the ceiling, under the minimum EV, without a price, or on thin minutes">Show marginal</button>
       {onReset && !isDefault(f) ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" onClick={onReset}>Defaults</button> : null}
-      {counts ? <small className="nhlx-auto-meta ir-vc-note">{counts.passing} of {counts.all} +EV play{counts.all === 1 ? '' : 's'} clear the floors{minMinutes ? ` · players under ${minMinutes} minutes are marginal` : ''}</small> : null}
+      {counts ? <small className="nhlx-auto-meta ir-vc-note">{counts.passing} of {counts.all} {counts.noun || '+EV play'}{counts.all === 1 ? '' : 's'} clear the floors{minMinutes ? ` · players under ${minMinutes} minutes are marginal` : ''}</small> : null}
     </div>
   );
 }
