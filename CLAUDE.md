@@ -1822,6 +1822,15 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   a slot only to a player of the slot's own group (`fillFromLastLineup`), so a pair slot read before the rule never
   carries a forward.
   Without a tweet or preview the snapshot uses PropFinder's depth chart (`propfinder-depth.json`).
+  **A lineup read keeps what it cannot re-read** (2026-11-01, Vincent: EDM @ NYI showed Joseph at the RW1 before the
+  game and Draisaitl after it): `ingestLineups` always merges into the stored file — a full read (no `due`) used to start
+  from nothing, so its own GameDayTweets reads (403 from Cloudflare on Render) wrote errors over the tweets the workflow
+  had posted a minute before and the rink fell to PropFinder's depth chart until a later page post put the tweet back;
+  a re-read preview without a lineup keeps the stored rows (`keepPreview`, `reread` beside them). `fetchPreview` takes
+  the game-preview story naming the most teams' lineups (`previewLineupTeams` in `lineups.js`): the club site's own
+  preview ("game-preview-islanders-vs-oilers-…", its lines under a bare "PROJECTED LINEUP") is listed first and gave
+  neither team NHL.com's lines. "The same winning lineup" reads as a confirmation (`SAME_LINES`).
+  `__tests__/nhl-lineups-keep.test.js`.
   Slots a capture leaves empty (no lineup yet, or a partial one) are filled from the team's last
   known lineup (`data/lineups/last/<ABBR>.json`, written from each team's own capture) with
   players still on the roster, marked `carried`; the slate does the same for a game with no snapshot.
