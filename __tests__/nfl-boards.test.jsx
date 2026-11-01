@@ -9,7 +9,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildBoard } from '../lib/nfl/picks';
-import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS } from '../lib/nfl/projections';
+import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS } from '../lib/nfl/projections';
 import { reproject } from '../lib/nfl/picks';
 import { envFactor } from '../lib/picks/projection';
 import { NflMatchups, NflList, NflBigGames, KINDS } from '../components/nfl/NflBoards';
@@ -292,6 +292,58 @@ describe('NFL projections: the read', () => {
     const y = r('Puka Nacua').yards.rec_yds;
     expect(y.grade).toBe(131 > y.ceiling ? 'over' : 131 < y.floor ? 'under' : 'inside');
     expect(r('Tyler Higbee').td.actual).toBeNull();   // no box-score line: did not play
+  });
+});
+
+describe('NFL projections: one quarterback a team, the starter on ESPN’s depth chart (2026-11-01)', () => {
+  // Vincent: "Lamar Jackson is the QB, why am I seeing Tyler Huntley?" — the backup had three starts in his logs.
+  const backup = player('p8', 'Jimmy Garoppolo', 'LAR', 'QB', logs((i) => ({ passAtt: 34, passCmp: 23, passYds: 290 + (i % 4) * 10, passTd: 2, rushAtt: 1, rushYds: 2 }), dates.map((_, i) => `lar-b${i}`)), []);
+  const depth = { LAR: { qb: [{ id: '12483', name: 'Matthew Stafford' }, { id: '2969939', name: 'Jimmy Garoppolo' }] } };
+  const buildWith = (extra) => buildBoard({ season: 2026, week: 9, games: GAMES, sheets: [], pf: { ...pf, data: { ...pf.data, players: [...pf.data.players, backup] }, ...extra }, results: {} }).projections;
+  const rowIn = (pj, name) => Object.values(pj.rows).find((x) => x.player === name);
+  test('the starter alone is on the lists, labelled QB1; the backup keeps his row (the search) as QB2 and backup', () => {
+    const pj = buildWith({ espnDepth: depth });
+    expect(rowIn(pj, 'Matthew Stafford')).toMatchObject({ slot: 'QB', depth: 1 });
+    expect(rowIn(pj, 'Matthew Stafford').backup).toBeUndefined();
+    expect(rowIn(pj, 'Jimmy Garoppolo')).toMatchObject({ slot: 'QB', depth: 2, backup: true });
+    const listed = (ids) => ids.map((id) => pj.rows[id].player);
+    expect(listed(pj.lists.passing)).toEqual(['Matthew Stafford']);
+    for (const k of ['td', 'receiving', 'rushing']) expect(listed(pj.lists[k])).not.toContain('Jimmy Garoppolo');
+    for (const m of Object.keys(pj.lists.big)) expect(listed(pj.lists.big[m])).not.toContain('Jimmy Garoppolo');
+  });
+  test('without a chart both stand as before', () => {
+    const pj = buildWith({});
+    expect(pj.lists.passing.map((id) => pj.rows[id].player)).toEqual(expect.arrayContaining(['Matthew Stafford', 'Jimmy Garoppolo']));
+  });
+  test('the starter out: the next on the chart starts', () => {
+    const rows = [{ id: 'a', pos: 'QB', player: 'Tyler Huntley' }, { id: 'b', pos: 'QB', player: 'Joe Fagnano' }];
+    const chart = [{ id: '1', name: 'Lamar Jackson' }, { id: '2', name: 'Tyler Huntley' }, { id: '3', name: 'Joe Fagnano' }];
+    expect(markQuarterbacks(rows, chart, rows)).toBe('a');
+    expect(rows[1]).toMatchObject({ backup: true, depth: 3 });
+  });
+  test('a starter who plays without a row (no log yet) still makes the rows backups', () => {
+    const rows = [{ id: 'a', pos: 'QB', player: 'Tyler Huntley' }];
+    const chart = [{ id: '1', name: 'Lamar Jackson' }, { id: '2', name: 'Tyler Huntley' }];
+    expect(markQuarterbacks(rows, chart, [{ player: 'Lamar Jackson' }, { player: 'Tyler Huntley' }])).toBeNull();
+    expect(rows[0]).toMatchObject({ backup: true, depth: 2 });
+  });
+  test('names match across feeds', () => {
+    expect(normPlayer('Odell Beckham Jr.')).toBe('odell beckham');
+    expect(normPlayer('Amon-Ra St. Brown')).toBe('amon ra st brown');
+  });
+});
+
+describe('NFL projections: the role word reads an absence at his own position group', () => {
+  const posOf = (n) => ({ 'Elijah Sarratt': 'WR', 'Derrick Henry': 'RB' })[n] || null;
+  test('a receiver out moves no quarterback’s or back’s word, a receiver’s yes', () => {
+    const sp = (pos) => ({ pos, health: 'In', without: { names: ['Elijah Sarratt'], n: 2, weight: 0.33 } });
+    expect(roleOf(sp('QB'), [], posOf)).toEqual([]);
+    expect(roleOf(sp('RB'), [], posOf)).toEqual([]);
+    expect(roleOf(sp('TE'), [], posOf)).toEqual([expect.objectContaining({ kind: 'role' })]);
+  });
+  test('a lift from another group is no word, from his own it is', () => {
+    expect(roleOf({ pos: 'WR', own: { tgt: { lift: 1.1, liftFrom: ['Derrick Henry'] } } }, ['tgt'], posOf)).toEqual([]);
+    expect(roleOf({ pos: 'RB', own: { rushAtt: { lift: 3, liftFrom: ['Derrick Henry'] } } }, ['rushAtt'], posOf)).toEqual([expect.objectContaining({ why: expect.stringMatching(/^Henry out/) })]);
   });
 });
 

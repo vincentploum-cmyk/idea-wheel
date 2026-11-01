@@ -2,7 +2,7 @@ import { describe, expect, test } from '@jest/globals';
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseInjuries } from '../lib/nba/espn';
-import { parseInjuries as parseNflInjuries } from '../lib/nfl/espn';
+import { parseInjuries as parseNflInjuries, parseDepthChart } from '../lib/nfl/espn';
 import { applyEspnInjuries, applyOverrides, applyBoxScores, absentByTeam, isOut, statusOf, healthOf } from '../lib/picks/injuries';
 import { normName } from '../lib/nhl-data/names';
 import { fetchInjuries as fetchNflReport } from '../lib/nfl/propfinder-nfl';
@@ -162,5 +162,21 @@ describe('ESPN’s NFL injury feed', () => {
     const names = Object.values(absent).flat().map((a) => a.name).sort();
     expect(names).toEqual(['Charles Cross', 'Jadarian Price', 'Jonah Elliss', 'RJ Harvey', 'Talanoa Hufanga', 'Tyler Badie']);
     expect(absent.DEN.find((a) => a.name === 'Talanoa Hufanga')).toMatchObject({ status: 'Out', detail: 'Ankle' });
+  });
+});
+
+describe('ESPN’s NFL depth chart: the quarterbacks in order', () => {
+  // BAL's chart of 2026-11-01 as ESPN served it, trimmed to the formations' quarterback slots.
+  const chart = { depthchart: [
+    { name: 'Base 3-4 D', positions: { lde: { athletes: [{ id: '1', displayName: 'Someone' }] } } },
+    { name: '3WR 1TE', positions: { qb: { position: { abbreviation: 'QB' }, athletes: [
+      { id: '3916387', displayName: 'Lamar Jackson' }, { id: '4035671', displayName: 'Tyler Huntley' }, { id: '4429582', displayName: 'Joe Fagnano' }, { id: '4036419', displayName: 'Skylar Thompson' },
+    ] } } },
+  ] };
+  test('the offense’s formation, starter first', () => {
+    expect(parseDepthChart(chart).qb.map((a) => a.name)).toEqual(['Lamar Jackson', 'Tyler Huntley', 'Joe Fagnano', 'Skylar Thompson']);
+    expect(parseDepthChart(chart).qb[0].id).toBe('3916387');
+    expect(parseDepthChart({ depthchart: [] })).toBeNull();
+    expect(parseDepthChart(null)).toBeNull();
   });
 });
