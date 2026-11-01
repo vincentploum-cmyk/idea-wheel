@@ -139,6 +139,11 @@ describe('the board carries the value', () => {
     const glass = g.sides.BOS.players.find((p) => p.key === 'big glass');
     expect(glass.thin).toBe(false);
     expect(glass.b2b).toBe(true);   // his newest log is Oct 30, the night before
+    // His splits for the players list: every log is against NY (the opponent tonight), none says home or away.
+    expect(glass.splits.reb.h2h).toMatchObject({ n: 4 });
+    expect(glass.splits.reb.h2h.avg).toBeGreaterThan(10);
+    expect(glass.splits.reb.venue).toBeNull();
+    expect(glass.splits.reb.season).toMatchObject({ n: 12, stand: false });
     expect(glass.ladders.reb.find((r) => r.main)).toMatchObject({ ev: expect.any(Number), evUnder: expect.any(Number) });
     const bench = g.sides.NY.players.find((p) => p.key === 'bench guy');
     expect(bench.thin).toBe(true);

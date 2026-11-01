@@ -7,7 +7,7 @@ import ThemeToggle from '@/components/nhl/ThemeToggle';
 import SportNav from '@/components/site/SportNav';
 import TabBar from '@/components/site/TabBar';
 import { useHashTab } from '@/components/site/hash-tab';
-import NbaBoard, { NbaShuffle } from './NbaBoard';
+import NbaBoard, { NbaShuffle, NbaBoards } from './NbaBoard';
 import NbaSources from './NbaSources';
 import NbaFirstBasket from './NbaFirstBasket';
 import NbaSheetMatchups from './NbaSheetMatchups';
@@ -17,6 +17,7 @@ const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { wee
 
 const TABS = [
   ['board', 'Best plays'],
+  ['boards', 'Boards'],
   ['sheet', 'Cheat sheet'],
   ['shuffle', 'Shuffle'],
   ['firstbasket', 'First basket'],
@@ -122,6 +123,24 @@ export default function NbaApp({ email }) {
               {board ? <NbaBoard board={board} game={gameId || null} onGame={setGameId} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null}
             </section>
             {date ? <NbaSources date={date} onChange={() => go(date)} /> : null}
+          </div>
+        </section>
+
+        <section className="nhlx-bench nhlx-tabpanel" id="boards" role="tabpanel" aria-labelledby="tab-boards" hidden={tab !== 'boards'}>
+          <div className="nhlx-wrap">
+            <div className="nhlx-bench-head">
+              <div>
+                <span className="nhlx-eyebrow">NBA</span>
+                <h1>Tonight&apos;s <span>boards</span></h1>
+                <p>What to bet on, per stat: every player’s ladder as three marks — the highest he clears <b>strong</b> (70%+), <b>lean</b> (55%+) and <b>thin</b> (40%+) — 20+ strong · 25+ lean · 30+ thin. The strongest ladders first. Pick a game above to cut every board to it; click a name for the card.</p>
+              </div>
+            </div>
+            <section className="nhlx-pk" aria-label="Tonight’s boards">
+              {head({ games: true })}
+              {pull.msg ? <p className="nhlx-auto-msg">{pull.msg}</p> : null}
+              {err ? <div className="nhlx-alert">{err}</div> : null}
+              {mounted('boards') ? (board ? <NbaBoards board={board} game={gameId || null} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null) : null}
+            </section>
           </div>
         </section>
 

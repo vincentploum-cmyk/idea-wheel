@@ -22,7 +22,7 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard (the NFL's alone since
   2026-10-31), the data sources, the default; on the NBA page the night's plays in one ranked list over the games folded to a line each,
   below) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
-  drawn on both panels); the NBA page also `#sheet` (Cheat sheet, below) and `#firstbasket`. The NHL app has nine (below).
+  drawn on both panels); the NBA page also `#boards` (Boards, below), `#sheet` (Cheat sheet, below) and `#firstbasket`. The NHL app has nine (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)
@@ -71,7 +71,17 @@ config and keeps its own markets, teams, feeds and slate key:
   EV, the score; Expand all / Collapse all; a Top Matchups card or the NBA head's dropdown opens one game alone); inside,
   the profile, the strips / the courts and the tables (`GroupTable`: EV · Price · Chance, the marginal rows behind the
   panel's switch, re-read at the user's floors). The games-first-and-open layout of 2026-10-30 gave way to this on
-  2026-11-01; `RowBadges` (`badges.jsx`) marks DTD, thin minutes and a back-to-back on every row.
+  2026-11-01; `RowBadges` (`badges.jsx`) marks DTD, thin minutes and a back-to-back on every row. **An opened NBA game
+  leads with PropFinder's tables, the players under them** (Vincent, 2026-11-01: "put the propfinder tables back. under
+  the tables, we just list the players", and his read — PropFinder's L10 per position, the cheat sheet to confirm it, then
+  the player's own home / away / h2h figures for the projected number): `TeamColumn` in `NbaGame.jsx` per side — who is
+  out, the `AllowedTable` opening on **L10** when PropFinder has one (`sheetMarks`: the cheat sheet's tile in every cell,
+  "✓ #4" green in the same third as PropFinder's rank, "✗ #19" red otherwise), the stat tabs (the slate's `metric`), and
+  `Roster`: every active player with his projection per stat (the book's line, chance and EV under it), and for the picked
+  stat his average at tonight's venue / in his last meetings with the opponent (`splits[market]` on the side player,
+  `venueSplits` in `board.js`: { venue: { avg, n, at }, h2h: { avg, n }, season: { avg, n, stand } } over this season's
+  regular-season games, his last `seasonCap` standing in until three; a pressed table row keeps that position's players,
+  a row opens the card); the courts and the five group tables behind "Show the courts and the tables".
 - `markets.js` (`makeMarkets`): a sport's markets ({ group, label, unit, fields (the box-score
   fields the market settles on, summed), yesNo, floor, defense, aliases }) → `marketFromText`
   (any spelling, whole-word match for short aliases like "PTS"), `statOf`, `defenseKey`.
@@ -851,6 +861,27 @@ config and keeps its own markets, teams, feeds and slate key:
   (`firstBasketOdds` in `lib/picks/propfinder.js`: the items naming a first basket / first field goal, not a team's or
   first points, the best price as `firstBasket` on the player, never a market), with the edge; the score is the chance
   × 4 on 0–100. Once stored, who scored first, the first points and the tip are on the game and the rows are graded.
+- **Boards** (`#boards`, `NbaBoards` in `components/nba/NbaBoard.jsx` → `components/picks/Boards.jsx`, the pure builders in
+  `lib/picks/boards.js`; Vincent, 2026-11-01, with his own NFL lists as the form — "Best Receiving Ladders · 1. Puka Nacua
+  100+ / 110+ / 125+" —, then "I don't care about edge etc… I just want to know what I should bet on: 10+ points (strong),
+  20+ points (lean), 30+ points (thin)" and "TD candidates we should list with chance%"; the NBA's built here, the NFL's
+  elsewhere): per stat a numbered list across the slate (`NBA_BOARDS`: points, rebounds, assists, threes, PRA), each player
+  with **the highest round mark he clears at each tier** — `TIERS`: strong 70%+, lean 55%+, thin 40%+ on the board's chance
+  (`tierOf`), a mark shared by two tiers listed once at the stronger — "15+ strong · 20+ lean · 25+ thin", ranked by the
+  strong mark, then the lean, then the thin. The marks are round (`step` per spec: points and PRA by 5, rebounds and
+  assists by 2, threes by 1) and read off the shuffle's payload (`tierBoard`: `GET /api/nba/shuffle?date&market` per
+  stat, fetched by the tab, every height read with `pAt`, the court's and the Shuffle tab's figure); until it arrives the
+  board reads the book's ladder rungs (`ladderBoard`, `round: false`, the note says so). No price and no EV on the line
+  (the price on a mark's hover). **Double-double candidates** (`candidateBoard`, the NBA's touchdown list) by his chance
+  alone, coloured by tier. A player out is off the boards, a game-time decision reads "if he plays" and thin minutes
+  "if role confirmed" (`caveatOf`); `PER_BOARD` = 10 then "Show all"; the head's game dropdown cuts every board to one
+  game (`gameId`); a name opens the card. **Every line carries the matchup its projection reads** (`matchupOf` /
+  `matchupText` in `boards.js`; Vincent, 2026-11-01: "I also need to know the matchup from propfinder / cheat sheet so I
+  know where the projection is coming from"): his spot (`envPos`), PropFinder's rank there on the season table the
+  projection reads ("PF #3", tinted by third, 1 = gives up the most), the last ten ("L10 #5") when PropFinder published
+  it, the cheat sheet's tile ("✓ sheet #4" when it sits in PropFinder's third, "✗" when not) and the factor on his rate
+  (`ranges[market].matchup`, "×1.06"); the hover names the figures, the league's average and whether the factor is the
+  sheet and PropFinder blended or one alone; "no table" when the pull has none. `__tests__/picks-boards.test.js`.
 - **Cheat sheet** (`#sheet`, `components/nba/NbaSheetMatchups.jsx`, the pure reader `lib/nba/sheet-matchups.js`; Vincent,
   2026-10-31: "create a new view with best cheat sheet matchups per game"): per game the cheat sheet's soft tiles — the
   cells of each side's `allowed` table carrying the sheet's rank (`sheet`, 1 = the opponent gives up the most of 30) for
