@@ -54,3 +54,25 @@ describe('the pull kept whole, a team a file', () => {
     expect(await store.extraFor({ season: 2026, week: 9, type: 2 })).toBeNull();
   });
 });
+
+describe('the week exported for the audit (GET /api/nfl/propfinder?export=1)', () => {
+  test('the pull as stored, the sheets, the schedule and the teams’ published rows; nothing for an empty week', async () => {
+    const { writeJson } = require('../lib/nhl-store');
+    const { exportWeek, weeksWithData } = require('../lib/nfl/store');
+    const wk = { season: 2026, week: 7, type: 2 };
+    await writeJson('nfl/2026/w07/propfinder.json', { at: '2026-10-25T13:40:00Z', data: { players: [{ id: 'p1', name: 'CeeDee Lamb', team: 'DAL', games: [] }], defense: {} } }, { gzip: true });
+    await writeJson('nfl/2026/w07/schedule.json', { games: [{ id: 'g7', away: 'DAL', home: 'WSH' }] });
+    await writeJson('nfl/2026/w07/sheets-index.json', { sheets: [{ id: 's1', fileName: 'NFL_2026_W7_detailed.pdf', at: '2026-10-24T10:00:00Z' }] });
+    await writeJson('nfl/2026/w07/sheets/s1.json', { id: 's1', rows: [{ player: 'CeeDee Lamb', market: 'rec_yds', line: 74.5 }], meta: { defense: {} } });
+    await writeJson('nfl/2026/w07/propfinder-extra/index.json', { at: '2026-10-25T13:40:00Z', counts: { teams: 1 }, players: { p1: ['CeeDee Lamb', 'DAL'] } }, { gzip: true });
+    await writeJson('nfl/2026/w07/propfinder-extra/DAL.json', { teams: { DAL: { rows: [{ type: 'Opponent', position: 'WR1', lastNGames: 3 }] } }, players: { p1: { name: 'CeeDee Lamb' } } }, { gzip: true });
+    const out = await exportWeek(wk);
+    expect(out.pull.data.players[0].name).toBe('CeeDee Lamb');
+    expect(out.sheets.map((s) => s.id)).toEqual(['s1']);
+    expect(out.schedule.games[0].id).toBe('g7');
+    expect(out.extraTeams).toEqual({ DAL: { rows: [{ type: 'Opponent', position: 'WR1', lastNGames: 3 }] } });
+    expect(out.extraTeams.DAL.players).toBeUndefined();
+    expect(await weeksWithData(2026)).toContain('w07');
+    expect(await exportWeek({ season: 2026, week: 12, type: 2 })).toBeNull();
+  });
+});
