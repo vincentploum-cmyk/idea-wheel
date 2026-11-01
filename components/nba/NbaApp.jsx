@@ -132,7 +132,7 @@ export default function NbaApp({ email }) {
               <div>
                 <span className="nhlx-eyebrow">NBA</span>
                 <h1>Tonight&apos;s <span>boards</span></h1>
-                <p>Per stat, the slate’s players ranked: the best candidates over the book’s main line with the price and the EV, and the ladders — the marks he clears at 55% or better on the board’s chance, 20+ / 25+ points, 10+ / 12+ rebounds, 6+ / 8+ assists, 3+ / 4+ threes. Pick a game above to cut every board to it; click a name for the card.</p>
+                <p>What to bet on, per stat: every player’s ladder as three marks — the highest he clears <b>strong</b> (70%+), <b>lean</b> (55%+) and <b>thin</b> (40%+) — 20+ strong · 25+ lean · 30+ thin. The strongest ladders first. Pick a game above to cut every board to it; click a name for the card.</p>
               </div>
             </div>
             <section className="nhlx-pk" aria-label="Tonight’s boards">

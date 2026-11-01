@@ -2093,3 +2093,11 @@ button.ir-bd-name:hover b { text-decoration: underline; }
 .ir-bd-proj { font-size: 12.5px; }
 .ir-bd-caveat { color: var(--warn-fg); font-size: 13px; }
 .ir-bd-got { color: var(--muted); font-size: 13px; }
+.ir-bd-mark.is-strong { background: var(--ok-bg); color: var(--ok-fg); }
+.ir-bd-mark.is-strong small { color: var(--ok-fg); }
+.ir-bd-mark.is-lean { background: var(--warn-bg); color: var(--warn-fg); }
+.ir-bd-mark.is-lean small { color: var(--warn-fg); }
+.ir-bd-mark.is-thin { background: var(--bg-soft); color: var(--muted); }
+.ir-bd-chance { display: inline-block; min-width: 42px; padding: 0 7px; border-radius: 5px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; background: var(--bg-soft); color: var(--body); }
+.ir-bd-chance.is-strong { background: var(--ok-bg); color: var(--ok-fg); }
+.ir-bd-chance.is-lean { background: var(--warn-bg); color: var(--warn-fg); }

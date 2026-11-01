@@ -97,7 +97,7 @@ function NbaBoardsRows({ board, game = null }) {
     open({ key: r.key, player: side?.players?.find((p) => p.key === r.key) || r, team: r.team, opp: r.opp, venue: r.venue, market: r.market });
   };
   if (!board?.games?.length) return <div className="nhlx-empty">No games on this date.</div>;
-  return <Boards board={board} specs={NBA_BOARDS} units={UNITS} gameId={game || null} onOpen={openRow} title={game ? 'The game’s boards' : 'Tonight’s boards'} />;
+  return <Boards board={board} specs={NBA_BOARDS} units={UNITS} gameId={game || null} onOpen={openRow} title={game ? 'The game’s boards' : 'Tonight’s boards'} shuffleApi="/api/nba" query={board.date ? `date=${board.date}` : ''} />;
 }
 
 /**

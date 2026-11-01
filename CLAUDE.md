@@ -863,16 +863,19 @@ config and keeps its own markets, teams, feeds and slate key:
   × 4 on 0–100. Once stored, who scored first, the first points and the tip are on the game and the rows are graded.
 - **Boards** (`#boards`, `NbaBoards` in `components/nba/NbaBoard.jsx` → `components/picks/Boards.jsx`, the pure builders in
   `lib/picks/boards.js`; Vincent, 2026-11-01, with his own NFL lists as the form — "Best Receiving Ladders · 1. Puka Nacua
-  100+ / 110+ / 125+", "we should for assists, points, rebounds have the best candidates. Also, we should list the point
-  ladders. 20+, 25+" —, the NBA's built here, the NFL's elsewhere): per stat two numbered lists across the slate, read off
-  the board the page holds (`NBA_BOARDS`: points, rebounds, assists, threes, then PRA ladders) — **the best candidates**
-  (`candidateBoard`: every active player's over at the book's main line, the ladder's main rung as the NBA board prints it,
-  the likeliest first, the price, the EV and the projection beside him) and **the ladders** (`ladderBoard`: the marks he
-  clears at `LADDER_BAR` = 55% on the board's chance, the highest `MAX_MARKS` = 3 of them ascending, "20+ / 25+" — a line of
-  19.5 reads 20+, `markOf` —, ranked by the highest mark then the chance there; each mark with its chance and price, green
-  when the book's price leaves an EV, the main line dotted); a player out is off the boards, a game-time decision reads
-  "if he plays" and thin minutes "if role confirmed" (`caveatOf`); `PER_BOARD` = 10 then "Show all"; the head's game
-  dropdown cuts every board to one game (`gameId`); a name opens the card. `__tests__/picks-boards.test.js`.
+  100+ / 110+ / 125+" —, then "I don't care about edge etc… I just want to know what I should bet on: 10+ points (strong),
+  20+ points (lean), 30+ points (thin)" and "TD candidates we should list with chance%"; the NBA's built here, the NFL's
+  elsewhere): per stat a numbered list across the slate (`NBA_BOARDS`: points, rebounds, assists, threes, PRA), each player
+  with **the highest round mark he clears at each tier** — `TIERS`: strong 70%+, lean 55%+, thin 40%+ on the board's chance
+  (`tierOf`), a mark shared by two tiers listed once at the stronger — "15+ strong · 20+ lean · 25+ thin", ranked by the
+  strong mark, then the lean, then the thin. The marks are round (`step` per spec: points and PRA by 5, rebounds and
+  assists by 2, threes by 1) and read off the shuffle's payload (`tierBoard`: `GET /api/nba/shuffle?date&market` per
+  stat, fetched by the tab, every height read with `pAt`, the court's and the Shuffle tab's figure); until it arrives the
+  board reads the book's ladder rungs (`ladderBoard`, `round: false`, the note says so). No price and no EV on the line
+  (the price on a mark's hover). **Double-double candidates** (`candidateBoard`, the NBA's touchdown list) by his chance
+  alone, coloured by tier. A player out is off the boards, a game-time decision reads "if he plays" and thin minutes
+  "if role confirmed" (`caveatOf`); `PER_BOARD` = 10 then "Show all"; the head's game dropdown cuts every board to one
+  game (`gameId`); a name opens the card. `__tests__/picks-boards.test.js`.
 - **Cheat sheet** (`#sheet`, `components/nba/NbaSheetMatchups.jsx`, the pure reader `lib/nba/sheet-matchups.js`; Vincent,
   2026-10-31: "create a new view with best cheat sheet matchups per game"): per game the cheat sheet's soft tiles — the
   cells of each side's `allowed` table carrying the sheet's rank (`sheet`, 1 = the opponent gives up the most of 30) for

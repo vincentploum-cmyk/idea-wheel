@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
-import { candidateBoard, ladderBoard, boardsOf, markOf, marksText, NBA_BOARDS, LADDER_BAR } from '../lib/picks/boards';
-import { buildBoard } from '../lib/nba/picks';
+import { candidateBoard, ladderBoard, tierBoard, boardsOf, markOf, marksText, tierOf, NBA_BOARDS, TIERS } from '../lib/picks/boards';
+import { buildBoard, shuffleOf } from '../lib/nba/picks';
 
 // The slate's boards (Vincent, 2026-11-01): the best candidates over the main line and the ladders' marks, ranked.
 const games = [{ id: 'g1', date: '2026-11-02T00:00Z', away: 'BOS', home: 'NY', final: false, state: 'pre' }];
@@ -20,19 +20,24 @@ describe('the boards', () => {
     expect(markOf(99.5)).toBe('100+');
     expect(markOf(0.5)).toBe('1+');
   });
-  test('a ladder board: the marks cleared at the bar, the highest first; a player out is off it', () => {
+  test('a ladder board: the highest mark at each tier, the strongest ladder first; a player out is off it', () => {
+    expect(tierOf(0.8)).toBe('strong'); expect(tierOf(0.6)).toBe('lean'); expect(tierOf(0.45)).toBe('thin'); expect(tierOf(0.3)).toBeNull();
     const reb = ladderBoard(board, { market: 'reb' });
     expect(reb[0].player).toBe('Big Glass');
-    expect(reb[0].marks.length).toBeGreaterThan(0);
-    expect(reb[0].marks.length).toBeLessThanOrEqual(3);
-    for (const m of reb[0].marks) expect(m.p).toBeGreaterThanOrEqual(LADDER_BAR);
-    for (let i = 1; i < reb[0].marks.length; i++) expect(reb[0].marks[i].line).toBeGreaterThan(reb[0].marks[i - 1].line);
-    expect(reb[0].top).toBe(reb[0].marks[reb[0].marks.length - 1]);
-    expect(marksText(reb[0])).toMatch(/^\d+\+( \/ \d+\+)*$/);
-    expect(reb[0].marks.some((m) => m.main)).toBe(true);
+    const marks = reb[0].marks;
+    expect(marks.length).toBeGreaterThan(0);
+    expect(marks.length).toBeLessThanOrEqual(TIERS.length);
+    for (const m of marks) expect(tierOf(m.p)).toBe(m.tier);
+    for (let i = 1; i < marks.length; i++) { expect(marks[i].line).toBeGreaterThan(marks[i - 1].line); expect(marks[i].p).toBeLessThan(marks[i - 1].p); }
+    // His strong mark is the highest rung the board gives 70% or better, and nothing higher clears it.
+    const rungs = board.games[0].sides.BOS.players.find((p) => p.key === 'big glass').ladders.reb;
+    const strongLine = Math.max(...rungs.filter((r) => r.p >= 0.7).map((r) => r.line));
+    expect(reb[0].strong.line).toBe(strongLine);
+    expect(marksText(reb[0])).toMatch(/^\d+\+ strong/);
     const pts = ladderBoard(board, { market: 'pts' });
     expect(pts.map((r) => r.player)).not.toContain('Hurt Man');
     expect(pts[0].player).toBe('Steady Hands');
+    expect(pts[0].strong).not.toBeNull();
     // Thin minutes: the caveat rides on the line.
     const tpm = ladderBoard(board, { market: 'tpm' });
     expect(tpm.find((r) => r.player === 'Bench Guy')?.caveat).toBe('if role confirmed');
@@ -40,7 +45,7 @@ describe('the boards', () => {
     expect(ladderBoard(board, { market: 'reb', gameId: 'g1' }).length).toBe(reb.length);
     expect(ladderBoard(board, { market: 'reb', gameId: 'nope' })).toEqual([]);
   });
-  test('a candidates board: the main line, the likeliest first, the price and the EV', () => {
+  test('a candidates board: the main line, the likeliest first, with the chance', () => {
     const ast = candidateBoard(board, { market: 'ast', min: 0.5 });
     expect(ast[0]).toMatchObject({ player: 'Steady Hands', line: 6.5, odds: -120, side: 'over' });
     expect(ast[0].p).toBeGreaterThanOrEqual(0.5);
@@ -49,11 +54,25 @@ describe('the boards', () => {
     for (let i = 1; i < ast.length; i++) expect(ast[i].p).toBeLessThanOrEqual(ast[i - 1].p);
     expect(candidateBoard(board, { market: 'pts', min: 0.5 }).map((r) => r.player)).not.toContain('Hurt Man');
   });
+  test('round marks off the shuffle: points by 5, the highest each tier clears', () => {
+    const sh = shuffleOf({ market: 'pts', board, pf, season: 2026, results: {} });
+    const rows = tierBoard(sh, { step: 5 });
+    const top = rows.find((r) => r.player === 'Steady Hands');
+    expect(top).toBeTruthy();
+    for (const m of top.marks) { expect(Number(m.mark.replace('+', '')) % 5).toBe(0); expect(tierOf(m.p)).toBe(m.tier); }
+    // Steady Hands scores 24–28: 20+ is strong, nothing at 30+ strong.
+    expect(top.strong.mark).toBe('20+');
+    expect(rows.map((r) => r.player)).not.toContain('Hurt Man');
+    const viaSpecs = boardsOf(board, NBA_BOARDS, { shuffles: { pts: sh } }).find((b) => b.key === 'pts');
+    expect(viaSpecs.round).toBe(true);
+    expect(viaSpecs.rows.map((r) => r.player)).toEqual(rows.map((r) => r.player));
+  });
   test('the NBA specs build every board', () => {
     const boards = boardsOf(board, NBA_BOARDS);
     expect(boards.map((b) => b.key)).toEqual(NBA_BOARDS.map((b) => b.key));
     expect(boards.find((b) => b.key === 'reb').rows[0].player).toBe('Big Glass');
-    expect(boards.find((b) => b.key === 'reb-best').rows[0].player).toBe('Big Glass');
+    // The ladders, and the double-double candidates (the NBA's touchdown list) by their chance.
+    expect(boards.filter((b) => b.kind === 'candidates').map((b) => b.market)).toEqual(['dd']);
     for (const b of boards) for (const r of b.rows) expect(r.game).toBe('g1');
   });
 });
