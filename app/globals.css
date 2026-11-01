@@ -1877,7 +1877,15 @@ div.nhlx-auto-msg > p { margin: 0; }
    tables side by side, the sportsbook rows kept at the NFL's width. */
 .ir-gm-list.is-wide { max-width: 1280px; }
 .ir-gm-list.is-wide .ir-gm-top, .ir-gm-list.is-wide > .ir-gm-cols { max-width: 880px; }
-.ir-gm-pf { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 16px; margin: 12px 0 4px; }
+/* An opened NBA game: the stat and position pills, then each defense's PropFinder table with the players facing it under it. */
+.ir-gm-picks { display: flex; flex-wrap: wrap; gap: 0 18px; align-items: center; }
+.ir-gm-def { padding: 14px 0 6px; border-top: 1px solid var(--line); margin-top: 10px; }
+.ir-gm-def:first-of-type { border-top: 0; margin-top: 0; }
+.ir-gm-def-vs { font-family: var(--font-display); font-size: 16px; color: var(--heading); }
+.ir-gm-cell { display: inline-block; font-size: 13px; padding: 2px 8px; border-radius: 6px; background: var(--bg-soft); color: var(--body); }
+.ir-gm-cell.is-soft { background: var(--ok-bg); color: var(--ok-fg); }
+.ir-gm-cell.is-tough { background: var(--bad-bg); color: var(--bad-fg); }
+.ir-gm-def .ir-gf-out { margin: 8px 0 0; font-size: 13px; }
 .ir-gm-players { margin-top: 14px; flex-wrap: wrap; gap: 6px 12px; }
 
 /* The NFL's projection lists (Matchups, TDs, Receiving, Rushing; 2026-11-01): strong / lean / thin. */

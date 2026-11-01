@@ -6,7 +6,7 @@ import React from 'react';
 import fs from 'fs';
 import path from 'path';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { NbaGames, NbaStatList, tierRows, spreadFor } from '../components/nba/NbaGames';
+import { NbaGames, NbaStatList, DefenseBlock, tierRows, spreadFor } from '../components/nba/NbaGames';
 
 // The NBA page in the NFL's layout (Vincent, 2026-11-01: "for nba, I need the same layout as nfl with as addition the
 // propfinder tables for each game when clicking on the game"): the games as a sportsbook lists them, an opened game on
@@ -69,6 +69,13 @@ describe('the NBA games, the NFL’s layout', () => {
     expect(html).toContain('Strong');
     expect(html).not.toContain('Out Man');
     expect(html).not.toMatch(/\bEV\b|edge|juice/i);
+    // Each defense's table first, the players who face it under it (Vincent, 2026-11-01): DEN's table, LAL's players, then LAL's table, DEN's players.
+    const at = (t) => html.indexOf(t);
+    expect(at('What DEN gives up')).toBeLessThan(at('Austin Reaves'));
+    expect(at('Austin Reaves')).toBeLessThan(at('What LAL gives up'));
+    expect(at('What LAL gives up')).toBeLessThan(at('Nikola Jokic'));
+    expect(html).toContain('Nuggets defense');
+    for (const pos of ['All', 'PG', 'SG', 'SF', 'PF', 'C']) expect(html).toMatch(new RegExp(`role="tab"[^>]*>${pos}<`));
     // With MOCK_OUT=<dir> the opened game is written as standalone pages (dark, light) for a screenshot at 1440 and 390.
     const out = process.env.MOCK_OUT;
     if (!out) return;
@@ -80,6 +87,16 @@ describe('the NBA games, the NFL’s layout', () => {
       fs.writeFileSync(path.join(out, `games-nba-${theme}.html`), `<!doctype html><html lang="en" data-theme="${theme}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>NBA games</title><style>${css}
 .mock-page { max-width: 1360px; margin: 0 auto; padding: 24px var(--gutter) 48px; }</style></head><body><main class="mock-page nhlx"><section class="nhlx-pk">${html}</section></main></body></html>`);
     }
+  });
+  test('a position picked: the table’s cell for it in a line, the players at that spot alone', () => {
+    const rows = tierRows(board, shuffles, 'pts', 'g1');
+    const den = board.games[0].sides.DEN;
+    const c = renderToStaticMarkup(<DefenseBlock side={den} season={2026} market="pts" pos="C" onPos={() => {}} rows={rows} onOpen={() => {}} shuffled />);
+    expect(c).toContain('LAL gives up 17.0 pts a game to Cs · #27 of 30 · L10 · league 19.0');
+    expect(c).toContain('Nikola Jokic');
+    expect(c).not.toContain('Austin Reaves');
+    const pg = renderToStaticMarkup(<DefenseBlock side={den} season={2026} market="pts" pos="PG" onPos={() => {}} rows={rows} onOpen={() => {}} shuffled />);
+    expect(pg).toContain('No PG of DEN on this ladder.');
   });
   test('closed by default; the stat tab lists the night', () => {
     const closed = renderToStaticMarkup(<NbaGames board={board} shuffles={shuffles} />);
