@@ -966,6 +966,29 @@ config and keeps its own markets, teams, feeds and slate key:
   `optional: true` reads null when the row lacks the key, so an unknown spelling shows as "—" on
   the card and in the pull's unread list, never as 0) and averaged per split in the top bar and
   the splits table.
+- **Everything PropFinder sends is loaded** (2026-11-01, Vincent: "do the same for the NBA board", after the NFL's; the
+  pull's markets printed in full by `nba-data.yml`): the items are filed by PropFinder's own category first
+  (`CATEGORY_MARKETS` in `propfinder-nba.js`), the NBA's skip rule narrowed to the fantasy score and the first basket
+  (`notAMarket`; `NOT_A_MARKET` had kept the shooting lines from being read as points or threes, now each is its own
+  market), and **new markets** in two groups (`lib/nba/markets.js`): Shooting (field goals made / attempted, two-pointers
+  made / attempted = the field goals less the threes, `derived` in `espn.js`, threes and free throws attempted) and
+  1st quarter & first minutes (1st-quarter points, rebounds, assists, the points in the first 3 minutes: `q1_*`, `m3_pts`,
+  the full game's matchup table; `periodOf`, now `lib/picks/periods.js` shared with the NFL, reads "1st 3 Minutes …",
+  "… - First 3 Minutes", "first3MinPoints", "points3min" as `m3`, a window without a market — the first five — off).
+  The game rows' new sparse fields: `q1Pts` / `q1Reb` / `q1Ast` / `q1Tpm` / `q1Min`, `pts3m`, the first-basket flags
+  (`firstFg`, `firstPt`, `firstTeamFg`, `firstThree`: loaded, the First Basket tab's model still reads ESPN's openings),
+  `starter`, `passes`, `contestedReb`, `deferredReb`, `techFouls`, `blockedAtt`. **ESPN grades the first quarter off its
+  play-by-play** (`periodLines` in `lib/nba/espn.js`: the scorer first among a scoring play's participants, the assister
+  second when the text names one, the rebounds off the rebound plays, the first three minutes the clock from 12:00 to
+  9:00; on POR at UTA, 2026-10-31, every player's points, rebounds and assists summed over the four quarters equal his box
+  score; a summary without plays leaves them null, ungraded). **The rest is kept as sent** (`keepExtra`, as the NFL's:
+  `nba/<date>/propfinder-extra/<ABBR>.json` + `index.json`, `GET /api/nba/propfinder?date&player|team`), with **every
+  rostered player the odds-only call leaves out** (`rosterExtra`: a second players call without `withOddsOnly`, two teams
+  a call, each answer cut to the unpriced players; `offBoard: true` and his logs in the board's row shape) — kept with the
+  extra and off the board, whose minutes, team scale and vacated lifts read the priced players. The game rows' kept
+  figures are everything but the board row's own keys (`ROW_KEYS`: the win, the margin, the division game are kept too,
+  the NFL's as well). `__tests__/nba-propfinder-all.test.js` (every market name of that pull; the play-by-play of POR at
+  UTA, `fixtures/espn-nba-summary-por-uta.json`), `nba-propfinder-pull.test.js` (the pull against a stand-in API).
 - **First basket** (`#firstbasket`, `components/nba/NbaFirstBasket.jsx`, `GET /api/nba/firstbasket?date[&backfill=0]`,
   `firstBasketFor` in `lib/nba/store.js`, the model in `lib/nba/firstbasket.js`; Vincent's ask, 2026-10-27, after
   PropFinder's First Basket page): who scores the first field goal of each game. ESPN's summary carries the plays, so
