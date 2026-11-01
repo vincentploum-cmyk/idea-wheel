@@ -71,7 +71,17 @@ config and keeps its own markets, teams, feeds and slate key:
   EV, the score; Expand all / Collapse all; a Top Matchups card or the NBA head's dropdown opens one game alone); inside,
   the profile, the strips / the courts and the tables (`GroupTable`: EV · Price · Chance, the marginal rows behind the
   panel's switch, re-read at the user's floors). The games-first-and-open layout of 2026-10-30 gave way to this on
-  2026-11-01; `RowBadges` (`badges.jsx`) marks DTD, thin minutes and a back-to-back on every row.
+  2026-11-01; `RowBadges` (`badges.jsx`) marks DTD, thin minutes and a back-to-back on every row. **An opened NBA game
+  leads with PropFinder's tables, the players under them** (Vincent, 2026-11-01: "put the propfinder tables back. under
+  the tables, we just list the players", and his read — PropFinder's L10 per position, the cheat sheet to confirm it, then
+  the player's own home / away / h2h figures for the projected number): `TeamColumn` in `NbaGame.jsx` per side — who is
+  out, the `AllowedTable` opening on **L10** when PropFinder has one (`sheetMarks`: the cheat sheet's tile in every cell,
+  "✓ #4" green in the same third as PropFinder's rank, "✗ #19" red otherwise), the stat tabs (the slate's `metric`), and
+  `Roster`: every active player with his projection per stat (the book's line, chance and EV under it), and for the picked
+  stat his average at tonight's venue / in his last meetings with the opponent (`splits[market]` on the side player,
+  `venueSplits` in `board.js`: { venue: { avg, n, at }, h2h: { avg, n }, season: { avg, n, stand } } over this season's
+  regular-season games, his last `seasonCap` standing in until three; a pressed table row keeps that position's players,
+  a row opens the card); the courts and the five group tables behind "Show the courts and the tables".
 - `markets.js` (`makeMarkets`): a sport's markets ({ group, label, unit, fields (the box-score
   fields the market settles on, summed), yesNo, floor, defense, aliases }) → `marketFromText`
   (any spelling, whole-word match for short aliases like "PTS"), `statOf`, `defenseKey`.
