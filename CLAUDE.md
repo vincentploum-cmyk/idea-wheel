@@ -29,7 +29,7 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   price; `GameRow` in `NflBoards.jsx`, press a game for its players), `#tds`, `#passing`, `#receiving`, `#rushing` (the
   projection lists, below), `#big` (Big games, below) and `#sources` (Data sources: the drop zone, the pulls); the Best plays board
   (EV, juice, the floors, the scorecard) and the shuffle are off the NFL page — `NflBoard` / `NflShuffle` and their routes
-  stay, an old `#board` / `#shuffle` link opens Games. The NHL app has nine (below).
+  stay, an old `#board` / `#shuffle` link opens Games. The NHL app has ten (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)
@@ -1293,6 +1293,13 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   5+ threes; the matchup, pace, the line, home and back-to-backs did not; the rarest marks keep the board's chance. The
   site's read on Feb–Apr 2025-26: 30+ points said 10.0% landed 9.9%, the night's top five 35% / 34%; this season's first
   ten nights ran under it (30+ said 12.3%, landed 8.4%).
+- The NHL's big games (`docs/audits/2026-11-01-nhl-big-games.md`, `tools/audit/nhl_big.py` on the predictors' rows of 2025-26
+  and 2026-27, the study's λ rebuilt the site's way): unlike the NFL and the NBA nothing beside the board's λ found the 5+ /
+  6+ / 7+ shot or 2+ goal nights on both checks (his big nights over his last 20, attempts, ice time, line, chances, the
+  opponent, its goalie, pace, rest: ≤ 0.0001 of Brier; everything at once and the trees worse on Feb–Apr; the mined rules
+  30–50% → 0–23%). The level is the finding: a Poisson tail understates the big shot nights (5+ said 7.7%, landed 9.0%;
+  6+ 3.0 / 3.7%; 7+ 1.1 / 1.6%), which the board's calibration corrects; this season's top of the night overstates (the
+  five likeliest 5+ said 31%, landed 20%; Feb–Apr 26% / 30%).
 
 ## Canonical locations
 
@@ -1321,7 +1328,7 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   skater's games-played count in as his away shot base and his shots as goals.
 - Scheduled by `.github/workflows/nhl-data.yml` (daily results + lineups) and
   `nhl-lineups.yml` (hourly pre-game lineup reads); Mac folder sync in `tools/mac-sync`.
-- Signed-in page = nine hash tabs (`#teams`, `#matchups`, `#defense`, `#firstgoal`, `#model`, `#shuffle`, `#patterns`, `#league`,
+- Signed-in page = ten hash tabs (`#teams`, `#matchups`, `#defense`, `#firstgoal`, `#model`, `#shuffle`, `#patterns`, `#big`, `#league`,
   `#history`); it opens on Matchups. The Defense tab (`components/nhl/DefensePanel.jsx`, helpers in `lib/nhl-data/defense-board.js`, data from
   `/api/nhl/data/defense`, which also carries the date's games and MoneyPuck's team rates) is the ShotPropz-style cheat sheet:
   what every team gives up to each position group (C / LW / RW / D, C / W / D, F / D) in shots or goals **per skater at the
@@ -1771,6 +1778,15 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   reads "board: … · the run as stated: …"; the first-goal candidate's 1+ G and score read the same figure. The Run
   history cards keep the run's figures as saved, named as such on the hover. `__tests__/nhl-board-reads.test.js`, the
   slate overlay in `nhl-slate-memo.test.js`.
+- **Big games** (`#big`, `components/nhl/BigGamesPanel.jsx` with its own slate-date picker, `lib/nhl-data/big-pure.js` on the
+  shuffle's payload, `GET /api/nhl/data/shuffle?date=`; Vincent, 2026-11-01: "Do the same big games study for the NHL"): the
+  night's likeliest 5+ / 6+ shots on goal and 2+ goals (`NHL_BIG`: from λ 1.5 shots / 0.1 goals, listed from 10% at 5+ /
+  4% at 2+), each chance the board's own as the shuffle prints it (`chanceAt` on the board's read through
+  `calibration.fits`, the stated Poisson tail as `raw` on the hover), so one skater has one number across Best bets, the
+  shuffle and this tab; beside it his λ and how often he reached the mark over his last ten and this season (`bigWhy`, off
+  `own.cleared`: reference only, the study found it moves nothing), graded once stored; a name opens the card. The study
+  (`docs/audits/2026-11-01-nhl-big-games.md`) found no context worth a model, so none is in the number.
+  `__tests__/nhl-big.test.jsx` (`MOCK_OUT` writes `big-nhl-<theme>.html`).
 - **Patterns** (`#patterns`, `components/nhl/PatternsPanel.jsx` with its own slate-date picker, `GET /api/nhl/data/patterns?date=`
   → `buildPatterns` in `lib/nhl-data/patterns.js`; Vincent, 2026-10-30: "look at literally every data point that is
   available to detect patterns … rules per line … the outcome should be pills like firsthalfscore.com"): every skater in

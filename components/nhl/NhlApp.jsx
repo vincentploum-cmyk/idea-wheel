@@ -12,6 +12,7 @@ import FirstGoalPanel from './FirstGoalPanel';
 import PicksPanel from './PicksPanel';
 import ShufflePanel from './ShufflePanel';
 import PatternsPanel from './PatternsPanel';
+import BigGamesPanel from './BigGamesPanel';
 import LeaguePanel from './LeaguePanel';
 import DefensePanel from './DefensePanel';
 import { PlayerCardHost } from './PlayerCard';
@@ -29,6 +30,7 @@ const TABS = [
   ['model', 'Best bets'],
   ['shuffle', 'Shuffle'],
   ['patterns', 'Patterns'],
+  ['big', 'Big games'],
   ['league', 'League'],
   ['history', 'Run history'],
 ];
@@ -376,6 +378,15 @@ export default function NhlApp({ email }) {
             <h2 className="nhlx-h2">The <span>patterns</span></h2>
             <p className="nhlx-lede">Every line a skater can go over, 3+ to 6+ shots and 1+ to 3+ goals, read from what his numbers, his venue split, his streaks and tonight’s opponent have said this season. A filled pill is a pick.</p>
             <div style={{ marginTop: 28 }}>{mounted('patterns') && <PatternsPanel />}</div>
+          </div>
+        </section>
+
+        <section className="nhlx-section nhlx-tabpanel" id="big" role="tabpanel" aria-labelledby="tab-big" hidden={tab !== 'big'}>
+          <div className="nhlx-wrap">
+            <span className="nhlx-eyebrow">Tonight</span>
+            <h2 className="nhlx-h2">The <span>big games</span></h2>
+            <p className="nhlx-lede">Who is likeliest to have the big night: 5+ or 6+ shots on goal, two goals or more. The board’s own chance, as the shuffle prints it, the likeliest first.</p>
+            <div style={{ marginTop: 28 }}>{mounted('big') && <BigGamesPanel />}</div>
           </div>
         </section>
 
