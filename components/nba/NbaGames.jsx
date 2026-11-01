@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { teamLogo, teamName, teamAbbrFromText } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
 import { tierBoard, ladderBoard, NBA_BOARDS } from '@/lib/picks/boards';
-import { AllowedTable, windowsOf, envPos as envPosOf } from './NbaCourt';
+import { AllowedTable, windowsOf, tableFor, windowLabel, zoneTone, envPos as envPosOf } from './NbaCourt';
 import { NbaPlayerCardProvider, useNbaPlayerCard } from './NbaPlayerCard';
 
 // The NBA page laid out as the NFL's (Vincent, 2026-11-01: "for nba, I need the same layout as nfl with as addition the
@@ -118,20 +118,43 @@ export function spreadFor(odds, team) {
 }
 const tip = (iso) => (iso ? `${new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }).replace(' ', '')} ET` : '');
 
-/** One team's PropFinder table (what the opponent gives up per position), opening on L10, and who is out. */
-function TeamTable({ side, season, metric, hiPos, onPos }) {
+export const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
+
+/**
+ * One defense and the players who face it (Vincent, 2026-11-01: "when clicking on a game, I need first the propfinder
+ * table and then the players of the opponent underneath with their projections. I should be able to check easily per
+ * position and type"): headed by the defending team, its PropFinder table (what it gives up per game to each position,
+ * opening on L10, the cheat sheet's ✓ / ✗ in each cell, the picked stat's column and position's row marked; a pressed row
+ * picks the position), the table's cell for the pick in a line, then the opposing team's players at that position with
+ * their ladders, the highest projection first, and who is out on that team.
+ */
+export function DefenseBlock({ side, season, market, pos, onPos, rows, onOpen, shuffled }) {
   const windows = windowsOf(side.allowed);
   const [win, setWin] = useState(() => (windows.includes('l10') ? 'l10' : 'season'));
   const view = windows.includes(win) ? win : 'season';
+  const table = side.allowed ? tableFor(side.allowed, view) : null;
+  const count = table?.count || 30;
+  const cell = pos ? table?.rows?.[pos]?.[market] : null;
+  const lg = pos ? (table?.league || side.allowed?.league)?.[pos]?.[market] ?? null : null;
+  const unit = UNIT[market] || market;
+  const mine = rows.filter((r) => r.team === side.team && (!pos || r.envPos === pos));
   return (
-    <section className="ir-gf-team" aria-label={`${side.team} ${side.venue === 'H' ? 'vs' : 'at'} ${side.opp}`}>
+    <section className="ir-gm-def" aria-label={`${side.opp} defense against ${side.team}`}>
       <div className="ir-gf-team-head">
-        <img src={teamLogo(side.team)} alt="" width="28" height="28" loading="lazy" />
-        <b>{teamName(side.team)}</b>
-        <small className="nhlx-auto-meta">{side.venue === 'H' ? 'vs' : 'at'} {side.opp}</small>
+        <img src={teamLogo(side.opp)} alt="" width="28" height="28" loading="lazy" />
+        <b>{teamName(side.opp)} defense</b>
+        <small className="nhlx-auto-meta">against</small>
+        <img src={teamLogo(side.team)} alt="" width="22" height="22" loading="lazy" />
+        <b className="ir-gm-def-vs">{teamName(side.team)}</b>
       </div>
-      <p className="ir-gf-out"><b>Out</b> {side.out?.length ? side.out.map((a) => `${a.name}${a.status && a.status !== 'Out' ? ` (${a.status})` : ''}`).join(' · ') : 'nobody listed'}</p>
-      <AllowedTable side={side} win={view} metric={metric} season={season} onWin={setWin} onPos={onPos} hiPos={hiPos} sheetMarks pickWord="in the list" />
+      <AllowedTable side={side} win={view} metric={market} season={season} onWin={setWin} onPos={onPos} hiPos={pos} sheetMarks pickWord="below" />
+      <div className="nhlx-pfd-head ir-gm-players">
+        <b>{side.team}’s {pos ? `${pos}s` : 'players'} · {NBA_STATS.find(([k]) => k === market)[1]}</b>
+        {cell ? <span className={`ir-gm-cell is-${zoneTone(cell.rankBlend ?? cell.rank, count)}`} title={lg != null ? `The league's average at ${pos}: ${num(lg)} a game` : ''}>{side.opp} gives up {num(cell.value)} {unit} a game to {pos}s{cell.rank ? ` · #${cell.rank} of ${count}` : ''} · {windowLabel(view, side.allowed, season)}{lg != null ? ` · league ${num(lg)}` : ''}</span> : null}
+        {!shuffled ? <small className="nhlx-auto-meta">the book’s rungs until the round marks load</small> : null}
+      </div>
+      {mine.length ? <TierTable rows={mine} market={market} onOpen={onOpen} /> : <p className="nhlx-auto-meta ir-ml-empty">{rows.length ? `No ${pos ? `${pos} of ` : 'player of '}${side.team} on this ladder.` : NO_DATA}</p>}
+      <p className="ir-gf-out"><b>{side.team} out</b> {side.out?.length ? side.out.map((a) => `${a.name}${a.status && a.status !== 'Out' ? ` (${a.status})` : ''}`).join(' · ') : 'nobody listed'}</p>
     </section>
   );
 }
@@ -140,19 +163,18 @@ const NO_DATA = 'No projection yet: the night needs a PropFinder pull.';
 
 /**
  * One game as a sportsbook lists it (the NFL's `GameRow`): the matchup and the tip, a row a team with its logo, its
- * spread and the total; press it for the stat tabs, PropFinder's table for each team (a pressed row keeps that team's
- * players at that position) and both teams' players with their ladders.
+ * spread and the total; press it for the stat and position pills, then each defense in turn: its PropFinder table and
+ * the opposing team's players under it with their ladders (`DefenseBlock`).
  */
 function GameRow({ g, board, shuffles, onOpen, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
   const [market, setMarket] = useState('pts');
-  const [pick, setPick] = useState(null);   // { team, pos } from a pressed row of a PropFinder table
+  const [pos, setPos] = useState(null);   // the position picked: the pills or a pressed row of a table, both defenses
   const live = !g.final && g.state === 'in';
   const scored = g.final || live;
   const status = g.final ? 'Final' : live ? 'Live' : tip(g.date);
   const total = g.odds?.total != null ? g.odds.total : null;
   const rows = useMemo(() => (open ? tierRows(board, shuffles, market, g.id) : []), [open, board, shuffles, market, g.id]);
-  const shown = pick ? rows.filter((r) => r.team === pick.team && r.envPos === pick.pos) : rows;
   const team = (abbr, side) => {
     const score = side === 'away' ? g.awayScore : g.homeScore;
     const sp = spreadFor(g.odds, abbr);
@@ -177,20 +199,15 @@ function GameRow({ g, board, shuffles, onOpen, defaultOpen = false }) {
       </button>
       {open ? (
         <div className="ir-gm-detail">
-          <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="Stat">
-            {NBA_STATS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={market === k} className={`nhlx-tab${market === k ? ' is-active' : ''}`} onClick={() => setMarket(k)}>{l}</button>)}
-          </div>
-          {sides.length ? (
-            <div className="ir-gm-pf">
-              {sides.map((s) => <TeamTable key={s.team} side={s} season={board.season} metric={market} hiPos={pick?.team === s.team ? pick.pos : null} onPos={(pos) => setPick(pos ? { team: s.team, pos } : null)} />)}
+          <div className="ir-gm-picks">
+            <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="Stat">
+              {NBA_STATS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={market === k} className={`nhlx-tab${market === k ? ' is-active' : ''}`} onClick={() => setMarket(k)}>{l}</button>)}
             </div>
-          ) : null}
-          <div className="nhlx-pfd-head ir-gm-players">
-            <b>{pick ? `${pick.team}’s ${pick.pos}s` : 'Players'} · {NBA_STATS.find(([k]) => k === market)[1]}</b>
-            {pick ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" onClick={() => setPick(null)}>Both teams</button> : null}
-            {!shuffles?.[market] ? <small className="nhlx-auto-meta">the book’s rungs until the round marks load</small> : null}
+            <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="Position">
+              {[null, ...POSITIONS].map((k) => <button key={k || 'all'} type="button" role="tab" aria-selected={pos === k} className={`nhlx-tab${pos === k ? ' is-active' : ''}`} onClick={() => setPos(k)}>{k || 'All'}</button>)}
+            </div>
           </div>
-          {shown.length ? <TierTable rows={shown} market={market} onOpen={onOpen} /> : <p className="nhlx-auto-meta ir-ml-empty">{rows.length ? `No ${pick?.pos} of ${pick?.team} on this ladder.` : NO_DATA}</p>}
+          {sides.length ? sides.map((s) => <DefenseBlock key={s.team} side={s} season={board.season} market={market} pos={pos} onPos={setPos} rows={rows} onOpen={onOpen} shuffled={!!shuffles?.[market]} />) : <p className="nhlx-auto-meta ir-ml-empty">{NO_DATA}</p>}
         </div>
       ) : null}
     </section>
@@ -199,7 +216,7 @@ function GameRow({ g, board, shuffles, onOpen, defaultOpen = false }) {
 
 const LEGEND = (
   <p className="nhlx-auto-meta ir-bd-legend">
-    Each mark is the highest he reaches tonight at that chance: <b>strong</b> 70%+ · <b>lean</b> 55%+ · <b>thin</b> 40%+ — his projection × tonight’s matchup (PropFinder’s table and the cheat sheet). The tables are PropFinder’s: what each defense gives up per game to each position, rank 1 = the most, ✓ / ✗ the cheat sheet’s tile; press a row for that team’s players at the position. <span className="ir-bd-role is-role">if role confirmed</span> thin minutes. Click a name for his card.
+    Each mark is the highest he reaches tonight at that chance: <b>strong</b> 70%+ · <b>lean</b> 55%+ · <b>thin</b> 40%+ — his projection × tonight’s matchup (PropFinder’s table and the cheat sheet). Each defense’s PropFinder table comes first — what it gives up per game to each position, rank 1 = the most, ✓ / ✗ the cheat sheet’s tile — and the players who face it under it; pick a stat and a position (or press a row of a table) to narrow both. <span className="ir-bd-role is-role">if role confirmed</span> thin minutes. Click a name for his card.
   </p>
 );
 

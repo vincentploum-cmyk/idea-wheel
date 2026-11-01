@@ -23,9 +23,14 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   with as addition the propfinder tables for each game when clicking on the game"; `components/nba/NbaGames.jsx`): pill
   tabs over one date picker (the `head()`, drawn on every panel) — `#matchups` (Games, the default: the night's games as a
   sportsbook lists them, a row a team with its logo, spread and total, the tip in ET; press one for the stat pills Points ·
-  Rebounds · Assists · Threes · PRA, **PropFinder's table for each team** — the court's `AllowedTable`, what the opponent
-  gives up per position, opening on L10, the cheat sheet's ✓ / ✗ in each cell, who is out above it; a pressed row keeps
-  that team's players at that position, `pickWord` "in the list" — and both teams' players with his projection and the
+  Rebounds · Assists · Threes · PRA and the position pills All · PG · SG · SF · PF · C, then **each defense in turn, its
+  PropFinder table first and the players who face it under it** (`DefenseBlock`; Vincent, 2026-11-01: "when clicking on a
+  game, I need first the propfinder table and then the players of the opponent underneath with their projections. I
+  should be able to check easily per position and type"): "Nuggets defense against Lakers", the court's `AllowedTable`
+  (what DEN gives up per position, opening on L10, the cheat sheet's ✓ / ✗ in each cell, the picked stat's column and
+  position's row marked; a pressed row sets the position for both blocks, `pickWord` "below"), the table's cell for the
+  pick in a line ("DEN gives up 7.2 ast a game to PGs · #3 of 30 · L10 · league 5.9", tinted by third), the opposing
+  team's players at that position, then who is out on that team — each player with his projection and the
   strong / lean / thin marks, 70 / 55 / 40% as the Boards tab read them: round marks off the shuffle's payload per stat,
   `useNbaShuffles` / `tierRows` over `tierBoard`, the book's rungs (`ladderBoard`) until they load, the highest projection
   first, a name opening the card), `#pts`, `#reb`, `#ast`, `#tpm`, `#pra` (`NbaStatList`: the same list across the night,
