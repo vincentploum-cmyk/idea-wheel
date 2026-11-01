@@ -11,6 +11,7 @@ import NbaBoard, { NbaShuffle, NbaBoards } from './NbaBoard';
 import NbaSources from './NbaSources';
 import NbaFirstBasket from './NbaFirstBasket';
 import NbaSheetMatchups from './NbaSheetMatchups';
+import NbaBigGames from './NbaBigGames';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : '');
@@ -18,6 +19,7 @@ const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { wee
 const TABS = [
   ['board', 'Best plays'],
   ['boards', 'Boards'],
+  ['big', 'Big games'],
   ['sheet', 'Cheat sheet'],
   ['shuffle', 'Shuffle'],
   ['firstbasket', 'First basket'],
@@ -140,6 +142,23 @@ export default function NbaApp({ email }) {
               {pull.msg ? <p className="nhlx-auto-msg">{pull.msg}</p> : null}
               {err ? <div className="nhlx-alert">{err}</div> : null}
               {mounted('boards') ? (board ? <NbaBoards board={board} game={gameId || null} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null) : null}
+            </section>
+          </div>
+        </section>
+
+        <section className="nhlx-bench nhlx-tabpanel" id="big" role="tabpanel" aria-labelledby="tab-big" hidden={tab !== 'big'}>
+          <div className="nhlx-wrap">
+            <div className="nhlx-bench-head">
+              <div>
+                <span className="nhlx-eyebrow">NBA</span>
+                <h1>Tonight&apos;s <span>big games</span></h1>
+                <p>Who is likeliest to go big tonight: 30+ / 40+ points, 12+ / 15+ rebounds, 10+ / 12+ assists, 5+ / 7+ threes, 40+ / 50+ PRA. Pick a game above to cut it to one game; click a name for the card.</p>
+              </div>
+            </div>
+            <section className="nhlx-pk" aria-label="Tonight’s big games">
+              {head({ games: true })}
+              {err ? <div className="nhlx-alert">{err}</div> : null}
+              {mounted('big') ? (board ? <NbaBigGames board={board} game={gameId || null} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null) : null}
             </section>
           </div>
         </section>
