@@ -22,7 +22,8 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard (the NFL's alone since
   2026-10-31), the data sources, the default; on the NBA page the night's plays in one ranked list over the games folded to a line each,
   below) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
-  drawn on both panels); the NBA page also `#boards` (Boards, below), `#sheet` (Cheat sheet, below) and `#firstbasket`. The NHL app has nine (below).
+  drawn on both panels); the NBA page also `#boards` (Boards, below), `#sheet` (Cheat sheet, below) and `#firstbasket`; the
+  NFL page also `#matchups`, `#tds`, `#receiving` and `#rushing` (the projection lists, below). The NHL app has nine (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)
@@ -608,6 +609,72 @@ config and keeps its own markets, teams, feeds and slate key:
   thirds), the expected touchdowns as the card's pill when the sides carry `teamProj.td`; the characteristics card stays
   as the fallback for a game without a profile. `__tests__/nfl-profile.test.js` (the builder, the render; `MOCK_OUT`
   writes `profile-nfl-<theme>.html` for `tools/mock/screenshot-profile.mjs`).
+- **The week's projections** (`lib/nfl/projections.js` `nflProjections`, attached by `buildBoard` in `lib/nfl/picks.js` as
+  `board.projections`; drawn by `components/nfl/NflBoards.jsx`, printed by `tools/nfl-projections.mjs`; Vincent, 2026-11-01:
+  first "the following structure based on the cheat sheet and propfinder data", then "I don't care about edge … the
+  projected yards / TD candidates per game", then "Why am I not seeing a simple list of players and their projected yards
+  / receptions per game … Player - yards (strong) yards (lean) yards (thin) … In case of touch down: Player - chance% of
+  td"; the EV-ranked boards and the six-board tab of that day are gone): no price and no edge anywhere. **The tabs**:
+  `#matchups` (`NflMatchups`: one card a game — the line, each side's touchdowns expected, the cheat sheet's defense weak
+  spots in a line — with three tabs TDs · Receiving · Rushing, both teams in one list) and `#tds`, `#receiving`,
+  `#rushing` (`NflList`: the same list across every game, 40 rows then "Show all"). **Yards are tonight's floor,
+  projection and ceiling** (Vincent, the same evening, of a first cut read as the heights he clears 60 / 45 / 30% of the
+  time: "It should not be: this is what he clears all the time… it should be: based on today's matchup and the player's
+  skill, and today's script, this is the floor and this is the ceiling"): the projection = his skill and the matchup (the
+  board's `ranges[market].exp`: his rate from PropFinder's logs × the defense at his slot, PropFinder's table with the
+  cheat sheet's snapshot, the table counted at gp / (gp + 8) of itself, `COCKTAIL.matchupK` in `lib/nfl/picks.js`); **the
+  game script** (`scriptOf`: the book's implied points against the team's usual, the spread's lean to the run or the
+  pass; `scriptFactor`) is in the code at zero weight (`SCRIPT` volume / rush / pass 0) since the backtest found it moved
+  no yards figure for the better — the card names each side's implied points and spread, and the line feeds the
+  touchdowns; the floor and the ceiling his 20th and 80th percentile tonight, fitted per market (`RANGE`: [below, above]
+  in his spreads, a game's yards running longer above the projection than below); receptions the same to a tenth under
+  the receiving yards; the hover spells rate × matchup; once stored,
+  the figure got over the ceiling is green, under the floor red (`grade`). The book's main line and the cheat sheet's
+  line on the hover only. A list carries receivers, tight ends and backs (receiving) or backs and quarterbacks (rushing)
+  projected `LIST_YDS_MIN` = 10 yards and up, the highest
+  projection first. **Touchdowns from the team down**: the team's touchdowns tonight (`teamTd`) = its own touchdowns a game
+  through the opponent's touchdowns allowed (`envFactor` on PropFinder's `totals.for/against.td`, `leagueFor.td`) at 0.75
+  and the book's implied points (ESPN's total and spread, `impliedPoints`) × `TD_PER_POINT` = 0.105 at 0.25
+  (`LINE_WEIGHT`), its factor on his read clamped 0.6–1.6; his own rate = touchdowns a game (season 0.6 · last five 0.4)
+  pulled toward his projected carries + targets × his position's touchdowns per touch across the pull (`perTouch`) at
+  n / (n + `RATE_K` = 16); `posShift` (the opponent's touchdowns allowed at his spot over what it allows in all) off,
+  `POS_CLAMP` [1, 1]; P = 1 − e^(−λ) through the calibration `TD_CAL` (σ(−0.167 + 0.857 · logit p), `raw` the stated
+  chance), first half 1 − e^(−0.48 λ) (`H1_SHARE`); every constant in `PARAMS`, overridable per call (`params`, the
+  audit's grid; `reproject` in `lib/nfl/picks.js`, `nflBoard(cocktail)` / `makeBuild` for the board); its word strong from 45%, lean from 30%, thin under (`tdTier`, `TD_TIERS`); listed from
+  `LIST_TD_MIN` = 5%, the likeliest first. Skill positions only, the out left off, "if active" (DTD) and "if role
+  confirmed" (a without split or a vacated lift; `roleOf`, the hover names who) beside a name; every height and chance
+  graded once the game is stored. `games[].lists` and `lists` = { td, receiving, rushing } of row ids (`listsOf`).
+  **The script**: `node tools/nfl-projections.mjs [--season --week | --file picks.json] [--games | --week-lists] [--top N]`
+  prints the same lists as text, one line a player ("Puka Nacua (LAR @ SEA) — floor 98 · proj 125 · ceiling 151 yds ·
+  rec 6 / 7.5 / 9"; "Kyren Williams (LAR) — 58% (strong) · 1st half 35%"; each side's script above its game), fetching `/api/nfl/picks` with
+  `NHL_ACTIONS_TOKEN`. **Backtested** (`docs/audits/2026-11-01-nfl-backtest.md`, `tools/audit/nfl-audit.mjs`): every
+  constant above searched on 2025's weeks 4–18 and checked on 2026's weeks 1–7. The first-half chance is
+  his own (1 − e^(−0.48 λ)), graded on `h1_anytime_td` (the period fields `h1RushTd` + `h1RecTd` off ESPN's scoring plays);
+  the book's first-half line is that market's play like any other. The side players' plays carry `ev`, `implied` and the
+  without names. `__tests__/nfl-boards.test.jsx` (the read, the panel, the script; `MOCK_OUT`
+  writes `boards-nfl-<theme>.html`).
+- **The cheat sheet's defense snapshot** (`lib/nfl/snapshot.js`; Vincent, 2026-11-01: "the cheat sheet should be used to
+  identify weaknesses in defenses"): each column of the detailed sheet opens with the opponent's defense — coverage shells
+  (Man% / Zone%, Cover 0 / 1 / 2 / 3 / 4 / 6, 2-Man) and ranked tiles (Pass Yds/G, Rush Yds/G, Rush Y/Play, the passing
+  field's Short L / M / R and Long L / M / R, "#N" of 32). `parseSnapshot` reads them off the column's OCR words (labels
+  as OCR spells them, `shellOf` / `tileOf`; the field's zones by place when a label misreads; a coverage share whose
+  decimal OCR dropped put back, and one read a digit long repaired by the shells' 100% sum, `repaired`);
+  `parseDetailedPages` stores them as `meta.defense[offense] = { of: defense, coverage, ranks, tiles }` (a column whose
+  tiles did not read is warned about: page 1's left column, DEN's, read its coverage and no tile). **Which way the sheet
+  ranks is not printed**: #1 = the defense allowing the fewest by default (`SHEET_RANK_DEFAULT`, the usual NFL reading),
+  checked against PropFinder's QB pass-yards and RB rush-yards ranks across the slate (`rankDirection`, Spearman, 6
+  ranks and |ρ| ≥ 0.2 to decide, else the default). `sheetDefense` (run by `buildBoard` in `lib/nfl/picks.js` before the
+  shared builder) converts the tiles to the site's convention (1 = gives up the most, `convertRanks`) and places them on
+  the offense's positions and slots as `meta.oppRanks` (`oppRanksOf`: QB pass and run, backs the run with their catches
+  on the short zones, WR the pass, WR1 / WR2 the outside zones, WR3 and the TE the middle, a zone blended half and half
+  with the pass rank; `meta.oppCount` = 32, `defenseFromSheets` reads it): the existing path puts them beside
+  PropFinder's cells (`sheet`, `sheetValue`, `rankBlend`) and `matchupOf` blends them into every yards projection and the
+  profile's Soft spots. The defenses in words ride as `board.sheetDefense` ({ direction, teams: { DEF: { weak, strong,
+  style } } }, `spotsOf`: the weakest and strongest thirds, man- / zone-heavy, the main shell) and on each projected side
+  as `defense` with `attack` (the top `ATTACK_MAX` = 4 weak spots and the players each opens up: the pass → the QB, the
+  run → the lead back, the outside → WR1 / WR2, the middle → the TE and the slot). The Matchups tab's game card names each defense's three weakest spots, and the script prints the same. A sheet stored before
+  2026-11-01 gains its snapshot with "Read again" (the stored OCR words, no new read). Touchdowns do not read the
+  snapshot (it prints no touchdown tile). `__tests__/nfl-snapshot.test.js` (page 1's real words).
 - Routes (`authorize()`, admin session or sync token): `GET /api/nfl/picks?season&week&type|date`,
   `GET /api/nfl/shuffle?season&week&type&market`, `GET /api/nfl/scorecard?season&from&to`,
   `GET|POST|DELETE /api/nfl/sheets`, `POST /api/nfl/refresh?only=schedule|propfinder`
@@ -1154,6 +1221,17 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   team's goals a game and the opponent's allowed (0.621 · log Σλ + 0.214 + 0.113) they miss a team's goals by 1.37 on 2026-27
   (the league's 1.38, own × allowed 1.40) and call the winner 58% (the bare sum 61%, ±4 points of noise on 128 games). Shipped
   as above (the special-teams bullet under Automation).
+
+- The NFL projections, backtested (`docs/audits/2026-11-01-nfl-backtest.md`, `tools/audit/nfl-fetch.mjs` → `nfl-audit.mjs`;
+  Vincent, 2026-11-01: "Did you backtest and optimize it based on the last 7 week's matches?" — no — then "yes do the
+  backtest and optimize it"): every week of 2025 and 2026 rebuilt from ESPN's box scores and lines with what was known that
+  morning, through the site's own board and projections; tuned on 2025's weeks 4–18, checked unchanged on 2026's weeks 1–7.
+  On the check weeks: receiving yards missed by 22.5 (23.2 before), rushing 21.7 (22.6), passing 67.5 (71.7); the floor /
+  ceiling from a quarter under the floor to a fifth each side; touchdowns Brier 0.1472 → 0.1419 (said 56% landed 41% at
+  the top before, 52% / 47% after). The defense table damped at gp / (gp + 8), the game script off the yards (the book's
+  total and spread moved no projection for the better), the touchdown read on volume more than history with no position
+  shift, a fitted calibration. Zero-stat games are not in ESPN's box score, so neither the replay's logs nor its grading
+  carry them.
 
 ## Canonical locations
 

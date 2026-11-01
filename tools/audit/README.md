@@ -169,3 +169,18 @@ python3 -I tools/audit/nhl_lines.py --games .nhl-data/predictors --dir games-pos
 Four sections: the softest slot against the top shooter (and the slot's base rate, and the highest own rate as the
 yardstick); the lift by third of the slot table beside the position table; the slot cell on top of his own rate and
 the position cell (a Poisson fit, 2025-26 fitted, 2026-27 scored); the odd / even persistence of the cells.
+
+## NFL: the projections (`lib/nfl/projections.js` on `lib/nfl/picks.js`)
+
+```bash
+# ESPN: every week's scoreboard and finished games (box score, scoring plays, the line), the rosters' positions
+node tools/audit/nfl-fetch.mjs --season 2025 --weeks 1-18 --raw .nhl-data/audit/nfl
+node tools/audit/nfl-fetch.mjs --season 2026 --weeks 1-9 --raw .nhl-data/audit/nfl
+node --max-old-space-size=6144 --import ./tools/audit/register.mjs tools/audit/nfl-audit.mjs --out .nhl-data/audit/out
+```
+
+Every week rebuilt from the games before it (each player's logs, each defense's table by position, the game's line) and
+run through the site's own board and projections, then graded on the week's box scores. The board's cocktail, the game
+script, the floor and ceiling and the touchdown read are searched on 2025's weeks 4–18 and checked unchanged on 2026's
+finished weeks; `nfl-backtest.json` carries every table. ESPN takes the season as `dates=<year>` (`year` is ignored);
+a past game's line is in the summary's pickcenter or ESPN's core odds. First run: `docs/audits/2026-11-01-nfl-backtest.md`.

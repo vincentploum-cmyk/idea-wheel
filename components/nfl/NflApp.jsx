@@ -10,6 +10,7 @@ import { useHashTab } from '@/components/site/hash-tab';
 import { weekLabel, shiftWeek } from '@/lib/nfl/week';
 import Scorecard from '@/components/picks/Scorecard';
 import NflBoard, { NflShuffle } from './NflBoard';
+import { NflMatchups, NflList } from './NflBoards';
 import NflSources from './NflSources';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
@@ -17,13 +18,25 @@ const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { wee
 
 const TABS = [
   ['board', 'Best plays'],
+  ['matchups', 'Matchups'],
+  ['tds', 'TDs'],
+  ['receiving', 'Receiving'],
+  ['rushing', 'Rushing'],
   ['shuffle', 'Shuffle'],
+];
+// The projection tabs (Vincent, 2026-11-01): the games with their three lists, then each list across every game.
+const LIST_TABS = [
+  ['matchups', 'The week’s', 'matchups', 'Every game with three lists: the touchdown chances, the receiving and the rushing heights each player clears strong (60%), lean (45%) and thin (30%).', null],
+  ['tds', 'Every', 'touchdown', 'Every skill player’s chance of an anytime touchdown across the week, the likeliest first.', 'td'],
+  ['receiving', 'Every', 'receiver', 'Receiving yards and receptions across the week, strong / lean / thin, the highest projection first.', 'receiving'],
+  ['rushing', 'Every', 'rusher', 'Rushing yards across the week, quarterbacks included, strong / lean / thin, the highest projection first.', 'rushing'],
 ];
 const TAB_KEYS = TABS.map(([key]) => key);
 
 /**
- * The NFL page, two hash tabs over one week picker: Best plays (the week's board, the notes, the
- * scorecard and the data sources under it) and Shuffle (a bar per market over the week's players).
+ * The NFL page, six hash tabs over one week picker: Best plays (the week's board, the notes, the scorecard and the data
+ * sources under it), Matchups (each game's TDs, receiving and rushing lists), the same three lists across the week
+ * (TDs, Receiving, Rushing; lib/nfl/projections.js) and Shuffle (a bar per market over the week's players).
  */
 export default function NflApp({ email }) {
   const [tab, mounted] = useHashTab(TAB_KEYS, 'board');
@@ -91,6 +104,25 @@ export default function NflApp({ email }) {
             {wk ? <NflSources wk={wk} onChange={() => go(wk)} /> : null}
           </div>
         </section>
+
+        {LIST_TABS.map(([key, lead, word, blurb, kind]) => (
+          <section key={key} className="nhlx-bench nhlx-tabpanel" id={key} role="tabpanel" aria-labelledby={`tab-${key}`} hidden={tab !== key}>
+            <div className="nhlx-wrap">
+              <div className="nhlx-bench-head">
+                <div>
+                  <span className="nhlx-eyebrow">NFL</span>
+                  <h1>{lead} <span>{word}</span></h1>
+                  <p>{blurb}</p>
+                </div>
+              </div>
+              <section className="nhlx-pk" aria-label={`${lead} ${word}`}>
+                {head()}
+                {err ? <div className="nhlx-alert">{err}</div> : null}
+                {mounted(key) ? (board ? (kind ? <NflList board={board} kind={kind} /> : <NflMatchups board={board} />) : !err ? <div className="nhlx-empty">Loading the week…</div> : null) : null}
+              </section>
+            </div>
+          </section>
+        ))}
 
         <section className="nhlx-bench nhlx-tabpanel" id="shuffle" role="tabpanel" aria-labelledby="tab-shuffle" hidden={tab !== 'shuffle'}>
           <div className="nhlx-wrap">

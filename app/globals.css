@@ -1760,6 +1760,101 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-sh-line b { display: block; font-family: var(--font-display); font-size: 17px; color: var(--heading); }
 .ir-sh-line small { display: block; font-size: 13px; color: var(--muted); }
 
+/* The NFL's Boards tab (2026-11-01): a ladder row's rungs worth playing as chips, the words beside a name. */
+.ir-bd-legend { margin: -4px 0 14px; line-height: 1.6; }
+.ir-bd-rungs { display: flex; flex-wrap: wrap; gap: 6px; }
+.ir-bd-rung { display: inline-grid; grid-template-columns: auto auto; gap: 0 8px; align-items: baseline; padding: 4px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); white-space: nowrap; font-size: 13px; color: var(--muted); }
+.ir-bd-rung b { color: var(--heading); font-weight: 600; }
+.ir-bd-rung i { font-style: normal; font-weight: 600; color: var(--body); text-align: right; }
+.ir-bd-rung small { font-size: 12px; }
+.ir-bd-rung em { font-style: normal; font-weight: 600; font-size: 12.5px; text-align: right; font-variant-numeric: tabular-nums; }
+.ir-bd-rung.is-good em { color: var(--ok-fg); }
+.ir-bd-rung.is-thin em { color: var(--warn-fg); }
+.ir-bd-rung.is-bad em { color: var(--bad-fg); }
+.ir-bd-rung.is-best { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+.ir-bd-rung.is-main b::before { content: '● '; font-size: 8px; vertical-align: 2px; color: var(--primary); }
+.ir-bd-rung.is-hit b { color: var(--ok-fg); }
+.ir-bd-rung.is-miss b { color: var(--bad-fg); }
+.ir-bd-table td.ir-sl-play > small { display: block; margin-top: 3px; }
+.ir-bd-role { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 5px; font-size: 12px; font-weight: 600; line-height: 19px; white-space: nowrap; vertical-align: 1px; }
+.ir-bd-role.is-active { background: var(--warn-bg); color: var(--warn-fg); }
+.ir-bd-role.is-role { background: var(--info-bg); color: var(--info-fg); }
+.ir-bd-why { display: block; margin-top: 2px; font-size: 12.5px; color: var(--muted); white-space: normal; }
+.ir-bd-table .nhlx-pk-flags { margin-left: 4px; }
+.ir-bd-table td.ir-sl-play .ir-bd-rung { grid-template-columns: auto auto; }
+.ir-pj { margin: 26px 0 18px; }
+.ir-pj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 12px; }
+.ir-pj-game { padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--card); }
+.ir-pj-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 8px; }
+.ir-pj-head b { font-family: var(--font-display); font-size: 17px; color: var(--heading); }
+.ir-pj-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; }
+.ir-pj-team-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-bottom: 6px; }
+.ir-pj-team-head b { font-family: var(--font-display); color: var(--heading); }
+.ir-pj-list { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; margin: 0; font-size: 14px; }
+.ir-pj-list dt { color: var(--muted); font-size: 12.5px; padding-top: 1px; }
+.ir-pj-list dd { margin: 0; }
+.ir-pj-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.ir-pj-list li { display: flex; justify-content: space-between; gap: 8px; }
+.ir-pj-list li span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ir-pj-list li b { color: var(--heading); font-variant-numeric: tabular-nums; }
+.ir-pj-list li.is-hit b { color: var(--ok-fg); }
+.ir-pj-list li.is-miss b { color: var(--bad-fg); }
+.ir-pj-list li small { color: var(--muted); }
+@media (max-width: 520px) { .ir-pj-cols { grid-template-columns: 1fr; } }
+.ir-pj-def { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0 0 8px; font-size: 13px; }
+.ir-def-table td { vertical-align: top; }
+.ir-def-table td > b + .ir-slate-sub { display: block; }
+.ir-def-team { display: inline-flex; align-items: center; gap: 8px; }
+.ir-def-team b { font-family: var(--font-display); color: var(--heading); }
+.ir-def-attack { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px; }
+.ir-def-attack li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.ir-def-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+@media (max-width: 700px) {
+  .ir-def-table, .ir-def-table tbody, .ir-def-table tr, .ir-def-table td { display: block; width: 100%; }
+  .ir-def-table thead { display: none; }
+  .ir-def-table tr { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 12px; padding: 12px; border-bottom: 1px solid var(--line); }
+  .ir-def-table td { padding: 0; border: 0; min-width: 0; white-space: normal; }
+  .ir-def-table td:nth-child(n + 3) { grid-column: 1 / -1; }
+}
+.ir-bd-table .ir-bd-proj { min-width: 0; }
+.ir-bd-table td.ir-sl-play { white-space: normal; }
+.ir-bd-table td.ir-sl-play > b { white-space: nowrap; }
+.ir-bd-table td.ir-sl-play .ir-bd-rungs { max-width: 330px; }
+
+/* The NFL's projection lists (Matchups, TDs, Receiving, Rushing; 2026-11-01): strong / lean / thin. */
+.ir-ml-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr)); gap: 14px; }
+.ir-ml-game { padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--card); min-width: 0; }
+.ir-ml-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.ir-ml-teams { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--heading); }
+.ir-ml-teams i { font-style: normal; color: var(--muted); font-weight: 500; }
+.ir-ml-def { display: grid; gap: 2px; margin: 6px 0 0; font-size: 13.5px; color: var(--body); }
+.ir-ml-def b { color: var(--heading); font-weight: 600; }
+.ir-ml-tabs { margin: 10px 0 6px; }
+.ir-ml-tabs .nhlx-tab i { font-style: normal; margin-left: 6px; font-weight: 500; color: var(--muted); }
+.ir-ml-table { width: 100%; }
+.ir-ml-table td { vertical-align: middle; font-variant-numeric: tabular-nums; }
+.ir-ml-table td.is-lead b { font-family: var(--font-display); font-size: 17px; color: var(--heading); }
+.ir-ml-table td small { display: block; font-size: 12px; color: var(--muted); }
+.ir-ml-cell b { font-weight: 600; font-size: 15px; color: var(--body); }
+.ir-ml-cell.is-proj b { font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--heading); }
+.ir-ml-th.is-proj { color: var(--heading); }
+.ir-ml-table td.nhlx-pk-got.is-hit b { color: var(--ok-fg); }
+.ir-ml-table td.nhlx-pk-got.is-miss b { color: var(--bad-fg); }
+.ir-ml-tier { display: inline-block; padding: 0 8px; border-radius: 100px; font-size: 12.5px; font-weight: 600; line-height: 20px; background: var(--bg-soft); color: var(--muted); }
+.ir-ml-tier.is-strong { background: var(--ok-bg); color: var(--ok-fg); }
+.ir-ml-tier.is-lean { background: var(--warn-bg); color: var(--warn-fg); }
+.ir-ml-table tr.is-hit td.is-lead b { color: var(--ok-fg); }
+.ir-ml-table tr.is-miss td.is-lead b { color: var(--bad-fg); }
+.ir-ml-empty { margin: 8px 0; }
+@media (max-width: 700px) {
+  .ir-ml-game { padding: 10px; }
+  .ir-ml-table th, .ir-ml-table td { padding-left: 5px; padding-right: 5px; }
+  .ir-ml-table .ir-slate-rank { display: none; }
+  .ir-ml-table .nhlx-db-player img { display: none; }
+  .ir-ml-table .nhlx-db-player b { white-space: normal; }
+  .ir-ml-table .ir-bd-role { margin-left: 0; margin-right: 4px; }
+}
+
 /* Phones (Vincent, 2026-10-30: "Optimize for mobile"): the slate list's and the shuffle's rows stacked into a few
    short lines each, every figure on screen, no sideways scroll; the open game's roster table tightened. */
 @media (max-width: 700px) {
