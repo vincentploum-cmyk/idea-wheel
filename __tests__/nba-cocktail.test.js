@@ -231,9 +231,9 @@ describe('the minutes and the defaults', () => {
     expect(COCKTAIL_DEFAULTS).toMatchObject({ windows: null, hitWeights: WEIGHTS, matchupK: 0, ladderModel: 0.5, empK: 0, spreadA: 0, factorMax: FACTOR_MAX, scope: 'all', volume: true, pull: null });
     expect(nbaBoard().COCKTAIL).toMatchObject(COCKTAIL);
     expect(nbaBoard({}).COCKTAIL).toEqual(COCKTAIL_DEFAULTS);
-    // The NFL board builds as before (its tables carry no k: the matchup at full weight).
+    // The NFL board's tables carry its own damping since the backtest of 2026-11-01 (lib/nfl/picks.js COCKTAIL, k = 8).
     const games = [{ id: 'g1', date: '2026-10-25T17:00Z', away: 'BUF', home: 'MIA', final: false, state: 'pre' }];
     const b = nflBoard({ season: 2026, week: 8, games, sheets: [], pf: { at: 'x', data: { players: [], defense: { teams: { MIA: { QB: { gp: 3, passYds: 300 } } }, ranks: { MIA: { QB: { passYds: 1 } } }, count: 1, league: { QB: { passYds: 230 } } } } }, results: {} });
-    expect(b.games[0].sides.BUF.allowed.k).toBeUndefined();
+    expect(b.games[0].sides.BUF.allowed.k).toBe(8);
   });
 });

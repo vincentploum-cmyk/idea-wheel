@@ -9,7 +9,8 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildBoard } from '../lib/nfl/picks';
-import { markOf, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, RANGE_Z, SCRIPT, TD_PER_POINT, H1_SHARE } from '../lib/nfl/projections';
+import { markOf, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS } from '../lib/nfl/projections';
+import { reproject } from '../lib/nfl/picks';
 import { firstHalfOf } from '../lib/nfl/markets';
 import { envFactor } from '../lib/picks/projection';
 import { NflMatchups, NflList, KINDS } from '../components/nfl/NflBoards';
@@ -129,7 +130,7 @@ describe('NFL projections: the read', () => {
     expect(lar).toMatchObject({ own: 2.8, oppAgainst: 2.9, points: 22.3, from: 'both' });
     expect(lar.fromTable).toBeCloseTo(fromTable, 2);
     expect(lar.fromLine).toBeCloseTo(fromLine, 2);
-    expect(lar.tonight).toBeCloseTo((fromTable + fromLine) / 2, 2);
+    expect(lar.tonight).toBeCloseTo((1 - LINE_WEIGHT) * fromTable + LINE_WEIGHT * fromLine, 2);
     expect(lar.factor).toBeCloseTo(lar.tonight / 2.8, 2);
     // The other game: no players in the pull, no line, its own rate alone.
     const g2 = pj.games.find((g) => g.id === 'g2').teams;
@@ -138,15 +139,21 @@ describe('NFL projections: the read', () => {
   test('a player’s touchdown chance: his rate pulled toward his volume, × the team, × where the defense gives them up', () => {
     const k = row('Kyren Williams');
     const t = k.td;
-    expect(t.lambda).toBeCloseTo(t.own * t.teamFactor * t.posShift, 2);
-    expect(t.p).toBeCloseTo(1 - Math.exp(-t.lambda), 3);
+    // The stated chance off λ = his rate × the team × the position, through the touchdown calibration (fitted on 2025).
+    const stated = 1 - Math.exp(-(t.own * t.teamFactor * t.posShift));
+    expect(t.raw).toBeCloseTo(stated, 2);
+    expect(t.p).toBeCloseTo(tdCalibrated(stated, TD_CAL), 2);
+    expect(t.p).toBeCloseTo(1 - Math.exp(-t.lambda), 2);
     expect(t.p1h).toBeCloseTo(1 - Math.exp(-H1_SHARE * t.lambda), 3);
     expect(t.n).toBe(10);
     expect(t.own).toBeGreaterThan(Math.min(t.rate, t.prior) - 0.001);
     expect(t.own).toBeLessThan(Math.max(t.rate, t.prior) + 0.001);
     expect(t.touches).toBeGreaterThan(18);
-    // SEA gives backs more than its overall leakiness: the backs move up.
-    expect(t.posShift).toBeGreaterThan(1);
+    // Where the defense gives its touchdowns up read nothing in the backtest: the shift is off by default (posShift 1)…
+    expect(t.posShift).toBe(1);
+    // …and SEA giving backs more than its overall leakiness moves them up when the clamp lets it.
+    const open = reproject(b, { pf, results: {}, season: 2026 }, { ...PARAMS, POS_CLAMP: [0.7, 1.4] });
+    expect(Object.values(open.rows).find((r) => r.player === 'Kyren Williams').td.posShift).toBeGreaterThan(1);
     expect(t.spot).toMatchObject({ pos: 'RB', rank: 1 });
     // The quarterback's touchdown is a rushing one: carries alone behind it.
     expect(row('Matthew Stafford').td.targets).toBe(0);
@@ -174,18 +181,22 @@ describe('NFL projections: the read', () => {
     expect(JSON.stringify(pj.rows)).not.toMatch(/"(ev|edge|odds|implied)"/);
   });
   test('the game script: the book’s points against the team’s usual, the spread’s lean to the run or the pass', () => {
-    // LAR: 22.3 points implied against its usual 2.8 / 0.105 = 26.7, a 3-point underdog.
-    const lar = scriptOf({ spread: 'SEA -3', total: 47.5 }, 'LAR', 2.8);
+    // Measured to move no yards projection for the better: off by default (every factor 1).
+    expect(SCRIPT).toMatchObject({ volume: 0, rush: 0, pass: 0 });
+    expect(scriptOf({ spread: 'SEA -3', total: 47.5 }, 'LAR', 2.8)).toMatchObject({ volume: 1, rush: 1, pass: 1, points: 22.3 });
+    // With weights it reads as the first cut did. LAR: 22.3 points implied against its usual 2.8 / 0.105 = 26.7, a 3-point underdog.
+    const W = { SCRIPT: { ...SCRIPT, volume: 0.5, rush: 0.012, pass: 0.008 } };
+    const lar = scriptOf({ spread: 'SEA -3', total: 47.5 }, 'LAR', 2.8, W);
     expect(lar).toMatchObject({ points: 22.3, usual: 26.7, spread: -3, from: 'line' });
-    expect(lar.volume).toBeCloseTo(1 + SCRIPT.volume * (22.3 / (2.8 / TD_PER_POINT) - 1), 3);
-    expect(lar.rush).toBeCloseTo(1 - 3 * SCRIPT.rush, 3);
-    expect(lar.pass).toBeCloseTo(1 + 3 * SCRIPT.pass, 3);
-    expect(lar.words).toEqual(['22.3 points implied against its usual 26.7', '3-point underdog: more passing']);
-    const sea = scriptOf({ spread: 'SEA -3', total: 47.5 }, 'SEA', 2.5);
+    expect(lar.volume).toBeCloseTo(1 + 0.5 * (22.3 / (2.8 / TD_PER_POINT) - 1), 3);
+    expect(lar.rush).toBeCloseTo(1 - 3 * 0.012, 3);
+    expect(lar.pass).toBeCloseTo(1 + 3 * 0.008, 3);
+    expect(lar.words).toEqual(['22.3 points implied against its usual 26.7', '3-point underdog']);
+    const sea = scriptOf({ spread: 'SEA -3', total: 47.5 }, 'SEA', 2.5, W);
     expect(sea.rush).toBeGreaterThan(1);
     expect(sea.pass).toBeLessThan(1);
     expect(scriptOf(null, 'LAR', 2.8)).toMatchObject({ volume: 1, rush: 1, pass: 1, from: null });
-    expect(scriptOf({ spread: 'LAR -40', total: 90 }, 'LAR', 1)).toMatchObject({ volume: 1.15, rush: 1.1, pass: 0.9 });
+    expect(scriptOf({ spread: 'LAR -40', total: 90 }, 'LAR', 1, W)).toMatchObject({ volume: 1.15, rush: 1.1, pass: 0.9 });
     expect(scriptFactor(lar, 'rush_yds')).toBeCloseTo(lar.volume * lar.rush, 3);
     expect(scriptFactor(lar, 'rec_yds')).toBeCloseTo(lar.volume * lar.pass, 3);
     expect(scriptFactor(null, 'rec_yds')).toBe(1);
@@ -199,13 +210,16 @@ describe('NFL projections: the read', () => {
     expect(y.script).toBeCloseTo(scriptFactor(script, 'rec_yds'), 3);
     expect(y.proj).toBeCloseTo(y.exp * y.script, 1);
     const sd = side.ladders.rec_yds[0].sd * y.script;
-    expect(y.floor).toBe(Math.round(Math.max(0, y.proj - RANGE_Z * sd)));
-    expect(y.ceiling).toBe(Math.round(y.proj + RANGE_Z * sd));
+    expect(y.floor).toBe(Math.round(Math.max(0, y.proj - RANGE.rec_yds[0] * sd)));
+    expect(y.ceiling).toBe(Math.round(y.proj + RANGE.rec_yds[1] * sd));
     expect(y.floor).toBeLessThan(y.proj);
     expect(y.ceiling).toBeGreaterThan(y.proj);
     expect(y).toMatchObject({ line: 89.5, matchupFrom: expect.any(String) });
-    // The underdog throws: LAR's receiving goes up with the script, its rushing down.
-    expect(y.script).toBeGreaterThan(row('Kyren Williams').yards.rush_yds.script);
+    // The script carries no weight by default; with the first cut's weights the underdog's receiving goes up, its rushing down.
+    expect(y.script).toBe(1);
+    const W = reproject(b, { pf, results: {}, season: 2026 }, { ...PARAMS, SCRIPT: { ...SCRIPT, volume: 0.5, rush: 0.012, pass: 0.008 } });
+    const wr = (name) => Object.values(W.rows).find((x) => x.player === name);
+    expect(wr('Puka Nacua').yards.rec_yds.script).toBeGreaterThan(wr('Kyren Williams').yards.rush_yds.script);
     // Receptions read the same way, to a tenth.
     const c = r.yards.receptions;
     expect(c.floor).toBeLessThanOrEqual(c.proj);
@@ -294,7 +308,7 @@ describe('NFL projections: the panel and the script', () => {
     for (const kind of ['td', 'receiving', 'rushing']) {
       const list = renderToStaticMarkup(<NflList board={b} kind={kind} />);
       expect(list).toContain(kind === 'receiving' ? 'Puka Nacua' : 'Kyren Williams');
-      if (kind !== 'td') { expect(list).toContain('>Floor<'); expect(list).toContain('>Projected<'); expect(list).toContain('>Ceiling<'); expect(list).toContain('the game script'); }
+      if (kind !== 'td') { expect(list).toContain('>Floor<'); expect(list).toContain('>Projected<'); expect(list).toContain('>Ceiling<'); expect(list).toContain('the matchup'); }
       else expect(list).toMatch(/ir-ml-tier is-(strong|lean|thin)/);
     }
     // With MOCK_OUT=<dir> the panel is written as standalone pages (dark, light) for a screenshot at 1440 and 390.
@@ -320,7 +334,7 @@ describe('NFL projections: the panel and the script', () => {
     for (const t of [' TDs', ' Receiving', ' Rushing', 'All TDs', 'All Receiving', 'All Rushing']) expect(text).toContain(t);
     expect(text).toMatch(/1\. Kyren Williams \(LAR\) — \d+% \((strong|lean|thin)\) · 1st half \d+%/);
     expect(text).toMatch(/Puka Nacua \(LAR @ SEA\) — floor \d+ · proj \d+ · ceiling \d+ yds · rec \d+ \/ [\d.]+ \/ \d+/);
-    expect(text).toMatch(/LAR script: 22\.3 points implied against its usual 26\.7 · 3-point underdog: more passing/);
+    expect(text).toMatch(/LAR script: 22\.3 points implied against its usual 26\.7 · 3-point underdog/);
     expect(text).toMatch(/Blake Corum \(LAR\) \[DTD, if active\]/);
     expect(text).not.toContain('Kenneth Walker');
   });

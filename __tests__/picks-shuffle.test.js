@@ -272,7 +272,8 @@ describe('NFL ladders by configuration', () => {
     expect(Object.keys(brown.ladders)).toEqual(expect.arrayContaining(['rec_yds', 'receptions']));
     const lad = brown.ladders.rec_yds;
     expect(lad.map((r) => r.line)).toEqual([59.5, 74.5, 89.5, 104.5]);
-    expect(lad[0].env).toBeCloseTo(1 + 0.6 * (184 / 160 - 1), 3);   // DAL gives up 184 to WRs against the league's 160
+    // DAL gives up 184 to WRs against the league's 160, its table of 8 games counted at 8 / (8 + 8) (the NFL's matchupK).
+    expect(lad[0].env).toBeCloseTo(1 + (8 / 16) * 0.6 * (184 / 160 - 1), 3);
     expect(brown.ranges.rec_yds).toMatchObject({ line: 74.5, odds: -112 });
     expect(brown.ranges.rec_yds.exp).toBeCloseTo(90 * lad[0].env, 0);
     expect(brown.ranges.rec_yds.ceiling).toBeGreaterThan(brown.ranges.rec_yds.exp);
@@ -280,7 +281,7 @@ describe('NFL ladders by configuration', () => {
     const withSlot = nflBoard({ season: 2026, week: 9, games, sheets: [], pf: pf({ PHI: { WR1: [{ key: 'a.j. brown', depth: 1 }] } }), results: {} });
     const slotted = withSlot.games[0].sides.PHI.players.find((p) => p.key === 'a.j. brown');
     expect(slotted).toMatchObject({ slot: 'WR1', depth: 1, envPos: 'WR1' });
-    expect(slotted.ladders.rec_yds[0].env).toBeCloseTo(1 + 0.6 * (96 / 84 - 1), 3);
+    expect(slotted.ladders.rec_yds[0].env).toBeCloseTo(1 + (8 / 16) * 0.6 * (96 / 84 - 1), 3);
     expect(envPosFor('WR1', 'WR', { WR: {} })).toBe('WR');
     expect(envPosFor('WR1', 'WR', null)).toBe('WR1');
     expect(envPosFor(null, 'G', { SG: {} })).toBe('SG');

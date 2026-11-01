@@ -3,7 +3,8 @@
 // player's skill, and today's script, this is the floor and this is the ceiling … In case of touch down: Player -
 // chance% of td"): every game with its TDs, receiving and rushing lists, then the three lists across the week. The
 // figures are the site's own (lib/nfl/projections.js, `projections` on GET /api/nfl/picks): tonight's projection = his
-// skill × the matchup × the game script, his floor and ceiling around it (a bad day, a good day); a touchdown chance is
+// skill × the matchup (the book's line feeds the touchdowns: backtested, it moved no yards figure), his floor and ceiling
+// around it (a bad day, a good day: one game in five under the floor, one over the ceiling); a touchdown chance is
 // strong from 45%, lean from 30%. No price.
 //
 //   node tools/nfl-projections.mjs                         this week, from https://ideareels.io (NHL_ACTIONS_TOKEN in the env)
@@ -58,7 +59,7 @@ function gameText(pj) {
     out.push(`${g.away} @ ${g.home}${g.odds?.total != null ? ` · total ${g.odds.total}` : ''}${g.odds?.spread ? ` · ${g.odds.spread}` : ''}${g.final ? ` · final ${g.awayScore}–${g.homeScore}` : ''}`);
     for (const team of [g.away, g.home]) {
       const sc = g.teams?.[team]?.script;
-      if (sc?.words?.length) out.push(`  ${team} script: ${sc.words.join(' · ')} (volume × ${sc.volume}, run × ${sc.rush}, pass × ${sc.pass})`);
+      if (sc?.words?.length) out.push(`  ${team} script: ${sc.words.join(' · ')}`);
       const d = g.teams?.[team]?.defense;
       if (d?.weak?.length) out.push(`  ${d.of} defense gives up the most to ${d.weak.slice(0, 3).map((w) => `${w.word} (#${w.rank})`).join(', ')}`);
     }
@@ -76,6 +77,6 @@ function weekText(pj) {
 const board = await load();
 const pj = board.projections;
 if (!pj?.lists) { console.error('The payload carries no projection lists (a board built before 2026-11-01, or no PropFinder pull for the week).'); process.exit(1); }
-const head = `NFL ${board.type === 3 ? `postseason round ${board.week}` : `week ${board.week}`}, ${board.season} · yards: tonight's projection (skill × matchup × game script) with a floor (bad day) and ceiling (good day); TDs strong from 45%, lean from 30%`;
+const head = `NFL ${board.type === 3 ? `postseason round ${board.week}` : `week ${board.week}`}, ${board.season} · yards: tonight's projection (skill × matchup) with a floor and a ceiling (one game in five under, one over); TDs strong from 45%, lean from 30%`;
 const parts = flag('games') ? [gameText(pj)] : flag('week-lists') ? [weekText(pj)] : [gameText(pj), weekText(pj)];
 console.log([head, ...parts].join('\n\n'));

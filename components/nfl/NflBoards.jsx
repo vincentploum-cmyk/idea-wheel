@@ -10,8 +10,9 @@ import { TD_TIERS } from '@/lib/nfl/projections';
 // Player - chance% of td"): the Matchups tab, one card a game with three tabs — TDs, Receiving, Rushing —, and the same
 // three lists across every game (`NflList`). The figures are lib/nfl/projections.js's (`board.projections`): tonight's
 // projection = his skill (his rate) × the matchup (the defense at his slot, PropFinder's table and the cheat sheet's
-// snapshot) × the game script (the book's total and spread), with his floor and ceiling around it (Vincent, 2026-11-01:
-// "based on today's matchup and the player's skill, and today's script, this is the floor and this is the ceiling"); a
+// snapshot), with his floor and ceiling around it (Vincent, 2026-11-01: "based on today's matchup and the player's skill,
+// and today's script, this is the floor and this is the ceiling"; the game script — the book's total and spread — was
+// backtested on two seasons and moved no yards figure for the better, so it feeds the touchdowns only); a
 // touchdown chance is strong from 45%, lean from 30%, thin under that. No price anywhere.
 
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
@@ -74,7 +75,7 @@ function TdTable({ rows, game }) {
 const pctile = 80;   // the ceiling's percentile (lib/nfl/projections.js RANGE_Z), the floor's 20th
 /** How tonight's figure is built, for the hover. */
 function why(y, unit) {
-  const parts = [`${num(y.rate, 1)} ${unit} his rate`, `× ${y.matchup ?? 1} the matchup${y.matchupFrom ? ` (${y.matchupFrom === 'blend' ? 'PropFinder and the cheat sheet' : y.matchupFrom === 'sheet' ? 'the cheat sheet' : 'PropFinder'})` : ''}`, `× ${y.script} the game script`];
+  const parts = [`${num(y.rate, 1)} ${unit} his rate`, `× ${y.matchup ?? 1} the matchup${y.matchupFrom ? ` (${y.matchupFrom === 'blend' ? 'PropFinder and the cheat sheet' : y.matchupFrom === 'sheet' ? 'the cheat sheet' : 'PropFinder'})` : ''}`, ...(y.script !== 1 ? [`× ${y.script} the game script`] : [])];
   return `${parts.join(' ')} = ${num(y.proj, 1)} tonight · floor ${y.floor} and ceiling ${y.ceiling}: a bad day and a good day (his ${100 - pctile}th and ${pctile}th percentile)${y.line != null ? ` · the book's line ${y.line}` : ''}${y.sheetLine != null ? ` · the cheat sheet's ${y.sheetLine}` : ''}`;
 }
 const gradeOf = (y) => (y?.grade === 'over' ? ' is-hit' : y?.grade === 'under' ? ' is-miss' : '');
@@ -83,7 +84,7 @@ function YardsTable({ rows, kind, game }) {
   const market = MARKET[kind];
   const final = rows.some((r) => r.final);
   const rec = kind === 'receiving';
-  const cols = [['floor', 'Floor', 'A bad day tonight'], ['proj', 'Projected', 'His skill × tonight’s matchup × tonight’s game script'], ['ceiling', 'Ceiling', 'A good day tonight']];
+  const cols = [['floor', 'Floor', 'A bad day tonight'], ['proj', 'Projected', 'His skill × tonight’s matchup'], ['ceiling', 'Ceiling', 'A good day tonight']];
   return (
     <table className="nhlx-db-table nhlx-pk-table ir-ml-table">
       <thead><tr>
@@ -141,7 +142,7 @@ function GameCard({ g, pj }) {
         <span className="ir-ml-teams"><img src={teamLogo(g.away)} alt="" width="22" height="22" className="ir-nfl-logo" />{g.away}<i>@</i><img src={teamLogo(g.home)} alt="" width="22" height="22" className="ir-nfl-logo" />{g.home}</span>
         <small className="nhlx-auto-meta">{[status, g.odds?.total != null ? `total ${g.odds.total}` : null, g.odds?.spread || null, tds.length ? tds.map((x) => `${x.team} ${num(x.tt.tonight, 1)} TDs expected`).join(' · ') : null].filter(Boolean).join(' · ')}</small>
       </div>
-      {[g.away, g.home].some((t) => g.teams?.[t]?.script?.words?.length) ? <p className="ir-ml-def">{[g.away, g.home].filter((t) => g.teams?.[t]?.script?.words?.length).map((t) => <span key={t} title={`On ${t}'s yards: volume × ${g.teams[t].script.volume}, the run × ${g.teams[t].script.rush}, the pass × ${g.teams[t].script.pass}`}><b>{t} script</b> {g.teams[t].script.words.join(' · ')}</span>)}</p> : null}
+      {[g.away, g.home].some((t) => g.teams?.[t]?.script?.words?.length) ? <p className="ir-ml-def">{[g.away, g.home].filter((t) => g.teams?.[t]?.script?.words?.length).map((t) => <span key={t} title="The book’s line: a quarter of the team’s touchdowns tonight (its own rate through the defense the rest). Backtested on two seasons, it moved no yards figure for the better, so the yards do not read it."><b>{t}</b> {g.teams[t].script.words.join(' · ')}</span>)}</p> : null}
       {weak.length ? <p className="ir-ml-def">{weak.map(({ team, d }) => <span key={team}><b>{d.of} defense</b> gives up the most to {d.weak.slice(0, 3).map((w) => `${w.word} (#${w.rank})`).join(', ')}</span>)}</p> : null}
       <div className="nhlx-tabs nhlx-rk-tabs ir-ml-tabs" role="tablist" aria-label="List">
         {KINDS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={kind === k} className={`nhlx-tab${kind === k ? ' is-active' : ''}`} onClick={() => setKind(k)}>{l}<i>{g.lists?.[k]?.length || 0}</i></button>)}
@@ -153,7 +154,7 @@ function GameCard({ g, pj }) {
 
 const LEGEND = (
   <p className="nhlx-auto-meta ir-bd-legend">
-    Yards: tonight’s <b>projection</b> = his skill × tonight’s matchup (PropFinder and the cheat sheet’s defense snapshot) × tonight’s game script (the book’s total and spread), with his <b>floor</b> (a bad day) and <b>ceiling</b> (a good day) around it; hover a figure for its parts. Touchdowns: <span className="ir-ml-tier is-strong">strong</span> from 45% · <span className="ir-ml-tier is-lean">lean</span> from 30% · <span className="ir-ml-tier is-thin">thin</span> under. ✓ = on the cheat sheet; no price. <span className="ir-bd-role is-active">if active</span> a game-time decision · <span className="ir-bd-role is-role">if role confirmed</span> his read leans on a teammate out.
+    Yards: tonight’s <b>projection</b> = his skill × tonight’s matchup (PropFinder and the cheat sheet’s defense snapshot), with his <b>floor</b> (a bad day, one game in five under it) and <b>ceiling</b> (a good day, one in five over it) around it; hover a figure for its parts. Backtested on 2025 and checked on this season’s seven weeks. Touchdowns: <span className="ir-ml-tier is-strong">strong</span> from 45% · <span className="ir-ml-tier is-lean">lean</span> from 30% · <span className="ir-ml-tier is-thin">thin</span> under. ✓ = on the cheat sheet; no price. <span className="ir-bd-role is-active">if active</span> a game-time decision · <span className="ir-bd-role is-role">if role confirmed</span> his read leans on a teammate out.
   </p>
 );
 
