@@ -2101,3 +2101,11 @@ button.ir-bd-name:hover b { text-decoration: underline; }
 .ir-bd-chance { display: inline-block; min-width: 42px; padding: 0 7px; border-radius: 5px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; background: var(--bg-soft); color: var(--body); }
 .ir-bd-chance.is-strong { background: var(--ok-bg); color: var(--ok-fg); }
 .ir-bd-chance.is-lean { background: var(--warn-bg); color: var(--warn-fg); }
+/* The matchup behind a board line (2026-11-01): his spot, PropFinder's season and L10 ranks, the cheat sheet's tile, the factor. */
+.ir-bd-mu { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 5px; font-size: 12.5px; color: var(--muted); }
+.ir-bd-mu > b { color: var(--body); font-weight: 600; }
+.ir-bd-rk { padding: 0 5px; border-radius: 4px; font-weight: 600; font-variant-numeric: tabular-nums; background: var(--bg-soft); }
+.ir-bd-rk.is-soft { background: var(--pf-soft-chip); color: var(--pf-soft-fg); }
+.ir-bd-rk.is-tough { background: var(--pf-tough-chip); color: var(--pf-tough-fg); }
+.ir-bd-fx { font-variant-numeric: tabular-nums; }
+.ir-bd-mu.is-none { font-style: italic; }

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { fmtOdds } from '@/lib/nfl/odds';
-import { boardsOf, markText, tierOf, PER_BOARD } from '@/lib/picks/boards';
+import { boardsOf, markText, matchupText, tierOf, PER_BOARD } from '@/lib/picks/boards';
 
 // The slate's boards as numbered lists (Vincent, 2026-11-01, in the form of his own: "Best Receiving Ladders · 1. Puka
 // Nacua 100+ / 110+ / 125+", "we should for assists, points, rebounds have the best candidates … list the point ladders.
@@ -13,6 +13,20 @@ import { boardsOf, markText, tierOf, PER_BOARD } from '@/lib/picks/boards';
 
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
+
+/** The matchup behind the projection: his spot, PropFinder's rank (season, then last 10), the cheat sheet's tile ✓ / ✗, the factor. */
+function Matchup({ m, opp }) {
+  if (!m) return <small className="ir-bd-mu is-none" title={matchupText(null)}>no table</small>;
+  return (
+    <small className="ir-bd-mu" title={matchupText(m, opp)}>
+      <b>{m.pos}</b>
+      {m.pf != null ? <span className={`ir-bd-rk is-${m.pfTone}`}>PF #{m.pf}</span> : null}
+      {m.l10 != null ? <span className={`ir-bd-rk is-${m.l10Tone}`}>L10 #{m.l10}</span> : null}
+      {m.sheet != null ? <span className={`ir-bd-rk is-${m.sheetTone}`}>{m.agree == null ? '' : m.agree ? '✓ ' : '✗ '}sheet #{m.sheet}</span> : null}
+      {m.factor != null && m.factor !== 1 ? <span className="ir-bd-fx">×{Number(m.factor).toFixed(2)}</span> : null}
+    </small>
+  );
+}
 
 function Line({ r, kind, unit, onOpen }) {
   const game = `${r.team} ${r.venue === 'H' ? 'vs' : 'at'} ${r.opp}`;
@@ -34,6 +48,7 @@ function Line({ r, kind, unit, onOpen }) {
           {r.proj != null && r.side !== 'yes' ? <small className="nhlx-auto-meta ir-bd-proj">proj {num(r.proj)}</small> : null}
         </span>
       )}
+      <Matchup m={r.matchup} opp={r.opp} />
       {r.caveat ? <small className="ir-bd-caveat">, {r.caveat}</small> : null}
       {r.final && r.actual !== undefined ? <small className="ir-bd-got">got {r.actual ?? 'DNP'}</small> : null}
     </li>
@@ -81,7 +96,7 @@ export default function Boards({ board, specs, units = null, gameId = null, onOp
     <section className="ir-bds" aria-label={title}>
       <div className="nhlx-pfd-head">
         <b>{title}</b>
-        <small className="nhlx-auto-meta">per stat the slate’s players ranked: the highest mark each clears <b>strong</b> (70%+ on the board’s chance), <b>lean</b> (55%+) and <b>thin</b> (40%+), the strongest ladder first · hover a mark for the chance and the price · click a name for the card</small>
+        <small className="nhlx-auto-meta">per stat the slate’s players ranked: the highest mark each clears <b>strong</b> (70%+ on the board’s chance), <b>lean</b> (55%+) and <b>thin</b> (40%+), the strongest ladder first · after the marks, the matchup the projection reads: his spot, PropFinder’s rank (#1 gives up the most), the last ten, the cheat sheet’s tile ✓ when it confirms PropFinder’s third, and the factor on his rate · hover for the figures · click a name for the card</small>
       </div>
       <div className="ir-bds-grid">{boards.map((b) => <OneBoard key={b.key} b={b} units={units} onOpen={onOpen} />)}</div>
     </section>

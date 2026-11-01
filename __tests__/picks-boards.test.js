@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { candidateBoard, ladderBoard, tierBoard, boardsOf, markOf, marksText, tierOf, NBA_BOARDS, TIERS } from '../lib/picks/boards';
+import { candidateBoard, ladderBoard, tierBoard, boardsOf, markOf, marksText, tierOf, matchupOf, matchupText, NBA_BOARDS, TIERS } from '../lib/picks/boards';
 import { buildBoard, shuffleOf } from '../lib/nba/picks';
 
 // The slate's boards (Vincent, 2026-11-01): the best candidates over the main line and the ladders' marks, ranked.
@@ -66,6 +66,21 @@ describe('the boards', () => {
     const viaSpecs = boardsOf(board, NBA_BOARDS, { shuffles: { pts: sh } }).find((b) => b.key === 'pts');
     expect(viaSpecs.round).toBe(true);
     expect(viaSpecs.rows.map((r) => r.player)).toEqual(rows.map((r) => r.player));
+  });
+  test('every line carries the matchup its projection reads', () => {
+    // A defense table on the pull: NY gives BOS's centre the most rebounds, the sheet agrees; the last ten too.
+    const cell = (value, rank, sheet = null) => ({ value, rank, rankBlend: sheet == null ? rank : (rank + sheet) / 2, ...(sheet != null ? { sheet } : {}) });
+    const g = board.games[0];
+    const glass = g.sides.BOS.players.find((p) => p.key === 'big glass');
+    const withTable = { ...board, games: [{ ...g, sides: { ...g.sides, BOS: { ...g.sides.BOS, allowed: { count: 30, league: { [glass.envPos]: { reb: 10 } }, rows: { [glass.envPos]: { reb: cell(13.2, 2, 4) } }, windows: { l10: { rows: { [glass.envPos]: { reb: cell(14, 1) } } } } } } } }] };
+    const m = matchupOf(withTable, { game: 'g1', team: 'BOS', key: 'big glass', market: 'reb' });
+    expect(m).toMatchObject({ pos: glass.envPos, pf: 2, pfValue: 13.2, l10: 1, sheet: 4, agree: true, pfTone: 'soft', league: 10 });
+    expect(matchupText(m, 'NY')).toMatch(/PropFinder #2 of 30 .* last 10 #1 .* cheat sheet #4, the same third: confirmed/);
+    const rows = boardsOf(withTable, NBA_BOARDS).find((b) => b.key === 'reb').rows;
+    expect(rows.find((r) => r.key === 'big glass').matchup).toMatchObject({ pf: 2, sheet: 4 });
+    // No table: null, and the hover says the projection is his own rate.
+    expect(matchupOf(board, { game: 'g1', team: 'BOS', key: 'big glass', market: 'reb' })).toBeNull();
+    expect(matchupText(null)).toMatch(/his own rate/);
   });
   test('the NBA specs build every board', () => {
     const boards = boardsOf(board, NBA_BOARDS);

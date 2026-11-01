@@ -875,7 +875,13 @@ config and keeps its own markets, teams, feeds and slate key:
   (the price on a mark's hover). **Double-double candidates** (`candidateBoard`, the NBA's touchdown list) by his chance
   alone, coloured by tier. A player out is off the boards, a game-time decision reads "if he plays" and thin minutes
   "if role confirmed" (`caveatOf`); `PER_BOARD` = 10 then "Show all"; the head's game dropdown cuts every board to one
-  game (`gameId`); a name opens the card. `__tests__/picks-boards.test.js`.
+  game (`gameId`); a name opens the card. **Every line carries the matchup its projection reads** (`matchupOf` /
+  `matchupText` in `boards.js`; Vincent, 2026-11-01: "I also need to know the matchup from propfinder / cheat sheet so I
+  know where the projection is coming from"): his spot (`envPos`), PropFinder's rank there on the season table the
+  projection reads ("PF #3", tinted by third, 1 = gives up the most), the last ten ("L10 #5") when PropFinder published
+  it, the cheat sheet's tile ("✓ sheet #4" when it sits in PropFinder's third, "✗" when not) and the factor on his rate
+  (`ranges[market].matchup`, "×1.06"); the hover names the figures, the league's average and whether the factor is the
+  sheet and PropFinder blended or one alone; "no table" when the pull has none. `__tests__/picks-boards.test.js`.
 - **Cheat sheet** (`#sheet`, `components/nba/NbaSheetMatchups.jsx`, the pure reader `lib/nba/sheet-matchups.js`; Vincent,
   2026-10-31: "create a new view with best cheat sheet matchups per game"): per game the cheat sheet's soft tiles — the
   cells of each side's `allowed` table carrying the sheet's rank (`sheet`, 1 = the opponent gives up the most of 30) for
