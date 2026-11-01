@@ -1475,6 +1475,13 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-nfl-none { color: var(--muted); font-size: 14px; }
 .ir-nfl-nogame { margin: 10px 0 0; font-size: 15px; color: var(--muted); }
 .ir-nfl-weekpick { min-width: 96px; text-align: center; font-family: var(--font-display); font-weight: 600; color: var(--heading); font-size: 16px; }
+/* The board head's "Pull injuries": the read's line, then who changed status and the projections that moved. */
+div.nhlx-auto-msg > p { margin: 0; }
+.ir-nfl-injdiff { margin-top: 6px; font-size: 14px; font-weight: 400; color: var(--body); }
+.ir-nfl-injdiff summary { cursor: pointer; color: var(--primary); font-weight: 500; }
+.ir-nfl-injdiff ul { margin: 6px 0 0; padding-left: 18px; }
+.ir-nfl-injdiff li { margin: 2px 0; }
+.ir-nfl-injdiff strong { color: var(--heading); font-weight: 600; }
 .ir-nfl-sources { margin-top: 36px; }
 .ir-nfl-sources .nhlx-drop { margin-top: 14px; }
 .ir-nfl-sheets { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
