@@ -628,7 +628,9 @@ config and keeps its own markets, teams, feeds and slate key:
   next day: "per game, players listed with their ladders: strong - 50+ yards (60%), lean - 60+ yards, thin 70+ yards …
   I asked you this already"): per player the highest round mark he reaches tonight at 60% (strong), 45% (lean) and 30%
   (thin) with its chance (`ladderTiers`, `LADDER_TIERS`; marks by 10 yards, 5 under `SMALL_YDS` = 40 projected, 25 passing,
-  1 reception; a mark two tiers share listed once, at the stronger), receptions under the receiving yards; once stored
+  1 reception; a mark two tiers share listed once, at the stronger), receptions under the receiving yards, **his projection
+  first** (a Proj column on every yards table — the yards, the receptions under them — and on the touchdown tables his
+  expected touchdowns, λ; Vincent, 2026-11-01: "add the projected on TD, rushing, passing and receiving tabs"); once stored
   each rung green / red on what he got (`hits`). The chance at a mark (`chanceAtMark`) is read around tonight's
   projection — his skill and the matchup (the board's `ranges[market].exp`: his rate from PropFinder's logs × the defense
   at his slot, PropFinder's table with the cheat sheet's snapshot, the table counted at gp / (gp + 8) of itself,
