@@ -18,7 +18,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { parseSummary } from '../../lib/nfl/espn.js';
 import { nflBoard, makeBuild, reproject, COCKTAIL } from '../../lib/nfl/picks.js';
-import { PARAMS } from '../../lib/nfl/projections.js';
+import { PARAMS, chanceAtMark } from '../../lib/nfl/projections.js';
 
 const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const PF = arg('--pf', '.nhl-data/audit/nfl-pf');
@@ -160,7 +160,7 @@ function gradeWeek(pj, played, tag, lines = null) {
       if (!y || !LIST[m](r)) continue;
       const bl = book?.[m] || null;
       for (const [tier, t] of Object.entries(y.tiers || {})) if (t) rungs.push({ tag, m, tier, p: t.p, hit: line[STAT[m]] >= t.mark ? 1 : 0 });
-      yards.push({ tag, m, pos: r.pos, proj: y.proj, exp: y.exp, floor: y.floor, ceiling: y.ceiling, sd: y.sd, actual: line[STAT[m]], active: !!ACTIVE(line), line: bl?.line ?? null, odds: bl?.odds ?? null, underOdds: bl?.underOdds ?? null });
+      yards.push({ tag, m, pos: r.pos, key: r.key, matchup: y.matchup, proj: y.proj, exp: y.exp, floor: y.floor, ceiling: y.ceiling, sd: y.sd, actual: line[STAT[m]], active: !!ACTIVE(line), line: bl?.line ?? null, odds: bl?.odds ?? null, underOdds: bl?.underOdds ?? null });
     }
     if (r.td) tds.push({ tag, pos: r.pos, p: r.td.p, raw: r.td.raw, p1h: r.td.p1h, td: line.rushTd + line.recTd + (line.retTd || 0) > 0 ? 1 : 0, td1h: (Number(line.h1RushTd) || 0) + (Number(line.h1RecTd) || 0) > 0 ? 1 : 0, h1Known: !!line.h1Known, active: !!ACTIVE(line), odds: book?.anytime_td?.odds ?? null, p2: r.td.p2, two: line.rushTd + line.recTd + (line.retTd || 0) >= 2 ? 1 : 0, pFirst: r.td.pFirst, first: Number(line.firstTd) > 0 ? 1 : 0 });
   }
@@ -256,6 +256,34 @@ report.resid = Object.fromEntries(YARD_MARKETS.map((m) => { const z = base.tune.
 say('resid', JSON.stringify(report.resid));
 report.otherTd = { tune: otherTd(base.tune.tds), check: otherTd(base.check.tds) };
 say('ladders', JSON.stringify(report.ladders.check), 'other td', JSON.stringify(report.otherTd.check));
+// The big games (Vincent, 2026-11-01: "how can I find the super matchups that result in the big wins … today's matchup can
+// lead up to 150 rushing yards"): the chance of a big mark, said against landed, overall and by the matchup's third.
+const BIG = { rush_yds: [75, 100, 125, 150], rec_yds: [75, 100, 125, 150], pass_yds: [250, 300, 350], receptions: [6, 8, 10] };
+function bigScore(rows) {
+  const out = {};
+  for (const [m, marks] of Object.entries(BIG)) {
+    const xs = rows.filter((r) => r.m === m && r.sd > 0);
+    out[m] = {};
+    for (const mark of marks) {
+      const all = xs.map((r) => ({ p: chanceAtMark(r, mark, m), hit: r.actual >= mark ? 1 : 0, mu: r.matchup ?? 1, proj: r.proj }));
+      const band = (lo, hi) => { const b = all.filter((x) => x.p >= lo && x.p < hi); return b.length ? [b.length, r3(mean(b.map((x) => x.p))), r3(mean(b.map((x) => x.hit)))] : null; };
+      const sorted = [...all].sort((a, b) => a.mu - b.mu); const n3 = Math.floor(sorted.length / 3);
+      const third = (arr) => { const b = arr.filter((x) => x.p >= 0.05); return b.length ? [b.length, r3(mean(b.map((x) => x.p))), r3(mean(b.map((x) => x.hit)))] : null; };
+      out[m][mark] = { n: all.length, bands: { '5–15%': band(0.05, 0.15), '15–30%': band(0.15, 0.3), '30–50%': band(0.3, 0.5), '50%+': band(0.5, 1.01) }, byMatchup: { tough: third(sorted.slice(0, n3)), middle: third(sorted.slice(n3, 2 * n3)), soft: third(sorted.slice(2 * n3)) } };
+    }
+  }
+  // At the same projection, does a soft matchup bring the big game more often? Pairs of projection band × matchup third.
+  return out;
+}
+report.big = { tune: bigScore(base.tune.yards), check: bigScore(base.check.yards) };
+// The top of the week: per week the 5 likeliest to reach the big mark, how many did.
+function topOfWeek(rows, m, mark, k = 5) {
+  const weeks2 = [...new Set(rows.map((r) => r.tag))]; let n = 0; let hit = 0; let said = 0;
+  for (const w of weeks2) { const xs = rows.filter((r) => r.tag === w && r.m === m && r.sd > 0).map((r) => ({ p: chanceAtMark(r, mark, m), hit: r.actual >= mark })).sort((a, b) => b.p - a.p).slice(0, k); n += xs.length; hit += xs.filter((x) => x.hit).length; said += xs.reduce((s2, x) => s2 + x.p, 0); }
+  return { n, said: r3(said / n), landed: r3(hit / n) };
+}
+report.bigTop = Object.fromEntries(['tune', 'check'].map((k) => [k, { rush100: topOfWeek(base[k].yards, 'rush_yds', 100), rush150: topOfWeek(base[k].yards, 'rush_yds', 150), rec100: topOfWeek(base[k].yards, 'rec_yds', 100), rec150: topOfWeek(base[k].yards, 'rec_yds', 150), pass300: topOfWeek(base[k].yards, 'pass_yds', 300) }]));
+if (process.argv.includes('--big')) { fs.mkdirSync(OUT, { recursive: true }); fs.writeFileSync(path.join(OUT, 'nfl-pf-big.json'), JSON.stringify({ big: report.big, top: report.bigTop }, null, 1)); process.exit(0); }
 if (process.argv.includes('--ladders')) { fs.mkdirSync(OUT, { recursive: true }); fs.writeFileSync(path.join(OUT, 'nfl-pf-ladders.json'), JSON.stringify({ ladders: report.ladders, otherTd: report.otherTd }, null, 1)); process.exit(0); }
 say('shipped', JSON.stringify(baseCheck), JSON.stringify(report.shipped.check.td).slice(0, 200));
 const asLive = { tune: run(TUNE, { noFor: true }), check: run(CHECK, { noFor: true }) };
