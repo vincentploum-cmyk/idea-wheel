@@ -1,13 +1,15 @@
 #!/usr/bin/env node
-// The week's NFL projections as text (Vincent, 2026-11-01: "write a script based on the data from propfinder and the cheat
-// sheet … the projected yards / TD candidates per game"): the Top TD board, the first-half TD board, the receiving /
-// rushing / passing projections with the heights each player clears, the TE touchdowns, then every game. The figures are
-// the site's own (lib/nfl/projections.js, `projections` on GET /api/nfl/picks): no price, no edge.
+// The week's NFL projections as text, in the site's layout (Vincent, 2026-11-01: "Player - yards (strong) yards (lean)
+// yards (thin) … In case of touch down: Player - chance% of td"): every game with its TDs, receiving and rushing lists,
+// then the three lists across the week. The figures are the site's own (lib/nfl/projections.js, `projections` on GET
+// /api/nfl/picks): a height is the highest he clears at 60% (strong), 45% (lean) and 30% (thin); a touchdown chance is
+// strong from 45%, lean from 30%. No price.
 //
 //   node tools/nfl-projections.mjs                         this week, from https://ideareels.io (NHL_ACTIONS_TOKEN in the env)
 //   node tools/nfl-projections.mjs --season 2026 --week 9  a given week
 //   node tools/nfl-projections.mjs --file picks.json       a saved /api/nfl/picks payload
-//   --base http://localhost:3000   another server · --all   every row of every board · --games   the games alone
+//   --base http://localhost:3000   another server · --games   the games alone · --week-lists   the three week lists alone
+//   --top 25   rows per week list (all by default)
 import fs from 'node:fs';
 
 const args = process.argv.slice(2);
@@ -28,72 +30,49 @@ async function load() {
 }
 
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
-const n0 = (v) => (v == null ? '—' : String(Math.round(v)));
+const n1 = (v) => (v == null ? '—' : Number(v).toFixed(1));
 const words = (r) => (r.role || []).map((x) => x.word).join(', ');
-const tag = (r) => [r.onSheet ? '✓ sheet' : null, words(r) || null, r.health === 'DTD' ? 'DTD' : null].filter(Boolean).join(', ');
-const who = (r) => `${r.player} (${r.team} ${r.venue === 'H' ? 'vs' : '@'} ${r.opp})${tag(r) ? `, ${tag(r)}` : ''}`;
+const tag = (r) => [r.onSheet ? '✓' : null, r.health === 'DTD' ? 'DTD' : null, words(r) || null].filter(Boolean).join(', ');
+const who = (r, game) => `${r.player} (${r.team}${game ? ` ${r.venue === 'H' ? 'vs' : '@'} ${r.opp}` : ''})${tag(r) ? ` [${tag(r)}]` : ''}`;
+const TIER_NAMES = ['strong', 'lean', 'thin'];
+const heights = (y) => TIER_NAMES.map((t) => `${y?.tiers?.[t] ? `${y.tiers[t].mark}+` : '—'} (${t})`).join(' ');
 
-const SHOWN = { td: 10, firstHalfTd: 8, receiving: 8, rushing: 6, passing: 4, teTd: 3 };
-const YARDS = { receiving: 'rec_yds', rushing: 'rush_yds', passing: 'pass_yds' };
-const TITLE = { td: 'Top TD Board', firstHalfTd: 'Best First-Half TD Board', receiving: 'Best Receiving Projections', rushing: 'Best Rushing Projections', passing: 'Best Passing Projections', teTd: 'TE TDs Across Slate' };
-
-function boardLines(pj, key) {
-  const ids = pj.boards[key] || [];
-  const rows = (flag('all') ? ids : ids.slice(0, SHOWN[key])).map((id) => pj.rows[id]).filter(Boolean);
-  const out = [TITLE[key], ''];
-  rows.forEach((r, i) => {
-    const m = YARDS[key];
-    if (m) {
-      const y = r.yards[m];
-      const heights = y.marks.map((x) => `${x.mark} ${pct(x.p)}`).join(' / ');
-      out.push(`${i + 1}. ${who(r)} — ${n0(y.exp)} yds (${y.floor}–${y.ceiling})${heights ? ` · ${heights}` : ''}${y.line != null ? ` · book ${y.line}` : ''}${y.sheetLine != null ? ` · sheet ${y.sheetLine}` : ''}`);
-    } else {
-      const t = r.td;
-      const p = key === 'firstHalfTd' ? t.p1h : t.p;
-      const vol = [t.carries > 0 ? `${n0(t.carries)} car` : null, t.targets > 0 ? `${n0(t.targets)} tgt` : null].filter(Boolean).join(', ');
-      out.push(`${i + 1}. ${who(r)} — ${pct(p)}${r.pos === 'QB' ? ' rushing TD' : ''}${key === 'firstHalfTd' ? ` (anytime ${pct(t.p)})` : ` (1H ${pct(t.p1h)})`}${vol ? ` · ${vol}` : ''}${t.spot?.rank ? ` · ${r.opp} #${t.spot.rank} to ${t.spot.pos}s` : ''}`);
-    }
+function lines(pj, ids, kind, game) {
+  const rows = ids.map((id) => pj.rows[id]).filter(Boolean);
+  if (!rows.length) return ['  (none)'];
+  return rows.map((r, i) => {
+    if (kind === 'td') return `  ${i + 1}. ${who(r, game)} — ${pct(r.td.p)} (${r.td.tier})${r.pos === 'QB' ? ' rushing' : ''} · 1st half ${pct(r.td.p1h)}`;
+    const y = r.yards[kind === 'receiving' ? 'rec_yds' : 'rush_yds'];
+    const c = kind === 'receiving' ? r.yards.receptions : null;
+    const rec = c ? ` · rec ${TIER_NAMES.map((t) => (c.tiers?.[t] ? `${c.tiers[t].mark}+` : '—')).join(' / ')}` : '';
+    return `  ${i + 1}. ${who(r, game)} — ${heights(y)}${rec} · proj ${n1(y.exp)}`;
   });
-  if (!rows.length) out.push('(nothing yet: the week needs a PropFinder pull)');
-  return out.join('\n');
 }
 
-const zoneOf = (w) => `${w.word} #${w.rank}`;
-function defenseLines(pj) {
-  const out = ['Defenses to Attack (cheat sheet; #1 = gives up the most)', ''];
-  let any = false;
-  for (const g of pj.games) for (const team of [g.away, g.home]) {
-    const d = g.teams[team]?.defense;
-    if (!d) continue;
-    any = true;
-    out.push(`${d.of} defense vs ${team}: weak ${d.attack.map((w) => `${zoneOf(w)}${w.ids.length ? ` → ${w.ids.map((id) => pj.rows[id].player).join(', ')}` : ''}`).join('; ') || '—'}${d.strong.length ? ` · strong ${d.strong.slice(0, 3).map(zoneOf).join(', ')}` : ''}${d.style.length ? ` · ${d.style.join(', ')}` : ''}`);
-  }
-  if (!any) out.push('(no defense snapshot on this week’s cheat sheets)');
-  const dir = pj.sheetDirection;
-  if (dir) out.push('', `The sheet's #1 read as the defense allowing the ${dir.convention}${dir.from === 'propfinder' ? ` (PropFinder agrees, correlation ${dir.rho} over ${dir.n} ranks)` : ' (the default reading)'}.`);
-  return out.join('\n');
-}
+const TITLES = [['td', 'TDs'], ['receiving', 'Receiving'], ['rushing', 'Rushing']];
 
-function gameLines(pj) {
-  const out = ['By Game', ''];
+function gameText(pj) {
+  const out = [];
   for (const g of pj.games) {
     out.push(`${g.away} @ ${g.home}${g.odds?.total != null ? ` · total ${g.odds.total}` : ''}${g.odds?.spread ? ` · ${g.odds.spread}` : ''}${g.final ? ` · final ${g.awayScore}–${g.homeScore}` : ''}`);
     for (const team of [g.away, g.home]) {
-      const t = g.teams[team];
-      if (!t) { out.push(`  ${team}: no PropFinder players`); continue; }
-      const y = (ids, m) => ids.map((id) => `${pj.rows[id].player} ${n0(pj.rows[id].yards[m].exp)}`).join(', ') || '—';
-      out.push(`  ${team}${t.teamTd.tonight != null ? ` (${t.teamTd.tonight.toFixed(1)} TDs expected)` : ''}${t.defense?.weak?.length ? ` · vs ${t.defense.of}: ${t.defense.weak.slice(0, 3).map(zoneOf).join(', ')}` : ''}`);
-      out.push(`    pass ${y(t.passing, 'pass_yds')} · rush ${y(t.rushing, 'rush_yds')} · rec ${y(t.receiving, 'rec_yds')}`);
-      out.push(`    TD ${t.td.map((id) => `${pj.rows[id].player} ${pct(pj.rows[id].td.p)}${words(pj.rows[id]) ? ` (${words(pj.rows[id])})` : ''}`).join(', ') || '—'}`);
+      const d = g.teams?.[team]?.defense;
+      if (d?.weak?.length) out.push(`  ${d.of} defense gives up the most to ${d.weak.slice(0, 3).map((w) => `${w.word} (#${w.rank})`).join(', ')}`);
     }
+    for (const [k, title] of TITLES) out.push(` ${title}`, ...lines(pj, g.lists?.[k] || [], k, false));
     out.push('');
   }
   return out.join('\n');
 }
 
+function weekText(pj) {
+  const top = Number(opt('top')) || null;
+  return TITLES.map(([k, title]) => [`All ${title}`, ...lines(pj, (pj.lists?.[k] || []).slice(0, top || undefined), k, true)].join('\n')).join('\n\n');
+}
+
 const board = await load();
 const pj = board.projections;
-if (!pj) { console.error('The payload carries no projections (a board built before 2026-11-01, or no PropFinder pull for the week).'); process.exit(1); }
-const head = `NFL ${board.type === 3 ? `postseason round ${board.week}` : `week ${board.week}`}, ${board.season}`;
-const parts = flag('games') ? [gameLines(pj)] : [defenseLines(pj), ...Object.keys(TITLE).map((k) => boardLines(pj, k)), gameLines(pj)];
+if (!pj?.lists) { console.error('The payload carries no projection lists (a board built before 2026-11-01, or no PropFinder pull for the week).'); process.exit(1); }
+const head = `NFL ${board.type === 3 ? `postseason round ${board.week}` : `week ${board.week}`}, ${board.season} · strong = cleared 60% of the time, lean 45%, thin 30%; TDs strong from 45%, lean from 30%`;
+const parts = flag('games') ? [gameText(pj)] : flag('week-lists') ? [weekText(pj)] : [gameText(pj), weekText(pj)];
 console.log([head, ...parts].join('\n\n'));

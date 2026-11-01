@@ -22,8 +22,8 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard (the NFL's alone since
   2026-10-31), the data sources, the default; on the NBA page the night's plays in one ranked list over the games folded to a line each,
   below) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
-  drawn on both panels); the NBA page also `#sheet` (Cheat sheet, below) and `#firstbasket`; the NFL page also `#boards`
-  (Boards, below). The NHL app has nine (below).
+  drawn on both panels); the NBA page also `#sheet` (Cheat sheet, below) and `#firstbasket`; the NFL page also `#matchups`,
+  `#tds`, `#receiving` and `#rushing` (the projection lists, below). The NHL app has nine (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)
@@ -568,26 +568,35 @@ config and keeps its own markets, teams, feeds and slate key:
   thirds), the expected touchdowns as the card's pill when the sides carry `teamProj.td`; the characteristics card stays
   as the fallback for a game without a profile. `__tests__/nfl-profile.test.js` (the builder, the render; `MOCK_OUT`
   writes `profile-nfl-<theme>.html` for `tools/mock/screenshot-profile.mjs`).
-- **The week's projections** (`#boards`, Boards; `lib/nfl/projections.js` `nflProjections`, attached by `buildBoard` in
-  `lib/nfl/picks.js` as `board.projections`; drawn by `components/nfl/NflBoards.jsx`, printed by `tools/nfl-projections.mjs`;
-  Vincent, 2026-11-01, first "the following structure based on the cheat sheet and propfinder data" — Top TD, first-half
-  TD, receiving / rushing / passing ladders, three TE TDs — then "I don't care about edge. I want us to write a script …
-  the projected yards / TD candidates per game"; the EV-ranked boards of that morning, `lib/nfl/boards.js`, are gone): no
-  price and no edge anywhere. **Yards** are the board's own projection (`ranges[market]` on the side player: PropFinder's
-  logs × the defense at his slot, the cheat sheet's tile beside it) with its quartiles and the heights he clears at 60 /
-  45 / 30% off his ladder (`marksOf`, `MARK_AT`, "100+" for o99.5); the book's main line and the cheat sheet's line beside
-  it, never in it. **Touchdowns from the team down**: the team's touchdowns tonight (`teamTd`) = its own touchdowns a game
+- **The week's projections** (`lib/nfl/projections.js` `nflProjections`, attached by `buildBoard` in `lib/nfl/picks.js` as
+  `board.projections`; drawn by `components/nfl/NflBoards.jsx`, printed by `tools/nfl-projections.mjs`; Vincent, 2026-11-01:
+  first "the following structure based on the cheat sheet and propfinder data", then "I don't care about edge … the
+  projected yards / TD candidates per game", then "Why am I not seeing a simple list of players and their projected yards
+  / receptions per game … Player - yards (strong) yards (lean) yards (thin) … In case of touch down: Player - chance% of
+  td"; the EV-ranked boards and the six-board tab of that day are gone): no price and no edge anywhere. **The tabs**:
+  `#matchups` (`NflMatchups`: one card a game — the line, each side's touchdowns expected, the cheat sheet's defense weak
+  spots in a line — with three tabs TDs · Receiving · Rushing, both teams in one list) and `#tds`, `#receiving`,
+  `#rushing` (`NflList`: the same list across every game, 40 rows then "Show all"). **Yards** are the board's own
+  projection (`ranges[market]` on the side player: PropFinder's logs × the defense at his slot, the cheat sheet's tile
+  beside it) read as **strong / lean / thin** (`TIERS`: the highest height he clears at 60 / 45 / 30%, `tiersOf`, on a 5-yard
+  grid, every catch for receptions, `TIER_STEP`; his chance at any line off his ladder, `chanceAt`: straight between the
+  rungs, his own distribution's tail past them), receiving with his receptions under each height, the projection beside;
+  the book's main line and the cheat sheet's line on the hover, never in the figure. A list carries receivers, tight ends
+  and backs (receiving) or backs and quarterbacks (rushing) projected `LIST_YDS_MIN` = 10 yards and up, the highest
+  projection first. **Touchdowns from the team down**: the team's touchdowns tonight (`teamTd`) = its own touchdowns a game
   through the opponent's touchdowns allowed (`envFactor` on PropFinder's `totals.for/against.td`, `leagueFor.td`) averaged
   with the book's implied points (ESPN's total and spread, `impliedPoints`) × `TD_PER_POINT` = 0.105, its factor on his
   read clamped 0.6–1.6; his own rate = touchdowns a game (season 0.6 · last five 0.4) pulled toward his projected carries
   + targets × his position's touchdowns per touch across the pull (`perTouch`) at n / (n + `RATE_K` = 4); × `posShift`
   (the opponent's touchdowns allowed at his spot over what it allows in all, 0.7–1.4); P = 1 − e^(−λ), first half 1 −
-  e^(−λ/2) (`H1_SHARE`); under `TD_MIN` = 3% no candidate. Skill positions only, the out left off, "if active" (DTD) and "if
-  role confirmed" (a without split or a vacated lift; `roleOf`, the hover names who) beside a name. The tab: the six boards
-  (`SHOWN`), then **By game** — each side's touchdowns expected and implied points, its passer, two runners, three
-  receivers and four likeliest scorers (`PER_GAME`); every figure graded once the game is stored. **The script**:
-  `node tools/nfl-projections.mjs [--season --week | --file picks.json] [--all] [--games]` prints the same as text in
-  his list's layout (fetches `/api/nfl/picks` with `NHL_ACTIONS_TOKEN`). The constants are set, not measured: no NFL
+  e^(−λ/2) (`H1_SHARE`); its word strong from 45%, lean from 30%, thin under (`tdTier`, `TD_TIERS`); listed from
+  `LIST_TD_MIN` = 5%, the likeliest first. Skill positions only, the out left off, "if active" (DTD) and "if role
+  confirmed" (a without split or a vacated lift; `roleOf`, the hover names who) beside a name; every height and chance
+  graded once the game is stored. `games[].lists` and `lists` = { td, receiving, rushing } of row ids (`listsOf`).
+  **The script**: `node tools/nfl-projections.mjs [--season --week | --file picks.json] [--games | --week-lists] [--top N]`
+  prints the same lists as text, one line a player ("Puka Nacua (LAR @ SEA) — 115+ (strong) 125+ (lean) 140+ (thin) ·
+  rec 7+ / 8+ / 9+ · proj 132"; "Kyren Williams (LAR) — 58% (strong) · 1st half 35%"), fetching `/api/nfl/picks` with
+  `NHL_ACTIONS_TOKEN`. The constants are set, not measured: no NFL
   audit has graded them. **The first-half TD market** (`first_half_td` in `lib/nfl/markets.js`) stays on the board for
   the grading: its chance derived from his anytime play (`chanceFrom`, 1 − √(1 − p)), priced when PropFinder carries a
   first-half line (`period: true` lets the prop reader file it), else `synthetic` (off the tables, the counts and
@@ -614,9 +623,7 @@ config and keeps its own markets, teams, feeds and slate key:
   profile's Soft spots. The defenses in words ride as `board.sheetDefense` ({ direction, teams: { DEF: { weak, strong,
   style } } }, `spotsOf`: the weakest and strongest thirds, man- / zone-heavy, the main shell) and on each projected side
   as `defense` with `attack` (the top `ATTACK_MAX` = 4 weak spots and the players each opens up: the pass → the QB, the
-  run → the lead back, the outside → WR1 / WR2, the middle → the TE and the slot). The Boards tab leads with **Defenses
-  to attack** (the leakiest first, weak spots → players, strong spots, coverage; the printed rank and the direction on the
-  hover) and each By-game side names the defense's three weakest spots; the script prints the same. A sheet stored before
+  run → the lead back, the outside → WR1 / WR2, the middle → the TE and the slot). The Matchups tab's game card names each defense's three weakest spots, and the script prints the same. A sheet stored before
   2026-11-01 gains its snapshot with "Read again" (the stored OCR words, no new read). Touchdowns do not read the
   snapshot (it prints no touchdown tile). `__tests__/nfl-snapshot.test.js` (page 1's real words).
 - Routes (`authorize()`, admin session or sync token): `GET /api/nfl/picks?season&week&type|date`,
