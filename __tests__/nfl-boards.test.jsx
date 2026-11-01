@@ -9,10 +9,10 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildBoard } from '../lib/nfl/picks';
-import { chanceAtMark, ladderTiers, LADDER_TIERS, markOf, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS } from '../lib/nfl/projections';
+import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS } from '../lib/nfl/projections';
 import { reproject } from '../lib/nfl/picks';
 import { envFactor } from '../lib/picks/projection';
-import { NflMatchups, NflList, KINDS } from '../components/nfl/NflBoards';
+import { NflMatchups, NflList, NflBigGames, KINDS } from '../components/nfl/NflBoards';
 
 // The week's projections (Vincent, 2026-11-01: "I don't care about edge … the projected yards / TD candidates per game")
 // on a board built from a synthetic pull: the team's touchdowns tonight from its rate, the defense and the book's total,
@@ -112,6 +112,39 @@ describe('NFL projections: the ladders and the touchdown reads (2026-11-01)', ()
     const games = [{ ...GAMES[0], final: true, state: 'post', awayScore: 27, homeScore: 20, detail: 'Final' }, GAMES[1]];
     const y = Object.values(build(results, games).projections.rows).find((r) => r.player === 'Puka Nacua').yards.rec_yds;
     for (const [tier] of LADDER_TIERS) if (y.tiers[tier]) expect(y.hits[tier]).toBe(131 >= y.tiers[tier].mark);
+  });
+});
+
+describe('NFL projections: the big games (2026-11-01)', () => {
+  test('the chance rises with the board’s own chance and with the context each model reads', () => {
+    const y = { proj: 85, sd: 35 };
+    const lo = bigChance(y, 'rush_yds', 100, { points: 18 });
+    const hi = bigChance(y, 'rush_yds', 100, { points: 30 });
+    expect(hi).toBeGreaterThan(lo);
+    expect(bigChance({ proj: 95, sd: 35 }, 'rush_yds', 100, { points: 24 })).toBeGreaterThan(bigChance(y, 'rush_yds', 100, { points: 24 }));
+    expect(bigChance(y, 'rush_yds', 150, { points: 24 })).toBeLessThan(bigChance(y, 'rush_yds', 100, { points: 24 }));
+    expect(bigChance({ proj: 70, sd: 30 }, 'rec_yds', 100, { tgtShare: 0.3 })).toBeGreaterThan(bigChance({ proj: 70, sd: 30 }, 'rec_yds', 100, { tgtShare: 0.15 }));
+    expect(bigChance({ proj: 250, sd: 60 }, 'pass_yds', 300, { total: 52 })).toBeGreaterThan(bigChance({ proj: 250, sd: 60 }, 'pass_yds', 300, { total: 40 }));
+    // Under the market's projection floor, no read; a missing context reads the league's usual.
+    expect(bigChance({ proj: 10, sd: 10 }, 'rush_yds', 100, {})).toBeNull();
+    expect(bigChance(y, 'rush_yds', 100, {})).toBe(bigChance(y, 'rush_yds', 100, { points: BIG_FILL.points }));
+    expect(Object.keys(BIG)).toEqual(['rush_yds', 'rec_yds', 'pass_yds']);
+  });
+  test('the rows carry it, the list ranks it, the tab draws it', () => {
+    const b = build();
+    const pj = b.projections;
+    const k = Object.values(pj.rows).find((r) => r.player === 'Kyren Williams');
+    expect(k.big.rush_yds).toMatchObject({ marks: [100, 150], ctx: { points: expect.any(Number) } });
+    expect(k.big.rush_yds.p[100]).toBeGreaterThan(k.big.rush_yds.p[150]);
+    const puka = Object.values(pj.rows).find((r) => r.player === 'Puka Nacua');
+    expect(puka.big.rec_yds.ctx.tgtShare).toBeGreaterThan(0);
+    const first = (id, m) => pj.rows[id].big[m].p[pj.rows[id].big[m].marks[0]];
+    for (const m of ['rush_yds', 'rec_yds']) { const ids = pj.lists.big[m]; for (let i = 1; i < ids.length; i++) expect(first(ids[i - 1], m)).toBeGreaterThanOrEqual(first(ids[i], m)); }
+    const html = renderToStaticMarkup(<NflBigGames board={b} />);
+    expect(html).toContain('Kyren Williams');
+    expect(html).toMatch(/team expected [\d.]+ pts/);
+    expect(html).toContain('>100+<');
+    expect(html).not.toMatch(/\bEV\b|edge|juice/i);
   });
 });
 
@@ -236,7 +269,7 @@ describe('NFL projections: the read', () => {
     expect(g.lists.td.map((id) => pj.rows[id].team)).toEqual(expect.arrayContaining(['LAR', 'SEA']));
     expect(g.lists.receiving.map((id) => pj.rows[id].player)[0]).toBe('Puka Nacua');
     expect(g.lists.rushing.map((id) => pj.rows[id].player)).toEqual(['Kyren Williams', 'Zach Charbonnet', 'Blake Corum']);
-    expect(pj.games.find((x) => x.id === 'g2').lists).toEqual({ td: [], receiving: [], rushing: [], passing: [] });
+    expect(pj.games.find((x) => x.id === 'g2').lists).toEqual({ td: [], receiving: [], rushing: [], passing: [], big: { rush_yds: [], rec_yds: [], pass_yds: [] } });
   });
   test('the words beside a name', () => {
     expect(row('Blake Corum').role).toEqual([expect.objectContaining({ kind: 'active', word: 'if active' })]);
@@ -332,7 +365,7 @@ describe('NFL projections: the panel and the script', () => {
     const css = [fontCss('@fontsource-variable/schibsted-grotesk'), fontCss('@fontsource-variable/source-sans-3'), fs.readFileSync(path.join(root, 'app/globals.css'), 'utf8')].join('\n');
     for (const theme of ['dark', 'light']) {
       fs.writeFileSync(path.join(out, `boards-nfl-${theme}.html`), `<!doctype html><html lang="en" data-theme="${theme}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>NFL boards</title><style>${css}
-.mock-page { max-width: 1180px; margin: 0 auto; padding: 24px var(--gutter) 48px; }</style></head><body><main class="mock-page nhlx"><section class="nhlx-pk">${html}${renderToStaticMarkup(<NflList board={b} kind="passing" />)}</section></main></body></html>`);
+.mock-page { max-width: 1180px; margin: 0 auto; padding: 24px var(--gutter) 48px; }</style></head><body><main class="mock-page nhlx"><section class="nhlx-pk">${html}${renderToStaticMarkup(<NflList board={b} kind="passing" />)}${renderToStaticMarkup(<NflBigGames board={b} />)}</section></main></body></html>`);
     }
   });
   test('the script prints each game’s three lists and the week’s', () => {

@@ -197,3 +197,8 @@ The same replay on the pulls' PropFinder logs (zeros in) with the defense tables
 against PropFinder's published ones, the week whose pre-game pull survived on PropFinder's own tables and against the
 books' lines of that day, and the constants searched again; `nfl-pf-backtest.json`. First run:
 `docs/audits/2026-11-01-nfl-propfinder-backtest.md`.
+
+The big games (`docs/audits/2026-11-01-nfl-big-games.md`): `nfl-pf-audit.mjs --dump` writes the board's read for every
+player-game of 2024 (with `nfl-fetch.mjs --season 2024`), 2025 and 2026, `python3 tools/audit/nfl_big.py` (scikit-learn,
+pandas) builds the morning's features from the PropFinder export and fits / checks the models and the rules,
+`nfl-pf-audit.mjs --big` grades the site's own `BIG` read on the replay.
