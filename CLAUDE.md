@@ -568,26 +568,33 @@ config and keeps its own markets, teams, feeds and slate key:
   thirds), the expected touchdowns as the card's pill when the sides carry `teamProj.td`; the characteristics card stays
   as the fallback for a game without a profile. `__tests__/nfl-profile.test.js` (the builder, the render; `MOCK_OUT`
   writes `profile-nfl-<theme>.html` for `tools/mock/screenshot-profile.mjs`).
-- **The week's boards** (`#boards`, `components/nfl/NflBoards.jsx`, the pure builder `lib/nfl/boards.js` `weekBoards(board,
-  filters)`; Vincent, 2026-11-01: "for NFL, I think we will need to follow the following structure based on the cheat sheet
-  and propfinder data"): six ranked tables in his order — **Top TD** (every anytime-TD play, one a player), **Best first-half
-  TD**, **Best receiving / rushing / passing ladders** (per player the priced rungs of his `rec_yds` / `rush_yds` /
-  `pass_yds` ladder that clear the floors, three at most, "100+" for o99.5, the best EV ringed, the main line dotted;
-  quarterbacks on the rushing board) and **TE touchdowns across the slate** (the tight ends' TD rows, three shown, with his
-  projected targets and receiving yards and the opponent's rank to TEs). Everything by EV at the book's price at the user's
-  own floors (`useValueFilters('nfl')`, shared with Best plays; the failing rows behind "Show marginal"); `board.boards` =
-  the same at the defaults (`buildBoard` in `lib/nfl/picks.js` attaches it). Beside a name the words of his lists: **"if
-  active"** for a game-time decision (DTD), **"if role confirmed"** when his read leans on a teammate out (a without split
-  or a vacated lift, `roleOf`; the hover names who). **The first-half TD market** (`first_half_td` in `lib/nfl/markets.js`):
-  no log carries it, so the chance is derived from his anytime play (`chanceFrom: { market: 'anytime_td', fn: firstHalfOf }`,
-  1 − √(1 − p), a touchdown count with half its rate in the half; `makeBoard` builds these plays after the others, through
-  the market's calibration when one is learned, `derived` on the play); priced when PropFinder carries a first-half line
-  (`period: true` lets the prop reader file it despite "1st half", every other period market still skipped), else
-  `synthetic` (fair price only: off the tables, the counts and `best`, kept on the side player's `plays`; the board keeps
-  it on the chance, not failed for the missing price). Graded off ESPN's scoring plays (`firstHalfTd` per player in
-  `parseSummary`, periods 1–2); a result stored before 2026-11-01 lacks the field and reads unknown (`fieldOptional`,
-  `statOf` in `lib/picks/markets.js`). The side players' plays now carry `ev`, `implied`, `derived` / `synthetic` and the
-  without names. `__tests__/nfl-boards.test.jsx` (`MOCK_OUT` writes `boards-nfl-<theme>.html`).
+- **The week's projections** (`#boards`, Boards; `lib/nfl/projections.js` `nflProjections`, attached by `buildBoard` in
+  `lib/nfl/picks.js` as `board.projections`; drawn by `components/nfl/NflBoards.jsx`, printed by `tools/nfl-projections.mjs`;
+  Vincent, 2026-11-01, first "the following structure based on the cheat sheet and propfinder data" — Top TD, first-half
+  TD, receiving / rushing / passing ladders, three TE TDs — then "I don't care about edge. I want us to write a script …
+  the projected yards / TD candidates per game"; the EV-ranked boards of that morning, `lib/nfl/boards.js`, are gone): no
+  price and no edge anywhere. **Yards** are the board's own projection (`ranges[market]` on the side player: PropFinder's
+  logs × the defense at his slot, the cheat sheet's tile beside it) with its quartiles and the heights he clears at 60 /
+  45 / 30% off his ladder (`marksOf`, `MARK_AT`, "100+" for o99.5); the book's main line and the cheat sheet's line beside
+  it, never in it. **Touchdowns from the team down**: the team's touchdowns tonight (`teamTd`) = its own touchdowns a game
+  through the opponent's touchdowns allowed (`envFactor` on PropFinder's `totals.for/against.td`, `leagueFor.td`) averaged
+  with the book's implied points (ESPN's total and spread, `impliedPoints`) × `TD_PER_POINT` = 0.105, its factor on his
+  read clamped 0.6–1.6; his own rate = touchdowns a game (season 0.6 · last five 0.4) pulled toward his projected carries
+  + targets × his position's touchdowns per touch across the pull (`perTouch`) at n / (n + `RATE_K` = 4); × `posShift`
+  (the opponent's touchdowns allowed at his spot over what it allows in all, 0.7–1.4); P = 1 − e^(−λ), first half 1 −
+  e^(−λ/2) (`H1_SHARE`); under `TD_MIN` = 3% no candidate. Skill positions only, the out left off, "if active" (DTD) and "if
+  role confirmed" (a without split or a vacated lift; `roleOf`, the hover names who) beside a name. The tab: the six boards
+  (`SHOWN`), then **By game** — each side's touchdowns expected and implied points, its passer, two runners, three
+  receivers and four likeliest scorers (`PER_GAME`); every figure graded once the game is stored. **The script**:
+  `node tools/nfl-projections.mjs [--season --week | --file picks.json] [--all] [--games]` prints the same as text in
+  his list's layout (fetches `/api/nfl/picks` with `NHL_ACTIONS_TOKEN`). The constants are set, not measured: no NFL
+  audit has graded them. **The first-half TD market** (`first_half_td` in `lib/nfl/markets.js`) stays on the board for
+  the grading: its chance derived from his anytime play (`chanceFrom`, 1 − √(1 − p)), priced when PropFinder carries a
+  first-half line (`period: true` lets the prop reader file it), else `synthetic` (off the tables, the counts and
+  `best`); graded off ESPN's scoring plays (`firstHalfTd` per player in `parseSummary`, periods 1–2), a result stored
+  before 2026-11-01 reads unknown (`fieldOptional`, `statOf`). The side players' plays carry `ev`, `implied`, `derived`
+  / `synthetic` and the without names. `__tests__/nfl-boards.test.jsx` (the read, the panel, the script; `MOCK_OUT`
+  writes `boards-nfl-<theme>.html`).
 - Routes (`authorize()`, admin session or sync token): `GET /api/nfl/picks?season&week&type|date`,
   `GET /api/nfl/shuffle?season&week&type&market`, `GET /api/nfl/scorecard?season&from&to`,
   `GET|POST|DELETE /api/nfl/sheets`, `POST /api/nfl/refresh?only=schedule|propfinder`

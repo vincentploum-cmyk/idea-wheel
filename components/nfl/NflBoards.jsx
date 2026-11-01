@@ -1,160 +1,200 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { fmtOdds } from '@/lib/nfl/odds';
-import { fmtEv, DEFAULTS } from '@/lib/picks/value';
-import { weekBoards, BOARDS } from '@/lib/nfl/boards';
+import { useState } from 'react';
 import { teamLogo } from '@/lib/nfl/teams';
 import { headshotUrl } from '@/lib/nfl/espn';
-import { asStated } from '@/lib/picks/calibration';
-import { ICON } from '@/components/nhl/flags';
-import ValueControls from '@/components/picks/ValueControls';
-import { RowBadges } from '@/components/picks/badges';
-import { spotTone, evTone } from '@/components/picks/SlateList';
-import { useValueFilters } from '@/components/picks/value-filters';
+import { SHOWN, PER_GAME } from '@/lib/nfl/projections';
+import { spotTone } from '@/components/picks/SlateList';
 
-// The Boards tab (Vincent, 2026-11-01, the structure the NFL week should follow): six boards in his order — Top TD, the
-// first-half TD board, the receiving, rushing and passing ladders, three TE touchdowns across the slate — each a ranked
-// table built by lib/nfl/boards.js off the week's board at the user's own floors (the same sliders as Best plays, the
-// same localStorage), the rows that fail a floor behind "Show marginal". A name carries the words Vincent writes beside
-// it: "if active" for a game-time decision, "if role confirmed" when his read leans on a teammate out (hover for who).
+// The Boards tab (Vincent, 2026-11-01: "I don't care about edge … the data from propfinder and the cheat sheet … the
+// projected yards / TD candidates per game"): the week's projections (lib/nfl/projections.js, `board.projections`) as
+// his six boards — Top TD, first-half TD, the receiving / rushing / passing projections with the heights each clears,
+// three TE touchdowns — then every game with each side's projected leaders and touchdown candidates. No price, no edge:
+// the figures are the board's own, the book's and the cheat sheet's lines beside the yards for reference.
 
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
-const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
+const num = (v, d = 0) => (v == null ? '—' : Number(v).toFixed(d));
 const fmtTip = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { weekday: 'short' }) : '');
-const FAIL_WORD = { price: 'no price', juice: 'past the juice ceiling', ev: 'under the EV floor', chance: 'under the chance floor', thin: 'thin', out: 'out' };
 const TONE_WORD = { soft: 'soft', mid: 'even', tough: 'tough' };
+const MARKET = { receiving: 'rec_yds', rushing: 'rush_yds', passing: 'pass_yds' };
+const UNIT = { rec_yds: 'rec yds', rush_yds: 'rush yds', pass_yds: 'pass yds' };
+
+export const BOARDS = [
+  ['td', 'Top TD board', 'Every skill player’s chance of an anytime touchdown: his team’s touchdowns tonight (its own rate through the defense it faces and the book’s total and spread), his share of them (his touchdowns a game, pulled toward his carries and targets tonight) and where the defense gives them up.'],
+  ['firstHalfTd', 'Best first-half TD board', 'The same read for the first half: half of his expected touchdowns, 1 − e^(−λ/2).'],
+  ['receiving', 'Best receiving projections', 'Projected receiving yards: his rate from PropFinder’s logs × the defense at his slot (the cheat sheet’s tile beside it), with the heights he clears at 60 / 45 / 30%.'],
+  ['rushing', 'Best rushing projections', 'Projected rushing yards, quarterbacks included.'],
+  ['passing', 'Best passing projections', 'Projected passing yards.'],
+  ['teTd', 'TE touchdowns across the slate', 'The tight ends’ touchdown chances, with the volume and the matchup behind each.'],
+];
 
 function RoleWords({ r }) {
   if (!r.role?.length) return null;
   return r.role.map((x) => <span key={x.kind} className={`ir-bd-role is-${x.kind}`} title={x.why}>{x.word}</span>);
 }
 
-function FormFlag({ r }) {
-  if (r.form !== 'hot' && r.form !== 'cold') return null;
-  const t = r.form === 'hot' ? `Hot: ${pct(r.rates?.l5)} of his last ${r.rates?.l5N ?? 5} scored (colour only; the chance already carries the rate)` : `Cold: ${pct(r.rates?.l5)} of his last ${r.rates?.l5N ?? 5} scored`;
-  return <span className="nhlx-pk-flags"><i className={`nhlx-pk-flag is-${r.form}`} title={t} aria-label={t}>{ICON[r.form]}</i></span>;
+function Who({ r }) {
+  return (
+    <div className="nhlx-db-player">
+      {r.espnId ? <img src={headshotUrl(r.espnId)} alt="" width="30" height="30" loading="lazy" /> : <img src={teamLogo(r.team)} alt="" width="30" height="30" loading="lazy" className="ir-nfl-logo" />}
+      <span>
+        <b>{r.player}{r.onSheet ? <small className="ir-sh-check" title="On the cheat sheet"> ✓</small> : null}<RoleWords r={r} /></b>
+        <small>{r.team} · {r.slot && r.depth ? `${r.slot}${r.depth}` : r.pos}{r.health === 'DTD' ? <> · <span className="ir-health is-dtd" title={r.injury || ''}>DTD</span></> : null}</small>
+      </span>
+    </div>
+  );
 }
 
-/** The play cell: the touchdown market's word, or a ladder's rungs worth playing. */
-function PlayCell({ r }) {
-  if (r.rungs) {
-    return (
-      <>
-        <span className="ir-bd-rungs">
-          {r.rungs.map((x) => {
-            const tone = x.ev == null ? 'none' : x.ev >= DEFAULTS.minEv ? 'good' : x.ev > 0 ? 'thin' : 'bad';
-            const grade = x.hit == null ? '' : x.hit ? ' is-hit' : ' is-miss';
-            return (
-              <span key={x.line} className={`ir-bd-rung is-${tone}${x.best ? ' is-best' : ''}${x.main ? ' is-main' : ''}${grade}`} title={`o${x.line} ${r.unit}: ${pct(x.p)} chance at ${fmtOdds(x.odds)} · EV ${fmtEv(x.ev)} a unit · edge ${x.edge >= 0 ? '+' : '−'}${Math.abs(Math.round(x.edge * 100))} pts${x.main ? ' · the book’s main line' : ''}${x.best ? ' · the best value on his ladder' : ''}${x.hit == null ? '' : x.hit ? ' · HIT' : ' · MISS'}`}>
-                <b>{x.mark}</b><i>{pct(x.p)}</i><small>{fmtOdds(x.odds)}</small><em>{fmtEv(x.ev)}</em>
-              </span>
-            );
-          })}
-        </span>
-        <small className="ir-slate-sub">{r.rungsPassing} of {r.rungsPriced} priced rung{r.rungsPriced === 1 ? '' : 's'} clear the floors{r.mainLine != null ? ` · main o${r.mainLine}` : ''}</small>
-      </>
-    );
-  }
-  const qb = r.pos === 'QB' && r.market !== 'pass_td';
+const Game = ({ r }) => <><b>{r.venue === 'H' ? 'vs' : 'at'} {r.opp}</b><small className="ir-slate-sub">{r.final ? 'final' : `${fmtDay(r.start)} ${fmtTip(r.start)}`}</small></>;
+
+function Spot({ spot, opp, unit }) {
+  if (!spot?.rank) return <span className="ir-spot is-none">no table</span>;
+  const tone = spotTone(spot);
+  return <span className={`ir-spot is-${tone}`} title={`${opp} gives up ${spot.value != null ? `${num(spot.value, 1)} ${unit} a game` : `the #${spot.rank} most`} to ${spot.pos}s, #${spot.rank} of ${spot.count}`}>#{spot.rank} {spot.pos} · {TONE_WORD[tone] || ''}</span>;
+}
+
+function tdWhy(r, half) {
+  const t = r.td;
+  return `${half ? 'First half' : 'Anytime'}: ${pct(half ? t.p1h : t.p)} · ${num(t.lambda, 2)} touchdowns expected = his own ${num(t.own, 2)} a game (${t.rate != null ? `${num(t.rate, 2)} a game over ${t.n} game${t.n === 1 ? '' : 's'} this season` : 'no touchdown record'}${t.prior != null ? `, pulled toward ${num(t.prior, 2)} from ${num(t.touches, 1)} touches tonight` : ''}) × ${t.teamFactor} his team's touchdowns tonight against its usual × ${t.posShift} where the defense gives them up`;
+}
+
+function TdTable({ rows, half, shown }) {
+  const [all, setAll] = useState(false);
+  const list = all ? rows : rows.slice(0, shown);
+  const final = rows.some((r) => r.final);
   return (
     <>
-      <b>{r.label}{qb ? ' · rushing' : ''}</b>
-      {r.derived ? <small className="ir-slate-sub" title={`Read off his ${r.derived.label} chance of ${pct(r.derived.p)}${r.derived.odds != null ? ` at ${fmtOdds(r.derived.odds)}` : ''}: a touchdown count with half its rate in the first half, 1 − √(1 − p)${r.synthetic ? ' · no first-half line in the pull yet: the fair price stands alone' : ''}`}>off anytime {pct(r.derived.p)}</small> : null}
+      <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
+        <table className="nhlx-db-table nhlx-pk-table ir-slate-table ir-bd-table">
+          <thead><tr>
+            <th className="ir-slate-rank">#</th><th>Player</th><th>Game</th>
+            <th className="is-num is-lead" title="The board's chance of a touchdown">{half ? '1st half' : 'Anytime'}</th>
+            <th className="is-num" title={half ? 'His anytime chance' : 'His first-half chance'}>{half ? 'Anytime' : '1st half'}</th>
+            <th className="is-num" title="Touchdowns expected tonight (λ)">Exp. TD</th>
+            <th title="His projected carries and targets tonight, and his touchdowns a game this season">Volume</th>
+            <th title="The opponent's touchdowns allowed at his spot, 1 = the most">Matchup</th>
+            {final ? <th className="is-num">Got</th> : null}
+          </tr></thead>
+          <tbody>
+            {list.length ? list.map((r, i) => {
+              const a = half ? r.td.actual1h : r.td.actual;
+              const grade = a == null ? '' : a > 0 ? ' is-hit' : ' is-miss';
+              return (
+                <tr key={r.id} className={grade}>
+                  <td className="ir-slate-rank ir-sl-rank">{i + 1}</td>
+                  <td className="ir-sl-player"><Who r={r} /></td>
+                  <td className="ir-sl-game"><Game r={r} /></td>
+                  <td className="is-num is-lead ir-sl-chance" title={tdWhy(r, half)}><b>{pct(half ? r.td.p1h : r.td.p)}</b><small>{r.pos === 'QB' ? 'rushing TD' : 'TD'}</small></td>
+                  <td className="is-num ir-sl-price"><b>{pct(half ? r.td.p : r.td.p1h)}</b></td>
+                  <td className="is-num ir-sl-ev"><b>{num(r.td.lambda, 2)}</b></td>
+                  <td className="ir-sl-proj"><small className="ir-slate-sub">{[r.td.carries > 0 ? `${num(r.td.carries)} car` : null, r.td.targets > 0 ? `${num(r.td.targets)} tgt` : null, r.td.season != null ? `${num(r.td.season, 2)} TD/g` : null].filter(Boolean).join(' · ') || '—'}</small></td>
+                  <td className="ir-sl-spot"><Spot spot={r.td.spot} opp={r.opp} unit="TD" /></td>
+                  {final ? <td className="is-num nhlx-pk-got ir-sl-got">{a === undefined ? <small>—</small> : a === null ? <small>DNP</small> : <b>{a}</b>}</td> : null}
+                </tr>
+              );
+            }) : <tr><td colSpan={final ? 9 : 8}><small className="ir-nfl-none">No projection yet: the week needs a PropFinder pull.</small></td></tr>}
+          </tbody>
+        </table>
+      </div>
+      {!all && rows.length > shown ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-slate-more" onClick={() => setAll(true)}>Show all {rows.length}</button> : null}
     </>
   );
 }
 
-export function BoardTable({ b, filters }) {
+function YardsTable({ rows, market, shown }) {
   const [all, setAll] = useState(false);
-  const f = { ...DEFAULTS, ...(filters || {}) };
-  const rows = useMemo(() => (f.marginal ? b.rows : b.rows.filter((r) => !r.fails)), [b, f.marginal]);
-  const shown = all ? rows : rows.slice(0, b.shown);
+  const list = all ? rows : rows.slice(0, shown);
   const final = rows.some((r) => r.final);
-  const ladder = !!b.market && /_yds$/.test(b.market);
-  const cols = 9 + (final ? 1 : 0);
+  const unit = UNIT[market];
   return (
-    <section className="ir-slate ir-bd" aria-label={b.title}>
-      <div className="nhlx-pfd-head">
-        <b>{b.title}</b>
-        <small className="nhlx-auto-meta">{b.note} · {b.passing} clear{b.passing === 1 ? 's' : ''} the floors{b.rows.length > b.passing ? `, ${b.rows.length - b.passing} marginal` : ''}</small>
-      </div>
+    <>
       <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
         <table className="nhlx-db-table nhlx-pk-table ir-slate-table ir-bd-table">
-          <thead>
-            <tr>
-              <th className="ir-slate-rank">#</th>
-              <th>Player</th>
-              <th>Game</th>
-              <th>{ladder ? 'Rungs worth playing' : 'Play'}</th>
-              <th className="is-num is-lead" title="Expected value: the return a unit staked at the book’s price on the board’s chance; the probability edge under it">EV</th>
-              <th className="is-num" title="The book’s price, and the chance it implies under it">Price</th>
-              <th className="is-num" title="The board’s chance of the hit, and the break-even price under it">Chance</th>
-              <th title={ladder ? 'His projection for the game, its gap to the best rung and the quartiles of his range under it' :  'His projected volume behind the touchdown chance'}>{ladder ? 'Projection' : 'Volume'}</th>
-              <th title="The opponent’s rank at his spot for the stat, 1 = gives up the most">Matchup</th>
-              {final ? <th className="is-num" title="The box-score figure">Got</th> : null}
-            </tr>
-          </thead>
+          <thead><tr>
+            <th className="ir-slate-rank">#</th><th>Player</th><th>Game</th>
+            <th className="is-num is-lead" title="The board's projection, the quartiles of his range under it (he lands between them half his games)">Projected</th>
+            <th title="The highest height he clears at 60%, 45% and 30% off his ladder">Heights</th>
+            <th className="is-num" title="The book's main line, and the cheat sheet's line when the sheet lists him">Line</th>
+            <th title="The opponent's yards allowed at his spot, 1 = the most">Matchup</th>
+            {final ? <th className="is-num">Got</th> : null}
+          </tr></thead>
           <tbody>
-            {shown.length ? shown.map((r, i) => {
-              const tone = spotTone(r.spot);
-              const grade = r.hit == null ? (r.final && r.actual === null ? ' is-dnp' : '') : r.hit ? ' is-hit' : ' is-miss';
-              const price = r.odds != null ? fmtOdds(r.odds) : r.synthetic ? 'no line' : '—';
+            {list.length ? list.map((r, i) => {
+              const y = r.yards[market];
               return (
-                <tr key={r.id} className={`${grade}${r.fails ? ' is-marginal' : ''}`}>
+                <tr key={r.id}>
                   <td className="ir-slate-rank ir-sl-rank">{i + 1}</td>
-                  <td className="ir-sl-player">
-                    <div className="nhlx-db-player">
-                      {r.espnId ? <img src={headshotUrl(r.espnId)} alt="" width="30" height="30" loading="lazy" /> : <img src={teamLogo(r.team)} alt="" width="30" height="30" loading="lazy" className="ir-nfl-logo" />}
-                      <span>
-                        <b>{r.player}{r.confirmed ? <small className="ir-sh-check" title="On the cheat sheet"> ✓</small> : null}<FormFlag r={r} /><RoleWords r={r} /></b>
-                        <small>{r.team} · {r.slot && r.depth ? `${r.slot}${r.depth}` : r.pos || '—'}<RowBadges r={r} />{r.sheetOnly ? ' · sheet only' : ''}{r.fails ? <> · <span className="ir-fails" title="Fails a floor: shown because “Show marginal” is on">{FAIL_WORD[r.fails] || r.fails}</span></> : null}</small>
-                        {r.why ? <small className="ir-bd-why">{r.why}</small> : null}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="ir-sl-game"><b>{r.venue === 'H' ? 'vs' : 'at'} {r.opp}</b><small className="ir-slate-sub">{r.final ? 'final' : `${fmtDay(r.start)} ${fmtTip(r.start)}`}</small></td>
-                  <td className="ir-nfl-play ir-sl-play"><PlayCell r={r} /></td>
-                  <td className={`is-num is-lead ir-sl-ev ir-ev-${evTone(r.ev)}`} title={r.ev != null ? `${fmtEv(r.ev)} a unit staked at ${fmtOdds(r.odds)} on a ${pct(r.p)} chance · edge ${r.edge >= 0 ? '+' : '−'}${Math.abs(Math.round((r.edge || 0) * 100))} points over the book’s ${pct(r.implied)}` : 'No price: no value to read'}><b>{fmtEv(r.ev)}</b><small>{r.edge == null ? '—' : `${r.edge >= 0 ? '+' : '−'}${Math.abs(Math.round(r.edge * 100))} pts`}</small></td>
-                  <td className="is-num ir-sl-price"><b>{price}</b><small>{r.odds == null ? (r.synthetic ? `fair ${r.fair}` : r.book || '—') : `implies ${pct(r.implied)}`}</small></td>
-                  <td className="is-num ir-sl-chance" title={r.raw != null ? `${pct(r.p)} calibrated to what this season's ${r.label} plays have landed${asStated(r.raw)}` : undefined}><b>{pct(r.p)}</b><small>{r.fair}</small></td>
-                  <td className="ir-sl-proj">
-                    {ladder ? (r.proj ? (
-                      <div className="ir-slate-proj ir-bd-proj" title={`Projected ${num(r.proj.exp)} ${r.unit}, between ${r.proj.floor} and ${r.proj.ceiling} half the games`}>
-                        <span><b>{num(r.proj.exp)}</b><small className="ir-slate-sub">{r.gap != null ? <span className={r.gap > 0 ? 'ir-slate-gap is-up' : 'ir-slate-gap'} title={`The projection ${num(Math.abs(r.gap))} ${r.unit} ${r.gap >= 0 ? 'over' : 'under'} the best rung`}>{r.gap >= 0 ? '+' : '−'}{num(Math.abs(r.gap))} vs rung · </span> : null}{r.proj.floor}–{r.proj.ceiling}</small></span>
-                      </div>
-                    ) : <small className="ir-slate-sub">no projection</small>) : (
-                      <small className="ir-slate-sub" title="His projected volume for the game (the board’s ranges)">{[r.volume?.rushAtt != null ? `${num(r.volume.rushAtt, 0)} car` : null, r.volume?.rushYds != null ? `${num(r.volume.rushYds, 0)} rush yds` : null, r.volume?.targets != null ? `${num(r.volume.targets, 0)} tgt` : null, r.volume?.recYds != null ? `${num(r.volume.recYds, 0)} rec yds` : null].filter(Boolean).join(' · ') || '—'}</small>
-                    )}
-                  </td>
-                  <td className="ir-sl-spot">{r.spot?.rank ? <span className={`ir-spot is-${tone}`} title={`${r.opp} gives up ${r.spot.value != null ? `${num(r.spot.value)} ${r.unit} a game` : `the #${r.spot.rank} most`} to ${r.spot.pos}s, #${r.spot.rank} of ${r.spot.count}`}>#{r.spot.rank} {r.spot.pos} · {TONE_WORD[tone] || ''}</span> : <span className="ir-spot is-none">no table</span>}</td>
-                  {final ? <td className="is-num nhlx-pk-got ir-sl-got">{r.actual === undefined ? <small>—</small> : r.actual === null ? <small>DNP</small> : <><b>{r.actual}</b><small>{r.unit}</small></>}</td> : null}
+                  <td className="ir-sl-player"><Who r={r} /></td>
+                  <td className="ir-sl-game"><Game r={r} /></td>
+                  <td className="is-num is-lead ir-sl-chance" title={`${num(y.rate, 1)} his rate × ${y.matchup ?? 1} the matchup${y.matchupFrom ? ` (${y.matchupFrom === 'blend' ? 'the cheat sheet and PropFinder' : y.matchupFrom === 'sheet' ? 'the cheat sheet' : 'PropFinder'})` : ''}`}><b>{num(y.exp)}</b><small>{y.floor}–{y.ceiling}</small></td>
+                  <td className="ir-sl-play"><span className="ir-bd-rungs">{y.marks.length ? y.marks.map((m) => <span key={m.line} className={`ir-bd-rung${m.hit == null ? '' : m.hit ? ' is-hit' : ' is-miss'}`} title={`o${m.line}: ${pct(m.p)} · read at ${pct(m.at)}${m.hit == null ? '' : m.hit ? ' · HIT' : ' · MISS'}`}><b>{m.mark}</b><i>{pct(m.p)}</i></span>) : <small className="ir-slate-sub">no ladder</small>}</span></td>
+                  <td className="is-num ir-sl-price"><b>{y.line != null ? y.line : '—'}</b><small>{y.sheetLine != null && y.sheetLine !== y.line ? `sheet ${y.sheetLine}` : y.sheetLine != null ? 'on the sheet' : y.line != null ? 'book' : ''}</small></td>
+                  <td className="ir-sl-spot"><Spot spot={y.spot} opp={r.opp} unit="yds" /></td>
+                  {final ? <td className="is-num nhlx-pk-got ir-sl-got">{y.actual === undefined ? <small>—</small> : y.actual === null ? <small>DNP</small> : <b>{y.actual}</b>}</td> : null}
                 </tr>
               );
-            }) : <tr><td colSpan={cols}><small className="ir-nfl-none">No row clears the floors{f.marginal ? '' : ' · "Show marginal" lists the rest'}.</small></td></tr>}
+            }) : <tr><td colSpan={final ? 8 : 7}><small className="ir-nfl-none">No projection yet: the week needs a PropFinder pull.</small></td></tr>}
           </tbody>
         </table>
       </div>
-      {!all && rows.length > b.shown ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-slate-more" onClick={() => setAll(true)}>Show all {rows.length}</button> : null}
+      {!all && rows.length > shown ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-slate-more" onClick={() => setAll(true)}>Show all {rows.length}</button> : null}
+    </>
+  );
+}
+
+/** One game: each side's team touchdowns tonight, its projected passer, runners, receivers and touchdown candidates. */
+function GameCard({ g, rows }) {
+  const total = g.odds?.total != null ? `total ${g.odds.total}` : null;
+  const score = g.final ? `final ${g.awayScore}–${g.homeScore}` : `${fmtDay(g.date)} ${fmtTip(g.date)}`;
+  const list = (ids, item) => (ids.length ? <ul>{ids.map(item)}</ul> : <span className="ir-slate-sub">—</span>);
+  const line = (id, market) => { const r = rows[id]; const y = r.yards[market]; return <li key={id}><span>{r.player}{y.actual != null ? <small> · got {y.actual}</small> : null}</span><b>{num(y.exp)}</b></li>; };
+  return (
+    <section className="ir-pj-game" aria-label={`${g.away} at ${g.home}`}>
+      <div className="ir-pj-head"><b>{g.away} @ {g.home}</b><small className="nhlx-auto-meta">{[score, total, g.odds?.spread || null].filter(Boolean).join(' · ')}</small></div>
+      <div className="ir-pj-cols">
+        {[g.away, g.home].map((team) => {
+          const t = g.teams[team];
+          if (!t) return <div key={team} className="ir-pj-team"><b>{team}</b><small className="nhlx-auto-meta">No PropFinder players for this side.</small></div>;
+          const tt = t.teamTd;
+          return (
+            <div key={team} className="ir-pj-team">
+              <div className="ir-pj-team-head">
+                <img src={teamLogo(team)} alt="" width="22" height="22" loading="lazy" className="ir-nfl-logo" /><b>{team}</b>
+                <small className="nhlx-auto-meta" title={`Its own ${num(tt.own, 2)} touchdowns a game${tt.fromTable != null ? `, ${num(tt.fromTable, 2)} through ${t.opp}'s defense` : ''}${tt.fromLine != null ? `, ${num(tt.fromLine, 2)} off ${num(tt.points, 1)} implied points` : ''}`}>{tt.tonight != null ? `${num(tt.tonight, 1)} TDs expected` : 'no team read'}{tt.points != null ? ` · ${num(tt.points, 1)} pts implied` : ''}</small>
+              </div>
+              <dl className="ir-pj-list">
+                <dt>Passing</dt><dd>{list(t.passing, (id) => line(id, 'pass_yds'))}</dd>
+                <dt>Rushing</dt><dd>{list(t.rushing, (id) => line(id, 'rush_yds'))}</dd>
+                <dt>Receiving</dt><dd>{list(t.receiving, (id) => line(id, 'rec_yds'))}</dd>
+                <dt>TD</dt><dd>{list(t.td, (id) => { const r = rows[id]; const a = r.td.actual; return <li key={id} className={a == null ? '' : a > 0 ? 'is-hit' : 'is-miss'}><span>{r.player}<RoleWords r={r} /></span><b title={tdWhy(r, false)}>{pct(r.td.p)}</b></li>; })}</dd>
+              </dl>
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }
 
 export default function NflBoards({ board }) {
-  const [filters, setFilters, reset] = useValueFilters('nfl');
-  const boards = useMemo(() => weekBoards(board, filters), [board, filters]);
+  const pj = board?.projections;
   if (!board?.games?.length) return <div className="nhlx-empty">No games in this week.</div>;
-  // Every row once across the boards (a TE's touchdown row sits on two of them).
-  const rows = new Map();
-  for (const b of Object.values(boards)) for (const r of b.rows) rows.set(r.id, r);
-  const all = rows.size;
-  const passing = [...rows.values()].filter((r) => !r.fails).length;
+  if (!pj) return <div className="nhlx-empty">No projections for this week yet: reload once the week has a PropFinder pull.</div>;
+  const rowsOf = (key) => (pj.boards[key] || []).map((id) => pj.rows[id]).filter(Boolean);
   return (
     <div className="ir-overview">
-      <ValueControls filters={filters} onChange={setFilters} onReset={reset} counts={{ passing, all, noun: 'board row' }} />
-      <p className="nhlx-auto-meta ir-bd-legend">Ranked by the value at the book’s price, the chance breaking ties; the floors above apply to every board (the first-half rows without a book line keep their place on the chance). <span className="ir-bd-role is-active">if active</span> a game-time decision · <span className="ir-bd-role is-role">if role confirmed</span> his read leans on a teammate out, hover for who.</p>
-      {BOARDS.map(([key]) => <BoardTable key={key} b={boards[key]} filters={filters} />)}
+      <p className="nhlx-auto-meta ir-bd-legend">The board’s own projections from PropFinder’s logs and tables and the cheat sheets (✓ = on the sheet); the book’s prices play no part. <span className="ir-bd-role is-active">if active</span> a game-time decision · <span className="ir-bd-role is-role">if role confirmed</span> his read leans on a teammate out, hover for who. Hover a figure for its arithmetic.</p>
+      {BOARDS.map(([key, title, note]) => (
+        <section key={key} className="ir-slate ir-bd" aria-label={title}>
+          <div className="nhlx-pfd-head"><b>{title}</b><small className="nhlx-auto-meta">{note}</small></div>
+          {MARKET[key] ? <YardsTable rows={rowsOf(key)} market={MARKET[key]} shown={SHOWN[key]} /> : <TdTable rows={rowsOf(key)} half={key === 'firstHalfTd'} shown={SHOWN[key]} />}
+        </section>
+      ))}
+      <section className="ir-pj" aria-label="By game">
+        <div className="nhlx-pfd-head"><b>By game</b><small className="nhlx-auto-meta">each side’s team touchdowns tonight, its projected passer, top {PER_GAME.rushing} runners and {PER_GAME.receiving} receivers, and its {PER_GAME.td} likeliest scorers</small></div>
+        <div className="ir-pj-grid">{pj.games.map((g) => <GameCard key={g.id} g={g} rows={pj.rows} />)}</div>
+      </section>
     </div>
   );
 }

@@ -101,7 +101,7 @@ export default function NflApp({ email }) {
               <div>
                 <span className="nhlx-eyebrow">NFL</span>
                 <h1>The week&apos;s <span>boards</span></h1>
-                <p>Six boards off the cheat sheets and PropFinder: the Top TD board, the first-half TD board, the best receiving, rushing and passing ladders, and three TE touchdowns across the slate — each ranked by the value at the book’s price, a name carrying “if active” when he is a game-time decision and “if role confirmed” when his read leans on a teammate out.</p>
+                <p>The board’s own projections from PropFinder and the cheat sheets, no price and no edge: the Top TD and first-half TD boards, the projected receiving, rushing and passing yards with the heights each player clears, three TE touchdowns across the slate, then every game with each side’s projected leaders and likeliest scorers.</p>
               </div>
             </div>
             <section className="nhlx-pk" aria-label="The week’s boards">
