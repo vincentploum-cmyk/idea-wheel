@@ -111,8 +111,8 @@ export default function NbaApp({ email }) {
             <div className="nhlx-bench-head">
               <div>
                 <span className="nhlx-eyebrow">NBA</span>
-                <h1>Tonight&apos;s <span>best plays</span></h1>
-                <p>Tonight’s rebounds, assists and threes where the board beats the book, the biggest edge first: the book’s line, his projection against it with his floor and ceiling, the board’s chance there, the book’s price and the opponent’s rank at his spot. The games beside them: open one for both rosters against both defenses, the courts and the tables behind a switch.</p>
+                <h1>Tonight&apos;s <span>best matchups</span></h1>
+                <p>The games ranked by their Matchup Score and every +EV play on the night ranked by its expected value at the book’s price, the floors hiding the capital-dead locks (worse than -200, under +5% a unit); set your own floors above the cards. Under them the games, folded to a line each: press one for the profile, both courts, the tables and the alternate-line ladders.</p>
               </div>
             </div>
             <section className="nhlx-pk" aria-label="Tonight’s picks">

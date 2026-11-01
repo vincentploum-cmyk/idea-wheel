@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { GameCharacteristics } from '@/components/nhl/Characteristics';
 import GameProfile from './NbaProfile';
-import { GroupTable, teamMark, expectedPill, playLabel } from '@/components/picks/Board';
+import { GroupTable, GameSummary, teamMark, expectedPill } from '@/components/picks/Board';
 import CourtPair, { AllowedTable, zoneTone, envPos, windowsOf } from './NbaCourt';
 import { useNbaPlayerCard } from './NbaPlayerCard';
 
@@ -93,31 +93,34 @@ function TeamColumn({ side, sport, final, metric, season }) {
   );
 }
 
-/** A game folded to one line; pressed, the characteristics and both courts, the team columns and the tables behind a switch. */
-export default function GameFold({ g, best = [], sport, metric, onMetric, open: openProp = null, onToggle = null, reliability = null }) {
+/**
+ * A game folded to one line (the brief of 2026-10-31: the matchup, the tip, the leak badge, how many +EV plays, the top one
+ * with its EV, the Matchup Score; closed by default); pressed, the profile and both courts, the team columns and the tables
+ * — ordered by EV, the marginal rows behind the panel's switch — behind a second switch.
+ */
+export default function GameFold({ g, matchup = null, best = [], sport, metric, onMetric, open: openProp = null, onToggle = null, reliability = null, filters = null }) {
   const [openOwn, setOpenOwn] = useState(false);
   const open = openProp ?? openOwn;
   const setOpen = (fn) => { const next = typeof fn === 'function' ? fn(open) : fn; if (onToggle) onToggle(next); else setOpenOwn(next); };
   const [more, setMore] = useState(false);
   const mine = best.filter((r) => r.game === g.id);
-  const top = mine[0] || null;
   const graded = mine.filter((r) => r.hit != null);   // the best bets graded once the game is stored
   const sides = [g.sides?.[g.away], g.sides?.[g.home]].filter(Boolean);
   const outs = sides.reduce((n, s) => n + (s.out?.length || 0), 0);
   const bodyId = `nba-game-${g.id}`;
   return (
-    <article className={`ir-gf${open ? ' is-open' : ''}`}>
+    <article className={`ir-gf${open ? ' is-open' : ''}`} id={`game-${g.id}`}>
       <button type="button" className="ir-gf-head" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen((v) => !v)}>
         <span className="ir-gf-teams">
           <img src={sport.teamLogo(g.away)} alt="" width="24" height="24" loading="lazy" />{g.away}
           <i>@</i>
           <img src={sport.teamLogo(g.home)} alt="" width="24" height="24" loading="lazy" />{g.home}
         </span>
-        <span className="ir-gf-meta">{statusOf(g)}</span>
+        <span className="ir-gf-meta">{statusOf(g)}{g.odds?.spread ? ` · ${g.odds.spread}` : ''}</span>
         <span className="ir-gf-meta">{outs ? `${outs} out` : 'nobody out'}</span>
         {g.profile?.script?.word ? <span className="ir-gf-meta" title={g.profile.script.text}>{g.profile.script.word}</span> : null}
-        <span className="ir-gf-meta">{mine.length} play{mine.length === 1 ? '' : 's'}{graded.length ? ` · ${graded.filter((r) => r.hit).length} of ${graded.length} hit` : ''}</span>
-        <span className="ir-gf-best">{top ? <>Best: <b>{top.player}</b> {playLabel(top)} · {pct(top.p)}{top.edge != null ? <small> +{Math.round(top.edge * 100)}</small> : null}</> : 'No play with an edge'}</span>
+        {graded.length ? <span className="ir-gf-meta">{graded.filter((r) => r.hit).length} of {graded.length} hit</span> : null}
+        <GameSummary g={g} matchup={matchup} />
         <svg className="ir-gf-caret" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
       </button>
       {open ? (
@@ -130,7 +133,7 @@ export default function GameFold({ g, best = [], sport, metric, onMetric, open: 
               <div className="ir-gf-cols">
                 {sides.map((side) => <TeamColumn key={side.team} side={side} sport={sport} final={g.final} metric={metric} season={g.season || null} />)}
               </div>
-              {g.plays ? <div className="ir-nfl-grid">{sport.groups.map(([key, label]) => <GroupTable key={key} label={label} t={g.tables[key]} final={g.final} sport={sport} />)}</div> : null}
+              {g.plays ? <div className="ir-nfl-grid">{sport.groups.map(([key, label]) => <GroupTable key={key} label={label} t={g.tables[key]} final={g.final} sport={sport} filters={filters} marginal={filters ? !!filters.marginal : null} />)}</div> : null}
             </>
           ) : null}
         </div>

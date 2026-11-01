@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { BoardNotes } from '@/components/picks/Board';
 import Shuffle from '@/components/picks/Shuffle';
-import SlateList from '@/components/picks/SlateList';
+import SlateOverview, { useRanked } from '@/components/picks/SlateOverview';
+import { useValueFilters } from '@/components/picks/value-filters';
 import { GROUPS, MARKETS, SHUFFLE_MARKETS, labelOf } from '@/lib/nba/markets';
 import { teamLogo, teamName } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
@@ -35,39 +36,38 @@ export function NbaShuffle({ date }) {
 }
 
 /**
- * The slate: every play ranked, then the games folded to a line each; needs an NbaPlayerCardProvider above it.
- * `game` (a game id from the head's dropdown) shows that game alone, open, with the ranked list cut to its plays;
- * `onGame` clears it ("All games").
+ * The slate (the restructure of 2026-10-31): the overview first — the value floors, Top Matchups (the games by their
+ * Matchup Score) and Top Plays (every +EV play on the night, the best value first) — then the games folded to a line
+ * each in the same order, closed by default, opening on a press; needs an NbaPlayerCardProvider above it.
+ * `game` (a game id from the head's dropdown, or a Top Matchups card) shows that game alone, open, with the list cut to
+ * its plays; `onGame` sets or clears it ("All games").
  */
 function NbaSlate({ board: whole, game = null, onGame = null }) {
   const open = useNbaPlayerCard();
+  const [filters, setFilters, reset] = useValueFilters('nba');
   const picked = game ? (whole?.games || []).find((g) => g.id === game) || null : null;
   const board = picked ? { ...whole, games: [picked], best: (whole.best || []).filter((r) => r.game === picked.id) } : whole;
+  const { ranked } = useRanked(board, filters);
   const [metric, setMetric] = useState('pts');   // the courts' stat (the tabs above each court, one setting for the slate); the bar's height per stat lives in CourtShuffleProvider
-  // Every game open by default (Vincent, 2026-10-30: "too many clicks"); the set of closed ones is the state, so a new slate opens again.
-  const [closed, setClosed] = useState(() => new Set());
-  // A game picked in the dropdown opens, whatever it was before (the state adjusted as the pick changes, during render); its caret still folds it.
-  const [lastGame, setLastGame] = useState(game);
-  if (game !== lastGame) {
-    setLastGame(game);
-    if (game && closed.has(game)) { const s = new Set(closed); s.delete(game); setClosed(s); }
-  }
+  // Every game folded by default (the brief of 2026-10-31: "Games collapsed by default to a one-line header"); the set of open ones is the state.
+  const [opened, setOpened] = useState(() => new Set());
   if (!whole?.games?.length) return <div className="nhlx-empty">No games on this date.</div>;
-  const allClosed = board.games.every((g) => closed.has(g.id));
+  const allOpen = board.games.every((g) => opened.has(g.id));
   // A row of the list opens the card with the side's entry for the player (his ladders and projection), as a court chip does.
   const openRow = (r) => {
-    const side = board.games.find((g) => g.id === r.game)?.sides?.[r.team];
+    const side = whole.games.find((g) => g.id === r.game)?.sides?.[r.team];
     open({ key: r.key, player: side?.players?.find((p) => p.key === r.key) || r, team: r.team, opp: r.opp, venue: r.venue, market: r.market });
   };
+  const pickGame = (id) => { if (onGame) onGame(String(id)); else setOpened((prev) => new Set(prev).add(id)); };
   return (
     <>
-      {/* The games first, open (2026-10-30, Vincent: "too many clicks. I need the games listed first along with the best bets"), the ranked list under them. */}
+      <SlateOverview board={board} sport={SPORT} filters={filters} onFilters={setFilters} onReset={reset} onGame={picked ? null : pickGame} onOpen={openRow} picked={picked?.id || null} title="Top plays tonight" />
       <section className="ir-gf-list" aria-label="Games">
         <div className="nhlx-pfd-head">
           <b>{picked ? `${picked.away} @ ${picked.home}` : 'Games'}</b>
-          <small className="nhlx-auto-meta">{picked ? `one game, picked in the dropdown above · its plays ranked under it` : 'each with its profile, its best bets and the two courts: the stat tabs, the shuffle bar, every player’s projections and his chance at the bar, PropFinder’s table above each · the ranked list of every play is under the games'}</small>
+          <small className="nhlx-auto-meta">{picked ? 'one game, picked above · its plays ranked over it' : 'by Matchup Score · each line the leak badge, the +EV count and the top play · press one for the profile, the courts and the tables'}</small>
           {picked && onGame ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-gf-all" onClick={() => onGame('')}>All games ({whole.games.length})</button>
-            : <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-gf-all" onClick={() => setClosed(allClosed ? new Set() : new Set(board.games.map((g) => g.id)))}>{allClosed ? 'Expand all' : 'Collapse all'}</button>}
+            : <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-gf-all" onClick={() => setOpened(allOpen ? new Set() : new Set(board.games.map((g) => g.id)))}>{allOpen ? 'Collapse all' : 'Expand all'}</button>}
         </div>
         {/* What chance has been reliable to bet on, per market, from the season's graded nights (lib/picks/reliability.js; Vincent,
             2026-10-31): every percentage on the page is green at or over its market's threshold, red under it. */}
@@ -78,9 +78,8 @@ function NbaSlate({ board: whole, game = null, onGame = null }) {
             <small>green = a chance at or over its market’s threshold, red = under it, by the chance as the model states it</small>
           </p>
         ) : null}
-        {board.games.map((g) => <GameFold key={g.id} g={{ ...g, season: board.season }} best={board.best} sport={SPORT} metric={metric} onMetric={setMetric} reliability={board.reliability || null} open={!closed.has(g.id)} onToggle={(next) => setClosed((prev) => { const s = new Set(prev); if (next) s.delete(g.id); else s.add(g.id); return s; })} />)}
+        {ranked.map(({ game: g, matchup }) => <GameFold key={g.id} g={{ ...g, season: board.season }} matchup={matchup} best={board.best} sport={SPORT} metric={metric} onMetric={setMetric} reliability={board.reliability || null} filters={filters} open={!!picked || opened.has(g.id)} onToggle={(next) => setOpened((prev) => { const s = new Set(prev); if (next) s.add(g.id); else s.delete(g.id); return s; })} />)}
       </section>
-      <SlateList board={board} sport={SPORT} onOpen={openRow} />
       <BoardNotes notes={board.notes} />
     </>
   );

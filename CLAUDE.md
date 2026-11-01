@@ -30,6 +30,48 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
 `lib/picks/*` is the sport-neutral pipeline both boards run on; each sport binds it with a
 config and keeps its own markets, teams, feeds and slate key:
 
+- **The value layer** (`lib/picks/value.js`, pure and client-safe; Mr B's restructure brief for Vincent, 2026-10-31, "Best
+  matchups, immediately visible": "chance is a vanity metric … rank on EV%, not chance"): every play and every ladder rung
+  carries its expected value at the book's price — `decimal` = american > 0 ? american / 100 + 1 : 100 / |american| + 1,
+  `ev` = p × (decimal − 1) − (1 − p), the return a unit staked (`evOf`; a 99% lock at -5000 is +1%, a 47% TD at +145
+  +15%), `edge` = p − 1 / decimal as before — and **everything ranks by EV** (`orderBy`; `board.best`, each side's `picks`,
+  the per-game tables, the chance only breaking ties: chance-sorting inverts the P&L). **Two floors by default** (`DEFAULTS`:
+  `minEv` 0.05, `maxJuice` -200, `minChance` null): a play failing one is marginal — `failsOf` names the floor ('price',
+  'juice', 'ev', 'chance', 'thin', 'out'), `passes` — and stays off the overview, the side's picks and the tables' rows
+  (a table lists the rows that pass, the best value first, `marginal` the rest, three fill-ins marked `under` when fewer
+  pass; `next` the first four marginal). **The Matchup Score per game** (`matchupScore`, `g.matchup` on every board game):
+  the top three passing plays' EV summed (`base`) + 0.5 × the passing count (`breadth`), × 1 + 0.15 × the leak tier
+  (`gameLeak`: the softer defense's tier from the profile's words — Allows / Soft spots "Leaky" = 1, "Very leaky" = 2 —
+  with the NBA's game script folded in, pace and total both up +1, both down −1), × the blowout dampener on the spread
+  (`blowoutFactor`: 1 to 9 points, 0.7 from 16; the NBA's starters sit late in a blowout), × 100; `top` the ids, `topPlay`.
+  **The NBA's minutes gate**: a side player projected under `MIN_MINUTES` = 20 is `thin` and his plays marginal; `b2b` when
+  his newest log is the night before the slate (a badge); `thin` / `b2b` / `minutes` ride on the plays, the best rows and
+  the side players. `board.value` = the defaults, `minMinutes`, `top` (the passing plays' ids by EV) and `ranked` (the games
+  by score). The server runs it at the defaults; the panels run the same functions with the user's own floors
+  (`components/picks/value-filters.js` `useValueFilters(sport)`: localStorage `ir:value:<sport>`, through
+  `useSyncExternalStore` so the server render shows the defaults; `rankGames` / `topPlays` re-read `board.best` and
+  `g.matchup`), so a slider never refetches. `ladderValue(rungs, side)` prices every rung for the ladder view, the best-EV
+  rung marked. **The read API** (`lib/picks/v1.js`, `GET /api/v1/slate/{nba|nfl}?date[&season&week&type][&minEv&maxJuice
+  &minChance&sort&marginal=1]` → { games: [{ matchup, kickoff, line, leak_tier, matchup_score, plays_with_edge, top_plays }]
+  by score, top_plays by EV }, `GET /api/v1/picks/{sport}/{gameId}` → the tables with every row's value, the marginal rows,
+  both sides' players with ranges and ladders; each row player, market, model_chance, fair_price, book_price, EV_pct, edge,
+  status, result; admin or the sync token, `Cache-Control: private, max-age=60`). `__tests__/picks-value.test.js`.
+- **The three-level layout both boards share** (the brief's IA; `components/picks/SlateOverview.jsx`): level 1, the slate
+  overview at the top — `ValueControls.jsx` (the min EV, max juice and min chance sliders, the sort EV% · Matchup · Chance,
+  "Show marginal", Defaults), **Top Matchups** (`MatchupCards`: the games by Matchup Score, a card each — the matchup, the
+  tip, the leak badges, "N +EV plays", the top play with its EV and price, the score's heat green / amber / grey against the
+  slate's best; hover for the arithmetic; press one to open the game) and **Top Plays** (`SlateList.jsx`: every +EV play
+  across the slate, EV the headline column with the edge under it, the price beside it with the chance it implies, then
+  the chance, the projection against the line and the matchup; the market tabs, "Soft matchups only", the marginal rows
+  dimmed with the floor they miss when the switch is on; a row opens the card on the NBA, the **ladder** button opens
+  level 3 under the row — `Ladder.jsx`, the alternate lines with the board's chance, the price and the EV of every rung,
+  the best-EV rung ringed, the main line marked; the NBA card's rung buttons carry the same EV and ring). Level 2, the
+  games **folded to one line, closed by default**, in the overview's order (the NFL's `Board.jsx` `GameHead` +
+  `GameSummary`, the NBA's `NbaGame.jsx` `GameFold`: the matchup, the tip, the leak badges, "N +EV", the top play with its
+  EV, the score; Expand all / Collapse all; a Top Matchups card or the NBA head's dropdown opens one game alone); inside,
+  the profile, the strips / the courts and the tables (`GroupTable`: EV · Price · Chance, the marginal rows behind the
+  panel's switch, re-read at the user's floors). The games-first-and-open layout of 2026-10-30 gave way to this on
+  2026-11-01; `RowBadges` (`badges.jsx`) marks DTD, thin minutes and a back-to-back on every row.
 - `markets.js` (`makeMarkets`): a sport's markets ({ group, label, unit, fields (the box-score
   fields the market settles on, summed), yesNo, floor, defense, aliases }) → `marketFromText`
   (any spelling, whole-word match for short aliases like "PTS"), `statOf`, `defenseKey`.
