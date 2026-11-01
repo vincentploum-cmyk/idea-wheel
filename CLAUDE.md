@@ -679,7 +679,16 @@ config and keeps its own markets, teams, feeds and slate key:
   chance), first half 1 − e^(−0.48 λ) (`H1_SHARE`); every constant in `PARAMS`, overridable per call (`params`, the
   audit's grid; `reproject` in `lib/nfl/picks.js`, `nflBoard(cocktail)` / `makeBuild` for the board); its word strong from 45%, lean from 30%, thin under (`tdTier`, `TD_TIERS`); listed from
   `LIST_TD_MIN` = 5%, the likeliest first. Skill positions only, the out left off, "if active" (DTD) and "if role
-  confirmed" (a without split or a vacated lift; `roleOf`, the hover names who) beside a name; every height and chance
+  confirmed" (a without split or a vacated lift **from a teammate at his own position group** — QB, RB, WR / TE,
+  `ROLE_GROUP`, the side's players and out list naming the positions; until 2026-11-01 one inactive rookie receiver put
+  the word on every Raven; `roleOf`, the hover names who) beside a name; **one quarterback a team** (Vincent, 2026-11-01:
+  "Lamar Jackson is the QB, why am I seeing Tyler Huntley?" — the backup's three starts projected him 197 yards):
+  ESPN's depth chart is read with the injury feed (`fetchDepthCharts` / `parseDepthChart` in `lib/nfl/espn.js`: every
+  team's `/teams/<id>/depthcharts`, the offense formation's `qb` slot starter first, stored on the feed as `depth`, put
+  on the pull as `espnDepth` by `pfFor`; PropFinder's `fullPosition` numbers no quarterback), `markQuarterbacks` puts
+  `slot: 'QB'` / `depth` on each QB row (the lists read "QB1" / "QB2") and makes the highest on the chart among the
+  quarterbacks not out the starter, every other `backup: true` — off every list (`listsOf`), the first-TD sum and the
+  snapshot's attack, still found by the search; no chart, the rows as before; every height and chance
   graded once the game is stored. `games[].lists` and `lists` = { td, receiving, rushing } of row ids (`listsOf`).
   **The script**: `node tools/nfl-projections.mjs [--season --week | --file picks.json] [--games | --week-lists] [--top N]`
   prints the same lists as text, one line a player ("Puka Nacua (LAR @ SEA) — floor 98 · proj 125 · ceiling 151 yds ·
