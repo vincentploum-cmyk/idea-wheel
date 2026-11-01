@@ -21,7 +21,7 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   → `[tab, mounted]`, a visited panel stays mounted hidden so it keeps its state; `components/site/TabBar.jsx`
   draws the bar). The NBA page has `#board` (Best plays: the night's plays in one ranked list over the games folded to a
   line each, the data sources, the default) and `#shuffle` (the shuffle) over one date picker (the `head()`, drawn on
-  every panel), and `#boards` (Boards, below), `#sheet` (Cheat sheet, below) and `#firstbasket`. **The NFL page is seven
+  every panel), and `#boards` (Boards, below), `#big` (Big games, below), `#sheet` (Cheat sheet, below) and `#firstbasket`. **The NFL page is seven
   plain tabs drawn as pills** (Vincent, 2026-11-01: "way too complicated … Remove the edge, implies, juice, etc… I just need
   a simple list of games and per game, players listed with their ladders", then a sportsbook's games page as the form and
   "where are the passing yards?"; `TabBar`'s `pills`): `#matchups` (Games, the default: the week's games as a sportsbook
@@ -1008,6 +1008,16 @@ config and keeps its own markets, teams, feeds and slate key:
   it, the cheat sheet's tile ("✓ sheet #4" when it sits in PropFinder's third, "✗" when not) and the factor on his rate
   (`ranges[market].matchup`, "×1.06"); the hover names the figures, the league's average and whether the factor is the
   sheet and PropFinder blended or one alone; "no table" when the pull has none. `__tests__/picks-boards.test.js`.
+- **Big games** (`#big`, `components/nba/NbaBigGames.jsx`, `lib/nba/big.js`; Vincent, 2026-11-01: "Do the same big games
+  study for the NBA"; `docs/audits/2026-11-01-nba-big-games.md`, `tools/audit/nba_big.py`): per stat the night's likeliest
+  30+ / 40+ points, 12+ / 15+ rebounds, 10+ / 12+ assists, 5+ / 7+ threes and 40+ / 50+ PRA (`NBA_BIG`, `nbaBigChance`: the
+  board's normal tail at the mark off `ranges[market].exp` and the ladder's `sd` (`boardTail`), moved by σ(a + b · logit +
+  w · context) where a context beat it on both checks — his share of his last 20 games at the mark (points, 12+ rebounds,
+  10+ assists, PRA), his threes attempted over his last five (5+ threes); 15+ rebounds, 12+ assists and 7+ threes read the
+  board's tail as it is; the matchup, pace, the line, home and back-to-backs added nothing). `nbaBigGames` runs in the
+  binding's `buildBoard` (`board.big` = { rows, lists }, the logs off the pull, `BIG_MIN_GAMES` = 5, `NBA_BIG_LIST_MIN` = 5%),
+  the reason beside each name ("30+ in 7 of his last 20"), the head's game dropdown cuts it, a name opens the card.
+  `__tests__/nba-big.test.jsx`.
 - **Cheat sheet** (`#sheet`, `components/nba/NbaSheetMatchups.jsx`, the pure reader `lib/nba/sheet-matchups.js`; Vincent,
   2026-10-31: "create a new view with best cheat sheet matchups per game"): per game the cheat sheet's soft tiles — the
   cells of each side's `allowed` table carrying the sheet's rank (`sheet`, 1 = the opponent gives up the most of 30) for
@@ -1277,6 +1287,12 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   context per stat (implied points, target share, game total) beat the board and its recalibration on both checks, the
   defense table and the player's past big games did not, everything at once and the trees overfit, the rules mined on 2024
   fell from 70% to 22–35%. Shipped as the Big games tab.
+- The NBA's big games (`docs/audits/2026-11-01-nba-big-games.md`, `tools/audit/nba_big.py` on `nba-audit.mjs`'s rows, `--big`
+  grades the site's read): 31,014 player-game-stat rows of 2025-26 and 2026-27; unlike the NFL the player's own record over
+  his last 20 games beats the board's chance on both checks (points, 12+ rebounds, 10+ assists, PRA), threes attempted for
+  5+ threes; the matchup, pace, the line, home and back-to-backs did not; the rarest marks keep the board's chance. The
+  site's read on Feb–Apr 2025-26: 30+ points said 10.0% landed 9.9%, the night's top five 35% / 34%; this season's first
+  ten nights ran under it (30+ said 12.3%, landed 8.4%).
 
 ## Canonical locations
 
