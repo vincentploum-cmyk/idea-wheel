@@ -3,20 +3,21 @@
 import { useState } from 'react';
 import { teamLogo } from '@/lib/nfl/teams';
 import { headshotUrl } from '@/lib/nfl/espn';
-import { TIERS, TD_TIERS } from '@/lib/nfl/projections';
+import { TD_TIERS } from '@/lib/nfl/projections';
 
 // The NFL projections as plain lists (Vincent, 2026-11-01: "Why am I not seeing a simple list of players and their
 // projected yards / receptions per game … Player - yards (strong) yards (lean) yards (thin) … In case of touch down:
 // Player - chance% of td"): the Matchups tab, one card a game with three tabs — TDs, Receiving, Rushing —, and the same
-// three lists across every game (`NflList`). The figures are lib/nfl/projections.js's (`board.projections`): a height is
-// the highest he clears at 60% (strong), 45% (lean) and 30% (thin) off his ladder; a touchdown chance is strong from
-// 45%, lean from 30%, thin under that. No price anywhere.
+// three lists across every game (`NflList`). The figures are lib/nfl/projections.js's (`board.projections`): tonight's
+// projection = his skill (his rate) × the matchup (the defense at his slot, PropFinder's table and the cheat sheet's
+// snapshot) × the game script (the book's total and spread), with his floor and ceiling around it (Vincent, 2026-11-01:
+// "based on today's matchup and the player's skill, and today's script, this is the floor and this is the ceiling"); a
+// touchdown chance is strong from 45%, lean from 30%, thin under that. No price anywhere.
 
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const num = (v, d = 0) => (v == null ? '—' : Number(v).toFixed(d));
 const fmtTip = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { weekday: 'short' }) : '');
-const TIER_AT = Object.fromEntries(TIERS);
 export const KINDS = [['td', 'TDs'], ['receiving', 'Receiving'], ['rushing', 'Rushing']];
 const MARKET = { receiving: 'rec_yds', rushing: 'rush_yds' };
 const SHOW = 40;
@@ -35,13 +36,6 @@ function Who({ r, game = false }) {
       </span>
     </div>
   );
-}
-
-/** One height: "115+" with his chance there on the hover, graded once the game is stored. */
-function Height({ t, unit, tier }) {
-  if (!t) return <span className="ir-ml-none" title={`He reaches no ${unit} height at ${pct(TIER_AT[tier])}`}>—</span>;
-  const grade = t.hit == null ? '' : t.hit ? ' is-hit' : ' is-miss';
-  return <span className={`ir-ml-h${grade}`} title={`${t.mark}+ ${unit}: ${pct(t.p)}${t.hit == null ? '' : t.hit ? ' · HIT' : ' · MISS'}`}>{t.mark}+</span>;
 }
 
 const Got = ({ v }) => (v === undefined ? <small>—</small> : v === null ? <small>DNP</small> : <b>{v}</b>);
@@ -77,16 +71,24 @@ function TdTable({ rows, game }) {
   );
 }
 
+const pctile = 80;   // the ceiling's percentile (lib/nfl/projections.js RANGE_Z), the floor's 20th
+/** How tonight's figure is built, for the hover. */
+function why(y, unit) {
+  const parts = [`${num(y.rate, 1)} ${unit} his rate`, `× ${y.matchup ?? 1} the matchup${y.matchupFrom ? ` (${y.matchupFrom === 'blend' ? 'PropFinder and the cheat sheet' : y.matchupFrom === 'sheet' ? 'the cheat sheet' : 'PropFinder'})` : ''}`, `× ${y.script} the game script`];
+  return `${parts.join(' ')} = ${num(y.proj, 1)} tonight · floor ${y.floor} and ceiling ${y.ceiling}: a bad day and a good day (his ${100 - pctile}th and ${pctile}th percentile)${y.line != null ? ` · the book's line ${y.line}` : ''}${y.sheetLine != null ? ` · the cheat sheet's ${y.sheetLine}` : ''}`;
+}
+const gradeOf = (y) => (y?.grade === 'over' ? ' is-hit' : y?.grade === 'under' ? ' is-miss' : '');
+
 function YardsTable({ rows, kind, game }) {
   const market = MARKET[kind];
   const final = rows.some((r) => r.final);
   const rec = kind === 'receiving';
+  const cols = [['floor', 'Floor', 'A bad day tonight'], ['proj', 'Projected', 'His skill × tonight’s matchup × tonight’s game script'], ['ceiling', 'Ceiling', 'A good day tonight']];
   return (
     <table className="nhlx-db-table nhlx-pk-table ir-ml-table">
       <thead><tr>
         <th className="ir-slate-rank">#</th><th>Player</th>
-        {TIERS.map(([tier, at]) => <th key={tier} className={`is-num ir-ml-th is-${tier}`} title={`The highest height he clears at ${pct(at)}${rec ? '; his receptions under it' : ''}`}>{tier}</th>)}
-        <th className="is-num" title="The board's projection: his rate from PropFinder's logs × the defense at his slot (PropFinder's table with the cheat sheet's snapshot)">Proj.</th>
+        {cols.map(([k, l, t]) => <th key={k} className={`is-num ir-ml-th is-${k}`} title={`${t}${rec ? '; his receptions under it' : ''}`}>{l}</th>)}
         {final ? <th className="is-num">Got</th> : null}
       </tr></thead>
       <tbody>
@@ -97,14 +99,13 @@ function YardsTable({ rows, kind, game }) {
             <tr key={r.id}>
               <td className="ir-slate-rank">{i + 1}</td>
               <td><Who r={r} game={game} /></td>
-              {TIERS.map(([tier]) => (
-                <td key={tier} className="is-num ir-ml-cell">
-                  <Height t={y.tiers?.[tier]} unit="yds" tier={tier} />
-                  {c ? <small><Height t={c.tiers?.[tier]} unit="rec" tier={tier} /> rec</small> : null}
+              {cols.map(([k]) => (
+                <td key={k} className={`is-num ir-ml-cell is-${k}`} title={why(y, 'yds')}>
+                  <b>{y[k] == null ? '—' : num(y[k])}</b>
+                  {c ? <small>{c[k] == null ? '—' : num(c[k], k === 'proj' ? 1 : 0)} rec</small> : null}
                 </td>
               ))}
-              <td className="is-num ir-ml-proj" title={`Between ${y.floor} and ${y.ceiling} yards half the games${y.line != null ? ` · the book's line ${y.line}` : ''}${y.sheetLine != null ? ` · the cheat sheet's ${y.sheetLine}` : ''}`}><b>{num(y.exp)}</b><small>{rec && c ? `${num(c.exp, 1)} rec` : 'yds'}</small></td>
-              {final ? <td className="is-num nhlx-pk-got"><Got v={y.actual} />{rec && c?.actual != null ? <small>{c.actual} rec</small> : null}</td> : null}
+              {final ? <td className={`is-num nhlx-pk-got${gradeOf(y)}`} title={y.grade ? `${y.grade === 'over' ? 'Over his ceiling' : y.grade === 'under' ? 'Under his floor' : 'Between his floor and ceiling'}` : undefined}><Got v={y.actual} />{rec && c?.actual != null ? <small>{c.actual} rec</small> : null}</td> : null}
             </tr>
           );
         })}
@@ -140,6 +141,7 @@ function GameCard({ g, pj }) {
         <span className="ir-ml-teams"><img src={teamLogo(g.away)} alt="" width="22" height="22" className="ir-nfl-logo" />{g.away}<i>@</i><img src={teamLogo(g.home)} alt="" width="22" height="22" className="ir-nfl-logo" />{g.home}</span>
         <small className="nhlx-auto-meta">{[status, g.odds?.total != null ? `total ${g.odds.total}` : null, g.odds?.spread || null, tds.length ? tds.map((x) => `${x.team} ${num(x.tt.tonight, 1)} TDs expected`).join(' · ') : null].filter(Boolean).join(' · ')}</small>
       </div>
+      {[g.away, g.home].some((t) => g.teams?.[t]?.script?.words?.length) ? <p className="ir-ml-def">{[g.away, g.home].filter((t) => g.teams?.[t]?.script?.words?.length).map((t) => <span key={t} title={`On ${t}'s yards: volume × ${g.teams[t].script.volume}, the run × ${g.teams[t].script.rush}, the pass × ${g.teams[t].script.pass}`}><b>{t} script</b> {g.teams[t].script.words.join(' · ')}</span>)}</p> : null}
       {weak.length ? <p className="ir-ml-def">{weak.map(({ team, d }) => <span key={team}><b>{d.of} defense</b> gives up the most to {d.weak.slice(0, 3).map((w) => `${w.word} (#${w.rank})`).join(', ')}</span>)}</p> : null}
       <div className="nhlx-tabs nhlx-rk-tabs ir-ml-tabs" role="tablist" aria-label="List">
         {KINDS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={kind === k} className={`nhlx-tab${kind === k ? ' is-active' : ''}`} onClick={() => setKind(k)}>{l}<i>{g.lists?.[k]?.length || 0}</i></button>)}
@@ -151,7 +153,7 @@ function GameCard({ g, pj }) {
 
 const LEGEND = (
   <p className="nhlx-auto-meta ir-bd-legend">
-    <span className="ir-ml-tier is-strong">strong</span> the highest height he clears 60% of the time · <span className="ir-ml-tier is-lean">lean</span> 45% · <span className="ir-ml-tier is-thin">thin</span> 30% · touchdowns: strong from 45%, lean from 30%. From PropFinder’s logs and tables and the cheat sheets (✓ = on the sheet); no price. <span className="ir-bd-role is-active">if active</span> a game-time decision · <span className="ir-bd-role is-role">if role confirmed</span> his read leans on a teammate out.
+    Yards: tonight’s <b>projection</b> = his skill × tonight’s matchup (PropFinder and the cheat sheet’s defense snapshot) × tonight’s game script (the book’s total and spread), with his <b>floor</b> (a bad day) and <b>ceiling</b> (a good day) around it; hover a figure for its parts. Touchdowns: <span className="ir-ml-tier is-strong">strong</span> from 45% · <span className="ir-ml-tier is-lean">lean</span> from 30% · <span className="ir-ml-tier is-thin">thin</span> under. ✓ = on the cheat sheet; no price. <span className="ir-bd-role is-active">if active</span> a game-time decision · <span className="ir-bd-role is-role">if role confirmed</span> his read leans on a teammate out.
   </p>
 );
 

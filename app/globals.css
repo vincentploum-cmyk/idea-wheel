@@ -1835,15 +1835,11 @@ td.is-shown .nhlx-df-cellbtn { outline: 1.5px solid var(--primary-line); }
 .ir-ml-table td { vertical-align: middle; font-variant-numeric: tabular-nums; }
 .ir-ml-table td.is-lead b { font-family: var(--font-display); font-size: 17px; color: var(--heading); }
 .ir-ml-table td small { display: block; font-size: 12px; color: var(--muted); }
-.ir-ml-th { text-transform: capitalize; }
-.ir-ml-th.is-strong { color: var(--ok-fg); }
-.ir-ml-th.is-lean { color: var(--warn-fg); }
-.ir-ml-cell .ir-ml-h { font-weight: 700; font-size: 15px; color: var(--heading); }
-.ir-ml-cell small .ir-ml-h { font-size: 12px; font-weight: 600; color: var(--body); }
-.ir-ml-h.is-hit { color: var(--ok-fg) !important; }
-.ir-ml-h.is-miss { color: var(--bad-fg) !important; text-decoration: line-through; }
-.ir-ml-none { color: var(--muted); }
-.ir-ml-proj b { color: var(--body); font-weight: 600; }
+.ir-ml-cell b { font-weight: 600; font-size: 15px; color: var(--body); }
+.ir-ml-cell.is-proj b { font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--heading); }
+.ir-ml-th.is-proj { color: var(--heading); }
+.ir-ml-table td.nhlx-pk-got.is-hit b { color: var(--ok-fg); }
+.ir-ml-table td.nhlx-pk-got.is-miss b { color: var(--bad-fg); }
 .ir-ml-tier { display: inline-block; padding: 0 8px; border-radius: 100px; font-size: 12.5px; font-weight: 600; line-height: 20px; background: var(--bg-soft); color: var(--muted); }
 .ir-ml-tier.is-strong { background: var(--ok-bg); color: var(--ok-fg); }
 .ir-ml-tier.is-lean { background: var(--warn-bg); color: var(--warn-fg); }

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-// The week's NFL projections as text, in the site's layout (Vincent, 2026-11-01: "Player - yards (strong) yards (lean)
-// yards (thin) … In case of touch down: Player - chance% of td"): every game with its TDs, receiving and rushing lists,
-// then the three lists across the week. The figures are the site's own (lib/nfl/projections.js, `projections` on GET
-// /api/nfl/picks): a height is the highest he clears at 60% (strong), 45% (lean) and 30% (thin); a touchdown chance is
+// The week's NFL projections as text, in the site's layout (Vincent, 2026-11-01: "based on today's matchup and the
+// player's skill, and today's script, this is the floor and this is the ceiling … In case of touch down: Player -
+// chance% of td"): every game with its TDs, receiving and rushing lists, then the three lists across the week. The
+// figures are the site's own (lib/nfl/projections.js, `projections` on GET /api/nfl/picks): tonight's projection = his
+// skill × the matchup × the game script, his floor and ceiling around it (a bad day, a good day); a touchdown chance is
 // strong from 45%, lean from 30%. No price.
 //
 //   node tools/nfl-projections.mjs                         this week, from https://ideareels.io (NHL_ACTIONS_TOKEN in the env)
@@ -34,8 +35,7 @@ const n1 = (v) => (v == null ? '—' : Number(v).toFixed(1));
 const words = (r) => (r.role || []).map((x) => x.word).join(', ');
 const tag = (r) => [r.onSheet ? '✓' : null, r.health === 'DTD' ? 'DTD' : null, words(r) || null].filter(Boolean).join(', ');
 const who = (r, game) => `${r.player} (${r.team}${game ? ` ${r.venue === 'H' ? 'vs' : '@'} ${r.opp}` : ''})${tag(r) ? ` [${tag(r)}]` : ''}`;
-const TIER_NAMES = ['strong', 'lean', 'thin'];
-const heights = (y) => TIER_NAMES.map((t) => `${y?.tiers?.[t] ? `${y.tiers[t].mark}+` : '—'} (${t})`).join(' ');
+const n0 = (v) => (v == null ? '—' : String(Math.round(v)));
 
 function lines(pj, ids, kind, game) {
   const rows = ids.map((id) => pj.rows[id]).filter(Boolean);
@@ -44,8 +44,9 @@ function lines(pj, ids, kind, game) {
     if (kind === 'td') return `  ${i + 1}. ${who(r, game)} — ${pct(r.td.p)} (${r.td.tier})${r.pos === 'QB' ? ' rushing' : ''} · 1st half ${pct(r.td.p1h)}`;
     const y = r.yards[kind === 'receiving' ? 'rec_yds' : 'rush_yds'];
     const c = kind === 'receiving' ? r.yards.receptions : null;
-    const rec = c ? ` · rec ${TIER_NAMES.map((t) => (c.tiers?.[t] ? `${c.tiers[t].mark}+` : '—')).join(' / ')}` : '';
-    return `  ${i + 1}. ${who(r, game)} — ${heights(y)}${rec} · proj ${n1(y.exp)}`;
+    const rec = c ? ` · rec ${n0(c.floor)} / ${n1(c.proj)} / ${n0(c.ceiling)}` : '';
+    const got = y.actual != null ? ` · got ${y.actual}${y.grade === 'over' ? ' (over his ceiling)' : y.grade === 'under' ? ' (under his floor)' : ''}` : '';
+    return `  ${i + 1}. ${who(r, game)} — floor ${n0(y.floor)} · proj ${n0(y.proj)} · ceiling ${n0(y.ceiling)} yds${rec}${got}`;
   });
 }
 
@@ -56,6 +57,8 @@ function gameText(pj) {
   for (const g of pj.games) {
     out.push(`${g.away} @ ${g.home}${g.odds?.total != null ? ` · total ${g.odds.total}` : ''}${g.odds?.spread ? ` · ${g.odds.spread}` : ''}${g.final ? ` · final ${g.awayScore}–${g.homeScore}` : ''}`);
     for (const team of [g.away, g.home]) {
+      const sc = g.teams?.[team]?.script;
+      if (sc?.words?.length) out.push(`  ${team} script: ${sc.words.join(' · ')} (volume × ${sc.volume}, run × ${sc.rush}, pass × ${sc.pass})`);
       const d = g.teams?.[team]?.defense;
       if (d?.weak?.length) out.push(`  ${d.of} defense gives up the most to ${d.weak.slice(0, 3).map((w) => `${w.word} (#${w.rank})`).join(', ')}`);
     }
@@ -73,6 +76,6 @@ function weekText(pj) {
 const board = await load();
 const pj = board.projections;
 if (!pj?.lists) { console.error('The payload carries no projection lists (a board built before 2026-11-01, or no PropFinder pull for the week).'); process.exit(1); }
-const head = `NFL ${board.type === 3 ? `postseason round ${board.week}` : `week ${board.week}`}, ${board.season} · strong = cleared 60% of the time, lean 45%, thin 30%; TDs strong from 45%, lean from 30%`;
+const head = `NFL ${board.type === 3 ? `postseason round ${board.week}` : `week ${board.week}`}, ${board.season} · yards: tonight's projection (skill × matchup × game script) with a floor (bad day) and ceiling (good day); TDs strong from 45%, lean from 30%`;
 const parts = flag('games') ? [gameText(pj)] : flag('week-lists') ? [weekText(pj)] : [gameText(pj), weekText(pj)];
 console.log([head, ...parts].join('\n\n'));

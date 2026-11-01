@@ -9,7 +9,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildBoard } from '../lib/nfl/picks';
-import { markOf, roleOf, spreadOf, impliedPoints, chanceAt, tiersOf, tdTier, TD_PER_POINT, H1_SHARE } from '../lib/nfl/projections';
+import { markOf, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, RANGE_Z, SCRIPT, TD_PER_POINT, H1_SHARE } from '../lib/nfl/projections';
 import { firstHalfOf } from '../lib/nfl/markets';
 import { envFactor } from '../lib/picks/projection';
 import { NflMatchups, NflList, KINDS } from '../components/nfl/NflBoards';
@@ -164,7 +164,7 @@ describe('NFL projections: the read', () => {
     const rec = rows('receiving');
     expect(rec[0].player).toBe('Puka Nacua');
     expect(rec.every((r) => ['WR', 'TE', 'RB'].includes(r.pos))).toBe(true);
-    for (let i = 1; i < rec.length; i++) expect(rec[i - 1].yards.rec_yds.exp).toBeGreaterThanOrEqual(rec[i].yards.rec_yds.exp);
+    for (let i = 1; i < rec.length; i++) expect(rec[i - 1].yards.rec_yds.proj).toBeGreaterThanOrEqual(rec[i].yards.rec_yds.proj);
     const rush = rows('rushing').map((r) => r.player);
     expect(rush).toEqual(expect.arrayContaining(['Kyren Williams', 'Zach Charbonnet']));
     expect(rush).not.toContain('Matthew Stafford');   // 7 rushing yards projected: under the list's 10
@@ -173,29 +173,43 @@ describe('NFL projections: the read', () => {
     // No price anywhere on a row.
     expect(JSON.stringify(pj.rows)).not.toMatch(/"(ev|edge|odds|implied)"/);
   });
-  test('strong / lean / thin: the highest height he clears at 60 / 45 / 30% off his ladder, interpolated between rungs', () => {
-    const rungs = [{ line: 59.5, p: 0.8, proj: 75, sd: 15 }, { line: 79.5, p: 0.5, proj: 75, sd: 15 }, { line: 99.5, p: 0.2, proj: 75, sd: 15 }];
-    expect(chanceAt(rungs, 69.5)).toBeCloseTo(0.65, 3);
-    expect(chanceAt(rungs, 79.5)).toBe(0.5);
-    expect(chanceAt(rungs, 109.5)).toBeLessThan(0.2);
-    expect(chanceAt(rungs, 39.5)).toBeGreaterThan(0.8);
-    expect(chanceAt([], 50)).toBeNull();
-    const t = tiersOf(rungs, 'rec_yds');
-    // 60% sits at 72.8 yards (between 59.5's 80% and 79.5's 50%): 70+; 45% at 82.8: 80+; 30% at 92.8: 90+.
-    expect([t.strong.mark, t.lean.mark, t.thin.mark]).toEqual([70, 80, 90]);
-    expect(t.strong.p).toBeGreaterThanOrEqual(0.6);
-    expect(tiersOf(rungs, 'rec_yds', 85)).toMatchObject({ strong: { hit: true }, lean: { hit: true }, thin: { hit: false } });
-    expect(tiersOf([{ line: 0.5, p: 0.2, proj: 0.3, sd: 0.5 }], 'receptions').strong).toBeNull();
-    // On the board: Nacua's receiving heights rise from strong to thin, his chance at each over the tier's.
-    const y = row('Puka Nacua').yards.rec_yds;
-    const range = b.games[0].sides.LAR.players.find((p) => p.player === 'Puka Nacua').ranges.rec_yds;
-    expect(y).toMatchObject({ exp: range.exp, floor: range.floor, ceiling: range.ceiling, line: 89.5 });
-    expect(y.tiers.strong.mark).toBeLessThan(y.tiers.lean.mark);
-    expect(y.tiers.lean.mark).toBeLessThan(y.tiers.thin.mark);
-    expect(y.tiers.strong.p).toBeGreaterThanOrEqual(0.6);
-    expect(y.tiers.thin.p).toBeGreaterThanOrEqual(0.3);
-    expect(y.tiers.strong.mark % 5).toBe(0);
-    expect(row('Puka Nacua').yards.receptions.tiers.strong.mark).toBeGreaterThan(0);
+  test('the game script: the book’s points against the team’s usual, the spread’s lean to the run or the pass', () => {
+    // LAR: 22.3 points implied against its usual 2.8 / 0.105 = 26.7, a 3-point underdog.
+    const lar = scriptOf({ spread: 'SEA -3', total: 47.5 }, 'LAR', 2.8);
+    expect(lar).toMatchObject({ points: 22.3, usual: 26.7, spread: -3, from: 'line' });
+    expect(lar.volume).toBeCloseTo(1 + SCRIPT.volume * (22.3 / (2.8 / TD_PER_POINT) - 1), 3);
+    expect(lar.rush).toBeCloseTo(1 - 3 * SCRIPT.rush, 3);
+    expect(lar.pass).toBeCloseTo(1 + 3 * SCRIPT.pass, 3);
+    expect(lar.words).toEqual(['22.3 points implied against its usual 26.7', '3-point underdog: more passing']);
+    const sea = scriptOf({ spread: 'SEA -3', total: 47.5 }, 'SEA', 2.5);
+    expect(sea.rush).toBeGreaterThan(1);
+    expect(sea.pass).toBeLessThan(1);
+    expect(scriptOf(null, 'LAR', 2.8)).toMatchObject({ volume: 1, rush: 1, pass: 1, from: null });
+    expect(scriptOf({ spread: 'LAR -40', total: 90 }, 'LAR', 1)).toMatchObject({ volume: 1.15, rush: 1.1, pass: 0.9 });
+    expect(scriptFactor(lar, 'rush_yds')).toBeCloseTo(lar.volume * lar.rush, 3);
+    expect(scriptFactor(lar, 'rec_yds')).toBeCloseTo(lar.volume * lar.pass, 3);
+    expect(scriptFactor(null, 'rec_yds')).toBe(1);
+  });
+  test('the yards: tonight’s projection = skill × matchup × script, a floor and a ceiling around it', () => {
+    const r = row('Puka Nacua');
+    const y = r.yards.rec_yds;
+    const side = b.games[0].sides.LAR.players.find((p) => p.player === 'Puka Nacua');
+    const script = pj.games.find((g) => g.id === 'g1').teams.LAR.script;
+    expect(y.exp).toBe(side.ranges.rec_yds.exp);
+    expect(y.script).toBeCloseTo(scriptFactor(script, 'rec_yds'), 3);
+    expect(y.proj).toBeCloseTo(y.exp * y.script, 1);
+    const sd = side.ladders.rec_yds[0].sd * y.script;
+    expect(y.floor).toBe(Math.round(Math.max(0, y.proj - RANGE_Z * sd)));
+    expect(y.ceiling).toBe(Math.round(y.proj + RANGE_Z * sd));
+    expect(y.floor).toBeLessThan(y.proj);
+    expect(y.ceiling).toBeGreaterThan(y.proj);
+    expect(y).toMatchObject({ line: 89.5, matchupFrom: expect.any(String) });
+    // The underdog throws: LAR's receiving goes up with the script, its rushing down.
+    expect(y.script).toBeGreaterThan(row('Kyren Williams').yards.rush_yds.script);
+    // Receptions read the same way, to a tenth.
+    const c = r.yards.receptions;
+    expect(c.floor).toBeLessThanOrEqual(c.proj);
+    expect(c.ceiling).toBeGreaterThanOrEqual(c.proj);
     expect(markOf(99.5)).toBe('100+');
   });
   test('per game: the same three lists for the game’s two teams', () => {
@@ -223,7 +237,8 @@ describe('NFL projections: the read', () => {
     expect(r('Kyren Williams').td).toMatchObject({ actual: 1, actual1h: 1 });
     expect(r('Puka Nacua').td).toMatchObject({ actual: 1, actual1h: 0 });
     expect(r('Puka Nacua').yards.rec_yds.actual).toBe(131);
-    expect(Object.values(r('Puka Nacua').yards.rec_yds.tiers).every((t) => !t || t.hit === 131 >= t.mark)).toBe(true);
+    const y = r('Puka Nacua').yards.rec_yds;
+    expect(y.grade).toBe(131 > y.ceiling ? 'over' : 131 < y.floor ? 'under' : 'inside');
     expect(r('Tyler Higbee').td.actual).toBeNull();   // no box-score line: did not play
   });
 });
@@ -279,7 +294,7 @@ describe('NFL projections: the panel and the script', () => {
     for (const kind of ['td', 'receiving', 'rushing']) {
       const list = renderToStaticMarkup(<NflList board={b} kind={kind} />);
       expect(list).toContain(kind === 'receiving' ? 'Puka Nacua' : 'Kyren Williams');
-      if (kind !== 'td') { expect(list).toMatch(/>strong</); expect(list).toMatch(/>lean</); expect(list).toMatch(/>thin</); expect(list).toMatch(/\d+\+/); }
+      if (kind !== 'td') { expect(list).toContain('>Floor<'); expect(list).toContain('>Projected<'); expect(list).toContain('>Ceiling<'); expect(list).toContain('the game script'); }
       else expect(list).toMatch(/ir-ml-tier is-(strong|lean|thin)/);
     }
     // With MOCK_OUT=<dir> the panel is written as standalone pages (dark, light) for a screenshot at 1440 and 390.
@@ -304,7 +319,8 @@ describe('NFL projections: the panel and the script', () => {
     expect(text).toMatch(/SEA defense gives up the most to the pass \(#2\)/);
     for (const t of [' TDs', ' Receiving', ' Rushing', 'All TDs', 'All Receiving', 'All Rushing']) expect(text).toContain(t);
     expect(text).toMatch(/1\. Kyren Williams \(LAR\) — \d+% \((strong|lean|thin)\) · 1st half \d+%/);
-    expect(text).toMatch(/Puka Nacua \(LAR @ SEA\) — \d+\+ \(strong\) \d+\+ \(lean\) \d+\+ \(thin\) · rec \d+\+ \/ \d+\+ \/ \d+\+/);
+    expect(text).toMatch(/Puka Nacua \(LAR @ SEA\) — floor \d+ · proj \d+ · ceiling \d+ yds · rec \d+ \/ [\d.]+ \/ \d+/);
+    expect(text).toMatch(/LAR script: 22\.3 points implied against its usual 26\.7 · 3-point underdog: more passing/);
     expect(text).toMatch(/Blake Corum \(LAR\) \[DTD, if active\]/);
     expect(text).not.toContain('Kenneth Walker');
   });

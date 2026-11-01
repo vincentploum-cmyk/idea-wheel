@@ -576,13 +576,20 @@ config and keeps its own markets, teams, feeds and slate key:
   td"; the EV-ranked boards and the six-board tab of that day are gone): no price and no edge anywhere. **The tabs**:
   `#matchups` (`NflMatchups`: one card a game — the line, each side's touchdowns expected, the cheat sheet's defense weak
   spots in a line — with three tabs TDs · Receiving · Rushing, both teams in one list) and `#tds`, `#receiving`,
-  `#rushing` (`NflList`: the same list across every game, 40 rows then "Show all"). **Yards** are the board's own
-  projection (`ranges[market]` on the side player: PropFinder's logs × the defense at his slot, the cheat sheet's tile
-  beside it) read as **strong / lean / thin** (`TIERS`: the highest height he clears at 60 / 45 / 30%, `tiersOf`, on a 5-yard
-  grid, every catch for receptions, `TIER_STEP`; his chance at any line off his ladder, `chanceAt`: straight between the
-  rungs, his own distribution's tail past them), receiving with his receptions under each height, the projection beside;
-  the book's main line and the cheat sheet's line on the hover, never in the figure. A list carries receivers, tight ends
-  and backs (receiving) or backs and quarterbacks (rushing) projected `LIST_YDS_MIN` = 10 yards and up, the highest
+  `#rushing` (`NflList`: the same list across every game, 40 rows then "Show all"). **Yards are tonight's floor,
+  projection and ceiling** (Vincent, the same evening, of a first cut read as the heights he clears 60 / 45 / 30% of the
+  time: "It should not be: this is what he clears all the time… it should be: based on today's matchup and the player's
+  skill, and today's script, this is the floor and this is the ceiling"): the projection = his skill and the matchup (the
+  board's `ranges[market].exp`: his rate from PropFinder's logs × the defense at his slot, PropFinder's table with the
+  cheat sheet's snapshot) × **the game script** (`scriptOf`: the book's implied points against the team's usual scoring,
+  its touchdowns a game over `TD_PER_POINT`, half the way, 0.85–1.15; the spread leaning the favourite to the run, +1.2% a
+  point, and the underdog to the pass, +0.8% a point, 0.9–1.1; `scriptFactor` = volume × the run or the pass, receptions
+  and receiving yards on the pass; `SCRIPT`, set by hand, no NFL replay behind it), the floor and the ceiling his 20th and
+  80th percentile tonight (`RANGE_Z`, his ladder's spread scaled with the script); receptions the same to a tenth under
+  the receiving yards; the hover spells rate × matchup × script; the card's head names each side's script; once stored,
+  the figure got over the ceiling is green, under the floor red (`grade`). The book's main line and the cheat sheet's
+  line on the hover only. A list carries receivers, tight ends and backs (receiving) or backs and quarterbacks (rushing)
+  projected `LIST_YDS_MIN` = 10 yards and up, the highest
   projection first. **Touchdowns from the team down**: the team's touchdowns tonight (`teamTd`) = its own touchdowns a game
   through the opponent's touchdowns allowed (`envFactor` on PropFinder's `totals.for/against.td`, `leagueFor.td`) averaged
   with the book's implied points (ESPN's total and spread, `impliedPoints`) × `TD_PER_POINT` = 0.105, its factor on his
@@ -594,8 +601,8 @@ config and keeps its own markets, teams, feeds and slate key:
   confirmed" (a without split or a vacated lift; `roleOf`, the hover names who) beside a name; every height and chance
   graded once the game is stored. `games[].lists` and `lists` = { td, receiving, rushing } of row ids (`listsOf`).
   **The script**: `node tools/nfl-projections.mjs [--season --week | --file picks.json] [--games | --week-lists] [--top N]`
-  prints the same lists as text, one line a player ("Puka Nacua (LAR @ SEA) — 115+ (strong) 125+ (lean) 140+ (thin) ·
-  rec 7+ / 8+ / 9+ · proj 132"; "Kyren Williams (LAR) — 58% (strong) · 1st half 35%"), fetching `/api/nfl/picks` with
+  prints the same lists as text, one line a player ("Puka Nacua (LAR @ SEA) — floor 98 · proj 125 · ceiling 151 yds ·
+  rec 6 / 7.5 / 9"; "Kyren Williams (LAR) — 58% (strong) · 1st half 35%"; each side's script above its game), fetching `/api/nfl/picks` with
   `NHL_ACTIONS_TOKEN`. The constants are set, not measured: no NFL
   audit has graded them. **The first-half TD market** (`first_half_td` in `lib/nfl/markets.js`) stays on the board for
   the grading: its chance derived from his anytime play (`chanceFrom`, 1 − √(1 − p)), priced when PropFinder carries a
