@@ -23,6 +23,7 @@ import { nbaBoard, COCKTAIL, LADDER_MARKETS, SHUFFLE_MARKETS } from '../../lib/n
 import { makeShuffle } from '../../lib/picks/shuffle.js';
 import { gradeBoard, gradePredictors, summarize, asOf, etDate, PREDICTORS } from '../../lib/picks/scorecard.js';
 import { normName } from '../../lib/nhl-data/names.js';
+import { nbaBigGames } from '../../lib/nba/big.js';
 import { OWN_WEIGHTS, ENV_WEIGHT, upperTail } from '../../lib/picks/projection.js';
 import { calibrationOf, playChance, rungFit, calibrated, calibrate } from '../../lib/picks/calibration.js';
 
@@ -220,7 +221,7 @@ function pullFor(slate) {
 const actualOf = (g, p, market) => { const line = actualFor(results[g.id], p); return line === undefined ? undefined : line && line.played !== false ? statOf(line, market) : null; };
 
 // ---- every slate graded the way the store grades it ----
-const graded = []; const boards = {}; const extra = []; const rungs = [];   // extra: per player-market rows with the projection's parts
+const graded = []; const boards = {}; const extra = []; const rungs = []; const bigRows = [];   // bigRows: the site's big-game read (lib/nba/big.js), graded   // extra: per player-market rows with the projection's parts
 for (const slate of slates.filter((d) => d >= from)) {
   const games = schedule.filter((g) => g.slate === slate).map(({ slate: _s, ...g }) => g);
   const pf = pullFor(slate);
@@ -234,6 +235,14 @@ for (const slate of slates.filter((d) => d >= from)) {
     fs.mkdirSync(OUT, { recursive: true });
     fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-board.json`), JSON.stringify({ board: { ...board, date: slate }, shuffle }));
   }
+  if (process.argv.includes('--big')) {
+    const big = nbaBigGames(board, { pf: cut, results, statOf, actualFor });
+    for (const r of Object.values(big.rows)) {
+      const bg = board.games.find((x) => x.id === r.game); const act = actualOf(bg, { key: r.key, player: r.player, team: r.team }, r.market);
+      if (act == null) continue;
+      for (const mk of r.marks) bigRows.push({ slate, market: r.market, mark: mk, p: r.p[mk], hit: act >= mk ? 1 : 0 });
+    }
+  }
   const g = gradeBoard(board, { key: slate, label: slate, actualOf });
   g.pred = gradePredictors(board, cut, { key: slate, season: SEASON, actualOf, ownWindows });
   graded.push(g);
@@ -246,7 +255,7 @@ for (const slate of slates.filter((d) => d >= from)) {
     const gp = side.allowed?.rows?.[p.envPos]?.gp ?? null;
     const rk = side.allowed?.rows?.[p.envPos]?.[stat]?.rank ?? null; const cnt = side.allowed?.count || 30;
     for (const rung of p.ladders?.[market] || []) rungs.push({ slate, market, line: rung.line, model: rung.model, emp: rung.emp, wModel: rung.wModel ?? 0.5, p: rung.p, proj: rung.proj, base: rung.base ?? rung.proj, up: rung.reach?.up ?? null, down: rung.reach?.down ?? null, where: rk != null && gp != null ? Math.max(-1, Math.min(1, 1 - (2 * (rk - 1)) / (cnt - 1))) : null, gp, sd: rung.sd, n: rung.rates?.n ?? 0, main: !!rung.main, hit: actual > rung.line ? 1 : 0 });
-    extra.push({ slate, game: bg.id, team: side.team, opp: side.opp, key: p.key, player: p.player, pos: p.pos, envPos: p.envPos, market, matchupPrior, gp, exp: r.exp, rate: r.rate, matchup: r.matchup, teamScale: r.team, env: r.env, floor: r.floor, ceiling: r.ceiling, sd: p.ladders?.[market]?.[0]?.sd ?? null, lift: r.lift || 0, liftFrom: r.liftFrom || null, minFactor: r.minutes || null, minutes: p.minutes || null, out: !!p.out, actual, actualMin: line?.min ?? null, withoutN: p.without?.n || 0, withoutW: p.without?.weight || 0,
+    extra.push({ slate, game: bg.id, team: side.team, opp: side.opp, venue: side.venue || null, espnId: p.espnId || line?.espnId || null, key: p.key, player: p.player, pos: p.pos, envPos: p.envPos, market, matchupPrior, gp, exp: r.exp, rate: r.rate, matchup: r.matchup, teamScale: r.team, env: r.env, floor: r.floor, ceiling: r.ceiling, sd: p.ladders?.[market]?.[0]?.sd ?? null, lift: r.lift || 0, liftFrom: r.liftFrom || null, minFactor: r.minutes || null, minutes: p.minutes || null, out: !!p.out, actual, actualMin: line?.min ?? null, withoutN: p.without?.n || 0, withoutW: p.without?.weight || 0,
       // for the per-stat read (docs/audits/2026-10-29-nba-projections.md): his games this season, his own windows, the minutes read, the matchup undamped
       nThis: (logsOf.get(p.key) || []).filter((x) => x.season === SEASON && (x.type === 'REG' || !x.type)).length, ownSeason: p.own?.[stat]?.season ?? null, ownL10: p.own?.[stat]?.l10 ?? null, ownL5: p.own?.[stat]?.l5 ?? null,
       minTonight: p.minutes?.tonight ?? null, minBase: p.minutes?.base ?? null, rawMatchup: r.matchupFrom?.raw ?? r.matchup ?? null, matchupWeight: r.matchupFrom?.weight ?? null,
@@ -511,6 +520,16 @@ else {
   line(`The calibration over every night replayed (${last.nights} nights, ${last.plays} plays, ${last.rungs} rungs): per read and market, what a stated 60% / 70% / 80% prints, the check on the last nights it never saw (Brier as stated → calibrated) and whether the board would print it.`);
   line();
   table(['Read', 'Key', 'n', 'a', 'b', '60%', '70%', '80%', 'check', 'printed'], [...Object.entries(last.reads.plays).map(([k, f]) => ['play', k, f]), ...Object.entries(last.reads.rungs).map(([k, f]) => ['rung', k, f])].map(([read, k, f]) => [read, k, f.n, f.a, f.b, pct(calibrate(f, 0.6)), pct(calibrate(f, 0.7)), pct(calibrate(f, 0.8)), f.check ? `${f.check.stated} → ${f.check.calibrated} (${f.check.n})` : '—', f.use ? 'yes' : 'no']));
+}
+// The site's big-game read graded (`--big`): said against landed per mark, and the night's five likeliest.
+if (process.argv.includes('--big')) {
+  const out = {};
+  for (const k of [...new Set(bigRows.map((r) => `${r.market}|${r.mark}`))]) {
+    const xs = bigRows.filter((r) => `${r.market}|${r.mark}` === k);
+    const top = [...new Set(xs.map((r) => r.slate))].flatMap((s) => xs.filter((r) => r.slate === s).sort((a, b) => b.p - a.p).slice(0, 5));
+    out[k] = { n: xs.length, said: r3(mean(xs.map((r) => r.p))), landed: r3(mean(xs.map((r) => r.hit))), brier: r4(mean(xs.map((r) => (r.p - r.hit) ** 2))), top5: { said: r3(mean(top.map((r) => r.p))), landed: r3(mean(top.map((r) => r.hit))) } };
+  }
+  fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-big.json`), JSON.stringify(out, null, 1));
 }
 // Every graded chance as stated (`--graded`), the shape the site's `/api/nba/scorecard?rows=1` exports.
 if (process.argv.includes('--graded')) fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-graded.json`), JSON.stringify({ rows: { plays: graded.flatMap((g) => g.plays.map((x) => ({ slate: g.key, key: x.key, market: x.market, side: x.side, line: x.line, p: x.p, odds: x.odds, onBoard: x.onBoard, hit: x.hit }))), rungs: graded.flatMap((g) => g.rungs.map((r) => ({ slate: g.key, key: r.key, market: r.market, line: r.line, p: r.p, model: r.model, emp: r.emp, main: r.main, hit: r.hit }))) } }));

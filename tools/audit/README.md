@@ -202,3 +202,9 @@ The big games (`docs/audits/2026-11-01-nfl-big-games.md`): `nfl-pf-audit.mjs --d
 player-game of 2024 (with `nfl-fetch.mjs --season 2024`), 2025 and 2026, `python3 tools/audit/nfl_big.py` (scikit-learn,
 pandas) builds the morning's features from the PropFinder export and fits / checks the models and the rules,
 `nfl-pf-audit.mjs --big` grades the site's own `BIG` read on the replay.
+
+## NBA: the big games (`nba_big.py`)
+
+`nba-audit.mjs`'s rows (with `espnId` and `venue` since 2026-11-01) for 2025-26 and 2026-27, joined in Python to ESPN's box
+scores and lines (`--raw`'s `games/` and `prior/games/`), fit and check the big-game models; `--big` on either replay grades
+the site's own `lib/nba/big.js` read. Written up in `docs/audits/2026-11-01-nba-big-games.md` (commands there).
