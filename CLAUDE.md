@@ -19,11 +19,14 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   for the mark and carries `components/site/SportNav.jsx` (NFL · NBA · NHL, the start screen's order).
 - Every app's tabs are the URL hash (`components/site/hash-tab.js`: `tabOf`, `useHashTab(keys, fallback)`
   → `[tab, mounted]`, a visited panel stays mounted hidden so it keeps its state; `components/site/TabBar.jsx`
-  draws the bar). The NFL and NBA pages have two: `#board` (Best plays: the board, the scorecard (the NFL's alone since
-  2026-10-31), the data sources, the default; on the NBA page the night's plays in one ranked list over the games folded to a line each,
-  below) and `#shuffle` (the shuffle), over one week / date picker (the `head()` in each app,
-  drawn on both panels); the NBA page also `#boards` (Boards, below), `#sheet` (Cheat sheet, below) and `#firstbasket`; the
-  NFL page also `#matchups`, `#tds`, `#receiving` and `#rushing` (the projection lists, below). The NHL app has nine (below).
+  draws the bar). The NBA page has `#board` (Best plays: the night's plays in one ranked list over the games folded to a
+  line each, the data sources, the default) and `#shuffle` (the shuffle) over one date picker (the `head()`, drawn on
+  every panel), and `#boards` (Boards, below), `#sheet` (Cheat sheet, below) and `#firstbasket`. **The NFL page is five
+  plain tabs** (Vincent, 2026-11-01: "way too complicated … Remove the edge, implies, juice, etc… I just need a simple list
+  of games and per game, players listed with their ladders"): `#matchups` (Games, the default), `#tds`, `#receiving`,
+  `#rushing` (the projection lists, below) and `#sources` (Data sources: the drop zone, the pulls); the Best plays board
+  (EV, juice, the floors, the scorecard) and the shuffle are off the NFL page — `NflBoard` / `NflShuffle` and their routes
+  stay, an old `#board` / `#shuffle` link opens Games. The NHL app has nine (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
 
 ## The picks core (NFL and NBA)
@@ -615,27 +618,37 @@ config and keeps its own markets, teams, feeds and slate key:
   projected yards / TD candidates per game", then "Why am I not seeing a simple list of players and their projected yards
   / receptions per game … Player - yards (strong) yards (lean) yards (thin) … In case of touch down: Player - chance% of
   td"; the EV-ranked boards and the six-board tab of that day are gone): no price and no edge anywhere. **The tabs**:
-  `#matchups` (`NflMatchups`: one card a game — the line, each side's touchdowns expected, the cheat sheet's defense weak
+  `#matchups` (`NflMatchups`: one card a game — the teams and the kickoff or the score, the cheat sheet's defense weak
   spots in a line — with three tabs TDs · Receiving · Rushing, both teams in one list) and `#tds`, `#receiving`,
-  `#rushing` (`NflList`: the same list across every game, 40 rows then "Show all"). **Yards are tonight's floor,
-  projection and ceiling** (Vincent, the same evening, of a first cut read as the heights he clears 60 / 45 / 30% of the
-  time: "It should not be: this is what he clears all the time… it should be: based on today's matchup and the player's
-  skill, and today's script, this is the floor and this is the ceiling"): the projection = his skill and the matchup (the
-  board's `ranges[market].exp`: his rate from PropFinder's logs × the defense at his slot, PropFinder's table with the
-  cheat sheet's snapshot, the table counted at gp / (gp + 8) of itself, `COCKTAIL.matchupK` in `lib/nfl/picks.js`); **the
-  game script** (`scriptOf`: the book's implied points against the team's usual, the spread's lean to the run or the
-  pass; `scriptFactor`) is in the code at zero weight (`SCRIPT` volume / rush / pass 0) since the backtest found it moved
-  no yards figure for the better — the card names each side's implied points and spread, and the line feeds the
-  touchdowns; the floor and the ceiling his 20th and 80th percentile tonight, fitted per market (`RANGE`: [below, above]
-  in his spreads, a game's yards running longer above the projection than below); receptions the same to a tenth under
-  the receiving yards; the hover spells rate × matchup; once stored,
-  the figure got over the ceiling is green, under the floor red (`grade`). The book's main line and the cheat sheet's
-  line on the hover only. A list carries receivers, tight ends and backs (receiving) or backs and quarterbacks (rushing)
+  `#rushing` (`NflList`: the same list across every game, 40 rows then "Show all"). **Yards are ladders** (Vincent, the
+  next day: "per game, players listed with their ladders: strong - 50+ yards (60%), lean - 60+ yards, thin 70+ yards …
+  I asked you this already"): per player the highest round mark he reaches tonight at 60% (strong), 45% (lean) and 30%
+  (thin) with its chance (`ladderTiers`, `LADDER_TIERS`; marks by 10 yards, 5 under `SMALL_YDS` = 40 projected, 25 passing,
+  1 reception; a mark two tiers share listed once, at the stronger), receptions under the receiving yards; once stored
+  each rung green / red on what he got (`hits`). The chance at a mark (`chanceAtMark`) is read around tonight's
+  projection — his skill and the matchup (the board's `ranges[market].exp`: his rate from PropFinder's logs × the defense
+  at his slot, PropFinder's table with the cheat sheet's snapshot, the table counted at gp / (gp + 8) of itself,
+  `COCKTAIL.matchupK` in `lib/nfl/picks.js`) — on his spread with **the market's real residuals** (`RESID`: (got −
+  projection) / spread at 5% steps, fitted on 2025's games with PropFinder's logs, zeros in): a game's yards run skewed,
+  the middle game a third of a spread under the projection, so a symmetric curve said 67% where the strong rungs landed
+  59%; with `RESID` on 2026's weeks 1–7 strong said 69% / landed 63%, lean 51 / 50%, thin 35 / 35%
+  (`docs/audits/2026-11-01-nfl-propfinder-backtest.md`). The floor and the ceiling (his 20th and 80th percentile, `RANGE`)
+  stay on the row for the script and the audit, off the page. **The game script** (`scriptOf`, `scriptFactor`) is in the
+  code at zero weight (`SCRIPT` volume / rush / pass 0): backtested, the book's total and spread moved no yards figure for
+  the better; nothing of the line is on the page. The book's main line and the cheat sheet's line ride on the row, off the
+  page. **Touchdowns: anytime, 1st half, first TD, 2+ TDs** (Vincent: "For touchdowns, I need first touch down, first half
+  touch and 2 touch downs"): 2+ = 1 − e^(−λ)(1 + λ) on his calibrated λ (`p2`); the first touchdown = his λ over the game's
+  expected touchdowns (the book's total × `TD_PER_POINT`, ÷ (1 − `FIRST_OTHER` = 0.06) for the defenses' and the returns';
+  the listed players' sum without a total — it runs high, counting every backup with a log) × the chance the game has one
+  (`pFirst`); graded on `first_td` / `h1_anytime_td` / the count. On 2026's weeks 1–7: first TD said 4.1% landed 3.8%, 2+
+  said 2.8% landed 3.3%. A list carries receivers, tight ends and backs (receiving) or backs and quarterbacks (rushing)
   projected `LIST_YDS_MIN` = 10 yards and up, the highest
   projection first. **Touchdowns from the team down**: the team's touchdowns tonight (`teamTd`) = its own touchdowns a game
   through the opponent's touchdowns allowed (`envFactor` on PropFinder's `totals.for/against.td`, `leagueFor.td`) at 0.75
   and the book's implied points (ESPN's total and spread, `impliedPoints`) × `TD_PER_POINT` = 0.105 at 0.25
-  (`LINE_WEIGHT`), its factor on his read clamped 0.6–1.6; his own rate = touchdowns a game (season 0.6 · last five 0.4)
+  (`LINE_WEIGHT`), its factor on his read clamped 0.6–1.6 — **inert on the live board**: PropFinder's NFL team objects
+  carry no Team row, so `totals[ABBR].for` is null on every pull and the factor is 1 (measured on PropFinder's own logs,
+  `docs/audits/2026-11-01-nfl-propfinder-backtest.md`: Brier 0.1237 with the team read, 0.1236 without); his own rate = touchdowns a game (season 0.6 · last five 0.4)
   pulled toward his projected carries + targets × his position's touchdowns per touch across the pull (`perTouch`) at
   n / (n + `RATE_K` = 16); `posShift` (the opponent's touchdowns allowed at his spot over what it allows in all) off,
   `POS_CLAMP` [1, 1]; P = 1 − e^(−λ) through the calibration `TD_CAL` (σ(−0.167 + 0.857 · logit p), `raw` the stated
@@ -1232,6 +1245,18 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   total and spread moved no projection for the better), the touchdown read on volume more than history with no position
   shift, a fitted calibration. Zero-stat games are not in ESPN's box score, so neither the replay's logs nor its grading
   carry them.
+- The NFL projections on PropFinder's own data (`docs/audits/2026-11-01-nfl-propfinder-backtest.md`,
+  `tools/audit/nfl-pf-audit.mjs`; Vincent, 2026-11-01: "Backtest it with the real PropFinder data"): the site's stored pulls
+  exported read-only (`GET /api/nfl/propfinder?export=1` — the pull, the sheets, the schedule, the teams' published rows,
+  gzipped; `?weeks=1` the stored weeks; `exportWeek` in `lib/nfl/store.js`; the `nfl-pf-export` workflow puts every week in
+  a two-day artifact). Each pull carries every rostered player's PropFinder logs back to 2024, zeros in, so every week of
+  2025 and 2026 replays on them with the defense tables rebuilt from the same logs (they match PropFinder's published
+  season table at 0.99+). On 2026's weeks 1–7: receiving 22.9, rushing 21.6, passing 70.2, receptions 1.6, the floor /
+  ceiling at a fifth each side, touchdowns Brier 0.1237; no re-searched constant beat the shipped ones. Week 7 on
+  PropFinder's tables as published that Wednesday read the same as the rebuilt ones; the books' main lines that day landed
+  a little nearer than the projections (receiving 23.7 against 24.3, rushing 25.1 / 26.8, passing 55 / 66.7) and their TD
+  prices beat the TD read (Brier 0.1175 / 0.1214). Only that week could be graded on pre-game PropFinder files: each
+  week's file is overwritten by the next day's pull.
 
 ## Canonical locations
 

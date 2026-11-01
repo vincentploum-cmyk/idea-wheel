@@ -1,11 +1,9 @@
 #!/usr/bin/env node
-// The week's NFL projections as text, in the site's layout (Vincent, 2026-11-01: "based on today's matchup and the
-// player's skill, and today's script, this is the floor and this is the ceiling … In case of touch down: Player -
-// chance% of td"): every game with its TDs, receiving and rushing lists, then the three lists across the week. The
-// figures are the site's own (lib/nfl/projections.js, `projections` on GET /api/nfl/picks): tonight's projection = his
-// skill × the matchup (the book's line feeds the touchdowns: backtested, it moved no yards figure), his floor and ceiling
-// around it (a bad day, a good day: one game in five under the floor, one over the ceiling); a touchdown chance is
-// strong from 45%, lean from 30%. No price.
+// The week's NFL projections as text, in the site's layout (Vincent, 2026-11-01: "per game, players listed with their
+// ladders: strong - 50+ yards (60%), lean - 60+ yards, thin 70+ yards … For touchdowns, I need first touch down, first
+// half touch and 2 touch downs"): every game with its TDs, receiving and rushing lists, then the three lists across the
+// week. The figures are the site's own (lib/nfl/projections.js, `projections` on GET /api/nfl/picks): per player the
+// highest round mark he reaches tonight at 60% (strong), 45% (lean) and 30% (thin), and his touchdown chances. No price.
 //
 //   node tools/nfl-projections.mjs                         this week, from https://ideareels.io (NHL_ACTIONS_TOKEN in the env)
 //   node tools/nfl-projections.mjs --season 2026 --week 9  a given week
@@ -42,24 +40,23 @@ function lines(pj, ids, kind, game) {
   const rows = ids.map((id) => pj.rows[id]).filter(Boolean);
   if (!rows.length) return ['  (none)'];
   return rows.map((r, i) => {
-    if (kind === 'td') return `  ${i + 1}. ${who(r, game)} — ${pct(r.td.p)} (${r.td.tier})${r.pos === 'QB' ? ' rushing' : ''} · 1st half ${pct(r.td.p1h)}`;
+    if (kind === 'td') return `  ${i + 1}. ${who(r, game)} — anytime ${pct(r.td.p)} (${r.td.tier}) · 1st half ${pct(r.td.p1h)} · first TD ${pct(r.td.pFirst)} · 2+ TDs ${pct(r.td.p2)}`;
     const y = r.yards[kind === 'receiving' ? 'rec_yds' : 'rush_yds'];
     const c = kind === 'receiving' ? r.yards.receptions : null;
-    const rec = c ? ` · rec ${n0(c.floor)} / ${n1(c.proj)} / ${n0(c.ceiling)}` : '';
-    const got = y.actual != null ? ` · got ${y.actual}${y.grade === 'over' ? ' (over his ceiling)' : y.grade === 'under' ? ' (under his floor)' : ''}` : '';
-    return `  ${i + 1}. ${who(r, game)} — floor ${n0(y.floor)} · proj ${n0(y.proj)} · ceiling ${n0(y.ceiling)} yds${rec}${got}`;
+    const rungs = (x, unit) => TIERS.map((t) => (x?.tiers?.[t] ? `${t} ${x.tiers[t].mark}+ ${unit} (${pct(x.tiers[t].p)})` : null)).filter(Boolean).join(' · ');
+    const got = y.actual != null ? ` · got ${y.actual}` : '';
+    return `  ${i + 1}. ${who(r, game)} — ${rungs(y, 'yds') || '—'}${c ? ` | ${rungs(c, 'rec')}` : ''}${got}`;
   });
 }
 
+const TIERS = ['strong', 'lean', 'thin'];
 const TITLES = [['td', 'TDs'], ['receiving', 'Receiving'], ['rushing', 'Rushing']];
 
 function gameText(pj) {
   const out = [];
   for (const g of pj.games) {
-    out.push(`${g.away} @ ${g.home}${g.odds?.total != null ? ` · total ${g.odds.total}` : ''}${g.odds?.spread ? ` · ${g.odds.spread}` : ''}${g.final ? ` · final ${g.awayScore}–${g.homeScore}` : ''}`);
+    out.push(`${g.away} @ ${g.home}${g.final ? ` · final ${g.awayScore}–${g.homeScore}` : ''}`);
     for (const team of [g.away, g.home]) {
-      const sc = g.teams?.[team]?.script;
-      if (sc?.words?.length) out.push(`  ${team} script: ${sc.words.join(' · ')}`);
       const d = g.teams?.[team]?.defense;
       if (d?.weak?.length) out.push(`  ${d.of} defense gives up the most to ${d.weak.slice(0, 3).map((w) => `${w.word} (#${w.rank})`).join(', ')}`);
     }
@@ -77,6 +74,6 @@ function weekText(pj) {
 const board = await load();
 const pj = board.projections;
 if (!pj?.lists) { console.error('The payload carries no projection lists (a board built before 2026-11-01, or no PropFinder pull for the week).'); process.exit(1); }
-const head = `NFL ${board.type === 3 ? `postseason round ${board.week}` : `week ${board.week}`}, ${board.season} · yards: tonight's projection (skill × matchup) with a floor and a ceiling (one game in five under, one over); TDs strong from 45%, lean from 30%`;
+const head = `NFL ${board.type === 3 ? `postseason round ${board.week}` : `week ${board.week}`}, ${board.season} · the highest mark each player reaches tonight: strong 60%+, lean 45%+, thin 30%+ (his skill × tonight's matchup)`;
 const parts = flag('games') ? [gameText(pj)] : flag('week-lists') ? [weekText(pj)] : [gameText(pj), weekText(pj)];
 console.log([head, ...parts].join('\n\n'));

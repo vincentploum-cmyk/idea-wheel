@@ -9,7 +9,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildBoard } from '../lib/nfl/picks';
-import { markOf, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS } from '../lib/nfl/projections';
+import { chanceAtMark, ladderTiers, LADDER_TIERS, markOf, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS } from '../lib/nfl/projections';
 import { reproject } from '../lib/nfl/picks';
 import { envFactor } from '../lib/picks/projection';
 import { NflMatchups, NflList, KINDS } from '../components/nfl/NflBoards';
@@ -73,6 +73,45 @@ describe('NFL boards: the first-half touchdown line', () => {
     const half = lar.players.find((p) => p.player === 'Kyren Williams').plays.find((x) => x.market === 'h1_anytime_td');
     expect(half).toMatchObject({ side: 'yes', line: 0.5, odds: 115, actual: 1, hit: true });
     expect(half.implied).toBeCloseTo(100 / 215, 3);
+  });
+});
+
+describe('NFL projections: the ladders and the touchdown reads (2026-11-01)', () => {
+  test('a mark’s chance falls as the mark rises, the projection is cleared less than half the time, the tiers are the highest marks at 60 / 45 / 30%', () => {
+    const y = { proj: 72, sd: 28 };
+    const ps = [40, 50, 60, 70, 80, 90, 100].map((m) => chanceAtMark(y, m, 'rec_yds'));
+    for (let i = 1; i < ps.length; i++) expect(ps[i]).toBeLessThan(ps[i - 1]);
+    expect(chanceAtMark(y, 72, 'rec_yds')).toBeLessThan(0.5);   // a game's yards run skewed: the middle game lands under the projection
+    const t = ladderTiers(y, 'rec_yds');
+    for (const [tier, at] of LADDER_TIERS) {
+      expect(t[tier].p).toBeGreaterThanOrEqual(at);
+      expect(t[tier].mark % 10).toBe(0);   // 72 projected: by 10
+      expect(chanceAtMark(y, t[tier].mark + 10, 'rec_yds')).toBeLessThan(at);
+    }
+    expect(t.strong.mark).toBeLessThan(t.lean.mark);
+    expect(t.lean.mark).toBeLessThan(t.thin.mark);
+    expect(ladderTiers({ proj: 3.2, sd: 1.5 }, 'receptions').strong.mark).toBeGreaterThanOrEqual(1);
+    expect(ladderTiers({ proj: null, sd: 10 }, 'rec_yds')).toEqual({ strong: null, lean: null, thin: null });
+  });
+  test('every row carries the ladder; the touchdowns carry the first half, the first touchdown and two or more', () => {
+    const b = build();
+    const rows = Object.values(b.projections.rows);
+    const puka = rows.find((r) => r.player === 'Puka Nacua');
+    expect(puka.yards.rec_yds.tiers.strong).toMatchObject({ mark: expect.any(Number), p: expect.any(Number) });
+    const k = rows.find((r) => r.player === 'Kyren Williams').td;
+    expect(k.p2).toBeCloseTo(1 - Math.exp(-k.lambda) * (1 + k.lambda), 3);
+    expect(k.pFirst).toBeGreaterThan(0);
+    expect(k.pFirst).toBeLessThan(k.p1h);
+    // The first touchdown is shared over the game's expected touchdowns (the book's total × TD_PER_POINT and the others').
+    const g1 = rows.filter((r) => r.game === 'g1' && r.td);
+    const sum = g1.reduce((s, r) => s + r.td.pFirst, 0);
+    expect(sum).toBeLessThan(1);
+  });
+  test('once the game is in, each rung is graded on what he got', () => {
+    const results = { g1: { id: 'g1', final: true, players: [{ name: 'Puka Nacua', team: 'LAR', ...base, rec: 9, recYds: 131, recTd: 1, td: 1 }] } };
+    const games = [{ ...GAMES[0], final: true, state: 'post', awayScore: 27, homeScore: 20, detail: 'Final' }, GAMES[1]];
+    const y = Object.values(build(results, games).projections.rows).find((r) => r.player === 'Puka Nacua').yards.rec_yds;
+    for (const [tier] of LADDER_TIERS) if (y.tiers[tier]) expect(y.hits[tier]).toBe(131 >= y.tiers[tier].mark);
   });
 });
 
@@ -267,14 +306,14 @@ describe('NFL projections: the panel and the script', () => {
     expect(html).toContain('Kyren Williams');
     expect(html).toContain('if active');
     expect(html).toContain('if role confirmed');
-    expect(html).toContain('TDs expected');
+    for (const col of ['Anytime', '1st half', 'First TD', '2+ TDs']) expect(html).toContain(col);
     expect(html).toContain('SEA defense</b> gives up the most to the pass (#2)');
     expect(html).not.toContain('Kenneth Walker');
-    expect(html).not.toMatch(/\bEV\b|edge/);
+    expect(html).not.toMatch(/\bEV\b|edge|juice|implied/i);
     for (const kind of ['td', 'receiving', 'rushing']) {
       const list = renderToStaticMarkup(<NflList board={b} kind={kind} />);
       expect(list).toContain(kind === 'receiving' ? 'Puka Nacua' : 'Kyren Williams');
-      if (kind !== 'td') { expect(list).toContain('>Floor<'); expect(list).toContain('>Projected<'); expect(list).toContain('>Ceiling<'); expect(list).toContain('the matchup'); }
+      if (kind !== 'td') { for (const t of ['>Strong<', '>Lean<', '>Thin<']) expect(list).toContain(t); expect(list).toMatch(/\d+\+ yds<\/b><small>\d+%/); }
       else expect(list).toMatch(/ir-ml-tier is-(strong|lean|thin)/);
     }
     // With MOCK_OUT=<dir> the panel is written as standalone pages (dark, light) for a screenshot at 1440 and 390.
@@ -295,12 +334,12 @@ describe('NFL projections: the panel and the script', () => {
     fs.writeFileSync(file, JSON.stringify(b));
     const text = execFileSync(process.execPath, [path.resolve(__dirname, '../tools/nfl-projections.mjs'), '--file', file], { encoding: 'utf8' });
     expect(text).toMatch(/^NFL week 9, 2026/);
-    expect(text).toMatch(/LAR @ SEA · total 47\.5 · SEA -3/);
+    expect(text).toMatch(/LAR @ SEA\n/);
     expect(text).toMatch(/SEA defense gives up the most to the pass \(#2\)/);
     for (const t of [' TDs', ' Receiving', ' Rushing', 'All TDs', 'All Receiving', 'All Rushing']) expect(text).toContain(t);
-    expect(text).toMatch(/1\. Kyren Williams \(LAR\) — \d+% \((strong|lean|thin)\) · 1st half \d+%/);
-    expect(text).toMatch(/Puka Nacua \(LAR @ SEA\) — floor \d+ · proj \d+ · ceiling \d+ yds · rec \d+ \/ [\d.]+ \/ \d+/);
-    expect(text).toMatch(/LAR script: 22\.3 points implied against its usual 26\.7 · 3-point underdog/);
+    expect(text).toMatch(/1\. Kyren Williams \(LAR\) — anytime \d+% \((strong|lean|thin)\) · 1st half \d+% · first TD \d+% · 2\+ TDs \d+%/);
+    expect(text).toMatch(/Puka Nacua \(LAR @ SEA\) — strong \d+\+ yds \(\d+%\) · lean \d+\+ yds \(\d+%\)/);
+    expect(text).not.toMatch(/implied|script/);
     expect(text).toMatch(/Blake Corum \(LAR\) \[DTD, if active\]/);
     expect(text).not.toContain('Kenneth Walker');
   });
