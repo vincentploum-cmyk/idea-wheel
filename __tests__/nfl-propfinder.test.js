@@ -53,7 +53,9 @@ describe('PropFinder NFL mapping', () => {
   test('the keys the API used, with the ones this file does not read', () => {
     const seen = fieldsSeen([PLAYER], []);
     expect(seen.game).toContain('passingYards');
-    expect(seen.unread).toEqual(['weirdStat']);
+    // The NFL keeps what the board does not read (`keepExtra`): listed as stored, not unread.
+    expect(seen.unread).toEqual([]);
+    expect(seen.stored).toEqual(['weirdStat']);
     expect(seen.prop).toContain('overOdds');
   });
   test('what each defense allows per position, ranked 1 = most', () => {
