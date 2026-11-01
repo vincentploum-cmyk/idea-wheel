@@ -21,10 +21,13 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   → `[tab, mounted]`, a visited panel stays mounted hidden so it keeps its state; `components/site/TabBar.jsx`
   draws the bar). The NBA page has `#board` (Best plays: the night's plays in one ranked list over the games folded to a
   line each, the data sources, the default) and `#shuffle` (the shuffle) over one date picker (the `head()`, drawn on
-  every panel), and `#boards` (Boards, below), `#sheet` (Cheat sheet, below) and `#firstbasket`. **The NFL page is five
-  plain tabs** (Vincent, 2026-11-01: "way too complicated … Remove the edge, implies, juice, etc… I just need a simple list
-  of games and per game, players listed with their ladders"): `#matchups` (Games, the default), `#tds`, `#receiving`,
-  `#rushing` (the projection lists, below) and `#sources` (Data sources: the drop zone, the pulls); the Best plays board
+  every panel), and `#boards` (Boards, below), `#sheet` (Cheat sheet, below) and `#firstbasket`. **The NFL page is six
+  plain tabs drawn as pills** (Vincent, 2026-11-01: "way too complicated … Remove the edge, implies, juice, etc… I just need
+  a simple list of games and per game, players listed with their ladders", then a sportsbook's games page as the form and
+  "where are the passing yards?"; `TabBar`'s `pills`): `#matchups` (Games, the default: the week's games as a sportsbook
+  lists them — the matchup, the kickoff in ET, a row a team with its logo, spread and the total, the line alone with no
+  price; `GameRow` in `NflBoards.jsx`, press a game for its players), `#tds`, `#passing`, `#receiving`, `#rushing` (the
+  projection lists, below) and `#sources` (Data sources: the drop zone, the pulls); the Best plays board
   (EV, juice, the floors, the scorecard) and the shuffle are off the NFL page — `NflBoard` / `NflShuffle` and their routes
   stay, an old `#board` / `#shuffle` link opens Games. The NHL app has nine (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.
@@ -618,9 +621,10 @@ config and keeps its own markets, teams, feeds and slate key:
   projected yards / TD candidates per game", then "Why am I not seeing a simple list of players and their projected yards
   / receptions per game … Player - yards (strong) yards (lean) yards (thin) … In case of touch down: Player - chance% of
   td"; the EV-ranked boards and the six-board tab of that day are gone): no price and no edge anywhere. **The tabs**:
-  `#matchups` (`NflMatchups`: one card a game — the teams and the kickoff or the score, the cheat sheet's defense weak
-  spots in a line — with three tabs TDs · Receiving · Rushing, both teams in one list) and `#tds`, `#receiving`,
-  `#rushing` (`NflList`: the same list across every game, 40 rows then "Show all"). **Yards are ladders** (Vincent, the
+  `#matchups` (`NflMatchups`: the games, each opening on the cheat sheet's defense weak spots in a line and four pill tabs
+  TDs · Pass Yards · Receiving Yards · Rushing Yards, both teams in one list) and `#tds`, `#passing`, `#receiving`,
+  `#rushing` (`NflList`: the same list across every game, 40 rows then "Show all"; passing = quarterbacks projected
+  `LIST_PASS_MIN` = 100 yards and up). **Yards are ladders** (Vincent, the
   next day: "per game, players listed with their ladders: strong - 50+ yards (60%), lean - 60+ yards, thin 70+ yards …
   I asked you this already"): per player the highest round mark he reaches tonight at 60% (strong), 45% (lean) and 30%
   (thin) with its chance (`ladderTiers`, `LADDER_TIERS`; marks by 10 yards, 5 under `SMALL_YDS` = 40 projected, 25 passing,

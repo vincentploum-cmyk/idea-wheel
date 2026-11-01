@@ -236,7 +236,7 @@ describe('NFL projections: the read', () => {
     expect(g.lists.td.map((id) => pj.rows[id].team)).toEqual(expect.arrayContaining(['LAR', 'SEA']));
     expect(g.lists.receiving.map((id) => pj.rows[id].player)[0]).toBe('Puka Nacua');
     expect(g.lists.rushing.map((id) => pj.rows[id].player)).toEqual(['Kyren Williams', 'Zach Charbonnet', 'Blake Corum']);
-    expect(pj.games.find((x) => x.id === 'g2').lists).toEqual({ td: [], receiving: [], rushing: [] });
+    expect(pj.games.find((x) => x.id === 'g2').lists).toEqual({ td: [], receiving: [], rushing: [], passing: [] });
   });
   test('the words beside a name', () => {
     expect(row('Blake Corum').role).toEqual([expect.objectContaining({ kind: 'active', word: 'if active' })]);
@@ -292,7 +292,7 @@ describe('NFL projections: the cheat sheet’s defense snapshot', () => {
     expect(who('shortM')).toEqual(['Tyler Higbee']);
     expect(b.projections.sheetDirection).toMatchObject({ convention: 'fewest', from: 'default' });
     expect(b.projections.games.find((g) => g.id === 'g1').teams.SEA.defense).toBeNull();
-    const html = renderToStaticMarkup(<NflMatchups board={b} />);
+    const html = renderToStaticMarkup(<NflMatchups board={b} openFirst />);
     expect(html).toContain('SEA defense</b> gives up the most to the pass (#2), short right (#2), short middle (#3)');
   });
 });
@@ -301,7 +301,14 @@ describe('NFL projections: the panel and the script', () => {
   const snapshot = { of: 'SEA', ranks: { passYds: 31, rushYds: 22, rushYpp: 25, short: { l: 22, m: 30, r: 31 }, long: { l: 27, m: 21, r: 26 } }, coverage: { man: 11.1, zone: 88.9, c3: 33.3 }, tiles: 9 };
   const b = buildBoard({ season: 2026, week: 9, games: GAMES, sheets: [{ id: 's1', fileName: 'NFL_2026_W9_detailed.pdf', rows: [], meta: { defense: { LAR: snapshot } } }], pf, results: {} });
   test('the panel server-renders the games with their three lists and the week lists, no price', () => {
-    const html = renderToStaticMarkup(<NflMatchups board={b} />);
+    // The games as a sportsbook lists them: closed, the matchup, the kickoff in ET, the spread and the total a team, no price.
+    const list = renderToStaticMarkup(<NflMatchups board={b} />);
+    expect(list).toContain('LAR Rams @ SEA Seahawks');
+    expect(list).toMatch(/Sun 4:25PM ET/);
+    expect(list).toMatch(/Rams<\/span><span><\/span><span class="ir-gm-box">\+3<\/span><span class="ir-gm-box">O 47\.5/);
+    expect(list).toMatch(/Seahawks<\/span><span><\/span><span class="ir-gm-box">-3<\/span><span class="ir-gm-box">U 47\.5/);
+    expect(list).not.toContain('Kyren Williams');
+    const html = renderToStaticMarkup(<NflMatchups board={b} openFirst />);
     for (const [, label] of KINDS) expect(html).toContain(label);
     expect(html).toContain('Kyren Williams');
     expect(html).toContain('if active');
@@ -310,9 +317,9 @@ describe('NFL projections: the panel and the script', () => {
     expect(html).toContain('SEA defense</b> gives up the most to the pass (#2)');
     expect(html).not.toContain('Kenneth Walker');
     expect(html).not.toMatch(/\bEV\b|edge|juice|implied/i);
-    for (const kind of ['td', 'receiving', 'rushing']) {
+    for (const kind of ['td', 'passing', 'receiving', 'rushing']) {
       const list = renderToStaticMarkup(<NflList board={b} kind={kind} />);
-      expect(list).toContain(kind === 'receiving' ? 'Puka Nacua' : 'Kyren Williams');
+      expect(list).toContain(kind === 'receiving' ? 'Puka Nacua' : kind === 'passing' ? 'Matthew Stafford' : 'Kyren Williams');
       if (kind !== 'td') { for (const t of ['>Strong<', '>Lean<', '>Thin<']) expect(list).toContain(t); expect(list).toMatch(/\d+\+ yds<\/b><small>\d+%/); }
       else expect(list).toMatch(/ir-ml-tier is-(strong|lean|thin)/);
     }
@@ -325,7 +332,7 @@ describe('NFL projections: the panel and the script', () => {
     const css = [fontCss('@fontsource-variable/schibsted-grotesk'), fontCss('@fontsource-variable/source-sans-3'), fs.readFileSync(path.join(root, 'app/globals.css'), 'utf8')].join('\n');
     for (const theme of ['dark', 'light']) {
       fs.writeFileSync(path.join(out, `boards-nfl-${theme}.html`), `<!doctype html><html lang="en" data-theme="${theme}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>NFL boards</title><style>${css}
-.mock-page { max-width: 1180px; margin: 0 auto; padding: 24px var(--gutter) 48px; }</style></head><body><main class="mock-page nhlx"><section class="nhlx-pk">${html}${renderToStaticMarkup(<NflList board={b} kind="receiving" />)}</section></main></body></html>`);
+.mock-page { max-width: 1180px; margin: 0 auto; padding: 24px var(--gutter) 48px; }</style></head><body><main class="mock-page nhlx"><section class="nhlx-pk">${html}${renderToStaticMarkup(<NflList board={b} kind="passing" />)}</section></main></body></html>`);
     }
   });
   test('the script prints each game’s three lists and the week’s', () => {
