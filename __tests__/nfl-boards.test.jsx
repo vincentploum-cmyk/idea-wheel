@@ -9,7 +9,8 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildBoard } from '../lib/nfl/picks';
-import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS, PASS, passRead } from '../lib/nfl/projections';
+import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS, PASS, passRead, QB_RUSH, qbRushRead } from '../lib/nfl/projections';
+import { applyRosterStatus, ROSTER_OFF } from '../lib/nfl/roster-status';
 import { reproject } from '../lib/nfl/picks';
 import { envFactor } from '../lib/picks/projection';
 import { NflMatchups, NflList, NflBigGames, KINDS } from '../components/nfl/NflBoards';
@@ -161,6 +162,47 @@ describe('NFL projections: the passing read (2026-11-02)', () => {
     const zeros = { ...pf, data: { ...pf.data, players: pf.data.players.map((p) => (p.name === 'Matthew Stafford' ? { ...p, games: [...p.games, { ...p.games[0], date: '2026-10-02', passAtt: 0, passYds: 0, passCmp: 0 }] } : p)) } };
     const b2 = buildBoard({ season: 2026, week: 9, games: GAMES, sheets: [], pf: zeros, results: {} });
     expect(Object.values(b2.projections.rows).find((r) => r.player === 'Matthew Stafford').yards.pass_yds.proj).toBe(y.proj);
+  });
+});
+
+describe('NFL board: PropFinder\'s roster status (2026-11-02)', () => {
+  const withStatus = (map) => ({ ...pf, data: { ...pf.data, players: pf.data.players.map((p) => (map[p.name] ? { ...p, status: map[p.name] } : { ...p, status: 'ACT' })) } });
+  test('a player off the active roster is no row, no list, no ladder', () => {
+    const b = buildBoard({ season: 2026, week: 9, games: GAMES, sheets: [], pf: withStatus({ 'Puka Nacua': 'IR', 'Tyler Higbee': 'OFF_ROSTER', 'Kyren Williams': 'PRA' }), results: {} });
+    const names = Object.values(b.projections.rows).map((r) => r.player);
+    for (const gone of ['Puka Nacua', 'Tyler Higbee', 'Kyren Williams']) expect(names).not.toContain(gone);
+    expect(names).toContain('Matthew Stafford');
+    const listed = Object.values(b.projections.lists).flatMap((x) => (Array.isArray(x) ? x : Object.values(x).flat())).map((id) => b.projections.rows[id]?.player);
+    expect(listed).not.toContain('Puka Nacua');
+  });
+  test('ACT, no status and an unknown status stay; a player the feed already has out is left as he was', () => {
+    const out = applyRosterStatus(withStatus({ 'Puka Nacua': 'ACT', 'Tyler Higbee': 'IR' }));
+    expect(out.data.players.map((p) => p.name)).toContain('Puka Nacua');
+    expect(out.data.players.map((p) => p.name)).not.toContain('Tyler Higbee');
+    expect(out.data.rosterStatus).toEqual({ dropped: 1, by: { IR: 1 } });
+    expect(applyRosterStatus(pf)).toBe(pf);
+    const walker = applyRosterStatus(withStatus({ 'Kenneth Walker': 'IR' })).data.players.find((p) => p.name === 'Kenneth Walker');
+    expect(walker.injury).toBe('Out');
+    expect(Object.keys(ROSTER_OFF)).toEqual(expect.arrayContaining(['IR', 'IRD', 'PUP', 'OFF_ROSTER', 'PRA', 'SUS']));
+  });
+});
+
+describe('NFL projections: the quarterback\'s rushing read (2026-11-02)', () => {
+  const g = (date, rushYds, passAtt = 30) => ({ date, rushYds, passAtt });
+  test('his starts, pulled toward the league; a relief game or a week on the bench is no start', () => {
+    const starts = Array.from({ length: 12 }, (_, i) => g(`2026-10-${String(28 - i * 2).padStart(2, '0')}`, 40));
+    const r = qbRushRead(starts);
+    expect(r.n).toBe(12);
+    expect(r.proj).toBeCloseTo((12 * 40 + QB_RUSH.K * QB_RUSH.league) / (12 + QB_RUSH.K), 1);
+    expect(qbRushRead([...starts, g('2026-10-29', 0, 0), g('2026-10-03', 30, 3)]).proj).toBe(r.proj);
+    expect(qbRushRead([g('2026-10-28', 0, 0)])).toBeNull();
+  });
+  test('the board: the starter\'s rushing reads it', () => {
+    const b = build();
+    const y = Object.values(b.projections.rows).find((r) => r.player === 'Matthew Stafford').yards.rush_yds;
+    const want = qbRushRead(pf.data.players.find((p) => p.name === 'Matthew Stafford').games, { before: GAMES[0].date });
+    expect(y.proj).toBe(want.proj);
+    expect(y.qbRush.n).toBe(10);
   });
 });
 

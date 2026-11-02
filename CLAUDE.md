@@ -722,6 +722,14 @@ config and keeps its own markets, teams, feeds and slate key:
   low: 64.6 → 55.8 a start on 2026's weeks 1–8); a flat 70-yard spread, `RESID.pass_yds` / `RANGE.pass_yds` refitted, 300+ /
   350+ read the ladder's chance (`BIG.pass_yds` a 0, b 1); a backup on ESPN's chart (no chart: all but the latest starter)
   keeps the board's read; `y.pass` on the row, `passText` on the hovers.
+- **PropFinder's roster status and the quarterback's rushing** (Vincent, 2026-11-02: "Same for rushing yards. They are also
+  far off"; `docs/audits/2026-11-02-nfl-rushing.md`, `tools/audit/nfl_rushing.py`): every NFL player's `status` (ACT, PRA,
+  OFF_ROSTER, IR, IRD, PRA_IR, PUP, NON, SUS, EXE) is read by `applyRosterStatus` (`lib/nfl/roster-status.js`, first in
+  `makeBuild`): anyone but ACT (or no status) leaves the board — no row, no list — unless the injury feed already has him out
+  (week 8: 25 of the 28 listed rushers who never played, 69 of 79 receivers, 149 of 176 touchdown names were off the
+  roster or on IR); left off, not marked out, so the vacated lifts read what they read before. A starting quarterback's
+  rushing yards are his last 17 starts' pulled toward 8 at n / (n + 3) (`QB_RUSH`, `qbRushRead`, `y.qbRush`). The backs'
+  rushing read is unchanged: nothing tried beat it out of sample.
 - **The cheat sheet's defense snapshot** (`lib/nfl/snapshot.js`; Vincent, 2026-11-01: "the cheat sheet should be used to
   identify weaknesses in defenses"): each column of the detailed sheet opens with the opponent's defense — coverage shells
   (Man% / Zone%, Cover 0 / 1 / 2 / 3 / 4 / 6, 2-Man) and ranked tiles (Pass Yds/G, Rush Yds/G, Rush Y/Play, the passing
