@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { teamLogo, teamName } from '@/lib/nfl/teams';
-import { spreadOf } from '@/lib/nfl/projections';
+import { spreadOf, passText } from '@/lib/nfl/projections';
 import { headshotUrl } from '@/lib/nfl/espn';
 
 // The NFL page's lists (Vincent, 2026-11-01: "I just need a simple list of games and per game, players listed with their
@@ -92,7 +92,7 @@ function YardsTable({ rows, kind, game }) {
   return (
     <table className="nhlx-db-table nhlx-pk-table ir-ml-table">
       <thead><tr>
-        <th className="ir-slate-rank">#</th><th>Player</th><th className="is-num ir-ml-proj" title="Tonight’s projection: his skill × tonight’s matchup">Proj</th>
+        <th className="ir-slate-rank">#</th><th>Player</th><th className="is-num ir-ml-proj" title={kind === 'passing' ? 'Tonight’s projection: his starts, the game’s total and spread, the defense (hover a figure)' : 'Tonight’s projection: his skill × tonight’s matchup'}>Proj</th>
         {TIERS.map(([k, l]) => <th key={k} className={`ir-ml-th is-${k}`} title={`The highest mark he reaches tonight at ${k === 'strong' ? '60' : k === 'lean' ? '45' : '30'}% or better`}>{l}</th>)}
         {final ? <th className="is-num">Got</th> : null}
       </tr></thead>
@@ -103,7 +103,7 @@ function YardsTable({ rows, kind, game }) {
           return (
             <tr key={r.id}>
               <td className="ir-slate-rank">{i + 1}</td>
-              <td><Who r={r} game={game} /></td><td className="is-num ir-ml-proj"><b>{y?.proj == null ? '—' : Math.round(y.proj)}</b><small>{c?.proj != null ? `${Number(c.proj).toFixed(1)} rec` : 'yds'}</small></td>
+              <td><Who r={r} game={game} /></td><td className="is-num ir-ml-proj" title={y?.pass ? passText(y.pass) : undefined}><b>{y?.proj == null ? '—' : Math.round(y.proj)}</b><small>{c?.proj != null ? `${Number(c.proj).toFixed(1)} rec` : 'yds'}</small></td>
               {TIERS.map(([k]) => (
                 <td key={k} className={`ir-ml-cell is-${k}`}>
                   <Rung y={y} market={market} tier={k} />

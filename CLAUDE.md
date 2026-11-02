@@ -714,6 +714,14 @@ config and keeps its own markets, teams, feeds and slate key:
   the book's first-half line is that market's play like any other. The side players' plays carry `ev`, `implied` and the
   without names. `__tests__/nfl-boards.test.jsx` (the read, the panel, the script; `MOCK_OUT`
   writes `boards-nfl-<theme>.html`).
+- **The passing read** (`PASS`, `passRead` in `lib/nfl/projections.js`; Vincent, 2026-11-02: "we need to work on the passing
+  yards … our predictions are not even close to the actual"; `docs/audits/2026-11-02-nfl-passing.md`, `tools/audit/nfl_passing.py`):
+  a starting quarterback's passing yards are his last 17 starts (10+ attempts) pulled toward 225 at n / (n + 6), plus the
+  book's total and his team's half spread, plus PropFinder's QB passing yards allowed over the league at gp / (gp + 8), fitted
+  on 2025's starts (the board had averaged every logged game, the weeks he sat as a backup in, and read starters 15 yards
+  low: 64.6 → 55.8 a start on 2026's weeks 1–8); a flat 70-yard spread, `RESID.pass_yds` / `RANGE.pass_yds` refitted, 300+ /
+  350+ read the ladder's chance (`BIG.pass_yds` a 0, b 1); a backup on ESPN's chart (no chart: all but the latest starter)
+  keeps the board's read; `y.pass` on the row, `passText` on the hovers.
 - **The cheat sheet's defense snapshot** (`lib/nfl/snapshot.js`; Vincent, 2026-11-01: "the cheat sheet should be used to
   identify weaknesses in defenses"): each column of the detailed sheet opens with the opponent's defense — coverage shells
   (Man% / Zone%, Cover 0 / 1 / 2 / 3 / 4 / 6, 2-Man) and ranked tiles (Pass Yds/G, Rush Yds/G, Rush Y/Play, the passing

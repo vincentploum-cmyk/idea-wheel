@@ -9,7 +9,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildBoard } from '../lib/nfl/picks';
-import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS } from '../lib/nfl/projections';
+import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS, PASS, passRead } from '../lib/nfl/projections';
 import { reproject } from '../lib/nfl/picks';
 import { envFactor } from '../lib/picks/projection';
 import { NflMatchups, NflList, NflBigGames, KINDS } from '../components/nfl/NflBoards';
@@ -115,6 +115,55 @@ describe('NFL projections: the ladders and the touchdown reads (2026-11-01)', ()
   });
 });
 
+describe('NFL projections: the passing read (2026-11-02)', () => {
+  const start = (date, passYds, passAtt = 34) => ({ date, passYds, passAtt });
+  const starts = Array.from({ length: 10 }, (_, i) => start(`2026-10-${String(28 - i * 2).padStart(2, '0')}`, 280));
+  test('his starts alone: a game he sat or a relief appearance is no start', () => {
+    const plain = passRead(starts);
+    const withBench = passRead([...starts, start('2026-10-29', 0, 0), start('2026-10-09', 41, 4)]);
+    expect(withBench.proj).toBe(plain.proj);
+    expect(plain.n).toBe(10);
+    expect(plain.avg).toBe(280);
+    // Pulled toward the league at n / (n + K): one start reads close to the league, ten most of the way to his own.
+    expect(plain.own).toBeCloseTo((10 * 280 + PASS.K * PASS.league) / (10 + PASS.K), 1);
+    expect(passRead([start('2026-10-28', 400)]).own).toBeLessThan(260);
+    expect(passRead([start('2026-10-28', 0, 0)])).toBeNull();
+    expect(passRead([])).toBeNull();
+  });
+  test('rows on or after the game are left out', () => {
+    const later = [start('2026-11-02', 500), ...starts];
+    expect(passRead(later, { before: '2026-11-02T18:00Z' }).proj).toBe(passRead(starts, { before: '2026-11-02T18:00Z' }).proj);
+  });
+  test('the total, the favourite and a soft pass defense each lift it; a thin or last-season table moves nothing', () => {
+    const at = (o) => passRead(starts, o).proj;
+    const even = { spread: 'PK', total: 44.5 };
+    expect(at({ odds: { spread: 'PK', total: 52.5 }, team: 'LAR' })).toBeGreaterThan(at({ odds: even, team: 'LAR' }));
+    // ESPN names the favourite ("LAR -7"): the favourite throws for more than the underdog at the same total.
+    expect(at({ odds: { spread: 'LAR -7', total: 44.5 }, team: 'LAR' })).toBeGreaterThan(at({ odds: { spread: 'SEA -7', total: 44.5 }, team: 'LAR' }));
+    // No line: the league's usual total, no favourite.
+    expect(at({})).toBe(at({ odds: even, team: 'LAR' }));
+    const soft = { cell: { value: 275 }, league: 235, gp: 7 };
+    expect(at(soft)).toBeGreaterThan(at({}));
+    expect(passRead(starts, soft).matchup).toBeGreaterThan(1);
+    expect(at({ ...soft, gp: 2 })).toBe(at({}));
+    expect(at({ ...soft, held: true })).toBe(at({}));
+  });
+  test('the board: the starter takes the read, his ladder on its flat spread', () => {
+    const b = build();
+    const row = Object.values(b.projections.rows).find((r) => r.player === 'Matthew Stafford');
+    const y = row.yards.pass_yds;
+    const want = passRead(pf.data.players.find((p) => p.name === 'Matthew Stafford').games, { before: GAMES[0].date, odds: GAMES[0].odds, team: 'LAR', cell: { value: 265 }, league: 235, gp: null });
+    expect(y.proj).toBe(want.proj);
+    expect(y.sd).toBe(PASS.sd);
+    expect(y.pass.n).toBe(10);
+    expect(y.tiers.strong.mark).toBeLessThan(y.proj);
+    // A backup start in his log would have dragged the board's average; the read does not see it.
+    const zeros = { ...pf, data: { ...pf.data, players: pf.data.players.map((p) => (p.name === 'Matthew Stafford' ? { ...p, games: [...p.games, { ...p.games[0], date: '2026-10-02', passAtt: 0, passYds: 0, passCmp: 0 }] } : p)) } };
+    const b2 = buildBoard({ season: 2026, week: 9, games: GAMES, sheets: [], pf: zeros, results: {} });
+    expect(Object.values(b2.projections.rows).find((r) => r.player === 'Matthew Stafford').yards.pass_yds.proj).toBe(y.proj);
+  });
+});
+
 describe('NFL projections: the big games (2026-11-01)', () => {
   test('the chance rises with the board’s own chance and with the context each model reads', () => {
     const y = { proj: 85, sd: 35 };
@@ -124,7 +173,9 @@ describe('NFL projections: the big games (2026-11-01)', () => {
     expect(bigChance({ proj: 95, sd: 35 }, 'rush_yds', 100, { points: 24 })).toBeGreaterThan(bigChance(y, 'rush_yds', 100, { points: 24 }));
     expect(bigChance(y, 'rush_yds', 150, { points: 24 })).toBeLessThan(bigChance(y, 'rush_yds', 100, { points: 24 }));
     expect(bigChance({ proj: 70, sd: 30 }, 'rec_yds', 100, { tgtShare: 0.3 })).toBeGreaterThan(bigChance({ proj: 70, sd: 30 }, 'rec_yds', 100, { tgtShare: 0.15 }));
-    expect(bigChance({ proj: 250, sd: 60 }, 'pass_yds', 300, { total: 52 })).toBeGreaterThan(bigChance({ proj: 250, sd: 60 }, 'pass_yds', 300, { total: 40 }));
+    // Passing reads the ladder's own chance: the passing read (PASS) has the total in the projection already.
+    expect(bigChance({ proj: 250, sd: 70 }, 'pass_yds', 300, { total: 52 })).toBe(bigChance({ proj: 250, sd: 70 }, 'pass_yds', 300, { total: 40 }));
+    expect(bigChance({ proj: 250, sd: 70 }, 'pass_yds', 300, {})).toBe(chanceAtMark({ proj: 250, sd: 70 }, 300, 'pass_yds'));
     // Under the market's projection floor, no read; a missing context reads the league's usual.
     expect(bigChance({ proj: 10, sd: 10 }, 'rush_yds', 100, {})).toBeNull();
     expect(bigChance(y, 'rush_yds', 100, {})).toBe(bigChance(y, 'rush_yds', 100, { points: BIG_FILL.points }));
