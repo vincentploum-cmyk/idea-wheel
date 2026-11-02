@@ -1018,7 +1018,14 @@ config and keeps its own markets, teams, feeds and slate key:
   `nba/<date>/propfinder-extra/<ABBR>.json` + `index.json`, `GET /api/nba/propfinder?date&player|team`), with **every
   rostered player the odds-only call leaves out** (`rosterExtra`: a second players call without `withOddsOnly`, two teams
   a call, each answer cut to the unpriced players; `offBoard: true` and his logs in the board's row shape) — kept with the
-  extra and off the board, whose minutes, team scale and vacated lifts read the priced players. The game rows' kept
+  extra and, **since 2026-11-02, on the board too** (`rosterOnBoard` in `propfinder-nba.js`; Vincent, of IND with ten players
+  out: "why the hell do I only have 2 players listed for Indiana???" — the players taking the absentees' minutes had no
+  lines yet, so the odds-only board had no row for them): every rostered player of the slate's teams is a side player with
+  his logs and no lines (`props: []`, no play, off `best`), with ranges, ladders and a shuffle row, so the Games tab lists
+  him with his projection; the minutes, the team scale and the vacated lifts now read the whole roster, as the audits'
+  replays (every player of ESPN's logs) always did. The Games tab and the stat lists keep every active player with a
+  projection, a mark or not (`tierBoard(…, { keepAll: true })`, "—" in a tier he does not reach); the Boards tab still
+  lists only players with a mark. The game rows' kept
   figures are everything but the board row's own keys (`ROW_KEYS`: the win, the margin, the division game are kept too,
   the NFL's as well). `__tests__/nba-propfinder-all.test.js` (every market name of that pull; the play-by-play of POR at
   UTA, `fixtures/espn-nba-summary-por-uta.json`), `nba-propfinder-pull.test.js` (the pull against a stand-in API).
