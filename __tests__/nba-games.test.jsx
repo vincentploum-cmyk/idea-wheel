@@ -98,6 +98,13 @@ describe('the NBA games, the NFL’s layout', () => {
     const pg = renderToStaticMarkup(<DefenseBlock side={den} season={2026} market="pts" pos="PG" onPos={() => {}} rows={rows} onOpen={() => {}} shuffled />);
     expect(pg).toContain('No PG of DEN on this ladder.');
   });
+  test('every active player with a projection is listed, a mark or not (2026-11-02: IND listed two)', () => {
+    const low = { key: 'big man', player: 'Big Man', team: 'DEN', opp: 'LAL', venue: 'H', game: 'g1', pos: 'C', health: 'In', exp: 0.3, at: heights.map(() => ({ p: 0.05 })) };
+    const rows = tierRows(board, { pts: { ...shuffles.pts, players: [...shuffles.pts.players, low] } }, 'pts', 'g1');
+    const big = rows.find((r) => r.player === 'Big Man');
+    expect(big).toMatchObject({ proj: 0.3, strong: null, lean: null, thin: null, top: null });
+    expect(rows.map((r) => r.player)).toEqual(['Nikola Jokic', 'Austin Reaves', 'Big Man']);
+  });
   test('closed by default; the stat tab lists the night', () => {
     const closed = renderToStaticMarkup(<NbaGames board={board} shuffles={shuffles} />);
     expect(closed).not.toContain('What DEN gives up');

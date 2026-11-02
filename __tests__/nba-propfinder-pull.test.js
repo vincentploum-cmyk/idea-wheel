@@ -21,10 +21,15 @@ jest.mock('../lib/nhl-data/propfinder-api', () => ({
 const { pullSlate } = require('../lib/nba/propfinder-nba');
 
 describe('the NBA pull loads everything', () => {
-  test('the priced players on the board, the rest of the roster in the extra', async () => {
+  test('every rostered player on the board (the unpriced with no lines), the extra kept as well', async () => {
     const r = await pullSlate({ season: 2026, games: [{ away: 'IND', home: 'DET' }], at: '2026-11-01T13:00:00Z' });
     expect(r.ok).toBe(true);
-    expect(r.data.players.map((p) => p.name)).toEqual(['Andrew Nembhard']);
+    // 2026-11-02, IND with ten out: the players taking the minutes had no lines yet and were not on the board.
+    expect(r.data.players.map((p) => p.name)).toEqual(['Andrew Nembhard', 'Bench Guard']);
+    const bench = r.data.players.find((p) => p.name === 'Bench Guard');
+    expect(bench.props).toEqual([]);
+    expect(bench.games[0]).toMatchObject({ pts: 6 });
+    expect(r.withProps).toBe(1);
     expect(mockCalls.filter((c) => c.startsWith('/NBA/players')).map((c) => /withOddsOnly/.test(c))).toEqual([true, false]);
     const ind = r.data.extra.of('IND');
     expect(ind.counts).toMatchObject({ players: 2, offBoard: 1, teamRows: 1 });

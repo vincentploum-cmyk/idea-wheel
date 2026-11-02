@@ -44,7 +44,7 @@ export function useNbaShuffles(date) {
 /** The rows of a stat's list: round marks off the shuffle once loaded (else the book's rungs), the highest projection first. */
 export function tierRows(board, shuffles, market, gameId = null) {
   const sh = shuffles?.[market];
-  const rows = sh?.players ? tierBoard(sh, { step: STEP[market] || 1, gameId }) : ladderBoard(board, { market, gameId });
+  const rows = sh?.players ? tierBoard(sh, { step: STEP[market] || 1, gameId, keepAll: true }) : ladderBoard(board, { market, gameId });
   // His spot on the board (the slot PropFinder's table is read at), for a pressed row of the table.
   const spot = new Map();
   for (const g of board?.games || []) for (const t of [g.away, g.home]) for (const p of g.sides?.[t]?.players || []) spot.set(`${t}|${p.key}`, p.envPos || envPosOf(p));
