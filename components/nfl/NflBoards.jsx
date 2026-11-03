@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { teamLogo, teamName } from '@/lib/nfl/teams';
-import { spreadOf } from '@/lib/nfl/projections';
+import { spreadOf, passText } from '@/lib/nfl/projections';
 import { headshotUrl } from '@/lib/nfl/espn';
 
 // The NFL page's lists (Vincent, 2026-11-01: "I just need a simple list of games and per game, players listed with their
@@ -39,6 +39,15 @@ const Got = ({ v }) => (v === undefined ? <small>—</small> : v === null ? <sma
 
 const hitOf = (v) => (v === undefined || v === null ? '' : v ? ' is-hit' : ' is-miss');
 
+/** The anytime chance's arithmetic for the hover: the board's read, his red-zone looks and the points his team is expected to score (the touchdown engine). */
+function tdWhy(t) {
+  if (t?.board == null) return undefined;
+  const parts = [`${pct(t.board)} from his touchdown rate and touches`];
+  if (t.rz != null) parts.push(`${Number(t.rz).toFixed(1)} red-zone looks a game over his last 5`);
+  if (t.points != null) parts.push(`his team expected to score ${t.points}`);
+  return `${parts.join(' · ')} → ${pct(t.p)}`;
+}
+
 function TdTable({ rows, game }) {
   const final = rows.some((r) => r.final);
   const cols = [
@@ -62,7 +71,7 @@ function TdTable({ rows, game }) {
               <td className="ir-slate-rank">{i + 1}</td>
               <td><Who r={r} game={game} /></td><td className="is-num ir-ml-proj"><b>{t.lambda == null ? '—' : Number(t.lambda).toFixed(2)}</b><small>TDs</small></td>
               {cols.map(([k, , , hit]) => (
-                <td key={k} className={`is-num${k === 'p' ? ' is-lead' : ''}${final ? hitOf(hit(t)) : ''}`}>
+                <td key={k} className={`is-num${k === 'p' ? ' is-lead' : ''}${final ? hitOf(hit(t)) : ''}`} title={k === 'p' ? tdWhy(t) : undefined}>
                   <b>{pct(t[k])}</b>{k === 'p' && t.tier ? <small className={`ir-ml-tier is-${t.tier}`}>{t.tier}</small> : null}
                 </td>
               ))}
@@ -92,7 +101,7 @@ function YardsTable({ rows, kind, game }) {
   return (
     <table className="nhlx-db-table nhlx-pk-table ir-ml-table">
       <thead><tr>
-        <th className="ir-slate-rank">#</th><th>Player</th><th className="is-num ir-ml-proj" title="Tonight’s projection: his skill × tonight’s matchup">Proj</th>
+        <th className="ir-slate-rank">#</th><th>Player</th><th className="is-num ir-ml-proj" title={kind === 'passing' ? 'Tonight’s projection: his starts, the game’s total and spread, the defense (hover a figure)' : 'Tonight’s projection: his skill × tonight’s matchup'}>Proj</th>
         {TIERS.map(([k, l]) => <th key={k} className={`ir-ml-th is-${k}`} title={`The highest mark he reaches tonight at ${k === 'strong' ? '60' : k === 'lean' ? '45' : '30'}% or better`}>{l}</th>)}
         {final ? <th className="is-num">Got</th> : null}
       </tr></thead>
@@ -103,7 +112,7 @@ function YardsTable({ rows, kind, game }) {
           return (
             <tr key={r.id}>
               <td className="ir-slate-rank">{i + 1}</td>
-              <td><Who r={r} game={game} /></td><td className="is-num ir-ml-proj"><b>{y?.proj == null ? '—' : Math.round(y.proj)}</b><small>{c?.proj != null ? `${Number(c.proj).toFixed(1)} rec` : 'yds'}</small></td>
+              <td><Who r={r} game={game} /></td><td className="is-num ir-ml-proj" title={y?.pass ? passText(y.pass) : undefined}><b>{y?.proj == null ? '—' : Math.round(y.proj)}</b><small>{c?.proj != null ? `${Number(c.proj).toFixed(1)} rec` : 'yds'}</small></td>
               {TIERS.map(([k]) => (
                 <td key={k} className={`ir-ml-cell is-${k}`}>
                   <Rung y={y} market={market} tier={k} />
@@ -219,6 +228,28 @@ export function NflList({ board, kind }) {
     <div className="ir-overview">
       {LEGEND}
       <ListOf pj={pj} ids={pj.lists?.[kind] || []} kind={kind} game limit empty={NO_DATA} />
+    </div>
+  );
+}
+
+// ── Tight ends (Vincent, 2026-11-03: "We should also have a tight end tab … the books price these nicely"): the week's tight
+// ends alone, their receiving ladders and their touchdown chances, the same reads as the other tabs. Checked on 2026's weeks
+// 1–7 (docs/audits/2026-11-03-nfl-engines.md, "tight ends"): no tight-end fit of its own read closer than the shipped one
+// (within 10 yards 43.8% of 409 games against 41.3–42.8%), and its rungs land as said (strong 66 → 65%, lean 50 → 51%).
+const TE_KINDS = [['receiving', 'Receiving Yards'], ['td', 'TDs']];
+export function NflTightEnds({ board }) {
+  const [kind, setKind] = useState('receiving');
+  const pj = board?.projections;
+  if (!board?.games?.length) return <div className="nhlx-empty">No games in this week.</div>;
+  if (!pj) return <div className="nhlx-empty">{NO_DATA}</div>;
+  const ids = (pj.lists?.[kind] || []).filter((id) => pj.rows[id]?.pos === 'TE');
+  return (
+    <div className="ir-overview">
+      <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="Tight ends">
+        {TE_KINDS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={kind === k} className={`nhlx-tab${kind === k ? ' is-active' : ''}`} onClick={() => setKind(k)}>{l}</button>)}
+      </div>
+      {LEGEND}
+      <ListOf key={kind} pj={pj} ids={ids} kind={kind} game limit empty={NO_DATA} />
     </div>
   );
 }

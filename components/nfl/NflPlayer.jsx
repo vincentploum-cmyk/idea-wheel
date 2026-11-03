@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { teamLogo, teamName } from '@/lib/nfl/teams';
 import { headshotUrl } from '@/lib/nfl/espn';
+import { passText } from '@/lib/nfl/projections';
 
 // One NFL player from the week's projections (lib/nfl/projections.js `board.projections.rows`), opened from the head's
 // search (Vincent, 2026-11-01: "I should be able to search on players for both nba and nfl"): his touchdown chances
@@ -56,6 +57,7 @@ export default function NflPlayer({ row: r, onClose }) {
             return (
               <section key={m} className="ir-np-sec">
                 <h4>{label} <small className="nhlx-auto-meta">proj <b>{m === 'receptions' ? Number(y.proj).toFixed(1) : Math.round(y.proj)}</b>{y.floor != null ? ` · ${y.floor}–${y.ceiling} most nights` : ''}{y.line != null ? ` · the book’s line ${y.line}` : ''} · <Spot s={y.spot} />{y.matchup != null && y.matchup !== 1 ? ` · ×${Number(y.matchup).toFixed(2)} on his rate` : ''}</small></h4>
+                {y.pass ? <p className="nhlx-auto-meta">{passText(y.pass)}</p> : null}
                 <div className="ir-np-tiers">
                   {TIERS.map(([k, l]) => { const x = y.tiers?.[k]; const hit = y.actual == null || !x ? '' : y.actual >= x.mark ? ' is-hit' : ' is-miss'; return <span key={k} className={`ir-bd-mark is-${k}${hit}`}>{x ? `${x.mark}+ ${unit}` : '—'}<small>{l.toLowerCase()}{x ? ` ${pct(x.p)}` : ''}</small></span>; })}
                   {y.actual != null ? <span className="nhlx-auto-meta">got <b>{y.actual}</b></span> : null}

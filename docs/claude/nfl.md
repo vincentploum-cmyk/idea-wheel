@@ -174,6 +174,38 @@
   the book's first-half line is that market's play like any other. The side players' plays carry `ev`, `implied` and the
   without names. `__tests__/nfl-boards.test.jsx` (the read, the panel, the script; `MOCK_OUT`
   writes `boards-nfl-<theme>.html`).
+- **The passing read** (`PASS`, `passRead` in `lib/nfl/projections.js`; Vincent, 2026-11-02: "we need to work on the passing
+  yards … our predictions are not even close to the actual"; `docs/audits/2026-11-02-nfl-passing.md`, `tools/audit/nfl_passing.py`):
+  a starting quarterback's passing yards are his last 17 starts (10+ attempts) pulled toward 225 at n / (n + 6), plus the
+  book's total and his team's half spread, plus PropFinder's QB passing yards allowed over the league at gp / (gp + 8), fitted
+  on 2025's starts (the board had averaged every logged game, the weeks he sat as a backup in, and read starters 15 yards
+  low: 64.6 → 55.8 a start on 2026's weeks 1–8); a flat 70-yard spread, `RESID.pass_yds` / `RANGE.pass_yds` refitted, 300+ /
+  350+ read the ladder's chance (`BIG.pass_yds` a 0, b 1); a backup on ESPN's chart (no chart: all but the latest starter)
+  keeps the board's read; `y.pass` on the row, `passText` on the hovers.
+- **PropFinder's roster status and the quarterback's rushing** (Vincent, 2026-11-02: "Same for rushing yards. They are also
+  far off"; `docs/audits/2026-11-02-nfl-rushing.md`, `tools/audit/nfl_rushing.py`): every NFL player's `status` (ACT, PRA,
+  OFF_ROSTER, IR, IRD, PRA_IR, PUP, NON, SUS, EXE) is read by `applyRosterStatus` (`lib/nfl/roster-status.js`, first in
+  `makeBuild`): anyone but ACT (or no status) leaves the board — no row, no list — unless the injury feed already has him out
+  (week 8: 25 of the 28 listed rushers who never played, 69 of 79 receivers, 149 of 176 touchdown names were off the
+  roster or on IR); left off, not marked out, so the vacated lifts read what they read before. A starting quarterback's
+  rushing yards are his last 17 starts' pulled toward 8 at n / (n + 3) (`QB_RUSH`, `qbRushRead`, `y.qbRush`). The backs'
+  rushing read is unchanged: nothing tried beat it out of sample.
+- **No injury hand-over on the NFL** (Vincent, 2026-11-03: "yes run the volume study"; `docs/audits/2026-11-03-nfl-volume.md`,
+  `tools/audit/nfl_volume.py`; the predictors study the day before, `docs/audits/2026-11-03-nfl-predictors.md`,
+  `tools/audit/nfl_predictors.py`: recent form leads every market, head to head and the matchup add nothing case by case):
+  the NFL's `COCKTAIL` is `{ matchupK: 8, vacatedShare: 0, withoutSplit: false }` — a teammate out moves no read (the vacated lift
+  at 0.6 put targets within one 29.0% of the games with a teammate missing against 35.7% without it, carries 16.9% / 33.8%;
+  the without split cost 5.5 points of targets' close calls); the split is `board.js`'s `withoutSplit` cocktail key; `roleOf`'s `regularsOut` keeps "if role confirmed" beside a name when a regular at his group is out.
+- **The two-engine spec, tested** (Vincent, 2026-11-03, a spec: yards = volume × matchup × efficiency × script with a
+  max-ladder gate and a card of 2 + 2 ladders; touchdowns = red-zone opportunity × implied total, six a card, an outlier
+  rule; `docs/audits/2026-11-03-nfl-engines.md`, `tools/audit/nfl_engines.py`): the yards formula, the receivers' gate and the
+  card did not beat the board case by case and are not built; two pieces shipped in `lib/nfl/projections.js` — **the shrink**
+  (`YARDS_SHRINK`: receiving 2.07 + 0.772 × the board's, a back's rushing 1.29 + 0.887 ×, LAD on 2025; `RESID` / `RANGE`
+  refitted on it, `y.unshrunk`, the big games on `RESID_UNSHRUNK`): the board's top 5% over-read by 11–18 yards; 2026
+  receiving within ±10 27.5% → 32.2%, rushing 23.0% → 27.2% — and **the touchdown engine** (`TD_ENGINE`, `tdEngine`,
+  `rzLooksOf`: the board's chance after `TD_CAL` with his red-zone looks a game over his last five, PropFinder's `rzAtt` +
+  `rzTgt`, and the team's implied points; `td.board`, `td.rz`, `td.points`; quarterbacks as before): Brier 0.1237 → 0.1222,
+  the week's six likeliest scored 66.7% (54.8% before), the outlier rule met by the engine itself.
 - **The cheat sheet's defense snapshot** (`lib/nfl/snapshot.js`; Vincent, 2026-11-01: "the cheat sheet should be used to
   identify weaknesses in defenses"): each column of the detailed sheet opens with the opponent's defense — coverage shells
   (Man% / Zone%, Cover 0 / 1 / 2 / 3 / 4 / 6, 2-Man) and ranked tiles (Pass Yds/G, Rush Yds/G, Rush Y/Play, the passing

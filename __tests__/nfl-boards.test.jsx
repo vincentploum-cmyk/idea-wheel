@@ -9,10 +9,11 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildBoard } from '../lib/nfl/picks';
-import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS } from '../lib/nfl/projections';
-import { reproject } from '../lib/nfl/picks';
+import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS, PASS, passRead, QB_RUSH, qbRushRead, RESID, RESID_UNSHRUNK, YARDS_SHRINK, TD_ENGINE, tdEngine, rzLooksOf } from '../lib/nfl/projections';
+import { applyRosterStatus, ROSTER_OFF } from '../lib/nfl/roster-status';
+import { reproject, makeBuild, nflBoard, COCKTAIL } from '../lib/nfl/picks';
 import { envFactor } from '../lib/picks/projection';
-import { NflMatchups, NflList, NflBigGames, KINDS } from '../components/nfl/NflBoards';
+import { NflMatchups, NflList, NflBigGames, NflTightEnds, KINDS } from '../components/nfl/NflBoards';
 
 // The week's projections (Vincent, 2026-11-01: "I don't care about edge … the projected yards / TD candidates per game")
 // on a board built from a synthetic pull: the team's touchdowns tonight from its rate, the defense and the book's total,
@@ -77,11 +78,14 @@ describe('NFL boards: the first-half touchdown line', () => {
 });
 
 describe('NFL projections: the ladders and the touchdown reads (2026-11-01)', () => {
-  test('a mark’s chance falls as the mark rises, the projection is cleared less than half the time, the tiers are the highest marks at 60 / 45 / 30%', () => {
+  test('a mark’s chance falls as the mark rises, the projection is cleared about half the time, the tiers are the highest marks at 60 / 45 / 30%', () => {
     const y = { proj: 72, sd: 28 };
     const ps = [40, 50, 60, 70, 80, 90, 100].map((m) => chanceAtMark(y, m, 'rec_yds'));
     for (let i = 1; i < ps.length; i++) expect(ps[i]).toBeLessThan(ps[i - 1]);
-    expect(chanceAtMark(y, 72, 'rec_yds')).toBeLessThan(0.5);   // a game's yards run skewed: the middle game lands under the projection
+    // The curve is fitted on the shrunk projection (YARDS_SHRINK, 2026-11-03): the middle game lands on it.
+    expect(chanceAtMark(y, 72, 'rec_yds')).toBeCloseTo(0.5, 1);
+    // Before the shrink the board's own projection ran over the middle game: its curve put the projection under half.
+    expect(chanceAtMark(y, 72, 'rec_yds', { ...RESID, ...RESID_UNSHRUNK })).toBeLessThan(0.5);
     const t = ladderTiers(y, 'rec_yds');
     for (const [tier, at] of LADDER_TIERS) {
       expect(t[tier].p).toBeGreaterThanOrEqual(at);
@@ -115,6 +119,135 @@ describe('NFL projections: the ladders and the touchdown reads (2026-11-01)', ()
   });
 });
 
+describe('NFL projections: the passing read (2026-11-02)', () => {
+  const start = (date, passYds, passAtt = 34) => ({ date, passYds, passAtt });
+  const starts = Array.from({ length: 10 }, (_, i) => start(`2026-10-${String(28 - i * 2).padStart(2, '0')}`, 280));
+  test('his starts alone: a game he sat or a relief appearance is no start', () => {
+    const plain = passRead(starts);
+    const withBench = passRead([...starts, start('2026-10-29', 0, 0), start('2026-10-09', 41, 4)]);
+    expect(withBench.proj).toBe(plain.proj);
+    expect(plain.n).toBe(10);
+    expect(plain.avg).toBe(280);
+    // Pulled toward the league at n / (n + K): one start reads close to the league, ten most of the way to his own.
+    expect(plain.own).toBeCloseTo((10 * 280 + PASS.K * PASS.league) / (10 + PASS.K), 1);
+    expect(passRead([start('2026-10-28', 400)]).own).toBeLessThan(260);
+    expect(passRead([start('2026-10-28', 0, 0)])).toBeNull();
+    expect(passRead([])).toBeNull();
+  });
+  test('rows on or after the game are left out', () => {
+    const later = [start('2026-11-02', 500), ...starts];
+    expect(passRead(later, { before: '2026-11-02T18:00Z' }).proj).toBe(passRead(starts, { before: '2026-11-02T18:00Z' }).proj);
+  });
+  test('the total, the favourite and a soft pass defense each lift it; a thin or last-season table moves nothing', () => {
+    const at = (o) => passRead(starts, o).proj;
+    const even = { spread: 'PK', total: 44.5 };
+    expect(at({ odds: { spread: 'PK', total: 52.5 }, team: 'LAR' })).toBeGreaterThan(at({ odds: even, team: 'LAR' }));
+    // ESPN names the favourite ("LAR -7"): the favourite throws for more than the underdog at the same total.
+    expect(at({ odds: { spread: 'LAR -7', total: 44.5 }, team: 'LAR' })).toBeGreaterThan(at({ odds: { spread: 'SEA -7', total: 44.5 }, team: 'LAR' }));
+    // No line: the league's usual total, no favourite.
+    expect(at({})).toBe(at({ odds: even, team: 'LAR' }));
+    const soft = { cell: { value: 275 }, league: 235, gp: 7 };
+    expect(at(soft)).toBeGreaterThan(at({}));
+    expect(passRead(starts, soft).matchup).toBeGreaterThan(1);
+    expect(at({ ...soft, gp: 2 })).toBe(at({}));
+    expect(at({ ...soft, held: true })).toBe(at({}));
+  });
+  test('the board: the starter takes the read, his ladder on its flat spread', () => {
+    const b = build();
+    const row = Object.values(b.projections.rows).find((r) => r.player === 'Matthew Stafford');
+    const y = row.yards.pass_yds;
+    const want = passRead(pf.data.players.find((p) => p.name === 'Matthew Stafford').games, { before: GAMES[0].date, odds: GAMES[0].odds, team: 'LAR', cell: { value: 265 }, league: 235, gp: null });
+    expect(y.proj).toBe(want.proj);
+    expect(y.sd).toBe(PASS.sd);
+    expect(y.pass.n).toBe(10);
+    expect(y.tiers.strong.mark).toBeLessThan(y.proj);
+    // A backup start in his log would have dragged the board's average; the read does not see it.
+    const zeros = { ...pf, data: { ...pf.data, players: pf.data.players.map((p) => (p.name === 'Matthew Stafford' ? { ...p, games: [...p.games, { ...p.games[0], date: '2026-10-02', passAtt: 0, passYds: 0, passCmp: 0 }] } : p)) } };
+    const b2 = buildBoard({ season: 2026, week: 9, games: GAMES, sheets: [], pf: zeros, results: {} });
+    expect(Object.values(b2.projections.rows).find((r) => r.player === 'Matthew Stafford').yards.pass_yds.proj).toBe(y.proj);
+  });
+});
+
+describe('NFL projections: the two engines (2026-11-03)', () => {
+  test('the touchdown engine: more red-zone looks and more team points lift the chance; the board\'s order holds', () => {
+    expect(tdEngine(0.3, 3, 22)).toBeGreaterThan(tdEngine(0.3, 0, 22));
+    expect(tdEngine(0.3, 1, 28)).toBeGreaterThan(tdEngine(0.3, 1, 18));
+    expect(tdEngine(0.4, 1, 22)).toBeGreaterThan(tdEngine(0.3, 1, 22));
+    expect(tdEngine(null, 1, 22)).toBeNull();
+    expect(tdEngine(0.3, 1, null)).toBeCloseTo(tdEngine(0.3, 1, TD_ENGINE.points), 6);
+  });
+  test('red-zone looks: his last five games with a touch, before the game', () => {
+    const g = (date, rzAtt, rzTgt, rushAtt = 10, tgt = 3) => ({ date, rzAtt, rzTgt, rushAtt, tgt });
+    const logs = [g('2026-10-26', 4, 1), g('2026-10-19', 2, 0), g('2026-10-12', 0, 0, 0, 0), g('2026-10-05', 3, 1), g('2026-09-28', 1, 1), g('2026-09-21', 2, 2), g('2026-09-14', 9, 9)];
+    expect(rzLooksOf(logs)).toBeCloseTo((5 + 2 + 4 + 2 + 4) / 5, 6);   // the game without a touch left out, the sixth oldest too
+    expect(rzLooksOf([g('2026-11-02', 9, 9), ...logs], '2026-11-02T18:00Z')).toBeCloseTo(rzLooksOf(logs), 6);
+    expect(rzLooksOf([])).toBe(0);
+  });
+  test('the big games read the projection before the shrink', () => {
+    const b = build();
+    const r = Object.values(b.projections.rows).find((x) => x.player === 'Puka Nacua');
+    const y = r.yards.rec_yds;
+    expect(r.big.rec_yds.proj).toBe(y.proj);
+    expect(r.big.rec_yds.p[100]).toBe(bigChance(y, 'rec_yds', 100, { points: impliedPoints(GAMES[0].odds, 'LAR'), total: 47.5, tgtShare: r.big.rec_yds.ctx.tgtShare }));
+    // the shrink moves no big-game chance: the read without it gives the same figure
+    expect(bigChance(y, 'rec_yds', 100, { tgtShare: 0.3 })).toBe(bigChance({ ...y, proj: y.unshrunk + 40 }, 'rec_yds', 100, { tgtShare: 0.3 }));
+  });
+});
+
+describe('NFL board: no injury hand-over (2026-11-03)', () => {
+  test('a teammate out moves no read on the NFL; the old cocktail would have', () => {
+    expect(COCKTAIL).toEqual(expect.objectContaining({ vacatedShare: 0, withoutSplit: false }));
+    const proj = (b) => Object.values(b.projections.rows).find((r) => r.player === 'Zach Charbonnet').yards.rush_yds.proj;
+    const shipped = build();
+    const old = makeBuild(nflBoard({ ...COCKTAIL, vacatedShare: 0.6, withoutSplit: true }))({ season: 2026, week: 9, games: GAMES, sheets: [], pf, results: {} });
+    const side = shipped.games.find((g) => g.id === 'g1').sides.SEA.players.find((p) => p.player === 'Zach Charbonnet');
+    expect(side.own.rushYds.lift ?? 0).toBe(0);
+    expect(side.own.rushYds.without ?? null).toBeNull();
+    expect(proj(old)).toBeGreaterThan(proj(shipped));
+  });
+});
+
+describe('NFL board: PropFinder\'s roster status (2026-11-02)', () => {
+  const withStatus = (map) => ({ ...pf, data: { ...pf.data, players: pf.data.players.map((p) => (map[p.name] ? { ...p, status: map[p.name] } : { ...p, status: 'ACT' })) } });
+  test('a player off the active roster is no row, no list, no ladder', () => {
+    const b = buildBoard({ season: 2026, week: 9, games: GAMES, sheets: [], pf: withStatus({ 'Puka Nacua': 'IR', 'Tyler Higbee': 'OFF_ROSTER', 'Kyren Williams': 'PRA' }), results: {} });
+    const names = Object.values(b.projections.rows).map((r) => r.player);
+    for (const gone of ['Puka Nacua', 'Tyler Higbee', 'Kyren Williams']) expect(names).not.toContain(gone);
+    expect(names).toContain('Matthew Stafford');
+    const listed = Object.values(b.projections.lists).flatMap((x) => (Array.isArray(x) ? x : Object.values(x).flat())).map((id) => b.projections.rows[id]?.player);
+    expect(listed).not.toContain('Puka Nacua');
+  });
+  test('ACT, no status and an unknown status stay; a player the feed already has out is left as he was', () => {
+    const out = applyRosterStatus(withStatus({ 'Puka Nacua': 'ACT', 'Tyler Higbee': 'IR' }));
+    expect(out.data.players.map((p) => p.name)).toContain('Puka Nacua');
+    expect(out.data.players.map((p) => p.name)).not.toContain('Tyler Higbee');
+    expect(out.data.rosterStatus).toEqual({ dropped: 1, by: { IR: 1 } });
+    expect(applyRosterStatus(pf)).toBe(pf);
+    const walker = applyRosterStatus(withStatus({ 'Kenneth Walker': 'IR' })).data.players.find((p) => p.name === 'Kenneth Walker');
+    expect(walker.injury).toBe('Out');
+    expect(Object.keys(ROSTER_OFF)).toEqual(expect.arrayContaining(['IR', 'IRD', 'PUP', 'OFF_ROSTER', 'PRA', 'SUS']));
+  });
+});
+
+describe('NFL projections: the quarterback\'s rushing read (2026-11-02)', () => {
+  const g = (date, rushYds, passAtt = 30) => ({ date, rushYds, passAtt });
+  test('his starts, pulled toward the league; a relief game or a week on the bench is no start', () => {
+    const starts = Array.from({ length: 12 }, (_, i) => g(`2026-10-${String(28 - i * 2).padStart(2, '0')}`, 40));
+    const r = qbRushRead(starts);
+    expect(r.n).toBe(12);
+    expect(r.proj).toBeCloseTo((12 * 40 + QB_RUSH.K * QB_RUSH.league) / (12 + QB_RUSH.K), 1);
+    expect(qbRushRead([...starts, g('2026-10-29', 0, 0), g('2026-10-03', 30, 3)]).proj).toBe(r.proj);
+    expect(qbRushRead([g('2026-10-28', 0, 0)])).toBeNull();
+  });
+  test('the board: the starter\'s rushing reads it', () => {
+    const b = build();
+    const y = Object.values(b.projections.rows).find((r) => r.player === 'Matthew Stafford').yards.rush_yds;
+    const want = qbRushRead(pf.data.players.find((p) => p.name === 'Matthew Stafford').games, { before: GAMES[0].date });
+    expect(y.proj).toBe(want.proj);
+    expect(y.qbRush.n).toBe(10);
+  });
+});
+
 describe('NFL projections: the big games (2026-11-01)', () => {
   test('the chance rises with the board’s own chance and with the context each model reads', () => {
     const y = { proj: 85, sd: 35 };
@@ -124,7 +257,9 @@ describe('NFL projections: the big games (2026-11-01)', () => {
     expect(bigChance({ proj: 95, sd: 35 }, 'rush_yds', 100, { points: 24 })).toBeGreaterThan(bigChance(y, 'rush_yds', 100, { points: 24 }));
     expect(bigChance(y, 'rush_yds', 150, { points: 24 })).toBeLessThan(bigChance(y, 'rush_yds', 100, { points: 24 }));
     expect(bigChance({ proj: 70, sd: 30 }, 'rec_yds', 100, { tgtShare: 0.3 })).toBeGreaterThan(bigChance({ proj: 70, sd: 30 }, 'rec_yds', 100, { tgtShare: 0.15 }));
-    expect(bigChance({ proj: 250, sd: 60 }, 'pass_yds', 300, { total: 52 })).toBeGreaterThan(bigChance({ proj: 250, sd: 60 }, 'pass_yds', 300, { total: 40 }));
+    // Passing reads the ladder's own chance: the passing read (PASS) has the total in the projection already.
+    expect(bigChance({ proj: 250, sd: 70 }, 'pass_yds', 300, { total: 52 })).toBe(bigChance({ proj: 250, sd: 70 }, 'pass_yds', 300, { total: 40 }));
+    expect(bigChance({ proj: 250, sd: 70 }, 'pass_yds', 300, {})).toBe(chanceAtMark({ proj: 250, sd: 70 }, 300, 'pass_yds'));
     // Under the market's projection floor, no read; a missing context reads the league's usual.
     expect(bigChance({ proj: 10, sd: 10 }, 'rush_yds', 100, {})).toBeNull();
     expect(bigChance(y, 'rush_yds', 100, {})).toBe(bigChance(y, 'rush_yds', 100, { points: BIG_FILL.points }));
@@ -180,7 +315,10 @@ describe('NFL projections: the read', () => {
     // The stated chance off λ = his rate × the team × the position, through the touchdown calibration (fitted on 2025).
     const stated = 1 - Math.exp(-(t.own * t.teamFactor * t.posShift));
     expect(t.raw).toBeCloseTo(stated, 2);
-    expect(t.p).toBeCloseTo(tdCalibrated(stated, TD_CAL), 2);
+    // The board's chance through the calibration, then the touchdown engine: his red-zone looks and the team's points.
+    expect(t.board).toBeCloseTo(tdCalibrated(stated, TD_CAL), 2);
+    expect(t.p).toBeCloseTo(tdEngine(tdCalibrated(stated, TD_CAL), t.rz, t.points), 2);
+    expect(t.rz).toBe(0);   // the fixture's rows carry no red-zone looks
     expect(t.p).toBeCloseTo(1 - Math.exp(-t.lambda), 2);
     expect(t.p1h).toBeCloseTo(1 - Math.exp(-H1_SHARE * t.lambda), 3);
     expect(t.n).toBe(10);
@@ -239,14 +377,16 @@ describe('NFL projections: the read', () => {
     expect(scriptFactor(lar, 'rec_yds')).toBeCloseTo(lar.volume * lar.pass, 3);
     expect(scriptFactor(null, 'rec_yds')).toBe(1);
   });
-  test('the yards: tonight’s projection = skill × matchup × script, a floor and a ceiling around it', () => {
+  test('the yards: tonight’s projection = (skill × matchup × script) shrunk, a floor and a ceiling around it', () => {
     const r = row('Puka Nacua');
     const y = r.yards.rec_yds;
     const side = b.games[0].sides.LAR.players.find((p) => p.player === 'Puka Nacua');
     const script = pj.games.find((g) => g.id === 'g1').teams.LAR.script;
     expect(y.exp).toBe(side.ranges.rec_yds.exp);
     expect(y.script).toBeCloseTo(scriptFactor(script, 'rec_yds'), 3);
-    expect(y.proj).toBeCloseTo(y.exp * y.script, 1);
+    expect(y.unshrunk).toBeCloseTo(y.exp * y.script, 1);
+    expect(y.proj).toBeCloseTo(YARDS_SHRINK.rec_yds.c + YARDS_SHRINK.rec_yds.b * y.unshrunk, 1);
+    expect(y.proj).toBeLessThan(y.unshrunk);
     const sd = side.ladders.rec_yds[0].sd * y.script;
     expect(y.floor).toBe(Math.round(Math.max(0, y.proj - RANGE.rec_yds[0] * sd)));
     expect(y.ceiling).toBe(Math.round(y.proj + RANGE.rec_yds[1] * sd));
@@ -273,7 +413,8 @@ describe('NFL projections: the read', () => {
   });
   test('the words beside a name', () => {
     expect(row('Blake Corum').role).toEqual([expect.objectContaining({ kind: 'active', word: 'if active' })]);
-    expect(row('Zach Charbonnet').role).toEqual([expect.objectContaining({ kind: 'role', word: 'if role confirmed', why: expect.stringMatching(/Walker out: his read leans on his 2 games without him/) })]);
+    // No hand-over on the NFL (2026-11-03): the regular out at his group is a word, the projection reads his own games.
+    expect(row('Zach Charbonnet').role).toEqual([expect.objectContaining({ kind: 'role', word: 'if role confirmed', why: expect.stringMatching(/Walker out: his role may grow; the projection reads his own last games/) })]);
     expect(row('Kyren Williams').role).toEqual([]);
     expect(roleOf({ health: 'In', own: { rushAtt: { lift: 3.2, liftFrom: ['Josh Jacobs'] } } }, ['rushAtt'])).toEqual([{ kind: 'role', word: 'if role confirmed', why: 'Jacobs out: the production left behind lifts his rate (+3.2 rushAtt a game)' }]);
   });
@@ -409,6 +550,14 @@ describe('NFL projections: the panel and the script', () => {
       if (kind !== 'td') { for (const t of ['>Strong<', '>Lean<', '>Thin<']) expect(list).toContain(t); expect(list).toMatch(/\d+\+ yds<\/b><small>\d+%/); }
       else expect(list).toMatch(/ir-ml-tier is-(strong|lean|thin)/);
     }
+    // The tight ends' tab (2026-11-03): the tight ends alone, the receiving ladder first, the same reads as the lists.
+    const te = renderToStaticMarkup(<NflTightEnds board={b} />);
+    expect(te).toContain('Tyler Higbee');
+    for (const other of ['Puka Nacua', 'Kyren Williams', 'Matthew Stafford']) expect(te).not.toContain(other);
+    expect(te).toContain('>Receiving Yards<');
+    expect(te).toContain('>TDs<');
+    for (const t of ['>Strong<', '>Lean<', '>Thin<']) expect(te).toContain(t);
+    expect(te).not.toMatch(/\bEV\b|edge|juice|implied/i);
     // With MOCK_OUT=<dir> the panel is written as standalone pages (dark, light) for a screenshot at 1440 and 390.
     const out = process.env.MOCK_OUT;
     if (!out) return;
@@ -418,7 +567,7 @@ describe('NFL projections: the panel and the script', () => {
     const css = [fontCss('@fontsource-variable/schibsted-grotesk'), fontCss('@fontsource-variable/source-sans-3'), fs.readFileSync(path.join(root, 'app/globals.css'), 'utf8')].join('\n');
     for (const theme of ['dark', 'light']) {
       fs.writeFileSync(path.join(out, `boards-nfl-${theme}.html`), `<!doctype html><html lang="en" data-theme="${theme}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>NFL boards</title><style>${css}
-.mock-page { max-width: 1180px; margin: 0 auto; padding: 24px var(--gutter) 48px; }</style></head><body><main class="mock-page nhlx"><section class="nhlx-pk">${html}${renderToStaticMarkup(<NflList board={b} kind="passing" />)}${renderToStaticMarkup(<NflBigGames board={b} />)}</section></main></body></html>`);
+.mock-page { max-width: 1180px; margin: 0 auto; padding: 24px var(--gutter) 48px; }</style></head><body><main class="mock-page nhlx"><section class="nhlx-pk">${html}${renderToStaticMarkup(<NflList board={b} kind="passing" />)}${te}${renderToStaticMarkup(<NflBigGames board={b} />)}</section></main></body></html>`);
     }
   });
   test('the script prints each game’s three lists and the week’s', () => {
