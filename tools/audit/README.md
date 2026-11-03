@@ -101,6 +101,29 @@ in a soft matchup, then grids the cocktail's `reach` / `reachK` / `reachDown` ov
 two replays above (`--cocktail site`, or a JSON cocktail with `"reach": 0` for the board without it). Written up in
 `docs/audits/2026-10-31-nba-ceiling.md` (shipped at 0.3, K 10, no pull toward the floor).
 
+## NBA: what predicts each stat (`nba-box-fetch.mjs`, `nba_stat_drivers.py`)
+
+Points, rebounds, assists and threes one at a time, from the box scores rather than the board: his own record at every
+window and half-life (per game, and his rate a minute × his minutes), then the opponent (at his position and in all, season
+and last ten), pace, the misses on offer, the opponent's threes allowed, teammates out, home, rest, his venue split and his
+head to head, each as a Poisson read on top of his own, fitted on one season and scored unchanged on the next; the head to
+head against a control (his games against other teams at the same dates). `--board` joins `nba-audit.mjs`'s rows to compare
+with the site's whole board on the same player-games. The rows are cached as `stat-drivers-rows.pkl` beside the box scores
+(`--rebuild` reads them again, about four minutes).
+
+```bash
+# trimmed box scores (header, boxscore, pickcenter), 25 MB a season; the first season is history only
+node tools/audit/nba-box-fetch.mjs --from 2023-10-24 --to 2024-04-14 --out .nhl-data/audit/nba-box
+node tools/audit/nba-box-fetch.mjs --from 2024-10-22 --to 2025-04-13 --out .nhl-data/audit/nba-box
+node tools/audit/nba-box-fetch.mjs --from 2025-10-21 --to 2026-04-12 --out .nhl-data/audit/nba-box
+node tools/audit/nba-box-fetch.mjs --from 2026-10-20 --to $(date -u +%F) --out .nhl-data/audit/nba-box
+# the site's board on both check seasons (last season's needs --max-old-space-size=12000: it ran out of heap at the default)
+python3 -I tools/audit/nba_stat_drivers.py --box .nhl-data/audit/nba-box --out docs/audits/2026-11-03-nba-stat-drivers-tables.md \
+  --board .nhl-data/audit/cmp/nba-2026-04-12-site-rows.csv .nhl-data/audit/cmp/nba-2026-11-02-site-rows.csv
+```
+
+Written up in `docs/audits/2026-11-03-nba-stat-drivers.md`.
+
 ## NBA: the minutes read (`nba_minutes.py`)
 
 The replay's rows say what the projection would miss had the board known his minutes; this script tries to get there:

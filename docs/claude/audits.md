@@ -173,3 +173,13 @@
   site's read on Feb–Apr 2025-26: 30+ points said 10.0% landed 9.9%, the night's top five 35% / 34%; this season's first
   ten nights ran under it (30+ said 12.3%, landed 8.4%).
 
+- What predicts each NBA stat (`docs/audits/2026-11-03-nba-stat-drivers.md`, `tools/audit/nba-box-fetch.mjs` → `nba_stat_drivers.py`;
+  Vincent, 2026-11-03: "what can predict threes the best, rebounds the best, points the best and assists the best?"): ESPN's
+  box scores of 2023-24 (history), 2024-25 (fit), 2025-26 and this season (checks), rotation players. Per stat his rate a
+  minute over a decayed memory (half-life 15 games points / assists, 20 rebounds, 20–30 threes, across seasons, regular
+  season) × this season's minutes (half-life 3, from his first game: last April's minutes read 2–4 high in October); the
+  opponent's all-positions table beat the position cell for every stat (the split adds nothing on top), threes on the
+  opponent's 3PA allowed (not 3P%), rebounds on its last ten; teammates out the biggest lever for points and assists; the
+  head to head (against a control at the same dates), the venue split, home and rest predict nothing. Against the site's
+  board replayed on the same player-games: 2025-26 points 5.08 → 4.96 (the board −1.37 low, the team ceiling), rebounds
+  2.01 → 1.98, assists 1.50 → 1.48, threes 1.04 → 1.03; this season 5.05 → 4.99, 2.01 → 1.93, 1.51 → 1.45, 1.03 → 1.02.
