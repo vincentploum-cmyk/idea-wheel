@@ -44,7 +44,7 @@ export function useNbaShuffles(date) {
 /** The rows of a stat's list: round marks off the shuffle once loaded (else the book's rungs), the highest projection first. */
 export function tierRows(board, shuffles, market, gameId = null) {
   const sh = shuffles?.[market];
-  const rows = sh?.players ? tierBoard(sh, { step: STEP[market] || 1, gameId }) : ladderBoard(board, { market, gameId });
+  const rows = sh?.players ? tierBoard(sh, { step: STEP[market] || 1, gameId, keepAll: true }) : ladderBoard(board, { market, gameId });
   // His spot on the board (the slot PropFinder's table is read at), for a pressed row of the table.
   const spot = new Map();
   for (const g of board?.games || []) for (const t of [g.away, g.home]) for (const p of g.sides?.[t]?.players || []) spot.set(`${t}|${p.key}`, p.envPos || envPosOf(p));
@@ -138,6 +138,12 @@ export function DefenseBlock({ side, season, market, pos, onPos, rows, onOpen, s
   const lg = pos ? (table?.league || side.allowed?.league)?.[pos]?.[market] ?? null : null;
   const unit = UNIT[market] || market;
   const mine = rows.filter((r) => r.team === side.team && (!pos || r.envPos === pos));
+  // What the defense gives up in all positions this season (the board's matchup for the stat), and for threes the threes it lets
+  // teams attempt — at the picked position on the table's window and in all (Vincent, 2026-11-03: "if propfinder gives us the
+  // allowed 3 pt attempts, we need to display that also").
+  const all = side.against?.stats?.[market] || null;
+  const tpaCell = market === 'tpm' && pos ? table?.rows?.[pos]?.tpa || null : null;
+  const tpaAll = market === 'tpm' ? side.against?.stats?.tpa || null : null;
   return (
     <section className="ir-gm-def" aria-label={`${side.opp} defense against ${side.team}`}>
       <div className="ir-gf-team-head">
@@ -151,6 +157,8 @@ export function DefenseBlock({ side, season, market, pos, onPos, rows, onOpen, s
       <div className="nhlx-pfd-head ir-gm-players">
         <b>{side.team}’s {pos ? `${pos}s` : 'players'} · {NBA_STATS.find(([k]) => k === market)[1]}</b>
         {cell ? <span className={`ir-gm-cell is-${zoneTone(cell.rankBlend ?? cell.rank, count)}`} title={lg != null ? `The league's average at ${pos}: ${num(lg)} a game` : ''}>{side.opp} gives up {num(cell.value)} {unit} a game to {pos}s{cell.rank ? ` · #${cell.rank} of ${count}` : ''} · {windowLabel(view, side.allowed, season)}{lg != null ? ` · league ${num(lg)}` : ''}</span> : null}
+        {all ? <span className={`ir-gm-cell is-${zoneTone(all.rank, all.count)}`} title={`${teamName(side.opp)} gives up ${num(all.value)} ${unit} a game to all positions this season${side.against?.gp ? ` (${side.against.gp} games)` : ''}${all.l10 != null ? ` · ${num(all.l10)} over its last ten` : ''}${all.league != null ? ` · the league ${num(all.league)}` : ''} · rank 1 = the most`}>{side.opp} gives up {num(all.value)} {unit} a game in all · #{all.rank} of {all.count}{all.league != null ? ` · league ${num(all.league)}` : ''}</span> : null}
+        {tpaCell || tpaAll ? <span className={`ir-gm-cell is-${zoneTone(tpaAll?.rank ?? tpaCell?.rank, tpaAll?.count ?? count)}`} title={`Three-point attempts ${teamName(side.opp)} allows a game (PropFinder): more attempts, more threes made — the threes' matchup on the board${tpaAll?.l10 != null ? ` · ${num(tpaAll.l10)} over its last ten` : ''}`}>3PA allowed{tpaCell ? ` · ${num(tpaCell.value)} to ${pos}s${tpaCell.rank ? ` (#${tpaCell.rank})` : ''}` : ''}{tpaAll ? ` · ${num(tpaAll.value)} in all (#${tpaAll.rank} of ${tpaAll.count}${tpaAll.league != null ? `, league ${num(tpaAll.league)}` : ''})` : ''}</span> : null}
         {!shuffled ? <small className="nhlx-auto-meta">the book’s rungs until the round marks load</small> : null}
       </div>
       {mine.length ? <TierTable rows={mine} market={market} onOpen={onOpen} /> : <p className="nhlx-auto-meta ir-ml-empty">{rows.length ? `No ${pos ? `${pos} of ` : 'player of '}${side.team} on this ladder.` : NO_DATA}</p>}

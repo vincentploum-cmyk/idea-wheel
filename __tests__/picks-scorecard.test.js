@@ -168,10 +168,10 @@ describe('the predictors', () => {
       { market: 'pts', proj: 20, actual: 20, matchup: 1, mFrom: 'none' },
     ];
     const rep = matchupReport(fake, 'pts', 'Points');
-    expect(rep.by.map((b) => b.key)).toEqual(['sheet', 'blend', 'propfinder', 'none']);
+    expect(rep.by.map((b) => b.key)).toEqual(['sheet', 'blend', 'propfinder', 'team', 'none']);
     expect(rep.by[0]).toMatchObject({ label: 'The cheat sheet', n: 2, mae: 2, without: 2, bias: -2, moved: 0.1 });
     expect(rep.by[1]).toMatchObject({ n: 0, mae: null });
-    expect(rep.by[3]).toMatchObject({ n: 1, mae: 0, without: 0 });
+    expect(rep.by.find((b) => b.key === 'none')).toMatchObject({ n: 1, mae: 0, without: 0 });
   });
   test('the report: bias, MAE, RMSE and the over-the-line read per predictor, on common rows', () => {
     const rep = predictorReport(rows, 'pts', 'Points');

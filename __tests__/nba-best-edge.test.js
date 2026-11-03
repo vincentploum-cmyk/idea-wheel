@@ -55,3 +55,17 @@ describe('the NBA best bets by edge', () => {
     expect(b.best.find((r) => r.key === 'cold shooter')).toMatchObject({ actual: 1, hit: true });
   });
 });
+
+describe('a rostered player with no lines (2026-11-02: IND sat ten and listed two)', () => {
+  test('he is on the side with a projection and on the shuffle, with no play of his own', () => {
+    const { shuffleOf } = require('../lib/nba/picks');
+    const withBench = { ...pf, data: { ...pf.data, players: [...pf.data.players, player('p6', 'Bench Wing', 'BOS', 'SF', (i) => ({ pts: 11 + (i % 3), min: 26 }), [])] } };
+    const b = buildBoard({ date: '2026-10-31', season: 2026, games: games(), sheets: [], pf: withBench, results: {} });
+    const bench = b.games[0].sides.BOS.players.find((p) => p.key === 'bench wing');
+    expect(bench.plays).toEqual([]);
+    expect(bench.ranges.pts.exp).toBeGreaterThan(8);
+    expect(b.best.some((r) => r.key === 'bench wing')).toBe(false);
+    const sh = shuffleOf({ market: 'pts', board: b, pf: withBench, season: 2026 });
+    expect(sh.players.find((r) => r.key === 'bench wing')?.exp).toBeGreaterThan(8);
+  });
+});

@@ -196,10 +196,10 @@ describe('NFL projections: the two engines (2026-11-03)', () => {
 
 describe('NFL board: no injury hand-over (2026-11-03)', () => {
   test('a teammate out moves no read on the NFL; the old cocktail would have', () => {
-    expect(COCKTAIL).toEqual(expect.objectContaining({ vacatedShare: 0, without: false }));
+    expect(COCKTAIL).toEqual(expect.objectContaining({ vacatedShare: 0, withoutSplit: false }));
     const proj = (b) => Object.values(b.projections.rows).find((r) => r.player === 'Zach Charbonnet').yards.rush_yds.proj;
     const shipped = build();
-    const old = makeBuild(nflBoard({ ...COCKTAIL, vacatedShare: 0.6, without: true }))({ season: 2026, week: 9, games: GAMES, sheets: [], pf, results: {} });
+    const old = makeBuild(nflBoard({ ...COCKTAIL, vacatedShare: 0.6, withoutSplit: true }))({ season: 2026, week: 9, games: GAMES, sheets: [], pf, results: {} });
     const side = shipped.games.find((g) => g.id === 'g1').sides.SEA.players.find((p) => p.player === 'Zach Charbonnet');
     expect(side.own.rushYds.lift ?? 0).toBe(0);
     expect(side.own.rushYds.without ?? null).toBeNull();

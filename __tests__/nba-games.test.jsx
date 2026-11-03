@@ -88,6 +88,27 @@ describe('the NBA games, the NFL’s layout', () => {
 .mock-page { max-width: 1360px; margin: 0 auto; padding: 24px var(--gutter) 48px; }</style></head><body><main class="mock-page nhlx"><section class="nhlx-pk">${html}</section></main></body></html>`);
     }
   });
+  test('threes: the 3PA column in the table, the threes attempted allowed at the position and in all (Vincent, 2026-11-03)', () => {
+    const threes = (tpm, tpa, rk) => ({ gp: 10, pts: { value: 22, rank: 10 }, tpm: { value: tpm, rank: rk }, tpa: { value: tpa, rank: rk } });
+    const allowed = { count: 30, rows: { PG: threes(3.1, 8.4, 4), SG: threes(2.6, 7.1, 18), C: threes(0.6, 1.9, 22) }, league: { PG: { tpm: 2.7, tpa: 7.6 }, SG: { tpm: 2.5, tpa: 7.0 }, C: { tpm: 0.7, tpa: 2.1 } } };
+    const side = { team: 'DEN', opp: 'LAL', venue: 'H', out: [], allowed, against: { gp: 10, stats: { tpm: { value: 14.2, rank: 6, count: 30, league: 13.1, l10: 14.8 }, tpa: { value: 39.5, rank: 3, count: 30, league: 35.2, l10: 40.1 } } }, players: [] };
+    const html = renderToStaticMarkup(<DefenseBlock side={side} season={2026} market="tpm" pos="PG" onPos={() => {}} rows={[]} onOpen={() => {}} shuffled />);
+    expect(html).toMatch(/<th class="is-on">3PM<\/th><th[^>]*>3PA<\/th>/);
+    expect(html).toContain('LAL gives up 14.2 3PM a game in all · #6 of 30 · league 13.1');
+    expect(html).toContain('3PA allowed · 8.4 to PGs (#4) · 39.5 in all (#3 of 30, league 35.2)');
+    // Points: the figure in all positions, no 3PA line.
+    const pts = renderToStaticMarkup(<DefenseBlock side={{ ...side, against: { gp: 10, stats: { pts: { value: 118.4, rank: 7, count: 30, league: 114.6 } } } }} season={2026} market="pts" pos={null} onPos={() => {}} rows={[]} onOpen={() => {}} shuffled />);
+    expect(pts).toContain('LAL gives up 118.4 pts a game in all · #7 of 30 · league 114.6');
+    expect(pts).not.toContain('3PA allowed');
+    const out = process.env.MOCK_OUT;
+    if (!out) return;
+    const root = path.resolve(__dirname, '..');
+    const fontCss = (pkg) => { const dir = path.join(root, 'node_modules', pkg); return fs.readFileSync(path.join(dir, 'index.css'), 'utf8').replace(/url\(\.\/files\//g, `url(file://${dir}/files/`); };
+    const css = [fontCss('@fontsource-variable/schibsted-grotesk'), fontCss('@fontsource-variable/source-sans-3'), fs.readFileSync(path.join(root, 'app/globals.css'), 'utf8')].join('\n');
+    fs.mkdirSync(out, { recursive: true });
+    for (const theme of ['dark', 'light']) fs.writeFileSync(path.join(out, `threes-nba-${theme}.html`), `<!doctype html><html lang="en" data-theme="${theme}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>NBA threes</title><style>${css}
+.mock-page { max-width: 1360px; margin: 0 auto; padding: 24px var(--gutter) 48px; }</style></head><body><main class="mock-page nhlx"><section class="nhlx-pk">${html}</section></main></body></html>`);
+  });
   test('a position picked: the table’s cell for it in a line, the players at that spot alone', () => {
     const rows = tierRows(board, shuffles, 'pts', 'g1');
     const den = board.games[0].sides.DEN;
@@ -97,6 +118,20 @@ describe('the NBA games, the NFL’s layout', () => {
     expect(c).not.toContain('Austin Reaves');
     const pg = renderToStaticMarkup(<DefenseBlock side={den} season={2026} market="pts" pos="PG" onPos={() => {}} rows={rows} onOpen={() => {}} shuffled />);
     expect(pg).toContain('No PG of DEN on this ladder.');
+  });
+  test('a last-N tab a team is short of says how many games stand in', () => {
+    const den = board.games[0].sides.DEN;
+    const short = { ...den, allowed: { ...den.allowed, windows: { l10: { count: 30, season: 2026, rows: { PG: { gp: 8, short: true, pts: { value: 30, rank: 1 } } } } } } };
+    const html = renderToStaticMarkup(<DefenseBlock side={short} season={2026} market="pts" pos={null} onPos={() => {}} rows={[]} onOpen={() => {}} shuffled />);
+    expect(html).toContain('its last 10 games · LAL has played 8 games this season, all 8 here');
+    expect(html).not.toContain('of last season');
+  });
+  test('every active player with a projection is listed, a mark or not (2026-11-02: IND listed two)', () => {
+    const low = { key: 'big man', player: 'Big Man', team: 'DEN', opp: 'LAL', venue: 'H', game: 'g1', pos: 'C', health: 'In', exp: 0.3, at: heights.map(() => ({ p: 0.05 })) };
+    const rows = tierRows(board, { pts: { ...shuffles.pts, players: [...shuffles.pts.players, low] } }, 'pts', 'g1');
+    const big = rows.find((r) => r.player === 'Big Man');
+    expect(big).toMatchObject({ proj: 0.3, strong: null, lean: null, thin: null, top: null });
+    expect(rows.map((r) => r.player)).toEqual(['Nikola Jokic', 'Austin Reaves', 'Big Man']);
   });
   test('closed by default; the stat tab lists the night', () => {
     const closed = renderToStaticMarkup(<NbaGames board={board} shuffles={shuffles} />);

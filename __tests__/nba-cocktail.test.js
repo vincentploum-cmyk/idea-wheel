@@ -3,7 +3,9 @@ import { blendWindows, ownRate, matchupOf, dampOf, blendText, dampText, pullText
 import { COCKTAIL_DEFAULTS, chanceOf, WEIGHTS } from '../lib/picks/board';
 import { minutesTonight, FACTOR_MAX } from '../lib/picks/rotations';
 import { pAt } from '../lib/picks/shuffle';
-import { COCKTAIL, nbaBoard, logAverages as nbaAverages, ladderOf as nbaLadder } from '../lib/nba/picks';
+// The mechanics below (the windows, the role pull) as the cocktail until 2026-11-03 carried them; the site's since reads the per-stat
+// recipe with the pull off (__tests__/nba-recipe.test.js), the options all still in the code.
+import { COCKTAIL as SITE, COCKTAIL_BEFORE_RECIPE as COCKTAIL, RECIPE, nbaBoard, logAverages as nbaAverages, ladderOf as nbaLadder } from '../lib/nba/picks';
 import { logAverages as nflAverages, buildBoard as nflBoard } from '../lib/nfl/picks';
 
 // The NBA cocktail (lib/nba/picks.js COCKTAIL, docs/audits/2026-10-28-nba-cocktail.md): the weights behind the
@@ -146,7 +148,7 @@ describe('his first games pulled toward his role, a stat at a time', () => {
     expect(pullText(null)).toBe('');
   });
   test('one game in: points halfway, rebounds a third of the way, assists two thirds (K 1, 2, 0.5)', () => {
-    const p = sideOf(nbaBoard(), [one, ...last]);
+    const p = sideOf(nbaBoard(COCKTAIL), [one, ...last]);
     // A guard's rate a minute: the slate's guard games in PropFinder (40 points in 30 minutes) on the reference's 0.4998
     // at 500 minutes → (40 + 250) / 530 = 0.547 × 30 = 16.4.
     expect(p.own.pts.pull).toMatchObject({ prior: 16.4, w: 0.5, n: 1, K: 1, group: 'G', min: 30, from: { sheet: 0, propfinder: 30, reference: 500 } });
@@ -163,11 +165,11 @@ describe('his first games pulled toward his role, a stat at a time', () => {
     // The slate's sheet lists two guards: 20 points in 30 minutes and 10 in 20 (30 points in 50 minutes), and a
     // misread row (300 points in 30). With PropFinder's 40 in 30: (30 + 40 + 0.4998 × 500) / (50 + 30 + 500) = 0.5516.
     const rows = [{ player: 'Jaylen Brown', pos: 'SG', avg: { min: 30, pts: 20, reb: 5, ast: 3, tpm: 2 } }, { player: 'Derrick White', pos: 'PG', avg: { min: 20, pts: 10, reb: 3, ast: 4, tpm: 2 } }, { player: 'Sam Hauser', pos: 'SG', avg: { min: 30, pts: 300, reb: 3, ast: 1, tpm: 3 } }];
-    const p = nbaBoard().buildBoard({ date: '2026-10-25', season: 2026, games, sheets: [{ id: 's', fileName: 'nba_20261025.pdf', rows, meta: {} }], pf: pfOf([one, ...last]), results: {} }).games[0].sides.BOS.players[0];
+    const p = nbaBoard(COCKTAIL).buildBoard({ date: '2026-10-25', season: 2026, games, sheets: [{ id: 's', fileName: 'nba_20261025.pdf', rows, meta: {} }], pf: pfOf([one, ...last]), results: {} }).games[0].sides.BOS.players[0];
     expect(p.own.pts.pull).toMatchObject({ perMin: 0.5516, prior: 16.5, from: { sheet: 80, propfinder: 30, reference: 500 } });
   });
   test('no game this season, no pull: last season’s regular season stands in as it is', () => {
-    const p = sideOf(nbaBoard(), last);
+    const p = sideOf(nbaBoard(COCKTAIL), last);
     expect(p.own.pts.pull).toBeUndefined();
     expect(p.ranges.pts.rate).toBe(18);
   });
@@ -184,7 +186,7 @@ describe('his role from his own opportunity: usage, rebound chances, potential a
     { id: 'p1', name: 'Payton Pritchard', key: 'payton pritchard', team: 'BOS', pos: 'PG', games: pg, props: [] },
     { id: 'p2', name: 'Neemias Queta', key: 'neemias queta', team: 'BOS', pos: 'C', games: c, props: [] },
   ], defense: null } };
-  const side = nbaBoard().buildBoard({ date: '2026-11-05', season: 2026, games, sheets: [], pf, results: {} }).games[0].sides.BOS;
+  const side = nbaBoard(COCKTAIL).buildBoard({ date: '2026-11-05', season: 2026, games, sheets: [], pf, results: {} }).games[0].sides.BOS;
   const guard = side.players.find((p) => p.key === 'payton pritchard'); const big = side.players.find((p) => p.key === 'neemias queta');
   // His own opportunity earns the stronger pull (`pullOpportunity`: points 12, PRA 5 on its parts; rebounds and assists as the position's).
   const w = (stat) => Math.round((10 / (10 + COCKTAIL.pullOpportunity[stat])) * 1000) / 1000;
@@ -210,7 +212,7 @@ describe('his role from his own opportunity: usage, rebound chances, potential a
     expect(pullText(guard.own.pts.pull)).toContain('his 30% usage over 30 minutes');
     expect(pullText(big.own.reb.pull)).toContain('his 20 rebound chances a game, 30 minutes');
     const bare = { ...pf, data: { ...pf.data, players: pf.data.players.map((p) => ({ ...p, games: p.games.map(({ usg, rebCh, potAst, ...g }) => g) })) } };
-    const plain = nbaBoard().buildBoard({ date: '2026-11-05', season: 2026, games, sheets: [], pf: bare, results: {} }).games[0].sides.BOS.players.find((p) => p.key === 'payton pritchard');
+    const plain = nbaBoard(COCKTAIL).buildBoard({ date: '2026-11-05', season: 2026, games, sheets: [], pf: bare, results: {} }).games[0].sides.BOS.players.find((p) => p.key === 'payton pritchard');
     expect(plain.own.pts.pull).toMatchObject({ basis: 'position', K: COCKTAIL.pull.pts, w: Math.round((10 / (10 + COCKTAIL.pull.pts)) * 1000) / 1000 });
     expect(plain.own.pra.pull).toMatchObject({ basis: 'position', K: COCKTAIL.pull.pra });
     // The NFL board reads no opportunity (the defaults).
@@ -229,7 +231,8 @@ describe('the minutes and the defaults', () => {
   });
   test('the defaults are the board as it was; the NBA’s cocktail is its own', () => {
     expect(COCKTAIL_DEFAULTS).toMatchObject({ windows: null, hitWeights: WEIGHTS, matchupK: 0, ladderModel: 0.5, empK: 0, spreadA: 0, factorMax: FACTOR_MAX, scope: 'all', volume: true, pull: null });
-    expect(nbaBoard().COCKTAIL).toMatchObject(COCKTAIL);
+    expect(nbaBoard().COCKTAIL).toMatchObject({ ...COCKTAIL, recipe: RECIPE, withoutSplit: false, pull: null });
+    expect(nbaBoard().COCKTAIL).toMatchObject(SITE);
     expect(nbaBoard({}).COCKTAIL).toEqual(COCKTAIL_DEFAULTS);
     // The NFL board's tables carry its own damping since the backtest of 2026-11-01 (lib/nfl/picks.js COCKTAIL, k = 8).
     const games = [{ id: 'g1', date: '2026-10-25T17:00Z', away: 'BUF', home: 'MIA', final: false, state: 'pre' }];
