@@ -11,7 +11,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { buildBoard } from '../lib/nfl/picks';
 import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS, PASS, passRead, QB_RUSH, qbRushRead } from '../lib/nfl/projections';
 import { applyRosterStatus, ROSTER_OFF } from '../lib/nfl/roster-status';
-import { reproject } from '../lib/nfl/picks';
+import { reproject, makeBuild, nflBoard, COCKTAIL } from '../lib/nfl/picks';
 import { envFactor } from '../lib/picks/projection';
 import { NflMatchups, NflList, NflBigGames, KINDS } from '../components/nfl/NflBoards';
 
@@ -162,6 +162,19 @@ describe('NFL projections: the passing read (2026-11-02)', () => {
     const zeros = { ...pf, data: { ...pf.data, players: pf.data.players.map((p) => (p.name === 'Matthew Stafford' ? { ...p, games: [...p.games, { ...p.games[0], date: '2026-10-02', passAtt: 0, passYds: 0, passCmp: 0 }] } : p)) } };
     const b2 = buildBoard({ season: 2026, week: 9, games: GAMES, sheets: [], pf: zeros, results: {} });
     expect(Object.values(b2.projections.rows).find((r) => r.player === 'Matthew Stafford').yards.pass_yds.proj).toBe(y.proj);
+  });
+});
+
+describe('NFL board: no injury hand-over (2026-11-03)', () => {
+  test('a teammate out moves no read on the NFL; the old cocktail would have', () => {
+    expect(COCKTAIL).toEqual(expect.objectContaining({ vacatedShare: 0, without: false }));
+    const proj = (b) => Object.values(b.projections.rows).find((r) => r.player === 'Zach Charbonnet').yards.rush_yds.proj;
+    const shipped = build();
+    const old = makeBuild(nflBoard({ ...COCKTAIL, vacatedShare: 0.6, without: true }))({ season: 2026, week: 9, games: GAMES, sheets: [], pf, results: {} });
+    const side = shipped.games.find((g) => g.id === 'g1').sides.SEA.players.find((p) => p.player === 'Zach Charbonnet');
+    expect(side.own.rushYds.lift ?? 0).toBe(0);
+    expect(side.own.rushYds.without ?? null).toBeNull();
+    expect(proj(old)).toBeGreaterThan(proj(shipped));
   });
 });
 
@@ -366,7 +379,8 @@ describe('NFL projections: the read', () => {
   });
   test('the words beside a name', () => {
     expect(row('Blake Corum').role).toEqual([expect.objectContaining({ kind: 'active', word: 'if active' })]);
-    expect(row('Zach Charbonnet').role).toEqual([expect.objectContaining({ kind: 'role', word: 'if role confirmed', why: expect.stringMatching(/Walker out: his read leans on his 2 games without him/) })]);
+    // No hand-over on the NFL (2026-11-03): the regular out at his group is a word, the projection reads his own games.
+    expect(row('Zach Charbonnet').role).toEqual([expect.objectContaining({ kind: 'role', word: 'if role confirmed', why: expect.stringMatching(/Walker out: his role may grow; the projection reads his own last games/) })]);
     expect(row('Kyren Williams').role).toEqual([]);
     expect(roleOf({ health: 'In', own: { rushAtt: { lift: 3.2, liftFrom: ['Josh Jacobs'] } } }, ['rushAtt'])).toEqual([{ kind: 'role', word: 'if role confirmed', why: 'Jacobs out: the production left behind lifts his rate (+3.2 rushAtt a game)' }]);
   });

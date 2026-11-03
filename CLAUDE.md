@@ -730,6 +730,13 @@ config and keeps its own markets, teams, feeds and slate key:
   roster or on IR); left off, not marked out, so the vacated lifts read what they read before. A starting quarterback's
   rushing yards are his last 17 starts' pulled toward 8 at n / (n + 3) (`QB_RUSH`, `qbRushRead`, `y.qbRush`). The backs'
   rushing read is unchanged: nothing tried beat it out of sample.
+- **No injury hand-over on the NFL** (Vincent, 2026-11-03: "yes run the volume study"; `docs/audits/2026-11-03-nfl-volume.md`,
+  `tools/audit/nfl_volume.py`; the predictors study the day before, `docs/audits/2026-11-03-nfl-predictors.md`,
+  `tools/audit/nfl_predictors.py`: recent form leads every market, head to head and the matchup add nothing case by case):
+  the NFL's `COCKTAIL` is `{ matchupK: 8, vacatedShare: 0, without: false }` — a teammate out moves no read (the vacated lift
+  at 0.6 put targets within one 29.0% of the games with a teammate missing against 35.7% without it, carries 16.9% / 33.8%;
+  the without split cost 5.5 points of targets' close calls); `without` is a cocktail key in `board.js` (default true, the
+  NBA's unchanged); `roleOf`'s `regularsOut` keeps "if role confirmed" beside a name when a regular at his group is out.
 - **The cheat sheet's defense snapshot** (`lib/nfl/snapshot.js`; Vincent, 2026-11-01: "the cheat sheet should be used to
   identify weaknesses in defenses"): each column of the detailed sheet opens with the opponent's defense — coverage shells
   (Man% / Zone%, Cover 0 / 1 / 2 / 3 / 4 / 6, 2-Man) and ranked tiles (Pass Yds/G, Rush Yds/G, Rush Y/Play, the passing
