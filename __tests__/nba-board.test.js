@@ -249,6 +249,19 @@ describe('NBA PropFinder mapping', () => {
     expect(depthChart({ code: 'CHI', depthChart: { data: 'not json' } })).toBeNull();
     expect(fieldsSeen([], [team]).sample.depthChart).toContain('Payton Pritchard');
   });
+  test('a team short of N games this season reads its season row on the last-N tab, not last season\'s last N (2026-11-02: ATL)', () => {
+    const row = (season, lastNGames, gp, pts) => ({ type: 'Opponent', position: 'PG', seasonYear: season, seasonType: 'REG', lastNGames, gamesPlayed: gp, points: pts });
+    // ATL: 8 games this season, no L10 row for it yet; last season's L10 row is there. BOS: 10 games, its L10 published.
+    const teams = [{ code: 'ATL', stats: [row(2026, 0, 8, 30), row(2025, 10, 10, 35.2)] }, { code: 'BOS', stats: [row(2026, 0, 10, 24), row(2026, 10, 10, 25)] }];
+    const d = defenseAllowed(teams, { season: 2026 });
+    expect(d.windows.l10.teams.ATL.PG).toMatchObject({ gp: 8, pts: 30, short: true, season: 2026 });
+    expect(d.windows.l10.teams.BOS.PG).toMatchObject({ gp: 10, pts: 25 });
+    expect(d.windows.l10.teams.BOS.PG.short).toBeUndefined();
+    expect(d.windows.l10.season).toBe(2026);
+    expect(d.windows.l10.ranks.ATL.PG.short).toBeUndefined();
+    // A window nobody publishes, this season or last, is no tab.
+    expect(d.windows.l20).toBeUndefined();
+  });
   test('what each defense allows per position, from the positions the rows carry', () => {
     // PropFinder's NBA rows are per-game figures already (no division by the games); a playoff row is not the season's.
     const row = (pos, pts, reb = 6, ast = 4) => ({ type: 'Opponent', position: pos, seasonYear: 2026, seasonType: 'REG', gamesPlayed: 5, points: pts / 5, rebounds: reb, assists: ast });

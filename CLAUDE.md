@@ -858,7 +858,11 @@ config and keeps its own markets, teams, feeds and slate key:
   over the tab picked beside them (**this season's table as PropFinder publishes it**, the default and the table the
   board reads, labelled by its years, "'26-'27"; last season's in full, "'25-'26", `allowed.prior` from
   `defense.prior`, a comparison only; then L5 / L10 / L15 / L20 = PropFinder's `lastNGames` rows as published,
-  `defenseAllowed` → `defense.windows[l5]` with their own ranks and `league` = the league's average per position
+  `defenseAllowed` → `defense.windows[l5]` with their own ranks (**a team short of N games this season reads its season row
+  there**, `short` on the row, the note "ATL has played 8 games this season, all 8 here"; 2026-11-02, Vincent: ATL's L10 tab
+  read last season's last ten, "10 GP", labelled "of last season (no games this season yet)" — PropFinder publishes no
+  last-N row until a team has N games; last season's last N stands in only for a team without a game this season, and a
+  window PropFinder publishes for no team in either season is no tab) and `league` = the league's average per position
   and stat; `windowsOf` / `tableFor` / `windowLabel` in the court, `zoneTone` by rank third, rank 1 = the most
   permissive), the zone's foot carrying the rank; **above the table, who is out tonight** (`OutLines`: the side's
   team then the opponent, from `side.out` = PropFinder's injury report through `absentByTeam`, name, position,

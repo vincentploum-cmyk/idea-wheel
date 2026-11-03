@@ -98,6 +98,13 @@ describe('the NBA games, the NFL’s layout', () => {
     const pg = renderToStaticMarkup(<DefenseBlock side={den} season={2026} market="pts" pos="PG" onPos={() => {}} rows={rows} onOpen={() => {}} shuffled />);
     expect(pg).toContain('No PG of DEN on this ladder.');
   });
+  test('a last-N tab a team is short of says how many games stand in', () => {
+    const den = board.games[0].sides.DEN;
+    const short = { ...den, allowed: { ...den.allowed, windows: { l10: { count: 30, season: 2026, rows: { PG: { gp: 8, short: true, pts: { value: 30, rank: 1 } } } } } } };
+    const html = renderToStaticMarkup(<DefenseBlock side={short} season={2026} market="pts" pos={null} onPos={() => {}} rows={[]} onOpen={() => {}} shuffled />);
+    expect(html).toContain('its last 10 games · LAL has played 8 games this season, all 8 here');
+    expect(html).not.toContain('of last season');
+  });
   test('every active player with a projection is listed, a mark or not (2026-11-02: IND listed two)', () => {
     const low = { key: 'big man', player: 'Big Man', team: 'DEN', opp: 'LAL', venue: 'H', game: 'g1', pos: 'C', health: 'In', exp: 0.3, at: heights.map(() => ({ p: 0.05 })) };
     const rows = tierRows(board, { pts: { ...shuffles.pts, players: [...shuffles.pts.players, low] } }, 'pts', 'g1');
