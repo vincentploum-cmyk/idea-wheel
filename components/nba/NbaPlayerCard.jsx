@@ -27,6 +27,10 @@ const STAT_LABEL = { pts: 'PTS', reb: 'REB', ast: 'AST', tpm: '3PM', tpa: '3PA',
 // Per-game figures that are not markets: read straight off the game row.
 const RAW = new Set(['min', 'usg', 'rebCh', 'potAst', 'tpa', 'fga', 'fta']);
 const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
+// The attempts behind a made count, drawn as an outline behind each bar (the NHL card's "Total shots"):
+// threes made over threes attempted, points over field-goal attempts.
+export const ATTEMPTS = { tpm: 'tpa', pts: 'fga' };
+const attOf = (g, key) => { const v = g?.[key]; return v == null || v === '' || !Number.isFinite(Number(v)) ? null : Number(v); };
 const SEASON_MIN = 1;    // the season split is this season's from his first game; last season's (his last 82) stands in until then
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
 const pct = (r) => (r == null ? '—' : `${Math.round(r * 100)}%`);
@@ -69,7 +73,7 @@ function RateTile({ label, hit, active, onClick }) {
 }
 
 /** Per-game bars against the line, PropFinder's way: green over, red under, the average pill at the right. */
-function Bars({ games, market, line, unit }) {
+export function Bars({ games, market, line, unit, showAtt = false }) {
   const [hover, setHover] = useState(null);
   const box = useRef(null);
   const [width, setWidth] = useState(720);
@@ -89,7 +93,9 @@ function Bars({ games, market, line, unit }) {
   const W = padL + n * slot + padR;
   const vals = list.map((g) => statOf(g, market) ?? 0);
   const avg = vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
-  const max = Math.max(Math.ceil(line) + 1, ...vals, 1);
+  const attKey = showAtt ? ATTEMPTS[market] : null;
+  const atts = attKey ? list.map((g) => attOf(g, attKey)) : [];
+  const max = Math.max(Math.ceil(line) + 1, ...vals, ...atts.filter((v) => v != null), 1);
   const y = (v) => padT + (H - padT - padB) * (1 - v / max);
   const step = max <= 8 ? 1 : max <= 16 ? 2 : max <= 40 ? 5 : 10;
   const ticks = Array.from({ length: Math.floor(max / step) + 1 }, (_, i) => i * step);
@@ -104,11 +110,13 @@ function Bars({ games, market, line, unit }) {
             const v = vals[i];
             const x = padL + i * slot + (slot - bw) / 2;
             const top = y(v); const h = Math.max(0, y(0) - top);
+            const att = atts[i];
             return (
               <g key={`${g.date}-${i}`} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
                 <rect x={padL + i * slot} y={padT} width={slot} height={H - padT - padB} fill="transparent" />
+                {att != null && att > 0 ? <><rect x={x} y={y(att)} width={bw} height={y(0) - y(att)} className="nhlx-hist-total" /><text x={x + bw / 2} y={y(Math.max(att, v)) - 5} className="nhlx-hist-totlbl" textAnchor="middle">{v}/{att}</text></> : null}
                 {v > 0 ? <rect x={x} y={top} width={bw} height={h} className={v > line ? 'nhlx-hist-over' : 'nhlx-hist-under'} /> : <rect x={x} y={y(0) - 3} width={bw} height={3} className="nhlx-hist-under" />}
-                {v > 0 && h > 16 ? <text x={x + bw / 2} y={top + 14} className="nhlx-hist-val" textAnchor="middle">{v}</text> : <text x={x + bw / 2} y={top - 5} className="nhlx-hist-val is-out" textAnchor="middle">{v}</text>}
+                {v > 0 && h > 16 ? <text x={x + bw / 2} y={top + 14} className="nhlx-hist-val" textAnchor="middle">{v}</text> : att != null && att > 0 ? null : <text x={x + bw / 2} y={top - 5} className="nhlx-hist-val is-out" textAnchor="middle">{v}</text>}
                 {(slot >= 40 || i % 2 === 0) && <><text x={x + bw / 2} y={H - padB + 14} className="nhlx-hist-x" textAnchor="middle">{g.home === true || g.home === 1 ? 'vs' : '@'} {g.opp || '—'}</text><text x={x + bw / 2} y={H - padB + 27} className="nhlx-hist-x nhlx-hist-date" textAnchor="middle">{mdy(g.date)}</text></>}
               </g>
             );
@@ -120,7 +128,7 @@ function Bars({ games, market, line, unit }) {
       {hover != null && list[hover] && (
         <div className="nhlx-hist-tip">
           <b>{list[hover].date} · {list[hover].home === true || list[hover].home === 1 ? 'vs' : '@'} {list[hover].opp || '—'}</b>
-          <span>{list[hover].pts ?? 0} PTS · {list[hover].reb ?? 0} REB · {list[hover].ast ?? 0} AST · {list[hover].tpm ?? 0} 3PM · {list[hover].stl ?? 0} STL · {list[hover].blk ?? 0} BLK · {list[hover].tov ?? 0} TO{list[hover].min != null ? ` · ${num(list[hover].min, 0)} min` : ''}</span>
+          <span>{list[hover].pts ?? 0} PTS · {list[hover].reb ?? 0} REB · {list[hover].ast ?? 0} AST · {list[hover].tpm ?? 0}{attOf(list[hover], 'tpa') != null ? `/${attOf(list[hover], 'tpa')}` : ''} 3PM{attOf(list[hover], 'fga') != null ? ` · ${list[hover].fgm ?? '—'}/${attOf(list[hover], 'fga')} FG` : ''} · {list[hover].stl ?? 0} STL · {list[hover].blk ?? 0} BLK · {list[hover].tov ?? 0} TO{list[hover].min != null ? ` · ${num(list[hover].min, 0)} min` : ''}</span>
         </div>
       )}
     </div>
@@ -200,6 +208,7 @@ function Card({ req, date, onClose }) {
   const [market, setMarket] = useState(req.market || 'pts');
   const [lines, setLines] = useState({});
   const [span, setSpan] = useState('l5');
+  const [showAtt, setShowAtt] = useState(true);   // the attempts outline on the bars (3PA behind threes, FGA behind points)
   const [win, setWin] = useState('season');   // the window of the opponent's table (season, or PropFinder's last-N rows): the table on the right, never the figure
   const [marking, setMarking] = useState('');   // the injury override in flight: 'Active' | 'Out' | 'clear'
   // The admin's word over the report (POST /api/nba/injuries): mark him playing or out by hand; the board,
@@ -263,6 +272,16 @@ function Card({ req, date, onClose }) {
   const splits = [['l5', 'L5'], ['l10', 'L10'], ['l20', 'L20'], ['season', seasonLabel], ...(opp ? [['h2h', `vs ${opp}`]] : []), ...(venue ? [['venue', venue === 'H' ? 'Home' : 'Away']] : []), ...(without ? [['without', `w/o ${without.names.join(' + ')}`]] : [])];
   const splitCtx = { season, opp, venue, withoutIds: without?.gameIds || null };
   const spanGames = splitGames(games, span, splitCtx);
+  // The attempts behind the made count over the pressed split: "3PA 6.2 a game · 34%" (made over attempted, the games that carry attempts).
+  const attChip = (() => {
+    const key = ATTEMPTS[market]; if (!key) return null;
+    const withAtt = spanGames.filter((g) => attOf(g, key) != null);
+    if (!withAtt.length) return null;
+    const att = withAtt.reduce((s, g) => s + attOf(g, key), 0);
+    const made = withAtt.reduce((s, g) => s + (Number(market === 'pts' ? g.fgm : statOf(g, market)) || 0), 0);
+    const showPct = market === 'tpm' || withAtt.every((g) => g.fgm != null);
+    return <span className="nhlx-pc-chip" title={`${STAT_LABEL[key]} a game over the ${withAtt.length} game${withAtt.length === 1 ? '' : 's'} of this split${showPct ? `: ${made} of ${att} made` : ''}`}><b>{STAT_LABEL[key]}</b> {num(att / withAtt.length)}{showPct && att ? ` · ${pct(made / att)}` : ''}</span>;
+  })();
   const hit = hitRate(spanGames, market, line);
   // The line menu: the book's ladder for the market (PropFinder's `lines`, priced), his plays' lines and ±3 around the one shown.
   const ladder = (data?.props || []).find((x) => x.market === market);
@@ -336,7 +355,9 @@ function Card({ req, date, onClose }) {
               {opp ? <span className="nhlx-pc-chip"><b>{venue === 'H' ? 'Home' : 'Away'}</b> {venue === 'A' ? '@' : 'vs'} <img src={teamLogo(opp)} alt="" width="18" height="18" /> {opp}</span> : null}
               <span className="nhlx-pc-chip"><b>GP</b> {games.length}</span>
               {hit.gp ? <span className="nhlx-pc-chip"><b>Hit</b> {hit.hits}/{hit.gp}</span> : null}
+              {attChip}
               {data?.pulledAt ? <span className="nhlx-pc-chip" title="PropFinder's logs, pulled for this slate">PropFinder {new Date(data.pulledAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span> : null}
+              {ATTEMPTS[market] ? <label className="nhlx-pc-check"><input type="checkbox" checked={showAtt} onChange={(e) => setShowAtt(e.target.checked)} /> Attempts</label> : null}
             </div>
             {(bp?.ladders?.[market] || []).length ? (
               <div className="ir-pc-ladder" aria-label="Ladder">
@@ -348,7 +369,7 @@ function Card({ req, date, onClose }) {
                 }); })()}
               </div>
             ) : null}
-            {!data && !err ? <div className="nhlx-empty">Loading the logs…</div> : spanGames.length ? <Bars games={spanGames} market={market} line={line} unit={STAT_LABEL[market] || market} /> : <div className="nhlx-empty">{span === 'h2h' ? `No logged games vs ${opp}.` : 'No logged games for this player yet.'}</div>}
+            {!data && !err ? <div className="nhlx-empty">Loading the logs…</div> : spanGames.length ? <Bars games={spanGames} market={market} line={line} unit={STAT_LABEL[market] || market} showAtt={showAtt} /> : <div className="nhlx-empty">{span === 'h2h' ? `No logged games vs ${opp}.` : 'No logged games for this player yet.'}</div>}
             <div className="nhlx-rates">
               {splits.map(([k, label]) => <RateTile key={k} label={label} hit={hitRate(splitGames(games, k, splitCtx), market, line)} active={span === k} onClick={() => setSpan(k)} />)}
             </div>

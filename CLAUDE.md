@@ -967,7 +967,9 @@ config and keeps its own markets, teams, feeds and slate key:
   rungs and lines whichever view opened it, the shuffle's rows included; `projectFor` on the season
   table only for a market without a ladder; the tabs on the right — this season's table, last season's
   (`prior` in the payload), the windows — fill the allowed table and the hover says what that tab would read), the per-game bars against the line (`Bars`: green over, red
-  under, the average pill), the split tiles (L5 · L10 · L20 · season · vs opp · home / away; press one
+  under, the average pill), **the attempts behind them** (`ATTEMPTS`: 3PA behind threes, FGA behind points, an outline
+  with "made/attempted" over each bar and an "Attempts" switch, on by default; a chip with the split's attempts a game and
+  the percentage made; Vincent, 2026-11-03: "I need attempts in this view as well"; `__tests__/nba-card-attempts.test.js`), the split tiles (L5 · L10 · L20 · season · vs opp · home / away; press one
   to draw its games), the splits table (GP, MIN, PTS, REB, AST, 3PM, PRA, over %), and on the right
   the opponent's allowed table (Season / L5 / L10 … tabs, his position marked, the league's average at
   his spot under it), **what other players at his position did against the opponent** (`VsPosition` in the card,
