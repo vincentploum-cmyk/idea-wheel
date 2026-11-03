@@ -36,13 +36,14 @@ replaced the former IdeaReels startup-idea product; that code is in git history 
   first, a name opening the card), `#pts`, `#reb`, `#ast`, `#tpm`, `#pra` (`NbaStatList`: the same list across the night,
   40 rows then "Show all"), `#big` (Big games, below, with the game dropdown), `#firstbasket` and `#sources` (Data sources).
   The Best plays board, Boards, Cheat sheet and Shuffle tabs are off the page (their components and routes stay; an old
-  `#board` / `#shuffle` link opens Games). `__tests__/nba-games.test.jsx` (`MOCK_OUT` writes `games-nba-<theme>.html`). **The NFL page is seven
+  `#board` / `#shuffle` link opens Games). `__tests__/nba-games.test.jsx` (`MOCK_OUT` writes `games-nba-<theme>.html`). **The NFL page is eight
   plain tabs drawn as pills** (Vincent, 2026-11-01: "way too complicated … Remove the edge, implies, juice, etc… I just need
   a simple list of games and per game, players listed with their ladders", then a sportsbook's games page as the form and
   "where are the passing yards?"; `TabBar`'s `pills`): `#matchups` (Games, the default: the week's games as a sportsbook
   lists them — the matchup, the kickoff in ET, a row a team with its logo, spread and the total, the line alone with no
   price; `GameRow` in `NflBoards.jsx`, press a game for its players), `#tds`, `#passing`, `#receiving`, `#rushing` (the
-  projection lists, below), `#big` (Big games, below) and `#sources` (Data sources: the drop zone, the pulls); the Best plays board
+  projection lists, below), `#te` (Tight Ends, Vincent, 2026-11-03: "the books price these nicely": `NflTightEnds`, the
+  tight ends alone off the same rows, Receiving Yards · TDs; a tight-end fit beat nothing, `docs/audits/2026-11-03-nfl-engines.md`), `#big` (Big games, below) and `#sources` (Data sources: the drop zone, the pulls); the Best plays board
   (EV, juice, the floors, the scorecard) and the shuffle are off the NFL page — `NflBoard` / `NflShuffle` and their routes
   stay, an old `#board` / `#shuffle` link opens Games. The NHL app has nine (below).
 - The NHL app is unchanged apart from its path: hash tabs, routes, storage, model math.

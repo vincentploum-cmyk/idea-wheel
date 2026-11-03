@@ -232,6 +232,28 @@ export function NflList({ board, kind }) {
   );
 }
 
+// ── Tight ends (Vincent, 2026-11-03: "We should also have a tight end tab … the books price these nicely"): the week's tight
+// ends alone, their receiving ladders and their touchdown chances, the same reads as the other tabs. Checked on 2026's weeks
+// 1–7 (docs/audits/2026-11-03-nfl-engines.md, "tight ends"): no tight-end fit of its own read closer than the shipped one
+// (within 10 yards 43.8% of 409 games against 41.3–42.8%), and its rungs land as said (strong 66 → 65%, lean 50 → 51%).
+const TE_KINDS = [['receiving', 'Receiving Yards'], ['td', 'TDs']];
+export function NflTightEnds({ board }) {
+  const [kind, setKind] = useState('receiving');
+  const pj = board?.projections;
+  if (!board?.games?.length) return <div className="nhlx-empty">No games in this week.</div>;
+  if (!pj) return <div className="nhlx-empty">{NO_DATA}</div>;
+  const ids = (pj.lists?.[kind] || []).filter((id) => pj.rows[id]?.pos === 'TE');
+  return (
+    <div className="ir-overview">
+      <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="Tight ends">
+        {TE_KINDS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={kind === k} className={`nhlx-tab${kind === k ? ' is-active' : ''}`} onClick={() => setKind(k)}>{l}</button>)}
+      </div>
+      {LEGEND}
+      <ListOf key={kind} pj={pj} ids={ids} kind={kind} game limit empty={NO_DATA} />
+    </div>
+  );
+}
+
 export default NflMatchups;
 
 // ── Big games (Vincent, 2026-11-01: "how can I find the super matchups that result in the big wins", then "find out what

@@ -66,3 +66,31 @@ touchdown Brier 0.1542 → 0.1515, the six likeliest 3 of 6 before and after.
 - The backs' max-ladder gate: 18 games read well; re-test at mid-season.
 - The card: a sorted list's top over-reads; a card of two needs a pick rule that has been graded, not the top of the list.
 - Inside-5 carries, cornerback and line ranks are not in the data the replay holds.
+
+## Tight ends (the same day)
+
+Vincent: "We should also have a tight end tab. We have data that can help us predicting receiving yards and touch downs for
+tight ends. Reason is that the books price these nicely." Before building a tab off the board's read, the question was
+whether a tight end reads better on a fit of his own than on the receivers' pooled one (`nfl_engines.py --te`, the shipped
+dump; tight ends with 5+ receiving yards a game over their last 17, fitted on 2025's 871 games, checked on 2026's 409).
+
+| Receiving yards, 2026 weeks 1–7 (409 games) | Close ±10 | Near ±20 | Way off >30 | Close against the board |
+|---|---|---|---|---|
+| The board as shipped (the pooled shrink) | **43.8%** | 69.2% | 17.6% | — |
+| The board's read, unshrunk | 41.3% | 67.7% | 20.0% | −2.4 (−5.6 to +0.5) |
+| A tight-end shrink (5.2 + 0.738 ×) | 41.6% | 68.9% | 17.4% | −2.2 (−5.1 to +0.5) |
+| + the defense against tight ends | 42.3% | 68.9% | 17.8% | −1.5 (−4.4 to +1.5) |
+| + his targets over his last five and his share | 41.3% | 68.2% | 17.6% | −2.4 (−5.6 to +0.5) |
+| + defense + targets + implied points | 42.8% | 68.7% | 16.4% | −1.0 (−4.2 to +2.2) |
+
+Nothing beats the shipped read for tight ends; their figures sit closer than the receivers' (43.8% within ±10 against
+32.2%) because their yards are smaller. The rungs land as said on tight ends: strong 66.3% said / 64.7% landed (346),
+lean 50.4 / 51.3 (355), thin 34.3 / 34.9 (390). Touchdowns (414 games, 20.8% scored): said 6% scored 8%, said 15% scored
+22%, said 25% scored 21%, said 37% scored 34% — inside the noise of a hundred games a band.
+
+**Shipped**: the Tight Ends tab (`#te`, `NflTightEnds` in `components/nfl/NflBoards.jsx`): the week's tight ends alone, off
+the same rows as the Receiving and TDs tabs — Receiving Yards (his projection, the strong / lean / thin marks, the receptions)
+and TDs (anytime, 1st half, first TD, 2+), across every game. No price on the page, as everywhere on `/nfl`.
+
+**Not tested**: whether the books misprice tight ends. Two stored pulls hold pre-game lines, too few to grade an edge by
+position; the stored pulls from here on carry them.

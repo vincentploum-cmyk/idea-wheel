@@ -8,7 +8,7 @@ import SportNav from '@/components/site/SportNav';
 import TabBar from '@/components/site/TabBar';
 import { useHashTab } from '@/components/site/hash-tab';
 import { weekLabel, shiftWeek } from '@/lib/nfl/week';
-import { NflMatchups, NflList, NflBigGames } from './NflBoards';
+import { NflMatchups, NflList, NflBigGames, NflTightEnds } from './NflBoards';
 import NflSources from './NflSources';
 import NflPlayer from './NflPlayer';
 import PlayerSearch from '@/components/picks/PlayerSearch';
@@ -31,10 +31,11 @@ const TABS = [
   ['passing', 'Pass Yards'],
   ['receiving', 'Receiving Yards'],
   ['rushing', 'Rushing Yards'],
+  ['te', 'Tight Ends'],
   ['big', 'Big games'],
   ['sources', 'Data sources'],
 ];
-const LIST_TABS = [['matchups', null], ['tds', 'td'], ['passing', 'passing'], ['receiving', 'receiving'], ['rushing', 'rushing'], ['big', 'big']];
+const LIST_TABS = [['matchups', null], ['tds', 'td'], ['passing', 'passing'], ['receiving', 'receiving'], ['rushing', 'rushing'], ['te', 'te'], ['big', 'big']];
 const TAB_KEYS = TABS.map(([key]) => key);
 
 /**
@@ -148,7 +149,7 @@ export default function NflApp({ email }) {
                 {head()}
                 {injNote()}
                 {err ? <div className="nhlx-alert">{err}</div> : null}
-                {mounted(key) ? (board ? (kind === 'big' ? <NflBigGames board={board} /> : kind ? <NflList board={board} kind={kind} /> : <NflMatchups board={board} />) : !err ? <div className="nhlx-empty">Loading the week…</div> : null) : null}
+                {mounted(key) ? (board ? (kind === 'big' ? <NflBigGames board={board} /> : kind === 'te' ? <NflTightEnds board={board} /> : kind ? <NflList board={board} kind={kind} /> : <NflMatchups board={board} />) : !err ? <div className="nhlx-empty">Loading the week…</div> : null) : null}
               </section>
             </div>
           </section>

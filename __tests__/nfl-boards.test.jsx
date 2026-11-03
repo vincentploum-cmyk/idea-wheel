@@ -13,7 +13,7 @@ import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, mark
 import { applyRosterStatus, ROSTER_OFF } from '../lib/nfl/roster-status';
 import { reproject, makeBuild, nflBoard, COCKTAIL } from '../lib/nfl/picks';
 import { envFactor } from '../lib/picks/projection';
-import { NflMatchups, NflList, NflBigGames, KINDS } from '../components/nfl/NflBoards';
+import { NflMatchups, NflList, NflBigGames, NflTightEnds, KINDS } from '../components/nfl/NflBoards';
 
 // The week's projections (Vincent, 2026-11-01: "I don't care about edge … the projected yards / TD candidates per game")
 // on a board built from a synthetic pull: the team's touchdowns tonight from its rate, the defense and the book's total,
@@ -550,6 +550,14 @@ describe('NFL projections: the panel and the script', () => {
       if (kind !== 'td') { for (const t of ['>Strong<', '>Lean<', '>Thin<']) expect(list).toContain(t); expect(list).toMatch(/\d+\+ yds<\/b><small>\d+%/); }
       else expect(list).toMatch(/ir-ml-tier is-(strong|lean|thin)/);
     }
+    // The tight ends' tab (2026-11-03): the tight ends alone, the receiving ladder first, the same reads as the lists.
+    const te = renderToStaticMarkup(<NflTightEnds board={b} />);
+    expect(te).toContain('Tyler Higbee');
+    for (const other of ['Puka Nacua', 'Kyren Williams', 'Matthew Stafford']) expect(te).not.toContain(other);
+    expect(te).toContain('>Receiving Yards<');
+    expect(te).toContain('>TDs<');
+    for (const t of ['>Strong<', '>Lean<', '>Thin<']) expect(te).toContain(t);
+    expect(te).not.toMatch(/\bEV\b|edge|juice|implied/i);
     // With MOCK_OUT=<dir> the panel is written as standalone pages (dark, light) for a screenshot at 1440 and 390.
     const out = process.env.MOCK_OUT;
     if (!out) return;
@@ -559,7 +567,7 @@ describe('NFL projections: the panel and the script', () => {
     const css = [fontCss('@fontsource-variable/schibsted-grotesk'), fontCss('@fontsource-variable/source-sans-3'), fs.readFileSync(path.join(root, 'app/globals.css'), 'utf8')].join('\n');
     for (const theme of ['dark', 'light']) {
       fs.writeFileSync(path.join(out, `boards-nfl-${theme}.html`), `<!doctype html><html lang="en" data-theme="${theme}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>NFL boards</title><style>${css}
-.mock-page { max-width: 1180px; margin: 0 auto; padding: 24px var(--gutter) 48px; }</style></head><body><main class="mock-page nhlx"><section class="nhlx-pk">${html}${renderToStaticMarkup(<NflList board={b} kind="passing" />)}${renderToStaticMarkup(<NflBigGames board={b} />)}</section></main></body></html>`);
+.mock-page { max-width: 1180px; margin: 0 auto; padding: 24px var(--gutter) 48px; }</style></head><body><main class="mock-page nhlx"><section class="nhlx-pk">${html}${renderToStaticMarkup(<NflList board={b} kind="passing" />)}${te}${renderToStaticMarkup(<NflBigGames board={b} />)}</section></main></body></html>`);
     }
   });
   test('the script prints each game’s three lists and the week’s', () => {

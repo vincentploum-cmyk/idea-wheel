@@ -357,3 +357,63 @@ for m, ystat, keep in (('rec_yds', 'recYds', lambda x: x['rec17'] >= 10), ('rush
         print(f"     {lab} ({len(xs)}): " + ' | '.join(line))
     report['shrink'][m]['fit'] = {'c': float(c), 'b': float(b), 'resid': Q, 'cases_board': c0, 'cases_shrunk': c1, 'close_gain': [float(d.mean()), lo, hi]}
 if OUT: json.dump(report, open(OUT, 'w'), indent=1)
+
+# ================= tight ends (Vincent, 2026-11-03: "We should also have a tight end tab … the books price these nicely") =================
+# Does a tight end read better on his own fit than on the receivers' pooled one? Run with --dump <the shipped dump> so the
+# board's rec_yds is the shrunk projection; the pooled shrink is undone to get the board's own read.
+if '--te' in sys.argv:
+    print('\n=== tight ends')
+    S0 = {'c': 2.07, 'b': 0.7721}
+    rows = [x for x in data if x['pos'] == 'TE' and x['b_rec_yds'] is not None and x['rec17'] >= 5]
+    for x in rows: x['raw_rec'] = (x['b_rec_yds'] - S0['c']) / S0['b']
+    tune = [x for x in rows if x['season'] == 2025]; chk = [x for x in rows if x['season'] == 2026]
+    yt = np.array([x['recYds'] for x in tune]); yc = np.array([x['recYds'] for x in chk])
+    print(f"  receiving: fit {len(tune)}, check {len(chk)}, mean got {yc.mean():.1f}, the board's mean {np.mean([x['b_rec_yds'] for x in chk]):.1f}")
+    reads = {'the board (pooled shrink, shipped)': lambda x: x['b_rec_yds'], "the board's read unshrunk": lambda x: x['raw_rec']}
+    b, c = lad(np.array([x['raw_rec'] for x in tune]), yt); reads[f'tight-end shrink ({c:.1f} + {b:.3f} ×)'] = lambda x, b=b, c=c: max(0, c + b * x['raw_rec'])
+    def fitlad(feats_):
+        A = np.array([feats_(x) + [1] for x in tune]); w = np.linalg.lstsq(A, yt, rcond=None)[0]
+        for _ in range(300):
+            r = np.abs(yt - A @ w); W = np.sqrt(1 / np.maximum(r, 1.0)); w = np.linalg.lstsq(A * W[:, None], yt * W, rcond=None)[0]
+        return lambda x: max(0.0, float(np.dot(feats_(x) + [1], w))), w
+    for nm, fe in (('tight-end fit: read + defense vs TEs', lambda x: [x['raw_rec'], x['raw_rec'] * x['def_rec']]),
+                   ('tight-end fit: read + targets (last 5) + share', lambda x: [x['raw_rec'], x['tgt5'], nz(x['sh_tgt5'], 0) * 100]),
+                   ('tight-end fit: read + defense + targets + implied', lambda x: [x['raw_rec'], x['raw_rec'] * x['def_rec'], x['tgt5'], x['implied'] - 22])):
+        f, w = fitlad(fe); reads[nm] = f
+    base = np.array([x['b_rec_yds'] for x in chk]); out = {}
+    for nm, f in reads.items():
+        p = np.array([f(x) for x in chk]); cc = cases(p, yc)
+        d = (np.abs(yc - p) <= 10).astype(float) - (np.abs(yc - base) <= 10).astype(float); lo, hi = boot(d)
+        cc['close_vs_board'] = [float(d.mean()), lo, hi]; out[nm] = cc
+        print(f"    {nm:52s} {fmt(cc)}  close vs board {d.mean()*100:+.1f} [{lo*100:+.1f}, {hi*100:+.1f}]")
+    report['te_rec'] = out
+    # the board's rungs for tight ends, as shipped (shrunk projection, the pooled curve)
+    res = {}
+    for t in ('strong', 'lean', 'thin'):
+        hs = [(tt[t][1], x['recYds'] >= tt[t][0]) for x in chk for tt in [tiers(x['b_rec_yds'], x['sd_rec_yds'], 'rec_yds')] if t in tt]
+        res[t] = (len(hs), float(np.mean([a for a, _ in hs])), float(np.mean([h for _, h in hs])))
+    # the curve is the pooled one refitted on the shrunk read: rebuild it from the report for a fair read
+    Q = report['shrink']['rec_yds']['fit']['resid'] if 'shrink' in report else RESID['rec_yds']
+    res2 = {}
+    for t in ('strong', 'lean', 'thin'):
+        hs = []
+        for x in chk:
+            step = 5 if x['b_rec_yds'] < 40 else 10
+            marks = [(mk, 1 - cdf(Q, (mk - 0.5 - x['b_rec_yds']) / x['sd_rec_yds'])) for mk in range(step, int(x['b_rec_yds'] + 3 * x['sd_rec_yds']) + 1, step)]
+            used = set(); got = {}
+            for tt, at in (('strong', .6), ('lean', .45), ('thin', .3)):
+                bb = [m for m in marks if m[1] >= at]
+                if bb and bb[-1][0] not in used: got[tt] = bb[-1]
+                if bb: used.add(bb[-1][0])
+            if t in got: hs.append((got[t][1], x['recYds'] >= got[t][0]))
+        res2[t] = (len(hs), float(np.mean([a for a, _ in hs])), float(np.mean([h for _, h in hs])))
+    print('    the shipped rungs on tight ends: ' + ' · '.join(f"{t} said {res2[t][1]*100:4.1f}% landed {res2[t][2]*100:4.1f}% ({res2[t][0]})" for t in res2))
+    report['te_rungs'] = res2
+    # touchdowns: the shipped engine's read on tight ends, said against scored by band
+    ytd = [x for x in data if x['pos'] == 'TE' and x['b_td'] is not None and x['season'] == 2026]
+    print(f"  touchdowns (2026, {len(ytd)} tight-end games, {np.mean([x['td'] for x in ytd])*100:.1f}% scored)")
+    if '--dump' in sys.argv:
+        for lo_, hi_ in ((0, .1), (.1, .2), (.2, .3), (.3, 1)):
+            xs = [x for x in ytd if lo_ <= x['b_td'] < hi_]
+            if xs: print(f"    said {lo_*100:.0f}–{hi_*100:.0f}%: {len(xs)} games, said {np.mean([x['b_td'] for x in xs])*100:.1f}% scored {np.mean([x['td'] for x in xs])*100:.1f}%")
+    if OUT: json.dump(report, open(OUT, 'w'), indent=1)
