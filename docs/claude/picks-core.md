@@ -210,6 +210,30 @@ config and keeps its own markets, teams, feeds and slate key:
   prior, w, n, K, group, min, basis, opp, oppGames } rides on `own[stat]`, `ranges[market]` and the shuffle row, `ladderOf` takes it,
   `ownRate` applies it, `pullText` words it for the court's, the card's and the shuffle's hovers. `volume` (true)
   switches the volume read off for the audit's A / B.
+- **The per-stat recipe** (the cocktail's `recipe`, with `withoutSplit` and `teamCeiling`; `RECIPE` / `COCKTAIL` in
+  `lib/nba/picks.js`, the NBA's cocktail since 2026-11-03, the one before kept as `COCKTAIL_BEFORE_RECIPE`; Vincent, 2026-11-03:
+  "what can predict threes the best, rebounds the best, points the best and assists the best?", then "yes build it and run the
+  replay"; `docs/audits/2026-11-03-nba-stat-drivers.md`): `logAverages` puts `dec` on a stat's windows — his rate a minute over
+  his regular-season games across the seasons, each game's weight halving every `rate[stat]` games (points and assists 15,
+  rebounds and threes 20, the rest 15; `decayRate`), × his minutes (`recipeMinutes`: this season's decayed at `minutes` = 3
+  from his first game, last season's average before it, n / (n + 0.5) between) — and `ownRate` reads `dec` before the windows'
+  blend and the volume read (`decRate`, `decMin`, `decHl` ride along, `recipeText` / `recipeOf` word them). The matchup reads the
+  opponent in all positions (`sidesOf`'s `allRatio`: `totals[opp].against` or its last ten over `leagueFor`, shrunk toward 1 at
+  gp / (gp + `matchupK` = 10), the last ten at K / 2; `posRatio` its last-ten cell at his spot), × Π ratio^b per `matchup[stat]`
+  (points season 0.94; rebounds last ten 0.65; assists season 0.62 · position last ten 0.18 · 3PA allowed 0.51; threes 3PA
+  allowed 1.12), the cheat sheet's tile at his spot in full beside it (their mean), a combo on its parts weighted by his rates
+  when a part reads the recipe; `matchupFrom.from: 'team'` (the scorecard's "The opponent in all positions" group); a stat it
+  does not name keeps the cell at his position. The teammates out (`outRead` on the side: the out players who played 3 of the
+  team's last 5 games this season at 20+ minutes — an older absence is in everyone's own games — their production a game
+  decayed at 10 games over the team's `totals.for`, (1 + V / T)^b per `out[stat]`: points 0.7, rebounds 0.53, assists 0.77,
+  threes 0.64, PRA 0.68, else 0.6) multiply into the ladder's `env` (`out` / `outFrom` on the range), in place of the vacated
+  lifts and the minutes factor (`minutesTonight` still runs for the minutes shown and the thin gate); no team totals, no factor.
+  `withoutSplit: false` drops the without-teammate split from the rate, the rungs and the shuffle; `teamCeiling: false` keeps
+  the expected total and scales nothing. The site's cocktail: the recipe, the without split off, the role pull off (`pull: null`:
+  the decayed memory reads a player's first games better), the team ceiling on. Replayed on 2025-26 and this season: every stat's
+  miss and every market's rung Brier down over the season (points 4.96 → 4.92, rebounds 1.99 → 1.97, assists 1.46 → 1.45, threes
+  1.012 → 1.005, PRA 6.52 → 6.42), the pieces priced in the audit. `--cocktail before | recipe | site+{json} | before+{json}` on
+  the replay; `tools/audit/nba_ab_rows.py` compares variants on the same player-games. `__tests__/nba-recipe.test.js`.
 - `shuffle.js` (`makeShuffle` → `shuffleOf`, and the pure readers the panel runs: `readAt`, `pAt`, `survivorsAt`,
   `fallenAt`, `curveOf`, `thinsAt`, `linesAt`, `centreOf`): the shuffle, a bar per stat (`SHUFFLE_MARKETS` in each sport's
   `markets.js`: market, min, max, step, start). `GET /api/<sport>/shuffle?…&market=pts` reads every player on the

@@ -19,7 +19,7 @@ import path from 'node:path';
 import { parseSummary, parseScoreboard, derived } from '../../lib/nba/espn.js';
 import { teamAbbrFromText } from '../../lib/nba/teams.js';
 import { defenseAllowed } from '../../lib/nba/propfinder-nba.js';
-import { nbaBoard, COCKTAIL, LADDER_MARKETS, SHUFFLE_MARKETS } from '../../lib/nba/picks.js';
+import { nbaBoard, COCKTAIL, COCKTAIL_BEFORE_RECIPE, RECIPE_COCKTAIL, LADDER_MARKETS, SHUFFLE_MARKETS } from '../../lib/nba/picks.js';
 import { makeShuffle } from '../../lib/picks/shuffle.js';
 import { gradeBoard, gradePredictors, summarize, asOf, etDate, PREDICTORS } from '../../lib/picks/scorecard.js';
 import { normName } from '../../lib/nhl-data/names.js';
@@ -39,7 +39,11 @@ fs.mkdirSync(OUT, { recursive: true });
 const SEASON = Number(arg('--season', '2026'));
 // The board's cocktail: the site's (`site`, lib/nba/picks.js COCKTAIL), the board as it was before it (`old`), or a JSON object.
 const CK_ARG = arg('--cocktail', 'site');
-const CK = CK_ARG === 'site' ? COCKTAIL : CK_ARG === 'old' ? {} : JSON.parse(CK_ARG);
+// `before` = the site's until 2026-11-03 (the windows, the role pull, the without split); `recipe` = that with the per-stat
+// recipe (the role pull kept); `site+{json}` / `before+{json}` = either with the JSON on top (one setting varied).
+const PRESET = { site: COCKTAIL, before: COCKTAIL_BEFORE_RECIPE, recipe: { ...COCKTAIL_BEFORE_RECIPE, ...RECIPE_COCKTAIL }, old: {} };
+const plus = CK_ARG.match(/^(site|before)\+(.*)$/s);
+const CK = PRESET[CK_ARG] || (plus ? { ...PRESET[plus[1]], ...JSON.parse(plus[2]) } : JSON.parse(CK_ARG));
 const { buildBoard, ownWindows, statOf, actualFor } = nbaBoard(CK);
 // The folders: this season's scoreboards and box scores, last season's game logs (defaults under --raw).
 const DAYS = arg('--days', path.join(RAW, 'days')); const GAMES = arg('--games', path.join(RAW, 'games')); const LOGS = arg('--gamelogs', path.join(RAW, 'gamelogs'));
@@ -114,7 +118,7 @@ for (const x of players.values()) x.games.sort((a, b) => b.date.localeCompare(a.
 
 // ---- the opponent's table before a slate, in PropFinder's team-row shape, through the site's defenseAllowed ----
 const POSW = { PG: { PG: 1 }, SG: { SG: 1 }, SF: { SF: 1 }, PF: { PF: 1 }, C: { C: 1 }, G: { PG: 0.5, SG: 0.5 }, F: { SF: 0.5, PF: 0.5 } };
-const KEYS = { pts: 'points', reb: 'rebounds', ast: 'assists', tpm: 'threePointsMade', stl: 'steals', blk: 'blocks', tov: 'turnovers', ftm: 'freeThrowsMade' };
+const KEYS = { pts: 'points', reb: 'rebounds', ast: 'assists', tpm: 'threePointsMade', tpa: 'threePointsAtt', stl: 'steals', blk: 'blocks', tov: 'turnovers', ftm: 'freeThrowsMade' };
 let priorRows = null;   // ABBR → the team's rows for last season (built once)
 function priorTable() {
   if (priorRows || !PRIOR || !fs.existsSync(PRIOR)) return priorRows;

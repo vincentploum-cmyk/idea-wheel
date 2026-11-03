@@ -4,7 +4,7 @@ import { teamAbbrFromText, parseMatchup, teamLogo } from '../lib/nba/teams';
 import { parseCheatSheet, classifyHeader, parsePlayerCell } from '../lib/nba/cheatsheet';
 import { parseSummary, parseScoreboard, seasonOfDate, derived } from '../lib/nba/espn';
 import { gameRow, mapPlayers, defenseAllowed, fieldsSeen, depthChart, fetchInjuries, applyInjuries } from '../lib/nba/propfinder-nba';
-import { buildBoard, statOf, logRates, nbaBoard, COCKTAIL, BEST_MARKETS } from '../lib/nba/picks';
+import { buildBoard, statOf, logRates, nbaBoard, COCKTAIL, COCKTAIL_BEFORE_RECIPE, BEST_MARKETS } from '../lib/nba/picks';
 import { FACTOR_MAX } from '../lib/picks/rotations';
 import { VACATED_SHARE } from '../lib/picks/injuries';
 import { dateFromFileName } from '../lib/nba/store';
@@ -403,7 +403,7 @@ describe('NBA board', () => {
     { name: 'Jalen Brunson', team: 'NY', played: true, pts: 24, reb: 3, ast: 9, pra: 36, dd: 0, td3: 0 },
   ] } };
   test('the stored box score settles who played: a player listed out who played is back on the board (Nembhard, 2026-10-30)', () => {
-    const buildBoard = nbaBoard({ ...COCKTAIL, pull: null }).buildBoard;
+    const buildBoard = nbaBoard({ ...COCKTAIL_BEFORE_RECIPE, pull: null }).buildBoard;
     const gid = (i) => `g${i}`;
     const brownLogs = logs.map((g, i) => ({ ...log(g.date, i < 3 ? 34 : 20, 6, 4), gameId: gid(i), min: 35 }));
     const tatumLogs = logs.map((g, i) => ({ ...g, gameId: gid(i), min: 34 })).filter((_, i) => i >= 3);
@@ -442,7 +442,7 @@ describe('NBA board', () => {
   test('the injury report: a player out keeps his chip but loses his table rows; a teammate reads w/o him', () => {
     // The arithmetic below on the board without the pull toward his role (its own check at the end, and
     // __tests__/nba-cocktail.test.js), so the split, the minutes and the lift read as they add up.
-    const buildBoard = nbaBoard({ ...COCKTAIL, pull: null }).buildBoard;
+    const buildBoard = nbaBoard({ ...COCKTAIL_BEFORE_RECIPE, pull: null }).buildBoard;
     const gid = (i) => `g${i}`;
     // Brown's eight games (newest first): 34 points in the three without Tatum, 20 in the five with him.
     const brownLogs = logs.map((g, i) => ({ ...log(g.date, i < 3 ? 34 : 20, 6, 4), gameId: gid(i), min: 35 }));
@@ -487,7 +487,7 @@ describe('NBA board', () => {
     expect(b.notes.find((n) => n.startsWith('Rotation'))).toBeUndefined();
     // With the minutes factor's ceiling and the vacated share as they were (1.3, 60%): × 1.086 → 31.5, and 6.0 of
     // Tatum's production less the 2.5 points the extra minutes already add = 3.5 on top: 35.0.
-    const lifted = nbaBoard({ ...COCKTAIL, factorMax: FACTOR_MAX, vacatedShare: VACATED_SHARE, pull: null }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pfInj, results: {} });
+    const lifted = nbaBoard({ ...COCKTAIL_BEFORE_RECIPE, factorMax: FACTOR_MAX, vacatedShare: VACATED_SHARE, pull: null }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pfInj, results: {} });
     const liftedSide = lifted.games[0].sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
     expect(liftedSide.minutes).toMatchObject({ tonight: 38, factor: 1.086 });
     expect(liftedSide.ranges.pts).toMatchObject({ rate: 35, lift: 3.5, minutes: 1.086, exp: 35 });
@@ -506,10 +506,11 @@ describe('NBA board', () => {
     const plain = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: { ...pfInj, data: { ...pfInj.data, injuries: { rows: [] }, players: pfInj.data.players.map((p) => ({ ...p, injury: null })) } }, results: {} });
     expect(plain.games[0].out).toBe(0);
     expect([...plain.games[0].tables.points.rows, ...plain.games[0].tables.points.next].find((x) => x.player === 'Jaylen Brown')).toMatchObject({ without: null, rates: { season: 0.375 } });
-    // The site's board pulls his first games toward his role: a guard's rate a minute (the slate's guard games in
-    // PropFinder, 202 points in 280 minutes, with the reference 0.4998 at 500 minutes: 0.579) × his 35 minutes = 20.3,
-    // his own 29.07 (the split in) counting at 8 / (8 + 1) of the way → 28.1, plus the 2.0 lift: 30.1.
-    const pulled = nbaBoard().buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pfInj, results: {} }).games[0].sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
+    // The cocktail until 2026-11-03 pulled his first games toward his role (off on the site's since: the recipe's long memory reads
+    // them better): a guard's rate a minute (the slate's guard games in PropFinder, 202 points in 280 minutes, with the reference
+    // 0.4998 at 500 minutes: 0.579) × his 35 minutes = 20.3, his own 29.07 (the split in) counting at 8 / (8 + 1) of the way →
+    // 28.1, plus the 2.0 lift: 30.1.
+    const pulled = nbaBoard(COCKTAIL_BEFORE_RECIPE).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pfInj, results: {} }).games[0].sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
     expect(pulled.ranges.pts.pull).toMatchObject({ group: 'G', min: 35, n: 8, K: 1, w: 0.889, prior: 20.3 });
     expect(pulled.ranges.pts.rate).toBe(30.1);
     expect(plain.notes.find((n) => n.startsWith('Nobody on the slate is out'))).toBeUndefined();
@@ -610,7 +611,7 @@ describe('NBA projection', () => {
 });
 
 describe('NBA ladders', () => {
-  const { ladderOf, buildBoard, nbaBoard, COCKTAIL } = require('../lib/nba/picks');
+  const { ladderOf, buildBoard, nbaBoard, COCKTAIL, COCKTAIL_BEFORE_RECIPE } = require('../lib/nba/picks');
   const { upperTail } = require('../lib/picks/board');
   test('the normal tail', () => { expect(upperTail(0)).toBeCloseTo(0.5, 6); expect(upperTail(1.96)).toBeCloseTo(0.025, 3); expect(upperTail(-1)).toBeCloseTo(0.8413, 3); });
   const logs = Array.from({ length: 20 }, (_, i) => ({ date: `2026-01-${String(10 + i).padStart(2, '0')}`, season: 2026, type: 'REG', opp: 'NY', pts: 20 + (i % 5) * 3, reb: 8, ast: 5, tpm: 2 }));   // 20, 23, 26, 29, 32 repeating
@@ -680,7 +681,12 @@ describe('NBA ladders', () => {
     // The team's expected total is a ceiling on the side's projections: BOS scores 110 a game, NY gives up 120
     // against a league of 115 → 112.9 tonight; the players' own rates add up to 130, so the side scales down to it.
     const two = { ...pf, data: { ...pf.data, players: [...pf.data.players, { id: 'p2', name: 'Derrick White', key: 'derrick white', team: 'BOS', pos: 'SG', games: logs.map((g) => ({ ...g, pts: 104 })), props: [] }], defense: { teams: {}, ranks: {}, count: 0, league: {}, windows: {}, totals: { BOS: { for: { gp: 82, pts: 110, reb: 44, ast: 26 }, against: { gp: 82, pts: 112 } }, NY: { for: { gp: 82, pts: 115 }, against: { gp: 82, pts: 120, reb: 44, ast: 26 } } }, leagueFor: { pts: 115, reb: 44, ast: 26 } } } };
-    const sc = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: two, results: {} }).games[0].sides.BOS;
+    // (the ceiling's arithmetic on the cocktail until 2026-11-03; the site's board also multiplies in the opponent in all
+    // positions — NY's 120 against the league's 115 over 82 games, shrunk at K = 10 to 1.0387, ^0.94 — checked below)
+    const sc = nbaBoard(COCKTAIL_BEFORE_RECIPE).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: two, results: {} }).games[0].sides.BOS;
+    const site = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: two, results: {} }).games[0].sides.BOS.players[0].ranges.pts;
+    expect(site.matchup).toBeCloseTo(((82 * (120 / 115) + 10) / 92) ** 0.94, 3);
+    expect(site.matchupFrom.from).toBe('team');
     expect(sc.teamProj.pts).toBeCloseTo(112.9, 1);
     expect(sc.scale.pts).toBeCloseTo(112.9 / (26 + 104), 2);   // over Brown's 26 + White's 104 own rates (the rest of the roster stands in White's figure)
     expect(sc.scale.pra).toBeUndefined();   // their PRA rates (39 + 117) stay under the team's 182.9: nothing to scale
@@ -694,7 +700,7 @@ describe('NBA ladders', () => {
     // The minutes the priced players play ride along as the share of the game they cover; they move no figure.
     const withMin = (mins) => ({ ...two, data: { ...two.data, players: two.data.players.map((p, i) => ({ ...p, games: p.games.map((g) => ({ ...g, min: mins[i] })) })) } });
     // (without the pull toward his role, which minutes in the logs switch on: the ceiling's arithmetic alone)
-    const cov = nbaBoard({ ...COCKTAIL, pull: null }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 144]), results: {} }).games[0].sides.BOS;
+    const cov = nbaBoard({ ...COCKTAIL_BEFORE_RECIPE, pull: null }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 144]), results: {} }).games[0].sides.BOS;
     expect(cov.minutes).toBe(180);
     expect(cov.share).toBe(0.75);
     expect(cov.teamProj.pts).toBeCloseTo(112.9, 1);
@@ -703,7 +709,7 @@ describe('NBA ladders', () => {
     // keeps every player on his own rate — the old pro-rated factor put ×1.28 to ×1.5 on every projection
     // of such a side, a non-shooter's threes included (Castle at 3.6 threes, 2026-10-27).
     const thinPts = { ...two, data: { ...two.data, players: two.data.players.map((p) => (p.key === 'derrick white' ? { ...p, games: p.games.map((g) => ({ ...g, pts: 40 })) } : p)) } };
-    const thin = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: thinPts, results: {} }).games[0].sides.BOS;
+    const thin = nbaBoard(COCKTAIL_BEFORE_RECIPE).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: thinPts, results: {} }).games[0].sides.BOS;
     expect(thin.scale).toEqual({});
     expect(thin.teamProj.pts).toBeCloseTo(112.9, 1);
     expect(thin.players[0].ladders.pts[0].env).toBeNull();
