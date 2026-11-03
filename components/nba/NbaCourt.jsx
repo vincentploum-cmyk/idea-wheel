@@ -286,6 +286,17 @@ function OutLines({ side, oppOut }) {
  * what the cheat sheet says, whether it confirms propfinder's data"): "✓ #4" green when the tile sits in the same third,
  * "✗ #19" red when it does not; nothing without a sheet. The hover said it before; now the cell does.
  */
+/**
+ * A window a team is short of (fewer than N games this season, `short` on the rows): its games this season stand in, so
+ * the note says how many — " · DEN has played 8 games this season, all 8 here".
+ */
+function shortNote(a, opp) {
+  const rows = Object.values(a?.rows || {}).filter((r) => r.short);
+  if (!rows.length) return '';
+  const gp = Math.max(...rows.map((r) => r.gp || 0));
+  return ` · ${opp} has played ${gp} game${gp === 1 ? '' : 's'} this season, all ${gp} here`;
+}
+
 export function AllowedTable({ side, win, metric, season, onWin = null, onPos = null, hiPos = null, sheetMarks = false, pickWord = 'on the court' }) {
   const a = tableFor(side.allowed, win);
   if (!a) return <p className="nhlx-auto-meta ir-court-none">No defense table for {side.opp} yet: pull PropFinder (the button above the board, or under Data sources).</p>;
@@ -298,7 +309,7 @@ export function AllowedTable({ side, win, metric, season, onWin = null, onPos = 
   const note = a.from === 'sheet' ? 'the cheat sheet’s tiles'
     : win === 'season' ? `PropFinder, ${seasonTag(season)} as published, the table the board’s projections read${held ? ` · last season’s until ${side.opp} plays its first game` : ''}`
       : win === 'prior' ? `PropFinder, ${windowLabel('prior', side.allowed, season)} in full · a comparison: the board reads this season’s`
-        : `PropFinder, ${WINDOW_TEXT[win]}${a.season && season && a.season < season ? ' of last season (no games this season yet)' : ''} · a comparison: the board reads this season’s table`;
+        : `PropFinder, ${WINDOW_TEXT[win]}${shortNote(a, side.opp) || (a.season && season && a.season < season ? ' of last season (no games this season yet)' : '')} · a comparison: the board reads this season’s table`;
   return (
     <div className="nhlx-pfd">
       <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position{onWin ? '' : ` · ${windowLabel(win, side.allowed, season)}`}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {note}{league ? ' · Lg = the league’s average' : ''}{sheetMarks ? ' · ✓ / ✗ the cheat sheet’s tile, confirming the third or not' : ''}{onPos ? ` · press a row to pick out that position’s players${sheetMarks ? '' : ' on the court'}` : ''}</small></div>
