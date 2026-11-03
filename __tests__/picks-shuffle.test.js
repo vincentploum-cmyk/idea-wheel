@@ -23,8 +23,12 @@ describe('the bar and the ladder', () => {
       { id: 'p2', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', games: withIds.map((g) => ({ ...g, pts: 28 })), props: [], injury: 'Out', injuryDetail: 'Achilles' },
     ], injuries: { rows: [{ id: 'p2', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', status: 'Out', detail: 'Achilles' }] }, defense: null } };
     // The board without the pull toward his role (minutes in the logs would switch it on), so the lift reads alone.
-    const { nbaBoard: makeNba, COCKTAIL } = require('../lib/nba/picks');
-    const b = makeNba({ ...COCKTAIL, pull: null }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf, results: {} });
+    // (the lift and the split are the cocktail's until 2026-11-03; the site's reads the recipe's teammates-out factor instead)
+    const { nbaBoard: makeNba, COCKTAIL_BEFORE_RECIPE, SHUFFLE_MARKETS } = require('../lib/nba/picks');
+    const { makeShuffle } = require('../lib/picks/shuffle');
+    const old = makeNba({ ...COCKTAIL_BEFORE_RECIPE, pull: null });
+    const nbaShuffle = makeShuffle({ board: old, markets: SHUFFLE_MARKETS }).shuffleOf;
+    const b = old.buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf, results: {} });
     const side = b.games[0].sides.BOS.players.find((p) => p.player === 'Jaylen Brown');
     // Tatum played every one of Brown's games: his 34 minutes × Brown's share of the game (34 of 240) = +4.8
     // on Brown's 34, capped at 38, read at × 1 (the NBA's minutes factor lifts no rate); his 28 points × 1 × 0.2 (the
@@ -215,8 +219,12 @@ describe('the NBA shuffle', () => {
     // and the side scales to 112.9 / 126 beside the matchup.
     const totals = { BOS: { for: { gp: 82, pts: 110, reb: 44, ast: 26 }, against: { gp: 82, pts: 112 } }, NY: { for: { gp: 82, pts: 115 }, against: { gp: 82, pts: 120 } } };
     // (the board without the pull toward his role: the matchup and the ceiling alone)
-    const { nbaBoard: makeNba, COCKTAIL } = require('../lib/nba/picks');
-    const nbaBoard = makeNba({ ...COCKTAIL, pull: null }).buildBoard;
+    // (the position cell's matchup, the cocktail's until 2026-11-03; the site's reads the opponent in all positions)
+    const { nbaBoard: makeNba, COCKTAIL_BEFORE_RECIPE, SHUFFLE_MARKETS } = require('../lib/nba/picks');
+    const { makeShuffle } = require('../lib/picks/shuffle');
+    const old = makeNba({ ...COCKTAIL_BEFORE_RECIPE, pull: null });
+    const nbaBoard = old.buildBoard;
+    const nbaShuffle = makeShuffle({ board: old, markets: SHUFFLE_MARKETS }).shuffleOf;
     const withMin = (mins, pts = null) => ({ ...pf, data: { ...pf.data, players: pf.data.players.map((p, i) => ({ ...p, games: p.games.map((g) => ({ ...g, min: mins[i], ...(pts && i === 1 ? { pts } : {}) })) })), defense: { ...defense, totals, leagueFor: { pts: 115, reb: 44, ast: 26 } } } });
     const few = nbaShuffle({ market: 'pts', board: nbaBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 24]), results: {} }), pf: withMin([36, 24]), season: 2026 }).players.find((p) => p.player === 'Jaylen Brown');
     expect(few.matchup).toBeCloseTo(1.033, 3);

@@ -21,7 +21,13 @@
   should be able to check easily per position and type"): "Nuggets defense against Lakers", the court's `AllowedTable`
   (what DEN gives up per position, opening on L10, the cheat sheet's ✓ / ✗ in each cell, the picked stat's column and
   position's row marked; a pressed row sets the position for both blocks, `pickWord` "below"), the table's cell for the
-  pick in a line ("DEN gives up 7.2 ast a game to PGs · #3 of 30 · L10 · league 5.9", tinted by third), the opposing
+  pick in a line ("DEN gives up 7.2 ast a game to PGs · #3 of 30 · L10 · league 5.9", tinted by third), beside it what the
+  defense gives up to all positions this season, the figure the projection reads since the per-stat recipe ("DEN gives up 26.1
+  ast a game in all · #4 of 30 · league 25.3", `side.against` from `sidesOf`: `totals[opp].against` ranked over the teams, its
+  last ten and the league's), and with Threes picked its **three-point attempts allowed** (Vincent, 2026-11-03: "if propfinder
+  gives us the allowed 3 pt attempts, we need to display that also": "3PA allowed · 8.4 to PGs (#4) · 39.5 in all (#3 of 30,
+  league 35.2)"; PropFinder's team rows carry `threePointsAtt`, read as `tpa` in the NBA's `allowed`, so every `AllowedTable`
+  has a 3PA column beside 3PM, nine columns at most), the opposing
   team's players at that position, then who is out on that team — each player with his projection and the
   strong / lean / thin marks, 70 / 55 / 40% as the Boards tab read them: round marks off the shuffle's payload per stat,
   `useNbaShuffles` / `tierRows` over `tierBoard`, the book's rungs (`ladderBoard`) until they load, the highest projection

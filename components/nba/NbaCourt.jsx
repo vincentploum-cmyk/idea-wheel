@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { ICON } from '@/components/nhl/flags';
-import { boardRead, windowRead, blendText, dampText, pullText, reachText } from '@/lib/picks/projection';
+import { boardRead, windowRead, blendText, recipeText, dampText, pullText, reachText } from '@/lib/picks/projection';
 import { seasonTag } from '@/lib/nba/teams';
 import { SHUFFLE_MARKETS } from '@/lib/nba/markets';
 import { heightsOf, lineOf, readAt } from '@/lib/picks/shuffle';
@@ -60,8 +60,8 @@ export function sheetCheck(cell, count) {
 export function envPos(p) { return ZONE_OF[String(p.slot || p.pos || '').toUpperCase()] || ZONE_OF[String(p.pos || '').toUpperCase()] || null; }
 const MARKET_OF = { pts: 'pts', reb: 'reb', ast: 'ast', tpm: 'tpm', stl: 'stl', blk: 'blk' };
 const STAT_SHORT = { pts: 'P', reb: 'R', ast: 'A', tpm: '3P', stl: 'S', blk: 'B', pra: 'PRA' };   // the chip's projections row: the figure, then the stat's letter
-const STAT_LABEL = { pts: 'PTS', reb: 'REB', ast: 'AST', tpm: '3PM', stl: 'STL', blk: 'BLK', tov: 'TO', pra: 'PRA', pr: 'PR', pa: 'PA', ra: 'RA', ftm: 'FTM', fgm: 'FGM', min: 'MIN', oreb: 'OREB', dreb: 'DREB' };
-const STAT_ORDER = ['pts', 'reb', 'ast', 'tpm', 'pra', 'stl', 'blk', 'tov', 'ftm', 'fgm'];
+const STAT_LABEL = { pts: 'PTS', reb: 'REB', ast: 'AST', tpm: '3PM', tpa: '3PA', stl: 'STL', blk: 'BLK', tov: 'TO', pra: 'PRA', pr: 'PR', pa: 'PA', ra: 'RA', ftm: 'FTM', fgm: 'FGM', min: 'MIN', oreb: 'OREB', dreb: 'DREB' };
+const STAT_ORDER = ['pts', 'reb', 'ast', 'tpm', 'tpa', 'pra', 'stl', 'blk', 'tov', 'ftm', 'fgm'];   // 3PA allowed beside 3PM (Vincent, 2026-11-03)
 const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
 const TABLE_MARKETS = [['pts', 'PTS'], ['reb', 'REB'], ['ast', 'AST'], ['tpm', '3PM'], ['pra', 'PRA']];
 const W = 50; const H = 47;
@@ -139,7 +139,10 @@ function projectionText(read, stat, opp, allowed, win) {
   const window = w ? ` · over ${WINDOW_TEXT[win] || win} ${opp} gives up ${num(w.allowed)} (#${w.rank ?? '—'}): the matchup would read × ${w.factor}, ${num(w.value)} ${label}; the window tints the court, the figure stays the board's` : '';
   // The ceiling read (the cocktail's reach, lib/picks/board.js ladderOf): the centre moved toward his ceiling in a soft matchup.
   const reach = read.reach?.add ? ` = ${num(read.value - read.reach.add)}${reachText(read.reach, read.pos)}` : '';
-  return `Tonight ${num(read.value)} ${label}, the board's read: his ${num(read.rate)} a game in PropFinder's logs (${blendText(read.weights)}${pullText(read.pull)})${vol}${mins}${lift}${env}${team}${reach}${window}`;
+  // The per-stat recipe (board.js CK.recipe): the opponent in all positions in place of the cell at his spot, the teammates out as a factor.
+  const envText = mf?.from === 'team' || (mf?.from === 'blend' && mf?.weight == null && read.ownDec) ? ` × ${read.matchup} (what ${opp} gives up to all positions this season over the league's${mf?.sheet != null ? `, the cheat sheet's tile #${read.sheetRank} × ${mf.sheet} beside it` : ''})` : env;
+  const out = read.out ? ` × ${read.out} (${(read.outFrom || []).join(' + ')} out tonight: their production to who plays)` : '';
+  return `Tonight ${num(read.value)} ${label}, the board's read: his ${num(read.rate)} a game in PropFinder's logs (${read.ownDec ? recipeText(read.ownDec) : blendText(read.weights)}${pullText(read.pull)})${read.ownDec ? '' : vol}${mins}${lift}${envText}${out}${team}${reach}${window}`;
 }
 
 /** The player's play for a market: the book's main line on the over (or yes) side first, else his best over, else any. */
@@ -301,7 +304,7 @@ export function AllowedTable({ side, win, metric, season, onWin = null, onPos = 
   const a = tableFor(side.allowed, win);
   if (!a) return <p className="nhlx-auto-meta ir-court-none">No defense table for {side.opp} yet: pull PropFinder (the button above the board, or under Data sources).</p>;
   const windows = onWin ? windowsOf(side.allowed) : [];
-  const keys = [...new Set(Object.values(a.rows).flatMap((r) => Object.keys(r)))].filter((k) => !['gp', 'prior'].includes(k)).sort((x, y) => (STAT_ORDER.indexOf(x) + 1 || 99) - (STAT_ORDER.indexOf(y) + 1 || 99)).slice(0, 8);
+  const keys = [...new Set(Object.values(a.rows).flatMap((r) => Object.keys(r)))].filter((k) => !['gp', 'prior'].includes(k)).sort((x, y) => (STAT_ORDER.indexOf(x) + 1 || 99) - (STAT_ORDER.indexOf(y) + 1 || 99)).slice(0, 9);
   const positions = [...POSITIONS.filter((p) => a.rows[p]), ...Object.keys(a.rows).filter((p) => !POSITIONS.includes(p))];
   const count = a.count || 30;
   const league = a.league || null;

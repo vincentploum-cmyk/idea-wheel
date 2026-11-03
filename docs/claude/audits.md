@@ -183,3 +183,9 @@
   head to head (against a control at the same dates), the venue split, home and rest predict nothing. Against the site's
   board replayed on the same player-games: 2025-26 points 5.08 → 4.96 (the board −1.37 low, the team ceiling), rebounds
   2.01 → 1.98, assists 1.50 → 1.48, threes 1.04 → 1.03; this season 5.05 → 4.99, 2.01 → 1.93, 1.51 → 1.45, 1.03 → 1.02.
+  Built the same day as the NBA's cocktail (`RECIPE`, the bullet "The per-stat recipe" in `picks-core.md`) and replayed through
+  the site's board piece by piece (`nba-audit.mjs --cocktail before | recipe | site+{json}`, `tools/audit/nba_ab_rows.py`): over
+  2025-26 points 4.962 → 4.918, rebounds 1.989 → 1.966, assists 1.461 → 1.447, threes 1.012 → 1.005, PRA 6.52 → 6.42, every
+  market's rung Brier lower; this season 4.89 → 4.83, 1.98 → 1.91, 1.48 → 1.40, threes level. The role pull off (it cost with the
+  decayed memory in, both seasons), the team ceiling kept (without it the board runs high), the without split off; the
+  all-positions matchup a little better than PropFinder's position cell; the teammates-out factor better on points and PRA.

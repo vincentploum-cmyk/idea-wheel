@@ -5,9 +5,74 @@ points the best and assists the best? I expect that our rules need to be slightl
 for threes we need to look at h2h results, but for rebounds, we should look more at the environment and for points we
 might rely more on recent performance to get to the prediction).*
 
+## Built and replayed (later the same day)
+
+Vincent: *yes build it and run the replay. Also, if propfinder gives us the allowed 3 pt attempts, we need to display that also.*
+
+The recipe is now the NBA board's cocktail (`COCKTAIL` in `lib/nba/picks.js`, the fields in `board.js` `COCKTAIL_DEFAULTS`;
+the cocktail until today stays as `COCKTAIL_BEFORE_RECIPE`, the replay's `--cocktail before`). Each piece was replayed through the
+site's own board (`tools/audit/nba-audit.mjs`, the pull built from ESPN's logs night by night, the injury list ESPN's pre-game
+report) and compared on the same player-games with `tools/audit/nba_ab_rows.py`.
+
+**What shipped**, against the board as it was, every projected player who played. Average miss (bias), then each market's
+ladder rungs (Brier, lower is better):
+
+| | Player-games | Points | Rebounds | Assists | Threes | PRA |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2025-26, the board as it was | 95,264 | 4.962 (−1.32) | 1.989 (−0.38) | 1.461 (−0.35) | 1.012 (−0.14) | 6.521 (−2.07) |
+| **2025-26, the recipe** | 95,264 | **4.918** (−1.00) | **1.966** (−0.27) | **1.447** (−0.27) | **1.005** (−0.10) | **6.418** (−1.57) |
+| Rungs, as it was → the recipe | | 0.1856 → 0.1832 | 0.1648 → 0.1626 | 0.1416 → 0.1395 | 0.1124 → 0.1112 | 0.1748 → 0.1719 |
+| This season, the board as it was | 8,416 | 4.888 (−0.12) | 1.978 (−0.04) | 1.477 (−0.11) | 1.007 (−0.10) | 6.400 (−0.16) |
+| **This season, the recipe** | 8,416 | **4.832** (+0.28) | **1.912** (−0.02) | **1.401** (−0.00) | 1.009 (−0.06) | **6.330** (+0.37) |
+| Rungs, as it was → the recipe | | 0.1726 → 0.1721 | 0.1628 → 0.1578 | 0.1414 → 0.1351 | 0.1125 → 0.1122 | 0.1650 → 0.1643 |
+
+Better on every stat and every market's rungs over a full season. This season threes read level (1.007 / 1.009, the rungs a
+hair better).
+
+**Each piece, priced** (average miss, every projected player; 2025-26 / this season):
+
+| Variant | Points | Rebounds | Assists | Threes | PRA |
+| --- | --- | --- | --- | --- | --- |
+| The recipe with the role pull kept | 4.926 / 4.870 | 1.969 / 1.937 | 1.450 / 1.409 | 1.008 / 1.017 | 6.435 / 6.340 |
+| **The recipe, the pull off (shipped)** | **4.918 / 4.832** | **1.966 / 1.912** | **1.447 / 1.401** | **1.005 / 1.009** | **6.418 / 6.330** |
+| … and no teammates-out factor | 4.921 / — | 1.962 / — | 1.446 / — | 1.001 / — | 6.436 / — |
+| The recipe without the team ceiling | 4.922 / 4.967 | 1.983 / 1.965 | 1.456 / 1.454 | 1.023 / 1.026 | 6.330 / 6.460 |
+| The recipe on the position cell (PropFinder's, as before) | 4.928 / 4.868 | 1.971 / 1.937 | 1.447 / 1.408 | 1.008 / 1.017 | 6.436 / 6.337 |
+| The recipe with the without split kept | — / 4.884 | — / 1.951 | — / 1.413 | — / 1.016 | — / 6.362 |
+
+- **The rate × this season's minutes carries most of the gain.** The decayed memory reads a player's first games better than the
+  pull toward his role did, so **the pull is off** (both seasons agree). The usage pull of 2026-10-29 goes with it. Rebound chances
+  and potential assists could not be replayed (ESPN has no tracking), so on the site they leave with it too.
+- **The opponent in all positions** beats PropFinder's cell at his position by a little, on points, rebounds and the rungs over
+  the season. This season every table is under ten games and shrunk, and the two read alike.
+- **The team ceiling stays.** Without it the board runs high (points +0.5 over the season, +0.8 this season) and rebounds, assists,
+  threes and the rungs read worse. It is most of the board's remaining low bias on points.
+- **The teammates-out factor stays.** It is the better read on points and PRA (the miss and the rungs). It is a hair worse on
+  rebounds, assists and threes, at the third decimal. The replay names who is out from ESPN's pre-game report. The study counted
+  who did not play, where the factor was the strongest read for points and assists.
+- **The without split is off.** The factor reads the same absences, and with the split on this season read worse.
+
+**What the board reads now, per stat** (`RECIPE`): his rate a minute with a half-life of 15 games (points, assists), 20 (rebounds,
+threes) and 15 for the rest, × his minutes (this season's, half-life 3); × the opponent in all positions (points: season ^0.94;
+rebounds: last ten ^0.65; assists: season ^0.62 × its last ten at his position ^0.18 × its 3PA allowed ^0.51; threes: its 3PA
+allowed ^1.12; PRA on its parts; steals, blocks and the rest keep the position cell); × (1 + the out players' production / the
+team's)^b (points 0.7, rebounds 0.53, assists 0.77, threes 0.64, PRA 0.68). The cheat sheet's tile at his spot still counts in
+full beside the matchup (the replay has no sheets, so that part is not measured here). The ceiling read and the calibration are
+as before.
+
+**Three-point attempts allowed.** PropFinder's team rows carry `threePointsAtt` (seen in the pull of 2026-11-01, with its rank).
+The NBA's defense tables now read it (`allowed` in `lib/nba/propfinder-nba.js`): a **3PA** column beside 3PM in every PropFinder
+table, and on the Games tab, under each defense with Threes picked, "3PA allowed · 8.4 to PGs (#4) · 39.5 in all (#3 of 30,
+league 35.2)". Every stat now also shows what the defense gives up to all positions, the figure the projection reads.
+
+**After the deploy**, run the NBA workflow with `what: calibration` (or wait for the 2:11 AM job). The stored calibration was
+fitted on the old board's chances, and it relearns on the recipe's.
+
+## The study
+
 This study starts from the box scores, not from the board. Every candidate read is built for every player-game from the
 games before its date. The reads are tuned on one season, then scored unchanged on the next season and on this one.
-**Nothing on the site was changed.** The proposals are at the end. The tables are in the appendix,
+The proposals at the end were built and replayed the same day (above). The tables are in the appendix,
 [2026-11-03-nba-stat-drivers-tables.md](2026-11-03-nba-stat-drivers-tables.md).
 
 ## Your three hunches, answered
@@ -118,7 +183,7 @@ The share of the night-to-night spread his own read explains (R²), on 2025-26:
   threes is mostly luck.
 - **Most of what is left is the night itself.** Even knowing his minutes in advance, points would still miss by 4.1.
 
-## What I would change (nothing is changed yet)
+## What the study proposed
 
 Each change goes through the site's replay (`nba-audit.mjs`) as its own A / B before it ships:
 

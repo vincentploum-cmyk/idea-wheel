@@ -124,6 +124,17 @@ python3 -I tools/audit/nba_stat_drivers.py --box .nhl-data/audit/nba-box --out d
 
 Written up in `docs/audits/2026-11-03-nba-stat-drivers.md`.
 
+The recipe built from it is the site's cocktail since that day; the replay A / B (`--cocktail before` = the board until then,
+`recipe` = that with the recipe, `site+{json}` / `before+{json}` = either with one setting varied), compared on the same
+player-games:
+
+```bash
+for ck in before site; do node --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --date 2026-11-02 --from 2026-10-20 --raw .nhl-data/audit/nba --out .nhl-data/audit/ab4 --prior .nhl-data/audit/nba/prior/games --cocktail $ck --tag -$ck; done
+python3 -I tools/audit/nba_ab_rows.py .nhl-data/audit/ab4/nba-2026-11-02 before site --label "This season"
+# last season (about 17 minutes a run; two at a time fit in 15 GB at --max-old-space-size=6500)
+node --max-old-space-size=6500 --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --season 2025 --date 2026-04-12 --from 2025-10-21 --raw .nhl-data/audit/nba --days .nhl-data/audit/nba/prior/days --games .nhl-data/audit/nba/prior/games --gamelogs .nhl-data/audit/nba/prior/gamelogs --out .nhl-data/audit/ab4 --cocktail site --tag -site
+```
+
 ## NBA: the minutes read (`nba_minutes.py`)
 
 The replay's rows say what the projection would miss had the board known his minutes; this script tries to get there:
