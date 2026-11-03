@@ -737,6 +737,16 @@ config and keeps its own markets, teams, feeds and slate key:
   at 0.6 put targets within one 29.0% of the games with a teammate missing against 35.7% without it, carries 16.9% / 33.8%;
   the without split cost 5.5 points of targets' close calls); `without` is a cocktail key in `board.js` (default true, the
   NBA's unchanged); `roleOf`'s `regularsOut` keeps "if role confirmed" beside a name when a regular at his group is out.
+- **The two-engine spec, tested** (Vincent, 2026-11-03, a spec: yards = volume × matchup × efficiency × script with a
+  max-ladder gate and a card of 2 + 2 ladders; touchdowns = red-zone opportunity × implied total, six a card, an outlier
+  rule; `docs/audits/2026-11-03-nfl-engines.md`, `tools/audit/nfl_engines.py`): the yards formula, the receivers' gate and the
+  card did not beat the board case by case and are not built; two pieces shipped in `lib/nfl/projections.js` — **the shrink**
+  (`YARDS_SHRINK`: receiving 2.07 + 0.772 × the board's, a back's rushing 1.29 + 0.887 ×, LAD on 2025; `RESID` / `RANGE`
+  refitted on it, `y.unshrunk`, the big games on `RESID_UNSHRUNK`): the board's top 5% over-read by 11–18 yards; 2026
+  receiving within ±10 27.5% → 32.2%, rushing 23.0% → 27.2% — and **the touchdown engine** (`TD_ENGINE`, `tdEngine`,
+  `rzLooksOf`: the board's chance after `TD_CAL` with his red-zone looks a game over his last five, PropFinder's `rzAtt` +
+  `rzTgt`, and the team's implied points; `td.board`, `td.rz`, `td.points`; quarterbacks as before): Brier 0.1237 → 0.1222,
+  the week's six likeliest scored 66.7% (54.8% before), the outlier rule met by the engine itself.
 - **The cheat sheet's defense snapshot** (`lib/nfl/snapshot.js`; Vincent, 2026-11-01: "the cheat sheet should be used to
   identify weaknesses in defenses"): each column of the detailed sheet opens with the opponent's defense — coverage shells
   (Man% / Zone%, Cover 0 / 1 / 2 / 3 / 4 / 6, 2-Man) and ranked tiles (Pass Yds/G, Rush Yds/G, Rush Y/Play, the passing

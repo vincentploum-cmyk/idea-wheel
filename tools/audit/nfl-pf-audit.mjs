@@ -165,7 +165,7 @@ function gradeWeek(pj, played, tag, lines = null) {
       yards.push({ tag, m, pos: r.pos, key: r.key, team: r.team, opp: r.opp, matchup: y.matchup, proj: y.proj, exp: y.exp, floor: y.floor, ceiling: y.ceiling, sd: y.sd, actual: line[STAT[m]], att: Number(line.passAtt) || 0, rushAtt: Number(line.rushAtt) || 0, tgt: Number(line.tgt) || 0, active: !!ACTIVE(line), line: bl?.line ?? null, odds: bl?.odds ?? null, underOdds: bl?.underOdds ?? null });
     }
     for (const [m, b] of Object.entries(r.big || {})) for (const mk of b.marks) if (b.p[mk] != null) bigs.push({ tag, m, mark: mk, first: mk === b.marks[0], p: b.p[mk], hit: line[STAT[m]] >= mk ? 1 : 0, player: r.player, share: b.ctx.tgtShare, proj: b.proj });
-    if (r.td) tds.push({ tag, pos: r.pos, p: r.td.p, raw: r.td.raw, p1h: r.td.p1h, td: line.rushTd + line.recTd + (line.retTd || 0) > 0 ? 1 : 0, td1h: (Number(line.h1RushTd) || 0) + (Number(line.h1RecTd) || 0) > 0 ? 1 : 0, h1Known: !!line.h1Known, active: !!ACTIVE(line), odds: book?.anytime_td?.odds ?? null, p2: r.td.p2, two: line.rushTd + line.recTd + (line.retTd || 0) >= 2 ? 1 : 0, pFirst: r.td.pFirst, first: Number(line.firstTd) > 0 ? 1 : 0 });
+    if (r.td) tds.push({ tag, key: r.key, team: r.team, pos: r.pos, p: r.td.p, raw: r.td.raw, p1h: r.td.p1h, td: line.rushTd + line.recTd + (line.retTd || 0) > 0 ? 1 : 0, td1h: (Number(line.h1RushTd) || 0) + (Number(line.h1RecTd) || 0) > 0 ? 1 : 0, h1Known: !!line.h1Known, active: !!ACTIVE(line), odds: book?.anytime_td?.odds ?? null, p2: r.td.p2, two: line.rushTd + line.recTd + (line.retTd || 0) >= 2 ? 1 : 0, pFirst: r.td.pFirst, first: Number(line.firstTd) > 0 ? 1 : 0 });
   }
   return { yards, tds, rungs, bigs };
 }
@@ -256,6 +256,9 @@ if (DUMP) {
   const extra = seasons[2024] ? run({ season: 2024, weeks: [6, 18] }).yards : [];
   const rows = [...extra, ...base.tune.yards, ...base.check.yards].map((r) => ({ tag: r.tag, m: r.m, pos: r.pos, key: r.key, team: r.team, opp: r.opp, proj: r.proj, sd: r.sd, matchup: r.matchup, actual: r.actual, att: r.att, rushAtt: r.rushAtt, tgt: r.tgt, active: r.active, exp: r.exp }));
   fs.writeFileSync(path.join(OUT, 'nfl-board-rows.json'), JSON.stringify(rows));
+  // the touchdown reads beside them (the TD engine study, tools/audit/nfl_engines.py)
+  const tdRows = [...base.tune.tds, ...base.check.tds].map((r) => ({ tag: r.tag, key: r.key, team: r.team, pos: r.pos, p: r.p, td: r.td }));
+  fs.writeFileSync(path.join(OUT, 'nfl-board-tds.json'), JSON.stringify(tdRows));
   say('dumped', rows.length); process.exit(0);
 }
 // The ladders' tiers and the other touchdown reads, said against landed.

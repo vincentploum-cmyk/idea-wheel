@@ -39,6 +39,15 @@ const Got = ({ v }) => (v === undefined ? <small>—</small> : v === null ? <sma
 
 const hitOf = (v) => (v === undefined || v === null ? '' : v ? ' is-hit' : ' is-miss');
 
+/** The anytime chance's arithmetic for the hover: the board's read, his red-zone looks and the points his team is expected to score (the touchdown engine). */
+function tdWhy(t) {
+  if (t?.board == null) return undefined;
+  const parts = [`${pct(t.board)} from his touchdown rate and touches`];
+  if (t.rz != null) parts.push(`${Number(t.rz).toFixed(1)} red-zone looks a game over his last 5`);
+  if (t.points != null) parts.push(`his team expected to score ${t.points}`);
+  return `${parts.join(' · ')} → ${pct(t.p)}`;
+}
+
 function TdTable({ rows, game }) {
   const final = rows.some((r) => r.final);
   const cols = [
@@ -62,7 +71,7 @@ function TdTable({ rows, game }) {
               <td className="ir-slate-rank">{i + 1}</td>
               <td><Who r={r} game={game} /></td><td className="is-num ir-ml-proj"><b>{t.lambda == null ? '—' : Number(t.lambda).toFixed(2)}</b><small>TDs</small></td>
               {cols.map(([k, , , hit]) => (
-                <td key={k} className={`is-num${k === 'p' ? ' is-lead' : ''}${final ? hitOf(hit(t)) : ''}`}>
+                <td key={k} className={`is-num${k === 'p' ? ' is-lead' : ''}${final ? hitOf(hit(t)) : ''}`} title={k === 'p' ? tdWhy(t) : undefined}>
                   <b>{pct(t[k])}</b>{k === 'p' && t.tier ? <small className={`ir-ml-tier is-${t.tier}`}>{t.tier}</small> : null}
                 </td>
               ))}

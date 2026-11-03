@@ -9,7 +9,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildBoard } from '../lib/nfl/picks';
-import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS, PASS, passRead, QB_RUSH, qbRushRead } from '../lib/nfl/projections';
+import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS, PASS, passRead, QB_RUSH, qbRushRead, RESID, RESID_UNSHRUNK, YARDS_SHRINK, TD_ENGINE, tdEngine, rzLooksOf } from '../lib/nfl/projections';
 import { applyRosterStatus, ROSTER_OFF } from '../lib/nfl/roster-status';
 import { reproject, makeBuild, nflBoard, COCKTAIL } from '../lib/nfl/picks';
 import { envFactor } from '../lib/picks/projection';
@@ -78,11 +78,14 @@ describe('NFL boards: the first-half touchdown line', () => {
 });
 
 describe('NFL projections: the ladders and the touchdown reads (2026-11-01)', () => {
-  test('a mark’s chance falls as the mark rises, the projection is cleared less than half the time, the tiers are the highest marks at 60 / 45 / 30%', () => {
+  test('a mark’s chance falls as the mark rises, the projection is cleared about half the time, the tiers are the highest marks at 60 / 45 / 30%', () => {
     const y = { proj: 72, sd: 28 };
     const ps = [40, 50, 60, 70, 80, 90, 100].map((m) => chanceAtMark(y, m, 'rec_yds'));
     for (let i = 1; i < ps.length; i++) expect(ps[i]).toBeLessThan(ps[i - 1]);
-    expect(chanceAtMark(y, 72, 'rec_yds')).toBeLessThan(0.5);   // a game's yards run skewed: the middle game lands under the projection
+    // The curve is fitted on the shrunk projection (YARDS_SHRINK, 2026-11-03): the middle game lands on it.
+    expect(chanceAtMark(y, 72, 'rec_yds')).toBeCloseTo(0.5, 1);
+    // Before the shrink the board's own projection ran over the middle game: its curve put the projection under half.
+    expect(chanceAtMark(y, 72, 'rec_yds', { ...RESID, ...RESID_UNSHRUNK })).toBeLessThan(0.5);
     const t = ladderTiers(y, 'rec_yds');
     for (const [tier, at] of LADDER_TIERS) {
       expect(t[tier].p).toBeGreaterThanOrEqual(at);
@@ -162,6 +165,32 @@ describe('NFL projections: the passing read (2026-11-02)', () => {
     const zeros = { ...pf, data: { ...pf.data, players: pf.data.players.map((p) => (p.name === 'Matthew Stafford' ? { ...p, games: [...p.games, { ...p.games[0], date: '2026-10-02', passAtt: 0, passYds: 0, passCmp: 0 }] } : p)) } };
     const b2 = buildBoard({ season: 2026, week: 9, games: GAMES, sheets: [], pf: zeros, results: {} });
     expect(Object.values(b2.projections.rows).find((r) => r.player === 'Matthew Stafford').yards.pass_yds.proj).toBe(y.proj);
+  });
+});
+
+describe('NFL projections: the two engines (2026-11-03)', () => {
+  test('the touchdown engine: more red-zone looks and more team points lift the chance; the board\'s order holds', () => {
+    expect(tdEngine(0.3, 3, 22)).toBeGreaterThan(tdEngine(0.3, 0, 22));
+    expect(tdEngine(0.3, 1, 28)).toBeGreaterThan(tdEngine(0.3, 1, 18));
+    expect(tdEngine(0.4, 1, 22)).toBeGreaterThan(tdEngine(0.3, 1, 22));
+    expect(tdEngine(null, 1, 22)).toBeNull();
+    expect(tdEngine(0.3, 1, null)).toBeCloseTo(tdEngine(0.3, 1, TD_ENGINE.points), 6);
+  });
+  test('red-zone looks: his last five games with a touch, before the game', () => {
+    const g = (date, rzAtt, rzTgt, rushAtt = 10, tgt = 3) => ({ date, rzAtt, rzTgt, rushAtt, tgt });
+    const logs = [g('2026-10-26', 4, 1), g('2026-10-19', 2, 0), g('2026-10-12', 0, 0, 0, 0), g('2026-10-05', 3, 1), g('2026-09-28', 1, 1), g('2026-09-21', 2, 2), g('2026-09-14', 9, 9)];
+    expect(rzLooksOf(logs)).toBeCloseTo((5 + 2 + 4 + 2 + 4) / 5, 6);   // the game without a touch left out, the sixth oldest too
+    expect(rzLooksOf([g('2026-11-02', 9, 9), ...logs], '2026-11-02T18:00Z')).toBeCloseTo(rzLooksOf(logs), 6);
+    expect(rzLooksOf([])).toBe(0);
+  });
+  test('the big games read the projection before the shrink', () => {
+    const b = build();
+    const r = Object.values(b.projections.rows).find((x) => x.player === 'Puka Nacua');
+    const y = r.yards.rec_yds;
+    expect(r.big.rec_yds.proj).toBe(y.proj);
+    expect(r.big.rec_yds.p[100]).toBe(bigChance(y, 'rec_yds', 100, { points: impliedPoints(GAMES[0].odds, 'LAR'), total: 47.5, tgtShare: r.big.rec_yds.ctx.tgtShare }));
+    // the shrink moves no big-game chance: the read without it gives the same figure
+    expect(bigChance(y, 'rec_yds', 100, { tgtShare: 0.3 })).toBe(bigChance({ ...y, proj: y.unshrunk + 40 }, 'rec_yds', 100, { tgtShare: 0.3 }));
   });
 });
 
@@ -286,7 +315,10 @@ describe('NFL projections: the read', () => {
     // The stated chance off λ = his rate × the team × the position, through the touchdown calibration (fitted on 2025).
     const stated = 1 - Math.exp(-(t.own * t.teamFactor * t.posShift));
     expect(t.raw).toBeCloseTo(stated, 2);
-    expect(t.p).toBeCloseTo(tdCalibrated(stated, TD_CAL), 2);
+    // The board's chance through the calibration, then the touchdown engine: his red-zone looks and the team's points.
+    expect(t.board).toBeCloseTo(tdCalibrated(stated, TD_CAL), 2);
+    expect(t.p).toBeCloseTo(tdEngine(tdCalibrated(stated, TD_CAL), t.rz, t.points), 2);
+    expect(t.rz).toBe(0);   // the fixture's rows carry no red-zone looks
     expect(t.p).toBeCloseTo(1 - Math.exp(-t.lambda), 2);
     expect(t.p1h).toBeCloseTo(1 - Math.exp(-H1_SHARE * t.lambda), 3);
     expect(t.n).toBe(10);
@@ -345,14 +377,16 @@ describe('NFL projections: the read', () => {
     expect(scriptFactor(lar, 'rec_yds')).toBeCloseTo(lar.volume * lar.pass, 3);
     expect(scriptFactor(null, 'rec_yds')).toBe(1);
   });
-  test('the yards: tonight’s projection = skill × matchup × script, a floor and a ceiling around it', () => {
+  test('the yards: tonight’s projection = (skill × matchup × script) shrunk, a floor and a ceiling around it', () => {
     const r = row('Puka Nacua');
     const y = r.yards.rec_yds;
     const side = b.games[0].sides.LAR.players.find((p) => p.player === 'Puka Nacua');
     const script = pj.games.find((g) => g.id === 'g1').teams.LAR.script;
     expect(y.exp).toBe(side.ranges.rec_yds.exp);
     expect(y.script).toBeCloseTo(scriptFactor(script, 'rec_yds'), 3);
-    expect(y.proj).toBeCloseTo(y.exp * y.script, 1);
+    expect(y.unshrunk).toBeCloseTo(y.exp * y.script, 1);
+    expect(y.proj).toBeCloseTo(YARDS_SHRINK.rec_yds.c + YARDS_SHRINK.rec_yds.b * y.unshrunk, 1);
+    expect(y.proj).toBeLessThan(y.unshrunk);
     const sd = side.ladders.rec_yds[0].sd * y.script;
     expect(y.floor).toBe(Math.round(Math.max(0, y.proj - RANGE.rec_yds[0] * sd)));
     expect(y.ceiling).toBe(Math.round(y.proj + RANGE.rec_yds[1] * sd));
