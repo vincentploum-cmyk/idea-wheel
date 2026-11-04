@@ -213,6 +213,40 @@ describe('the NHL builders are kept per store state', () => {
   });
 });
 
+describe('the NBA night’s starting lineups (RotoWire)', () => {
+  test('read while the night’s games are to start, stored and carried on the board; another night’s page is not stored; a past night is not read', async () => {
+    const fs = require('node:fs'); const path = require('node:path');
+    const nba = require('../lib/nba/store');
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+    const words = (d) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+    const fixture = fs.readFileSync(path.join(__dirname, 'fixtures/rotowire-nba-lineups.html'), 'utf8');
+    const pageFor = (d) => fixture.replace('November 4, 2026', words(d));
+    const slate = { date: today };
+    const schedule = { slate, games: [{ id: '501', date: `${today}T23:00:00Z`, away: 'PHI', home: 'DET', final: false, state: 'pre' }], fetchedAt: new Date().toISOString() };
+    files.set(`nba/${today}/schedule.json`, JSON.stringify(schedule));
+    const spy = jest.spyOn(global, 'fetch').mockImplementation(async () => ({ ok: true, status: 200, text: async () => pageFor('2020-01-01') }));
+    try {
+      // A page of another night (RotoWire serves today's alone): not stored.
+      expect(await nba.ensureLineups(slate, { force: true, schedule })).toMatchObject({ fetched: false, feed: null });
+      expect(files.has(`nba/${today}/lineups.json`)).toBe(false);
+      spy.mockImplementation(async () => ({ ok: true, status: 200, text: async () => pageFor(today) }));
+      const got = await nba.ensureLineups(slate, { force: true, schedule });
+      expect(got.fetched).toBe(true);
+      expect(got.feed).toMatchObject({ source: 'rotowire', date: today });
+      const board = await nba.boardFor(slate, { refresh: false });
+      expect(board.lineups.teams.PHI).toMatchObject({ status: 'expected', starters: expect.arrayContaining([{ pos: 'C', name: 'Joel Embiid', play: 100 }]) });
+      expect(board.lineups.teams.WSH.status).toBe('expected');
+      // Fresh for ten minutes: no second read.
+      const calls = spy.mock.calls.length;
+      expect((await nba.ensureLineups(slate, { schedule })).fetched).toBe(false);
+      expect(spy.mock.calls.length).toBe(calls);
+      // A past night is not read at all.
+      expect(await nba.ensureLineups({ date: '2026-10-20' }, { force: true })).toMatchObject({ fetched: false });
+      expect(spy.mock.calls.length).toBe(calls);
+    } finally { spy.mockRestore(); }
+  });
+});
+
 describe('the NBA board is kept per slate files', () => {
   test('boardFor and shuffleFor build once for the same stored files; a finished OCR sheet reads through the cache', async () => {
     const nba = require('../lib/nba/store');

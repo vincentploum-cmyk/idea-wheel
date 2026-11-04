@@ -17,6 +17,8 @@ const table = (pts) => ({ count: 30, rows: { PG: { gp: 6, pts: { value: pts, ran
 const player = (key, name, pos, exp, lines) => ({ key, player: name, pos, envPos: pos, ranges: { pts: { exp, floor: exp - 5, ceiling: exp + 5 } }, ladders: { pts: lines.map(([line, p]) => ({ line, p })) } });
 const board = {
   date: '2026-11-01', season: 2026,
+  // RotoWire's lineups (lib/nba/rotowire.js): LAL's five confirmed, DEN's expected.
+  lineups: { at: '2026-11-01T22:40:00Z', source: 'rotowire', teams: { LAL: { status: 'confirmed', starters: [{ pos: 'SF', name: 'LeBron James' }], mayNotPlay: [] }, DEN: { status: 'expected', starters: [], mayNotPlay: [] } } },
   games: [{
     id: 'g1', away: 'LAL', home: 'DEN', date: '2026-11-01T23:00:00Z', final: false, state: 'pre', odds: { spread: 'DEN -2.5', total: 228.5 },
     sides: {
@@ -60,6 +62,8 @@ describe('the NBA games, the NFL’s layout', () => {
     expect(html).toMatch(/>-2\.5</);
     expect(html).toMatch(/>\+2\.5</);
     expect(html).toContain('O 228.5');
+    expect(html).toContain('✓ Lineup confirmed');
+    expect(html).toContain('Expected lineup');
     expect(html).toContain('What DEN gives up per game, by position');
     expect(html).toContain('What LAL gives up per game, by position');
     expect(html).toMatch(/aria-selected="true"[^>]*>L10</);

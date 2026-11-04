@@ -1,5 +1,5 @@
 import { authorize, DATE_RE } from '@/lib/nhl-data/util';
-import { resolveSlate, ensureSchedule, ensureInjuries, pullPropfinderSlate, publicRefreshAllowed, relearnCalibration } from '@/lib/nba/store';
+import { resolveSlate, ensureSchedule, ensureInjuries, ensureLineups, pullPropfinderSlate, publicRefreshAllowed, relearnCalibration } from '@/lib/nba/store';
 import { scheduledSlotDone } from '@/lib/scheduler';
 
 export const runtime = 'nodejs';
@@ -44,6 +44,9 @@ async function handle(request) {
       // ESPN's league injury feed with the schedule: the second word on who plays tonight (lib/picks/injuries.js applyEspnInjuries).
       const inj = await ensureInjuries(slate, { force: true, schedule });
       out.injuries = inj.feed ? { at: inj.feed.at, fetched: inj.fetched, rows: inj.feed.rows.length } : { fetched: false };
+      // RotoWire's starting lineups, tonight's night alone ("Lineup confirmed" beside a team on the Games tab).
+      const lu = await ensureLineups(slate, { force: true, schedule });
+      out.lineups = lu.feed?.teams ? { at: lu.feed.fetchedAt, fetched: lu.fetched, teams: Object.keys(lu.feed.teams).length, confirmed: Object.values(lu.feed.teams).filter((t) => t.status === 'confirmed').length } : { fetched: false };
       // New box scores: the season's scorecard graded again in the background, the board's calibration learned from it.
       if (resultsStored) relearnCalibration().catch((err) => console.warn('[nba] calibration relearn failed:', err.message));
     }

@@ -1850,6 +1850,8 @@ div.nhlx-auto-msg > p { margin: 0; }
 .ir-gm.is-open .ir-gm-title i { transform: rotate(90deg); }
 .ir-gm-time { margin-top: -4px; font-size: 13.5px; letter-spacing: 0.04em; color: var(--muted); }
 .ir-gm-name { font-size: 17px; color: var(--heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ir-gm-lineup { display: block; width: fit-content; margin-top: 3px; padding: 0 7px; border-radius: 5px; font-size: 12px; font-weight: 600; line-height: 19px; color: var(--muted); background: var(--bg-soft); }
+.ir-gm-lineup.is-confirmed { background: var(--ok-bg); color: var(--ok-fg); }
 .ir-gm-score { font-family: var(--font-display); font-size: 18px; color: var(--heading); font-variant-numeric: tabular-nums; }
 .ir-gm-box { display: grid; place-items: center; min-height: 44px; border: 1.5px solid var(--primary-line); border-radius: 8px; font-weight: 600; font-size: 15.5px; color: var(--heading); font-variant-numeric: tabular-nums; }
 .ir-gm-box.is-empty { color: var(--muted); border-color: var(--line); }
