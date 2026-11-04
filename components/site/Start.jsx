@@ -41,14 +41,14 @@ function Stat({ n, label, tone = '' }) {
 const PANELS = [
   {
     key: 'nfl', code: 'NFL', title: 'NFL picks', logo: nflLogo, withDay: true,
-    copy: 'Touchdowns, passing, rushing and receiving: the week’s best plays per game from your cheat sheets and PropFinder’s logs and lines.',
+    copy: 'Touchdowns, passing, rushing and receiving: the week’s best plays per game from PropFinder’s logs, lines and defense tables.',
     sub: (s) => (s?.label ? `${s.label} · ${s.week?.season ?? ''}` : 'This week'),
     stats: (s) => [[s.games.length, 'games'], [s.plays, 'plays'], s.graded ? [`${s.hits}/${s.graded}`, 'hit', s.hits * 2 >= s.graded ? 'good' : 'bad'] : [s.finals, 'final'], [s.sheets, s.sheets === 1 ? 'sheet' : 'sheets']],
     foot: (s) => `${s.propfinder ? 'PropFinder pulled' : 'PropFinder not pulled yet'}${s.nextStart ? ` · next kickoff ${fmtWhen(s.nextStart, true)}` : ''}`,
   },
   {
     key: 'nba', code: 'NBA', title: 'NBA picks', logo: nbaLogo, withDay: false,
-    copy: 'Points, rebounds, assists, threes and the combos: tonight’s best plays per game from your cheat sheets and PropFinder’s logs and lines.',
+    copy: 'Points, rebounds, assists, threes and the combos: tonight’s best plays per game from PropFinder’s logs, lines and defense tables.',
     sub: () => 'Tonight',
     stats: (s) => [[s.games.length, 'games'], [s.plays, 'plays'], s.graded ? [`${s.hits}/${s.graded}`, 'hit', s.hits * 2 >= s.graded ? 'good' : 'bad'] : [s.finals, 'final'], [s.sheets, s.sheets === 1 ? 'sheet' : 'sheets']],
     foot: (s) => `${s.propfinder ? 'PropFinder pulled' : 'PropFinder not pulled yet'}${s.nextStart ? ` · first tip ${fmtWhen(s.nextStart)}` : ''}`,

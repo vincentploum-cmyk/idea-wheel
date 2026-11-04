@@ -54,4 +54,9 @@
   `components/nfl/NflPlayer.jsx`: his TD chances (anytime, 1st half, first TD, 2+), each yards market's projection,
   floor–ceiling, the book's line, the strong / lean / thin marks, the matchup at his spot and the factor on his rate, and
   his big-game chances, graded once the game is in; hidden until the week has projections. `__tests__/picks-player-search.test.jsx`.
-
+- **No cheat sheets since 2026-11-04** (Vincent: "I will not get the cheat sheet anymore"): the pages no longer ask for one — the
+  NFL / NBA heads drop "no cheat sheet" (a date that stored sheets still counts them), the footers name ESPN and PropFinder only,
+  the legends and the Proj hovers read "PropFinder's defense table" / "what the defense gives up to all positions, PropFinder",
+  the ✓ / ✗ note above PropFinder's tables shows only when a cell carries a tile, the start screen and the landing page describe
+  the boards off PropFinder's logs, lines and defense tables, and Data sources has no drop zone. The sheet parsers, the store
+  routes and the board's reads stay (a sheet uploaded through the API still counts), so the sheets can come back without code.

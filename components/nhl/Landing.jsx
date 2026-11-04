@@ -5,11 +5,11 @@ import { LEAGUES, leagueLogo, leagueName } from '@/lib/site/leagues';
 const SPORTS = [
   {
     code: 'NFL', title: 'NFL picks',
-    body: 'The week’s best plays per game in four tables: touchdowns, passing, rushing and receiving. The two cheat sheets you upload plus PropFinder’s game logs and lines, every row with the chance of the hit, its break-even price and the book’s price, graded against the box score.',
+    body: 'The week’s best plays per game in four tables: touchdowns, passing, rushing and receiving. PropFinder’s game logs, lines and defense tables, every row with the chance of the hit, its break-even price and the book’s price, graded against the box score.',
   },
   {
     code: 'NBA', title: 'NBA picks',
-    body: 'Tonight’s best plays per game in five tables: points, rebounds, assists, threes and the combos, from the cheat sheets and PropFinder’s logs and lines, graded against the box score.',
+    body: 'Tonight’s best plays per game in five tables: points, rebounds, assists, threes and the combos, from PropFinder’s logs, lines and defense tables, graded against the box score.',
   },
   {
     code: 'NHL', title: 'NHL picks',
