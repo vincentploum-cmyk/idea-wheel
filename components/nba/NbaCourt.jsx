@@ -300,6 +300,11 @@ function shortNote(a, opp) {
   return ` · ${opp} has played ${gp} game${gp === 1 ? '' : 's'} this season, all ${gp} here`;
 }
 
+/**
+ * What the projections read, for the table's note (since the per-stat recipe of 2026-11-03, lib/nba/picks.js RECIPE): the
+ * defense in all positions for points, rebounds, assists, threes and PRA, this season's row at his position for the rest.
+ */
+export const readsText = (opp) => `the projections read what ${opp} gives up to all positions (rebounds: its last ten; steals and blocks: this season’s row at his position)`;
 export function AllowedTable({ side, win, metric, season, onWin = null, onPos = null, hiPos = null, sheetMarks = false, pickWord = 'on the court' }) {
   const a = tableFor(side.allowed, win);
   if (!a) return <p className="nhlx-auto-meta ir-court-none">No defense table for {side.opp} yet: pull PropFinder (the button above the board, or under Data sources).</p>;
@@ -310,15 +315,15 @@ export function AllowedTable({ side, win, metric, season, onWin = null, onPos = 
   const league = a.league || null;
   const held = win === 'season' && Object.values(a.rows).some((r) => r.held);
   const note = a.from === 'sheet' ? 'the cheat sheet’s tiles'
-    : win === 'season' ? `PropFinder, ${seasonTag(season)} as published, the table the board’s projections read${held ? ` · last season’s until ${side.opp} plays its first game` : ''}`
-      : win === 'prior' ? `PropFinder, ${windowLabel('prior', side.allowed, season)} in full · a comparison: the board reads this season’s`
-        : `PropFinder, ${WINDOW_TEXT[win]}${shortNote(a, side.opp) || (a.season && season && a.season < season ? ' of last season (no games this season yet)' : '')} · a comparison: the board reads this season’s table`;
+    : win === 'season' ? `PropFinder, ${seasonTag(season)} as published${held ? ` · last season’s until ${side.opp} plays its first game` : ''} · ${readsText(side.opp)}`
+      : win === 'prior' ? `PropFinder, ${windowLabel('prior', side.allowed, season)} in full · a comparison`
+        : `PropFinder, ${WINDOW_TEXT[win]}${shortNote(a, side.opp) || (a.season && season && a.season < season ? ' of last season (no games this season yet)' : '')} · ${readsText(side.opp)}`;
   return (
     <div className="nhlx-pfd">
       <div className="nhlx-pfd-head"><b>What {side.opp} gives up per game, by position{onWin ? '' : ` · ${windowLabel(win, side.allowed, season)}`}</b><small className="nhlx-auto-meta">rank 1 = the most of {count} · {note}{league ? ' · Lg = the league’s average' : ''}{sheetMarks && Object.values(a.rows).some((r) => Object.values(r || {}).some((c) => c?.sheet != null)) ? ' · ✓ / ✗ the cheat sheet’s tile, confirming the third or not' : ''}{onPos ? ` · press a row to pick out that position’s players${sheetMarks ? '' : ' on the court'}` : ''}</small></div>
       {windows.length > 1 ? (
         <div className="nhlx-tabs nhlx-rk-tabs nhlx-pfd-tabs" role="tablist" aria-label={`Window of ${side.opp}'s table`}>
-          {windows.map((k) => <button key={k} type="button" role="tab" aria-selected={win === k} className={`nhlx-tab${win === k ? ' is-active' : ''}`} onClick={() => onWin(k)} title={`${WINDOW_TEXT[k]}${k === 'season' ? ': the table the board’s projections read' : ': a comparison, the projections keep this season’s table'}`}>{windowLabel(k, side.allowed, season)}</button>)}
+          {windows.map((k) => <button key={k} type="button" role="tab" aria-selected={win === k} className={`nhlx-tab${win === k ? ' is-active' : ''}`} onClick={() => onWin(k)} title={`${WINDOW_TEXT[k]}${k === 'prior' ? ': a comparison' : `: by position, a guide to the players at each spot; ${readsText(side.opp)}`}`}>{windowLabel(k, side.allowed, season)}</button>)}
         </div>
       ) : null}
       <div className="nhlx-pfd-wrap">
