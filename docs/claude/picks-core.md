@@ -498,8 +498,8 @@ config and keeps its own markets, teams, feeds and slate key:
   best plays for the team, `side.picks` in `board.js` = the table rows over the floor for its players, one a player by
   chance, `PICKS_MAX` = 4, with the price and the edge, graded with the rows once the game is stored; the NBA draws it at
   the top of each court card with the picked players' chips ringed and a play opening the card, the NFL between the game
-  head and the tables, both sides side by side — Vincent's ask, 2026-10-27) and `Sources.jsx` (drop zone, stored sheets, PropFinder pull, ESPN refresh, folder
-  sync note); `components/nfl/*` and `components/nba/*` bind them.
+  head and the tables, both sides side by side — Vincent's ask, 2026-10-27) and `Sources.jsx` (the PropFinder pull, ESPN refresh, the injury feed; since 2026-11-04 — Vincent: "I will not get the cheat
+  sheet anymore" — no drop zone and no folder-sync note, a date that stored sheets still listing them to read again or remove); `components/nfl/*` and `components/nba/*` bind them.
 - The Mac folder sync (`tools/mac-sync/nhl-sync.sh`, `sync_sheets`) posts any `.csv` / `.xlsx` / `.pdf`
   saved in `~/Desktop/NFL` to `POST /api/nfl/sheets` and in `~/Desktop/NBA` to `/api/nba/sheets`
   with the NHL sync token.

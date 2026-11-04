@@ -83,7 +83,7 @@ function TierTable({ rows, market, game = false, onOpen }) {
       <table className="nhlx-db-table nhlx-pk-table ir-ml-table">
         <thead><tr>
           <th className="ir-slate-rank">#</th><th>Player</th>
-          <th className="is-num ir-ml-proj" title="Tonight’s projection: his rate × tonight’s matchup (PropFinder’s table and the cheat sheet)">Proj</th>
+          <th className="is-num ir-ml-proj" title="Tonight’s projection: his rate × tonight’s matchup (what the defense gives up to all positions, PropFinder)">Proj</th>
           {TIER_COLS.map(([k, l, at]) => <th key={k} className={`ir-ml-th is-${k}`} title={`The highest mark he reaches tonight at ${at}% or better`}>{l}</th>)}
           {final ? <th className="is-num">Got</th> : null}
         </tr></thead>
@@ -224,7 +224,7 @@ function GameRow({ g, board, shuffles, onOpen, defaultOpen = false }) {
 
 const LEGEND = (
   <p className="nhlx-auto-meta ir-bd-legend">
-    Each mark is the highest he reaches tonight at that chance: <b>strong</b> 70%+ · <b>lean</b> 55%+ · <b>thin</b> 40%+ — his projection × tonight’s matchup (PropFinder’s table and the cheat sheet). Each defense’s PropFinder table comes first — what it gives up per game to each position, rank 1 = the most, ✓ / ✗ the cheat sheet’s tile — and the players who face it under it; pick a stat and a position (or press a row of a table) to narrow both. <span className="ir-bd-role is-role">if role confirmed</span> thin minutes. Click a name for his card.
+    Each mark is the highest he reaches tonight at that chance: <b>strong</b> 70%+ · <b>lean</b> 55%+ · <b>thin</b> 40%+ — his projection × tonight’s matchup (what the defense gives up to all positions, PropFinder). Each defense’s PropFinder table comes first — what it gives up per game to each position, rank 1 = the most — and the players who face it under it; pick a stat and a position (or press a row of a table) to narrow both. <span className="ir-bd-role is-role">if role confirmed</span> thin minutes. Click a name for his card.
   </p>
 );
 

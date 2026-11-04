@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const fmt = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—');
 
@@ -13,19 +13,15 @@ async function api(path, init) {
 }
 
 /**
- * Data sources for a slate: the cheat sheets (drop zone, the stored ones, delete), the PropFinder
- * pull, ESPN's schedule and box scores, and the folder-sync note.
- *   sport: { api ('/api/nfl'), query (the slate's query string), fields (the slate's form fields),
- *            label ('week 7'), groupLabel, folder ('~/Desktop/NFL'), nameHint, liveNote }
+ * Data sources for a slate: the PropFinder pull, ESPN's schedule, box scores and injuries, and the cheat sheets a date
+ * stored before they stopped (2026-11-04: listed to read again or remove; no drop zone, no folder-sync note).
+ *   sport: { api ('/api/nfl'), query (the slate's query string), label ('week 7'), groupLabel, liveNote }
  */
 export default function Sources({ sport, onChange }) {
   const [status, setStatus] = useState(null);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState('');
-  const [over, setOver] = useState(false);
-  const [preview, setPreview] = useState(null); // the rows read from a PDF nothing parsed from
-  const fileRef = useRef(null);
-  const { api: base, query, fields, label, groupLabel, folder, nameHint } = sport;
+  const { api: base, query, label, groupLabel } = sport;
 
   const load = useCallback(() => api(`${base}/status?${query}`).then(setStatus).catch((e) => setMsg(`Status: ${e.message}`)), [base, query]);
   useEffect(() => { load(); }, [load]);
@@ -41,23 +37,6 @@ export default function Sources({ sport, onChange }) {
     }, 6000);
     return () => clearInterval(t);
   }, [reading, base, query, onChange]);
-
-  const upload = async (files) => {
-    const list = [...files].filter((f) => /\.(csv|tsv|txt|xlsx|xlsm|xls|pdf)$/i.test(f.name));
-    if (!list.length) { setMsg('Drop a CSV, TSV, Excel or PDF cheat sheet.'); return; }
-    setBusy('upload'); setMsg('');
-    try {
-      const form = new FormData();
-      for (const f of list) form.append('file', f, f.name);
-      for (const [k, v] of Object.entries(fields)) form.append(k, String(v));
-      const j = await api(`${base}/sheets`, { method: 'POST', body: form });
-      const lines = j.results.map((r) => (r.pending ? `${r.fileName}: ${r.pages} page${r.pages === 1 ? '' : 's'} of pictures, being read by OCR (a few minutes); the rows land on the board when the read is done.` : r.ok ? `${r.fileName}: ${r.rows} rows (${Object.entries(r.groups || {}).map(([g, n]) => `${n} ${groupLabel[g] || g}`).join(', ')})${r.pages ? ` from ${r.pages} page${r.pages === 1 ? '' : 's'}` : ''}${r.replaced ? ', replaced' : ''}${r.warnings?.length ? ` · ${r.warnings.length} warning${r.warnings.length === 1 ? '' : 's'}` : ''}` : `${r.fileName}: ${r.error || (r.warnings || []).join('; ') || 'no rows'}`));
-      setMsg(lines.join(' · '));
-      setPreview(j.results.find((r) => !r.ok && r.preview?.length)?.preview || null);
-      await load(); onChange?.();
-    } catch (e) { setMsg(`Upload failed: ${e.message}`); }
-    finally { setBusy(''); }
-  };
 
   const reread = async (s, full) => {
     setBusy(s.id); setMsg('');
@@ -93,27 +72,14 @@ export default function Sources({ sport, onChange }) {
   const pf = status?.propfinder;
   return (
     <details className="nhlx-auto-tools ir-nfl-sources">
-      <summary>Data sources: cheat sheets, PropFinder, schedule and folder sync</summary>
-      <div
-        className={`nhlx-drop${over ? ' is-over' : ''}`}
-        onClick={() => fileRef.current?.click()}
-        onDragOver={(e) => { e.preventDefault(); setOver(true); }}
-        onDragLeave={() => setOver(false)}
-        onDrop={(e) => { e.preventDefault(); setOver(false); upload(e.dataTransfer.files); }}
-        role="button" tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileRef.current?.click(); }}
-      >
-        <span className="nhlx-drop-icon">+</span>
-        <span className="nhlx-drop-title">{busy === 'upload' ? 'Reading…' : 'Drop the cheat sheets here'}</span>
-        <span className="nhlx-drop-sub">CSV, TSV, Excel or PDF, any column order: one row per prop (market, line, side, odds, hit rates) or one row per player with a column per market; a PDF of pictures is read by OCR. They land on {label}; a file with a stored name replaces it.</span>
-        <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,.xlsx,.xlsm,.xls,.pdf" multiple hidden onChange={(e) => { upload(e.target.files); e.target.value = ''; }} />
-      </div>
+      <summary>Data sources: PropFinder, schedule and injuries</summary>
       {msg ? <p className="nhlx-auto-msg">{msg}</p> : null}
-      {preview ? <details className="ir-nfl-warn" open><summary>What was read from the PDF (first rows; the parser needs a header row with Player, the market or a line, and the price)</summary><ul>{preview.map((row, i) => <li key={i}><code>{row}</code></li>)}</ul></details> : null}
       <div className="nhlx-auto-tools-grid">
-        <div>
+        {/* The cheat sheets stopped on 2026-11-04 (Vincent: "I will not get the cheat sheet anymore"): no drop zone; a date that
+            stored one still lists it, to read or remove. */}
+        {status?.sheets?.length ? <div>
           <div className="nhlx-auto-label">Cheat sheets on {label}</div>
-          {!status ? <div className="nhlx-auto-meta">Loading…</div> : !status.sheets.length ? <div className="nhlx-auto-meta">None yet. Drop the sheets above, or save them in <code>{folder}</code> on the Mac: the folder sync posts them here.</div> : (
+          {(
             <ul className="ir-nfl-sheets">
               {status.sheets.map((s) => (
                 <li key={s.id}>
@@ -129,7 +95,7 @@ export default function Sources({ sport, onChange }) {
               ))}
             </ul>
           )}
-        </div>
+        </div> : null}
         <div>
           <div className="nhlx-auto-label">PropFinder</div>
           <div className="nhlx-auto-meta">
@@ -159,13 +125,6 @@ export default function Sources({ sport, onChange }) {
           </div>
           <div className="nhlx-auto-actions">
             <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={!!busy} onClick={() => refresh('schedule')}>{busy === 'schedule' ? 'Fetching…' : 'Refresh schedule and scores'}</button>
-          </div>
-        </div>
-        <div>
-          <div className="nhlx-auto-label">Folder sync</div>
-          <div className="nhlx-auto-meta">
-            The Mac sync watches <code>{folder}</code> (any subfolder) and posts every new <code>.csv</code> / <code>.xlsx</code> here with the same sync token as the NHL folder; the slate is read from the file name ({nameHint}) or is the current one.
-            {status?.syncToken ? ` Token created ${fmt(status.syncToken.createdAt)}.` : ' No sync token yet: create one under the NHL Best bets → Data sources.'} Re-run <code>tools/mac-sync/install.command</code> once after updating.
           </div>
         </div>
       </div>

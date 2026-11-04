@@ -92,7 +92,7 @@ export default function NbaApp({ email }) {
       <div>
         <div className="nhlx-today-date">{pretty || 'Loading…'}</div>
         <div className="nhlx-auto-sub">
-          {board ? [`${games.length} game${games.length === 1 ? '' : 's'}`, finals ? `${finals} final` : null, src?.sheets?.length ? `${src.sheets.length} cheat sheet${src.sheets.length === 1 ? '' : 's'}` : 'no cheat sheet', src?.propfinder ? `PropFinder ${fmtDay(src.propfinder.at)} ${fmtTime(src.propfinder.at)}` : 'PropFinder not pulled'].filter(Boolean).join(' · ') : ''}
+          {board ? [`${games.length} game${games.length === 1 ? '' : 's'}`, finals ? `${finals} final` : null, src?.sheets?.length ? `${src.sheets.length} cheat sheet${src.sheets.length === 1 ? '' : 's'}` : null, src?.propfinder ? `PropFinder ${fmtDay(src.propfinder.at)} ${fmtTime(src.propfinder.at)}` : 'PropFinder not pulled'].filter(Boolean).join(' · ') : ''}
         </div>
       </div>
       <div className="nhlx-auto-actions">
@@ -178,7 +178,7 @@ export default function NbaApp({ email }) {
       <footer className="nhlx-footer">
         <div className="nhlx-wrap">
           <span>ideareels · NBA picks</span>
-          <span>Schedule and box scores from ESPN · lines and logs from PropFinder · cheat sheets stored in Supabase Storage</span>
+          <span>Schedule, box scores and injuries from ESPN · lines, logs and defense tables from PropFinder</span>
         </div>
       </footer>
     </>

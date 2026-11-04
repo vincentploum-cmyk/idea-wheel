@@ -95,7 +95,7 @@ export default function NflApp({ email }) {
       <div>
         <div className="nhlx-today-date">{wk ? `${weekLabel(wk)} · ${wk.season}` : 'Loading…'}</div>
         <div className="nhlx-auto-sub">
-          {board ? [`${games.length} game${games.length === 1 ? '' : 's'}`, span, finals ? `${finals} final` : null, src?.sheets?.length ? `${src.sheets.length} cheat sheet${src.sheets.length === 1 ? '' : 's'}` : 'no cheat sheet', src?.propfinder ? `PropFinder ${fmtDay(src.propfinder.at)} ${fmtTime(src.propfinder.at)}` : 'PropFinder not pulled', board.injuriesFetchedAt ? `injuries ${fmtTime(board.injuriesFetchedAt)}` : null, board.byes?.length ? `bye: ${board.byes.join(', ')}` : null].filter(Boolean).join(' · ') : ''}
+          {board ? [`${games.length} game${games.length === 1 ? '' : 's'}`, span, finals ? `${finals} final` : null, src?.sheets?.length ? `${src.sheets.length} cheat sheet${src.sheets.length === 1 ? '' : 's'}` : null, src?.propfinder ? `PropFinder ${fmtDay(src.propfinder.at)} ${fmtTime(src.propfinder.at)}` : 'PropFinder not pulled', board.injuriesFetchedAt ? `injuries ${fmtTime(board.injuriesFetchedAt)}` : null, board.byes?.length ? `bye: ${board.byes.join(', ')}` : null].filter(Boolean).join(' · ') : ''}
         </div>
       </div>
       <div className="nhlx-auto-actions">
@@ -170,7 +170,7 @@ export default function NflApp({ email }) {
       <footer className="nhlx-footer">
         <div className="nhlx-wrap">
           <span>ideareels · NFL picks</span>
-          <span>Schedule and box scores from ESPN · lines and logs from PropFinder · cheat sheets stored in Supabase Storage</span>
+          <span>Schedule, box scores and injuries from ESPN · lines, logs and defense tables from PropFinder</span>
         </div>
       </footer>
     </>

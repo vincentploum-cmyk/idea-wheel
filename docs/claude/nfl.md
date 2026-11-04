@@ -228,6 +228,16 @@
   run → the lead back, the outside → WR1 / WR2, the middle → the TE and the slot). The Matchups tab's game card names each defense's three weakest spots, and the script prints the same. A sheet stored before
   2026-11-01 gains its snapshot with "Read again" (the stored OCR words, no new read). Touchdowns do not read the
   snapshot (it prints no touchdown tile). `__tests__/nfl-snapshot.test.js` (page 1's real words).
+- **Without the cheat sheet, PropFinder's weak spots** (`pfSpots` / `PF_SPOTS` in `lib/nfl/projections.js`; Vincent, 2026-11-04:
+  "I will not get the cheat sheet anymore"): a game whose defense has no snapshot reads its weak and strong spots off the side's
+  `allowed` (the opponent's PropFinder season table, rank 1 = the most of `count`): the pass (QB passing yards), the run (RB
+  rushing), receiving yards to the WR1, the WR2, the slot receiver (WR3), the tight end (TE1, else TE) and the backs — "the
+  receivers" as one when the table has no slot rows; weak = the third that gives up the most, strong = the third that gives up
+  the least, in the snapshot's `{ key, word, rank }` shape, so the Matchups card ("SEA defense gives up the most to the WR1 (#2),
+  …", its hover naming PropFinder's table), the attack lists (a slot's spot → the player in that slot, the TE's → the tight
+  end, the backs' → the receiving backs) and `tools/nfl-projections.mjs` read it unchanged; `defense.from` = 'sheet' |
+  'propfinder', no coverage words without the sheet. The snapshot still leads on a week that stored one.
+  `__tests__/nfl-boards.test.jsx` ("the weak spots without a cheat sheet").
 - Routes (`authorize()`, admin session or sync token): `GET /api/nfl/picks?season&week&type|date`,
   `GET /api/nfl/shuffle?season&week&type&market`, `GET /api/nfl/scorecard?season&from&to`,
   `GET|POST|DELETE /api/nfl/sheets`, `POST /api/nfl/refresh?only=schedule|propfinder`

@@ -188,7 +188,7 @@ function GameRow({ g, pj, defaultOpen = false }) {
       </button>
       {open ? (
         <div className="ir-gm-detail">
-          {weak.length ? <p className="ir-ml-def">{weak.map(({ team: t, d }) => <span key={t} title="From the cheat sheet’s defense snapshot"><b>{d.of} defense</b> gives up the most to {d.weak.slice(0, 3).map((w) => `${w.word} (#${w.rank})`).join(', ')}</span>)}</p> : null}
+          {weak.length ? <p className="ir-ml-def">{weak.map(({ team: t, d }) => <span key={t} title={d.from === 'sheet' ? 'From the cheat sheet’s defense snapshot' : `PropFinder’s table: what ${d.of} gives up per game at each position and slot this season, #1 = the most of ${d.count || 32}`}><b>{d.of} defense</b> gives up the most to {d.weak.slice(0, 3).map((w) => `${w.word} (#${w.rank})`).join(', ')}</span>)}</p> : null}
           <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="List">
             {KINDS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={kind === k} className={`nhlx-tab${kind === k ? ' is-active' : ''}`} onClick={() => setKind(k)}>{l}</button>)}
           </div>
@@ -201,7 +201,7 @@ function GameRow({ g, pj, defaultOpen = false }) {
 
 const LEGEND = (
   <p className="nhlx-auto-meta ir-bd-legend">
-    Each mark is the highest he reaches tonight at that chance: <b>strong</b> 60%+ · <b>lean</b> 45%+ · <b>thin</b> 30%+ — his skill × tonight’s matchup (PropFinder and the cheat sheet). ✓ = on the cheat sheet. <span className="ir-bd-role is-active">if active</span> a game-time decision · <span className="ir-bd-role is-role">if role confirmed</span> a teammate is out.
+    Each mark is the highest he reaches tonight at that chance: <b>strong</b> 60%+ · <b>lean</b> 45%+ · <b>thin</b> 30%+ — his skill × tonight’s matchup (PropFinder’s defense table). <span className="ir-bd-role is-active">if active</span> a game-time decision · <span className="ir-bd-role is-role">if role confirmed</span> a teammate is out.
   </p>
 );
 

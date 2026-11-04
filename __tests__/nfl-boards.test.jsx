@@ -517,9 +517,35 @@ describe('NFL projections: the cheat sheet’s defense snapshot', () => {
     expect(who('shortR')).toEqual(expect.arrayContaining(['Puka Nacua']));
     expect(who('shortM')).toEqual(['Tyler Higbee']);
     expect(b.projections.sheetDirection).toMatchObject({ convention: 'fewest', from: 'default' });
-    expect(b.projections.games.find((g) => g.id === 'g1').teams.SEA.defense).toBeNull();
+    // LAR has no snapshot: SEA's side reads LAR's defense off PropFinder's table (no weak third among three teams, its TE strong).
+    expect(b.projections.games.find((g) => g.id === 'g1').teams.SEA.defense).toMatchObject({ of: 'LAR', from: 'propfinder', weak: [], strong: [{ key: 'recTE', rank: 3 }] });
     const html = renderToStaticMarkup(<NflMatchups board={b} openFirst />);
     expect(html).toContain('SEA defense</b> gives up the most to the pass (#2), short right (#2), short middle (#3)');
+  });
+});
+
+describe('NFL projections: the weak spots without a cheat sheet (PropFinder’s table)', () => {
+  // Vincent, 2026-11-04: "I will not get the cheat sheet anymore". SEA gives up the most of the three teams everywhere.
+  const b = build();
+  test('pfSpots: the pass, the run, receiving by slot (the receivers as one without slot rows), in thirds', () => {
+    const lar = b.projections.games.find((g) => g.id === 'g1').teams.LAR;
+    expect(lar.defense).toMatchObject({ of: 'SEA', from: 'propfinder', count: 3, style: [], coverage: null });
+    expect(lar.defense.weak.map((w) => [w.key, w.word, w.rank])).toEqual([['passYds', 'the pass', 1], ['rushYds', 'the run', 1], ['recTE', 'the tight end', 1], ['recWR', 'the receivers', 1]]);
+    const who = (key) => lar.defense.attack.find((w) => w.key === key)?.ids.map((id) => b.projections.rows[id].player);
+    expect(who('passYds')).toEqual(['Matthew Stafford']);
+    expect(who('recTE')).toEqual(['Tyler Higbee']);
+    expect(who('recWR')).toEqual(expect.arrayContaining(['Puka Nacua']));
+    const html = renderToStaticMarkup(<NflMatchups board={b} openFirst />);
+    expect(html).toContain('SEA defense</b> gives up the most to the pass (#1), the run (#1), the tight end (#1)');
+    expect(html).toContain('PropFinder’s table: what SEA gives up per game at each position and slot this season, #1 = the most of 3');
+  });
+  test('with slot rows: the WR1, the WR2 and the slot receiver apart', () => {
+    const { pfSpots } = require('../lib/nfl/projections');
+    const allowed = { count: 30, rows: { QB: { passYds: { value: 250, rank: 20 } }, RB: { rushYds: { value: 90, rank: 25 }, recYds: { value: 40, rank: 3 } }, WR1: { recYds: { value: 95, rank: 2 } }, WR2: { recYds: { value: 60, rank: 15 } }, WR3: { recYds: { value: 55, rank: 9 } }, TE1: { recYds: { value: 30, rank: 28 } } } };
+    const s = pfSpots(allowed);
+    expect(s.weak.map((w) => [w.key, w.word, w.rank])).toEqual([['recWR1', 'the WR1', 2], ['recRB', 'passes to the backs', 3], ['recWR3', 'the slot receiver', 9]]);
+    expect(s.strong.map((w) => [w.key, w.rank])).toEqual([['recTE', 28], ['rushYds', 25]]);   // the bottom third: ranks 21–30
+    expect(pfSpots(null)).toBeNull();
   });
 });
 
