@@ -438,7 +438,15 @@ config and keeps its own markets, teams, feeds and slate key:
   block says when the feed was read and how many it lists on the slate (`injuries` on `statusFor`), `injuriesAt` rides on
   the board payload. The feed has no starting fives (ESPN's pre-game summary carries `injuries` per team and no roster;
   the box score's `starter` flag arrives at tip), so "confirmed" means the report an hour before tip, not the lineup
-  card. **The NFL board reads the same feed** (Vincent, 2026-10-31: "do the same for the NFL board"; `parseInjuries` /
+  card — **the starting fives come from RotoWire** (`lib/nba/rotowire.js`, 2026-11-04: `parseLineups` reads
+  https://www.rotowire.com/basketball/nba-lineups.php — served to the server, today's night alone, its date in the head; each
+  team's status line "Expected Lineup" / "Confirmed Lineup" (the class or the words, `statusOf`: the confirmed markup had not been
+  seen when it shipped), its five starters and who may not play, RotoWire's codes read through `teamAbbrFromText`; `getText` in
+  `lib/picks/http.js`): the store's `ensureLineups` (`cfg.fetchLineups` / `cfg.lineupsLive`: the slate is today ET and a game is
+  still to start) keeps it at `nba/<date>/lineups.json`, read again every `LINEUPS_FRESH_MS` = 10 min by `boardFor` and with the
+  refresh route's schedule branch (`lineups` in its answer), a page dated for another night never stored; the board payload
+  carries `lineups` { at, source, url, teams: { ABBR: { status, starters, mayNotPlay } } } (no number reads it).
+  **The NFL board reads the same feed** (Vincent, 2026-10-31: "do the same for the NFL board"; `parseInjuries` /
   `fetchInjuries` in `lib/nfl/espn.js`, `fetchInjuries` / `injuriesLive` on the NFL store — live while the week has a game
   to play —, the refresh route's schedule branch; `nfl/<season>/<wk>/injuries-espn.json`): the week's practice reports
   (Active = he cleared, listed as such and read as In; Questionable; Doubtful; Out) and the reserve lists (`NFL_FANTASY`:

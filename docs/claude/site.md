@@ -60,3 +60,9 @@
   the ✓ / ✗ note above PropFinder's tables shows only when a cell carries a tile, the start screen and the landing page describe
   the boards off PropFinder's logs, lines and defense tables, and Data sources has no drop zone. The sheet parsers, the store
   routes and the board's reads stay (a sheet uploaded through the API still counts), so the sheets can come back without code.
+- **"Lineup confirmed" beside each team on the NBA Games tab** (Vincent, 2026-11-04: "a 'lineups confirmed' message next to the
+  teams when the lineups are confirmed from rotowire / espn"): `LineupTag` in `components/nba/NbaGames.jsx` under the team's name
+  in each game row — "✓ Lineup confirmed" (the `--ok-*` tokens) once RotoWire confirms the starting five, a muted "Expected
+  lineup" before, the five and who may not play on the hover; nothing once the game is final. Off `board.lineups` (below and in
+  `picks-core.md`). `__tests__/nba-lineups.test.jsx`, the mock in `nba-games.test.jsx` (`MOCK_OUT`).
+

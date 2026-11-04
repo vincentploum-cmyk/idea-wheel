@@ -169,6 +169,22 @@ export function DefenseBlock({ side, season, market, pos, onPos, rows, onOpen, s
 
 const NO_DATA = 'No projection yet: the night needs a PropFinder pull.';
 
+const clock = (iso) => (iso ? new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) : '');
+/**
+ * Beside a team in the games list: RotoWire's word on its starting five (Vincent, 2026-11-04: "a 'lineups confirmed' message
+ * next to the teams when the lineups are confirmed from rotowire / espn"; lib/nba/rotowire.js, `board.lineups`): "Lineup
+ * confirmed" once RotoWire confirms it, "Expected lineup" before; the five and who may not play on the hover.
+ */
+export function LineupTag({ lineup, at = null }) {
+  if (!lineup?.status) return null;
+  const five = (lineup.starters || []).map((p) => `${p.pos ? `${p.pos} ` : ''}${p.name}`).join(', ');
+  const doubt = (lineup.mayNotPlay || []).map((p) => `${p.name}${p.status ? ` (${p.status})` : ''}`).join(', ');
+  const title = `RotoWire${at ? `, read ${clock(at)} ET` : ''}: ${lineup.status === 'confirmed' ? 'confirmed' : 'expected'} starting five${five ? ` · ${five}` : ''}${doubt ? ` · may not play: ${doubt}` : ''}`;
+  return lineup.status === 'confirmed'
+    ? <small className="ir-gm-lineup is-confirmed" title={title}>✓ Lineup confirmed</small>
+    : <small className="ir-gm-lineup" title={title}>Expected lineup</small>;
+}
+
 /**
  * One game as a sportsbook lists it (the NFL's `GameRow`): the matchup and the tip, a row a team with its logo, its
  * spread and the total; press it for the stat and position pills, then each defense in turn: its PropFinder table and
@@ -189,7 +205,7 @@ function GameRow({ g, board, shuffles, onOpen, defaultOpen = false }) {
     return (
       <span className="ir-gm-team">
         <img src={teamLogo(abbr)} alt="" width="34" height="34" className="ir-nfl-logo" />
-        <span className="ir-gm-name">{teamName(abbr)}</span>
+        <span className="ir-gm-name">{teamName(abbr)}{!g.final ? <LineupTag lineup={board?.lineups?.teams?.[abbr]} at={board?.lineups?.at} /> : null}</span>
         {scored && score != null ? <b className="ir-gm-score">{score}</b> : <span />}
         <span className={`ir-gm-box${sp ? '' : ' is-empty'}`}>{sp || '—'}</span>
         <span className={`ir-gm-box${total != null ? '' : ' is-empty'}`}>{total != null ? `${side === 'away' ? 'O' : 'U'} ${total}` : '—'}</span>
