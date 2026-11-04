@@ -1850,6 +1850,17 @@ div.nhlx-auto-msg > p { margin: 0; }
 .ir-gm.is-open .ir-gm-title i { transform: rotate(90deg); }
 .ir-gm-time { margin-top: -4px; font-size: 13.5px; letter-spacing: 0.04em; color: var(--muted); }
 .ir-gm-name { font-size: 17px; color: var(--heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The NBA cheat sheet (#guide): three columns, one a stat; one under the other on a phone. */
+.ir-guide-lede { margin: 0 0 18px; max-width: 760px; }
+.ir-guide-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+.ir-guide-col h3 { margin: 0 0 10px; font-family: var(--font-display); font-size: 20px; color: var(--heading); }
+.ir-guide-label { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ok-fg); margin: 0 0 6px; }
+.ir-guide-label.is-ignore { color: var(--muted); margin-top: 14px; }
+.ir-guide-col ol { margin: 0; padding-left: 20px; display: grid; gap: 10px; }
+.ir-guide-col li { line-height: 1.45; color: var(--body); }
+.ir-guide-col li b { color: var(--heading); font-weight: 600; }
+.ir-guide-col p { margin: 0; line-height: 1.45; color: var(--body); }
+@media (max-width: 900px) { .ir-guide-grid { grid-template-columns: minmax(0, 1fr); gap: 22px; } }
 .ir-gm-lineup { display: block; width: fit-content; margin-top: 3px; padding: 0 7px; border-radius: 5px; font-size: 12px; font-weight: 600; line-height: 19px; color: var(--muted); background: var(--bg-soft); }
 .ir-gm-lineup.is-confirmed { background: var(--ok-bg); color: var(--ok-fg); }
 .ir-gm-score { font-family: var(--font-display); font-size: 18px; color: var(--heading); font-variant-numeric: tabular-nums; }

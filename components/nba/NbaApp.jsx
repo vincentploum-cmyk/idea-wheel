@@ -7,6 +7,7 @@ import ThemeToggle from '@/components/nhl/ThemeToggle';
 import SportNav from '@/components/site/SportNav';
 import TabBar from '@/components/site/TabBar';
 import { useHashTab } from '@/components/site/hash-tab';
+import NbaGuide from './NbaGuide';
 import NbaSources from './NbaSources';
 import NbaSearch from './NbaSearch';
 import NbaFirstBasket from './NbaFirstBasket';
@@ -30,6 +31,7 @@ const TABS = [
   ['pra', 'PRA'],
   ['big', 'Big games'],
   ['firstbasket', 'First basket'],
+  ['guide', 'Cheat sheet'],
   ['sources', 'Data sources'],
 ];
 const STAT_TABS = ['pts', 'reb', 'ast', 'tpm', 'pra'];
@@ -160,6 +162,15 @@ export default function NbaApp({ email }) {
             <section className="nhlx-pk" aria-label="First basket">
               {head()}
               {mounted('firstbasket') && date ? <NbaFirstBasket date={date} /> : null}
+            </section>
+          </div>
+        </section>
+
+        {/* The cheat sheet (Vincent, 2026-11-04): what predicts rebounds, assists and threes, and what to ignore. */}
+        <section className="nhlx-bench nhlx-tabpanel ir-nfl-panel" id="guide" role="tabpanel" aria-labelledby="tab-guide" hidden={tab !== 'guide'}>
+          <div className="nhlx-wrap">
+            <section className="nhlx-pk" aria-label="Cheat sheet">
+              <NbaGuide />
             </section>
           </div>
         </section>

@@ -65,4 +65,10 @@
   in each game row — "✓ Lineup confirmed" (the `--ok-*` tokens) once RotoWire confirms the starting five, a muted "Expected
   lineup" before, the five and who may not play on the hover; nothing once the game is final. Off `board.lineups` (below and in
   `picks-core.md`). `__tests__/nba-lineups.test.jsx`, the mock in `nba-games.test.jsx` (`MOCK_OUT`).
+- **The NBA cheat sheet** (`#guide`, "Cheat sheet" before Data sources; `components/nba/NbaGuide.jsx`, `GUIDE`; Vincent,
+  2026-11-04: "Can we have this simplified in a cheat sheet somewhere on the site for nba"): static, three columns (one under the
+  other under 900 px) — Rebounds, Assists, Threes — each "Look at" (his rate a minute and its memory, his recent minutes, the
+  opponent figure that predicts it and where it sits on the Games tab, teammates out) and "Ignore" (head to head, home / away …),
+  from `docs/audits/2026-11-03-nba-stat-drivers.md`. Keep it in step with the recipe (`RECIPE` in `lib/nba/picks.js`) when that
+  changes. `__tests__/nba-guide.test.jsx` (`MOCK_OUT` writes `guide-nba-<theme>.html`).
 
