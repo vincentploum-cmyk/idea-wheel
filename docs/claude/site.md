@@ -71,4 +71,11 @@
   opponent figure that predicts it and where it sits on the Games tab, teammates out) and "Ignore" (head to head, home / away …),
   from `docs/audits/2026-11-03-nba-stat-drivers.md`. Keep it in step with the recipe (`RECIPE` in `lib/nba/picks.js`) when that
   changes. `__tests__/nba-guide.test.jsx` (`MOCK_OUT` writes `guide-nba-<theme>.html`).
+- **The model's expected score under each NBA game row** (`modelScore` in `components/nba/NbaGames.jsx`; Vincent, 2026-11-05:
+  "show the expected score in grey"): "Model: ATL 116 – WSH 113 · total 229" in muted grey under the spread and total boxes,
+  each side's `teamProj.pts` (its own points a game through what the opponent allows), until the game is final. **Grey, never
+  green on the boxes**: replayed against DraftKings' lines (ESPN's pickcenter) over 2025-26's 978 priced games its side of the
+  spread was right 48.3% and of the total 49.3% (52.4% breaks even at -110); home court (+1.5 to +3.5), the undamped opponent
+  factor and only the 5+ point disagreements did no better (≤ 51%); this season's 92 games read 56–60% on spreads, noise. The
+  hover says so.
 
