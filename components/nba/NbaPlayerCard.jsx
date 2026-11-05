@@ -56,6 +56,13 @@ export function splitGames(games, span, { season, opp, venue, withoutIds = null 
   return games.slice(0, Number(span.slice(1)));
 }
 
+/** "w/o edge o5.5 · 76% vs 58%": his record without tonight's absent teammates against the price's chance (board.js WO_EDGE). */
+export function WoEdgeTag({ e }) {
+  const side = e.side === 'under' ? 'u' : e.side === 'yes' ? '' : 'o';
+  const title = `Without ${e.names.join(' + ')} he cleared ${side}${e.line} in ${e.hits} of ${e.n} games (${pct(e.rate)})${e.with ? `, ${e.with.hits} of ${e.with.n} with ${e.names.length === 1 ? 'him' : 'them'} (${pct(e.with.rate)})` : ''}; the book’s price says ${pct(e.implied)}. The books may not price the absence in: graded on the scorecard as “W/o edge”.`;
+  return <span className="ir-bd-role is-wo" title={title}>w/o edge {side}{e.line} · {pct(e.rate)} vs {pct(e.implied)}</span>;
+}
+
 function Pct({ rate }) {
   if (rate == null) return <span className="nhlx-pct is-none">—</span>;
   return <span className={`nhlx-pct ${rate >= 0.5 ? 'is-good' : 'is-bad'}`}>{pct(rate)}</span>;
@@ -269,6 +276,8 @@ function Card({ req, date, onClose }) {
   const thisSeason = games.filter((g) => g.season === season).length;
   const seasonLabel = season && thisSeason < SEASON_MIN ? `${seasonTag(season - 1)}${thisSeason ? ` +${thisSeason}` : ''}` : seasonTag(season);
   const without = data?.without?.gameIds?.length ? data.without : null;
+  // The stat's lines whose record without tonight's absent teammates beats the price (board.js WO_EDGE), the widest first.
+  const woEdges = plays.filter((x) => x.market === market && x.without?.edge).sort((a, b) => b.without.edge.gap - a.without.edge.gap).slice(0, 3);
   const splits = [['l5', 'L5'], ['l10', 'L10'], ['l20', 'L20'], ['season', seasonLabel], ...(opp ? [['h2h', `vs ${opp}`]] : []), ...(venue ? [['venue', venue === 'H' ? 'Home' : 'Away']] : []), ...(without ? [['without', `w/o ${without.names.join(' + ')}`]] : [])];
   const splitCtx = { season, opp, venue, withoutIds: without?.gameIds || null };
   const spanGames = splitGames(games, span, splitCtx);
@@ -373,6 +382,7 @@ function Card({ req, date, onClose }) {
             <div className="nhlx-rates">
               {splits.map(([k, label]) => <RateTile key={k} label={label} hit={hitRate(splitGames(games, k, splitCtx), market, line)} active={span === k} onClick={() => setSpan(k)} />)}
             </div>
+            {woEdges.length ? <p className="ir-pc-woedge">{woEdges.map((x) => <WoEdgeTag key={x.id} e={{ ...x.without.edge, line: x.line, side: x.side, names: x.without.names || [] }} />)}</p> : null}
             {without ? <p className="nhlx-auto-meta ir-pc-without">w/o {without.names.join(' + ')} ({without.absent.map((a) => `${a.name}: ${a.status}${a.detail ? `, ${a.detail}` : ''}`).join('; ')}): his {without.n} logged game{without.n === 1 ? '' : 's'} without {without.absent.length === 1 ? 'him' : 'them'}. The board’s season read moves toward this split at weight {without.weight}.</p> : null}
             <div className="nhlx-pfd-wrap nhlx-pc-stats">
               <table className="nhlx-pfd-table">
@@ -436,7 +446,7 @@ function Card({ req, date, onClose }) {
                   <table className="nhlx-pfd-table">
                     <thead><tr><th>Market</th><th>Line</th><th>Chance</th><th>Price</th><th>L5 · L10 · season</th></tr></thead>
                     <tbody>
-                      {[...plays].sort((a, b) => b.p - a.p).map((x) => <tr key={x.id} className={x.market === market && x.line === line ? 'is-active' : ''} onClick={() => { setMarket(x.market); setLines({ ...lines, [x.market]: x.line }); }} style={{ cursor: 'pointer' }}><td><b>{x.label}</b></td><td>{x.side === 'yes' ? '' : x.side === 'under' ? 'u' : 'o'}{x.line}</td><td className={x.p >= x.floor ? 'is-soft' : 'is-tough'}><span className="nhlx-pfd-val">{pct(x.p)}</span></td><td>{x.odds != null ? fmtOdds(x.odds) : '—'}</td><td>{pct(x.rates?.l5)} · {pct(x.rates?.l10)} · {pct(x.rates?.season)}</td></tr>)}
+                      {[...plays].sort((a, b) => b.p - a.p).map((x) => <tr key={x.id} className={x.market === market && x.line === line ? 'is-active' : ''} onClick={() => { setMarket(x.market); setLines({ ...lines, [x.market]: x.line }); }} style={{ cursor: 'pointer' }}><td><b>{x.label}</b>{x.without?.edge ? <WoEdgeTag e={{ ...x.without.edge, line: x.line, side: x.side, names: x.without.names || [] }} /> : null}</td><td>{x.side === 'yes' ? '' : x.side === 'under' ? 'u' : 'o'}{x.line}</td><td className={x.p >= x.floor ? 'is-soft' : 'is-tough'}><span className="nhlx-pfd-val">{pct(x.p)}</span></td><td>{x.odds != null ? fmtOdds(x.odds) : '—'}</td><td>{pct(x.rates?.l5)} · {pct(x.rates?.l10)} · {pct(x.rates?.season)}</td></tr>)}
                     </tbody>
                   </table>
                 </div>

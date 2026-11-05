@@ -5,7 +5,7 @@ import { teamLogo, teamName, teamAbbrFromText } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
 import { tierBoard, ladderBoard, NBA_BOARDS } from '@/lib/picks/boards';
 import { AllowedTable, windowsOf, tableFor, windowLabel, zoneTone, envPos as envPosOf } from './NbaCourt';
-import { NbaPlayerCardProvider, useNbaPlayerCard } from './NbaPlayerCard';
+import { NbaPlayerCardProvider, useNbaPlayerCard, WoEdgeTag } from './NbaPlayerCard';
 
 // The NBA page laid out as the NFL's (Vincent, 2026-11-01: "for nba, I need the same layout as nfl with as addition the
 // propfinder tables for each game when clicking on the game"): the night's games as a sportsbook lists them, each opening
@@ -47,8 +47,18 @@ export function tierRows(board, shuffles, market, gameId = null) {
   const rows = sh?.players ? tierBoard(sh, { step: STEP[market] || 1, gameId, keepAll: true }) : ladderBoard(board, { market, gameId });
   // His spot on the board (the slot PropFinder's table is read at), for a pressed row of the table.
   const spot = new Map();
-  for (const g of board?.games || []) for (const t of [g.away, g.home]) for (const p of g.sides?.[t]?.players || []) spot.set(`${t}|${p.key}`, p.envPos || envPosOf(p));
-  return rows.map((r) => ({ ...r, envPos: spot.get(`${r.team}|${r.key}`) || null })).sort((a, b) => (b.proj ?? -1) - (a.proj ?? -1) || a.player.localeCompare(b.player));
+  // His priced line of the stat with the widest without-teammates edge (board.js WO_EDGE), for the row's "w/o edge" tag.
+  const wo = new Map();
+  for (const g of board?.games || []) for (const t of [g.away, g.home]) for (const p of g.sides?.[t]?.players || []) {
+    spot.set(`${t}|${p.key}`, p.envPos || envPosOf(p));
+    for (const x of p.plays || []) {
+      const e = x.market === market ? x.without?.edge : null;
+      if (!e) continue;
+      const k = `${t}|${p.key}`; const prev = wo.get(k);
+      if (!prev || e.gap > prev.gap) wo.set(k, { ...e, line: x.line, side: x.side, names: x.without.names || [] });
+    }
+  }
+  return rows.map((r) => ({ ...r, envPos: spot.get(`${r.team}|${r.key}`) || null, woEdge: wo.get(`${r.team}|${r.key}`) || null })).sort((a, b) => (b.proj ?? -1) - (a.proj ?? -1) || a.player.localeCompare(b.player));
 }
 
 function Who({ r, game = false, onOpen }) {
@@ -61,6 +71,7 @@ function Who({ r, game = false, onOpen }) {
           {r.team} · {r.slot && r.depth ? `${r.slot}${r.depth}` : r.pos || '—'}{game ? ` · ${r.venue === 'H' ? 'vs' : '@'} ${r.opp}` : ''}
           {r.health === 'DTD' ? <> · <span className="ir-health is-dtd">DTD</span></> : null}
           {r.caveat && r.health !== 'DTD' ? <span className="ir-bd-role is-role">{r.caveat}</span> : null}
+          {r.woEdge ? <WoEdgeTag e={r.woEdge} /> : null}
         </small>
       </span>
     </div>

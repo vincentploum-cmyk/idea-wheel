@@ -515,6 +515,47 @@ describe('NBA board', () => {
     expect(pulled.ranges.pts.rate).toBe(30.1);
     expect(plain.notes.find((n) => n.startsWith('Nobody on the slate is out'))).toBeUndefined();
   });
+  test('the w/o edge: his record without tonight’s absent teammates 10+ pts past the price, on 15+ games, flags the play', () => {
+    const buildBoard = nbaBoard({ ...COCKTAIL_BEFORE_RECIPE, pull: null }).buildBoard;
+    // Brown's 30 games (newest first, last season's below this season's): 34 points in the 16 without Tatum (any season), 20 in the 14 with him.
+    const day = (i) => (i < 8 ? `2026-10-${String(20 - i).padStart(2, '0')}` : `2026-03-${String(30 - i).padStart(2, '0')}`);
+    const brownLogs = Array.from({ length: 30 }, (_, i) => ({ ...log(day(i), i < 16 ? 34 : 20, 6, 4), season: i < 8 ? 2026 : 2025, gameId: `g${i}`, min: 35 }));
+    const tatumLogs = Array.from({ length: 30 }, (_, i) => ({ ...log(day(i), 25, 8, 4), season: i < 8 ? 2026 : 2025, gameId: `g${i}`, min: 34 })).filter((_, i) => i >= 16);
+    const pfOf = (odds) => ({ at: pf.at, data: { ...pf.data, players: [
+      { id: 'p1', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', games: tatumLogs, props: [], injury: 'Out', injuryDetail: 'Achilles' },
+      { id: 'p2', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SG', games: brownLogs, props: [{ market: 'pts', line: 24.5, odds, underOdds: -110 }] },
+    ], injuries: { source: 'v2', rows: [{ id: 'p1', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', pos: 'SF', status: 'Out', detail: 'Achilles', date: null }] } } });
+    const find = (b, side) => { const g = b.games[0]; return Object.values(g.tables).flatMap((t) => [...t.rows, ...t.next]).find((x) => x.player === 'Jaylen Brown' && x.side === side); };
+    // Over 24.5 at -110 (52.4%): 16 of 16 without Tatum → flagged; the under 0 of 16 → not.
+    const b = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pfOf(-110), results: {} });
+    const over = find(b, 'over');
+    expect(over.without.all).toEqual({ hits: 16, n: 16, rate: 1 });
+    expect(over.without.with).toEqual({ hits: 0, n: 14, rate: 0 });
+    expect(over.without.edge).toEqual({ rate: 1, hits: 16, n: 16, implied: 0.524, gap: 0.476, with: { hits: 0, n: 14, rate: 0 } });
+    expect(over.woEdge).toBe(true);
+    const under = find(b, 'under');
+    if (under) { expect(under.without.edge).toBeUndefined(); expect(under.woEdge).toBe(false); }
+    // The side's play carries the flag for the Games tab and the card.
+    const sp = b.games[0].sides.BOS.players.find((p) => p.player === 'Jaylen Brown').plays.find((x) => x.side === 'over');
+    expect(sp.without).toMatchObject({ names: ['Tatum'], all: { hits: 16, n: 16 }, edge: { rate: 1, n: 16 } });
+    expect(sp.woEdge).toBe(true);
+    // Priced near the record (-1500, 93.8%): no edge.
+    expect(find(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: pfOf(-1500), results: {} }), 'over')?.without?.edge ?? null).toBeNull();
+    // A line he clears with Tatum as often as without (over 15.5: every game): no edge of the absence's, however the price reads.
+    const low = pfOf(-110);
+    low.data = { ...low.data, players: low.data.players.map((p) => (p.key === 'jaylen brown' ? { ...p, props: [{ market: 'pts', line: 15.5, odds: 150, underOdds: -200 }] } : p)) };
+    const lo = find(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: low, results: {} }), 'over');
+    expect(lo.without.all.rate).toBe(1);
+    expect(lo.without.with.rate).toBe(1);
+    expect(lo.without.edge).toBeUndefined();
+    // Under 15 games without him: no flag, however wide the gap.
+    const short = { ...pfOf(-110) };
+    short.data = { ...short.data, players: short.data.players.map((p) => (p.key === 'jaylen brown' ? { ...p, games: p.games.slice(2) } : p)) };
+    const s = find(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: short, results: {} }), 'over');
+    expect(s.without.all.n).toBe(14);
+    expect(s.without.edge).toBeUndefined();
+    expect(s.woEdge).toBe(false);
+  });
   test('tables per group from the logs and the sheet, graded', () => {
     expect(statOf({ pts: 10, reb: 11, ast: 12 }, 'pra')).toBe(33);
     const r = logRates(logs, { market: 'pts', line: 27.5, side: 'over', season: 2026, opp: 'NY' });

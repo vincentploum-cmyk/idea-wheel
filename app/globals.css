@@ -1786,6 +1786,9 @@ div.nhlx-auto-msg > p { margin: 0; }
 .ir-bd-role { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 5px; font-size: 12px; font-weight: 600; line-height: 19px; white-space: nowrap; vertical-align: 1px; }
 .ir-bd-role.is-active { background: var(--warn-bg); color: var(--warn-fg); }
 .ir-bd-role.is-role { background: var(--info-bg); color: var(--info-fg); }
+.ir-bd-role.is-wo { background: var(--ok-bg); color: var(--ok-fg); cursor: help; }
+.ir-pc-woedge { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.ir-pc-woedge .ir-bd-role { margin-left: 0; }
 .ir-bd-why { display: block; margin-top: 2px; font-size: 12.5px; color: var(--muted); white-space: normal; }
 .ir-bd-table .nhlx-pk-flags { margin-left: 4px; }
 .ir-bd-table td.ir-sl-play .ir-bd-rung { grid-template-columns: auto auto; }
@@ -1944,6 +1947,7 @@ div.nhlx-auto-msg > p { margin: 0; }
   .ir-ml-table .ir-slate-rank { display: none; }
   .ir-ml-table .nhlx-db-player img { display: none; }
   .ir-ml-table .nhlx-db-player b { white-space: normal; }
+  .ir-ml-table .ir-bd-role.is-wo { display: block; width: fit-content; margin-top: 2px; white-space: normal; }
   .ir-ml-table .ir-bd-role { margin-left: 0; margin-right: 4px; }
   .ir-ml-rung b { font-size: 14.5px; }
   .ir-ml-table td .ir-ml-rung small { display: block; margin-left: 0; }

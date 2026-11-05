@@ -97,6 +97,22 @@ describe('grading a slate', () => {
     expect(summarize([{ key: 'x', label: 'x', games: 2, finals: 0, graded: 0, plays: [], rungs: [] }]).slates).toBe(1);
     expect(summarize([]).all).toMatchObject({ n: 0, said: null, ret: null });
   });
+  test('the w/o edge plays graded against their price', () => {
+    // A board play flagged with a without-teammates edge (board.js WO_EDGE) carries it into the record …
+    const wb = { games: [{ id: 'g1', final: true, tables: {}, sides: { BOS: { team: 'BOS', opp: 'NY', venue: 'A', players: [{ player: 'Jaylen Brown', key: 'jaylen brown', plays: [
+      { id: 'a', market: 'pts', group: 'points', label: 'Points', line: 24.5, side: 'over', p: 0.6, odds: -110, floor: 0.55, hit: true, actual: 30, without: { names: ['Tatum'], edge: { rate: 0.8, hits: 16, n: 20, implied: 0.524, gap: 0.276 } }, woEdge: true },
+      { id: 'b', market: 'reb', group: 'rebounds', label: 'Rebounds', line: 5.5, side: 'over', p: 0.5, odds: 120, floor: 0.55, hit: false, actual: 4, without: { names: ['Tatum'], edge: { rate: 0.7, hits: 14, n: 20, implied: 0.455, gap: 0.245 } }, woEdge: true },
+      { id: 'c', market: 'ast', group: 'assists', label: 'Assists', line: 3.5, side: 'over', p: 0.5, odds: -110, floor: 0.55, hit: true, actual: 5 },
+    ] }] } } }] };
+    const g = gradeBoard(wb, { key: 'w' });
+    expect(g.plays.map((x) => [x.market, x.woEdge, x.woRate])).toEqual([['pts', true, 0.8], ['reb', true, 0.7], ['ast', false, null]]);
+    // … and the summary's row: 2 flagged, 1 won at -110 (+0.909), 1 lost at +120 (−1) → −0.045 a unit; the split said 75%.
+    const rep = summarize([g]);
+    expect(rep.woEdge).toMatchObject({ n: 2, priced: 2, hit: 0.5, said: 0.55, split: 0.75 });
+    expect(rep.woEdge.ret).toBeCloseTo((0.909 - 1) / 2, 2);
+    expect(rep.woEdge.board.n).toBe(0);
+    expect(summarize([]).woEdge).toMatchObject({ n: 0, split: null });
+  });
 });
 
 describe('NFL week keys', () => {
