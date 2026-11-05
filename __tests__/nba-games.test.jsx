@@ -22,8 +22,8 @@ const board = {
   games: [{
     id: 'g1', away: 'LAL', home: 'DEN', date: '2026-11-01T23:00:00Z', final: false, state: 'pre', odds: { spread: 'DEN -2.5', total: 228.5 },
     sides: {
-      LAL: { team: 'LAL', opp: 'DEN', venue: 'A', out: [{ name: 'Gabe Vincent', status: 'Out' }], allowed: table(24.1), players: [player('austin reaves', 'Austin Reaves', 'PG', 21.4, [[17.5, 0.72], [21.5, 0.5], [24.5, 0.38]])] },
-      DEN: { team: 'DEN', opp: 'LAL', venue: 'H', out: [], allowed: table(22.0), players: [player('nikola jokic', 'Nikola Jokic', 'C', 29.6, [[24.5, 0.75], [27.5, 0.6], [31.5, 0.42]])] },
+      LAL: { team: 'LAL', opp: 'DEN', venue: 'A', teamProj: { pts: 114.2 }, out: [{ name: 'Gabe Vincent', status: 'Out' }], allowed: table(24.1), players: [player('austin reaves', 'Austin Reaves', 'PG', 21.4, [[17.5, 0.72], [21.5, 0.5], [24.5, 0.38]])] },
+      DEN: { team: 'DEN', opp: 'LAL', venue: 'H', teamProj: { pts: 118.6 }, out: [], allowed: table(22.0), players: [player('nikola jokic', 'Nikola Jokic', 'C', 29.6, [[24.5, 0.75], [27.5, 0.6], [31.5, 0.42]])] },
     },
   }],
 };
@@ -62,6 +62,7 @@ describe('the NBA games, the NFL’s layout', () => {
     expect(html).toMatch(/>-2\.5</);
     expect(html).toMatch(/>\+2\.5</);
     expect(html).toContain('O 228.5');
+    expect(html).toContain('Model: LAL 114 – DEN 119 · total 233');   // grey, information only: no green on the boxes
     expect(html).toContain('✓ Lineup confirmed');
     expect(html).toContain('Expected lineup');
     expect(html).toContain('What DEN gives up per game, by position');

@@ -169,6 +169,18 @@ export function DefenseBlock({ side, season, market, pos, onPos, rows, onOpen, s
 
 const NO_DATA = 'No projection yet: the night needs a PropFinder pull.';
 
+/**
+ * The model's expected score for a game (Vincent, 2026-11-05: "show the expected score in grey"): each side's `teamProj.pts`,
+ * its own points a game through what the opponent allows (lib/picks/board.js sidesOf). Information, not a pick: replayed against
+ * DraftKings' lines over 2025-26 (978 games) its side of the spread was right 48% of the time and of the total 49%, under the
+ * 52.4% a -110 bet needs, home court or a stronger opponent read added none of it back — so it is grey, never green.
+ */
+export function modelScore(g) {
+  const a = g?.sides?.[g.away]?.teamProj?.pts; const h = g?.sides?.[g.home]?.teamProj?.pts;
+  return a != null && h != null ? { away: a, home: h } : null;
+}
+const MODEL_SCORE_TITLE = 'The model’s expected points: each team’s own points a game through what the opponent allows (PropFinder). Information, not a pick: against DraftKings’ lines over 2025-26 it called the spread right 48% of the time and the total 49%, under the 52.4% a bet at -110 needs.';
+
 const clock = (iso) => (iso ? new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) : '');
 /**
  * Beside a team in the games list: RotoWire's word on its starting five (Vincent, 2026-11-04: "a 'lineups confirmed' message
@@ -213,6 +225,7 @@ function GameRow({ g, board, shuffles, onOpen, defaultOpen = false }) {
     );
   };
   const sides = [g.away, g.home].map((t) => g.sides?.[t]).filter(Boolean);
+  const expected = modelScore(g);
   return (
     <section className={`ir-gm${open ? ' is-open' : ''}`} aria-label={`${g.away} at ${g.home}`}>
       <button type="button" className="ir-gm-top" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
@@ -220,6 +233,7 @@ function GameRow({ g, board, shuffles, onOpen, defaultOpen = false }) {
         <span className="ir-gm-time">{status}</span>
         {team(g.away, 'away')}
         {team(g.home, 'home')}
+        {expected && !g.final ? <span className="ir-gm-model" title={MODEL_SCORE_TITLE}>Model: {g.away} {Math.round(expected.away)} – {g.home} {Math.round(expected.home)} · total {Math.round(expected.away + expected.home)}</span> : null}
       </button>
       {open ? (
         <div className="ir-gm-detail">
