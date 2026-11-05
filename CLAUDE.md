@@ -82,4 +82,6 @@ under ~150 lines.
 - PropFinder field spellings not yet seen in a real pull are read through `FIELDS` and reported in
   `fieldsSeen.unread`; never guess silently (`docs/claude/picks-core.md`).
 - Secrets stay out of git (Render env + `.env.local`).
+- Data stays out of git: scheduled workflows and automated jobs write to the store, never commit to the repo
+  (no `git commit` / `git push` in `.github/workflows/`). Git holds code that people review. (2026-11-05.)
 - Site is `noindex` by design (robots.txt disallow + X-Robots-Tag).
