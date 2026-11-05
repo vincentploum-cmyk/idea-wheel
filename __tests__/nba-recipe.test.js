@@ -99,3 +99,27 @@ describe('three-point attempts allowed', () => {
     expect(d.leagueFor.tpa).toBe(39);
   });
 });
+
+describe('the team ceiling leaves out the roster players without a game this season (2026-11-05)', () => {
+  // Vincent, 2026-11-05: "Jokic 6 rebounds … are you fucking kidding me?" — every Nugget at half his figure: PropFinder's roster
+  // brought players without a game this season at last season's minutes, the sum ran to twice the team's and the floor (×0.5) hit.
+  const g = (season, min, reb, i) => ({ date: season === 2026 ? `2026-10-${String(30 - i).padStart(2, '0')}` : `2026-03-${String(28 - i).padStart(2, '0')}`, season, type: 'REG', opp: 'MIA', min, pts: min / 2, reb, ast: min / 10, tpm: 0, tpa: 0 });
+  const player = (key, min, reb, season = 2026) => ({ id: key, name: key, key, team: 'BOS', pos: 'C', games: Array.from({ length: 6 }, (_, i) => g(season, min, reb, i)), props: [] });
+  // BOS gets 44 rebounds a game: its star 13 in 36 minutes and seven regulars at 4.4 in 29; eight more on the roster with only
+  // last season's games, 25 minutes and 6 rebounds each.
+  const roster = [player('star', 36, 13), ...Array.from({ length: 7 }, (_, i) => player(`regular ${i}`, 29, 4.4)), ...Array.from({ length: 8 }, (_, i) => player(`roster ${i}`, 25, 6, 2025))];
+  const t = { ...totals, BOS: { for: row({ reb: 44 }), against: row() } };
+  const pf = { at: '2026-11-01T14:00:00Z', data: { players: roster, defense: { ...defense, totals: t }, injuries: null } };
+  test('the players who have not played do not scale the regulars down', () => {
+    const side = nbaBoard(COCKTAIL).buildBoard({ date: '2026-11-01', season: 2026, games, sheets: [], pf, results: {} }).games[0].sides.BOS;
+    expect(side.scale.reb).toBeUndefined();   // 13 + 7 × 4.4 = 43.8 counted, under the 44 (with the eight: 91.8, ×0.48 → the floor)
+    const star = side.players.find((p) => p.key === 'star');
+    expect(star.ranges.reb.team).toBeNull();
+    expect(star.ranges.reb.exp).toBeGreaterThan(12);
+  });
+  test('the floor: the ceiling never cuts an NBA side by more than a fifth', () => {
+    const thin = { ...pf, data: { ...pf.data, defense: { ...defense, totals: { ...t, BOS: { for: row({ reb: 20 }), against: row() } } } } };
+    const side = nbaBoard(COCKTAIL).buildBoard({ date: '2026-11-01', season: 2026, games, sheets: [], pf: thin, results: {} }).games[0].sides.BOS;
+    expect(side.scale.reb).toBe(0.8);
+  });
+});

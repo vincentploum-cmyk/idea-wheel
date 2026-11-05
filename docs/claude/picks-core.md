@@ -229,7 +229,13 @@ config and keeps its own markets, teams, feeds and slate key:
   threes 0.64, PRA 0.68, else 0.6) multiply into the ladder's `env` (`out` / `outFrom` on the range), in place of the vacated
   lifts and the minutes factor (`minutesTonight` still runs for the minutes shown and the thin gate); no team totals, no factor.
   `withoutSplit: false` drops the without-teammate split from the rate, the rungs and the shuffle; `teamCeiling: false` keeps
-  the expected total and scales nothing. The site's cocktail: the recipe, the without split off, the role pull off (`pull: null`:
+  the expected total and scales nothing. **The ceiling's sum leaves out the roster players without a game this season** once the
+  team has three (2026-11-05; Vincent, of DEN at half its figures — Jokic 6.9 rebounds, Gordon 3.1, Murray 2.6: PropFinder's
+  roster since 2026-11-02 brought two-way, G League and long-injured players at last season's minutes, the sum ran to twice the
+  team's total and the ×0.5 floor hit), and the NBA's floor is `ceilingFloor` = 0.8 (the default 0.5 elsewhere). Counting only
+  the 240 minutes of the expected rotation was tried first and read 0.06 points and 0.02 rebounds worse on the replay; the fix as
+  shipped reads the same as before on the full-roster replay (rebounds 1.844 → 1.839, the bias −0.22 → −0.14).
+  `__tests__/nba-recipe.test.js`. The site's cocktail: the recipe, the without split off, the role pull off (`pull: null`:
   the decayed memory reads a player's first games better), the team ceiling on. Replayed on 2025-26 and this season: every stat's
   miss and every market's rung Brier down over the season (points 4.96 → 4.92, rebounds 1.99 → 1.97, assists 1.46 → 1.45, threes
   1.012 → 1.005, PRA 6.52 → 6.42), the pieces priced in the audit. `--cocktail before | recipe | site+{json} | before+{json}` on

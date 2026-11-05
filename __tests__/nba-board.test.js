@@ -716,9 +716,11 @@ describe('NBA ladders', () => {
     expect(thin.players[0].ranges.pts).toMatchObject({ rate: 26, team: null, exp: 26 });
     const thinMin = { ...thinPts, data: { ...thinPts.data, players: thinPts.data.players.map((p, i) => ({ ...p, games: p.games.map((g) => ({ ...g, min: [36, 144][i] })) })) } };
     expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: thinMin, results: {} }).games[0].sides.BOS.scale).toEqual({});
-    // The floor of the ceiling: a side whose rates run past twice the total scales to 0.5 at the least.
+    // The floor of the ceiling: a side whose rates run past twice the total scales to 0.5 at the least by default, and the NBA's
+    // to 0.8 (`ceilingFloor`, 2026-11-05: at 0.5 every Nugget read at half his figure).
     const wild = { ...two, data: { ...two.data, players: two.data.players.map((p) => (p.key === 'derrick white' ? { ...p, games: p.games.map((g) => ({ ...g, pts: 300 })) } : p)) } };
-    expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: wild, results: {} }).games[0].sides.BOS.scale.pts).toBe(0.5);
+    expect(nbaBoard(COCKTAIL_BEFORE_RECIPE).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: wild, results: {} }).games[0].sides.BOS.scale.pts).toBe(0.5);
+    expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: wild, results: {} }).games[0].sides.BOS.scale.pts).toBe(0.8);
     // With a PropFinder table in, the cheat sheet's tiles ride on every cell as `sheet` beside PropFinder's rank.
     // Sixty games behind each table: the matchup counts at 60 / (60 + 40) = 0.6 of itself (the NBA's cocktail, matchupK 40).
     const defense = { teams: { NY: { SF: { gp: 60, pts: 24, reb: 6 } }, BOS: { SF: { gp: 60, pts: 20, reb: 7 } } }, ranks: { NY: { SF: { pts: 1, reb: 2 } }, BOS: { SF: { pts: 2, reb: 1 } } }, count: 2, league: { SF: { pts: 22, reb: 6.5 } }, windows: {} };
