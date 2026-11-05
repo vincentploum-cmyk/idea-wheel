@@ -240,8 +240,14 @@
   figure for it. ESPN's box score places a player only as G / F / C, so the positions come from the stored PropFinder pulls
   of those nights (`positionBook`: the depth chart's slot first, else the roster position, G → SG and F → SF as `envPosFor`);
   a player no pull knows keeps ESPN's group and shows at both spots it covers (`atPosition`, `WIDE` in the client-safe
-  `vs-position-pure.js`), marked "· G" / "· F". The read is kept ten minutes per opponent and date (`vsMemo`: a dozen pulls
-  read once). **The players like him are washed purple** (Vincent, 2026-10-31: "mark the players in purple when they are
+  `vs-position-pure.js`), marked "· G" / "· F". The block comes in **its own request** (`/api/nba/player?part=vs` → `vsPositionCard`), fetched beside the card's,
+  so the card opens on its logs while the season is read ("Loading what other players did against …" until it lands;
+  2026-11-05, "the load of the player card takes too long": the card waited ~9 s cold on some 150 reads one after the
+  other). `seasonResults` reads six nights at a time and each night's games together; a past night whose games are all
+  final and stored is kept six hours (`nightMemo`, `NIGHT_TTL_MS`) and each past night's pull is kept cut to its
+  positions (`pullMemo`), both until a write under the date (`pathRevision` in `lib/nhl-store.js`: the first-basket
+  backfill rewriting a result drops its night). The read is kept ten minutes per opponent and date (`vsMemo`, two cards
+  opened together share the read under way); `__tests__/nba-card-load.test.js`. **The players like him are washed purple** (Vincent, 2026-10-31: "mark the players in purple when they are
   similar to the player on the player's card"; the NHL card's violet look-alikes, the `--like-*` tokens): every player's
   averages this season before tonight from the same stored box scores (`seasonProfiles` in `vs-position.js`: minutes,
   points, rebounds, assists, threes a game, any opponent), the card's own beside each opposing player's (`likeHim`,

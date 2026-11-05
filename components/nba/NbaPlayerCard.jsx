@@ -138,7 +138,7 @@ export function Bars({ games, market, line, unit, showAtt = false }) {
 /**
  * What other players at a position did against tonight's opponent this season (Vincent, 2026-10-31: "on the individual
  * player card, I need to see what other players in the same position did"): the opponent's stored games before the slate,
- * every opposing player at the picked position with his line that night (`vsPosition` on the card's payload, placed by
+ * every opposing player at the picked position with his line that night (`vsPosition`, the card's own `part=vs` request, placed by
  * the stored PropFinder pulls; a player no pull knows shows under ESPN's group, G or F, at both positions it covers), the
  * card's market column read against his line (green over, red under), his own games against them tinted, and the
  * position's total per game beside PropFinder's table figure for it.
@@ -204,6 +204,9 @@ export function VsPosition({ data, opp, myPos, market, line, allowed }) {
 
 function Card({ req, date, onClose }) {
   const [data, setData] = useState(null);
+  // What other players at his position did against the opponent: its own request (`part=vs`), slower than the card's
+  // (the season's box scores), so the card opens on its logs first. undefined while it loads, null without one.
+  const [vs, setVs] = useState(undefined);
   const [err, setErr] = useState('');
   const [market, setMarket] = useState(req.market || 'pts');
   const [lines, setLines] = useState({});
@@ -241,6 +244,11 @@ function Card({ req, date, onClose }) {
       .then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.detail || j.error || `${r.status}`); return j; })
       .then((j) => { if (live) setData(j); })
       .catch((e) => { if (live) setErr(e.message); });
+    q.set('part', 'vs');
+    fetch(`/api/nba/player?${q}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (live) setVs(j?.vsPosition || null); })
+      .catch(() => { if (live) setVs(null); });
     return () => { live = false; };
   }, [req.key, date]);
   useEffect(() => {
@@ -428,7 +436,7 @@ function Card({ req, date, onClose }) {
                 </table>
               </div>
             ) : <div className="nhlx-empty">{data ? `No defense table for ${opp || 'the opponent'} in this pull.` : 'Loading…'}</div>}
-            {data?.vsPosition ? <VsPosition data={data.vsPosition} opp={opp} myPos={myPos} market={market} line={line} allowed={data.allowed} /> : null}
+            {vs ? <VsPosition data={vs} opp={opp} myPos={myPos} market={market} line={line} allowed={data?.allowed} /> : vs === undefined && opp ? <div className="nhlx-empty">Loading what other players did against {opp}…</div> : null}
             {plays.length ? (
               <div className="nhlx-pfd ir-pc-plays">
                 <div className="nhlx-pfd-head"><b>His lines tonight</b><small className="nhlx-auto-meta">the board’s chance per line</small></div>

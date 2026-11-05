@@ -40,6 +40,10 @@ rows per side, thirty-two times a night). Now (3 s cold, 0 ms after):
   schedule, the pull, the sheets, the results: `inputsMemo`), `shuffleFor` the shuffle per board
   and market; a sheet whose OCR is done is read through the cache (fresh only while pending, or
   when the cached copy is still the pending one), the sheets index stays a fresh read.
+- NBA player card (`lib/nba/store.js`): the card's payload reads only the slate's files; the vs-position block is a
+  second request (`part=vs`) over the season's nights, read in parallel and kept per night (`nightMemo`, `pullMemo`,
+  dropped by `pathRevision` on a write under the date). Cold: ~9 s → ~65 ms for the card, ~0.8 s for the block at
+  60 ms a bucket read (2026-11-05).
 - `middleware.js` skips `/api/nhl/data/media` (hundreds of image requests a page, the route checks
   the session itself); the media route's CDN fallback redirect is cacheable for a day.
 - Tests: `__tests__/memo.test.js` (the helpers, the tables off one aggregate),
