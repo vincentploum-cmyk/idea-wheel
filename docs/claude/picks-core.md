@@ -347,7 +347,12 @@ config and keeps its own markets, teams, feeds and slate key:
   call left out are read one by one (`/<LEAGUE>/player/<id>`, `readFor: 'injury'`, `MAX_ABSENT_READS`)
   so their logs say which games they took part in: every game row carries `gameId`, `gamesPlayed` is a
   teammate's rows with minutes, `keyAbsences` the out teammates who took part in ≥ 40% (and 2) of a
-  player's logged games, `withoutGames` his games without them, `withoutOf` the split (≥ `WITHOUT_MIN`
+  player's logged games, `withoutGames` his games without them, **his games for this team only** (`teamRows`, Vincent, 2026-11-05: Desmond
+  Bane's "w/o Banchero + Suggs" read 60/79 over his Memphis games of 2024-25, the game rows carrying no team; it was 5
+  games for Orlando): `absentByTeam` hangs `teamGames` (Map gameId → the team's pulled players who took part, not
+  enumerable) on each team's list and `withoutOf` keeps his rows from his first game with one of them on, none against
+  the team, before `keyAbsences` / `withoutGames` read them (the card's w/o tile, the board's blend and the w/o edge
+  alike; a teammate who arrived later moves nothing); `withoutOf` the split (≥ `WITHOUT_MIN`
   = 1 game, and not every game: PropFinder's Injury Splits page speaks from one game and so does the
   board since 2026-10-27, the n / (n + 8) weight keeping one game a whisper; it was 3 and 5 together,
   which in October's fifth game left nothing to show — Vincent: "why are you not implementing the injury

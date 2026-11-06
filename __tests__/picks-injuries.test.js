@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { statusOf, isOut, healthOf, parseInjuryReport, gamesPlayed, keyAbsences, withoutGames, blendWithout, withoutWeight, absentByTeam, withoutOf, shortNames, WITHOUT_K, WITHOUT_MIN, playedShare, vacatedLifts, VACATED_SHARE, latestReport, markStale, applyOverrides, applyBoxScores, teammateSplits, injurySplits } from '../lib/picks/injuries';
+import { statusOf, isOut, healthOf, parseInjuryReport, gamesPlayed, keyAbsences, withoutGames, blendWithout, withoutWeight, absentByTeam, withoutOf, shortNames, WITHOUT_K, WITHOUT_MIN, playedShare, vacatedLifts, VACATED_SHARE, latestReport, markStale, applyOverrides, applyBoxScores, teammateSplits, injurySplits, teamRows } from '../lib/picks/injuries';
 import { ownRate } from '../lib/picks/projection';
 
 describe('PropFinder injury report', () => {
@@ -53,6 +53,27 @@ describe('PropFinder injury report', () => {
   });
 });
 
+describe('the w/o split keeps to his games for this team (Desmond Bane, 2026-11-05)', () => {
+  const g = (id, date, ast, opp = 'X') => ({ gameId: id, date, season: date < '2025-10' ? 2024 : 2025, type: 'REG', opp, ast, min: 34 });
+  // Bane: three Memphis games (one of them against Orlando), then five for Orlando, two of them without Banchero.
+  const bane = { id: 'b', name: 'Desmond Bane', key: 'desmond bane', team: 'ORL', games: [
+    g('o5', '2025-11-05', 1), g('o4', '2025-11-03', 2), g('o3', '2025-11-01', 6), g('o2', '2025-10-30', 4), g('o1', '2025-10-28', 3),
+    g('m3', '2025-03-01', 7), g('m2', '2025-02-01', 0, 'ORL'), g('m1', '2025-01-01', 6),
+  ] };
+  const pao = { id: 'p', name: 'Paolo Banchero', key: 'paolo banchero', team: 'ORL', injury: 'Out', games: [g('o3', '2025-11-01', 5), g('o2', '2025-10-30', 5), g('o1', '2025-10-28', 5), g('m2', '2025-02-01', 4, 'MEM'), g('x', '2025-01-01', 4)] };
+  const franz = { id: 'f', name: 'Franz Wagner', key: 'franz wagner', team: 'ORL', games: [g('o5', '2025-11-05', 7), g('o4', '2025-11-03', 6), g('o3', '2025-11-01', 5), g('o2', '2025-10-30', 4), g('o1', '2025-10-28', 3), g('m2', '2025-02-01', 4, 'MEM')] };
+  test('his games for another club are no games without his teammates', () => {
+    const absent = absentByTeam({ data: { players: [bane, pao, franz], injuries: { rows: [] } } });
+    expect(teamRows(bane, absent.ORL.teamGames).map((x) => x.gameId)).toEqual(['o5', 'o4', 'o3', 'o2', 'o1']);   // m2 (against Orlando) shared a game id, still Memphis
+    const wo = withoutOf(bane, absent.ORL);
+    expect(wo.games.map((x) => x.gameId)).toEqual(['o5', 'o4']);
+    expect(wo.absent[0]).toMatchObject({ name: 'Paolo Banchero', together: 3, of: 5 });
+    // Without the team's games (a hand-built list) every row stays: the Memphis games read as without him.
+    expect(withoutOf(bane, [...absent.ORL]).games.map((x) => x.gameId)).toEqual(['o5', 'o4', 'm3', 'm1']);
+    expect(teamRows(bane, null)).toBe(bane.games);
+  });
+});
+
 describe('without-teammate splits', () => {
   const row = (gameId, pts, min = 30) => ({ gameId: String(gameId), date: `2026-10-${String(gameId).padStart(2, '0')}`, season: 2026, type: 'REG', pts, min });
   // Brown's ten games, newest first; Tatum took part in the first six (g1–g6) and sat g7–g10.
@@ -87,7 +108,8 @@ describe('without-teammate splits', () => {
   });
   test('per team the players out tonight, and a player’s split against them', () => {
     const pf = { data: {
-      players: [brown, tatum, { id: 'h', name: 'Jrue Holiday', key: 'jrue holiday', team: 'BOS', injury: 'Doubtful', games: [row(10, 10), row(9, 10)] }],
+      // White, a regular who played all ten: the team's games (`teamRows`) run from Brown's first game with a teammate.
+      players: [brown, tatum, { id: 'h', name: 'Jrue Holiday', key: 'jrue holiday', team: 'BOS', injury: 'Doubtful', games: [row(10, 10), row(9, 10)] }, { id: 'w', name: 'Derrick White', key: 'derrick white', team: 'BOS', games: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((g) => row(g, 15)) }],
       injuries: { rows: [
         { id: 't', name: 'Jayson Tatum', key: 'jayson tatum', team: 'BOS', status: 'Out', detail: 'Achilles' },
         { id: 'q', name: 'Josh Hart', key: 'josh hart', team: 'NY', status: 'Questionable', detail: null },
@@ -111,6 +133,8 @@ describe('without-teammate splits', () => {
     expect(WITHOUT_MIN).toBe(1);
     expect(withoutOf({ ...brown, games: [...brown.games.slice(0, 1), ...brown.games.slice(4)] }, absent.BOS)).toMatchObject({ n: 1 });
     expect(shortNames([{ name: 'Jayson Tatum' }, { name: 'Jaylen Brown' }])).toEqual(['Tatum', 'Brown']);
+    expect(absent.BOS.teamGames.get('10')).toEqual(new Set(['jaylen brown', 'jrue holiday', 'derrick white']));
+    expect(Object.keys(absent.BOS)).toEqual(['0', '1']);   // not enumerable: the list reads as before
     expect(shortNames([{ name: 'Jayson Tatum' }, { name: 'Jaxon Tatum' }])).toEqual(['J. Tatum', 'J. Tatum']);
   });
   test('the production an out player leaves goes to his active teammates by their own rates, for the share of their games he played', () => {
