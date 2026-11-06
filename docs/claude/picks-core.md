@@ -367,7 +367,17 @@ config and keeps its own markets, teams, feeds and slate key:
   over `.n` games, `.all` the plain season) at n / (n + 4): one game a fifth of the way, two a third, four
   halfway, eight two thirds; the ladder's rungs move the whole empirical hit rate the same way and the
   play's chance every window (`blendWithout`); `without` on the play and the side's player carries names,
-  n, weight, rate, avg, seasonAll. **The production an out player leaves goes to his active
+  n, weight, rate, avg, seasonAll. **The w/o edge** (Vincent, 2026-11-05, on the card's "w/o Banchero + Suggs 60/79
+  76%": "because books don't price it accordingly"): `without.all` is his record at the play's line and side over every
+  logged regular-season game of the split (any season, the card's w/o tile), `without.with` the same over his games with
+  them; `without.edge` = { rate, hits, n, implied, gap, with } when `all` beats the price's implied chance by
+  `WO_EDGE.gap` = 10 pts or more on `WO_EDGE.n` = 15 games or more **and** beats `with` (else the line is no edge of the
+  absence's). A flag, not a change to the chance: `woEdge` on the play and the side's play; the Games tab's row carries the
+  widest flagged line of the stat (`tierRows` → `woEdge`, the green "w/o edge o21.5 · 76% vs 50%" tag, `WoEdgeTag` in
+  `NbaPlayerCard.jsx`, wrapping onto its own line under 700px), the card the stat's flagged lines over the w/o note and in
+  its plays table. The scorecard records `woEdge` / `woRate` per graded play and `summarize` → `woEdge` (scorePriced + the
+  split's average `split` + `board`), the "W/o edge" row under the edge table: after a few weeks it says whether those plays
+  won more than the price said. The ESPN replay carries no prices, so it was never backtested. **The production an out player leaves goes to his active
   teammates** (`vacatedLifts` in `injuries.js`, 2026-10-27, Vincent: a point guard out, his assists must
   land on someone): per stat, each out player's own rate (`ownRate` of his windows; the players the
   odds-only pull left out are read one by one, so they have logs) × how much of the teammate's window he

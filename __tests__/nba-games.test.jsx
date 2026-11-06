@@ -55,6 +55,21 @@ describe('the NBA games, the NFL’s layout', () => {
     const book = tierRows(board, {}, 'pts', 'g1');
     expect(book.find((r) => r.player === 'Nikola Jokic').strong).toMatchObject({ mark: '25+', p: 0.75 });
   });
+  test('the w/o edge tag: the widest flagged line of the stat on his row, the record against the price', () => {
+    const wb = JSON.parse(JSON.stringify(board));
+    const reaves = wb.games[0].sides.LAL.players[0];
+    reaves.plays = [
+      { id: 'a', market: 'pts', line: 17.5, side: 'over', without: { names: ['Vincent'], edge: { rate: 0.8, hits: 16, n: 20, implied: 0.6, gap: 0.2 } } },
+      { id: 'b', market: 'pts', line: 21.5, side: 'over', without: { names: ['Vincent'], edge: { rate: 0.76, hits: 19, n: 25, implied: 0.5, gap: 0.26 } } },
+      { id: 'c', market: 'reb', line: 4.5, side: 'over', without: { names: ['Vincent'], edge: { rate: 0.9, hits: 18, n: 20, implied: 0.5, gap: 0.4 } } },
+    ];
+    const rows = tierRows(wb, shuffles, 'pts', 'g1');
+    expect(rows.find((r) => r.player === 'Austin Reaves').woEdge).toMatchObject({ line: 21.5, side: 'over', rate: 0.76, implied: 0.5, names: ['Vincent'] });
+    expect(rows.find((r) => r.player === 'Nikola Jokic').woEdge).toBeNull();
+    const html = renderToStaticMarkup(<NbaGames board={wb} shuffles={shuffles} openFirst />);
+    expect(html).toContain('w/o edge o21.5 · 76% vs 50%');
+    expect(html).toContain('Without Vincent he cleared o21.5 in 19 of 25 games (76%)');
+  });
   test('an opened game: the sportsbook rows, PropFinder’s table for both teams opening on L10, the players’ ladders', () => {
     const html = renderToStaticMarkup(<NbaGames board={board} shuffles={shuffles} openFirst />);
     expect(html).toContain('Lakers');

@@ -312,7 +312,7 @@ export default function Scorecard({ sport }) {
               <SplitTable first="By matchup" rows={report.thirds} title="How generous the opponent is to the player’s position for the stat: the soft third gives up the most. Colour on the board, not a number." />
               <SplitTable first="By source" rows={report.sources} />
               <SplitTable first="By form" rows={report.forms} title="Hot and cold are colour only on the board; this says whether they would have earned a number." />
-              <EdgeTable edges={report.edges} />
+              <EdgeTable edges={[...report.edges, ...(report.woEdge ? [{ key: 'wo', label: <>W/o edge<small> his record without tonight’s absent teammates 10+ pts past the price, 15+ games{report.woEdge.split != null ? ` · that record said ${pct(report.woEdge.split)}` : ''}</small></>, all: report.woEdge, board: report.woEdge.board }] : [])]} />
             </div>
             {report.predictors?.length ? (
               <>
