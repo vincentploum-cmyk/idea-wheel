@@ -188,6 +188,23 @@ own goals × allowed, the fitted team layer, Σ of the skaters' study λ goals, 
 fitted on 2025-26 and scored unchanged on 2026-27. The JSON at the end is what `lib/nhl-data/special-teams.js`
 (`ST`) and `lib/nhl-data/score.js` (`SCORE`) carry. Needs numpy, pandas and statsmodels.
 
+
+## NHL: projected minutes, the line and the power plays (`nhl_toi.py`)
+
+Vincent, 2026-11-07: whether a skater's minutes can be projected from his line and the power plays the matchup should
+bring. The NHL stats API's game-by-game reports (`skater/timeonice`: each skater-game's minutes split even strength /
+power play / short-handed; `team/powerplay`, `team/penaltykill`: each team-game's power plays and kills), fetched with
+curl in two-week windows. Report: `docs/audits/2026-11-07-nhl-toi.md`.
+
+```bash
+tools/audit/nhl-toi-fetch.sh .nhl-data/toi "20252026 2025-10-01 2026-04-30" "20262027 2026-10-01 $(date -u -d tomorrow +%F)"
+python3 -I tools/audit/nhl_toi.py --raw .nhl-data/toi --out .nhl-data/audit/out/nhl-toi.md
+```
+
+Five sections: minutes by line (as played and as projected from his recent even-strength minutes) and by power-play role;
+what one more power play or kill does to a skater's minutes, in hindsight; how well the matchup's power plays are
+foreseen (`specialTeamsRead`'s shape); the projections scored (his last 10 / 5, the model's `projectedToiFromLineup`, a
+split read, fits with the line and the power-play role); the skaters who played a different line than their minutes said.
 ## NHL: the by-line read (`nhl_lines.py`)
 
 Vincent, 2026-10-31: do the slot badges on the rink (the opponent's rank against the LW1, the C2, the D1 …) help —

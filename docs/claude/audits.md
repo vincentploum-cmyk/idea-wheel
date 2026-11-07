@@ -138,6 +138,17 @@
   team's goals a game and the opponent's allowed (0.621 · log Σλ + 0.214 + 0.113) they miss a team's goals by 1.37 on 2026-27
   (the league's 1.38, own × allowed 1.40) and call the winner 58% (the bare sum 61%, ±4 points of noise on 128 games). Shipped
   as above (the special-teams bullet under Automation).
+- Projected minutes, the line and the power plays (`docs/audits/2026-11-07-nhl-toi.md`, `tools/audit/nhl_toi.py` on the NHL
+  stats API's game-by-game TOI split, `tools/audit/nhl-toi-fetch.sh`; Vincent, 2026-11-07: "can we predict how many minutes
+  skaters are projected to get based on potential power plays … and the line he is playing?"): 56,445 skater-games of both
+  seasons. The line matters (F1 19.4 minutes, F4 10.5; D1 23.2, D3 14.9), but mostly through his own recent minutes: it adds
+  only when the lineup moves him (moved down: played 15.7 against a last 10 of 17.6; up: 17.3 against 15.5). The played
+  line cuts the miss from 1.94 to 1.56 minutes, a ceiling, since that line is read from the result. The matchup's power plays add
+  nothing: in hindsight a first-unit forward nets +0.39 minutes a power play (+0.98 on the power play, −0.56 at even strength),
+  but the forecast spans only 2.7–3.3 and correlates 0.1 with the count (miss 1.511 → 1.510). `projectedToiFromLineup`'s
+  max(L5, floor) runs +0.6 to +0.9 minutes high and never lowers a demoted skater. A fit (L10, L5, the line's mean, PP and
+  PK share) reads 1.51, but nothing shipped: the line's weight must be refitted on the stored posted lines, `effectiveToi`
+  gates the tags and floors, and the model's math waits on Vincent's call and the `App.jsx` port.
 
 - The NFL projections, backtested (`docs/audits/2026-11-01-nfl-backtest.md`, `tools/audit/nfl-fetch.mjs` → `nfl-audit.mjs`;
   Vincent, 2026-11-01: "Did you backtest and optimize it based on the last 7 week's matches?" — no — then "yes do the
