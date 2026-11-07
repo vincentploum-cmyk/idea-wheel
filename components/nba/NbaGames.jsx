@@ -44,7 +44,7 @@ export function useNbaShuffles(date) {
 /** The rows of a stat's list: round marks off the shuffle once loaded (else the book's rungs), the highest projection first. */
 export function tierRows(board, shuffles, market, gameId = null) {
   const sh = shuffles?.[market];
-  const rows = sh?.players ? tierBoard(sh, { step: STEP[market] || 1, gameId, keepAll: true }) : ladderBoard(board, { market, gameId });
+  const rows = sh?.players ? tierBoard(sh, { step: STEP[market] || 1, gameId, keepAll: true }) : ladderBoard(board, { market, gameId, keepAll: true });
   // His spot on the board (the slot PropFinder's table is read at), for a pressed row of the table.
   const spot = new Map();
   // His priced line of the stat with the widest without-teammates edge (board.js WO_EDGE), for the row's "w/o edge" tag.

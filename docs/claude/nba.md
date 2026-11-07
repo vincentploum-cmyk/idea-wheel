@@ -290,7 +290,9 @@
   his logs and no lines (`props: []`, no play, off `best`), with ranges, ladders and a shuffle row, so the Games tab lists
   him with his projection; the minutes, the team scale and the vacated lifts now read the whole roster, as the audits'
   replays (every player of ESPN's logs) always did. The Games tab and the stat lists keep every active player with a
-  projection, a mark or not (`tierBoard(…, { keepAll: true })`, "—" in a tier he does not reach); the Boards tab still
+  projection, a mark or not (`tierBoard(…, { keepAll: true })`, "—" in a tier he does not reach; `ladderBoard(…, { keepAll:
+  true })` the same on the book's rungs until the shuffle loads — that line, copied in without the option, threw
+  `keepAll is not defined` and broke `/nba#reb` on a past night, 2026-11-07); the Boards tab still
   lists only players with a mark. The game rows' kept
   figures are everything but the board row's own keys (`ROW_KEYS`: the win, the margin, the division game are kept too,
   the NFL's as well). `__tests__/nba-propfinder-all.test.js` (every market name of that pull; the play-by-play of POR at
