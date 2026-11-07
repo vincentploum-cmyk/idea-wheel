@@ -240,6 +240,28 @@ config and keeps its own markets, teams, feeds and slate key:
   miss and every market's rung Brier down over the season (points 4.96 → 4.92, rebounds 1.99 → 1.97, assists 1.46 → 1.45, threes
   1.012 → 1.005, PRA 6.52 → 6.42), the pieces priced in the audit. `--cocktail before | recipe | site+{json} | before+{json}` on
   the replay; `tools/audit/nba_ab_rows.py` compares variants on the same player-games. `__tests__/nba-recipe.test.js`.
+- **The outlier nights** (the cocktail's `countTail` and `lineup`; `OUTLIERS` on the NBA's `COCKTAIL` since 2026-11-07, the board
+  before it `COCKTAIL_BEFORE_OUTLIERS`, the replay's `--cocktail outliersOff`; Vincent, 2026-11-07: "a few players were projected
+  by us to get 4 or 5 rebounds but they actually got 10+ … that is where the money is for nba. The big players are nuked in odds
+  anyways"; `docs/audits/2026-11-07-nba-outliers.md`, `tools/audit/nba_spikes.py`). **A count's tail** for the markets in
+  `countTail` (the NBA: rebounds, assists, threes, steals, blocks): `ladderOf`'s model half is `countTail(line, proj, sd)` in
+  `projection.js` (the negative binomial with the ladder's centre and spread, the Poisson where the spread is narrower than
+  √centre) in place of `upperTail`, `tail: 'count'` on the rung; the range's floor and ceiling are its quartiles
+  (`countQuantile`); the shuffle recentres the same tail (`tailOf`, the row's `tail`); the Big games' unfitted marks read it
+  (`nbaBigChance`'s `ctx.tail`), the fitted ones keep the normal they were fitted on; the scorecard's predictor table stays on
+  the normal. Over 2025-26 the normal said 2.4% for threes at the centre + 3 (3.5% landed), 2.0% for rebounds + 6 (2.5%), 0.5%
+  for assists + 6 (1.2%); the count 3.7 / 2.9 / 1.4%; every count stat's rungs scored better with it on both seasons, points and
+  PRA worse near the line on 2025-26 and keep the normal. **Tonight's starting five** (`lineup` { up, down, games, min }; the NBA
+  0.1, 0.1, 10, 5): `sidesOf`'s `lineupRead` reads the board's `lineups` (RotoWire's, the store passes `lineupsOf(feed)` into
+  `buildBoard` and keys the board's memo on the feed; `gradeSlate` the slate's stored copy) against his starts over his last
+  `games` regular-season games with PropFinder's `starter` flag (sparse: 1 a start, absent off the bench, null a row without
+  the flag; read only when some row of the pull carries a 1, from `min` flagged games): in the five from under half of them
+  × (1 + up), out of it from half or more × (1 − down), into the ladder's `env` beside the teammates-out factor
+  (`ranges[market].lineup`; `lineup` { factor, role: promoted | demoted | starter | bench, share, n, status } on the side
+  player; `lineupText` words it on the court's and the card's hovers). Over 2025-26 a promoted player landed 1.21–1.30× his
+  projection (28.2 minutes against 24.4), a demoted one 0.89–0.92×; this season's 17 nights 1.00–1.12× and 0.79–0.86×; shipped
+  below the fit. Replayed: 2025-26's average miss down on every stat (points 4.903 → 4.883, PRA 6.352 → 6.315), the rung Brier
+  down or level. `__tests__/nba-outliers.test.js`.
 - `shuffle.js` (`makeShuffle` → `shuffleOf`, and the pure readers the panel runs: `readAt`, `pAt`, `survivorsAt`,
   `fallenAt`, `curveOf`, `thinsAt`, `linesAt`, `centreOf`): the shuffle, a bar per stat (`SHUFFLE_MARKETS` in each sport's
   `markets.js`: market, min, max, step, start). `GET /api/<sport>/shuffle?…&market=pts` reads every player on the

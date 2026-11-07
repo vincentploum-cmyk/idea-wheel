@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { ICON } from '@/components/nhl/flags';
-import { boardRead, windowRead, blendText, recipeText, dampText, pullText, reachText } from '@/lib/picks/projection';
+import { boardRead, windowRead, blendText, recipeText, dampText, pullText, reachText, lineupText } from '@/lib/picks/projection';
 import { seasonTag } from '@/lib/nba/teams';
 import { SHUFFLE_MARKETS } from '@/lib/nba/markets';
 import { heightsOf, lineOf, readAt } from '@/lib/picks/shuffle';
@@ -142,7 +142,7 @@ function projectionText(read, stat, opp, allowed, win) {
   // The per-stat recipe (board.js CK.recipe): the opponent in all positions in place of the cell at his spot, the teammates out as a factor.
   const envText = mf?.from === 'team' || (mf?.from === 'blend' && mf?.weight == null && read.ownDec) ? ` × ${read.matchup} (what ${opp} gives up to all positions this season over the league's${mf?.sheet != null ? `, the cheat sheet's tile #${read.sheetRank} × ${mf.sheet} beside it` : ''})` : env;
   const out = read.out ? ` × ${read.out} (${(read.outFrom || []).join(' + ')} out tonight: their production to who plays)` : '';
-  return `Tonight ${num(read.value)} ${label}, the board's read: his ${num(read.rate)} a game in PropFinder's logs (${read.ownDec ? recipeText(read.ownDec) : blendText(read.weights)}${pullText(read.pull)})${read.ownDec ? '' : vol}${mins}${lift}${envText}${out}${team}${reach}${window}`;
+  return `Tonight ${num(read.value)} ${label}, the board's read: his ${num(read.rate)} a game in PropFinder's logs (${read.ownDec ? recipeText(read.ownDec) : blendText(read.weights)}${pullText(read.pull)})${read.ownDec ? '' : vol}${mins}${lift}${envText}${out}${lineupText(read)}${team}${reach}${window}`;
 }
 
 /** The player's play for a market: the book's main line on the over (or yes) side first, else his best over, else any. */

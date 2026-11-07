@@ -135,6 +135,26 @@ python3 -I tools/audit/nba_ab_rows.py .nhl-data/audit/ab4/nba-2026-11-02 before 
 node --max-old-space-size=6500 --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --season 2025 --date 2026-04-12 --from 2025-10-21 --raw .nhl-data/audit/nba --days .nhl-data/audit/nba/prior/days --games .nhl-data/audit/nba/prior/games --gamelogs .nhl-data/audit/nba/prior/gamelogs --out .nhl-data/audit/ab4 --cocktail site --tag -site
 ```
 
+## NBA: the outlier nights (`nba_spikes.py`)
+
+Vincent, 2026-11-07: the 10-rebound nights from a 4–5 projection. Reads the board's replayed rows (`exp`, `sd`, what he got),
+joins them to the box scores for what each player did before the night, and asks: does the board's tail (the normal, the
+board's whole chance with his hit rates) say what lands at his centre + 2, + 3 … and at double his projection; does a count's
+tail with the same centre and spread (the negative binomial) do better; and what, on top of it, sees a spike coming (his
+start tonight off the bench, teammates out, the opponent's misses and rebounds allowed, pace, his own spike record …),
+fitted on the first season of `--rows`, scored on the others. The box scores' history is cached as `spikes-hist.pkl` beside
+them (about a minute); `stat-drivers-rows.pkl` must exist (`nba_stat_drivers.py` once). The replay reads tonight's five off
+each box score (the starters, as the confirmed lineup) and the start flag on this season's rows (`--cocktail outliersOff`
+for the board before the read).
+
+```bash
+python3 -I tools/audit/nba_spikes.py --box .nhl-data/audit/nba-box \
+  --rows 2026:.nhl-data/audit/sp/nba-2026-04-12-site-rows.csv 2027:.nhl-data/audit/sp/nba-2026-11-06-site-rows.csv \
+  --out docs/audits/2026-11-07-nba-outliers-tables.md
+```
+
+Written up in `docs/audits/2026-11-07-nba-outliers.md`.
+
 ## NBA: the minutes read (`nba_minutes.py`)
 
 The replay's rows say what the projection would miss had the board known his minutes; this script tries to get there:

@@ -691,8 +691,11 @@ describe('NBA ladders', () => {
     expect(l.find((r) => r.main)).toMatchObject({ line: 25.5, odds: -110, books: 2 });
     const bare = ladderOf(logs, { market: 'reb', season: 2026 });
     expect(bare.map((r) => r.line)).toEqual([6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5]);
-    // 8 every night: the floor on his spread keeps a tail (0.6 over 7.5, 0.4 over 8.5 off the tail; 1 and 0 off his record).
-    expect(bare.find((r) => r.line === 7.5).p).toBeGreaterThan(0.65);
+    // 8 every night: the floor on his spread keeps a tail — rebounds read a count's (COCKTAIL.countTail): his spread (2) is
+    // narrower than a Poisson's, so the Poisson at 8, 0.55 over 7.5 and 0.41 over 8.5 off the tail; 1 and 0 off his record.
+    expect(bare[0].tail).toBe('count');
+    expect(bare.find((r) => r.line === 7.5).model).toBeCloseTo(0.547, 3);
+    expect(bare.find((r) => r.line === 7.5).p).toBeGreaterThan(0.6);
     expect(bare.find((r) => r.line === 8.5).p).toBeLessThan(0.35);
     expect(ladderOf(logs, { market: 'dd', season: 2026 })).toEqual([]);
     // Four games this season: the rungs' season rate reads those four (20, 23, 26, 29: none over 33.5), not the 24 across
