@@ -194,6 +194,18 @@ chance at the mark ranks as well (the night's top ten landed: rebounds 7.9% eith
 8.7% against 7.5%, threes 15.3% against 15.9%) and says more at the top for rebounds (10.8% said) and assists (8.9%); points
 (8.8%) and threes (15.4%) land on it. The tab's legend says so.
 
+## 7. The rebounds' high lines
+
+Vincent, the same day: "fix the rebounds and assists chances too". Across every rung over the centre, 2025-26's ladder landed on
+what it said for both (rebounds 12.4% said, 11.9% landed; assists 12.3% → 12.8%). From double the centre up, rebounds ran high
+(the 10–15% band said 13.6%, 12.2% landed) and assists did not (12.5% said, 13.2% landed). A spread rescaled to tonight's
+centre (× √(centre / his mean) or × centre / his mean) changed nothing at the mark. Shipped for rebounds alone (`HIGH_LINES`,
+`highLineFit`): σ(− 0.3598 + 0.9543 · logit) on the rung's chance at 2 × the centre and up, in by the line's height from 1.5 ×,
+on the ladder, the shuffle and so the card and the Outliers list. 2025-26: the rungs from 1.5 × log loss 96.40 → 96.27 (× 10⁻³),
+the list's top ten said 10.8% → 8.7% (7.9% landed); this season 90.68 → 89.41, the site's replay rebounds rung Brier 0.1498 →
+0.1497. Assists keep their chances: the top of their list runs high from the ranking alone (the board's likeliest are the ones
+it overrates most), which a fit on the card's lines would not fix.
+
 ## Next
 
 - The outliers fit is 2025-26's: refit it on this season once it has the nights (this season's 17 land under it).

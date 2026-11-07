@@ -2,8 +2,8 @@
 // 10+"; docs/audits/2026-11-07-nba-outliers.md): the counts' rungs read a count's tail, and tonight's starting five moves the
 // projection of a player whose role changed.
 import { describe, expect, test } from '@jest/globals';
-import { countTail, countQuantile, upperTail, lineupText } from '../lib/picks/projection';
-import { nbaBoard, COCKTAIL, COCKTAIL_BEFORE_OUTLIERS, OUTLIERS, LINEUP_MINUTES } from '../lib/nba/picks';
+import { countTail, countQuantile, upperTail, lineupText, highLineFit } from '../lib/picks/projection';
+import { nbaBoard, COCKTAIL, COCKTAIL_BEFORE_OUTLIERS, OUTLIERS, LINEUP_MINUTES, HIGH_LINES } from '../lib/nba/picks';
 import { nbaBigChance } from '../lib/nba/big';
 import { tailOf } from '../lib/picks/shuffle';
 
@@ -139,5 +139,35 @@ describe("tonight's starting five", () => {
     // The board before the read: no lineup on any player.
     const off = nbaBoard(COCKTAIL_BEFORE_OUTLIERS).buildBoard({ date: '2026-11-06', season: 2027, games, sheets: [], pf: pfWith(players), results: {}, lineups: fiveWithLyles });
     expect(sideOf(off, 'trey lyles').lineup).toBeUndefined();
+  });
+});
+
+describe("the rebounds' high lines", () => {
+  test('from 1.5 × his centre the fit comes in by the height, in full from 2 ×; under it the chance is untouched', () => {
+    const spec = HIGH_LINES.reb;
+    expect(highLineFit(0.3, 5.5, 4.4, spec)).toBe(0.3);                 // 1.25 × the centre
+    const full = highLineFit(0.12, 9.5, 4.4, spec);                      // 2.16 ×
+    const q = 0.12; const fit = 1 / (1 + Math.exp(-(spec.a + spec.b * Math.log(q / (1 - q)))));
+    expect(full).toBeCloseTo(fit, 3);
+    expect(full).toBeLessThan(0.12);
+    const half = highLineFit(0.12, 7.7, 4.4, spec);                      // 1.75 ×: halfway
+    expect(half).toBeCloseTo((0.12 + fit) / 2, 3);
+    expect(highLineFit(0.12, 9.5, 4.4, null)).toBe(0.12);
+    expect(COCKTAIL.highLines).toEqual(HIGH_LINES);
+    expect(HIGH_LINES.ast).toBeUndefined();
+  });
+  test('on the ladder: the rebounds rungs from 1.5 × read it and stay in order; assists do not', () => {
+    const { ladderOf } = nbaBoard(COCKTAIL);
+    const log = (i, reb) => ({ date: `2026-10-${String(30 - i).padStart(2, '0')}`, season: 2026, type: 'REG', opp: 'NY', min: 24, pts: 8, reb, ast: reb, tpm: 1, stl: 1, blk: 0, tov: 1, pra: 8 + 2 * reb });
+    const logs = [3, 5, 4, 9, 2, 4, 6, 3, 5, 4, 11, 3].map((r, i) => log(i, r));
+    const reb = ladderOf(logs, { market: 'reb', season: 2026 });
+    const before = nbaBoard({ ...COCKTAIL, highLines: null }).ladderOf(logs, { market: 'reb', season: 2026 });
+    for (const r of reb) {
+      const b = before.find((x) => x.line === r.line);
+      if (r.line / r.proj < 1.5) expect(r.p).toBe(b.p); else expect(r.p).toBeLessThanOrEqual(b.p);
+    }
+    expect(reb.some((r) => r.line / r.proj >= 1.5 && r.p < before.find((x) => x.line === r.line).p)).toBe(true);
+    for (let i = 1; i < reb.length; i++) expect(reb[i].p).toBeLessThanOrEqual(reb[i - 1].p);
+    expect(ladderOf(logs, { market: 'ast', season: 2026 }).some((r) => r.highFit)).toBe(false);
   });
 });
