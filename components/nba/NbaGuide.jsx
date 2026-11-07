@@ -1,6 +1,7 @@
 // The NBA cheat sheet (#guide; Vincent, 2026-11-04: "Can we have this simplified in a cheat sheet somewhere on the site for
 // nba"): what to look at for rebounds, assists and threes, and what to ignore, from the stat-by-stat study of 2026-11-03
-// (docs/audits/2026-11-03-nba-stat-drivers.md, three seasons of box scores), with where each read sits on the Games tab.
+// (docs/audits/2026-11-03-nba-stat-drivers.md, three seasons of box scores), with where each read sits on the Games tab; the
+// starting five since 2026-11-07 (docs/audits/2026-11-07-nba-outliers.md).
 // Static: no data, no request.
 
 export const GUIDE = [
@@ -12,6 +13,7 @@ export const GUIDE = [
       ['His minutes in his last 2–3 games.', 'More minutes, more rebounds.'],
       ['The opponent’s rebounds allowed, all positions, last 10 games.', 'Games tab → Rebounds → the tag “gives up X reb a game in all” (hover it for the last 10). Soft third against tough third: about +0.4 rebounds, ~10%.'],
       ['A teammate just ruled out, above all a big man.', 'His rebounds get shared out.'],
+      ['A bench player in tonight’s starting five.', 'RotoWire’s lineup: over 2025-26 he got 1.2× his projection (about 4 more minutes) and the 10-rebound nights from a 4–5 projection come most from him. The board projects his minutes with the five (about 4 more for him, 3 fewer for a starter sent to the bench) and moves every stat with them.'],
     ],
     ignore: 'Head to head, home / away, pace, how many shots the opponent misses.',
   },
@@ -32,7 +34,8 @@ export const GUIDE = [
       ['His threes per minute, last 20–30 games.', 'The longest memory of the three: a hot week is mostly luck.'],
       ['The opponent’s 3-point attempts allowed.', 'Not its 3PM or 3P% allowed. Games tab → Threes → “3PA allowed · X to PGs · Y in all”. A team that lets opponents shoot a lot lifts every shooter ~10%.'],
       ['Teammates out: a medium effect.', 'Another shooter gets the shots.'],
-      ['Expect noise.', 'The least predictable stat (about 28% of the night-to-night swing): be careful with thin edges.'],
+      ['A bench player in tonight’s starting five.', 'Over 2025-26 1.26× his projected threes; the board reads his minutes with the five.'],
+      ['Expect noise.', 'The least predictable stat (about 28% of the night-to-night swing): be careful with thin edges. The big nights come more often than a bell curve says (4+ over his projection: 1.2% of nights, not 0.7%); the board’s ladder reads them as counts.'],
     ],
     ignore: 'Head to head (about 1% of it carries into tonight), the opponent’s 3P% allowed.',
   },

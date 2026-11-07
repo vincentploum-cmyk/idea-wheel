@@ -19,7 +19,7 @@ import path from 'node:path';
 import { parseSummary, parseScoreboard, derived } from '../../lib/nba/espn.js';
 import { teamAbbrFromText } from '../../lib/nba/teams.js';
 import { defenseAllowed } from '../../lib/nba/propfinder-nba.js';
-import { nbaBoard, COCKTAIL, COCKTAIL_BEFORE_RECIPE, RECIPE_COCKTAIL, LADDER_MARKETS, SHUFFLE_MARKETS } from '../../lib/nba/picks.js';
+import { nbaBoard, COCKTAIL, COCKTAIL_BEFORE_OUTLIERS, COCKTAIL_BEFORE_RECIPE, RECIPE_COCKTAIL, LADDER_MARKETS, SHUFFLE_MARKETS } from '../../lib/nba/picks.js';
 import { makeShuffle } from '../../lib/picks/shuffle.js';
 import { gradeBoard, gradePredictors, summarize, asOf, etDate, PREDICTORS } from '../../lib/picks/scorecard.js';
 import { normName } from '../../lib/nhl-data/names.js';
@@ -41,7 +41,7 @@ const SEASON = Number(arg('--season', '2026'));
 const CK_ARG = arg('--cocktail', 'site');
 // `before` = the site's until 2026-11-03 (the windows, the role pull, the without split); `recipe` = that with the per-stat
 // recipe (the role pull kept); `site+{json}` / `before+{json}` = either with the JSON on top (one setting varied).
-const PRESET = { site: COCKTAIL, before: COCKTAIL_BEFORE_RECIPE, recipe: { ...COCKTAIL_BEFORE_RECIPE, ...RECIPE_COCKTAIL }, old: {} };
+const PRESET = { site: COCKTAIL, outliersOff: COCKTAIL_BEFORE_OUTLIERS, before: COCKTAIL_BEFORE_RECIPE, recipe: { ...COCKTAIL_BEFORE_RECIPE, ...RECIPE_COCKTAIL }, old: {} };
 const plus = CK_ARG.match(/^(site|before)\+(.*)$/s);
 const CK = PRESET[CK_ARG] || (plus ? { ...PRESET[plus[1]], ...JSON.parse(plus[2]) } : JSON.parse(CK_ARG));
 const { buildBoard, ownWindows, statOf, actualFor } = nbaBoard(CK);
@@ -90,7 +90,7 @@ for (const g of schedule) {
     const x = playerOf(p, p.team);
     if (g.slate >= (x.latest || '')) { x.team = p.team; x.pos = p.pos || x.pos; x.latest = g.slate; }
     if (!p.played) continue;
-    x.games.push({ date: g.slate, gameId: g.id, season: SEASON, type: 'REG', home: p.team === r.home, opp: p.team === r.home ? r.away : r.home, min: p.min, pts: p.pts, reb: p.reb, ast: p.ast, tpm: p.tpm, tpa: p.tpa, fgm: p.fgm, fga: p.fga, ftm: p.ftm, fta: p.fta, stl: p.stl, blk: p.blk, tov: p.tov, oreb: p.oreb, dreb: p.dreb, pf: p.pf, pra: p.pra, pr: p.pr, pa: p.pa, ra: p.ra, stlBlk: p.stlBlk, dd: p.dd, td3: p.td3, usg: usgOf(p) });
+    x.games.push({ date: g.slate, gameId: g.id, season: SEASON, type: 'REG', home: p.team === r.home, opp: p.team === r.home ? r.away : r.home, min: p.min, pts: p.pts, reb: p.reb, ast: p.ast, tpm: p.tpm, tpa: p.tpa, fgm: p.fgm, fga: p.fga, ftm: p.ftm, fta: p.fta, stl: p.stl, blk: p.blk, tov: p.tov, oreb: p.oreb, dreb: p.dreb, pf: p.pf, pra: p.pra, pr: p.pr, pa: p.pa, ra: p.ra, stlBlk: p.stlBlk, dd: p.dd, td3: p.td3, usg: usgOf(p), ...(p.starter ? { starter: 1 } : {}) });
   }
 }
 let withLast = 0;
@@ -108,7 +108,7 @@ for (const x of players.values()) {
     for (const c of st.categories || []) for (const e of c.events || []) {
       const ev = gl.events?.[e.eventId]; if (!ev || !e.stats) continue;
       const s = e.stats;
-      const row = { date: etDate(ev.gameDate), gameId: String(e.eventId), season: SEASON - 1, type, home: ev.atVs !== '@', opp: teamAbbrFromText(ev.opponent?.abbreviation) || null, min: Number(at(s, 'minutes')) || 0, pts: Number(at(s, 'points')) || 0, reb: Number(at(s, 'totalRebounds')) || 0, ast: Number(at(s, 'assists')) || 0, tpm: dash(at(s, 'threePointFieldGoalsMade-threePointFieldGoalsAttempted'), 0), tpa: dash(at(s, 'threePointFieldGoalsMade-threePointFieldGoalsAttempted'), 1), fgm: dash(at(s, 'fieldGoalsMade-fieldGoalsAttempted'), 0), fga: dash(at(s, 'fieldGoalsMade-fieldGoalsAttempted'), 1), ftm: dash(at(s, 'freeThrowsMade-freeThrowsAttempted'), 0), fta: dash(at(s, 'freeThrowsMade-freeThrowsAttempted'), 1), stl: Number(at(s, 'steals')) || 0, blk: Number(at(s, 'blocks')) || 0, tov: Number(at(s, 'turnovers')) || 0, oreb: 0, dreb: 0, pf: Number(at(s, 'fouls')) || 0 };
+      const row = { date: etDate(ev.gameDate), gameId: String(e.eventId), season: SEASON - 1, type, home: ev.atVs !== '@', opp: teamAbbrFromText(ev.opponent?.abbreviation) || null, min: Number(at(s, 'minutes')) || 0, pts: Number(at(s, 'points')) || 0, reb: Number(at(s, 'totalRebounds')) || 0, ast: Number(at(s, 'assists')) || 0, tpm: dash(at(s, 'threePointFieldGoalsMade-threePointFieldGoalsAttempted'), 0), tpa: dash(at(s, 'threePointFieldGoalsMade-threePointFieldGoalsAttempted'), 1), fgm: dash(at(s, 'fieldGoalsMade-fieldGoalsAttempted'), 0), fga: dash(at(s, 'fieldGoalsMade-fieldGoalsAttempted'), 1), ftm: dash(at(s, 'freeThrowsMade-freeThrowsAttempted'), 0), fta: dash(at(s, 'freeThrowsMade-freeThrowsAttempted'), 1), stl: Number(at(s, 'steals')) || 0, blk: Number(at(s, 'blocks')) || 0, tov: Number(at(s, 'turnovers')) || 0, oreb: 0, dreb: 0, pf: Number(at(s, 'fouls')) || 0, starter: null };
       x.games.push(derived(row)); any = true;
     }
   }
@@ -230,7 +230,10 @@ for (const slate of slates.filter((d) => d >= from)) {
   const games = schedule.filter((g) => g.slate === slate).map(({ slate: _s, ...g }) => g);
   const pf = pullFor(slate);
   const cut = asOf(pf, games);
-  const board = buildBoard({ season: SEASON, date: slate, games, sheets: [], pf: cut, results });
+  // Tonight's starting fives: the box score's starters, standing in for RotoWire's confirmed lineup (the cocktail's `lineup`).
+  const lineups = { teams: {} };
+  for (const g of games) { const r = results[g.id]; if (!r) continue; for (const p of r.players) if (p.starter && p.played) { const t = (lineups.teams[p.team] ||= { status: 'confirmed', starters: [] }); t.starters.push({ name: p.name }); } }
+  const board = buildBoard({ season: SEASON, date: slate, games, sheets: [], pf: cut, results, lineups });
   const logsOf = new Map(cut.data.players.map((x) => [x.key, x.games || []]));
   boards[slate] = board;
   if (DUMP && slate === DATE) {
@@ -264,7 +267,7 @@ for (const slate of slates.filter((d) => d >= from)) {
       nThis: (logsOf.get(p.key) || []).filter((x) => x.season === SEASON && (x.type === 'REG' || !x.type)).length, ownSeason: p.own?.[stat]?.season ?? null, ownL10: p.own?.[stat]?.l10 ?? null, ownL5: p.own?.[stat]?.l5 ?? null,
       minTonight: p.minutes?.tonight ?? null, minBase: p.minutes?.base ?? null, rawMatchup: r.matchupFrom?.raw ?? r.matchup ?? null, matchupWeight: r.matchupFrom?.weight ?? null,
       // for the ceiling read (the cocktail's reach): the stated centre before it, his upside / downside ratios, the opponent's rank at his spot
-      base: r.base ?? r.exp, up: r.reach?.up ?? null, down: r.reach?.down ?? null, rank: side.allowed?.rows?.[p.envPos]?.[stat]?.rank ?? null, count: side.allowed?.count || 30, reachAdd: r.reach?.add || 0 });
+      base: r.base ?? r.exp, lineup: r.lineup ?? null, role: p.lineup?.role ?? null, startShare: p.lineup?.share ?? null, up: r.reach?.up ?? null, down: r.reach?.down ?? null, rank: side.allowed?.rows?.[p.envPos]?.[stat]?.rank ?? null, count: side.allowed?.count || 30, reachAdd: r.reach?.add || 0 });
   }
 }
 const sum = summarize(graded, {});

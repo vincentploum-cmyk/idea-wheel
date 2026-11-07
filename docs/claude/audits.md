@@ -204,3 +204,13 @@
   market's rung Brier lower; this season 4.89 → 4.83, 1.98 → 1.91, 1.48 → 1.40, threes level. The role pull off (it cost with the
   decayed memory in, both seasons), the team ceiling kept (without it the board runs high), the without split off; the
   all-positions matchup a little better than PropFinder's position cell; the teammates-out factor better on points and PRA.
+- The NBA's outlier nights (`docs/audits/2026-11-07-nba-outliers.md`, tables in `-tables.md`, `tools/audit/nba_spikes.py` on the
+  board's replayed rows and the box scores; Vincent, 2026-11-07: projected 4–5 rebounds, got 10+, "that is where the money is"):
+  83,447 projections of 2025-26 and this season. The board's normal tail said too little past his centre + 3 for every stat
+  (threes + 3: 2.4% said, 3.5% landed); a count with the same centre and spread lands on it and scores better on every count
+  stat's rungs, both seasons; points and PRA kept the normal. On top of the board's chance only tonight's start and the
+  teammates out saw a spike coming (the opponent's misses and rebounds allowed, pace, his past spikes did not); a bench player
+  starting tonight got 1.21–1.30× his projection over 2025-26, a demoted starter 0.89–0.92×. Shipped as `OUTLIERS` (count tail,
+  lineup × 1.1 / × 0.9), then the same day his minutes from the lineup (`LINEUP_MINUTES`: the minutes' miss 4.75 → 4.65 over
+  2025-26, 4.91 → 4.66 this season; the promoted 6.29 → 5.01, the demoted 6.11 → 4.69 on the replay; every stat and rung Brier
+  better than the flat factor); the night's five likeliest rebound spikes landed 9.7% against 4.6% for everyone.
