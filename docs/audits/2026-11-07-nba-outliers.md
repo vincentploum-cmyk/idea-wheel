@@ -188,7 +188,15 @@ This season's 17 nights land under it for rebounds, assists and points (fewer sp
 players reached their rebounds mark, none in the top ten (Ayton 7th: 12+ off a projection of 6 with the start, got 11); 3 of
 the top ten in threes landed (14 of 118 in all).
 
+Later the same day the list's chance became the ladder's own rung at the mark where the ladder has one (his card's number
+for that line; the fit stays for a mark above the ladder). On 2025-26's replay, before the market calibration, the ladder's
+chance at the mark ranks as well (the night's top ten landed: rebounds 7.9% either way, assists 6.5% against 5.9%, points
+8.7% against 7.5%, threes 15.3% against 15.9%) and says more at the top for rebounds (10.8% said) and assists (8.9%); points
+(8.8%) and threes (15.4%) land on it. The tab's legend says so.
+
 ## Next
 
 - The outliers fit is 2025-26's: refit it on this season once it has the nights (this season's 17 land under it).
+- The ladder's rungs far over the centre run high for rebounds and assists (section 6): the fit at the mark could move into the
+  ladder itself, so the card and the list both read it.
 - The minutes of a bench big in a close game (Lyles) are not in any pre-game read measured here.

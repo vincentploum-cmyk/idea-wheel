@@ -6,7 +6,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { NBA_BIG, boardTail, nbaBigChance, nbaBigGames } from '../lib/nba/big';
 import { statOf, actualFor } from '../lib/nba/picks';
-import NbaBigGames from '../components/nba/NbaBigGames';
+import NbaBigGames, { outlierWhy, sortOutliers } from '../components/nba/NbaBigGames';
 
 // The NBA's big games (Vincent, 2026-11-01: "Do the same big games study for the NBA"; docs/audits/2026-11-01-nba-big-games.md).
 describe('NBA big games: the read', () => {
@@ -81,7 +81,8 @@ describe('NBA outliers: double his projection', () => {
     expect(outlierChance(4.4, 3.5, 'reb', 'count').p).toBeGreaterThan(c.p);
   });
 
-  const logs = (reb, n = 20) => Array.from({ length: n }, (_, i) => ({ date: `2026-10-${String(30 - i).padStart(2, '0')}`, type: 'REG', min: 22, pts: 9, reb: reb(i), ast: 2, tpm: 1, tpa: 3 }));
+  // Five games this season (2027), fifteen last season's behind them.
+  const logs = (reb, n = 20) => Array.from({ length: n }, (_, i) => ({ date: i < 5 ? `2026-11-${String(6 - i).padStart(2, '0')}` : `2026-04-${String(30 - i).padStart(2, '0')}`, season: i < 5 ? 2027 : 2026, type: 'REG', min: 22, pts: 9, reb: reb(i), ast: 2, tpm: 1, tpa: 3 }));
   const pf = { data: { players: [
     { key: 'trey lyles', team: 'MIN', games: logs((i) => (i % 5 === 0 ? 11 : 4)) },
     { key: 'deep bench', team: 'MIN', games: logs(() => 4) },
@@ -98,25 +99,51 @@ describe('NBA outliers: double his projection', () => {
   ] } } }] };
 
   test('every rotation player from the floor gets a row: the mark, the chance, why, the book’s price at the mark', () => {
-    const o = nbaOutliers(board, { pf, results: {}, statOf, actualFor });
+    const o = nbaOutliers(board, { pf, results: {}, statOf, actualFor, season: 2027 });
     const lyles = o.rows['trey lyles|MIN|reb'];
-    expect(lyles).toMatchObject({ mark: 9, proj: 4.4, line: 4.5, minutes: 22, hits: 4, n: 20, role: 'promoted', outFrom: ['Rudy Gobert'] });
+    // Lyles: 11 rebounds every fifth game (games 0, 5, 10, 15): one this season, three last season's.
+    expect(lyles).toMatchObject({ mark: 9, proj: 4.4, line: 4.5, minutes: 22, hits: 4, n: 20, role: 'promoted', outFrom: ['Rudy Gobert'], record: { season: { hits: 1, n: 5 }, last: { hits: 3, n: 15 } } });
+    // No rung at o8.5 with a chance on his ladder: the fitted tail.
+    expect(lyles.from).toBe('fit');
+    expect(lyles.p).toBeCloseTo(outlierChance(4.4, 3, 'reb', 'count').p, 3);
     expect(lyles.book).toMatchObject({ line: 8.5, odds: 900, implied: 0.1 });
     expect(lyles.book.edge).toBeCloseTo(lyles.p - 0.1, 3);
     expect(o.rows['deep bench|MIN|reb']).toBeUndefined();          // under the minutes floor
     expect(o.rows['steady big|MIN|reb'].book).toBeNull();          // no rung at 8.5
     expect(o.rows['steady big|MIN|reb'].p).toBeLessThan(lyles.p);  // the narrow spread
     expect(o.lists.reb[0]).toBe('trey lyles|MIN|reb');
+    // Without the board's season: his newest log's.
+    expect(nbaOutliers(board, { pf, results: {}, statOf, actualFor }).rows['trey lyles|MIN|reb'].record.season.n).toBe(5);
+  });
+  test("the ladder's rung at the mark is the chance when the ladder has it: the card's number for that line", () => {
+    const withRung = { ...board, games: [{ ...board.games[0], sides: { MIN: { ...board.games[0].sides.MIN, players: [
+      sp('trey lyles', 'Trey Lyles', { ladder: [{ line: 4.5, sd: 3, tail: 'count', p: 0.45, odds: -120 }, { line: 8.5, sd: 3, tail: 'count', p: 0.07, raw: 0.081, odds: 900 }] }),
+    ] } } }] };
+    const r = nbaOutliers(withRung, { pf, results: {}, statOf, actualFor, season: 2027 }).rows['trey lyles|MIN|reb'];
+    expect(r).toMatchObject({ from: 'ladder', p: 0.07, raw: 0.081, book: { odds: 900, edge: -0.03 } });
+  });
+  test('the note: this season first, last season to make 20; the sort: by any column, nulls last, a second click flips', () => {
+    expect(outlierWhy({ mark: 4, record: { season: { hits: 0, n: 5 }, last: { hits: 5, n: 15 } }, minutes: 22 })).toBe('4+ in 0 of 5 this season · 5 of 15 last season · 22 min');
+    expect(outlierWhy({ mark: 4, record: { season: { hits: 0, n: 0 }, last: { hits: 3, n: 20 } } })).toBe('4+ in 3 of his last 20 last season');
+    expect(outlierWhy({ mark: 4, role: 'demoted', record: { season: { hits: 2, n: 12 }, last: { hits: 0, n: 8 } } })).toBe('Off the bench tonight · 4+ in 2 of 12 this season · 0 of 8 last season');
+    const rows = [{ player: 'B', p: 0.1, proj: 2, book: null, mark: 4 }, { player: 'A', p: 0.2, proj: 1, book: { edge: 0.02 }, mark: 5 }, { player: 'C', p: 0.15, proj: 3, book: { edge: -0.01 }, mark: 4 }];
+    expect(sortOutliers(rows).map((r) => r.player)).toEqual(['A', 'C', 'B']);
+    expect(sortOutliers(rows, { key: 'proj', dir: 'desc' }).map((r) => r.player)).toEqual(['C', 'B', 'A']);
+    expect(sortOutliers(rows, { key: 'book', dir: 'desc' }).map((r) => r.player)).toEqual(['A', 'C', 'B']);
+    expect(sortOutliers(rows, { key: 'book', dir: 'asc' }).map((r) => r.player)).toEqual(['C', 'A', 'B']);
+    expect(sortOutliers(rows, { key: 'player', dir: 'asc' }).map((r) => r.player)).toEqual(['A', 'B', 'C']);
   });
 
   test('the tab’s Outliers view: the stat’s list with the mark, the price and why', () => {
-    const b = { ...board, big: { rows: {}, lists: {}, outliers: nbaOutliers(board, { pf, results: {}, statOf, actualFor }) } };
+    const b = { ...board, big: { rows: {}, lists: {}, outliers: nbaOutliers(board, { pf, results: {}, statOf, actualFor, season: 2027 }) } };
     const html = renderToStaticMarkup(<NbaBigGames board={b} initialView="outliers" />);
     expect(html).toContain('>Outliers<');
     expect(html).toContain('Trey Lyles');
     expect(html).toContain('>9+<');
     expect(html).toContain('+900');
-    expect(html).toContain('Starts tonight · Rudy Gobert out · 9+ in 4 of his last 20 · 22 min');
+    expect(html).toContain('Starts tonight · Rudy Gobert out · 9+ in 1 of 5 this season · 3 of 15 last season · 22 min');
+    expect(html).toContain('aria-sort="descending"');
+    expect(html).toContain('Click a column to sort');
     expect(html).toContain('double their projection');
     // The Big games view stays as it was by default.
     expect(renderToStaticMarkup(<NbaBigGames board={b} />)).toContain('No big-game candidate yet');

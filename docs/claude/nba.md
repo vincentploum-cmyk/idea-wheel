@@ -364,9 +364,14 @@
   night's likeliest to reach **double his projection** and at least + 4 rebounds / assists, + 2 threes, + 10 points
   (`outlierMark`), from `OUTLIER_MIN_MINUTES` = 12 minutes tonight and the stat's projection floor; the chance is the board's
   tail at the mark (a count's for the counts) through σ(a + b · logit) fitted on 2025-26's replayed board at that mark
-  (`outlierChance`; threes as they are), `OUTLIER_LIST_MIN` = 3%; the row carries the book's main line, the book's price at the
-  mark when its ladder has the rung (`book` { line, odds, implied, edge, ev }), why (a start off the bench, the teammates out,
-  his nights at the mark in his last 20, his minutes: `outlierWhy`) and what he got. `nbaOutliers` runs in the binding's
+  (`outlierChance`; threes as they are) **where his ladder has no rung at the mark; where it has one the chance is that rung's,
+  his card's number for the line** (`from: 'ladder' | 'fit'`; Vincent, 2026-11-07: the list said 18% for McCollum's 4+ threes,
+  his card's o3.5 16%), `OUTLIER_LIST_MIN` = 3%; the row carries the book's main line, the book's price at the mark when its
+  ladder has the rung (`book` { line, odds, implied, edge, ev }), why (a start off the bench, the teammates out, **his games at
+  the mark this season, then last season's to make 20** — `record` { season, last }, "4+ in 0 of 5 this season · 5 of 15 last
+  season"; Vincent: "we should look at threes per game not across games", the note had read "4+ in 5 of his last 20" off
+  last season alone —, his minutes: `outlierWhy`) and what he got. **Every column sorts** (`sortOutliers` / `OUT_SORTS`: a click
+  sorts by the column, a second flips it, nulls last; Book by the edge, Why by his rate at the mark this season; Chance first). `nbaOutliers` runs in the binding's
   `buildBoard` (`board.big.outliers` = { rows, lists }); the replay's `--board` dump carries both lists.
   `__tests__/nba-big.test.jsx`.
 - **Cheat sheet** (`#sheet`, `components/nba/NbaSheetMatchups.jsx`, the pure reader `lib/nba/sheet-matchups.js`; Vincent,

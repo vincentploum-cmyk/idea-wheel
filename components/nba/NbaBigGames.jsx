@@ -63,42 +63,89 @@ function Rows({ board, market, game }) {
   );
 }
 
-/** Why a player is on the outliers list: a start off the bench, the teammates out, his nights at the mark lately, his minutes. */
+/**
+ * Why a player is on the outliers list: a start off the bench, the teammates out, his games at the mark this season and last
+ * season's to make 20 ("4+ in 0 of 5 this season · 5 of 15 last season"), his minutes.
+ */
 export function outlierWhy(r) {
   const parts = [];
   if (r.role === 'promoted') parts.push('Starts tonight');
   if (r.role === 'demoted') parts.push('Off the bench tonight');
   if (r.outFrom?.length) parts.push(`${r.outFrom.join(' + ')} out`);
-  parts.push(`${r.mark}+ in ${r.hits} of his last ${r.n}`);
+  const s = r.record?.season; const l = r.record?.last;
+  if (s?.n) parts.push(`${r.mark}+ in ${s.hits} of ${s.n} this season`);
+  if (l?.n) parts.push(s?.n ? `${l.hits} of ${l.n} last season` : `${r.mark}+ in ${l.hits} of his last ${l.n} last season`);
+  if (!s?.n && !l?.n && r.n) parts.push(`${r.mark}+ in ${r.hits} of his last ${r.n}`);
   if (r.minutes != null) parts.push(`${Math.round(r.minutes)} min`);
   return parts.join(' · ');
 }
 
+/** The Outliers table's sorts: each column's value (null sorts last) and its first direction. */
+const OUT_SORTS = {
+  player: { v: (r) => r.player, dir: 'asc' },
+  mark: { v: (r) => r.mark, dir: 'desc' },
+  p: { v: (r) => r.p, dir: 'desc' },
+  proj: { v: (r) => r.proj, dir: 'desc' },
+  line: { v: (r) => r.line, dir: 'desc' },
+  book: { v: (r) => r.book?.edge ?? null, dir: 'desc' },
+  season: { v: (r) => (r.record?.season?.n ? r.record.season.hits / r.record.season.n : null), dir: 'desc' },
+  minutes: { v: (r) => r.minutes, dir: 'desc' },
+  got: { v: (r) => r.actual, dir: 'desc' },
+};
+/** The rows in the sort's order; ties keep the chance's order. */
+export function sortOutliers(rows, { key = 'p', dir = 'desc' } = {}) {
+  const spec = OUT_SORTS[key] || OUT_SORTS.p;
+  const sign = dir === 'asc' ? 1 : -1;
+  return rows.map((r, i) => [r, i]).sort(([a, i], [b, j]) => {
+    const x = spec.v(a); const y = spec.v(b);
+    if (x == null && y == null) return i - j;
+    if (x == null) return 1;
+    if (y == null) return -1;
+    const c = typeof x === 'string' ? x.localeCompare(y) : x - y;
+    return c ? sign * c : i - j;
+  }).map(([r]) => r);
+}
+
+/** A sortable header: a click sorts by the column (its first direction), a second click flips it. */
+function SortHead({ k, label, sort, onSort, title, className = '' }) {
+  const on = sort.key === k;
+  return (
+    <th className={`${className}${on ? ' is-sorted' : ''}`} title={title} aria-sort={on ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
+      <button type="button" onClick={() => onSort(k)}>{label}{on ? <i aria-hidden="true">{sort.dir === 'asc' ? '↑' : '↓'}</i> : null}</button>
+    </th>
+  );
+}
+
 function OutlierRows({ board, market, game }) {
   const [all, setAll] = useState(false);
+  const [sort, setSort] = useState({ key: 'p', dir: 'desc' });
   const open = useNbaPlayerCard();
   const o = board?.big?.outliers;
-  const rows = (o?.lists?.[market] || []).map((id) => o.rows[id]).filter((r) => r && (!game || r.game === game));
-  if (!rows.length) return <p className="nhlx-auto-meta ir-ml-empty">No outlier candidate yet: the night needs a PropFinder pull.</p>;
+  const listed = (o?.lists?.[market] || []).map((id) => o.rows[id]).filter((r) => r && (!game || r.game === game));
+  if (!listed.length) return <p className="nhlx-auto-meta ir-ml-empty">No outlier candidate yet: the night needs a PropFinder pull.</p>;
+  const rows = sortOutliers(listed, sort);
+  const onSort = (k) => setSort((cur) => (cur.key === k ? { key: k, dir: cur.dir === 'asc' ? 'desc' : 'asc' } : { key: k, dir: OUT_SORTS[k]?.dir || 'desc' }));
   const final = rows.some((r) => r.final);
   const shown = all ? rows : rows.slice(0, SHOW);
   const openRow = (r) => {
     const side = (board.games || []).find((g) => g.id === r.game)?.sides?.[r.team];
     open({ key: r.key, player: side?.players?.find((p) => p.key === r.key) || r, team: r.team, opp: r.opp, venue: r.venue, market: r.market });
   };
+  const head = { sort, onSort };
   return (
     <>
       <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
-        <table className="nhlx-db-table nhlx-pk-table ir-ml-table ir-big-table">
+        <table className="nhlx-db-table nhlx-pk-table ir-ml-table ir-big-table ir-out-table">
           <thead><tr>
-            <th className="ir-slate-rank">#</th><th>Player</th>
-            <th className="is-num" title="Double his projection, and at least this much over it">Mark</th>
-            <th className="is-num is-lead" title="His chance of the mark tonight">Chance</th>
-            <th className="is-num" title="Tonight’s projection">Proj</th>
-            <th className="is-num ir-out-line" title="The book’s main line">Line</th>
-            <th className="is-num" title="The book’s price at the mark, where its ladder has the rung, and the chance over its implied one">Book</th>
-            <th className="ir-big-why">Why</th>
-            {final ? <th className="is-num">Got</th> : null}
+            <th className="ir-slate-rank">#</th>
+            <SortHead k="player" label="Player" {...head} />
+            <SortHead k="mark" label="Mark" className="is-num" title="Double his projection, and at least this much over it" {...head} />
+            <SortHead k="p" label="Chance" className="is-num is-lead" title="His chance of the mark tonight: his card's ladder at that line" {...head} />
+            <SortHead k="proj" label="Proj" className="is-num" title="Tonight’s projection" {...head} />
+            <SortHead k="line" label="Line" className="is-num ir-out-line" title="The book’s main line" {...head} />
+            <SortHead k="book" label="Book" className="is-num" title="The book’s price at the mark, where its ladder has the rung, and the chance over its implied one (sorts by that edge)" {...head} />
+            <SortHead k="season" label="Why" className="ir-big-why" title="Sorts by how often he reached the mark this season" {...head} />
+            {final ? <SortHead k="got" label="Got" className="is-num" {...head} /> : null}
           </tr></thead>
           <tbody>
             {shown.map((r, i) => (
@@ -110,7 +157,7 @@ function OutlierRows({ board, market, game }) {
                   <small className="ir-big-why-m">{outlierWhy(r)}</small>
                 </td>
                 <td className="is-num"><b>{r.mark}+</b></td>
-                <td className={`is-num is-lead${r.hit == null ? '' : r.hit ? ' is-hit' : ' is-miss'}`} title={r.raw !== r.p ? `The board's tail at ${r.mark}+: ${pct(r.raw)}, fitted to what landed at the mark over 2025-26` : `The board's tail at ${r.mark}+`}><b>{pct(r.p)}</b></td>
+                <td className={`is-num is-lead${r.hit == null ? '' : r.hit ? ' is-hit' : ' is-miss'}`} title={r.from === 'ladder' ? `His card's ladder at o${r.mark - 0.5}: ${pct(r.p)}` : r.raw !== r.p ? `No rung at o${r.mark - 0.5} on his ladder: the board's tail at ${r.mark}+, ${pct(r.raw)}, fitted to what landed at the mark over 2025-26` : `No rung at o${r.mark - 0.5} on his ladder: the board's tail at ${r.mark}+`}><b>{pct(r.p)}</b></td>
                 <td className="is-num">{r.proj}</td>
                 <td className="is-num ir-out-line">{r.line != null ? r.line : <small>—</small>}</td>
                 <td className="is-num" title={r.book ? `o${r.book.line} at ${fmtOdds(r.book.odds)}: the book says ${pct(r.book.implied)}, the board ${pct(r.p)}` : 'The book’s ladder has no rung at the mark'}>{r.book ? <><b>{fmtOdds(r.book.odds)}</b><small className={`ir-out-edge${r.book.edge > 0 ? ' is-pos' : ''}`}> {r.book.edge >= 0 ? '+' : '−'}{Math.abs(Math.round(r.book.edge * 100))}</small></> : <small>—</small>}</td>
@@ -128,7 +175,7 @@ function OutlierRows({ board, market, game }) {
 
 const OUT_LEGEND = (
   <p className="nhlx-auto-meta ir-bd-legend">
-    The players likeliest to reach <b>double their projection</b> tonight (and at least 4 rebounds or assists, 2 threes, 10 points over it): the nights the books price long. The chance is the board’s own, fitted to what landed at the mark over 2025-26; each night’s top ten landed about 8% for rebounds (4.6% for everyone), 16% for threes (9%). A start off the bench and teammates out are what move it most. Where the book’s ladder prices the mark, its price and the edge in points. Long shots: a few a night land.
+    The players likeliest to reach <b>double their projection</b> tonight (and at least 4 rebounds or assists, 2 threes, 10 points over it): the nights the books price long. The chance is his card’s ladder at the mark, the same number as on his card. Over 2025-26 each night’s top ten landed 8% for rebounds (4.6% for everyone), 15% for threes (9%), 9% for points (4.4%), 6.5% for assists (3.7%); for rebounds and assists the top of the list says more than lands (11% and 9%). A start off the bench and teammates out are what move it most. Where the book’s ladder prices the mark, its price and the edge in points. Long shots: a few a night land. Click a column to sort.
   </p>
 );
 

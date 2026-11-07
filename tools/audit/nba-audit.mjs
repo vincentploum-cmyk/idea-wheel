@@ -241,7 +241,7 @@ for (const slate of slates.filter((d) => d >= from)) {
     const shuffle = Object.fromEntries(SHUFFLE_MARKETS.map(({ market }) => [market, sh.shuffleOf({ market, board, pf: cut, season: SEASON, results })]));
     fs.mkdirSync(OUT, { recursive: true });
     // The Big games tab's lists, as the site's binding (lib/nba/picks.js buildBoard) puts them on the board.
-    const bigCtx = { pf: cut, results, statOf, actualFor };
+    const bigCtx = { pf: cut, results, statOf, actualFor, season: SEASON };
     const big = { ...nbaBigGames(board, bigCtx), outliers: nbaOutliers(board, bigCtx) };
     fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-board.json`), JSON.stringify({ board: { ...board, date: slate, big }, shuffle }));
   }
