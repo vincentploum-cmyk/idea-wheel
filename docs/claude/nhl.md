@@ -534,6 +534,27 @@
   preview ("game-preview-islanders-vs-oilers-…", its lines under a bare "PROJECTED LINEUP") is listed first and gave
   neither team NHL.com's lines. "The same winning lineup" reads as a confirmation (`SAME_LINES`).
   `__tests__/nhl-lineups-keep.test.js`.
+  **Lineup graphics are read by OCR** (`lib/nhl-data/lineup-image.js`; SEA vs NYR, 2026-11-07: @sound_hockey's
+  "Kraken lineup" card at 4:42 PM ET carried the lines in the picture alone, its text "Is the Catton line now the second
+  line? My COLUMN: … Otherwise, nothing changes from last game." read as nothing, and the rink named @Benton_Mike's
+  practice tweet of the day before). On every page post (`ingestGdtPages`, `settleGdtPages` → `gdtPictures`), the tweets
+  newer than a slate team's newest text lines that carry a link and no lines (`imageCandidates`, three a team at most)
+  have their photos found through X's embed endpoint (`cdn.syndication.twimg.com/tweet-result?id=…&token=…`,
+  `tweetPhotos`; the page's status id is the writer's own tweet), read by tesseract (`readImageWords`: the cheat sheets'
+  `prepareColumn`, auto-inverted, about 2600 px across, `createReader({ psm: '11' })` for sparse tiles; about 3 s a card),
+  and laid out against the roster (`parseLineupImage`, pure): surnames matched exactly or within an OCR misread
+  (`similarity` ≥ 0.75, 0.7 from seven letters: "KRKKO" Kakko, "SAMOSKEVIGH"), a first name stacked over or before the
+  surname settling a shared one and never counting as a player itself ("RYAN" over "WINTERTON"); the card's own heads
+  decide who is out (EXTRAS, SCRATCHES, INJURED, GOALIES …: a player sits under the nearest head above him that does not
+  start to his right); the roster decides forward or defense; the picture's rows (or its columns, whichever gives more
+  full lines and pairs) are the lines, left to right LW, C, RW; three forward lines at least or no read. The words are
+  kept per tweet id in `data/lineups/gdt-images.json` (four days) and laid out again on every post, so a picture is
+  fetched and read once (six new tweets a post at most, the rest on the next; a failed read retried after 30 min). The
+  read then stands in `latestTeamLines` (`images`) where the tweet's text gave nothing, ahead of a "same lineup"
+  reading, `meta.image` the photo; the snapshot carries `gdtImage` and the rink pill adds "graphic" (hover: "Read off
+  the tweet's lineup graphic (OCR)"). The usual timing rules stand: a 4:42 PM card still loses to a 5:34 PM preview
+  update until the warm-up window. The response's `pictures` lists what each candidate gave.
+  `__tests__/nhl-lineup-image.test.js` (the 11-07 and 11-04 SEA cards' words as read, `__tests__/fixtures/ocr-sea-lineup-*.json`).
   **Lines written with full stops and jersey nicknames read too** (`splitNames`, `JERSEY` in `gamedaytweets.js`; VAN vs TOR,
   2026-10-31: @BatchHockey's warm-up tweet "DeBrusk. EP40. Boeser." read as nothing and the rink stood on the preview): a
   dash-less line ending in a full stop splits on them (a lone initial joins the next name), and "EP40" is the roster
