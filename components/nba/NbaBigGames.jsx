@@ -86,7 +86,8 @@ const OUT_SORTS = {
   mark: { v: (r) => r.mark, dir: 'desc' },
   p: { v: (r) => r.p, dir: 'desc' },
   proj: { v: (r) => r.proj, dir: 'desc' },
-  line: { v: (r) => r.line, dir: 'desc' },
+  floor: { v: (r) => r.floor, dir: 'desc' },
+  ceiling: { v: (r) => r.ceiling, dir: 'desc' },
   book: { v: (r) => r.book?.edge ?? null, dir: 'desc' },
   season: { v: (r) => (r.record?.season?.n ? r.record.season.hits / r.record.season.n : null), dir: 'desc' },
   minutes: { v: (r) => r.minutes, dir: 'desc' },
@@ -139,10 +140,11 @@ function OutlierRows({ board, market, game }) {
           <thead><tr>
             <th className="ir-slate-rank">#</th>
             <SortHead k="player" label="Player" {...head} />
-            <SortHead k="mark" label="Mark" className="is-num" title="Double his projection, and at least this much over it" {...head} />
-            <SortHead k="p" label="Chance" className="is-num is-lead" title="His chance of the mark tonight: his card's ladder at that line" {...head} />
-            <SortHead k="proj" label="Proj" className="is-num" title="Tonight’s projection" {...head} />
-            <SortHead k="line" label="Line" className="is-num ir-out-line" title="The book’s main line" {...head} />
+            <SortHead k="proj" label={<><span className="ir-out-full">Projected</span><span className="ir-out-short">Proj</span></>} className="is-num" title="Tonight’s projection" {...head} />
+            <SortHead k="floor" label="Floor" className="is-num" title="He lands between his floor and his ceiling half the nights" {...head} />
+            <SortHead k="ceiling" label="Ceiling" className="is-num" title="He lands between his floor and his ceiling half the nights" {...head} />
+            <SortHead k="mark" label="Outlier" className="is-num" title="About double his projection" {...head} />
+            <SortHead k="p" label="Chance" className="is-num is-lead" title="His chance of the outlier tonight: his card's number for that line" {...head} />
             <SortHead k="book" label="Book" className="is-num" title="The book’s price at the mark, where its ladder has the rung, and the chance over its implied one (sorts by that edge)" {...head} />
             <SortHead k="season" label="Why" className="ir-big-why" title="Sorts by how often he reached the mark this season" {...head} />
             {final ? <SortHead k="got" label="Got" className="is-num" {...head} /> : null}
@@ -156,10 +158,11 @@ function OutlierRows({ board, market, game }) {
                   <small className="ir-big-sub">{r.team} · {r.pos || ''} · {r.venue === 'H' ? 'vs' : '@'} {r.opp}{r.health === 'DTD' ? ' · DTD' : ''}</small>
                   <small className="ir-big-why-m">{outlierWhy(r)}</small>
                 </td>
-                <td className="is-num"><b>{r.mark}+</b></td>
-                <td className={`is-num is-lead${r.hit == null ? '' : r.hit ? ' is-hit' : ' is-miss'}`} title={r.from === 'ladder' ? `His card's ladder at o${r.mark - 0.5}: ${pct(r.p)}` : r.raw !== r.p ? `No rung at o${r.mark - 0.5} on his ladder: the board's tail at ${r.mark}+, ${pct(r.raw)}, fitted to what landed at the mark over 2025-26` : `No rung at o${r.mark - 0.5} on his ladder: the board's tail at ${r.mark}+`}><b>{pct(r.p)}</b></td>
                 <td className="is-num">{r.proj}</td>
-                <td className="is-num ir-out-line">{r.line != null ? r.line : <small>—</small>}</td>
+                <td className="is-num">{r.floor ?? <small>—</small>}</td>
+                <td className="is-num">{r.ceiling ?? <small>—</small>}</td>
+                <td className="is-num"><b>{r.mark}+</b></td>
+                <td className={`is-num is-lead${r.hit == null ? '' : r.hit ? ' is-hit' : ' is-miss'}`} title={r.from === 'ladder' ? `His card's number at o${r.mark - 0.5}: ${pct(r.p)}` : `The board's chance of ${r.mark}+: ${pct(r.p)}`}><b>{pct(r.p)}</b></td>
                 <td className="is-num" title={r.book ? `o${r.book.line} at ${fmtOdds(r.book.odds)}: the book says ${pct(r.book.implied)}, the board ${pct(r.p)}` : 'The book’s ladder has no rung at the mark'}>{r.book ? <><b>{fmtOdds(r.book.odds)}</b><small className={`ir-out-edge${r.book.edge > 0 ? ' is-pos' : ''}`}> {r.book.edge >= 0 ? '+' : '−'}{Math.abs(Math.round(r.book.edge * 100))}</small></> : <small>—</small>}</td>
                 <td className="ir-big-why"><small>{outlierWhy(r)}</small></td>
                 {final ? <td className="is-num nhlx-pk-got">{r.actual == null ? <small>—</small> : <b>{r.actual}</b>}</td> : null}
@@ -175,7 +178,7 @@ function OutlierRows({ board, market, game }) {
 
 const OUT_LEGEND = (
   <p className="nhlx-auto-meta ir-bd-legend">
-    The players likeliest to reach <b>double their projection</b> tonight (and at least 4 rebounds or assists, 2 threes, 10 points over it): the nights the books price long. The chance is his card’s ladder at the mark, the same number as on his card. Over 2025-26 each night’s top ten landed 8% for rebounds (4.6% for everyone), 15% for threes (9%), 9% for points (4.4%), 6.5% for assists (3.7%); for rebounds and assists the top of the list says more than lands (11% and 9%). A start off the bench and teammates out are what move it most. Where the book’s ladder prices the mark, its price and the edge in points. Long shots: a few a night land. Click a column to sort.
+    The players likeliest to have an <b>outlier</b> night: about double their projection (at least 4 more rebounds or assists, 2 more threes, 10 more points). He lands between his floor and ceiling half the nights; the outlier is well past the ceiling. The chance is his card’s number for that line, the book’s price beside it when it has one. Long shots: a few a night land. Click a column to sort.
   </p>
 );
 

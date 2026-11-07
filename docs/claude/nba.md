@@ -373,6 +373,9 @@
   last season alone —, his minutes: `outlierWhy`) and what he got. **The mark is a rung on his ladder** (the cocktail's `outlierRungs`,
   `OUTLIER_RUNGS` = each stat's `add`; Vincent, 2026-11-07, "Ok" to: the card shows the line the list reads), so every listed row
   is his card's number (`outlier: true` on the rung, kept from a 1% tail: no o51.5 points on a star's card).
+  **The table reads Projected · Floor · Ceiling · Outlier · Chance · Book · Got** (Vincent, 2026-11-07: "why can't you keep
+  things simple? Like projected, floor and ceiling": the range's floor and ceiling as on the court, "Outlier" for the mark, the
+  Line column gone; on a phone "Proj", no note under the name, no rank).
   **The rebounds' high lines are fitted** (`HIGH_LINES` / `highLineFit`, the cocktail's `highLines`: from 1.5 × his centre,
   in full at 2 ×; Vincent, 2026-11-07, "fix the rebounds and assists chances too" — assists' high lines measured right, no fit). **Every column sorts** (`sortOutliers` / `OUT_SORTS`: a click
   sorts by the column, a second flips it, nulls last; Book by the edge, Why by his rate at the mark this season; Chance first). `nbaOutliers` runs in the binding's

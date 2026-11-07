@@ -90,7 +90,7 @@ describe('NBA outliers: double his projection', () => {
   ] } };
   const sp = (key, name, { exp = 4.4, sd = 3, minutes = 22, ladder = null, role = null, outFrom = null } = {}) => ({
     key, player: name, pos: 'PF', minutes: { tonight: minutes }, ...(role ? { lineup: { role, factor: 1.2 } } : {}),
-    ranges: { reb: { exp, line: 4.5, outFrom } }, ladders: { reb: ladder || [{ line: 4.5, sd, tail: 'count', odds: -120 }] },
+    ranges: { reb: { exp, line: 4.5, floor: 3, ceiling: 6, outFrom } }, ladders: { reb: ladder || [{ line: 4.5, sd, tail: 'count', odds: -120 }] },
   });
   const board = { date: '2026-11-07', games: [{ id: 'g1', final: false, sides: { MIN: { opp: 'NO', venue: 'A', players: [
     sp('trey lyles', 'Trey Lyles', { role: 'promoted', outFrom: ['Rudy Gobert'], ladder: [{ line: 4.5, sd: 3, tail: 'count', odds: -120 }, { line: 8.5, sd: 3, tail: 'count', odds: 900 }] }),
@@ -102,7 +102,7 @@ describe('NBA outliers: double his projection', () => {
     const o = nbaOutliers(board, { pf, results: {}, statOf, actualFor, season: 2027 });
     const lyles = o.rows['trey lyles|MIN|reb'];
     // Lyles: 11 rebounds every fifth game (games 0, 5, 10, 15): one this season, three last season's.
-    expect(lyles).toMatchObject({ mark: 9, proj: 4.4, line: 4.5, minutes: 22, hits: 4, n: 20, role: 'promoted', outFrom: ['Rudy Gobert'], record: { season: { hits: 1, n: 5 }, last: { hits: 3, n: 15 } } });
+    expect(lyles).toMatchObject({ mark: 9, proj: 4.4, floor: 3, ceiling: 6, line: 4.5, minutes: 22, hits: 4, n: 20, role: 'promoted', outFrom: ['Rudy Gobert'], record: { season: { hits: 1, n: 5 }, last: { hits: 3, n: 15 } } });
     // No rung at o8.5 with a chance on his ladder: the fitted tail.
     expect(lyles.from).toBe('fit');
     expect(lyles.p).toBeCloseTo(outlierChance(4.4, 3, 'reb', 'count').p, 3);
@@ -144,7 +144,9 @@ describe('NBA outliers: double his projection', () => {
     expect(html).toContain('Starts tonight · Rudy Gobert out · 9+ in 1 of 5 this season · 3 of 15 last season · 22 min');
     expect(html).toContain('aria-sort="descending"');
     expect(html).toContain('Click a column to sort');
-    expect(html).toContain('double their projection');
+    expect(html).toContain('about double their projection');
+    expect(html).toContain('>Floor<'); expect(html).toContain('>Ceiling<'); expect(html).toContain('>Outlier<'); expect(html).not.toContain('>Line<');
+    expect(html).toContain('<td class="is-num">3</td><td class="is-num">6</td>');
     // The Big games view stays as it was by default.
     expect(renderToStaticMarkup(<NbaBigGames board={b} />)).toContain('No big-game candidate yet');
   });
