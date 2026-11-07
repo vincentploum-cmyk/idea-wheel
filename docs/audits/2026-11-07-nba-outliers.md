@@ -166,8 +166,29 @@ the board shows 6.29 → 5.01 for the promoted (bias − 4.1 → − 1.1) and 6.
 season's replay (87 role changes from the 5-flagged-games floor): points 4.880 → 4.875, PRA 6.317 → 6.313, the demoted's
 minutes 6.52 → 3.93, the promoted's 5.64 → 5.14.
 
+## 6. The outliers list (the Big games tab)
+
+Vincent, the same day: "build the outliers list on the big games tab". Per stat the night's likeliest to reach double his
+projection (and + 4 rebounds or assists, + 2 threes, + 10 points over it), from 12 minutes tonight and a projection floor
+(rebounds 2.5, assists 1.5, threes 0.8, points 6). The board's tail at the mark ran high at the top of the list on the shipped
+board (2025-26, the night's top ten by it: rebounds said 10.4%, landed 8.0%; assists 8.5% → 5.9%), so the list reads it
+through a fit at the mark, σ(a + b · logit), on 2025-26's replay with the minutes read (rebounds a − 0.827 b 0.743, assists
+− 1.156 / 0.635, points − 1.028 / 0.566; threes landed on the tail, no fit). Calibrated, every band of 2025-26 lands on what it
+says; each night's top ten:
+
+| Night's top ten | 2025-26 said / landed | every player | this season said / landed | every player |
+|---|---|---|---|---|
+| Rebounds | 8.1% / 8.0% | 4.6% | 8.7% / 4.7% | 3.7% |
+| Threes | 14.7% / 15.9% | 9.0% | 16.3% / 16.5% | 9.1% |
+| Assists | 6.5% / 5.9% | 3.7% | 7.1% / 4.7% | 2.9% |
+| Points | 8.3% / 7.5% | 4.4% | 9.7% / 2.9% | 2.5% |
+
+This season's 17 nights land under it for rebounds, assists and points (fewer spikes this season: 3.7% of rebounds against
+4.6%); the fit is last season's until this season has the nights to refit. On the replayed 2026-11-06, 3 of 133 rotation
+players reached their rebounds mark, none in the top ten (Ayton 7th: 12+ off a projection of 6 with the start, got 11); 3 of
+the top ten in threes landed (14 of 118 in all).
+
 ## Next
 
-- An outlier list (the night's likeliest to double the line, by stat) on the Big games tab, off the same chances.
-- The top of the spike list runs high: a fit on the spike marks alone once the season has enough nights.
+- The outliers fit is 2025-26's: refit it on this season once it has the nights (this season's 17 land under it).
 - The minutes of a bench big in a close game (Lyles) are not in any pre-game read measured here.

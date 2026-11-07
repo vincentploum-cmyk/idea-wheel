@@ -359,6 +359,15 @@
   board's tail as it is; the matchup, pace, the line, home and back-to-backs added nothing). `nbaBigGames` runs in the
   binding's `buildBoard` (`board.big` = { rows, lists }, the logs off the pull, `BIG_MIN_GAMES` = 5, `NBA_BIG_LIST_MIN` = 5%),
   the reason beside each name ("30+ in 7 of his last 20"), the head's game dropdown cuts it, a name opens the card.
+  **Outliers** beside it (a Big games / Outliers switch over the stat pills; Vincent, 2026-11-07: "build the outliers list on the
+  big games tab", the 10-rebound nights from a 4–5 projection): per stat (rebounds, threes, assists, points; `NBA_OUTLIERS`) the
+  night's likeliest to reach **double his projection** and at least + 4 rebounds / assists, + 2 threes, + 10 points
+  (`outlierMark`), from `OUTLIER_MIN_MINUTES` = 12 minutes tonight and the stat's projection floor; the chance is the board's
+  tail at the mark (a count's for the counts) through σ(a + b · logit) fitted on 2025-26's replayed board at that mark
+  (`outlierChance`; threes as they are), `OUTLIER_LIST_MIN` = 3%; the row carries the book's main line, the book's price at the
+  mark when its ladder has the rung (`book` { line, odds, implied, edge, ev }), why (a start off the bench, the teammates out,
+  his nights at the mark in his last 20, his minutes: `outlierWhy`) and what he got. `nbaOutliers` runs in the binding's
+  `buildBoard` (`board.big.outliers` = { rows, lists }); the replay's `--board` dump carries both lists.
   `__tests__/nba-big.test.jsx`.
 - **Cheat sheet** (`#sheet`, `components/nba/NbaSheetMatchups.jsx`, the pure reader `lib/nba/sheet-matchups.js`; Vincent,
   2026-10-31: "create a new view with best cheat sheet matchups per game"): per game the cheat sheet's soft tiles — the

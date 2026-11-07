@@ -23,7 +23,7 @@ import { nbaBoard, COCKTAIL, COCKTAIL_BEFORE_OUTLIERS, COCKTAIL_BEFORE_RECIPE, R
 import { makeShuffle } from '../../lib/picks/shuffle.js';
 import { gradeBoard, gradePredictors, summarize, asOf, etDate, PREDICTORS } from '../../lib/picks/scorecard.js';
 import { normName } from '../../lib/nhl-data/names.js';
-import { nbaBigGames } from '../../lib/nba/big.js';
+import { nbaBigGames, nbaOutliers } from '../../lib/nba/big.js';
 import { OWN_WEIGHTS, ENV_WEIGHT, upperTail } from '../../lib/picks/projection.js';
 import { calibrationOf, playChance, rungFit, calibrated, calibrate } from '../../lib/picks/calibration.js';
 
@@ -240,7 +240,10 @@ for (const slate of slates.filter((d) => d >= from)) {
     const sh = makeShuffle({ board: nbaBoard(CK), markets: SHUFFLE_MARKETS });
     const shuffle = Object.fromEntries(SHUFFLE_MARKETS.map(({ market }) => [market, sh.shuffleOf({ market, board, pf: cut, season: SEASON, results })]));
     fs.mkdirSync(OUT, { recursive: true });
-    fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-board.json`), JSON.stringify({ board: { ...board, date: slate }, shuffle }));
+    // The Big games tab's lists, as the site's binding (lib/nba/picks.js buildBoard) puts them on the board.
+    const bigCtx = { pf: cut, results, statOf, actualFor };
+    const big = { ...nbaBigGames(board, bigCtx), outliers: nbaOutliers(board, bigCtx) };
+    fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-board.json`), JSON.stringify({ board: { ...board, date: slate, big }, shuffle }));
   }
   if (process.argv.includes('--big')) {
     const big = nbaBigGames(board, { pf: cut, results, statOf, actualFor });

@@ -1878,9 +1878,14 @@ div.nhlx-auto-msg > p { margin: 0; }
 .ir-big-name { padding: 0; border: 0; background: none; color: var(--heading); font: inherit; text-align: left; cursor: pointer; }
 .ir-big-name:hover b { text-decoration: underline; }
 .ir-big-table td small.ir-big-sub { display: block; font-size: 12px; color: var(--muted); }
+/* The Outliers view: the book's price at the mark, its edge in points (green when the board's chance beats it). */
+.ir-big-table td small.ir-out-edge { color: var(--muted); font-size: 12px; }
+.ir-big-table td small.ir-out-edge.is-pos { color: var(--ok-fg); }
+.ir-overview > .nhlx-tabs + .nhlx-tabs { margin-top: 8px; }
 @media (max-width: 700px) {
   .ir-big-table th.ir-big-why, .ir-big-table td.ir-big-why { display: none; }
   .ir-big-table td small.ir-big-why-m { display: block; margin-top: 2px; color: var(--body); }
+  .ir-big-table th.ir-out-line, .ir-big-table td.ir-out-line { display: none; }
 }
 @media (max-width: 700px) {
   .ir-gm-cols, .ir-gm-team { grid-template-columns: 30px minmax(0, 1fr) auto 76px 76px; gap: 0 8px; }
