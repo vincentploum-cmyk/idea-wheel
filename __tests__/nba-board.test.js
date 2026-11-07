@@ -152,6 +152,23 @@ describe('NBA PropFinder mapping', () => {
     const pts = mapPlayers([ladder])[0].props.find((x) => x.market === 'pts');
     expect(pts).toMatchObject({ line: 8.5, odds: -115, underOdds: -105, isMain: true });
     expect(pts.lines.map((x) => x.line)).toEqual([1.5, 3.5, 8.5, 11.5]);
+    // A line priced against its own ladder is another market's (2026-11-07: a 25-point scorer's o5.5 at -143 between o3.5
+    // at -24900 and o7.5 at -6150 read as his main line with a +68.6% edge): it leaves the ladder and the pick.
+    const stray25 = { ...PLAYER, stats: [{ ...GAME, points: 25 }, { ...GAME, gameDate: '2026-10-19T23:30:00Z', points: 27 }], odds: [
+      item('Player Points', 'points', 'Betano', 'over', -49900, 1.5), item('Player Points', 'points', 'Betano', 'over', -24900, 3.5),
+      item('Player Points', 'points', 'Book B', 'over', -143, 5.5),
+      item('Player Points', 'points', 'Betano', 'over', -6150, 7.5), item('Player Points', 'points', 'Betano', 'over', -3126, 9.5),
+      item('Player Points', 'points', 'Betano', 'over', -1752, 11.5), item('Player Points', 'points', 'Betano', 'over', -801, 13.5),
+      item('Player Points', 'points', 'DraftKings', 'over', -115, 25.5), item('Player Points', 'points', 'DraftKings', 'under', -105, 25.5),
+    ] };
+    const p25 = mapPlayers([stray25])[0].props.find((x) => x.market === 'pts');
+    expect(p25).toMatchObject({ line: 25.5, odds: -115 });
+    expect(p25.lines.map((x) => x.line)).toEqual([1.5, 3.5, 7.5, 9.5, 11.5, 13.5, 25.5]);
+    // On the ladder the main rung is the pull's line, whatever a book flagged.
+    const { ladderOf } = nbaBoard(COCKTAIL);
+    const l25 = ladderOf(Array.from({ length: 10 }, (_, i) => ({ date: `2026-10-${String(20 - i).padStart(2, '0')}`, season: 2026, type: 'REG', min: 34, pts: 25 + (i % 3), reb: 5, ast: 4 })),
+      { market: 'pts', season: 2026, prop: { ...p25, lines: p25.lines.map((x) => ({ ...x, main: x.line === 7.5 || x.main })) } });
+    expect(l25.filter((r) => r.main).map((r) => r.line)).toEqual([25.5]);
     // The shooting lines whose names carry a market's word (the live pull, 2026-10-20: "Made Two Pointers" read as points,
     // "Threes Attempted" as threes) are markets of their own since 2026-11-01, each where it settles; the fantasy score
     // is no market.

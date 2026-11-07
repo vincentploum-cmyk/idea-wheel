@@ -240,6 +240,12 @@ config and keeps its own markets, teams, feeds and slate key:
   miss and every market's rung Brier down over the season (points 4.96 → 4.92, rebounds 1.99 → 1.97, assists 1.46 → 1.45, threes
   1.012 → 1.005, PRA 6.52 → 6.42), the pieces priced in the audit. `--cocktail before | recipe | site+{json} | before+{json}` on
   the replay; `tools/audit/nba_ab_rows.py` compares variants on the same player-games. `__tests__/nba-recipe.test.js`.
+- **A ladder priced against itself** (2026-11-07, Vincent's screenshot: a 25-point scorer's o5.5 points at -143 between o3.5 at
+  -24900 and o7.5 at -6150, the card's main line with a +68.6% edge): `playerProps` drops a line priced under a higher line of
+  its market by more than `LADDER_CLASH` = 15 points of implied chance (another market's line filed under it), the line in the
+  most clashes first, the lone book's of two; and `ladderOf` marks main only the pull's line (`prop.line`), never the rungs a
+  book flags main on its alternate ladder (the first flagged, the lowest, had read as the night's line on the ranges, the
+  shuffle and the card).
 - **The outlier nights** (the cocktail's `countTail` and `lineup`; `OUTLIERS` on the NBA's `COCKTAIL` since 2026-11-07, the board
   before it `COCKTAIL_BEFORE_OUTLIERS`, the replay's `--cocktail outliersOff`; Vincent, 2026-11-07: "a few players were projected
   by us to get 4 or 5 rebounds but they actually got 10+ … that is where the money is for nba. The big players are nuked in odds
