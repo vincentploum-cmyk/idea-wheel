@@ -695,8 +695,13 @@
   the points step) and the historical-profile (position vs opponent) multipliers on the goal ladder are cut to a
   quarter — `VENUE_SPLIT_WEIGHT` and `H2H_WEIGHT` at the top of `model-core.js`, `venueMix`; 1 restores the model as
   it was, 0 turns the factor off; Vincent's call after the study's section 16 (`__tests__/nhl-model-weights.test.js`).
-  `node tools/port-model-core.mjs [App.jsx]` applies all three ports on the Mac (the 2026-10-13 shots odds, the
-  2026-10-20 goal odds, the 2026-10-27 weights), each group all-or-nothing by exact-text anchors: a backup beside the
+  And on 2026-11-07 (port it too): `projectedToiFromLineup` (the `effectiveToi` every minute gate reads) is the line's
+  constant + 0.345 · his last 5 + 0.442 · his season (`TOI_FIT`), refitted on the posted lines, in place of max(last 5,
+  the line's floor); its call passes `skater.toiL5` and `skater.toiSeason`; a skater with no minutes gets the line's mean
+  (Vincent: "yes, refit on the stored lineups and swap it in"; `docs/audits/2026-11-07-nhl-toi.md`,
+  `__tests__/nhl-model-toi.test.js`).
+  `node tools/port-model-core.mjs [App.jsx]` applies all four ports on the Mac (the 2026-10-13 shots odds, the
+  2026-10-20 goal odds, the 2026-10-27 weights, the 2026-11-07 minutes), each group all-or-nothing by exact-text anchors: a backup beside the
   file, a group already there reported as ported, a group with a differing anchor skipped and named, `--check` to
   look first. On 2026-10-27 App.jsx had neither odds port: the local app had published the ladder's odds since Oct 13.
 

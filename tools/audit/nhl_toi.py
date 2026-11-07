@@ -26,6 +26,8 @@ ap = argparse.ArgumentParser()
 ap.add_argument('--raw', required=True); ap.add_argument('--out', required=True)
 ap.add_argument('--train', default='20252026'); ap.add_argument('--test', default='20262027')
 ap.add_argument('--min-games', type=int, default=5)
+ap.add_argument('--lines', default=None, help='the posted lines of the test season (tools/audit/nhl-toi-lines.mjs): adds section F, the refit')
+ap.add_argument('--split', default='2026-10-24', help='section F: fitted before this date, scored from it')
 args = ap.parse_args()
 md = []
 def line(s=''): md.append(s)
@@ -178,5 +180,80 @@ te = e[e.season == args.test].assign(moved=lambda x: np.sign(x.slotPre - x.slotR
 te['the model now'] = np.maximum(te.toiL5, fl(te, 'slotReal')); te['fit with the slot'] = reads['fit: + slot as played + PP role (league PP min)'][te.index]
 table(te.groupby('moved').agg(n=('toi', 'size'), toi=('toi', 'mean'), L10=('toiL10', 'mean'), model_now=('the model now', 'mean'),
                               fit_with_slot=('fit with the slot', 'mean')))
+
+# ── F. the refit on the posted lines ─────────────────────────────────────────────────────────────────────────────────
+if args.lines:
+    P = json.load(open(args.lines))
+    posted = pd.DataFrame([{'gameId': g['gameId'], 'team': g['team'], 'src': g['source'], 'playerId': int(pid), 'lpos': v['pos'], 'pline': v['line']}
+                           for g in P['games'] for pid, v in g['players'].items()])
+    src = pd.DataFrame([{'gameId': g['gameId'], 'team': g['team'], 'src': g['source']} for g in P['games']])
+    # what the model is given: his last 5 and his season to date (this season's games before the date; none yet → his last 10)
+    d['nS'] = d.groupby(['playerId', 'season']).cumcount()
+    d['toiSeason'] = d.groupby(['playerId', 'season'])['toi'].transform(lambda x: x.shift(1).expanding().mean())
+    d['toiSeason'] = d.toiSeason.fillna(d.toiL10)
+    f = d[(d.season == P['season'][:8]) | (d.season == P['season'])].merge(src, on=['gameId', 'team'], how='left')
+    f = f.merge(posted.drop(columns='src'), on=['gameId', 'team', 'playerId'], how='left')
+    f = f[f.n >= 1].copy()
+    f['inLines'] = f.pline.notna()
+    f['lineKey'] = np.where(f.inLines, np.where(f.lpos == 'D', 'D', 'F') + f.pline.fillna(0).astype(int).astype(str), 'none')
+    f['posKpost'] = np.where(f.inLines, np.where(f.lpos == 'D', 'D', 'F'), f.posK)
+    f['slotReal2'] = slot(f, 'ev')
+    line('## F. The refit on the posted lines (' + P['season'] + ')'); line()
+    tw = src.src.value_counts().to_dict()
+    line(f'The lines each team-game was posted with, rebuilt from GameDayTweets by the site\'s reader (`latestTeamLines`, '
+         f'the newest lines tweet from the day before up to {P["afterMin"]} minutes past puck drop; '
+         f'tools/audit/nhl-toi-lines.mjs): {tw.get("tweet", 0)} team-games read from a tweet, {tw.get("last", 0)} carried over '
+         f'from the last game, {tw.get("none", 0)} with none. {100 * f.inLines.mean():.1f}% of the {len(f):,} skater-games '
+         f'(1+ game before) found their skater in the lines.'); line()
+    x = f[f.inLines]
+    agree = (x.pline == np.where(x.posKpost == 'D', np.minimum(3, x.slotReal2), np.minimum(4, x.slotReal2)))
+    line(f'The posted line is the played one (tonight\'s even-strength rank) for {100 * agree[x.posKpost == "F"].mean():.0f}% of forwards and '
+         f'{100 * agree[x.posKpost == "D"].mean():.0f}% of defencemen; the slot read from his recent minutes managed 53% / 61% (section A).'); line()
+    line('Minutes by posted line:'); line()
+    table(x.groupby('lineKey').agg(n=('toi', 'size'), toi=('toi', 'mean'), L5=('toiL5', 'mean'), season=('toiSeason', 'mean'), ev=('ev', 'mean'), pp=('pp', 'mean')))
+    FLOOR2 = {'D1': 21.0, 'D2': 18.5, 'D3': 16.0, 'F1': 18.5, 'F2': 16.0, 'F3': 13.5, 'F4': 11.0}
+    x = x.copy(); x['floorRule'] = np.maximum(x.toiL5, x.lineKey.map(FLOOR2))
+    fit, test = x[x.date < args.split], x[x.date >= args.split]
+    forms = {'fit: L5 + season': 'toi ~ toiL5 + toiSeason',
+             'fit: L5 + season + posted line': 'toi ~ toiL5 + toiSeason + C(lineKey)',
+             'fit: L5 + season + posted line, own slopes F / D': 'toi ~ (toiL5 + toiSeason) * C(posKpost) + C(lineKey)',
+             'fit: + PP / PK share (not in the model\'s inputs)': 'toi ~ toiL5 + toiSeason + C(lineKey) + ppShare + shShare'}
+    preds = {'his last 5': test.toiL5, 'his season': test.toiSeason, 'the model now: max(L5, line floor)': test.floorRule}
+    models = {}
+    for k, fo in forms.items():
+        m = smf.ols(fo, data=fit).fit(); models[k] = m; preds[k] = m.predict(test)
+    rows = []
+    for k, p in preds.items():
+        err = p - test.toi; r = {'read': k, 'MAE': err.abs().mean(), 'bias': err.mean()}
+        for side, msk in (('stayed', test.pline == np.where(test.posKpost == 'D', np.minimum(3, test.slotPre), np.minimum(4, test.slotPre))),):
+            pass
+        rows.append(r)
+    line(f'Fitted on the games before {args.split} ({len(fit):,} skater-games), scored from it ({len(test):,}):'); line()
+    table(pd.DataFrame(rows), index=False)
+    # the moves: posted line against the slot his recent minutes say
+    test = test.copy(); test['moved'] = np.sign(test.slotPre - test.pline).map({1.0: 'up', 0.0: 'same', -1.0: 'down'})
+    test['fit'] = preds['fit: L5 + season + posted line']
+    line('Skaters the posted lines moved off the slot their recent minutes say (scored half):'); line()
+    table(test.groupby('moved').agg(n=('toi', 'size'), toi=('toi', 'mean'), L5=('toiL5', 'mean'), model_now=('floorRule', 'mean'), fit=('fit', 'mean')))
+    final = smf.ols('toi ~ toiL5 + toiSeason + C(lineKey)', data=x).fit()
+    line(f'Refitted on all {len(x):,} skater-games with a posted line, the read to ship: ' + ', '.join(f'{n} {v:+.3f}' for n, v in final.params.items())
+         + f' (R² {final.rsquared:.3f}; residual sd {np.sqrt(final.scale):.2f} min).'); line()
+    base = final.params['Intercept']
+    line('As per-line constants (the intercept, D1\'s, plus the line\'s term): ' + ', '.join(
+        f'{k} {base + final.params.get(f"C(lineKey)[T.{k}]", 0):.2f}' for k in ('F1', 'F2', 'F3', 'F4', 'D1', 'D2', 'D3'))
+        + f'; toi = that + {final.params.toiL5:.3f} · L5 + {final.params.toiSeason:.3f} · season.'); line()
+    # the gates: effectiveToi sets the role tags and floors at fixed minutes (model-core.js buildDefenseRoleMarketBoost,
+    # the role lanes, the goal-leak overrides); the share of each line's skaters over a gate, under each read
+    x = x.copy(); x['fitAll'] = final.predict(x)
+    GATES = [('F1', 15.5), ('F1', 17.0), ('F1', 18.5), ('F2', 14.0), ('F2', 15.0), ('F2', 16.0), ('F3', 12.0), ('F3', 13.5),
+             ('F4', 10.5), ('F4', 11.5), ('D1', 20.5), ('D1', 21.0), ('D1', 23.0), ('D2', 19.0), ('D2', 20.0)]
+    rows = []
+    for k, gmin in GATES:
+        y = x[x.lineKey == k]
+        rows.append({'line': k, 'gate (min)': gmin, 'played over': f'{100 * (y.toi >= gmin).mean():.0f}%',
+                     'old rule over': f'{100 * (y.floorRule >= gmin).mean():.0f}%', 'refit over': f'{100 * (y.fitAll >= gmin).mean():.0f}%'})
+    line('The model\'s minute gates (tags, lanes, floors), by posted line: the share of skaters over each, as played and under each read:'); line()
+    table(pd.DataFrame(rows), index=False)
+    json.dump({'params': final.params.to_dict(), 'n': len(x), 'sd': float(np.sqrt(final.scale))}, open(args.out.replace('.md', '') + '-fit.json', 'w'), indent=1)
 
 open(args.out, 'w').write('\n'.join(md) + '\n'); print('wrote', args.out)

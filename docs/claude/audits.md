@@ -146,9 +146,13 @@
   line cuts the miss from 1.94 to 1.56 minutes, a ceiling, since that line is read from the result. The matchup's power plays add
   nothing: in hindsight a first-unit forward nets +0.39 minutes a power play (+0.98 on the power play, −0.56 at even strength),
   but the forecast spans only 2.7–3.3 and correlates 0.1 with the count (miss 1.511 → 1.510). `projectedToiFromLineup`'s
-  max(L5, floor) runs +0.6 to +0.9 minutes high and never lowers a demoted skater. A fit (L10, L5, the line's mean, PP and
-  PK share) reads 1.51, but nothing shipped: the line's weight must be refitted on the stored posted lines, `effectiveToi`
-  gates the tags and floors, and the model's math waits on Vincent's call and the `App.jsx` port.
+  max(L5, floor) ran +0.6 to +0.9 minutes high and never lowered a demoted skater. **Refitted on the posted lines and
+  shipped** (Vincent, 2026-11-07: "yes, refit on the stored lineups and swap it in"; the lines rebuilt from GameDayTweets by
+  `latestTeamLines`, up to 10 minutes past puck drop, `tools/audit/nhl-toi-lines.mjs`; 443 of 512 team-games from a tweet):
+  `toi = the line's constant + 0.345 · L5 + 0.442 · season` (`TOI_FIT`: F1 4.05 · F2 3.60 · F3 3.07 · F4 2.16 · D1 5.04 ·
+  D2 4.26 · D3 2.98), 1.82 minutes on the later half against the old rule's 2.08 (bias +0.05 against +0.84); the posted line
+  itself is worth 0.04 over his own minutes, the rest is the floor's bias gone. The minute gates now pass about the share
+  that plays them (F1 at 17: 100% → 76%, 69% played; D1 at 21: 100% → 73%).
 
 - The NFL projections, backtested (`docs/audits/2026-11-01-nfl-backtest.md`, `tools/audit/nfl-fetch.mjs` → `nfl-audit.mjs`;
   Vincent, 2026-11-01: "Did you backtest and optimize it based on the last 7 week's matches?" — no — then "yes do the

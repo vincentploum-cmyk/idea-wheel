@@ -102,3 +102,65 @@ First-unit forwards by fifth of the forecast (tonight's minutes against his last
 | same | 4866 | 16.69 | 16.71 | 17.33 | 16.71 |
 | up | 2048 | 17.28 | 15.50 | 17.69 | 17.42 |
 
+## F. The refit on the posted lines (20262027)
+
+The lines each team-game was posted with, rebuilt from GameDayTweets by the site's reader (`latestTeamLines`, the newest lines tweet from the day before up to 10 minutes past puck drop; tools/audit/nhl-toi-lines.mjs): 443 team-games read from a tweet, 62 carried over from the last game, 7 with none. 92.7% of the 9,169 skater-games (1+ game before) found their skater in the lines.
+
+The posted line is the played one (tonight's even-strength rank) for 50% of forwards and 57% of defencemen; the slot read from his recent minutes managed 53% / 61% (section A).
+
+Minutes by posted line:
+
+| lineKey | n | toi | L5 | season | ev | pp |
+| --- | --- | --- | --- | --- | --- | --- |
+| D1 | 931 | 22.30 | 22.00 | 21.86 | 18.64 | 1.55 |
+| D2 | 948 | 19.84 | 19.78 | 19.78 | 17.19 | 0.65 |
+| D3 | 879 | 15.54 | 16.08 | 15.85 | 13.98 | 0.48 |
+| F1 | 1475 | 18.36 | 18.14 | 18.20 | 14.84 | 2.92 |
+| F2 | 1455 | 16.56 | 16.46 | 16.44 | 13.55 | 2.23 |
+| F3 | 1433 | 14.47 | 14.50 | 14.45 | 12.20 | 1.27 |
+| F4 | 1380 | 11.32 | 11.76 | 11.53 | 9.97 | 0.33 |
+
+Fitted on the games before 2026-10-24 (5,210 skater-games), scored from it (3,291):
+
+| read | MAE | bias |
+| --- | --- | --- |
+| his last 5 | 1.89 | 0.10 |
+| his season | 1.87 | -0.00 |
+| the model now: max(L5, line floor) | 2.08 | 0.84 |
+| fit: L5 + season | 1.86 | 0.07 |
+| fit: L5 + season + posted line | 1.82 | 0.05 |
+| fit: L5 + season + posted line, own slopes F / D | 1.82 | 0.05 |
+| fit: + PP / PK share (not in the model's inputs) | 1.81 | 0.04 |
+
+Skaters the posted lines moved off the slot their recent minutes say (scored half):
+
+| moved | n | toi | L5 | model_now | fit |
+| --- | --- | --- | --- | --- | --- |
+| down | 697 | 17.16 | 17.55 | 17.58 | 16.99 |
+| same | 1962 | 16.33 | 16.48 | 17.08 | 16.40 |
+| up | 632 | 16.53 | 16.12 | 18.09 | 16.75 |
+
+Refitted on all 8,501 skater-games with a posted line, the read to ship: Intercept +5.039, C(lineKey)[T.D2] -0.778, C(lineKey)[T.D3] -2.059, C(lineKey)[T.F1] -0.994, C(lineKey)[T.F2] -1.435, C(lineKey)[T.F3] -1.966, C(lineKey)[T.F4] -2.878, toiL5 +0.345, toiSeason +0.442 (R² 0.708; residual sd 2.46 min).
+
+As per-line constants (the intercept, D1's, plus the line's term): F1 4.05, F2 3.60, F3 3.07, F4 2.16, D1 5.04, D2 4.26, D3 2.98; toi = that + 0.345 · L5 + 0.442 · season.
+
+The model's minute gates (tags, lanes, floors), by posted line: the share of skaters over each, as played and under each read:
+
+| line | gate (min) | played over | old rule over | refit over |
+| --- | --- | --- | --- | --- |
+| F1 | 15.50 | 83% | 100% | 89% |
+| F1 | 17.00 | 69% | 100% | 76% |
+| F1 | 18.50 | 50% | 100% | 52% |
+| F2 | 14.00 | 81% | 100% | 90% |
+| F2 | 15.00 | 70% | 100% | 79% |
+| F2 | 16.00 | 58% | 100% | 63% |
+| F3 | 12.00 | 82% | 100% | 93% |
+| F3 | 13.50 | 65% | 100% | 72% |
+| F4 | 10.50 | 62% | 100% | 67% |
+| F4 | 11.50 | 48% | 55% | 46% |
+| D1 | 20.50 | 70% | 100% | 80% |
+| D1 | 21.00 | 64% | 100% | 73% |
+| D1 | 23.00 | 41% | 34% | 35% |
+| D2 | 19.00 | 64% | 65% | 69% |
+| D2 | 20.00 | 49% | 46% | 49% |
+
