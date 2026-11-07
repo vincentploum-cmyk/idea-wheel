@@ -497,9 +497,15 @@
   `Rink.jsx`), since the gap on the ice is the lineup's, not a missing read; and the model's lineup rows carry the short
   line with a placeholder third name (`SHORT_LINE_FILL` in `lineupRowsFromSnapshot`: the model's parser, untouched, takes a
   two-name row as a pair and drops every skater its lineup rows lack, so until then the short line's two forwards were out of
-  the auto run); "game-day" is decided by timestamp (tweet id vs the preview's updated time), and a tweet
-  from the warm-up window (`GDT_FINAL_WORD_MIN`, 90 minutes before puck drop, or after it) beats the
-  preview whatever its updated time. A tweet
+  the auto run); a tweet from the warm-up window (`GDT_FINAL_WORD_MIN`, 90 minutes before puck drop, or after
+  it) beats the preview whatever its time; **a tweet from the game's date before that (the morning skate) beats
+  the preview unless NHL.com revised that team's lines after the tweet** (Vincent, 2026-11-07: every rink read
+  "NHL.com projected" with morning-skate lines tweeted for CAR, CHI, DAL, EDM, PIT: the preview's "updated" stamp
+  moves on every refresh while its lineup stands still, so it beat every morning tweet). `withLinesTimes` (in
+  `keepPreview`, `ingest.js`) keeps per team `linesAt` (when the lines as they stand were first seen) and
+  `revisedAt` (when a re-read found them changed; null until then), comparing the parsed slots, not the prose; a
+  tweet from an earlier day goes by timestamp against `linesAt`. The snapshot carries `nhlRevised` and the
+  preview pill's hover names the revision. A tweet
   that only confirms the lines ("Same lineup, Swayman in net", "no changes", `confirmsSameLines`)
   stands for the newest lines tweet before it, even past the date floor: the lines are that
   tweet's, the time and link the confirmation's (`meta.confirmed`, `meta.linesFrom`). A prose
