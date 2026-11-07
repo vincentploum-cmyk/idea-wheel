@@ -1322,20 +1322,29 @@ function buildDefenseRoleMarketBoost({ oppRoleProfile, posStats, currentRole, po
 // ─── PARSE LINEUPS ───────────────────────────────────────────────────────────
 
 
-function projectedToiFromLineup(posKey, todayLine, playerToi) {
-  const p = (posKey || "").toUpperCase();
-  const current = playerToi || 0;
+// ─── PROJECTED MINUTES (2026-11-07) ──────────────────────────────────────────
+// Refitted on the posted lines (docs/audits/2026-11-07-nhl-toi.md, tools/audit/nhl_toi.py section F):
+// 8,501 skater-games of 2026-27, each with the lines GameDayTweets posted before puck drop.
+// toi = the line's constant + 0.345 · his last 5 + 0.442 · his season. On the later half of the
+// games it misses by 1.82 minutes with a +0.05 bias. The rule it replaces, his last 5 or the
+// line's floor (F 18.5 / 16 / 13.5 / 11, D 21 / 18.5 / 16), whichever was higher, missed by 2.08
+// with a +0.84 bias and never lowered a demoted skater. The matchup's power plays measured
+// nothing and are left out. With no minutes on record the line's mean stands in.
+const TOI_FIT = {
+  l5: 0.345,
+  season: 0.442,
+  line: { F1: 4.05, F2: 3.60, F3: 3.07, F4: 2.16, D1: 5.04, D2: 4.26, D3: 2.98 },
+  mean: { F1: 18.36, F2: 16.56, F3: 14.47, F4: 11.32, D1: 22.30, D2: 19.84, D3: 15.54 },
+};
 
-  if (p === "D") {
-    if (todayLine === 1) return Math.max(current, 21.0);
-    if (todayLine === 2) return Math.max(current, 18.5);
-    return Math.max(current, 16.0);
-  }
-
-  if (todayLine === 1) return Math.max(current, 18.5);
-  if (todayLine === 2) return Math.max(current, 16.0);
-  if (todayLine === 3) return Math.max(current, 13.5);
-  return Math.max(current, 11.0);
+function projectedToiFromLineup(posKey, todayLine, playerToi, toiL5, toiSeason) {
+  const isD = (posKey || "").toUpperCase() === "D";
+  const n = Math.max(1, Math.round(Number(todayLine) || (isD ? 3 : 4)));
+  const key = isD ? `D${Math.min(3, n)}` : `F${Math.min(4, n)}`;
+  const l5 = Number(toiL5) > 0 ? Number(toiL5) : Number(playerToi) || 0;
+  const season = Number(toiSeason) > 0 ? Number(toiSeason) : l5;
+  if (!(l5 > 0)) return TOI_FIT.mean[key];
+  return +(TOI_FIT.line[key] + TOI_FIT.l5 * l5 + TOI_FIT.season * season).toFixed(2);
 }
 
 
@@ -4513,7 +4522,7 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
         const basePosRaw = (skater.pos || "C").replace(/\s/g, "").toUpperCase();
         const resolvedPosRaw = ["C", "LW", "RW", "D"].includes(lineupPosRaw) ? lineupPosRaw : basePosRaw;
         const posKeyForToi = ["C", "LW", "RW", "D"].includes(resolvedPosRaw) ? resolvedPosRaw : "C";
-        const effectiveToi = projectedToiFromLineup(posKeyForToi, todayLine, playerToi);
+        const effectiveToi = projectedToiFromLineup(posKeyForToi, todayLine, playerToi, skater.toiL5, skater.toiSeason);
         const venueIffSeason = pHA ? (isHome ? pHA.iff_home : pHA.iff_away) : 0;
         const iffAnchor =
           (venueIffSeason > 0 ? venueIffSeason : skater.iffSeason) || 0;
@@ -6220,6 +6229,7 @@ export {
   positionGoalLeakOverride,
   profileRate,
   projectedToiFromLineup,
+  TOI_FIT,
   resolvePaceTier,
   resolveRoleLabelAgainstCheatSheet,
   roleGoalAccessMultiplier,

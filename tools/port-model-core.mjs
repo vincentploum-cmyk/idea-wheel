@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Port the site's model changes into the local model app (App.jsx, the model's source of truth),
-// the same edits made to components/nhl/model-core.js, in three groups, each all-or-nothing:
+// the same edits made to components/nhl/model-core.js, in four groups, each all-or-nothing:
 //   1. 2026-10-13 (a022443): p2s / p3s / p4s / p5s are the Poisson tails of λ shots; the ladder's
 //      figures ride along as ladderP3s / P4s / P5s and still set the attack score.
 //   2. 2026-10-20 (4ec641f): p1g / p2g / p3g are the Poisson tails of λ goals; the ladder's figures
@@ -8,6 +8,9 @@
 //   3. 2026-10-27 (26b1084): the home / away split's share of a skater's goal base and the
 //      historical-profile multipliers on the goal ladder cut to a quarter (VENUE_SPLIT_WEIGHT,
 //      H2H_WEIGHT, venueMix).
+//   4. 2026-11-07: projectedToiFromLineup refitted on the posted lines (TOI_FIT: the line's constant
+//      + 0.345 · last 5 + 0.442 · season, in place of max(last 5, the line's floor)); its call passes
+//      skater.toiL5 and skater.toiSeason (docs/audits/2026-11-07-nhl-toi.md).
 //
 //   node tools/port-model-core.mjs [path to App.jsx] [--check]
 //
@@ -124,10 +127,61 @@ const WEIGHTS = [
   },
 ];
 
+const TOI = [
+  {
+    name: 'the projected minutes (projectedToiFromLineup)',
+    old: 'function projectedToiFromLineup(posKey, todayLine, playerToi) {\n'
+      + '  const p = (posKey || \"\").toUpperCase();\n'
+      + '  const current = playerToi || 0;\n'
+      + '\n'
+      + '  if (p === \"D\") {\n'
+      + '    if (todayLine === 1) return Math.max(current, 21.0);\n'
+      + '    if (todayLine === 2) return Math.max(current, 18.5);\n'
+      + '    return Math.max(current, 16.0);\n'
+      + '  }\n'
+      + '\n'
+      + '  if (todayLine === 1) return Math.max(current, 18.5);\n'
+      + '  if (todayLine === 2) return Math.max(current, 16.0);\n'
+      + '  if (todayLine === 3) return Math.max(current, 13.5);\n'
+      + '  return Math.max(current, 11.0);\n'
+      + '}\n',
+    new: '// ─── PROJECTED MINUTES (2026-11-07) ──────────────────────────────────────────\n'
+      + '// Refitted on the posted lines (docs/audits/2026-11-07-nhl-toi.md, tools/audit/nhl_toi.py section F):\n'
+      + '// 8,501 skater-games of 2026-27, each with the lines GameDayTweets posted before puck drop.\n'
+      + '// toi = the line\'s constant + 0.345 · his last 5 + 0.442 · his season. On the later half of the\n'
+      + '// games it misses by 1.82 minutes with a +0.05 bias. The rule it replaces, his last 5 or the\n'
+      + '// line\'s floor (F 18.5 / 16 / 13.5 / 11, D 21 / 18.5 / 16), whichever was higher, missed by 2.08\n'
+      + '// with a +0.84 bias and never lowered a demoted skater. The matchup\'s power plays measured\n'
+      + '// nothing and are left out. With no minutes on record the line\'s mean stands in.\n'
+      + 'const TOI_FIT = {\n'
+      + '  l5: 0.345,\n'
+      + '  season: 0.442,\n'
+      + '  line: { F1: 4.05, F2: 3.60, F3: 3.07, F4: 2.16, D1: 5.04, D2: 4.26, D3: 2.98 },\n'
+      + '  mean: { F1: 18.36, F2: 16.56, F3: 14.47, F4: 11.32, D1: 22.30, D2: 19.84, D3: 15.54 },\n'
+      + '};\n'
+      + '\n'
+      + 'function projectedToiFromLineup(posKey, todayLine, playerToi, toiL5, toiSeason) {\n'
+      + '  const isD = (posKey || \"\").toUpperCase() === \"D\";\n'
+      + '  const n = Math.max(1, Math.round(Number(todayLine) || (isD ? 3 : 4)));\n'
+      + '  const key = isD ? `D${Math.min(3, n)}` : `F${Math.min(4, n)}`;\n'
+      + '  const l5 = Number(toiL5) > 0 ? Number(toiL5) : Number(playerToi) || 0;\n'
+      + '  const season = Number(toiSeason) > 0 ? Number(toiSeason) : l5;\n'
+      + '  if (!(l5 > 0)) return TOI_FIT.mean[key];\n'
+      + '  return +(TOI_FIT.line[key] + TOI_FIT.l5 * l5 + TOI_FIT.season * season).toFixed(2);\n'
+      + '}\n',
+  },
+  {
+    name: 'the projected minutes\' call (his last 5 and season passed)',
+    old: '        const effectiveToi = projectedToiFromLineup(posKeyForToi, todayLine, playerToi);\n',
+    new: '        const effectiveToi = projectedToiFromLineup(posKeyForToi, todayLine, playerToi, skater.toiL5, skater.toiSeason);\n',
+  },
+];
+
 export const GROUPS = [
   { key: 'shotsOdds20261013', label: 'shots odds (2026-10-13): p2s / p3s / p4s / p5s the Poisson tails of λ shots, the ladder as ladderP3s / P4s / P5s', edits: SHOTS_ODDS },
   { key: 'goalOdds20261020', label: 'goal odds (2026-10-20): p1g / p2g / p3g the Poisson tails of λ goals, the ladder as ladderP1g / P2g / P3g', edits: GOAL_ODDS },
   { key: 'weights20261027', label: 'venue split and head-to-head at a quarter (2026-10-27)', edits: WEIGHTS, constants: true },
+  { key: 'toi20261107', label: 'projected minutes (2026-11-07): the line\'s constant + 0.345 · last 5 + 0.442 · season, refitted on the posted lines', edits: TOI },
 ];
 
 /** The end index of the `function poissonAtLeast(` body (after its closing brace), or -1. */
