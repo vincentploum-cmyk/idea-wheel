@@ -256,12 +256,18 @@ config and keeps its own markets, teams, feeds and slate key:
   `buildBoard` and keys the board's memo on the feed; `gradeSlate` the slate's stored copy) against his starts over his last
   `games` regular-season games with PropFinder's `starter` flag (sparse: 1 a start, absent off the bench, null a row without
   the flag; read only when some row of the pull carries a 1, from `min` flagged games): in the five from under half of them
-  × (1 + up), out of it from half or more × (1 − down), into the ladder's `env` beside the teammates-out factor
-  (`ranges[market].lineup`; `lineup` { factor, role: promoted | demoted | starter | bench, share, n, status } on the side
-  player; `lineupText` words it on the court's and the card's hovers). Over 2025-26 a promoted player landed 1.21–1.30× his
-  projection (28.2 minutes against 24.4), a demoted one 0.89–0.92×; this season's 17 nights 1.00–1.12× and 0.79–0.86×; shipped
-  below the fit. Replayed: 2025-26's average miss down on every stat (points 4.903 → 4.883, PRA 6.352 → 6.315), the rung Brier
-  down or level. `__tests__/nba-outliers.test.js`.
+  (promoted) or out of it from half or more (demoted), his projection moves by his minutes with the five over his minutes
+  without it (`lineupMinutes`, the cocktail's `lineup.model` / `lineup.base`: `dec` this season's minutes decayed at `hl`,
+  `split` his average in tonight's role over his last `history` games shrunk at `splitK`, `vac` the minutes of the teammates
+  out by outRead's rule; clipped to `clip`; `LINEUP_MINUTES` in `lib/nba/picks.js`, Vincent, 2026-11-07: "can we predict
+  player's minutes based on lineups?"), × (1 + up) / × (1 − down) without a model, into the ladder's `env` beside the
+  teammates-out factor (`ranges[market].lineup`; `lineup` { factor, role: promoted | demoted | starter | bench, share, n,
+  status, minutes { tonight, before, dec, split, vac } } on the side player; the lineup's minutes are `minutes.tonight`, with
+  `minutes.lineup`, for the Min column, the thin gate and the plays; `lineupText` words it on the court's and the card's
+  hovers). Minutes' miss 4.75 (the board's read) → 4.65 over 2025-26, 4.91 → 4.66 this season. Over 2025-26 a promoted player landed 1.21–1.30× his
+  projection (28.2 minutes against 24.4), a demoted one 0.89–0.92×; this season's 17 nights 1.00–1.12× and 0.79–0.86×.
+  Replayed over 2025-26, the board before → the flat × 1.1 / × 0.9 → the minutes: points 4.903 → 4.883 → 4.875, PRA 6.352 →
+  6.315 → 6.297, every market's rung Brier lowest with the minutes. `__tests__/nba-outliers.test.js`.
 - `shuffle.js` (`makeShuffle` → `shuffleOf`, and the pure readers the panel runs: `readAt`, `pAt`, `survivorsAt`,
   `fallenAt`, `curveOf`, `thinsAt`, `linesAt`, `centreOf`): the shuffle, a bar per stat (`SHUFFLE_MARKETS` in each sport's
   `markets.js`: market, min, max, step, start). `GET /api/<sport>/shuffle?…&market=pts` reads every player on the

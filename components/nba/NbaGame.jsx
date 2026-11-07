@@ -65,7 +65,7 @@ function Roster({ side, final, metric, hiPos = null }) {
             return (
               <tr key={p.key} className="is-click" onClick={() => open({ key: p.key, player: p, team: side.team, opp: side.opp, venue: side.venue, market: stat })}>
                 <td><b>{p.player}</b><small className="nhlx-auto-meta"> {p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</small>{p.health === 'DTD' ? <> <span className="ir-health is-dtd" title={`${p.injury || ''}${p.injuryDetail ? ` · ${p.injuryDetail}` : ''}`}>DTD</span></> : null}{p.thin ? <> <span className="ir-health is-thin" title={`Projected ${num(p.minutes?.tonight, 0)} minutes: under the minutes gate`}>thin</span></> : null}{p.b2b ? <> <span className="ir-health is-b2b" title="Played last night">B2B</span></> : null}</td>
-                <td>{p.minutes?.tonight != null ? num(p.minutes.tonight, 0) : '—'}</td>
+                <td title={p.minutes?.lineup ? `${num(p.minutes.lineup.tonight)} minutes with RotoWire's ${String(p.minutes.lineup.status || '').toLowerCase() || 'starting'} five (${p.minutes.lineup.role === 'promoted' ? 'starts tonight, off the bench in most of his last games' : 'out of the five after starting most of his last games'}), ${num(p.minutes.lineup.before)} without it` : undefined}>{p.minutes?.tonight != null ? num(p.minutes.tonight, 0) : '—'}{p.minutes?.lineup ? (p.minutes.lineup.role === 'promoted' ? ' ↑' : ' ↓') : ''}</td>
                 {STATS.map(([k]) => {
                   const rr = p.ranges?.[k];
                   const cell = pos ? side.allowed?.rows?.[pos]?.[k] : null;

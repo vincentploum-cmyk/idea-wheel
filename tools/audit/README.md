@@ -155,6 +155,17 @@ python3 -I tools/audit/nba_spikes.py --box .nhl-data/audit/nba-box \
 
 Written up in `docs/audits/2026-11-07-nba-outliers.md`.
 
+## NBA: his minutes from the lineup (`nba_lineup_minutes.py`)
+
+The minutes model behind `LINEUP_MINUTES` (lib/nba/picks.js): his recent minutes, his average in tonight's role, the start,
+promoted / demoted against his last ten, the teammates out's minutes; least squares with and without the five, fitted on
+`--fit`, scored on the later seasons. Needs `stat-drivers-rows.pkl` (`nba_stat_drivers.py` once). The board replayed with it:
+`nba-audit.mjs --cocktail site` (the flat factor: `site+{"lineup":{"up":0.1,"down":0.1,"games":10,"min":5}}`).
+
+```bash
+python3 -I tools/audit/nba_lineup_minutes.py --box .nhl-data/audit/nba-box --fit 2026
+```
+
 ## NBA: the minutes read (`nba_minutes.py`)
 
 The replay's rows say what the projection would miss had the board known his minutes; this script tries to get there:

@@ -3,7 +3,7 @@
 // projection of a player whose role changed.
 import { describe, expect, test } from '@jest/globals';
 import { countTail, countQuantile, upperTail, lineupText } from '../lib/picks/projection';
-import { nbaBoard, COCKTAIL, COCKTAIL_BEFORE_OUTLIERS, OUTLIERS } from '../lib/nba/picks';
+import { nbaBoard, COCKTAIL, COCKTAIL_BEFORE_OUTLIERS, OUTLIERS, LINEUP_MINUTES } from '../lib/nba/picks';
 import { nbaBigChance } from '../lib/nba/big';
 import { tailOf } from '../lib/picks/shuffle';
 
@@ -57,7 +57,8 @@ describe('the ladder and the shuffle read the count tail for the counts', () => 
   });
   test('the site carries both reads', () => {
     expect(COCKTAIL.countTail).toEqual(['reb', 'ast', 'tpm', 'stl', 'blk']);
-    expect(COCKTAIL.lineup).toEqual(OUTLIERS.lineup);
+    expect(COCKTAIL.lineup).toEqual(LINEUP_MINUTES);
+    expect(LINEUP_MINUTES.model.promoted).toBeGreaterThan(0);
   });
 });
 
@@ -76,22 +77,40 @@ describe("tonight's starting five", () => {
   const players = [player('Trey Lyles', 'MIN', 1), player('Rudy Gobert', 'MIN', 10), player('Anthony Edwards', 'MIN', 10)];
   const fiveWithLyles = five(['Trey Lyles', 'Anthony Edwards', 'Mike Conley', 'Jaden McDaniels', 'Julius Randle']);
 
-  test('off the bench and in the five tonight: × (1 + up) on every market; a starter out of the five: × (1 − down)', () => {
+  test('off the bench and in the five tonight: his minutes with the five over his minutes without it, on every market', () => {
     const plain = build(pfWith(players), null);
     const b = build(pfWith(players), fiveWithLyles);
     const lyles = sideOf(b, 'trey lyles'); const gobert = sideOf(b, 'rudy gobert'); const ant = sideOf(b, 'anthony edwards');
-    expect(lyles.lineup).toMatchObject({ factor: 1.1, role: 'promoted', share: 0.1, n: 10, status: 'Expected' });
-    expect(lyles.ranges.reb.lineup).toBe(1.1);
-    expect(lyles.ranges.reb.exp).toBeCloseTo(sideOf(plain, 'trey lyles').ranges.reb.exp * 1.1, 0);
+    // 22 minutes every game, one start in ten, no teammate out: dec 22, split (22 + 3 · 22) / 4 = 22.
+    // With the five: 1.3259 + 0.62 · 22 + 0.2333 · 22 + 2.268 + 2.6584 = 25.0; without: 0.4915 + 0.9304 · 22 = 21.0.
+    expect(lyles.lineup).toMatchObject({ factor: 1.19, role: 'promoted', share: 0.1, n: 10, status: 'Expected', minutes: { tonight: 25, before: 21, dec: 22, split: 22, vac: 0 } });
+    expect(lyles.minutes).toMatchObject({ tonight: 25, lineup: { tonight: 25, before: 21, role: 'promoted' } });
+    expect(lyles.ranges.reb.lineup).toBe(1.19);
+    expect(lyles.ranges.reb.exp).toBeCloseTo(sideOf(plain, 'trey lyles').ranges.reb.exp * 1.19, 0);
     expect(lyles.ranges.reb.exp).toBeGreaterThan(sideOf(plain, 'trey lyles').ranges.reb.exp);
-    expect(gobert.lineup).toMatchObject({ factor: 0.9, role: 'demoted', share: 1 });
-    expect(gobert.ranges.pts.lineup).toBe(0.9);
+    // A starter every game out of the five: 1.3259 + 0.62 · 22 + 0.2333 · 22 − 1.3018 = 18.8 against 21.0.
+    expect(gobert.lineup).toMatchObject({ factor: 0.895, role: 'demoted', share: 1, minutes: { tonight: 18.8, before: 21 } });
+    expect(gobert.ranges.pts.lineup).toBe(0.895);
     expect(gobert.ranges.reb.exp).toBeLessThan(sideOf(plain, 'rudy gobert').ranges.reb.exp);
     expect(ant.lineup).toMatchObject({ factor: 1, role: 'starter' });
+    expect(ant.lineup.minutes).toBeUndefined();
     expect(ant.ranges.reb.lineup).toBeNull();
-    expect(lineupText({ lineup: 1.1, role: 'promoted', lineupStatus: 'Expected' })).toMatch(/starts tonight in RotoWire's expected five/);
+    // Without the minutes model (the first cut, OUTLIERS alone): the flat × 1.1 / × 0.9.
+    const flat = nbaBoard({ ...COCKTAIL_BEFORE_OUTLIERS, ...OUTLIERS }).buildBoard({ date: '2026-11-06', season: 2027, games, sheets: [], pf: pfWith(players), results: {}, lineups: fiveWithLyles });
+    expect(sideOf(flat, 'trey lyles').lineup).toMatchObject({ factor: 1.1, role: 'promoted' });
+    expect(sideOf(flat, 'rudy gobert').lineup).toMatchObject({ factor: 0.9, role: 'demoted' });
+    expect(lineupText({ lineup: 1.19, role: 'promoted', lineupStatus: 'Expected', lineupMinutes: { tonight: 25, before: 21 } })).toMatch(/starts tonight in RotoWire's expected five, off the bench in most of his last games: 25 minutes tonight against 21 without the lineup/);
     expect(lineupText({ lineup: 0.9, role: 'demoted' })).toMatch(/out of RotoWire's five/);
     expect(lineupText({ lineup: null })).toBe('');
+  });
+  test("the teammates out add to the minutes with the five and without it", () => {
+    // A 30-minute starter out tonight (3 of the last 5 dates at 20+): his decayed minutes join `vac` on both sides.
+    const out = { ...player('Julius Randle', 'MIN', 10), injury: 'Out', games: logsOf(10).map((g) => ({ ...g, min: 30 })) };
+    const pf = { at: '2026-11-06T14:00:00Z', data: { players: [...players, out], injuries: { source: 'v2', rows: [{ id: 'Julius Randle', name: 'Julius Randle', key: 'julius randle', team: 'MIN', pos: 'PF', status: 'Out', date: '2026-11-06' }] } } };
+    const lyles = sideOf(build(pf, fiveWithLyles), 'trey lyles');
+    expect(lyles.lineup.minutes.vac).toBeCloseTo(30, 0);
+    expect(lyles.lineup.minutes.tonight).toBeCloseTo(25 + 0.0425 * 30, 0);
+    expect(lyles.lineup.minutes.before).toBeCloseTo(21 + 0.0558 * 30, 0);
   });
   test('no read without the five, without the flag on the pull, or with fewer than five flagged games', () => {
     expect(sideOf(build(pfWith(players), null), 'trey lyles').lineup).toBeUndefined();

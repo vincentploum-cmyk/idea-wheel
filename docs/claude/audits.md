@@ -196,4 +196,6 @@
   stat's rungs, both seasons; points and PRA kept the normal. On top of the board's chance only tonight's start and the
   teammates out saw a spike coming (the opponent's misses and rebounds allowed, pace, his past spikes did not); a bench player
   starting tonight got 1.21–1.30× his projection over 2025-26, a demoted starter 0.89–0.92×. Shipped as `OUTLIERS` (count tail,
-  lineup × 1.1 / × 0.9); the night's five likeliest rebound spikes landed 9.7% against 4.6% for everyone.
+  lineup × 1.1 / × 0.9), then the same day his minutes from the lineup (`LINEUP_MINUTES`: the minutes' miss 4.75 → 4.65 over
+  2025-26, 4.91 → 4.66 this season; the promoted 6.29 → 5.01, the demoted 6.11 → 4.69 on the replay; every stat and rung Brier
+  better than the flat factor); the night's five likeliest rebound spikes landed 9.7% against 4.6% for everyone.

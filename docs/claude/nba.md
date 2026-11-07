@@ -342,9 +342,11 @@
 - **The outlier nights** (Vincent, 2026-11-07: "we need to start calibrating the nba model … players were projected by us to
   get 4 or 5 rebounds but they actually got 10+"; `docs/audits/2026-11-07-nba-outliers.md`): the rebounds', assists', threes',
   steals' and blocks' rungs read a count's tail (the negative binomial with the ladder's centre and spread: a 4.5-rebound
-  projection at 2.5 says 10+ 3.8%, the normal said 2.3%), and RotoWire's starting five moves the projection — a bench player
-  starting tonight × 1.1, a starter out of the five × 0.9 (the cocktail's `countTail` / `lineup`, the bullet "The outlier
-  nights" in `picks-core.md`). The ladders, the ranges, the shuffle, the best bets, the boards and the Big games' unfitted
+  projection at 2.5 says 10+ 3.8%, the normal said 2.3%), and RotoWire's starting five predicts the minutes of a player whose
+  role changed tonight (Vincent, same day: "can we predict player's minutes based on lineups?") — a bench player starting about
+  4 more, a starter out of the five about 3 fewer — and his projection moves with them (the cocktail's `countTail` / `lineup`,
+  `LINEUP_MINUTES`, the bullet "The outlier nights" in `picks-core.md`); the Games tab's Min column shows the lineup's minutes
+  with ↑ / ↓ and both figures on the hover. The ladders, the ranges, the shuffle, the best bets, the boards and the Big games' unfitted
   marks all read it; the calibration was fitted on the old tails and relearns with the next grading (or the workflow's
   `what: calibration`). What did not see a spike coming: the opponent's misses and rebounds allowed, pace, his own past big
   nights, his best recent game; the start and the teammates out did. The cheat sheet (`#guide`) names the start.
