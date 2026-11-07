@@ -43,8 +43,22 @@ describe('the ladder and the shuffle read the count tail for the counts', () => 
     expect(pts.some((x) => x.tail)).toBe(false);
     const before = nbaBoard(COCKTAIL_BEFORE_OUTLIERS).ladderOf(logs, { market: 'reb', season: 2026 });
     expect(before.some((x) => x.tail)).toBe(false);
-    // The top rung: the count puts more on the big night than the normal over the same centre and spread.
-    expect(r.model).toBeGreaterThan(before[before.length - 1].model);
+    // The same top line: the count puts more on the big night than the normal over the same centre and spread.
+    const top = before[before.length - 1];
+    expect(reb.find((x) => x.line === top.line).model).toBeGreaterThan(top.model);
+  });
+  test("the outlier mark is a rung on the ladder, so the card shows the line the Outliers list reads", () => {
+    const { ladderOf } = nbaBoard(COCKTAIL);
+    const reb = ladderOf(logs, { market: 'reb', season: 2026 });
+    const proj = reb[0].proj;
+    const mark = Math.max(Math.ceil(2 * proj - 1e-9), Math.ceil(proj + 4 - 1e-9));
+    const r = reb.find((x) => x.line === mark - 0.5);
+    expect(r).toMatchObject({ outlier: true, odds: null, main: false });
+    expect(r.model).toBeCloseTo(countTail(mark - 0.5, proj, r.sd), 3);
+    expect(reb.map((x) => x.line)).toEqual([...reb.map((x) => x.line)].sort((a, b) => a - b));
+    // Not on the shuffle's bars (its own heights), not on the board before it.
+    expect(ladderOf(logs, { market: 'reb', season: 2026, lines: [3, 4] }).some((x) => x.outlier)).toBe(false);
+    expect(nbaBoard(COCKTAIL_BEFORE_OUTLIERS).ladderOf(logs, { market: 'reb', season: 2026 }).some((x) => x.outlier)).toBe(false);
   });
   test('the shuffle recentres the same tail', () => {
     expect(tailOf({ sd: 2.5, tail: 'count' }, 9.5, 4.5)).toBeCloseTo(countTail(9.5, 4.5, 2.5), 10);

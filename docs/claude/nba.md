@@ -370,7 +370,9 @@
   ladder has the rung (`book` { line, odds, implied, edge, ev }), why (a start off the bench, the teammates out, **his games at
   the mark this season, then last season's to make 20** — `record` { season, last }, "4+ in 0 of 5 this season · 5 of 15 last
   season"; Vincent: "we should look at threes per game not across games", the note had read "4+ in 5 of his last 20" off
-  last season alone —, his minutes: `outlierWhy`) and what he got. **Every column sorts** (`sortOutliers` / `OUT_SORTS`: a click
+  last season alone —, his minutes: `outlierWhy`) and what he got. **The mark is a rung on his ladder** (the cocktail's `outlierRungs`,
+  `OUTLIER_RUNGS` = each stat's `add`; Vincent, 2026-11-07, "Ok" to: the card shows the line the list reads), so every listed row
+  is his card's number (`outlier: true` on the rung, kept from a 1% tail: no o51.5 points on a star's card). **Every column sorts** (`sortOutliers` / `OUT_SORTS`: a click
   sorts by the column, a second flips it, nulls last; Book by the edge, Why by his rate at the mark this season; Chance first). `nbaOutliers` runs in the binding's
   `buildBoard` (`board.big.outliers` = { rows, lists }); the replay's `--board` dump carries both lists.
   `__tests__/nba-big.test.jsx`.
