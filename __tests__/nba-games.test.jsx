@@ -55,6 +55,18 @@ describe('the NBA games, the NFL’s layout', () => {
     const book = tierRows(board, {}, 'pts', 'g1');
     expect(book.find((r) => r.player === 'Nikola Jokic').strong).toMatchObject({ mark: '25+', p: 0.75 });
   });
+  test('before the shuffle loads, a player with no rung at 40% stays listed on his projection (no ReferenceError)', () => {
+    // 2026-11-07: /nba#reb on the previous night broke the page — the book's-rungs fallback (ladderBoard) read an
+    // undefined `keepAll` whenever a player had no rung at the thin floor.
+    const lb = JSON.parse(JSON.stringify(board));
+    lb.games[0].final = true;
+    lb.games[0].sides.LAL.players.push(player('bench guy', 'Bench Guy', 'SG', 3.1, [[9.5, 0.12]]));
+    lb.games[0].sides.LAL.players.push({ key: 'no line', player: 'No Line', pos: 'SF', envPos: 'SF', ranges: { pts: { exp: 6.2 } }, ladders: {} });
+    const rows = tierRows(lb, {}, 'pts');
+    expect(rows.map((r) => r.player)).toEqual(['Nikola Jokic', 'Austin Reaves', 'No Line', 'Bench Guy']);
+    expect(rows.find((r) => r.player === 'Bench Guy')).toMatchObject({ strong: null, lean: null, thin: null, proj: 3.1 });
+    expect(() => renderToStaticMarkup(<NbaStatList board={lb} shuffles={{}} market="pts" />)).not.toThrow();
+  });
   test('the w/o edge tag: the widest flagged line of the stat on his row, the record against the price', () => {
     const wb = JSON.parse(JSON.stringify(board));
     const reaves = wb.games[0].sides.LAL.players[0];
