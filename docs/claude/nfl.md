@@ -215,6 +215,14 @@
   `rzLooksOf`: the board's chance after `TD_CAL` with his red-zone looks a game over his last five, PropFinder's `rzAtt` +
   `rzTgt`, and the team's implied points; `td.board`, `td.rz`, `td.points`; quarterbacks as before): Brier 0.1237 → 0.1222,
   the week's six likeliest scored 66.7% (54.8% before), the outlier rule met by the engine itself.
+- **The pick rules** (Vincent, 2026-11-08: "work on the pick rules"; `docs/audits/2026-11-08-nfl-picks.md`, `tools/audit/nfl_picks.py`):
+  a play is a rung at its stated chance. The top of each list (by projection) now lands as said for receiving, receptions and
+  passing; no other ordering (the rung's chance, volume, share, the steadiest) picked better over 2024–26, and sorting by the
+  rung's own chance over-says by 10 points. Three groups' rungs said too much every season and read **a curve of their own**
+  (`RESID_POS`, `RANGE_POS`, `residFor` in `lib/nfl/projections.js`; fitted 2024–25): a back's receiving (strong said 67, landed
+  55 → 61 on 2026), a back's rushing (68 → 58 → 62) and a quarterback's rushing (69 → 54 → 59, still over on 2026); the ladder and
+  the floor / ceiling read it, the outliers keep the pool's. The touchdown list lands (top six 63 → 65% on 2026). The replay's dump
+  carries each row's rungs (`tiers`, `floor`, `ceiling`).
 - **The cheat sheet's defense snapshot** (`lib/nfl/snapshot.js`; Vincent, 2026-11-01: "the cheat sheet should be used to
   identify weaknesses in defenses"): each column of the detailed sheet opens with the opponent's defense — coverage shells
   (Man% / Zone%, Cover 0 / 1 / 2 / 3 / 4 / 6, 2-Man) and ranked tiles (Pass Yds/G, Rush Yds/G, Rush Y/Play, the passing

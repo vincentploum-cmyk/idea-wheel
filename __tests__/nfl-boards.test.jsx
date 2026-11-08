@@ -9,7 +9,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildBoard } from '../lib/nfl/picks';
-import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS, PASS, passRead, QB_RUSH, qbRushRead, RESID, RESID_UNSHRUNK, YARDS_SHRINK, TD_ENGINE, tdEngine, rzLooksOf, NFL_OUTLIERS, NFL_OUTLIER_LIST_MIN, nflOutlierMark, nflOutlierChance, TGT_SHARE, tgtShareRead, shareRead, shareText } from '../lib/nfl/projections';
+import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS, PASS, passRead, QB_RUSH, qbRushRead, RESID, RESID_UNSHRUNK, YARDS_SHRINK, TD_ENGINE, tdEngine, rzLooksOf, NFL_OUTLIERS, NFL_OUTLIER_LIST_MIN, nflOutlierMark, nflOutlierChance, TGT_SHARE, tgtShareRead, shareRead, shareText, RESID_POS, RANGE_POS, residFor } from '../lib/nfl/projections';
 import { applyRosterStatus, ROSTER_OFF } from '../lib/nfl/roster-status';
 import { reproject, makeBuild, nflBoard, COCKTAIL } from '../lib/nfl/picks';
 import { envFactor } from '../lib/picks/projection';
@@ -235,6 +235,39 @@ describe('NFL projections: PropFinder\'s Team Share on the receiving read (2026-
     // a quarterback and a back's rushing take no share
     const s = Object.values(b.projections.rows).find((x) => x.player === 'Matthew Stafford');
     expect(s.yards.pass_yds.tgtShare ?? null).toBeNull();
+  });
+});
+
+describe('NFL projections: the rungs on a curve of their own (2026-11-08, the pick rules)', () => {
+  test('a back\'s receiving and a back\'s and a quarterback\'s rushing read their own curve; everyone else the pool\'s', () => {
+    expect(residFor('rec_yds', 'RB').rec_yds).toBe(RESID_POS.rec_yds.RB);
+    expect(residFor('rush_yds', 'QB').rush_yds).toBe(RESID_POS.rush_yds.QB);
+    expect(residFor('rush_yds', 'RB').rush_yds).toBe(RESID_POS.rush_yds.RB);
+    expect(residFor('rec_yds', 'WR')).toBe(RESID);
+    expect(residFor('rec_yds', 'TE')).toBe(RESID);
+    expect(residFor('receptions', 'RB')).toBe(RESID);
+    // the other markets ride along untouched
+    expect(residFor('rec_yds', 'RB').rush_yds).toBe(RESID.rush_yds);
+    for (const q of [RESID_POS.rec_yds.RB, RESID_POS.rush_yds.RB, RESID_POS.rush_yds.QB]) {
+      expect(q).toHaveLength(19);
+      expect([...q].sort((a, b) => a - b)).toEqual(q);
+    }
+  });
+  test('a back\'s receiving rung sits lower than a receiver\'s at the same read (his curve lands under the pool\'s)', () => {
+    const y = { proj: 40, sd: 22 };
+    expect(chanceAtMark(y, 40, 'rec_yds', residFor('rec_yds', 'RB'))).toBeLessThan(chanceAtMark(y, 40, 'rec_yds'));
+    expect(ladderTiers(y, 'rec_yds', residFor('rec_yds', 'RB')).strong.mark).toBeLessThanOrEqual(ladderTiers(y, 'rec_yds').strong.mark);
+  });
+  test('on the board: the backs\' and the quarterback\'s rushing rungs and range read their curves', () => {
+    const b = build();
+    const k = Object.values(b.projections.rows).find((x) => x.player === 'Kyren Williams').yards.rush_yds;
+    expect(k.tiers).toEqual(ladderTiers({ proj: k.proj, sd: k.sd }, 'rush_yds', residFor('rush_yds', 'RB')));
+    expect(k.floor).toBe(Math.round(Math.max(0, k.proj - RANGE_POS.rush_yds.RB[0] * k.sd)));
+    expect(k.ceiling).toBe(Math.round(k.proj + RANGE_POS.rush_yds.RB[1] * k.sd));
+    const s = Object.values(b.projections.rows).find((x) => x.player === 'Matthew Stafford').yards.rush_yds;
+    if (s) expect(s.tiers).toEqual(ladderTiers({ proj: s.proj, sd: s.sd }, 'rush_yds', residFor('rush_yds', 'QB')));
+    const n = Object.values(b.projections.rows).find((x) => x.player === 'Puka Nacua').yards.rec_yds;
+    expect(n.tiers).toEqual(ladderTiers({ proj: n.proj, sd: n.sd }, 'rec_yds'));
   });
 });
 

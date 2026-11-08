@@ -237,3 +237,9 @@
   ∓0.53), × 0.97, `SAVES_SD` 6.8, PropFinder's goalie lines kept per date; the board's λ sum stays on the hover, since it
   already carries the team's side through each skater's matchup and could not be graded here. Replayed with the site's
   functions (`tools/predictors/saves-replay.mjs`): 2026-27 projected 23.57, made 23.65, 25+ said 44.9% landed 44.4%.
+- The NFL's pick rules (`docs/audits/2026-11-08-nfl-picks.md`, `tools/audit/nfl_picks.py` on the PropFinder replay's dump;
+  Vincent, 2026-11-08: "work on the pick rules"): every rung of 2024–26 by list, position and the week's top K. The top of each
+  list lands as said after the shrink and the target share; a back's receiving, a back's and a quarterback's rushing said
+  6–15 points too much every season and read curves of their own now (2026 strong: 55 → 61%, 58 → 62%, 54 → 59%); no ordering
+  key (the rung's chance, volume, share, steadiness) picked better than the projection, and the rung's own chance over-says by
+  10 points at the top. The touchdown list lands.
