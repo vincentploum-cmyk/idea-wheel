@@ -101,6 +101,22 @@
   tab's by-line table and off the rink head); colour only, no number moves — and checked the same
   day on both seasons' box scores (`docs/audits/2026-10-31-nhl-lines.md`, under Audits): the softest slot's skater was the
   top shooter at the slot's base rate (9.4%), the slot cell adds nothing to the position table, so the badges stay colour;
+  **the PP badge beside the slot badge** (Vincent, 2026-11-08, of the profile's Power play and Discipline rows: "we should
+  know whether there will be a lot of powerplays... Then, we need to find out who is on the powerplay ... Rotowire is the
+  only website that gives insight in the powerplay lineups ... a small PP symbol next to the players on the rink that are
+  predicted to get a lot of powerplay minutes"; `PpBadge` in `Rink.jsx`, `.nhlx-rk-pp`, `p.pp` from `ppRead` in
+  `lib/nhl-data/pp-units.js`): RotoWire's POWER PLAY #1 / #2 (`lib/nhl-data/rotowire.js`, `parseNhlLineups` on
+  https://www.rotowire.com/hockey/nhl-lineups.php — goalie and his Confirmed / Expected word, both five-man units, the
+  injuries; the page serves today alone, so `ingestLineups` stores it for today's date at `data/rotowire/<date>.json`
+  through `refreshRotowire`, every lineup read, a team the new page lacks keeping its entry; the slate reads the file,
+  `side.ppUnits` the names) × the power plays the team should get tonight (`specialTeamsRead`'s `ppFor.expected`, the
+  profile's "tonight ≈ 3.6"; the league's 3.2 without ShotPropz) × a unit skater's minutes per power play
+  (`PP_MIN_PER_PP`, the 2026-11-07 TOI audit's section B: forwards 0.98 / 0.48, defensemen 0.95 / 0.45 on the first /
+  second unit). Drawn from `PP_SHOW` = 2.0 minutes (the first unit nearly always, the second on a 4.2+ power-play
+  night), green from `PP_LOT` = 3.5 (a first-unit skater on a ~3.6+ night; the league's first unit averages 3.1); "PP"
+  for the first unit, "PP2" the second; the read on the hover and in the chip's title. Matched by full name, then last
+  name with the first initial (`ppUnitOf`). Descriptive only: the model's power-play share stays `PP_WEIGHTS` by line
+  slot; `__tests__/nhl-pp-units.test.jsx` (the page as served 2026-11-08, `fixtures/rotowire-nhl-lineups.html`);
   chips carrying the latest saved model run's λ shots / goals for the slate date from
   `lib/nhl-data/model-runs.js` — printed as the board reads them since 2026-10-31 (`slateWithBoardReads`, the bullet
   "One number per skater" under Automation; the run's own on the hover) —, or a matchup read when no run exists; at the
