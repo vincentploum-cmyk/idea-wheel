@@ -245,7 +245,11 @@
   `nfl/<season>/<wk>/propfinder-pages/<name>.json` (`P.propfinderPage`, beside the pull: the pull's file has a 15 MB limit),
   its keys and a 2000-character sample on the pull's `samples` (Data sources, the workflow's log), `pages` { name: { at, rows } }
   on the pull's meta, the export (`exportWeek`) carrying them for the backtests. So far: Role Matchups
-  (`/NFL/role-matchups?season=2026`: { season, week, seasonType, window, statsSeason, generatedAtUtc, roles: […] }). No number
+  (`/NFL/role-matchups?season=2026`: { season, week, seasonType, window, statsSeason, generatedAtUtc, roles (QB, WR, WR1–3, Other WR,
+  TE, TE1–2, Other TE, RB, RB1–2), markets (passYds … longRush), games }), Receiver coverage splits
+  (`/NFL/coverage/receiver-splits?season=`), TD Matchups (`/NFL/td-matchups?teamWindow=Season<season>&playerYear=<season>`, and
+  with `&allSplitTypes=true&skipSplits=true`). The site's `propfinder.app/nfl/cheatsheets/…?_rsc=` requests are the page's own
+  layout, no data. Role Matchups' table likely repeats the Opponent rows by slot the board already reads: to compare. No number
   reads them yet: each is read and backtested before it moves a projection. `__tests__/nfl-pf-pages.test.js`.
 - **Without the cheat sheet, PropFinder's weak spots** (`pfSpots` / `PF_SPOTS` in `lib/nfl/projections.js`; Vincent, 2026-11-04:
   "I will not get the cheat sheet anymore"): a game whose defense has no snapshot reads its weak and strong spots off the side's

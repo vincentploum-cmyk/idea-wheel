@@ -9,7 +9,8 @@ describe('NFL PropFinder pages', () => {
     const asked = [];
     const get = async (path) => { asked.push(path); if (path.startsWith('/NFL/role-matchups')) return ROLE; throw new Error('404'); };
     const out = await fetchSamples({ slateAbbrs: [], byAbbr: {}, at: '2026-11-08T14:00:00Z', season: 2026, get, env: {} });
-    expect(asked).toEqual(['/NFL/role-matchups?season=2026']);
+    expect(asked).toEqual(['/NFL/role-matchups?season=2026', '/NFL/coverage/receiver-splits?season=2026', '/NFL/td-matchups?teamWindow=Season2026&playerYear=2026',
+      '/NFL/td-matchups?teamWindow=Season2026&playerYear=2026&allSplitTypes=true&skipSplits=true']);
     expect(out.roleMatchups).toMatchObject({ path: '/NFL/role-matchups?season=2026', error: null, keys: ['season', 'week', 'seasonType', 'window', 'statsSeason', 'generatedAtUtc', 'roles'] });
     expect(out.roleMatchups.data).toBe(ROLE);
     expect(out.roleMatchups.sample).toContain('"roles"');
@@ -18,9 +19,11 @@ describe('NFL PropFinder pages', () => {
     const out = await fetchSamples({ slateAbbrs: [], byAbbr: {}, at: '2026-11-08T14:00:00Z', season: 2026, get: async () => { throw new Error('PropFinder 401'); }, env: {} });
     expect(out.roleMatchups).toMatchObject({ error: 'PropFinder 401', sample: null });
     expect(out.roleMatchups.data).toBeUndefined();
+    expect(Object.keys(out)).toEqual(['roleMatchups', 'coverageReceiverSplits', 'tdMatchups', 'tdMatchupsAllSplits']);
   });
   test('the env still names extra routes to sample (not kept)', async () => {
     const out = await fetchSamples({ slateAbbrs: [], byAbbr: {}, at: '2026-11-08T14:00:00Z', season: 2026, get: async () => [{ a: 1 }], env: { PROPFINDER_NFL_SAMPLE_PATHS: 'wrcb=/NFL/x' } });
+    expect(out.roleMatchups.data).toEqual([{ a: 1 }]);
     expect(out.wrcb).toMatchObject({ path: '/NFL/x', count: 1, keys: ['a'] });
     expect(out.wrcb.data).toBeUndefined();
   });
