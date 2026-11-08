@@ -225,3 +225,12 @@
   (PropFinder serves them, `…Prior` pages) graded on 2026's weeks 1–8, leak-free. The coverage fit (his 2025 yards per route by
   coverage × the opponent's 2025 coverage mix) ordered nothing (got ÷ average by fifth 0.95 / 0.94 / 1.02 / 0.94 / 0.97, the
   miss 23.89 → 24.19); the backs' run direction against the gaps the same (27.75 → 28.59). Nothing shipped.
+- Goalie saves (`docs/audits/2026-11-08-nhl-saves.md`, tables in `-tables.md`, `tools/predictors/saves_rows.py` +
+  `saves.py` on the public box scores; Vincent, 2026-11-08: "find something to predict saves"): 5,784 starts of 2024-25,
+  2025-26 and this season, fitted on 2024-25. Saves are shots against (r 0.97); the read is both teams, the opponent's
+  shots a game and his team's shots allowed, each blended into last season (ρ 0.25; the opponent alone 0.20, his own
+  saves a start 0.12, his save % 0.04: the league's .900 does as well). Home −0.9, the rink ±half a save; rest, back to
+  backs, penalties, goal difference and short windows nothing. The miss is 6.8 saves (the site's normal 5.4) and the
+  site's shape runs a save high (the starter faces 97% of the team's shots against): it said 25+ at 55%, 47% landed.
+  Against a stand-in line at his own saves a start, 2+ over it landed 66–78% overs, 2+ under 30–34%. Nothing shipped;
+  the spread, the 0.97 share, the team's side and keeping PropFinder's goalie lines by date are proposed in the audit.
