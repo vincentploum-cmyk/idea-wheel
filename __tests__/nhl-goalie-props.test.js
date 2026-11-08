@@ -62,10 +62,10 @@ describe('goalie props: the Saves row against the book', () => {
     const unpriced = savesRow({ team: 'VGK', opp: 'NJD', venue: 'H', starter, shots: 32.6, shotsFrom: 'x', prop: { line: 27.5 } });
     expect(unpriced).toMatchObject({ odds: null, implied: null, edge: null });
     expect(isSavesPlay(unpriced)).toBe(unpriced.pLine >= 0.5);
-    // Without a line the 30-save mark stands as it was.
+    // Without a line the 25-save mark (SAVES_LEAD) stands.
     const plain = savesRow({ team: 'VGK', opp: 'NJD', venue: 'H', starter, shots: 32.6, shotsFrom: 'x' });
     expect(plain).toMatchObject({ line: null, pLine: null, edge: null });
-    expect(isSavesPlay(plain)).toBe(plain.p30 >= 0.5);
+    expect(isSavesPlay(plain)).toBe(plain.p25 >= 0.5);
   });
   test('pickSaves orders by the edge and marks the rows that are no play; savesHit grades on the line', () => {
     const a = savesRow({ team: 'VGK', opp: 'NJD', venue: 'H', starter, shots: 32.6, shotsFrom: 'x', prop: { line: 27.5, odds: -110 } });

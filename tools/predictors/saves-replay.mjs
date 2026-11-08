@@ -6,7 +6,7 @@
 // Usage: node --import ./tools/audit/register.mjs tools/predictors/saves-replay.mjs <from YYYY-MM-DD> <games dir> [<games dir> ...]
 import fs from 'node:fs';
 import path from 'node:path';
-import { teamShotBook, shotsAgainst, goalieBook, goalieRowsOf, goalieRowObj, savesFrom, savesChance, LEAGUE_SV } from '../../lib/nhl-data/goalies-pure.js';
+import { teamShotBook, shotsAgainst, goalieBook, goalieRowsOf, goalieRowObj, savesFrom, savesChance, LEAGUE_SV, SAVES_LEAD, SAVES_FLOOR } from '../../lib/nhl-data/goalies-pure.js';
 import { seasonYearOf } from '../../lib/nhl-data/picks-pure.js';
 
 const [from, ...dirs] = process.argv.slice(2);
@@ -14,7 +14,7 @@ const games = [];
 for (const d of dirs) for (const f of fs.readdirSync(d).filter((x) => x.endsWith('.json')).sort()) games.push(...JSON.parse(fs.readFileSync(path.join(d, f))).games.filter((g) => g.gameType === 2));
 games.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id));
 const dates = [...new Set(games.map((g) => g.date))].filter((d) => d >= from);
-const MARKS = [22, 25, 28];
+const MARKS = [...new Set([22, 25, 28, SAVES_LEAD])].sort((a, b) => a - b);
 const out = [];
 let skRows = []; let gkRows = []; let gi = 0;
 for (const date of dates) {
@@ -51,6 +51,9 @@ for (const season of [...new Set(out.map((r) => r.season))]) {
     const base = mean((r) => (r.sv >= k ? 1 : 0));
     console.log(`  ${k}+: said ${pc(mean((r) => r.p[k]))}, landed ${pc(base)} · Brier ${f3(mean((r) => (r.p[k] - (r.sv >= k ? 1 : 0)) ** 2))} (base rate ${f3(base * (1 - base))})`);
   }
+  // The no-line fallback: a play on SAVES_LEAD saves at SAVES_FLOOR.
+  const calls = rs.filter((r) => r.p[SAVES_LEAD] >= SAVES_FLOOR);
+  if (calls.length) console.log(`  the fallback (${SAVES_LEAD}+ at ${pc(SAVES_FLOOR)}): ${calls.length} calls (${pc(calls.length / rs.length)} of starts), said ${pc(calls.reduce((s, r) => s + r.p[SAVES_LEAD], 0) / calls.length)}, landed ${pc(calls.filter((r) => r.sv >= SAVES_LEAD).length / calls.length)}`);
   const bands = [[0, 0.3], [0.3, 0.4], [0.4, 0.5], [0.5, 0.6], [0.6, 0.7], [0.7, 1.01]];
   const cells = rs.flatMap((r) => MARKS.map((k) => ({ p: r.p[k], hit: r.sv >= k ? 1 : 0 })));
   console.log('  said → landed (every mark): ' + bands.map(([a, b]) => { const c = cells.filter((x) => x.p >= a && x.p < b); return c.length ? `${pc(c.reduce((s, x) => s + x.p, 0) / c.length)} → ${pc(c.reduce((s, x) => s + x.hit, 0) / c.length)} (${c.length})` : null; }).filter(Boolean).join(' · '));

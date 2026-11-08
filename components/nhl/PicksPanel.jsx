@@ -108,7 +108,7 @@ const pct3 = (v) => (v == null ? '—' : `.${String(Math.round(v * 1000)).padSta
  * The Saves table: each side's likely starter, the shots he is expected to face and, with the book's saves line
  * from PropFinder's pull, the over — o27.5, his chance of clearing it, the price and the edge over it (the play
  * when the edge is positive; Vincent, 2026-10-31: "over x saves with a %"); without a line the chance of 25 /
- * 30 / 35 saves (30+ the play); his line once final.
+ * 30 / 35 saves (25+ the play without a book line, SAVES_LEAD); his line once final.
  */
 function SavesTable({ g }) {
   const rows = g.saves || [];
@@ -120,7 +120,7 @@ function SavesTable({ g }) {
       <table className="nhlx-db-table nhlx-pk-table">
         <thead>
           <tr>
-            <th>Saves{rows.every((r) => r.under) ? <i className="nhlx-fg-rank"> {lined ? 'no edge over the book' : `nobody over ${Math.round(SAVES_FLOOR * 100)}% for 30`}: best available</i> : null}</th>
+            <th>Saves{rows.every((r) => r.under) ? <i className="nhlx-fg-rank"> {lined ? 'no edge over the book' : `nobody over ${Math.round(SAVES_FLOOR * 100)}% for ${SAVES_LEAD}`}: best available</i> : null}</th>
             {lined
               ? <th className="is-num is-lead" title="The book’s saves line on him (PropFinder, the main line), his chance of clearing it, and under it the price with the edge: his chance minus what the price implies">Over</th>
               : SAVES_MARKS.map((k) => <th key={k} className={`is-num${k === SAVES_LEAD ? '' : ' is-wide'}`} title={`${k}+ saves: the chance, and the break-even price under it`}>{k}+</th>)}

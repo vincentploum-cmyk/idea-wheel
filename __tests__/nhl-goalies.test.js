@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { goalieRowsOf, goalieRowObj, goalieBook, likelyStarter, savesChance, savesRow, pickSaves, withSavesActuals, shrunkSv, normalCdf, teamShotBook, shotsAgainst, shotsAgainstText, GOALIE_ROW_FIELDS, SAVES_FLOOR, SAVES_SD, STARTER_SHARE, LEAGUE_SHOTS } from '../lib/nhl-data/goalies-pure';
+import { goalieRowsOf, goalieRowObj, goalieBook, likelyStarter, savesChance, savesRow, pickSaves, withSavesActuals, shrunkSv, normalCdf, teamShotBook, shotsAgainst, shotsAgainstText, GOALIE_ROW_FIELDS, SAVES_FLOOR, SAVES_LEAD, savesHit, SAVES_SD, STARTER_SHARE, LEAGUE_SHOTS } from '../lib/nhl-data/goalies-pure';
 
 const rec = (id, date, away, home, goalies) => ({ id, season: 20262027, date, away: { abbrev: away, score: 3 }, home: { abbrev: home, score: 2 }, goalies });
 const gk = (id, name, team, venue, sa, sv, starter = true, toi = 60) => ({ id, name, team, venue, toi, sa, ga: sa - sv, sv, starter, decision: starter ? 'W' : null });
@@ -92,7 +92,7 @@ describe('goalies: the saves projection', () => {
     expect(savesChance(27, 25)).toBeCloseTo(0.643, 2);
     expect(savesChance(60, 25)).toBe(1);
   });
-  test('savesRow and pickSaves: the shots allowed × the starter’s share × the save percentage, the marks, the floor on 30+', () => {
+  test('savesRow and pickSaves: the shots allowed × the starter’s share × the save percentage, the marks, the floor on 25+', () => {
     const starter = { goalie: { id: 2, name: 'A. Hill', team: 'VGK', starts: 7, gp: 7, pct: 0.929, svPct: 0.916, savesPerStart: 26, l5: { starts: 5, sv: 26, sa: 28, pct: 0.929 } }, reason: "7 of the team's last 10 starts", b2b: false, other: { id: 3, name: 'C. Hart', starts: 3 }, held: false };
     // 32.6 shots expected against VGK, 97% of them on Hill (31.6) × .916 = 29.0 saves; the board's λ sum rides beside it.
     const row = savesRow({ team: 'VGK', opp: 'NJD', venue: 'H', starter, shots: 32.6, shotsFrom: 'x', boardShots: 31.24 });
@@ -102,7 +102,12 @@ describe('goalies: the saves projection', () => {
     expect(row.p25).toBeGreaterThan(row.p30); expect(row.p30).toBeGreaterThan(row.p35);
     const low = savesRow({ team: 'NJD', opp: 'VGK', venue: 'A', starter: { goalie: { id: 1, name: 'C. Hellebuyck', starts: 10, gp: 10, svPct: 0.905 }, reason: 'x' }, shots: 24, shotsFrom: 'x' });
     const table = pickSaves([low, row]);
-    expect(table.map((r) => [r.name, r.under])).toEqual([['A. Hill', row.p30 < SAVES_FLOOR], ['C. Hellebuyck', true]]);
+    // Without a line the play is called on 25+ (SAVES_LEAD): Hill's 29 saves clear it at 72%, Hellebuyck's 24 × .97 × .905 = 21.1 do not.
+    expect(SAVES_LEAD).toBe(25);
+    expect(row.p25).toBeGreaterThan(0.7);
+    expect(table.map((r) => [r.name, r.under])).toEqual([['A. Hill', false], ['C. Hellebuyck', true]]);
+    expect(savesHit({ ...row, actual: { sv: 25, sa: 27 } })).toBe(true);
+    expect(savesHit({ ...row, actual: { sv: 24, sa: 27 } })).toBe(false);
     expect(savesRow({ team: 'VGK', opp: 'NJD', venue: 'H', starter: null, shots: 30 })).toBeNull();
     expect(savesRow({ team: 'VGK', opp: 'NJD', venue: 'H', starter, shots: null })).toBeNull();
   });

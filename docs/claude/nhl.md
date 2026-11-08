@@ -271,9 +271,11 @@
   rides on the row as `boardShots` for the hover (it carries the opponent's side and, through each skater's matchup
   table and home ice, much of the team's; its level could not be graded without the scorecard). Replayed with the site's
   functions (`tools/predictors/saves-replay.mjs`): 2026-27 projected 23.57 a start, made 23.65, 25+ said 44.9% landed
-  44.4%. **30+ the play** (`SAVES_LEAD`,
+  44.4%. **25+ the play without a book line** (`SAVES_LEAD`, 30 until 2026-11-08: Vincent, "change the fallback to 25"; 30
+  saves is a one-in-five night this season, 25+ lands 44% of starts; replayed, the 25+ calls at 50% were a third of
+  2026-27's starts, said 59.8%, landed 54.9%, and 48% of 2025-26's, said 59.7%, landed 57.7%;
   a row under `SAVES_FLOOR` = 50% there is dimmed as under the floor, `pickSaves`); once the game is stored the goalie's
-  own line grades the row (`withSavesActuals`: 30+ hit or miss, "another goalie played" when the read was on the wrong
+  own line grades the row (`withSavesActuals`: over the line, else 25+, hit or miss, "another goalie played" when the read was on the wrong
   man, `played: false`), and the game head's tally counts the saves plays with the shots and goal plays. **The book's saves lines come from PropFinder's
   pull** (`lib/nhl-data/goalie-props.js`, the ladder reader shared with the skaters' lines in `prop-lines.js` since 2026-10-31; Vincent, 2026-10-31: "pull the goalie saves lines from PropFinder and show the
   edge... I just need over x saves with a %"): the odds-only players call lists the goalies with their props, `goalieSavesProps`
@@ -286,7 +288,7 @@
   the NHL name against PropFinder's through `normName`, the surname on the team as the fallback; only a pull made for
   the slate's date), `savesRow` reads it (`line`, `mark` = o27.5 → 28+, `pLine` his chance of clearing it, `odds`,
   `implied`, `edge` = pLine − implied, the ladder as `lines`): **the over is the play when the edge is positive**
-  (`isSavesPlay`; the 50% floor on the line without a price, the 30-save mark without a line), `pickSaves` orders by the
+  (`isSavesPlay`; the 50% floor on the line without a price, the 25-save mark without a line), `pickSaves` orders by the
   edge, `savesHit` grades over the line. The Saves table shows one Over cell ("o27.5 · 61%", the price and the edge
   under it) when any row has a line, the three marks otherwise; the profile's Saves row appends "o25.5 59% at -120",
   green on an edge. The lines arrive with the next pull. `__tests__/nhl-goalies.test.js`, `nhl-goalie-props.test.js`.
