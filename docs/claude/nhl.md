@@ -115,8 +115,13 @@
   `components/nhl/MatchupProfile.jsx`; Vincent, 2026-10-30, with a soccer first-half profile as the form: "remove this
   and replace it with a summary of data from both the rink and propfinder", then "the summary needs to be compact. 5 rows
   max."): the two teams side by side, **five rows at tonight's venue** — Shooting (shots and goals a game), Allows (shots
-  and goals allowed), Power play (PP% and the power plays drawn a game), Penalty kill (PK% and the power plays given,
-  rank 1 = the softest kill), Last 10 (shots for and against over the last ten), and since 2026-10-31 **Saves** between
+  and goals allowed), Power play (PP% and the power plays drawn a game), **Discipline** (the power plays the team gives away a
+  game, its times short-handed, ShotPropz's `ppoa`: rank 1 = gives the most, the words Very disciplined · Disciplined ·
+  Average · Undisciplined · Very undisciplined, green when it gives many; then "≈ 3.0 tonight" and its PK% as a plain
+  figure; left out without a ShotPropz snapshot since PropFinder's table has no power plays given. It was a Penalty kill
+  row worded on PK% with "softest" ranks until 2026-11-08, Vincent: "a penalty kill is the ability to prevent powerplay
+  goals... What I want to know is whether a team is giving away a lot of powerplays or whether they more disciplined"),
+  Last 10 (shots for and against over the last ten), and since 2026-10-31 **Saves** between
   Allows and Power play (Vincent: "I should be able to see the projected goalkeeper saves for NHL games in the short game
   summary"): the shots the opponent is expected to put on the team's goalie — the saved run's λ shots summed over the
   opponent's lineup (ten skaters at least), else ShotPropz's boards (the opponent's shots a game at its venue and the
@@ -145,9 +150,9 @@
   all games until then (the head says "all games until four there"). Without a snapshot the rink and PropFinder stand
   in: the team's own stored shots and goals a game (`teamRates`, from `MIN_OWN_GAMES` = 5 this season, PropFinder's team
   table before that), PropFinder's table above the rink for Allows (the stored venue table without one), PropFinder's
-  season PP% / PK%, the stored last ten; every source rides on the cell's hover (`title`), nothing else is drawn. The
+  season PP% (its PK% only in the Discipline hover), the stored last ten; every source rides on the cell's hover (`title`), nothing else is drawn. The
   game-total read and the verdicts fold under it as "The numbers behind the reads". **Tonight's power plays end the Power
-  play and Penalty kill rows** ("tonight ≈ 3.6", "kills ≈ 2.9 tonight"; `lib/nhl-data/special-teams.js`, `specialTeamsRead`,
+  play and Discipline rows** ("tonight ≈ 3.6", "≈ 2.9 tonight"; `lib/nhl-data/special-teams.js`, `specialTeamsRead`,
   the bullet under Automation) and **the predicted score is the head pill** (`ProjectedScore` in `MatchupProfile.jsx`: "MTL
   2.8 – 3.3 DAL · 6.1 goals · DAL 56%", the final beside the pre-game projection stored before puck drop once the game is
   stored, green when it called the winner; `projected` on every slate game, which `app/api/nhl/data/slate/route.js` takes
