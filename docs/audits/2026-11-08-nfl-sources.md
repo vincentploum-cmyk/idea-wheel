@@ -133,5 +133,26 @@ receiving's week's top ten said 17.0% and landed 18.8% on 2026 (16.8 / 26.2% bef
 - The pages as stored: WR vs CB and the coverage splits cannot be rebuilt; graded once a few weeks of snapshots are kept
   beside their box scores (the export carries them: `exportWeek` `pages`).
 - Routes run and route share (Team Share) are in no game row: the same, once stored.
-- The receptions' outlier spread (`NFL_OUTLIERS.receptions.typical`) on the new figure.
 - The backs' carry share: re-test at the season's end (449 games on the check).
+
+## The receptions' outlier spread on the new figure (the same day)
+
+The outliers read half on his own spread and half on the spread usual for his projection (`NFL_OUTLIERS.receptions.typical`,
+c · projection^e, fitted on the ESPN replay's board before the target share). On the new receptions figure the week's top ten
+said 13.7% and landed 11.2% on 2026, so the spread was refitted on the PropFinder replay (the target share is in its logs;
+the ESPN replay has no `tgtShare`): receivers, tight ends and backs projected 1.5+, the games they played, fitted on 2025,
+scored on 2024 and 2026 (`nfl_outliers.py <dump> --fit 2025 --pos WR,TE,RB --active --only receptions`, `--typical 0.958,0.494`
+for the shipped spread, `--typical 1.22,0.14` for the searched one). Log loss × 1000 and
+each week's top ten, said / landed:
+
+| The usual spread | 2024 | 2025 (fit) | 2026 |
+|---|---|---|---|
+| **As shipped (0.958 · proj^0.494)** | **281.7 · 13.7 / 13.8%** | **241.2 · 13.9 / 10.7%** | **282.7 · 13.7 / 11.2%** |
+| Refitted as first fitted: the board's spread on the projection (1.163 · proj^0.458) | 280.9 · 15.0 / 13.8% | 244.1 · 15.2 / 10.7% | 282.5 · 15.0 / 12.5% |
+| Searched on 2025's log loss (1.22 · proj^0.14) | 284.9 · 12.8 / 11.5% | 239.1 · 13.0 / 10.7% | 283.3 · 12.8 / 15.0% |
+
+The first-fit method reads the spread wider on the new figure (it sits nearer the middle on the same board spread) and its
+top ten say 15% where 12% land; the searched spread wins only the season it was fitted on. Over the three seasons the shipped
+spread's top ten said 13.8% and landed 11.9% (360 picks; the 2026 gap of 2.5 points is inside one season's noise, 80 picks).
+**Kept as shipped.** The gap that remains is the own-spread half (its top ten alone say 18% on every season).
+

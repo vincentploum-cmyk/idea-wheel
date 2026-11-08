@@ -320,6 +320,10 @@ node --import ./tools/audit/register.mjs tools/audit/nfl-audit.mjs --raw .nhl-da
 python3 -I tools/audit/nfl_outliers.py .nhl-data/audit/nfl-yards.json
 ```
 
+On the PropFinder replay's dump (the target share in): `python3 -I tools/audit/nfl_outliers.py .nhl-data/audit/out/nfl-board-rows.json
+--fit 2025 --pos WR,TE,RB --active --only receptions` (`--fit` the season the usual spread is fitted on, `--active` the games he
+played).
+
 ## NBA: the big games (`nba_big.py`)
 
 `nba-audit.mjs`'s rows (with `espnId` and `venue` since 2026-11-01) for 2025-26 and 2026-27, joined in Python to ESPN's box

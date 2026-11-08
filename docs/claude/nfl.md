@@ -268,6 +268,8 @@
   `y.tgtShare` on the row, the Receiving list's Proj hover and the player card say the share. `RESID` / `RANGE` for both refitted
   on the new figure. On 2026's weeks 1–8 through the replay: receiving miss 22.01 → 21.55, within ±10 29.5% → 33.7%; receptions
   1.60 → 1.56; the receptions' rungs now land as said (the board's ran 3–5 points over). The big games keep the unshrunk read.
+  The outliers' usual spreads (`NFL_OUTLIERS[…].typical`) stay as fitted: the receptions' refitted on the new figure read no
+  better on 2024 or 2026 (the audit's last section; `nfl_outliers.py --fit --pos --active --only` on the PropFinder dump).
   `nfl-pf-audit.mjs --check-to <week>` grades 2026 to that week. `__tests__/nfl-boards.test.jsx` ("Team Share").
 - **Without the cheat sheet, PropFinder's weak spots** (`pfSpots` / `PF_SPOTS` in `lib/nfl/projections.js`; Vincent, 2026-11-04:
   "I will not get the cheat sheet anymore"): a game whose defense has no snapshot reads its weak and strong spots off the side's
