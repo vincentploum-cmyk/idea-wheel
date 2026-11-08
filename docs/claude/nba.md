@@ -119,7 +119,7 @@
   window PropFinder publishes for no team in either season is no tab) and `league` = the league's average per position
   and stat; `windowsOf` / `tableFor` / `windowLabel` in the court, `zoneTone` by rank third, rank 1 = the most
   permissive), the zone's foot carrying the rank; **above the table, who is out tonight** (`OutLines`: the side's
-  team then the opponent, from `side.out` = PropFinder's injury report through `absentByTeam`, name, position,
+  team then the opponent, from `side.out` = the injury report (ESPN's league feed since 2026-11-08, PropFinder's before) through `absentByTeam`, name, position,
   status and detail; Vincent's ask, 2026-10-27);
   every chip his **projection for tonight**: **the board's figure** (`ranges[stat].exp` on the side's
   player, `boardRead` in the court: `lib/picks/projection.js`'s `ownRate` = his season blended with his last

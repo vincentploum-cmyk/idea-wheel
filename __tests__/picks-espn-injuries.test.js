@@ -153,8 +153,9 @@ describe('ESPN’s NFL injury feed', () => {
     const byAbbr = { SEA: teams[0], DEN: teams[1] };
     expect(await fetchNflReport({ teams, byAbbr, slateAbbrs: ['SEA', 'DEN'], get })).toEqual({ rows: [], source: 'espn', keys: [], sample: null, errors: [] });
     expect(calls).toEqual([]);
-    await fetchNbaReport({ teams, byAbbr, slateAbbrs: ['SEA'], get });   // the NBA still reads PropFinder's own report
-    expect(calls[0]).toMatch(/^\/NBA\/v2\?sportsbooks=/);
+    // The NBA reads ESPN's feed too since 2026-11-08 (PropFinder's routes answer the API 404): no call either.
+    expect(await fetchNbaReport({ teams, byAbbr, slateAbbrs: ['SEA'], get })).toMatchObject({ rows: [], source: 'espn' });
+    expect(calls).toEqual([]);
     // The NFL pull's shape: every rostered player of both teams, no report rows, no flag; ESPN's feed over it.
     const roster = feed.rows.map((r) => ({ id: `pf-${normName(r.name)}`, name: r.name, key: normName(r.name), team: r.team, pos: r.pos, games: [], props: [] }));
     const pf = { at: '2026-10-31T13:00:00Z', data: { players: [...roster, { id: 'pf-x', name: 'Not Listed', key: 'not listed', team: 'SEA', pos: 'WR', games: [], props: [] }], injuries: { rows: [] } } };

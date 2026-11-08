@@ -49,6 +49,9 @@ describe('the NBA pull loads everything', () => {
     expect(ind.teams.IND.rows[0]).toMatchObject({ fastBreakPts: 4, pointsRank: 3 });
     expect(r.data.extra.abbrs.sort()).toEqual(['DET', 'IND']);
     expect(r.fieldsSeen.unread).toEqual([]);
+    // The injury report is ESPN's (2026-11-08): no call to PropFinder's dead routes, no error on the pull.
+    expect(mockCalls.some((c) => c.startsWith('/NBA/v2') || c.startsWith('/injuries/'))).toBe(false);
+    expect(r.injuries).toMatchObject({ source: 'espn', error: null, errors: [] });
     expect(r.fieldsSeen.stored).toEqual(['efficiency']);
   });
 

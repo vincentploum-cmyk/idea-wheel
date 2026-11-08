@@ -3,7 +3,11 @@ import { marketFromText, groupOf, statFields, MARKETS, GROUPS } from '../lib/nba
 import { teamAbbrFromText, parseMatchup, teamLogo } from '../lib/nba/teams';
 import { parseCheatSheet, classifyHeader, parsePlayerCell } from '../lib/nba/cheatsheet';
 import { parseSummary, parseScoreboard, seasonOfDate, derived } from '../lib/nba/espn';
-import { gameRow, mapPlayers, defenseAllowed, fieldsSeen, depthChart, fetchInjuries, applyInjuries } from '../lib/nba/propfinder-nba';
+import { gameRow, mapPlayers, defenseAllowed, fieldsSeen, depthChart, applyInjuries, NBA_PF_OPTIONS, fetchInjuries as nbaFetchInjuries } from '../lib/nba/propfinder-nba';
+import { makePropfinder } from '../lib/picks/propfinder';
+// PropFinder's report reader, kept for the day its route answers the API again: the NBA binding reads ESPN's feed since
+// 2026-11-08 (`injuryReport: 'espn'`), so the reader is tested on the binding with PropFinder's report.
+const { fetchInjuries } = makePropfinder({ ...NBA_PF_OPTIONS, injuryReport: 'propfinder' });
 import { buildBoard, statOf, logRates, nbaBoard, COCKTAIL, COCKTAIL_BEFORE_RECIPE, BEST_MARKETS } from '../lib/nba/picks';
 import { FACTOR_MAX } from '../lib/picks/rotations';
 import { VACATED_SHARE } from '../lib/picks/injuries';
@@ -226,6 +230,14 @@ describe('NBA PropFinder mapping', () => {
     const seen = fieldsSeen([PLAYER], []).markets;
     expect(Object.values(seen).reduce((s, m) => s + m.n, 0)).toBeGreaterThan(0);
     expect(Object.values(seen).every((m) => typeof m.n === 'number')).toBe(true);
+  });
+  // Vincent, 2026-11-08: "fix the propfinder injury report 404" → option 1, ESPN's league feed as the NBA's report.
+  test('the NBA binding asks PropFinder for no injury report: ESPN\'s feed is the report', async () => {
+    const calls = [];
+    const got = await nbaFetchInjuries({ teams: [{ id: 1, code: 'BOS' }], byAbbr: { BOS: { id: 1 } }, slateAbbrs: ['BOS'], get: async (path) => { calls.push(path); return {}; } });
+    expect(got).toMatchObject({ rows: [], source: 'espn', errors: [] });
+    expect(got.error).toBeUndefined();
+    expect(calls).toEqual([]);
   });
   test('the injury report, live: the games payload first, the per-team route as the fallback; statuses onto the players', async () => {
     const teams = [{ id: 1, code: 'BOS' }, { id: 2, code: 'NYK' }];
