@@ -250,7 +250,8 @@
   (`/NFL/coverage/receiver-splits?season=`), TD Matchups (`/NFL/td-matchups?teamWindow=Season<season>&playerYear=<season>`, and
   with `&allSplitTypes=true&skipSplits=true`), WR vs CB (`/NFL/wr-cb-matchups?season=&week=`: `{week}` the slate's,
   no read without one), Team Share (`/NFL/team-share?position=All&period=Full&season=&count=season`), Milestones receiving
-  yards (`/NFL/milestones?category=receivingYards`; other categories not seen yet). The site's `propfinder.app/nfl/cheatsheets/…?_rsc=` requests are the page's own
+  yards (`/NFL/milestones?category=receivingYards`; other categories not seen yet), Rushing Matchups
+  (`/NFL/rushing/slate-board?season=`). The site's `propfinder.app/nfl/cheatsheets/…?_rsc=` requests are the page's own
   layout, no data. Role Matchups' table likely repeats the Opponent rows by slot the board already reads: to compare. No number
   reads them yet: each is read and backtested before it moves a projection. `__tests__/nfl-pf-pages.test.js`.
 - **Without the cheat sheet, PropFinder's weak spots** (`pfSpots` / `PF_SPOTS` in `lib/nfl/projections.js`; Vincent, 2026-11-04:
