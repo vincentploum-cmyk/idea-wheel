@@ -320,6 +320,16 @@ node --import ./tools/audit/register.mjs tools/audit/nfl-audit.mjs --raw .nhl-da
 python3 -I tools/audit/nfl_outliers.py .nhl-data/audit/nfl-yards.json
 ```
 
+## NFL: the matchup pages on last season (`nfl_coverage.py`)
+
+The audit export (GitHub → Actions → NFL PropFinder export) unzipped into `.nhl-data/audit/nfl-pf`; its latest week holds the
+kept pages, last season's among them. 2025's coverage profiles × the opponents' 2025 coverage mix, and 2025's run direction
+× the opponents' gaps, graded on this season's games in PropFinder's logs. Written up in `docs/audits/2026-11-08-nfl-coverage.md`.
+
+```bash
+python3 -I tools/audit/nfl_coverage.py .nhl-data/audit/nfl-pf/w09.json.gz
+```
+
 ## NBA: the big games (`nba_big.py`)
 
 `nba-audit.mjs`'s rows (with `espnId` and `venue` since 2026-11-01) for 2025-26 and 2026-27, joined in Python to ESPN's box

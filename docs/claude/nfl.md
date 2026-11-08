@@ -252,7 +252,10 @@
   no read without one), Team Share (`/NFL/team-share?position=All&period=Full&season=&count=season`), Milestones receiving
   yards (`/NFL/milestones?category=receivingYards`; other categories not seen yet), Rushing Matchups
   (`/NFL/rushing/slate-board?season=`), Coverage Matrix (`/NFL/coverage/teams?season=`: the defenses' coverage mix).
-  Not pages: `config/leagues`, `savedprops/me`, `me`, `user`, `teams`, `version`, `flags`, `popups` (the app's own). The site's `propfinder.app/nfl/cheatsheets/…?_rsc=` requests are the page's own
+  Not pages: `config/leagues`, `savedprops/me`, `me`, `user`, `teams`, `version`, `flags`, `popups` (the app's own).
+  Last season's coverage and rushing pages too (`coverageTeamsPrior`, `coverageReceiverSplitsPrior`, `rushingSlateBoardPrior`,
+  `{priorSeason}`): graded on 2026's games, the coverage fit and the run-direction fit added nothing
+  (`docs/audits/2026-11-08-nfl-coverage.md`). The site's `propfinder.app/nfl/cheatsheets/…?_rsc=` requests are the page's own
   layout, no data. `__tests__/nfl-pf-pages.test.js`. **Measured** (2026-11-08, Vincent: "analyze and redo our logic to determine
   rushing, passing, receiving props as well as TDs"; `docs/audits/2026-11-08-nfl-sources.md`, `tools/audit/nfl_sources.py`): each
   page rebuilt week by week from the game rows behind it (Team Share's shares, TD / Rushing / Role Matchups' tables by position)

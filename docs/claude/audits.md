@@ -220,3 +220,8 @@
   (the week's top ten said 21%, landed 13%, receiving); half on his own spread and half on the spread usual for his
   projection lands (16.7 / 16.0% over 2025, 16.1 / 21.3% over 2026), log loss lower on both; a flat fit put a star's 209+ at
   8% and was dropped. Shipped as the Outliers view.
+- The NFL's matchup pages on last season (`docs/audits/2026-11-08-nfl-coverage.md`, `tools/audit/nfl_coverage.py` on the
+  PropFinder export; Vincent, 2026-11-08: "can't we backtest with last season's data?"): 2025's coverage and rushing profiles
+  (PropFinder serves them, `…Prior` pages) graded on 2026's weeks 1–8, leak-free. The coverage fit (his 2025 yards per route by
+  coverage × the opponent's 2025 coverage mix) ordered nothing (got ÷ average by fifth 0.95 / 0.94 / 1.02 / 0.94 / 0.97, the
+  miss 23.89 → 24.19); the backs' run direction against the gaps the same (27.75 → 28.59). Nothing shipped.
