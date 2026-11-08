@@ -237,6 +237,16 @@
   run → the lead back, the outside → WR1 / WR2, the middle → the TE and the slot). The Matchups tab's game card names each defense's three weakest spots, and the script prints the same. A sheet stored before
   2026-11-01 gains its snapshot with "Read again" (the stored OCR words, no new read). Touchdowns do not read the
   snapshot (it prints no touchdown tile). `__tests__/nfl-snapshot.test.js` (page 1's real words).
+- **PropFinder's cheat-sheet pages, kept** (Vincent, 2026-11-08: "we need to use all these cheat sheets to determine
+  matchups" — TD, First TD, Role, Market Grades, Coverage, Alignment, WR vs CB, Rushing, Redzone, Line Matchups, Hit Rate
+  Matrix, Player Stats Summary, Team Share %, Team Defensive Stats, Coverage Matrix, Team Tendencies, Coverage Players): each
+  page's route is read off the site (DevTools → Network, never guessed) and named in `pages` (`lib/nfl/propfinder-nfl.js`;
+  `{season}`, `{date}`, `{teamIds}` filled in); the pull reads each once (`fetchSamples`, `keep`), keeps it whole in
+  `nfl/<season>/<wk>/propfinder-pages/<name>.json` (`P.propfinderPage`, beside the pull: the pull's file has a 15 MB limit),
+  its keys and a 2000-character sample on the pull's `samples` (Data sources, the workflow's log), `pages` { name: { at, rows } }
+  on the pull's meta, the export (`exportWeek`) carrying them for the backtests. So far: Role Matchups
+  (`/NFL/role-matchups?season=2026`: { season, week, seasonType, window, statsSeason, generatedAtUtc, roles: […] }). No number
+  reads them yet: each is read and backtested before it moves a projection. `__tests__/nfl-pf-pages.test.js`.
 - **Without the cheat sheet, PropFinder's weak spots** (`pfSpots` / `PF_SPOTS` in `lib/nfl/projections.js`; Vincent, 2026-11-04:
   "I will not get the cheat sheet anymore"): a game whose defense has no snapshot reads its weak and strong spots off the side's
   `allowed` (the opponent's PropFinder season table, rank 1 = the most of `count`): the pass (QB passing yards), the run (RB
