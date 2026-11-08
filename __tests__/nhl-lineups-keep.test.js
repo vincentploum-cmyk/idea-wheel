@@ -70,6 +70,22 @@ describe('the lineup read keeps what it cannot re-read', () => {
     expect(g.reread.rows).toBe(0);
   });
 
+  test("keepPreview: the lines' own times — first seen as they stand, and revised — not the page's moving stamp", () => {
+    const rows = (rw) => ['Ducks projected lineup', `Leo Carlsson -- Troy Terry -- ${rw}`, 'Senators projected lineup', 'Brady Tkachuk -- Tim Stutzle -- Drake Batherson'];
+    const first = keepPreview(null, { gameId: 1, rows: rows('Frank Vatrano'), updated: '2026-04-18T15:00:00Z' });
+    expect(first.linesAt).toEqual({ ANA: '2026-04-18T15:00:00Z', OTT: '2026-04-18T15:00:00Z' });
+    expect(first.revisedAt).toEqual({ ANA: null, OTT: null });
+    // The page re-stamped with the same lines: nothing moves.
+    const same = keepPreview(first, { gameId: 1, rows: [...rows('Frank Vatrano'), 'Injuries: none'], updated: '2026-04-18T19:00:00Z' });
+    expect(same.linesAt).toEqual(first.linesAt);
+    expect(same.revisedAt).toEqual({ ANA: null, OTT: null });
+    // The Ducks' right wing changes: a revision for ANA alone.
+    const revised = keepPreview(same, { gameId: 1, rows: rows('Cutter Gauthier'), updated: '2026-04-18T21:00:00Z' });
+    expect(revised.revisedAt).toEqual({ ANA: '2026-04-18T21:00:00Z', OTT: null });
+    expect(revised.linesAt).toEqual({ ANA: '2026-04-18T21:00:00Z', OTT: '2026-04-18T15:00:00Z' });
+    // A later re-read without a change keeps the revision time.
+    expect(keepPreview(revised, { gameId: 1, rows: rows('Cutter Gauthier'), updated: '2026-04-18T22:00:00Z' }).revisedAt.ANA).toBe('2026-04-18T21:00:00Z');
+  });
   test('keepPreview: a re-read with lines replaces the entry, one without keeps it', () => {
     const prev = { gameId: 1, rows: ['x'], updated: 'a' };
     expect(keepPreview(prev, { gameId: 1, rows: ['y'], updated: 'b' }).rows).toEqual(['y']);

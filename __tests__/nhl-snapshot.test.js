@@ -93,10 +93,28 @@ describe('position snapshot sources', () => {
     let ana = mockStored.get(positionsPath('2026-04-18')).games[1].teams.ANA;
     expect(ana.source).toBe('gamedaytweets');
     expect(ana.players['troy terry']).toMatchObject({ pos: 'LW', line: 2 });
-    // The morning skate (T-8h): NHL.com's later preview wins, as before.
+    // The morning skate (T-8h): the tweet wins over a preview whose "updated" stamp moved but whose lines did not.
     await snapshotPositions('2026-04-18', schedule, { games: [nhlGame], gdt: tweet('2026-04-18T15:00:00Z') });
     ana = mockStored.get(positionsPath('2026-04-18')).games[1].teams.ANA;
+    expect(ana.source).toBe('gamedaytweets');
+    // NHL.com revised the Ducks' lines after the morning skate: the preview wins, and says when.
+    await snapshotPositions('2026-04-18', schedule, { games: [{ ...nhlGame, revisedAt: { ANA: '2026-04-18T20:00:00Z' } }], gdt: tweet('2026-04-18T15:00:00Z') });
+    ana = mockStored.get(positionsPath('2026-04-18')).games[1].teams.ANA;
     expect(ana.source).toBe('lineup');
+    expect(ana.meta.nhlRevised).toBe('2026-04-18T20:00:00Z');
+    // A revision before the tweet does not count against it.
+    await snapshotPositions('2026-04-18', schedule, { games: [{ ...nhlGame, revisedAt: { ANA: '2026-04-18T14:00:00Z' } }], gdt: tweet('2026-04-18T15:00:00Z') });
+    expect(mockStored.get(positionsPath('2026-04-18')).games[1].teams.ANA.source).toBe('gamedaytweets');
+  });
+  test("a tweet from the day before loses to the preview's lines first seen later; wins over lines older than it", async () => {
+    mockStored.set(PLAYERS_PATH, { players });
+    mockStored.delete(PF_DEPTH_PATH);
+    const nhlGame = { gameId: 1, away: 'ANA', home: 'OTT', updated: '2026-04-18T22:50:00Z', rows: ['Ducks projected lineup', 'Leo Carlsson -- Troy Terry -- X Y'] };
+    const tweet = { ANA: { players: { 'troy terry': { name: 'Troy Terry', id: 1, pos: 'LW', line: 2 } }, meta: { at: '2026-04-17T18:00:00Z', date: '2026-04-17', handle: 'w' } } };
+    await snapshotPositions('2026-04-18', schedule, { games: [{ ...nhlGame, linesAt: { ANA: '2026-04-18T16:00:00Z' } }], gdt: tweet });
+    expect(mockStored.get(positionsPath('2026-04-18')).games[1].teams.ANA.source).toBe('lineup');
+    await snapshotPositions('2026-04-18', schedule, { games: [{ ...nhlGame, linesAt: { ANA: '2026-04-16T16:00:00Z' } }], gdt: tweet });
+    expect(mockStored.get(positionsPath('2026-04-18')).games[1].teams.ANA.source).toBe('gamedaytweets');
   });
   test("PropFinder's depth chart never stands in for a game before the day it was pulled", async () => {
     mockStored.set(PLAYERS_PATH, { players });

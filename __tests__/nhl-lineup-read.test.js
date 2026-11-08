@@ -15,6 +15,14 @@ describe('the rink pill: where the lines came from', () => {
     expect(confirmed.confirmed).toBe(true);
     expect(confirmed.title).toMatch(/same lineup/);
   });
+  test('lines read off a lineup graphic say so', () => {
+    const r = lineupRead(side('gamedaytweets', { gdtAt: '2026-10-31T22:42:00Z', gdtImage: 'https://pbs.twimg.com/media/X.jpg?name=large' }), start);
+    expect(r).toMatchObject({ verdict: VERDICT.settled, pictured: true, note: '6:42 PM ET · 18 min before puck drop · graphic' });
+    expect(r.title).toMatch(/lineup graphic \(OCR\)/);
+    const early = lineupRead(side('gamedaytweets', { gdtAt: '2026-10-31T18:10:00Z', gdtImage: 'x' }), start);
+    expect(early.note).toBe('2:10 PM ET · 4 h 50 before puck drop · projected · graphic');
+    expect(lineupRead(side('gamedaytweets', { gdtAt: '2026-10-31T22:42:00Z' }), start).pictured).toBe(false);
+  });
   test('an earlier tweet is projected lines (amber), with its distance from puck drop', () => {
     const r = lineupRead(side('gamedaytweets', { gdtAt: '2026-10-31T18:10:00Z' }), start);
     expect(r).toMatchObject({ verdict: VERDICT.early, tone: 'warn', label: 'GameDayTweets @writer', note: '2:10 PM ET · 4 h 50 before puck drop · projected', tweetMinutes: -290, finalWord: false });
