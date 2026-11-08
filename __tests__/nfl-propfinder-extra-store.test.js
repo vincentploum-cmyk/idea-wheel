@@ -55,6 +55,29 @@ describe('the pull kept whole, a team a file', () => {
   });
 });
 
+describe('the Defensive Matchups answer through the store (the NBA, 2026-11-08)', () => {
+  test('its own gzipped file beside the pull, the board\'s file without it, the report on the pull', async () => {
+    const answer = { data: [{ team: { code: 'IND' }, position: 'PG', points: 24.1 }] };
+    const store = makeStore({
+      sport: 'nba', slateKey: (s) => s.date,
+      fetchSchedule: async () => ({ games: [{ id: 'g1', away: 'IND', home: 'DET', date: '2026-11-08T23:00:00Z' }] }),
+      propfinderConfigured: () => true, seasonOf: () => 2026, sameSlate: () => false,
+      pullSlate: async () => ({ ok: true, players: 0, samples: null, defensiveMatchups: { path: '/NBA/defensive-matchups?season=2026', count: 1, rows: 1, teams: 1 }, data: { players: [], defense: {}, defensiveMatchups: { path: '/NBA/defensive-matchups?season=2026', rows: [{ team: 'IND', pos: 'PG', stats: { pts: { value: 24.1, rank: null } } }], answer } } }),
+    });
+    const night = { date: '2026-11-08' };
+    const r = await store.pullPropfinder(night, { force: true });
+    expect(r.defensiveMatchups).toMatchObject({ count: 1, rows: 1 });
+    const board = await readJson('nba/2026-11-08/propfinder.json');
+    expect(board.data.defensiveMatchups).toBeUndefined();
+    expect(board.defensiveMatchups).toMatchObject({ rows: 1, teams: 1 });
+    expect(Buffer.isBuffer(files.get('nba/2026-11-08/propfinder-defensive-matchups.json'))).toBe(true);
+    const dm = await store.defensiveMatchupsFor(night);
+    expect(dm.answer).toEqual(answer);
+    expect(dm.rows[0]).toMatchObject({ team: 'IND', pos: 'PG' });
+    expect(await store.defensiveMatchupsFor({ date: '2026-11-09' })).toBeNull();
+  });
+});
+
 describe('the week exported for the audit (GET /api/nfl/propfinder?export=1)', () => {
   test('the pull as stored, the sheets, the schedule and the teams’ published rows; nothing for an empty week', async () => {
     const { writeJson } = require('../lib/nhl-store');
