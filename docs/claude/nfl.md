@@ -253,8 +253,22 @@
   yards (`/NFL/milestones?category=receivingYards`; other categories not seen yet), Rushing Matchups
   (`/NFL/rushing/slate-board?season=`), Coverage Matrix (`/NFL/coverage/teams?season=`: the defenses' coverage mix).
   Not pages: `config/leagues`, `savedprops/me`, `me`, `user`, `teams`, `version`, `flags`, `popups` (the app's own). The site's `propfinder.app/nfl/cheatsheets/…?_rsc=` requests are the page's own
-  layout, no data. Role Matchups' table likely repeats the Opponent rows by slot the board already reads: to compare. No number
-  reads them yet: each is read and backtested before it moves a projection. `__tests__/nfl-pf-pages.test.js`.
+  layout, no data. `__tests__/nfl-pf-pages.test.js`. **Measured** (2026-11-08, Vincent: "analyze and redo our logic to determine
+  rushing, passing, receiving props as well as TDs"; `docs/audits/2026-11-08-nfl-sources.md`, `tools/audit/nfl_sources.py`): each
+  page rebuilt week by week from the game rows behind it (Team Share's shares, TD / Rushing / Role Matchups' tables by position)
+  and fitted on top of the board (2024–25), scored on 2026's weeks 1–8. Only **Team Share's target share** moved a number: the
+  receiving yards and the receptions (below). The carry share (rushing −0.28 a game, interval across 0), the passing pieces
+  (attempts, completed air yards, sacks, the defense's yards a pass), the touchdown pieces (touchdowns allowed by position,
+  red-zone trips allowed, red-zone share) and the matchup pages (the board reads the slot table already) read nothing the board
+  did not. WR vs CB, the coverage splits, the Coverage Matrix and routes are in no game row: graded once weeks of snapshots are stored.
+- **The target share on the receiving read** (`TGT_SHARE`, `tgtShareRead`, `shareRead`, `shareText` in `lib/nfl/projections.js`;
+  2026-11-08): a receiver's, tight end's or back's receiving yards = −5.479 + 0.7828 × the board's read (after the shrink) +
+  81.477 × his target share over his last five games with a touch (PropFinder's per-row `tgtShare`, rows without it left out;
+  none → the board's read), receptions 0.05 + 0.61 × + 6.059 ×, from the lists' floor (10 yards, 1 reception); `y.board` and
+  `y.tgtShare` on the row, the Receiving list's Proj hover and the player card say the share. `RESID` / `RANGE` for both refitted
+  on the new figure. On 2026's weeks 1–8 through the replay: receiving miss 22.01 → 21.55, within ±10 29.5% → 33.7%; receptions
+  1.60 → 1.56; the receptions' rungs now land as said (the board's ran 3–5 points over). The big games keep the unshrunk read.
+  `nfl-pf-audit.mjs --check-to <week>` grades 2026 to that week. `__tests__/nfl-boards.test.jsx` ("Team Share").
 - **Without the cheat sheet, PropFinder's weak spots** (`pfSpots` / `PF_SPOTS` in `lib/nfl/projections.js`; Vincent, 2026-11-04:
   "I will not get the cheat sheet anymore"): a game whose defense has no snapshot reads its weak and strong spots off the side's
   `allowed` (the opponent's PropFinder season table, rank 1 = the most of `count`): the pass (QB passing yards), the run (RB

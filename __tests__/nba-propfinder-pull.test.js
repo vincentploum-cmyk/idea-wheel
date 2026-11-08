@@ -7,11 +7,15 @@ const mockGame = { gameId: 'g1', gameDate: '2026-10-29T23:00:00Z', season: 2026,
 const mockTeams = [{ id: 't1', code: 'IND', stats: [{ id: 1, teamId: 't1', type: 'Opponent', position: 'PG', seasonYear: 2026, gamesPlayed: 6, points: 24.1, pointsRank: 3, fastBreakPts: 4 }] }, { id: 't2', code: 'DET', stats: [] }];
 const mockPriced = [{ id: 'a', name: 'Andrew Nembhard', position: 'SG', team: { code: 'IND' }, stats: [mockGame], odds: [{ market: 'Player Points', categoryMapping: 'points', points: 17.5, price: -110, selectionLine: 'over', sportsbook: 'FanDuel', isMain: true }] }];
 const mockBench = { id: 'b', name: 'Bench Guard', position: 'PG', team: { code: 'IND' }, stats: [{ ...mockGame, points: 6 }] };
-// A stand-in for the Defensive Matchups answer (its real shape is not known yet): IND's PG row as the /teams table has it,
-// DET's with no /teams row, a figure no spelling reads (`fantasyPoints`).
-const mockDm = { refuse: false, answer: { data: [
-  { team: { code: 'IND' }, position: 'PG', opposingPlayer: { name: 'Cade Cunningham' }, points: 24.1, pointsRank: 3, rebounds: { value: 5.2, rank: 11 }, fantasyPoints: 41.5 },
-  { teamCode: 'DET', position: 'SG', stats: { points: 19.9, threePointsMade: 2.4 } },
+// The Defensive Matchups answer in the shape the pull of 2026-11-08 saw (games → sides → positions { stats, ranks, starters }):
+// the IND side's PG figures are what IND's /teams row allows; the DET side's are not DET's (no /teams rows) nor IND's.
+const mockDm = { refuse: false, answer: { season: 2026, since: '2025-10-21T00:00:00', lines: [{ playerId: 'a', market: 'points', line: 17.5 }], games: [
+  { gameId: 'g1', gameDate: '2026-11-08T23:00:00Z', homeTeamId: 'tid-det', homeTeamCode: 'DET', visitorTeamId: 'tid-ind', visitorTeamCode: 'IND', sides: [
+    { teamCode: 'IND', opponentTeamCode: 'DET', starterSource: 'lineup', positions: [
+      { position: 'PG', stats: { points: 24.1, rebounds: 5.75, threePointsMade: 2.4, benchPoints: 0, fieldGoalsPct: 0.48 }, ranks: { points: 3, rebounds: 17, threePointsMade: 1 }, starters: [{ playerId: 'c1', name: 'Cade Cunningham', position: 'PG', teamId: 'tid-det', lineupStatus: 'confirmed' }] },
+    ] },
+    { teamCode: 'DET', opponentTeamCode: 'IND', starterSource: 'lineup', positions: [{ position: 'PG', stats: { points: 30 }, ranks: { points: 1 }, starters: [] }] },
+  ] },
 ] } };
 jest.mock('../lib/nhl-data/propfinder-api', () => ({
   propfinderConfigured: () => true,
@@ -25,7 +29,7 @@ jest.mock('../lib/nhl-data/propfinder-api', () => ({
   },
 }));
 
-const { pullSlate, defensiveMatchupsPath, readDefensiveMatchups } = require('../lib/nba/propfinder-nba');
+const { pullSlate, defensiveMatchupsPath, readDefensiveMatchups, checkDefensiveMatchups } = require('../lib/nba/propfinder-nba');
 
 describe('the NBA pull loads everything', () => {
   test('every rostered player on the board (the unpriced with no lines), the extra kept as well', async () => {
@@ -48,8 +52,9 @@ describe('the NBA pull loads everything', () => {
     expect(r.fieldsSeen.stored).toEqual(['efficiency']);
   });
 
-  // Vincent, 2026-11-08: "add the endpoint to the pull" (the Defensive Matchups page's route).
-  test('the Defensive Matchups route rides with the pull: stored whole, read, checked against /teams, the unread named', async () => {
+  // Vincent, 2026-11-08: "add the endpoint to the pull" (the Defensive Matchups page's route); the reader for the shape the
+  // first pull showed, checked against /teams both ways ("compare each cell against /teams both ways").
+  test('the Defensive Matchups route rides with the pull: stored whole, read side by side, checked against /teams both ways', async () => {
     mockCalls.length = 0;
     const r = await pullSlate({ season: 2026, games: [{ away: 'IND', home: 'DET' }], at: '2026-11-08T13:00:00Z' });
     expect(r.ok).toBe(true);
@@ -57,11 +62,16 @@ describe('the NBA pull loads everything', () => {
     expect(defensiveMatchupsPath(2027)).toMatch(/^\/NBA\/defensive-matchups\?season=2027&lastNGames=0&/);
     const dm = r.data.defensiveMatchups;
     expect(dm.answer).toEqual(mockDm.answer);
-    expect(dm.rows[0]).toEqual({ team: 'IND', pos: 'PG', player: 'Cade Cunningham', stats: { pts: { value: 24.1, rank: 3 }, reb: { value: 5.2, rank: 11 } } });
-    expect(dm.rows[1]).toEqual({ team: 'DET', pos: 'SG', stats: { pts: { value: 19.9, rank: null }, tpm: { value: 2.4, rank: null } } });
-    expect(r.defensiveMatchups).toMatchObject({ count: 2, rows: 2, teams: 2, wrapper: 'data', unread: ['fantasyPoints'], error: null });
-    // IND PG points match the /teams row; IND's /teams row has no rebounds, DET has no /teams row at all.
-    expect(r.defensiveMatchups.check).toEqual({ cells: 1, same: 1, off: [], noRow: ['DET SG'] });
+    expect(dm.rows[0]).toEqual({ game: 'g1', team: 'IND', opp: 'DET', pos: 'PG', stats: { pts: { value: 24.1, rank: 3 }, reb: { value: 5.75, rank: 17 }, tpm: { value: 2.4, rank: 1 } }, starters: [{ name: 'Cade Cunningham', team: 'DET', position: 'PG', lineupStatus: 'confirmed', playerId: 'c1' }] });
+    expect(dm.rows[1]).toEqual({ game: 'g1', team: 'DET', opp: 'IND', pos: 'PG', stats: { pts: { value: 30, rank: 1 } } });
+    expect(r.defensiveMatchups).toMatchObject({ games: 1, rows: 2, teams: 2, season: 2026, since: '2025-10-21T00:00:00', others: ['benchPoints', 'fieldGoalsPct'], lines: { count: 1, keys: ['playerId', 'market', 'line'] }, starterKeys: ['playerId', 'name', 'position', 'teamId', 'lineupStatus'], error: null });
+    // As each side's own defense: IND PG points read the same (IND's /teams row has no rebounds or threes), DET has no row.
+    // As the opponent's: the DET side's 30 points against IND's 24.1.
+    expect(r.defensiveMatchups.check).toEqual({
+      team: { cells: 1, same: 1, share: 1, off: [], noRow: ['DET PG'] },
+      opponent: { cells: 1, same: 0, share: 0, off: ['IND PG pts: route 30, /teams 24.1'], noRow: ['DET PG'] },
+      reads: 'team',
+    });
     expect(r.defensiveMatchups.sample).toContain('Cade Cunningham');
   });
 
@@ -76,8 +86,14 @@ describe('the NBA pull loads everything', () => {
     } finally { mockDm.refuse = false; }
   });
 
-  test('an answer with no list reads no rows and names its keys', () => {
-    expect(readDefensiveMatchups({ message: 'nope', total: 0 })).toEqual({ rows: [], count: null, keys: ['message', 'total'], unread: [], wrapper: null });
-    expect(readDefensiveMatchups([{ team: 'Indiana Pacers', pos: 'c', blocks: 1.1 }]).rows).toEqual([{ team: 'IND', pos: 'C', stats: { blk: { value: 1.1, rank: null } } }]);
+  test('an answer without games reads no rows and names its keys; the check says which way matches, or neither', () => {
+    expect(readDefensiveMatchups({ message: 'nope', total: 0 })).toEqual({ rows: [], games: null, keys: ['message', 'total'], others: [], season: null, since: null, lines: null, starterKeys: [] });
+    const defense = { teams: { BOS: { C: { reb: 12.0, blk: 1.1 } }, NYK: { C: { reb: 9.0, blk: 2.0 } } } };
+    const row = (team, opp, reb, blk) => ({ team, opp, pos: 'C', stats: { reb: { value: reb, rank: null }, blk: { value: blk, rank: null } } });
+    // Each side carrying its opponent's table.
+    expect(checkDefensiveMatchups([row('BOS', 'NYK', 9.0, 2.0), row('NYK', 'BOS', 12.05, 1.1)], defense).reads).toBe('opponent');
+    // Another window: close to neither.
+    expect(checkDefensiveMatchups([row('BOS', 'NYK', 10.5, 1.5), row('NYK', 'BOS', 10.5, 1.5)], defense).reads).toBe('neither');
+    expect(checkDefensiveMatchups([row('LAL', 'GSW', 10, 1)], defense).reads).toBeNull();
   });
 });

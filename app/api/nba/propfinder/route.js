@@ -1,5 +1,5 @@
 import { authorize } from '@/lib/nhl-data/util';
-import { resolveSlate, extraFor, defensiveMatchupsFor } from '@/lib/nba/store';
+import { resolveSlate, extraFor, defensiveMatchupsFor, startersCheckFor } from '@/lib/nba/store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -10,11 +10,17 @@ export const dynamic = 'force-dynamic';
 // first basket) and, for a player the books have not priced (`offBoard`), his whole logs; ?team=ABBR its stats rows as
 // published (each window and position, PropFinder's ranks in); neither: the counts and the players kept.
 // ?part=defensive-matchups: the Defensive Matchups route's answer as stored with the pull (its rows read, the answer whole).
+// ?part=starters: PropFinder's starters from that answer against RotoWire's five and the board's spots (lib/nba/starters-check.js).
 export async function GET(request) {
   const auth = await authorize(request, { allowToken: true });
   if (!auth.ok) return auth.response;
   const url = new URL(request.url);
   const slate = await resolveSlate({ date: url.searchParams.get('date') });
+  if (url.searchParams.get('part') === 'starters') {
+    const out = await startersCheckFor(slate);
+    if (!out) return Response.json({ slate, error: 'no_defensive_matchups', detail: 'This night has no stored Defensive Matchups answer yet: the next pull writes it.' }, { status: 404, headers: { 'Cache-Control': 'private, no-store' } });
+    return Response.json(out, { headers: { 'Cache-Control': 'private, no-store' } });
+  }
   if (url.searchParams.get('part') === 'defensive-matchups') {
     const dm = await defensiveMatchupsFor(slate);
     if (!dm) return Response.json({ slate, error: 'no_defensive_matchups', detail: 'This night has no stored Defensive Matchups answer yet: the next pull writes it.' }, { status: 404, headers: { 'Cache-Control': 'private, no-store' } });

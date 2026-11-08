@@ -25,7 +25,8 @@ const PF = arg('--pf', '.nhl-data/audit/nfl-pf');
 const RAW = arg('--raw', '.nhl-data/audit/nfl');
 const OUT = arg('--out', '.nhl-data/audit/out');
 const TUNE = { season: 2025, weeks: [4, 18] };
-const CHECK = { season: 2026, weeks: [1, 7] };
+// --check-to: the last 2026 week graded (7 when this was written; the export of 2026-11-08 carries week 8's games).
+const CHECK = { season: 2026, weeks: [1, Number(arg('--check-to', '7'))] };
 const SKILL = ['QB', 'RB', 'WR', 'TE'];
 const STATS = ['passCmp', 'passAtt', 'passYds', 'passTd', 'passInt', 'rushAtt', 'rushYds', 'rushTd', 'rec', 'recYds', 'recTd', 'tgt', 'td'];
 const read = (f) => JSON.parse(f.endsWith('.gz') ? zlib.gunzipSync(fs.readFileSync(f)).toString('utf8') : fs.readFileSync(f, 'utf8'));
