@@ -232,5 +232,8 @@
   saves a start 0.12, his save % 0.04: the league's .900 does as well). Home −0.9, the rink ±half a save; rest, back to
   backs, penalties, goal difference and short windows nothing. The miss is 6.8 saves (the site's normal 5.4) and the
   site's shape runs a save high (the starter faces 97% of the team's shots against): it said 25+ at 55%, 47% landed.
-  Against a stand-in line at his own saves a start, 2+ over it landed 66–78% overs, 2+ under 30–34%. Nothing shipped;
-  the spread, the 0.97 share, the team's side and keeping PropFinder's goalie lines by date are proposed in the audit.
+  Against a stand-in line at his own saves a start, 2+ over it landed 66–78% overs, 2+ under 30–34%. Shipped the same day
+  (Vincent: "yes, fix the Saves table"): `shotsAgainst` (both teams' rates, refitted on team-games: 0.89 / 0.87, home
+  ∓0.53), × 0.97, `SAVES_SD` 6.8, PropFinder's goalie lines kept per date; the board's λ sum stays on the hover, since it
+  already carries the team's side through each skater's matchup and could not be graded here. Replayed with the site's
+  functions (`tools/predictors/saves-replay.mjs`): 2026-27 projected 23.57, made 23.65, 25+ said 44.9% landed 44.4%.

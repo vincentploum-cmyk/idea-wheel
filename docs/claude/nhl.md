@@ -123,9 +123,11 @@
   goals... What I want to know is whether a team is giving away a lot of powerplays or whether they more disciplined"),
   Last 10 (shots for and against over the last ten), and since 2026-10-31 **Saves** between
   Allows and Power play (Vincent: "I should be able to see the projected goalkeeper saves for NHL games in the short game
-  summary"): the shots the opponent is expected to put on the team's goalie — the saved run's λ shots summed over the
-  opponent's lineup (ten skaters at least), else ShotPropz's boards (the opponent's shots a game at its venue and the
-  team's shots allowed at its own, the geometric mean) — × the team's save percentage this season (`spzSavePct` in
+  summary"): the shots the team is expected to allow (the goalie's `shotsAgainst`, the Saves table's read below, since
+  2026-11-08; without a goalie on record the saved run's λ shots summed over the opponent's lineup, ten skaters at least,
+  else ShotPropz's boards: the opponent's shots a game at its venue and the team's shots allowed at its own, the geometric
+  mean) × the 97% a starter faces (`STARTER_SHARE`) × his save percentage, the team's this season until he has three
+  starts (`spzSavePct` in
   `shotpropz-pure.js`: 1 − GA/SA on the defense board, all games, ranked 1 = the best, the `goalie` kind's words, a
   strong goalie red; the rink's venue table without a snapshot, unranked). The boards carry no goalies, so the team's
   figure stands for the starter's and the hover says so — each cell a word over one line of
@@ -254,16 +256,30 @@
   percentage from three starts (the team's from ShotPropz until then), names him ("Montembeault likely · .908 over 7
   starts") and, once stored, the goalie who played and his line ("got Oettinger 30 of 33"). **Best bets' Saves table**
   (`saves` on every board game in `picks.js`, `SavesTable` in `PicksPanel.jsx`, the third table of the grid): each side's
-  likely starter facing the shots the board expects of the opponent (its lineup's λ shots summed, ten skaters at least) ×
-  his save percentage = the projected saves (`savesRow`), the chance of 25 / 30 / 35 saves (`savesChance`: a normal around
-  the projection, `SAVES_SD` = 6 shots × the save percentage) with the break-even price, **30+ the play** (`SAVES_LEAD`,
+  likely starter facing the shots his team is expected to allow × the 97% a starter faces × his save percentage = the
+  projected saves (`savesRow` / `savesFrom`), the chance of 25 / 30 / 35 saves (`savesChance`: a normal around the
+  projection, `SAVES_SD` = 6.8 saves) with the break-even price. **The shots read since 2026-11-08** (Vincent: "yes, fix
+  the Saves table", on `docs/audits/2026-11-08-nhl-saves.md`): `teamShotBook(rows, season)` (every team's shots for and
+  against a game this season and last from the stored skater rows) and `shotsAgainst(book, team, opp, venue)` = the
+  league's shots a team a game + `SAVES_SHOTS_FIT` 0.89 × the opponent's shots-a-game gap to the league + 0.87 × the
+  team's shots-allowed gap (each this season blended into last season's gap at games / (games + `SHOTS_BLEND_K` = 10))
+  ∓ 0.53 at home / on the road; the slate puts it on each side's `goalie.shotsAgainst`, `shotsAgainstText` words it for the
+  hovers. Saves are shots (r 0.97 with the shots faced); both teams' rates rank the night at ρ 0.25 against 0.20 for the
+  opponent's alone and 0.12 for his saves a start, and his save % predicts nothing (the shrunk figure stays, harmless).
+  Until then the read was the board's λ shots summed × the save %, at a normal of 6 × save % (5.4): it ran about a save
+  high (the starter faces 97% of the shots: `STARTER_SHARE`) and too sure (25+ said 55%, landed 47%). The board's λ sum
+  rides on the row as `boardShots` for the hover (it carries the opponent's side and, through each skater's matchup
+  table and home ice, much of the team's; its level could not be graded without the scorecard). Replayed with the site's
+  functions (`tools/predictors/saves-replay.mjs`): 2026-27 projected 23.57 a start, made 23.65, 25+ said 44.9% landed
+  44.4%. **30+ the play** (`SAVES_LEAD`,
   a row under `SAVES_FLOOR` = 50% there is dimmed as under the floor, `pickSaves`); once the game is stored the goalie's
   own line grades the row (`withSavesActuals`: 30+ hit or miss, "another goalie played" when the read was on the wrong
   man, `played: false`), and the game head's tally counts the saves plays with the shots and goal plays. **The book's saves lines come from PropFinder's
   pull** (`lib/nhl-data/goalie-props.js`, the ladder reader shared with the skaters' lines in `prop-lines.js` since 2026-10-31; Vincent, 2026-10-31: "pull the goalie saves lines from PropFinder and show the
   edge... I just need over x saves with a %"): the odds-only players call lists the goalies with their props, `goalieSavesProps`
   reads the items whose market names saves (a period's or a window's left out) with the NBA reader's spellings, the main
-  line the one priced nearest a coin flip, and the pull stores them at `data/propfinder/goalie-props.json` ({ at, date,
+  line the one priced nearest a coin flip, and the pull stores them at `data/propfinder/goalie-props.json` and, since 2026-11-08, per date at
+  `data/propfinder/goalie-props/<date>.json` (`goaliePropsPath`; the slate reads the date's file, else the latest one made for the date) ({ at, date,
   goalies: [{ pfId, name, key, team, line, odds, underOdds, book, books, implied, lines }], withLines, `sample` = the
   first goalie's raw items for the spelling check — no NHL goalie item had been seen when it shipped; the pull meta's
   `goalieProps` counts show under Data sources). The slate puts the line on each side's `goalie.prop` (`savesLineFor`,

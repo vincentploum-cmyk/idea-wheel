@@ -76,35 +76,44 @@ describe('matchup profile: MTL @ DAL with ShotPropz', () => {
     expect(mtl.parts[1]).toEqual({ t: '9th of 32 in shots', tone: '' });
   });
   test('saves: the run’s λ over the opponent’s lineup × the likely starter’s save percentage; the team’s without one; the box score once final', () => {
-    // DAL's eighteen skaters' λ add to 29.5 shots on Montembeault, .908 over 7 starts → 26.8 saves. The word is the team's ShotPropz rank.
+    // No shots read on the goalie (the slate's `shotsAgainst`): DAL's eighteen skaters' λ add to 29.5 shots, 97% of them on
+    // Montembeault (28.6), .908 over 7 starts → 26 saves. The word is the team's ShotPropz rank.
     const mtl = cellOf(p, 'saves', 'MTL');
-    expect(mtl).toMatchObject({ word: 'Elite', tone: 'is-tough', source: 'rink', text: '~27 saves expected · 29.5 shots faced · Montembeault likely · .908 over 7 starts' });
-    expect(mtl.title).toContain('29.5 shots faced expected (the run’s λ over 18 DAL skaters) × .908 = 26.8 saves');
+    expect(mtl).toMatchObject({ word: 'Elite', tone: 'is-tough', source: 'rink', text: '~26 saves expected · 28.6 shots faced · Montembeault likely · .908 over 7 starts' });
+    expect(mtl.title).toContain('29.5 shots expected against MTL (the run’s λ over 18 DAL skaters) × 97% faced by the starter × .908 = 26 saves');
     expect(mtl.title).toContain("Sam Montembeault likely in net: 7 of the team's last 10 starts; 7 starts, 192 saves on 210 shots (.914, shrunk to .908), 27.4 saves a start · the other way: Jakub Dobes, 3 starts");
     expect(mtl.title).toContain('2.92 goals on 31.2 shots allowed a game, 1st of 2 · ShotPropz');
-    expect(cellOf(p, 'saves', 'DAL')).toMatchObject({ text: '~29 saves expected · 32.3 shots faced · Oettinger likely · .910 over 9 starts' });
+    expect(cellOf(p, 'saves', 'DAL')).toMatchObject({ text: '~29 saves expected · 31.3 shots faced · Oettinger likely · .910 over 9 starts' });
     // Without a goalie on record the team's save percentage stands in, ranked on the line.
     const noGk = { ...game, sides: game.sides.map((s) => ({ ...s, goalie: null })) };
     const t = cellOf(matchupProfile({ game: noGk, rates, pfTeams, shotpropz }), 'saves', 'MTL');
-    expect(t).toMatchObject({ source: 'spz', text: '~27 saves expected · 29.5 shots faced · team .906 save % (1st of 2)' });
+    expect(t).toMatchObject({ source: 'spz', text: '~26 saves expected · 28.6 shots faced · team .906 save % (1st of 2)' });
     expect(t.parts.find((x) => x.tone != null)).toEqual({ t: '1st of 2', tone: 'is-tough' });
     // Without a run the shots come from ShotPropz's boards: the opponent's shots at its venue and the team's allowed at its own, the geometric mean.
     const noRun = { ...game, sides: game.sides.map((s) => ({ ...s, skaters: s.skaters.map((k) => ({ ...k, model: null })), plays: null })) };
     const q = cellOf(matchupProfile({ game: noRun, rates, pfTeams, shotpropz }), 'saves', 'MTL');
-    // DAL at home 29.2 shots a game, MTL on the road 32.5 allowed: √(29.2 × 32.5) = 30.8.
-    expect(q.text).toBe('~28 saves expected · 30.8 shots faced · Montembeault likely · .908 over 7 starts');
+    // DAL at home 29.2 shots a game, MTL on the road 32.5 allowed: √(29.2 × 32.5) = 30.8, 29.9 on the starter.
+    expect(q.text).toBe('~27 saves expected · 29.9 shots faced · Montembeault likely · .908 over 7 starts');
     expect(q.title).toContain('ShotPropz: DAL 29.2 shots a game at home, MTL 32.5 allowed on the road');
     // Final: the goalie who played and his line.
     const done = { ...game, log: { score: { away: 3, home: 2 }, goalies: [{ id: 8479193, name: 'Jake Oettinger', team: 'DAL', sa: 33, sv: 30, ga: 3, starter: true }, { id: 8478470, name: 'Sam Montembeault', team: 'MTL', sa: 28, sv: 26, ga: 2, starter: true }] } };
     const f = cellOf(matchupProfile({ game: done, rates, pfTeams, shotpropz }), 'saves', 'DAL');
-    expect(f.text).toBe('~29 saves expected · 32.3 shots faced · Oettinger likely · .910 over 9 starts · got Oettinger 30 of 33');
+    expect(f.text).toBe('~29 saves expected · 31.3 shots faced · Oettinger likely · .910 over 9 starts · got Oettinger 30 of 33');
     expect(f.title).toContain('the box score: Jake Oettinger 30 saves on 33 shots');
     // The book's saves line on him from PropFinder's pull: the over with his chance, green on an edge over the price.
     const lined = { ...game, sides: game.sides.map((s) => (s.team === 'MTL' ? { ...s, goalie: { ...s.goalie, prop: { line: 25.5, odds: -120, underOdds: 100, book: 'DraftKings', books: 1 } } } : s)) };
     const l = cellOf(matchupProfile({ game: lined, rates, pfTeams, shotpropz }), 'saves', 'MTL');
-    expect(l.text).toBe('~27 saves expected · 29.5 shots faced · Montembeault likely · .908 over 7 starts · o25.5 59% at -120');
-    expect(l.parts.find((x) => x.t.startsWith('o25.5'))).toMatchObject({ tone: 'is-soft' });
-    expect(l.title).toContain('the book: over 25.5 saves at -120 / under +100 (DraftKings) · 59% to clear it against 55% implied: edge +5 points · PropFinder');
+    expect(l.text).toBe('~26 saves expected · 28.6 shots faced · Montembeault likely · .908 over 7 starts · o25.5 53% at -120');
+    // 53% to clear it against the 55% the price implies: red, no edge (with the old spread and the full shots it read 59%, green).
+    expect(l.parts.find((x) => x.t.startsWith('o25.5'))).toMatchObject({ tone: 'is-tough' });
+    expect(l.title).toContain('the book: over 25.5 saves at -120 / under +100 (DraftKings) · 53% to clear it against 55% implied: edge -2 points · PropFinder');
+    // The slate's shots read on the goalie leads (both teams' shot rates, home ice); the run's λ sum rides beside it on the hover.
+    const sa = { shots: 31, league: 27.6, home: false, opp: { team: 'DAL', sf: 28.9, games: 11, prevGames: 82 }, team: { team: 'MTL', sa: 30.8, games: 10, prevGames: 82 } };
+    const read = { ...game, sides: game.sides.map((s) => (s.team === 'MTL' ? { ...s, goalie: { ...s.goalie, shotsAgainst: sa } } : s)) };
+    const r = cellOf(matchupProfile({ game: read, rates, pfTeams, shotpropz }), 'saves', 'MTL');
+    // 31 × .97 = 30.1 faced × .908 = 27.3.
+    expect(r.text).toBe('~27 saves expected · 30.1 shots faced · Montembeault likely · .908 over 7 starts');
+    expect(r.title).toContain('31.0 shots expected against MTL (DAL 28.9 shots a game (11 games + last season), MTL 30.8 allowed (10 games + last season), league 27.6, on the road) × 97% faced by the starter × .908 = 27.3 saves · the run’s λ over 18 DAL skaters: 29.5');
   });
   test('power play and discipline: the venue board from four games there; discipline ranks the power plays given (1 = the most)', () => {
     // The special-teams read ends the line: how many power plays the team should get tonight (lib/nhl-data/special-teams.js; the fixture's two-team league reads about the league's 3.0).
@@ -151,10 +160,10 @@ describe('matchup profile: without a ShotPropz snapshot', () => {
     // The fixture's rates carry no l10 window; the last-ten row is left out rather than guessed. The saves read the
     // rink's venue table for the save percentage (no rank, no word) and the run's λ for the shots.
     expect(p.rows.map((r) => r.key)).toEqual(['shooting', 'allows', 'saves', 'powerplay']);
-    expect(cellOf(p, 'saves', 'DAL')).toMatchObject({ word: null, source: 'rink', text: '~29 saves expected · 32.3 shots faced · Oettinger likely · .910 over 9 starts' });
+    expect(cellOf(p, 'saves', 'DAL')).toMatchObject({ word: null, source: 'rink', text: '~29 saves expected · 31.3 shots faced · Oettinger likely · .910 over 9 starts' });
     // Without a goalie either, the rink's venue table gives the percentage, unranked.
     const noGk = { ...game, sides: game.sides.map((s) => ({ ...s, goalie: null })) };
-    expect(cellOf(matchupProfile({ game: noGk, rates, pfTeams }), 'saves', 'DAL')).toMatchObject({ word: null, text: '~30 saves expected · 32.3 shots faced · team .913 save % (at home, stored games)' });
+    expect(cellOf(matchupProfile({ game: noGk, rates, pfTeams }), 'saves', 'DAL')).toMatchObject({ word: null, text: '~29 saves expected · 31.3 shots faced · team .913 save % (at home, stored games)' });
   });
   test('without PropFinder either: the shooting from the rink, allows from the stored venue table, no special teams', () => {
     const bare = { ...game, sides: game.sides.map((s) => ({ ...s, propfinder: null })) };
