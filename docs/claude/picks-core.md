@@ -370,6 +370,24 @@ config and keeps its own markets, teams, feeds and slate key:
   the pull carry it** (PropFinder drops a zero: on 2026-10-30 WSH, LAL and HOU had allowed no blocks to PGs
   and their rows had no `blocks` key, so the board had no cell and the matchup read as no table; a stat no
   row carries stays unread, in `fieldsSeen.unread`, never a guessed 0).
+- **The Defensive Matchups route** (the NBA; Vincent, 2026-11-08: "add the endpoint to the pull", after asking whether the
+  projections read it — they did not: the board's `allowed` table is `/NBA/teams`' Opponent rows). Every pull reads
+  `/NBA/defensive-matchups?season=<slate's>&lastNGames=0&since=2025-10-21&sportsbooks=betmgm|draftkings|fanduel|prizepicks|underdog`
+  (the page's own query as Vincent copied it; `defensiveMatchupsPath` in `propfinder-nba.js`, `PROPFINDER_NBA_DEFENSIVE_MATCHUPS_PATH`
+  with `{season}` replaces it on Render) through `fetchDefensiveMatchups` in `propfinder.js`, never failing the pull. Stored whole
+  (up to `DM_MAX_CHARS`) in `nba/<date>/propfinder-defensive-matchups.json` beside the pull, not read by the board, served by
+  `GET /api/nba/propfinder?part=defensive-matchups`. **The answer** (first pull, 2026-11-08): { season, since, lines,
+  games[{ gameId, homeTeamCode, visitorTeamCode, sides[{ teamCode, opponentTeamCode, starterSource: "lineup", positions[{
+  position, stats { points 29.75, … }, ranks { points 8, … }, starters[] }] }] }] }, the figures this season's per game (eighths
+  on 8 games) whatever `since` says. `readDefensiveMatchups` reads rows { game, team, opp, pos, stats { key: { value, rank } },
+  starters } (the FIELDS spellings, the rank from `ranks` under the same one; `others` = the figures no spelling reads), and
+  `checkDefensiveMatchups` compares every cell with the `/teams` table both ways — as the side's own defense (`team`) and as
+  its opponent's (`opponent`) — within `DM_SAME` = 0.15; `reads` = the way matching `DM_MATCH` = 90% of its cells, else
+  'neither' (Vincent, 2026-11-08: "compare each cell against /teams both ways, so the next pull shows whether it's the same
+  data and which team each side means"). The pull's `defensiveMatchups` report and Data sources carry both ways, the
+  verdict, the `lines` keys and the starters' keys. **The projections do not read it yet**: decide on the pull that says
+  what it is. The status's `propfinder.file` now passes `samples` too (Data
+  sources read `pf.file.samples`, which the status never sent). `__tests__/nba-propfinder-pull.test.js`.
 - `injuries.js`: PropFinder's injury report and the without-teammate ("w/o") splits, pulled live with
   the slate, never from a file. The report is `injuryReport` on the games payload the site's own
   pages load (`GET /<LEAGUE>/v2?sportsbooks=…`, read from the bundle 2026-10-27: a JSON string whose

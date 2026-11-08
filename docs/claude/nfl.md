@@ -251,7 +251,8 @@
   with `&allSplitTypes=true&skipSplits=true`), WR vs CB (`/NFL/wr-cb-matchups?season=&week=`: `{week}` the slate's,
   no read without one), Team Share (`/NFL/team-share?position=All&period=Full&season=&count=season`), Milestones receiving
   yards (`/NFL/milestones?category=receivingYards`; other categories not seen yet), Rushing Matchups
-  (`/NFL/rushing/slate-board?season=`). The site's `propfinder.app/nfl/cheatsheets/…?_rsc=` requests are the page's own
+  (`/NFL/rushing/slate-board?season=`), Coverage Matrix (`/NFL/coverage/teams?season=`: the defenses' coverage mix).
+  Not pages: `config/leagues`, `savedprops/me`, `me`, `user`, `teams`, `version`, `flags`, `popups` (the app's own). The site's `propfinder.app/nfl/cheatsheets/…?_rsc=` requests are the page's own
   layout, no data. `__tests__/nfl-pf-pages.test.js`. **Measured** (2026-11-08, Vincent: "analyze and redo our logic to determine
   rushing, passing, receiving props as well as TDs"; `docs/audits/2026-11-08-nfl-sources.md`, `tools/audit/nfl_sources.py`): each
   page rebuilt week by week from the game rows behind it (Team Share's shares, TD / Rushing / Role Matchups' tables by position)
@@ -259,7 +260,7 @@
   receiving yards and the receptions (below). The carry share (rushing −0.28 a game, interval across 0), the passing pieces
   (attempts, completed air yards, sacks, the defense's yards a pass), the touchdown pieces (touchdowns allowed by position,
   red-zone trips allowed, red-zone share) and the matchup pages (the board reads the slot table already) read nothing the board
-  did not. WR vs CB, the coverage splits and routes are in no game row: graded once weeks of snapshots are stored.
+  did not. WR vs CB, the coverage splits, the Coverage Matrix and routes are in no game row: graded once weeks of snapshots are stored.
 - **The target share on the receiving read** (`TGT_SHARE`, `tgtShareRead`, `shareRead`, `shareText` in `lib/nfl/projections.js`;
   2026-11-08): a receiver's, tight end's or back's receiving yards = −5.479 + 0.7828 × the board's read (after the shrink) +
   81.477 × his target share over his last five games with a touch (PropFinder's per-row `tgtShare`, rows without it left out;
