@@ -231,3 +231,7 @@
   6–15 points too much every season and read curves of their own now (2026 strong: 55 → 61%, 58 → 62%, 54 → 59%); no ordering
   key (the rung's chance, volume, share, steadiness) picked better than the projection, and the rung's own chance over-says by
   10 points at the top. The touchdown list lands.
+- The NFL's matchup pages in the numbers (`docs/audits/2026-11-08-nfl-matchup-pages.md`; Vincent chose hand-set weights over the
+  fitted ones): last season's coverage and rushing pages through the shipped factors on 2026's weeks 1–8 (`nfl-pf-audit.mjs
+  --pages-prior`): receiving 22.60 → 22.64, rushing 21.28 → 21.32, touchdowns flat, passing 64.50 → 65.87 (−0.1 to +2.9). WR vs
+  CB and TD Matchups have no last-season copy.

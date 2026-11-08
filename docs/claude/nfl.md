@@ -215,6 +215,18 @@
   `rzLooksOf`: the board's chance after `TD_CAL` with his red-zone looks a game over his last five, PropFinder's `rzAtt` +
   `rzTgt`, and the team's implied points; `td.board`, `td.rz`, `td.points`; quarterbacks as before): Brier 0.1237 → 0.1222,
   the week's six likeliest scored 66.7% (54.8% before), the outlier rule met by the engine itself.
+- **PropFinder's matchup pages feed the numbers, hand-set** (Vincent, 2026-11-08: "we need them to feed our numbers"; asked,
+  he chose "into the projection, hand-set" over a separate column or the fitted near-zero weights; `lib/nfl/matchups.js`,
+  `docs/audits/2026-11-08-nfl-matchup-pages.md`): the pull digests the pages (`digestPages` → `propfinder-pages-digest.json`
+  beside it; `withPages` in `lib/picks/store.js` attaches it to the pull as `matchups`, digesting a pull stored before it once)
+  and `matchupFactor` moves each projection: receiving by his coverage fit (receiver coverage splits × the opponent's Coverage
+  Matrix mix) and WR vs CB's advantage, receptions at half, a back's rushing by his run fit through the opponent's gaps and its
+  EPA a rush (a quarterback's by the EPA at half), passing by the EPA a pass allowed, touchdowns (λ) by TD Matchups' touchdowns
+  allowed at his position and the red-zone touchdown rate; weights in `WEIGHTS`, the product capped ±12% (`CAP`); Role
+  Matchups is the slot table the projection reads already. `beforePages` (the tested read) and `pages` (the factor, each part's
+  reason) on every row, said in the hovers; `MATCHUP_PAGES` in `projections.js` turns it off. Measured with last season's pages
+  on 2026 (`nfl-pf-audit.mjs --pages-prior`): receiving and rushing +0.04–0.05 yards of miss, touchdowns flat, passing +1.4
+  (−0.1 to +2.9) — the cost to watch. The replays without `--pages-prior` read no pages.
 - **The pick rules** (Vincent, 2026-11-08: "work on the pick rules"; `docs/audits/2026-11-08-nfl-picks.md`, `tools/audit/nfl_picks.py`):
   a play is a rung at its stated chance. The top of each list (by projection) now lands as said for receiving, receptions and
   passing; no other ordering (the rung's chance, volume, share, the steadiest) picked better over 2024–26, and sorting by the
