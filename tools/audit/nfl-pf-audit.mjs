@@ -19,6 +19,7 @@ import zlib from 'node:zlib';
 import { parseSummary } from '../../lib/nfl/espn.js';
 import { nflBoard, makeBuild, reproject, COCKTAIL } from '../../lib/nfl/picks.js';
 import { PARAMS, chanceAtMark } from '../../lib/nfl/projections.js';
+import { digestPages } from '../../lib/nfl/matchups.js';
 
 const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const PF = arg('--pf', '.nhl-data/audit/nfl-pf');
@@ -34,6 +35,14 @@ const r1 = (v) => (v == null ? null : Math.round(v * 10) / 10); const r3 = (v) =
 const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 const t0 = Date.now();
 const say = (...a) => console.error(`[${Math.round((Date.now() - t0) / 1000)}s]`, ...a);
+// --pages-prior <export week file>: last season's matchup pages (coverage, receiver splits, rushing: PropFinder serves 2025's)
+// digested and attached to every 2026 week, so the pages' hand-set factors (lib/nfl/matchups.js) are graded leak-free.
+const PAGES_PRIOR = (() => {
+  const f = arg('--pages-prior');
+  if (!f) return null;
+  const pg = read(f).pages || {};
+  return digestPages({ coverageTeams: pg.coverageTeamsPrior, coverageReceiverSplits: pg.coverageReceiverSplitsPrior, rushingSlateBoard: pg.rushingSlateBoardPrior }, { at: 'prior' });
+})();
 
 // ESPN's schedule and lines (what the site's board reads for the games), every finished regular-season game.
 function loadSeason(season) {
@@ -145,7 +154,7 @@ function weekInputs(season, week, { defense = 'rebuilt', noFor = false, depth = 
   let def = defense === 'rebuilt' ? (seasons[season].some((g) => g.date < start) || !seasons[season - 1] ? defenseOf(season, start) : defenseOf(season - 1, '9999')) : defense;
   if (noFor && def) def = { ...def, totals: Object.fromEntries(Object.entries(def.totals || {}).map(([t, v]) => [t, { ...v, for: null }])), leagueFor: {} };
   const slate = games.map((g) => ({ id: g.id, date: g.date, away: g.away, home: g.home, final: false, state: 'pre', odds: g.odds }));
-  return { args: { season, week, type: 2, games: slate, sheets: [], pf: { at: start, data: { players: pfPlayers, defense: def, depth: depth || {} } }, results: {} }, played };
+  return { args: { season, week, type: 2, games: slate, sheets: [], pf: { at: start, data: { players: pfPlayers, defense: def, depth: depth || {} }, ...(PAGES_PRIOR && season === 2026 ? { matchups: PAGES_PRIOR } : {}) }, results: {} }, played };
 }
 
 // The graded rows of one week's projections (his PropFinder row for the game; a zero is a game).
@@ -258,7 +267,7 @@ if (DUMP) {
   const rows = [...extra, ...base.tune.yards, ...base.check.yards].map((r) => ({ tag: r.tag, m: r.m, pos: r.pos, key: r.key, team: r.team, opp: r.opp, proj: r.proj, sd: r.sd, tiers: r.tiers, floor: r.floor, ceiling: r.ceiling, matchup: r.matchup, actual: r.actual, att: r.att, rushAtt: r.rushAtt, tgt: r.tgt, active: r.active, exp: r.exp }));
   fs.writeFileSync(path.join(OUT, 'nfl-board-rows.json'), JSON.stringify(rows));
   // the touchdown reads beside them (the TD engine study, tools/audit/nfl_engines.py)
-  const tdRows = [...base.tune.tds, ...base.check.tds].map((r) => ({ tag: r.tag, key: r.key, team: r.team, pos: r.pos, p: r.p, td: r.td }));
+  const tdRows = [...base.tune.tds, ...base.check.tds].map((r) => ({ tag: r.tag, key: r.key, team: r.team, pos: r.pos, p: r.p, td: r.td, active: r.active }));
   fs.writeFileSync(path.join(OUT, 'nfl-board-tds.json'), JSON.stringify(tdRows));
   say('dumped', rows.length); process.exit(0);
 }

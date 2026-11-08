@@ -308,6 +308,13 @@ node --import ./tools/audit/register.mjs tools/audit/nfl-pf-audit.mjs --pf .nhl-
 python3 -I tools/audit/nfl_sources.py --split pooled --json .nhl-data/audit/out/nfl-sources.json
 ```
 
+## NFL: the matchup pages' factors (`--pages-prior`)
+
+`nfl-pf-audit.mjs --pages-prior <an export week, e.g. .nhl-data/audit/nfl-pf/w09.json.gz>` digests that week's last-season
+pages (`coverageTeamsPrior`, `coverageReceiverSplitsPrior`, `rushingSlateBoardPrior`) with `lib/nfl/matchups.js` and attaches
+them to every 2026 week, so `--dump` with and without it grades the hand-set factors leak-free
+(`docs/audits/2026-11-08-nfl-matchup-pages.md`).
+
 ## NFL: the pick rules (`nfl_picks.py`)
 
 Every rung of the PropFinder replay (the dump; `nfl_sources.py`'s builder for the features) by list, position and each week's
