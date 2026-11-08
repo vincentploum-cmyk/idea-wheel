@@ -308,6 +308,16 @@ node --import ./tools/audit/register.mjs tools/audit/nfl-pf-audit.mjs --pf .nhl-
 python3 -I tools/audit/nfl_sources.py --split pooled --json .nhl-data/audit/out/nfl-sources.json
 ```
 
+## NFL: the pick rules (`nfl_picks.py`)
+
+Every rung of the PropFinder replay (the dump; `nfl_sources.py`'s builder for the features) by list, position and each week's
+top K: said against landed, what reads a hit beyond the said chance, each group on a curve of its own (fitted 2024–25, scored
+2026), the week's plays picked by a key. Written up in `docs/audits/2026-11-08-nfl-picks.md`.
+
+```bash
+python3 -I tools/audit/nfl_picks.py --json .nhl-data/audit/out/nfl-picks.json
+```
+
 ## NFL: the outlier games (`nfl_outliers.py`)
 
 `nfl-audit.mjs --yards <file>` writes every graded yards row of the tuning and the check weeks as shipped (`--check-to` the

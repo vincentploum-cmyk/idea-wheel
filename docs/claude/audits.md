@@ -225,3 +225,9 @@
   (PropFinder serves them, `…Prior` pages) graded on 2026's weeks 1–8, leak-free. The coverage fit (his 2025 yards per route by
   coverage × the opponent's 2025 coverage mix) ordered nothing (got ÷ average by fifth 0.95 / 0.94 / 1.02 / 0.94 / 0.97, the
   miss 23.89 → 24.19); the backs' run direction against the gaps the same (27.75 → 28.59). Nothing shipped.
+- The NFL's pick rules (`docs/audits/2026-11-08-nfl-picks.md`, `tools/audit/nfl_picks.py` on the PropFinder replay's dump;
+  Vincent, 2026-11-08: "work on the pick rules"): every rung of 2024–26 by list, position and the week's top K. The top of each
+  list lands as said after the shrink and the target share; a back's receiving, a back's and a quarterback's rushing said
+  6–15 points too much every season and read curves of their own now (2026 strong: 55 → 61%, 58 → 62%, 54 → 59%); no ordering
+  key (the rung's chance, volume, share, steadiness) picked better than the projection, and the rung's own chance over-says by
+  10 points at the top. The touchdown list lands.
