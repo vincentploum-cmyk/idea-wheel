@@ -392,7 +392,13 @@ config and keeps its own markets, teams, feeds and slate key:
   the slate, never from a file. The report is `injuryReport` on the games payload the site's own
   pages load (`GET /<LEAGUE>/v2?sportsbooks=…`, read from the bundle 2026-10-27: a JSON string whose
   `data` lists { team: { id }, player: { id, name, position }, status, type }; the per-team
-  `/injuries/<league>/<teamId>` route is the fallback), statuses read into one spelling (`statusOf`),
+  `/injuries/<league>/<teamId>` route is the fallback; **both answer the API 404, so no sport reads them now**: the NFL's
+  report is ESPN's since 2026-10-31 and the NBA's since 2026-11-08 (`injuryReport: 'espn'` on `NBA_PF_OPTIONS` in
+  `propfinder-nba.js`; Vincent: "fix the propfinder injury report 404" → "go with option 1". PropFinder's own pages still
+  read the report from `/v2`, sending `X-PF-Client: web/<their build id>`; passing our server off as their web build was
+  declined, the board already read ESPN's league feed through `applyEspnInjuries`, and the pull lists every rostered
+  player with his logs, so the one-by-one reads below are not needed. The reader stays, tested on a binding with
+  `injuryReport: 'propfinder'`, for the day PropFinder gives the API a route), statuses read into one spelling (`statusOf`),
   `isOut` = Out / Doubtful / IR / LTIR / Suspended / PUP / NFI. `fetchInjuries` in `propfinder.js`
   stores it with the pull as `data.injuries.rows`, `applyInjuries` puts `injury` / `injuryDetail` on
   every player (the report, then the depth chart's espn flag), and the players out whom the odds-only

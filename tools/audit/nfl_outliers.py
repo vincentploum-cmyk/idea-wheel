@@ -33,10 +33,22 @@ def chance(proj, sd, mark, m): return 1 - cdf(RESID[m], (mark - 0.5 - proj) / sd
 def ll(p, y): p = np.clip(p, 1e-4, 1 - 1e-4); return float(-np.mean(y * np.log(p) + (1 - y) * np.log(1 - p)))
 
 
-r = pd.DataFrame(json.load(open(sys.argv[1] if len(sys.argv) > 1 else '.nhl-data/audit/nfl-yards.json')))
+# --fit <season>: the season the usual spread is fitted on (the file's first by default); --pos WR,TE,RB: those positions only;
+# --active: the games he played (the PropFinder replay's dump carries his zero-stat rows; the live board drops the injured);
+# --only rec_yds,receptions: those markets; --typical c,e: score that usual spread rather than fit it. The PropFinder replay's dump (nfl-pf-audit.mjs --dump) has the target share in
+# (TGT_SHARE); the ESPN replay (nfl-audit.mjs --yards) has no tgtShare in its logs, so its receiving read is the board's.
+argv = sys.argv[1:]
+opt = lambda k, d=None: argv[argv.index(k) + 1] if k in argv else d
+src = next((a for i, a in enumerate(argv) if not a.startswith('--') and (i == 0 or not argv[i - 1].startswith('--') or argv[i - 1] == '--active')), '.nhl-data/audit/nfl-yards.json')
+r = pd.DataFrame(json.load(open(src)))
 r['season'] = r.tag.str[:4].astype(int); r['week'] = r.tag.str.split('w').str[1].astype(int)
 r = r[r.sd > 0]
-fit_season = r.season.min()
+if opt('--pos') and 'pos' in r: r = r[r.pos.isin(opt('--pos').split(','))]
+if '--active' in argv and 'active' in r: r = r[r.active.astype(bool)]
+if opt('--only'): SPEC = {k: v for k, v in SPEC.items() if k in opt('--only').split(',')}
+fit_season = int(opt('--fit', r.season.min()))
+# --typical c,e: score that usual spread instead of fitting one (the shipped 0.958,0.494 for receptions)
+fixed = [float(v) for v in opt('--typical').split(',')] if opt('--typical') else None
 for m, (add, fl, edges) in SPEC.items():
     x = r[(r.m == m) & (r.proj >= fl)].copy()
     x['k'] = np.maximum(np.ceil(2 * x.proj - 1e-9), np.ceil(x.proj + add - 1e-9)).astype(int)
@@ -44,6 +56,7 @@ for m, (add, fl, edges) in SPEC.items():
     x['own'] = [chance(p, s, k, m) for p, s, k in zip(x.proj, x.sd, x.k)]
     F = x[x.season == fit_season]
     e, lc = np.polyfit(np.log(F.proj), np.log(F.sd), 1); c = float(np.exp(lc))
+    if fixed: c, e = fixed
     x['typical'] = [chance(p, c * p ** e, k, m) for p, k in zip(x.proj, x.k)]
     x['half'] = (x.own + x.typical) / 2
     print(f'\n## {m}: +{add} (projected {fl}+); the usual spread {c:.3f} · projection^{e:.3f}')
