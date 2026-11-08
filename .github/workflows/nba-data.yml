@@ -75,5 +75,7 @@ jobs:
               jq -c '.propfinder.fieldsSeen | {unread, stored, player, prop}' pf.json 2>/dev/null || true
               jq -r '.propfinder.fieldsSeen.markets // {} | to_entries | sort_by(-.value.n) | .[] | "market \(.value.n)\t\(.value.market // "SKIPPED")\t\(.key)"' pf.json 2>/dev/null || true
               jq -r '.propfinder.fieldsSeen.sample | to_entries[] | "sample \(.key): \(.value | tostring | .[0:4000])"' pf.json 2>/dev/null || true
+              # The Defensive Matchups route: rows read, the check against /teams both ways and its verdict (the sample left out).
+              jq -c '.propfinder.defensiveMatchups // empty | del(.sample)' pf.json 2>/dev/null || true
             fi
           done
