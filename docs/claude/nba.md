@@ -350,6 +350,16 @@
   marks all read it; the calibration was fitted on the old tails and relearns with the next grading (or the workflow's
   `what: calibration`). What did not see a spike coming: the opponent's misses and rebounds allowed, pace, his own past big
   nights, his best recent game; the start and the teammates out did. The cheat sheet (`#guide`) names the start.
+- **PropFinder's starters against ours** (Vincent, 2026-11-08: "compare their starters against ours", after the Defensive
+  Matchups route read 630 of 630 cells the same as `/teams`: its new part is the starter each defense faces per position,
+  `starterSource: "lineup"`). `startersCheck` (`lib/nba/starters-check.js`, pure) against RotoWire's five (`board.lineups`) and
+  the board's spot (`envPos`): per team the same five or not, who is in one five only with his board role and starts share
+  (`theirPromotions`: in PropFinder's five alone, under half his last ten started — a promotion the board does not make;
+  `theirDemotions` the other way), and per player in both PropFinder's slot, RotoWire's and the board's. `startersCheckFor`
+  in `lib/nba/store.js` reads the stored answer again (a night pulled before the reader kept the starters' details compares
+  too) and the board without refreshing; `GET /api/nba/propfinder?part=starters&date`; the data workflow prints its summary
+  and every team that differs after each pull. Read only: nothing on the board follows PropFinder's five until a few nights
+  say whose five is right more often. `__tests__/nba-starters-check.test.js`.
 - **Big games** (`#big`, `components/nba/NbaBigGames.jsx`, `lib/nba/big.js`; Vincent, 2026-11-01: "Do the same big games
   study for the NBA"; `docs/audits/2026-11-01-nba-big-games.md`, `tools/audit/nba_big.py`): per stat the night's likeliest
   30+ / 40+ points, 12+ / 15+ rebounds, 10+ / 12+ assists, 5+ / 7+ threes and 40+ / 50+ PRA (`NBA_BIG`, `nbaBigChance`: the

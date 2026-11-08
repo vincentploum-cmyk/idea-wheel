@@ -10,9 +10,9 @@ const mockBench = { id: 'b', name: 'Bench Guard', position: 'PG', team: { code: 
 // The Defensive Matchups answer in the shape the pull of 2026-11-08 saw (games → sides → positions { stats, ranks, starters }):
 // the IND side's PG figures are what IND's /teams row allows; the DET side's are not DET's (no /teams rows) nor IND's.
 const mockDm = { refuse: false, answer: { season: 2026, since: '2025-10-21T00:00:00', lines: [{ playerId: 'a', market: 'points', line: 17.5 }], games: [
-  { gameId: 'g1', gameDate: '2026-11-08T23:00:00Z', homeTeamCode: 'DET', visitorTeamCode: 'IND', sides: [
+  { gameId: 'g1', gameDate: '2026-11-08T23:00:00Z', homeTeamId: 'tid-det', homeTeamCode: 'DET', visitorTeamId: 'tid-ind', visitorTeamCode: 'IND', sides: [
     { teamCode: 'IND', opponentTeamCode: 'DET', starterSource: 'lineup', positions: [
-      { position: 'PG', stats: { points: 24.1, rebounds: 5.75, threePointsMade: 2.4, benchPoints: 0, fieldGoalsPct: 0.48 }, ranks: { points: 3, rebounds: 17, threePointsMade: 1 }, starters: [{ playerId: 'c1', name: 'Cade Cunningham' }] },
+      { position: 'PG', stats: { points: 24.1, rebounds: 5.75, threePointsMade: 2.4, benchPoints: 0, fieldGoalsPct: 0.48 }, ranks: { points: 3, rebounds: 17, threePointsMade: 1 }, starters: [{ playerId: 'c1', name: 'Cade Cunningham', position: 'PG', teamId: 'tid-det', lineupStatus: 'confirmed' }] },
     ] },
     { teamCode: 'DET', opponentTeamCode: 'IND', starterSource: 'lineup', positions: [{ position: 'PG', stats: { points: 30 }, ranks: { points: 1 }, starters: [] }] },
   ] },
@@ -62,9 +62,9 @@ describe('the NBA pull loads everything', () => {
     expect(defensiveMatchupsPath(2027)).toMatch(/^\/NBA\/defensive-matchups\?season=2027&lastNGames=0&/);
     const dm = r.data.defensiveMatchups;
     expect(dm.answer).toEqual(mockDm.answer);
-    expect(dm.rows[0]).toEqual({ game: 'g1', team: 'IND', opp: 'DET', pos: 'PG', stats: { pts: { value: 24.1, rank: 3 }, reb: { value: 5.75, rank: 17 }, tpm: { value: 2.4, rank: 1 } }, starters: ['Cade Cunningham'] });
+    expect(dm.rows[0]).toEqual({ game: 'g1', team: 'IND', opp: 'DET', pos: 'PG', stats: { pts: { value: 24.1, rank: 3 }, reb: { value: 5.75, rank: 17 }, tpm: { value: 2.4, rank: 1 } }, starters: [{ name: 'Cade Cunningham', team: 'DET', position: 'PG', lineupStatus: 'confirmed', playerId: 'c1' }] });
     expect(dm.rows[1]).toEqual({ game: 'g1', team: 'DET', opp: 'IND', pos: 'PG', stats: { pts: { value: 30, rank: 1 } } });
-    expect(r.defensiveMatchups).toMatchObject({ games: 1, rows: 2, teams: 2, season: 2026, since: '2025-10-21T00:00:00', others: ['benchPoints', 'fieldGoalsPct'], lines: { count: 1, keys: ['playerId', 'market', 'line'] }, starterKeys: ['playerId', 'name'], error: null });
+    expect(r.defensiveMatchups).toMatchObject({ games: 1, rows: 2, teams: 2, season: 2026, since: '2025-10-21T00:00:00', others: ['benchPoints', 'fieldGoalsPct'], lines: { count: 1, keys: ['playerId', 'market', 'line'] }, starterKeys: ['playerId', 'name', 'position', 'teamId', 'lineupStatus'], error: null });
     // As each side's own defense: IND PG points read the same (IND's /teams row has no rebounds or threes), DET has no row.
     // As the opponent's: the DET side's 30 points against IND's 24.1.
     expect(r.defensiveMatchups.check).toEqual({

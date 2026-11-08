@@ -77,5 +77,9 @@ jobs:
               jq -r '.propfinder.fieldsSeen.sample | to_entries[] | "sample \(.key): \(.value | tostring | .[0:4000])"' pf.json 2>/dev/null || true
               # The Defensive Matchups route: rows read, the check against /teams both ways and its verdict (the sample left out).
               jq -c '.propfinder.defensiveMatchups // empty | del(.sample)' pf.json 2>/dev/null || true
+              # PropFinder's starters against ours (RotoWire's five, the board's spots): the summary, then each team that differs.
+              curl -sS --max-time 120 ${NHL_ACTIONS_TOKEN:+-H "Authorization: Bearer $NHL_ACTIONS_TOKEN"} "https://ideareels.io/api/nba/propfinder?date=$DATE&part=starters" -o st.json || true
+              jq -c '{starters: .summary, pulledAt, lineupsAt}' st.json 2>/dev/null || head -c 600 st.json || true
+              jq -c '.teams[]? | select(.sameFive != true or ([.slots[] | select(.theirs != .rotowire or .theirs != .board)] | length) > 0) | {team, rotowireStatus, onlyTheirs, onlyOurs, slots: [.slots[] | select(.theirs != .rotowire or .theirs != .board)]}' st.json 2>/dev/null || true
             fi
           done
