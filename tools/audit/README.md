@@ -296,6 +296,18 @@ player-game of 2024 (with `nfl-fetch.mjs --season 2024`), 2025 and 2026, `python
 pandas) builds the morning's features from the PropFinder export and fits / checks the models and the rules,
 `nfl-pf-audit.mjs --big` grades the site's own `BIG` read on the replay.
 
+## NFL: PropFinder's cheat-sheet pages (`nfl_sources.py`)
+
+Each page the pull keeps (`lib/nfl/propfinder-nfl.js` `pages`) rebuilt week by week from the PropFinder game rows behind it
+(Team Share's target / carry / red-zone shares, TD / Rushing / Role Matchups' tables by position), fitted on top of the board's
+figure (the dump) and scored on 2026 against it case by case. `--split pooled` fits on 2024 and 2025 (the shipped fit), the
+default on 2025, `--split 2024` fits 2024 and scores 2025. Written up in `docs/audits/2026-11-08-nfl-sources.md`.
+
+```bash
+node --import ./tools/audit/register.mjs tools/audit/nfl-pf-audit.mjs --pf .nhl-data/audit/nfl-pf --raw .nhl-data/audit/nfl --dump --check-to 8
+python3 -I tools/audit/nfl_sources.py --split pooled --json .nhl-data/audit/out/nfl-sources.json
+```
+
 ## NFL: the outlier games (`nfl_outliers.py`)
 
 `nfl-audit.mjs --yards <file>` writes every graded yards row of the tuning and the check weeks as shipped (`--check-to` the
