@@ -124,7 +124,7 @@ function SavesTable({ g }) {
             {lined
               ? <th className="is-num is-lead" title="The book’s saves line on him (PropFinder, the main line), his chance of clearing it, and under it the price with the edge: his chance minus what the price implies">Over</th>
               : SAVES_MARKS.map((k) => <th key={k} className={`is-num${k === SAVES_LEAD ? '' : ' is-wide'}`} title={`${k}+ saves: the chance, and the break-even price under it`}>{k}+</th>)}
-            <th className="is-num" title="The saves projected: the shots the opponent is expected to put on him × his save percentage">Proj</th>
+            <th className="is-num" title="The saves projected: the shots his team is expected to allow (both teams’ shot rates, home ice) × the 97% a starter faces × his save percentage">Proj</th>
             {g.final ? <th className="is-num" title="Saves on shots against in the box score">Got</th> : null}
           </tr>
         </thead>
@@ -133,7 +133,7 @@ function SavesTable({ g }) {
             const hit = savesHit(r);
             const title = [
               `${r.name}: ${r.starter === 'likely' ? 'likely in net' : 'in net'} (${r.reason})${r.other ? ` · the other way: ${r.other.name}, ${r.other.starts} start${r.other.starts === 1 ? '' : 's'}` : ''}`,
-              `${r.shots} shots faced expected (${r.shotsFrom}) × ${pct3(r.svPct)} = ${r.lam} saves · ${r.starts} start${r.starts === 1 ? '' : 's'} this season${r.pct != null ? `, ${pct3(r.pct)} shrunk to ${pct3(r.svPct)}` : ''}${r.savesPerStart != null ? `, ${r.savesPerStart} saves a start` : ''}${r.held ? ' · last season’s goalies, no game this season yet' : ''}`,
+              `${r.shots} shots expected against ${r.team} (${r.shotsFrom}) × 97% faced by the starter = ${r.faced ?? r.shots} × ${pct3(r.svPct)} = ${r.lam} saves${r.boardShots != null ? ` · the board’s λ over the ${r.opp} lineup: ${r.boardShots}` : ''} · ${r.starts} start${r.starts === 1 ? '' : 's'} this season${r.pct != null ? `, ${pct3(r.pct)} shrunk to ${pct3(r.svPct)}` : ''}${r.savesPerStart != null ? `, ${r.savesPerStart} saves a start` : ''}${r.held ? ' · last season’s goalies, no game this season yet' : ''}`,
               r.line != null ? `Book: over ${r.line} saves at ${fmtOdds(r.odds)}${r.underOdds != null ? ` / under ${fmtOdds(r.underOdds)}` : ''}${r.book ? ` (${r.book}${r.books > 1 ? ` and ${r.books - 1} more` : ''})` : ''} · ${pct(r.pLine)} to clear it against ${r.implied != null ? `${pct(r.implied)} implied: edge ${edgeText(r)} points` : 'no price'}${r.lines?.length > 1 ? ` · lines ${r.lines.map((l) => `${l.line}${l.odds != null ? ` ${fmtOdds(l.odds)}` : ''}`).join(', ')}` : ''}` : lined ? 'No saves line on him in the pull' : null,
               r.under ? (r.line != null ? 'No edge over the book: listed for the read' : `Under the ${Math.round(SAVES_FLOOR * 100)}% floor for ${SAVES_LEAD} saves: listed for the read`) : null,
               r.actual === undefined ? null : r.actual == null ? 'No goalie line in the box score' : r.played === false ? `${r.startedBy || 'Another goalie'} played instead: ${r.actual.sv} saves on ${r.actual.sa}` : `${hit ? 'Hit' : 'Miss'}: ${r.actual.sv} saves on ${r.actual.sa} shots`,
@@ -143,7 +143,7 @@ function SavesTable({ g }) {
                 <td>
                   <div className="nhlx-db-player">
                     <Headshot id={r.id} size={30} />
-                    <span><b>{r.name}</b><small>{r.team} · G{r.starter === 'likely' ? ' · likely' : ''}{r.b2b ? ' · b2b' : ''} · {r.venue === 'H' ? 'vs' : 'at'} {r.opp} · {pct3(r.svPct)} · faces ~{Math.round(r.shots)}</small></span>
+                    <span><b>{r.name}</b><small>{r.team} · G{r.starter === 'likely' ? ' · likely' : ''}{r.b2b ? ' · b2b' : ''} · {r.venue === 'H' ? 'vs' : 'at'} {r.opp} · {pct3(r.svPct)} · faces ~{Math.round(r.faced ?? r.shots)}</small></span>
                   </div>
                 </td>
                 {lined

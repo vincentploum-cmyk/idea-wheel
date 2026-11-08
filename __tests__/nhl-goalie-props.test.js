@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { savesLinesOf, goalieSavesProps, savesLineFor } from '../lib/nhl-data/goalie-props';
+import { savesLinesOf, goalieSavesProps, savesLineFor, goaliePropsPath, PF_GOALIE_PROPS_PATH } from '../lib/nhl-data/goalie-props';
 import { savesRow, pickSaves, savesHit, savesChance, isSavesPlay } from '../lib/nhl-data/goalies-pure';
 
 // PropFinder's prop items in the shape the NBA pull sends (one item per book and side; checked 2026-10-20) and the
@@ -51,8 +51,8 @@ describe('goalie props: the Saves row against the book', () => {
   const starter = { goalie: { id: 2, name: 'Adin Hill', team: 'VGK', starts: 7, gp: 7, pct: 0.929, svPct: 0.916, savesPerStart: 26 }, reason: "7 of the team's last 10 starts", b2b: false, other: null, held: false };
   test('savesRow with a line: the mark over it, the chance, the price, the edge; the play on a positive edge', () => {
     const row = savesRow({ team: 'VGK', opp: 'NJD', venue: 'H', starter, shots: 32.6, shotsFrom: 'x', prop: { line: 27.5, odds: -110, underOdds: -105, book: 'FanDuel', books: 2, lines: [{ line: 27.5 }] } });
-    expect(row).toMatchObject({ lam: 29.9, line: 27.5, mark: 28, odds: -110, underOdds: -105, implied: 0.524, book: 'FanDuel', books: 2 });
-    expect(row.pLine).toBeCloseTo(savesChance(29.9, 28, 0.916), 6);
+    expect(row).toMatchObject({ lam: 29, line: 27.5, mark: 28, odds: -110, underOdds: -105, implied: 0.524, book: 'FanDuel', books: 2 });
+    expect(row.pLine).toBeCloseTo(savesChance(29, 28), 6);
     expect(row.edge).toBeCloseTo(row.pLine - 0.524, 3);
     expect(row.edge).toBeGreaterThan(0);
     expect(isSavesPlay(row)).toBe(true);
@@ -79,5 +79,12 @@ describe('goalie props: the Saves row against the book', () => {
     expect(savesHit({ ...a, actual: { sv: 27, sa: 29 } }, 25)).toBe(true);
     expect(savesHit({ ...a, actual: { sv: 31, sa: 33 }, played: false })).toBe(false);
     expect(savesHit(a)).toBeNull();
+  });
+});
+
+describe('goalie props: kept by date', () => {
+  test('the pull writes the latest file and one per slate date', () => {
+    expect(PF_GOALIE_PROPS_PATH).toBe('data/propfinder/goalie-props.json');
+    expect(goaliePropsPath('2026-11-08')).toBe('data/propfinder/goalie-props/2026-11-08.json');
   });
 });

@@ -225,9 +225,25 @@
   (PropFinder serves them, `…Prior` pages) graded on 2026's weeks 1–8, leak-free. The coverage fit (his 2025 yards per route by
   coverage × the opponent's 2025 coverage mix) ordered nothing (got ÷ average by fifth 0.95 / 0.94 / 1.02 / 0.94 / 0.97, the
   miss 23.89 → 24.19); the backs' run direction against the gaps the same (27.75 → 28.59). Nothing shipped.
+- Goalie saves (`docs/audits/2026-11-08-nhl-saves.md`, tables in `-tables.md`, `tools/predictors/saves_rows.py` +
+  `saves.py` on the public box scores; Vincent, 2026-11-08: "find something to predict saves"): 5,784 starts of 2024-25,
+  2025-26 and this season, fitted on 2024-25. Saves are shots against (r 0.97); the read is both teams, the opponent's
+  shots a game and his team's shots allowed, each blended into last season (ρ 0.25; the opponent alone 0.20, his own
+  saves a start 0.12, his save % 0.04: the league's .900 does as well). Home −0.9, the rink ±half a save; rest, back to
+  backs, penalties, goal difference and short windows nothing. The miss is 6.8 saves (the site's normal 5.4) and the
+  site's shape runs a save high (the starter faces 97% of the team's shots against): it said 25+ at 55%, 47% landed.
+  Against a stand-in line at his own saves a start, 2+ over it landed 66–78% overs, 2+ under 30–34%. Shipped the same day
+  (Vincent: "yes, fix the Saves table"): `shotsAgainst` (both teams' rates, refitted on team-games: 0.89 / 0.87, home
+  ∓0.53), × 0.97, `SAVES_SD` 6.8, PropFinder's goalie lines kept per date; the board's λ sum stays on the hover, since it
+  already carries the team's side through each skater's matchup and could not be graded here. Replayed with the site's
+  functions (`tools/predictors/saves-replay.mjs`): 2026-27 projected 23.57, made 23.65, 25+ said 44.9% landed 44.4%.
 - The NFL's pick rules (`docs/audits/2026-11-08-nfl-picks.md`, `tools/audit/nfl_picks.py` on the PropFinder replay's dump;
   Vincent, 2026-11-08: "work on the pick rules"): every rung of 2024–26 by list, position and the week's top K. The top of each
   list lands as said after the shrink and the target share; a back's receiving, a back's and a quarterback's rushing said
   6–15 points too much every season and read curves of their own now (2026 strong: 55 → 61%, 58 → 62%, 54 → 59%); no ordering
   key (the rung's chance, volume, share, steadiness) picked better than the projection, and the rung's own chance over-says by
   10 points at the top. The touchdown list lands.
+- The NFL's matchup pages in the numbers (`docs/audits/2026-11-08-nfl-matchup-pages.md`; Vincent chose hand-set weights over the
+  fitted ones): last season's coverage and rushing pages through the shipped factors on 2026's weeks 1–8 (`nfl-pf-audit.mjs
+  --pages-prior`): receiving 22.60 → 22.64, rushing 21.28 → 21.32, touchdowns flat, passing 64.50 → 65.87 (−0.1 to +2.9). WR vs
+  CB and TD Matchups have no last-season copy.
