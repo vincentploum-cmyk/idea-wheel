@@ -9,7 +9,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildBoard } from '../lib/nfl/picks';
-import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS, PASS, passRead, QB_RUSH, qbRushRead, RESID, RESID_UNSHRUNK, YARDS_SHRINK, TD_ENGINE, tdEngine, rzLooksOf, NFL_OUTLIERS, NFL_OUTLIER_LIST_MIN, nflOutlierMark, nflOutlierChance } from '../lib/nfl/projections';
+import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS, PASS, passRead, QB_RUSH, qbRushRead, RESID, RESID_UNSHRUNK, YARDS_SHRINK, TD_ENGINE, tdEngine, rzLooksOf, NFL_OUTLIERS, NFL_OUTLIER_LIST_MIN, nflOutlierMark, nflOutlierChance, TGT_SHARE, tgtShareRead, shareRead, shareText } from '../lib/nfl/projections';
 import { applyRosterStatus, ROSTER_OFF } from '../lib/nfl/roster-status';
 import { reproject, makeBuild, nflBoard, COCKTAIL } from '../lib/nfl/picks';
 import { envFactor } from '../lib/picks/projection';
@@ -194,6 +194,50 @@ describe('NFL projections: the two engines (2026-11-03)', () => {
   });
 });
 
+describe('NFL projections: PropFinder\'s Team Share on the receiving read (2026-11-08)', () => {
+  const g = (date, tgtShare, tgt = 6, rushAtt = 0) => ({ date, tgtShare, tgt, rushAtt, rec: tgt ? 4 : 0 });
+  test('his target share: his last five games with a touch before the game, rows without the share left out', () => {
+    const logs = [g('2026-10-26', 0.3), g('2026-10-19', 0.2), g('2026-10-12', 0.9, 0), g('2026-10-05', null), g('2026-09-28', 0.25), g('2026-09-21', 0.15), g('2026-09-14', 0.5)];
+    // the game without a touch is off; the five newest with one are 10-26, 10-19, 10-05 (no share), 09-28, 09-21
+    expect(tgtShareRead(logs)).toBeCloseTo((0.3 + 0.2 + 0.25 + 0.15) / 4, 3);
+    expect(tgtShareRead([g('2026-11-02', 0.9), ...logs], '2026-11-02T18:00Z')).toBe(tgtShareRead(logs));
+    expect(tgtShareRead([g('2026-10-26', null)])).toBeNull();
+    expect(tgtShareRead([])).toBeNull();
+  });
+  test('the read: c + b × the board\'s + w × the share, receivers, tight ends and backs from the fit\'s floor', () => {
+    const k = TGT_SHARE.rec_yds;
+    expect(shareRead('rec_yds', 'WR', 60, 0.25).proj).toBeCloseTo(k.c + k.b * 60 + k.share * 0.25, 6);
+    // a bigger share reads up at the same board figure; the same share keeps the board's order
+    expect(shareRead('rec_yds', 'WR', 60, 0.3).proj).toBeGreaterThan(shareRead('rec_yds', 'WR', 60, 0.2).proj);
+    expect(shareRead('rec_yds', 'TE', 70, 0.2).proj).toBeGreaterThan(shareRead('rec_yds', 'TE', 50, 0.2).proj);
+    expect(shareRead('receptions', 'RB', 3, 0.1).proj).toBeCloseTo(TGT_SHARE.receptions.c + TGT_SHARE.receptions.b * 3 + TGT_SHARE.receptions.share * 0.1, 6);
+    expect(shareRead('rec_yds', 'QB', 60, 0.2)).toBeNull();
+    expect(shareRead('rush_yds', 'RB', 60, 0.2)).toBeNull();
+    expect(shareRead('rec_yds', 'WR', 9, 0.2)).toBeNull();      // under the lists' floor: the board's read
+    expect(shareRead('rec_yds', 'WR', 60, null)).toBeNull();    // no share in his logs: the board's read
+  });
+  test('on the board: the share moves a receiver\'s yards and receptions, the board\'s read rides along', () => {
+    const share = (x) => ({ ...x, data: { ...x.data, players: x.data.players.map((p) => (p.name === 'Puka Nacua' ? { ...p, games: p.games.map((r) => ({ ...r, tgtShare: 0.34 })) } : p)) } });
+    const plain = Object.values(build().projections.rows).find((x) => x.player === 'Puka Nacua');
+    const b = buildBoard({ season: 2026, week: 9, games: GAMES, sheets: [], pf: share(pf), results: {} });
+    const r = Object.values(b.projections.rows).find((x) => x.player === 'Puka Nacua');
+    const y = r.yards.rec_yds;
+    expect(plain.yards.rec_yds.tgtShare).toBeNull();
+    expect(y.board).toBe(plain.yards.rec_yds.proj);
+    expect(y.tgtShare).toBe(0.34);
+    expect(y.proj).toBeCloseTo(TGT_SHARE.rec_yds.c + TGT_SHARE.rec_yds.b * y.board + TGT_SHARE.rec_yds.share * 0.34, 0);
+    expect(r.yards.receptions.tgtShare).toBe(0.34);
+    // the ladder and the floor / ceiling read the new figure
+    expect(y.tiers.strong.mark).toBe(ladderTiers({ proj: y.proj, sd: y.sd }, 'rec_yds').strong.mark);
+    expect(shareText(y)).toMatch(/^34% of his team's targets over his last 5 games/);
+    // the big games still read the projection before the shrink and the share
+    expect(r.big.rec_yds.p[100]).toBe(plain.big.rec_yds.p[100]);
+    // a quarterback and a back's rushing take no share
+    const s = Object.values(b.projections.rows).find((x) => x.player === 'Matthew Stafford');
+    expect(s.yards.pass_yds.tgtShare ?? null).toBeNull();
+  });
+});
+
 describe('NFL board: no injury hand-over (2026-11-03)', () => {
   test('a teammate out moves no read on the NFL; the old cocktail would have', () => {
     expect(COCKTAIL).toEqual(expect.objectContaining({ vacatedShare: 0, withoutSplit: false }));
@@ -297,7 +341,7 @@ describe('NFL outliers: double his projection (2026-11-08)', () => {
     expect(c.raw).toBe(chanceAtMark(y, 90, 'rec_yds'));
     const { c: k, e } = NFL_OUTLIERS.rec_yds.typical;
     expect(c.typical).toBe(chanceAtMark({ proj: 45, sd: k * 45 ** e }, 90, 'rec_yds'));
-    expect(c.p).toBeCloseTo((c.raw + c.typical) / 2, 3);
+    expect(c.p).toBe(Math.round(((c.raw + c.typical) / 2) * 1000) / 1000);
     // A star's double is a long shot whatever the board's own spread says (2026-11-08: Nacua's 209+ at 8% on a flat fit).
     expect(nflOutlierChance({ proj: 104, sd: 40 }, 'rec_yds').p).toBeLessThan(0.06);
     expect(nflOutlierChance({ proj: 104, sd: 40 }, 'rec_yds').p).toBeLessThan(nflOutlierChance({ proj: 40, sd: 25 }, 'rec_yds').p);

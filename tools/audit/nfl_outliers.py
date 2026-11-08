@@ -12,11 +12,12 @@ the week's top ten by the board's chance (his own spread), by the chance on the 
 import json, sys
 import numpy as np, pandas as pd
 
-# lib/nfl/projections.js RESID (the shipped curves: (got − projection) / spread at 5% steps)
+# lib/nfl/projections.js RESID (the shipped curves: (got − projection) / spread at 5% steps; receiving and receptions refitted
+# with the target share on 2026-11-08)
 RESID = {
- 'rec_yds': [-1.087, -0.897, -0.766, -0.643, -0.529, -0.429, -0.318, -0.218, -0.118, -0.001, 0.125, 0.262, 0.41, 0.589, 0.779, 1.031, 1.331, 1.746, 2.432],
+ 'rec_yds': [-1.17, -0.95, -0.817, -0.703, -0.588, -0.472, -0.358, -0.245, -0.115, -0.002, 0.116, 0.271, 0.425, 0.604, 0.803, 1.034, 1.353, 1.809, 2.484],
  'rush_yds': [-1.212, -0.91, -0.746, -0.644, -0.519, -0.4, -0.3, -0.213, -0.11, 0.0, 0.13, 0.271, 0.422, 0.558, 0.754, 1.037, 1.373, 1.923, 2.798],
- 'receptions': [-1.61, -1.327, -1.151, -1.007, -0.867, -0.741, -0.605, -0.486, -0.342, -0.218, -0.111, 0, 0.183, 0.357, 0.536, 0.742, 1.021, 1.348, 2.024]}
+ 'receptions': [-1.481, -1.155, -0.97, -0.794, -0.655, -0.496, -0.374, -0.259, -0.156, -0.052, 0.088, 0.246, 0.399, 0.57, 0.755, 0.953, 1.254, 1.649, 2.317]}
 SPEC = {'rec_yds': (40, 15, [15, 25, 35, 45, 60, 80, 200]), 'rush_yds': (40, 15, [15, 25, 35, 50, 70, 200]), 'receptions': (3, 1.5, [1.5, 2.5, 3.5, 4.5, 6, 12])}
 
 
@@ -32,10 +33,22 @@ def chance(proj, sd, mark, m): return 1 - cdf(RESID[m], (mark - 0.5 - proj) / sd
 def ll(p, y): p = np.clip(p, 1e-4, 1 - 1e-4); return float(-np.mean(y * np.log(p) + (1 - y) * np.log(1 - p)))
 
 
-r = pd.DataFrame(json.load(open(sys.argv[1] if len(sys.argv) > 1 else '.nhl-data/audit/nfl-yards.json')))
+# --fit <season>: the season the usual spread is fitted on (the file's first by default); --pos WR,TE,RB: those positions only;
+# --active: the games he played (the PropFinder replay's dump carries his zero-stat rows; the live board drops the injured);
+# --only rec_yds,receptions: those markets; --typical c,e: score that usual spread rather than fit it. The PropFinder replay's dump (nfl-pf-audit.mjs --dump) has the target share in
+# (TGT_SHARE); the ESPN replay (nfl-audit.mjs --yards) has no tgtShare in its logs, so its receiving read is the board's.
+argv = sys.argv[1:]
+opt = lambda k, d=None: argv[argv.index(k) + 1] if k in argv else d
+src = next((a for i, a in enumerate(argv) if not a.startswith('--') and (i == 0 or not argv[i - 1].startswith('--') or argv[i - 1] == '--active')), '.nhl-data/audit/nfl-yards.json')
+r = pd.DataFrame(json.load(open(src)))
 r['season'] = r.tag.str[:4].astype(int); r['week'] = r.tag.str.split('w').str[1].astype(int)
 r = r[r.sd > 0]
-fit_season = r.season.min()
+if opt('--pos') and 'pos' in r: r = r[r.pos.isin(opt('--pos').split(','))]
+if '--active' in argv and 'active' in r: r = r[r.active.astype(bool)]
+if opt('--only'): SPEC = {k: v for k, v in SPEC.items() if k in opt('--only').split(',')}
+fit_season = int(opt('--fit', r.season.min()))
+# --typical c,e: score that usual spread instead of fitting one (the shipped 0.958,0.494 for receptions)
+fixed = [float(v) for v in opt('--typical').split(',')] if opt('--typical') else None
 for m, (add, fl, edges) in SPEC.items():
     x = r[(r.m == m) & (r.proj >= fl)].copy()
     x['k'] = np.maximum(np.ceil(2 * x.proj - 1e-9), np.ceil(x.proj + add - 1e-9)).astype(int)
@@ -43,6 +56,7 @@ for m, (add, fl, edges) in SPEC.items():
     x['own'] = [chance(p, s, k, m) for p, s, k in zip(x.proj, x.sd, x.k)]
     F = x[x.season == fit_season]
     e, lc = np.polyfit(np.log(F.proj), np.log(F.sd), 1); c = float(np.exp(lc))
+    if fixed: c, e = fixed
     x['typical'] = [chance(p, c * p ** e, k, m) for p, k in zip(x.proj, x.k)]
     x['half'] = (x.own + x.typical) / 2
     print(f'\n## {m}: +{add} (projected {fl}+); the usual spread {c:.3f} · projection^{e:.3f}')
