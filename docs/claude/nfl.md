@@ -140,7 +140,16 @@
   `SIDE_TGT_MIN` = 20 targets in the pull left out), passing the game total; the only contexts that beat the board on both
   checks, 2024 → 2025 and 2024–25 → 2026; the opponent's defense table and his own past big games added nothing, the
   mined rules did not survive), `big` on every row, `lists.big` by market from `BIG_LIST_MIN` = 5%, the reason beside each
-  name; the week's top five at 100+ landed about one in three. A list carries receivers, tight ends and backs (receiving) or backs and quarterbacks (rushing)
+  name; the week's top five at 100+ landed about one in three. **Outliers** beside it (a Big games / Outliers switch; Vincent, 2026-11-08: "Build
+  the same outlier functionality for NFL"; `docs/audits/2026-11-08-nfl-outliers.md`, `tools/audit/nfl_outliers.py` on
+  `nfl-audit.mjs --yards`): per stat (receiving, rushing, receptions: `NFL_OUTLIERS`) the week's likeliest to reach double his
+  projection and + 40 yards / + 3 receptions (`nflOutlierMark`), from 15 yards / 1.5 receptions projected, at his position;
+  the chance half on his own spread and half on the spread usual for his projection (`typical`: c · projection^e, fitted on
+  2025; his own spread alone said 21% for the week's top ten where 13% landed), `NFL_OUTLIER_LIST_MIN` = 5%; `outliers` on
+  every row { mark, p, raw, typical, proj, floor, ceiling, line, book, record { season, last } (his games at the mark this
+  season, then last season's to make 17), actual, hit }, `lists.outliers` by market; Projected · Floor · Ceiling (the RANGE
+  percentiles, on the page here) · Outlier · Chance · Book · Why · Got, every column sorting (`components/picks/OutlierSort.jsx`,
+  shared with the NBA's). No passing (double a quarterback's projection never lands). A list carries receivers, tight ends and backs (receiving) or backs and quarterbacks (rushing)
   projected `LIST_YDS_MIN` = 10 yards and up, the highest
   projection first. **Touchdowns from the team down**: the team's touchdowns tonight (`teamTd`) = its own touchdowns a game
   through the opponent's touchdowns allowed (`envFactor` on PropFinder's `totals.for/against.td`, `leagueFor.td`) at 0.75
@@ -228,6 +237,23 @@
   run → the lead back, the outside → WR1 / WR2, the middle → the TE and the slot). The Matchups tab's game card names each defense's three weakest spots, and the script prints the same. A sheet stored before
   2026-11-01 gains its snapshot with "Read again" (the stored OCR words, no new read). Touchdowns do not read the
   snapshot (it prints no touchdown tile). `__tests__/nfl-snapshot.test.js` (page 1's real words).
+- **PropFinder's cheat-sheet pages, kept** (Vincent, 2026-11-08: "we need to use all these cheat sheets to determine
+  matchups" — TD, First TD, Role, Market Grades, Coverage, Alignment, WR vs CB, Rushing, Redzone, Line Matchups, Hit Rate
+  Matrix, Player Stats Summary, Team Share %, Team Defensive Stats, Coverage Matrix, Team Tendencies, Coverage Players): each
+  page's route is read off the site (DevTools → Network, never guessed) and named in `pages` (`lib/nfl/propfinder-nfl.js`;
+  `{season}`, `{date}`, `{teamIds}` filled in); the pull reads each once (`fetchSamples`, `keep`), keeps it whole in
+  `nfl/<season>/<wk>/propfinder-pages/<name>.json` (`P.propfinderPage`, beside the pull: the pull's file has a 15 MB limit),
+  its keys and a 2000-character sample on the pull's `samples` (Data sources, the workflow's log), `pages` { name: { at, rows } }
+  on the pull's meta, the export (`exportWeek`) carrying them for the backtests. So far: Role Matchups
+  (`/NFL/role-matchups?season=2026`: { season, week, seasonType, window, statsSeason, generatedAtUtc, roles (QB, WR, WR1–3, Other WR,
+  TE, TE1–2, Other TE, RB, RB1–2), markets (passYds … longRush), games }), Receiver coverage splits
+  (`/NFL/coverage/receiver-splits?season=`), TD Matchups (`/NFL/td-matchups?teamWindow=Season<season>&playerYear=<season>`, and
+  with `&allSplitTypes=true&skipSplits=true`), WR vs CB (`/NFL/wr-cb-matchups?season=&week=`: `{week}` the slate's,
+  no read without one), Team Share (`/NFL/team-share?position=All&period=Full&season=&count=season`), Milestones receiving
+  yards (`/NFL/milestones?category=receivingYards`; other categories not seen yet), Rushing Matchups
+  (`/NFL/rushing/slate-board?season=`). The site's `propfinder.app/nfl/cheatsheets/…?_rsc=` requests are the page's own
+  layout, no data. Role Matchups' table likely repeats the Opponent rows by slot the board already reads: to compare. No number
+  reads them yet: each is read and backtested before it moves a projection. `__tests__/nfl-pf-pages.test.js`.
 - **Without the cheat sheet, PropFinder's weak spots** (`pfSpots` / `PF_SPOTS` in `lib/nfl/projections.js`; Vincent, 2026-11-04:
   "I will not get the cheat sheet anymore"): a game whose defense has no snapshot reads its weak and strong spots off the side's
   `allowed` (the opponent's PropFinder season table, rank 1 = the most of `count`): the pass (QB passing yards), the run (RB

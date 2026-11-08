@@ -296,6 +296,18 @@ player-game of 2024 (with `nfl-fetch.mjs --season 2024`), 2025 and 2026, `python
 pandas) builds the morning's features from the PropFinder export and fits / checks the models and the rules,
 `nfl-pf-audit.mjs --big` grades the site's own `BIG` read on the replay.
 
+## NFL: the outlier games (`nfl_outliers.py`)
+
+`nfl-audit.mjs --yards <file>` writes every graded yards row of the tuning and the check weeks as shipped (`--check-to` the
+last check week) and exits; `nfl_outliers.py` reads it: double the projection by the projection's size, the week's top ten
+by the board's chance, by the chance on the spread usual for the projection, and half and half. Written up in
+`docs/audits/2026-11-08-nfl-outliers.md`.
+
+```bash
+node --import ./tools/audit/register.mjs tools/audit/nfl-audit.mjs --raw .nhl-data/audit/nfl --yards .nhl-data/audit/nfl-yards.json --check-to 9
+python3 -I tools/audit/nfl_outliers.py .nhl-data/audit/nfl-yards.json
+```
+
 ## NBA: the big games (`nba_big.py`)
 
 `nba-audit.mjs`'s rows (with `espnId` and `venue` since 2026-11-01) for 2025-26 and 2026-27, joined in Python to ESPN's box
