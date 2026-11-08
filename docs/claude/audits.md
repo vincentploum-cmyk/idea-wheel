@@ -214,3 +214,9 @@
   lineup × 1.1 / × 0.9), then the same day his minutes from the lineup (`LINEUP_MINUTES`: the minutes' miss 4.75 → 4.65 over
   2025-26, 4.91 → 4.66 this season; the promoted 6.29 → 5.01, the demoted 6.11 → 4.69 on the replay; every stat and rung Brier
   better than the flat factor); the night's five likeliest rebound spikes landed 9.7% against 4.6% for everyone.
+- The NFL's outlier games (`docs/audits/2026-11-08-nfl-outliers.md`, `tools/audit/nfl_outliers.py` on `nfl-audit.mjs --yards`;
+  Vincent, 2026-11-08: "Build the same outlier functionality for NFL"): 11,273 graded yards rows of 2025 (weeks 4–18) and 2026
+  (1–9). The board's chance at double the projection lands by the projection's size and runs high on each player's own spread
+  (the week's top ten said 21%, landed 13%, receiving); half on his own spread and half on the spread usual for his
+  projection lands (16.7 / 16.0% over 2025, 16.1 / 21.3% over 2026), log loss lower on both; a flat fit put a star's 209+ at
+  8% and was dropped. Shipped as the Outliers view.

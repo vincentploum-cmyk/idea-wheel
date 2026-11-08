@@ -140,7 +140,16 @@
   `SIDE_TGT_MIN` = 20 targets in the pull left out), passing the game total; the only contexts that beat the board on both
   checks, 2024 → 2025 and 2024–25 → 2026; the opponent's defense table and his own past big games added nothing, the
   mined rules did not survive), `big` on every row, `lists.big` by market from `BIG_LIST_MIN` = 5%, the reason beside each
-  name; the week's top five at 100+ landed about one in three. A list carries receivers, tight ends and backs (receiving) or backs and quarterbacks (rushing)
+  name; the week's top five at 100+ landed about one in three. **Outliers** beside it (a Big games / Outliers switch; Vincent, 2026-11-08: "Build
+  the same outlier functionality for NFL"; `docs/audits/2026-11-08-nfl-outliers.md`, `tools/audit/nfl_outliers.py` on
+  `nfl-audit.mjs --yards`): per stat (receiving, rushing, receptions: `NFL_OUTLIERS`) the week's likeliest to reach double his
+  projection and + 40 yards / + 3 receptions (`nflOutlierMark`), from 15 yards / 1.5 receptions projected, at his position;
+  the chance half on his own spread and half on the spread usual for his projection (`typical`: c · projection^e, fitted on
+  2025; his own spread alone said 21% for the week's top ten where 13% landed), `NFL_OUTLIER_LIST_MIN` = 5%; `outliers` on
+  every row { mark, p, raw, typical, proj, floor, ceiling, line, book, record { season, last } (his games at the mark this
+  season, then last season's to make 17), actual, hit }, `lists.outliers` by market; Projected · Floor · Ceiling (the RANGE
+  percentiles, on the page here) · Outlier · Chance · Book · Why · Got, every column sorting (`components/picks/OutlierSort.jsx`,
+  shared with the NBA's). No passing (double a quarterback's projection never lands). A list carries receivers, tight ends and backs (receiving) or backs and quarterbacks (rushing)
   projected `LIST_YDS_MIN` = 10 yards and up, the highest
   projection first. **Touchdowns from the team down**: the team's touchdowns tonight (`teamTd`) = its own touchdowns a game
   through the opponent's touchdowns allowed (`envFactor` on PropFinder's `totals.for/against.td`, `leagueFor.td`) at 0.75

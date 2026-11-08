@@ -9,7 +9,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildBoard } from '../lib/nfl/picks';
-import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS, PASS, passRead, QB_RUSH, qbRushRead, RESID, RESID_UNSHRUNK, YARDS_SHRINK, TD_ENGINE, tdEngine, rzLooksOf } from '../lib/nfl/projections';
+import { bigChance, BIG, BIG_FILL, chanceAtMark, ladderTiers, LADDER_TIERS, markOf, markQuarterbacks, normPlayer, roleOf, spreadOf, impliedPoints, scriptOf, scriptFactor, tdTier, tdCalibrated, RANGE, SCRIPT, TD_PER_POINT, H1_SHARE, LINE_WEIGHT, TD_CAL, PARAMS, PASS, passRead, QB_RUSH, qbRushRead, RESID, RESID_UNSHRUNK, YARDS_SHRINK, TD_ENGINE, tdEngine, rzLooksOf, NFL_OUTLIERS, NFL_OUTLIER_LIST_MIN, nflOutlierMark, nflOutlierChance } from '../lib/nfl/projections';
 import { applyRosterStatus, ROSTER_OFF } from '../lib/nfl/roster-status';
 import { reproject, makeBuild, nflBoard, COCKTAIL } from '../lib/nfl/picks';
 import { envFactor } from '../lib/picks/projection';
@@ -283,6 +283,51 @@ describe('NFL projections: the big games (2026-11-01)', () => {
   });
 });
 
+describe('NFL outliers: double his projection (2026-11-08)', () => {
+  test('the mark: double his projection and the stat’s add over it', () => {
+    expect(nflOutlierMark(35, 'rec_yds')).toBe(75);       // 70 → 75 (35 + 40)
+    expect(nflOutlierMark(62, 'rush_yds')).toBe(124);     // 124 > 102
+    expect(nflOutlierMark(4.2, 'receptions')).toBe(9);    // 8.4 → 9
+    expect(nflOutlierMark(250, 'pass_yds')).toBeNull();
+  });
+  test('the chance: half on his own spread, half on the spread usual for his projection; under the floor, none', () => {
+    const y = { proj: 45, sd: 30 };
+    const c = nflOutlierChance(y, 'rec_yds');
+    expect(c.mark).toBe(90);
+    expect(c.raw).toBe(chanceAtMark(y, 90, 'rec_yds'));
+    const { c: k, e } = NFL_OUTLIERS.rec_yds.typical;
+    expect(c.typical).toBe(chanceAtMark({ proj: 45, sd: k * 45 ** e }, 90, 'rec_yds'));
+    expect(c.p).toBeCloseTo((c.raw + c.typical) / 2, 3);
+    // A star's double is a long shot whatever the board's own spread says (2026-11-08: Nacua's 209+ at 8% on a flat fit).
+    expect(nflOutlierChance({ proj: 104, sd: 40 }, 'rec_yds').p).toBeLessThan(0.06);
+    expect(nflOutlierChance({ proj: 104, sd: 40 }, 'rec_yds').p).toBeLessThan(nflOutlierChance({ proj: 40, sd: 25 }, 'rec_yds').p);
+    expect(nflOutlierChance({ proj: 10, sd: 10 }, 'rec_yds')).toBeNull();
+    expect(nflOutlierChance({ proj: 45, sd: 0 }, 'rec_yds')).toBeNull();
+  });
+  test('the rows carry it, the list ranks it, the tab’s Outliers view draws it and sorts', () => {
+    const b = build();
+    const pj = b.projections;
+    const puka = Object.values(pj.rows).find((r) => r.player === 'Puka Nacua');
+    const o = puka.outliers.rec_yds;
+    expect(o).toMatchObject({ proj: puka.yards.rec_yds.proj, floor: puka.yards.rec_yds.floor, ceiling: puka.yards.rec_yds.ceiling, mark: nflOutlierMark(puka.yards.rec_yds.proj, 'rec_yds') });
+    expect(o.p).toBe(nflOutlierChance({ proj: puka.yards.rec_yds.proj, sd: puka.yards.rec_yds.sd }, 'rec_yds').p);
+    expect(o.record.season.n + o.record.last.n).toBeLessThanOrEqual(17);
+    for (const m of Object.keys(NFL_OUTLIERS)) { const ids = pj.lists.outliers[m]; for (let i = 1; i < ids.length; i++) expect(pj.rows[ids[i - 1]].outliers[m].p).toBeGreaterThanOrEqual(pj.rows[ids[i]].outliers[m].p); for (const id of ids) expect(pj.rows[id].outliers[m].p).toBeGreaterThanOrEqual(NFL_OUTLIER_LIST_MIN); }
+    // The star's 200+ is under the list's floor; a tight end at 39 is on it.
+    expect(o.p).toBeLessThan(NFL_OUTLIER_LIST_MIN);
+    const top = pj.rows[pj.lists.outliers.rec_yds[0]];
+    const html = renderToStaticMarkup(<NflBigGames board={b} initialView="outliers" />);
+    expect(html).toContain(top.player);
+    expect(html).not.toContain('Puka Nacua');
+    for (const h of ['>Floor<', '>Ceiling<', '>Outlier<', '>Book<']) expect(html).toContain(h);
+    expect(html).toContain('aria-sort="descending"');
+    expect(html).toContain(`>${top.outliers.rec_yds.mark}+<`);
+    expect(html).toContain('about double their projection');
+    // The Big games view stays the default.
+    expect(renderToStaticMarkup(<NflBigGames board={b} />)).toContain('>100+<');
+  });
+});
+
 describe('NFL projections: the read', () => {
   const b = build();
   const pj = b.projections;
@@ -409,7 +454,7 @@ describe('NFL projections: the read', () => {
     expect(g.lists.td.map((id) => pj.rows[id].team)).toEqual(expect.arrayContaining(['LAR', 'SEA']));
     expect(g.lists.receiving.map((id) => pj.rows[id].player)[0]).toBe('Puka Nacua');
     expect(g.lists.rushing.map((id) => pj.rows[id].player)).toEqual(['Kyren Williams', 'Zach Charbonnet', 'Blake Corum']);
-    expect(pj.games.find((x) => x.id === 'g2').lists).toEqual({ td: [], receiving: [], rushing: [], passing: [], big: { rush_yds: [], rec_yds: [], pass_yds: [] } });
+    expect(pj.games.find((x) => x.id === 'g2').lists).toEqual({ td: [], receiving: [], rushing: [], passing: [], big: { rush_yds: [], rec_yds: [], pass_yds: [] }, outliers: { rec_yds: [], rush_yds: [], receptions: [] } });
   });
   test('the words beside a name', () => {
     expect(row('Blake Corum').role).toEqual([expect.objectContaining({ kind: 'active', word: 'if active' })]);

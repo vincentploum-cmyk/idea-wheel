@@ -161,7 +161,7 @@ function gradeWeek(pj, played, tag) {
     for (const m of YARD_MARKETS) {
       const y = r.yards[m];
       if (!y || !LIST[m](r)) continue;
-      yards.push({ tag, m, pos: r.pos, proj: y.proj, exp: y.exp, floor: y.floor, ceiling: y.ceiling, sd: y.sd, script: y.script, actual: Number(line[STAT[m]]) || 0 });
+      yards.push({ tag, m, pos: r.pos, key: r.key, player: r.player, team: r.team, proj: y.proj, unshrunk: y.unshrunk ?? null, exp: y.exp, floor: y.floor, ceiling: y.ceiling, sd: y.sd, script: y.script, actual: Number(line[STAT[m]]) || 0 });
     }
     if (r.td) tds.push({ tag, pos: r.pos, p: r.td.p, raw: r.td.raw, p1h: r.td.p1h, lambda: r.td.lambda, td: (line.rushTd || 0) + (line.recTd || 0) + (line.retTd || 0) > 0 ? 1 : 0, td1h: line.h1Td > 0 ? 1 : 0 });
   }
@@ -216,6 +216,14 @@ const calib = (rows, k = 'p', y = 'td') => BINS.map(([a, b]) => { const xs = row
 const tdScore = (rows) => ({ n: rows.length, brier: brier(rows), logloss: logloss(rows), said: r3(mean(rows.map((r) => r.p))), landed: r3(mean(rows.map((r) => r.td))), calib: calib(rows), h1: { brier: brier(rows, 'p1h', 'td1h'), said: r3(mean(rows.map((r) => r.p1h))), landed: r3(mean(rows.map((r) => r.td1h))), calib: calib(rows, 'p1h', 'td1h') } });
 
 const t0 = Date.now();
+// --yards <file>: every graded yards row of the tuning and the check weeks as shipped (the outliers study, tools/audit/nfl_outliers.py).
+if (process.argv.includes('--yards')) {
+  const file = arg('--yards');
+  const rows = [...run(TUNE).yards, ...run({ season: CHECK.season, weeks: [CHECK.weeks[0], Number(arg('--check-to', String(CHECK.weeks[1])))] }).yards];
+  fs.writeFileSync(file, JSON.stringify(rows));
+  console.error(`written ${rows.length} rows to ${file}`);
+  process.exit(0);
+}
 if (process.argv.includes('--smoke')) {
   const a = Date.now(); const v = built(null, 2026, 5); const b = Date.now();
   for (let i = 0; i < 5; i++) reproject(v.b, v.inp.args, PARAMS, v.b0);

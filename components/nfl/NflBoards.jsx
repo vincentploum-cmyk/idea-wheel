@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { teamLogo, teamName } from '@/lib/nfl/teams';
-import { spreadOf, passText } from '@/lib/nfl/projections';
+import { spreadOf, passText, NFL_OUTLIERS } from '@/lib/nfl/projections';
+import { fmtOdds } from '@/lib/nfl/odds';
+import { sortOutliers, nextSort, SortHead, recordText } from '@/components/picks/OutlierSort';
 import { headshotUrl } from '@/lib/nfl/espn';
 
 // The NFL page's lists (Vincent, 2026-11-01: "I just need a simple list of games and per game, players listed with their
@@ -314,19 +316,89 @@ const BIG_LEGEND = (
   </p>
 );
 
-/** The Big games tab: per stat the week's likeliest big games. */
-export function NflBigGames({ board }) {
+// ── Outliers (Vincent, 2026-11-08: "Build the same outlier functionality for NFL"; the NBA's Big games → Outliers): per stat
+// the week's likeliest to reach about double his projection (lib/nfl/projections.js NFL_OUTLIERS), with his floor and ceiling,
+// the book's price at that mark when its ladder has the line, and his games at the mark this season and last.
+const OUT_KINDS = Object.entries(NFL_OUTLIERS).map(([k, v]) => [k, v.label]);
+/** Why a player is on the outliers list: his games at the mark this season, then last season's. */
+export const nflOutlierWhy = (o) => recordText(o) || '—';
+function OutlierTable({ pj, market }) {
+  const [all, setAll] = useState(false);
+  const [sort, setSort] = useState({ key: 'p', dir: 'desc' });
+  const listed = (pj.lists?.outliers?.[market] || []).map((id) => pj.rows[id]).filter((r) => r?.outliers?.[market]).map((r) => ({ ...r.outliers[market], player: r.player, r }));
+  if (!listed.length) return <p className="nhlx-auto-meta ir-ml-empty">No outlier candidate yet: the week needs a PropFinder pull.</p>;
+  const rows = sortOutliers(listed, sort);
+  const onSort = (k) => setSort((cur) => nextSort(cur, k));
+  const final = rows.some((o) => o.r.final);
+  const shown = all ? rows : rows.slice(0, BIG_SHOW);
+  const head = { sort, onSort };
+  const unit = market === 'receptions' ? 'receptions' : 'yards';
+  return (
+    <>
+      <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
+        <table className="nhlx-db-table nhlx-pk-table ir-ml-table ir-big-table ir-out-table">
+          <thead><tr>
+            <th className="ir-slate-rank">#</th>
+            <SortHead k="player" label="Player" {...head} />
+            <SortHead k="proj" label={<><span className="ir-out-full">Projected</span><span className="ir-out-short">Proj</span></>} className="is-num" title="This week’s projection" {...head} />
+            <SortHead k="floor" label="Floor" className="is-num" title="A bad day: he lands under it one game in five" {...head} />
+            <SortHead k="ceiling" label="Ceiling" className="is-num" title="A good day: he lands over it one game in five" {...head} />
+            <SortHead k="mark" label="Outlier" className="is-num" title={`About double his projection (at least ${NFL_OUTLIERS[market].add} ${unit} over it)`} {...head} />
+            <SortHead k="p" label="Chance" className="is-num is-lead" title="His chance of the outlier this week" {...head} />
+            <SortHead k="book" label="Book" className="is-num" title="The book’s price at the outlier, where its ladder has the line, and the chance over its implied one (sorts by that edge)" {...head} />
+            <SortHead k="season" label="Why" className="ir-big-why" title="Sorts by how often he reached the mark this season" {...head} />
+            {final ? <SortHead k="got" label="Got" className="is-num" {...head} /> : null}
+          </tr></thead>
+          <tbody>
+            {shown.map((o, i) => (
+              <tr key={o.r.id}>
+                <td className="ir-slate-rank">{i + 1}</td>
+                <td><Who r={o.r} game /><small className="ir-big-why-m">{nflOutlierWhy(o)}</small></td>
+                <td className="is-num">{market === 'receptions' ? o.proj : Math.round(o.proj)}</td>
+                <td className="is-num">{o.floor ?? <small>—</small>}</td>
+                <td className="is-num">{o.ceiling ?? <small>—</small>}</td>
+                <td className="is-num"><b>{o.mark}+</b></td>
+                <td className={`is-num is-lead${o.hit == null ? '' : o.hit ? ' is-hit' : ' is-miss'}`} title={`Half his own spread (${pct(o.raw)}), half the spread usual for a ${market === 'receptions' ? o.proj : Math.round(o.proj)} projection (${pct(o.typical)})`}><b>{pct(o.p)}</b></td>
+                <td className="is-num" title={o.book ? `o${o.book.line} at ${fmtOdds(o.book.odds)}: the book says ${pct(o.book.implied)}, the board ${pct(o.p)}` : 'The book’s ladder has no line at the outlier'}>{o.book ? <><b>{fmtOdds(o.book.odds)}</b><small className={`ir-out-edge${o.book.edge > 0 ? ' is-pos' : ''}`}> {o.book.edge >= 0 ? '+' : '−'}{Math.abs(Math.round(o.book.edge * 100))}</small></> : <small>—</small>}</td>
+                <td className="ir-big-why"><small>{nflOutlierWhy(o)}</small></td>
+                {final ? <td className="is-num nhlx-pk-got"><Got v={o.actual ?? undefined} /></td> : null}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {!all && rows.length > BIG_SHOW ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-slate-more" onClick={() => setAll(true)}>Show all {rows.length}</button> : null}
+    </>
+  );
+}
+
+const OUT_LEGEND = (
+  <p className="nhlx-auto-meta ir-bd-legend">
+    The players likeliest to have an <b>outlier</b> game: about double their projection (at least 40 more receiving or rushing yards, 3 more receptions). He lands between his floor and ceiling three games in five; the outlier is well past the ceiling. In the NFL these are mostly luck: the week’s top ten land about one in six, against one in ten for everyone. The book’s price beside it when its ladder has the line. Click a column to sort.
+  </p>
+);
+
+/** The Big games tab: per stat the week's likeliest big games, and beside them the outliers. */
+export function NflBigGames({ board, initialView = 'big' }) {
+  const [view, setView] = useState(initialView);
   const [market, setMarket] = useState('rush_yds');
+  const [outMarket, setOutMarket] = useState('rec_yds');
   const pj = board?.projections;
   if (!board?.games?.length) return <div className="nhlx-empty">No games in this week.</div>;
   if (!pj) return <div className="nhlx-empty">{NO_DATA}</div>;
+  const kinds = view === 'big' ? BIG_KINDS : OUT_KINDS;
+  const current = view === 'big' ? market : outMarket;
+  const pick = view === 'big' ? setMarket : setOutMarket;
   return (
     <div className="ir-overview">
-      <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="Stat">
-        {BIG_KINDS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={market === k} className={`nhlx-tab${market === k ? ' is-active' : ''}`} onClick={() => setMarket(k)}>{l}</button>)}
+      <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="List">
+        {[['big', 'Big games'], ['outliers', 'Outliers']].map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setView(k)}>{l}</button>)}
       </div>
-      <BigTable pj={pj} ids={pj.lists?.big?.[market] || []} market={market} limit />
-      {BIG_LEGEND}
+      <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="Stat">
+        {kinds.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={current === k} className={`nhlx-tab${current === k ? ' is-active' : ''}`} onClick={() => pick(k)}>{l}</button>)}
+      </div>
+      {view === 'big' ? <BigTable pj={pj} ids={pj.lists?.big?.[market] || []} market={market} limit /> : <OutlierTable pj={pj} market={outMarket} />}
+      {view === 'big' ? BIG_LEGEND : OUT_LEGEND}
     </div>
   );
 }
