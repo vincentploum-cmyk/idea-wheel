@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { nbaBoard, COCKTAIL, COCKTAIL_BEFORE_RECIPE, RECIPE, RECIPE_COCKTAIL } from '../lib/nba/picks';
+import { nbaBoard, COCKTAIL, COCKTAIL_BEFORE_RECIPE, RECIPE, RECIPE_COCKTAIL, STAR_OUT } from '../lib/nba/picks';
 import { defenseAllowed } from '../lib/nba/propfinder-nba';
 
 // The per-stat recipe (docs/audits/2026-11-03-nba-stat-drivers.md): his rate a minute over a decayed memory × this season's
@@ -71,7 +71,7 @@ describe('the per-stat recipe', () => {
   });
 
   test('the site’s cocktail is the recipe, the role pull off, the team ceiling kept', () => {
-    expect(COCKTAIL).toMatchObject({ recipe: RECIPE, withoutSplit: false, pull: null });
+    expect(COCKTAIL).toMatchObject({ recipe: { ...RECIPE, outRule: 'overlap', out: STAR_OUT }, withoutSplit: false, pull: null });
     expect(COCKTAIL.teamCeiling).not.toBe(false);
   });
 

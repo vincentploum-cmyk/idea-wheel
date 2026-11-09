@@ -339,6 +339,13 @@
   it, the cheat sheet's tile ("✓ sheet #4" when it sits in PropFinder's third, "✗" when not) and the factor on his rate
   (`ranges[market].matchup`, "×1.06"); the hover names the figures, the league's average and whether the factor is the
   sheet and PropFinder blended or one alone; "no table" when the pull has none. `__tests__/picks-boards.test.js`.
+- **A star out** (Vincent, 2026-11-09: "Reaves had 40+ points … Doncic was out … our model was still way too conservative";
+  `docs/audits/2026-11-09-nba-star-out.md`): the board had Reaves at 19.4 because Doncic was not on ESPN's report, so nobody
+  was lifted and the ceiling cut LAL 12% for his 40 a game. Now RotoWire's lineups sit who the report missed (`lineupOuts`),
+  every out player of this season lifts each teammate by the share of his memory they shared (`outRule: 'overlap'`), and the
+  ceiling sums the lifted rates (`ceilingOut`); the bullet in `picks-core.md`. 2025-26's out nights had run 0.73 points low;
+  points 4.88 → 4.84, PRA 6.30 → 6.22. Measured and not shipped: the second option taking more than his share (the box
+  scores say less: the lift is biggest for the small shares, through minutes), the opponent's absences.
 - **The outlier nights** (Vincent, 2026-11-07: "we need to start calibrating the nba model … players were projected by us to
   get 4 or 5 rebounds but they actually got 10+"; `docs/audits/2026-11-07-nba-outliers.md`): the rebounds', assists', threes',
   steals' and blocks' rungs read a count's tail (the negative binomial with the ladder's centre and spread: a 4.5-rebound

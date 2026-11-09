@@ -5,7 +5,7 @@ import { minutesTonight, FACTOR_MAX } from '../lib/picks/rotations';
 import { pAt } from '../lib/picks/shuffle';
 // The mechanics below (the windows, the role pull) as the cocktail until 2026-11-03 carried them; the site's since reads the per-stat
 // recipe with the pull off (__tests__/nba-recipe.test.js), the options all still in the code.
-import { COCKTAIL as SITE, COCKTAIL_BEFORE_RECIPE as COCKTAIL, RECIPE, nbaBoard, logAverages as nbaAverages, ladderOf as nbaLadder } from '../lib/nba/picks';
+import { COCKTAIL as SITE, COCKTAIL_BEFORE_RECIPE as COCKTAIL, RECIPE, STAR_OUT, nbaBoard, logAverages as nbaAverages, ladderOf as nbaLadder } from '../lib/nba/picks';
 import { logAverages as nflAverages, buildBoard as nflBoard } from '../lib/nfl/picks';
 
 // The NBA cocktail (lib/nba/picks.js COCKTAIL, docs/audits/2026-10-28-nba-cocktail.md): the weights behind the
@@ -231,7 +231,7 @@ describe('the minutes and the defaults', () => {
   });
   test('the defaults are the board as it was; the NBA’s cocktail is its own', () => {
     expect(COCKTAIL_DEFAULTS).toMatchObject({ windows: null, hitWeights: WEIGHTS, matchupK: 0, ladderModel: 0.5, empK: 0, spreadA: 0, factorMax: FACTOR_MAX, scope: 'all', volume: true, pull: null });
-    expect(nbaBoard().COCKTAIL).toMatchObject({ ...COCKTAIL, recipe: RECIPE, withoutSplit: false, pull: null });
+    expect(nbaBoard().COCKTAIL).toMatchObject({ ...COCKTAIL, recipe: { ...RECIPE, outRule: 'overlap', out: STAR_OUT }, lineupOuts: true, ceilingOut: true, withoutSplit: false, pull: null });
     expect(nbaBoard().COCKTAIL).toMatchObject(SITE);
     expect(nbaBoard({}).COCKTAIL).toEqual(COCKTAIL_DEFAULTS);
     // The NFL board's tables carry its own damping since the backtest of 2026-11-01 (lib/nfl/picks.js COCKTAIL, k = 8).

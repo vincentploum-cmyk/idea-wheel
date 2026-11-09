@@ -19,7 +19,7 @@ import path from 'node:path';
 import { parseSummary, parseScoreboard, derived } from '../../lib/nba/espn.js';
 import { teamAbbrFromText } from '../../lib/nba/teams.js';
 import { defenseAllowed } from '../../lib/nba/propfinder-nba.js';
-import { nbaBoard, COCKTAIL, COCKTAIL_BEFORE_OUTLIERS, COCKTAIL_BEFORE_RECIPE, RECIPE_COCKTAIL, LADDER_MARKETS, SHUFFLE_MARKETS } from '../../lib/nba/picks.js';
+import { nbaBoard, COCKTAIL, COCKTAIL_BEFORE_STAR_OUT, COCKTAIL_BEFORE_OUTLIERS, COCKTAIL_BEFORE_RECIPE, RECIPE_COCKTAIL, LADDER_MARKETS, SHUFFLE_MARKETS } from '../../lib/nba/picks.js';
 import { makeShuffle } from '../../lib/picks/shuffle.js';
 import { gradeBoard, gradePredictors, summarize, asOf, etDate, PREDICTORS } from '../../lib/picks/scorecard.js';
 import { normName } from '../../lib/nhl-data/names.js';
@@ -39,9 +39,9 @@ fs.mkdirSync(OUT, { recursive: true });
 const SEASON = Number(arg('--season', '2026'));
 // The board's cocktail: the site's (`site`, lib/nba/picks.js COCKTAIL), the board as it was before it (`old`), or a JSON object.
 const CK_ARG = arg('--cocktail', 'site');
-// `before` = the site's until 2026-11-03 (the windows, the role pull, the without split); `recipe` = that with the per-stat
+// `beforeStarOut` = the site's until 2026-11-09 (the teammates out on the last-five rule, no lineup outs); `before` = the site's until 2026-11-03 (the windows, the role pull, the without split); `recipe` = that with the per-stat
 // recipe (the role pull kept); `site+{json}` / `before+{json}` = either with the JSON on top (one setting varied).
-const PRESET = { site: COCKTAIL, outliersOff: COCKTAIL_BEFORE_OUTLIERS, before: COCKTAIL_BEFORE_RECIPE, recipe: { ...COCKTAIL_BEFORE_RECIPE, ...RECIPE_COCKTAIL }, old: {} };
+const PRESET = { site: COCKTAIL, beforeStarOut: COCKTAIL_BEFORE_STAR_OUT, outliersOff: COCKTAIL_BEFORE_OUTLIERS, before: COCKTAIL_BEFORE_RECIPE, recipe: { ...COCKTAIL_BEFORE_RECIPE, ...RECIPE_COCKTAIL }, old: {} };
 const plus = CK_ARG.match(/^(site|before)\+(.*)$/s);
 const CK = PRESET[CK_ARG] || (plus ? { ...PRESET[plus[1]], ...JSON.parse(plus[2]) } : JSON.parse(CK_ARG));
 const { buildBoard, ownWindows, statOf, actualFor } = nbaBoard(CK);

@@ -228,6 +228,17 @@ config and keeps its own markets, teams, feeds and slate key:
   decayed at 10 games over the team's `totals.for`, (1 + V / T)^b per `out[stat]`: points 0.7, rebounds 0.53, assists 0.77,
   threes 0.64, PRA 0.68, else 0.6) multiply into the ladder's `env` (`out` / `outFrom` on the range), in place of the vacated
   lifts and the minutes factor (`minutesTonight` still runs for the minutes shown and the thin gate); no team totals, no factor.
+  **Since 2026-11-09 the out read is `outRule: 'overlap'`** (Vincent, of Reaves's 43 the night Doncic sat: "based on the
+  injury report, adjust the game script"; `docs/audits/2026-11-09-nba-star-out.md`): every out player of this season at
+  `outMin` = 20+ minutes a game (`outGames` = 3+ games) counts, his production × the share of each teammate's decayed memory
+  (half-life `outHl` = 15) he took part in (game ids), per player (`outRead.byKey`, `outMultOf`; the side's `outRead.mult` is
+  the full figure for the hover), exponents `STAR_OUT` (points 0.7, rebounds 0.3, assists 0.55, threes 0.4, PRA 0.62, else
+  0.45). The last-five rule stays for `outRule` unset. `ceilingOut`: the team ceiling's sum carries each player's out lift (a
+  star out no longer drops the cut and adds the lift both). `lineupOuts`: `applyLineupOuts` (`injuries.js`, before
+  `applyBoxScores` in `buildBoard`) marks a pulled player 'Out' (`injuryFrom: 'lineup'`) when RotoWire's "MAY NOT PLAY" says
+  OUT / OFS / SUSP or 0%, or a confirmed five (every name matched to the team's pull) leaves out a player who started 8 of his
+  last 10 this season: Doncic was not on ESPN's report on 2026-11-08 and the board read Reaves 19.4 (26.0 now).
+  `__tests__/nba-star-out.test.js`.
   `withoutSplit: false` drops the without-teammate split from the rate, the rungs and the shuffle; `teamCeiling: false` keeps
   the expected total and scales nothing. **The ceiling's sum leaves out the roster players without a game this season** once the
   team has three (2026-11-05; Vincent, of DEN at half its figures — Jokic 6.9 rebounds, Gordon 3.1, Murray 2.6: PropFinder's

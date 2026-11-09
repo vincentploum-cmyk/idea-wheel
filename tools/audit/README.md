@@ -101,6 +101,16 @@ in a soft matchup, then grids the cocktail's `reach` / `reachK` / `reachDown` ov
 two replays above (`--cocktail site`, or a JSON cocktail with `"reach": 0` for the board without it). Written up in
 `docs/audits/2026-10-31-nba-ceiling.md` (shipped at 0.3, K 10, no pull toward the floor).
 
+## NBA: a star out (`nba_star_out.py`)
+
+Who takes an out teammate's production, on the same box scores as below: the board's last-five rule against every out
+player of this season by his share of each teammate's decayed memory, a lift by the player's own share, the opponent's
+absences. Poisson with his read as the offset, fitted on 2024-25. Written up in `docs/audits/2026-11-09-nba-star-out.md`.
+
+```bash
+python3 -I tools/audit/nba_star_out.py --box .nhl-data/audit/nba-box --out docs/audits/2026-11-09-nba-star-out-tables.md
+```
+
 ## NBA: what predicts each stat (`nba-box-fetch.mjs`, `nba_stat_drivers.py`)
 
 Points, rebounds, assists and threes one at a time, from the box scores rather than the board: his own record at every
