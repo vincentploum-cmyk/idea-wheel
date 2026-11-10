@@ -1,4 +1,4 @@
-name: NHL backfill (lines + first goals)
+name: NHL backfill (lines + first goals + shots by period)
 
 # Walks a date range and, for each date, re-reads the stored games' lineups from the
 # NHL.com previews (positions + line slots, re-stamped onto the box scores) and stamps
@@ -15,7 +15,7 @@ on:
         description: 'Last date (YYYY-MM-DD, ET)'
         required: true
       modes:
-        description: 'Refresh modes per date, comma-separated (settle = previews → lines, firstgoals = play-by-play → first goal, restamp = stored snapshot only)'
+        description: 'Refresh modes per date, comma-separated (settle = previews → lines, firstgoals = play-by-play → first goal + shots by period, restamp = stored snapshot only)'
         required: false
         default: 'settle,firstgoals'
 

@@ -117,6 +117,20 @@
   for the first unit, "PP2" the second; the read on the hover and in the chip's title. Matched by full name, then last
   name with the first initial (`ppUnitOf`). Descriptive only: the model's power-play share stays `PP_WEIGHTS` by line
   slot; `__tests__/nhl-pp-units.test.jsx` (the page as served 2026-11-08, `fixtures/rotowire-nhl-lineups.html`);
+  **the 1 · 2 · 3 period badges beside the PP badge** (Vincent, 2026-11-10, after a look at shots by period: "a simple
+  1, 2, 3 next to the player on the board colored in green / amber / red to define the match up (opposing team allows +
+  own production)"; `PeriodBadges` in `Rink.jsx`, `.nhlx-rk-per`, `p.periods` from `periodRead(periodBook(rows, season), id,
+  opp)` in `lib/nhl-data/periods-pure.js`): per regulation period the opponent's shots allowed a game in that period
+  ranked among the teams with `MIN_TEAM_GAMES` = 3 (top third +1, bottom third -1) plus the skater's own shots a game in
+  it ranked among his position group, forwards or defensemen, with `MIN_SKATER_GAMES` = 5; the sum reads green (+1 or
+  more), amber (0) or red (-1 or less); a side short of games counts 0 and says so on the hover; no badges while neither
+  side ranks. This season's rows only. The data: `sp` = [p1, p2, p3] shots on goal (goals in, overtime and shootout out)
+  on every skater of a game record (`periodShotsOf` / `stampPeriodShots` in `game.js`, every new ingest) and `sp1` /
+  `sp2` / `sp3` at the end of `ROW_FIELDS` (older rows read null and are skipped); games stored before 2026-11-10 get
+  them from the play-by-play through `stampFirstGoals` (the backfill workflow's `firstgoals` mode, which now also stamps
+  any game whose skaters lack `sp`). Colour only, no number moves. The 2026-11-10 look (274 games): the league takes
+  8.8 / 9.6 / 8.7 shots a team by period; a team's period table is ~150 shots after a month, so ±1 a game is within the
+  noise; `__tests__/nhl-periods.test.jsx`;
   chips carrying the latest saved model run's λ shots / goals for the slate date from
   `lib/nhl-data/model-runs.js` — printed as the board reads them since 2026-10-31 (`slateWithBoardReads`, the bullet
   "One number per skater" under Automation; the run's own on the hover) —, or a matchup read when no run exists; at the

@@ -21,7 +21,7 @@ async function handle(request) {
   const url = new URL(request.url);
   const auth = await authorize(request, { allowToken: true });
   const date = url.searchParams.get('date') || todayET();
-  const only = url.searchParams.get('only'); // games | lineups (&due=<minutes>: only games starting within that window) | settle (a played date: previews' last update + re-stamp) | restamp (stored games follow the snapshot) | firstgoals (stored games get their first goal) | propfinder | shotpropz (the team boards) | goalies (the season's goalie rows from the stored games, &season=) | (default) daily
+  const only = url.searchParams.get('only'); // games | lineups (&due=<minutes>: only games starting within that window) | settle (a played date: previews' last update + re-stamp) | restamp (stored games follow the snapshot) | firstgoals (stored games get their first goal and shots by period) | propfinder | shotpropz (the team boards) | goalies (the season's goalie rows from the stored games, &season=) | (default) daily
   if (!DATE_RE.test(date)) return Response.json({ error: 'bad date' }, { status: 400 });
   // The GitHub workflow is the backstop for the server's own clock (lib/scheduler.js): a scheduled run names its
   // job and steps aside when the server already ran that slot (GitHub fires its schedules hours late).

@@ -224,6 +224,19 @@ export function PpBadge({ pp }) {
   return <i className={`nhlx-rk-pp${pp.lot ? ' is-lot' : ''}`} title={pp.text}>{pp.unit === 1 ? 'PP' : 'PP2'}</i>;
 }
 
+/**
+ * The chip's 1 · 2 · 3: per regulation period, green / amber / red for what tonight's opponent gives up in that
+ * period plus his own shots in it, each by third (lib/nhl-data/periods-pure.js). The read on each badge's hover.
+ */
+export function PeriodBadges({ periods }) {
+  if (!periods?.length) return null;
+  return (
+    <span className="nhlx-rk-per" aria-label="matchup by period">
+      {periods.map((x) => <i key={x.period} className={`nhlx-rk-per-b is-${x.tone}`} title={x.text}>{x.period}</i>)}
+    </span>
+  );
+}
+
 function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false, lines = null }) {
   const open = usePlayerCard();
   const thin = (p.gp || 0) < minGp;
@@ -258,7 +271,7 @@ function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false, 
         <i className="nhlx-rk-num">{p.number ?? p.pos}</i>
       </span>
       <span className="nhlx-rk-meta">
-        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{h2hMark ? <span className="nhlx-rk-h2h" title={h2hTitle}>h2h</span> : null}<Flags c={p} stat={metric} className="nhlx-rk-flags" soft={false} /><SlotBadge p={p} lines={lines} metric={metric} /><PpBadge pp={p.pp} /><span className="nhlx-rk-nm">{shortName(p.name)}</span></b>
+        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{h2hMark ? <span className="nhlx-rk-h2h" title={h2hTitle}>h2h</span> : null}<Flags c={p} stat={metric} className="nhlx-rk-flags" soft={false} /><SlotBadge p={p} lines={lines} metric={metric} /><PpBadge pp={p.pp} /><PeriodBadges periods={p.periods} /><span className="nhlx-rk-nm">{shortName(p.name)}</span></b>
         {played ? (actual
           ? <span className={`nhlx-rk-stat is-actual${(m?.sog ?? p.projSog) != null && actual.sog >= (m?.sog ?? p.projSog) ? ' is-over' : ''}`}><em>{actual.sog}</em>{NB}SOG{NB}· <em>{actual.g}</em>{NB}G{actual.a ? <>{NB}· <em>{actual.a}</em>{NB}A</> : null}{m?.sog != null ? <i>m{NB}{num(m.sog)}</i> : p.projSog != null ? <i>p{NB}{num(p.projSog)}</i> : null}</span>
           : <span className="nhlx-rk-stat">did not play</span>)
@@ -445,6 +458,7 @@ export function RinkLegend({ metric = 'sog' }) {
       <span><i className="nhlx-rk-slot is-soft is-legend">LW1</i> his line slot tonight, tinted by the {word} the opponent gives up to that slot per skater a game this season (the Defense tab’s by-line table, both venues; green = top third of the league, red = bottom third; grey = no record yet); the rink head names the slot the opponent gives the most to, with its rank against the league there, and who sits at that slot tonight</span>
       <span><i className="nhlx-pk-flag is-hot is-legend">{ICON.hot}</i> hot going in ({metric === 'g' ? '3+ goals in his last five' : 'his last five at 1.4× his shot rate or more'}) · <i className="nhlx-pk-flag is-cold is-legend">{ICON.cold}</i> cold ({metric === 'g' ? 'no goal in ten games when his rate owed him one' : 'his last five at 0.7× or under'}) ; on the plays above the rink and in the skater table, <i className="nhlx-pk-flag is-soft is-legend">{ICON.soft}</i> marks the opponent in the soft third of the league at his position for {word} on PropFinder’s table above the rink, the tab it opens on (on the ice the band under a chip already shows it); colour only, the numbers already carry his rate</span>
       <span><i className="nhlx-rk-pp is-lot is-legend">PP</i> on RotoWire’s first power-play unit (<i className="nhlx-rk-pp is-legend">PP2</i> the second) with 2+ power-play minutes coming tonight: the power plays his team should get (ShotPropz: what it draws against what the opponent gives, the Power play row above) × a unit skater’s share of each (0.98 of a minute on the first unit, 0.48 on the second); green from 3.5 minutes, a power-play-rich night; descriptive, no number moves with it</span>
+      <span><span className="nhlx-rk-per is-legend"><i className="nhlx-rk-per-b is-soft">1</i><i className="nhlx-rk-per-b is-mid">2</i><i className="nhlx-rk-per-b is-tough">3</i></span> the matchup by period: what the opponent gives up in shots in that period (top / bottom third of the league) plus his own shots in it (top / bottom third of his position); green when they lean good, red when they lean bad, amber when they cancel out or sit in the middle; this season, the read on each badge’s hover</span>
       {metric === 'g'
         ? <span><i className="nhlx-rk-h2h is-legend">h2h</i> scores on this opponent: more than a goal a game against them over 2+ stored games, or 2+ goals in the one game stored (this season and last)</span>
         : <span><i className="nhlx-rk-h2h is-legend">h2h</i> fires at this opponent: 4+ shots a game against them over 2+ stored games, or 5+ in the one game stored (this season and last)</span>}
