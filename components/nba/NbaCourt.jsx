@@ -11,6 +11,7 @@ import { reliableTone, reliableFor, reliabilityText } from '@/lib/picks/reliabil
 import { asStated } from '@/lib/picks/calibration';
 import SidePicks from '@/components/picks/SidePicks';
 import { useNbaPlayerCard } from './NbaPlayerCard';
+import { playerTopSpot, topSpotText } from '@/lib/nba/soft-spots';
 
 // The matchup view of an NBA game, the NHL rink's basketball twin: for each team a half court
 // (50 × 47 ft, the basket at the top) with its players placed by position (PF · C · SF under the
@@ -240,7 +241,12 @@ function Chip({ p, metric, height, read, sport, team, opp, venue, final, allowed
   const stats = CHIP_STATS.includes(metric) ? CHIP_STATS : [...CHIP_STATS, metric];
   const projs = stats.map((k) => [k, k === metric ? proj.value : boardRead(p, k, seasonAllowed, envPos(p)).value]);
   const flags = [];
-  if (play?.form === 'hot') flags.push(['hot', `Hot: ${pct(play.rates.l5)} of his last 5 over this line`, ICON.hot]);
+  // The flame: a hot streak on the line, or a top-five soft spot for the picked stat (a regular facing one of the
+  // SOFT_TOP defenses that give up the most at his spot this season, lib/nba/soft-spots.js; Vincent, 2026-11-10, the
+  // NHL rinks' flame: "We should do the same with nba"); one flame, both reasons on its hover when both hold.
+  const top = playerTopSpot(p, seasonAllowed, metric);
+  const heat = [play?.form === 'hot' ? `Hot: ${pct(play.rates.l5)} of his last 5 over this line` : null, top ? topSpotText(top, opp) : null].filter(Boolean);
+  if (heat.length) flags.push(['hot', heat.join(' · '), ICON.hot]);
   if (play?.form === 'cold') flags.push(['cold', `Cold: ${pct(play.rates.l5)} of his last 5 over this line`, ICON.cold]);
   if (play?.spot?.soft) flags.push(['soft', `Soft spot: the opponent is in the permissive third at his position for this stat (#${play.spot.rank})`, ICON.soft]);
   const all = (p.plays || []).filter((x) => x.side === 'over' || x.side === 'yes').map((x) => `${x.side === 'yes' ? '' : 'o'}${x.line} ${x.label} ${pct(x.p)}${x.odds != null ? ` at ${fmtOdds(x.odds)}` : ''}${x.hit == null ? '' : x.hit ? ' hit' : ' miss'}`);

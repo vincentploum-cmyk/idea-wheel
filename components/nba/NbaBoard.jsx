@@ -11,6 +11,7 @@ import { GROUPS, MARKETS, SHUFFLE_MARKETS, labelOf } from '@/lib/nba/markets';
 import { teamLogo, teamName } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
 import GameFold from './NbaGame';
+import NbaSoftSpots from './NbaSoftSpots';
 import { reliabilityText, reliableFor } from '@/lib/picks/reliability';
 
 /** The markets the reliability line names, the best-bets markets first. */
@@ -64,6 +65,9 @@ function NbaSlate({ board: whole, game = null, onGame = null }) {
   return (
     <>
       <SlateOverview board={board} sport={SPORT} filters={filters} onFilters={setFilters} onReset={reset} onGame={picked ? null : pickGame} onOpen={openRow} picked={picked?.id || null} title="Top plays tonight" />
+      {/* The soft spots (Vincent, 2026-11-10, the NHL's list on Best bets: "We should do the same with nba"): the regulars
+          facing one of the five most permissive defenses at their position, cut to the picked game with the rest. */}
+      <NbaSoftSpots board={board} sport={SPORT} onOpen={openRow} />
       <section className="ir-gf-list" aria-label="Games">
         <div className="nhlx-pfd-head">
           <b>{picked ? `${picked.away} @ ${picked.home}` : 'Games'}</b>

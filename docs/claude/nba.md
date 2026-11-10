@@ -133,7 +133,8 @@
   all show the one board projection, and the chip's hover says what the picked window would have read
   (`windowRead`); the shuffle's Matchup hover names the season table it reads. The chip also carries the
   book's main line and the chance for the stat (`playFor`: the over or yes side), ✓ when
-  the cheat sheet names him (the hover names the file), flame / snowflake / soft spot, his projection
+  the cheat sheet names him (the hover names the file), flame / snowflake / soft spot (the flame also for a regular
+  in a top-five spot, 2026-11-10, see Soft spots), his projection
   alone when he has no line; above the court the opponent-allowed table (per position, every stat
   PropFinder's table carries, value + rank chip, the `nhlx-pfd-*` styles, the picked stat's column
   marked, the league's average on hover) and under it "Props by player": each player's projection, line
@@ -416,6 +417,28 @@
   the price and the edge, and "best bet" when the play is in `board.best`; a player opens his card. Six rows a game, then
   "Show all"; the head's game dropdown picks one game as on Best plays. Read off the board the page already holds, no
   request of its own; without a sheet for the date the tab says where to drop one. `__tests__/nba-sheet-matchups.test.js`.
+- **Soft spots** (Best plays, between Top plays and the games; `components/nba/NbaSoftSpots.jsx`, the pure reader
+  `lib/nba/soft-spots.js`; Vincent, 2026-11-10, of the NHL's new list on Best bets — the skaters facing one of the five worst
+  defenses at their position — "We should do the same with nba"): `softSpots(board)` lists one row per regular and stat
+  where tonight's opponent ranks 1st to `SOFT_TOP` = 5 at his spot (`spotPos` = the board's `envPos`) for points, rebounds,
+  assists or threes (`SOFT_STATS`, the cheat sheet's four) on **the season table the board reads** (`topSpot` on the side's
+  `allowed`: the cell's `rank`, PropFinder's season rank, rank 1 = gives up the most; the cheat sheet's rank on a night
+  without a PropFinder table; the tile rides on the hover; not `rankBlend`, the court's tint). **A regular** (`isRegular`): not
+  out, not `idle`, not `thin`, a projection for the stat, and projected `REGULAR_MIN` = 24 minutes or more tonight
+  (`minutes.tonight`, the rotation's or the starting five's read); a player without a minutes read counts when he is the
+  depth chart's starter (depth 1) or in tonight's five (`lineup.role` starter / promoted). Each row: the player, at / vs the
+  opponent, "NY #2 · 2nd most PTS to SG · 24.1 a game", the board's projection (`ranges[stat].exp`, floor–ceiling), the
+  book's main line and price, the board's chance of the over there (the ladder's main rung, as the chip and the Cheat sheet
+  tab read it), the break-even price of that chance (`fairOdds`) and the edge, "best bet" when the play is in `board.best`;
+  the projection alone without a line. Ordered: the priced lines by edge, the unpriced lines by chance, then the
+  projections alone by rank. `SOFT_SHOWN` = 12 rows, then "Show all"; the head's game dropdown cuts it to the game; a row
+  opens the card; once the game is final the row is graded over the line (`actual` off his play for the stat: is-hit /
+  is-miss, DNP dimmed) and the head counts the hits. **The court's flame** (`playerTopSpot` in `Chip`): a regular in a
+  top-five spot for the court's picked stat (all six court stats, on the season table whatever window the court shows)
+  wears the hot-streak flame (`ICON.hot`), its hover saying why (`topSpotText`: "Soft spot: NY allows the 2nd most points
+  to SG this season (24.1 a game, #2 of 30, the league 20.3)"); hot and in a top-five spot, one flame with both reasons;
+  the soft-third mark (`play.spot.soft`) stays as it was. A list and a flag over figures the board already computes: no
+  number moves. `__tests__/nba-soft-spots.test.jsx` (the pure reader, the list and the court's flame rendered).
 - `tools/check-defensive-matchups.mjs <export.csv> <picks.json>` compares PropFinder's Defensive Matchups page export (what each team allows per position, with ranks) against the board's `sides[].allowed` table in a saved `GET /api/nba/picks?date` payload, cell by cell; the export itself is never ingested (its "OPPOSING PLAYER" header is no player column, the parser reads zero rows and the store rejects it).
 - Routes: `GET /api/nba/picks?date`, `GET /api/nba/shuffle?date&market`, `GET /api/nba/scorecard?from&to`, `GET|POST|DELETE /api/nba/sheets?date`,
   `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`,

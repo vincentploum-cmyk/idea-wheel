@@ -1748,6 +1748,45 @@ div.nhlx-auto-msg > p { margin: 0; }
 .ir-slate-proj { display: flex; align-items: center; gap: 12px; min-width: 220px; }
 .ir-slate-proj > span:first-child { min-width: 52px; font-variant-numeric: tabular-nums; }
 .ir-slate-more { margin-top: 10px; }
+/* NBA · Soft spots on the Best plays tab (2026-11-10, the NHL's list on Best bets; components/nba/NbaSoftSpots.jsx):
+   the regulars facing a top-five defense at their position, in the slate list's table style; the court's flame shares the glyph. */
+.ir-ss-flame { width: 15px; height: 15px; margin-right: 6px; vertical-align: -2px; }
+.ir-ss-flame svg { width: 15px; height: 15px; }
+.ir-ss-table td { vertical-align: middle; }
+.ir-ss-table td b, .ir-ss-table td .ir-slate-sub { display: block; }
+.ir-ss-table td.ir-ss-spot .ir-spot { margin-bottom: 2px; }
+.ir-ss-table td.ir-ss-edge.is-up b { color: var(--ok-fg); }
+.ir-ss-table td.ir-ss-edge.is-down b { color: var(--bad-fg); }
+.ir-ss-bet { color: var(--ok-fg); font-weight: 600; }
+@media (max-width: 700px) {
+  .ir-ss .nhlx-db-table-wrap { overflow-x: visible; }
+  .ir-ss-table, .ir-ss-table tbody { display: block; width: 100%; }
+  .ir-ss-table thead { display: none; }
+  .ir-ss-table tr { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; grid-template-areas: "n player chance" "n game edge" "n spot line" "n proj got"; column-gap: 12px; row-gap: 4px; align-items: center; padding: 12px; border-bottom: 1px solid var(--line); }
+  .ir-ss-table tr:last-child { border-bottom: 0; }
+  .ir-ss-table td { display: block; min-width: 0; padding: 0; border: 0; white-space: normal; }
+  .ir-ss-table td[colspan] { grid-column: 1 / -1; }
+  .ir-ss-table .nhlx-db-player { gap: 8px; min-width: 0; }
+  .ir-ss-table .nhlx-db-player img { width: 26px; height: 26px; }
+  .ir-ss-table .nhlx-db-player > span { min-width: 0; }
+  .ir-ss-table td.ir-ss-n { grid-area: n; align-self: start; padding-top: 4px; width: auto; }
+  .ir-ss-player { grid-area: player; }
+  .ir-ss-game { grid-area: game; }
+  .ir-ss-spot { grid-area: spot; }
+  .ir-ss-proj { grid-area: proj; text-align: left !important; }
+  .ir-ss-chance { grid-area: chance; }
+  .ir-ss-edge { grid-area: edge; }
+  .ir-ss-line { grid-area: line; }
+  .ir-ss-got { grid-area: got; }
+  .ir-ss-table td.ir-ss-game b, .ir-ss-table td.ir-ss-game .ir-slate-sub,
+  .ir-ss-table td.ir-ss-proj b, .ir-ss-table td.ir-ss-proj small,
+  .ir-ss-table td.ir-ss-line b, .ir-ss-table td.ir-ss-line small,
+  .ir-ss-table td.ir-ss-chance b, .ir-ss-table td.ir-ss-chance small,
+  .ir-ss-table td.ir-ss-got b, .ir-ss-table td.ir-ss-got small { display: inline; }
+  .ir-ss-table td.ir-ss-game .ir-slate-sub, .ir-ss-table td.ir-ss-proj small, .ir-ss-table td.ir-ss-line small,
+  .ir-ss-table td.ir-ss-chance small, .ir-ss-table td.ir-ss-got small { margin-left: 6px; }
+  .ir-ss-table td.ir-ss-game b { font-weight: 500; color: var(--body); }
+}
 .ir-range-bar { position: relative; flex: 1; min-width: 120px; height: 16px; }
 .ir-range-bar::before { content: ''; position: absolute; left: 0; right: 0; top: 7px; height: 2px; border-radius: 1px; background: var(--line); }
 .ir-range-band, .ir-range-tick, .ir-range-dot { position: absolute; display: block; }
