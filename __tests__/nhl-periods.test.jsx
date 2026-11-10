@@ -75,3 +75,18 @@ test('the badges: 1 · 2 · 3 tinted, the read on the hover; nothing without a r
   expect(html).toBe('<span class="nhlx-rk-per" aria-label="matchup by period"><i class="nhlx-rk-per-b is-soft" title="a">1</i><i class="nhlx-rk-per-b is-mid" title="b">2</i><i class="nhlx-rk-per-b is-tough" title="c">3</i></span>');
   expect(renderToStaticMarkup(<PeriodBadges periods={null} />)).toBe('');
 });
+
+test('teamAllowsBook: this season, each row against its opponent, ranked 1 = the most once a team has 3 games', () => {
+  const { teamAllowsBook, allowsOf } = require('@/lib/nhl-data/defense-board');
+  const rows = [];
+  const add = (opp, gameId, sog, g = 0, date = '2026-10-20') => rows.push({ date, gameId, opp, sog, g });
+  for (let i = 0; i < 3; i++) { add('AAA', 10 + i, 20, 1); add('AAA', 10 + i, 12, 2); add('BBB', 20 + i, 25); add('CCC', 30 + i, 30, 1); }
+  add('DDD', 40, 50); // one game: not ranked
+  add('AAA', 1, 99, 0, '2025-11-01'); // last season: left out
+  const b = teamAllowsBook(rows, 2026);
+  expect(allowsOf(b, 'AAA')).toMatchObject({ gp: 3, sog: 32, g: 3, rank: { sog: 1, g: 1 }, of: 3 });
+  expect(b.teams.BBB.rank).toEqual({ sog: 3, g: 3 });
+  expect(b.teams.DDD.rank).toEqual({ sog: null, g: null });
+  expect(b.league.sog).toBe(+((96 + 75 + 90 + 50) / 10).toFixed(2));
+  expect(allowsOf(b, 'ZZZ')).toBeNull();
+});

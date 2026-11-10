@@ -319,21 +319,42 @@ function BandLabel({ pos, d, opp, view, windowText = null, teamCount, x, y, metr
  * season's box scores — so the raw leader is the read and the rank gives it a scale). The per-slot ranks stay on the
  * chips' badges; colour only, no number moves.
  */
+/** The verdict words for an opponent's rank third: 1 = allows the most. */
+const ALLOWS_WORDS = { soft: 'allows a lot of', mid: 'allows an average number of', tough: 'allows few' };
+
+/**
+ * The rink head's headline: first whether tonight's opponent allows the metric or not, as a tinted verdict (its rank
+ * third this season: green "allows a lot of shots", amber "an average number", red "few") with its figure a game, its
+ * rank and the league's; then the slot it gives the most to with this side's skater there tonight (the Defense tab's
+ * by-line read). Either part alone when the other has no record.
+ */
 function SoftestLine({ side, metric = 'sog' }) {
   const open = usePlayerCard();
   const lines = side.lines?.[metric] || null;
   const most = lines?.most || lines?.softest || null;
-  if (!most) return null;
+  const a = side.allows || null;
+  const rank = a?.rank?.[metric] ?? null;
+  if (!most && !rank) return null;
   const unit = metric === 'g' ? 'goals' : 'shots';
   const dp = metric === 'g' ? 2 : 1;
-  const facing = side.skaters.find((p) => p.inLineup && `${p.pos}${p.line || ''}` === most.slot) || null;
-  const tone = zoneTone(most.rank, most.of);
-  const league = lines?.league?.[most.slot];
-  const title = `${side.opp} gives up ${num(most.value, dp)} ${unit} a game to the skater at ${most.slot}, more than to any other slot, over ${most.n} skater-games this season at both venues; #${most.rank} of ${most.of} teams at that slot${league != null ? ` (the league gives ${num(league, dp)})` : ''}. A cell this early is a dozen skater-games and moves with every night, so it says where the ${unit} went, not where they will go; the chips' slot badges carry every slot's rank.`;
+  const facing = most ? side.skaters.find((p) => p.inLineup && `${p.pos}${p.line || ''}` === most.slot) || null : null;
+  const verdictTone = rank ? zoneTone(rank, a.of) : 'none';
+  const verdictTitle = rank ? `${side.opp} allows ${num(a[metric], dp)} ${unit} a game over its ${a.gp} games this season, #${rank} of ${a.of} (1 = the most allowed; the league ${num(a.league?.[metric], dp)}). Green = the top third, red = the bottom third.` : '';
+  const league = most ? lines?.league?.[most.slot] : null;
+  const title = most ? `${side.opp} gives up ${num(most.value, dp)} ${unit} a game to the skater at ${most.slot}, more than to any other slot, over ${most.n} skater-games this season at both venues; #${most.rank} of ${most.of} teams at that slot${league != null ? ` (the league gives ${num(league, dp)})` : ''}. A cell this early is a dozen skater-games and moves with every night, so it says where the ${unit} went, not where they will go; the chips' slot badges carry every slot's rank.` : '';
   return (
-    <small className="nhlx-rk-line" title={title}>
-      {side.opp} gives the most {unit} to the <i className={`nhlx-rk-slot is-${tone}`}>{most.slot}</i> · {num(most.value, dp)} a game · <b>#{most.rank}</b> of {most.of} at that slot
-      {facing ? <> · tonight <button type="button" className={`nhlx-rk-facing${facing.id ? '' : ' is-static'}`} onClick={() => facing.id && open({ id: facing.id, opp: facing.opp, venue: facing.venue, pos: facing.pos, line: facing.line })}>{shortName(facing.name)}</button></> : null}
+    <small className="nhlx-rk-line">
+      {rank ? (
+        <span title={verdictTitle}>
+          {side.opp} <i className={`nhlx-rk-verdict is-${verdictTone}`}>{ALLOWS_WORDS[verdictTone]} {unit}</i> · {num(a[metric], dp)} a game · <b>#{rank}</b> of {a.of}
+        </span>
+      ) : null}
+      {most ? (
+        <span title={title}>
+          {rank ? ' · most to the ' : `${side.opp} gives the most ${unit} to the `}<i className={`nhlx-rk-slot is-${zoneTone(most.rank, most.of)}`}>{most.slot}</i> ({num(most.value, dp)} a game, #{most.rank} at that slot)
+          {facing ? <> · tonight <button type="button" className={`nhlx-rk-facing${facing.id ? '' : ' is-static'}`} onClick={() => facing.id && open({ id: facing.id, opp: facing.opp, venue: facing.venue, pos: facing.pos, line: facing.line })}>{shortName(facing.name)}</button></> : null}
+        </span>
+      ) : null}
     </small>
   );
 }

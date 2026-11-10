@@ -1234,6 +1234,10 @@ a.nhlx-rk-lines-pill:hover { text-decoration: underline; }
 .nhlx-rk-per-b.is-tough { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-line); }
 .nhlx-rk-line { display: block; margin-top: 2px; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .nhlx-rk-line b { color: var(--heading); font-weight: 600; }
+.nhlx-rk-verdict { font-style: normal; font-weight: 700; color: var(--muted); background: var(--bg-soft); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+.nhlx-rk-verdict.is-soft { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-line); }
+.nhlx-rk-verdict.is-mid { color: var(--warn-fg); background: var(--warn-bg); border-color: var(--warn-line); }
+.nhlx-rk-verdict.is-tough { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-line); }
 .nhlx-rk-facing { font: inherit; font-weight: 600; color: var(--primary); background: none; border: 0; padding: 0; cursor: pointer; }
 .nhlx-rk-facing:hover { text-decoration: underline; }
 .nhlx-rk-facing.is-static { color: var(--heading); cursor: default; text-decoration: none; }

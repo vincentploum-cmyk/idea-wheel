@@ -117,6 +117,14 @@
   for the first unit, "PP2" the second; the read on the hover and in the chip's title. Matched by full name, then last
   name with the first initial (`ppUnitOf`). Descriptive only: the model's power-play share stays `PP_WEIGHTS` by line
   slot; `__tests__/nhl-pp-units.test.jsx` (the page as served 2026-11-08, `fixtures/rotowire-nhl-lineups.html`);
+  **the rink head's verdict first** (Vincent, 2026-11-10: "rephrase the shooting headline for each team so that I can
+  quickly see if the specific team allows shots or not"; `SoftestLine` in `Rink.jsx`, `.nhlx-rk-verdict`, `side.allows`
+  from `allowsOf(teamAllowsBook(rows, season), opp)` in `defense-board.js`): "CHI **allows a lot of shots** · 30.1 a game
+  · #1 of 32 · most to the C1 (2.9 a game, #3 at that slot) · tonight Celebrini" — the opponent's shots (goals under the
+  Goals switch) allowed a game this season from the stored rows, ranked among the teams with `ALLOWS_MIN_GAMES` = 3,
+  the verdict tinted by third (green "a lot of", amber "an average number of", red "few"); the slot part follows as
+  before, and stands alone in its old words ("PIT gives the most shots to the C1 …") while the team has no rank;
+  `__tests__/nhl-rink-line.test.jsx`;
   **the 1 · 2 · 3 period badges beside the PP badge** (Vincent, 2026-11-10, after a look at shots by period: "a simple
   1, 2, 3 next to the player on the board colored in green / amber / red to define the match up (opposing team allows +
   own production)"; `PeriodBadges` in `Rink.jsx`, `.nhlx-rk-per`, `p.periods` from `periodRead(periodBook(rows, season), id,
