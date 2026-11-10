@@ -50,7 +50,7 @@ function Roster({ side, final, metric, hiPos = null }) {
   const open = useNbaPlayerCard();
   const count = side.allowed?.count || 30;
   const stat = SPLIT_STATS.some(([k]) => k === metric) ? metric : 'pts';
-  const players = side.players.filter((p) => !p.out && Object.keys(p.ranges || {}).length && (!hiPos || (p.envPos || envPos(p)) === hiPos));
+  const players = side.players.filter((p) => !p.out && !p.idle && Object.keys(p.ranges || {}).length && (!hiPos || (p.envPos || envPos(p)) === hiPos));
   if (!players.length) return <p className="nhlx-auto-meta">{hiPos ? `No active ${hiPos} with a projection for ${side.team}.` : `No projections for ${side.team} yet: pull PropFinder.`}</p>;
   const venueWord = side.venue === 'H' ? 'Home' : 'Away';
   return (

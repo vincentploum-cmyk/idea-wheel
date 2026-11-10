@@ -1,6 +1,8 @@
 import { describe, expect, test } from '@jest/globals';
 import { nbaBoard, COCKTAIL, COCKTAIL_BEFORE_STAR_OUT, STAR_OUT } from '../lib/nba/picks';
 import { applyLineupOuts } from '../lib/picks/injuries';
+import { ladderBoard, tierBoard } from '../lib/picks/boards';
+import { shuffleOf } from '../lib/nba/picks';
 
 // The star out (Vincent, 2026-11-09, Reaves's 43 the night Doncic sat; docs/audits/2026-11-09-nba-star-out.md): who sits
 // from RotoWire's lineups, every out player of this season by his share of each teammate's memory, the ceiling on the lifts.
@@ -94,5 +96,28 @@ describe('the team ceiling sums the lifted rates (ceilingOut)', () => {
     expect(off.scale.pts).toBeUndefined();
     expect(on.scale.pts).toBeLessThan(1);
     expect(on.scale.pts).toBeCloseTo(1 / on.players.find((x) => x.key === 's1').ranges.pts.out, 2);
+  });
+});
+
+describe('who is not expected to play is off the lists (idle)', () => {
+  // Ten team games; a deep-bench player with 2 minutes in one of the last five, a regular, a regular back from an absence.
+  const p = (key, perMin, min, played, extra = {}) => ({ id: key, name: key, key, team: 'LAL', pos: 'SF', games: logs(perMin, min, played), props: [], ...extra });
+  const roster = [p('r1', 0.5, 30, () => true), p('r2', 0.5, 30, () => true), p('r3', 0.5, 30, () => true),
+    p('deep', 0.4, 2, (i) => i === 2), p('back', 0.5, 32, (i) => i >= 6), p('priced', 0.4, 2, (i) => i === 2, { props: [{ market: 'pts', line: 3.5, side: 'over', odds: -110, main: true }] })];
+  test('the deep bench is idle; a regular back, a priced player and the five are not', () => {
+    const s = side(board(COCKTAIL, roster));
+    const idle = s.players.filter((x) => x.idle).map((x) => x.key);
+    expect(idle).toEqual(['deep']);
+    const five = { teams: { LAL: { status: 'expected', starters: ['r1', 'r2', 'r3', 'deep', 'back'].map((name) => ({ name })) } } };
+    expect(side(board(COCKTAIL, roster, { lineups: five })).players.some((x) => x.idle)).toBe(false);
+    expect(side(board(COCKTAIL_BEFORE_STAR_OUT, roster)).players.some((x) => x.idle)).toBe(false);
+  });
+  test('the Games tab, the boards and the shuffle leave him off', () => {
+    const b = board(COCKTAIL, roster);
+    expect(ladderBoard(b, { market: 'pts', keepAll: true }).map((r) => r.key)).not.toContain('deep');
+    const sh = shuffleOf({ market: 'pts', board: b, pf: pfWith(roster), season: 2026, results: {} });
+    expect(sh.players.map((r) => r.key)).not.toContain('deep');
+    expect(sh.players.map((r) => r.key)).toContain('r1');
+    expect(tierBoard(sh, { step: 5, keepAll: true }).map((r) => r.key)).not.toContain('deep');
   });
 });

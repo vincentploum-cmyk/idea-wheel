@@ -383,7 +383,8 @@ function sideNote(side) {
 
 function PlayersTable({ side, final, reliability = null }) {
   const open = useNbaPlayerCard();
-  const players = side.players.filter((p) => Object.keys(p.ranges || {}).length);
+  // Only who plays tonight (Vincent, 2026-11-10): the out are listed under the court, the idle (board.js) nowhere.
+  const players = side.players.filter((p) => !p.out && !p.idle && Object.keys(p.ranges || {}).length);
   if (!players.length) return null;
   return (
     <div className="nhlx-pfd ir-court-players">
@@ -437,7 +438,7 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
   const [hiPos, setHiPos] = useState(null);
   const view = windows.includes(win) ? win : 'season';
   const allowed = tableFor(side.allowed, view);
-  const { placed, extras } = layoutCourt(side.players);
+  const { placed, extras } = layoutCourt(side.players.filter((p) => !p.out && !p.idle));
   const count = allowed?.count || 30;
   const tones = Object.fromEntries(Object.keys(ZONES).map((z) => [z, zoneTone(allowed?.rows?.[z]?.[metric]?.rankBlend ?? allowed?.rows?.[z]?.[metric]?.rank, count)]));
   const clipId = `court-${side.team}-${side.opp}`;

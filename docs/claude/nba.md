@@ -339,6 +339,14 @@
   it, the cheat sheet's tile ("✓ sheet #4" when it sits in PropFinder's third, "✗" when not) and the factor on his rate
   (`ranges[market].matchup`, "×1.06"); the hover names the figures, the league's average and whether the factor is the
   sheet and PropFinder blended or one alone; "no table" when the pull has none. `__tests__/picks-boards.test.js`.
+- **Only who plays is listed** (Vincent, 2026-11-10: "I see a lot of players that are not playing still listed … I only need
+  the players listed that will be playing"): `idle` on a side player (board.js `idleOf`, the cocktail's `idleGate`): the team
+  has 3+ games this season, he averaged under 5 minutes over its last five (a game he sat counts 0), no book prices him, he is
+  not in RotoWire's five, and he is no regular back from an absence (20+ a game this season over 3+ games). The idle and the
+  out are off the court's chips and Tonight table, the Games tab (`ladderBoard` / `tierBoard`), the boards and the shuffle;
+  the out stay in the lines under the court. A flag only: the minutes, the ceiling and the out reads are as before.
+  Box scores 2024-25 to now: the full roster 89.5k player-nights (half under 10 minutes), the gate 60.3k, hiding 4.9% of
+  those who played 10+ before the five and the lines keep theirs. `__tests__/nba-star-out.test.js`.
 - **A star out** (Vincent, 2026-11-09: "Reaves had 40+ points … Doncic was out … our model was still way too conservative";
   `docs/audits/2026-11-09-nba-star-out.md`): the board had Reaves at 19.4 because Doncic was not on ESPN's report, so nobody
   was lifted and the ceiling cut LAL 12% for his 40 a game. Now RotoWire's lineups sit who the report missed (`lineupOuts`),
