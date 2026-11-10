@@ -247,3 +247,9 @@
   fitted ones): last season's coverage and rushing pages through the shipped factors on 2026's weeks 1–8 (`nfl-pf-audit.mjs
   --pages-prior`): receiving 22.60 → 22.64, rushing 21.28 → 21.32, touchdowns flat, passing 64.50 → 65.87 (−0.1 to +2.9). WR vs
   CB and TD Matchups have no last-season copy.
+- Soft spots (`docs/audits/2026-11-10-nhl-soft-spots.md`, `tools/predictors/soft_spots.py` on the box scores; Vincent,
+  2026-11-09: Marchment's four shots at NYI, "the L10 PropFinder stats said that the left wing of the Sharks was
+  vulnerable"): 85,402 skater-games of 2024-25 to 2026-27. Against a top-3 defense at the position over its last ten a
+  skater shot 1.054× his own rate, a top-5 1.04×, the bottom five 0.939× (low-volume left wings 1.101× / 0.950×): 3+ from
+  about 27% to 30% for a 1.7-shot winger, never a favourite, and the board's season table already reads it. Shipped as
+  the Soft spots list on Best bets (top 5, regulars) and the rinks' flame on a top-5 spot; the same on the NBA board.

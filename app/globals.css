@@ -1354,6 +1354,15 @@ a.nhlx-rk-lines-pill:hover { text-decoration: underline; }
 .nhlx-pk-table td.nhlx-pk-got b { font-weight: 700; }
 .nhlx-pk-table tr.is-dnp td { opacity: 0.5; }
 .nhlx-pk-next { margin: 8px 14px 4px; font-size: 14px; color: var(--muted); }
+/* NHL Best bets: Soft spots, the regulars facing a top-5 defense at their position (PicksPanel.jsx SoftSpotsTable). */
+.nhlx-pk-soft .nhlx-pk-table-wrap { max-width: 920px; }
+.nhlx-pk-soft-how { margin: 6px 0 10px; max-width: 78ch; }
+.nhlx-pk-table td.nhlx-pk-soft-spot b { color: var(--ok-fg); font-variant-numeric: tabular-nums; }
+.nhlx-pk-table td.nhlx-pk-soft-spot small { display: block; font-size: 12.5px; color: var(--muted); line-height: 1.2; }
+.nhlx-pk-soft-more { margin: 4px 0 0; }
+.nhlx-pk-soft .nhlx-mu-game-head { flex-wrap: wrap; row-gap: 2px; }
+.nhlx-pk-soft .nhlx-mu-game-head b { white-space: nowrap; }
+.nhlx-pk-table td.nhlx-pk-soft-spot, .nhlx-pk-table td.nhlx-pk-soft-spot small { white-space: nowrap; }
 .nhlx-pk-notes { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--line-strong); max-width: 78ch; }
 .nhlx-pk-notes h3 { font-family: var(--font-display); font-weight: 600; font-size: 20px; color: var(--heading); margin: 0 0 10px; }
 .nhlx-pk-notes ul { margin: 0; padding-left: 20px; }

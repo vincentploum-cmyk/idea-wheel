@@ -268,7 +268,10 @@
   three stingiest teams. Colour only: the study found a streak adds nothing once the rate is in, so no number moves.
   The same flags (`components/nhl/flags.jsx`, `Flags`) sit on the Matchups tab: on each rink chip for the rink's
   metric (flame / snowflake only, `soft={false}`: the ice band under the chip already shows the environment, and by
-  the picked window rather than the season table), on the plays strip per play, and in the all-skaters table's
+  the picked window rather than the season table; **since 2026-11-10 the flame also marks a top-5 soft spot**,
+  `spotFlame`: the opponent in the top `SOFT_TOP` = 5 at his position for the metric on the same PropFinder table,
+  `topSpot` / `topSpotText` in `picks-pure.js`, the hover naming it, one flame with both reasons when he is hot too;
+  Vincent, 2026-11-10: "mark the players in the rinks with the same flame as players that are on a hot streak"), on the plays strip per play, and in the all-skaters table's
   L5 S/G and Goals cells; `buildSlate` puts
   `heat` and `oppPos` on every skater and `sidePlays` carries them onto the plays. A stored game grades the rows
   (`withActuals` / `hitOf` in `picks-pure.js`: each skater's box-score SOG and goals ride on his row as `actual`,
@@ -276,6 +279,15 @@
   short, the row on its lead market, a "Got" column with the figure and a tally in the game head. The model's math is untouched.
   Study: `docs/shots-goals-predictors.md` (section 13 is the every-angle scan and the replay; `tools/predictors/run.sh <year>`
   rebuilds it, `explain.py` reads one skater-game).
+  **Soft spots** (Vincent, 2026-11-10, after Marchment's four shots at NYI off the board: "do 1 but the top 5 worst
+  defenses"; `docs/audits/2026-11-10-nhl-soft-spots.md`): a list atop Best bets (`SoftSpotsTable` in `PicksPanel.jsx`,
+  `softSpots` on the payload = `softSpotPlays` over every graded candidate of the slate in `picks.js`): the skaters whose
+  opponent ranks in the top `SOFT_TOP` = 5 at their position for shots (`topSpot`: the flag's PropFinder table, the tab
+  the rink opens on, the study's `oppPos` for a team without one), regulars only (`SOFT_SPOT_MIN_SOG` = 1.5 shots a game
+  on `rates.sog`, line ≤ `SOFT_SPOT_MAX_LINE` = 2; no slot read lets him in), the board's 3+ first, with the spot ("#3 ·
+  NYI to LW", the hover in words), his rate, the board's 2+ / 3+ / 4+, the book's line and Got; graded on 3+, a tally in
+  the head; twelve rows then "Show all". The figures are the board's: a top-five spot is worth +5% shots (+10% for a
+  low-volume winger) on three seasons' box scores, which the board's λ already reads, so these are plus-money tries.
   **Goalies and the Saves table** (`lib/nhl-data/goalies-pure.js` + `goalies.js`; Vincent, 2026-10-31: "record the saves as part
   of the box scores … they should be listed as a best bet if it's applicable"): the game records have carried every goalie's
   line since the first ingest (`game.goalies` in `game.js`: shots against `sa`, saves `sv`, goals against `ga`, `toi`, the

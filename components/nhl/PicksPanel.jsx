@@ -5,7 +5,7 @@ import { shareText, verdictText } from '@/lib/nhl-data/board-weights-pure';
 import { Headshot, TeamLogo } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { SlateDateContext } from './player-card-context';
-import { fairOdds, hitOf } from '@/lib/nhl-data/picks-pure';
+import { fairOdds, hitOf, SOFT_TOP, SOFT_SPOT_MIN_SOG, SOFT_SPOT_MAX_LINE, topSpotText } from '@/lib/nhl-data/picks-pure';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { SAVES_MARKS, SAVES_LEAD, SAVES_FLOOR, savesHit } from '@/lib/nhl-data/goalies-pure';
 import { Flags } from './flags';
@@ -193,6 +193,65 @@ function ShotsTable({ g, reliable = null }) {
   );
 }
 
+/**
+ * Soft spots (Vincent, 2026-11-10): the slate's regulars facing a top-SOFT_TOP defense at their position on shots
+ * (`softSpots` on the payload, softSpotPlays in picks-pure.js), the board's own 2+ / 3+ / 4+ and the book's line,
+ * graded on 3+ once the game is final. SOFT_ROWS shown, then the rest on "Show all".
+ */
+const SOFT_ROWS = 12;
+export function SoftSpotsTable({ rows, reliable = null }) {
+  const [all, setAll] = useState(false);
+  if (!rows?.length) return null;
+  const shown = all ? rows : rows.slice(0, SOFT_ROWS);
+  const booked = rows.some((c) => c.book?.sog);
+  const final = rows.some((c) => c.actual !== undefined);
+  const graded = rows.filter((c) => c.actual != null);
+  const hits = graded.filter((c) => hitOf(c, 'sog', 3)).length;
+  return (
+    <article className="nhlx-mu-game is-first nhlx-pk-soft">
+      <div className="nhlx-mu-game-head">
+        <b>Soft spots</b>
+        <small>
+          {rows.length} regular{rows.length === 1 ? '' : 's'} facing a top-{SOFT_TOP} defense at his position on shots
+          {graded.length ? <> · 3+ hit {hits} of {graded.length}</> : null}
+        </small>
+      </div>
+      <p className="nhlx-auto-meta nhlx-pk-soft-how">
+        The opponent allows one of the {SOFT_TOP} most shots to his position on PropFinder’s table above the rink (the tab it opens on; the stored box scores for a team without one), and he takes {SOFT_SPOT_MIN_SOG}+ shots a game on line {SOFT_SPOT_MAX_LINE === 2 ? '1 or 2' : `${SOFT_SPOT_MAX_LINE} or better`}. The chances are the board’s own: a top-{SOFT_TOP} spot adds a few percent to a skater’s shots, which the board already reads, so most of these are plus-money tries rather than favourites.
+      </p>
+      <div className="nhlx-db-table-wrap nhlx-pk-table-wrap">
+        <table className="nhlx-db-table nhlx-pk-table">
+          <thead>
+            <tr>
+              <th>Skater</th>
+              <th title="The opponent's rank at his position for shots allowed, 1 = the most">Spot</th>
+              <th className="is-num is-wide" title="His shots a game (this season, last season's before five games)">Rate</th>
+              <th className="is-num is-wide" title="2+ shots: the chance, and the break-even price under it">2+</th>
+              <th className="is-num" title="3+ shots: the chance, and the break-even price under it">3+</th>
+              <th className="is-num" title="4+ shots: the chance, and the break-even price under it">4+</th>
+              {booked ? <th className="is-num" title="The book’s main shots line (PropFinder’s pull): the board’s chance at it with the price, and the edge under it">Book</th> : null}
+              {final ? <th className="is-num" title="Shots on goal in the box score">Got</th> : null}
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((c) => (
+              <tr key={`${c.gameId}-${c.id}`} className={rowGrade(c, 'sog', 3)} title={[rowTitle(c, 'sog', 3, 'SOG')].filter(Boolean).join(' · ') || undefined}>
+                <Player c={c} stat="sog" />
+                <td className="nhlx-pk-soft-spot" title={topSpotText(c, 'sog')}><b>#{c.softSpot.rank}</b><small>to {c.pos}</small></td>
+                <td className="is-num is-wide"><b>{c.rates?.sog != null ? Number(c.rates.sog).toFixed(2) : '—'}</b><small>a game</small></td>
+                <Prob p={c.p2} raw={c.raw?.p2} wide hit={hitOf(c, 'sog', 2)} /><Prob p={c.p3} raw={c.raw?.p3} lead hit={hitOf(c, 'sog', 3)} /><Prob p={c.p4} raw={c.raw?.p4} hit={hitOf(c, 'sog', 4)} />
+                {booked ? <BookCell b={c.book?.sog || null} stat="sog" c={c} reliable={reliable} /> : null}
+                {final ? (c.actual === undefined ? <td /> : <Got c={c} stat="sog" unit="SOG" />) : null}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {rows.length > SOFT_ROWS ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-pk-soft-more" onClick={() => setAll((v) => !v)}>{all ? 'Show fewer' : `Show all ${rows.length}`}</button> : null}
+    </article>
+  );
+}
+
 function GoalsTable({ g, reliable = null }) {
   const booked = g.goals.some((c) => c.book?.goal);
   return (
@@ -256,11 +315,12 @@ export default function PicksPanel() {
       </div>
       {err ? <div className="nhlx-alert">{err}</div> : null}
       <p className="nhlx-auto-meta nhlx-fg-how">
-        The best shots plays, goal plays and saves plays in every game. The percentage is the chance of the hit, the price under it the break-even; dimmed rows are under the floor. Click a skater for his card. The Saves table reads each team’s likely starter from the stored box scores (hover him for why) facing the shots the board expects of the opponent, against the book’s saves line from PropFinder’s pull when it has one: the over is the play when his chance beats the price.
+        The best shots plays, goal plays and saves plays in every game, under the Soft spots: the regulars facing one of the five defenses that allow the most shots to their position. The percentage is the chance of the hit, the price under it the break-even; dimmed rows are under the floor. Click a skater for his card. The Saves table reads each team’s likely starter from the stored box scores (hover him for why) facing the shots the board expects of the opponent, against the book’s saves line from PropFinder’s pull when it has one: the over is the play when his chance beats the price.
       </p>
       {board && !board.games.length ? <div className="nhlx-empty">No games on this date.</div> : null}
+      {board?.softSpots?.length ? <SoftSpotsTable rows={board.softSpots} reliable={board.reliable?.sog || null} /> : null}
       {board && board.games.map((g, i) => (
-        <article key={g.id} className={`nhlx-mu-game${i === 0 ? ' is-first' : ''}`}>
+        <article key={g.id} className={`nhlx-mu-game${i === 0 && !board.softSpots?.length ? ' is-first' : ''}`}>
           <div className="nhlx-mu-game-head">
             <TeamLogo abbr={g.away} size={28} />
             <b>{g.away} @ {g.home}</b>
