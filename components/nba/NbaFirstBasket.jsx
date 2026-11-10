@@ -77,7 +77,7 @@ function Board({ date }) {
       <div className="nhlx-today-head">
         <div>
           <div className="nhlx-auto-sub">
-            {board ? `${board.games.length} game${board.games.length === 1 ? '' : 's'} · ${board.count} starters · ${board.recorded} game${board.recorded === 1 ? '' : 's'} with an opening on record this season${board.possessionEdge ? ` (the team with first possession scored first in ${pct0(board.possessionEdge.share)} of ${board.possessionEdge.games}; ${board.edgeUsed === board.possessionEdge.share ? 'the figure used' : `${pct0(board.edgeUsed)} used until 40 games`})` : ''} · ${board.priced} player${board.priced === 1 ? '' : 's'} priced for the first basket in the pull${board.missing ? ` · ${board.missing} stored game${board.missing === 1 ? '' : 's'} still to read for the opening plays (each load reads a dozen)` : ''}` : 'Loading…'}
+            {board ? `${board.games.length} game${board.games.length === 1 ? '' : 's'} · ${board.count} starters · ${board.recorded} game${board.recorded === 1 ? '' : 's'} with an opening on record this season${board.possessionEdge ? ` (the team with first possession scored first in ${pct0(board.possessionEdge.share)} of ${board.possessionEdge.games}; ${board.edgeUsed === board.possessionEdge.share ? 'the figure used' : `${pct0(board.edgeUsed)} used until 40 games`})` : ''} · ${board.priced} player${board.priced === 1 ? '' : 's'} priced for the first basket in the pull${board.missing ? ` · ${board.missing} stored game${board.missing === 1 ? '' : 's'} still to read for the opening plays or the 1st-quarter lines (each load reads a dozen)` : ''}` : 'Loading…'}
           </div>
         </div>
         <div className="nhlx-auto-actions">

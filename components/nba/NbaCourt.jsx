@@ -259,7 +259,7 @@ function Chip({ p, metric, height, read, sport, team, opp, venue, final, allowed
         <i className="nhlx-rk-num" title={p.depth ? `${p.slot}${p.depth} on PropFinder’s depth chart` : 'roster position'}>{p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</i>
       </span>
       <span className="nhlx-rk-meta">
-        <b className="nhlx-rk-name">{flags.length ? <span className="nhlx-pk-flags nhlx-rk-flags">{flags.map(([k, t, icon]) => <i key={k} className={`nhlx-pk-flag is-${k}`} title={t} aria-label={t}>{icon}</i>)}</span> : null}<span className="nhlx-rk-nm">{shortName(p.player)}</span></b>
+        <b className="nhlx-rk-name">{flags.length ? <span className="nhlx-pk-flags nhlx-rk-flags">{flags.map(([k, t, icon]) => <i key={k} className={`nhlx-pk-flag is-${k}`} title={t} aria-label={t}>{icon}</i>)}</span> : null}<Q1Badge p={p} metric={metric} /><span className="nhlx-rk-nm">{shortName(p.player)}</span></b>
         <span className="nhlx-rk-projs" aria-label="Projected tonight">{projs.map(([k, v]) => <span key={k} className={k === metric ? 'is-on' : ''}><em>{v != null ? num(v) : '—'}</em>{STAT_SHORT[k] || k}</span>)}</span>
         {bar}
       </span>
@@ -430,6 +430,38 @@ function CourtBar({ metric, side, sh, rows }) {
   );
 }
 
+/** The verdict words by rank third, 1 = gives up the most. */
+const ALLOWS_WORDS = { soft: 'gives up a lot of', mid: 'gives up an average number of', tough: 'gives up few' };
+const ALLOWS_NOUN = { pts: 'points', reb: 'rebounds', ast: 'assists', tpm: 'threes', stl: 'steals', blk: 'blocks' };
+
+/**
+ * The court head's headline (Vincent, 2026-11-10, the NHL rink's twin): whether tonight's opponent gives up the court's
+ * stat, as a tinted verdict by its rank third over the league (PropFinder's team row: green "a lot of", amber "an
+ * average number of", red "few") with its figure a game and its rank. Nothing without a ranked figure.
+ */
+export function AllowsLine({ side, metric }) {
+  const a = side?.allows?.[metric];
+  if (!a?.rank) return null;
+  const tone = zoneTone(a.rank, a.of);
+  const noun = ALLOWS_NOUN[metric] || metric;
+  const title = `${side.opp} gives up ${num(a.value)} ${noun} a game (PropFinder's team row, ${a.src}), #${a.rank} of ${a.of} (1 = the most; the league ${num(a.league)}). Green = the top third, red = the bottom third.`;
+  return (
+    <small className="nhlx-rk-line" title={title}>
+      {side.opp} <i className={`nhlx-rk-verdict is-${tone}`}>{ALLOWS_WORDS[tone]} {noun}</i> · {num(a.value)} a game · <b>#{a.rank}</b> of {a.of}
+    </small>
+  );
+}
+
+/**
+ * The chip's Q1 badge for the court's stat (points, rebounds, assists, threes): green / amber / red for what tonight's
+ * opponent gives up in the 1st quarter plus his own 1st quarter, each by third (lib/nba/quarter.js); the read on the hover.
+ */
+export function Q1Badge({ p, metric }) {
+  const r = p?.q1?.[metric];
+  if (!r) return null;
+  return <i className={`nhlx-rk-per-b ir-q1 is-${r.tone}`} title={r.text}>Q1</i>;
+}
+
 function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season, reliability = null }) {
   const open = useNbaPlayerCard();
   const sh = useCourtShuffle();
@@ -455,7 +487,7 @@ function CourtCard({ side, oppOut = null, metric, onMetric, sport, final, season
     <section className="nhlx-rk-card ir-court-card" aria-label={`${side.team} court`}>
       <div className="nhlx-rk-head">
         <img src={sport.teamLogo(side.team)} alt="" width="40" height="40" loading="lazy" />
-        <div><b>{sport.teamName(side.team)} <small>{side.venue === 'H' ? 'vs' : 'at'} {sport.teamName(side.opp)}</small></b></div>
+        <div><b>{sport.teamName(side.team)} <small>{side.venue === 'H' ? 'vs' : 'at'} {sport.teamName(side.opp)}</small></b><AllowsLine side={side} metric={metric} /></div>
       </div>
       <SidePicks side={side} sport={sport} final={final} heading={false} reliability={reliability} onOpen={(pl) => open({ key: pl.key, player: side.players.find((p) => p.key === pl.key) || null, team: side.team, opp: side.opp, venue: side.venue, market: pl.market })} />
       {/* The table, the players picker, the stat tabs with the bar, then the court: one view (Vincent, 2026-10-30: "put the
