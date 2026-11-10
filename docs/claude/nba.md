@@ -71,6 +71,22 @@
   table), and "Show the team columns and the tables" folds the columns and the five group tables. A player listed day-to-day
   is no longer greyed on the court or in the Tonight table (`p.out`, not any injury listing). Class names `ir-gf-*`:
   the start screen owns `ir-game` / `ir-games`.
+- **The court head's verdict and the chips' Q1 badge** (Vincent, 2026-11-10, after the NHL rink's: "build the court
+  headline verdict plus a Q1 badge"). The head: "CHI **gives up a lot of points** · 121.4 a game · #2 of 30" for the stat
+  the court shows (`AllowsLine` in `NbaCourt.jsx`, `.nhlx-rk-verdict` shared with the rink; `side.allows` from
+  `sideAllows(defense, opp)` in `lib/nba/profile.js`, set on every side in `makeBoard` through `profile.sideAllows`:
+  PropFinder's team row `totals[opp].against`, last season's standing in early, ranked over the pull, 1 = the most), tinted by
+  third — green "a lot of", amber "an average number of", red "few". The chips: a **Q1** badge on the name line for points,
+  rebounds, assists and threes (`Q1Badge`; none for steals and blocks), `p.q1[stat]` from `q1Read(q1Book(results, { through }),
+  player, opp)` in `lib/nba/quarter.js`, put on the board by `boardFor` in `lib/nba/store.js` (`withQ1Reads` over the season's
+  stored ESPN results before the slate, `seasonResults`; the book kept while the date and the results (id + `storedAt`) are the same, the decorated board per built board so its identity holds): the opponent's 1st-quarter
+  figure allowed a game ranked among teams with `Q1_MIN_TEAM_GAMES` = 3, plus the player's own 1st quarter a game ranked in
+  his ESPN group (guards / forwards / centers) with `Q1_MIN_PLAYER_GAMES` = 5, each by third (+1 / 0 / -1), the sum green at
+  +1 or more, amber at 0, red at -1 or less, the read on the hover (the NHL's `periodRead` rule). Results stored before the
+  1st-quarter lines were parsed (2026-11-01) have `q1Pts` null and are skipped; `firstBasketFor`'s re-read now also takes
+  those (the ones ESPN had no plays for last), and `nba-data.yml`'s `what: q1` walks it until none remain. The 2026-11-10
+  look (150 games from ESPN): a team gives up 28.2 points, 11.4 rebounds, 6.9 assists and 3.4 threes in a 1st quarter;
+  CHI the most points (35.7), BOS the fewest (24.1). Colour only; `__tests__/nba-q1-allows.test.jsx`.
 - The courts (`components/nba/NbaCourt.jsx`, the rink's basketball twin, drawn by `GameFold` behind the opened
   game's switch, above the five tables): per team a half court (50 × 47 ft, the basket on
   top) with five zones — PF · C · SF under the basket, SG · PG on the perimeter (`ZONES`; G joins the
