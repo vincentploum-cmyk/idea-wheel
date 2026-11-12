@@ -37,7 +37,11 @@
   against the league, a tie to the one furthest over the league's mean — stays on the board for the sort it gave and names
   nothing on the page) with the opponent's skater at that slot tonight, clickable to his card; a slot's header sorts by it
   (`__tests__/nhl-defense-line-table.test.jsx`), and a team overview
-  (GA / GP, SA / GP from the stored box scores; xGA / 60, high-danger shots against and pace from MoneyPuck), each column ranked;
+  (GA / GP, SA / GP from the stored box scores; xGA / 60, high-danger shots against and pace from MoneyPuck; **PP SOG to D**,
+  the share of the power-play shots on goal the team allowed that defensemen took over the span and venue picked, rank 1 = the
+  biggest, the counts and the league's share on the hover, 10+ power-play shots at the least, `PP_SHARE_MIN` — Vincent,
+  2026-11-12: "add D share of PP shots to the Defense tab"; the one power-play split that held from one half of 2025-26 to the
+  next, r 0.52, the forwards' shares r ≈ 0, `tools/predictors/pp_shots.py`), each column ranked;
   between them "Running hot" (`lib/nhl-data/streaks.js`, `streaks` in the defense API): every skater's current goal / point /
   3+ SOG streak from this season's stored games, his last game and tonight's opponent read off the same tables at his
   position (the study found no carry-over from a goal last game, so the streak is colour, the Tonight cell the matchup). The 1st goal tab (`lib/nhl-data/firstgoal.js`, `/api/nhl/data/firstgoal`, `FirstGoalPanel.jsx`) ranks
@@ -57,13 +61,21 @@
   (`settleGdtPages`). The stored skater rows carry the position plus its source (`posSrc`,
   `boxPos`) and the line slot (`line`: forward line 1-4 or defense pair 1-3, null for a
   box-score position), so results are logged per line (LW1, LW2, LW3 …; `defenseBySlot` in
-  `lib/nhl-data/defense.js`, `slots` in `/api/nhl/data/defense`). Each game record carries its
+  `lib/nhl-data/defense.js`, `slots` in `/api/nhl/data/defense`). Every skater row carries his power-play shots on goal
+  (`ppSog`, the last row column since 2026-11-12: `ppShotsOf` / `stampPpShots` in `game.js` off each play's situationCode, the
+  shooter's side up a skater with the other goalie in net, the shootout out; null on rows stored before it until the
+  `firstgoals` backfill mode stamps them, which `stampFirstGoals` now also does; `ppSog` is a `DEF_METRICS` column, so every
+  defense table has it per position). Each game record carries its
   first goal (`firstGoal`, scorer's row flagged `fg`; shootouts excluded) and `firstGoalsAllowed`
   reads first goals given up per defending team by venue, position and line slot (the defense
   card's "1st goal" column, `firstGoals` in the defense API); games logged without it get it
   from the play-by-play via `stampFirstGoals` (`ingestGames` with nothing new, `?only=firstgoals`). The
   Matchups tab (`lib/nhl-data/slate.js`; each game drawn as two rinks in
-  `components/nhl/Rink.jsx`, ice bands tinted by the opponent's SOG-allowed or goals-allowed rank per position (the slate-wide
+  `components/nhl/Rink.jsx`, ice bands tinted by the opponent's rank per position (**since 2026-11-12**, graded in
+  `docs/audits/2026-11-12-nhl-shots-environment.md`: under Shots its Shots/G, ICF/G and IFF/G ranks weighted 2 : 1 : 1,
+  `shotsEnvRank`; under Goals its ISCF/G rank, `goalsEnvRank`, Goals/G having predicted nothing; both in
+  `propfinder-csv.js`, read by `tintRank` in `Rink.jsx` and by `spotFromTab`'s soft flags; the band label reads
+  `#8 shots · #13 ISCF`, every column on its hover; before, the SOG-allowed or goals-allowed rank) (the slate-wide
   Shots / Goals switch above each rink, `metric` state in `MatchupsPanel`; the band labels, legend and the chips'
   h2h mark follow it: scorers (`h2hHot`) under Goals, shooters (`h2hShotsHot`) under Shots)
   for the window picked above the rink — home / away / L5 / L10 / L5 home / L5 away, opening on L10 since
@@ -831,8 +843,22 @@
   the line's floor); its call passes `skater.toiL5` and `skater.toiSeason`; a skater with no minutes gets the line's mean
   (Vincent: "yes, refit on the stored lineups and swap it in"; `docs/audits/2026-11-07-nhl-toi.md`,
   `__tests__/nhl-model-toi.test.js`).
-  `node tools/port-model-core.mjs [App.jsx]` applies all four ports on the Mac (the 2026-10-13 shots odds, the
-  2026-10-20 goal odds, the 2026-10-27 weights, the 2026-11-07 minutes), each group all-or-nothing by exact-text anchors: a backup beside the
+  And on 2026-11-12 (port it too): `cheatSheetMajorMultiplier`'s goals branch is a smooth ISCF/G term
+  (`iscfGoalMultiplier`, ×exp(0.04 per SD of rank): about +7% at rank 1, -6.5% at rank 32, `ISCF_GOAL_PER_SD`) in place
+  of the Goals/G steps (+18% / +9% / -12% and the soft / hard counts), the D ×0.88 kept; the Goals/G rank predicted
+  nothing over a skater's rate and the old steps made 1+ goal less accurate (`docs/audits/2026-11-12-nhl-shots-environment.md`,
+  Vincent: "replace it with the smooth ISCF term and port it"; `__tests__/nhl-model-goals-env.test.js`). It reaches the
+  goal ladder (`ladderP1g` / `P2g`: the attack score and the goal tier), not the published goal odds, which are the
+  Poisson tails of λ goals. And the same day (port it too, Vincent: "yes, do defenseGoalMultiplier too and port it"):
+  λ's own opponent read, `defenseGoalMultiplier`, is the ISCF ratio alone (the opponent's ISCF/G to the position over the
+  league's mean, clamped 0.82–1.22; no ISCF on the table → 1) in place of Goals 50% / ISCF 30% / Shots 20% (D 35 / 35 /
+  30). It reaches λ goals through the points step (`pointDefenseMult`'s 0.45 × the tier's `defDamp`, so 0.2–0.45 of the
+  ratio, where the study fitted 0.21–0.33) and so moves the points odds too; λ points keeps its assists (0.35) and
+  shots (0.20) ratios. Replayed through that pass-through at every tier, the ISCF ratio beat a skater's rate alone and
+  the old composite did not (same audit).
+  `node tools/port-model-core.mjs [App.jsx]` applies all six ports on the Mac (the 2026-10-13 shots odds, the
+  2026-10-20 goal odds, the 2026-10-27 weights, the 2026-11-07 minutes, the 2026-11-12 goals environment and
+  `defenseGoalMultiplier`), each group all-or-nothing by exact-text anchors: a backup beside the
   file, a group already there reported as ported, a group with a differing anchor skipped and named, `--check` to
   look first. On 2026-10-27 App.jsx had neither odds port: the local app had published the ladder's odds since Oct 13.
 

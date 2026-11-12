@@ -2154,15 +2154,17 @@ function last5GoalFormMultiplier(skater) {
   return +mult.toFixed(3);
 }
 
+// The opponent's goal read on λ (2026-11-12): the scoring chances it allows the position (ISCF/G)
+// over the league's mean, alone. The Goals/G ratio (half the old composite) predicted nothing over a
+// skater's goal rate and Shots/G added nothing to ISCF (docs/audits/2026-11-12-nhl-shots-environment.md,
+// 45,363 skater-games: replayed through λ points to λ goals at every tier's pass-through, the ISCF ratio
+// beat his rate alone and the old composite did not). λ goals takes 0.45 x defDamp of it through the
+// points step, about 0.2 to 0.45 of the ratio, where the study fitted 0.21 to 0.33. No ISCF on the
+// table: neutral. Vincent: "yes, do defenseGoalMultiplier too and port it".
 function defenseGoalMultiplier(teamPos, defenseAvg, posKey) {
-  if (!teamPos || !defenseAvg) return 1;
-  const goalsRatio = safeRatio(teamPos.goals || 0, Math.max(0.65, defenseAvg.goals || 0.65), 1);
-  const iscfRatio = safeRatio(teamPos.iscf || 0, Math.max(3.5, defenseAvg.iscf || 3.5), 1);
-  const shotsRatio = safeRatio(teamPos.shots || 0, Math.max(3.5, defenseAvg.shots || 3.5), 1);
-
-  let composite = 0.5 * goalsRatio + 0.3 * iscfRatio + 0.2 * shotsRatio;
-  if (posKey === "D") composite = 0.35 * goalsRatio + 0.35 * iscfRatio + 0.3 * shotsRatio;
-  return +clamp(composite, 0.82, 1.22).toFixed(3);
+  if (!teamPos || !defenseAvg || !(Number(teamPos.iscf) > 0)) return 1;
+  const iscfRatio = safeRatio(Number(teamPos.iscf), Math.max(3.5, defenseAvg.iscf || 3.5), 1);
+  return +clamp(iscfRatio, 0.82, 1.22).toFixed(3);
 }
 
 function roleGoalAccessMultiplier(todayLine, effectiveToi) {
@@ -4270,6 +4272,24 @@ function buildCapabilityBaseFloors({ skater, pHA, isHome, effectiveToi, playerTo
   };
 }
 
+// ─── GOALS ENVIRONMENT (2026-11-12) ───────────────────────────────────────────
+// The opponent's goals read on the cheat sheet is its ISCF/G rank at the position, as a smooth
+// term: ×exp(0.04 per SD of rank), about +7% for the rank 1 defense and -6.5% for rank 32.
+// Graded on 2025-26 and 2026-27 to Nov 11 (45,393 skater-games, the opponent's season table
+// ranked each morning, on top of his own goal rate; docs/audits/2026-11-12-nhl-shots-environment.md):
+// the Goals/G rank predicted nothing (top 10: +0.8% to +4% where the old steps added +16%; 11-16
+// below his rate where they added +8%), ISCF/G carried the read (top 10: +3.6% to +7.1%; fitted,
+// 93-98% of the weight), and only a smooth ISCF term beat his rate alone (1+ goal Brier -0.25%;
+// the old steps cost +1.2% to +1.4%). Vincent: "replace it with the smooth ISCF term and port it".
+const ISCF_GOAL_PER_SD = 0.04;
+function iscfGoalMultiplier(iscfRank, teams = 32) {
+  const r = Number(iscfRank);
+  if (iscfRank == null || !Number.isFinite(r) || r <= 0) return 1;
+  const n = teams || 32;
+  const z = ((n + 1) / 2 - r) / (n / Math.sqrt(12));
+  return +Math.exp(ISCF_GOAL_PER_SD * z).toFixed(3);
+}
+
 function cheatSheetMajorMultiplier(posStats, market, posKey) {
   const ranks = posStats?.ranks || {};
   const goalRank = ranks.goals ?? null;
@@ -4302,14 +4322,9 @@ function cheatSheetMajorMultiplier(posStats, market, posKey) {
     if (hardScore >= 3) mult -= 0.18;
     else if (hard(assistRank, 24)) mult -= 0.12;
   } else {
-    const openScore = [goalRank, iscfRank, shotRank].filter((v) => soft(v, 16)).length;
-    const hardScore = [goalRank, iscfRank, shotRank].filter((v) => hard(v)).length;
-    if (open(goalRank, 10)) mult += 0.18;
-    else if (soft(goalRank, 16)) mult += 0.09;
-    if (open(iscfRank, 10)) mult += 0.12;
-    if (openScore >= 2) mult += 0.07;
-    if (hardScore >= 2) mult -= 0.18;
-    else if (hard(goalRank, 24)) mult -= 0.12;
+    // Goals: the smooth ISCF term (2026-11-12, above iscfGoalMultiplier); the Goals/G rank steps
+    // (+18% / +9% / -12%, and the soft / hard counts with Shots) predicted nothing over his rate.
+    mult = iscfGoalMultiplier(iscfRank);
   }
   if (posKey === 'D' && market === 'goals') mult *= 0.88;
   return clamp(mult, market === 'goals' ? 0.74 : 0.76, market === 'goals' ? 1.34 : 1.30);
@@ -6177,6 +6192,7 @@ export {
   capabilityStageMultiplier,
   capabilityStyleMultipliers,
   cheatSheetMajorMultiplier,
+  iscfGoalMultiplier,
   clamp,
   classifyCapabilityStyle,
   classifyDefenseLaneState,

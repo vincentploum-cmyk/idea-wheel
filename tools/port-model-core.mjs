@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Port the site's model changes into the local model app (App.jsx, the model's source of truth),
-// the same edits made to components/nhl/model-core.js, in four groups, each all-or-nothing:
+// the same edits made to components/nhl/model-core.js, in six groups, each all-or-nothing:
 //   1. 2026-10-13 (a022443): p2s / p3s / p4s / p5s are the Poisson tails of λ shots; the ladder's
 //      figures ride along as ladderP3s / P4s / P5s and still set the attack score.
 //   2. 2026-10-20 (4ec641f): p1g / p2g / p3g are the Poisson tails of λ goals; the ladder's figures
@@ -11,6 +11,11 @@
 //   4. 2026-11-07: projectedToiFromLineup refitted on the posted lines (TOI_FIT: the line's constant
 //      + 0.345 · last 5 + 0.442 · season, in place of max(last 5, the line's floor)); its call passes
 //      skater.toiL5 and skater.toiSeason (docs/audits/2026-11-07-nhl-toi.md).
+//   5. 2026-11-12: cheatSheetMajorMultiplier's goals branch is a smooth ISCF/G term
+//      (iscfGoalMultiplier, ISCF_GOAL_PER_SD), the Goals/G rank steps out
+//      (docs/audits/2026-11-12-nhl-shots-environment.md).
+//   6. 2026-11-12: defenseGoalMultiplier (λ goals' and λ points' opponent read) is the ISCF ratio
+//      alone, the Goals/G and Shots/G ratios out; no ISCF on the table → 1 (same audit).
 //
 //   node tools/port-model-core.mjs [path to App.jsx] [--check]
 //
@@ -23,6 +28,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const CONSTANTS_BLOCK = `
 // ─── WEIGHTS UNDER REVIEW (2026-10-27) ────────────────────────────────────────
@@ -177,11 +183,89 @@ const TOI = [
   },
 ];
 
+const GOALS_ENV_OLD = '  } else {\n'
+  + '    const openScore = [goalRank, iscfRank, shotRank].filter((v) => soft(v, 16)).length;\n'
+  + '    const hardScore = [goalRank, iscfRank, shotRank].filter((v) => hard(v)).length;\n'
+  + '    if (open(goalRank, 10)) mult += 0.18;\n'
+  + '    else if (soft(goalRank, 16)) mult += 0.09;\n'
+  + '    if (open(iscfRank, 10)) mult += 0.12;\n'
+  + '    if (openScore >= 2) mult += 0.07;\n'
+  + '    if (hardScore >= 2) mult -= 0.18;\n'
+  + '    else if (hard(goalRank, 24)) mult -= 0.12;\n'
+  + '  }\n'
+  + "  if (posKey === 'D' && market === 'goals') mult *= 0.88;\n";
+
+const GOALS_ENV = [
+  {
+    name: 'the smooth ISCF goals term (iscfGoalMultiplier)',
+    old: 'function cheatSheetMajorMultiplier(posStats, market, posKey) {\n',
+    new: '// ─── GOALS ENVIRONMENT (2026-11-12) ───────────────────────────────────────────\n'
+      + '// The opponent\'s goals read on the cheat sheet is its ISCF/G rank at the position, as a smooth\n'
+      + '// term: ×exp(0.04 per SD of rank), about +7% for the rank 1 defense and -6.5% for rank 32.\n'
+      + '// Graded on 2025-26 and 2026-27 to Nov 11 (45,393 skater-games, the opponent\'s season table\n'
+      + '// ranked each morning, on top of his own goal rate; docs/audits/2026-11-12-nhl-shots-environment.md):\n'
+      + '// the Goals/G rank predicted nothing (top 10: +0.8% to +4% where the old steps added +16%; 11-16\n'
+      + '// below his rate where they added +8%), ISCF/G carried the read (top 10: +3.6% to +7.1%; fitted,\n'
+      + '// 93-98% of the weight), and only a smooth ISCF term beat his rate alone (1+ goal Brier -0.25%;\n'
+      + '// the old steps cost +1.2% to +1.4%). Vincent: "replace it with the smooth ISCF term and port it".\n'
+      + 'const ISCF_GOAL_PER_SD = 0.04;\n'
+      + 'function iscfGoalMultiplier(iscfRank, teams = 32) {\n'
+      + '  const r = Number(iscfRank);\n'
+      + '  if (iscfRank == null || !Number.isFinite(r) || r <= 0) return 1;\n'
+      + '  const n = teams || 32;\n'
+      + '  const z = ((n + 1) / 2 - r) / (n / Math.sqrt(12));\n'
+      + '  return +Math.exp(ISCF_GOAL_PER_SD * z).toFixed(3);\n'
+      + '}\n'
+      + '\n'
+      + 'function cheatSheetMajorMultiplier(posStats, market, posKey) {\n',
+  },
+  {
+    name: 'the cheat sheet\'s goals multiplier (the ISCF term in place of the Goals/G steps)',
+    old: GOALS_ENV_OLD,
+    new: '  } else {\n'
+      + '    // Goals: the smooth ISCF term (2026-11-12, above iscfGoalMultiplier); the Goals/G rank steps\n'
+      + '    // (+18% / +9% / -12%, and the soft / hard counts with Shots) predicted nothing over his rate.\n'
+      + '    mult = iscfGoalMultiplier(iscfRank);\n'
+      + '  }\n'
+      + "  if (posKey === 'D' && market === 'goals') mult *= 0.88;\n",
+  },
+];
+
+const DEFENSE_GOAL = [
+  {
+    name: 'the opponent\'s goal read on λ (defenseGoalMultiplier: the ISCF ratio alone)',
+    old: 'function defenseGoalMultiplier(teamPos, defenseAvg, posKey) {\n'
+      + '  if (!teamPos || !defenseAvg) return 1;\n'
+      + '  const goalsRatio = safeRatio(teamPos.goals || 0, Math.max(0.65, defenseAvg.goals || 0.65), 1);\n'
+      + '  const iscfRatio = safeRatio(teamPos.iscf || 0, Math.max(3.5, defenseAvg.iscf || 3.5), 1);\n'
+      + '  const shotsRatio = safeRatio(teamPos.shots || 0, Math.max(3.5, defenseAvg.shots || 3.5), 1);\n'
+      + '\n'
+      + '  let composite = 0.5 * goalsRatio + 0.3 * iscfRatio + 0.2 * shotsRatio;\n'
+      + '  if (posKey === "D") composite = 0.35 * goalsRatio + 0.35 * iscfRatio + 0.3 * shotsRatio;\n'
+      + '  return +clamp(composite, 0.82, 1.22).toFixed(3);\n'
+      + '}\n',
+    new: '// The opponent\'s goal read on λ (2026-11-12): the scoring chances it allows the position (ISCF/G)\n'
+      + '// over the league\'s mean, alone. The Goals/G ratio (half the old composite) predicted nothing over a\n'
+      + '// skater\'s goal rate and Shots/G added nothing to ISCF (docs/audits/2026-11-12-nhl-shots-environment.md,\n'
+      + '// 45,363 skater-games: replayed through λ points to λ goals at every tier\'s pass-through, the ISCF ratio\n'
+      + '// beat his rate alone and the old composite did not). λ goals takes 0.45 x defDamp of it through the\n'
+      + '// points step, about 0.2 to 0.45 of the ratio, where the study fitted 0.21 to 0.33. No ISCF on the\n'
+      + '// table: neutral. Vincent: "yes, do defenseGoalMultiplier too and port it".\n'
+      + 'function defenseGoalMultiplier(teamPos, defenseAvg, posKey) {\n'
+      + '  if (!teamPos || !defenseAvg || !(Number(teamPos.iscf) > 0)) return 1;\n'
+      + '  const iscfRatio = safeRatio(Number(teamPos.iscf), Math.max(3.5, defenseAvg.iscf || 3.5), 1);\n'
+      + '  return +clamp(iscfRatio, 0.82, 1.22).toFixed(3);\n'
+      + '}\n',
+  },
+];
+
 export const GROUPS = [
   { key: 'shotsOdds20261013', label: 'shots odds (2026-10-13): p2s / p3s / p4s / p5s the Poisson tails of λ shots, the ladder as ladderP3s / P4s / P5s', edits: SHOTS_ODDS },
   { key: 'goalOdds20261020', label: 'goal odds (2026-10-20): p1g / p2g / p3g the Poisson tails of λ goals, the ladder as ladderP1g / P2g / P3g', edits: GOAL_ODDS },
   { key: 'weights20261027', label: 'venue split and head-to-head at a quarter (2026-10-27)', edits: WEIGHTS, constants: true },
   { key: 'toi20261107', label: 'projected minutes (2026-11-07): the line\'s constant + 0.345 · last 5 + 0.442 · season, refitted on the posted lines', edits: TOI },
+  { key: 'goalsEnv20261112', label: 'goals environment (2026-11-12): the cheat sheet\'s goals multiplier is a smooth ISCF/G term, the Goals/G steps out', edits: GOALS_ENV },
+  { key: 'defenseGoal20261112', label: 'λ goals\' opponent read (2026-11-12): defenseGoalMultiplier is the ISCF ratio alone, Goals/G and Shots/G out', edits: DEFENSE_GOAL },
 ];
 
 /** The end index of the `function poissonAtLeast(` body (after its closing brace), or -1. */
@@ -228,7 +312,10 @@ export function portText(src, groups = GROUPS) {
   return { text, results };
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === new URL(import.meta.url).pathname;
+// Compare real paths: on macOS /tmp is a link to /private/tmp, and a plain comparison read the script as
+// imported and did nothing, silently (2026-11-12).
+const realOf = (p) => { try { return fs.realpathSync(p); } catch { return path.resolve(p); } };
+const isMain = !!process.argv[1] && realOf(process.argv[1]) === realOf(fileURLToPath(import.meta.url));
 if (isMain) {
   const args = process.argv.slice(2);
   const check = args.includes('--check');
