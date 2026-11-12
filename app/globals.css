@@ -2169,6 +2169,8 @@ div.nhlx-auto-msg > p { margin: 0; }
 .ir-pill.is-hit { box-shadow: 0 0 0 2px var(--mark-over); }
 .ir-pill.is-miss { box-shadow: 0 0 0 2px var(--mark-under); }
 .ir-pills { display: inline-flex; flex-wrap: wrap; gap: 5px; }
+.ir-pill.is-model:not(.is-on) { border-style: dashed; }
+.ir-pt-why-row { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .ir-facts { display: inline-flex; flex-wrap: wrap; gap: 4px; }
 .ir-fact { display: inline-block; padding: 3px 7px; border: 1px solid var(--line); border-radius: 6px; font-size: 12.5px; line-height: 1.2; color: var(--body); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ir-fact.is-soft { color: var(--ok-fg); border-color: var(--ok-line); }

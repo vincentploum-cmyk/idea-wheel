@@ -558,6 +558,24 @@
   they stood that morning, the study's out-of-sample figure carried in at 30 skater-games), and those nights are the
   record shown under the head. The season walked once per stored rows and date (`memoByRows`), the build per store state.
   Re-mine with the study's commands (the README in `tools/predictors/`) to move `builtThrough`.
+  **Re-mined 2026-11-12** (Vincent: "ship the re-mined rules"): searched on Oct 2–21, checked on Oct 22 – Nov 11,
+  `builtThrough` 2026-11-11 (`docs/audits/2026-11-12-nhl-patterns-model.md`), so the record under the head restarts on
+  Nov 12. The frozen Oct 29 rules had landed 48% of 447 3+ SOG picks (said 60%) and 33% of 235 goal picks (said 40%).
+- **The 3+ SOG model on the Patterns tab** (Vincent, 2026-11-12: "add the model for 3+ SOG", after the season backtest
+  had a model on every figure ahead of the rules on that line): a logistic regression and boosted trees on the same
+  figures (plus his position), averaged, fitted offline by `tools/predictors/patterns_model.py` and shipped as
+  `lib/nhl-data/patterns-model.json` (medians / means / spreads / coefficients, the trees as node lists); the site only
+  scores it (`modelChance` in `lib/nhl-data/patterns-model-pure.js`, matched to scikit-learn by
+  `__tests__/fixtures/patterns-model-parity.json`, written by the same command with `--fixture`). Each skater carries
+  `model.s3`; the pill "Model 3+" sits after his 3+ pill (dashed when under the bar, filled with a check at the 3+ line's
+  bar, 50%, graded green / red like a pick); "Strongest tonight" has a "3+ SOG · model" tab (ranked by the model, his
+  3+ rule pill and facts beside); the fold counts its picks apart; the record line carries its calls since its fit
+  (`modelRecord`: the rows after `builtThrough`, scored on the full figures in the season walk through
+  `patternTable`'s `score` hook, before the `keep` trim, so the table stays small); a line under the how-to says what it
+  is and the frozen check the JSON carries (`check`: a second fit through `--check-through`, graded on the games after
+  it), and that a night inside the fit is not a test. Not retrained on the site: refit it with the rules
+  (`patterns_model.py <csv> --through <last date> --check-through <a date two weeks back> --out
+  lib/nhl-data/patterns-model.json --fixture __tests__/fixtures/patterns-model-parity.json`). Frozen fits landed 57–59% of their 50%+ calls on the weeks after them.
 - Lineups: `lib/nhl-data/gamedaytweets.js` reads the beat writers' lines from
   gamedaytweets.com/lines?team=XXX (roster-aware name matching: the roster decides a row's group, a pair
   holds a defenseman and two forwards side by side are a short forward line, three pairs at most, and a

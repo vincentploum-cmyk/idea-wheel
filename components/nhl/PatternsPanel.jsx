@@ -9,6 +9,8 @@ import { MARKS, describe } from '@/lib/nhl-data/patterns-pure';
 // SOG, 1+ / 2+ / 3+ goals — after firsthalfscore.com's: solid with a check when a rule the study kept fires and its
 // rate clears the line's bar, outlined with the figure otherwise; the conditions behind the filled pills underneath.
 // The strongest tonight per line first, then every game folded to a line. One request a slate (/api/nhl/data/patterns).
+// Beside the pills, the 3+ SOG model on every figure (Vincent, 2026-11-12): its chance, a pick at the line's bar, its
+// own tab in Strongest tonight and its own record.
 
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
@@ -16,6 +18,26 @@ const fmtDay = (d) => (d ? new Date(`${d}T12:00:00Z`).toLocaleDateString(undefin
 const SHOWN = 15;
 const markOf = (k) => MARKS.find((m) => m.key === k);
 const hitOf = (actual, mk) => { const m = markOf(mk); return actual && !actual.dnp ? actual[m.stat] >= m.at : null; };
+const MODEL_TAB = 'model';
+const modelP = (s, model) => (model ? s.model?.[model.mark] ?? null : null);
+const modelPick = (s, model) => { const p = modelP(s, model); return p != null && p >= model.bar; };
+
+/** The model's pill: his chance at its line (3+ SOG), filled with a check at the line's bar, graded like a pick. */
+function ModelPill({ s, model, final }) {
+  if (!model) return null;
+  const p = modelP(s, model);
+  if (p == null) return null;
+  const on = p >= model.bar;
+  const hit = final && on ? hitOf(s.actual, model.mark) : null;
+  const c = model.check?.calls?.[String(Math.round(model.bar * 100))];
+  const check = c?.n ? ` Frozen after ${fmtDay(model.check.fitThrough)}, its ${pct(model.bar)}+ calls landed ${c.hits} of ${c.n} (${pct(c.hits / c.n)}) on ${fmtDay(model.check.from)}–${fmtDay(model.check.to)}.` : '';
+  const title = `${model.label}, the model on every figure: ${pct(p)}${on ? ` — a pick (over the ${pct(model.bar)} bar)` : ` (the bar is ${pct(model.bar)})`}. A regression and boosted trees on his 239 figures and position, fitted on every game through ${fmtDay(model.builtThrough)}.${check}`;
+  return (
+    <span className={`ir-pill is-model${on ? ` is-on${hit === true ? ' is-hit' : hit === false ? ' is-miss' : ''}` : ''}`} title={title}>
+      <b>Model {markOf(model.mark).short}</b>{on ? <i aria-label="pick">✓</i> : null}<span>{pct(p)}</span>
+    </span>
+  );
+}
 
 /** What a pill's hover says: the rule behind it (the payload's catalog, worded with his values), how it did on the week it never saw and since. */
 function pillTitle(mk, p, bar, s, catalog) {
@@ -60,30 +82,37 @@ function Facts({ s, max = 4 }) {
 const gotText = (a) => (!a ? '' : a.dnp ? 'DNP' : `${a.sog} SOG · ${a.g} G`);
 
 function Strongest({ data, onOpen }) {
-  const [mk, setMk] = useState('s3');
+  const [tab, setTab] = useState('s3');
   const [more, setMore] = useState(false);
+  const model = data.model;
+  const isModel = tab === MODEL_TAB && !!model;
+  const mk = isModel ? model.mark : tab;
   const rows = useMemo(() => {
     const out = [];
-    for (const g of data.games) for (const side of g.sides) for (const s of side.skaters) if (s.pills?.[mk]?.selected) out.push({ ...s, game: g });
-    return out.sort((a, b) => b.pills[mk].p - a.pills[mk].p);
-  }, [data, mk]);
-  const counts = useMemo(() => Object.fromEntries(MARKS.map((m) => [m.key, data.games.reduce((n, g) => n + g.sides.reduce((k, side) => k + side.skaters.filter((s) => s.pills?.[m.key]?.selected).length, 0), 0)])), [data]);
+    for (const g of data.games) for (const side of g.sides) for (const s of side.skaters) if (isModel ? modelPick(s, model) : s.pills?.[mk]?.selected) out.push({ ...s, game: g });
+    return isModel ? out.sort((a, b) => modelP(b, model) - modelP(a, model)) : out.sort((a, b) => b.pills[mk].p - a.pills[mk].p);
+  }, [data, mk, isModel, model]);
+  const counts = useMemo(() => {
+    const count = (fn) => data.games.reduce((n, g) => n + g.sides.reduce((k, side) => k + side.skaters.filter(fn).length, 0), 0);
+    return { ...Object.fromEntries(MARKS.map((m) => [m.key, count((s) => s.pills?.[m.key]?.selected)])), ...(model ? { [MODEL_TAB]: count((s) => modelPick(s, model)) } : {}) };
+  }, [data, model]);
   const bar = data.rules.marks[mk]?.bar;
+  const tabs = [...MARKS.slice(0, 1).map((m) => ({ key: m.key, label: m.label })), ...(model ? [{ key: MODEL_TAB, label: `${model.label} · model` }] : []), ...MARKS.slice(1).map((m) => ({ key: m.key, label: m.label }))];
   const shown = more ? rows : rows.slice(0, SHOWN);
   const final = data.games.some((g) => g.final);
   return (
     <div className="ir-pt-strong">
       <div className="nhlx-tabs" role="tablist" aria-label="Line">
-        {MARKS.map((m) => (
-          <button key={m.key} type="button" role="tab" aria-selected={mk === m.key} className={`nhlx-tab${mk === m.key ? ' is-active' : ''}`} onClick={() => { setMk(m.key); setMore(false); }}>
-            {m.label}<i>{counts[m.key]}</i>
+        {tabs.map((t) => (
+          <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} className={`nhlx-tab${tab === t.key ? ' is-active' : ''}`} onClick={() => { setTab(t.key); setMore(false); }}>
+            {t.label}<i>{counts[t.key]}</i>
           </button>
         ))}
       </div>
       {rows.length ? (
         <div className="nhlx-db-table-wrap">
           <table className="nhlx-pk-table ir-pt-table">
-            <thead><tr><th>#</th><th>Skater</th><th>Game</th><th>{markOf(mk).label}</th><th>Why</th>{final ? <th>Got</th> : null}</tr></thead>
+            <thead><tr><th>#</th><th>Skater</th><th>Game</th><th>{isModel ? 'Model' : markOf(mk).label}</th><th>{isModel ? 'The rules' : 'Why'}</th>{final ? <th>Got</th> : null}</tr></thead>
             <tbody>
               {shown.map((s, i) => {
                 const hit = s.game.final ? hitOf(s.actual, mk) : null;
@@ -92,8 +121,8 @@ function Strongest({ data, onOpen }) {
                     <td className="ir-pt-rank">{i + 1}</td>
                     <td className="ir-pt-player"><Headshot id={s.id} size={28} /><span><b>{s.name}</b><small className="nhlx-auto-meta">{s.slot || s.pos}</small></span></td>
                     <td className="ir-pt-game"><small className="nhlx-auto-meta">{s.team} {s.venue === 'H' ? 'vs' : '@'} {s.opp}{s.game.final ? '' : ` · ${fmtTime(s.game.startTimeUTC)}`}</small></td>
-                    <td className="ir-pt-pill"><Pill mk={mk} s={s} bar={bar} final={s.game.final} catalog={data.rules.catalog} /></td>
-                    <td className="ir-pt-why"><Facts s={{ facts: s.facts.filter((f) => f.marks.includes(mk)), notes: s.notes }} max={4} /></td>
+                    <td className="ir-pt-pill">{isModel ? <ModelPill s={s} model={model} final={s.game.final} /> : <Pill mk={mk} s={s} bar={bar} final={s.game.final} catalog={data.rules.catalog} />}</td>
+                    <td className="ir-pt-why">{isModel ? <span className="ir-pt-why-row"><Pill mk={mk} s={s} bar={bar} final={s.game.final} catalog={data.rules.catalog} /><Facts s={{ facts: s.facts.filter((f) => f.marks.includes(mk)), notes: s.notes }} max={3} /></span> : <Facts s={{ facts: s.facts.filter((f) => f.marks.includes(mk)), notes: s.notes }} max={4} />}</td>
                     {final ? <td className="ir-pt-got">{gotText(s.actual)}</td> : null}
                   </tr>
                 );
@@ -101,14 +130,14 @@ function Strongest({ data, onOpen }) {
             </tbody>
           </table>
         </div>
-      ) : <p className="nhlx-auto-meta">No skater fills the {markOf(mk).label} pill tonight: no rule that held fires over the {pct(bar)} bar.</p>}
+      ) : <p className="nhlx-auto-meta">{isModel ? `The model has no skater at ${pct(bar)} or more for ${model.label} tonight.` : `No skater fills the ${markOf(mk).label} pill tonight: no rule that held fires over the ${pct(bar)} bar.`}</p>}
       {rows.length > SHOWN ? <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-slate-more" onClick={() => setMore((v) => !v)}>{more ? 'Show the top 15' : `Show all ${rows.length}`}</button> : null}
     </div>
   );
 }
 
-function SideList({ side, final, onlyPicks, bars, catalog, onOpen }) {
-  const skaters = side.skaters.filter((s) => s.pills && (!onlyPicks || MARKS.some((m) => s.pills[m.key]?.selected)))
+function SideList({ side, final, onlyPicks, bars, catalog, model, onOpen }) {
+  const skaters = side.skaters.filter((s) => s.pills && (!onlyPicks || MARKS.some((m) => s.pills[m.key]?.selected) || modelPick(s, model)))
     .sort((a, b) => MARKS.filter((m) => b.pills[m.key]?.selected).length - MARKS.filter((m) => a.pills[m.key]?.selected).length || b.pills.s3.p - a.pills.s3.p);
   return (
     <section className="ir-pt-side" aria-label={side.team}>
@@ -118,7 +147,7 @@ function SideList({ side, final, onlyPicks, bars, catalog, onOpen }) {
           {skaters.map((s) => (
             <li key={s.id}>
               <button type="button" className="ir-pt-who" onClick={() => onOpen(s)}><b>{s.name}</b><small className="nhlx-auto-meta">{s.slot || s.pos}{final ? ` · ${gotText(s.actual)}` : ''}</small></button>
-              <span className="ir-pills">{MARKS.map((m) => <Pill key={m.key} mk={m.key} s={s} bar={bars[m.key]} final={final} catalog={catalog} />)}</span>
+              <span className="ir-pills">{MARKS.map((m) => [<Pill key={m.key} mk={m.key} s={s} bar={bars[m.key]} final={final} catalog={catalog} />, model?.mark === m.key ? <ModelPill key="model" s={s} model={model} final={final} /> : null])}</span>
               <Facts s={s} max={3} />
             </li>
           ))}
@@ -128,22 +157,24 @@ function SideList({ side, final, onlyPicks, bars, catalog, onOpen }) {
   );
 }
 
-function GameFold({ g, onlyPicks, bars, catalog, onOpen }) {
+function GameFold({ g, onlyPicks, bars, catalog, model, onOpen }) {
   const [open, setOpen] = useState(false);
   const picks = g.sides.reduce((n, side) => n + side.skaters.reduce((k, s) => k + MARKS.filter((m) => s.pills?.[m.key]?.selected).length, 0), 0);
   const landed = g.final ? g.sides.reduce((n, side) => n + side.skaters.reduce((k, s) => k + MARKS.filter((m) => s.pills?.[m.key]?.selected && hitOf(s.actual, m.key)).length, 0), 0) : null;
+  const mPicks = model ? g.sides.reduce((n, side) => n + side.skaters.filter((s) => modelPick(s, model)).length, 0) : 0;
+  const mLanded = model && g.final ? g.sides.reduce((n, side) => n + side.skaters.filter((s) => modelPick(s, model) && hitOf(s.actual, model.mark)).length, 0) : null;
   const id = `pt-game-${g.id}`;
   return (
     <article className={`ir-gf${open ? ' is-open' : ''}`}>
       <button type="button" className="ir-gf-head" aria-expanded={open} aria-controls={id} onClick={() => setOpen((v) => !v)}>
         <span className="ir-gf-teams"><TeamLogo abbr={g.away} size={22} />{g.away}<i>@</i><TeamLogo abbr={g.home} size={22} />{g.home}</span>
         <span className="ir-gf-meta">{g.final ? `Final ${g.score.away}–${g.score.home}` : fmtTime(g.startTimeUTC)}</span>
-        <span className="ir-gf-meta">{picks} pick{picks === 1 ? '' : 's'}{landed != null ? ` · ${landed} landed` : ''}</span>
+        <span className="ir-gf-meta">{picks} pick{picks === 1 ? '' : 's'}{landed != null ? ` · ${landed} landed` : ''}{mPicks ? ` · model ${mPicks}${mLanded != null ? ` (${mLanded} landed)` : ''}` : ''}</span>
         <svg className="ir-gf-caret" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
       </button>
       {open ? (
         <div className="ir-gf-body" id={id}>
-          <div className="ir-gf-cols">{g.sides.map((side) => <SideList key={side.team} side={side} final={g.final} onlyPicks={onlyPicks} bars={bars} catalog={catalog} onOpen={onOpen} />)}</div>
+          <div className="ir-gf-cols">{g.sides.map((side) => <SideList key={side.team} side={side} final={g.final} onlyPicks={onlyPicks} bars={bars} catalog={catalog} model={model} onOpen={onOpen} />)}</div>
         </div>
       ) : null}
     </article>
@@ -153,11 +184,27 @@ function GameFold({ g, onlyPicks, bars, catalog, onOpen }) {
 function RecordLine({ data }) {
   const r = data.record;
   const parts = MARKS.map((m) => ({ m, t: r.marks?.[m.key] })).filter((x) => x.t?.picks);
-  if (!parts.length) return <p className="nhlx-auto-meta">Record: no game since {fmtDay(data.rules.builtThrough)} is stored yet; the first night after the study starts it.</p>;
+  const mt = data.model ? r.model?.calls : null;
+  if (!parts.length && !mt?.picks) return <p className="nhlx-auto-meta">Record: no game since {fmtDay(data.rules.builtThrough)} is stored yet; the first night after the study starts it.</p>;
   return (
     <p className="ir-pt-record">
-      <b>Since {fmtDay(r.from)}</b>
+      <b>Since {fmtDay(r.from || r.model?.from)}</b>
+      {mt?.picks ? <span>{data.model.label} · model <b>{mt.landed} of {mt.picks}</b> landed ({pct(mt.landed / mt.picks)}, said {pct(mt.said)})</span> : null}
       {parts.map(({ m, t }) => <span key={m.key}>{m.label} <b>{t.landed} of {t.picks}</b> landed ({pct(t.landed / t.picks)}, said {pct(t.said)})</span>)}
+    </p>
+  );
+}
+
+/** The model in a line: what it is, when it was fitted, how a frozen fit did on the games after it. */
+function ModelLine({ model, date }) {
+  if (!model) return null;
+  const c = model.check?.calls?.[String(Math.round(model.bar * 100))];
+  const c60 = model.check?.calls?.['60'];
+  return (
+    <p className="nhlx-auto-meta ir-pt-how">
+      <span className="ir-pill is-model is-on"><b>Model 3+</b><i>✓</i><span>61%</span></span> is the {model.label} model: a regression and boosted trees on every figure the rules read, fitted on {model.rows.toLocaleString()} skater-games through {fmtDay(model.builtThrough)}; a pick at {pct(model.bar)} or more.
+      {c?.n ? ` Frozen after ${fmtDay(model.check.fitThrough)}, its ${pct(model.bar)}+ calls landed ${pct(c.hits / c.n)} (${c.hits} of ${c.n}) on ${fmtDay(model.check.from)}–${fmtDay(model.check.to)}${c60?.n ? `, its 60%+ ${pct(c60.hits / c60.n)} (${c60.hits} of ${c60.n})` : ''}.` : ''}
+      {date && date <= model.builtThrough ? ' This night is inside its fit, so its pills here are not a test.' : ''}
     </p>
   );
 }
@@ -204,6 +251,7 @@ export default function PatternsPanel() {
             ({MARKS.map((m) => `${m.short} ${pct(bars[m.key])}`).join(' · ')}, about what a book asks). <span className="ir-pill"><b>4+</b><span>31%</span></span> is his figure without a pick:
             the strongest rule he meets, else his shots-a-game tier. The rules were searched on {fmtDay(data.rules.fit?.[0])}–{fmtDay(data.rules.fit?.[1])} and kept only when they held on {fmtDay(data.rules.check?.[0])}–{fmtDay(data.rules.check?.[1])}; their rates move with every game since. Hover a pill for its rule.
           </p>
+          <ModelLine model={data.model} date={data.date} />
           <RecordLine data={data} />
           <h3 className="nhlx-db-h3">Strongest tonight</h3>
           <Strongest data={data} onOpen={onOpen} />
@@ -211,7 +259,7 @@ export default function PatternsPanel() {
             <h3 className="nhlx-db-h3">Every game</h3>
             <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm ir-slate-soft" aria-pressed={onlyPicks} onClick={() => setOnlyPicks((v) => !v)}>{onlyPicks ? 'Skaters with a pick' : 'Every skater'}</button>
           </div>
-          <div className="ir-gf-list">{data.games.map((g) => <GameFold key={g.id} g={g} onlyPicks={onlyPicks} bars={bars} catalog={data.rules.catalog} onOpen={onOpen} />)}</div>
+          <div className="ir-gf-list">{data.games.map((g) => <GameFold key={g.id} g={g} onlyPicks={onlyPicks} bars={bars} catalog={data.rules.catalog} model={data.model} onOpen={onOpen} />)}</div>
           {!data.games.length ? <p className="nhlx-auto-meta">No games on this date.</p> : null}
         </>
       ) : null}

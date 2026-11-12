@@ -104,6 +104,12 @@
   landed 46% (30 a night), their 1+ goal picks 33% — the pills' figures run high. Environment + streak: for goals the
   environment adds a point on top of the run (a goal last game 21%, with a top-10 opponent 22%); for shots it adds 5–9
   (3+ SOG in two straight 41%, with a top-10 high-danger-chances opponent over its last five 50%).
+- Patterns, six weeks in (`docs/audits/2026-11-12-nhl-patterns-model.md`, with `2026-11-12-nhl-patterns.md` and
+  `2026-11-12-nhl-season-backtest.md`; Vincent, 2026-11-12: "how are the patterns performing", "we have way more games
+  already"): the Oct 29 rules on the 13 nights after them landed 48% of 3+ SOG picks (said 60%), 33% at 4+ SOG and 1+
+  goal (said 40%); walk-forward over 35 nights the filled pills landed 47% / 30% / 32%, the model on every figure 62%
+  of its 60%+ 3+ SOG calls. Changed: the rules re-mined on Oct 2–21 / Oct 22 – Nov 11, and the 3+ SOG model added to
+  the tab (`tools/predictors/patterns_model.py`; frozen fits landed 57–59% of their 50%+ calls on the weeks after).
 - The top of the night (`docs/audits/2026-10-30-nhl-top-of-night.md`, `tools/predictors/precision_curve.py`; Vincent, 2026-10-30:
   "it's always 46%. I don't buy this"): on 2025-26 from November (40,524 skater-games, every rate a month in), the top 1–3
   picks a night land 3+ SOG 64–67% whatever the read (his rate, the model, his true rate in hindsight) and 1+ goal 37–48%;
