@@ -92,6 +92,11 @@
   stands in while the tables lack an L10 window), the shuffle's "Matchup from" column, the fold's defense card and the
   soft-spot flags, since they all read the tab the rink opens on; colour only, no number moves with it. The rink's tint
   defaults to PropFinder (that tab) when the opponent has a table, else to the Rink's stored games;
+  **tinted from PropFinder, the ice takes the table's split** (`bandTone` in `Rink.jsx` → `rankThird` in `pf-ui.jsx`:
+  the tint rank at 1–11 green, 12–22 amber, 23–32 red of 32, the colours of the cells above), so the ice reads the way
+  the table does; tinted from the Rink's stored games the bands keep `zoneTone`'s 11 / 10 / 11, as do the rink head's
+  verdict and the shuffle (Vincent, 2026-11-12, of WSH's LW at #22 SOG, amber in the table and red on the ice: "the rink
+  should be colored as per the table when 'propfinder' is selected"; `__tests__/nhl-rank-third.test.js`);
   a window PropFinder's API has not published for the current season is rolled from the stored
   box scores across the season boundary by `withStoredWindows`, the way PropFinder's own L5 counts; a window
   published for the league that lacks a team short of its games this season — CBJ had L5 and L15 and no L10

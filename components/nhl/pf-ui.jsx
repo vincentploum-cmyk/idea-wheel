@@ -61,9 +61,13 @@ export function SortTh({ k, label, sort, onSort, title }) {
   );
 }
 
-/** PropFinder's rank thirds, read from the shooter's side: rank 1 = most allowed. */
-// PropFinder's bands: ranks 1-11 green (most allowed), 12-22 yellow, 23-32 red of 32.
-export const rankTone = (rank, n) => (!rank || !n ? '' : rank <= Math.ceil(n / 3) ? 'is-soft' : rank > n - Math.floor(n / 3) ? 'is-tough' : 'is-mid');
+/**
+ * PropFinder's thirds of a league rank (1 = allows the most): 1–11 soft, 12–22 mid, 23–32 tough of 32,
+ * the split its table and legend use. The rink's bands read it when PropFinder tints the ice (`bandTone`
+ * in Rink.jsx), so a cell and the ice under it agree.
+ */
+export const rankThird = (rank, n) => (!rank || !n ? 'none' : rank <= Math.ceil(n / 3) ? 'soft' : rank > n - Math.floor(n / 3) ? 'tough' : 'mid');
+export const rankTone = (rank, n) => { const t = rankThird(rank, n); return t === 'none' ? '' : `is-${t}`; };
 
 const POS_OPTS = [['All', 'All'], ['C', 'C'], ['LW', 'LW'], ['RW', 'RW'], ['D', 'D']];
 

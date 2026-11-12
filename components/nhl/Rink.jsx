@@ -7,6 +7,7 @@ import { Headshot, TeamLogo, headshotUrl } from './media';
 import { TeamLink } from './links';
 import { usePlayerCard } from './PlayerCard';
 import { PropfinderDefense } from './Propfinder';
+import { rankThird } from './pf-ui';
 import { defaultDefenseTab, defenseBandFromTab, defenseTabText, shotsEnvRank, shotsEnvText, goalsEnvRank } from '@/lib/nhl-data/propfinder-csv';
 import { lineupRead } from '@/lib/nhl-data/lineup-read';
 
@@ -298,11 +299,22 @@ export function tintRank(d, metric) {
   return metric === 'g' ? goalsEnvRank(d?.rank) : shotsEnvRank(d?.rank);
 }
 
+/**
+ * A band's tone off its tint rank: tinted from PropFinder, the table's own split (`rankThird`, 1–11 / 12–22 /
+ * 23–32 of 32, the colours of the cells above), so the ice reads the way the table does; off the stored games,
+ * `zoneTone`. Vincent, 2026-11-12: "the rink should be colored as per the table when 'propfinder' is selected".
+ */
+export function bandTone(d, metric, teams) {
+  const rank = tintRank(d, metric);
+  const n = d?.teamCount || teams;
+  return d?.source === 'propfinder' ? rankThird(rank, n) : zoneTone(rank, n);
+}
+
 function BandLabel({ pos, d, opp, view, windowText = null, teamCount, x, y, metric = 'sog' }) {
   const r = d?.rank || {};
   const s = d?.season;
   const n = d?.teamCount || teamCount;
-  const tone = zoneTone(tintRank(d, metric), n);
+  const tone = bandTone(d, metric, teamCount);
   // The shots blend on the label, rounded (the hover has it to one decimal and its parts); the goals read is ISCF.
   const env = shotsEnvRank(r);
   const envLabel = env == null ? '–' : Math.round(env);
@@ -411,7 +423,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
   const fromPf = tint === 'propfinder' && !!pfTab;
   const defAt = (pos) => (fromPf ? defenseBandFromTab(pfTab, pos) : side.defense?.[pos]?.windows?.[v] ?? (v === defaultView ? side.defense?.[pos] : null) ?? null);
   const windowText = fromPf ? `over ${defenseTabText(pfTab)} (PropFinder)` : WINDOW_TEXT[v];
-  const tones = Object.fromEntries(ZONES.map((z) => [z, posFilter && posFilter !== z ? 'none' : zoneTone(tintRank(defAt(z), metric), defAt(z)?.teamCount || teamCount)]));
+  const tones = Object.fromEntries(ZONES.map((z) => [z, posFilter && posFilter !== z ? 'none' : bandTone(defAt(z), metric, teamCount)]));
   const metricWord = metric === 'g' ? 'scoring chances (ISCF)' : 'shots (Shots, ICF and IFF ranks, 2 : 1 : 1)';
   const clipId = `rink-${side.team}-${side.opp}`;
   const open = usePlayerCard();
@@ -484,8 +496,8 @@ export function RinkLegend({ metric = 'sog' }) {
   return (
     <p className="nhlx-rk-legend nhlx-auto-meta">
       <span><i className="is-soft" /> favourable: the opponent allows the most {metric === 'g' ? 'scoring chances (ISCF, the read that predicts goals; its goals allowed did not)' : 'shots, read on its Shots, ICF and IFF ranks weighted 2 : 1 : 1'} to that position (top third of the league); switch Shots / Goals above a rink to tint by the other</span>
-      <span><i className="is-mid" /> neutral</span>
-      <span><i className="is-tough" /> stingy: bottom third</span>
+      <span><i className="is-mid" /> neutral: ranks 12–21 of 32, or 12–22 when PropFinder tints the ice (its table’s split, the colours of the cells above)</span>
+      <span><i className="is-tough" /> stingy: ranks 22–32, or 23–32 from PropFinder</span>
       <span>on each player: the model’s projected SOG and goals from the latest saved run for this slate (3+ SOG and 1+ G odds in the tooltip), or a matchup read when no run exists; once the game is final, the actual shots, goals and assists with the model’s number after “m”; click for the player card</span>
       <span>🔥 on fire, by the model’s rule: 1+ point at 50% or better, 2.0+ scoring chances per game, 16+ minutes</span>
       <span><i className="nhlx-rk-lines-pill is-ok is-legend">GameDayTweets</i> under the team: where the lines came from — green, the beat writers’ tweet from the warm-up window (90 minutes before puck drop) or the game; amber, an earlier tweet (projected lines) or NHL.com’s projected lineup; red, a guess (PropFinder’s depth chart, the roster or the last known lineup) until a tweet or preview arrives; hover for the time and the link</span>
