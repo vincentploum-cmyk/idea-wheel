@@ -6,9 +6,10 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
 
 // The night's first-basket board: ?date=YYYY-MM-DD, &backfill=0 to skip re-reading stored results
-// that lack their opening plays (lib/nba/store.js firstBasketFor).
+// that lack their opening plays or their 1st-quarter lines (lib/nba/store.js firstBasketFor). The site token is
+// accepted too: the NBA data workflow's `q1` option walks the re-read with it.
 export async function GET(request) {
-  const auth = await authorize(request);
+  const auth = await authorize(request, { allowToken: true });
   if (!auth.ok) return auth.response;
   const url = new URL(request.url);
   const date = url.searchParams.get('date');
