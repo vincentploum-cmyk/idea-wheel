@@ -5,7 +5,7 @@ import { TeamLogo, Headshot } from './media';
 import { usePlayerCard } from './PlayerCard';
 import { PfTable, SortTh, Sel, UnderlineTabs, rankTone } from './pf-ui';
 import { TeamLink } from './links';
-import { GROUPS, OVERVIEW_COLS, SLOT_LINES, boardTables, overviewRows, matchupReads, groupKeyFor, shootersAt, figureFor, resultsAt, slotBoard, facingAt } from '@/lib/nhl-data/defense-board';
+import { GROUPS, OVERVIEW_COLS, PP_SHARE_MIN, SLOT_LINES, boardTables, overviewRows, matchupReads, groupKeyFor, shootersAt, figureFor, resultsAt, slotBoard, facingAt } from '@/lib/nhl-data/defense-board';
 
 // The Defense tab: ShotPropz-style cheat sheets from the stored box scores. What every
 // team gives up to each position group, ranked softest first (1 = the most allowed),
@@ -406,6 +406,12 @@ function TrackRecord({ grade, metric, loading }) {
   );
 }
 
+/** The D share cell's hover: the counts behind it and the league's share. */
+function ppTitle(r) {
+  if (r.ppD == null) return r.pp ? `${r.pp} power-play shots on goal allowed in the span: under ${PP_SHARE_MIN}, no share yet` : 'No power-play shots stored for the span yet (the play-by-play backfill fills older games)';
+  return `${r.ppToD} of the ${r.pp} power-play shots on goal ${r.abbr} allowed went to defensemen (${Math.round(r.ppD * 100)}%)${r.ppLeague != null ? ` · league ${Math.round(r.ppLeague * 100)}%` : ''} · rank 1 = the biggest share`;
+}
+
 /** Every team's defensive figures with a rank per column; sortable. */
 function Overview({ rows, playing, view, active, onPick }) {
   const [sort, setSort] = useState('sog');
@@ -430,8 +436,8 @@ function Overview({ rows, playing, view, active, onPick }) {
               <td className="is-left"><button type="button" className="nhlx-df-team" onClick={() => onPick(r.abbr)}><TeamLogo abbr={r.abbr} size={20} />{r.abbr}</button></td>
               <td>{r.gp}</td>
               {OVERVIEW_COLS.map((c) => (
-                <td key={c.key} className={`${rankTone(r.rank[c.key], n[c.key])}${sort === c.key ? ' is-sorted' : ''}`}>
-                  {r[c.key] == null ? <small>—</small> : <span className="nhlx-df-cell"><b>{fmt(r[c.key], c.digits)}</b><RankChip rank={r.rank[c.key]} n={n[c.key]} /></span>}
+                <td key={c.key} className={`${rankTone(r.rank[c.key], n[c.key])}${sort === c.key ? ' is-sorted' : ''}`} title={c.key === 'ppD' ? ppTitle(r) : undefined}>
+                  {r[c.key] == null ? <small>—</small> : <span className="nhlx-df-cell"><b>{c.pct ? `${Math.round(r[c.key] * 100)}%` : fmt(r[c.key], c.digits)}</b><RankChip rank={r.rank[c.key]} n={n[c.key]} /></span>}
                 </td>
               ))}
             </tr>

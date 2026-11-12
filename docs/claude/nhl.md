@@ -37,7 +37,11 @@
   against the league, a tie to the one furthest over the league's mean — stays on the board for the sort it gave and names
   nothing on the page) with the opponent's skater at that slot tonight, clickable to his card; a slot's header sorts by it
   (`__tests__/nhl-defense-line-table.test.jsx`), and a team overview
-  (GA / GP, SA / GP from the stored box scores; xGA / 60, high-danger shots against and pace from MoneyPuck), each column ranked;
+  (GA / GP, SA / GP from the stored box scores; xGA / 60, high-danger shots against and pace from MoneyPuck; **PP SOG to D**,
+  the share of the power-play shots on goal the team allowed that defensemen took over the span and venue picked, rank 1 = the
+  biggest, the counts and the league's share on the hover, 10+ power-play shots at the least, `PP_SHARE_MIN` — Vincent,
+  2026-11-12: "add D share of PP shots to the Defense tab"; the one power-play split that held from one half of 2025-26 to the
+  next, r 0.52, the forwards' shares r ≈ 0, `tools/predictors/pp_shots.py`), each column ranked;
   between them "Running hot" (`lib/nhl-data/streaks.js`, `streaks` in the defense API): every skater's current goal / point /
   3+ SOG streak from this season's stored games, his last game and tonight's opponent read off the same tables at his
   position (the study found no carry-over from a goal last game, so the streak is colour, the Tonight cell the matchup). The 1st goal tab (`lib/nhl-data/firstgoal.js`, `/api/nhl/data/firstgoal`, `FirstGoalPanel.jsx`) ranks
@@ -57,7 +61,11 @@
   (`settleGdtPages`). The stored skater rows carry the position plus its source (`posSrc`,
   `boxPos`) and the line slot (`line`: forward line 1-4 or defense pair 1-3, null for a
   box-score position), so results are logged per line (LW1, LW2, LW3 …; `defenseBySlot` in
-  `lib/nhl-data/defense.js`, `slots` in `/api/nhl/data/defense`). Each game record carries its
+  `lib/nhl-data/defense.js`, `slots` in `/api/nhl/data/defense`). Every skater row carries his power-play shots on goal
+  (`ppSog`, the last row column since 2026-11-12: `ppShotsOf` / `stampPpShots` in `game.js` off each play's situationCode, the
+  shooter's side up a skater with the other goalie in net, the shootout out; null on rows stored before it until the
+  `firstgoals` backfill mode stamps them, which `stampFirstGoals` now also does; `ppSog` is a `DEF_METRICS` column, so every
+  defense table has it per position). Each game record carries its
   first goal (`firstGoal`, scorer's row flagged `fg`; shootouts excluded) and `firstGoalsAllowed`
   reads first goals given up per defending team by venue, position and line slot (the defense
   card's "1st goal" column, `firstGoals` in the defense API); games logged without it get it

@@ -15,7 +15,7 @@ on:
         description: 'Last date (YYYY-MM-DD, ET)'
         required: true
       modes:
-        description: 'Refresh modes per date, comma-separated (settle = previews → lines, firstgoals = play-by-play → first goal + shots by period, restamp = stored snapshot only)'
+        description: 'Refresh modes per date, comma-separated (settle = previews → lines, firstgoals = play-by-play → first goal + shots by period + power-play shots, restamp = stored snapshot only)'
         required: false
         default: 'settle,firstgoals'
 
