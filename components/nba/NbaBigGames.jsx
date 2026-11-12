@@ -5,6 +5,9 @@ import { NBA_BIG, NBA_OUTLIERS } from '@/lib/nba/big';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { sortOutliers, nextSort, SortHead, recordText } from '@/components/picks/OutlierSort';
 import { NbaPlayerCardProvider, useNbaPlayerCard } from './NbaPlayerCard';
+import NbaSoftSpots from './NbaSoftSpots';
+import { headshotUrl } from '@/lib/nba/espn';
+import { teamLogo } from '@/lib/nba/teams';
 
 // The Big games tab (Vincent, 2026-11-01: "Do the same big games study for the NBA"; lib/nba/big.js,
 // docs/audits/2026-11-01-nba-big-games.md): per stat the night's likeliest 30+ / 40+ points, 12+ / 15+ rebounds, 10+ / 12+
@@ -153,7 +156,23 @@ const LEGEND = (
   </p>
 );
 
-/** The Big games tab: per stat the night's likeliest big games; `game` cuts it to one game (the head's dropdown). */
+/**
+ * The Soft spots list (lib/nba/soft-spots.js) on Big games since 2026-11-11 (Vincent: "Move the soft spots to the big games
+ * tab"), plain as the page's rule asks (no edge, no price); `game` cuts it to one game. A row opens the card.
+ */
+function SoftSpotsView({ board, game }) {
+  const open = useNbaPlayerCard();
+  const cut = game ? { ...board, games: board.games.filter((g) => String(g.id) === String(game)) } : board;
+  const onOpen = (r) => {
+    const side = (board.games || []).find((g) => String(g.id) === String(r.game))?.sides?.[r.team];
+    open({ key: r.key, player: side?.players?.find((p) => p.key === r.key) || r, team: r.team, opp: r.opp, venue: r.venue, market: r.market });
+  };
+  return <NbaSoftSpots board={cut} sport={{ headshotUrl, teamLogo }} onOpen={onOpen} plain />;
+}
+
+const VIEWS = [['big', 'Big games'], ['outliers', 'Outliers'], ['soft', 'Soft spots']];
+
+/** The Big games tab: per stat the night's likeliest big games, the outliers, the soft spots; `game` cuts it to one game (the head's dropdown). */
 export default function NbaBigGames({ board, game = null, initialView = 'big' }) {
   const [view, setView] = useState(initialView);
   const [market, setMarket] = useState('pts');
@@ -166,13 +185,17 @@ export default function NbaBigGames({ board, game = null, initialView = 'big' })
     <NbaPlayerCardProvider date={board.date}>
       <div className="ir-overview">
         <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="List">
-          {[['big', 'Big games'], ['outliers', 'Outliers']].map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setView(k)}>{l}</button>)}
+          {VIEWS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setView(k)}>{l}</button>)}
         </div>
-        <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="Stat">
-          {kinds.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={current === k} className={`nhlx-tab${current === k ? ' is-active' : ''}`} onClick={() => pick(k)}>{l}</button>)}
-        </div>
-        {view === 'big' ? <Rows board={board} market={market} game={game} /> : <OutlierRows board={board} market={outMarket} game={game} />}
-        {view === 'big' ? LEGEND : OUT_LEGEND}
+        {view === 'soft' ? <SoftSpotsView board={board} game={game} /> : (
+          <>
+            <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="Stat">
+              {kinds.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={current === k} className={`nhlx-tab${current === k ? ' is-active' : ''}`} onClick={() => pick(k)}>{l}</button>)}
+            </div>
+            {view === 'big' ? <Rows board={board} market={market} game={game} /> : <OutlierRows board={board} market={outMarket} game={game} />}
+            {view === 'big' ? LEGEND : OUT_LEGEND}
+          </>
+        )}
       </div>
     </NbaPlayerCardProvider>
   );

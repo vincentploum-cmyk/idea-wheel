@@ -134,3 +134,29 @@ describe('rendered', () => {
     expect(badges.find((b) => b.includes('>PF #3<'))).toContain('Soft spot: BOS allows the 3rd most points to PF this season');
   });
 });
+
+describe('where the list lives (Vincent, 2026-11-11: "Move the soft spots to the big games tab")', () => {
+  const NbaBigGames = require('../components/nba/NbaBigGames').default;
+  const { NbaGames } = require('../components/nba/NbaGames');
+  const two = () => { const b = fixture(); return { ...b, games: [b.games[0], { ...b.games[0], id: 'g2', away: 'MIA', home: 'ORL' }] }; };
+  test('Big games carries a Soft spots switch beside Big games and Outliers; Games no longer lists them', () => {
+    const big = renderToStaticMarkup(<NbaBigGames board={two()} />);
+    expect(big).toMatch(/role="tab"[^>]*>Big games</);
+    expect(big).toMatch(/role="tab"[^>]*>Outliers</);
+    expect(big).toMatch(/role="tab"[^>]*>Soft spots</);
+    const soft = renderToStaticMarkup(<NbaBigGames board={two()} initialView="soft" />);
+    expect(soft).toContain('NY #2');
+    expect(soft).not.toMatch(/\bEV\b|edge|juice|implie/i);   // plain, as the page asks
+    expect(renderToStaticMarkup(<NbaGames board={two()} shuffles={{}} />)).not.toContain('aria-label="Soft spots"');
+  });
+  test('the head’s game dropdown on Games: the picked game alone, opened; every game, closed, without one', () => {
+    const one = renderToStaticMarkup(<NbaGames board={two()} shuffles={{}} game="g2" />);
+    expect(one).toContain('aria-label="MIA at ORL"');
+    expect(one).not.toContain('aria-label="BOS at NY"');
+    expect(one).toContain('ir-gm is-open');
+    const all = renderToStaticMarkup(<NbaGames board={two()} shuffles={{}} />);
+    expect(all).toContain('aria-label="MIA at ORL"');
+    expect(all).toContain('aria-label="BOS at NY"');
+    expect(all).not.toContain('ir-gm is-open');
+  });
+});

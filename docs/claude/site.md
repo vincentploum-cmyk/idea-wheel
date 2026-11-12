@@ -32,7 +32,7 @@
   strong / lean / thin marks, 70 / 55 / 40% as the Boards tab read them: round marks off the shuffle's payload per stat,
   `useNbaShuffles` / `tierRows` over `tierBoard`, the book's rungs (`ladderBoard`) until they load, the highest projection
   first, a name opening the card), `#pts`, `#reb`, `#ast`, `#tpm`, `#pra` (`NbaStatList`: the same list across the night,
-  40 rows then "Show all"), `#big` (Big games, below, with the game dropdown), `#firstbasket` and `#sources` (Data sources).
+  40 rows then "Show all"), `#big` (Big games, below, with the game dropdown; its Soft spots switch since 2026-11-11), `#firstbasket` and `#sources` (Data sources). The game dropdown shows on `#matchups` too since 2026-11-11 (one picked game, listed alone and open).
   The Best plays board, Boards, Cheat sheet and Shuffle tabs are off the page (their components and routes stay; an old
   `#board` / `#shuffle` link opens Games). `__tests__/nba-games.test.jsx` (`MOCK_OUT` writes `games-nba-<theme>.html`). **The NFL page is eight
   plain tabs drawn as pills** (Vincent, 2026-11-01: "way too complicated … Remove the edge, implies, juice, etc… I just need

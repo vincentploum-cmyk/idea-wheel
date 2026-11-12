@@ -6,7 +6,6 @@ import { headshotUrl } from '@/lib/nba/espn';
 import { tierBoard, ladderBoard, NBA_BOARDS } from '@/lib/picks/boards';
 import { AllowedTable, windowsOf, tableFor, windowLabel, zoneTone, envPos as envPosOf } from './NbaCourt';
 import { NbaPlayerCardProvider, useNbaPlayerCard, WoEdgeTag } from './NbaPlayerCard';
-import NbaSoftSpots from './NbaSoftSpots';
 
 // The NBA page laid out as the NFL's (Vincent, 2026-11-01: "for nba, I need the same layout as nfl with as addition the
 // propfinder tables for each game when clicking on the game"): the night's games as a sportsbook lists them, each opening
@@ -296,24 +295,25 @@ function useOpenRow(board) {
   };
 }
 
-function GamesInner({ board, shuffles, openFirst = false }) {
+function GamesInner({ board, shuffles, openFirst = false, game = null }) {
   const onOpen = useOpenRow(board);
+  // The head's dropdown (Vincent, 2026-11-11: "on the games tab I should be able to select the games from a drop down"):
+  // one game, shown open; every game otherwise.
+  const picked = game ? board.games.filter((g) => String(g.id) === String(game)) : null;
+  const list = picked?.length ? picked : board.games;
   return (
     <div className="ir-gm-list is-wide">
-      {/* The soft spots (the regulars facing one of the five defenses that give up the most to their position): on Games since
-          2026-11-11, the Best plays board they were built for being off the page. */}
-      <NbaSoftSpots board={board} sport={{ headshotUrl, teamLogo }} onOpen={onOpen} plain />
       <div className="ir-gm-cols" aria-hidden="true"><span>Spread</span><span>Total</span></div>
-      {board.games.map((g, i) => <GameRow key={g.id} g={g} board={board} shuffles={shuffles} onOpen={onOpen} defaultOpen={openFirst && i === 0} />)}
+      {list.map((g, i) => <GameRow key={g.id} g={g} board={board} shuffles={shuffles} onOpen={onOpen} defaultOpen={(openFirst && i === 0) || !!picked?.length} />)}
       {LEGEND}
     </div>
   );
 }
 
 /** The Games tab: the night's games as a sportsbook lists them, each opening on PropFinder's tables and its players. */
-export function NbaGames({ board, shuffles, openFirst = false }) {
+export function NbaGames({ board, shuffles, openFirst = false, game = null }) {
   if (!board?.games?.length) return <div className="nhlx-empty">No games on this date.</div>;
-  return <NbaPlayerCardProvider date={board.date}><GamesInner board={board} shuffles={shuffles} openFirst={openFirst} /></NbaPlayerCardProvider>;
+  return <NbaPlayerCardProvider date={board.date}><GamesInner key={game || 'all'} board={board} shuffles={shuffles} openFirst={openFirst} game={game} /></NbaPlayerCardProvider>;
 }
 
 function ListInner({ board, shuffles, market }) {

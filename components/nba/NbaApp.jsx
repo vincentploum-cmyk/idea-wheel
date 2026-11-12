@@ -126,10 +126,10 @@ export default function NbaApp({ email }) {
         <section className="nhlx-bench nhlx-tabpanel ir-nfl-panel" id="matchups" role="tabpanel" aria-labelledby="tab-matchups" hidden={tab !== 'matchups'}>
           <div className="nhlx-wrap">
             <section className="nhlx-pk" aria-label="Games">
-              {head()}
+              {head({ games: true })}
               {pull.msg ? <p className="nhlx-auto-msg">{pull.msg}</p> : null}
               {err ? <div className="nhlx-alert">{err}</div> : null}
-              {board ? <NbaGames board={board} shuffles={shuffles} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null}
+              {board ? <NbaGames board={board} shuffles={shuffles} game={gameId || null} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null}
             </section>
           </div>
         </section>

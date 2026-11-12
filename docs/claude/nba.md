@@ -73,9 +73,13 @@
   the start screen owns `ir-game` / `ir-games`.
 - **On the Games tab since 2026-11-11** (Vincent: "I don't see a best plays tab" — the courts and the Best plays board
   are off the page since 2026-11-01, so the court verdict, the chips' Q1 badges and the Soft spots list built for them
-  were drawn nowhere): the **Soft spots list** heads the Games tab (`NbaSoftSpots` with `plain`: no Edge column, no
-  prices, no break-even — Vincent's rule of 2026-11-01 for the page, "Remove the edge, implies, juice"; ordered by the
-  board's chance, then the projection), each defense's **"in all" pill reads as the verdict** (`AllowsVerdict` in
+  were drawn nowhere): the **Soft spots list**, plain (`NbaSoftSpots` with `plain`: no Edge column, no prices, no
+  break-even — Vincent's rule of 2026-11-01 for the page, "Remove the edge, implies, juice"; ordered by the board's chance,
+  then the projection), headed the Games tab for a day and is **on Big games since 2026-11-11** (Vincent: "Move the soft
+  spots to the big games tab"): a third switch beside Big games and Outliers (`VIEWS` / `SoftSpotsView` in
+  `NbaBigGames.jsx`), cut to the head's picked game. **The head's game dropdown shows on Games too** (Vincent, the same
+  day: "on the games tab I should be able to select the games from a drop down"): one `gameId` for both tabs; a picked
+  game is listed alone and opened (`NbaGames` / `GamesInner` `game`), "All games" lists every game closed. Each defense's **"in all" pill reads as the verdict** (`AllowsVerdict` in
   `NbaGames.jsx`: "LAL **gives up a lot of points** · 121.4 a game · #2 of 30 · league 114.6", off `side.against.stats`, the
   pill's tint by third as before), and the **Q1 badge** sits after each name in the players' ladders and the stat lists
   (`tierRows` carries `q1` = the side player's `q1[market]`; none for PRA). The court pieces below stay for when the
