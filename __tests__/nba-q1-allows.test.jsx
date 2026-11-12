@@ -87,3 +87,12 @@ test('withQ1Reads puts the read on every side player, the board left untouched; 
   expect(renderToStaticMarkup(<Q1Badge p={p} metric="pts" />)).toMatch(/^<i class="nhlx-rk-per-b ir-q1 is-soft" title="1st quarter points: A9 allow/);
   expect(renderToStaticMarkup(<Q1Badge p={p} metric="stl" />)).toBe('');
 });
+
+test('on the Games tab: the Q1 badge beside the name follows the stat; the soft spots list shows no edge and no price', () => {
+  const { tierRows } = require('@/components/nba/NbaGames');
+  const board = { games: [{ id: 'g', away: 'B9', home: 'A9', sides: { B9: { team: 'B9', opp: 'A9', players: [{ key: 'k', player: 'Guard B9', q1: { pts: { tone: 'soft', text: 'x' } } }] } } }] };
+  const rows = [{ team: 'B9', key: 'k', player: 'Guard B9', proj: 20 }];
+  jest.spyOn(require('@/lib/picks/boards'), 'ladderBoard').mockReturnValue(rows);
+  expect(tierRows(board, null, 'pts')[0].q1).toEqual({ tone: 'soft', text: 'x' });
+  expect(tierRows(board, null, 'pra')[0].q1).toBeNull();
+});

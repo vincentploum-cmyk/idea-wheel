@@ -6,6 +6,7 @@ import { headshotUrl } from '@/lib/nba/espn';
 import { tierBoard, ladderBoard, NBA_BOARDS } from '@/lib/picks/boards';
 import { AllowedTable, windowsOf, tableFor, windowLabel, zoneTone, envPos as envPosOf } from './NbaCourt';
 import { NbaPlayerCardProvider, useNbaPlayerCard, WoEdgeTag } from './NbaPlayerCard';
+import NbaSoftSpots from './NbaSoftSpots';
 
 // The NBA page laid out as the NFL's (Vincent, 2026-11-01: "for nba, I need the same layout as nfl with as addition the
 // propfinder tables for each game when clicking on the game"): the night's games as a sportsbook lists them, each opening
@@ -49,8 +50,11 @@ export function tierRows(board, shuffles, market, gameId = null) {
   const spot = new Map();
   // His priced line of the stat with the widest without-teammates edge (board.js WO_EDGE), for the row's "w/o edge" tag.
   const wo = new Map();
+  // His Q1 read for the stat (lib/nba/quarter.js, put on the board by boardFor): the row's Q1 badge.
+  const q1 = new Map();
   for (const g of board?.games || []) for (const t of [g.away, g.home]) for (const p of g.sides?.[t]?.players || []) {
     spot.set(`${t}|${p.key}`, p.envPos || envPosOf(p));
+    if (p.q1?.[market]) q1.set(`${t}|${p.key}`, p.q1[market]);
     for (const x of p.plays || []) {
       const e = x.market === market ? x.without?.edge : null;
       if (!e) continue;
@@ -58,7 +62,7 @@ export function tierRows(board, shuffles, market, gameId = null) {
       if (!prev || e.gap > prev.gap) wo.set(k, { ...e, line: x.line, side: x.side, names: x.without.names || [] });
     }
   }
-  return rows.map((r) => ({ ...r, envPos: spot.get(`${r.team}|${r.key}`) || null, woEdge: wo.get(`${r.team}|${r.key}`) || null })).sort((a, b) => (b.proj ?? -1) - (a.proj ?? -1) || a.player.localeCompare(b.player));
+  return rows.map((r) => ({ ...r, envPos: spot.get(`${r.team}|${r.key}`) || null, woEdge: wo.get(`${r.team}|${r.key}`) || null, q1: q1.get(`${r.team}|${r.key}`) || null })).sort((a, b) => (b.proj ?? -1) - (a.proj ?? -1) || a.player.localeCompare(b.player));
 }
 
 function Who({ r, game = false, onOpen }) {
@@ -67,6 +71,7 @@ function Who({ r, game = false, onOpen }) {
       {r.espnId ? <img src={headshotUrl(r.espnId)} alt="" width="28" height="28" loading="lazy" /> : <img src={teamLogo(r.team)} alt="" width="28" height="28" loading="lazy" className="ir-nfl-logo" />}
       <span>
         <button type="button" className="ir-big-name" onClick={() => onOpen?.(r)}><b>{r.player}</b></button>
+        {r.q1 ? <i className={`nhlx-rk-per-b ir-q1 is-${r.q1.tone}`} title={`${r.q1.text} · green = the opponent's 1st quarter and his own both lean good, red = both lean bad, amber = they cancel out or sit in the middle`}>Q1</i> : null}
         <small>
           {r.team} · {r.slot && r.depth ? `${r.slot}${r.depth}` : r.pos || '—'}{game ? ` · ${r.venue === 'H' ? 'vs' : '@'} ${r.opp}` : ''}
           {r.health === 'DTD' ? <> · <span className="ir-health is-dtd">DTD</span></> : null}
@@ -139,6 +144,20 @@ export const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
  * picks the position), the table's cell for the pick in a line, then the opposing team's players at that position with
  * their ladders, the highest projection first, and who is out on that team.
  */
+const VERDICT_WORDS = { soft: 'gives up a lot of', mid: 'gives up an average number of', tough: 'gives up few' };
+const VERDICT_NOUN = { pts: 'points', reb: 'rebounds', ast: 'assists', tpm: 'threes', pra: 'points + rebounds + assists' };
+
+/**
+ * The defense's headline for the stat (Vincent, 2026-11-10: "so that I can quickly see if the specific team allows shots or
+ * not", the NHL rink's verdict): what it gives up to all positions this season, as words tinted by its third — green "gives up
+ * a lot of points", amber "an average number of", red "few" — with the figure, the rank and the league's.
+ */
+export function AllowsVerdict({ side, all, market, unit }) {
+  const tone = zoneTone(all.rank, all.count);
+  const title = `${teamName(side.opp)} gives up ${num(all.value)} ${unit} a game to all positions this season${side.against?.gp ? ` (${side.against.gp} games)` : ''}${all.l10 != null ? ` · ${num(all.l10)} over its last ten` : ''}${all.league != null ? ` · the league ${num(all.league)}` : ''} · rank 1 = the most; green = the top third, red = the bottom third`;
+  return <span className={`ir-gm-cell ir-gm-verdict is-${tone}`} title={title}>{side.opp} <b>{VERDICT_WORDS[tone] || 'gives up'} {VERDICT_NOUN[market] || unit}</b> · {num(all.value)} a game · #{all.rank} of {all.count}{all.league != null ? ` · league ${num(all.league)}` : ''}</span>;
+}
+
 export function DefenseBlock({ side, season, market, pos, onPos, rows, onOpen, shuffled }) {
   const windows = windowsOf(side.allowed);
   const [win, setWin] = useState(() => (windows.includes('l10') ? 'l10' : 'season'));
@@ -167,8 +186,8 @@ export function DefenseBlock({ side, season, market, pos, onPos, rows, onOpen, s
       <AllowedTable side={side} win={view} metric={market} season={season} onWin={setWin} onPos={onPos} hiPos={pos} sheetMarks pickWord="below" />
       <div className="nhlx-pfd-head ir-gm-players">
         <b>{side.team}’s {pos ? `${pos}s` : 'players'} · {NBA_STATS.find(([k]) => k === market)[1]}</b>
+        {all ? <AllowsVerdict side={side} all={all} market={market} unit={unit} /> : null}
         {cell ? <span className={`ir-gm-cell is-${zoneTone(cell.rankBlend ?? cell.rank, count)}`} title={lg != null ? `The league's average at ${pos}: ${num(lg)} a game` : ''}>{side.opp} gives up {num(cell.value)} {unit} a game to {pos}s{cell.rank ? ` · #${cell.rank} of ${count}` : ''} · {windowLabel(view, side.allowed, season)}{lg != null ? ` · league ${num(lg)}` : ''}</span> : null}
-        {all ? <span className={`ir-gm-cell is-${zoneTone(all.rank, all.count)}`} title={`${teamName(side.opp)} gives up ${num(all.value)} ${unit} a game to all positions this season${side.against?.gp ? ` (${side.against.gp} games)` : ''}${all.l10 != null ? ` · ${num(all.l10)} over its last ten` : ''}${all.league != null ? ` · the league ${num(all.league)}` : ''} · rank 1 = the most`}>{side.opp} gives up {num(all.value)} {unit} a game in all · #{all.rank} of {all.count}{all.league != null ? ` · league ${num(all.league)}` : ''}</span> : null}
         {tpaCell || tpaAll ? <span className={`ir-gm-cell is-${zoneTone(tpaAll?.rank ?? tpaCell?.rank, tpaAll?.count ?? count)}`} title={`Three-point attempts ${teamName(side.opp)} allows a game (PropFinder): more attempts, more threes made — the threes' matchup on the board${tpaAll?.l10 != null ? ` · ${num(tpaAll.l10)} over its last ten` : ''}`}>3PA allowed{tpaCell ? ` · ${num(tpaCell.value)} to ${pos}s${tpaCell.rank ? ` (#${tpaCell.rank})` : ''}` : ''}{tpaAll ? ` · ${num(tpaAll.value)} in all (#${tpaAll.rank} of ${tpaAll.count}${tpaAll.league != null ? `, league ${num(tpaAll.league)}` : ''})` : ''}</span> : null}
         {!shuffled ? <small className="nhlx-auto-meta">the book’s rungs until the round marks load</small> : null}
       </div>
@@ -281,6 +300,9 @@ function GamesInner({ board, shuffles, openFirst = false }) {
   const onOpen = useOpenRow(board);
   return (
     <div className="ir-gm-list is-wide">
+      {/* The soft spots (the regulars facing one of the five defenses that give up the most to their position): on Games since
+          2026-11-11, the Best plays board they were built for being off the page. */}
+      <NbaSoftSpots board={board} sport={{ headshotUrl, teamLogo }} onOpen={onOpen} plain />
       <div className="ir-gm-cols" aria-hidden="true"><span>Spread</span><span>Total</span></div>
       {board.games.map((g, i) => <GameRow key={g.id} g={g} board={board} shuffles={shuffles} onOpen={onOpen} defaultOpen={openFirst && i === 0} />)}
       {LEGEND}

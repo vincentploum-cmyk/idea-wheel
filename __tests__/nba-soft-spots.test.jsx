@@ -114,6 +114,13 @@ describe('rendered', () => {
     expect(done).toContain('is-hit');
     expect(done).toContain('is-miss');
   });
+  test('plain, on the Games tab (Vincent, 2026-11-01: no edge, no implied, no juice): the line and the chance, no price', () => {
+    const html = renderToStaticMarkup(<NbaSoftSpots board={fixture()} sport={sport} onOpen={() => {}} plain />);
+    expect(html).toContain('NY #2');
+    expect(html).toContain('62%');
+    expect(html).not.toMatch(/\bEV\b|edge|juice|implie|break/i);
+    expect(html).not.toContain('-163');
+  });
   test('the court: one flame for a regular in a top-five spot, both reasons on its hover when he is hot too', () => {
     const g = fixture().games[0];
     const html = renderToStaticMarkup(<CourtPair g={g} metric="pts" onMetric={() => {}} sport={{ ...sport, teamName: (t) => t, groups: [] }} />);

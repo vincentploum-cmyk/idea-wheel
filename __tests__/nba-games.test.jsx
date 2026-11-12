@@ -126,11 +126,11 @@ describe('the NBA games, the NFL’s layout', () => {
     const side = { team: 'DEN', opp: 'LAL', venue: 'H', out: [], allowed, against: { gp: 10, stats: { tpm: { value: 14.2, rank: 6, count: 30, league: 13.1, l10: 14.8 }, tpa: { value: 39.5, rank: 3, count: 30, league: 35.2, l10: 40.1 } } }, players: [] };
     const html = renderToStaticMarkup(<DefenseBlock side={side} season={2026} market="tpm" pos="PG" onPos={() => {}} rows={[]} onOpen={() => {}} shuffled />);
     expect(html).toMatch(/<th class="is-on">3PM<\/th><th[^>]*>3PA<\/th>/);
-    expect(html).toContain('LAL gives up 14.2 3PM a game in all · #6 of 30 · league 13.1');
+    expect(html).toContain('LAL <b>gives up a lot of threes</b> · 14.2 a game · #6 of 30 · league 13.1');
     expect(html).toContain('3PA allowed · 8.4 to PGs (#4) · 39.5 in all (#3 of 30, league 35.2)');
     // Points: the figure in all positions, no 3PA line.
     const pts = renderToStaticMarkup(<DefenseBlock side={{ ...side, against: { gp: 10, stats: { pts: { value: 118.4, rank: 7, count: 30, league: 114.6 } } } }} season={2026} market="pts" pos={null} onPos={() => {}} rows={[]} onOpen={() => {}} shuffled />);
-    expect(pts).toContain('LAL gives up 118.4 pts a game in all · #7 of 30 · league 114.6');
+    expect(pts).toContain('LAL <b>gives up a lot of points</b> · 118.4 a game · #7 of 30 · league 114.6');
     expect(pts).not.toContain('3PA allowed');
     const out = process.env.MOCK_OUT;
     if (!out) return;

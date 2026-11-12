@@ -1233,6 +1233,8 @@ a.nhlx-rk-lines-pill:hover { text-decoration: underline; }
 .nhlx-rk-per-b.is-mid { color: var(--warn-fg); background: var(--warn-bg); border-color: var(--warn-line); }
 .nhlx-rk-per-b.is-tough { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-line); }
 .nhlx-rk-per-b.ir-q1 { flex: none; min-width: 0; padding: 0 0.5cqw; letter-spacing: 0.02em; }
+.nhlx-db-player .nhlx-rk-per-b.ir-q1 { font-size: 11px; padding: 0 4px; margin-left: 6px; vertical-align: 1px; }
+.ir-gm-verdict b { font-weight: 700; }
 .nhlx-rk-line { display: block; margin-top: 2px; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .nhlx-rk-line b { color: var(--heading); font-weight: 600; }
 .nhlx-rk-verdict { font-style: normal; font-weight: 700; color: var(--muted); background: var(--bg-soft); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }

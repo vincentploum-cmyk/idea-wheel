@@ -71,6 +71,15 @@
   table), and "Show the team columns and the tables" folds the columns and the five group tables. A player listed day-to-day
   is no longer greyed on the court or in the Tonight table (`p.out`, not any injury listing). Class names `ir-gf-*`:
   the start screen owns `ir-game` / `ir-games`.
+- **On the Games tab since 2026-11-11** (Vincent: "I don't see a best plays tab" — the courts and the Best plays board
+  are off the page since 2026-11-01, so the court verdict, the chips' Q1 badges and the Soft spots list built for them
+  were drawn nowhere): the **Soft spots list** heads the Games tab (`NbaSoftSpots` with `plain`: no Edge column, no
+  prices, no break-even — Vincent's rule of 2026-11-01 for the page, "Remove the edge, implies, juice"; ordered by the
+  board's chance, then the projection), each defense's **"in all" pill reads as the verdict** (`AllowsVerdict` in
+  `NbaGames.jsx`: "LAL **gives up a lot of points** · 121.4 a game · #2 of 30 · league 114.6", off `side.against.stats`, the
+  pill's tint by third as before), and the **Q1 badge** sits after each name in the players' ladders and the stat lists
+  (`tierRows` carries `q1` = the side player's `q1[market]`; none for PRA). The court pieces below stay for when the
+  courts return.
 - **The court head's verdict and the chips' Q1 badge** (Vincent, 2026-11-10, after the NHL rink's: "build the court
   headline verdict plus a Q1 badge"). The head: "CHI **gives up a lot of points** · 121.4 a game · #2 of 30" for the stat
   the court shows (`AllowsLine` in `NbaCourt.jsx`, `.nhlx-rk-verdict` shared with the rink; `side.allows` from
