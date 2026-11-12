@@ -60,9 +60,8 @@ figure kept on the hover.
 
 ## Not changed
 
-The model's own cheat-sheet multiplier (`cheatSheetMajorMultiplier` in `components/nhl/model-core.js`) still leans on
-the Goals/G rank for goals (+0.18 in the top ten) and on Shots / IFF / ISCF for shots; the model's math is ported from
-the local app and is left as is. The top-5 soft-spot badge (`topSpot`) and the shuffle's Matchup column
+The model's shots multiplier (`cheatSheetMajorMultiplier`, shots branch) still reads Shots / IFF / ISCF steps; its
+goals branch changed (below). The top-5 soft-spot badge (`topSpot`) and the shuffle's Matchup column
 (`matchupOf`) still rank by Shots/G and Goals/G.
 
 ## The model's goals multiplier, replayed (Vincent: "is this not correct?")
@@ -82,4 +81,11 @@ the local app and is left as is. The top-5 soft-spot badge (`topSpot`) and the s
 
 The bands the full multiplier sorts skaters into landed within ±6% of their own rate whatever it said (×1.27 said,
 ×1.03 to ×1.06 landed), and the 1+ goal Brier gets worse with it: 0.12733 on his rate alone, 0.12915 (L10) / 0.12887
-(season) with the multiplier. Not changed here: the model's math is ported from the local app.
+(season) with the multiplier.
+
+**Changed (Vincent: "replace it with the smooth ISCF term and port it").** The goals branch is `iscfGoalMultiplier`:
+×exp(0.04 × (16.5 − rank) / 9.24), the season-table fit (L10 fitted 0.027); in the same replay a smooth ISCF term
+fitted out of fold took 1+ goal Brier from 0.12733 to 0.12699–0.12702 (−0.25%), while fixed top-10 / bottom-third ISCF
+steps did not beat his rate. Ported to App.jsx as group 5 of `tools/port-model-core.mjs`. It feeds the goal ladder
+(attack score, goal tier); the published goal odds come from λ goals, whose opponent read `defenseGoalMultiplier`
+(Goals/G 50%, ISCF 30%, Shots 20%) is unchanged.

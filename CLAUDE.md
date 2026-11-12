@@ -75,7 +75,7 @@ under ~150 lines.
   opponent's table in any number is this season's (`positionAllowed`, `defenseBlocks`, the Defense tab's
   `seasonDefense`). (Vincent's call, 2026-10-27.)
 - Keep the model's math untouched when restyling; port logic changes from the local app into
-  `components/nhl/model-core.js` (pipeline) and `NhlModel.jsx` (UI). Four changes went the other way and must
+  `components/nhl/model-core.js` (pipeline) and `NhlModel.jsx` (UI). Five changes went the other way and must
   be ported into `App.jsx` (`node tools/port-model-core.mjs`): read "Porting model changes" at the end of
   `docs/claude/nhl.md` before touching the model.
 - Never change the NHL model's parsers to fit the automation; change the builders instead (`docs/claude/nhl.md`).

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Port the site's model changes into the local model app (App.jsx, the model's source of truth),
-// the same edits made to components/nhl/model-core.js, in four groups, each all-or-nothing:
+// the same edits made to components/nhl/model-core.js, in five groups, each all-or-nothing:
 //   1. 2026-10-13 (a022443): p2s / p3s / p4s / p5s are the Poisson tails of λ shots; the ladder's
 //      figures ride along as ladderP3s / P4s / P5s and still set the attack score.
 //   2. 2026-10-20 (4ec641f): p1g / p2g / p3g are the Poisson tails of λ goals; the ladder's figures
@@ -11,6 +11,9 @@
 //   4. 2026-11-07: projectedToiFromLineup refitted on the posted lines (TOI_FIT: the line's constant
 //      + 0.345 · last 5 + 0.442 · season, in place of max(last 5, the line's floor)); its call passes
 //      skater.toiL5 and skater.toiSeason (docs/audits/2026-11-07-nhl-toi.md).
+//   5. 2026-11-12: cheatSheetMajorMultiplier's goals branch is a smooth ISCF/G term
+//      (iscfGoalMultiplier, ISCF_GOAL_PER_SD), the Goals/G rank steps out
+//      (docs/audits/2026-11-12-nhl-shots-environment.md).
 //
 //   node tools/port-model-core.mjs [path to App.jsx] [--check]
 //
@@ -177,11 +180,60 @@ const TOI = [
   },
 ];
 
+const GOALS_ENV_OLD = '  } else {\n'
+  + '    const openScore = [goalRank, iscfRank, shotRank].filter((v) => soft(v, 16)).length;\n'
+  + '    const hardScore = [goalRank, iscfRank, shotRank].filter((v) => hard(v)).length;\n'
+  + '    if (open(goalRank, 10)) mult += 0.18;\n'
+  + '    else if (soft(goalRank, 16)) mult += 0.09;\n'
+  + '    if (open(iscfRank, 10)) mult += 0.12;\n'
+  + '    if (openScore >= 2) mult += 0.07;\n'
+  + '    if (hardScore >= 2) mult -= 0.18;\n'
+  + '    else if (hard(goalRank, 24)) mult -= 0.12;\n'
+  + '  }\n'
+  + "  if (posKey === 'D' && market === 'goals') mult *= 0.88;\n";
+
+const GOALS_ENV = [
+  {
+    name: 'the smooth ISCF goals term (iscfGoalMultiplier)',
+    old: 'function cheatSheetMajorMultiplier(posStats, market, posKey) {\n',
+    new: '// ─── GOALS ENVIRONMENT (2026-11-12) ───────────────────────────────────────────\n'
+      + '// The opponent\'s goals read on the cheat sheet is its ISCF/G rank at the position, as a smooth\n'
+      + '// term: ×exp(0.04 per SD of rank), about +7% for the rank 1 defense and -6.5% for rank 32.\n'
+      + '// Graded on 2025-26 and 2026-27 to Nov 11 (45,393 skater-games, the opponent\'s season table\n'
+      + '// ranked each morning, on top of his own goal rate; docs/audits/2026-11-12-nhl-shots-environment.md):\n'
+      + '// the Goals/G rank predicted nothing (top 10: +0.8% to +4% where the old steps added +16%; 11-16\n'
+      + '// below his rate where they added +8%), ISCF/G carried the read (top 10: +3.6% to +7.1%; fitted,\n'
+      + '// 93-98% of the weight), and only a smooth ISCF term beat his rate alone (1+ goal Brier -0.25%;\n'
+      + '// the old steps cost +1.2% to +1.4%). Vincent: "replace it with the smooth ISCF term and port it".\n'
+      + 'const ISCF_GOAL_PER_SD = 0.04;\n'
+      + 'function iscfGoalMultiplier(iscfRank, teams = 32) {\n'
+      + '  const r = Number(iscfRank);\n'
+      + '  if (iscfRank == null || !Number.isFinite(r) || r <= 0) return 1;\n'
+      + '  const n = teams || 32;\n'
+      + '  const z = ((n + 1) / 2 - r) / (n / Math.sqrt(12));\n'
+      + '  return +Math.exp(ISCF_GOAL_PER_SD * z).toFixed(3);\n'
+      + '}\n'
+      + '\n'
+      + 'function cheatSheetMajorMultiplier(posStats, market, posKey) {\n',
+  },
+  {
+    name: 'the cheat sheet\'s goals multiplier (the ISCF term in place of the Goals/G steps)',
+    old: GOALS_ENV_OLD,
+    new: '  } else {\n'
+      + '    // Goals: the smooth ISCF term (2026-11-12, above iscfGoalMultiplier); the Goals/G rank steps\n'
+      + '    // (+18% / +9% / -12%, and the soft / hard counts with Shots) predicted nothing over his rate.\n'
+      + '    mult = iscfGoalMultiplier(iscfRank);\n'
+      + '  }\n'
+      + "  if (posKey === 'D' && market === 'goals') mult *= 0.88;\n",
+  },
+];
+
 export const GROUPS = [
   { key: 'shotsOdds20261013', label: 'shots odds (2026-10-13): p2s / p3s / p4s / p5s the Poisson tails of λ shots, the ladder as ladderP3s / P4s / P5s', edits: SHOTS_ODDS },
   { key: 'goalOdds20261020', label: 'goal odds (2026-10-20): p1g / p2g / p3g the Poisson tails of λ goals, the ladder as ladderP1g / P2g / P3g', edits: GOAL_ODDS },
   { key: 'weights20261027', label: 'venue split and head-to-head at a quarter (2026-10-27)', edits: WEIGHTS, constants: true },
   { key: 'toi20261107', label: 'projected minutes (2026-11-07): the line\'s constant + 0.345 · last 5 + 0.442 · season, refitted on the posted lines', edits: TOI },
+  { key: 'goalsEnv20261112', label: 'goals environment (2026-11-12): the cheat sheet\'s goals multiplier is a smooth ISCF/G term, the Goals/G steps out', edits: GOALS_ENV },
 ];
 
 /** The end index of the `function poissonAtLeast(` body (after its closing brace), or -1. */

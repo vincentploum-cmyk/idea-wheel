@@ -4270,6 +4270,24 @@ function buildCapabilityBaseFloors({ skater, pHA, isHome, effectiveToi, playerTo
   };
 }
 
+// ─── GOALS ENVIRONMENT (2026-11-12) ───────────────────────────────────────────
+// The opponent's goals read on the cheat sheet is its ISCF/G rank at the position, as a smooth
+// term: ×exp(0.04 per SD of rank), about +7% for the rank 1 defense and -6.5% for rank 32.
+// Graded on 2025-26 and 2026-27 to Nov 11 (45,393 skater-games, the opponent's season table
+// ranked each morning, on top of his own goal rate; docs/audits/2026-11-12-nhl-shots-environment.md):
+// the Goals/G rank predicted nothing (top 10: +0.8% to +4% where the old steps added +16%; 11-16
+// below his rate where they added +8%), ISCF/G carried the read (top 10: +3.6% to +7.1%; fitted,
+// 93-98% of the weight), and only a smooth ISCF term beat his rate alone (1+ goal Brier -0.25%;
+// the old steps cost +1.2% to +1.4%). Vincent: "replace it with the smooth ISCF term and port it".
+const ISCF_GOAL_PER_SD = 0.04;
+function iscfGoalMultiplier(iscfRank, teams = 32) {
+  const r = Number(iscfRank);
+  if (iscfRank == null || !Number.isFinite(r) || r <= 0) return 1;
+  const n = teams || 32;
+  const z = ((n + 1) / 2 - r) / (n / Math.sqrt(12));
+  return +Math.exp(ISCF_GOAL_PER_SD * z).toFixed(3);
+}
+
 function cheatSheetMajorMultiplier(posStats, market, posKey) {
   const ranks = posStats?.ranks || {};
   const goalRank = ranks.goals ?? null;
@@ -4302,14 +4320,9 @@ function cheatSheetMajorMultiplier(posStats, market, posKey) {
     if (hardScore >= 3) mult -= 0.18;
     else if (hard(assistRank, 24)) mult -= 0.12;
   } else {
-    const openScore = [goalRank, iscfRank, shotRank].filter((v) => soft(v, 16)).length;
-    const hardScore = [goalRank, iscfRank, shotRank].filter((v) => hard(v)).length;
-    if (open(goalRank, 10)) mult += 0.18;
-    else if (soft(goalRank, 16)) mult += 0.09;
-    if (open(iscfRank, 10)) mult += 0.12;
-    if (openScore >= 2) mult += 0.07;
-    if (hardScore >= 2) mult -= 0.18;
-    else if (hard(goalRank, 24)) mult -= 0.12;
+    // Goals: the smooth ISCF term (2026-11-12, above iscfGoalMultiplier); the Goals/G rank steps
+    // (+18% / +9% / -12%, and the soft / hard counts with Shots) predicted nothing over his rate.
+    mult = iscfGoalMultiplier(iscfRank);
   }
   if (posKey === 'D' && market === 'goals') mult *= 0.88;
   return clamp(mult, market === 'goals' ? 0.74 : 0.76, market === 'goals' ? 1.34 : 1.30);
@@ -6177,6 +6190,7 @@ export {
   capabilityStageMultiplier,
   capabilityStyleMultipliers,
   cheatSheetMajorMultiplier,
+  iscfGoalMultiplier,
   clamp,
   classifyCapabilityStyle,
   classifyDefenseLaneState,

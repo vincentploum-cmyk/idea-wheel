@@ -808,8 +808,16 @@
   the line's floor); its call passes `skater.toiL5` and `skater.toiSeason`; a skater with no minutes gets the line's mean
   (Vincent: "yes, refit on the stored lineups and swap it in"; `docs/audits/2026-11-07-nhl-toi.md`,
   `__tests__/nhl-model-toi.test.js`).
-  `node tools/port-model-core.mjs [App.jsx]` applies all four ports on the Mac (the 2026-10-13 shots odds, the
-  2026-10-20 goal odds, the 2026-10-27 weights, the 2026-11-07 minutes), each group all-or-nothing by exact-text anchors: a backup beside the
+  And on 2026-11-12 (port it too): `cheatSheetMajorMultiplier`'s goals branch is a smooth ISCF/G term
+  (`iscfGoalMultiplier`, ×exp(0.04 per SD of rank): about +7% at rank 1, -6.5% at rank 32, `ISCF_GOAL_PER_SD`) in place
+  of the Goals/G steps (+18% / +9% / -12% and the soft / hard counts), the D ×0.88 kept; the Goals/G rank predicted
+  nothing over a skater's rate and the old steps made 1+ goal less accurate (`docs/audits/2026-11-12-nhl-shots-environment.md`,
+  Vincent: "replace it with the smooth ISCF term and port it"; `__tests__/nhl-model-goals-env.test.js`). It reaches the
+  goal ladder (`ladderP1g` / `P2g`: the attack score and the goal tier), not the published goal odds, which are the
+  Poisson tails of λ goals; λ's own opponent read is `defenseGoalMultiplier` (Goals/G 50%, ISCF 30%, Shots 20%),
+  untouched.
+  `node tools/port-model-core.mjs [App.jsx]` applies all five ports on the Mac (the 2026-10-13 shots odds, the
+  2026-10-20 goal odds, the 2026-10-27 weights, the 2026-11-07 minutes, the 2026-11-12 goals environment), each group all-or-nothing by exact-text anchors: a backup beside the
   file, a group already there reported as ported, a group with a differing anchor skipped and named, `--check` to
   look first. On 2026-10-27 App.jsx had neither odds port: the local app had published the ladder's odds since Oct 13.
 
