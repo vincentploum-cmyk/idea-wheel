@@ -28,6 +28,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const CONSTANTS_BLOCK = `
 // ─── WEIGHTS UNDER REVIEW (2026-10-27) ────────────────────────────────────────
@@ -311,7 +312,10 @@ export function portText(src, groups = GROUPS) {
   return { text, results };
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === new URL(import.meta.url).pathname;
+// Compare real paths: on macOS /tmp is a link to /private/tmp, and a plain comparison read the script as
+// imported and did nothing, silently (2026-11-12).
+const realOf = (p) => { try { return fs.realpathSync(p); } catch { return path.resolve(p); } };
+const isMain = !!process.argv[1] && realOf(process.argv[1]) === realOf(fileURLToPath(import.meta.url));
 if (isMain) {
   const args = process.argv.slice(2);
   const check = args.includes('--check');
