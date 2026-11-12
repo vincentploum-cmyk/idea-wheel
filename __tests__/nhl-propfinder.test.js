@@ -190,6 +190,8 @@ describe('propfinder defense tabs (the table above each rink)', () => {
     expect(band).toMatchObject({ source: 'propfinder', seasonLabel: 'L10', window: 'the last 10 games', teamCount: 32 });
     expect(band.season.sog).toBe(pf.opponentsByPosWindow.l10.D.teams.LAK.sog);
     expect(band.rank.sog).toBe(pf.opponentsByPosWindow.l10.D.ranks.LAK.sog);
+    expect(band.season.icf).toBe(pf.opponentsByPosWindow.l10.D.teams.LAK.icf ?? null);
+    expect(band.rank.icf).toBe(pf.opponentsByPosWindow.l10.D.ranks.LAK.icf ?? null);
     expect(defenseBandFromTab(d.tabs[1], 'XX')).toBeNull();
     expect(defenseBandFromTab(null, 'D')).toBeNull();
   });
@@ -317,7 +319,7 @@ describe('defense tabs without holes', () => {
     expect(card.tab.key).toBe('season-2026');
     expect(card.text).toBe('the 2026 season');
     expect(card.l10).toBeNull();
-    expect(card.rows.LW).toEqual({ band: expect.objectContaining({ season: { gp: 4, sog: 5, g: 1, iscf: 7 }, rank: { sog: null, g: 1, iscf: null }, teamCount: 3 }), l10: null });
+    expect(card.rows.LW).toEqual({ band: expect.objectContaining({ season: { gp: 4, sog: 5, g: 1, icf: 12, iscf: 7 }, rank: { sog: null, g: 1, icf: null, iscf: null }, teamCount: 3 }), l10: null });
     expect(Object.keys(card.rows)).toEqual(['LW', 'C', 'RW', 'D']);
     expect(defenseCardFromTabs(tabs, 'nope').tab.key).toBe('season-2026');   // a tab the side lacks: the default
     const l10 = { key: 'l10', label: 'L10', kind: 'window', windowGames: 10, split: null, season: 2026, count: 3, rows: { LW: { gp: 10, sog: 6.1, g: 0.9, ranks: { sog: 1, g: 2 } } } };

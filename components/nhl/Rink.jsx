@@ -292,11 +292,22 @@ const WINDOWS = [['home', 'Home'], ['away', 'Away'], ['l5', 'L5'], ['l10', 'L10'
 const WINDOW_TEXT = { home: 'at home', away: 'away', l5: 'over its last 5 games', l10: 'over its last 10 games', l5home: 'over its last 5 home games', l5away: 'over its last 5 away games', h2hhome: 'at home against this team (stored meetings, this season and last)', h2haway: 'away against this team (stored meetings, this season and last)' };
 const WINDOW_TITLE = { h2hhome: 'What the opponent allowed in its home games against this team', h2haway: 'What the opponent allowed in its road games against this team' };
 
+// The rank that tints the ice: goals under Goals; under Shots the shot attempts allowed (ICF), the less
+// noisy volume read (docs/shots-goals-predictors.md: attempts beat SOG as the shots signal; Vincent,
+// 2026-11-12: "the main driver for shots is ICF, not shots themselves"), SOG only where a source has no ICF rank.
+export function tintKey(d, metric) {
+  if (metric === 'g') return 'g';
+  return d?.rank?.icf != null ? 'icf' : 'sog';
+}
+
 function BandLabel({ pos, d, opp, view, windowText = null, teamCount, x, y, metric = 'sog' }) {
   const r = d?.rank || {};
   const s = d?.season;
   const n = d?.teamCount || teamCount;
-  const tone = zoneTone(r[metric], n);
+  const tone = zoneTone(r[tintKey(d, metric)], n);
+  // The volume rank on the label: ICF, SOG where the source has none.
+  const vol = tintKey(d, 'sog');
+  const volText = vol === 'icf' ? 'ICF' : 'SOG';
   const when = windowText || WINDOW_TEXT[view];
   const from = d?.source === 'propfinder' ? (d.window ? ` · PropFinder's table, ${d.window}` : ` · PropFinder's ${d.seasonLabel} table, until ${opp} has enough stored games at this venue`)
     : d?.source === 'h2h' ? ` · ${s?.gp ?? 0} stored meeting${s?.gp === 1 ? '' : 's'}; the rank is where that sits among the league's season values at this venue`
@@ -304,10 +315,10 @@ function BandLabel({ pos, d, opp, view, windowText = null, teamCount, x, y, metr
   // First goals given up to this position (the season table at tonight's venue; the card's column has the same numbers).
   const fg = d?.firstGoal;
   const fgText = fg?.games ? ` · first goal given up to ${pos} in ${fg.allowed} of ${fg.games} games${fg.rank ? ` (#${fg.rank})` : ''}${Object.keys(fg.bySlot || {}).length ? `: ${Object.entries(fg.bySlot).sort((a, b) => b[1] - a[1]).map(([k, c]) => `${k} ×${c}`).join(', ')}` : ''}` : '';
-  const title = s?.gp ? `${opp} allows ${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'}) per game to ${pos} ${when} · rank 1 = most permissive of ${n}${from}${fgText}` : `No defense data for ${opp} ${when} yet`;
+  const title = s?.gp ? `${opp} allows ${s.icf != null ? `${num(s.icf)} shot attempts (ICF, #${r.icf ?? '–'}), ` : ''}${num(s.sog)} SOG (#${r.sog ?? '–'}) and ${num(s.g, 2)} goals (#${r.g ?? '–'}) per game to ${pos} ${when} · rank 1 = most permissive of ${n}${from}${fgText}` : `No defense data for ${opp} ${when} yet`;
   return (
     <div className={`nhlx-rk-zone is-${tone}`} style={{ left: `${x}%`, top: `${pct(y)}%` }} title={title}>
-      <b>{pos}</b>{s?.gp ? <span>{metric === 'g' ? <>#{r.g ?? '–'} G · #{r.sog ?? '–'} SOG</> : <>#{r.sog ?? '–'} SOG · #{r.g ?? '–'} G</>}{d?.source === 'propfinder' ? <i title={`PropFinder ${d.seasonLabel}`}>PF</i> : d?.source === 'h2h' ? <i title={`${s.gp} stored meeting${s.gp === 1 ? '' : 's'}`}>{s.gp} GP</i> : null}</span> : <span>{view?.startsWith('h2h') ? 'no meetings' : 'no data'}</span>}
+      <b>{pos}</b>{s?.gp ? <span>{metric === 'g' ? <>#{r.g ?? '–'} G · #{r[vol] ?? '–'} {volText}</> : <>#{r[vol] ?? '–'} {volText} · #{r.g ?? '–'} G</>}{d?.source === 'propfinder' ? <i title={`PropFinder ${d.seasonLabel}`}>PF</i> : d?.source === 'h2h' ? <i title={`${s.gp} stored meeting${s.gp === 1 ? '' : 's'}`}>{s.gp} GP</i> : null}</span> : <span>{view?.startsWith('h2h') ? 'no meetings' : 'no data'}</span>}
     </div>
   );
 }
@@ -400,8 +411,8 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
   const fromPf = tint === 'propfinder' && !!pfTab;
   const defAt = (pos) => (fromPf ? defenseBandFromTab(pfTab, pos) : side.defense?.[pos]?.windows?.[v] ?? (v === defaultView ? side.defense?.[pos] : null) ?? null);
   const windowText = fromPf ? `over ${defenseTabText(pfTab)} (PropFinder)` : WINDOW_TEXT[v];
-  const tones = Object.fromEntries(ZONES.map((z) => [z, posFilter && posFilter !== z ? 'none' : zoneTone(defAt(z)?.rank?.[metric], defAt(z)?.teamCount || teamCount)]));
-  const metricWord = metric === 'g' ? 'goals' : 'shots';
+  const tones = Object.fromEntries(ZONES.map((z) => [z, posFilter && posFilter !== z ? 'none' : zoneTone(defAt(z)?.rank?.[tintKey(defAt(z), metric)], defAt(z)?.teamCount || teamCount)]));
+  const metricWord = metric === 'g' ? 'goals' : 'shot attempts (ICF)';
   const clipId = `rink-${side.team}-${side.opp}`;
   const open = usePlayerCard();
   return (
@@ -422,7 +433,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
         <small>Tint by</small>
         <div className="nhlx-tabs nhlx-rk-tabs" role="tablist" aria-label="Shots or goals tint the rink">
           {[['sog', 'Shots'], ['g', 'Goals']].map(([k, l]) => (
-            <button key={k} type="button" role="tab" aria-selected={metric === k} className={`nhlx-tab${metric === k ? ' is-active' : ''}`} onClick={() => onMetric?.(k)} title={k === 'sog' ? `Ice by the shots ${side.opp} allows to each position; h2h marks the shooters who fire at ${side.opp}` : `Ice by the goals ${side.opp} allows to each position; h2h marks the scorers who score on ${side.opp}`}>{l}</button>
+            <button key={k} type="button" role="tab" aria-selected={metric === k} className={`nhlx-tab${metric === k ? ' is-active' : ''}`} onClick={() => onMetric?.(k)} title={k === 'sog' ? `Ice by the shot attempts (ICF) ${side.opp} allows to each position, SOG where a table has no ICF; h2h marks the shooters who fire at ${side.opp}` : `Ice by the goals ${side.opp} allows to each position; h2h marks the scorers who score on ${side.opp}`}>{l}</button>
           ))}
         </div>
         <small>from</small>
@@ -472,7 +483,7 @@ export function RinkLegend({ metric = 'sog' }) {
   const word = metric === 'g' ? 'goals' : 'shots';
   return (
     <p className="nhlx-rk-legend nhlx-auto-meta">
-      <span><i className="is-soft" /> favourable: the opponent allows the most {word} to that position (top third of the league); switch Shots / Goals above a rink to tint by the other</span>
+      <span><i className="is-soft" /> favourable: the opponent allows the most {metric === 'g' ? 'goals' : 'shot attempts (ICF, the steadier read on shots than SOG; SOG where a table has no ICF)'} to that position (top third of the league); switch Shots / Goals above a rink to tint by the other</span>
       <span><i className="is-mid" /> neutral</span>
       <span><i className="is-tough" /> stingy: bottom third</span>
       <span>on each player: the model’s projected SOG and goals from the latest saved run for this slate (3+ SOG and 1+ G odds in the tooltip), or a matchup read when no run exists; once the game is final, the actual shots, goals and assists with the model’s number after “m”; click for the player card</span>
