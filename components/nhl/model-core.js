@@ -2154,15 +2154,17 @@ function last5GoalFormMultiplier(skater) {
   return +mult.toFixed(3);
 }
 
+// The opponent's goal read on λ (2026-11-12): the scoring chances it allows the position (ISCF/G)
+// over the league's mean, alone. The Goals/G ratio (half the old composite) predicted nothing over a
+// skater's goal rate and Shots/G added nothing to ISCF (docs/audits/2026-11-12-nhl-shots-environment.md,
+// 45,363 skater-games: replayed through λ points to λ goals at every tier's pass-through, the ISCF ratio
+// beat his rate alone and the old composite did not). λ goals takes 0.45 x defDamp of it through the
+// points step, about 0.2 to 0.45 of the ratio, where the study fitted 0.21 to 0.33. No ISCF on the
+// table: neutral. Vincent: "yes, do defenseGoalMultiplier too and port it".
 function defenseGoalMultiplier(teamPos, defenseAvg, posKey) {
-  if (!teamPos || !defenseAvg) return 1;
-  const goalsRatio = safeRatio(teamPos.goals || 0, Math.max(0.65, defenseAvg.goals || 0.65), 1);
-  const iscfRatio = safeRatio(teamPos.iscf || 0, Math.max(3.5, defenseAvg.iscf || 3.5), 1);
-  const shotsRatio = safeRatio(teamPos.shots || 0, Math.max(3.5, defenseAvg.shots || 3.5), 1);
-
-  let composite = 0.5 * goalsRatio + 0.3 * iscfRatio + 0.2 * shotsRatio;
-  if (posKey === "D") composite = 0.35 * goalsRatio + 0.35 * iscfRatio + 0.3 * shotsRatio;
-  return +clamp(composite, 0.82, 1.22).toFixed(3);
+  if (!teamPos || !defenseAvg || !(Number(teamPos.iscf) > 0)) return 1;
+  const iscfRatio = safeRatio(Number(teamPos.iscf), Math.max(3.5, defenseAvg.iscf || 3.5), 1);
+  return +clamp(iscfRatio, 0.82, 1.22).toFixed(3);
 }
 
 function roleGoalAccessMultiplier(todayLine, effectiveToi) {

@@ -814,10 +814,16 @@
   nothing over a skater's rate and the old steps made 1+ goal less accurate (`docs/audits/2026-11-12-nhl-shots-environment.md`,
   Vincent: "replace it with the smooth ISCF term and port it"; `__tests__/nhl-model-goals-env.test.js`). It reaches the
   goal ladder (`ladderP1g` / `P2g`: the attack score and the goal tier), not the published goal odds, which are the
-  Poisson tails of λ goals; λ's own opponent read is `defenseGoalMultiplier` (Goals/G 50%, ISCF 30%, Shots 20%),
-  untouched.
-  `node tools/port-model-core.mjs [App.jsx]` applies all five ports on the Mac (the 2026-10-13 shots odds, the
-  2026-10-20 goal odds, the 2026-10-27 weights, the 2026-11-07 minutes, the 2026-11-12 goals environment), each group all-or-nothing by exact-text anchors: a backup beside the
+  Poisson tails of λ goals. And the same day (port it too, Vincent: "yes, do defenseGoalMultiplier too and port it"):
+  λ's own opponent read, `defenseGoalMultiplier`, is the ISCF ratio alone (the opponent's ISCF/G to the position over the
+  league's mean, clamped 0.82–1.22; no ISCF on the table → 1) in place of Goals 50% / ISCF 30% / Shots 20% (D 35 / 35 /
+  30). It reaches λ goals through the points step (`pointDefenseMult`'s 0.45 × the tier's `defDamp`, so 0.2–0.45 of the
+  ratio, where the study fitted 0.21–0.33) and so moves the points odds too; λ points keeps its assists (0.35) and
+  shots (0.20) ratios. Replayed through that pass-through at every tier, the ISCF ratio beat a skater's rate alone and
+  the old composite did not (same audit).
+  `node tools/port-model-core.mjs [App.jsx]` applies all six ports on the Mac (the 2026-10-13 shots odds, the
+  2026-10-20 goal odds, the 2026-10-27 weights, the 2026-11-07 minutes, the 2026-11-12 goals environment and
+  `defenseGoalMultiplier`), each group all-or-nothing by exact-text anchors: a backup beside the
   file, a group already there reported as ported, a group with a differing anchor skipped and named, `--check` to
   look first. On 2026-10-27 App.jsx had neither odds port: the local app had published the ladder's odds since Oct 13.
 

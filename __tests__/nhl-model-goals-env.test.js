@@ -5,7 +5,7 @@
  */
 import { describe, expect, test } from '@jest/globals';
 import { execFileSync } from 'node:child_process';
-import { iscfGoalMultiplier, cheatSheetMajorMultiplier } from '../components/nhl/model-core';
+import { iscfGoalMultiplier, cheatSheetMajorMultiplier, defenseGoalMultiplier } from '../components/nhl/model-core';
 
 const ranks = (r) => ({ ranks: { goals: null, assists: null, shots: null, icf: null, iff: null, iscf: null, ...r } });
 
@@ -32,16 +32,38 @@ describe('the smooth ISCF goals term', () => {
   });
 });
 
-describe('the port (group 5 of tools/port-model-core.mjs)', () => {
-  test('applied to the model before the change, it gives the change; applied again, it reports ported', () => {
+describe('λ goals\' opponent read: defenseGoalMultiplier is the ISCF ratio alone (2026-11-12)', () => {
+  const avg = { goals: 0.8, iscf: 6, shots: 7 };
+  test('the ISCF ratio over the league\'s mean, clamped 0.82 to 1.22; goals and shots allowed no longer move it', () => {
+    expect(defenseGoalMultiplier({ goals: 2.0, iscf: 6.6, shots: 12 }, avg, 'C')).toBe(1.1);
+    expect(defenseGoalMultiplier({ goals: 0.1, iscf: 6.6, shots: 2 }, avg, 'C')).toBe(1.1);
+    expect(defenseGoalMultiplier({ goals: 0.8, iscf: 5.4, shots: 7 }, avg, 'D')).toBe(0.9);
+    expect(defenseGoalMultiplier({ goals: 0.8, iscf: 12, shots: 7 }, avg, 'LW')).toBe(1.22);
+    expect(defenseGoalMultiplier({ goals: 0.8, iscf: 3, shots: 7 }, avg, 'LW')).toBe(0.82);
+  });
+  test('neutral without a table or without ISCF on it (was pinned to the floor by a missing ISCF)', () => {
+    expect(defenseGoalMultiplier(null, avg, 'C')).toBe(1);
+    expect(defenseGoalMultiplier({ goals: 2, shots: 12 }, avg, 'C')).toBe(1);
+    expect(defenseGoalMultiplier({ goals: 2, iscf: 0, shots: 12 }, avg, 'C')).toBe(1);
+  });
+});
+
+describe('the ports (groups 5 and 6 of tools/port-model-core.mjs)', () => {
+  test('applied to the model before the change, they give the change; applied again, they report ported', () => {
     const script = `
       import { execFileSync } from 'node:child_process';
       const { GROUPS, applyGroup } = await import('./tools/port-model-core.mjs');
       const g = GROUPS.find((x) => x.key === 'goalsEnv20261112');
+      const d = GROUPS.find((x) => x.key === 'defenseGoal20261112');
       const before = execFileSync('git', ['show', '4c94fb9:components/nhl/model-core.js'], { encoding: 'utf8', maxBuffer: 1 << 26 });
       const r = applyGroup(before, g);
-      console.log(JSON.stringify({ status: r.status, iscf: r.text.includes('mult = iscfGoalMultiplier(iscfRank);'), steps: r.text.includes('if (open(goalRank, 10)) mult += 0.18;'), again: applyGroup(r.text, g).status }));`;
+      const r2 = applyGroup(r.text, d);
+      const { readFileSync } = await import('node:fs');
+      const now = readFileSync('components/nhl/model-core.js', 'utf8');
+      const strip = (t) => t.replace('  iscfGoalMultiplier,' + String.fromCharCode(10), '');   // the site's own export
+      console.log(JSON.stringify({ status: r.status, iscf: r.text.includes('mult = iscfGoalMultiplier(iscfRank);'), steps: r.text.includes('if (open(goalRank, 10)) mult += 0.18;'), again: applyGroup(r.text, g).status,
+        status6: r2.status, composite: r2.text.includes('0.5 * goalsRatio'), again6: applyGroup(r2.text, d).status, same: strip(r2.text) === strip(now) }));`;
     const out = JSON.parse(execFileSync('node', ['--input-type=module', '-e', script], { encoding: 'utf8' }).trim());
-    expect(out).toEqual({ status: 'applied', iscf: true, steps: false, again: 'ported' });
+    expect(out).toEqual({ status: 'applied', iscf: true, steps: false, again: 'ported', status6: 'applied', composite: false, again6: 'ported', same: true });
   });
 });

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Port the site's model changes into the local model app (App.jsx, the model's source of truth),
-// the same edits made to components/nhl/model-core.js, in five groups, each all-or-nothing:
+// the same edits made to components/nhl/model-core.js, in six groups, each all-or-nothing:
 //   1. 2026-10-13 (a022443): p2s / p3s / p4s / p5s are the Poisson tails of λ shots; the ladder's
 //      figures ride along as ladderP3s / P4s / P5s and still set the attack score.
 //   2. 2026-10-20 (4ec641f): p1g / p2g / p3g are the Poisson tails of λ goals; the ladder's figures
@@ -14,6 +14,8 @@
 //   5. 2026-11-12: cheatSheetMajorMultiplier's goals branch is a smooth ISCF/G term
 //      (iscfGoalMultiplier, ISCF_GOAL_PER_SD), the Goals/G rank steps out
 //      (docs/audits/2026-11-12-nhl-shots-environment.md).
+//   6. 2026-11-12: defenseGoalMultiplier (λ goals' and λ points' opponent read) is the ISCF ratio
+//      alone, the Goals/G and Shots/G ratios out; no ISCF on the table → 1 (same audit).
 //
 //   node tools/port-model-core.mjs [path to App.jsx] [--check]
 //
@@ -228,12 +230,41 @@ const GOALS_ENV = [
   },
 ];
 
+const DEFENSE_GOAL = [
+  {
+    name: 'the opponent\'s goal read on λ (defenseGoalMultiplier: the ISCF ratio alone)',
+    old: 'function defenseGoalMultiplier(teamPos, defenseAvg, posKey) {\n'
+      + '  if (!teamPos || !defenseAvg) return 1;\n'
+      + '  const goalsRatio = safeRatio(teamPos.goals || 0, Math.max(0.65, defenseAvg.goals || 0.65), 1);\n'
+      + '  const iscfRatio = safeRatio(teamPos.iscf || 0, Math.max(3.5, defenseAvg.iscf || 3.5), 1);\n'
+      + '  const shotsRatio = safeRatio(teamPos.shots || 0, Math.max(3.5, defenseAvg.shots || 3.5), 1);\n'
+      + '\n'
+      + '  let composite = 0.5 * goalsRatio + 0.3 * iscfRatio + 0.2 * shotsRatio;\n'
+      + '  if (posKey === "D") composite = 0.35 * goalsRatio + 0.35 * iscfRatio + 0.3 * shotsRatio;\n'
+      + '  return +clamp(composite, 0.82, 1.22).toFixed(3);\n'
+      + '}\n',
+    new: '// The opponent\'s goal read on λ (2026-11-12): the scoring chances it allows the position (ISCF/G)\n'
+      + '// over the league\'s mean, alone. The Goals/G ratio (half the old composite) predicted nothing over a\n'
+      + '// skater\'s goal rate and Shots/G added nothing to ISCF (docs/audits/2026-11-12-nhl-shots-environment.md,\n'
+      + '// 45,363 skater-games: replayed through λ points to λ goals at every tier\'s pass-through, the ISCF ratio\n'
+      + '// beat his rate alone and the old composite did not). λ goals takes 0.45 x defDamp of it through the\n'
+      + '// points step, about 0.2 to 0.45 of the ratio, where the study fitted 0.21 to 0.33. No ISCF on the\n'
+      + '// table: neutral. Vincent: "yes, do defenseGoalMultiplier too and port it".\n'
+      + 'function defenseGoalMultiplier(teamPos, defenseAvg, posKey) {\n'
+      + '  if (!teamPos || !defenseAvg || !(Number(teamPos.iscf) > 0)) return 1;\n'
+      + '  const iscfRatio = safeRatio(Number(teamPos.iscf), Math.max(3.5, defenseAvg.iscf || 3.5), 1);\n'
+      + '  return +clamp(iscfRatio, 0.82, 1.22).toFixed(3);\n'
+      + '}\n',
+  },
+];
+
 export const GROUPS = [
   { key: 'shotsOdds20261013', label: 'shots odds (2026-10-13): p2s / p3s / p4s / p5s the Poisson tails of λ shots, the ladder as ladderP3s / P4s / P5s', edits: SHOTS_ODDS },
   { key: 'goalOdds20261020', label: 'goal odds (2026-10-20): p1g / p2g / p3g the Poisson tails of λ goals, the ladder as ladderP1g / P2g / P3g', edits: GOAL_ODDS },
   { key: 'weights20261027', label: 'venue split and head-to-head at a quarter (2026-10-27)', edits: WEIGHTS, constants: true },
   { key: 'toi20261107', label: 'projected minutes (2026-11-07): the line\'s constant + 0.345 · last 5 + 0.442 · season, refitted on the posted lines', edits: TOI },
   { key: 'goalsEnv20261112', label: 'goals environment (2026-11-12): the cheat sheet\'s goals multiplier is a smooth ISCF/G term, the Goals/G steps out', edits: GOALS_ENV },
+  { key: 'defenseGoal20261112', label: 'λ goals\' opponent read (2026-11-12): defenseGoalMultiplier is the ISCF ratio alone, Goals/G and Shots/G out', edits: DEFENSE_GOAL },
 ];
 
 /** The end index of the `function poissonAtLeast(` body (after its closing brace), or -1. */

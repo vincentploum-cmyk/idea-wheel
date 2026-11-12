@@ -87,5 +87,23 @@ The bands the full multiplier sorts skaters into landed within ±6% of their own
 ×exp(0.04 × (16.5 − rank) / 9.24), the season-table fit (L10 fitted 0.027); in the same replay a smooth ISCF term
 fitted out of fold took 1+ goal Brier from 0.12733 to 0.12699–0.12702 (−0.25%), while fixed top-10 / bottom-third ISCF
 steps did not beat his rate. Ported to App.jsx as group 5 of `tools/port-model-core.mjs`. It feeds the goal ladder
-(attack score, goal tier); the published goal odds come from λ goals, whose opponent read `defenseGoalMultiplier`
-(Goals/G 50%, ISCF 30%, Shots 20%) is unchanged.
+(attack score, goal tier); the published goal odds come from λ goals, through λ's own opponent read below.
+
+## λ goals' opponent read, `defenseGoalMultiplier` (Vincent: "yes, do defenseGoalMultiplier too and port it")
+
+It was Goals 50% / ISCF 30% / Shots 20% of the opponent's per-game values to the position over the league's mean
+(D 35 / 35 / 30), clamped 0.82–1.22. λ goals takes it through the points step: `pointDefenseMult` = 0.45 × it (damped by
+the scorer tier's `defDamp`, 0.48 to 1.0) + 0.35 × the assists ratio + 0.20 × the shots ratio, and λ goals = λ points ×
+the finisher filter × 0.9, so a pass-through of 0.22 (low tier), 0.29 (average) or 0.45 (elite). Replayed in
+`goals_mult.py` (season-to-date values, 45,363 skater-games, 1+ goal Brier on his rate alone 0.12737):
+
+| pass-through | old composite | ISCF ratio alone |
+|---|---|---|
+| 0.22 (low tier) | 0.12736 (−0.006%) | 0.12733 (−0.030%) |
+| 0.29 (average) | 0.12737 (+0.001%) | 0.12733 (−0.034%) |
+| 0.45 (elite) | 0.12741 (+0.029%) | 0.12733 (−0.030%) |
+
+Changed: `defenseGoalMultiplier` is the ISCF ratio alone (no ISCF on the table → 1, where a missing figure used to read
+as 0 and pull the composite down). Ported as group 6. It moves the points odds too, through the same 0.45; λ points
+keeps its assists and shots ratios. The gains are small: the skater's own rate is the prediction, the opponent a
+tie-breaker. Grade it on the scorecard export (`tools/predictors/model_check.py`) once a week of games is in.
