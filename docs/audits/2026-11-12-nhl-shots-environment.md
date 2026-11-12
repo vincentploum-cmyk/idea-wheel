@@ -64,3 +64,22 @@ The model's own cheat-sheet multiplier (`cheatSheetMajorMultiplier` in `componen
 the Goals/G rank for goals (+0.18 in the top ten) and on Shots / IFF / ISCF for shots; the model's math is ported from
 the local app and is left as is. The top-5 soft-spot badge (`topSpot`) and the shuffle's Matchup column
 (`matchupOf`) still rank by Shots/G and Goals/G.
+
+## The model's goals multiplier, replayed (Vincent: "is this not correct?")
+
+`tools/predictors/goals_mult.py` replays `cheatSheetMajorMultiplier(…, 'goals')` on the same rows, as
+`majorFactorProbabilityBlend` applies it (boosts ×0.9, penalties ×0.4), against 1+ goal landed versus his own rate
+(scaled so the whole set lands on its average, 15.7%).
+
+| Opponent's rank at the position | model adds | actual lift, L10 ranks | actual lift, season ranks |
+|---|---|---|---|
+| Goals/G 1-10 | +16% | +0.8% | +4.0% |
+| Goals/G 11-16 | +8% | −1.1% | −4.3% |
+| Goals/G 17-23 | 0 | +1.0% | −0.8% |
+| Goals/G 24-32 | −5% | −1.3% | −1.3% |
+| ISCF/G 1-10 | +11% (stacks) | +3.6% | +7.1% |
+| ISCF/G 24-32 | (in the hard count) | −2.4% | −2.4% |
+
+The bands the full multiplier sorts skaters into landed within ±6% of their own rate whatever it said (×1.27 said,
+×1.03 to ×1.06 landed), and the 1+ goal Brier gets worse with it: 0.12733 on his rate alone, 0.12915 (L10) / 0.12887
+(season) with the multiplier. Not changed here: the model's math is ported from the local app.
