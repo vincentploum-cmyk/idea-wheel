@@ -558,9 +558,18 @@
   they stood that morning, the study's out-of-sample figure carried in at 30 skater-games), and those nights are the
   record shown under the head. The season walked once per stored rows and date (`memoByRows`), the build per store state.
   Re-mine with the study's commands (the README in `tools/predictors/`) to move `builtThrough`.
-  **Re-mined 2026-11-12** (Vincent: "ship the re-mined rules"): searched on Oct 2–21, checked on Oct 22 – Nov 11,
+  **Re-mined 2026-11-12** (Vincent: "ship the re-mined rules"): searched on Sep 30 – Oct 21, checked on Oct 22 – Nov 11,
   `builtThrough` 2026-11-11 (`docs/audits/2026-11-12-nhl-patterns-model.md`), so the record under the head restarts on
   Nov 12. The frozen Oct 29 rules had landed 48% of 447 3+ SOG picks (said 60%) and 33% of 235 goal picks (said 40%).
+  The season opened on **Sep 29** (8 games): the Oct 30 study and the first cut of this one fetched from Oct 1.
+  **Refitted weekly** (Vincent, 2026-11-12: "set up the weekly refit"): `.github/workflows/nhl-patterns-refit.yml`,
+  Mondays 09:37 UTC (and by hand, with `through` and `ship`), runs `tools/predictors/patterns-refit.sh`: the season's
+  games from Sep 25 through yesterday (Eastern; the fetched nights cached between runs, the last three fetched again),
+  the rows, the split at the first night of the second half of the skater-games (the rules searched before it and
+  checked from it; the model's frozen check fitted through the night before it), then a gate (no fewer skater-games
+  than the shipped rules were built on; the model's frozen 50%+ calls at least 45% on 50 or more), the patterns tests,
+  and a commit of the rules, the model and the parity fixture to main by github-actions[bot]. Each refit restarts the
+  record under the head; the run's summary and artifact carry both reports.
 - **The 3+ SOG model on the Patterns tab** (Vincent, 2026-11-12: "add the model for 3+ SOG", after the season backtest
   had a model on every figure ahead of the rules on that line): a logistic regression and boosted trees on the same
   figures (plus his position), averaged, fitted offline by `tools/predictors/patterns_model.py` and shipped as

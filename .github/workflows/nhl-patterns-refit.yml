@@ -1,0 +1,88 @@
+name: NHL Patterns refit (weekly)
+
+# The Patterns tab's rules re-mined and its 3+ SOG model refitted on every game of the season so far (Vincent,
+# 2026-11-12: "set up the weekly refit"): tools/predictors/patterns-refit.sh on the public NHL box scores, then the
+# patterns tests, then a commit of patterns-rules.json, patterns-model.json and the scorer's parity fixture to main
+# (Render deploys it). Nothing is committed when the refit's gate fails (a short fetch, the model's frozen check under
+# 45% of its 50%+ calls), when a test fails, or when nothing changed. The fetched games are cached between runs.
+on:
+  schedule:
+    - cron: '37 9 * * 1'   # Mondays 09:37 UTC (4:37 AM Eastern in winter), after the weekend's games
+  workflow_dispatch:
+    inputs:
+      through:
+        description: 'Last game date to fit on (YYYY-MM-DD). Blank = yesterday, Eastern.'
+        required: false
+      ship:
+        description: 'Commit the refit to main'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nhl-patterns-refit
+  cancel-in-progress: false
+
+jobs:
+  refit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install
+        run: |
+          npm ci --no-audit --no-fund
+          pip install --quiet numpy==2.5.3 pandas==3.0.5 scikit-learn==1.9.1
+      - name: The season's games so far (cached)
+        uses: actions/cache@v4
+        with:
+          path: .nhl-data/predictors/patterns/games
+          key: nhl-patterns-games-${{ github.run_id }}
+          restore-keys: nhl-patterns-games-
+      - name: Refit
+        env:
+          THROUGH: ${{ github.event.inputs.through }}
+        run: tools/predictors/patterns-refit.sh "$THROUGH" 2>&1 | grep -v -E 'Warning|warning|trace-warnings|X\[f'
+      - name: Summary
+        if: always()
+        run: |
+          w=.nhl-data/predictors/patterns
+          { [ -f $w/patterns-report.md ] && sed -n '1,14p' $w/patterns-report.md; echo; [ -f $w/model-report.md ] && cat $w/model-report.md; } >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nhl-patterns-refit
+          path: |
+            .nhl-data/predictors/patterns/*.md
+            .nhl-data/predictors/patterns/*.json
+          retention-days: 30
+      - name: Tests
+        run: npx jest __tests__/nhl-patterns.test.js __tests__/nhl-patterns-model.test.js --silent
+      - name: Commit to main
+        if: github.event_name == 'schedule' || github.event.inputs.ship == 'true'
+        run: |
+          set -e
+          files="lib/nhl-data/patterns-rules.json lib/nhl-data/patterns-model.json __tests__/fixtures/patterns-model-parity.json"
+          if git diff --quiet -- $files; then echo "Nothing changed: the shipped rules and model stand."; exit 0; fi
+          read -r through split fitlast rows < .nhl-data/predictors/patterns/refit.txt
+          check=$(jq -r '.check.calls["50"] | "\(.hits) of \(.n)"' lib/nhl-data/patterns-model.json)
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add $files
+          git commit -q -m "Patterns: weekly refit through $through" -m "Rules searched to $fitlast and checked from $split; the 3+ SOG model fitted on $rows skater-games. Its frozen check (fit to $fitlast): $check 50%+ calls landed. tools/predictors/patterns-refit.sh, run by nhl-patterns-refit.yml."
+          for i in 1 2 3 4; do
+            git pull --rebase -q origin main && git push origin HEAD:main && exit 0
+            sleep $((i * 10))
+          done
+          echo "::error::could not push to main"; exit 1

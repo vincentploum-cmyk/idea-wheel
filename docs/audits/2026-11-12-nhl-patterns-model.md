@@ -5,6 +5,14 @@ October … we have way more games already", then "ship the re-mined rules and a
 Games: the public box scores of every game Oct 1 – Nov 11 (290 games, 9,676 skater-games with a game behind them),
 built with `tools/predictors/fetch.mjs` → `faceoffs.mjs` → `relabel.py` → `patterns-rows.mjs`.
 
+**Correction, same day:** the season opened on Sep 29 (8 games on Sep 29–30, ids 2026020001–008); the study above,
+like the Oct 30 one, fetched from Oct 1 and left them out. The shipped files are the first run of the weekly refit
+(`tools/predictors/patterns-refit.sh 2026-11-11`, which fetches from Sep 25): 298 games, 9,964 skater-games, rules
+searched on Sep 30 – Oct 21 and checked on Oct 22 – Nov 11. With them the 3+ / 4+ SOG rules kept 91% / 92% of their lift
+(15 rules fill each), 5+ SOG has 4 rules over its bar, and 1+ goal is weaker than below: 72% of the lift kept, 5 rules
+over the 35% bar (14 below). The model's frozen check (fit through Oct 21) is the same: its 50%+ calls landed 57% (246
+of 432, said 60%), its 60%+ 66% (116 of 177). The tables below are from the Oct 1 cut.
+
 ## 1. The rules as shipped on Oct 30, on the 13 nights after (Oct 30 – Nov 11, 3,028 skater-games)
 
 `patternRecord` (the site's own record) on the rules built through Oct 29, frozen:

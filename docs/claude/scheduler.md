@@ -24,6 +24,9 @@
   and let the NFL late run's write wipe the NHL late run's record, so the backstop ran that job again at 7 AM; the
   claim's re-read is gone (one instance on Render; a slot run twice in a deploy's overlap is one extra refresh).
   `GET /api/site/scheduler` (admin or token) lists each job's last and next slot and its last run.
+- The Patterns refit is GitHub's alone (`nhl-patterns-refit.yml`, Mondays 09:37 UTC; Vincent, 2026-11-12): it re-mines
+  the Patterns rules and refits the 3+ SOG model on the public box scores and commits the JSON to main, so a late
+  fire costs nothing (`docs/claude/nhl.md`, Patterns).
 - The GitHub workflows (`nba-data.yml`, `nfl-data.yml`, `nhl-data.yml`) stay as the backstop: a scheduled run
   names its job from the cron that fired it (`github.event.schedule`, no longer the UTC hour it happened to run
   in: the 2:11 AM NBA slot fired at 8:53 AM and was read as a morning run) and passes `job=<id>`; the refresh

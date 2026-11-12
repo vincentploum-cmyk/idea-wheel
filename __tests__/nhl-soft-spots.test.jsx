@@ -67,7 +67,6 @@ describe('the rinks: the top-spot badge, the flame for a hot streak only', () =>
 });
 
 describe('Best bets: the Soft spots table', () => {
-  // eslint-disable-next-line global-require
   const { SoftSpotsTable } = require('@/components/nhl/PicksPanel');
   test('the rows with the spot, his rate and the board’s chances; graded on 3+ once final; twelve then Show all', () => {
     const rows = softSpotPlays([sk({ gameId: 9 }), sk({ id: 2, name: 'Will Smith', pos: 'C', rates: { sog: 2.53 }, p3: 0.47, spot: pf(2), gameId: 9 })]);
