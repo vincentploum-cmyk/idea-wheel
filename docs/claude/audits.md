@@ -254,3 +254,9 @@
   about 27% to 30% for a 1.7-shot winger, never a favourite, and the board's season table already reads it. Shipped as
   the Soft spots list on Best bets (top 5, regulars) and the rinks' flame on a top-5 spot (its own green "RW #3" badge
   since 2026-11-12, the line-slot badge untinted); the same on the NBA board.
+- Shots / goals environment (`docs/audits/2026-11-12-nhl-shots-environment.md`, `tools/predictors/shots_env.py`;
+  Vincent, 2026-11-12: "a combination of SHOTS/G ICF/G IFF/G ISCF/G … which should weigh more", "for goals, check whether
+  ISCF/G should be included"): 2025-26 and 2026-27 to date, the opponent's L10 and season ranks at the position on top of
+  the skater's own rate. Shots: Shots/G the best single read, ICF and IFF close, ISCF the weakest; fitted, Shots took
+  about half, the rest ICF (L10) or IFF (season), ISCF none → the rink and the shots flag read Shots ×2 + ICF + IFF.
+  Goals: Goals/G added nothing, ISCF/G took 93-98% of the fitted weight → the Goals tint and flag read ISCF.

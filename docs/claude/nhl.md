@@ -63,9 +63,11 @@
   card's "1st goal" column, `firstGoals` in the defense API); games logged without it get it
   from the play-by-play via `stampFirstGoals` (`ingestGames` with nothing new, `?only=firstgoals`). The
   Matchups tab (`lib/nhl-data/slate.js`; each game drawn as two rinks in
-  `components/nhl/Rink.jsx`, ice bands tinted by the opponent's shot-attempts-allowed (ICF) or goals-allowed rank per position (**ICF, not SOG, under
-  Shots since 2026-11-12**, Vincent: "the main driver for shots is ICF, not shots themselves"; `tintKey` in `Rink.jsx`, SOG
-  only where a source has no ICF rank; the band label reads `#3 ICF · #17 G`, SOG on its hover) (the slate-wide
+  `components/nhl/Rink.jsx`, ice bands tinted by the opponent's rank per position (**since 2026-11-12**, graded in
+  `docs/audits/2026-11-12-nhl-shots-environment.md`: under Shots its Shots/G, ICF/G and IFF/G ranks weighted 2 : 1 : 1,
+  `shotsEnvRank`; under Goals its ISCF/G rank, `goalsEnvRank`, Goals/G having predicted nothing; both in
+  `propfinder-csv.js`, read by `tintRank` in `Rink.jsx` and by `spotFromTab`'s soft flags; the band label reads
+  `#8 shots · #13 ISCF`, every column on its hover; before, the SOG-allowed or goals-allowed rank) (the slate-wide
   Shots / Goals switch above each rink, `metric` state in `MatchupsPanel`; the band labels, legend and the chips'
   h2h mark follow it: scorers (`h2hHot`) under Goals, shooters (`h2hShotsHot`) under Shots)
   for the window picked above the rink — home / away / L5 / L10 / L5 home / L5 away, opening on L10 since
