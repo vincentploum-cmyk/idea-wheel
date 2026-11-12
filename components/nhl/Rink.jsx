@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Flags, ICON } from './flags';
+import { Flags, ICON, TopSpotBadge } from './flags';
 import { SOFT_TOP } from '@/lib/nhl-data/picks-pure';
 import { Headshot, TeamLogo, headshotUrl } from './media';
 import { TeamLink } from './links';
@@ -207,12 +207,13 @@ function SlotBadge({ p, lines, metric = 'sog' }) {
   const slot = p.line ? `${p.pos}${p.line}` : null;
   if (!slot) return null;
   const c = lines?.cells?.[slot] || null;
-  const tone = c ? zoneTone(c.rank, c.of) : 'none';
   const unit = metric === 'g' ? 'goals' : 'shots';
   const title = c
     ? `${p.opp} gives up ${num(c.value, metric === 'g' ? 2 : 1)} ${unit} a game to the ${slot}, #${c.rank} of ${c.of}${lines?.league?.[slot] != null ? ` (the league ${num(lines.league[slot], metric === 'g' ? 2 : 1)})` : ''}, ${c.n} skater-games this season at both venues; rank 1 = the most allowed`
     : `${slot} tonight · no ${slot} on record against ${p.opp} this season yet`;
-  return <i className={`nhlx-rk-slot is-${tone}`} title={title}>{slot}</i>;
+  // Untinted since 2026-11-12 (Vincent: a red RW1 beside a soft-spot flame read as a contradiction): the slot's own table
+  // predicted nothing over a skater's rate (docs/audits/2026-10-31-nhl-lines.md), so it is a label with the figure on the hover.
+  return <i className="nhlx-rk-slot" title={`${title} · descriptive: the by-line table has not predicted shots beyond his own rate`}>{slot}</i>;
 }
 
 /**
@@ -272,7 +273,7 @@ function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false, 
         <i className="nhlx-rk-num">{p.number ?? p.pos}</i>
       </span>
       <span className="nhlx-rk-meta">
-        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{h2hMark ? <span className="nhlx-rk-h2h" title={h2hTitle}>h2h</span> : null}<Flags c={p} stat={metric} className="nhlx-rk-flags" soft={false} spotFlame /><SlotBadge p={p} lines={lines} metric={metric} /><PpBadge pp={p.pp} /><PeriodBadges periods={p.periods} /><span className="nhlx-rk-nm">{shortName(p.name)}</span></b>
+        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{h2hMark ? <span className="nhlx-rk-h2h" title={h2hTitle}>h2h</span> : null}<Flags c={p} stat={metric} className="nhlx-rk-flags" soft={false} /><TopSpotBadge c={p} stat={metric} /><SlotBadge p={p} lines={lines} metric={metric} /><PpBadge pp={p.pp} /><PeriodBadges periods={p.periods} /><span className="nhlx-rk-nm">{shortName(p.name)}</span></b>
         {played ? (actual
           ? <span className={`nhlx-rk-stat is-actual${(m?.sog ?? p.projSog) != null && actual.sog >= (m?.sog ?? p.projSog) ? ' is-over' : ''}`}><em>{actual.sog}</em>{NB}SOG{NB}· <em>{actual.g}</em>{NB}G{actual.a ? <>{NB}· <em>{actual.a}</em>{NB}A</> : null}{m?.sog != null ? <i>m{NB}{num(m.sog)}</i> : p.projSog != null ? <i>p{NB}{num(p.projSog)}</i> : null}</span>
           : <span className="nhlx-rk-stat">did not play</span>)
@@ -352,7 +353,7 @@ function SoftestLine({ side, metric = 'sog' }) {
       ) : null}
       {most ? (
         <span title={title}>
-          {rank ? ' · most to the ' : `${side.opp} gives the most ${unit} to the `}<i className={`nhlx-rk-slot is-${zoneTone(most.rank, most.of)}`}>{most.slot}</i> ({num(most.value, dp)} a game, #{most.rank} at that slot)
+          {rank ? ' · most to the ' : `${side.opp} gives the most ${unit} to the `}<i className="nhlx-rk-slot">{most.slot}</i> ({num(most.value, dp)} a game, #{most.rank} at that slot)
           {facing ? <> · tonight <button type="button" className={`nhlx-rk-facing${facing.id ? '' : ' is-static'}`} onClick={() => facing.id && open({ id: facing.id, opp: facing.opp, venue: facing.venue, pos: facing.pos, line: facing.line })}>{shortName(facing.name)}</button></> : null}
         </span>
       ) : null}
@@ -477,8 +478,9 @@ export function RinkLegend({ metric = 'sog' }) {
       <span>on each player: the model’s projected SOG and goals from the latest saved run for this slate (3+ SOG and 1+ G odds in the tooltip), or a matchup read when no run exists; once the game is final, the actual shots, goals and assists with the model’s number after “m”; click for the player card</span>
       <span>🔥 on fire, by the model’s rule: 1+ point at 50% or better, 2.0+ scoring chances per game, 16+ minutes</span>
       <span><i className="nhlx-rk-lines-pill is-ok is-legend">GameDayTweets</i> under the team: where the lines came from — green, the beat writers’ tweet from the warm-up window (90 minutes before puck drop) or the game; amber, an earlier tweet (projected lines) or NHL.com’s projected lineup; red, a guess (PropFinder’s depth chart, the roster or the last known lineup) until a tweet or preview arrives; hover for the time and the link</span>
-      <span><i className="nhlx-rk-slot is-soft is-legend">LW1</i> his line slot tonight, tinted by the {word} the opponent gives up to that slot per skater a game this season (the Defense tab’s by-line table, both venues; green = top third of the league, red = bottom third; grey = no record yet); the rink head names the slot the opponent gives the most to, with its rank against the league there, and who sits at that slot tonight</span>
-      <span><i className="nhlx-pk-flag is-hot is-legend">{ICON.hot}</i> hot going in ({metric === 'g' ? '3+ goals in his last five' : 'his last five at 1.4× his shot rate or more'}), or a top-{SOFT_TOP} soft spot: the opponent allows one of the five most {word} to his position on PropFinder’s table above the rink, the tab it opens on (hover the flame for which) · <i className="nhlx-pk-flag is-cold is-legend">{ICON.cold}</i> cold ({metric === 'g' ? 'no goal in ten games when his rate owed him one' : 'his last five at 0.7× or under'}) ; on the plays above the rink and in the skater table, <i className="nhlx-pk-flag is-soft is-legend">{ICON.soft}</i> marks the opponent in the soft third of the league at his position for {word} on PropFinder’s table above the rink, the tab it opens on (on the ice the band under a chip already shows it); colour only, the numbers already carry his rate</span>
+      <span><i className="nhlx-rk-slot is-legend">LW1</i> his line slot tonight; the hover gives the {word} the opponent gives up to that slot per skater a game this season (the Defense tab’s by-line table, both venues), untinted because that table has not predicted shots beyond a skater’s own rate; the rink head names the slot the opponent gives the most to, with its rank against the league there, and who sits at that slot tonight</span>
+      <span><i className="nhlx-rk-slot is-soft nhlx-rk-top is-legend">RW #3</i> a top-{SOFT_TOP} soft spot: the opponent allows one of the five most {word} to his position on PropFinder’s table above the rink, the tab it opens on (the Soft spots list on Best bets)</span>
+      <span><i className="nhlx-pk-flag is-hot is-legend">{ICON.hot}</i> hot going in ({metric === 'g' ? '3+ goals in his last five' : 'his last five at 1.4× his shot rate or more'}) · <i className="nhlx-pk-flag is-cold is-legend">{ICON.cold}</i> cold ({metric === 'g' ? 'no goal in ten games when his rate owed him one' : 'his last five at 0.7× or under'}) ; on the plays above the rink and in the skater table, <i className="nhlx-pk-flag is-soft is-legend">{ICON.soft}</i> marks the opponent in the soft third of the league at his position for {word} on PropFinder’s table above the rink, the tab it opens on (on the ice the band under a chip already shows it); colour only, the numbers already carry his rate</span>
       <span><i className="nhlx-rk-pp is-lot is-legend">PP</i> on RotoWire’s first power-play unit (<i className="nhlx-rk-pp is-legend">PP2</i> the second) with 2+ power-play minutes coming tonight: the power plays his team should get (ShotPropz: what it draws against what the opponent gives, the Power play row above) × a unit skater’s share of each (0.98 of a minute on the first unit, 0.48 on the second); green from 3.5 minutes, a power-play-rich night; descriptive, no number moves with it</span>
       <span><span className="nhlx-rk-per is-legend"><i className="nhlx-rk-per-b is-soft">1</i><i className="nhlx-rk-per-b is-mid">2</i><i className="nhlx-rk-per-b is-tough">3</i></span> the matchup by period: what the opponent gives up in shots in that period (top / bottom third of the league) plus his own shots in it (top / bottom third of his position); green when they lean good, red when they lean bad, amber when they cancel out or sit in the middle; this season, the read on each badge’s hover</span>
       {metric === 'g'

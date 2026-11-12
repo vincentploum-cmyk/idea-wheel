@@ -47,24 +47,22 @@ describe('softSpotPlays', () => {
   });
 });
 
-describe('the flame on the rinks', () => {
-  test('a top-5 spot lights the hot flame with why; hot and in a top spot is one flame with both reasons; off without spotFlame', () => {
-    const f = flagsFor(sk(), 'sog', { spotFlame: true });
-    expect(f[0]).toMatchObject({ kind: 'hot', spot: true });
-    expect(f[0].title).toContain('Top-5 soft spot: NYI allows the 3rd most shots to LW');
-    expect(f.find((x) => x.kind === 'soft')).toBeTruthy(); // the soft-third rink stays (the rink chips leave it out)
-    expect(flagsFor(sk(), 'sog').some((x) => x.kind === 'hot')).toBe(false);
-    const hot = flagsFor(sk({ heat: { hotS: true, sogL5: 3.2, games: 5, sogRatio: 1.8 } }), 'sog', { spotFlame: true });
-    expect(hot.filter((x) => x.kind === 'hot')).toHaveLength(1);
-    expect(hot[0].title).toMatch(/^Hot: 3.2 shots a game .* · Top-5 soft spot: NYI allows/);
-    expect(flagsFor(sk({ spot: pf(9) }), 'sog', { spotFlame: true }).some((x) => x.kind === 'hot')).toBe(false);
-  });
-  test('a rink chip carries the flame for the rink’s metric', () => {
-    const side = { team: 'SJS', opp: 'NYI', venue: 'H', source: 'preview', skaters: [{ ...sk(), number: 84, inLineup: true }], defense: null, propfinder: null, lines: null };
+describe('the rinks: the top-spot badge, the flame for a hot streak only', () => {
+  test('a chip in a top-5 spot carries a green "LW #3" badge with the read on its hover, for the rink’s metric', () => {
+    const side = { team: 'SJS', opp: 'NYI', venue: 'H', source: 'preview', skaters: [{ ...sk(), number: 84, inLineup: true, line: 1 }], defense: null, propfinder: null, lines: null };
     const html = renderToStaticMarkup(<Rink side={side} teamCount={32} />);
-    expect(html).toMatch(/nhlx-pk-flag is-hot" title="Top-5 soft spot: NYI allows the 3rd most shots to LW/);
+    expect(html).toMatch(/<i class="nhlx-rk-slot is-soft nhlx-rk-top" title="Top-5 soft spot: NYI allows the 3rd most shots to LW over its last 10 games[^"]*"[^>]*>LW #3<\/i>/);
+    expect(html).not.toContain('nhlx-pk-flag is-hot'); // not hot: no flame
     const goals = renderToStaticMarkup(<Rink side={side} teamCount={32} metric="g" />);
-    expect(goals).not.toContain('Top-5 soft spot');
+    expect(goals).not.toContain('nhlx-rk-top');
+  });
+  test('the flame is the hot streak alone; the line slot is an untinted label', () => {
+    expect(flagsFor(sk(), 'sog').some((x) => x.kind === 'hot')).toBe(false);
+    expect(flagsFor(sk({ heat: { hotS: true, sogL5: 3.2, games: 5, sogRatio: 1.8 } }), 'sog')[0].title).toMatch(/^Hot: 3.2 shots a game/);
+    const lines = { sog: { gp: 13, cells: { LW1: { value: 1.1, rank: 30, of: 32, n: 13 } }, league: { LW1: 1.9 } } };
+    const side = { team: 'SJS', opp: 'NYI', venue: 'H', source: 'preview', skaters: [{ ...sk(), number: 84, inLineup: true, line: 1 }], defense: null, propfinder: null, lines };
+    const html = renderToStaticMarkup(<Rink side={side} teamCount={32} />);
+    expect(html).toMatch(/<i class="nhlx-rk-slot" title="NYI gives up 1.1 shots a game to the LW1, #30 of 32[^"]*descriptive[^"]*">LW1<\/i>/);
   });
 });
 

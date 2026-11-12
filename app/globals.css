@@ -1752,9 +1752,7 @@ div.nhlx-auto-msg > p { margin: 0; }
 .ir-slate-proj > span:first-child { min-width: 52px; font-variant-numeric: tabular-nums; }
 .ir-slate-more { margin-top: 10px; }
 /* NBA · Soft spots on the Best plays tab (2026-11-10, the NHL's list on Best bets; components/nba/NbaSoftSpots.jsx):
-   the regulars facing a top-five defense at their position, in the slate list's table style; the court's flame shares the glyph. */
-.ir-ss-flame { width: 15px; height: 15px; margin-right: 6px; vertical-align: -2px; }
-.ir-ss-flame svg { width: 15px; height: 15px; }
+   the regulars facing a top-five defense at their position, in the slate list's table style. */
 .ir-ss-table td { vertical-align: middle; }
 .ir-ss-table td b, .ir-ss-table td .ir-slate-sub { display: block; }
 .ir-ss-table td.ir-ss-spot .ir-spot { margin-bottom: 2px; }

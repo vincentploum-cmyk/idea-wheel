@@ -16,11 +16,8 @@ export const ICON = {
  * rate is in, so no number moves) and the soft spot: `spot` (PropFinder's table above the rink on
  * Matchups, on the tab it opens on — `spotFromTab` in propfinder-csv.js — so the flag and the ice
  * agree), the study's per-skater table (`oppPos`) standing in for a team without one, named in the title.
- * `spotFlame` (the rinks; Vincent, 2026-11-10: "mark the players in the rinks with the same flame as players that are
- * on a hot streak") lights the hot flame for a top-SOFT_TOP soft spot too (`topSpot` in picks-pure.js), its title saying
- * which; a skater hot and in a top spot carries one flame with both reasons.
  */
-export function flagsFor(c, stat, { spotFlame = false } = {}) {
+export function flagsFor(c, stat) {
   const f = c?.heat; const s = c?.spot; const o = s || c?.oppPos; const out = [];
   if (f) {
     if (stat === 'sog') {
@@ -28,12 +25,6 @@ export function flagsFor(c, stat, { spotFlame = false } = {}) {
       else if (f.coldS) out.push({ kind: 'cold', title: `Cold: ${f.sogL5} shots a game over his last ${f.games}, ${Math.round((1 - f.sogRatio) * 100)}% under his norm` });
     } else if (f.hotG) out.push({ kind: 'hot', title: `Hot: ${f.gL5} goal${f.gL5 === 1 ? '' : 's'} in his last ${f.games} games (colour only; the study found no carry-over from a streak)` });
     else if (f.coldG) out.push({ kind: 'cold', title: `Cold: no goal in his last ${FORM.coldGoalsGames} games` });
-  }
-  if (spotFlame && topSpot(c, stat)) {
-    const why = `Top-${SOFT_TOP} soft spot: ${topSpotText(c, stat)} (colour only; the board’s number already reads the opponent)`;
-    const hot = out.find((x) => x.kind === 'hot');
-    if (hot) hot.title = `${hot.title} · ${why}`;
-    else out.unshift({ kind: 'hot', title: why, spot: true });
   }
   if (o && (stat === 'sog' ? o.softSog : o.softG)) {
     const v = stat === 'sog' ? o.sog : o.g; const rank = stat === 'sog' ? o.rankSog : o.rankG; const word = stat === 'sog' ? 'shots' : 'goals';
@@ -45,9 +36,22 @@ export function flagsFor(c, stat, { spotFlame = false } = {}) {
   return out;
 }
 
-/** The flags as inline icons, or null when there are none. `soft: false` leaves the rink out (the ice is already tinted under a chip); `spotFlame` lights the flame for a top-5 soft spot. */
-export function Flags({ c, stat, className = '', soft = true, spotFlame = false }) {
-  const flags = flagsFor(c, stat, { spotFlame }).filter((f) => soft || f.kind !== 'soft');
+/** The flags as inline icons, or null when there are none. `soft: false` leaves the rink out (the ice is already tinted under a chip). */
+export function Flags({ c, stat, className = '', soft = true }) {
+  const flags = flagsFor(c, stat).filter((f) => soft || f.kind !== 'soft');
   if (!flags.length) return null;
   return <span className={`nhlx-pk-flags${className ? ` ${className}` : ''}`}>{flags.map((f) => <i key={f.kind} className={`nhlx-pk-flag is-${f.kind}`} title={f.title} aria-label={f.title}>{ICON[f.kind]}</i>)}</span>;
+}
+
+/**
+ * The rinks' top-spot badge: "RW #3", green, when the opponent ranks in the top SOFT_TOP at his position for `stat` on
+ * PropFinder's table above the rink, the tab it opens on (`topSpot` in picks-pure.js), the read in words on the hover.
+ * Vincent, 2026-11-10, first as the hot-streak flame ("mark the players in the rinks with the same flame"); on
+ * 2026-11-12 its own badge, since one flame for two reads could not be told apart on a phone ("Sure").
+ */
+export function TopSpotBadge({ c, stat }) {
+  const t = topSpot(c, stat);
+  if (!t) return null;
+  const title = `Top-${SOFT_TOP} soft spot: ${topSpotText(c, stat)} (colour only; the board’s number already reads the opponent)`;
+  return <i className="nhlx-rk-slot is-soft nhlx-rk-top" title={title} aria-label={title}>{c.pos} #{t.rank}</i>;
 }

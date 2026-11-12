@@ -158,8 +158,8 @@
   all show the one board projection, and the chip's hover says what the picked window would have read
   (`windowRead`); the shuffle's Matchup hover names the season table it reads. The chip also carries the
   book's main line and the chance for the stat (`playFor`: the over or yes side), ✓ when
-  the cheat sheet names him (the hover names the file), flame / snowflake / soft spot (the flame also for a regular
-  in a top-five spot, 2026-11-10, see Soft spots), his projection
+  the cheat sheet names him (the hover names the file), flame / snowflake / soft spot (and a green "SG #2" badge
+  for a regular in a top-five spot, see Soft spots), his projection
   alone when he has no line; above the court the opponent-allowed table (per position, every stat
   PropFinder's table carries, value + rank chip, the `nhlx-pfd-*` styles, the picked stat's column
   marked, the league's average on hover) and under it "Props by player": each player's projection, line
@@ -458,12 +458,13 @@
   the projection alone without a line. Ordered: the priced lines by edge, the unpriced lines by chance, then the
   projections alone by rank. `SOFT_SHOWN` = 12 rows, then "Show all"; the head's game dropdown cuts it to the game; a row
   opens the card; once the game is final the row is graded over the line (`actual` off his play for the stat: is-hit /
-  is-miss, DNP dimmed) and the head counts the hits. **The court's flame** (`playerTopSpot` in `Chip`): a regular in a
+  is-miss, DNP dimmed) and the head counts the hits. **The court's badge** (`playerTopSpot` in `Chip`): a regular in a
   top-five spot for the court's picked stat (all six court stats, on the season table whatever window the court shows)
-  wears the hot-streak flame (`ICON.hot`), its hover saying why (`topSpotText`: "Soft spot: NY allows the 2nd most points
-  to SG this season (24.1 a game, #2 of 30, the league 20.3)"); hot and in a top-five spot, one flame with both reasons;
-  the soft-third mark (`play.spot.soft`) stays as it was. A list and a flag over figures the board already computes: no
-  number moves. `__tests__/nba-soft-spots.test.jsx` (the pure reader, the list and the court's flame rendered).
+  wears a green badge, "SG #2" (`.nhlx-rk-slot.is-soft.nhlx-rk-top`, the NHL rinks' shape), its hover saying why
+  (`topSpotText`: "Soft spot: NY allows the 2nd most points to SG this season (24.1 a game, #2 of 30, the league 20.3)").
+  It was the hot-streak flame from 2026-11-10 to 2026-11-12 (Vincent: the NHL's "same flame"; then one flame for two
+  reads could not be told apart, "Sure"): the flame is a hot streak alone again; the soft-third mark (`play.spot.soft`) stays as it was. A list and a flag over figures the board already computes: no
+  number moves. `__tests__/nba-soft-spots.test.jsx` (the pure reader, the list and the court's badge rendered).
 - `tools/check-defensive-matchups.mjs <export.csv> <picks.json>` compares PropFinder's Defensive Matchups page export (what each team allows per position, with ranks) against the board's `sides[].allowed` table in a saved `GET /api/nba/picks?date` payload, cell by cell; the export itself is never ingested (its "OPPOSING PLAYER" header is no player column, the parser reads zero rows and the store rejects it).
 - Routes: `GET /api/nba/picks?date`, `GET /api/nba/shuffle?date&market`, `GET /api/nba/scorecard?from&to`, `GET|POST|DELETE /api/nba/sheets?date`,
   `POST /api/nba/refresh?date&only=schedule|propfinder`, `GET /api/nba/status?date`, `GET /api/nba/player?key&date`,

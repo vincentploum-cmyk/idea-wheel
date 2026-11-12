@@ -121,13 +121,16 @@ describe('rendered', () => {
     expect(html).not.toMatch(/\bEV\b|edge|juice|implie|break/i);
     expect(html).not.toContain('-163');
   });
-  test('the court: one flame for a regular in a top-five spot, both reasons on its hover when he is hot too', () => {
+  test('the court: a green "SG #2" badge for a regular in a top-five spot, the flame for a hot streak only', () => {
     const g = fixture().games[0];
     const html = renderToStaticMarkup(<CourtPair g={g} metric="pts" onMetric={() => {}} sport={{ ...sport, teamName: (t) => t, groups: [] }} />);
     const flames = html.match(/nhlx-pk-flag is-hot" title="[^"]*"/g) || [];
-    expect(flames).toHaveLength(2);   // White (hot + soft spot) and Towns (soft spot)
-    const white = flames.find((f) => f.includes('Hot:'));
-    expect(white).toContain('Hot: 80% of his last 5 over this line · Soft spot: NY allows the 2nd most points to SG this season');
-    expect(flames.find((f) => !f.includes('Hot:'))).toContain('Soft spot: BOS allows the 3rd most points to PF this season');
+    expect(flames).toHaveLength(1);   // White is hot
+    expect(flames[0]).toContain('Hot: 80% of his last 5 over this line');
+    expect(flames[0]).not.toContain('Soft spot');
+    const badges = html.match(/<i class="nhlx-rk-slot is-soft nhlx-rk-top" title="[^"]*"[^>]*>[^<]*<\/i>/g) || [];
+    expect(badges).toHaveLength(2);   // White and Towns
+    expect(badges.find((b) => b.includes('>SG #2<'))).toContain('Soft spot: NY allows the 2nd most points to SG this season');
+    expect(badges.find((b) => b.includes('>PF #3<'))).toContain('Soft spot: BOS allows the 3rd most points to PF this season');
   });
 });

@@ -91,7 +91,9 @@
   table, `slotBoard(defenseBySlot(rows, { season }))` at both venues, read once a slate in `buildSlate` and carried per
   side as `side.lines = linesOf(boards, opp)` ({ sog, g } → { gp, cells, softest, league }, `linesOf` in
   `defense-board.js`), green = top third, red = bottom third, grey = no record (the hover: the figure, the rank, the
-  league's mean, the skater-games) — and **the rink head names the slot the opponent gives the most to** ("PIT gives the most shots to the C1 · 2.9 a game ·
+  league's mean, the skater-games); **untinted since 2026-11-12** (Vincent, of a red RW1 beside a soft-spot flame: "But
+  the red RW1 means a bad matchup, no?" — the slot table predicted nothing over a skater's rate, the audit below, so the
+  badge is a plain label and the figure stays on its hover, the rink head's slot too) — and **the rink head names the slot the opponent gives the most to** ("PIT gives the most shots to the C1 · 2.9 a game ·
   #3 of 32 at that slot · tonight Kapanen": `most` on each `slotBoard` team and on `linesOf`'s read, the raw leader with its
   rank against the league at that slot and this side's skater there, `SoftestLine`, click to his card; the hover says the
   cell is a dozen skater-games that say where the shots went, not where they will go; `__tests__/nhl-rink-line.test.jsx`.
@@ -268,10 +270,12 @@
   three stingiest teams. Colour only: the study found a streak adds nothing once the rate is in, so no number moves.
   The same flags (`components/nhl/flags.jsx`, `Flags`) sit on the Matchups tab: on each rink chip for the rink's
   metric (flame / snowflake only, `soft={false}`: the ice band under the chip already shows the environment, and by
-  the picked window rather than the season table; **since 2026-11-10 the flame also marks a top-5 soft spot**,
-  `spotFlame`: the opponent in the top `SOFT_TOP` = 5 at his position for the metric on the same PropFinder table,
-  `topSpot` / `topSpotText` in `picks-pure.js`, the hover naming it, one flame with both reasons when he is hot too;
-  Vincent, 2026-11-10: "mark the players in the rinks with the same flame as players that are on a hot streak"), on the plays strip per play, and in the all-skaters table's
+  the picked window rather than the season table); **a top-5 soft spot wears its own badge** beside the flags,
+  `TopSpotBadge` in `flags.jsx` ("RW #3", green, the slot badge's shape): the opponent in the top `SOFT_TOP` = 5 at his
+  position for the metric on the same PropFinder table (`topSpot` / `topSpotText` in `picks-pure.js`), the read on its
+  hover. Vincent, 2026-11-10: "mark the players in the rinks with the same flame as players that are on a hot streak",
+  shipped as the flame; 2026-11-12 its own badge ("Sure"), since one flame for a streak and a matchup could not be told
+  apart on a phone: the flame is the hot streak alone, on the plays strip per play, and in the all-skaters table's
   L5 S/G and Goals cells; `buildSlate` puts
   `heat` and `oppPos` on every skater and `sidePlays` carries them onto the plays. A stored game grades the rows
   (`withActuals` / `hitOf` in `picks-pure.js`: each skater's box-score SOG and goals ride on his row as `actual`,

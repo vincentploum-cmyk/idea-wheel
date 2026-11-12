@@ -10,7 +10,6 @@ import { fmtOdds } from '@/lib/nfl/odds';
 import { reliableTone } from '@/lib/picks/reliability';
 import { softSpots, topSpotText, statShort, SOFT_TOP, SOFT_SHOWN, REGULAR_MIN } from '@/lib/nba/soft-spots';
 import { ordinal } from '@/lib/nba/sheet-matchups';
-import { ICON } from '@/components/nhl/flags';
 
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
@@ -38,7 +37,7 @@ export default function NbaSoftSpots({ board, sport, onOpen = null, plain = fals
   return (
     <section className="ir-slate ir-ss" aria-label="Soft spots">
       <div className="nhlx-pfd-head">
-        <b><i className="nhlx-pk-flag is-hot ir-ss-flame" aria-hidden="true">{ICON.hot}</i>Soft spots</b>
+        <b>Soft spots</b>
         <small className="nhlx-auto-meta">
           {rows.length} spot{rows.length === 1 ? '' : 's'}: a regular against one of the {SOFT_TOP} defenses that give up the most to his position for points, rebounds, assists or threes (this season’s table, #1 = the most) · regulars = projected {REGULAR_MIN}+ minutes tonight · {plain ? 'the lines with the best chance first, then the projection alone' : 'the priced lines by edge, then the chance, then the projection alone'}{graded.length ? ` · ${graded.filter((r) => r.hit).length} of ${graded.length} over the line` : ''}{onOpen ? ' · click a row for the card' : ''}
         </small>

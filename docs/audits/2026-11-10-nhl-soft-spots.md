@@ -42,8 +42,11 @@ Marchment that night: NYI ranked 6th in shots allowed per left wing this season 
   read as the soft-spot flag and the ice; the stored per-skater table for a team without one), regulars only
   (`SOFT_SPOT_MIN_SOG` = 1.5 shots a game, line 1 or 2, `SOFT_SPOT_MAX_LINE`), the board's own 2+ / 3+ / 4+ and book line,
   the board's 3+ first, twelve then "Show all", graded on 3+ once final with a tally in the head.
-- **The rinks' flame**: a chip whose skater sits in a top-5 spot for the rink's metric carries the hot-streak flame, its
-  hover naming the spot; hot and in a top spot is one flame with both reasons (`spotFlame` on `Flags` / `flagsFor`).
-- **The NBA**: the same list and flame on the NBA board (`docs/claude/nba.md`).
+- **The rinks**: a chip whose skater sits in a top-5 spot for the rink's metric carries the hot-streak flame, its
+  hover naming the spot (2026-11-10). On 2026-11-12 the spot got its own green badge ("RW #3", `TopSpotBadge` in
+  `flags.jsx`) and the flame went back to meaning a hot streak, since one flame for two reads could not be told apart on
+  a phone; the line-slot badge lost its red / green tint the same day (the slot table predicts nothing over a skater's
+  rate, `2026-10-31-nhl-lines.md`, and a red RW1 beside a soft-spot mark read as a contradiction).
+- **The NBA**: the same list, and the same badge on the court chips (`docs/claude/nba.md`).
 
 No projection, chance or calibration moved.
