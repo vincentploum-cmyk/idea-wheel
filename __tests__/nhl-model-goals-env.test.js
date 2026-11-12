@@ -50,20 +50,23 @@ describe('λ goals\' opponent read: defenseGoalMultiplier is the ISCF ratio alon
 
 describe('the ports (groups 5 and 6 of tools/port-model-core.mjs)', () => {
   test('applied to the model before the change, they give the change; applied again, they report ported', () => {
+    // The model before the change, rebuilt from today's by undoing the two groups (each edit is an exact text swap),
+    // so the test needs no git history (CI checks out one commit).
     const script = `
-      import { execFileSync } from 'node:child_process';
       const { GROUPS, applyGroup } = await import('./tools/port-model-core.mjs');
+      const { readFileSync } = await import('node:fs');
       const g = GROUPS.find((x) => x.key === 'goalsEnv20261112');
       const d = GROUPS.find((x) => x.key === 'defenseGoal20261112');
-      const before = execFileSync('git', ['show', '4c94fb9:components/nhl/model-core.js'], { encoding: 'utf8', maxBuffer: 1 << 26 });
+      const strip = (t) => t.replace('  iscfGoalMultiplier,' + String.fromCharCode(10), '');   // the site's own export
+      const now = strip(readFileSync('components/nhl/model-core.js', 'utf8'));
+      const undo = (t, grp) => grp.edits.reduce((x, e) => x.replace(e.new, e.old), t);
+      const before = undo(undo(now, d), g);
       const r = applyGroup(before, g);
       const r2 = applyGroup(r.text, d);
-      const { readFileSync } = await import('node:fs');
-      const now = readFileSync('components/nhl/model-core.js', 'utf8');
-      const strip = (t) => t.replace('  iscfGoalMultiplier,' + String.fromCharCode(10), '');   // the site's own export
-      console.log(JSON.stringify({ status: r.status, iscf: r.text.includes('mult = iscfGoalMultiplier(iscfRank);'), steps: r.text.includes('if (open(goalRank, 10)) mult += 0.18;'), again: applyGroup(r.text, g).status,
-        status6: r2.status, composite: r2.text.includes('0.5 * goalsRatio'), again6: applyGroup(r2.text, d).status, same: strip(r2.text) === strip(now) }));`;
+      console.log(JSON.stringify({ undone: before !== now && before.includes('if (open(goalRank, 10)) mult += 0.18;') && before.includes('0.5 * goalsRatio'),
+        status: r.status, iscf: r.text.includes('mult = iscfGoalMultiplier(iscfRank);'), steps: r.text.includes('if (open(goalRank, 10)) mult += 0.18;'), again: applyGroup(r.text, g).status,
+        status6: r2.status, composite: r2.text.includes('0.5 * goalsRatio'), again6: applyGroup(r2.text, d).status, same: r2.text === now }));`;
     const out = JSON.parse(execFileSync('node', ['--input-type=module', '-e', script], { encoding: 'utf8' }).trim());
-    expect(out).toEqual({ status: 'applied', iscf: true, steps: false, again: 'ported', status6: 'applied', composite: false, again6: 'ported', same: true });
+    expect(out).toEqual({ undone: true, status: 'applied', iscf: true, steps: false, again: 'ported', status6: 'applied', composite: false, again6: 'ported', same: true });
   });
 });
