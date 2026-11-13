@@ -37,7 +37,9 @@
   against the league, a tie to the one furthest over the league's mean — stays on the board for the sort it gave and names
   nothing on the page) with the opponent's skater at that slot tonight, clickable to his card; a slot's header sorts by it
   (`__tests__/nhl-defense-line-table.test.jsx`), and a team overview
-  (GA / GP, SA / GP from the stored box scores; xGA / 60, high-danger shots against and pace from MoneyPuck; **PP SOG to D**,
+  (GA / GP, SA / GP from the stored box scores; xGA / 60, high-danger shots against and pace from MoneyPuck; **PP SA / GP**,
+  power-play shots on goal allowed a game over the span, rank 1 = the most, null until a stored power-play shot counts —
+  Vincent, 2026-11-13: "add PP SOG allowed per game to the Defense tab too"; r 0.45 half to half on 2025-26; **PP SOG to D**,
   the share of the power-play shots on goal the team allowed that defensemen took over the span and venue picked, rank 1 = the
   biggest, the counts and the league's share on the hover, 10+ power-play shots at the least, `PP_SHARE_MIN` — Vincent,
   2026-11-12: "add D share of PP shots to the Defense tab"; the one power-play split that held from one half of 2025-26 to the

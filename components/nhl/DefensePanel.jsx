@@ -436,7 +436,7 @@ function Overview({ rows, playing, view, active, onPick }) {
               <td className="is-left"><button type="button" className="nhlx-df-team" onClick={() => onPick(r.abbr)}><TeamLogo abbr={r.abbr} size={20} />{r.abbr}</button></td>
               <td>{r.gp}</td>
               {OVERVIEW_COLS.map((c) => (
-                <td key={c.key} className={`${rankTone(r.rank[c.key], n[c.key])}${sort === c.key ? ' is-sorted' : ''}`} title={c.key === 'ppD' ? ppTitle(r) : undefined}>
+                <td key={c.key} className={`${rankTone(r.rank[c.key], n[c.key])}${sort === c.key ? ' is-sorted' : ''}`} title={c.key === 'ppD' ? ppTitle(r) : c.key === 'ppSog' && r.ppSog != null ? `${r.pp} power-play shots on goal allowed in ${r.gp} games · rank 1 = the most` : undefined}>
                   {r[c.key] == null ? <small>—</small> : <span className="nhlx-df-cell"><b>{c.pct ? `${Math.round(r[c.key] * 100)}%` : fmt(r[c.key], c.digits)}</b><RankChip rank={r.rank[c.key]} n={n[c.key]} /></span>}
                 </td>
               ))}
