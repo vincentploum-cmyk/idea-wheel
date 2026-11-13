@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Port the site's model changes into the local model app (App.jsx, the model's source of truth),
-// the same edits made to components/nhl/model-core.js, in six groups, each all-or-nothing:
+// the same edits made to components/nhl/model-core.js, in seven groups, each all-or-nothing:
 //   1. 2026-10-13 (a022443): p2s / p3s / p4s / p5s are the Poisson tails of λ shots; the ladder's
 //      figures ride along as ladderP3s / P4s / P5s and still set the attack score.
 //   2. 2026-10-20 (4ec641f): p1g / p2g / p3g are the Poisson tails of λ goals; the ladder's figures
@@ -16,6 +16,9 @@
 //      (docs/audits/2026-11-12-nhl-shots-environment.md).
 //   6. 2026-11-12: defenseGoalMultiplier (λ goals' and λ points' opponent read) is the ISCF ratio
 //      alone, the Goals/G and Shots/G ratios out; no ISCF on the table → 1 (same audit).
+//   7. 2026-11-13: the line boost is lineMoveMultiplier: the projected minutes at tonight's posted line over
+//      the same at his usual line, to the power 0.8, both ways, defensemen on their own minutes, in place of
+//      +6% a line upward only (docs/audits/2026-11-13-nhl-formula-refit.md). Needs group 4 in first.
 //
 //   node tools/port-model-core.mjs [path to App.jsx] [--check]
 //
@@ -259,6 +262,24 @@ const DEFENSE_GOAL = [
   },
 ];
 
+const LINE_MOVE = [
+  {
+    name: "the line-move multiplier (lineMoveMultiplier, usualLineFromToi, TOI_MOVE_EXP)",
+    old: "  if (!(l5 > 0)) return TOI_FIT.mean[key];\n  return +(TOI_FIT.line[key] + TOI_FIT.l5 * l5 + TOI_FIT.season * season).toFixed(2);\n}\n",
+    new: "  if (!(l5 > 0)) return TOI_FIT.mean[key];\n  return +(TOI_FIT.line[key] + TOI_FIT.l5 * l5 + TOI_FIT.season * season).toFixed(2);\n}\n\n// ─── SHOTS FOLLOW THE POSTED LINE'S MINUTES (2026-11-13) ─────────────────────\n// docs/audits/2026-11-13-nhl-formula-refit.md (tools/predictors/formula_refit.py): 7,044 skater-games of\n// 2026-27 with the lines posted before puck drop. A skater posted a line above his usual one played 1.03x\n// (one line) and 1.10x (two) his minutes and shot 1.03x / 1.11x his read; posted a line below, 0.97x / 0.94x\n// and 0.97x / 0.96x. The multiplier is the projected minutes at tonight's posted line over the same projection\n// at his usual line (the line whose mean minutes are nearest his own), to the power 0.8 (minutes follow that\n// ratio at 0.81, shots follow minutes at 0.99; fitted directly, 0.70 with 0.16 to 1.24 around it). It replaces\n// the up-only step (+6% a line, read on the forwards' minute cuts for defensemen too, which left a promoted\n// defenseman unread and never lowered a demoted skater). Only with a posted line; 0 turns it off.\nconst TOI_MOVE_EXP = 0.8;\nfunction usualLineFromToi(posKey, playerToi) {\n  const isD = (posKey || \"\").toUpperCase() === \"D\";\n  const toi = Number(playerToi) || 0;\n  let best = null;\n  for (let n = 1; n <= (isD ? 3 : 4); n++) {\n    const gap = Math.abs(TOI_FIT.mean[`${isD ? \"D\" : \"F\"}${n}`] - toi);\n    if (best == null || gap < best.gap) best = { n, gap };\n  }\n  return best.n;\n}\nfunction lineMoveMultiplier(posKey, postedLine, playerToi, toiL5, toiSeason) {\n  if (!TOI_MOVE_EXP || postedLine == null || !(Number(playerToi) > 0)) return 1;\n  const isD = (posKey || \"\").toUpperCase() === \"D\";\n  const today = Math.min(isD ? 3 : 4, Math.max(1, Math.round(Number(postedLine) || 0)));\n  if (!(today >= 1)) return 1;\n  const usual = usualLineFromToi(posKey, playerToi);\n  if (usual === today) return 1;\n  const at = projectedToiFromLineup(posKey, today, playerToi, toiL5, toiSeason);\n  const base = projectedToiFromLineup(posKey, usual, playerToi, toiL5, toiSeason);\n  if (!(at > 0) || !(base > 0)) return 1;\n  return clamp(Math.pow(at / base, TOI_MOVE_EXP), 0.88, 1.14);\n}\n",
+  },
+  {
+    name: "the posted line kept on the prepared skater",
+    old: "          todayLine,\n          resolvedPos: posKeyForToi,\n",
+    new: "          todayLine,\n          postedLine: luPlayer?.line ?? null,\n          resolvedPos: posKeyForToi,\n",
+  },
+  {
+    name: "the line boost (the minutes multiplier in place of the up-only step)",
+    old: "        const lineShift = impliedLine - todayLine;\n        const lineBoost = Math.max(0, Math.min(0.12, lineShift * 0.06));\n",
+    new: "        const lineBoost = lineMoveMultiplier(posKey, prep.postedLine, playerToi, skater.toiL5, skater.toiSeason) - 1;\n",
+  },
+];
+
 export const GROUPS = [
   { key: 'shotsOdds20261013', label: 'shots odds (2026-10-13): p2s / p3s / p4s / p5s the Poisson tails of λ shots, the ladder as ladderP3s / P4s / P5s', edits: SHOTS_ODDS },
   { key: 'goalOdds20261020', label: 'goal odds (2026-10-20): p1g / p2g / p3g the Poisson tails of λ goals, the ladder as ladderP1g / P2g / P3g', edits: GOAL_ODDS },
@@ -266,6 +287,7 @@ export const GROUPS = [
   { key: 'toi20261107', label: 'projected minutes (2026-11-07): the line\'s constant + 0.345 · last 5 + 0.442 · season, refitted on the posted lines', edits: TOI },
   { key: 'goalsEnv20261112', label: 'goals environment (2026-11-12): the cheat sheet\'s goals multiplier is a smooth ISCF/G term, the Goals/G steps out', edits: GOALS_ENV },
   { key: 'defenseGoal20261112', label: 'λ goals\' opponent read (2026-11-12): defenseGoalMultiplier is the ISCF ratio alone, Goals/G and Shots/G out', edits: DEFENSE_GOAL },
+  { key: 'lineMove20261113', label: 'shots follow the posted line\'s minutes (2026-11-13): lineMoveMultiplier in place of the up-only +6% a line', edits: LINE_MOVE },
 ];
 
 /** The end index of the `function poissonAtLeast(` body (after its closing brace), or -1. */

@@ -1347,6 +1347,39 @@ function projectedToiFromLineup(posKey, todayLine, playerToi, toiL5, toiSeason) 
   return +(TOI_FIT.line[key] + TOI_FIT.l5 * l5 + TOI_FIT.season * season).toFixed(2);
 }
 
+// ─── SHOTS FOLLOW THE POSTED LINE'S MINUTES (2026-11-13) ─────────────────────
+// docs/audits/2026-11-13-nhl-formula-refit.md (tools/predictors/formula_refit.py): 7,044 skater-games of
+// 2026-27 with the lines posted before puck drop. A skater posted a line above his usual one played 1.03x
+// (one line) and 1.10x (two) his minutes and shot 1.03x / 1.11x his read; posted a line below, 0.97x / 0.94x
+// and 0.97x / 0.96x. The multiplier is the projected minutes at tonight's posted line over the same projection
+// at his usual line (the line whose mean minutes are nearest his own), to the power 0.8 (minutes follow that
+// ratio at 0.81, shots follow minutes at 0.99; fitted directly, 0.70 with 0.16 to 1.24 around it). It replaces
+// the up-only step (+6% a line, read on the forwards' minute cuts for defensemen too, which left a promoted
+// defenseman unread and never lowered a demoted skater). Only with a posted line; 0 turns it off.
+const TOI_MOVE_EXP = 0.8;
+function usualLineFromToi(posKey, playerToi) {
+  const isD = (posKey || "").toUpperCase() === "D";
+  const toi = Number(playerToi) || 0;
+  let best = null;
+  for (let n = 1; n <= (isD ? 3 : 4); n++) {
+    const gap = Math.abs(TOI_FIT.mean[`${isD ? "D" : "F"}${n}`] - toi);
+    if (best == null || gap < best.gap) best = { n, gap };
+  }
+  return best.n;
+}
+function lineMoveMultiplier(posKey, postedLine, playerToi, toiL5, toiSeason) {
+  if (!TOI_MOVE_EXP || postedLine == null || !(Number(playerToi) > 0)) return 1;
+  const isD = (posKey || "").toUpperCase() === "D";
+  const today = Math.min(isD ? 3 : 4, Math.max(1, Math.round(Number(postedLine) || 0)));
+  if (!(today >= 1)) return 1;
+  const usual = usualLineFromToi(posKey, playerToi);
+  if (usual === today) return 1;
+  const at = projectedToiFromLineup(posKey, today, playerToi, toiL5, toiSeason);
+  const base = projectedToiFromLineup(posKey, usual, playerToi, toiL5, toiSeason);
+  if (!(at > 0) || !(base > 0)) return 1;
+  return clamp(Math.pow(at / base, TOI_MOVE_EXP), 0.88, 1.14);
+}
+
 
 function positionGoalLeakOverride({ posKey, todayLine, effectiveToi, skater, teamPos }) {
   if (!teamPos) return null;
@@ -4553,6 +4586,7 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
           effectiveToi,
           impliedLine,
           todayLine,
+          postedLine: luPlayer?.line ?? null,
           resolvedPos: posKeyForToi,
           iffAnchor,
           shotsAnchor,
@@ -4943,8 +4977,7 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
           pointPlayerBase * pointDefenseMult * pointRoleMult * pointShareMult * pacePointMult
         );
 
-        const lineShift = impliedLine - todayLine;
-        const lineBoost = Math.max(0, Math.min(0.12, lineShift * 0.06));
+        const lineBoost = lineMoveMultiplier(posKey, prep.postedLine, playerToi, skater.toiL5, skater.toiSeason) - 1;
         const lineBoostedS = cappedLambdaS * (1 + lineBoost);
         const lineBoostedG = baseLambdaG * (1 + lineBoost * 0.12);
         const lineBoostedP = baseLambdaP * (1 + lineBoost * 0.08);
@@ -6246,6 +6279,9 @@ export {
   profileRate,
   projectedToiFromLineup,
   TOI_FIT,
+  lineMoveMultiplier,
+  usualLineFromToi,
+  TOI_MOVE_EXP,
   resolvePaceTier,
   resolveRoleLabelAgainstCheatSheet,
   roleGoalAccessMultiplier,
