@@ -308,3 +308,14 @@
   or soft / tough split does not hold (r −0.02, 0.07 season to season). Of 2,365 rules the best that held both seasons
   land 71% at 3+ (season 3.5+ a game + last season 3.0+ + not a tough-third defense, or home), none 75%; the same rules
   land 87–94% at 2+. Descriptive; nothing changed.
+- The opponent as a team, and shots that follow the posted line (`docs/audits/2026-11-13-nhl-formula-refit.md`,
+  `tools/predictors/formula_refit.py`; Vincent, 2026-11-13: "no just 2 and 3" of the drivers study's list). Fitted
+  against the shipped formula both were smaller and differently shaped than the study said. The team's shots allowed
+  added beside the cell takes nothing (0.006); the cell at 0.687 was the fault (tightest fifth of cells shot 1.18× the
+  formula, loosest 0.96×): fitted together the team takes 0.63 and 0.53 comes off the cell, stable on three fits,
+  −9.9 per 1,000 on 2026-27 (−15.2 … −4.8), −2.2 on 2025-26 whole; 3+ calls said 61.4 → 60.6, landed 58.2 → 58.8.
+  **Shipped** (`TEAM_SHOTS_FIT`). The model already lifted a promoted skater 6% a line (`lineBoost`), up only and on
+  forwards' minute cuts; on 7,044 posted-line skater-games the move is symmetric and the size of the minutes (up one
+  ×1.04, down one ×0.98, defensemen ×1.05 / ×0.95), exponent 0.70 (0.16 … 1.24) on the projected-minutes ratio.
+  **Shipped** as `lineMoveMultiplier` (ratio ^0.8, both ways, defensemen on their own minutes); worth little overall
+  (−0.9 per 1,000, interval across 0). The model's own run was not replayed (no scorecard export).

@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { studyWeight, studyWeightGoals, blendRates, project, fromModel, blendProjection, formOf, isSoftThird, FORM, poissonAtLeast, fairOdds, shotsAllowed, positionAllowed, isBackToBack, pickGame, notesFor, seasonYearOf, SHOTS_FLOOR, LEAGUE_POS, withActuals, hitOf } from '../lib/nhl-data/picks';
+import { studyWeight, studyWeightGoals, blendRates, project, TEAM_SHOTS_FIT, fromModel, blendProjection, formOf, isSoftThird, FORM, poissonAtLeast, fairOdds, shotsAllowed, positionAllowed, isBackToBack, pickGame, notesFor, seasonYearOf, SHOTS_FLOOR, LEAGUE_POS, withActuals, hitOf } from '../lib/nhl-data/picks';
 
 const game = (sog, icf = sog * 1.8, g = 0.3, iscf = 1.5, toi = 17) => ({ sog, icf, g, iscf, toi });
 
@@ -61,6 +61,31 @@ describe('tonight’s picks', () => {
     const avg = blendRates([], Array.from({ length: 82 }, () => game(1.73, 3.1, 0.23, 1.2, 16.3)));
     expect(project(avg, { home: false, oppPos: LEAGUE_POS.C, pos: 'C' }).lamS).toBeCloseTo(1.73, 0);
     expect(project(avg, { home: false, oppPos: LEAGUE_POS.C, pos: 'C' }).lamG).toBeCloseTo(0.23, 0);
+  });
+  test('the opponent as a team beside its position cell (TEAM_SHOTS_FIT, 2026-11-13)', () => {
+    const r = { n: 20, sog: 2.5, icf: 4.6, g: 0.3, iscf: 2.2, toi: 18, toiL5: 18 };
+    const at = (oppPos, oppTeam) => project(r, { home: false, oppPos, pos: 'C', oppTeam });
+    const lg = 28;
+    // a league-average team and cell: the formula as it was; and so without a team read
+    expect(at(LEAGUE_POS.C, { sog: lg, games: 15, league: lg }).lamS).toBe(at(LEAGUE_POS.C, null).lamS);
+    expect(at({ sog: 2.1, g: 0.2 }, null).lamS).toBe(project(r, { home: false, oppPos: { sog: 2.1, g: 0.2 }, pos: 'C' }).lamS);
+    // a loose team lifts, a tight one lowers; goals untouched
+    expect(at(LEAGUE_POS.C, { sog: 31, games: 15, league: lg }).lamS).toBeGreaterThan(at(LEAGUE_POS.C, null).lamS);
+    expect(at(LEAGUE_POS.C, { sog: 25, games: 15, league: lg }).lamS).toBeLessThan(at(LEAGUE_POS.C, null).lamS);
+    expect(at(LEAGUE_POS.C, { sog: 31, games: 15, league: lg }).lamG).toBe(at(LEAGUE_POS.C, null).lamG);
+    // the team's ratio to the power 0.63, its games shrunk to the league at games / (games + 5)
+    const raw = (oppPos, oppTeam) => {
+      const ratio = ((oppTeam.sog * oppTeam.games + lg * 5) / (oppTeam.games + 5)) / lg;
+      return Math.pow(ratio, TEAM_SHOTS_FIT.team) * Math.pow(oppPos.sog / LEAGUE_POS.C.sog, TEAM_SHOTS_FIT.cell);
+    };
+    const loose = { sog: 31, games: 15, league: lg };
+    expect(at(LEAGUE_POS.C, loose).lamS / at(LEAGUE_POS.C, null).lamS).toBeCloseTo(raw(LEAGUE_POS.C, loose), 1);
+    expect(at(LEAGUE_POS.C, { sog: 31, games: 2, league: lg }).lamS).toBeLessThan(at(LEAGUE_POS.C, loose).lamS);   // two games say less
+    // the cell keeps 0.687 - 0.53 of its say once the team is read: a soft cell on an average team lifts less than before
+    const soft = { sog: 2.1, g: 0.2 }; const avgTeam = { sog: lg, games: 15, league: lg };
+    expect(at(soft, avgTeam).lamS).toBeGreaterThan(at(LEAGUE_POS.C, avgTeam).lamS);
+    expect(at(soft, avgTeam).lamS).toBeLessThan(at(soft, null).lamS);
+    expect(TEAM_SHOTS_FIT).toEqual({ team: 0.63, cell: -0.53, k: 5 });
   });
   test('with a saved run the row carries the model’s own numbers, the study’s beside them', () => {
     const study = { lamS: 3.08, p3: 0.59, p4: 0.37, p1g: 0.4 };

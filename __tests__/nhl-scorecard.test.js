@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { blendRates, project, positionAllowed } from '../lib/nhl-data/picks-pure';
+import { blendRates, project, positionAllowed, shotsAllowed } from '../lib/nhl-data/picks-pure';
 import {
   BUCKETS, PREDICTORS, boardPicks, compactRow, defaultFrom, exportRows, gradeRow, indexRun, marketReport,
   ownWindows, predictorReport, predictorValue, runForGame, seasonOf, slateReport, summarize,
@@ -197,7 +197,11 @@ describe('scorecard: the study read', () => {
     const b = read10({ id: 1, team: 'EDM', opp: 'CGY', venue: 'H', pos: 'C' });
     const cur10 = rows.filter((r) => r.playerId === 1 && r.date >= '2026-10-01' && r.date < '2026-10-10');
     const table10 = positionAllowed(rows.filter((r) => r.date >= '2026-10-01' && r.date < '2026-10-10'), rows.filter((r) => r.date < '2026-07-01'));
-    expect(b).toEqual((({ lamS, lamG }) => ({ lamS, lamG }))(project(blendRates(cur10, prev), { home: true, oppPos: table10.read('CGY', 'C'), pos: 'C', b2b: true })));
+    // … and the opponent as a team from this season's games before it (TEAM_SHOTS_FIT)
+    const teams10 = shotsAllowed(rows.filter((r) => r.date >= '2026-10-01' && r.date < '2026-10-10'));
+    const oppTeam = { sog: teams10.teams.CGY.sog, games: teams10.teams.CGY.games, league: teams10.league };
+    expect(oppTeam.games).toBe(2);
+    expect(b).toEqual((({ lamS, lamG }) => ({ lamS, lamG }))(project(blendRates(cur10, prev), { home: true, oppPos: table10.read('CGY', 'C'), pos: 'C', b2b: true, oppTeam })));
     expect(b.lamS).not.toBe(a.lamS);
     // no base, under five games: no read; a goalie-ish position: no read; dates must be asked in order
     expect(read10({ id: 3, team: 'EDM', opp: 'CGY', venue: 'H', pos: 'C' })).toBeNull();
