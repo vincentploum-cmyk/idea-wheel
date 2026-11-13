@@ -384,6 +384,16 @@
   season), PRA 6.239 → 6.143 and 6.178 → 6.099, rebounds, assists, threes and the ladders' Brier all better. A file, not a
   job: refit monthly (README). `__tests__/nba-model.test.js` (LightGBM's own answers on eight player-nights, the features,
   the blend on the board).
+- **The book's line in the projection** (Vincent, 2026-11-13: "check whether the odds from propfinder can help us find
+  opportunities"; `docs/audits/2026-11-13-nba-odds.md`): `LINE_BLEND` = { pts: 0.5, pra: 0.5, band: [-160, 130] } on the
+  cocktail (`lineBlend`): the points and PRA centre moves half way to the book's main line where its over is priced inside the
+  band, after the learned read, the ladder built again (`ranges[market].lineRead` = { factor, before, line, odds }, the card's
+  hover). On the site's 23 graded nights: points 4.926 → 4.850, PRA 6.347 → 6.186; the other stats' half-point lines are too
+  coarse and are not blended. `buildBoard({ lineBlend: false })` is the board without it (the older arithmetic tests use it).
+  The same audit: the stored odds are overs only from one book, blind overs lose 16%, the board's edge sorts them (−22% to
+  +22%) and only an 8+ point edge paid (234 bets); no under price is stored, so the under side cannot be graded.
+  `.github/workflows/nba-odds-export.yml` + `tools/audit/nba_odds.py` (the scorecard's `rows=1`: every rung with `odds`,
+  `underOdds`, `books`, `proj`, `actual`).
 - **Projected · Floor · Ceiling for every player** (Vincent, 2026-11-13: "I still don't see always, the projected, floor,
   and ceiling for all players"): the Games tab's and the stat lists' table (`TierTable` in `NbaGames.jsx`) reads Proj ·
   Floor · Ceiling · Strong · Lean · Thin — the floor and the ceiling were the projection's hover, which a phone does not

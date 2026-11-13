@@ -154,6 +154,18 @@ python3 -I tools/audit/nba_model_fit.py --features $F --out lib/nba/model-trees.
 A plain `--cocktail site` replay is the board without the trees (the site's file has seen those seasons: replaying with it would
 flatter it). Written up in `docs/audits/2026-11-13-nba-model.md`.
 
+## NBA: the board against the book's prices (`nba_odds.py`)
+
+The site's graded nights with the prices the pull carried: run the `nba-odds-export` workflow (Actions, by hand; read-only), unzip
+its artifact, then:
+
+```bash
+python3 -I tools/audit/nba_odds.py --rows .nhl-data/audit/odds/nba-odds-rows.json.gz --out docs/audits/2026-11-13-nba-odds-tables.md
+```
+
+Is the price honest, the board against the price on one line, the return by the board's edge (halves of the nights, a 90% range
+resampling nights), the unders when the pull carries their price. Written up in `docs/audits/2026-11-13-nba-odds.md`.
+
 ## NBA: what predicts each stat (`nba-box-fetch.mjs`, `nba_stat_drivers.py`)
 
 Points, rebounds, assists and threes one at a time, from the box scores rather than the board: his own record at every

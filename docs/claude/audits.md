@@ -241,6 +241,13 @@
   every stat. The gain is the teammates out and back and tonight's role; the opponent, pace, the book's spread and total, rest
   and home add nothing. Shipped as the cocktail's `model` (the bullet "The learned read" in `nba.md`): points 4.862 → 4.814
   and 4.783 → 4.737, PRA 6.239 → 6.143 and 6.178 → 6.099 on the replay, walk-forward. Not a test against the book.
+- The NBA board against real prices (`docs/audits/2026-11-13-nba-odds.md`, `tools/audit/nba_odds.py` on the `nba-odds-export`
+  workflow's artifact = the site's `scorecard?rows=1`; Vincent, 2026-11-13: "check whether the odds from propfinder can help
+  us find opportunities"). 16,473 priced over rungs of 23 nights. The stored odds are overs only, one book, steep (implied
+  61.3%, landed 51.6%): blind −16%. The board's edge orders the returns from −22.5% (edge under −15) to +6.7% and +21.6% (8–15
+  and 15+, 234 bets, both halves). The price and the board read a line equally well and better together (Brier 0.2400 /
+  0.2413 / 0.2357). The book's main line beats the board's projection for points and PRA: shipped as `LINE_BLEND` (points
+  4.926 → 4.850, PRA 6.347 → 6.186 on the live site). Open: under prices and more books in the pull; the price in the chance.
 - The NFL's outlier games (`docs/audits/2026-11-08-nfl-outliers.md`, `tools/audit/nfl_outliers.py` on `nfl-audit.mjs --yards`;
   Vincent, 2026-11-08: "Build the same outlier functionality for NFL"): 11,273 graded yards rows of 2025 (weeks 4–18) and 2026
   (1–9). The board's chance at double the projection lands by the projection's size and runs high on each player's own spread
