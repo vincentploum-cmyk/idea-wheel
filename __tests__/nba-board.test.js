@@ -738,7 +738,7 @@ describe('NBA ladders', () => {
   test('every side player with logs carries his ladders', () => {
     const games = [{ id: 'g1', date: '2026-10-21T23:30Z', away: 'BOS', home: 'NY', final: false, state: 'pre' }];
     const pf = { at: '2026-10-20T14:00:00Z', data: { players: [{ id: 'p1', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SF', games: logs, props: [{ market: 'pts', line: 25.5, odds: -110, underOdds: -110, isMain: true }] }], defense: null } };
-    const b = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf, results: {} });
+    const b = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf, results: {}, lineBlend: false });   // the board's own arithmetic, before the book's line
     const p = b.games[0].sides.BOS.players[0];
     expect(Object.keys(p.ladders).sort()).toEqual(['ast', 'pra', 'pts', 'reb', 'tpm']);
     expect(p.ladders.pts.find((r) => r.main).line).toBe(25.5);

@@ -1,8 +1,11 @@
 import { describe, expect, test } from '@jest/globals';
 import { heightsOf, lineOf, readAt, survivorsAt, fallenAt, curveOf, thinsAt, linesAt, pAt, returnOf } from '../lib/picks/shuffle';
-import { buildBoard as nbaBoard, ladderOf as nbaLadder, shuffleOf as nbaShuffle, SHUFFLE_MARKETS as NBA_BARS, envPosFor } from '../lib/nba/picks';
+import { buildBoard as nbaBoardSite, ladderOf as nbaLadder, shuffleOf as nbaShuffle, SHUFFLE_MARKETS as NBA_BARS, envPosFor } from '../lib/nba/picks';
 import { buildBoard as nflBoard, shuffleOf as nflShuffle, SHUFFLE_MARKETS as NFL_BARS, LADDER_MARKETS as NFL_LADDERS } from '../lib/nfl/picks';
 import { MARKETS as NFL_MARKETS } from '../lib/nfl/markets';
+
+// The board's own arithmetic, before the book's line moves a points or PRA centre (the cocktail's `lineBlend`; __tests__/nba-model.test.js).
+const nbaBoard = (args) => nbaBoardSite({ ...args, lineBlend: false });
 
 // A scorer whose last 20 games read 20, 23, 26, 29, 32 in turn: mean 26, so a 28+ bar clears in 8 of 20.
 const logs = Array.from({ length: 20 }, (_, i) => ({ date: `2026-01-${String(10 + i).padStart(2, '0')}`, season: 2026, type: 'REG', opp: 'NY', pts: 20 + (i % 5) * 3, reb: 8, ast: 5, tpm: 2, pra: 33 + (i % 5) * 3, stl: 1 + (i % 3), blk: i % 2 }));
