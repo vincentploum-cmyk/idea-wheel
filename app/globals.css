@@ -1979,6 +1979,14 @@ div.nhlx-auto-msg > p { margin: 0; }
 .ir-gm-list.is-wide .ir-gm-top, .ir-gm-list.is-wide > .ir-gm-cols { max-width: 880px; }
 /* An opened NBA game: the stat and position pills, then each defense's PropFinder table with the players facing it under it. */
 .ir-gm-picks { display: flex; flex-wrap: wrap; gap: 0 18px; align-items: center; }
+/* The pills stay under the header while the game is open and scrolled through (2026-11-13), so the stat and position switch
+   from the middle of the tables; `--nhlx-header-h` is the header's measured height (NbaGames.jsx useHeaderHeight). */
+.ir-gm-detail > .ir-gm-picks { position: sticky; top: var(--nhlx-header-h, 72px); z-index: 5; background: var(--bg); }
+@media (max-width: 640px) {
+  /* On a phone each pill row scrolls sideways instead of wrapping, so the frozen bar stays two rows high. */
+  .ir-gm-detail > .ir-gm-picks { flex-wrap: nowrap; flex-direction: column; align-items: stretch; }
+  .ir-gm-detail > .ir-gm-picks .nhlx-tabs.is-pills.is-small { flex-wrap: nowrap; margin: 6px 0; }
+}
 .ir-gm-def { padding: 14px 0 6px; border-top: 1px solid var(--line); margin-top: 10px; }
 .ir-gm-def:first-of-type { border-top: 0; margin-top: 0; }
 .ir-gm-def-vs { font-family: var(--font-display); font-size: 16px; color: var(--heading); }

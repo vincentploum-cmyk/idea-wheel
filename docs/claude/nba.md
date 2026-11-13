@@ -71,6 +71,11 @@
   table), and "Show the team columns and the tables" folds the columns and the five group tables. A player listed day-to-day
   is no longer greyed on the court or in the Tonight table (`p.out`, not any injury listing). Class names `ir-gf-*`:
   the start screen owns `ir-game` / `ir-games`.
+- **An opened game's Stat and Position pills are frozen under the header** (Vincent, 2026-11-13: "the top row of threes,
+  rebounds etc should be frozen so I can easily toggle whenever I'm in the middle of the page"): `.ir-gm-detail > .ir-gm-picks`
+  is `position: sticky` at `top: var(--nhlx-header-h)`, the header's height measured by `useHeaderHeight` in `NbaGames.jsx`
+  (69 px at 1440, 77 px at 390, where the header wraps); it sticks only while that game's tables are on screen. On a phone
+  each pill row scrolls sideways instead of wrapping, so the bar stays two rows (~96 px) high.
 - **On the Games tab since 2026-11-11** (Vincent: "I don't see a best plays tab" — the courts and the Best plays board
   are off the page since 2026-11-01, so the court verdict, the chips' Q1 badges and the Soft spots list built for them
   were drawn nowhere): the **Soft spots list** heads the Games tab (`NbaSoftSpots` with `plain`: no Edge column, no

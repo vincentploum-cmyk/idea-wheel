@@ -301,8 +301,27 @@ function useOpenRow(board) {
   };
 }
 
+/**
+ * The site header's height as `--nhlx-header-h` on the page (it wraps on a phone), so an opened game's stat and position pills
+ * can stick right under it (Vincent, 2026-11-13: "the top row of threes, rebounds etc should be frozen so I can easily toggle
+ * whenever I'm in the middle of the page").
+ */
+function useHeaderHeight() {
+  useEffect(() => {
+    const el = document.querySelector('.nhlx-header');
+    if (!el) return undefined;
+    const root = document.documentElement;
+    const set = () => root.style.setProperty('--nhlx-header-h', `${Math.round(el.getBoundingClientRect().height)}px`);
+    set();
+    const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(set) : null;
+    ro?.observe(el);
+    return () => ro?.disconnect();
+  }, []);
+}
+
 function GamesInner({ board, shuffles, openFirst = false }) {
   const onOpen = useOpenRow(board);
+  useHeaderHeight();
   return (
     <div className="ir-gm-list is-wide">
       {/* The soft spots (the regulars facing one of the five defenses that give up the most to their position): on Games since
