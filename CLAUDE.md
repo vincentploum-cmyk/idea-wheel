@@ -31,7 +31,7 @@ under ~150 lines.
 
 - **Large files: grep, then read a range.** Never read these whole: `components/nhl/model-core.js` (258 KB),
   `components/nhl/NhlModel.jsx` (193 KB), `app/globals.css` (178 KB), `lib/picks/board.js` (92 KB),
-  `docs/shots-goals-predictors.md` (94 KB), `lib/nhl-data/patterns-rules.json`, `lib/nhl-data/seed/*`,
+  `docs/shots-goals-predictors.md` (94 KB), `lib/nhl-data/patterns-rules.json`, `lib/nba/model-trees.json` (0.9 MB), `lib/nhl-data/seed/*`,
   `package-lock.json`, and everything in `__tests__/fixtures/` (real payloads up to 146 KB). Use
   `grep -n` for the symbol, then `Read` with `offset` / `limit` (or `sed -n 'a,bp'`).
 - **Tests: run the files you touched, quietly.** `npx jest __tests__/nba-board.test.js --silent` while working;

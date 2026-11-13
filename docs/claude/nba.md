@@ -365,6 +365,23 @@
   it, the cheat sheet's tile ("✓ sheet #4" when it sits in PropFinder's third, "✗" when not) and the factor on his rate
   (`ranges[market].matchup`, "×1.06"); the hover names the figures, the league's average and whether the factor is the
   sheet and PropFinder blended or one alone; "no table" when the pull has none. `__tests__/picks-boards.test.js`.
+- **The learned read** (Vincent, 2026-11-13: "put in some REAL effort to improve our accuracy";
+  `docs/audits/2026-11-13-nba-model.md`): gradient-boosted trees per stat (points, rebounds, assists, threes) blended half
+  and half into the board's projection. `lib/nba/model.js` (pure): `modelFeatures({ games, season, pos, starter, mates })` —
+  110 figures: his production a minute at four memories, his minutes, his windows; tonight's role and his minutes in it; the
+  teammates out (`out_*`) and back (`back_*`), each one's share of his last twenty games against whether he plays tonight ×
+  what he produces — `predictTrees` / `modelRead` (the trees' sum is the log of the projection) and `modelFactor` (the blend
+  as a factor on the board's figure, ×0.6–1.6). The binding passes the functions (`learned` on `makeBoard`, `lib/nba/picks.js`);
+  the trees come as `model` on `buildBoard`'s arguments — `lib/nba/store.js` imports `lib/nba/model-trees.json` (0.9 MB, server
+  side only: never import it from `picks.js`, which the pages load) — or as the cocktail's `model` in the replay. In `sidesOf`
+  the ladder of each of the four stats is built, then built again on its environment × the factor, so the centre, the range,
+  the rungs and the shuffle carry it; PRA moves by its parts; `ranges[market].model` = { factor, before, pred } (the card's
+  hover). **The training file is the replay's** (`nba-audit.mjs --features` writes every player-night's features with this
+  function; `tools/audit/nba_model_fit.py` fits and writes the trees and the parity fixture), so the site and the fit cannot
+  drift. Replayed with trees trained on earlier seasons only: points 4.862 → 4.814 (2025-26) and 4.783 → 4.737 (this
+  season), PRA 6.239 → 6.143 and 6.178 → 6.099, rebounds, assists, threes and the ladders' Brier all better. A file, not a
+  job: refit monthly (README). `__tests__/nba-model.test.js` (LightGBM's own answers on eight player-nights, the features,
+  the blend on the board).
 - **Projected · Floor · Ceiling for every player** (Vincent, 2026-11-13: "I still don't see always, the projected, floor,
   and ceiling for all players"): the Games tab's and the stat lists' table (`TierTable` in `NbaGames.jsx`) reads Proj ·
   Floor · Ceiling · Strong · Lean · Thin — the floor and the ceiling were the projection's hover, which a phone does not
@@ -374,7 +391,7 @@
   stay off. `__tests__/picks-boards.test.js`.
 - **The big players, measured** (Vincent, 2026-11-13: "still too conservative … big players in favorable matchups as well
   as injury impacts"; `docs/audits/2026-11-13-nba-stars.md`): the board's centre and its chances land for the stars, and run
-  a point high in a soft third or with a teammate out; no cocktail change. The thresholds behind a mark ("what it takes":
+  a point high in a soft third or with a teammate out; no setting to tune (the learned read above is what came of it). The thresholds behind a mark ("what it takes":
   3+ threes at 7.4+ attempts and 2.8+ made a game → 60%) are in the audit. Open, his call: the ceiling read off (the one
   measured gain), a ceiling that means one night in ten.
 - **Only who plays is listed** (Vincent, 2026-11-10: "I see a lot of players that are not playing still listed … I only need

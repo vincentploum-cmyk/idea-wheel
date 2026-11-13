@@ -44,6 +44,12 @@ const CK_ARG = arg('--cocktail', 'site');
 const PRESET = { site: COCKTAIL, beforeStarOut: COCKTAIL_BEFORE_STAR_OUT, outliersOff: COCKTAIL_BEFORE_OUTLIERS, before: COCKTAIL_BEFORE_RECIPE, recipe: { ...COCKTAIL_BEFORE_RECIPE, ...RECIPE_COCKTAIL }, old: {} };
 const plus = CK_ARG.match(/^(site|before)\+(.*)$/s);
 const CK = PRESET[CK_ARG] || (plus ? { ...PRESET[plus[1]], ...JSON.parse(plus[2]) } : JSON.parse(CK_ARG));
+// --features: every player-night's model features (lib/nba/model.js) with what he got, as -features.csv (the training file of
+// tools/audit/nba_model_fit.py); --model <file>: the learned read's trees blended into the board (the cocktail's `model`).
+const FEATURES = process.argv.includes('--features');
+if (FEATURES) CK.modelFeatures = true;
+if (arg('--model')) CK.model = JSON.parse(fs.readFileSync(arg('--model'), 'utf8'));
+const featRows = []; let featCols = null;
 const { buildBoard, ownWindows, statOf, actualFor } = nbaBoard(CK);
 // The folders: this season's scoreboards and box scores, last season's game logs (defaults under --raw).
 const DAYS = arg('--days', path.join(RAW, 'days')); const GAMES = arg('--games', path.join(RAW, 'games')); const LOGS = arg('--gamelogs', path.join(RAW, 'gamelogs'));
@@ -267,6 +273,13 @@ for (const slate of slates.filter((d) => d >= from)) {
   const g = gradeBoard(board, { key: slate, label: slate, actualOf });
   g.pred = gradePredictors(board, cut, { key: slate, season: SEASON, actualOf, ownWindows });
   graded.push(g);
+  if (FEATURES) for (const bg of board.games) for (const side of Object.values(bg.sides || {})) for (const p of side.players || []) {
+    if (!p.modelFeats || p.out) continue;
+    const line = results[bg.id]?.players.find((x) => normName(x.name) === p.key && x.team === side.team) || null;
+    if (!line || !line.played) continue;
+    featCols ||= Object.keys(p.modelFeats);
+    featRows.push([slate, p.espnId || line.espnId || '', JSON.stringify(p.key), side.team, line.pts ?? '', line.reb ?? '', line.ast ?? '', line.tpm ?? '', line.min ?? '', ...featCols.map((c) => p.modelFeats[c] ?? '')].join(','));
+  }
   for (const bg of board.games) for (const side of Object.values(bg.sides || {})) for (const p of side.players || []) for (const [market, r] of Object.entries(p.ranges || {})) {
     const actual = actualOf(bg, p, market); if (actual == null) continue;
     const line = results[bg.id]?.players.find((x) => normName(x.name) === p.key && x.team === side.team) || null;
@@ -561,5 +574,6 @@ fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-summary.json`), JSON.stringif
 const cols = Object.keys(extra[0] || {}).filter((k) => k !== 'minutes');
 fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-rows.csv`), [cols.join(','), ...extra.map((r) => cols.map((c) => JSON.stringify(Array.isArray(r[c]) ? r[c].join('+') : r[c] ?? '')).join(','))].join('\n'));
 console.log(md.join('\n'));
+if (FEATURES && featCols) fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-features.csv`), [['slate', 'espnId', 'key', 'team', 'y_pts', 'y_reb', 'y_ast', 'y_tpm', 'y_min', ...featCols].join(','), ...featRows].join('\n'));
 if (MARKS) fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-marks.csv`), ['slate,espnId,key,team,market,mark,p,exp,actual', ...markRows].join('\n'));
 console.error(`written ${OUT}/nba-${DATE}.md, -summary.json and -rows.csv`);

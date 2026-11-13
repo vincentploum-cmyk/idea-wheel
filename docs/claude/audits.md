@@ -234,6 +234,13 @@
   the assists' matchup halved, stronger teammates-out exponents for rebounds and threes (better this season, worse over
   2025-26). The ceiling read off (`reach` 0) reads better on every stat both seasons (points 4.862 → 4.844, 4.783 → 4.766):
   Vincent's call, not changed. Nothing in the cocktail changed.
+- The NBA's learned read (`docs/audits/2026-11-13-nba-model.md`, tables in `-model-tables.md`; `tools/audit/nba_model.py` for
+  the headroom, `nba-audit.mjs --features | --model <file>` and `tools/audit/nba_model_fit.py` for the site's trees; Vincent,
+  2026-11-13: "put in some REAL effort to improve our accuracy"). Boosted trees on ~130 pre-game figures beat the board by 1.8%
+  on points over 2025-26 and 1.1% this season, nothing on the other stats alone; half and half with the board beats both on
+  every stat. The gain is the teammates out and back and tonight's role; the opponent, pace, the book's spread and total, rest
+  and home add nothing. Shipped as the cocktail's `model` (the bullet "The learned read" in `nba.md`): points 4.862 → 4.814
+  and 4.783 → 4.737, PRA 6.239 → 6.143 and 6.178 → 6.099 on the replay, walk-forward. Not a test against the book.
 - The NFL's outlier games (`docs/audits/2026-11-08-nfl-outliers.md`, `tools/audit/nfl_outliers.py` on `nfl-audit.mjs --yards`;
   Vincent, 2026-11-08: "Build the same outlier functionality for NFL"): 11,273 graded yards rows of 2025 (weeks 4–18) and 2026
   (1–9). The board's chance at double the projection lands by the projection's size and runs high on each player's own spread

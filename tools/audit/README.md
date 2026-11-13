@@ -131,6 +131,29 @@ python3 -I tools/audit/nba_what_it_takes.py --box .nhl-data/audit/nba-box --out 
 
 Written up in `docs/audits/2026-11-13-nba-stars.md`.
 
+## NBA: the learned read (`nba_model.py`, `nba_model_fit.py`, lib/nba/model.js)
+
+`nba_model.py` asks how much accuracy the box scores still hold: boosted trees on ~130 pre-game figures against the board's
+rows, `--ablate` drops each group of features in turn. The site's trees are fitted on the replay's own features
+(`nba-audit.mjs --features` → `<tag>-features.csv`, computed by `lib/nba/model.js`), one season a file; `--model <file>` replays
+the board with a set of trees blended in. **To refit** (monthly; a season's replay needs that season's days / games and the
+season before's game logs, `nba-fetch.mjs`):
+
+```bash
+R=.nhl-data/audit/run; A="node --max-old-space-size=6000 --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --out $R --cocktail site --tag -feat --features"
+$A --date $(date -u +%F) --from 2026-10-20 --raw .nhl-data/audit/nba --prior .nhl-data/audit/nba/prior/games
+$A --season 2025 --date 2026-04-12 --from 2025-10-21 --raw .nhl-data/audit/nba --days .nhl-data/audit/nba/prior/days --games .nhl-data/audit/nba/prior/games --gamelogs .nhl-data/audit/nba/prior/gamelogs
+# 2024-25 and 2023-24 the same way from prior2 / prior3 (--season 2024 --date 2025-04-13 --from 2024-10-22; --season 2023 --date 2024-04-14 --from 2023-10-24)
+F="2024:$R/nba-2024-04-14-feat-features.csv 2025:$R/nba-2025-04-13-feat-features.csv 2026:$R/nba-2026-04-12-feat-features.csv 2027:$R/nba-<today>-feat-features.csv"
+# the check: trees from the seasons before --test, scored beside the board's rows, then replayed (--model)
+python3 -I tools/audit/nba_model_fit.py --features $F --rows 2027:$R/nba-<today>-site-rows.csv --test 2027 --out $R/model-2027.json
+# the site's file and the parity fixture
+python3 -I tools/audit/nba_model_fit.py --features $F --out lib/nba/model-trees.json --fixture __tests__/fixtures/nba-model-rows.json
+```
+
+A plain `--cocktail site` replay is the board without the trees (the site's file has seen those seasons: replaying with it would
+flatter it). Written up in `docs/audits/2026-11-13-nba-model.md`.
+
 ## NBA: what predicts each stat (`nba-box-fetch.mjs`, `nba_stat_drivers.py`)
 
 Points, rebounds, assists and threes one at a time, from the box scores rather than the board: his own record at every
