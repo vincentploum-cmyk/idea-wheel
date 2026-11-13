@@ -9,7 +9,7 @@ import path from 'path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { parseNhlLineups, pageDate } from '@/lib/nhl-data/rotowire';
-import { ppRead, ppUnitOf, PP_SHOW, PP_LOT } from '@/lib/nhl-data/pp-units';
+import { ppRead, ppUnitOf, PP_SHOW, PP_LOT, ppAllowedBook, ppAllowedAt, ppTone, PP_ALLOWED_MIN_GAMES } from '@/lib/nhl-data/pp-units';
 import { PpBadge } from '@/components/nhl/Rink';
 
 const html = fs.readFileSync(path.join(__dirname, 'fixtures/rotowire-nhl-lineups.html'), 'utf8');
@@ -62,9 +62,46 @@ test('minutes: the power plays tonight × a unit skater\'s share of each; shown 
   expect(PP_SHOW).toBeLessThan(PP_LOT);
 });
 
-test('the badge: PP for the first unit, PP2 for the second, green when a lot, nothing under PP_SHOW', () => {
-  expect(renderToStaticMarkup(<PpBadge pp={{ unit: 1, show: true, lot: true, text: 'x' }} />)).toBe('<i class="nhlx-rk-pp is-lot" title="x">PP</i>');
-  expect(renderToStaticMarkup(<PpBadge pp={{ unit: 2, show: true, lot: false, text: 'y' }} />)).toBe('<i class="nhlx-rk-pp" title="y">PP2</i>');
+test('the badge: PP for the first unit, PP2 for the second, coloured by the opponent, nothing under PP_SHOW', () => {
+  expect(renderToStaticMarkup(<PpBadge pp={{ unit: 1, show: true, lot: true, tone: 'soft', text: 'x' }} />)).toBe('<i class="nhlx-rk-pp is-soft" title="x">PP</i>');
+  expect(renderToStaticMarkup(<PpBadge pp={{ unit: 2, show: true, lot: false, tone: 'tough', text: 'y' }} />)).toBe('<i class="nhlx-rk-pp is-tough" title="y">PP2</i>');
+  expect(renderToStaticMarkup(<PpBadge pp={{ unit: 1, show: true, lot: true, tone: null, text: 'w' }} />)).toBe('<i class="nhlx-rk-pp" title="w">PP</i>');   // no ranked read: grey
   expect(renderToStaticMarkup(<PpBadge pp={{ unit: 2, show: false, lot: false, text: 'z' }} />)).toBe('');
   expect(renderToStaticMarkup(<PpBadge pp={null} />)).toBe('');
+});
+
+describe('the colour: the opponent\'s power-play shots allowed a game to his position (Vincent, 2026-11-13)', () => {
+  // Six teams, 10 games each; per game in all and to each position (defenseByPosition's season table shape).
+  const cell = (ppSog) => ({ gp: 10, ppSog });
+  const team = (all, C, LW, RW, D, gp = 10) => ({ ALL: { All: { gp, ppSog: all }, C: cell(C), LW: cell(LW), RW: cell(RW), D: cell(D) } });
+  const season = { teams: {
+    MTL: team(6.6, 1.6, 2.2, 2.0, 0.8), FLA: team(6.3, 1.7, 1.9, 1.4, 1.3), BOS: team(5.1, 1.6, 1.8, 1.2, 0.5),
+    NJD: team(3.6, 0.7, 0.7, 1.7, 0.5), COL: team(3.9, 1.7, 0.8, 0.8, 0.6), NEW: team(5.0, 1.5, 1.5, 1.5, 0.5, 3),
+  } };
+  const book = ppAllowedBook(season);
+  test('each position\'s per-game figure and share, ranked among the teams with enough games', () => {
+    expect(book.teams.MTL).toMatchObject({ gp: 10, all: 6.6, rankAll: 1, of: 5 });
+    expect(book.teams.MTL.pos.LW).toEqual({ perGame: 2.2, share: 0.333, rank: 1 });
+    expect(book.teams.FLA.pos.D.rank).toBe(1);
+    expect(book.teams.NEW.of).toBe(0);   // under PP_ALLOWED_MIN_GAMES: shown nowhere
+    expect(PP_ALLOWED_MIN_GAMES).toBe(5);
+    expect(book.league.all).toBeCloseTo((6.6 + 6.3 + 5.1 + 3.6 + 3.9) / 5, 2);
+  });
+  test('green / amber / red by thirds of the rank at his position, with the read in words', () => {
+    expect(ppTone(1, 32)).toBe('soft'); expect(ppTone(11, 32)).toBe('soft'); expect(ppTone(12, 32)).toBe('mid');
+    expect(ppTone(21, 32)).toBe('mid'); expect(ppTone(22, 32)).toBe('tough');   // the rink's thirds: 1-11, 12-21, 22-32 expect(ppTone(null, 32)).toBeNull();
+    const lw = ppAllowedAt(book, 'MTL', 'LW');
+    expect(lw).toMatchObject({ perGame: 2.2, rank: 1, of: 5, tone: 'soft', lead: 'LW' });
+    expect(lw.text).toMatch(/^MTL gives a lot of power-play shots to LW: 2\.20 a game, #1 of 5 · 6\.60 power-play shots on goal allowed a game in all \(#1/);
+    expect(ppAllowedAt(book, 'NJD', 'LW')).toMatchObject({ rank: 5, tone: 'tough' });
+    expect(ppAllowedAt(book, 'NJD', 'RW')).toMatchObject({ rank: 2, tone: 'soft', lead: 'RW' });   // NJD gives the fewest in all, yet #2 to RW
+    expect(ppAllowedAt(book, 'NEW', 'C')).toBeNull();
+  });
+  test('the read carries it on the PP badge and its hover', () => {
+    const rw = { teams: { CHI: { pp1: [{ name: 'Tyler Bertuzzi' }], pp2: [] } } };
+    const r = ppRead({ rw, team: 'CHI', opp: 'MTL', name: 'Tyler Bertuzzi', pos: 'LW', allowed: book });
+    expect(r).toMatchObject({ unit: 1, tone: 'soft' });
+    expect(r.text).toMatch(/^MTL gives a lot of power-play shots to LW/);
+    expect(ppRead({ rw, team: 'CHI', opp: 'MTL', name: 'Tyler Bertuzzi', pos: 'LW' }).tone).toBeNull();
+  });
 });

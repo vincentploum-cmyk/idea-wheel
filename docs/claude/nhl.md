@@ -134,7 +134,16 @@
   profile's "tonight ≈ 3.6"; the league's 3.2 without ShotPropz) × a unit skater's minutes per power play
   (`PP_MIN_PER_PP`, the 2026-11-07 TOI audit's section B: forwards 0.98 / 0.48, defensemen 0.95 / 0.45 on the first /
   second unit). Drawn from `PP_SHOW` = 2.0 minutes (the first unit nearly always, the second on a 4.2+ power-play
-  night), green from `PP_LOT` = 3.5 (a first-unit skater on a ~3.6+ night; the league's first unit averages 3.1); "PP"
+  night); **coloured by the opponent since 2026-11-13** (Vincent: "I want to know per team 1) if they allow a lot of
+  powerplays and if so, to which position are they allowing the most shots. Based on this, you should mark the pp in the
+  rink either amber, green or red"): `ppAllowedBook` / `ppAllowedAt` in `pp-units.js` off the slate's season table, the
+  opponent's power-play shots on goal allowed a game to his position this season (both venues, the rows' `ppSog`), ranked
+  1 = the most among the teams with `PP_ALLOWED_MIN_GAMES` = 5 games, green / amber / red by the rink's thirds (`ppTone`;
+  grey without a ranked read), the hover leading with it ("MTL gives a lot of power-play shots to LW: 2.18 a game, #1 of
+  32 · 6.65 … in all · 33% of them to LW (league 24%), the most to LW"); per game to a position answers both at once (a
+  kill short a lot gives every position more; the share says where), and it is colour only — the 2026-11-13 study
+  (`pp_d.py`, audits) found the kill's read does not move a defenseman's shots over his rate, and a forward position's
+  share does not carry half to half; until then green meant `PP_LOT` = 3.5 minutes, which stays on the read as `lot`; "PP"
   for the first unit, "PP2" the second; the read on the hover and in the chip's title. Matched by full name, then last
   name with the first initial (`ppUnitOf`). Descriptive only: the model's power-play share stays `PP_WEIGHTS` by line
   slot; `__tests__/nhl-pp-units.test.jsx` (the page as served 2026-11-08, `fixtures/rotowire-nhl-lineups.html`);
