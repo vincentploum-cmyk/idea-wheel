@@ -756,8 +756,8 @@ describe('NBA ladders', () => {
     const two = { ...pf, data: { ...pf.data, players: [...pf.data.players, { id: 'p2', name: 'Derrick White', key: 'derrick white', team: 'BOS', pos: 'SG', games: logs.map((g) => ({ ...g, pts: 104 })), props: [] }], defense: { teams: {}, ranks: {}, count: 0, league: {}, windows: {}, totals: { BOS: { for: { gp: 82, pts: 110, reb: 44, ast: 26 }, against: { gp: 82, pts: 112 } }, NY: { for: { gp: 82, pts: 115 }, against: { gp: 82, pts: 120, reb: 44, ast: 26 } } }, leagueFor: { pts: 115, reb: 44, ast: 26 } } } };
     // (the ceiling's arithmetic on the cocktail until 2026-11-03; the site's board also multiplies in the opponent in all
     // positions — NY's 120 against the league's 115 over 82 games, shrunk at K = 10 to 1.0387, ^0.94 — checked below)
-    const sc = nbaBoard(COCKTAIL_BEFORE_RECIPE).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: two, results: {} }).games[0].sides.BOS;
-    const site = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: two, results: {} }).games[0].sides.BOS.players[0].ranges.pts;
+    const sc = nbaBoard(COCKTAIL_BEFORE_RECIPE).buildBoard({ lineBlend: false, date: '2026-10-21', season: 2026, games, sheets: [], pf: two, results: {} }).games[0].sides.BOS;
+    const site = buildBoard({ lineBlend: false, date: '2026-10-21', season: 2026, games, sheets: [], pf: two, results: {} }).games[0].sides.BOS.players[0].ranges.pts;
     expect(site.matchup).toBeCloseTo(((82 * (120 / 115) + 10) / 92) ** 0.94, 3);
     expect(site.matchupFrom.from).toBe('team');
     expect(sc.teamProj.pts).toBeCloseTo(112.9, 1);
@@ -773,7 +773,7 @@ describe('NBA ladders', () => {
     // The minutes the priced players play ride along as the share of the game they cover; they move no figure.
     const withMin = (mins) => ({ ...two, data: { ...two.data, players: two.data.players.map((p, i) => ({ ...p, games: p.games.map((g) => ({ ...g, min: mins[i] })) })) } });
     // (without the pull toward his role, which minutes in the logs switch on: the ceiling's arithmetic alone)
-    const cov = nbaBoard({ ...COCKTAIL_BEFORE_RECIPE, pull: null }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 144]), results: {} }).games[0].sides.BOS;
+    const cov = nbaBoard({ ...COCKTAIL_BEFORE_RECIPE, pull: null }).buildBoard({ lineBlend: false, date: '2026-10-21', season: 2026, games, sheets: [], pf: withMin([36, 144]), results: {} }).games[0].sides.BOS;
     expect(cov.minutes).toBe(180);
     expect(cov.share).toBe(0.75);
     expect(cov.teamProj.pts).toBeCloseTo(112.9, 1);
@@ -782,23 +782,23 @@ describe('NBA ladders', () => {
     // keeps every player on his own rate — the old pro-rated factor put ×1.28 to ×1.5 on every projection
     // of such a side, a non-shooter's threes included (Castle at 3.6 threes, 2026-10-27).
     const thinPts = { ...two, data: { ...two.data, players: two.data.players.map((p) => (p.key === 'derrick white' ? { ...p, games: p.games.map((g) => ({ ...g, pts: 40 })) } : p)) } };
-    const thin = nbaBoard(COCKTAIL_BEFORE_RECIPE).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: thinPts, results: {} }).games[0].sides.BOS;
+    const thin = nbaBoard(COCKTAIL_BEFORE_RECIPE).buildBoard({ lineBlend: false, date: '2026-10-21', season: 2026, games, sheets: [], pf: thinPts, results: {} }).games[0].sides.BOS;
     expect(thin.scale).toEqual({});
     expect(thin.teamProj.pts).toBeCloseTo(112.9, 1);
     expect(thin.players[0].ladders.pts[0].env).toBeNull();
     expect(thin.players[0].ranges.pts).toMatchObject({ rate: 26, team: null, exp: 26 });
     const thinMin = { ...thinPts, data: { ...thinPts.data, players: thinPts.data.players.map((p, i) => ({ ...p, games: p.games.map((g) => ({ ...g, min: [36, 144][i] })) })) } };
-    expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: thinMin, results: {} }).games[0].sides.BOS.scale).toEqual({});
+    expect(buildBoard({ lineBlend: false, date: '2026-10-21', season: 2026, games, sheets: [], pf: thinMin, results: {} }).games[0].sides.BOS.scale).toEqual({});
     // The floor of the ceiling: a side whose rates run past twice the total scales to 0.5 at the least by default, and the NBA's
     // to 0.8 (`ceilingFloor`, 2026-11-05: at 0.5 every Nugget read at half his figure).
     const wild = { ...two, data: { ...two.data, players: two.data.players.map((p) => (p.key === 'derrick white' ? { ...p, games: p.games.map((g) => ({ ...g, pts: 300 })) } : p)) } };
-    expect(nbaBoard(COCKTAIL_BEFORE_RECIPE).buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: wild, results: {} }).games[0].sides.BOS.scale.pts).toBe(0.5);
-    expect(buildBoard({ date: '2026-10-21', season: 2026, games, sheets: [], pf: wild, results: {} }).games[0].sides.BOS.scale.pts).toBe(0.8);
+    expect(nbaBoard(COCKTAIL_BEFORE_RECIPE).buildBoard({ lineBlend: false, date: '2026-10-21', season: 2026, games, sheets: [], pf: wild, results: {} }).games[0].sides.BOS.scale.pts).toBe(0.5);
+    expect(buildBoard({ lineBlend: false, date: '2026-10-21', season: 2026, games, sheets: [], pf: wild, results: {} }).games[0].sides.BOS.scale.pts).toBe(0.8);
     // With a PropFinder table in, the cheat sheet's tiles ride on every cell as `sheet` beside PropFinder's rank.
     // Sixty games behind each table: the matchup counts at 60 / (60 + 40) = 0.6 of itself (the NBA's cocktail, matchupK 40).
     const defense = { teams: { NY: { SF: { gp: 60, pts: 24, reb: 6 } }, BOS: { SF: { gp: 60, pts: 20, reb: 7 } } }, ranks: { NY: { SF: { pts: 1, reb: 2 } }, BOS: { SF: { pts: 2, reb: 1 } } }, count: 2, league: { SF: { pts: 22, reb: 6.5 } }, windows: {} };
     const sheets = [{ id: 's', fileName: 'nba_20261021.pdf', rows: [], meta: { oppRanks: { BOS: { SF: { pts: 3, reb: 28 } } } } }];   // BOS's opponent (NY) gives up the 3rd most points to SFs, the 28th most rebounds
-    const withSheet = buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf: { ...pf, data: { ...pf.data, defense } }, results: {} });
+    const withSheet = buildBoard({ lineBlend: false, date: '2026-10-21', season: 2026, games, sheets, pf: { ...pf, data: { ...pf.data, defense } }, results: {} });
     const bos = withSheet.games[0].sides.BOS.allowed;
     // The ladder reads against NY's environment at SF, the cheat sheet first: its tile (#3, on PropFinder's spread the 24
     // NY allows) × 1.055 in full, PropFinder's 24 over the league's 22 → × 1.055 at 0.6 of itself (sixty games) beside
@@ -812,17 +812,17 @@ describe('NBA ladders', () => {
     // The sheet's tile (#3 of 30) placed on PropFinder's two-team spread lands on the top value, 24: the two reads agree and blend to the same factor.
     expect(range.matchupFrom).toEqual({ pf: 1.055, sheet: 1.055, from: 'blend', raw: 1.055, weight: 0.6, gp: 60 });
     // The board as it was (the defaults, the NFL's): the table at full weight from the first game.
-    expect(nbaBoard({}).buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf: { ...pf, data: { ...pf.data, defense } }, results: {} }).games[0].sides.BOS.players[0].ranges.pts).toMatchObject({ matchup: 1.055, exp: 27.4 });
+    expect(nbaBoard({}).buildBoard({ lineBlend: false, date: '2026-10-21', season: 2026, games, sheets, pf: { ...pf, data: { ...pf.data, defense } }, results: {} }).games[0].sides.BOS.players[0].ranges.pts).toMatchObject({ matchup: 1.055, exp: 27.4 });
     expect(bos.rows.SF.pts).toEqual({ value: 24, rank: 1, sheet: 3, sheetValue: 24, rankBlend: 2 });
     // A tile that disagrees leads: NY's tile at #30 of 30 lands on the spread's bottom value, 20 → × 0.945 in full, PropFinder's
     // × 1.055 at 0.6 beside it: 1 + (−0.055 + 0.6 × 0.055) / 1.6 → × 0.986 (the two at 1 each, before 2026-10-28: × 1.0).
     const sheetsLow = [{ id: 's', fileName: 'nba_20261021.pdf', rows: [], meta: { oppRanks: { BOS: { SF: { pts: 30, reb: 28 } } } } }];
-    const low = buildBoard({ date: '2026-10-21', season: 2026, games, sheets: sheetsLow, pf: { ...pf, data: { ...pf.data, defense } }, results: {} }).games[0].sides.BOS.players[0].ranges.pts;
+    const low = buildBoard({ lineBlend: false, date: '2026-10-21', season: 2026, games, sheets: sheetsLow, pf: { ...pf, data: { ...pf.data, defense } }, results: {} }).games[0].sides.BOS.players[0].ranges.pts;
     expect(low.matchupFrom).toEqual({ pf: 1.055, sheet: 0.945, from: 'blend', raw: 1, weight: 0.6, gp: 60 });
     expect(low.matchup).toBe(0.986);
     expect(low.exp).toBe(25.6);
     // The sheet alone (a pull without a defense table): its rank on the standard spread, #3 of 30 → × 1.078.
-    const sheetOnly = buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf, results: {} }).games[0].sides.BOS.players[0].ranges.pts;
+    const sheetOnly = buildBoard({ lineBlend: false, date: '2026-10-21', season: 2026, games, sheets, pf, results: {} }).games[0].sides.BOS.players[0].ranges.pts;
     expect(sheetOnly.matchupFrom).toEqual({ pf: null, sheet: 1.078, from: 'sheet' });
     // The stated centre 28; the sheet's #3 tile is a soft spot, so the ceiling read (the site's reach 0.3, the tile in full) moves the figure toward his ceiling.
     expect(sheetOnly.base).toBe(28);
