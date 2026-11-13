@@ -111,6 +111,26 @@ absences. Poisson with his read as the offset, fitted on 2024-25. Written up in 
 python3 -I tools/audit/nba_star_out.py --box .nhl-data/audit/nba-box --out docs/audits/2026-11-09-nba-star-out-tables.md
 ```
 
+## NBA: the big players, and what it takes (`nba_stars.py`, `nba_what_it_takes.py`)
+
+Vincent, 2026-11-13: is the board too conservative with the big players in a soft matchup or with a teammate out, and which
+thresholds predict a mark (3+ threes). `nba-audit.mjs --marks` also writes `<tag>-marks.csv`: the site's chance at round
+marks for every player-night (the shuffle's read); its rows carry the teammates-out factor (`outM`, `outFrom`), the
+opponent's all-positions rank (`teamRank`) and the side's players out. `nba_stars.py` reads them: the projection and the
+chance at the marks against what landed, by the opponent's third, the teammates out and the ceiling's cut, each part on top
+of the projection, and `--variants` (other cocktails' rows on the same player-games). `nba_what_it_takes.py` reads the box
+scores alone (cached as `what-it-takes-rows.pkl`): per mark the hit rate by his own numbers, the opponent's ranks and
+tonight's context, and the widest thresholds that land 50 / 60 / 70% on `--fit`, read unchanged on the later seasons.
+
+```bash
+node --max-old-space-size=6000 --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --date 2026-11-12 --from 2026-10-20 --raw .nhl-data/audit/nba --prior .nhl-data/audit/nba/prior/games --out .nhl-data/audit/run --cocktail site --tag -site --marks
+# a variant: --cocktail 'site+{"reach":0}' --tag -reach0 (also {"ceilingFloor":0.9}, {"ceilingPower":0.5}, {"teamCeiling":false})
+python3 -I tools/audit/nba_stars.py --run .nhl-data/audit/run --seasons 2025-26:2026-04-12 2026-27:2026-11-12 --box .nhl-data/audit/nba-box --variants reach0 floor9 pow5 noceil ast5 out6 --out docs/audits/2026-11-13-nba-stars-tables.md
+python3 -I tools/audit/nba_what_it_takes.py --box .nhl-data/audit/nba-box --out docs/audits/2026-11-13-nba-what-it-takes-tables.md
+```
+
+Written up in `docs/audits/2026-11-13-nba-stars.md`.
+
 ## NBA: what predicts each stat (`nba-box-fetch.mjs`, `nba_stat_drivers.py`)
 
 Points, rebounds, assists and threes one at a time, from the box scores rather than the board: his own record at every

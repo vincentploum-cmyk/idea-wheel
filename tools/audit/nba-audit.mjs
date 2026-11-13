@@ -20,7 +20,7 @@ import { parseSummary, parseScoreboard, derived } from '../../lib/nba/espn.js';
 import { teamAbbrFromText } from '../../lib/nba/teams.js';
 import { defenseAllowed } from '../../lib/nba/propfinder-nba.js';
 import { nbaBoard, COCKTAIL, COCKTAIL_BEFORE_STAR_OUT, COCKTAIL_BEFORE_OUTLIERS, COCKTAIL_BEFORE_RECIPE, RECIPE_COCKTAIL, LADDER_MARKETS, SHUFFLE_MARKETS } from '../../lib/nba/picks.js';
-import { makeShuffle } from '../../lib/picks/shuffle.js';
+import { makeShuffle, pAt } from '../../lib/picks/shuffle.js';
 import { gradeBoard, gradePredictors, summarize, asOf, etDate, PREDICTORS } from '../../lib/picks/scorecard.js';
 import { normName } from '../../lib/nhl-data/names.js';
 import { nbaBigGames, nbaOutliers } from '../../lib/nba/big.js';
@@ -48,6 +48,10 @@ const { buildBoard, ownWindows, statOf, actualFor } = nbaBoard(CK);
 // The folders: this season's scoreboards and box scores, last season's game logs (defaults under --raw).
 const DAYS = arg('--days', path.join(RAW, 'days')); const GAMES = arg('--games', path.join(RAW, 'games')); const LOGS = arg('--gamelogs', path.join(RAW, 'gamelogs'));
 const TAG = arg('--tag', '');
+// --marks: the site's chance at round marks for every player-night (the shuffle's read, the court's and the stat lists' figure), as -marks.csv
+const MARKS = process.argv.includes('--marks') ? { pts: [15, 20, 25, 30, 35, 40], reb: [6, 8, 10, 12, 15], ast: [4, 6, 8, 10, 12], tpm: [1, 2, 3, 4, 5, 6], pra: [25, 30, 35, 40, 45, 50], stl: [1, 2, 3], blk: [1, 2, 3] } : null;
+const markRows = [];
+const markShuffle = MARKS ? makeShuffle({ board: nbaBoard(CK), markets: SHUFFLE_MARKETS }) : null;
 const DUMP = process.argv.includes('--board');   // also write the slate's board and its shuffle payloads as JSON (the page's data, for a look at the views)
 const STATS = ['pts', 'reb', 'ast', 'tpm', 'pra'];
 const r1 = (v) => (v == null ? null : Math.round(v * 10) / 10);
@@ -236,6 +240,13 @@ for (const slate of slates.filter((d) => d >= from)) {
   const board = buildBoard({ season: SEASON, date: slate, games, sheets: [], pf: cut, results, lineups });
   const logsOf = new Map(cut.data.players.map((x) => [x.key, x.games || []]));
   boards[slate] = board;
+  if (MARKS) for (const [market, marks] of Object.entries(MARKS)) {
+    const sh = markShuffle.shuffleOf({ market, board, pf: cut, season: SEASON, results });
+    for (const pl of sh?.players || []) {
+      if (pl.actual == null) continue;
+      for (const h of marks) { const i = sh.heights.indexOf(h); const p = i < 0 ? null : pAt(pl, sh.heights, i); if (p != null) markRows.push([slate, pl.espnId || '', JSON.stringify(pl.key), pl.team, market, h, p, pl.exp, pl.actual].join(',')); }
+    }
+  }
   if (DUMP && slate === DATE) {
     const sh = makeShuffle({ board: nbaBoard(CK), markets: SHUFFLE_MARKETS });
     const shuffle = Object.fromEntries(SHUFFLE_MARKETS.map(({ market }) => [market, sh.shuffleOf({ market, board, pf: cut, season: SEASON, results })]));
@@ -270,7 +281,9 @@ for (const slate of slates.filter((d) => d >= from)) {
       nThis: (logsOf.get(p.key) || []).filter((x) => x.season === SEASON && (x.type === 'REG' || !x.type)).length, ownSeason: p.own?.[stat]?.season ?? null, ownL10: p.own?.[stat]?.l10 ?? null, ownL5: p.own?.[stat]?.l5 ?? null,
       minTonight: p.minutes?.tonight ?? null, minBase: p.minutes?.base ?? null, rawMatchup: r.matchupFrom?.raw ?? r.matchup ?? null, matchupWeight: r.matchupFrom?.weight ?? null,
       // for the ceiling read (the cocktail's reach): the stated centre before it, his upside / downside ratios, the opponent's rank at his spot
-      base: r.base ?? r.exp, lineup: r.lineup ?? null, role: p.lineup?.role ?? null, startShare: p.lineup?.share ?? null, up: r.reach?.up ?? null, down: r.reach?.down ?? null, rank: side.allowed?.rows?.[p.envPos]?.[stat]?.rank ?? null, count: side.allowed?.count || 30, reachAdd: r.reach?.add || 0 });
+      base: r.base ?? r.exp, lineup: r.lineup ?? null, role: p.lineup?.role ?? null, startShare: p.lineup?.share ?? null, up: r.reach?.up ?? null, down: r.reach?.down ?? null, rank: side.allowed?.rows?.[p.envPos]?.[stat]?.rank ?? null, count: side.allowed?.count || 30, reachAdd: r.reach?.add || 0,
+      // for the stars' read (docs/audits/2026-11-13-nba-stars.md): the teammates-out factor and who, the opponent in all positions, the side's players out
+      outM: r.out ?? null, outFrom: (r.outFrom || []).join('; ') || null, teamRank: side.against?.stats?.[stat]?.rank ?? null, teamVal: side.against?.stats?.[stat]?.value ?? null, teamLg: side.against?.stats?.[stat]?.league ?? null, sideOut: (side.out || []).length, starter: p.lineup?.role ?? (p.depth === 1 ? 'depth1' : null) });
   }
 }
 const sum = summarize(graded, {});
@@ -548,4 +561,5 @@ fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-summary.json`), JSON.stringif
 const cols = Object.keys(extra[0] || {}).filter((k) => k !== 'minutes');
 fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-rows.csv`), [cols.join(','), ...extra.map((r) => cols.map((c) => JSON.stringify(Array.isArray(r[c]) ? r[c].join('+') : r[c] ?? '')).join(','))].join('\n'));
 console.log(md.join('\n'));
+if (MARKS) fs.writeFileSync(path.join(OUT, `nba-${DATE}${TAG}-marks.csv`), ['slate,espnId,key,team,market,mark,p,exp,actual', ...markRows].join('\n'));
 console.error(`written ${OUT}/nba-${DATE}.md, -summary.json and -rows.csv`);

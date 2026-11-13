@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { teamLogo, teamName, teamAbbrFromText } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
-import { tierBoard, ladderBoard, NBA_BOARDS } from '@/lib/picks/boards';
+import { tierBoard, ladderBoard, withEveryone, NBA_BOARDS } from '@/lib/picks/boards';
 import { AllowedTable, windowsOf, tableFor, windowLabel, zoneTone, envPos as envPosOf } from './NbaCourt';
 import { NbaPlayerCardProvider, useNbaPlayerCard, WoEdgeTag } from './NbaPlayerCard';
 import NbaSoftSpots from './NbaSoftSpots';
@@ -45,7 +45,8 @@ export function useNbaShuffles(date) {
 /** The rows of a stat's list: round marks off the shuffle once loaded (else the book's rungs), the highest projection first. */
 export function tierRows(board, shuffles, market, gameId = null) {
   const sh = shuffles?.[market];
-  const rows = sh?.players ? tierBoard(sh, { step: STEP[market] || 1, gameId, keepAll: true }) : ladderBoard(board, { market, gameId, keepAll: true });
+  // Every active player is listed (`withEveryone`): one without a ladder for the stat reads 0, one without a game in the pull "—".
+  const rows = withEveryone(board, sh?.players ? tierBoard(sh, { step: STEP[market] || 1, gameId, keepAll: true }) : ladderBoard(board, { market, gameId, keepAll: true }), { market, gameId });
   // His spot on the board (the slot PropFinder's table is read at), for a pressed row of the table.
   const spot = new Map();
   // His priced line of the stat with the widest without-teammates edge (board.js WO_EDGE), for the row's "w/o edge" tag.
@@ -100,6 +101,8 @@ function TierTable({ rows, market, game = false, onOpen }) {
         <thead><tr>
           <th className="ir-slate-rank">#</th><th>Player</th>
           <th className="is-num ir-ml-proj" title="Tonight’s projection: his rate × tonight’s matchup (what the defense gives up to all positions, PropFinder)">Proj</th>
+          <th className="is-num ir-ml-fc" title="His floor tonight: he lands under it one night in four">Floor</th>
+          <th className="is-num ir-ml-fc" title="His ceiling tonight: he lands over it one night in four (the Big games tab lists the nights far over it)">Ceiling</th>
           {TIER_COLS.map(([k, l, at]) => <th key={k} className={`ir-ml-th is-${k}`} title={`The highest mark he reaches tonight at ${at}% or better`}>{l}</th>)}
           {final ? <th className="is-num">Got</th> : null}
         </tr></thead>
@@ -108,7 +111,9 @@ function TierTable({ rows, market, game = false, onOpen }) {
             <tr key={`${r.team}|${r.key}`}>
               <td className="ir-slate-rank">{i + 1}</td>
               <td><Who r={r} game={game} onOpen={onOpen} /></td>
-              <td className="is-num ir-ml-proj" title={r.floor != null ? `${num(r.floor)}–${num(r.ceiling)} half the nights` : ''}><b>{num(r.proj)}</b><small>{unit}</small></td>
+              <td className="is-num ir-ml-proj" title={r.noLogs ? 'No game of his in the PropFinder pull yet: nothing to project from' : r.floor != null ? `${num(r.floor, 0)}–${num(r.ceiling, 0)} half the nights` : ''}><b>{num(r.proj)}</b><small>{r.noLogs ? 'no games yet' : unit}</small></td>
+              <td className="is-num ir-ml-fc">{r.floor != null ? <b>{num(r.floor, 0)}</b> : <small>—</small>}</td>
+              <td className="is-num ir-ml-fc">{r.ceiling != null ? <b>{num(r.ceiling, 0)}</b> : <small>—</small>}</td>
               {TIER_COLS.map(([k]) => <td key={k} className={`ir-ml-cell is-${k}`}><Rung m={r[k]} unit={unit} actual={r.final ? r.actual : null} /></td>)}
               {final ? <td className="is-num nhlx-pk-got">{r.actual === undefined ? <small>—</small> : r.actual === null ? <small>DNP</small> : <b>{r.actual}</b>}</td> : null}
             </tr>

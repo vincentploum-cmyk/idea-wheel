@@ -222,6 +222,18 @@
   lineup × 1.1 / × 0.9), then the same day his minutes from the lineup (`LINEUP_MINUTES`: the minutes' miss 4.75 → 4.65 over
   2025-26, 4.91 → 4.66 this season; the promoted 6.29 → 5.01, the demoted 6.11 → 4.69 on the replay; every stat and rung Brier
   better than the flat factor); the night's five likeliest rebound spikes landed 9.7% against 4.6% for everyone.
+- The NBA's big players (`docs/audits/2026-11-13-nba-stars.md`, tables in `-stars-tables.md` and `-what-it-takes-tables.md`;
+  `tools/audit/nba_stars.py` on `nba-audit.mjs --marks`, `tools/audit/nba_what_it_takes.py` on the box scores; Vincent,
+  2026-11-13: "still too conservative … especially with the big players in favorable matchups as well as injury impacts",
+  "what are the propfinder and player thresholds … to predict a particular player will have 3 threes"). The centre is not
+  low: 20+ scorers 24.18 projected, 24.13 landed over 2025-26; in a soft third +0.84 high, with a teammate out +0.98 high
+  (this season +0.53 and +0.76); a star's 30+ said 30.2%, landed 30.5%. Low only where the team ceiling cut 8%+ (−1.88,
+  2025-26), and loosening it costs this season. The five softest defenses are worth + 3% to a star, the five tightest − 7%.
+  3+ threes follows his attempts over his last ten (7–8.2 → 50%, 9.5+ → 68%), the opponent's rank moves it 5 points, and
+  the board's chance by volume lands (6–8 attempts: 43.7% said, 43.8%). Tried and left: the ceiling capped / halved / off,
+  the assists' matchup halved, stronger teammates-out exponents for rebounds and threes (better this season, worse over
+  2025-26). The ceiling read off (`reach` 0) reads better on every stat both seasons (points 4.862 → 4.844, 4.783 → 4.766):
+  Vincent's call, not changed. Nothing in the cocktail changed.
 - The NFL's outlier games (`docs/audits/2026-11-08-nfl-outliers.md`, `tools/audit/nfl_outliers.py` on `nfl-audit.mjs --yards`;
   Vincent, 2026-11-08: "Build the same outlier functionality for NFL"): 11,273 graded yards rows of 2025 (weeks 4–18) and 2026
   (1–9). The board's chance at double the projection lands by the projection's size and runs high on each player's own spread

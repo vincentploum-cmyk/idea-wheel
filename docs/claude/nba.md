@@ -365,6 +365,18 @@
   it, the cheat sheet's tile ("✓ sheet #4" when it sits in PropFinder's third, "✗" when not) and the factor on his rate
   (`ranges[market].matchup`, "×1.06"); the hover names the figures, the league's average and whether the factor is the
   sheet and PropFinder blended or one alone; "no table" when the pull has none. `__tests__/picks-boards.test.js`.
+- **Projected · Floor · Ceiling for every player** (Vincent, 2026-11-13: "I still don't see always, the projected, floor,
+  and ceiling for all players"): the Games tab's and the stat lists' table (`TierTable` in `NbaGames.jsx`) reads Proj ·
+  Floor · Ceiling · Strong · Lean · Thin — the floor and the ceiling were the projection's hover, which a phone does not
+  have — and `withEveryone(board, rows, { market, gameId })` (`lib/picks/boards.js`, called by `tierRows`) adds every active
+  player the shuffle has no row for: a player with no ladder for the stat (no made three in his logs: `ladderOf` returns
+  nothing) reads 0 with a 0–0 range, one without a game in the pull "—" and "no games yet" (`noLogs`); the out and the idle
+  stay off. `__tests__/picks-boards.test.js`.
+- **The big players, measured** (Vincent, 2026-11-13: "still too conservative … big players in favorable matchups as well
+  as injury impacts"; `docs/audits/2026-11-13-nba-stars.md`): the board's centre and its chances land for the stars, and run
+  a point high in a soft third or with a teammate out; no cocktail change. The thresholds behind a mark ("what it takes":
+  3+ threes at 7.4+ attempts and 2.8+ made a game → 60%) are in the audit. Open, his call: the ceiling read off (the one
+  measured gain), a ceiling that means one night in ten.
 - **Only who plays is listed** (Vincent, 2026-11-10: "I see a lot of players that are not playing still listed … I only need
   the players listed that will be playing"): `idle` on a side player (board.js `idleOf`, the cocktail's `idleGate`): the team
   has 3+ games this season, he averaged under 5 minutes over its last five (a game he sat counts 0), no book prices him, he is

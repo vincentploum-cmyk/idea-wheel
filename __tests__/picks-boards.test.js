@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { candidateBoard, ladderBoard, tierBoard, boardsOf, markOf, marksText, tierOf, matchupOf, matchupText, NBA_BOARDS, TIERS } from '../lib/picks/boards';
+import { candidateBoard, ladderBoard, tierBoard, withEveryone, boardsOf, markOf, marksText, tierOf, matchupOf, matchupText, NBA_BOARDS, TIERS } from '../lib/picks/boards';
 import { buildBoard, shuffleOf } from '../lib/nba/picks';
 
 // The slate's boards (Vincent, 2026-11-01): the best candidates over the main line and the ladders' marks, ranked.
@@ -66,6 +66,30 @@ describe('the boards', () => {
     const viaSpecs = boardsOf(board, NBA_BOARDS, { shuffles: { pts: sh } }).find((b) => b.key === 'pts');
     expect(viaSpecs.round).toBe(true);
     expect(viaSpecs.rows.map((r) => r.player)).toEqual(rows.map((r) => r.player));
+  });
+  test('every active player is on a stat list: no ladder for the stat reads 0, no game in the pull reads —', () => {
+    // A centre who never made a three and a rookie without a game had no row on the threes list (Vincent, 2026-11-13).
+    const pf2 = { ...pf, data: { ...pf.data, players: [
+      ...pf.data.players.map((p) => (p.id === 'p1' ? { ...p, games: p.games.map((x) => ({ ...x, tpm: 0 })) } : p)),
+      { id: 'p5', name: 'New Kid', key: 'new kid', team: 'BOS', pos: 'SF', games: [], props: [] },
+    ] } };
+    const b2 = buildBoard({ date: '2026-11-01', season: 2026, games, sheets: [], pf: pf2, results: {} });
+    const sh = shuffleOf({ market: 'tpm', board: b2, pf: pf2, season: 2026, results: {} });
+    const listed = tierBoard(sh, { step: 1, keepAll: true });
+    expect(listed.map((r) => r.player)).not.toContain('Big Glass');
+    const rows = withEveryone(b2, listed, { market: 'tpm' });
+    const glass = rows.find((r) => r.player === 'Big Glass');
+    expect(glass).toMatchObject({ proj: 0, floor: 0, ceiling: 0, strong: null, lean: null, thin: null });
+    expect(glass.noLogs).toBeUndefined();
+    const kid = rows.find((r) => r.player === 'New Kid');
+    if (kid) expect(kid).toMatchObject({ proj: null, floor: null, ceiling: null, noLogs: true });
+    // The listed rows keep their place and their figures; a player out stays off; nobody is listed twice.
+    expect(rows.slice(0, listed.length)).toEqual(listed);
+    expect(rows.map((r) => r.player)).not.toContain('Hurt Man');
+    expect(new Set(rows.map((r) => `${r.team}|${r.key}`)).size).toBe(rows.length);
+    for (const r of listed) { expect(r.proj).not.toBeNull(); expect(r.floor).not.toBeNull(); expect(r.ceiling).not.toBeNull(); }
+    // The ladder fallback (before the shuffle loads) reads the same way.
+    expect(withEveryone(b2, ladderBoard(b2, { market: 'tpm', keepAll: true }), { market: 'tpm' }).find((r) => r.player === 'Big Glass').proj).toBe(0);
   });
   test('every line carries the matchup its projection reads', () => {
     // A defense table on the pull: NY gives BOS's centre the most rebounds, the sheet agrees; the last ten too.
