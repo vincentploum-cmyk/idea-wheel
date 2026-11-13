@@ -136,6 +136,13 @@ describe("tonight's starting five", () => {
     // Four flagged games: too few.
     const short = { ...player('Trey Lyles', 'MIN', 1), games: logsOf(1).map((g, i) => (i < 6 ? { ...g, starter: null } : g)) };
     expect(sideOf(build(pfWith([short, players[1]]), fiveWithLyles), 'trey lyles').lineup).toBeUndefined();
+    // His starts this season only (2026-11-13, Jrue Holiday: 0 of 10 started this season per ESPN, read "Off the bench tonight"):
+    // ten games this season without the flag and ten starts last season read no role, not demoted.
+    const lastSeasonStarter = { ...player('Rudy Gobert', 'MIN', 0, { flag: false }), games: [...logsOf(0, { flag: false }), ...logsOf(10).map((g, i) => ({ ...g, date: `2026-03-${String(30 - i).padStart(2, '0')}`, gameId: `y${i}`, season: 2026 }))] };
+    expect(sideOf(build(pfWith([players[0], lastSeasonStarter]), fiveWithLyles), 'rudy gobert').lineup).toBeUndefined();
+    // Off the bench this season (flagged), a starter last season: bench, no factor.
+    const benchNow = { ...player('Rudy Gobert', 'MIN', 0), games: [...logsOf(0), ...logsOf(10).map((g, i) => ({ ...g, date: `2026-03-${String(30 - i).padStart(2, '0')}`, gameId: `y${i}`, season: 2026 }))] };
+    expect(sideOf(build(pfWith([players[0], benchNow]), fiveWithLyles), 'rudy gobert').lineup).toMatchObject({ factor: 1, role: 'bench', share: 0 });
     // The board before the read: no lineup on any player.
     const off = nbaBoard(COCKTAIL_BEFORE_OUTLIERS).buildBoard({ date: '2026-11-06', season: 2027, games, sheets: [], pf: pfWith(players), results: {}, lineups: fiveWithLyles });
     expect(sideOf(off, 'trey lyles').lineup).toBeUndefined();

@@ -417,6 +417,11 @@
   not in RotoWire's five, and he is no regular back from an absence (20+ a game this season over 3+ games). The idle and the
   out are off the court's chips and Tonight table, the Games tab (`ladderBoard` / `tierBoard`), the boards and the shuffle;
   the out stay in the lines under the court. A flag only: the minutes, the ceiling and the out reads are as before.
+  **Since 2026-11-13 also off the Outliers and Big games lists** (`nbaOutliers` / `nbaBigGames` in `lib/nba/big.js`) **and the
+  cheat sheet's matchups** (`lib/nba/sheet-matchups.js`), which had skipped the out alone (Vincent: "these are all invalid
+  statements. We really need to do a better job in looking at the expected lineups"): the Outliers' assists listed Kevin Porter
+  Jr. (MIL, 27 min) and Elfrid Payton (SAC, 21 min), both free agents per ESPN with preseason games only this season, Kam Jones
+  (preseason only) and Nikola Topic (no game), at last season's minutes.
   Box scores 2024-25 to now: the full roster 89.5k player-nights (half under 10 minutes), the gate 60.3k, hiding 4.9% of
   those who played 10+ before the five and the lines keep theirs. `__tests__/nba-star-out.test.js`.
 - **A star out** (Vincent, 2026-11-09: "Reaves had 40+ points … Doncic was out … our model was still way too conservative";

@@ -271,8 +271,10 @@ config and keeps its own markets, teams, feeds and slate key:
   PRA worse near the line on 2025-26 and keep the normal. **Tonight's starting five** (`lineup` { up, down, games, min }; the NBA
   0.1, 0.1, 10, 5): `sidesOf`'s `lineupRead` reads the board's `lineups` (RotoWire's, the store passes `lineupsOf(feed)` into
   `buildBoard` and keys the board's memo on the feed; `gradeSlate` the slate's stored copy) against his starts over his last
-  `games` regular-season games with PropFinder's `starter` flag (sparse: 1 a start, absent off the bench, null a row without
-  the flag; read only when some row of the pull carries a 1, from `min` flagged games): in the five from under half of them
+  `games` regular-season games **of this season** with PropFinder's `starter` flag (sparse: 1 a start, absent off the bench, null
+  a row without the flag; read only when some row of the pull carries a 1, from `min` flagged games this season — since
+  2026-11-13: the last ten had reached into last season for players whose rows this season carry no flag, and read Jrue
+  Holiday and Cam Spencer, 0 and 1 starts in 10 this season per ESPN, as demoted, "Off the bench tonight" on the Outliers): in the five from under half of them
   (promoted) or out of it from half or more (demoted), his projection moves by his minutes with the five over his minutes
   without it (`lineupMinutes`, the cocktail's `lineup.model` / `lineup.base`: `dec` this season's minutes decayed at `hl`,
   `split` his average in tonight's role over his last `history` games shrunk at `splitK`, `vac` the minutes of the teammates

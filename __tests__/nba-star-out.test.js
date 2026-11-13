@@ -2,7 +2,8 @@ import { describe, expect, test } from '@jest/globals';
 import { nbaBoard, COCKTAIL, COCKTAIL_BEFORE_STAR_OUT, STAR_OUT } from '../lib/nba/picks';
 import { applyLineupOuts } from '../lib/picks/injuries';
 import { ladderBoard, tierBoard } from '../lib/picks/boards';
-import { shuffleOf } from '../lib/nba/picks';
+import { shuffleOf, statOf, actualFor } from '../lib/nba/picks';
+import { nbaBigGames, nbaOutliers } from '../lib/nba/big';
 
 // The star out (Vincent, 2026-11-09, Reaves's 43 the night Doncic sat; docs/audits/2026-11-09-nba-star-out.md): who sits
 // from RotoWire's lineups, every out player of this season by his share of each teammate's memory, the ceiling on the lifts.
@@ -111,6 +112,20 @@ describe('who is not expected to play is off the lists (idle)', () => {
     const five = { teams: { LAL: { status: 'expected', starters: ['r1', 'r2', 'r3', 'deep', 'back'].map((name) => ({ name })) } } };
     expect(side(board(COCKTAIL, roster, { lineups: five })).players.some((x) => x.idle)).toBe(false);
     expect(side(board(COCKTAIL_BEFORE_STAR_OUT, roster)).players.some((x) => x.idle)).toBe(false);
+  });
+  test('the Outliers and Big games lists leave him off too (2026-11-13: a released player listed at 27 minutes)', () => {
+    // Kevin Porter Jr.'s case: no game this season (his preseason is not read), last season's at 27 minutes, still on the pull.
+    const gone = { id: 'gone', name: 'gone', key: 'gone', team: 'LAL', pos: 'SG', props: [],
+      games: Array.from({ length: 20 }, (_, i) => ({ date: new Date(Date.UTC(2026, 3, 10 - i)).toISOString().slice(0, 10), gameId: `l${i}`, season: 2025, type: 'REG', opp: 'MIA', min: 27, pts: 14, reb: 4, ast: 6 + (i % 5), tpm: 2, starter: 1, pra: 24 + (i % 5) })) };
+    const b = board(COCKTAIL, [...roster, gone]);
+    const g = side(b).players.find((x) => x.key === 'gone');
+    const ctx = { pf: pfWith([...roster, gone]), results: {}, statOf, actualFor, season: 2026 };
+    b.big = { ...nbaBigGames(b, ctx), outliers: nbaOutliers(b, ctx) };
+    expect(g.idle).toBe(true);
+    expect(g.minutes.tonight).toBeGreaterThanOrEqual(12);
+    expect(Object.values(b.big.outliers.rows).map((r) => r.key)).not.toContain('gone');
+    expect(Object.values(b.big.rows || {}).map((r) => r.key)).not.toContain('gone');
+    expect(Object.values(b.big.outliers.rows).map((r) => r.key)).toContain('r1');
   });
   test('the Games tab, the boards and the shuffle leave him off', () => {
     const b = board(COCKTAIL, roster);
