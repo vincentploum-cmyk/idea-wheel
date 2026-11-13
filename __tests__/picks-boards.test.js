@@ -91,6 +91,15 @@ describe('the boards', () => {
     // The ladder fallback (before the shuffle loads) reads the same way.
     expect(withEveryone(b2, ladderBoard(b2, { market: 'tpm', keepAll: true }), { market: 'tpm' }).find((r) => r.player === 'Big Glass').proj).toBe(0);
   });
+  test('rebounds and assists count by 1 (2026-11-13: by 2 jumped past the lean band)', () => {
+    const step = (k) => NBA_BOARDS.find((b) => b.key === k).step;
+    expect(step('reb')).toBe(1);
+    expect(step('ast')).toBe(1);
+    const sh = shuffleOf({ market: 'ast', board, pf, season: 2026, results: {} });
+    const rows = tierBoard(sh, { step: step('ast') });
+    expect(rows.some((r) => r.marks.some((m) => Number(m.mark.replace('+', '')) % 2 === 1))).toBe(true);
+    for (const r of rows) for (const m of r.marks) expect(tierOf(m.p)).toBe(m.tier);
+  });
   test('every line carries the matchup its projection reads', () => {
     // A defense table on the pull: NY gives BOS's centre the most rebounds, the sheet agrees; the last ten too.
     const cell = (value, rank, sheet = null) => ({ value, rank, rankBlend: sheet == null ? rank : (rank + sheet) / 2, ...(sheet != null ? { sheet } : {}) });

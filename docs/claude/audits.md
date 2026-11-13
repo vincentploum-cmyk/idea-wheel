@@ -295,3 +295,46 @@
   the skater's own rate. Shots: Shots/G the best single read, ICF and IFF close, ISCF the weakest; fitted, Shots took
   about half, the rest ICF (L10) or IFF (season), ISCF none → the rink and the shots flag read Shots ×2 + ICF + IFF.
   Goals: Goals/G added nothing, ISCF/G took 93-98% of the fitted weight → the Goals tint and flag read ISCF.
+- The drivers, the streak and the ceiling (`docs/audits/2026-11-13-nhl-drivers.md`, tables in `-tables.md`,
+  `tools/predictors/drivers_frame.py` → `drivers.py`; Vincent, 2026-11-13: "find out when a goal hot streak predicts the
+  next game of a goal … what the drivers are for shots, points and goals. Is it the environment. Is it toi? … the l5, l10,
+  l15 season values that must hold true for 3 shots, 4 shots … Investigate every angle"): 105,577 skater-games of 2024-25
+  to 2026-27 (309 games this season), the minutes split from the stats API. **The streak does not carry**: after goals in
+  2+ straight skaters scored 27.2% and their numbers with the heat hidden said 26.4% (4+ straight 31.1% / 31.7%); 62 cuts
+  of the streak find no condition; his raw goals a game overstates him by 3–7 points. **The driver is his own volume**:
+  shots 16.7% of the deviance explained by the full read, 15.8 by his production alone; minutes and line next; the
+  opponent ±6% on shots (its team shots allowed blended into last season the best single read, ahead of the position
+  cell), ±7% on points, nothing on goals; rest, venue split, goalie, forecast power plays, regulars out, streaks, boosted
+  trees nothing. **Minutes**: 75% role; shots follow tonight's minutes one for one (elasticity 0.99), a power-play minute
+  is worth 2.2× an even one in shots and 3.2× in points; what moves them is the line he ends up on (30% alone), overtime,
+  the power plays called (not foreseeable, r 0.1) and the score. **The ceiling**: a Poisson count leaves 72% / 90% / 85%
+  of the variance in shots / goals / points to chance; the full read matches his true season rate in hindsight; the rest
+  is tonight (his minutes +2.8 points on shots, his team's night +4.3 / +7.3 / +11.6). Best three a night: 3+ SOG 66%,
+  4+ 47%, 1+ goal 39–42%, 1+ point 73–75%. **The averages**: 3+ at 50% needs 2.85 on the season, 2.9 L15, 3.0 L10, 3.4
+  L5 (4+ at 40%: 3.3 / 3.4 / 3.6 / 4.0); position does not matter at the same average, the line (8–10 points F1 to F3),
+  the first power-play unit (10 points) and home (2–4) do; all four windows at 3.0+ land 60%, at 3.5+ 64%; a screen's
+  hit rates run 10–20 points high; the season average carries 71% of the weight, L15 27%, L5 / L10 none. **Proposed, not
+  changed**: blend the plain-rate formula's rates into last season's (k ≈ 15: 13.2% → 15.8% explained on shots this
+  season, calls said 60% landed 62% against said 61% landed 58%; reverses the 2026-10-27 call, fades by game 40); shots
+  to follow projected minutes when the posted line moves him; the opponent's team shots allowed in the formula.
+- The top 100 shooters, one by one (`docs/audits/2026-11-13-nhl-top-shooters.md`, tables in `-tables.md`,
+  `tools/predictors/top_shooters.py`; Vincent, 2026-11-13: "don't average. your approach is not correct", "run it for the
+  top 100 shooters"): their 9,233 games of 2025-26 and 2026-27, each skater against his own 3+ rate. 54% this season, 48%
+  last; this season's 12 at 70%+ were at 63% last season, and last season's 80%+ first-20-game starts finished at 63%.
+  Before the game only the defense (tough third −4.3 points, soft +3.4, read on team shots allowed), the rink (±1.7)
+  and an opponent's back-to-back (+2.6) move him; form, his last game, his line, a teammate out nothing. Afterwards the
+  misses are his team under 25 shots (34% against 65% at 35+) and his minutes cut (36% / 62%). A skater's own home / away
+  or soft / tough split does not hold (r −0.02, 0.07 season to season). Of 2,365 rules the best that held both seasons
+  land 71% at 3+ (season 3.5+ a game + last season 3.0+ + not a tough-third defense, or home), none 75%; the same rules
+  land 87–94% at 2+. Descriptive; nothing changed.
+- The opponent as a team, and shots that follow the posted line (`docs/audits/2026-11-13-nhl-formula-refit.md`,
+  `tools/predictors/formula_refit.py`; Vincent, 2026-11-13: "no just 2 and 3" of the drivers study's list). Fitted
+  against the shipped formula both were smaller and differently shaped than the study said. The team's shots allowed
+  added beside the cell takes nothing (0.006); the cell at 0.687 was the fault (tightest fifth of cells shot 1.18× the
+  formula, loosest 0.96×): fitted together the team takes 0.63 and 0.53 comes off the cell, stable on three fits,
+  −9.9 per 1,000 on 2026-27 (−15.2 … −4.8), −2.2 on 2025-26 whole; 3+ calls said 61.4 → 60.6, landed 58.2 → 58.8.
+  **Shipped** (`TEAM_SHOTS_FIT`). The model already lifted a promoted skater 6% a line (`lineBoost`), up only and on
+  forwards' minute cuts; on 7,044 posted-line skater-games the move is symmetric and the size of the minutes (up one
+  ×1.04, down one ×0.98, defensemen ×1.05 / ×0.95), exponent 0.70 (0.16 … 1.24) on the projected-minutes ratio.
+  **Shipped** as `lineMoveMultiplier` (ratio ^0.8, both ways, defensemen on their own minutes); worth little overall
+  (−0.9 per 1,000, interval across 0). The model's own run was not replayed (no scorecard export).

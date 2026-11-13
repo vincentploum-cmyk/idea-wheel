@@ -279,7 +279,12 @@
   running 5–10 points high, 0.6+ scorers said .39 and hit .31 / .35, calibrated at k = 8); home ice; back-to-back; and what the opponent allows **per skater at his position** this season
   (`positionAllowed`; last season's regular season only for a team with no game yet, `held`). Vincent's call, 2026-10-27,
   twice over: this season's rate and this season's table — the study's n / (n + 18), n / (n + 40) and games / (games + 15),
-  games / (games + 40) blends stay on record in sections 3, 13, 15 and 16 and in no number) rides on
+  games / (games + 40) blends stay on record in sections 3, 13, 15 and 16 and in no number; **since 2026-11-13 the
+  opponent is read as a team beside the cell** — `project`'s `oppTeam` (`shotsAllowed` of this season's rows: its shots
+  allowed a game over the league's, to the power 0.63, its games shrunk to the league at games / (games + 5), and 0.53
+  off the cell's 0.687: `TEAM_SHOTS_FIT`; shots only; Vincent: "no just 2 and 3"; the cell alone had skaters against the
+  tightest fifth of cells shooting 1.18× the formula, `docs/audits/2026-11-13-nhl-formula-refit.md`; `picks.js` and the
+  scorecard's `studyRead` pass it, without it the formula is as it was) rides on
   each API row as `study` and stands in when no run exists, but the panel shows one set of numbers only: player,
   2+ / 3+ / 4+ (1+ G) with the break-even price, and Got once final — no study, rate or opponent columns (the user
   wants the plays readable at a glance; the comparison lives on the History tab's scorecard). Beside the name, for
@@ -870,9 +875,16 @@
   ratio, where the study fitted 0.21–0.33) and so moves the points odds too; λ points keeps its assists (0.35) and
   shots (0.20) ratios. Replayed through that pass-through at every tier, the ISCF ratio beat a skater's rate alone and
   the old composite did not (same audit).
-  `node tools/port-model-core.mjs [App.jsx]` applies all six ports on the Mac (the 2026-10-13 shots odds, the
+  And on 2026-11-13 (port it too, Vincent: "no just 2 and 3"): the line boost on λ shots (and 0.12 / 0.08 of it on λ
+  goals / points) is `lineMoveMultiplier` − 1: the projected minutes at tonight's posted line over the same projection at
+  his usual line (`usualLineFromToi`: the line whose `TOI_FIT.mean` is nearest his minutes, defensemen on their own),
+  to the power `TOI_MOVE_EXP` 0.8, held to 0.88–1.14, 1 without a posted line — in place of +6% a line upward only on
+  the forwards' minute cuts, which never lowered a demoted skater and left promoted defensemen unread (7,044 posted-line
+  skater-games: up one line shot ×1.04, down one ×0.98, defensemen ×1.05 / ×0.95; worth little overall, −0.9 per 1,000
+  with an interval across 0; `docs/audits/2026-11-13-nhl-formula-refit.md`, `__tests__/nhl-model-line-move.test.js`).
+  `node tools/port-model-core.mjs [App.jsx]` applies all seven ports on the Mac (the 2026-10-13 shots odds, the
   2026-10-20 goal odds, the 2026-10-27 weights, the 2026-11-07 minutes, the 2026-11-12 goals environment and
-  `defenseGoalMultiplier`), each group all-or-nothing by exact-text anchors: a backup beside the
+  `defenseGoalMultiplier`, the 2026-11-13 line move), each group all-or-nothing by exact-text anchors: a backup beside the
   file, a group already there reported as ported, a group with a differing anchor skipped and named, `--check` to
   look first. On 2026-10-27 App.jsx had neither odds port: the local app had published the ladder's odds since Oct 13.
 

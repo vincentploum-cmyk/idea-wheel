@@ -351,8 +351,10 @@
   elsewhere): per stat a numbered list across the slate (`NBA_BOARDS`: points, rebounds, assists, threes, PRA), each player
   with **the highest round mark he clears at each tier** — `TIERS`: strong 70%+, lean 55%+, thin 40%+ on the board's chance
   (`tierOf`), a mark shared by two tiers listed once at the stronger — "15+ strong · 20+ lean · 25+ thin", ranked by the
-  strong mark, then the lean, then the thin. The marks are round (`step` per spec: points and PRA by 5, rebounds and
-  assists by 2, threes by 1) and read off the shuffle's payload (`tierBoard`: `GET /api/nba/shuffle?date&market` per
+  strong mark, then the lean, then the thin. The marks are round (`step` per spec: points and PRA by 5, rebounds,
+  assists and threes by 1 — rebounds and assists were by 2 until 2026-11-13, when Vincent asked "why is lean empty?":
+  two assists apart the chance drops ~30 points, past the 15-point lean band, so lean was mostly blank; "switch assists
+  and rebounds to steps of 1") and read off the shuffle's payload (`tierBoard`: `GET /api/nba/shuffle?date&market` per
   stat, fetched by the tab, every height read with `pAt`, the court's and the Shuffle tab's figure); until it arrives the
   board reads the book's ladder rungs (`ladderBoard`, `round: false`, the note says so). No price and no EV on the line
   (the price on a mark's hover). **Double-double candidates** (`candidateBoard`, the NBA's touchdown list) by his chance
