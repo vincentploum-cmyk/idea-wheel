@@ -1,0 +1,40 @@
+name: NBA graded odds export (audit)
+
+# Every stored NBA night's graded chances with the book's line and price (the plays and the ladders' rungs, as
+# GET /api/nba/scorecard?rows=1 returns them), gzipped into one artifact (kept two days), for the odds audit
+# (tools/audit/nba_odds.py; Vincent, 2026-11-13: "check whether the odds from propfinder can help us find opportunities").
+# Read-only: `from` one day past the season's start keeps the route from storing a calibration. Run by hand; a push that
+# touches this file on the audit's branch runs it too.
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 'First night (YYYY-MM-DD). Blank = 2026-10-02.'
+        required: false
+  push:
+    branches: ['claude/**']
+    paths: ['.github/workflows/nba-odds-export.yml']
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Export the graded rows
+        env:
+          NHL_ACTIONS_TOKEN: ${{ secrets.NHL_ACTIONS_TOKEN }}
+        run: |
+          set -e
+          FROM="${{ github.event.inputs.from }}"; [ -z "$FROM" ] && FROM=2026-10-02
+          mkdir -p out
+          code=$(curl -sS --max-time 290 -H "Authorization: Bearer $NHL_ACTIONS_TOKEN" -o out/scorecard.json -w '%{http_code}' "https://ideareels.io/api/nba/scorecard?rows=1&from=$FROM" || echo 000)
+          echo "scorecard: $code $(du -h out/scorecard.json | cut -f1)"
+          if [ "$code" != "200" ]; then head -c 500 out/scorecard.json; exit 1; fi
+          jq -c '{from, to, slates: (.slates | length), plays: (.rows.plays | length), rungs: (.rows.rungs | length), priced: ([.rows.rungs[] | select(.odds != null)] | length)}' out/scorecard.json
+          jq -c '.rows' out/scorecard.json | gzip -9 > out/nba-odds-rows.json.gz; rm out/scorecard.json
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nba-odds-export
+          path: out/
+          retention-days: 2
