@@ -45,11 +45,8 @@ describe('the overview\'s D share', () => {
   test('the share of the power-play shots on goal allowed that defensemen took, with the counts and the league\'s', () => {
     const rows = overviewRows(defenseByPosition(games), {}, { venue: 'ALL' });
     const bos = rows.find((r) => r.abbr === 'BOS');
-    expect(bos).toMatchObject({ pp: 16, ppToD: 4, ppD: 0.25, ppLeague: 0.25, ppSog: 4 });
+    expect(bos).toMatchObject({ pp: 16, ppToD: 4, ppD: 0.25, ppLeague: 0.25 });
     expect(bos.rank.ppD).toBe(1);
-    expect(bos.rank.ppSog).toBe(1);
-    expect(OVERVIEW_COLS.find((c) => c.key === 'ppSog')).toMatchObject({ label: 'PP SA / GP', digits: 2 });
-    expect(OVERVIEW_COLS.findIndex((c) => c.key === 'ppSog')).toBe(OVERVIEW_COLS.findIndex((c) => c.key === 'ppD') - 1);
     expect(OVERVIEW_COLS.find((c) => c.key === 'ppD')).toMatchObject({ pct: true });
   });
   test('no share under the floor, nor for games stored before the column', () => {
@@ -57,7 +54,6 @@ describe('the overview\'s D share', () => {
     expect(overviewRows(defenseByPosition(few), {}).find((r) => r.abbr === 'BOS')).toMatchObject({ pp: 4, ppD: null });
     expect(PP_SHARE_MIN).toBe(10);
     const old = games.map(({ ppSog, ...r }) => r);
-    expect(overviewRows(defenseByPosition(old), {}).find((r) => r.abbr === 'BOS')).toMatchObject({ pp: 0, ppD: null, ppSog: null });
-    expect(overviewRows(defenseByPosition(few), {}).find((r) => r.abbr === 'BOS').ppSog).toBe(4);   // per game needs no floor
+    expect(overviewRows(defenseByPosition(old), {}).find((r) => r.abbr === 'BOS')).toMatchObject({ pp: 0, ppD: null });
   });
 });

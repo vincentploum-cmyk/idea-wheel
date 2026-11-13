@@ -268,7 +268,8 @@
   (r 0.52) hold half to half; the forwards' shares do not. But neither moves a defenseman's shots over his own rate: the
   power-play ones (83, 0.52 PP SOG a game) against the top third of kills by PP SOG allowed to D shot x0.99 their rate
   and 0.50 PP SOG against x0.94 and 0.43 in the bottom third, 3+ about a point apart, every CV gain's interval across 0.
-  Shipped as Defense-tab description only (PP SA / GP, PP SOG to D); no Best bets list, no lift.
+  No Best bets list, no lift; the Defense tab keeps the D share (PP SOG to D) as a description, and the per-game
+  figure went onto the rink's PP badge as its colour instead of a Defense-tab column (Vincent: "I only need the coloured pp").
 - Shots / goals environment (`docs/audits/2026-11-12-nhl-shots-environment.md`, `tools/predictors/shots_env.py`;
   Vincent, 2026-11-12: "a combination of SHOTS/G ICF/G IFF/G ISCF/G … which should weigh more", "for goals, check whether
   ISCF/G should be included"): 2025-26 and 2026-27 to date, the opponent's L10 and season ranks at the position on top of
