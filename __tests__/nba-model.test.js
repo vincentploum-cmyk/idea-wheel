@@ -62,4 +62,18 @@ describe('the NBA learned read', () => {
     const parts = ['pts', 'reb', 'ast'].reduce((t, k) => t + b.ranges[k].exp, 0);
     expect(Math.abs(b.ranges.pra.exp - parts)).toBeLessThan(Math.abs(a.ranges.pra.exp - parts) + 0.3);
   });
+  test('the book\'s line: points and PRA move half way to a main line priced near even, nothing else does', () => {
+    const games = [{ id: 'g1', date: '2026-11-02T00:00Z', away: 'BOS', home: 'NY', final: false, state: 'pre' }];
+    const mk = (odds) => ({ at: '2026-11-01T14:00:00Z', data: { players: [
+      { id: 'p1', name: 'Lead Guard', key: 'lead guard', team: 'BOS', pos: 'PG', games: logs(12, (i) => ({ pts: 22 + (i % 5), reb: 5 })), props: [{ market: 'pts', line: 19.5, odds, underOdds: -110, isMain: true }, { market: 'reb', line: 7.5, odds: -110, underOdds: -110, isMain: true }] },
+      { id: 'p3', name: 'Other Side', key: 'other side', team: 'NY', pos: 'C', games: logs(12, () => ({ reb: 10 })), props: [] },
+    ], defense: null, injuries: { rows: [] } } });
+    const read = (odds) => buildBoard({ date: '2026-11-01', season: 2026, games, sheets: [], pf: mk(odds), results: {} }).games[0].sides.BOS.players.find((p) => p.key === 'lead guard').ranges;
+    const near = read(-115);
+    expect(near.pts.lineRead).toMatchObject({ line: 19.5, odds: -115 });
+    expect(Math.abs(near.pts.exp - (near.pts.lineRead.before + 19.5) / 2)).toBeLessThan(0.15);
+    expect(near.reb.lineRead).toBeUndefined();
+    // A line priced far from even is no projection.
+    expect(read(-400).pts.lineRead).toBeUndefined();
+  });
 });
