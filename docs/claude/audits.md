@@ -298,3 +298,13 @@
   changed**: blend the plain-rate formula's rates into last season's (k ≈ 15: 13.2% → 15.8% explained on shots this
   season, calls said 60% landed 62% against said 61% landed 58%; reverses the 2026-10-27 call, fades by game 40); shots
   to follow projected minutes when the posted line moves him; the opponent's team shots allowed in the formula.
+- The top 100 shooters, one by one (`docs/audits/2026-11-13-nhl-top-shooters.md`, tables in `-tables.md`,
+  `tools/predictors/top_shooters.py`; Vincent, 2026-11-13: "don't average. your approach is not correct", "run it for the
+  top 100 shooters"): their 9,233 games of 2025-26 and 2026-27, each skater against his own 3+ rate. 54% this season, 48%
+  last; this season's 12 at 70%+ were at 63% last season, and last season's 80%+ first-20-game starts finished at 63%.
+  Before the game only the defense (tough third −4.3 points, soft +3.4, read on team shots allowed), the rink (±1.7)
+  and an opponent's back-to-back (+2.6) move him; form, his last game, his line, a teammate out nothing. Afterwards the
+  misses are his team under 25 shots (34% against 65% at 35+) and his minutes cut (36% / 62%). A skater's own home / away
+  or soft / tough split does not hold (r −0.02, 0.07 season to season). Of 2,365 rules the best that held both seasons
+  land 71% at 3+ (season 3.5+ a game + last season 3.0+ + not a tough-third defense, or home), none 75%; the same rules
+  land 87–94% at 2+. Descriptive; nothing changed.
