@@ -77,6 +77,27 @@ export default function NbaApp({ email }) {
       go(date);
     } catch (e) { setPull({ busy: false, msg: `PropFinder: ${e.message}` }); }
   };
+  // RotoWire's starting lineups read now (Vincent, 2026-11-13: "a button to pull the rotowire nba lineups"); the scheduled
+  // reads come every 10 minutes while the board is open. RotoWire lists tonight alone.
+  const [luBusy, setLuBusy] = useState(false);
+  const pullLineups = async () => {
+    setLuBusy(true);
+    setPull((p) => ({ ...p, msg: '' }));
+    let msg;
+    try {
+      const res = await fetch(`/api/nba/refresh?only=lineups&date=${date}`, { method: 'POST', cache: 'no-store' });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.detail || j.error || `${res.status}`);
+      const l = j.lineups || {};
+      const read = l.at ? ` (read ${fmtTime(l.at)})` : '';
+      msg = !l.live ? `RotoWire: lineups are read for tonight's games before tip only${l.teams ? `; the last read${read} stays` : ''}.`
+        : l.fetched ? `RotoWire: ${l.teams} teams, ${l.confirmed} lineup${l.confirmed === 1 ? '' : 's'} confirmed.`
+          : `RotoWire: the read failed${l.teams ? `; the last read${read} stays` : ''}.`;
+      if (l.fetched) go(date);
+    } catch (e) { msg = `RotoWire: ${e.message}`; }
+    setLuBusy(false);
+    setPull((p) => ({ ...p, msg }));
+  };
   const shift = (n) => { const d = new Date(`${date}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); go(d.toISOString().slice(0, 10)); };
   const pretty = date ? new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' }) : '';
 
@@ -112,6 +133,7 @@ export default function NbaApp({ email }) {
         <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && go(e.target.value)} aria-label="Slate date" />
         <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !date} onClick={() => shift(1)} aria-label="Next day">›</button>
         <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={busy || !date} onClick={() => go(date)}>{busy ? 'Loading…' : 'Reload'}</button>
+        <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm" disabled={luBusy || busy || !date} onClick={pullLineups} title="Read RotoWire's starting lineups now (expected until confirmed; the board reads them every 10 minutes before tip)">{luBusy ? 'Pulling…' : 'Pull lineups'}</button>
         <button type="button" className="nhlx-btn nhlx-btn-sm" disabled={pull.busy || busy || !date} onClick={pullNow} title="Pull tonight's lines, logs, defense tables and depth charts from PropFinder now (the scheduled run does it at 9:47 AM and 5:23 PM ET)">{pull.busy ? 'Pulling…' : 'Pull PropFinder'}</button>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { authorize, DATE_RE } from '@/lib/nhl-data/util';
-import { resolveSlate, ensureSchedule, ensureInjuries, ensureLineups, pullPropfinderSlate, publicRefreshAllowed, relearnCalibration } from '@/lib/nba/store';
+import { resolveSlate, ensureSchedule, ensureInjuries, ensureLineups, lineupsLive, pullPropfinderSlate, publicRefreshAllowed, relearnCalibration } from '@/lib/nba/store';
 import { scheduledSlotDone } from '@/lib/scheduler';
 
 export const runtime = 'nodejs';
@@ -9,7 +9,7 @@ export const maxDuration = 300;
 const PUBLIC_MIN_GAP_MS = 15 * 60 * 1000;
 
 // ?date=YYYY-MM-DD&only=schedule (ESPN: the date's games, scores and the finished games' box scores)
-// | propfinder (the date's players, lines and defenses) | (default) both. Called by the admin UI and the
+// | propfinder (the date's players, lines and defenses) | lineups (RotoWire's starting lineups, admin) | (default) both. Called by the admin UI and the
 // scheduled workflow; anonymous calls only refresh the public ESPN data, one per 15 minutes.
 async function handle(request) {
   const url = new URL(request.url);
@@ -38,6 +38,17 @@ async function handle(request) {
     }
     const slate = await resolveSlate({ date });
     const out = { slate };
+    // `only=lineups` (admin): RotoWire's starting lineups read now, nothing else (Vincent, 2026-11-13: "a button to pull the
+    // rotowire nba lineups", beside Pull PropFinder). RotoWire lists tonight alone, so another date, or a night whose games
+    // have all started, reads nothing (`lineupsLive` in lib/nba/store.js).
+    if (only === 'lineups') {
+      if (!auth.ok) return auth.response;
+      const { schedule } = await ensureSchedule(slate);
+      const lu = await ensureLineups(slate, { force: true, schedule });
+      const teams = lu.feed?.teams || {};
+      out.lineups = { at: lu.feed?.fetchedAt || null, fetched: lu.fetched, teams: Object.keys(teams).length, confirmed: Object.values(teams).filter((t) => t.status === 'confirmed').length, live: lineupsLive(slate, schedule) };
+      return Response.json({ ok: true, ...out }, { headers: { 'Cache-Control': 'no-store' } });
+    }
     if (only !== 'propfinder') {
       const { schedule, fetched, resultsStored } = await ensureSchedule(slate, { force: true });
       out.schedule = { games: schedule?.games?.length || 0, finals: (schedule?.games || []).filter((g) => g.final).length, fetched, resultsStored };

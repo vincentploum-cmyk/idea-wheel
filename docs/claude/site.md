@@ -65,6 +65,12 @@
   in each game row — "✓ Lineup confirmed" (the `--ok-*` tokens) once RotoWire confirms the starting five, a muted "Expected
   lineup" before, the five and who may not play on the hover; nothing once the game is final. Off `board.lineups` (below and in
   `picks-core.md`). `__tests__/nba-lineups.test.jsx`, the mock in `nba-games.test.jsx` (`MOCK_OUT`).
+- **"Pull lineups" in the NBA board head** (Vincent, 2026-11-13: "a button to pull the rotowire nba lineups"): a ghost button
+  before Pull PropFinder (`pullLineups` in `components/nba/NbaApp.jsx`) → `POST /api/nba/refresh?only=lineups&date=` (admin only),
+  which reads RotoWire now (`ensureLineups` with `force`) and nothing else, then reloads the board when a read came back. The
+  answer lands in the head's message line: "RotoWire: 18 teams, 3 lineups confirmed." RotoWire lists tonight alone, so another
+  date or a night whose games have all started reads nothing and says so (`lineupsLive`, now exported from `lib/nba/store.js`).
+  The board still reads them on its own every 10 minutes before tip (`LINEUPS_FRESH_MS`).
 - **The NBA cheat sheet** (`#guide`, "Cheat sheet" before Data sources; `components/nba/NbaGuide.jsx`, `GUIDE`; Vincent,
   2026-11-04: "Can we have this simplified in a cheat sheet somewhere on the site for nba"): static, three columns (one under the
   other under 900 px) — Rebounds, Assists, Threes — each "Look at" (his rate a minute and its memory, his recent minutes, the
