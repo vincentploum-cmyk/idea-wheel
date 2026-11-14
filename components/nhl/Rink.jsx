@@ -220,14 +220,17 @@ function SlotBadge({ p, lines, metric = 'sog' }) {
 /**
  * The chip's PP badge: RotoWire has him on a power-play unit and his power-play minutes tonight reach PP_SHOW (the power
  * plays ShotPropz's boards give his team tonight × a unit skater's share of each, lib/nhl-data/pp-units.js). Coloured
- * since 2026-11-13 by the opponent: its power-play shots on goal allowed a game to his position this season, green in
+ * since 2026-11-13 by the opponent: its power-play shots on goal allowed a game to his position this season (its
+ * power-play goals when the rink shows Goals, 2026-11-14), green in
  * the top third of the league, amber the middle, red the bottom (grey without a ranked read). "PP" for the first
  * unit, "PP2" for the second. The read on the hover.
  */
-export function PpBadge({ pp }) {
+export function PpBadge({ pp, metric = 'sog' }) {
   if (!pp?.show) return null;
-  // Green / amber / red: the opponent's power-play shots allowed a game to his position (pp-units.js, ppAllowedAt).
-  return <i className={`nhlx-rk-pp${pp.tone ? ` is-${pp.tone}` : ''}`} title={pp.text}>{pp.unit === 1 ? 'PP' : 'PP2'}</i>;
+  // Green / amber / red: the opponent's power-play shots allowed a game to his position (pp-units.js, ppAllowedAt);
+  // under Goals its power-play goals allowed (Vincent, 2026-11-14), grey until the stored rows carry them.
+  const tone = metric === 'g' ? pp.toneG : pp.tone;
+  return <i className={`nhlx-rk-pp${tone ? ` is-${tone}` : ''}`} title={metric === 'g' ? pp.textG || pp.text : pp.text}>{pp.unit === 1 ? 'PP' : 'PP2'}</i>;
 }
 
 /**
@@ -262,7 +265,7 @@ function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false, 
     + (p.shotEdge != null ? ` · shot edge ${p.shotEdge > 0 ? '+' : ''}${p.shotEdge}%` : '')
     + (p.goalEdge != null ? ` · goal edge ${p.goalEdge > 0 ? '+' : ''}${p.goalEdge}%` : '')
     + (p.carried ? ` · carried from the last known lineup${p.carriedFrom ? ` (${p.carriedFrom})` : ''}` : p.inLineup ? '' : ' · not in the projected lineup')
-    + (p.pp ? ` · ${p.pp.text}` : '')
+    + (p.pp ? ` · ${metric === 'g' ? p.pp.textG || p.pp.text : p.pp.text}` : '')
     + (p.injury ? ` · injury report: ${p.injury}${p.injuryDetail ? ` (${p.injuryDetail})` : ''}` : '');
   return (
     <button
@@ -277,7 +280,7 @@ function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false, 
         <i className="nhlx-rk-num">{p.number ?? p.pos}</i>
       </span>
       <span className="nhlx-rk-meta">
-        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{h2hMark ? <span className="nhlx-rk-h2h" title={h2hTitle}>h2h</span> : null}<Flags c={p} stat={metric} className="nhlx-rk-flags" soft={false} /><TopSpotBadge c={p} stat={metric} /><SlotBadge p={p} lines={lines} metric={metric} /><PpBadge pp={p.pp} /><PeriodBadges periods={p.periods} /><span className="nhlx-rk-nm">{shortName(p.name)}</span></b>
+        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{h2hMark ? <span className="nhlx-rk-h2h" title={h2hTitle}>h2h</span> : null}<Flags c={p} stat={metric} className="nhlx-rk-flags" soft={false} /><TopSpotBadge c={p} stat={metric} /><SlotBadge p={p} lines={lines} metric={metric} /><PpBadge pp={p.pp} metric={metric} /><PeriodBadges periods={p.periods} /><span className="nhlx-rk-nm">{shortName(p.name)}</span></b>
         {played ? (actual
           ? <span className={`nhlx-rk-stat is-actual${(m?.sog ?? p.projSog) != null && actual.sog >= (m?.sog ?? p.projSog) ? ' is-over' : ''}`}><em>{actual.sog}</em>{NB}SOG{NB}· <em>{actual.g}</em>{NB}G{actual.a ? <>{NB}· <em>{actual.a}</em>{NB}A</> : null}{m?.sog != null ? <i>m{NB}{num(m.sog)}</i> : p.projSog != null ? <i>p{NB}{num(p.projSog)}</i> : null}</span>
           : <span className="nhlx-rk-stat">did not play</span>)
@@ -507,7 +510,7 @@ export function RinkLegend({ metric = 'sog' }) {
       <span><i className="nhlx-rk-slot is-legend">LW1</i> his line slot tonight; the hover gives the {word} the opponent gives up to that slot per skater a game this season (the Defense tab’s by-line table, both venues), untinted because that table has not predicted shots beyond a skater’s own rate; the rink head names the slot the opponent gives the most to, with its rank against the league there, and who sits at that slot tonight</span>
       <span><i className="nhlx-rk-slot is-soft nhlx-rk-top is-legend">RW #3</i> a top-{SOFT_TOP} soft spot: the opponent allows one of the five most {word} to his position on PropFinder’s table above the rink, the tab it opens on (the Soft spots list on Best bets)</span>
       <span><i className="nhlx-pk-flag is-hot is-legend">{ICON.hot}</i> hot going in ({metric === 'g' ? '3+ goals in his last five' : 'his last five at 1.4× his shot rate or more'}) · <i className="nhlx-pk-flag is-cold is-legend">{ICON.cold}</i> cold ({metric === 'g' ? 'no goal in ten games when his rate owed him one' : 'his last five at 0.7× or under'}) ; on the plays above the rink and in the skater table, <i className="nhlx-pk-flag is-soft is-legend">{ICON.soft}</i> marks the opponent in the soft third of the league at his position for {word} on PropFinder’s table above the rink, the tab it opens on (on the ice the band under a chip already shows it); colour only, the numbers already carry his rate</span>
-      <span><i className="nhlx-rk-pp is-soft is-legend">PP</i><i className="nhlx-rk-pp is-mid is-legend">PP</i><i className="nhlx-rk-pp is-tough is-legend">PP</i> on RotoWire’s first power-play unit (PP2 the second) with 2+ power-play minutes coming tonight (the power plays his team should get × a unit skater’s share of each); coloured by the opponent: its power-play shots on goal allowed a game to his position this season, green the top third of the league, amber the middle, red the bottom, both how much power play it gives up and where the shots go; the figures on the hover; colour only, no number moves with it</span>
+      <span><i className="nhlx-rk-pp is-soft is-legend">PP</i><i className="nhlx-rk-pp is-mid is-legend">PP</i><i className="nhlx-rk-pp is-tough is-legend">PP</i> on RotoWire’s first power-play unit (PP2 the second) with 2+ power-play minutes coming tonight (the power plays his team should get × a unit skater’s share of each); coloured by the opponent: its power-play {metric === 'g' ? 'goals' : 'shots on goal'} allowed a game to his position this season, green the top third of the league, amber the middle, red the bottom, both how much power play it gives up and where the {metric === 'g' ? 'goals' : 'shots'} go{metric === 'g' ? ' (a handful of goals a team: a thin read)' : ''}; the figures on the hover; colour only, no number moves with it</span>
       <span><span className="nhlx-rk-per is-legend"><i className="nhlx-rk-per-b is-soft">1</i><i className="nhlx-rk-per-b is-mid">2</i><i className="nhlx-rk-per-b is-tough">3</i></span> the matchup by period: what the opponent gives up in shots in that period (top / bottom third of the league) plus his own shots in it (top / bottom third of his position); green when they lean good, red when they lean bad, amber when they cancel out or sit in the middle; this season, the read on each badge’s hover</span>
       {metric === 'g'
         ? <span><i className="nhlx-rk-h2h is-legend">h2h</i> scores on this opponent: more than a goal a game against them over 2+ stored games, or 2+ goals in the one game stored (this season and last)</span>

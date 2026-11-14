@@ -3,7 +3,7 @@
  * from the play-by-play's situationCode (`ppSog` on the stored rows), summed per defending team and position, and the
  * overview's share of them that defensemen took.
  */
-import { ppShotsOf, stampPpShots } from '../lib/nhl-data/game';
+import { ppShotsOf, ppGoalsOf, stampPpShots } from '../lib/nhl-data/game';
 import { ROW_FIELDS, toRow, rowObj } from '../lib/nhl-data/ingest';
 import { defenseByPosition } from '../lib/nhl-data/defense';
 import { overviewRows, OVERVIEW_COLS, PP_SHARE_MIN } from '../lib/nhl-data/defense-board';
@@ -32,9 +32,16 @@ describe('power-play shots from the play-by-play', () => {
     const game = { date: '2026-11-10', id: 2026020200, skaters: [{ id: 1, venue: 'H' }, { id: 2, venue: 'A' }, { id: 3, venue: 'A' }] };
     stampPpShots(game, [shot(1, '1451'), shot(2, '1541'), shot(2, '1541')]);
     expect(game.skaters.map((s) => s.ppSog)).toEqual([1, 2, 0]);
-    expect(ROW_FIELDS[ROW_FIELDS.length - 1]).toBe('ppSog');
+    expect(ROW_FIELDS.slice(-2)).toEqual(['ppSog', 'ppG']);   // ppG: his power-play goals, the last column since 2026-11-14
     expect(rowObj(toRow(game, game.skaters[1])).ppSog).toBe(2);
     expect(rowObj(toRow(game, { id: 4 })).ppSog).toBeNull();   // a game stamped before the column
+    expect(game.skaters.map((s) => s.ppG)).toEqual([0, 0, 0]);
+    const g2 = { date: '2026-11-10', id: 2026020201, skaters: [{ id: 1, venue: 'H' }, { id: 2, venue: 'A' }] };
+    stampPpShots(g2, [{ ...shot(1, '1451'), typeDescKey: 'goal', details: { scoringPlayerId: 1 } }, shot(1, '1451'), { ...shot(2, '1551'), typeDescKey: 'goal', details: { scoringPlayerId: 2 } }]);
+    expect(g2.skaters.map((s) => [s.ppSog, s.ppG])).toEqual([[2, 1], [0, 0]]);   // an even-strength goal is not one
+    expect(ppGoalsOf([{ ...shot(1, '1451'), typeDescKey: 'goal', details: { scoringPlayerId: 1 } }], { 1: true })).toEqual({ 1: 1 });
+    expect(rowObj(toRow(g2, g2.skaters[0])).ppG).toBe(1);
+    expect(rowObj(toRow(g2, { id: 4 })).ppG).toBeNull();
   });
 });
 
