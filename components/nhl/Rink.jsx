@@ -394,6 +394,25 @@ function SoftestLine({ side, metric = 'sog' }) {
   );
 }
 
+/**
+ * The weak-goalie alert under the rink's head (lib/nhl-data/goalie-alert.js; Vincent, 2026-11-14): drawn only when the
+ * goalie this side shoots at tonight is a weak one (the bottom quarter of the league's by save %, or cold over his last
+ * five starts), green as every favourable read on the rink; "backup" beside it when he is not the usual starter. The
+ * figures on the hover. An alert only: no pick moves with it.
+ */
+export function GoalieAlert({ g, opp }) {
+  if (!g?.weak) return null;
+  const pct = g.pct == null ? null : Number(g.pct).toFixed(3).replace(/^0/, '');
+  return (
+    <small className="nhlx-rk-line" title={g.text}>
+      <span>
+        {opp} in net <i className="nhlx-rk-verdict is-soft">weak goalie</i> · <b>{g.name}</b>{pct ? ` ${pct}` : ''}{g.rank != null ? <> · <b>#{g.rank}</b> weakest of {g.of}</> : null}
+        {g.cold && g.l5 ? ` · ${Number(g.l5.pct).toFixed(3).replace(/^0/, '')} last ${g.l5.starts}` : ''}{g.backup ? ' · backup' : ''} · {g.status}
+      </span>
+    </small>
+  );
+}
+
 export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, modelRun = null, metric = 'sog', onMetric = null, pfKey: controlledKey = undefined, onPfKey = null, startTimeUTC = null }) {
   // The lines' source as a pill: the slate's read, else read here from the side's source and the game's start.
   const lineup = side.lineup || lineupRead(side, startTimeUTC);
@@ -447,6 +466,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
           {/* The chips' source stays in the title attribute: the head shows the team, where the lines came from and the softest line. */}
           <LineupSource read={lineup} />
           <SoftestLine side={side} metric={metric} />
+          <GoalieAlert g={side.oppGoalie} opp={side.opp} />
           {dressedText(side) ? <small className="nhlx-rk-line" title="NHL.com's projected lineup or the beat writers' lines list a two-forward line: the third spot rotates through the game, so no skater sits in it on the ice">{dressedText(side)}</small> : null}
         </div>
       </div>
