@@ -349,6 +349,18 @@
   (`firstBasketOdds` in `lib/picks/propfinder.js`: the items naming a first basket / first field goal, not a team's or
   first points, the best price as `firstBasket` on the player, never a market), with the edge; the score is the chance
   × 4 on 0–100. Once stored, who scored first, the first points and the tip are on the game and the rows are graded.
+- **The first-basket picks' season record** (the tab's "Record" view, `GET /api/nba/firstbasket/results[?backfill=0]`,
+  `firstBasketResults` / `gradeFirstBasketNight` in `lib/nba/store.js`, the grading shared with the NHL's first goal
+  and the NFL's first touchdown in `lib/picks/first-results.js`, drawn by `components/picks/FirstResults.jsx`; Vincent,
+  2026-11-14: "the season track record for all three"): how often our top pick scored the first basket, the top three
+  and five, what the list said such picks were worth and a pick at random, every name by the chance given (said against
+  scored it), and the games one by one (the scorer, his place on our list, our top pick). **Each night is graded as a
+  reader had it that morning**: the record (tips, first shots, first baskets, starts) from the season's results before
+  the date, the starters and attempts from the date's own pull; graded once the night is whole (every game final with
+  its opening read) and stored at `nba/<date>/first-basket-results.json` (`FIRST_RESULTS_VERSION`), `FIRST_RESULTS_BACKFILL`
+  = 8 nights a load, the rest in `missing`. A pull taken after the night's first tip is marked `latePull` (its game
+  logs may hold the night itself; counted on the payload), a night without a pull `noPull` (no list, nothing graded).
+  `__tests__/nba-first-results.test.js`, `__tests__/first-results.test.js`.
 - **Boards** (`#boards`, `NbaBoards` in `components/nba/NbaBoard.jsx` → `components/picks/Boards.jsx`, the pure builders in
   `lib/picks/boards.js`; Vincent, 2026-11-01, with his own NFL lists as the form — "Best Receiving Ladders · 1. Puka Nacua
   100+ / 110+ / 125+" —, then "I don't care about edge etc… I just want to know what I should bet on: 10+ points (strong),

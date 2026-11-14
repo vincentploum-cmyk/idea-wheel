@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { teamLogo } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
 import { NbaPlayerCardProvider, useNbaPlayerCard } from './NbaPlayerCard';
+import { FirstResults } from '@/components/picks/FirstResults';
 
 const pct = (v) => (v == null ? '—' : `${(v * 100).toFixed(1)}%`);
 const pct0 = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
@@ -59,6 +60,8 @@ function Board({ date }) {
   const [board, setBoard] = useState(null);
   const [err, setErr] = useState('');
   const [view, setView] = useState('slate');
+  const [record, setRecord] = useState(null);
+  const [recordErr, setRecordErr] = useState('');
   const open = useNbaPlayerCard();
   const load = useCallback((d, backfill = true) => fetch(`/api/nba/firstbasket?date=${d}${backfill ? '' : '&backfill=0'}`, { cache: 'no-store' })
     .then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.detail || j.error || `${r.status}`); return j; })
@@ -70,6 +73,14 @@ function Board({ date }) {
     window.addEventListener('nba:injury-override', onMark);
     return () => window.removeEventListener('nba:injury-override', onMark);
   }, [date, load]);
+  // The season's record of these picks (lib/picks/first-results.js), read when its view is opened.
+  useEffect(() => {
+    if (view !== 'record' || record) return;
+    fetch('/api/nba/firstbasket/results', { cache: 'no-store' })
+      .then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.detail || j.error || `${r.status}`); return j; })
+      .then((j) => { setRecord(j); setRecordErr(''); })
+      .catch((e) => setRecordErr(`Couldn’t load the record: ${e.message}`));
+  }, [view, record]);
   const top = useMemo(() => (board ? board.games.flatMap((g) => g.candidates.map((c) => ({ ...c, gameFinal: g.final }))).sort((a, b) => b.p - a.p).slice(0, 40) : []), [board]);
   const onOpen = (c) => open({ key: c.key, player: { player: c.name, key: c.key, pos: c.pos, injury: c.health }, team: c.team, opp: c.opp, venue: c.venue, market: 'pts' });
   return (
@@ -82,7 +93,7 @@ function Board({ date }) {
         </div>
         <div className="nhlx-auto-actions">
           <div className="nhlx-tabs" role="tablist" aria-label="View">
-            {[['slate', 'Whole slate'], ['games', 'By game']].map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setView(k)}>{l}</button>)}
+            {[['slate', 'Whole slate'], ['games', 'By game'], ['record', 'Record']].map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setView(k)}>{l}</button>)}
           </div>
         </div>
       </div>
@@ -90,7 +101,8 @@ function Board({ date }) {
       <p className="nhlx-auto-meta nhlx-fg-how">
         Each starter’s chance is his team’s chance of the first basket (the tip from the centre’s jump-ball record, and the team with first possession scoring first about 57% of the time) times his share of it (his attempts among the five starters, his finishing, and the first shots he has actually taken this season), moved toward his own first-basket record over his starts. The book’s first-basket price rides beside it when the pull carries one; the starters are PropFinder’s depth chart, the players out left aside. Click a row for the card.
       </p>
-      {board && !board.games.length ? <div className="nhlx-empty">No games on this date.</div> : null}
+      {view === 'record' ? <FirstResults data={record} error={recordErr} unit="night" /> : null}
+      {view !== 'record' && board && !board.games.length ? <div className="nhlx-empty">No games on this date.</div> : null}
       {board && view === 'slate' && top.length ? <Table list={top} onOpen={onOpen} final={false} /> : null}
       {board && view === 'games' && board.games.map((g) => (
         <article key={g.id} className="nhlx-mu-game nhlx-fg-game">
