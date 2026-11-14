@@ -81,7 +81,8 @@ describe('the colour: the opponent\'s power-play shots allowed a game to his pos
   const book = ppAllowedBook(season);
   test('each position\'s per-game figure and share, ranked among the teams with enough games', () => {
     expect(book.teams.MTL).toMatchObject({ gp: 10, all: 6.6, rankAll: 1, of: 5 });
-    expect(book.teams.MTL.pos.LW).toEqual({ perGame: 2.2, share: 0.333, rank: 1 });
+    expect(book.teams.MTL.pos.LW).toMatchObject({ perGame: 2.2, share: 0.333, rank: 1 });
+    expect(book.teams.MTL.pos.LW.g).toEqual({ perGame: 0, share: null, rank: null });   // no power-play goals on these rows: no goals read
     expect(book.teams.FLA.pos.D.rank).toBe(1);
     expect(book.teams.NEW.of).toBe(0);   // under PP_ALLOWED_MIN_GAMES: shown nowhere
     expect(PP_ALLOWED_MIN_GAMES).toBe(5);
@@ -103,5 +104,35 @@ describe('the colour: the opponent\'s power-play shots allowed a game to his pos
     expect(r).toMatchObject({ unit: 1, tone: 'soft' });
     expect(r.text).toMatch(/^MTL gives a lot of power-play shots to LW/);
     expect(ppRead({ rw, team: 'CHI', opp: 'MTL', name: 'Tyler Bertuzzi', pos: 'LW' }).tone).toBeNull();
+  });
+});
+
+// Vincent, 2026-11-14: "the pp should color based on the toggle shots/ goals".
+describe('the PP badge under Goals: the opponent\'s power-play goals allowed to his position', () => {
+  const cell = (ppSog, ppG) => ({ gp: 10, ppSog, ppG });
+  const team = (sog, g) => ({ ALL: { All: { gp: 10, ppSog: sog.reduce((a, b) => a + b, 0), ppG: g.reduce((a, b) => a + b, 0) }, C: cell(sog[0], g[0]), LW: cell(sog[1], g[1]), RW: cell(sog[2], g[2]), D: cell(sog[3], g[3]) } });
+  // AAA gives its power-play shots to C but its power-play goals to D; CCC the other way round
+  const season = { teams: { AAA: team([3, 1, 1, 1], [0.1, 0.1, 0.1, 0.6]), BBB: team([2, 1, 1, 1], [0.2, 0.2, 0.2, 0.2]), CCC: team([1, 1, 1, 3], [0.5, 0.1, 0.1, 0.05]) } };
+  const book = ppAllowedBook(season);
+
+  test('shots and goals rank apart', () => {
+    expect(ppAllowedAt(book, 'AAA', 'C').tone).toBe('soft');
+    expect(ppAllowedAt(book, 'AAA', 'C', 'g').tone).toBe('tough');
+    expect(ppAllowedAt(book, 'AAA', 'D', 'g')).toMatchObject({ tone: 'soft', rank: 1, perGame: 0.6, lead: 'D' });
+    expect(ppAllowedAt(book, 'AAA', 'D', 'g').text).toMatch(/^AAA gives a lot of power-play goals to D: 0\.60 a game, #1 of 3/);
+    expect(ppAllowedAt(book, 'AAA', 'D').text).toMatch(/power-play shots to D/);
+  });
+
+  test('rows stored before ppG: no goals read, the shots read untouched', () => {
+    const old = ppAllowedBook({ teams: { AAA: team([3, 1, 1, 1], [0, 0, 0, 0]), BBB: team([2, 1, 1, 1], [0, 0, 0, 0]), CCC: team([1, 1, 1, 3], [0, 0, 0, 0]) } });
+    expect(ppAllowedAt(old, 'AAA', 'C', 'g')).toBeNull();
+    expect(ppAllowedAt(old, 'AAA', 'C').tone).toBe('soft');
+  });
+
+  test('the badge follows the switch; grey without a goals read', () => {
+    const pp = { show: true, unit: 1, tone: 'soft', toneG: 'tough', text: 'shots read', textG: 'goals read' };
+    expect(renderToStaticMarkup(<PpBadge pp={pp} />)).toBe('<i class="nhlx-rk-pp is-soft" title="shots read">PP</i>');
+    expect(renderToStaticMarkup(<PpBadge pp={pp} metric="g" />)).toBe('<i class="nhlx-rk-pp is-tough" title="goals read">PP</i>');
+    expect(renderToStaticMarkup(<PpBadge pp={{ ...pp, toneG: null }} metric="g" />)).toBe('<i class="nhlx-rk-pp" title="goals read">PP</i>');
   });
 });

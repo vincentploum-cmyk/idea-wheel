@@ -65,7 +65,8 @@
   (`ppSog`, the last row column since 2026-11-12: `ppShotsOf` / `stampPpShots` in `game.js` off each play's situationCode, the
   shooter's side up a skater with the other goalie in net, the shootout out; null on rows stored before it until the
   `firstgoals` backfill mode stamps them, which `stampFirstGoals` now also does; `ppSog` is a `DEF_METRICS` column, so every
-  defense table has it per position). Each game record carries its
+  defense table has it per position; **`ppG`, his power-play goals, the same way and the last column since 2026-11-14**:
+  `ppGoalsOf`, stamped by `stampPpShots`, backfilled by the same `firstgoals` mode, a `DEF_METRICS` column). Each game record carries its
   first goal (`firstGoal`, scorer's row flagged `fg`; shootouts excluded) and `firstGoalsAllowed`
   reads first goals given up per defending team by venue, position and line slot (the defense
   card's "1st goal" column, `firstGoals` in the defense API); games logged without it get it
@@ -139,7 +140,11 @@
   1 = the most among the teams with `PP_ALLOWED_MIN_GAMES` = 5 games, green / amber / red by the rink's thirds (`ppTone`;
   grey without a ranked read), the hover leading with it ("MTL gives a lot of power-play shots to LW: 2.18 a game, #1 of
   32 · 6.65 … in all · 33% of them to LW (league 24%), the most to LW"); per game to a position answers both at once (a
-  kill short a lot gives every position more; the share says where), and it is colour only — the 2026-11-13 study
+  kill short a lot gives every position more; the share says where); **under the rink's Goals switch the badge reads the
+  opponent's power-play goals allowed a game to his position instead** (Vincent, 2026-11-14: "the pp should color based on
+  the toggle shots/ goals"; `ppAllowedAt(book, opp, pos, 'g')` off the rows' `ppG`, `pp.toneG` / `pp.textG`, `PpBadge`'s
+  `metric`; grey until the stored rows carry `ppG`, i.e. until the backfill has run, and a thin read: a team allows a
+  handful of power-play goals to a position), and it is colour only — the 2026-11-13 study
   (`pp_d.py`, audits) found the kill's read does not move a defenseman's shots over his rate, and a forward position's
   share does not carry half to half; until then green meant `PP_LOT` = 3.5 minutes, which stays on the read as `lot`; "PP"
   for the first unit, "PP2" the second; the read on the hover and in the chip's title. Matched by full name, then last
