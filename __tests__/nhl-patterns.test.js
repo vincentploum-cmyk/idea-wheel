@@ -170,3 +170,32 @@ describe('patterns: a condition on his position reads as the position', () => {
     expect(say({ f: 'icf_avg', op: '>=', v: 5.667 }, 5.8, {}).short).not.toMatch(/NaN/);
   });
 });
+
+// Vincent, 2026-11-14: "can we add pills for points in the patterns tab".
+describe('patterns: points', () => {
+  const { outcomesOf } = require('../lib/nhl-data/patterns-pure');
+  const rules = require('../lib/nhl-data/patterns-rules.json');
+  test('1+ and 2+ points are lines of their own, graded on goals + assists', () => {
+    expect(MARKS.filter((m) => m.group === 'points').map((m) => [m.key, m.stat, m.at, m.short])).toEqual([['p1', 'pts', 1, '1+ P'], ['p2', 'pts', 2, '2+ P']]);
+    expect(outcomesOf({ sog: 2, g: 0, a: 1 })).toMatchObject({ y_p1: 1, y_p2: 0, y_g1: 0 });
+    expect(outcomesOf({ sog: 2, g: 1, a: 1 })).toMatchObject({ y_p1: 1, y_p2: 1, y_g1: 1, y_g2: 0 });
+    expect(outcomesOf({ sog: 4, g: 0, a: 0 })).toMatchObject({ y_p1: 0, y_p2: 0, y_s4: 1 });
+  });
+  test('the shipped rules carry them, with rules over their bars that held on the check weeks', () => {
+    for (const [mk, bar] of [['p1', 0.5], ['p2', 0.25]]) {
+      const m = rules.marks[mk];
+      expect(m.bar).toBe(bar);
+      const over = m.rules.filter((r) => r.held && r.rate >= m.bar);
+      expect(over.length).toBeGreaterThan(0);
+      const fit = over.reduce((a, r) => a + r.check.hits, 0) / over.reduce((a, r) => a + r.check.n, 0);
+      expect(fit).toBeGreaterThan(m.base * 1.5);     // the picks land well over the base rate on the weeks the search never saw
+    }
+  });
+  test('a skater matching a points rule gets a filled pill', () => {
+    const rule = rules.marks.p1.rules.find((r) => r.held && r.rate >= 0.5);
+    const f = Object.fromEntries(rule.when.map((c) => [c.f, c.op === '<=' ? c.v - 1 : c.op === '>=' ? c.v + 1 : c.v]));
+    const pills = pillsFor({ gp: 12, ...f }, rules, null);
+    expect(pills.p1.selected).toBe(true);
+    expect(pills.p1.p).toBeGreaterThanOrEqual(0.5);
+  });
+});
