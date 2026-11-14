@@ -36,6 +36,7 @@ function sourceText(side) {
   const nhl = m.nhlUpdated ? `NHL.com lineup updated ${et(m.nhlUpdated)}` : null;
   if (side.source === 'gamedaytweets') return `lines from ${gdt}${nhl ? ` · ${nhl}` : ''}${m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}`;
   if (side.source === 'lineup') return `lines from the NHL.com projected lineup${nhl ? ` (updated ${et(m.nhlUpdated)})` : ''}${gdt ? ` · older tweet from ${gdt}` : ''}${m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}${carriedText(side)}`;
+  if (side.source === 'dailyfaceoff') return `lines from Daily Faceoff’s line combinations${m.dfAt ? ` (set ${et(m.dfAt)}${m.dfBy ? `, via ${m.dfBy}` : ''})` : ''} · no beat-writer or NHL.com lines yet${m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}${carriedText(side)}`;
   if (side.source === 'propfinder') return `lines from PropFinder’s depth chart${m.pfAt ? ` (pulled ${et(m.pfAt)})` : ''} · no beat-writer or NHL.com lines yet${m.capturedAt ? ` · captured ${et(m.capturedAt)}` : ''}${carriedText(side)}`;
   if (side.carried) return `no lines yet: ${carriedText(side).slice(3)}${m.capturedAt ? ` · last checked ${et(m.capturedAt)}` : ''}`;
   return `lines from the roster, ordered by projected shots (no lines yet${m.capturedAt ? `, last checked ${et(m.capturedAt)}` : ''})`;

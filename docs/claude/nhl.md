@@ -128,7 +128,10 @@
   `lib/nhl-data/pp-units.js`): RotoWire's POWER PLAY #1 / #2 (`lib/nhl-data/rotowire.js`, `parseNhlLineups` on
   https://www.rotowire.com/hockey/nhl-lineups.php — goalie and his Confirmed / Expected word, both five-man units, the
   injuries; the page serves today alone, so `ingestLineups` stores it for today's date at `data/rotowire/<date>.json`
-  through `refreshRotowire`, every lineup read, a team the new page lacks keeping its entry; the slate reads the file,
+  through `refreshRotowire`, every lineup read, a team the new page lacks keeping its entry; **since 2026-11-14 the
+  same read stores tomorrow's page too** (`?date=tomorrow`, served whole now; `pageFor` picks the page whose date is the
+  one asked, RotoWire's day turning before the Eastern one; `rotowire.tomorrow` on the refresh response), so tomorrow's
+  slate has its PP badges; the slate reads the file,
   `side.ppUnits` the names) × the power plays the team should get tonight (`specialTeamsRead`'s `ppFor.expected`, the
   profile's "tonight ≈ 3.6"; the league's 3.2 without ShotPropz) × a unit skater's minutes per power play
   (`PP_MIN_PER_PP`, the 2026-11-07 TOI audit's section B: forwards 0.98 / 0.48, defensemen 0.95 / 0.45 on the first /
@@ -725,6 +728,19 @@
   until a tweet or preview arrives; carried slots appended; the pill links the tweet, the hover spells the read out
   (a "same lineup" confirmation or a line-change tweet named: the snapshot meta carries `gdtConfirmed` / `gdtChanged`).
   `__tests__/nhl-lineup-read.test.js`.
+  **Daily Faceoff's line combinations are the fallback for lines since 2026-11-14** (`lib/nhl-data/dailyfaceoff.js`; Vincent:
+  "use rotowire as a fallback for the lines" — RotoWire's lineups page carries the goalie, the power-play units and the
+  injuries but no lines, its "Confirmed" is the goalie's; Daily Faceoff's team pages carry the lines, when they were set
+  and whose report they follow in their `__NEXT_DATA__`, so "sure go ahead" on that instead): `ingestLineups` reads one
+  page a team for the teams with neither a game-day tweet nor an NHL.com lineup (`fetchDfLines`, stored as `df` on
+  `data/lineups/<date>.json`, a failed read keeping what was stored, `dailyfaceoff: { asked, withLines, none, errors }` on
+  the refresh response — that is where a refusal of the site's server shows; the posted-pages routes carry `df` along),
+  and `snapshotPositions` takes it as source `dailyfaceoff` when there is no NHL.com lineup and no tweet from game day or
+  the warm-up (an older tweet stands only while it is newer than the page), the lines set within `DF_MAX_AGE_DAYS` = 5
+  of the game and never after it (`dfUsable`); ahead of PropFinder's depth chart and the roster. The pill is amber
+  "Daily Faceoff · updated Nov 13, 9:38 PM ET · via Jesse Granger · projected" linking the report (`VERDICT.dailyfaceoff`,
+  owed a better read in the lineup audit); remembered as a last known lineup; `__tests__/nhl-dailyfaceoff.test.js`
+  (`fixtures/dailyfaceoff-vgk.html`, the page of 2026-11-14 trimmed to its line combinations).
   `nhl-lineups.yml` re-reads lineups (`only=lineups&due=150` on a cron tick) on the rule: from 60 minutes
   before puck drop, every 15 minutes until the game's lineups are found (`linesFound` in
   `lib/nhl-data/lines-chain.js`: both teams have a tweet from the 45 minutes before the start, the warm-up window, so an afternoon
