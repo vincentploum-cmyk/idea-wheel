@@ -183,6 +183,21 @@
   the book's first-half line is that market's play like any other. The side players' plays carry `ev`, `implied` and the
   without names. `__tests__/nfl-boards.test.jsx` (the read, the panel, the script; `MOCK_OUT`
   writes `boards-nfl-<theme>.html`).
+- **The First TD record** (Vincent, 2026-11-14: "the season track record for all three" — the NBA's first basket, the NHL's
+  first goal, the NFL's first touchdown): `lib/nfl/first-td-results.js`, `GET /api/nfl/first-td/results[?backfill=N]`, the
+  TDs tab's "First TD record" pill (`NflList` in `NflBoards.jsx`, drawn by `components/picks/FirstResults.jsx`). Per finished
+  week each game's touchdown list (`lists.td`, `p` = `pFirst`) against the stored game's `firstTd`, graded by
+  `lib/picks/first-results.js` and kept at `nfl/<season>/<wk>/first-td-results.json` (`{ version, replay, date, week, label,
+  builtAt, inputs, games, skipped }`; a game without a touchdown is skipped); the season = the weeks before this one, at most
+  `FIRST_TD_BACKFILL` (2) missing weeks built a call, a failed build left `missing` with its reason in `errors`. **Leak-free
+  rule**: the week's stored pull is rewritten every morning, the Monday and Tuesday after its games too, so a game the pull
+  ran after is replayed (`asOf: 'replay'`, `replayInputs`): logs cut before the game (`asOf`), no status / injury, no book
+  line on the players, no matchup pages, the defense table and depth chart of the week before's stored pull (none when that
+  pull is missing or not before the first kickoff), no box score, no ESPN feed, no override; a game the pull ran before
+  reads the pull whole (`asOf: 'pull'`). Not reproducible, and not claimed: the list is today's model and constants on that
+  week's data (not that morning's build), it knows less than the morning's board did (who was ruled out, the pages), the
+  roster and a bye team's depth slots are the stored pull's, and the book's total is what the stored schedule still
+  carries. `FIRST_TD_REPLAY` bumps when the replay changes (the stored weeks are built again).
 - **The passing read** (`PASS`, `passRead` in `lib/nfl/projections.js`; Vincent, 2026-11-02: "we need to work on the passing
   yards … our predictions are not even close to the actual"; `docs/audits/2026-11-02-nfl-passing.md`, `tools/audit/nfl_passing.py`):
   a starting quarterback's passing yards are his last 17 starts (10+ attempts) pulled toward 225 at n / (n + 6), plus the

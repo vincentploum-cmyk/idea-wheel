@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { teamLogo, teamName } from '@/lib/nfl/teams';
 import { spreadOf, passText, shareText, NFL_OUTLIERS } from '@/lib/nfl/projections';
 import { matchupText } from '@/lib/nfl/matchups';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { sortOutliers, nextSort, SortHead, recordText } from '@/components/picks/OutlierSort';
 import { headshotUrl } from '@/lib/nfl/espn';
+import { FirstResults } from '@/components/picks/FirstResults';
 
 // The NFL page's lists (Vincent, 2026-11-01: "I just need a simple list of games and per game, players listed with their
 // ladders: strong - 50+ yards (60%), lean - 60+ yards, thin 70+ yards … For touchdowns, I need first touch down, first half
@@ -223,13 +224,45 @@ export function NflMatchups({ board, openFirst = false }) {
   );
 }
 
-/** One list across every game of the week: 'td' | 'passing' | 'receiving' | 'rushing'. */
+// The First TD picks' season record (Vincent, 2026-11-14: "the season track record for all three"; lib/nfl/first-td-results.js):
+// every finished week's list set against who scored each game's first touchdown. Read when the view opens; the route
+// grades a couple of missing weeks a call, so a reload adds the rest.
+const TD_VIEWS = [['list', 'This week'], ['record', 'First TD record']];
+function FirstTdRecord() {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let live = true;
+    fetch('/api/nfl/first-td/results', { cache: 'no-store' })
+      .then(async (res) => { const j = await res.json().catch(() => null); if (!res.ok || !j?.summary) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`); return j; })
+      .then((j) => { if (live) setData(j); })
+      .catch((e) => { if (live) setError(`The First TD record could not be read: ${e.message}`); });
+    return () => { live = false; };
+  }, []);
+  return (
+    <>
+      <FirstResults data={data} error={error} unit="week" whenOf={(e) => e.label || e.date} />
+      {data?.errors?.length ? <p className="nhlx-auto-meta">Not graded: {data.errors.join(' · ')}</p> : null}
+      {data?.summary?.games ? <p className="nhlx-auto-meta nhlx-fg-how">Each list is today’s model on that week’s stored data, never on its games: every player’s log cut before his game, no box score, and, where the week’s last pull ran after a game, the defense table of the pull taken before the week, no injury status and no matchup pages. Such a list knows less than that morning’s board did, never more.</p> : null}
+    </>
+  );
+}
+
+/** One list across every game of the week: 'td' | 'passing' | 'receiving' | 'rushing'. The TDs tab carries the First TD record beside the week's list. */
 export function NflList({ board, kind }) {
+  const [view, setView] = useState('list');
   const pj = board?.projections;
-  if (!board?.games?.length) return <div className="nhlx-empty">No games in this week.</div>;
-  if (!pj) return <div className="nhlx-empty">{NO_DATA}</div>;
+  const views = kind === 'td' ? (
+    <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="Touchdowns">
+      {TD_VIEWS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setView(k)}>{l}</button>)}
+    </div>
+  ) : null;
+  if (views && view === 'record') return <div className="ir-overview">{views}<FirstTdRecord /></div>;
+  if (!board?.games?.length) return <div className="ir-overview">{views}<div className="nhlx-empty">No games in this week.</div></div>;
+  if (!pj) return <div className="ir-overview">{views}<div className="nhlx-empty">{NO_DATA}</div></div>;
   return (
     <div className="ir-overview">
+      {views}
       {LEGEND}
       <ListOf pj={pj} ids={pj.lists?.[kind] || []} kind={kind} game limit empty={NO_DATA} />
     </div>
