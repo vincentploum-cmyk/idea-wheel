@@ -56,6 +56,7 @@ function pillTitle(mk, p, bar, s, catalog) {
 function Pill({ mk, s, bar, final, catalog }) {
   const m = markOf(mk);
   const p = s.pills?.[mk];
+  if (!p) return null;      // a line the rules file does not carry yet (a new mark before its first refit)
   const hit = final ? hitOf(s.actual, mk) : null;
   // Graded once final, the picks only: a pick that landed rings green, one that missed red.
   const cls = `ir-pill${p?.selected ? ` is-on${hit === true ? ' is-hit' : hit === false ? ' is-miss' : ''}` : ''}`;
@@ -79,7 +80,7 @@ function Facts({ s, max = 4 }) {
   );
 }
 
-const gotText = (a) => (!a ? '' : a.dnp ? 'DNP' : `${a.sog} SOG · ${a.g} G`);
+const gotText = (a) => (!a ? '' : a.dnp ? 'DNP' : `${a.sog} SOG · ${a.g} G${a.pts != null ? ` · ${a.pts} P` : ''}`);
 
 function Strongest({ data, onOpen }) {
   const [tab, setTab] = useState('s3');
@@ -97,7 +98,7 @@ function Strongest({ data, onOpen }) {
     return { ...Object.fromEntries(MARKS.map((m) => [m.key, count((s) => s.pills?.[m.key]?.selected)])), ...(model ? { [MODEL_TAB]: count((s) => modelPick(s, model)) } : {}) };
   }, [data, model]);
   const bar = data.rules.marks[mk]?.bar;
-  const tabs = [...MARKS.slice(0, 1).map((m) => ({ key: m.key, label: m.label })), ...(model ? [{ key: MODEL_TAB, label: `${model.label} · model` }] : []), ...MARKS.slice(1).map((m) => ({ key: m.key, label: m.label }))];
+  const tabs = [...MARKS.slice(0, 1).map((m) => ({ key: m.key, label: m.label })), ...(model ? [{ key: MODEL_TAB, label: `${model.label} · model` }] : []), ...MARKS.slice(1).filter((m) => data.rules.marks[m.key]).map((m) => ({ key: m.key, label: m.label }))];
   const shown = more ? rows : rows.slice(0, SHOWN);
   const final = data.games.some((g) => g.final);
   return (
@@ -248,7 +249,7 @@ export default function PatternsPanel() {
         <>
           <p className="nhlx-auto-meta ir-pt-how">
             A pill per line. <span className="ir-pill is-on"><b>3+</b><i>✓</i><span>58%</span></span> is a pick: a rule the study kept fires for him and its rate clears the line’s bar
-            ({MARKS.map((m) => `${m.short} ${pct(bars[m.key])}`).join(' · ')}, about what a book asks). <span className="ir-pill"><b>4+</b><span>31%</span></span> is his figure without a pick:
+            ({MARKS.filter((m) => bars[m.key] != null).map((m) => `${m.short} ${pct(bars[m.key])}`).join(' · ')}, about what a book asks). <span className="ir-pill"><b>4+</b><span>31%</span></span> is his figure without a pick:
             the strongest rule he meets, else his shots-a-game tier. The rules were searched on {fmtDay(data.rules.fit?.[0])}–{fmtDay(data.rules.fit?.[1])} and kept only when they held on {fmtDay(data.rules.check?.[0])}–{fmtDay(data.rules.check?.[1])}; their rates move with every game since. Hover a pill for its rule.
           </p>
           <ModelLine model={data.model} date={data.date} />

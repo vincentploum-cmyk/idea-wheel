@@ -40,7 +40,8 @@ chk = ~fit
 pid = d.playerId.to_numpy()
 
 MARKS = [('s3', '3+ SOG', 0.50), ('s4', '4+ SOG', 0.33), ('s5', '5+ SOG', 0.20), ('s6', '6+ SOG', 0.11),
-         ('g1', '1+ goal', 0.35), ('g2', '2+ goals', 0.09), ('g3', '3+ goals', 0.03)]
+         ('g1', '1+ goal', 0.35), ('g2', '2+ goals', 0.09), ('g3', '3+ goals', 0.03),
+         ('p1', '1+ point', 0.50), ('p2', '2+ points', 0.25)]
 META = {'date', 'gameId', 'playerId', 'name', 'team', 'opp', 'venue', 'slot', 'pos'}
 RAW_OPP = re.compile(r'^opp_pos_\w+?(_l5|_l10|_ven)?$|^opp_slot_(sog|icf|iscf|g)$')
 FEATS = [c for c in d.columns if c not in META and not c.startswith('o_')]

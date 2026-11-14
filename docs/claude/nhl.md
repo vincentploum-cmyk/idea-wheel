@@ -613,6 +613,15 @@
   than the shipped rules were built on; the model's frozen 50%+ calls at least 45% on 50 or more), the patterns tests,
   and a commit of the rules, the model and the parity fixture to main by github-actions[bot]. Each refit restarts the
   record under the head; the run's summary and artifact carry both reports.
+- **Points pills on the Patterns tab** (Vincent, 2026-11-14: "can we add pills for points in the patterns tab"): two more
+  marks, `p1` 1+ point (bar 50%) and `p2` 2+ points (bar 25%), `stat: 'pts'` = goals + assists (`outcomesOf` adds them;
+  the rows carry no points column), mined by `patterns.py` with the others and so refitted every Monday; the tab's
+  tabs, pills, record and "Got" line (`· N P`, `actual.pts`) follow `MARKS`, a mark the rules file lacks draws nothing.
+  First mined through 2026-11-13 (10,427 skater-games, base 35.1% / 9.6%): 18 rules over the 1+ point bar, pooled 73%
+  on the search weeks and 71% on the check weeks (the best about 80%: 21.5+ minutes with 2.4+ chances a game and a
+  point a game); 17 over the 2+ points bar, 39% → 34%. The same refit also moved the other marks' rules and the 3+ SOG
+  model to games through 2026-11-13. A row is still not coherent across its pills (each mark its own rule and bar; the
+  2+ goals pill fills on a broad volume rule while 1+ goal stays empty): Vincent was asked, not decided.
 - **The 3+ SOG model on the Patterns tab** (Vincent, 2026-11-12: "add the model for 3+ SOG", after the season backtest
   had a model on every figure ahead of the rules on that line): a logistic regression and boosted trees on the same
   figures (plus his position), averaged, fitted offline by `tools/predictors/patterns_model.py` and shipped as
