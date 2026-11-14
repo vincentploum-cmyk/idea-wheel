@@ -271,6 +271,9 @@
   same table too"; until then the stored venue table led once it had 10 games). The verdicts and the
   characteristics still read `side.defense`, the venue table, as the prose reads they are. Logos/headshots are copied into `data/media/*` and
   served by `/api/nhl/data/media`; standings/leaders live in `data/league/*`.
+- The night's games are listed earliest puck drop first on every tab (`byStartTime` in `slate.js`, applied in `gamesFor`,
+  which `buildSlate` and the defense API read; a game without a start time after the ones with one, ties by game id;
+  Vincent, 2026-11-14: "sort the games on time. the earliest first"; `__tests__/nhl-games-order.test.js`).
 - Tonight's picks (`lib/nhl-data/picks.js` + `picks-pure.js`, `/api/nhl/data/picks`, `components/nhl/PicksPanel.jsx`,
   the list at the top of Best bets): the best shots plays and the best goal plays in every game: every skater over
   the floor (P(3+ SOG) 50%, P(1+ G) 35%), three to four a table (fill-ins marked `under`, the rest on a "next" line; a run row whose 3+ / 4+ pair is inverted is read off its λ; the run carries no 2+, it is read off the λ), with the break-even price, and the notes
