@@ -289,6 +289,15 @@
 - The night's games are listed earliest puck drop first on every tab (`byStartTime` in `slate.js`, applied in `gamesFor`,
   which `buildSlate` and the defense API read; a game without a start time after the ones with one, ties by game id;
   Vincent, 2026-11-14: "sort the games on time. the earliest first"; `__tests__/nhl-games-order.test.js`).
+- **The rink's weak-goalie alert** (`lib/nhl-data/goalie-alert.js`, `side.oppGoalie` on the slate, `GoalieAlert` under the
+  rink's head in `Rink.jsx`; Vincent, 2026-11-14: "can we have a weak goalie alert added to the rink?"): the goalie this
+  side shoots at — RotoWire's named starter for the opponent ("Confirmed" / "Expected", matched to the goalie book by
+  name), else `likelyStarter` ("likely") — and a green "weak goalie" line when his shrunk save % this season is in the
+  bottom quarter of the goalies with `GOALIE_MIN_STARTS` = 4 starts (`goalieRanks`), or his last five starts are at
+  `GOALIE_COLD_PCT` = .880 or under while his season is under the league's; "backup" when he is not the usual starter;
+  nothing drawn for any other goalie; the figures on the hover. **An alert only**: the opposing starter's save % added
+  nothing to a skater's goals over his rate on 2025-26 and 2026-27 (the drivers audit), so no pick, tint or λ reads it.
+  `__tests__/nhl-goalie-alert.test.jsx`.
 - Tonight's picks (`lib/nhl-data/picks.js` + `picks-pure.js`, `/api/nhl/data/picks`, `components/nhl/PicksPanel.jsx`,
   the list at the top of Best bets): the best shots plays and the best goal plays in every game: every skater over
   the floor (P(3+ SOG) 50%, P(1+ G) 35%), three to four a table (fill-ins marked `under`, the rest on a "next" line; a run row whose 3+ / 4+ pair is inverted is read off its λ; the run carries no 2+, it is read off the λ), with the break-even price, and the notes
