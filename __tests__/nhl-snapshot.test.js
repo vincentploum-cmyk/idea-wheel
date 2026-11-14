@@ -146,3 +146,50 @@ describe('position snapshot sources', () => {
     }
   });
 });
+
+// Vincent, 2026-11-14: Carolina's first line, listed "Carrier - Aho - Svechnikov" by two writers and "Svechnikov - Aho -
+// Carrier" by the third, put Svechnikov at LW1 from the warm-up tweet on; the line had not changed.
+describe('an unchanged line listed the other way round keeps its sides', () => {
+  const { keepWingSides } = require('../lib/nhl-data/positions');
+  const P = (name, pos, line, extra = {}) => ({ name, pos, line, ...extra });
+  const last = { date: '2026-11-12', players: { carrier: P('Carrier', 'LW', 1), aho: P('Aho', 'C', 1), svechnikov: P('Svechnikov', 'RW', 1), ehlers: P('Ehlers', 'LW', 2), stankoven: P('Stankoven', 'C', 2), blake: P('Blake', 'RW', 2) } };
+  test('the same centre between the same two wingers, mirrored: the sides on file stand', () => {
+    const now = { svechnikov: P('Svechnikov', 'LW', 1), aho: P('Aho', 'C', 1), carrier: P('Carrier', 'RW', 1), ehlers: P('Ehlers', 'LW', 2), stankoven: P('Stankoven', 'C', 2), blake: P('Blake', 'RW', 2) };
+    const r = keepWingSides(now, last);
+    expect(r.kept).toBe(1);
+    expect(r.players.svechnikov).toMatchObject({ pos: 'RW', line: 1, sideKept: true });
+    expect(r.players.carrier).toMatchObject({ pos: 'LW', line: 1, sideKept: true });
+    expect(r.players.ehlers).toEqual(now.ehlers);          // the second line was listed as before: untouched
+    expect(now.svechnikov.pos).toBe('LW');                 // pure
+  });
+  test('a real change is left alone: a new linemate, a new centre, a trio moved to another line with its sides, a carried slot', () => {
+    const swap = { svechnikov: P('Svechnikov', 'LW', 1), aho: P('Aho', 'C', 1), blake: P('Blake', 'RW', 1) };
+    expect(keepWingSides(swap, last).kept).toBe(0);
+    const centre = { svechnikov: P('Svechnikov', 'LW', 1), stankoven: P('Stankoven', 'C', 1), carrier: P('Carrier', 'RW', 1) };
+    expect(keepWingSides(centre, last).kept).toBe(0);
+    const moved = { carrier: P('Carrier', 'LW', 2), aho: P('Aho', 'C', 2), svechnikov: P('Svechnikov', 'RW', 2) };
+    expect(keepWingSides(moved, last)).toEqual({ players: moved, kept: 0 });
+    // the trio dropped to the second line and listed the other way round: still the same trio, the sides stand
+    const movedMirrored = { svechnikov: P('Svechnikov', 'LW', 2), aho: P('Aho', 'C', 2), carrier: P('Carrier', 'RW', 2) };
+    expect(keepWingSides(movedMirrored, last).players.svechnikov).toMatchObject({ pos: 'RW', line: 2 });
+    const carriedLast = { ...last, players: { ...last.players, carrier: P('Carrier', 'LW', 1, { carried: true }) } };
+    expect(keepWingSides({ svechnikov: P('Svechnikov', 'LW', 1), aho: P('Aho', 'C', 1), carrier: P('Carrier', 'RW', 1) }, carriedLast).kept).toBe(0);
+    expect(keepWingSides(swap, null)).toEqual({ players: swap, kept: 0 });
+  });
+  test('the snapshot: the warm-up tweet listed the other way round does not move the wingers; the hover says so', async () => {
+    const DATE = '2026-11-14';
+    const roster = { 11: { id: 11, name: 'Will Carrier', team: 'CAR', pos: 'LW' }, 12: { id: 12, name: 'Sebastian Aho', team: 'CAR', pos: 'C' }, 13: { id: 13, name: 'Andrei Svechnikov', team: 'CAR', pos: 'RW' } };
+    mockStored.clear();
+    mockStored.set(PLAYERS_PATH, { players: roster });
+    mockStored.set(lastLineupPath('CAR'), { date: '2026-11-12', gameId: 1, source: 'gamedaytweets', players: { 'will carrier': { name: 'Will Carrier', id: 11, pos: 'LW', line: 1 }, 'sebastian aho': { name: 'Sebastian Aho', id: 12, pos: 'C', line: 1 }, 'andrei svechnikov': { name: 'Andrei Svechnikov', id: 13, pos: 'RW', line: 1 } } });
+    const tweet = { players: { 'andrei svechnikov': { name: 'Andrei Svechnikov', id: 13, pos: 'LW', line: 1 }, 'sebastian aho': { name: 'Sebastian Aho', id: 12, pos: 'C', line: 1 }, 'will carrier': { name: 'Will Carrier', id: 11, pos: 'RW', line: 1 } }, meta: { handle: 'RyanHenkel_', at: '2026-11-14T17:38:24Z', date: DATE } };
+    await snapshotPositions(DATE, [{ id: 21, away: 'SEA', home: 'CAR', state: 'FUT', startTimeUTC: '2026-11-14T18:00:00Z' }], { date: DATE, games: [], gdt: { CAR: tweet } });
+    const car = mockStored.get(positionsPath(DATE)).games[21].teams.CAR;
+    expect(car.source).toBe('gamedaytweets');
+    expect(car.players['andrei svechnikov']).toMatchObject({ pos: 'RW', line: 1 });
+    expect(car.players['will carrier']).toMatchObject({ pos: 'LW', line: 1 });
+    expect(car.meta.sidesKept).toBe(1);
+    const { lineupRead } = require('../lib/nhl-data/lineup-read');
+    expect(lineupRead({ source: car.source, sourceMeta: car.meta, carried: null }, '2026-11-14T18:00:00Z').title).toMatch(/listed the other way round.*sides on file were kept/);
+  });
+});
