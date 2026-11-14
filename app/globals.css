@@ -1226,6 +1226,8 @@ a.nhlx-rk-lines-pill:hover { text-decoration: underline; }
 .nhlx-rk-pp.is-soft { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-line); }
 .nhlx-rk-pp.is-mid { color: var(--warn-fg); background: var(--warn-bg); border-color: var(--warn-line); }
 .nhlx-rk-pp.is-tough { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-line); }
+/* the second unit under 2 power-play minutes tonight: drawn, quieter than the first */
+.nhlx-rk-pp.is-dim { opacity: 0.6; }
 .nhlx-rk-legend i.nhlx-rk-pp { width: auto; height: auto; font-size: 11px; padding: 0 5px; margin-right: 6px; vertical-align: 0; }
 .nhlx-rk-per { flex: none; display: inline-flex; gap: 1px; vertical-align: 1px; }
 .nhlx-rk-legend .nhlx-rk-per { margin-right: 6px; vertical-align: 0; }

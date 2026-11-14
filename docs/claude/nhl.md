@@ -133,7 +133,8 @@
   profile's "tonight ≈ 3.6"; the league's 3.2 without ShotPropz) × a unit skater's minutes per power play
   (`PP_MIN_PER_PP`, the 2026-11-07 TOI audit's section B: forwards 0.98 / 0.48, defensemen 0.95 / 0.45 on the first /
   second unit). Drawn from `PP_SHOW` = 2.0 minutes (the first unit nearly always, the second on a 4.2+ power-play
-  night); **coloured by the opponent since 2026-11-13** (Vincent: "I want to know per team 1) if they allow a lot of
+  night); **the second unit is always drawn since 2026-11-14**, dimmed (`.is-dim`) while under `PP_SHOW` (Vincent: "show pp2
+  for every second-unit player"; `PpBadge`, `pp.show` unchanged); **coloured by the opponent since 2026-11-13** (Vincent: "I want to know per team 1) if they allow a lot of
   powerplays and if so, to which position are they allowing the most shots. Based on this, you should mark the pp in the
   rink either amber, green or red"): `ppAllowedBook` / `ppAllowedAt` in `pp-units.js` off the slate's season table, the
   opponent's power-play shots on goal allowed a game to his position this season (both venues, the rows' `ppSog`), ranked

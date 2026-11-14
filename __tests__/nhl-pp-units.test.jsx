@@ -66,7 +66,11 @@ test('the badge: PP for the first unit, PP2 for the second, coloured by the oppo
   expect(renderToStaticMarkup(<PpBadge pp={{ unit: 1, show: true, lot: true, tone: 'soft', text: 'x' }} />)).toBe('<i class="nhlx-rk-pp is-soft" title="x">PP</i>');
   expect(renderToStaticMarkup(<PpBadge pp={{ unit: 2, show: true, lot: false, tone: 'tough', text: 'y' }} />)).toBe('<i class="nhlx-rk-pp is-tough" title="y">PP2</i>');
   expect(renderToStaticMarkup(<PpBadge pp={{ unit: 1, show: true, lot: true, tone: null, text: 'w' }} />)).toBe('<i class="nhlx-rk-pp" title="w">PP</i>');   // no ranked read: grey
-  expect(renderToStaticMarkup(<PpBadge pp={{ unit: 2, show: false, lot: false, text: 'z' }} />)).toBe('');
+  // the second unit is always drawn, dimmed under PP_SHOW (2026-11-14); a first-unit skater under it is not
+  expect(renderToStaticMarkup(<PpBadge pp={{ unit: 2, show: false, lot: false, text: 'z' }} />)).toBe('<i class="nhlx-rk-pp is-dim" title="z">PP2</i>');
+  expect(renderToStaticMarkup(<PpBadge pp={{ unit: 2, show: false, lot: false, tone: 'soft', toneG: 'mid', text: 'z', textG: 'zg' }} metric="g" />)).toBe('<i class="nhlx-rk-pp is-mid is-dim" title="zg">PP2</i>');
+  expect(renderToStaticMarkup(<PpBadge pp={{ unit: 1, show: false, lot: false, text: 'z' }} />)).toBe('');
+  expect(renderToStaticMarkup(<PpBadge pp={null} />)).toBe('');
   expect(renderToStaticMarkup(<PpBadge pp={null} />)).toBe('');
 });
 
