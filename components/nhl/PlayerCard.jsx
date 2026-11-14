@@ -175,7 +175,7 @@ function Card({ req, onClose }) {
   const tonight = mine?.line ? { ...(snap || {}), ...mine, source: snap && snap.pos === mine.pos && snap.line === mine.line ? snap.source : null }
     : snap?.line ? snap : mine || snap;
   // A player the lineup leaves out: the badge keeps his position, the line says so (a roster-only capture places nobody).
-  const scratched = !!tonight && tonight.inLineup === false && ['gamedaytweets', 'lineup', 'propfinder'].includes(tonight.source);
+  const scratched = !!tonight && tonight.inLineup === false && ['gamedaytweets', 'lineup', 'dailyfaceoff', 'propfinder'].includes(tonight.source);
 
   useEffect(() => {
     let live = true;

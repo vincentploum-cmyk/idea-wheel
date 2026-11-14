@@ -26,6 +26,13 @@ jest.mock('../lib/nhl-data/gamedaytweets', () => ({
   fetchTeamLines: async (abbr) => { throw new Error(`gamedaytweets answered 403 for ${abbr} (cloudflare challenge)`); },
 }));
 jest.mock('../lib/nhl-data/rosters', () => ({ loadPlayers: async () => ({ players: {} }), updateRosters: async () => null }));
+// Daily Faceoff's pages (the fallback for lines) are not this test's subject: no page is asked for.
+const mockDfAsked = [];
+jest.mock('../lib/nhl-data/dailyfaceoff', () => ({
+  ...jest.requireActual('../lib/nhl-data/dailyfaceoff'),
+  fetchDfLines: async (abbrs, at) => { mockDfAsked.push(abbrs); return Object.fromEntries(abbrs.map((a) => [a, { error: `403 for ${a}`, fetchedAt: at }])); },
+}));
+jest.mock('../lib/nhl-data/rotowire', () => ({ ...jest.requireActual('../lib/nhl-data/rotowire'), refreshRotowire: async () => ({ ok: false, skipped: 'test' }) }));
 const mockSnapped = [];
 jest.mock('../lib/nhl-data/positions', () => ({
   ...jest.requireActual('../lib/nhl-data/positions'),
