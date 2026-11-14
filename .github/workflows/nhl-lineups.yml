@@ -2,7 +2,7 @@ name: NHL lineups (pre-game and post-game)
 
 # The beat writers' tweets on GameDayTweets (fetched here with Chrome, the site is refused)
 # and NHL.com's projected lineup, for the games of the day. The rule: from 60 minutes before
-# puck drop, read every 15 minutes until the game's lineups are found (both teams have a
+# puck drop, read every 5 minutes until the game's lineups are found (both teams have a
 # tweet from the 45 minutes before the start: the warm-up lines) or the game is ten minutes
 # old; then one post-game read per game, 3 h 30 after puck drop once the game is final (about an
 # hour after a regulation final; tried again every 20 minutes while it is still on, until the
@@ -14,7 +14,7 @@ name: NHL lineups (pre-game and post-game)
 # GitHub's cron is a lottery (on 2026-10-07 the twice-hourly schedule fired twice all day, and
 # the 9:37 PM warm-up tweet never reached the site before the 10 PM game), so the schedule
 # only seeds a run: every run hands itself on (tools/lines-chain.mjs decides): a run before
-# the first window sleeps until that window opens, a run inside a window sleeps 15 minutes,
+# the first window sleeps until that window opens, a run inside a window sleeps 5 minutes,
 # then it dispatches the next hop with its own token, until every game has its lineups or is
 # past its window. A hop is skipped while another run is queued or running, so two chains
 # never run side by side. "Refresh lines" on the Matchups tab dispatches a run on demand
@@ -33,9 +33,9 @@ on:
         description: 'Only games starting within this many minutes (blank = all games on the date)'
         required: false
       chain:
-        description: 'Self-dispatched hops this run may add (0 = none; a hop is a wait for the next window, a 15-minute read inside one, or a post-game read)'
+        description: 'Self-dispatched hops this run may add (0 = none; a hop is a wait for the next window, a 5-minute read inside one, or a post-game read)'
         required: false
-        default: '60'
+        default: '180'
       settle:
         description: 'This run is a post-game read (1): also re-read the previews and re-stamp the stored box scores (only=settle)'
         required: false
@@ -68,7 +68,7 @@ jobs:
           # dispatched run reads what it was asked for (blank = every game on the date).
           [ -z "$DUE" ] && [ "${{ github.event_name }}" = "schedule" ] && DUE=150
           CHAIN="${{ github.event.inputs.chain }}"
-          [ -n "$CHAIN" ] || CHAIN=60
+          [ -n "$CHAIN" ] || CHAIN=180
           SETTLE="${{ github.event.inputs.settle }}"; [ "$SETTLE" = "1" ] || SETTLE=0
           SETTLED="${{ github.event.inputs.settled }}"
           BACKFILL="${{ github.event.inputs.backfill_from }}"

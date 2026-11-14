@@ -33,7 +33,7 @@ describe('GitHub dispatch of the pre-game lineups run', () => {
   });
 });
 
-describe('the warm-up chain: every 15 minutes from an hour before puck drop until the lineups are in', () => {
+describe('the warm-up chain: every 5 minutes from an hour before puck drop until the lineups are in', () => {
   const min = 60000;
   const t0 = Date.parse('2026-10-08T02:00:00Z'); // EDM @ ANA, 10 PM ET
   const t1 = Date.parse('2026-10-07T23:00:00Z'); // PIT @ WSH, 7 PM ET
@@ -50,7 +50,8 @@ describe('the warm-up chain: every 15 minutes from an hour before puck drop unti
     expect(linesFound(games[0], {})).toBe(false);
   });
 
-  test('inside a window without lineups: the next read in 15 minutes', () => {
+  test('inside a window without lineups: the next read in 5 minutes', () => {
+    expect(HOP_MIN).toBe(5);   // 15 until 2026-11-14: a tweet 22 minutes before puck drop reached the rink 9 minutes before it
     const r = nextHop(games, t0 - 56 * min, 40, { ...warmups, EDM: morning.EDM, ANA: morning.ANA }); // the 9:04 PM run last night
     expect(r).toMatchObject({ hop: true, sleepSec: HOP_MIN * 60, hopsLeft: 39 });
     expect(r.why).toMatch(/EDM@ANA/);

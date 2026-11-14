@@ -763,7 +763,9 @@
   owed a better read in the lineup audit); remembered as a last known lineup; `__tests__/nhl-dailyfaceoff.test.js`
   (`fixtures/dailyfaceoff-vgk.html`, the page of 2026-11-14 trimmed to its line combinations).
   `nhl-lineups.yml` re-reads lineups (`only=lineups&due=150` on a cron tick) on the rule: from 60 minutes
-  before puck drop, every 15 minutes until the game's lineups are found (`linesFound` in
+  before puck drop, every 5 minutes (`HOP_MIN`; 15 until 2026-11-14, when Carolina's line rushes, tweeted 12:38 PM ET for
+  a 1 PM game with Svechnikov moved to LW1, reached the rink at 12:50, the last game's lines standing until then; the
+  chain's hop budget 60 → 180 with it) until the game's lineups are found (`linesFound` in
   `lib/nhl-data/lines-chain.js`: both teams have a tweet from the 45 minutes before the start, the warm-up window, so an afternoon
   projected-lines tweet does not stop the reads; the site reports
   `gdtAt` per team in the refresh response via `gdtTimes`) or the game is 10 minutes old; **then one post-game read per
