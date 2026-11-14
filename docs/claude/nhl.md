@@ -762,6 +762,14 @@
   "Daily Faceoff · updated Nov 13, 9:38 PM ET · via Jesse Granger · projected" linking the report (`VERDICT.dailyfaceoff`,
   owed a better read in the lineup audit); remembered as a last known lineup; `__tests__/nhl-dailyfaceoff.test.js`
   (`fixtures/dailyfaceoff-vgk.html`, the page of 2026-11-14 trimmed to its line combinations).
+  **An unchanged line listed the other way round keeps its sides** (`keepWingSides` in `positions.js`, applied in
+  `snapshotPositions` before the last-lineup fill, `meta.sidesKept` and a sentence on the pill's hover; Vincent,
+  2026-11-14: "I now after the game see svechnikov as lw1"): Carolina's first line is "Carrier - Aho - Svechnikov" to two
+  of its writers and "Svechnikov - Aho - Carrier" to the third, so the warm-up tweet (12:38 PM ET for a 1 PM game) moved
+  Svechnikov from RW1 to LW1 on a line that had not changed; Daily Faceoff, on the same tweet, kept him at RW and the NHL
+  lists him there. On the season's tweeted lineups an unchanged trio comes back mirrored 34 times of 988 (3.4%). The
+  rule: the same centre between the same two wingers as the team's last known lineup, sides swapped → the sides on file
+  stand (a new linemate, a new centre or a carried slot is a real change and is left alone).
   `nhl-lineups.yml` re-reads lineups (`only=lineups&due=150` on a cron tick) on the rule: from 60 minutes
   before puck drop, every 5 minutes (`HOP_MIN`; 15 until 2026-11-14, when Carolina's line rushes, tweeted 12:38 PM ET for
   a 1 PM game with Svechnikov moved to LW1, reached the rink at 12:50, the last game's lines standing until then; the
