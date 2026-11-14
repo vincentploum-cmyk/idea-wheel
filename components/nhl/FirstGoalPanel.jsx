@@ -6,6 +6,7 @@ import { usePlayerCard } from './PlayerCard';
 import { SlateDateContext } from './player-card-context';
 import { SortTh } from './pf-ui';
 import { sortCandidates } from '@/lib/nhl-data/firstgoal-sort';
+import { FirstResults } from '@/components/picks/FirstResults';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
@@ -84,6 +85,8 @@ export default function FirstGoalPanel() {
   const [view, setView] = useState('slate');
   const [group, setGroup] = useState('');
   const [sort, setSort] = useState('score');
+  const [record, setRecord] = useState(null);
+  const [recordErr, setRecordErr] = useState('');
 
   const load = useCallback((d) => fetch(`/api/nhl/data/firstgoal${d ? `?date=${d}` : ''}`, { cache: 'no-store' })
     .then(async (res) => { const j = await res.json(); if (!res.ok) throw new Error(j.detail || j.error || `${res.status}`); return j; })
@@ -91,6 +94,14 @@ export default function FirstGoalPanel() {
     .catch((e) => setErr(`Couldn’t load the first-goal board: ${e.message}`))
     .finally(() => setBusy(false)), []);
   useEffect(() => { load(''); }, [load]);
+  // The season's record of this list (lib/nhl-data/firstgoal-results.js), read when its view is opened.
+  useEffect(() => {
+    if (view !== 'record' || record) return;
+    fetch('/api/nhl/data/firstgoal/results', { cache: 'no-store' })
+      .then(async (res) => { const j = await res.json(); if (!res.ok) throw new Error(j.detail || j.error || `${res.status}`); return j; })
+      .then((j) => { setRecord(j); setRecordErr(''); })
+      .catch((e) => setRecordErr(`Couldn’t load the record: ${e.message}`));
+  }, [view, record]);
   const pickDate = (d) => { setBusy(true); setErr(''); load(d); };
   const shift = (n) => { const d = new Date(`${date}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); pickDate(d.toISOString().slice(0, 10)); };
 
@@ -113,7 +124,7 @@ export default function FirstGoalPanel() {
           <input type="date" className="nhlx-input nhlx-input-sm" value={date} onChange={(e) => e.target.value && pickDate(e.target.value)} aria-label="Slate date" />
           <button type="button" className="nhlx-btn nhlx-btn-ghost nhlx-btn-sm nhlx-btn-icon" disabled={busy || !date} onClick={() => shift(1)} aria-label="Next day">›</button>
           <div className="nhlx-tabs" role="tablist" aria-label="View">
-            {[['slate', 'Whole slate'], ['games', 'By game']].map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setView(k)}>{l}</button>)}
+            {[['slate', 'Whole slate'], ['games', 'By game'], ['record', 'Record']].map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`nhlx-tab${view === k ? ' is-active' : ''}`} onClick={() => setView(k)}>{l}</button>)}
           </div>
           <div className="nhlx-tabs" role="tablist" aria-label="Position group">
             {[['', 'All'], ['F', 'Forwards'], ['D', 'Defense']].map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={group === k} className={`nhlx-tab${group === k ? ' is-active' : ''}`} onClick={() => setGroup(k)}>{l}</button>)}
@@ -124,7 +135,9 @@ export default function FirstGoalPanel() {
       <p className="nhlx-auto-meta nhlx-fg-how">
         Each candidate blends his own first-goal record (first goals over his last 100 stored games), what the opponent gives up to his position and line slot at tonight’s venue, his head-to-head goals, and the 1+ goal odds as Best bets prints them for the latest model run (one figure for one skater everywhere on the site; hover one for the run as stated). Score 0–100: the 1+ goal odds and the own rate carry most of it. Click a row for the player card.
       </p>
-      {board && !board.games.length ? <div className="nhlx-empty">No games on this date.</div> : null}
+      {view === 'record' ? <FirstResults data={record} error={recordErr} unit="night" /> : null}
+      {view === 'record' && record ? <p className="nhlx-auto-meta nhlx-fg-how">Each night’s list is rebuilt from the games before it, the lineup captured before the puck drop and the model run saved before it ({record.withRun} game{record.withRun === 1 ? '' : 's'} read with a run), not from Best bets’ figure as printed today; a candidate’s chance is his score’s share of his game’s total.{record.skipped ? ` ${record.skipped} game${record.skipped === 1 ? '' : 's'} left out (no lineup captured before the puck drop, or no first goal).` : ''}</p> : null}
+      {view !== 'record' && board && !board.games.length ? <div className="nhlx-empty">No games on this date.</div> : null}
       {board && view === 'slate' && top.length ? <CandidateTable list={top} sort={sort} onSort={setSort} /> : null}
       {board && view === 'games' && board.games.map((g) => {
         const list = g.candidates.filter(keep).slice(0, 6);
