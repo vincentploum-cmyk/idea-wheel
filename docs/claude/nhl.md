@@ -47,7 +47,19 @@
   position (the study found no carry-over from a goal last game, so the streak is colour, the Tonight cell the matchup). The 1st goal tab (`lib/nhl-data/firstgoal.js`, `/api/nhl/data/firstgoal`, `FirstGoalPanel.jsx`) ranks
   tonight's skaters as first-goal candidates: own first-goal record from the rows' `fg` flag, the opponent's first
   goals given up to the position and slot at the venue, head to head, and the 1+ goal odds as Best bets prints them for
-  the saved run (the board's read, `slateWithBoardReads`; the run's own on the hover) (score 0–100). The stored data (rosters, media, game history, league, MoneyPuck) is kept fresh by the
+  the saved run (the board's read, `slateWithBoardReads`; the run's own on the hover) (score 0–100). Its **Record** view
+  (`lib/nhl-data/firstgoal-results.js`, `/api/nhl/data/firstgoal/results`, `components/picks/FirstResults.jsx` over
+  `lib/picks/first-results.js`; Vincent, 2026-11-14: "the season track record for all three") is the season's record of
+  that list: the top pick, top 3 and top 5 against who scored first, the stated chances against what landed, the games one
+  by one. Each past night is graded once and kept at `data/firstgoal/results/<date>.json` (`{ version, date, builtAt,
+  games, slateGames, withRun, skipped }`), 3 missing nights a load (`FIRST_GOAL_BACKFILL`, `?backfill=` up to 10), the
+  newest first. Leak-free is the rule: a night's list is rebuilt (`candidatesAsOf`), never read off `buildFirstGoalBoard`
+  for the past date — the rows before the date only, the lineup snapshot when it was read before the puck drop (a game
+  on a tweet posted after it, or without a snapshot, is skipped and named in `skipped`), and the 1+ goal chance of the
+  newest run saved for the date before that game's start (`runBefore`; none → the board's goals-a-game fallback). Best
+  bets' printed figure and PropFinder's table in the goals edge are left out (neither exists as of a past morning), so
+  the record grades the run as stated. A candidate's chance is his score over his game's total (the board gives a score,
+  not a chance). The stored data (rosters, media, game history, league, MoneyPuck) is kept fresh by the
   morning run and shown, with repair buttons and the backfill, under Best bets → "Data sources"
   (`/api/nhl/data/setup`); there is no setup tab.
   Positions are captured per game from the newest lineup dated at or before it
