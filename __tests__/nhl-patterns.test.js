@@ -158,3 +158,15 @@ describe('patterns: the study’s rules', () => {
     expect(Object.keys(cat).length).toBe(Object.values(RULES.marks).reduce((n, m) => n + m.rules.length, 0));   // ids are unique
   });
 });
+
+// Svechnikov's pill read "pos NaN" (2026-11-14): a rule on his position is a word, not a figure.
+describe('patterns: a condition on his position reads as the position', () => {
+  const { describe: say } = require('../lib/nhl-data/patterns-pure');
+  test('no NaN on the pill', () => {
+    const d = say({ f: 'pos', op: '==', v: 'LW' }, 'LW', { opp: 'SEA', pos: 'LW' });
+    expect(d.short).toBe('LW');
+    expect(d.text).toBe('plays LW (the rule is for LWs)');
+    expect(JSON.stringify(d)).not.toMatch(/NaN/);
+    expect(say({ f: 'icf_avg', op: '>=', v: 5.667 }, 5.8, {}).short).not.toMatch(/NaN/);
+  });
+});
