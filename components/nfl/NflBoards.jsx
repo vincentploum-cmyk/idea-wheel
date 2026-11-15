@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { teamLogo, teamName } from '@/lib/nfl/teams';
 import { spreadOf, passText, shareText, NFL_OUTLIERS } from '@/lib/nfl/projections';
 import { matchupText } from '@/lib/nfl/matchups';
@@ -101,6 +101,20 @@ function Rung({ y, market, tier }) {
   return <span className={`ir-ml-rung${hit}`}><b>{t.mark}+ {UNIT[market]}</b><small>{pct(t.p)}</small></span>;
 }
 
+/**
+ * Where a quarterback's yards go: his side's receivers by their part of its projected receiving yards, the largest first
+ * (`yards.pass_yds.to`, lib/nfl/projections.js). The parts are of the receivers' own sum, said in the label's hover.
+ */
+export function PassTo({ to }) {
+  return (
+    <p className="ir-ml-to-list">
+      <span className="ir-ml-to-label" title={`Each receiver’s projected yards as a part of the ${Math.round(to.sum)} his team’s receivers are projected between them. Each projection is the game that man is likeliest to have, so they add up to less than the quarterback’s figure.`}>Goes to</span>
+      {to.players.map((p) => <span key={p.id} className="ir-ml-to-man"><b>{pct(p.share)}</b> {p.player} <i>{Math.round(p.proj)} yds</i></span>)}
+      {to.rest ? <span className="ir-ml-to-man"><i>and {to.rest} more</i></span> : null}
+    </p>
+  );
+}
+
 function YardsTable({ rows, kind, game }) {
   const market = MARKET[kind];
   const final = rows.some((r) => r.final);
@@ -117,9 +131,10 @@ function YardsTable({ rows, kind, game }) {
           const y = r.yards[market];
           const c = rec ? r.yards.receptions : null;
           return (
-            <tr key={r.id}>
+            <Fragment key={r.id}>
+            <tr className={y?.to ? 'is-with-to' : undefined}>
               <td className="ir-slate-rank">{i + 1}</td>
-              <td><Who r={r} game={game} /></td><td className="is-num ir-ml-proj" title={[y?.pass ? passText(y.pass) : y?.tgtShare != null ? shareText(y) : '', y?.model ? modelText(y.model) : '', y?.pages ? `${Math.round(y.beforePages)} before ${matchupText(y.pages)}` : ''].filter(Boolean).join(' · ') || undefined}><b>{y?.proj == null ? '—' : Math.round(y.proj)}</b><small>{c?.proj != null ? `${Number(c.proj).toFixed(1)} rec` : 'yds'}</small></td>
+              <td><Who r={r} game={game} /></td><td className="is-num ir-ml-proj" title={[y?.pass ? passText(y.pass) : y?.tgtShare != null ? shareText(y) : '', rec && y?.teamShare != null ? `${pct(y.teamShare)} of ${r.team}’s projected receiving yards` : '', y?.model ? modelText(y.model) : '', y?.pages ? `${Math.round(y.beforePages)} before ${matchupText(y.pages)}` : ''].filter(Boolean).join(' · ') || undefined}><b>{y?.proj == null ? '—' : Math.round(y.proj)}</b><small>{c?.proj != null ? `${Number(c.proj).toFixed(1)} rec` : 'yds'}</small></td>
               {TIERS.map(([k]) => (
                 <td key={k} className={`ir-ml-cell is-${k}`}>
                   <Rung y={y} market={market} tier={k} />
@@ -128,6 +143,15 @@ function YardsTable({ rows, kind, game }) {
               ))}
               {final ? <td className="is-num nhlx-pk-got"><Got v={y.actual} />{rec && c?.actual != null ? <small>{c.actual} rec</small> : null}</td> : null}
             </tr>
+            {y?.to ? (
+              <tr className="ir-ml-to">
+                <td className="ir-slate-rank" />
+                <td colSpan={final ? 5 : 4}>
+                  <PassTo to={y.to} />
+                </td>
+              </tr>
+            ) : null}
+            </Fragment>
           );
         })}
       </tbody>

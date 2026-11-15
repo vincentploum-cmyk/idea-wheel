@@ -111,4 +111,22 @@ describe('the NFL model: the blend', () => {
     expect(fed['arm guy|LAR'].yards.pass_yds.proj).toBe(plain['arm guy|LAR'].yards.pass_yds.proj);
     expect(fed['wide guy|LAR'].feats).toBeUndefined();
   });
+  test("where the passing goes: the side's receivers as parts of their own sum, on the starter's passing read", () => {
+    const QB = logs(() => ({ passAtt: 34, passCmp: 22, passYds: 240 }));
+    const TE = logs(() => ({ rec: 3, recYds: 30, tgt: 4, tgtShare: 0.1 }));
+    const players = [
+      { id: 'p-wr', name: 'Wide Guy', key: 'wide guy', team: 'LAR', pos: 'WR', games: WR, props: [] },
+      { id: 'p-te', name: 'Tight Guy', key: 'tight guy', team: 'LAR', pos: 'TE', games: TE, props: [] },
+      { id: 'p-qb', name: 'Arm Guy', key: 'arm guy', team: 'LAR', pos: 'QB', games: QB, props: [] },
+    ];
+    const rows = plainBuild({ season: 2026, week: 10, games: [{ id: 'g', date: '2026-11-08T21:25Z', away: 'LAR', home: 'SEA', final: false, state: 'pre', odds: { spread: 'SEA -3', total: 47.5 } }], sheets: [], pf: { at: 'a', data: { players, defense: null } }, results: {} }).projections.rows;
+    const to = rows['arm guy|LAR'].yards.pass_yds.to;
+    const wr = rows['wide guy|LAR'].yards.rec_yds; const te = rows['tight guy|LAR'].yards.rec_yds;
+    expect(to.players.map((p) => p.player)).toEqual(['Wide Guy', 'Tight Guy']);
+    expect(to.sum).toBeCloseTo(wr.proj + te.proj, 1);
+    expect(to.players[0]).toMatchObject({ id: 'wide guy|LAR', pos: 'WR', proj: wr.proj, share: wr.teamShare });
+    expect(wr.teamShare + te.teamShare).toBeCloseTo(1, 2);
+    expect(wr.teamShare).toBeGreaterThan(te.teamShare);
+    expect(to.rest).toBe(0);
+  });
 });

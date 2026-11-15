@@ -271,6 +271,20 @@
   group moved it. Against the books' early lines of weeks 7–10 (a stored week's lines are the next week's: the pull is taken
   after its games) the blend is level on yards and ahead on receptions. A file, not a job: refit after the season's weeks
   are exported (README). `__tests__/nfl-model.test.js`.
+- **Where the passing goes** (Vincent, 2026-11-15: "look at the predictions across each type also … if Trevor Lawrence is
+  projected to throw 300 yards, we need to see who within his team gets the lion share of the receiving yards"): after a side's
+  rows are built `nflProjections` writes each receiving projection as a part of the side's summed receiving projections
+  (`yards.rec_yds.teamShare`) and, on the starting quarterback's passing read, `yards.pass_yds.to = { sum, players: [{ id,
+  player, pos, proj, share }] (the largest `PASS_TO` = 5), rest }`. Drawn by `PassTo` (`components/nfl/NflBoards.jsx`): a "Goes
+  to" line under every quarterback on the passing tables (`#passing`, each game's Pass Yards pill; `tr.ir-ml-to`) and on his
+  card, the receiver's share in the receiving Proj hover and on his card. **The parts are of the receivers' own sum, not of the
+  quarterback's figure**: each projection is the game that man is likeliest to have, so a side's receivers add up to 0.87 of
+  its quarterback's read on average (194 against 225 yards, 1,058 team-games). **The numbers are not reconciled**: pulling each
+  receiver toward his quarterback's read (× 1 + a · (Q / (ratio · S) − 1), the ratio from the seasons before) took 0.16–0.20
+  yards off 2025's receiving miss and 0.08–0.12 off 2026's with the interval across zero, cost receptions' close calls on 2026,
+  and the ratio moves by season (1.19 / 1.14 / 1.26) and with who is counted on the side (the live roster's 1.11); the
+  quarterback read off his receivers' sum did no better than his own (`docs/audits/2026-11-15-nfl-model.md`).
+  `__tests__/nfl-model.test.js`.
 - **The pick rules** (Vincent, 2026-11-08: "work on the pick rules"; `docs/audits/2026-11-08-nfl-picks.md`, `tools/audit/nfl_picks.py`):
   a play is a rung at its stated chance. The top of each list (by projection) now lands as said for receiving, receptions and
   passing; no other ordering (the rung's chance, volume, share, the steadiest) picked better over 2024–26, and sorting by the
