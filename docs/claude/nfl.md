@@ -301,7 +301,10 @@
   not kept, the week is ESPN's). Alignment Matchups is `alignmentBoard` (`/NFL/alignment/board?season=`, with the all-splits TD Matchups; kept,
   read by nothing yet). First TD is `firstTdMatchups` (`/NFL/first-td-matchups?season=`) with the books' first-scorer props
   (`propsFirstTd`, `/nfl/props?…&category=firstTouchdownScorer&overUnder=over&…&limit=500`; kept, read by nothing yet — `pFirst`
-  is the board's own). Still without a route: Line Matchups, Hit Rate Matrix, Team Tendencies, Coverage Players.
+  is the board's own). Line Matchups is `/NFL/trench/teams?season=` and `/NFL/defense/funnels?season=`: the page asked
+  season=2025 on 2026-11-15 (`trenchTeamsPrior`, `defenseFunnelsPrior`); this season's (`trenchTeams`, `defenseFunnels`) is the same
+  route with the year, **not seen answered** — check the first pull's `pages` for an error note. Its `/NFL/players/list` is the roster,
+  not kept. Still without a route: Hit Rate Matrix, Team Tendencies, Coverage Players.
   Not pages: `config/leagues`, `savedprops/me`, `me`, `user`, `teams`, `version`, `flags`, `popups` (the app's own).
   Last season's coverage and rushing pages too (`coverageTeamsPrior`, `coverageReceiverSplitsPrior`, `rushingSlateBoardPrior`,
   `{priorSeason}`): graded on 2026's games, the coverage fit and the run-direction fit added nothing
