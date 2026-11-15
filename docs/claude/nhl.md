@@ -779,6 +779,16 @@
   lists him there. On the season's tweeted lineups an unchanged trio comes back mirrored 34 times of 988 (3.4%). The
   rule: the same centre between the same two wingers as the team's last known lineup, sides swapped → the sides on file
   stand (a new linemate, a new centre or a carried slot is a real change and is left alone).
+  **A name the roster does not hold as written, and a line read short** (Vincent, 2026-11-14, of Edmonton's rink before
+  EDM @ TOR: Kapanen LW2, Hyman C2, nobody at RW2, no Nugent-Hopkins, the line on the ice Kapanen - Nugent-Hopkins -
+  Hyman): `rosterMatcher` in `gamedaytweets.js` now reads a nickname of initials ("RNH": three or four capitals that are
+  one roster player's initials, a double-barrelled surname's parts counted) and a misspelt surname ("Muhkamudillin": one
+  word of 7+ letters within a quarter of its length in edits of exactly one roster surname with the same first letter,
+  no other as close; `editDistance`); and `keepKnownSlots` in `positions.js` (after `keepWingSides`, `meta.slotsKept`, a
+  sentence on the pill's hover): a forward line read with fewer than three names, all of them linemates in the team's
+  last known lineup, keeps the slots they had there instead of being placed by order (a winger at centre), the hole
+  then carried by `fillFromLastLineup`. The read that put Hyman at centre was not reproduced here (the store is
+  private): the practice tweet of Nov 13 gives Kapanen LW2, an unread "RNH" C2 and Hyman RW2.
   `nhl-lineups.yml` re-reads lineups (`only=lineups&due=150` on a cron tick) on the rule: from 60 minutes
   before puck drop, every 5 minutes (`HOP_MIN`; 15 until 2026-11-14, when Carolina's line rushes, tweeted 12:38 PM ET for
   a 1 PM game with Svechnikov moved to LW1, reached the rink at 12:50, the last game's lines standing until then; the
