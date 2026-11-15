@@ -271,3 +271,55 @@ describe('the snapshot in one line a team, for the lineup job\'s log', () => {
     expect(linesSummary(null)).toEqual({});
   });
 });
+
+// Vincent, 2026-11-15 ("Why?"): the next day's rink, EDM @ PHI, still Kapanen LW2 · Hyman C2 · nobody at RW2. The
+// lineup job's log: "EDM: gamedaytweets · … L2 Kapanen-Hyman-?" from "@EdmontonOilers · from the lineup graphic", a
+// tweet of Nov 14, 7:00 PM ET, read as Nov 15's.
+describe('Edmonton, 2026-11-15: the club\'s lineup graphic read short, dated a day late, and remembered', () => {
+  const { completeShortLines } = require('../lib/nhl-data/positions');
+  const { parseLinesPage, rosterMatcher } = require('../lib/nhl-data/gamedaytweets');
+  const P = (name, pos, line, extra = {}) => ({ name, pos, line, id: name.length, ...extra });
+  const whole = { kapanen: P('Kasperi Kapanen', 'LW', 2), rnh: P('Ryan Nugent-Hopkins', 'C', 2), hyman: P('Zach Hyman', 'RW', 2), mcdavid: P('Connor McDavid', 'C', 1) };
+  const graphic = { kapanen: P('Kasperi Kapanen', 'LW', 2), hyman: P('Zach Hyman', 'C', 2), mcdavid: P('Connor McDavid', 'C', 1) };
+  const poisoned = { date: '2026-11-14', players: { kapanen: P('Kasperi Kapanen', 'LW', 2), hyman: P('Zach Hyman', 'C', 2) } };   // the bad read, remembered
+
+  test('the short line is completed from NHL.com\'s whole lineup, whatever the last lineup remembers', () => {
+    const r = completeShortLines(graphic, [{ label: 'NHL.com', players: whole }, { label: 'the last lineup (2026-11-14)', players: poisoned.players }]);
+    expect(r.completed).toEqual([{ line: 2, from: 'NHL.com', added: ['Ryan Nugent-Hopkins'] }]);
+    expect(r.players.hyman).toMatchObject({ pos: 'RW', line: 2 });
+    expect(r.players.kapanen).toMatchObject({ pos: 'LW', line: 2 });
+    expect(r.players.rnh).toMatchObject({ pos: 'C', line: 2, carried: true, carriedFrom: 'NHL.com', inLineup: true });
+    expect(graphic.hyman.pos).toBe('C');   // pure
+  });
+  test('a reference that is itself short is passed over; with none whole the line stays as read', () => {
+    const r = completeShortLines(graphic, [{ label: 'the last lineup', players: poisoned.players }]);
+    expect(r.completed).toEqual([]);
+    expect(r.players.hyman.pos).toBe('C');
+    expect(completeShortLines(graphic, [{ label: 'the last lineup', players: poisoned.players }, { label: 'Daily Faceoff', players: whole }]).completed[0].from).toBe('Daily Faceoff');
+  });
+  test('the missing skater placed on another line today is a real change: nothing is lent', () => {
+    const moved = { ...graphic, rnh: P('Ryan Nugent-Hopkins', 'C', 3) };
+    expect(completeShortLines(moved, [{ label: 'NHL.com', players: whole }]).completed).toEqual([]);
+    // two skaters who were not linemates in the reference: left as read
+    expect(completeShortLines({ kapanen: P('Kasperi Kapanen', 'LW', 2), mcdavid: P('Connor McDavid', 'C', 2) }, [{ label: 'NHL.com', players: whole }]).completed).toEqual([]);
+    expect(completeShortLines(whole, [{ label: 'NHL.com', players: whole }])).toEqual({ players: whole, completed: [] });
+  });
+  test('a tweet\'s day is the Eastern day of its timestamp, not the page\'s UTC day', () => {
+    // status id 2121755083000000000-ish → build one from a time: (ms - epoch) << 22
+    const idOf = (iso) => String((BigInt(Date.parse(iso)) - 1288834974657n) << 22n);
+    const block = (iso, label, text) => `<blockquote class="tweet full-sized-tweet"><p><a class="handle" href="#">@EdmontonOilers</a>${text}</p><a href="https://x.com/EdmontonOilers/status/${idOf(iso)}">${label}</a></blockquote>`;
+    const page = block('2026-11-15T00:00:04Z', 'Nov 15, 2026', 'Levi starts') + block('2026-11-15T18:10:00Z', 'Nov 15, 2026', 'Morning skate');
+    const [evening, noon] = parseLinesPage(page);
+    expect(evening.date).toBe('2026-11-14');     // 7:00 PM ET on the 14th: the game of the 14th
+    expect(noon.date).toBe('2026-11-15');
+  });
+  test('"Lekk" is Lekkerimäki and "DOC" is Drew O\'Connor; a stem two skaters share is nobody', () => {
+    const roster = [['Jonathan Lekkerimäki', 'RW'], ['Drew O\'Connor', 'LW'], ['Jake DeBrusk', 'LW'], ['Elias Pettersson', 'C'], ['Linus Karlsson', 'RW'], ['Brock Boeser', 'RW'], ['Brock Boeson', 'C']].map(([name, pos], i) => ({ id: 200 + i, name, pos, team: 'VAN' }));
+    const match = rosterMatcher(roster);
+    expect(match('Lekk', 'F')).toMatchObject({ name: 'Jonathan Lekkerimäki' });
+    expect(match('DOC', 'F')).toMatchObject({ name: 'Drew O\'Connor' });
+    expect(match('Boes', 'F')).toBeNull();        // Boeser or Boeson
+    expect(match('Karl', 'F')).toMatchObject({ name: 'Linus Karlsson' });
+    expect(match('Pet', 'F')).toBeNull();         // three letters: too short
+  });
+});
