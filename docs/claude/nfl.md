@@ -304,7 +304,9 @@
   is the board's own). Line Matchups is `/NFL/trench/teams?season=` and `/NFL/defense/funnels?season=`: the page asked
   season=2025 on 2026-11-15 (`trenchTeamsPrior`, `defenseFunnelsPrior`); this season's (`trenchTeams`, `defenseFunnels`) is the same
   route with the year, **not seen answered** — check the first pull's `pages` for an error note. Its `/NFL/players/list` is the roster,
-  not kept. Still without a route: Hit Rate Matrix, Team Tendencies, Coverage Players.
+  not kept. Hit Rate Matrix is the Milestones route kept already (`milestonesReceivingYards`,
+  `/NFL/milestones?category=receivingYards`, the page's default; its other categories' spellings not seen). Still without a route:
+  Team Tendencies, Coverage Players.
   Not pages: `config/leagues`, `savedprops/me`, `me`, `user`, `teams`, `version`, `flags`, `popups` (the app's own).
   Last season's coverage and rushing pages too (`coverageTeamsPrior`, `coverageReceiverSplitsPrior`, `rushingSlateBoardPrior`,
   `{priorSeason}`): graded on 2026's games, the coverage fit and the run-direction fit added nothing
