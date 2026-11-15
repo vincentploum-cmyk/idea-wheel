@@ -299,7 +299,9 @@
   factor nothing). Redzone Matchups has no route of its own: the page asks `/NFL/td-matchups?teamWindow=Season<season>&playerYear=<season>`
   (`tdMatchups`, kept already), `/NFL/coverage/teams`, `/NFL/teams` and the schedule (`/NFL/upcoming-slate`, `/nfl/upcoming-games`:
   not kept, the week is ESPN's). Alignment Matchups is `alignmentBoard` (`/NFL/alignment/board?season=`, with the all-splits TD Matchups; kept,
-  read by nothing yet). Still without a route: First TD, Line Matchups, Hit Rate Matrix, Team Tendencies, Coverage Players.
+  read by nothing yet). First TD is `firstTdMatchups` (`/NFL/first-td-matchups?season=`) with the books' first-scorer props
+  (`propsFirstTd`, `/nfl/props?…&category=firstTouchdownScorer&overUnder=over&…&limit=500`; kept, read by nothing yet — `pFirst`
+  is the board's own). Still without a route: Line Matchups, Hit Rate Matrix, Team Tendencies, Coverage Players.
   Not pages: `config/leagues`, `savedprops/me`, `me`, `user`, `teams`, `version`, `flags`, `popups` (the app's own).
   Last season's coverage and rushing pages too (`coverageTeamsPrior`, `coverageReceiverSplitsPrior`, `rushingSlateBoardPrior`,
   `{priorSeason}`): graded on 2026's games, the coverage fit and the run-direction fit added nothing
