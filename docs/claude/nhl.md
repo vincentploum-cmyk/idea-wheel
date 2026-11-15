@@ -789,6 +789,21 @@
   last known lineup, keeps the slots they had there instead of being placed by order (a winger at centre), the hole
   then carried by `fillFromLastLineup`. The read that put Hyman at centre was not reproduced here (the store is
   private): the practice tweet of Nov 13 gives Kapanen LW2, an unread "RNH" C2 and Hyman RW2.
+  **The cause, found in the lineup job's log the next day** (2026-11-15, the rink for EDM @ PHI still Kapanen LW2 · Hyman C2;
+  `linesSummary` in `positions.js`, printed a line a team by `nhl-lineups.yml` from `result.positions.lines`: "EDM:
+  gamedaytweets · … L2 Kapanen-Hyman-?", the gdt summary "17 matched · @EdmontonOilers · from the lineup graphic"): the
+  club's "Levi starts" tweet carried a lineup graphic, the OCR read 17 of 18 and missed Nugent-Hopkins, the two names
+  left on the line were placed by order, and the read stood as the writers' final word over NHL.com's whole lineup; it
+  was then remembered as the last known lineup, so `keepKnownSlots` had nothing right to lean on; and the tweet, posted
+  7:00 PM ET on the 14th, carried the page's UTC day (the 15th) and so stood as a game-day tweet for the next game too.
+  Three changes: **a tweet's `date` is the Eastern day of its own timestamp** (`parseLinesPage`); **a forward line read
+  short is completed from a whole lineup** (`completeShortLines`, in place of `keepKnownSlots` in the snapshot: NHL.com's
+  projected lineup, then Daily Faceoff's, then the last known, the first that has the line's skaters together on that
+  same line whole gives each his slot and lends the missing one, `carried` / `carriedFrom` the reference, unless he is
+  placed elsewhere today; `meta.completed`, the pill's hover names the reference and the skater added); and the matcher
+  reads a surname cut short ("Lekk": 4+ letters beginning exactly one roster surname) and initials across an
+  apostrophe ("DOC", Drew O'Connor). The same log now prints the Daily Faceoff and RotoWire reads the 3,000-character
+  print cut off, and a server restart no longer fails the job on the print.
   `nhl-lineups.yml` re-reads lineups (`only=lineups&due=150` on a cron tick) on the rule: from 60 minutes
   before puck drop, every 5 minutes (`HOP_MIN`; 15 until 2026-11-14, when Carolina's line rushes, tweeted 12:38 PM ET for
   a 1 PM game with Svechnikov moved to LW1, reached the rink at 12:50, the last game's lines standing until then; the
