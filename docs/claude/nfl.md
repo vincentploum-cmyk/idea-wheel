@@ -293,8 +293,10 @@
   `/nfl/props?sportsbooks=…&category=…&overUnder=…&sortBy=l10&limit=500`, lower-case on the site; the first 500 a side — the page
   reads on with a `cursor` from each answer, not asked), Player Stats Summary (`playerSeasonTotals`,
   `/NFL/player-season-totals?{teamIds}&season=&seasonType=REG&positions=FB%2CQB%2CRB%2CTE%2CWR`, the slate's teams; `statWeeks`,
-  `/NFL/stat-weeks?season=`; that page's `/NFL/upcoming-games` and `/NFL/players?…&hydrate=none` are the pull's own). Still
-  without a route: First TD, Alignment, Redzone, Line Matchups, Hit Rate Matrix, Team Defensive Stats, Team Tendencies, Coverage
+  `/NFL/stat-weeks?season=`; that page's `/NFL/upcoming-games` and `/NFL/players?…&hydrate=none` are the pull's own), Team Defensive Stats
+  (`teamDefenseOpponent` / `teamDefenseTeam` / `teamDefenseOpponentL3`, `/NFL/team-defense?year=&type=Opponent|Team&position=All&lastNGames=0|3`;
+  `type=Team` is the teams' own row the team objects lack — the row `teamTd`'s factor waits on, not wired: the replay gave that
+  factor nothing). Still without a route: First TD, Alignment, Redzone, Line Matchups, Hit Rate Matrix, Team Tendencies, Coverage
   Players (Redzone's and Alignment's lists showed only the page's `?_rsc=` layout requests).
   Not pages: `config/leagues`, `savedprops/me`, `me`, `user`, `teams`, `version`, `flags`, `popups` (the app's own).
   Last season's coverage and rushing pages too (`coverageTeamsPrior`, `coverageReceiverSplitsPrior`, `rushingSlateBoardPrior`,

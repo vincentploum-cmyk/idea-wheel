@@ -14,6 +14,7 @@ describe('NFL PropFinder pages', () => {
       '/NFL/team-share?position=All&period=Full&season=2026&count=season', '/NFL/milestones?category=receivingYards', '/NFL/rushing/slate-board?season=2026', '/NFL/coverage/teams?season=2026',
       '/NFL/coverage/qb-splits?season=2026', '/NFL/edges/board?market=all', expect.stringMatching(/^\/nfl\/props\?.*overUnder=over&.*limit=500$/), expect.stringMatching(/^\/nfl\/props\?.*overUnder=under&.*limit=500$/),
       '/NFL/player-season-totals?&season=2026&seasonType=REG&positions=FB%2CQB%2CRB%2CTE%2CWR', '/NFL/stat-weeks?season=2026',
+      '/NFL/team-defense?year=2026&type=Opponent&position=All&lastNGames=0', '/NFL/team-defense?year=2026&type=Team&position=All&lastNGames=0', '/NFL/team-defense?year=2026&type=Opponent&position=All&lastNGames=3',
       '/NFL/coverage/teams?season=2025', '/NFL/coverage/receiver-splits?season=2025', '/NFL/rushing/slate-board?season=2025']);
     expect(out.roleMatchups).toMatchObject({ path: '/NFL/role-matchups?season=2026', error: null, keys: ['season', 'week', 'seasonType', 'window', 'statsSeason', 'generatedAtUtc', 'roles'] });
     expect(out.roleMatchups.data).toBe(ROLE);
@@ -23,7 +24,7 @@ describe('NFL PropFinder pages', () => {
     const out = await fetchSamples({ slateAbbrs: [], byAbbr: {}, at: '2026-11-08T14:00:00Z', season: 2026, get: async () => { throw new Error('PropFinder 401'); }, env: {} });
     expect(out.roleMatchups).toMatchObject({ error: 'PropFinder 401', sample: null });
     expect(out.roleMatchups.data).toBeUndefined();
-    expect(Object.keys(out)).toEqual(['roleMatchups', 'coverageReceiverSplits', 'tdMatchups', 'tdMatchupsAllSplits', 'wrCbMatchups', 'teamShare', 'milestonesReceivingYards', 'rushingSlateBoard', 'coverageTeams', 'coverageQbSplits', 'edgesBoard', 'propsOver', 'propsUnder', 'playerSeasonTotals', 'statWeeks', 'coverageTeamsPrior', 'coverageReceiverSplitsPrior', 'rushingSlateBoardPrior']);
+    expect(Object.keys(out)).toEqual(['roleMatchups', 'coverageReceiverSplits', 'tdMatchups', 'tdMatchupsAllSplits', 'wrCbMatchups', 'teamShare', 'milestonesReceivingYards', 'rushingSlateBoard', 'coverageTeams', 'coverageQbSplits', 'edgesBoard', 'propsOver', 'propsUnder', 'playerSeasonTotals', 'statWeeks', 'teamDefenseOpponent', 'teamDefenseTeam', 'teamDefenseOpponentL3', 'coverageTeamsPrior', 'coverageReceiverSplitsPrior', 'rushingSlateBoardPrior']);
     // Without a week the week's route is not asked (a 'no week' note).
     expect(out.wrCbMatchups.error).toBe('no week');
   });
