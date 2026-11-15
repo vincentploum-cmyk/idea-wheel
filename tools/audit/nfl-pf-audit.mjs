@@ -195,12 +195,16 @@ function built(cocktail, season, week, opts = {}) {
   BUILT.set(k, v);
   return v;
 }
+// --model 2025:<trees for 2025's weeks> 2026:<trees for 2026's> …: the learned read (lib/nfl/model.js) on those seasons' replays,
+// each file trained on the seasons before it (tools/audit/nfl_model_fit.py --test). --features <csv>: the training file — every
+// replayed player-game's features as the site computes them, the board's reads and what he got — then exit.
+const MODELS = (() => { const i = process.argv.indexOf('--model'); const out = {}; if (i > 0) for (let j = i + 1; j < process.argv.length && !process.argv[j].startsWith('--'); j++) { const [y, f] = process.argv[j].split(/:(.*)/s); out[Number(y)] = read(f); } return out; })();
 function run(range, { cocktail = COCKTAIL, params = null, lines = null, ...opts } = {}) {
   const yards = []; const tds = []; const rungs = []; const bigs = [];
   for (const [s, w] of weeks(range)) {
     const v = built(cocktail, s, w, opts);
     if (!v) continue;
-    const pj = params ? reproject(v.b, v.inp.args, { ...PARAMS, ...params }, v.b0) : v.b.projections;
+    const pj = params || MODELS[s] ? reproject(v.b, v.inp.args, { ...PARAMS, ...(MODELS[s] ? { MODEL: MODELS[s] } : {}), ...(params || {}) }, v.b0) : v.b.projections;
     const g = gradeWeek(pj, v.inp.played, `${s}w${w}`, lines);
     yards.push(...g.yards); tds.push(...g.tds); rungs.push(...g.rungs); bigs.push(...g.bigs);
   }
@@ -255,6 +259,31 @@ function linesOf(pull) {
   return out;
 }
 const propsOf = (pull) => new Map((pull.pull?.data?.players || []).filter((p) => p.props?.length).map((p) => [p.id, p.props]));
+
+const FEAT = arg('--features');
+if (FEAT) {
+  const ranges = [...(seasons[2024] ? [{ season: 2024, weeks: [6, 18] }] : []), { season: 2025, weeks: [1, 18] }, CHECK];
+  const META = ['tag', 'season', 'week', 'key', 'team', 'opp', 'pos', 'backup', 'active', 'y_rec_yds', 'y_rush_yds', 'y_pass_yds', 'y_receptions', 'y_td', 'bp_rec_yds', 'bp_rush_yds', 'bp_pass_yds', 'bp_receptions', 'bp_td', 'sd_rec_yds', 'sd_rush_yds', 'sd_pass_yds', 'sd_receptions'];
+  let names = null; const out = [];
+  const cell = (v) => (v == null || (typeof v === 'number' && !Number.isFinite(v)) ? '' : typeof v === 'number' ? String(Math.round(v * 1e5) / 1e5) : typeof v === 'boolean' ? (v ? '1' : '0') : String(v));
+  for (const range of ranges) for (const [s, w] of weeks(range)) {
+    const v = built(COCKTAIL, s, w);
+    if (!v) continue;
+    const pj = reproject(v.b, v.inp.args, { ...PARAMS, MODEL_FEATURES: true }, v.b0);
+    for (const r of Object.values(pj.rows)) {
+      const line = v.inp.played.get(`${r.key}|${r.team}`);
+      if (!line || !r.feats) continue;
+      names = names || Object.keys(r.feats);
+      const meta = { tag: `${s}w${w}`, season: s, week: w, key: r.key, team: r.team, opp: r.opp, pos: r.pos, backup: !!r.backup, active: !!ACTIVE(line), y_rec_yds: line.recYds, y_rush_yds: line.rushYds, y_pass_yds: line.passYds, y_receptions: line.rec, y_td: line.rushTd + line.recTd + (line.retTd || 0) > 0 ? 1 : 0,
+        bp_rec_yds: r.yards.rec_yds?.proj, bp_rush_yds: r.yards.rush_yds?.proj, bp_pass_yds: r.yards.pass_yds?.proj, bp_receptions: r.yards.receptions?.proj, bp_td: r.td?.p, sd_rec_yds: r.yards.rec_yds?.sd, sd_rush_yds: r.yards.rush_yds?.sd, sd_pass_yds: r.yards.pass_yds?.sd, sd_receptions: r.yards.receptions?.sd };
+      out.push([...META.map((k) => cell(meta[k])), ...names.map((k) => cell(r.feats[k]))].join(','));
+    }
+    say('features', `${s}w${w}`, out.length);
+  }
+  fs.mkdirSync(path.dirname(FEAT), { recursive: true });
+  fs.writeFileSync(FEAT, [[...META, ...names].join(','), ...out].join('\n'));
+  say('written', FEAT, out.length, 'player-games,', names.length, 'features'); process.exit(0);
+}
 
 // 2. As shipped, on PropFinder's logs: the teams' own touchdowns in (as the backtest assumed) and out (as the pulls are).
 const base = { tune: run(TUNE), check: run(CHECK) };

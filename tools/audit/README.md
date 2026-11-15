@@ -406,6 +406,21 @@ On the PropFinder replay's dump (the target share in): `python3 -I tools/audit/n
 --fit 2025 --pos WR,TE,RB --active --only receptions` (`--fit` the season the usual spread is fitted on, `--active` the games he
 played).
 
+## NFL: the learned read (`nfl_model.py`, `nfl_model_fit.py`)
+
+`lib/nfl/model.js`'s trees (`docs/audits/2026-11-15-nfl-model.md`). The training file is the replay's: every player-game's
+features as the site computes them, the board's reads and what he got. Needs the export and the ESPN files above (2024 too),
+numpy, pandas and lightgbm.
+
+```
+node --max-old-space-size=8192 --import ./tools/audit/register.mjs tools/audit/nfl-pf-audit.mjs --pf .nhl-data/audit/nfl-pf --raw .nhl-data/audit/nfl --check-to 10 --features .nhl-data/audit/out/nfl-features.csv
+python3 -I tools/audit/nfl_model.py .nhl-data/audit/out/nfl-features.csv            # the walk-forward tables; --groups, --mates, --lines <export folder>
+python3 -I tools/audit/nfl_model_fit.py .nhl-data/audit/out/nfl-features.csv --test 2026 --out .nhl-data/audit/out/nfl-model-2026.json
+node --max-old-space-size=8192 --import ./tools/audit/register.mjs tools/audit/nfl-pf-audit.mjs --pf .nhl-data/audit/nfl-pf --raw .nhl-data/audit/nfl --check-to 9 --dump --out .nhl-data/audit/out/model --model 2026:.nhl-data/audit/out/nfl-model-2026.json
+# the site's file, every season (refit when more weeks are exported; `--check-to` the last finished week):
+python3 -I tools/audit/nfl_model_fit.py .nhl-data/audit/out/nfl-features.csv --out lib/nfl/model-trees.json --fixture __tests__/fixtures/nfl-model.json
+```
+
 ## NFL: the matchup pages on last season (`nfl_coverage.py`)
 
 The audit export (GitHub → Actions → NFL PropFinder export) unzipped into `.nhl-data/audit/nfl-pf`; its latest week holds the

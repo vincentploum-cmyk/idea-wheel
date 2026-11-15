@@ -277,6 +277,13 @@
   6–15 points too much every season and read curves of their own now (2026 strong: 55 → 61%, 58 → 62%, 54 → 59%); no ordering
   key (the rung's chance, volume, share, steadiness) picked better than the projection, and the rung's own chance over-says by
   10 points at the top. The touchdown list lands.
+- The NFL's learned read (`docs/audits/2026-11-15-nfl-model.md`, `tools/audit/nfl_model.py` on `nfl-pf-audit.mjs --features`,
+  `tools/audit/nfl_model_fit.py` for the site's trees; Vincent, 2026-11-15: "build us the best nfl prediction model"): boosted
+  trees on 170 pre-game figures of PropFinder's logs (12,552 player-games of 2024–26), half and half with the board, beat it on
+  four forward blocks for receiving (−0.24 yards a game), rushing (−0.48), receptions and the touchdown Brier; passing lost
+  (+0.50) and is not blended. No feature group carries it, the regulars missing tonight add nothing, the settings barely
+  matter. Against the books' early lines (weeks 7–10) the blend is level on yards. **Shipped** (`lib/nfl/model.js`,
+  `PARAMS.MODEL`). A trap on the way: an export file's lines are the next week's, not its own.
 - The NFL's matchup pages in the numbers (`docs/audits/2026-11-08-nfl-matchup-pages.md`; Vincent chose hand-set weights over the
   fitted ones): last season's coverage and rushing pages through the shipped factors on 2026's weeks 1–8 (`nfl-pf-audit.mjs
   --pages-prior`): receiving 22.60 → 22.64, rushing 21.28 → 21.32, touchdowns flat, passing 64.50 → 65.87 (−0.1 to +2.9). WR vs

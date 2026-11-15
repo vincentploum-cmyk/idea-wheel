@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { teamLogo, teamName } from '@/lib/nfl/teams';
 import { spreadOf, passText, shareText, NFL_OUTLIERS } from '@/lib/nfl/projections';
 import { matchupText } from '@/lib/nfl/matchups';
+import { modelText } from '@/lib/nfl/model';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { sortOutliers, nextSort, SortHead, recordText } from '@/components/picks/OutlierSort';
 import { headshotUrl } from '@/lib/nfl/espn';
@@ -49,6 +50,7 @@ function tdWhy(t) {
   const parts = [`${pct(t.board)} from his touchdown rate and touches`];
   if (t.rz != null) parts.push(`${Number(t.rz).toFixed(1)} red-zone looks a game over his last 5`);
   if (t.points != null) parts.push(`his team expected to score ${t.points}`);
+  if (t.model) parts.push(modelText(t.model, 'td'));
   if (t.pages) parts.push(`${pct(t.beforePages)} before ${matchupText(t.pages)}`);
   return `${parts.join(' · ')} → ${pct(t.p)}`;
 }
@@ -117,7 +119,7 @@ function YardsTable({ rows, kind, game }) {
           return (
             <tr key={r.id}>
               <td className="ir-slate-rank">{i + 1}</td>
-              <td><Who r={r} game={game} /></td><td className="is-num ir-ml-proj" title={[y?.pass ? passText(y.pass) : y?.tgtShare != null ? shareText(y) : '', y?.pages ? `${Math.round(y.beforePages)} before ${matchupText(y.pages)}` : ''].filter(Boolean).join(' · ') || undefined}><b>{y?.proj == null ? '—' : Math.round(y.proj)}</b><small>{c?.proj != null ? `${Number(c.proj).toFixed(1)} rec` : 'yds'}</small></td>
+              <td><Who r={r} game={game} /></td><td className="is-num ir-ml-proj" title={[y?.pass ? passText(y.pass) : y?.tgtShare != null ? shareText(y) : '', y?.model ? modelText(y.model) : '', y?.pages ? `${Math.round(y.beforePages)} before ${matchupText(y.pages)}` : ''].filter(Boolean).join(' · ') || undefined}><b>{y?.proj == null ? '—' : Math.round(y.proj)}</b><small>{c?.proj != null ? `${Number(c.proj).toFixed(1)} rec` : 'yds'}</small></td>
               {TIERS.map(([k]) => (
                 <td key={k} className={`ir-ml-cell is-${k}`}>
                   <Rung y={y} market={market} tier={k} />

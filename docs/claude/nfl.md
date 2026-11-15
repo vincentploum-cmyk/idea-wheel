@@ -242,6 +242,35 @@
   reason) on every row, said in the hovers; `MATCHUP_PAGES` in `projections.js` turns it off. Measured with last season's pages
   on 2026 (`nfl-pf-audit.mjs --pages-prior`): receiving and rushing +0.04–0.05 yards of miss, touchdowns flat, passing +1.4
   (−0.1 to +2.9) — the cost to watch. The replays without `--pages-prior` read no pages.
+- **The learned read** (Vincent, 2026-11-15: "build us the best nfl prediction model for tds, rushing yards, receiving yards and
+  passing yards"; `docs/audits/2026-11-15-nfl-model.md`, `tools/audit/nfl_model.py`): gradient-boosted trees for receiving yards,
+  rushing yards, receptions and the anytime touchdown, blended half and half into the board's read (the NBA's design of
+  2026-11-13). `lib/nfl/model.js` (pure): `modelFeatures({ games, season, pos, date, ctx })` — 170 figures the trees read: his
+  box-score lines, target / carry shares, red-zone looks, air yards and yards after the catch at four memories (half-lives 2, 5,
+  12, 30 of his **active** games: a rostered week of zeros is a game he was not in, `activeRow`), yards a target / carry /
+  attempt, his team's targets and carries (his count ÷ his share), his windows, how often he has been in the game and the days
+  since, tonight (home, implied points, total, his slot) and his side (`teamFigures`: its players' five-game memories summed, a
+  man without a game in 24 days left off, the starting quarterback's passing); the board's own reads ride in the training file
+  (`b_*`) and no tree reads them. `modelRead(model, feats, pos)` (a market only at the positions it was fitted for: receiving
+  and receptions WR / TE / RB, rushing RB / QB, touchdowns all four; yards = the trees' Poisson mean through the file's LAD line
+  `cal`, the touchdown the log-odds), `modelBlend` (yards `blend[market]` of the model's, a chance blended on its log-odds),
+  `modelText` (the hover: "the board's 68 blended with the learned read's 61"). **In `nflProjections`**: every market's tested
+  read first (`pre`), then the features, then the blend, then PropFinder's pages, the floor / ceiling and the rungs on the blended
+  figure; the touchdown chance blended after the engine and before the pages, so 1st half, 2+ and first TD follow; `model:
+  { pred, before }` on each blended read (`y.model`, `td.model`). `PARAMS.MODEL` is the trees (null = the board alone: `picks.js`'s
+  own `buildBoard`, the replays, the tests); **the site's build is `lib/nfl/build.js`** (imports `lib/nfl/model-trees.json`, 0.35 MB,
+  server side only — `lib/nfl/store.js` and `first-td-results.js` build with it, `FIRST_TD_REPLAY` 2); the payload's
+  `constants.MODEL` names the trees (trained, rows, blend) and does not carry them. **The training file is the replay's**
+  (`nfl-pf-audit.mjs --features <csv>`: `MODEL_FEATURES` puts `feats` on every row; `tools/audit/nfl_model_fit.py` fits and
+  writes the trees and the parity fixture; `--model 2025:<file> 2026:<file>` replays with trees trained on the seasons before).
+  Measured on four forward blocks: receiving −0.24 yards of miss a game, rushing −0.48, receptions −0.02, the touchdown Brier
+  better in all four; through the site's code on 2026 receiving 22.07 → 21.62 (within ±10 30.7 → 33.6%), rushing 20.94 → 20.33
+  (29.7 → 33.2%), Brier 0.1221 → 0.1208, the rungs 68 → 63 / 51 → 48 / 35 → 33 before and 68 → 66 / 51 → 50 / 35 → 35 with it
+  (`RESID` not refitted). **Passing is not in the file**: the blend cost 0.5 yards a start over the blocks (lost on 2025, won on
+  2026; 400–1,200 starts to learn from) — ask again when 2026 is whole. The regulars missing tonight and no single feature
+  group moved it. Against the books' early lines of weeks 7–10 (a stored week's lines are the next week's: the pull is taken
+  after its games) the blend is level on yards and ahead on receptions. A file, not a job: refit after the season's weeks
+  are exported (README). `__tests__/nfl-model.test.js`.
 - **The pick rules** (Vincent, 2026-11-08: "work on the pick rules"; `docs/audits/2026-11-08-nfl-picks.md`, `tools/audit/nfl_picks.py`):
   a play is a rung at its stated chance. The top of each list (by projection) now lands as said for receiving, receptions and
   passing; no other ordering (the rung's chance, volume, share, the steadiest) picked better over 2024–26, and sorting by the
