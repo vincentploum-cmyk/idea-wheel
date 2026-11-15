@@ -257,3 +257,17 @@ describe('Edmonton, 2026-11-14: a nickname, a misspelt name and a line read shor
     expect(edm.meta.slotsKept).toBe(1);
   });
 });
+
+describe('the snapshot in one line a team, for the lineup job\'s log', () => {
+  const { linesSummary } = require('../lib/nhl-data/positions');
+  test('the source, each line and pair by last name; an empty slot, a carried skater and an unmatched name marked', () => {
+    const P = (name, pos, line, extra = {}) => ({ name, pos, line, id: 1, ...extra });
+    const file = { games: { 1: { teams: { EDM: { source: 'lineup', players: {
+      a: P('Vasily Podkolzin', 'LW', 1), b: P('Connor McDavid', 'C', 1), c: P('Leon Draisaitl', 'RW', 1),
+      d: P('Kasperi Kapanen', 'LW', 2), e: P('Ryan Nugent-Hopkins', 'C', 2, { carried: true }), f: P('Zach Hyman', 'RW', 2, { id: null }),
+      g: P('Mattias Ekholm', 'D', 1), h: P('Evan Bouchard', 'D', 1), x: P('Max Jones', 'LW', null, { inLineup: false }),
+    } } } } } };
+    expect(linesSummary(file).EDM).toBe('lineup · L1 Podkolzin-McDavid-Draisaitl | L2 Kapanen-Nugent-Hopkins~-Hyman! | L3 ?-?-? | L4 ?-?-? | D1 Ekholm-Bouchard | D2 ? | D3 ?');
+    expect(linesSummary(null)).toEqual({});
+  });
+});
