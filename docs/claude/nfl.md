@@ -285,6 +285,25 @@
   and the ratio moves by season (1.19 / 1.14 / 1.26) and with who is counted on the side (the live roster's 1.11); the
   quarterback read off his receivers' sum did no better than his own (`docs/audits/2026-11-15-nfl-model.md`).
   `__tests__/nfl-model.test.js`.
+- **A teammate back** (Vincent, 2026-11-15, on the Jets' second back projected over the first after the first's six games
+  out: "Why would the second rb get more rushing yards projected?", then "We should have it incorporated in the projection";
+  `lib/nfl/returns.js`, `docs/audits/2026-11-15-nfl-model.md`): `backFactor({ logs, mates, market, pos, depth, season, date })`
+  on rushing yards (backs), receiving yards and receptions (WR / TE / RB), after the learned read's blend and before the
+  pages. His recent = his last six active games this season (three at least); a mate at his position on the side tonight
+  counts when he carries a real load (three carries / targets a game at a twelve-game memory **and half the player's own**),
+  missed two or more of those six and shared two or more of the player's games (this season and the last; a game = date +
+  opponent); the with-him read = his average in their last eight shared games counted with two games of his recent average;
+  the factor = 1 + 0.5 × (that ÷ his recent − 1), the lowest over the mates, **down only**, floor ×0.6, a move under 5%
+  dropped (`BACK`). A mate not in the player's latest game (his first game back) counts only when the depth chart has him at
+  or ahead of the player's slot, he is not day to day and has been gone 60 days at most (the roster carries men active on
+  paper). `back: { factor, mate, shared, missed, of, withHim, usual, before }` on the read, `backText` in the Proj hover and
+  on the card. `PARAMS.ROLE_BACK` (null in `picks.js`'s own build and every replay — a replayed side holds every rostered
+  man; `BACK` in `lib/nfl/build.js`). Measured on the replay's blended figures with who played read off the game: full
+  strength or up as well cost yards; half strength, down only, a real load: rushing −1.3 / −2.2 yards on the moved games of
+  2025 / 2026 (52 / 14 games, the intervals across zero), receiving −0.47 / −0.35, the 15%+ cuts better on both, receptions
+  level. The trees given the same thing as features (`back_*`) did nothing. **The trees' `depth` feature is null for every
+  player** (the slot is 'RB', the number is `depth`; the replay has no chart either): harmless, to be fed when a replay
+  carries the chart. `__tests__/nfl-returns.test.js`.
 - **The pick rules** (Vincent, 2026-11-08: "work on the pick rules"; `docs/audits/2026-11-08-nfl-picks.md`, `tools/audit/nfl_picks.py`):
   a play is a rung at its stated chance. The top of each list (by projection) now lands as said for receiving, receptions and
   passing; no other ordering (the rung's chance, volume, share, the steadiest) picked better over 2024–26, and sorting by the

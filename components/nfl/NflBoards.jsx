@@ -5,6 +5,7 @@ import { teamLogo, teamName } from '@/lib/nfl/teams';
 import { spreadOf, passText, shareText, NFL_OUTLIERS } from '@/lib/nfl/projections';
 import { matchupText } from '@/lib/nfl/matchups';
 import { modelText } from '@/lib/nfl/model';
+import { backText } from '@/lib/nfl/returns';
 import { fmtOdds } from '@/lib/nfl/odds';
 import { sortOutliers, nextSort, SortHead, recordText } from '@/components/picks/OutlierSort';
 import { headshotUrl } from '@/lib/nfl/espn';
@@ -134,7 +135,7 @@ function YardsTable({ rows, kind, game }) {
             <Fragment key={r.id}>
             <tr className={y?.to ? 'is-with-to' : undefined}>
               <td className="ir-slate-rank">{i + 1}</td>
-              <td><Who r={r} game={game} /></td><td className="is-num ir-ml-proj" title={[y?.pass ? passText(y.pass) : y?.tgtShare != null ? shareText(y) : '', rec && y?.teamShare != null ? `${pct(y.teamShare)} of ${r.team}’s projected receiving yards` : '', y?.model ? modelText(y.model) : '', y?.pages ? `${Math.round(y.beforePages)} before ${matchupText(y.pages)}` : ''].filter(Boolean).join(' · ') || undefined}><b>{y?.proj == null ? '—' : Math.round(y.proj)}</b><small>{c?.proj != null ? `${Number(c.proj).toFixed(1)} rec` : 'yds'}</small></td>
+              <td><Who r={r} game={game} /></td><td className="is-num ir-ml-proj" title={[y?.pass ? passText(y.pass) : y?.tgtShare != null ? shareText(y) : '', rec && y?.teamShare != null ? `${pct(y.teamShare)} of ${r.team}’s projected receiving yards` : '', y?.model ? modelText(y.model) : '', y?.back ? backText(y.back) : '', y?.pages ? `${Math.round(y.beforePages)} before ${matchupText(y.pages)}` : ''].filter(Boolean).join(' · ') || undefined}><b>{y?.proj == null ? '—' : Math.round(y.proj)}</b><small>{c?.proj != null ? `${Number(c.proj).toFixed(1)} rec` : 'yds'}</small></td>
               {TIERS.map(([k]) => (
                 <td key={k} className={`ir-ml-cell is-${k}`}>
                   <Rung y={y} market={market} tier={k} />

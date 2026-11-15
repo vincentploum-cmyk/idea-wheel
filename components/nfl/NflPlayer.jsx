@@ -6,6 +6,7 @@ import { headshotUrl } from '@/lib/nfl/espn';
 import { passText, shareText } from '@/lib/nfl/projections';
 import { matchupText } from '@/lib/nfl/matchups';
 import { modelText } from '@/lib/nfl/model';
+import { backText } from '@/lib/nfl/returns';
 import { PassTo } from './NflBoards';
 
 // One NFL player from the week's projections (lib/nfl/projections.js `board.projections.rows`), opened from the head's
@@ -67,6 +68,7 @@ export default function NflPlayer({ row: r, onClose }) {
                 {m === 'rec_yds' && y.teamShare != null ? <p className="nhlx-auto-meta">{pct(y.teamShare)} of {r.team}’s projected receiving yards</p> : null}
                 {y.tgtShare != null ? <p className="nhlx-auto-meta">{shareText(y, m)}</p> : null}
                 {y.model ? <p className="nhlx-auto-meta">{modelText(y.model, m)}</p> : null}
+                {y.back ? <p className="nhlx-auto-meta">{backText(y.back, m)}</p> : null}
                 {y.pages ? <p className="nhlx-auto-meta">{m === 'receptions' ? Number(y.beforePages).toFixed(1) : Math.round(y.beforePages)} before {matchupText(y.pages)}</p> : null}
                 <div className="ir-np-tiers">
                   {TIERS.map(([k, l]) => { const x = y.tiers?.[k]; const hit = y.actual == null || !x ? '' : y.actual >= x.mark ? ' is-hit' : ' is-miss'; return <span key={k} className={`ir-bd-mark is-${k}${hit}`}>{x ? `${x.mark}+ ${unit}` : '—'}<small>{l.toLowerCase()}{x ? ` ${pct(x.p)}` : ''}</small></span>; })}
