@@ -193,3 +193,67 @@ describe('an unchanged line listed the other way round keeps its sides', () => {
     expect(lineupRead({ source: car.source, sourceMeta: car.meta, carried: null }, '2026-11-14T18:00:00Z').title).toMatch(/listed the other way round.*sides on file were kept/);
   });
 });
+
+// Vincent, 2026-11-14: Edmonton's rink before EDM @ TOR — Kapanen LW2, Hyman C2, nobody at RW2, no Nugent-Hopkins.
+describe('Edmonton, 2026-11-14: a nickname, a misspelt name and a line read short', () => {
+  const { keepKnownSlots } = require('../lib/nhl-data/positions');
+  const { parseLineTweet, linesToPlayers, rosterMatcher, editDistance } = require('../lib/nhl-data/gamedaytweets');
+  const roster = [
+    ['Vasily Podkolzin', 'RW'], ['Connor McDavid', 'C'], ['Leon Draisaitl', 'C'], ['Kasperi Kapanen', 'RW'], ['Ryan Nugent-Hopkins', 'C'], ['Zach Hyman', 'LW'],
+    ['Colton Dach', 'C'], ['Jason Dickinson', 'C'], ['Trent Frederic', 'C'], ['Alex Formenton', 'LW'], ['Owen Michaels', 'RW'], ['Mathieu Joseph', 'RW'], ['Max Jones', 'LW'], ['Filip Hallander', 'C'],
+    ['Mattias Ekholm', 'D'], ['Evan Bouchard', 'D'], ['Ryan Shea', 'D'], ['Connor Murphy', 'D'], ['Shakir Mukhamadullin', 'D'], ['Ty Emberson', 'D'], ['Jake Walman', 'D'],
+  ].map(([name, pos], i) => ({ id: 100 + i, name, pos, team: 'EDM' }));
+  const TWEET = 'The @EdmontonOilers practice in Toronto:\nPodkolzin-McDavid-Draisaitl\nKapanen-RNH-Hyman\nDach-Dickinson-Frederic\nFormenton-Michaels-Joseph\nJones-Hallander\nEkholm-Bouchard\nShea-Murphy\nMuhkamudillin-Emberson\nWalman-Howard*\nLevi\nJarry';
+
+  test('"RNH" is Ryan Nugent-Hopkins and "Muhkamudillin" is Mukhamadullin; a short or shared nickname is nobody', () => {
+    const match = rosterMatcher(roster);
+    expect(match('RNH', 'F')).toMatchObject({ name: 'Ryan Nugent-Hopkins' });
+    expect(match('Muhkamudillin', 'D')).toMatchObject({ name: 'Shakir Mukhamadullin' });
+    expect(editDistance('muhkamudillin', 'mukhamadullin')).toBe(3);
+    expect(match('CM', 'F')).toBeNull();          // two letters: McDavid or Murphy, never guessed
+    expect(match('XYZ', 'F')).toBeNull();
+    expect(match('Hymen', 'F')).toBeNull();       // five letters: too short to mend
+    expect(match('Hyman', 'F')).toMatchObject({ name: 'Zach Hyman' });
+    const two = rosterMatcher([...roster, { id: 999, name: 'Rasmus Nilsson-Hall', pos: 'C', team: 'EDM' }]);
+    expect(two('RNH', 'F')).toBeNull();           // two players with those initials
+  });
+  test('the practice tweet reads whole: Kapanen - Nugent-Hopkins - Hyman', () => {
+    const players = Object.values(linesToPlayers(parseLineTweet(TWEET, roster)));
+    const at = (pos, line) => players.filter((p) => p.pos === pos && p.line === line).map((p) => p.name);
+    expect(at('LW', 2)).toEqual(['Kasperi Kapanen']);
+    expect(at('C', 2)).toEqual(['Ryan Nugent-Hopkins']);
+    expect(at('RW', 2)).toEqual(['Zach Hyman']);
+    expect(players.find((p) => p.name === 'Shakir Mukhamadullin')).toMatchObject({ pos: 'D', line: 3 });
+    expect(players.filter((p) => p.id == null)).toEqual([]);
+  });
+  test('a line read short of its centre: the two wingers keep their slots, they are not placed by their order', () => {
+    const P = (name, pos, line, extra = {}) => ({ name, pos, line, ...extra });
+    const last = { date: '2026-11-13', players: { kapanen: P('Kapanen', 'LW', 2), rnh: P('Nugent-Hopkins', 'C', 2), hyman: P('Hyman', 'RW', 2), mcdavid: P('McDavid', 'C', 1) } };
+    const read = { kapanen: P('Kapanen', 'LW', 2), hyman: P('Hyman', 'C', 2), mcdavid: P('McDavid', 'C', 1) };   // the graphic's "Kapanen Hyman"
+    const r = keepKnownSlots(read, last);
+    expect(r.kept).toBe(1);
+    expect(r.players.hyman).toMatchObject({ pos: 'RW', line: 2, slotKept: true });
+    expect(r.players.kapanen).toMatchObject({ pos: 'LW', line: 2 });
+    expect(r.players.mcdavid).toEqual(read.mcdavid);                      // a line of one that already sits where it sat
+    // two skaters who were not linemates last time: a real change, left as read
+    expect(keepKnownSlots({ kapanen: P('Kapanen', 'LW', 2), mcdavid: P('McDavid', 'C', 2) }, last).kept).toBe(0);
+    expect(keepKnownSlots(read, null)).toEqual({ players: read, kept: 0 });
+    // a whole line is never touched
+    const whole = { kapanen: P('Kapanen', 'RW', 2), rnh: P('Nugent-Hopkins', 'C', 2), hyman: P('Hyman', 'LW', 2) };
+    expect(keepKnownSlots(whole, last)).toEqual({ players: whole, kept: 0 });
+  });
+  test('the snapshot: the short line is put back and its centre carried from the last lineup', async () => {
+    const DATE = '2026-11-14';
+    const ref = { 1: { id: 1, name: 'Kasperi Kapanen', team: 'EDM', pos: 'RW' }, 2: { id: 2, name: 'Ryan Nugent-Hopkins', team: 'EDM', pos: 'C' }, 3: { id: 3, name: 'Zach Hyman', team: 'EDM', pos: 'LW' } };
+    mockStored.clear();
+    mockStored.set(PLAYERS_PATH, { players: ref });
+    mockStored.set(lastLineupPath('EDM'), { date: '2026-11-13', gameId: 1, source: 'gamedaytweets', players: { 'kasperi kapanen': { name: 'Kasperi Kapanen', id: 1, pos: 'LW', line: 2 }, 'ryan nugent hopkins': { name: 'Ryan Nugent-Hopkins', id: 2, pos: 'C', line: 2 }, 'zach hyman': { name: 'Zach Hyman', id: 3, pos: 'RW', line: 2 } } });
+    const graphic = { players: { 'kasperi kapanen': { name: 'Kasperi Kapanen', id: 1, pos: 'LW', line: 2 }, 'zach hyman': { name: 'Zach Hyman', id: 3, pos: 'C', line: 2 } }, meta: { handle: 'EdmontonOilers', at: '2026-11-15T00:00:04Z', date: DATE } };
+    await snapshotPositions(DATE, [{ id: 31, away: 'EDM', home: 'TOR', state: 'FUT', startTimeUTC: '2026-11-15T00:00:00Z' }], { date: DATE, games: [], gdt: { EDM: graphic } });
+    const edm = mockStored.get(positionsPath(DATE)).games[31].teams.EDM;
+    expect(edm.players['zach hyman']).toMatchObject({ pos: 'RW', line: 2 });
+    expect(edm.players['kasperi kapanen']).toMatchObject({ pos: 'LW', line: 2 });
+    expect(edm.players['ryan nugent hopkins']).toMatchObject({ pos: 'C', line: 2, carried: true });
+    expect(edm.meta.slotsKept).toBe(1);
+  });
+});
