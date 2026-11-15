@@ -287,6 +287,15 @@
   no read without one), Team Share (`/NFL/team-share?position=All&period=Full&season=&count=season`), Milestones receiving
   yards (`/NFL/milestones?category=receivingYards`; other categories not seen yet), Rushing Matchups
   (`/NFL/rushing/slate-board?season=`), Coverage Matrix (`/NFL/coverage/teams?season=`: the defenses' coverage mix).
+  Added 2026-11-15 off Vincent's DevTools list (kept whole, **read by nothing yet**: no reader, no weight until their shapes are
+  seen on a stored pull and graded): Coverage Matchups' quarterback side (`coverageQbSplits`, `/NFL/coverage/qb-splits?season=`),
+  Market Grades (`edgesBoard`, `/NFL/edges/board?market=all`) and the props list that page loads (`propsOver` / `propsUnder`,
+  `/nfl/props?sportsbooks=…&category=…&overUnder=…&sortBy=l10&limit=500`, lower-case on the site; the first 500 a side — the page
+  reads on with a `cursor` from each answer, not asked), Player Stats Summary (`playerSeasonTotals`,
+  `/NFL/player-season-totals?{teamIds}&season=&seasonType=REG&positions=FB%2CQB%2CRB%2CTE%2CWR`, the slate's teams; `statWeeks`,
+  `/NFL/stat-weeks?season=`; that page's `/NFL/upcoming-games` and `/NFL/players?…&hydrate=none` are the pull's own). Still
+  without a route: First TD, Alignment, Redzone, Line Matchups, Hit Rate Matrix, Team Defensive Stats, Team Tendencies, Coverage
+  Players (Redzone's and Alignment's lists showed only the page's `?_rsc=` layout requests).
   Not pages: `config/leagues`, `savedprops/me`, `me`, `user`, `teams`, `version`, `flags`, `popups` (the app's own).
   Last season's coverage and rushing pages too (`coverageTeamsPrior`, `coverageReceiverSplitsPrior`, `rushingSlateBoardPrior`,
   `{priorSeason}`): graded on 2026's games, the coverage fit and the run-direction fit added nothing
