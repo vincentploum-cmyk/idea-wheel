@@ -298,8 +298,8 @@
   `type=Team` is the teams' own row the team objects lack — the row `teamTd`'s factor waits on, not wired: the replay gave that
   factor nothing). Redzone Matchups has no route of its own: the page asks `/NFL/td-matchups?teamWindow=Season<season>&playerYear=<season>`
   (`tdMatchups`, kept already), `/NFL/coverage/teams`, `/NFL/teams` and the schedule (`/NFL/upcoming-slate`, `/nfl/upcoming-games`:
-  not kept, the week is ESPN's). Still without a route: First TD, Alignment (its list showed only the page's `?_rsc=` layout
-  requests), Line Matchups, Hit Rate Matrix, Team Tendencies, Coverage Players.
+  not kept, the week is ESPN's). Alignment Matchups is `alignmentBoard` (`/NFL/alignment/board?season=`, with the all-splits TD Matchups; kept,
+  read by nothing yet). Still without a route: First TD, Line Matchups, Hit Rate Matrix, Team Tendencies, Coverage Players.
   Not pages: `config/leagues`, `savedprops/me`, `me`, `user`, `teams`, `version`, `flags`, `popups` (the app's own).
   Last season's coverage and rushing pages too (`coverageTeamsPrior`, `coverageReceiverSplitsPrior`, `rushingSlateBoardPrior`,
   `{priorSeason}`): graded on 2026's games, the coverage fit and the run-direction fit added nothing
