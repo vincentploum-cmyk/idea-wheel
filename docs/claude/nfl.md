@@ -307,7 +307,8 @@
   not kept. Hit Rate Matrix is the Milestones route kept already (`milestonesReceivingYards`,
   `/NFL/milestones?category=receivingYards`, the page's default; its other categories' spellings not seen). Team Tendencies is
   `/NFL/tendencies?` asked bare (`tendencies`, the page's default season) then `?season=2025` (`tendenciesPrior`); kept, read by
-  nothing yet. Still without a route: Coverage Players.
+  nothing yet. Coverage Players is `coveragePlayers` (`/NFL/coverage/players?season=&position=DB&minSnaps=300`, the page's default
+  filter; other positions and snap floors not seen). **Every page of the cheat-sheet menu has its route now** (2026-11-15).
   Not pages: `config/leagues`, `savedprops/me`, `me`, `user`, `teams`, `version`, `flags`, `popups` (the app's own).
   Last season's coverage and rushing pages too (`coverageTeamsPrior`, `coverageReceiverSplitsPrior`, `rushingSlateBoardPrior`,
   `{priorSeason}`): graded on 2026's games, the coverage fit and the run-direction fit added nothing
