@@ -9,9 +9,9 @@ export const dynamic = 'force-dynamic';
 // best-bet calls), the Model tab's boards replayed, the window predictors (own L5 /
 // L10 / L15 / season, PropFinder L5 / season) beside the model's λ on the same rows,
 // and per slate. `?from=&to=` (defaults: September 1 of the season → today);
-// `?rows=1` adds every graded player-game.
+// `?rows=1` adds every graded player-game. Admin session or the sync token (the daily results workflow).
 export async function GET(request) {
-  const auth = await authorize(request);
+  const auth = await authorize(request, { allowToken: true });
   if (!auth.ok) return auth.response;
   const url = new URL(request.url);
   const from = url.searchParams.get('from') || undefined;

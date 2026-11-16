@@ -404,7 +404,7 @@
   'propfinder', no coverage words without the sheet. The snapshot still leads on a week that stored one.
   `__tests__/nfl-boards.test.jsx` ("the weak spots without a cheat sheet").
 - Routes (`authorize()`, admin session or sync token): `GET /api/nfl/picks?season&week&type|date`,
-  `GET /api/nfl/shuffle?season&week&type&market`, `GET /api/nfl/scorecard?season&from&to`,
+  `GET /api/nfl/shuffle?season&week&type&market`, `GET /api/nfl/scorecard?season&from&to` (or `?date=`: that ET day's games only, `cutToDay`; `rows=1`; session or the sync token),
   `GET|POST|DELETE /api/nfl/sheets`, `POST /api/nfl/refresh?only=schedule|propfinder`
   (anonymous calls refresh ESPN only, throttled), `GET /api/nfl/status`, `GET /api/site/status`.
   `.github/workflows/nfl-data.yml` calls the refresh daily and after the Sunday / Monday /

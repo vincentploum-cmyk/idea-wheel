@@ -1,0 +1,48 @@
+name: Daily results (NHL, NBA, NFL)
+
+# How the model did yesterday in each sport: the three scorecards for one ET date (`?rows=1`), read with the sync
+# token, summarised by tools/audit/yesterday.mjs into the job log and the run's summary page, the JSON kept as an
+# artifact for two weeks. Read-only: a one-day range stores no calibration (NHL buildScorecard, picks scorecardFor).
+# Vincent, 2026-11-16: "see how our model performed across all 3 sports yesterday" — so a session can read it from
+# the run's log without the site's sign-in. Runs after the morning jobs have stored the night's finals and box scores.
+on:
+  schedule:
+    - cron: '37 15 * * *'   # ~10:37 ET (11:37 EDT): after the 9:17 NHL and 9:47 NBA morning jobs
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'ET date to grade (YYYY-MM-DD). Blank = yesterday.'
+        required: false
+  push:
+    branches: ['claude/**']
+    paths: ['.github/workflows/daily-results.yml', 'tools/audit/yesterday.mjs']
+
+jobs:
+  results:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Pull the three scorecards
+        env:
+          NHL_ACTIONS_TOKEN: ${{ secrets.NHL_ACTIONS_TOKEN }}
+        run: |
+          DATE="${{ github.event.inputs.date }}"; [ -z "$DATE" ] && DATE=$(TZ=America/New_York date -d yesterday +%F)
+          echo "DATE=$DATE" >> "$GITHUB_ENV"
+          mkdir -p out
+          get() { local c; c=$(curl -sS --max-time 290 -H "Authorization: Bearer $NHL_ACTIONS_TOKEN" -o "out/$1.json" -w '%{http_code}' "$2" || echo 000); echo "$1: $c $(du -h "out/$1.json" 2>/dev/null | cut -f1)"; [ "$c" = 200 ] || head -c 300 "out/$1.json"; }
+          get nhl "https://ideareels.io/api/nhl/data/scorecard?from=$DATE&to=$DATE&rows=1"
+          get nba "https://ideareels.io/api/nba/scorecard?from=$DATE&to=$DATE&rows=1"
+          get nfl "https://ideareels.io/api/nfl/scorecard?date=$DATE&rows=1"
+      - name: Summarise
+        run: |
+          node tools/audit/yesterday.mjs out "$DATE" | tee out/results.md
+          cat out/results.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: daily-results-${{ env.DATE }}
+          path: out/
+          retention-days: 14

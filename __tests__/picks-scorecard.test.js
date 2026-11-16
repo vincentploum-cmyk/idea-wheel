@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { etDate, asOf, gradeBoard, score, scorePriced, summarize, BUCKETS, EDGE_BUCKETS } from '../lib/picks/scorecard';
+import { etDate, asOf, gradeBoard, score, scorePriced, summarize, cutToDay, BUCKETS, EDGE_BUCKETS } from '../lib/picks/scorecard';
 import { buildBoard, actualFor, statOf } from '../lib/nba/picks';
 import { weekFromKey } from '../lib/nfl/store';
 
@@ -214,5 +214,28 @@ describe('the predictors', () => {
     // NY's table carries points at SF alone: the other stats read no matchup.
     const n = (m, key) => m.by.find((b) => b.key === key).n;
     expect(rep.matchups.map((m) => [m.key, n(m, 'propfinder'), n(m, 'none')])).toEqual([['pts', 1, 0], ['reb', 0, 1], ['ast', 0, 1], ['tpm', 0, 1], ['pra', 0, 1]]);
+  });
+});
+
+describe('one day of a longer slate (the daily results, ?date=)', () => {
+  const slate = {
+    key: '2026-reg-10', label: 'Week 10', games: 3, finals: 2, graded: 2,
+    gameDays: [{ id: 'thu', day: '2026-11-12', final: true }, { id: 'sun', day: '2026-11-15', final: true }, { id: 'mon', day: '2026-11-16', final: false }],
+    plays: [{ game: 'thu', p: 0.6, hit: 1 }, { game: 'sun', p: 0.5, hit: 0 }, { game: 'sun', p: 0.7, hit: 1 }],
+    rungs: [{ game: 'thu', p: 0.4, hit: 0 }, { game: 'sun', p: 0.3, hit: 1 }],
+    pred: [{ game: 'sun', market: 'rec' }, { game: 'thu', market: 'rec' }],
+  };
+  test('keeps only that day’s games, counted again', () => {
+    const cut = cutToDay(slate, '2026-11-15');
+    expect(cut.plays).toHaveLength(2);
+    expect(cut.rungs).toHaveLength(1);
+    expect(cut.pred).toEqual([{ game: 'sun', market: 'rec' }]);
+    expect(cut).toMatchObject({ games: 1, finals: 1, graded: 1, key: '2026-reg-10' });
+  });
+  test('a day with no final grades nothing', () => {
+    const cut = cutToDay(slate, '2026-11-16');
+    expect(cut).toMatchObject({ games: 1, finals: 0, graded: 0 });
+    expect(cut.plays).toHaveLength(0);
+    expect(cutToDay({ ...slate, gameDays: undefined }, '2026-11-15').finals).toBe(0);
   });
 });
