@@ -33,3 +33,10 @@
   routes answer `skipped` when the server already ran that slot well (`scheduledSlotDone`). A manual run always
   runs. The NHL workflow's first step, the beat writers' pages, always runs: gamedaytweets.com refuses the server.
 
+- **Daily results** (`.github/workflows/daily-results.yml`, Vincent, 2026-11-16: "see how our model performed across all
+  3 sports yesterday"): ~10:37 ET, after the morning jobs, it reads the three scorecards for yesterday's ET date with
+  the sync token (`/api/nhl/data/scorecard?from=to=`, `/api/nba/scorecard?from=to=`, `/api/nfl/scorecard?date=`, each
+  `rows=1`) and `tools/audit/yesterday.mjs` prints how the model did into the job log and the run's summary page
+  (per market said / hit / Brier, the board's plays with their result, the NHL best bets and predicted scores); the
+  JSON is an artifact for 14 days. A session reads the result from the run's log, no sign-in needed. `workflow_dispatch`
+  takes `date`. Read-only: a one-day range stores no calibration. All three scorecard routes take the token since.
