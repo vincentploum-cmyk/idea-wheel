@@ -323,3 +323,69 @@ describe('Edmonton, 2026-11-15: the club\'s lineup graphic read short, dated a d
     expect(match('Pet', 'F')).toBeNull();         // three letters: too short
   });
 });
+
+// Vincent, 2026-11-16 ("why are the defenders greyed out?"): Utah's rink with every forward on his line and every
+// defenseman dimmed, placed on the pairs by projected shots. The read gave the four forward lines and no pairs, and the
+// last known lineup, remembered from such a read, had none to lend.
+describe('Utah, 2026-11-16: a read with the forward lines and no defense pairs', () => {
+  const { completeShortPairs } = require('../lib/nhl-data/positions');
+  const P = (name, pos, line, extra = {}) => ({ name, pos, line, id: name.length, ...extra });
+  const F = { crouse: P('Lawson Crouse', 'RW', 3), mcbain: P('Jack McBain', 'C', 3) };
+  const D = (line) => ({ inLineup: false, line });
+  const roster = {   // the defensemen as mergeLineup leaves them: on the roster, no line
+    sergachev: P('Mikhail Sergachev', 'D', null, D(null)), weegar: P('MacKenzie Weegar', 'D', null, D(null)),
+    simashev: P('Dmitriy Simashev', 'D', null, D(null)), marino: P('John Marino', 'D', null, D(null)),
+    durzi: P('Sean Durzi', 'D', null, D(null)), cole: P('Ian Cole', 'D', null, D(null)), kesselring: P('Michael Kesselring', 'D', null, D(null)),
+  };
+  const read = { ...F, ...roster };
+  const pairs = { sergachev: P('Mikhail Sergachev', 'D', 1), marino: P('John Marino', 'D', 1), weegar: P('MacKenzie Weegar', 'D', 2), durzi: P('Sean Durzi', 'D', 2), simashev: P('Dmitriy Simashev', 'D', 3), cole: P('Ian Cole', 'D', 3) };
+
+  test('the pairs come from the first whole lineup, marked carried from it; the extra defenseman stays out', () => {
+    const r = completeShortPairs(read, [{ label: 'the last lineup (2026-11-14)', players: { ...F } }, { label: 'NHL.com', players: { ...F, ...pairs } }]);
+    expect(r.pairs).toEqual([{ from: 'NHL.com', added: ['Mikhail Sergachev', 'John Marino', 'MacKenzie Weegar', 'Sean Durzi', 'Dmitriy Simashev', 'Ian Cole'] }]);
+    expect(r.players.marino).toMatchObject({ pos: 'D', line: 1, inLineup: true, carried: true, carriedFrom: 'NHL.com' });
+    expect(r.players.cole).toMatchObject({ line: 3, inLineup: true, carried: true });
+    expect(r.players.kesselring).toMatchObject({ line: null, inLineup: false });
+    expect(r.players.crouse).toEqual(F.crouse);
+    expect(read.marino.inLineup).toBe(false);   // pure
+  });
+  test('a pair today\'s read already holds stands; only the empty slots are lent, never a defenseman placed today', () => {
+    const partial = { ...read, sergachev: P('Mikhail Sergachev', 'D', 1), weegar: P('MacKenzie Weegar', 'D', 1) };
+    const r = completeShortPairs(partial, [{ label: 'Daily Faceoff', players: pairs }]);
+    expect(r.players.sergachev).toEqual(partial.sergachev);
+    expect(r.players.weegar).toMatchObject({ line: 1 });
+    expect(r.players.weegar.carried).toBeUndefined();
+    expect(r.players.marino).toMatchObject({ inLineup: false });   // his pair is full today
+    // Weegar moved up to the first pair today: his old partner still takes the second, the slot beside him stays open.
+    expect(r.pairs[0].added).toEqual(['Sean Durzi', 'Dmitriy Simashev', 'Ian Cole']);
+  });
+  test('nothing is lent with six placed, with no whole reference, or from one that holds a forward on a pair', () => {
+    const six = { ...read, ...pairs };
+    expect(completeShortPairs(six, [{ label: 'NHL.com', players: pairs }])).toEqual({ players: six, pairs: [] });
+    const twoPairs = { sergachev: pairs.sergachev, marino: pairs.marino, weegar: pairs.weegar, durzi: pairs.durzi };
+    expect(completeShortPairs(read, [{ label: 'NHL.com', players: twoPairs }]).pairs).toEqual([]);
+    const { cole, ...five } = pairs;   // a reference that puts a roster forward on the third pair
+    expect(cole.line).toBe(3);
+    expect(completeShortPairs(read, [{ label: 'NHL.com', players: { ...five, crouse: P('Lawson Crouse', 'D', 3) } }]).pairs).toEqual([]);
+    expect(completeShortPairs(read, [{ label: 'x', players: { ...pairs, cole: { ...pairs.cole, carried: true } } }]).pairs).toEqual([]);
+    expect(completeShortPairs(read, null).pairs).toEqual([]);
+  });
+  test('snapshotPositions: a warm-up tweet with the forward lines only keeps NHL.com\'s pairs, and the hover says so', async () => {
+    const { lineupRead } = require('../lib/nhl-data/lineup-read');
+    const names = ['Troy Terry', 'Leo Carlsson', 'Cutter Gauthier', 'Radko Gudas', 'Jackson LaCombe', 'Pavel Mintyukov', 'Olen Zellweger', 'Jacob Trouba', 'Drew Helleson'];
+    const pos = ['RW', 'C', 'LW', 'D', 'D', 'D', 'D', 'D', 'D'];
+    mockStored.set(PLAYERS_PATH, { players: Object.fromEntries(names.map((name, i) => [200 + i, { id: 200 + i, name, team: 'ANA', pos: pos[i] }])) });
+    mockStored.delete(PF_DEPTH_PATH);
+    mockStored.delete(lastLineupPath('ANA'));
+    const nhlGame = { gameId: 1, away: 'ANA', home: 'OTT', updated: '2026-04-18T20:00:00Z', rows: ['Ducks projected lineup', 'Cutter Gauthier -- Leo Carlsson -- Troy Terry', 'Radko Gudas -- Jackson LaCombe', 'Pavel Mintyukov -- Olen Zellweger', 'Jacob Trouba -- Drew Helleson'] };
+    const gdt = { ANA: { players: { 'troy terry': { name: 'Troy Terry', id: 200, pos: 'LW', line: 1 }, 'cutter gauthier': { name: 'Cutter Gauthier', id: 202, pos: 'RW', line: 1 }, 'leo carlsson': { name: 'Leo Carlsson', id: 201, pos: 'C', line: 1 } }, meta: { at: '2026-04-18T22:35:00Z', date: '2026-04-18', handle: 'w' } } };
+    await snapshotPositions('2026-04-18', schedule, { games: [nhlGame], gdt });
+    const ana = mockStored.get(positionsPath('2026-04-18')).games[1].teams.ANA;
+    expect(ana.source).toBe('gamedaytweets');
+    expect(ana.players['troy terry']).toMatchObject({ pos: 'LW', line: 1 });   // the tweet's forwards stand
+    expect(ana.players['radko gudas']).toMatchObject({ pos: 'D', line: 1, inLineup: true, carried: true, carriedFrom: 'NHL.com' });
+    expect(ana.players['drew helleson']).toMatchObject({ line: 3, inLineup: true });
+    expect(ana.meta.pairsFrom).toEqual([{ from: 'NHL.com', added: ['Radko Gudas', 'Jackson LaCombe', 'Pavel Mintyukov', 'Olen Zellweger', 'Jacob Trouba', 'Drew Helleson'] }]);
+    expect(lineupRead({ source: ana.source, sourceMeta: ana.meta }, '2026-04-18T23:00:00Z').title).toMatch(/Defense pairs the read left out were taken from NHL\.com: Radko Gudas, /);
+  });
+});

@@ -804,6 +804,16 @@
   reads a surname cut short ("Lekk": 4+ letters beginning exactly one roster surname) and initials across an
   apostrophe ("DOC", Drew O'Connor). The same log now prints the Daily Faceoff and RotoWire reads the 3,000-character
   print cut off, and a server restart no longer fails the job on the print.
+  **Defense pairs a read leaves out are taken from a whole lineup** (`completeShortPairs`, after `completeShortLines`
+  in the snapshot; Vincent, 2026-11-16, Utah's rink: "why are the defenders greyed out?"). A tweet or lineup graphic
+  with the four forward lines and no pairs stood as the read, so every defenseman had no slot (`inLineup: false`: the
+  rink's chips at 55% opacity, placed on the pairs by projected shots), and the last known lineup, remembered from such
+  a read, had none to lend; `completeShortLines` takes forward lines only. Now, with fewer than six defensemen placed,
+  the first of the same references (NHL.com's projected lineup, Daily Faceoff's, the last known) holding three whole
+  pairs, each defenseman on today's roster as a D and none carried, fills each pair slot short of two with that pair's
+  defensemen not placed today, `carried` / `carriedFrom` the reference (dashed chips); a defenseman today's read places
+  keeps his slot. `meta.pairsFrom` ([{ from, added }]); the pill's hover: "Defense pairs the read left out were taken
+  from NHL.com: …". Carried players are not remembered (`lineupToRemember`), so a lent pair never becomes the last lineup.
   `nhl-lineups.yml` re-reads lineups (`only=lineups&due=150` on a cron tick) on the rule: from 60 minutes
   before puck drop, every 5 minutes (`HOP_MIN`; 15 until 2026-11-14, when Carolina's line rushes, tweeted 12:38 PM ET for
   a 1 PM game with Svechnikov moved to LW1, reached the rink at 12:50, the last game's lines standing until then; the
