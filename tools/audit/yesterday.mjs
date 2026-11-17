@@ -35,7 +35,7 @@ else {
     line('', '**Strongest best bets**', '', '| Player | Game | Bet | Chance | Result |', '| --- | --- | --- | ---: | --- |');
     for (const r of best) {
       const [stat, min] = STAT[r.best];
-      line(`| ${r.name} (${r.team}) | ${r.venue === 'home' ? `${r.opp} @ ${r.team}` : `${r.team} @ ${r.opp}`} | ${r.best} | ${pct(r.bestProb)} | ${r[stat] >= min ? 'hit' : 'miss'} (${r[stat]} ${stat}) |`);
+      line(`| ${r.name} (${r.team}) | ${r.venue === 'H' || r.venue === 'home' ? `${r.opp} @ ${r.team}` : `${r.team} @ ${r.opp}`} | ${r.best} | ${pct(r.bestProb)} | ${r[stat] >= min ? 'hit' : 'miss'} (${r[stat]} ${stat}) |`);
     }
   }
   const s = nhl.scores;
@@ -63,15 +63,23 @@ function picks(title, card) {
   if (!card.games) { line('No graded games (no final that day).'); return; }
   line(`${card.games} games, ${card.plays} plays graded, ${card.boardPlays} on the board.`, '');
   const row = (label, x) => `| ${label} | ${x?.n || 0} | ${pct(x?.said)} | ${pct(x?.hit)} | ${sgn(x?.diff)} | ${num(x?.brier, 4)} | ${x?.priced ? `${x.priced} / ${sgn(x.ret)}u per 100` : '–'} |`;
-  line('| Set | Plays | Said | Hit | Hit − said | Brier | Priced / return |', '| --- | ---: | ---: | ---: | ---: | ---: | --- |');
-  line(row('Every play', card.all));
-  line(row('On the board', card.board));
-  line('', '| Market | Plays | Said | Hit | Board plays | Board said | Board hit |', '| --- | ---: | ---: | ---: | ---: | ---: | ---: |');
-  for (const m of card.markets || []) if (m.all?.n) line(`| ${m.label} | ${m.all.n} | ${pct(m.all.said)} | ${pct(m.all.hit)} | ${m.board?.n || 0} | ${pct(m.board?.said)} | ${pct(m.board?.hit)} |`);
+  if (card.plays) {
+    line('| Set | Plays | Said | Hit | Hit − said | Brier | Priced / return |', '| --- | ---: | ---: | ---: | ---: | ---: | --- |');
+    line(row('Every play', card.all));
+    line(row('On the board', card.board));
+    line('', '| Market | Plays | Said | Hit | Board plays | Board said | Board hit |', '| --- | ---: | ---: | ---: | ---: | ---: | ---: |');
+    for (const m of card.markets || []) if (m.all?.n) line(`| ${m.label} | ${m.all.n} | ${pct(m.all.said)} | ${pct(m.all.hit)} | ${m.board?.n || 0} | ${pct(m.board?.said)} | ${pct(m.board?.hit)} |`);
+  }
   const ladders = (card.ladders || []).filter((l) => l.main?.n);
   if (ladders.length) {
     line('', '| Ladder (main rung) | Rungs | Said | Hit | Brier |', '| --- | ---: | ---: | ---: | ---: |');
     for (const l of ladders) line(`| ${l.label} | ${l.main.n} | ${pct(l.main.said)} | ${pct(l.main.hit)} | ${num(l.main.brier, 4)} |`);
+  } else if ((card.ladders || []).some((l) => l.blend?.n)) {
+    // No book line stored (no main rung, no plays): every rung of the ladders, the blend against the model alone and
+    // the hit rate alone, and the 20–35% ceiling rungs.
+    if (!card.plays) line('No book lines stored for these games, so no plays: the ladders are graded on every rung.');
+    line('', '| Ladder (every rung) | Rungs | Said | Hit | Brier blend | Brier model | Brier hit rate | Ceiling rungs said / hit |', '| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |');
+    for (const l of card.ladders) if (l.blend?.n) line(`| ${l.label} | ${l.blend.n} | ${pct(l.blend.said)} | ${pct(l.blend.hit)} | ${num(l.blend.brier, 4)} | ${num(l.model?.brier, 4)} | ${num(l.emp?.brier, 4)} | ${l.ceiling?.n ? `${pct(l.ceiling.said)} / ${pct(l.ceiling.hit)} (${l.ceiling.n})` : '–'} |`);
   }
   const board = (card.rows?.plays || []).filter((x) => x.onBoard).sort((a, b) => b.p - a.p);
   if (board.length) {
