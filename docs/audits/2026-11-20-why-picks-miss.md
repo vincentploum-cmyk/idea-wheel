@@ -70,3 +70,22 @@ cannot compare before and after. It shows only where the model stands now. The s
 
 Caveat: five nights; the NHL game sample (33) is small. The NBA findings (2,618 board plays, the same gap every night)
 are solid.
+
+## Shipped (2026-11-20): the NBA book anchor (fix 1)
+
+`lib/picks/calibration.js` learns a second, price-aware fit per market from the same graded nights,
+landed = σ(a + logit(implied) + wModel · (logit(stated) − logit(implied))), and the board prints it for every priced
+play and rung once it beats the stated-only read on the three nights it never saw (notes: `docs/claude/picks-core.md`,
+"The book anchor"). Replayed leave-one-night-out on these five nights with the shipped code:
+
+| Read | Brier | Plays with an edge | Their hit | Their ROI |
+| --- | ---: | ---: | ---: | ---: |
+| As stated (the old board) | 0.2469 | 4,228 | 49% | -14.0% |
+| The price alone | 0.2381 | – | – | – |
+| Anchored | 0.2329 | 269 | 50% | -10.8% |
+
+Learned per market on the five nights: wModel 0 on points, rebounds, assists, threes, PR / PA / PRA, Q1 assists, blocks;
+0.29 turnovers, 0.42 FTA, 0.44 first-3-minute points, 0.33 Q1 rebounds. The margin a ≈ -0.2 to -0.4 everywhere: overs
+landed under their price. It turns on with the next season relearn (the 2:11 AM job), using the whole season, not
+these five nights. Fixes 2 and 3 (the learned read, Q1 / steals / blocks) are covered by it: a market whose read adds
+nothing gets wModel 0 and stops calling plays. Fix 4 (grading unders) is still open.

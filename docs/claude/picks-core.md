@@ -372,6 +372,26 @@ config and keeps its own markets, teams, feeds and slate key:
   /api/nba/scorecard?rows=1` (the sync token reads it too) exports every graded play and rung as stated. Replayed walk-forward
   (`nba-audit.mjs`'s "The calibration, walked forward", `--graded` writes the rows): `docs/audits/2026-10-30-nba-calibration.md`.
   The NFL board passes none: its chances print as stated.
+- **The book anchor** (`calibration.js` `fitAnchor` / `anchorChecked` / `anchored`; Vincent, 2026-11-20: "I'm not hitting
+  anything anymore", then "fix nba"; `docs/audits/2026-11-20-why-picks-miss.md`): on the graded nights 11-15 to 11-19 the
+  board said 65-67% and landed 46-50% every night, and with the price known the stated chance carried a weight of 0.05
+  (negative on points / rebounds / assists / threes). The stated-only fit cannot learn that, so a priced chance gets a
+  second fit per market and side (plays) and per market (priced rungs): landed = σ(a + logit(implied) + wModel ·
+  (logit(stated) − logit(implied))), the price's own weight held at 1 (free, it drifted 0.3-1.5 a market on four
+  nights and its "edges" landed 43%), wModel held to 0-1 (a read pointing the wrong way is the price alone), a ridge
+  toward the book (`ANCHOR_RIDGE` 2), CAL_MIN chances, prices past `STEEP_IMPLIED` left out. It prints only after
+  beating the stated-only read (calibrated where that fit is used) on the last `CHECK_NIGHTS` nights it never saw
+  (`check: { stated, anchored }`, `use`). Stored beside the other fits as `reads.anchor = { plays, rungs }` (so
+  `sameCalibration` sees it), learned by the same `scorecardFor(…, { save: true })` / `relearnCalibration`. Applied by
+  `playChance(cal, market, side, stated, implied)` (the anchor where it holds and there is a price, else the stated-only
+  fit) and `ladderOf(…, { anchor })` (`rungAnchor`; a rung with odds, else `cal`); the shuffle passes the same. An
+  anchored rung carries `anchored: true` and **no under read**: `evUnder` null and `edgeRows` reads its over alone, since
+  the complement hands the over's learned margin to the under, a side no graded night checks (the first board test showed a
+  +0.2-point under "edge" at -110 / -110). `board.calibration.anchored` = the keys printed through it. Replayed on the five
+  nights (each night left out in turn, the real `fitAnchor` per market): Brier 0.2469 as stated, 0.2381 the price, 0.2329
+  anchored; every 10-point bucket within 1-3 points of what landed; the plays with an edge went from 4,228 (the old
+  rule) to 269. Those 269 still lost (-10.8%): overs landed about 7 points under their price on those nights, so expect
+  a much thinner best-bets list. `__tests__/picks-book-anchor.test.js`.
 - `propfinder.js` (`makePropfinder`): `/<LEAGUE>/teams` and `/<LEAGUE>/players?teamIds=…&hydrate=stats&withOddsOnly=true`
   through `pfGetJson` in `lib/nhl-data/propfinder-api.js`. The NHL endpoints were checked; the
   NFL / NBA game-row field names have not been seen yet, so every stat is read through the
