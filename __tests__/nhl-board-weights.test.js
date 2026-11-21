@@ -107,3 +107,22 @@ describe('the board’s weights, learned from the graded nights', () => {
     expect(verdictText(null, 'sog')).toBeNull();
   });
 });
+
+describe('the verdict judges the run as it is now (LEARN.recentNights)', () => {
+  // A season whose run read the truth for its first 20 nights and lost it for the last 14 (as the run's λ shots after
+  // its 2026-11-07 and 2026-11-13 changes): the study is the truth on the recent nights.
+  const dated = (rows, shift) => rows.map((r) => { const d = new Date(`${r.date}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + shift); return { ...r, date: d.toISOString().slice(0, 10) }; });
+  const rows = [...season({ nights: 20, perNight: 200, truthS: 0, seed: 11 }), ...dated(season({ nights: 14, perNight: 200, truthS: 1, seed: 12 }), 20)];
+
+  test('only the newest nights are scored, the calibration still fitted on every night before', () => {
+    expect(LEARN.recentNights).toBe(14);
+    expect(walkForward(rows, 'sog', 1, LEARN).nights).toBe(14);
+    expect(walkForward(rows, 'sog', 1, { warmNights: LEARN.warmNights }).nights).toBe(34 - LEARN.warmNights);
+  });
+
+  test('the shots move to the study once it is the better read on the recent nights', () => {
+    const v = learnWeights(rows, { defaults: { w: 0, wG: 1 } });
+    expect(v.stats.sog.share).toBeGreaterThanOrEqual(0.75);
+    expect(v.stats.sog.moved).toBe(true);
+  });
+});

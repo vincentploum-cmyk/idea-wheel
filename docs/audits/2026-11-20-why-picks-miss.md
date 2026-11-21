@@ -89,3 +89,13 @@ Learned per market on the five nights: wModel 0 on points, rebounds, assists, th
 landed under their price. It turns on with the next season relearn (the 2:11 AM job), using the whole season, not
 these five nights. Fixes 2 and 3 (the learned read, Q1 / steals / blocks) are covered by it: a market whose read adds
 nothing gets wModel 0 and stops calling plays. Fix 4 (grading unders) is still open.
+
+## Shipped (2026-11-21): NHL, the board's shots read judged on recent nights
+
+The NHL findings above were the run's own figures. The board prints goals off the study's λ (`wG` 1), and that read was
+already calibrated on these nights, so fix 5 (goals level) is not needed on the board. The study's λ shots, read through the
+calibration, beat the run's at every height, but the learned verdict scored the whole season, mostly an older run.
+`LEARN.recentNights` = 14 (`lib/nhl-data/board-weights-pure.js`) scores the newest two weeks, so the board can move to the
+study's shots at the next season-range scorecard build (the morning refresh, or opening the History tab). Fix 7 (store
+SOG / anytime prices) is still open: no skater price reached any graded row on 11-15..19, and the pull's stored `sample`
+(`data/propfinder/skater-props/<date>.json`) has to be read behind the sign-in to see why.
