@@ -569,6 +569,12 @@
   seed has none) — and rides on the picks and shuffle payloads as `boardWeights` { w, wG, from, learned, calibrationFits }.
   The Best bets head names it ("shots the run's λ, goals the study's λ (learned on N graded skater-games)", every share's
   score on the hover, `BoardRead` in `PicksPanel.jsx`), the shuffle's note the same (`shareText`, `verdictText`).
+  **Only the newest `LEARN.recentNights` = 14 nights are scored** (Vincent, 2026-11-21: "fix nhl"; the calibration a scored
+  night reads still fitted on every night before it): the run's λ shots changed on 11-07 (minutes) and 11-13 (line move), so a
+  season-long score judged a run the board no longer makes. On 11-15..19, each night left out in turn and read through the
+  calibration, the study's λ shots beat the run's at every height (2+ 0.2118 vs 0.2150, 3+ 0.1479 vs 0.1520, 4+ 0.0772 vs
+  0.0778 Brier) and the study's goals were already calibrated (1+ G said 15 / 24 / 33%, landed 14 / 23 / 42%); the run's own
+  λ goals ran 32% low (0.122 a skater against 0.179), which the board does not read (`wG` 1). `docs/audits/2026-11-20-why-picks-miss.md`.
   `tools/predictors/calibration-seed.mjs --learn` runs the verdict on a scorecard export and prints the table. No export was
   readable from the container when this shipped, so no verdict is in the seed: the board stays on the defaults until the
   site's next scorecard build judges the reads. `__tests__/nhl-board-weights.test.js` (synthetic seasons where one read is
