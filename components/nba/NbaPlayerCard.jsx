@@ -1,5 +1,6 @@
 'use client';
 
+import { woBadge, woLine } from '@/lib/picks/without-glance';
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { MARKETS, statOf } from '@/lib/nba/markets';
 import { teamLogo, teamName, seasonTag } from '@/lib/nba/teams';
@@ -363,6 +364,7 @@ function Card({ req, date, onClose }) {
         {err ? <div className="nhlx-alert" style={{ margin: 16 }}>⚠ Couldn’t load this player: {err}</div> : null}
         <div className="nhlx-pc-body">
           <section className="nhlx-pc-pane nhlx-pc-left">
+            {bp?.woSplit && !bp.out ? <p className={`ir-pc-woglance${woBadge(bp.woSplit) ? ` is-${woBadge(bp.woSplit).tone}` : ''}`}>{woLine(bp.woSplit)}</p> : null}
             <div className="nhlx-pc-markets" role="tablist" aria-label="Market">
               {TABS.filter(([k]) => MARKETS[k]).map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={market === k} className={`nhlx-pc-market${market === k ? ' is-active' : ''}`} onClick={() => setMarket(k)}>{l} <Pct rate={hitRate(spanGames, k, lineFor(k)).rate} /></button>)}
             </div>

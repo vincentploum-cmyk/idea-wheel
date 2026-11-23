@@ -443,6 +443,16 @@
   ceiling sums the lifted rates (`ceilingOut`); the bullet in `picks-core.md`. 2025-26's out nights had run 0.73 points low;
   points 4.88 → 4.84, PRA 6.30 → 6.22. Measured and not shipped: the second option taking more than his share (the box
   scores say less: the lift is biggest for the small shares, through minutes), the opponent's absences.
+- **The with / without glance** (Vincent, 2026-11-23, with the card's "With and without each teammate" table showing Grimes
+  at 26 → 37 minutes and 8.0 → 25.5 points in the 4 games Reaves sat: "I need to quickly see this"): `withoutSplit` in
+  `board.js` puts `woSplit` = { names, gpWith, gpWithout, stats: { min | pts | reb | ast | tpm | pra: { with, without, gap } },
+  big } on every side player with a key teammate out tonight (`withoutOf`, read whether or not the cocktail's
+  `withoutSplit` is on: the NBA's recipe has it off), this season's games only; `big` at `WO_GLANCE` (2+ games without and a
+  move of 4+ minutes or 4+ points either way). The court chip carries a badge beside the soft-spot one, "w/o Reaves +11.3
+  min" (the minutes when they move 4+, else the points; green up, red down; `woBadge` in `lib/picks/without-glance.js`), the
+  whole split on its hover; the player card opens with the same line (`woLine`, `ir-pc-woglance`). A glance only, no panel
+  (the 2026-10-27 call against an injury-splits table stands): the projection still takes the absence through the
+  teammates-out lift. `__tests__/nba-without-glance.test.js`.
 - **The outlier nights** (Vincent, 2026-11-07: "we need to start calibrating the nba model … players were projected by us to
   get 4 or 5 rebounds but they actually got 10+"; `docs/audits/2026-11-07-nba-outliers.md`): the rebounds', assists', threes',
   steals' and blocks' rungs read a count's tail (the negative binomial with the ladder's centre and spread: a 4.5-rebound

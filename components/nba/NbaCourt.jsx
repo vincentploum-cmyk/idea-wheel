@@ -12,6 +12,7 @@ import { asStated } from '@/lib/picks/calibration';
 import SidePicks from '@/components/picks/SidePicks';
 import { useNbaPlayerCard } from './NbaPlayerCard';
 import { playerTopSpot, topSpotText } from '@/lib/nba/soft-spots';
+import { woBadge } from '@/lib/picks/without-glance';
 
 // The matchup view of an NBA game, the NHL rink's basketball twin: for each team a half court
 // (50 × 47 ft, the basket at the top) with its players placed by position (PF · C · SF under the
@@ -244,6 +245,8 @@ function Chip({ p, metric, height, read, sport, team, opp, venue, final, allowed
   // The top-five soft spot for the picked stat (a regular facing one of the SOFT_TOP defenses that give up the most at his
   // spot this season, lib/nba/soft-spots.js; Vincent, 2026-11-10, "We should do the same with nba"): a green badge.
   const top = playerTopSpot(p, seasonAllowed, metric);
+  // A teammate out tonight who moved his minutes or points 4+ in the games he sat (board.js withoutSplit; Vincent, 2026-11-23).
+  const wo = p.out ? null : woBadge(p.woSplit);
   if (play?.form === 'hot') flags.push(['hot', `Hot: ${pct(play.rates.l5)} of his last 5 over this line`, ICON.hot]);
   // The top-five spot has its own badge since 2026-11-12 ("PG #2", green), so the flame means a hot streak only.
   const topTitle = top ? `${topSpotText(top, opp)} (colour only; the board’s projection already reads the opponent)` : null;
@@ -265,7 +268,7 @@ function Chip({ p, metric, height, read, sport, team, opp, venue, final, allowed
         <i className="nhlx-rk-num" title={p.depth ? `${p.slot}${p.depth} on PropFinder’s depth chart` : 'roster position'}>{p.slot && p.depth ? `${p.slot}${p.depth}` : p.pos || '—'}</i>
       </span>
       <span className="nhlx-rk-meta">
-        <b className="nhlx-rk-name">{flags.length ? <span className="nhlx-pk-flags nhlx-rk-flags">{flags.map(([k, t, icon]) => <i key={k} className={`nhlx-pk-flag is-${k}`} title={t} aria-label={t}>{icon}</i>)}</span> : null}{top ? <i className="nhlx-rk-slot is-soft nhlx-rk-top" title={topTitle} aria-label={topTitle}>{top.pos} #{top.rank}</i> : null}<Q1Badge p={p} metric={metric} /><span className="nhlx-rk-nm">{shortName(p.player)}</span></b>
+        <b className="nhlx-rk-name">{flags.length ? <span className="nhlx-pk-flags nhlx-rk-flags">{flags.map(([k, t, icon]) => <i key={k} className={`nhlx-pk-flag is-${k}`} title={t} aria-label={t}>{icon}</i>)}</span> : null}{top ? <i className="nhlx-rk-slot is-soft nhlx-rk-top" title={topTitle} aria-label={topTitle}>{top.pos} #{top.rank}</i> : null}{wo ? <i className={`nhlx-rk-slot is-${wo.tone} nhlx-rk-wo`} title={wo.title} aria-label={wo.title}>{wo.text}</i> : null}<Q1Badge p={p} metric={metric} /><span className="nhlx-rk-nm">{shortName(p.player)}</span></b>
         <span className="nhlx-rk-projs" aria-label="Projected tonight">{projs.map(([k, v]) => <span key={k} className={k === metric ? 'is-on' : ''}><em>{v != null ? num(v) : '—'}</em>{STAT_SHORT[k] || k}</span>)}</span>
         {bar}
       </span>
