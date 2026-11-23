@@ -1221,6 +1221,8 @@ a.nhlx-rk-lines-pill:hover { text-decoration: underline; }
 .nhlx-rk-slot.is-tough { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-line); }
 /* The with / without badge (lib/picks/without-glance.js): a teammate out tonight moved his minutes or points 4+. */
 .nhlx-rk-wo { white-space: nowrap; }
+/* The NHL back-to-back badge beside a team's name (components/nhl/flags.jsx B2bBadge). */
+.nhlx-b2b { font-size: 11px; padding: 0 5px; vertical-align: 2px; cursor: help; }
 /* The Teammates out tab (components/nba/NbaOutBoosts.jsx): with → without per stat, the gap under it. */
 .ir-ob-filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 6px 16px; margin: 8px 0 10px; }
 .ir-ob-filters .nhlx-pc-check { flex: none; margin: 0; }

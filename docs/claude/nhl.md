@@ -899,6 +899,12 @@
   his shots and 30% of his goals per game, 10+ games behind the read).
   The PropFinder-style table pieces (`PfTable`, `SortTh`, `PosBadge`, `Tag`, `UnderlineTabs`,
   `Sel`) live in `pf-ui.jsx` and dress the slate's skater table and League's PropFinder skaters.
+- **The B2B badge** (Vincent, 2026-11-23: "Can we add a b2b badge next to the team name for nhl?"): each slate side carries
+  `b2b` (`playedLastNight` in `goalies-pure.js`: the goalie book's last game is the day before the date, the same read
+  `likelyStarter` makes); `B2bBadge` in `flags.jsx` draws an amber "B2B" beside the team in the Matchups game head and the
+  rink head, the hover saying what it is worth (its skaters about −2.6%, `SHOTS_FIT.b2b`; on the road the skaters facing it
+  about +3.7%, at home nothing steady: `docs/audits/2026-11-23-nhl-tired-defense.md`; the backup often starts). Colour
+  only: the model's numbers are as before. `__tests__/nhl-b2b-badge.test.js`.
 - Team pages deep-link as `#teams/BUF` (`components/nhl/links.jsx`: `teamHref`, `teamFromHash`, `TeamLink`);
   every team logo / name on Matchups (game head, verdict heads, rink heads, PropFinder defense heads,
   skater-table heads) is a `TeamLink`, and picking a team on the Teams tab writes the hash.
