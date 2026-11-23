@@ -452,7 +452,11 @@
   min" (the minutes when they move 4+, else the points; green up, red down; `woBadge` in `lib/picks/without-glance.js`), the
   whole split on its hover; the player card opens with the same line (`woLine`, `ir-pc-woglance`). A glance only, no panel
   (the 2026-10-27 call against an injury-splits table stands): the projection still takes the absence through the
-  teammates-out lift. `__tests__/nba-without-glance.test.js`.
+  teammates-out lift. **Tested and not moved into the projection** (Vincent: "Test it yes";
+  `docs/audits/2026-11-23-nba-own-without.md`): his own average without the out players, blended into the board's read at
+  n / (n + k), is best at k = 32 (noise-level) on points, rebounds and minutes and not at all on assists and threes over
+  2024-25 to now; splits of +8 points said 18-22 and landed about 15, the board said 16. A big split's line ends "Splits
+  this big have landed near the board's projection, not this average." `__tests__/nba-without-glance.test.js`.
 - **The outlier nights** (Vincent, 2026-11-07: "we need to start calibrating the nba model … players were projected by us to
   get 4 or 5 rebounds but they actually got 10+"; `docs/audits/2026-11-07-nba-outliers.md`): the rebounds', assists', threes',
   steals' and blocks' rungs read a count's tail (the negative binomial with the ladder's centre and spread: a 4.5-rebound

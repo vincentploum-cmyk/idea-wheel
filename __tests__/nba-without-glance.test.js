@@ -13,7 +13,8 @@ describe('the with / without glance', () => {
     expect(b.tone).toBe('soft');
     expect(b.title).toContain('Without Reaves (4 games this season): 37.3 min · 25.5 pts · 6 reb');
     expect(b.title).toContain('With (11 games): 26 min · 8 pts · 2.5 reb');
-    expect(b.title).toContain('Gap: +11.3 min · +17.5 pts · +3.5 reb');
+    expect(b.title).toContain('Gap: +11.3 min · +17.5 pts · +3.5 reb.');
+    expect(b.title).toContain('landed near the board');
   });
 
   test('points lead when the minutes hardly move; a drop is red; a small split has no badge', () => {
