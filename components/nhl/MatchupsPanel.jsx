@@ -5,7 +5,7 @@ import { Headshot, TeamLogo, rankClass } from './media';
 import { usePlayerCard, FormChip } from './PlayerCard';
 import { SlateDateContext } from './player-card-context';
 import { PfTable, PosBadge, SortTh, Tag } from './pf-ui';
-import { Flags } from './flags';
+import { Flags, B2bBadge } from './flags';
 import { TeamLink } from './links';
 import { oppClass } from './MoneyPuck';
 import { Rink, RinkLegend } from './Rink';
@@ -381,7 +381,7 @@ export default function MatchupsPanel() {
             <article key={g.id} className={`nhlx-mu-game${i === 0 ? ' is-first' : ''}`} id={`game-${g.id}`}>
               <div className="nhlx-mu-game-head">
                 <TeamLink abbr={g.away} logo={34} />
-                <b><TeamLink abbr={g.away}>{g.away}</TeamLink> @ <TeamLink abbr={g.home}>{g.home}</TeamLink></b>
+                <b><TeamLink abbr={g.away}>{g.away}</TeamLink>{' '}<B2bBadge team={g.away} b2b={g.sides?.find((x) => x.team === g.away)?.b2b} venue="A" /> @ <TeamLink abbr={g.home}>{g.home}</TeamLink>{' '}<B2bBadge team={g.home} b2b={g.sides?.find((x) => x.team === g.home)?.b2b} venue="H" /></b>
                 <TeamLink abbr={g.home} logo={34} />
                 <small>
                   {g.log?.score

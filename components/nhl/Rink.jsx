@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Flags, ICON, TopSpotBadge } from './flags';
+import { Flags, ICON, TopSpotBadge, B2bBadge } from './flags';
 import { SOFT_TOP } from '@/lib/nhl-data/picks-pure';
 import { Headshot, TeamLogo, headshotUrl } from './media';
 import { TeamLink } from './links';
@@ -462,7 +462,7 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
       <div className="nhlx-rk-head">
         <TeamLink abbr={side.team} logo={28} />
         <div>
-          <b><TeamLink abbr={side.team}>{side.team}</TeamLink> <small>{side.venue === 'H' ? 'home' : 'away'}{score ? ` · final ${score[0]}–${score[1]} vs ${side.opp} · chips show the game's shots, goals, assists` : ' · attacking upwards'}</small></b>
+          <b><TeamLink abbr={side.team}>{side.team}</TeamLink> <B2bBadge team={side.team} b2b={side.b2b} venue={side.venue} /> <small>{side.venue === 'H' ? 'home' : 'away'}{score ? ` · final ${score[0]}–${score[1]} vs ${side.opp} · chips show the game's shots, goals, assists` : ' · attacking upwards'}</small></b>
           {/* The chips' source stays in the title attribute: the head shows the team, where the lines came from and the softest line. */}
           <LineupSource read={lineup} />
           <SoftestLine side={side} metric={metric} />

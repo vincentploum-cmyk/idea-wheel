@@ -59,3 +59,15 @@ export function TopSpotBadge({ c, stat }) {
   const title = `Top-${SOFT_TOP} soft spot: ${topSpotText(c, stat)} (colour only; the board’s number already reads the opponent)`;
   return <i className="nhlx-rk-slot is-soft nhlx-rk-top" title={title} aria-label={title}>{c.pos} #{t.rank}</i>;
 }
+
+/**
+ * The back-to-back badge beside a team's name (Vincent, 2026-11-23: "Can we add a b2b badge next to the team name for
+ * nhl?"): "B2B" when the team played last night (the slate side's `b2b`, goalies-pure.js playedLastNight). The hover says
+ * what it is worth: its own skaters shoot about 2.6% less (the study λ's SHOTS_FIT.b2b); on the road, the skaters facing it
+ * shoot about 3.7% more (docs/audits/2026-11-23-nhl-tired-defense.md; at home nothing steady). `venue` 'H' | 'A'.
+ */
+export function B2bBadge({ team, b2b, venue = null }) {
+  if (!b2b) return null;
+  const title = `${team} played last night: the 2nd game of a back-to-back. Its skaters shoot about 2.6% less${venue === 'A' ? '; on the road, so the skaters facing it shoot about 3.7% more (2024-25 to now)' : venue === 'H' ? '; at home, which has not moved the shots it gives up' : ''}. The backup goalie often starts.`;
+  return <i className="nhlx-rk-slot is-mid nhlx-b2b" title={title} aria-label={title}>B2B</i>;
+}
