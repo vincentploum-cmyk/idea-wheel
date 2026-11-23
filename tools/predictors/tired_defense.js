@@ -99,3 +99,11 @@ for (const [name, flt] of [['defense on B2B', (r) => r.oppB2B], ['defense rested
   for (const [r, i] of R) { const m = Math.exp(off[i] + base(r).reduce((s, x, j) => s + x * fb[j], 0)); a += r.sog; e += m; h3 += r.sog >= 3; e3 += pois(m, 3); h4 += r.sog >= 4; e4 += pois(m, 4); }
   console.log(`  ${name}: shots ×${(a / e).toFixed(3)} of expected · 3+ ${(e3 / R.length * 100).toFixed(1)}% expected → ${(h3 / R.length * 100).toFixed(1)}% · 4+ ${(e4 / R.length * 100).toFixed(1)}% → ${(h4 / R.length * 100).toFixed(1)}% (n ${R.length})`);
 }
+console.log('\nPer season, the defense on a B2B with his team rested · on the road · both:');
+for (const se of [...new Set(all.map((r) => r.season))]) {
+  const R = all.filter((r) => r.season === se); const yy = R.map((r) => r.sog); const oo = R.map((r) => lg(r.R));
+  const f = fit(R.map((r) => [...base(r), r.oppB2B * (1 - r.ownB2B), r.oppB2B * r.ownB2B]), yy, oo);
+  const g = fit(R.map((r) => [...base(r), r.oppB2B * (1 - r.oppHome), r.oppB2B * r.oppHome]), yy, oo);
+  const cv = cvGain(R, base, (r) => [...base(r), r.oppB2B * (1 - r.ownB2B)]);
+  console.log(`  ${se}: tired v rested ×${Math.exp(f.b[4]).toFixed(3)} (z ${(f.b[4] / f.se[4]).toFixed(1)}), both tired ×${Math.exp(f.b[5]).toFixed(3)} · tired on the road ×${Math.exp(g.b[4]).toFixed(3)} (z ${(g.b[4] / g.se[4]).toFixed(1)}), at home ×${Math.exp(g.b[5]).toFixed(3)} · CV of tired-v-rested ${cv.toFixed(2)} per 1,000`);
+}
