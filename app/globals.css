@@ -1221,6 +1221,21 @@ a.nhlx-rk-lines-pill:hover { text-decoration: underline; }
 .nhlx-rk-slot.is-tough { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-line); }
 /* The with / without badge (lib/picks/without-glance.js): a teammate out tonight moved his minutes or points 4+. */
 .nhlx-rk-wo { white-space: nowrap; }
+/* The Teammates out tab (components/nba/NbaOutBoosts.jsx): with → without per stat, the gap under it. */
+.ir-ob-filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 6px 16px; margin: 8px 0 10px; }
+.ir-ob-filters .nhlx-pc-check { flex: none; margin: 0; }
+.ir-ob-table + .ir-bd-legend, .nhlx-pk-table-wrap + .ir-bd-legend { margin-top: 12px; }
+.ir-ob-filters small { margin-left: auto; }
+.ir-ob-table td.ir-ob-player { min-width: 150px; }
+.ir-ob-table td.ir-ob-player small { display: block; font-size: 12px; color: var(--muted); line-height: 1.35; }
+.ir-ob-table td.ir-ob-player small.ir-ob-out { color: var(--heading); }
+.ir-ob-table td.ir-ob-cell span { display: block; white-space: nowrap; color: var(--heading); }
+.ir-ob-table td.ir-ob-cell span b { color: var(--heading); }
+.ir-ob-table td.ir-ob-cell small { display: block; font-weight: 700; color: var(--muted); }
+.ir-ob-table td.ir-ob-cell.is-soft small { color: var(--ok-fg); }
+.ir-ob-table td.ir-ob-cell.is-tough small { color: var(--bad-fg); }
+.ir-ob-table td.ir-ob-cell.is-soft { background: var(--ok-bg); }
+.ir-ob-table td.ir-ob-cell.is-tough { background: var(--bad-bg); }
 .nhlx-rk-legend i.nhlx-rk-slot, .nhlx-rk-line .nhlx-rk-slot { width: auto; height: auto; font-size: 11px; padding: 0 5px; vertical-align: 0; }
 .nhlx-rk-legend i.nhlx-rk-slot { margin-right: 6px; }
 /* The PP badge (lib/nhl-data/pp-units.js): RotoWire's power-play unit with the minutes tonight's power plays give it; green = a lot. */

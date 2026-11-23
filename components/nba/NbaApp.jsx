@@ -12,6 +12,7 @@ import NbaSources from './NbaSources';
 import NbaSearch from './NbaSearch';
 import NbaFirstBasket from './NbaFirstBasket';
 import NbaBigGames from './NbaBigGames';
+import NbaOutBoosts from './NbaOutBoosts';
 import { NbaGames, NbaStatList, useNbaShuffles } from './NbaGames';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '');
@@ -30,6 +31,7 @@ const TABS = [
   ['tpm', 'Threes'],
   ['pra', 'PRA'],
   ['big', 'Big games'],
+  ['out', 'Teammates out'],
   ['firstbasket', 'First basket'],
   ['guide', 'Cheat sheet'],
   ['sources', 'Data sources'],
@@ -175,6 +177,16 @@ export default function NbaApp({ email }) {
               {head({ games: true })}
               {err ? <div className="nhlx-alert">{err}</div> : null}
               {mounted('big') ? (board ? <NbaBigGames board={board} game={gameId || null} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null) : null}
+            </section>
+          </div>
+        </section>
+
+        <section className="nhlx-bench nhlx-tabpanel ir-nfl-panel" id="out" role="tabpanel" aria-labelledby="tab-out" hidden={tab !== 'out'}>
+          <div className="nhlx-wrap">
+            <section className="nhlx-pk" aria-label="Teammates out">
+              {head({ games: true })}
+              {err ? <div className="nhlx-alert">{err}</div> : null}
+              {mounted('out') ? (board ? <NbaOutBoosts board={board} game={gameId || null} /> : !err ? <div className="nhlx-empty">Loading the slate…</div> : null) : null}
             </section>
           </div>
         </section>

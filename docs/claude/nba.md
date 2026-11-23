@@ -443,20 +443,23 @@
   ceiling sums the lifted rates (`ceilingOut`); the bullet in `picks-core.md`. 2025-26's out nights had run 0.73 points low;
   points 4.88 → 4.84, PRA 6.30 → 6.22. Measured and not shipped: the second option taking more than his share (the box
   scores say less: the lift is biggest for the small shares, through minutes), the opponent's absences.
-- **The with / without glance** (Vincent, 2026-11-23, with the card's "With and without each teammate" table showing Grimes
-  at 26 → 37 minutes and 8.0 → 25.5 points in the 4 games Reaves sat: "I need to quickly see this"): `withoutSplit` in
-  `board.js` puts `woSplit` = { names, gpWith, gpWithout, stats: { min | pts | reb | ast | tpm | pra: { with, without, gap } },
-  big } on every side player with a key teammate out tonight (`withoutOf`, read whether or not the cocktail's
-  `withoutSplit` is on: the NBA's recipe has it off), this season's games only; `big` at `WO_GLANCE` (2+ games without and a
-  move of 4+ minutes or 4+ points either way). The court chip carries a badge beside the soft-spot one, "w/o Reaves +11.3
-  min" (the minutes when they move 4+, else the points; green up, red down; `woBadge` in `lib/picks/without-glance.js`), the
-  whole split on its hover; the player card opens with the same line (`woLine`, `ir-pc-woglance`). A glance only, no panel
-  (the 2026-10-27 call against an injury-splits table stands): the projection still takes the absence through the
-  teammates-out lift. **Tested and not moved into the projection** (Vincent: "Test it yes";
-  `docs/audits/2026-11-23-nba-own-without.md`): his own average without the out players, blended into the board's read at
-  n / (n + k), is best at k = 32 (noise-level) on points, rebounds and minutes and not at all on assists and threes over
-  2024-25 to now; splits of +8 points said 18-22 and landed about 15, the board said 16. A big split's line ends "Splits
-  this big have landed near the board's projection, not this average." `__tests__/nba-without-glance.test.js`.
+- **Teammates out** (`#out`, `components/nba/NbaOutBoosts.jsx`, `lib/picks/out-boosts.js`; Vincent, 2026-11-23, with the
+  card's "With and without each teammate" table showing Grimes at 26 → 37 minutes and 8.0 → 25.5 points in the 4 games
+  Reaves sat: "I need to quickly see this", then "I don't see the badge. I need a separate view with all players that have
+  an advantage bc another player is out"): `outBoostsOf` (called at the end of `buildBoard`, `board.outBoosts`) pairs every
+  player out tonight (each side's `out`) with every active, non-idle teammate and reads the teammate's season with and
+  without him off the pull's logs (`boostOf`: this season's REG games he played, split by `gamesPlayed` of the out player,
+  3+ games together, 1+ without; min / pts / reb / ast / tpm / pra), the card's figures; each pair one row with tonight's
+  `proj` (the board's `ranges` exp and line). The tab sorts by the gain in minutes, points, rebounds, assists or PRA, with
+  "Gains only" and "2+ games without him" on by default and the head's game dropdown; a row opens the card. The chip's
+  badge ("w/o Reaves +11.3 min", `woBadge` in `lib/picks/without-glance.js`, beside the soft-spot badge) reads each side
+  player's biggest `big` pair (`woSplit`: 2+ games without, 4+ minutes or points either way, `OUT_BOOST`) and the card
+  opens with its line (`woLine`). The first version read the board's `withoutOf`, which the NBA's recipe never feeds
+  (`withoutSplit: false`), so no badge showed; the pairs come from the logs directly since. **Not in the projection**
+  (Vincent: "Test it yes"; `docs/audits/2026-11-23-nba-own-without.md`): his own average without the out players,
+  blended into the board's read at n / (n + k), is best at k = 32 (noise-level) on points, rebounds and minutes and not at
+  all on assists and threes over 2024-25 to now; splits of +8 points said 18-22 and landed about 15, the board said 16. The
+  tab's legend and a big split's line say so. `__tests__/nba-without-glance.test.js`.
 - **The outlier nights** (Vincent, 2026-11-07: "we need to start calibrating the nba model … players were projected by us to
   get 4 or 5 rebounds but they actually got 10+"; `docs/audits/2026-11-07-nba-outliers.md`): the rebounds', assists', threes',
   steals' and blocks' rungs read a count's tail (the negative binomial with the ladder's centre and spread: a 4.5-rebound

@@ -1,7 +1,13 @@
+/**
+ * @jest-environment node
+ */
 import { describe, expect, test } from '@jest/globals';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import NbaOutBoosts from '../components/nba/NbaOutBoosts';
 import { woBadge, woLine } from '../lib/picks/without-glance';
 import { buildBoard } from '../lib/nba/picks';
-import { WO_GLANCE } from '../lib/picks/board';
+import { OUT_BOOST } from '../lib/picks/out-boosts';
 
 // Vincent, 2026-11-23, of Grimes with Reaves out (26 → 37 minutes, 8.0 → 25.5 points over 4 games): "I need to quickly see this".
 describe('the with / without glance', () => {
@@ -43,6 +49,17 @@ describe('the with / without glance', () => {
     expect(p.woSplit).toMatchObject({ names: ['Reaves'], gpWithout: 4, gpWith: 11, big: true });
     expect(p.woSplit.stats.min).toEqual({ with: 26, without: 37, gap: 11 });
     expect(p.woSplit.stats.pts).toEqual({ with: 8, without: 25, gap: 17 });
-    expect(WO_GLANCE.games).toBe(2);
+    expect(OUT_BOOST.big.games).toBe(2);
+    const row = b.outBoosts.find((x) => x.key === 'quentin grimes');
+    expect(row).toMatchObject({ team: 'LAL', out: { name: 'Austin Reaves', status: 'Out' }, gpWith: 11, gpWithout: 4, big: true });
+    expect(row.stats.pts).toEqual({ with: 8, without: 25, gap: 17 });
+    expect(row.proj.pts.line).toBe(12.5);
+    // The Teammates out tab lists him, the gain first, with the figures the card shows.
+    const html = renderToStaticMarkup(React.createElement(NbaOutBoosts, { board: b }));
+    expect(html).toContain('Quentin Grimes');
+    expect(html).toContain('Austin Reaves');
+    expect(html).toContain('26 → <b>37</b>');
+    expect(html).toContain('8 → <b>25</b>');
+    expect(html).toContain('+11');
   });
 });
