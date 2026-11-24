@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { teamLogo, teamName, teamAbbrFromText } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
-import { tierBoard, ladderBoard, withEveryone, NBA_BOARDS } from '@/lib/picks/boards';
+import { tierBoard, ladderBoard, withEveryone, matchupOf, NBA_BOARDS } from '@/lib/picks/boards';
+import { Matchup } from '@/components/picks/Boards';
 import { AllowedTable, windowsOf, tableFor, windowLabel, zoneTone, envPos as envPosOf } from './NbaCourt';
 import { NbaPlayerCardProvider, useNbaPlayerCard, WoEdgeTag } from './NbaPlayerCard';
 import NbaSoftSpots from './NbaSoftSpots';
@@ -19,6 +20,15 @@ const UNIT = { pts: 'pts', reb: 'reb', ast: 'ast', tpm: '3PM', pra: 'PRA' };
 const STEP = Object.fromEntries(NBA_BOARDS.filter((b) => b.kind === 'ladder').map((b) => [b.market, b.step || 1]));
 const TIER_COLS = [['strong', 'Strong', '70'], ['lean', 'Lean', '55'], ['thin', 'Thin', '40']];
 const SHOW = 40;
+// The second night of a back-to-back, measured on the lists' top 10 (docs/audits/2026-11-24-nba-top10.md: the site's own
+// boards Oct 21 – Nov 23 rebuilt from the store, and 2025-26 replayed): the marks landed less often than on the other nights.
+const B2B_NOTE = {
+  pts: 'Played last night. On the site’s boards this season the top 10’s strong points marks on a back-to-back landed 80% against 85% on other nights',
+  reb: 'Played last night. Top-10 strong rebounds marks on a back-to-back landed 70% against 81% on other nights (the site’s boards this season; 73% against 77% in 2025-26)',
+  ast: 'Played last night. Top-10 strong assists marks on a back-to-back landed 74% against 80% on other nights (the site’s boards this season; 69% against 80% in 2025-26)',
+  tpm: 'Played last night. Threes marks on a back-to-back landed as often as on other nights (80%), this season and last',
+  pra: 'Played last night: a back-to-back. The points, rebounds and assists marks land less often then',
+};
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
 
@@ -53,8 +63,11 @@ export function tierRows(board, shuffles, market, gameId = null) {
   const wo = new Map();
   // His Q1 read for the stat (lib/nba/quarter.js, put on the board by boardFor): the row's Q1 badge.
   const q1 = new Map();
+  // Played last night (board.js `b2b`): the row's B2B tag (docs/audits/2026-11-24-nba-top10.md: the list's marks land less often then).
+  const b2b = new Set();
   for (const g of board?.games || []) for (const t of [g.away, g.home]) for (const p of g.sides?.[t]?.players || []) {
     spot.set(`${t}|${p.key}`, p.envPos || envPosOf(p));
+    if (p.b2b) b2b.add(`${t}|${p.key}`);
     if (p.q1?.[market]) q1.set(`${t}|${p.key}`, p.q1[market]);
     for (const x of p.plays || []) {
       const e = x.market === market ? x.without?.edge : null;
@@ -63,7 +76,7 @@ export function tierRows(board, shuffles, market, gameId = null) {
       if (!prev || e.gap > prev.gap) wo.set(k, { ...e, line: x.line, side: x.side, names: x.without.names || [] });
     }
   }
-  return rows.map((r) => ({ ...r, envPos: spot.get(`${r.team}|${r.key}`) || null, woEdge: wo.get(`${r.team}|${r.key}`) || null, q1: q1.get(`${r.team}|${r.key}`) || null })).sort((a, b) => (b.proj ?? -1) - (a.proj ?? -1) || a.player.localeCompare(b.player));
+  return rows.map((r) => ({ ...r, envPos: spot.get(`${r.team}|${r.key}`) || null, woEdge: wo.get(`${r.team}|${r.key}`) || null, q1: q1.get(`${r.team}|${r.key}`) || null, b2b: b2b.has(`${r.team}|${r.key}`), matchup: matchupOf(board, { ...r, market: r.market || market }) })).sort((a, b) => (b.proj ?? -1) - (a.proj ?? -1) || a.player.localeCompare(b.player));
 }
 
 function Who({ r, game = false, onOpen }) {
@@ -76,6 +89,7 @@ function Who({ r, game = false, onOpen }) {
         <small>
           {r.team} · {r.slot && r.depth ? `${r.slot}${r.depth}` : r.pos || '—'}{game ? ` · ${r.venue === 'H' ? 'vs' : '@'} ${r.opp}` : ''}
           {r.health === 'DTD' ? <> · <span className="ir-health is-dtd">DTD</span></> : null}
+          {r.b2b ? <> · <span className="ir-health is-b2b" title={B2B_NOTE[r.market] || B2B_NOTE.pts}>B2B</span></> : null}
           {r.caveat && r.health !== 'DTD' ? <span className="ir-bd-role is-role">{r.caveat}</span> : null}
           {r.woEdge ? <WoEdgeTag e={r.woEdge} /> : null}
         </small>
@@ -100,6 +114,7 @@ function TierTable({ rows, market, game = false, onOpen }) {
       <table className="nhlx-db-table nhlx-pk-table ir-ml-table">
         <thead><tr>
           <th className="ir-slate-rank">#</th><th>Player</th>
+          <th className="ir-ml-mu" title="Tonight’s opponent against his position for this stat: PropFinder’s rank this season (PF, 1 = gives up the most; green soft third, red tough third), the last 10 games’ rank, the cheat sheet’s tile, and the factor it puts on his rate">Matchup</th>
           <th className="is-num ir-ml-proj" title="Tonight’s projection: his rate × tonight’s matchup (what the defense gives up to all positions, PropFinder)">Proj</th>
           <th className="is-num ir-ml-fc" title="His floor tonight: he lands under it one night in four">Floor</th>
           <th className="is-num ir-ml-fc" title="His ceiling tonight: he lands over it one night in four (the Big games tab lists the nights far over it)">Ceiling</th>
@@ -111,6 +126,7 @@ function TierTable({ rows, market, game = false, onOpen }) {
             <tr key={`${r.team}|${r.key}`}>
               <td className="ir-slate-rank">{i + 1}</td>
               <td><Who r={r} game={game} onOpen={onOpen} /></td>
+              <td className="ir-ml-mu"><Matchup m={r.matchup} opp={r.opp} /></td>
               <td className="is-num ir-ml-proj" title={r.noLogs ? 'No game of his in the PropFinder pull yet: nothing to project from' : r.floor != null ? `${num(r.floor, 0)}–${num(r.ceiling, 0)} half the nights` : ''}><b>{num(r.proj)}</b><small>{r.noLogs ? 'no games yet' : unit}</small></td>
               <td className="is-num ir-ml-fc">{r.floor != null ? <b>{num(r.floor, 0)}</b> : <small>—</small>}</td>
               <td className="is-num ir-ml-fc">{r.ceiling != null ? <b>{num(r.ceiling, 0)}</b> : <small>—</small>}</td>

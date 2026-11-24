@@ -165,6 +165,43 @@ describe('the NBA games, the NFL’s layout', () => {
     expect(big).toMatchObject({ proj: 0.3, strong: null, lean: null, thin: null, top: null });
     expect(rows.map((r) => r.player)).toEqual(['Nikola Jokic', 'Austin Reaves', 'Big Man']);
   });
+  test('the B2B tag: a player who played last night carries it on the stat list, the measured hit rates on its hover', () => {
+    const bb = JSON.parse(JSON.stringify(board));
+    bb.games[0].sides.DEN.players[0].b2b = true;
+    const rows = tierRows(bb, shuffles, 'pts', 'g1');
+    expect(rows.find((r) => r.player === 'Nikola Jokic').b2b).toBe(true);
+    expect(rows.find((r) => r.player === 'Austin Reaves').b2b).toBe(false);
+    const list = renderToStaticMarkup(<NbaStatList board={bb} shuffles={shuffles} market="pts" />);
+    expect(list.match(/>B2B</g)).toHaveLength(1);
+    expect(list).toContain('top 10’s strong points marks on a back-to-back landed 80%');
+  });
+  test('the matchup per player on the stat lists: his spot, PropFinder\'s rank for the stat, the last ten, the sheet (2026-11-24)', () => {
+    const rows = tierRows(board, shuffles, 'pts', 'g1');
+    // Jokic (C) faces LAL's table: C gives up 18.2 points, rank 25 (the tough third); last ten #27.
+    expect(rows.find((r) => r.player === 'Nikola Jokic').matchup).toMatchObject({ pos: 'C', pf: 25, pfTone: 'tough', l10: 27 });
+    expect(rows.find((r) => r.player === 'Austin Reaves').matchup).toMatchObject({ pos: 'PG', pf: 3, pfTone: 'soft', sheet: 4, agree: true });
+    const list = renderToStaticMarkup(<NbaStatList board={board} shuffles={shuffles} market="pts" />);
+    expect(list).toContain('>Matchup<');
+    expect(list).toContain('PF #25');
+    expect(list).toContain('PF #3');
+  });
+  test('threes: the matchup for the makes and the attempts the opponent gives up to his spot (2026-11-24)', () => {
+    const tb = JSON.parse(JSON.stringify(board));
+    for (const side of Object.values(tb.games[0].sides)) {
+      side.allowed.rows.C.tpm = { value: 1.9, rank: 6 }; side.allowed.rows.C.tpa = { value: 5.6, rank: 2 };
+      side.allowed.windows.l10.rows.C.tpa = { value: 6.1, rank: 1 };
+      for (const p of side.players) { p.ranges.tpm = { exp: 1.5, floor: 1, ceiling: 2 }; p.ladders.tpm = [{ line: 1.5, p: 0.55 }]; }
+    }
+    const rows = tierRows(tb, {}, 'tpm', 'g1');
+    const jokic = rows.find((r) => r.player === 'Nikola Jokic');
+    expect(jokic.matchup).toMatchObject({ pos: 'C', pf: 6, att: { stat: 'tpa', pf: 2, pfTone: 'soft', l10: 1, pfValue: 5.6 } });
+    const list = renderToStaticMarkup(<NbaStatList board={tb} shuffles={{}} market="tpm" />);
+    expect(list).toContain('>3PM<');
+    expect(list).toContain('>3PA<');
+    expect(list).toContain('threes attempted: PropFinder #2 of 30 (5.6 a game');
+    // Points keep the one line.
+    expect(tierRows(board, shuffles, 'pts', 'g1').find((r) => r.player === 'Nikola Jokic').matchup.att).toBeUndefined();
+  });
   test('closed by default; the stat tab lists the night', () => {
     const closed = renderToStaticMarkup(<NbaGames board={board} shuffles={shuffles} />);
     expect(closed).not.toContain('What DEN gives up');

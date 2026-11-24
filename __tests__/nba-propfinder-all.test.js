@@ -2,7 +2,8 @@
 // night's pull filed where it settles, the first quarter / first three minutes / shooting lines read off the game rows,
 // the rest (and the players the books have not priced) kept as `extra`, and ESPN's play-by-play grading the 1st quarter.
 import { describe, expect, test } from '@jest/globals';
-import { marketOfItem, playerProps, gameRow, extraOf, mapPlayers, periodOf } from '../lib/nba/propfinder-nba';
+import { marketOfItem, playerProps, gameRow, extraOf, mapPlayers, periodOf, bookLines } from '../lib/nba/propfinder-nba';
+import { consensusLine } from '../lib/picks/propfinder';
 import { buildBoard, statOf } from '../lib/nba/picks';
 import { parseSummary, periodLines } from '../lib/nba/espn';
 import summary from './fixtures/espn-nba-summary-por-uta.json';
@@ -44,6 +45,15 @@ describe('every PropFinder NBA market filed where it settles', () => {
       item('Player Fantasy Score (All)', 'fantasyPoints', 38.5, -115),
     ] };
     expect(Object.fromEntries(playerProps(p).map((r) => [r.market, r.line]))).toEqual({ fgm: 7.5, q1_pts: 6.5, m3_pts: 0.5 });
+  });
+  test('the game line: a lone first-quarter-sized line or a lone ladder rung is never his points / rebounds line (2026-11-24)', () => {
+    const avg = (m) => ({ pts: 31, reb: 4.2, ast: 6 }[m] ?? null);
+    // Gilgeous-Alexander, 2026-11-06: betJACK's o9.5 "Player Points" at -110 was the market's only line.
+    const sga = { name: 'S', odds: [item('Player Points', 'points', 9.5, -110), item('Player Rebounds', 'rebounds', 1.5, -3474), item('Player Assists', 'assists', 6.5, -115)] };
+    expect(Object.fromEntries(playerProps(sga, avg).map((r) => [r.market, r.line]))).toEqual({ ast: 6.5 });
+    // With his real line beside it, the real one is read.
+    const both = { name: 'S', odds: [item('Player Points', 'points', 9.5, -110), item('Player Points', 'points', 30.5, -115), item('Player Points', 'points', 30.5, -105, 'under')] };
+    expect(playerProps(both, avg).find((r) => r.market === 'pts')).toMatchObject({ line: 30.5 });
   });
 });
 
@@ -121,3 +131,29 @@ describe("ESPN's play-by-play grades the first quarter (POR 112 at UTAH 90, 2026
     expect(rows.find((x) => x.market === 'm3_pts')).toMatchObject({ actual: 5, hit: true });
   });
 });
+
+describe('the books\' own lines, stored to grade the projections against (2026-11-24)', () => {
+  test('every book\'s line kept with both prices; the consensus is the median of the books\' near-even main lines', () => {
+    const raw = [{ name: 'Lead Guard', team: { code: 'OKC' }, stats: [], odds: [
+      item('Player Points', 'points', 30.5, -115, 'over', 'DraftKings'), item('Player Points', 'points', 30.5, -105, 'under', 'DraftKings'),
+      item('Player Points', 'points', 31.5, -110, 'over', 'FanDuel'), item('Player Points', 'points', 31.5, -110, 'under', 'FanDuel'),
+      item('Player Points', 'points', 29.5, -120, 'over', 'BetMGM'),
+      item('Player Points', 'points', 9.5, -110, 'over', 'betJACK'),                       // first-quarter sized: not a game line
+      item('Player Rebounds', 'rebounds', 1.5, -3474, 'over', 'Polymarket'),               // a rung: no consensus
+      item('1st Quarter Player Points', 'Q1points', 8.5, -110, 'over', 'DraftKings'),      // a period: not stored here
+    ] }];
+    const [p] = bookLines(raw);
+    expect(p).toMatchObject({ key: 'lead guard', team: 'OKC' });
+    expect(Object.keys(p.markets).sort()).toEqual(['pts', 'reb']);
+    expect(p.markets.pts.books.find((b) => b.book === 'DraftKings')).toMatchObject({ line: 30.5, over: -115, under: -105, main: true });
+    // No logs here (no average), so the 9.5 counts as a book's line; four books, one line each: the one priced both ways nearest the median.
+    expect(p.markets.pts.consensus).toMatchObject({ line: 30.5, books: 4 });
+    expect(p.markets.reb.consensus).toBeNull();
+  });
+  test('with his average known, a line far from it is not a book\'s game line', () => {
+    const books = [{ book: 'A', line: 30.5, over: -110, under: -110, main: true }, { book: 'B', line: 9.5, over: -110, main: true }, { book: 'C', line: 31.5, over: -115, main: true }];
+    expect(consensusLine(books, { avg: 31 })).toMatchObject({ line: 30.5, books: 2, fairOver: 0.5 });
+    expect(consensusLine(books.slice(1, 2), { avg: 31 })).toBeNull();
+  });
+});
+

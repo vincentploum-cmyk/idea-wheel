@@ -111,6 +111,49 @@ absences. Poisson with his read as the offset, fitted on 2024-25. Written up in 
 python3 -I tools/audit/nba_star_out.py --box .nhl-data/audit/nba-box --out docs/audits/2026-11-09-nba-star-out-tables.md
 ```
 
+## NBA: the stat lists' top 10 (`nba_top10.py`)
+
+The Points / Rebounds / Assists / Threes tabs' ten highest projections a night, every strong / lean / thin mark they show,
+graded; one read at a time over the stated chance, and the back-to-back as a shift on the odds fitted on the first
+`--prefix` and read on the last. `--marks-all` on the replay writes the chance at every height the lists read. Written up
+in `docs/audits/2026-11-24-nba-top10.md`.
+
+```bash
+P=.nhl-data/audit/nba/prior
+npm run audit:nba -- --date 2026-11-23 --from 2026-10-24 --prior $P/games --marks-all --model lib/nba/model-trees.json --tag -model
+node --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --season 2025 --date 2026-04-12 --from 2025-10-26 --raw .nhl-data/audit/nba \
+  --days $P/days --games $P/games --gamelogs $P/gamelogs --out .nhl-data/audit/top10 --marks-all --tag -ls-nomodel
+python3 -I tools/audit/nba_top10.py --prefix .nhl-data/audit/top10/nba-2026-04-12-ls-nomodel --label 2025-26 --games $P/games \
+  --prefix .nhl-data/audit/out/nba-2026-11-23-model --label 2026-27 --games .nhl-data/audit/nba/games --out docs/audits/2026-11-24-nba-top10-tables.md
+```
+
+The site's own boards, from a copy of the store (read-only; Supabase keys from `.env.local`), go in as `--prefix store:…`:
+
+```bash
+node --env-file=.env.local tools/audit/nba-store-dump.mjs --from 2026-10-21 --to 2026-11-23 --out nba-store
+ln -sfn "$PWD/nba-store/nba" .nhl-data/nba    # the fs driver reads .nhl-data/ (NODE_ENV=development)
+NODE_ENV=development NHL_STORE_DRIVER=fs node --import ./tools/audit/register.mjs tools/audit/nba-store-top10.mjs \
+  --from 2026-10-21 --to 2026-11-23 --out .nhl-data/audit/store --calibrate
+python3 -I tools/audit/nba_top10.py ... --prefix store:.nhl-data/audit/store/store-cal --label site --games none --out ...
+```
+
+`--calibrate` grades the nights before each one with `scorecardFor` and puts that calibration in place first (it writes
+`.nhl-data/nba/meta/calibration.json`, i.e. into the copy). The loader (`register.mjs`) gives a bare `.json` import its
+`type: 'json'` attribute, as Next does, so the store's modules load outside Next.
+
+The 2025-26 replay needs that season's logs: `nba-fetch.mjs --from 2025-10-21 --to 2026-04-12 --raw $P --season 2025`
+(without `--no-logs`).
+
+## NBA: why players beat their projection (`nba_overs.py`)
+
+On the site's boards from the store (`nba-store-top10.mjs` writes `store-parts.csv`, each projection's factors): every big night
+(points +10 and 1.5×, rebounds / assists +4 and 1.5×, threes +3 and 2×) split into what happened in the box score against
+his usual and the board's minutes, and every pre-game read by fifth. Written up in `docs/audits/2026-11-24-nba-projections.md`.
+
+```bash
+python3 -I tools/audit/nba_overs.py --parts .nhl-data/audit/store/store --store .nhl-data/nba --out docs/audits/2026-11-24-nba-overs-tables.md
+```
+
 ## NBA: the big players, and what it takes (`nba_stars.py`, `nba_what_it_takes.py`)
 
 Vincent, 2026-11-13: is the board too conservative with the big players in a soft matchup or with a teammate out, and which

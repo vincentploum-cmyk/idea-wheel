@@ -55,7 +55,9 @@ const { buildBoard, ownWindows, statOf, actualFor } = nbaBoard(CK);
 const DAYS = arg('--days', path.join(RAW, 'days')); const GAMES = arg('--games', path.join(RAW, 'games')); const LOGS = arg('--gamelogs', path.join(RAW, 'gamelogs'));
 const TAG = arg('--tag', '');
 // --marks: the site's chance at round marks for every player-night (the shuffle's read, the court's and the stat lists' figure), as -marks.csv
-const MARKS = process.argv.includes('--marks') ? { pts: [15, 20, 25, 30, 35, 40], reb: [6, 8, 10, 12, 15], ast: [4, 6, 8, 10, 12], tpm: [1, 2, 3, 4, 5, 6], pra: [25, 30, 35, 40, 45, 50], stl: [1, 2, 3], blk: [1, 2, 3] } : null;
+// --marks-all: every height the stat lists read (points and PRA by 5, the rest by 1), for the top-of-list study (nba_top10.py).
+const STEPS = (lo, hi, by) => Array.from({ length: Math.floor((hi - lo) / by) + 1 }, (_, i) => lo + i * by);
+const MARKS = process.argv.includes('--marks-all') ? { pts: STEPS(5, 60, 5), reb: STEPS(1, 20, 1), ast: STEPS(1, 16, 1), tpm: STEPS(1, 10, 1), pra: STEPS(10, 75, 5) } : process.argv.includes('--marks') ? { pts: [15, 20, 25, 30, 35, 40], reb: [6, 8, 10, 12, 15], ast: [4, 6, 8, 10, 12], tpm: [1, 2, 3, 4, 5, 6], pra: [25, 30, 35, 40, 45, 50], stl: [1, 2, 3], blk: [1, 2, 3] } : null;
 const markRows = [];
 const markShuffle = MARKS ? makeShuffle({ board: nbaBoard(CK), markets: SHUFFLE_MARKETS }) : null;
 const DUMP = process.argv.includes('--board');   // also write the slate's board and its shuffle payloads as JSON (the page's data, for a look at the views)
@@ -100,7 +102,7 @@ for (const g of schedule) {
     const x = playerOf(p, p.team);
     if (g.slate >= (x.latest || '')) { x.team = p.team; x.pos = p.pos || x.pos; x.latest = g.slate; }
     if (!p.played) continue;
-    x.games.push({ date: g.slate, gameId: g.id, season: SEASON, type: 'REG', home: p.team === r.home, opp: p.team === r.home ? r.away : r.home, min: p.min, pts: p.pts, reb: p.reb, ast: p.ast, tpm: p.tpm, tpa: p.tpa, fgm: p.fgm, fga: p.fga, ftm: p.ftm, fta: p.fta, stl: p.stl, blk: p.blk, tov: p.tov, oreb: p.oreb, dreb: p.dreb, pf: p.pf, pra: p.pra, pr: p.pr, pa: p.pa, ra: p.ra, stlBlk: p.stlBlk, dd: p.dd, td3: p.td3, usg: usgOf(p), ...(p.starter ? { starter: 1 } : {}) });
+    x.games.push({ date: g.slate, day: g.slate, gameId: g.id, season: SEASON, type: 'REG', home: p.team === r.home, opp: p.team === r.home ? r.away : r.home, min: p.min, pts: p.pts, reb: p.reb, ast: p.ast, tpm: p.tpm, tpa: p.tpa, fgm: p.fgm, fga: p.fga, ftm: p.ftm, fta: p.fta, stl: p.stl, blk: p.blk, tov: p.tov, oreb: p.oreb, dreb: p.dreb, pf: p.pf, pra: p.pra, pr: p.pr, pa: p.pa, ra: p.ra, stlBlk: p.stlBlk, dd: p.dd, td3: p.td3, usg: usgOf(p), ...(p.starter ? { starter: 1 } : {}) });
   }
 }
 let withLast = 0;
@@ -118,7 +120,7 @@ for (const x of players.values()) {
     for (const c of st.categories || []) for (const e of c.events || []) {
       const ev = gl.events?.[e.eventId]; if (!ev || !e.stats) continue;
       const s = e.stats;
-      const row = { date: etDate(ev.gameDate), gameId: String(e.eventId), season: SEASON - 1, type, home: ev.atVs !== '@', opp: teamAbbrFromText(ev.opponent?.abbreviation) || null, min: Number(at(s, 'minutes')) || 0, pts: Number(at(s, 'points')) || 0, reb: Number(at(s, 'totalRebounds')) || 0, ast: Number(at(s, 'assists')) || 0, tpm: dash(at(s, 'threePointFieldGoalsMade-threePointFieldGoalsAttempted'), 0), tpa: dash(at(s, 'threePointFieldGoalsMade-threePointFieldGoalsAttempted'), 1), fgm: dash(at(s, 'fieldGoalsMade-fieldGoalsAttempted'), 0), fga: dash(at(s, 'fieldGoalsMade-fieldGoalsAttempted'), 1), ftm: dash(at(s, 'freeThrowsMade-freeThrowsAttempted'), 0), fta: dash(at(s, 'freeThrowsMade-freeThrowsAttempted'), 1), stl: Number(at(s, 'steals')) || 0, blk: Number(at(s, 'blocks')) || 0, tov: Number(at(s, 'turnovers')) || 0, oreb: 0, dreb: 0, pf: Number(at(s, 'fouls')) || 0, starter: null };
+      const row = { date: etDate(ev.gameDate), day: etDate(ev.gameDate), gameId: String(e.eventId), season: SEASON - 1, type, home: ev.atVs !== '@', opp: teamAbbrFromText(ev.opponent?.abbreviation) || null, min: Number(at(s, 'minutes')) || 0, pts: Number(at(s, 'points')) || 0, reb: Number(at(s, 'totalRebounds')) || 0, ast: Number(at(s, 'assists')) || 0, tpm: dash(at(s, 'threePointFieldGoalsMade-threePointFieldGoalsAttempted'), 0), tpa: dash(at(s, 'threePointFieldGoalsMade-threePointFieldGoalsAttempted'), 1), fgm: dash(at(s, 'fieldGoalsMade-fieldGoalsAttempted'), 0), fga: dash(at(s, 'fieldGoalsMade-fieldGoalsAttempted'), 1), ftm: dash(at(s, 'freeThrowsMade-freeThrowsAttempted'), 0), fta: dash(at(s, 'freeThrowsMade-freeThrowsAttempted'), 1), stl: Number(at(s, 'steals')) || 0, blk: Number(at(s, 'blocks')) || 0, tov: Number(at(s, 'turnovers')) || 0, oreb: 0, dreb: 0, pf: Number(at(s, 'fouls')) || 0, starter: null };
       x.games.push(derived(row)); any = true;
     }
   }

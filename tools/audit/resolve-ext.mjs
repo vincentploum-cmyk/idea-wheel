@@ -1,7 +1,8 @@
 // A Node loader hook so the audit scripts can import the site's own modules outside Next: a
 // relative import without an extension ('../memo', './teams') is tried with .js, then as a folder
 // index, and a bare package path without one ('next/headers') with .js when the package has no
-// exports map for it. Usage: node --import ./tools/audit/register.mjs <script.mjs>
+// exports map for it; a .json import without `with { type: 'json' }` (lib/nba/store.js's model trees, as Next bundles it)
+// is given the attribute. Usage: node --import ./tools/audit/register.mjs <script.mjs>
 import { existsSync, statSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -14,6 +15,10 @@ export async function resolve(specifier, context, nextResolve) {
     for (const cand of [`${p}.js`, `${p}.mjs`, `${p}/index.js`]) {
       if (existsSync(cand) && statSync(cand).isFile()) return nextResolve(pathToFileURL(cand).href, context);
     }
+  }
+  if (/\.json$/i.test(specifier) && !context.importAttributes?.type) {
+    const r = await nextResolve(specifier, { ...context, importAttributes: { ...context.importAttributes, type: 'json' } });
+    return { ...r, importAttributes: { ...r.importAttributes, type: 'json' } };
   }
   try {
     return await nextResolve(specifier, context);

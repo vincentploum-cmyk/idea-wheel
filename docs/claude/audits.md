@@ -352,3 +352,14 @@
   ×1.04, down one ×0.98, defensemen ×1.05 / ×0.95), exponent 0.70 (0.16 … 1.24) on the projected-minutes ratio.
   **Shipped** as `lineMoveMultiplier` (ratio ^0.8, both ways, defensemen on their own minutes); worth little overall
   (−0.9 per 1,000, interval across 0). The model's own run was not replayed (no scorecard export).
+- The NBA stat lists' top 10 (`docs/audits/2026-11-24-nba-top10.md`, `tools/audit/nba_top10.py`; Vincent, 2026-11-24:
+  "reduce the number of misses in the top 10"): the site's own boards rebuilt from a copy of the store (33 nights,
+  `nba-store-dump.mjs` + `nba-store-top10.mjs`, the fs driver on `.nhl-data/nba`) beside 2025-26 replayed
+  (`nba-audit.mjs --marks-all`). The tiers land at their chance or better; the misses are the chance playing out (thin is
+  half) and lost minutes. The back-to-back costs points, rebounds and assists 6–9 points on the site's boards, and the
+  board's own `b2b` flag turned out to fire on the team that played two nights ago (PropFinder's UTC log dates): fixed, a
+  B2B tag on the lists; the chance shift left for Vincent.
+- The NBA projections themselves and the big nights (`docs/audits/2026-11-24-nba-projections.md`, `tools/audit/nba_overs.py`):
+  on the store's boards the points line blend read a window / alternate line as the main one on 175 of 2,136 blends; a
+  0.6–1.6× guard (`LINE_BLEND.ratio`) took the top ten's points bias from +1.15 to +0.42. Big nights are shooting and rate
+  surges (minutes +1.9 of a +14.3-point surplus); the reads that raise their odds before tip are already in the board's chances.

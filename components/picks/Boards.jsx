@@ -15,15 +15,26 @@ const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
 
 /** The matchup behind the projection: his spot, PropFinder's rank (season, then last 10), the cheat sheet's tile ✓ / ✗, the factor. */
-function Matchup({ m, opp }) {
+export function Matchup({ m, opp }) {
   if (!m) return <small className="ir-bd-mu is-none" title={matchupText(null)}>no table</small>;
   return (
-    <small className="ir-bd-mu" title={matchupText(m, opp)}>
-      <b>{m.pos}</b>
-      {m.pf != null ? <span className={`ir-bd-rk is-${m.pfTone}`}>PF #{m.pf}</span> : null}
-      {m.l10 != null ? <span className={`ir-bd-rk is-${m.l10Tone}`}>L10 #{m.l10}</span> : null}
-      {m.sheet != null ? <span className={`ir-bd-rk is-${m.sheetTone}`}>{m.agree == null ? '' : m.agree ? '✓ ' : '✗ '}sheet #{m.sheet}</span> : null}
-      {m.factor != null && m.factor !== 1 ? <span className="ir-bd-fx">×{Number(m.factor).toFixed(2)}</span> : null}
+    <small className={`ir-bd-mu${m.att ? ' has-att' : ''}`} title={matchupText(m, opp)}>
+      <span className="ir-bd-mu-row">
+        <b>{m.pos}</b>
+        {m.att ? <i className="ir-bd-mu-k">3PM</i> : null}
+        {m.pf != null ? <span className={`ir-bd-rk is-${m.pfTone}`}>PF #{m.pf}</span> : null}
+        {m.l10 != null ? <span className={`ir-bd-rk is-${m.l10Tone}`}>L10 #{m.l10}</span> : null}
+        {m.sheet != null ? <span className={`ir-bd-rk is-${m.sheetTone}`}>{m.agree == null ? '' : m.agree ? '✓ ' : '✗ '}sheet #{m.sheet}</span> : null}
+        {m.factor != null && m.factor !== 1 ? <span className="ir-bd-fx">×{Number(m.factor).toFixed(2)}</span> : null}
+      </span>
+      {m.att ? (
+        <span className="ir-bd-mu-row">
+          <b className="ir-bd-mu-pad" aria-hidden="true">{m.pos}</b>
+          <i className="ir-bd-mu-k">3PA</i>
+          {m.att.pf != null ? <span className={`ir-bd-rk is-${m.att.pfTone}`}>PF #{m.att.pf}</span> : null}
+          {m.att.l10 != null ? <span className={`ir-bd-rk is-${m.att.l10Tone}`}>L10 #{m.att.l10}</span> : null}
+        </span>
+      ) : null}
     </small>
   );
 }
