@@ -463,6 +463,38 @@
   blended into the board's read at n / (n + k), is best at k = 32 (noise-level) on points, rebounds and minutes and not at
   all on assists and threes over 2024-25 to now; splits of +8 points said 18-22 and landed about 15, the board said 16. The
   tab's legend and a big split's line say so. `__tests__/nba-without-glance.test.js`.
+- **The matchup on every row of the stat lists** (Vincent, 2026-11-24: "add the matchup per player in each of the rebounds,
+  assists, threes and points views"): a Matchup column after the player in `TierTable` (`NbaGames.jsx`; the Games tab's
+  table too), the old Boards tab's chip (`Matchup`, now exported from `components/picks/Boards.jsx`) off `matchupOf`
+  (`lib/picks/boards.js`, put on each row by `tierRows`): his spot, PropFinder's rank for the stat this season ("PF #3",
+  green soft third, red tough third, 1 = gives up the most), the last ten's rank, the cheat sheet's tile ✓ / ✗ and the factor
+  on his rate; the hover says it in words. `__tests__/nba-games.test.jsx`.
+- **The stat lists' top 10, graded** (Vincent, 2026-11-24: "reduce the number of misses in the top 10 … see if any patterns
+  can be detected"; `docs/audits/2026-11-24-nba-top10.md`, `tools/audit/nba_top10.py`): the site's own boards rebuilt from a
+  copy of the store (`nba-store-dump.mjs`, then `nba-store-top10.mjs --calibrate`, Oct 21 – Nov 23) and 2025-26 replayed
+  (`nba-audit.mjs --marks-all`). The marks land at the chance they state or better (strong 79–84% on the site's boards); a
+  night shows 7 (points) to 11 (assists) misses a stat, half of them from the thin column, half (in the replays) on nights
+  he played under 90% of the minutes read. **The second night of a back-to-back** costs points, rebounds and assists 6–9
+  points of hit rate on the site's boards (strong rebounds 70% against 81%, assists 74 / 80, points 80 / 85), threes nothing;
+  2025-26 agrees on assists and rebounds. Shipped: a **B2B** tag on the lists' rows (`tierRows` → `b2b` from the board
+  player, `B2B_NOTE` in `NbaGames.jsx` the measured rates on the hover); display only. **The board's `b2b` was wrong until
+  2026-11-24**: PropFinder's `gameDate` is UTC and the pull kept its date, so an evening ET game carries the next day and the
+  flag fired on the team that played two nights ago (2,438 of 2,652 flags). The pull now keeps the ET night as `day`
+  (`etDayOf`, `lib/picks/propfinder.js`), the flag reads it (`playedLastNight`, `lib/picks/board.js`; an older pull: a log
+  dated the slate itself, not tonight's opponent), and so does the scorecard's `asOf`. Open, his call: the assists chance
+  × 0.82 odds on the second night (33 site nights: 369 → 358 misses, those rows 56% → 63%), points / rebounds likewise,
+  hiding the thin column, a higher strong floor. `__tests__/nba-games.test.jsx`, `__tests__/played-last-night.test.js`.
+- **The projections graded, and the big nights explained** (Vincent, 2026-11-24: "focus on getting the numbers right in
+  the first place" and "when a player hit well over his projection, we need to know why"; `docs/audits/2026-11-24-nba-projections.md`,
+  `tools/audit/nba_overs.py` on the store's boards with their parts, `nba-store-top10.mjs` → store-parts.csv). The board beats
+  his own averages by 2–4%; the night's top ten ran 1.15 points low, mostly from **the line blend reading junk lines** (a
+  window or alternate line stored as the main one on 175 of 2,136 blends: a 9.5 took Gilgeous-Alexander from 31.1 to 21.7 on
+  Nov 6). **`LINE_BLEND.ratio` = [0.6, 1.6]**: a line outside it is not read; top-ten bias +1.15 → +0.42, MAE 6.48 → 6.28.
+  The root cause is fixed in the pull: the NBA's `mainLine` bounds (picks-core.md, "The game line's bounds").
+  Big nights (855 of 19,047: points +10 and 1.5×, rebounds / assists +4 and 1.5×, threes +3 and 2×) are rate, not minutes
+  (+12.4 of a +14.3-point surplus): more shots and threes that went in, a rebound / assist surge, overtime twice as often.
+  Before tip his recent ceiling and his usage raise the odds, and the board's chances already price both. Not changed: the
+  learned model's weight (flat 0.5–0.75), the matchup factor (2025-26 only), no teammate out (the first week).
 - **The outlier nights** (Vincent, 2026-11-07: "we need to start calibrating the nba model … players were projected by us to
   get 4 or 5 rebounds but they actually got 10+"; `docs/audits/2026-11-07-nba-outliers.md`): the rebounds', assists', threes',
   steals' and blocks' rungs read a count's tail (the negative binomial with the ladder's centre and spread: a 4.5-rebound

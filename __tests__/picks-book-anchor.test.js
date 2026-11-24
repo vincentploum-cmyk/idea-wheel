@@ -76,7 +76,6 @@ describe('the book anchor', () => {
 });
 
 describe('the book anchor on the NBA board', () => {
-  // eslint-disable-next-line global-require
   const { buildBoard } = require('../lib/nba/picks');
   const games = [{ id: 'g1', date: '2026-10-21T23:30Z', away: 'BOS', home: 'NY', final: false, state: 'pre' }];
   const log = (date, pts, reb) => ({ date, season: 2026, type: 'REG', opp: 'NY', pts, reb, ast: 5, tpm: 3, stl: 1, blk: 0, tov: 2, pra: pts + reb + 5 });

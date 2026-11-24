@@ -122,7 +122,7 @@ describe('the Matchup Score', () => {
 
 describe('the board carries the value', () => {
   const games = [{ id: 'g1', date: '2026-10-31T23:30Z', away: 'BOS', home: 'NY', final: false, state: 'pre', odds: { spread: 'BOS -3.5', total: 228.5 } }];
-  const logs = (f) => Array.from({ length: 12 }, (_, i) => ({ date: `2026-10-${String(30 - i).padStart(2, '0')}`, season: 2026, type: 'REG', opp: 'NY', min: 34, pts: 20, reb: 6, ast: 4, tpm: 1, stl: 1, blk: 0, tov: 2, ...f(i) }));
+  const logs = (f) => Array.from({ length: 12 }, (_, i) => ({ date: `2026-10-${String(30 - i).padStart(2, '0')}`, day: `2026-10-${String(30 - i).padStart(2, '0')}`, season: 2026, type: 'REG', opp: 'NY', min: 34, pts: 20, reb: 6, ast: 4, tpm: 1, stl: 1, blk: 0, tov: 2, ...f(i) }));
   const player = (id, name, team, pos, f, props, min = 34) => ({ id, name, key: name.toLowerCase(), team, pos, games: logs((i) => ({ min, ...f(i) })), props });
   const pf = { at: '2026-10-31T14:00:00Z', data: { players: [
     player('p1', 'Big Glass', 'BOS', 'C', (i) => ({ reb: 11 + (i % 3) }), [{ market: 'reb', line: 6.5, odds: -110, underOdds: -110, isMain: true }]),
@@ -138,7 +138,7 @@ describe('the board carries the value', () => {
     const g = b.games[0];
     const glass = g.sides.BOS.players.find((p) => p.key === 'big glass');
     expect(glass.thin).toBe(false);
-    expect(glass.b2b).toBe(true);   // his newest log is Oct 30, the night before
+    expect(glass.b2b).toBe(true);   // his newest log's ET night (`day`) is Oct 30, the night before
     // His splits for the players list: every log is against NY (the opponent tonight), none says home or away.
     expect(glass.splits.reb.h2h).toMatchObject({ n: 4 });
     expect(glass.splits.reb.h2h.avg).toBeGreaterThan(10);

@@ -99,3 +99,27 @@ describe('the week exported for the audit (GET /api/nfl/propfinder?export=1)', (
     expect(await exportWeek({ season: 2026, week: 12, type: 2 })).toBeNull();
   });
 });
+
+describe('the books\' own lines through the store (the NBA, 2026-11-24)', () => {
+  test('a snapshot a pull in its own file, the day\'s first kept with the latest, the board\'s file without them', async () => {
+    const { BOOK_SNAPSHOTS } = require('../lib/picks/store');
+    let n = 0;
+    const line = () => [{ key: 'lead guard', name: 'Lead Guard', team: 'OKC', markets: { pts: { books: [{ book: 'DK', line: 30.5 + n, over: -110, under: -110, main: true }], consensus: { line: 30.5 + n, books: 1 } } } }];
+    const store = makeStore({
+      sport: 'nba', slateKey: (s) => s.date,
+      fetchSchedule: async () => ({ games: [{ id: 'g1', away: 'OKC', home: 'DEN', date: '2026-11-25T01:00:00Z' }] }),
+      propfinderConfigured: () => true, seasonOf: () => 2026, sameSlate: () => false,
+      pullSlate: async () => ({ ok: true, players: 1, data: { players: [], defense: {}, bookLines: line() } }),
+    });
+    const night = { date: '2026-11-24' };
+    for (n = 0; n < BOOK_SNAPSHOTS + 2; n++) await store.pullPropfinder(night, { force: true });
+    const board = await readJson('nba/2026-11-24/propfinder.json');
+    expect(board.data.bookLines).toBeUndefined();
+    expect(board.bookLines).toMatchObject({ players: 1, withConsensus: 1, snapshots: BOOK_SNAPSHOTS });
+    const saved = await readJson('nba/2026-11-24/book-lines.json');
+    expect(saved.firstTip).toBe('2026-11-25T01:00:00Z');
+    expect(saved.snapshots).toHaveLength(BOOK_SNAPSHOTS);
+    expect(saved.snapshots[0].players[0].markets.pts.consensus.line).toBe(30.5);                      // the opening line kept
+    expect(saved.snapshots[BOOK_SNAPSHOTS - 1].players[0].markets.pts.consensus.line).toBe(30.5 + BOOK_SNAPSHOTS + 1);   // the latest
+  });
+});

@@ -12,6 +12,7 @@ const read = (name) => {
 const pct = (x) => (x == null ? '–' : `${Math.round(x * 100)}%`);
 const sgn = (x) => (x == null ? '–' : `${x >= 0 ? '+' : ''}${Math.round(x * 100)}`);
 const num = (x, d = 3) => (x == null ? '–' : Number(x).toFixed(d));
+const bias = (x) => (x == null ? '–' : `${x >= 0 ? '+' : ''}${Number(x).toFixed(2)}`);
 const out = [];
 const line = (...s) => out.push(...(s.length ? s : ['']));
 
@@ -69,6 +70,12 @@ function picks(title, card) {
     line(row('On the board', card.board));
     line('', '| Market | Plays | Said | Hit | Board plays | Board said | Board hit |', '| --- | ---: | ---: | ---: | ---: | ---: | ---: |');
     for (const m of card.markets || []) if (m.all?.n) line(`| ${m.label} | ${m.all.n} | ${pct(m.all.said)} | ${pct(m.all.hit)} | ${m.board?.n || 0} | ${pct(m.board?.said)} | ${pct(m.board?.hit)} |`);
+  }
+  // The projections against the books' consensus line (book-lines.json, stored since 2026-11-24): the lower miss wins.
+  if (card.vsBook && Object.keys(card.vsBook).length) {
+    line('', '**Projection against the books\' line** (average miss; got − said; on a 1+ point lean off the line, how often he landed on the board\'s side)', '',
+      '| Stat | Players | Board miss | Book miss | Half-half miss | Board got − said | Book got − said | Leans | Board side right |', '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |');
+    for (const [m, x] of Object.entries(card.vsBook)) line(`| ${m} | ${x.n} | ${num(x.board, 2)} | ${num(x.book, 2)} | ${num(x.half, 2)} | ${bias(x.boardBias)} | ${bias(x.bookBias)} | ${x.leans} | ${pct(x.leanRight)} |`);
   }
   const ladders = (card.ladders || []).filter((l) => l.main?.n);
   if (ladders.length) {
