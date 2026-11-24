@@ -31,7 +31,9 @@ jobs:
           echo "scorecard: $code $(du -h out/scorecard.json | cut -f1)"
           if [ "$code" != "200" ]; then head -c 500 out/scorecard.json; exit 1; fi
           jq -c '{from, to, slates: (.slates | length), plays: (.rows.plays | length), rungs: (.rows.rungs | length), priced: ([.rows.rungs[] | select(.odds != null)] | length)}' out/scorecard.json
-          jq -c '.rows' out/scorecard.json | gzip -9 > out/nba-odds-rows.json.gz; rm out/scorecard.json
+          jq -c '.rows' out/scorecard.json | gzip -9 > out/nba-odds-rows.json.gz
+          # The report without its rows beside them (the predictors, the calibration and the book anchor as the site learned them).
+          jq -c 'del(.rows)' out/scorecard.json | gzip -9 > out/nba-scorecard-report.json.gz; rm out/scorecard.json
           ls -la out
       - uses: actions/upload-artifact@v4
         with:

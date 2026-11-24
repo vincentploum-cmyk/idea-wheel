@@ -141,7 +141,8 @@ describe('NBA PropFinder mapping', () => {
     expect(mapPlayers([api])[0].props).toEqual([
       // The first quarter's line is its own market since 2026-11-01 (it was skipped: the full game's must never take it).
       { market: 'q1_ast', line: 0.5, odds: 195, underOdds: null, book: 'Betano', books: 1, isMain: true },
-      { market: 'pts', line: 27.5, odds: -110, underOdds: -105, book: 'FanDuel', books: 2, isMain: true, lines: [{ line: 27.5, odds: -110, underOdds: -105, books: 2, main: true }, { line: 29.5, odds: 120, underOdds: null, books: 1, main: false }] },
+      // The best price each side across the books, the under's book named; the no-vig chance from the book pricing both (2026-11-24).
+      { market: 'pts', line: 27.5, odds: -110, underOdds: -105, book: 'FanDuel', underBook: 'DraftKings', books: 2, isMain: true, fair: 0.511, hold: 0.047, fairBooks: 1, lines: [{ line: 27.5, odds: -110, underOdds: -105, books: 2, main: true, fair: 0.511 }, { line: 29.5, odds: 120, underOdds: null, books: 1, main: false }] },
       { market: 'pra', line: 39.5, odds: -120, underOdds: null, book: 'DraftKings', books: 1, isMain: true },
       { market: 'tpm', line: 2.5, odds: -130, underOdds: null, book: 'DraftKings', books: 1, isMain: true },
       { market: 'dd', line: 0.5, odds: 140, underOdds: null, book: 'DraftKings', books: 1, isMain: true },

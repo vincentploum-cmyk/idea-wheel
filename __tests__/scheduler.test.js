@@ -45,7 +45,7 @@ describe('the jobs’ clock, in Eastern time', () => {
     expect(callsFor(job('nhl-morning'), '2026-10-29')).toEqual(['/api/nhl/data/refresh?date=2026-10-29&only=propfinder', '/api/nhl/data/refresh?date=2026-10-29']);
     expect(callsFor(job('nhl-late'), '2026-10-30')).toEqual(['/api/nhl/data/refresh?date=2026-10-29']);
     expect(callsFor(job('nfl-morning'), '2026-10-29')).toEqual(['/api/nfl/refresh?date=2026-10-29&only=schedule', '/api/nfl/refresh?date=2026-10-29&only=propfinder']);
-    expect(JOBS.map((j) => j.id)).toEqual(['nhl-morning', 'nhl-late', 'nfl-morning', 'nfl-late', 'nba-morning', 'nba-pregame', 'nba-overnight']);
+    expect(JOBS.map((j) => j.id)).toEqual(['nhl-morning', 'nhl-late', 'nfl-morning', 'nfl-late', 'nba-morning', 'nba-pregame', 'nba-tip', 'nba-overnight']);
   });
   test('due once a slot, within its catch-up window, a failure tried again once', () => {
     const j = job('nba-morning');

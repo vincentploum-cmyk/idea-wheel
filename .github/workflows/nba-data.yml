@@ -11,6 +11,7 @@ on:
   schedule:
     - cron: '47 13 * * *'   # ~9:47 ET: tonight's schedule, the PropFinder pull
     - cron: '23 21 * * *'   # ~5:23 PM ET: lines and logs again before tip-off
+    - cron: '40 23 * * *'   # ~6:40 PM ET: the last lines before the 7 PM tips (the close)
     - cron: '11 6 * * *'    # ~2:11 AM ET: last night's finals and box scores
   workflow_dispatch:
     inputs:
@@ -38,7 +39,7 @@ jobs:
           WHAT="${{ github.event.inputs.what }}"; [ -z "$WHAT" ] && WHAT=all
           TODAY=$(TZ=America/New_York date +%F); YDAY=$(TZ=America/New_York date -d 'yesterday' +%F)
           # The job from the cron that fired (not the hour it ran: the 2:11 AM slot fired at 8:53 AM on 2026-10-29).
-          JOB=""; case "${{ github.event.schedule }}" in '47 13 * * *') JOB=nba-morning ;; '23 21 * * *') JOB=nba-pregame ;; '11 6 * * *') JOB=nba-overnight ;; esac
+          JOB=""; case "${{ github.event.schedule }}" in '47 13 * * *') JOB=nba-morning ;; '23 21 * * *') JOB=nba-pregame ;; '40 23 * * *') JOB=nba-tip ;; '11 6 * * *') JOB=nba-overnight ;; esac
           J=""; [ -n "$JOB" ] && J="&job=$JOB"
           # The dates to refresh: the input (one date or a from..to range), else today, else
           # yesterday in the 2 AM slot.

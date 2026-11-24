@@ -42,6 +42,9 @@ describe('the NBA pull loads everything', () => {
     expect(bench.games[0]).toMatchObject({ pts: 6 });
     expect(r.withProps).toBe(1);
     expect(mockCalls.filter((c) => c.startsWith('/NBA/players')).map((c) => /withOddsOnly/.test(c))).toEqual([true, false]);
+    // The priced call names the five sportsbooks (2026-11-24: without them only DraftKings Pick 6's overs came back).
+    expect(mockCalls.find((c) => /withOddsOnly/.test(c))).toMatch(/sportsbooks=draftkings&sportsbooks=fanduel&sportsbooks=betmgm&sportsbooks=caesars&sportsbooks=fanatics/);
+    expect(r.oddsBooksSent).toBe(true);
     const ind = r.data.extra.of('IND');
     expect(ind.counts).toMatchObject({ players: 2, offBoard: 1, teamRows: 1 });
     expect(ind.players.b).toMatchObject({ name: 'Bench Guard', offBoard: true, logs: [{ pts: 6, q1Pts: 6 }] });
