@@ -401,6 +401,29 @@
   season), PRA 6.239 → 6.143 and 6.178 → 6.099, rebounds, assists, threes and the ladders' Brier all better. A file, not a
   job: refit monthly (README). `__tests__/nba-model.test.js` (LightGBM's own answers on eight player-nights, the features,
   the blend on the board).
+- **PropFinder's data pulled and used** (Vincent, 2026-11-24: "fix the fact that we are actually pulling AND using the
+  propfinder data for our predictions"; branch `claude/nba-propfinder-data`):
+  - *Five books, both sides.* The players odds call sends `sportsbooks=` (the `BOOKS` list, `oddsBooks` option): it had sent
+    none, and every stored rung (24,800 priced, Oct 20 – Nov 23) was one book, DraftKings Pick 6 (a pick'em product: overs only,
+    median main over about −150, lines as low as 0.5 points). `priced()` prefers a sportsbook's line over a pick'em one
+    (`isDfsBook`, `dfs: true` when only a pick'em priced it), shops the best over and under, and de-vigs each book's pair into
+    `fair` / `hold` / `fairBooks` (the rungs' `noVig`). The pull reports `oddsBooksSent` and `oddsBooksSeen` (per book: items,
+    unders, pick'em), logged by `nba-data.yml`.
+  - *Line history.* `lastLines` is read (`row.last`, its shape logged in `fieldsSeen.sample.lastLines`); every prop keeps where
+    it opened across the night's pulls and a started game keeps its pre-tip lines (`lib/picks/line-history.js`, the store's
+    `lineHistory`); a pull at 6:40 PM ET (`nba-tip` job, `nba-data.yml` 23:40 UTC) gives the close. The scorecard's ladders
+    carry `moves` (the main lines that moved, with the board or against it).
+  - *Opportunity read* (`OPPORTUNITY_READ`, board.js `oppRatioOf`): usage for points, rebound chances for rebounds, potential
+    assists for assists; his last 40 games' opportunity at his conversion pulled toward the slate's, as a ratio on the
+    projection (0.8–1.25), combos on their parts (`ranges[market].opp`, predictor rows' `oppRatio` / `oppBase`). It moves the
+    centre only by `calibration.opportunity[market].w`, learned by `fitOpportunity` (grid 0–0.6, 400+ player-games, must beat
+    the projection's miss on both halves of the nights): 0, the projection unchanged, until the graded nights say so.
+  - *Edges off the board's own number.* `edgeRows` reads the ladder before the line blend (`edgeLadders`) and the rung's own
+    chance where the book anchor printed the price's (`own`: its calibration alone), both sides; a market's best bet needs
+    `EDGE_MIN` (0.08 for every market for now). The stored nights cannot set it per stat: their lines are pick'em lines (the
+    "points edge 10+ paid 32%" of the Nov 13 audit came mostly from 0.5 to 7.5 point lines on bench players).
+  - *Games payload.* The pull asks `/NBA/v2` once (`gamesPayload`) and reports its fields (`gamesSeen`): whether PropFinder
+    carries a spread, a total or the starting fives. Injuries stay ESPN's (PropFinder's injury routes answer 404).
 - **The book's line in the projection** (Vincent, 2026-11-13: "check whether the odds from propfinder can help us find
   opportunities"; `docs/audits/2026-11-13-nba-odds.md`): `LINE_BLEND` = { pts: 0.5, pra: 0.5, band: [-160, 130] } on the
   cocktail (`lineBlend`): the points and PRA centre moves half way to the book's main line where its over is priced inside the

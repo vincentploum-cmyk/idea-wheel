@@ -100,6 +100,9 @@ describe('the book anchor on the NBA board', () => {
     expect(rung.anchored).toBe(true);
     expect(rung.p).toBeCloseTo(sigma(-0.2 + logit(impliedProb(-110))), 2);
     expect(rung.evUnder).toBeNull();   // no under read on an anchored rung
+    // The board's own chance rides beside it (its calibration alone, no price in it): the edge reads that one (2026-11-24).
+    expect(rung.own).toBeCloseTo(sigma(-0.4 + 0.6 * logit(rung.raw)), 2);
+    expect(rung.own).toBeGreaterThan(rung.p);
     expect(b.calibration.anchored).toEqual({ plays: ['reb'], rungs: ['reb'] });
   });
 });

@@ -8,7 +8,7 @@ import { makePropfinder } from '../lib/picks/propfinder';
 // PropFinder's report reader, kept for the day its route answers the API again: the NBA binding reads ESPN's feed since
 // 2026-11-08 (`injuryReport: 'espn'`), so the reader is tested on the binding with PropFinder's report.
 const { fetchInjuries } = makePropfinder({ ...NBA_PF_OPTIONS, injuryReport: 'propfinder' });
-import { buildBoard, statOf, logRates, nbaBoard, COCKTAIL, COCKTAIL_BEFORE_RECIPE, BEST_MARKETS } from '../lib/nba/picks';
+import { buildBoard, statOf, logRates, nbaBoard, COCKTAIL, COCKTAIL_BEFORE_RECIPE, BEST_MARKETS, EDGE_MIN } from '../lib/nba/picks';
 import { FACTOR_MAX } from '../lib/picks/rotations';
 import { VACATED_SHARE } from '../lib/picks/injuries';
 import { dateFromFileName } from '../lib/nba/store';
@@ -607,7 +607,11 @@ describe('NBA board', () => {
   });
   test('the slate in one list: every play over the floor, his likeliest line a market, the chance first, with his projection and the matchup', () => {
     // The list's mechanics on every market (the site's NBA board lists rebounds, assists and threes alone: below).
-    const b = nbaBoard(COCKTAIL, { bestMarkets: null, bestBy: 'chance' }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf, results });
+    // Any edge makes the list here (`edgeMin: null`); the site's minimum per market is checked below.
+    const b = nbaBoard({ ...COCKTAIL, edgeMin: null }, { bestMarkets: null, bestBy: 'chance' }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf, results });
+    const site = nbaBoard(COCKTAIL, { bestMarkets: null, bestBy: 'chance' }).buildBoard({ date: '2026-10-21', season: 2026, games, sheets, pf, results });
+    expect(site.best.every((r) => r.edge > (EDGE_MIN[r.market] ?? EDGE_MIN.default))).toBe(true);
+    expect(site.best.length).toBeLessThan(b.best.length);
     // A best bet is a play with an edge over the book's price (Vincent, 2026-10-31: "I only want to see profitable bets
     // with an edge"); a row without a price, or priced past its chance, stays in its table alone. Since the value layer
     // (lib/picks/value.js) the chance floor no longer gates the list — a 47% touchdown at +145 is the money — and the
@@ -890,5 +894,27 @@ describe('NBA projection with the team scale', () => {
     const allowed = { rows: { PG: { pts: { value: 30, rank: 1 } } }, league: { PG: { pts: 25 } } };
     expect(projectFor({ season: 20 }, allowed, 'PG', 'pts', { pts: 0.8 })).toMatchObject({ factor: 1.12, team: 0.8, value: 17.9 });
     expect(projectFor({ season: 20 }, allowed, 'PG', 'pts', null)).toMatchObject({ team: null, value: 22.4 });
+  });
+});
+
+describe('NBA opportunity read (PropFinder tracking in the projection)', () => {
+  // Two guards on one side, 20 games each: Brown makes 5 assists a game on 10 potential assists; White makes 5 on 6, so his
+  // conversion runs far past the slate's and his own opportunity reads him below his rate.
+  const games = [{ id: 'g1', date: '2026-10-21T23:30Z', away: 'BOS', home: 'NY', final: false, state: 'pre' }];
+  const rows = (potAst, usg) => Array.from({ length: 20 }, (_, i) => ({ date: `2026-10-${String(20 - (i % 20)).padStart(2, '0')}T00:00Z`, season: 2026, type: 'REG', opp: 'NY', min: 32, pts: 20, reb: 6, ast: 5, tpm: 2, potAst, usg, rebCh: 10 }));
+  const pf = { at: '2026-10-20T14:00:00Z', data: { players: [
+    { id: 'p1', name: 'Jaylen Brown', key: 'jaylen brown', team: 'BOS', pos: 'SF', games: rows(10, 25), props: [{ market: 'ast', line: 4.5, odds: -110, underOdds: -110, isMain: true }] },
+    { id: 'p2', name: 'Derrick White', key: 'derrick white', team: 'BOS', pos: 'SG', games: rows(6, 25), props: [] },
+  ], defense: null } };
+  const build = (calibration = null) => buildBoard({ lineBlend: false, date: '2026-10-21', season: 2026, games, sheets: [], pf, results: {}, calibration }).games[0].sides.BOS.players;
+  test('every player-game carries his opportunity read; the projection moves only by a learned weight', () => {
+    const [brown, white] = ['jaylen brown', 'derrick white'].map((k) => build().find((p) => p.key === k));
+    expect(brown.ranges.ast.opp).toMatchObject({ field: 'potAst', games: 20, w: 0 });
+    expect(brown.ranges.ast.opp.ratio).toBeGreaterThan(1);   // he converts below the slate's 10 of 16: room to grow
+    expect(white.ranges.ast.opp.ratio).toBeLessThan(1);      // 5 of 6: past the slate's rate, his read says fewer
+    expect(brown.ranges.ast.opp.before).toBeUndefined();      // no weight learned: the projection stands
+    const moved = build({ opportunity: { ast: { w: 0.5 } } }).find((p) => p.key === 'jaylen brown').ranges.ast;
+    expect(moved.opp.before).toBe(brown.ranges.ast.exp);
+    expect(moved.exp).toBeGreaterThan(brown.ranges.ast.exp);
   });
 });
