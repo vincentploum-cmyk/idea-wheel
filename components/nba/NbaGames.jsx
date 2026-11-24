@@ -19,14 +19,14 @@ const UNIT = { pts: 'pts', reb: 'reb', ast: 'ast', tpm: '3PM', pra: 'PRA' };
 const STEP = Object.fromEntries(NBA_BOARDS.filter((b) => b.kind === 'ladder').map((b) => [b.market, b.step || 1]));
 const TIER_COLS = [['strong', 'Strong', '70'], ['lean', 'Lean', '55'], ['thin', 'Thin', '40']];
 const SHOW = 40;
-// The second night of a back-to-back, measured on the lists' top 10 (docs/audits/2026-11-24-nba-top10.md, 2025-26 replayed
-// and this season to 2026-11-23): the strong marks landed less often than the other nights, most of all assists.
+// The second night of a back-to-back, measured on the lists' top 10 (docs/audits/2026-11-24-nba-top10.md: the site's own
+// boards Oct 21 – Nov 23 rebuilt from the store, and 2025-26 replayed): the marks landed less often than on the other nights.
 const B2B_NOTE = {
-  pts: 'Played last night. Top-10 strong points marks on a back-to-back landed about as often as on other nights (79% vs 80% in 2025-26)',
-  reb: 'Played last night. Top-10 strong rebounds marks on a back-to-back landed 73% (2025-26) and 70% (this season) against 77–78% on other nights',
-  ast: 'Played last night. Top-10 strong assists marks on a back-to-back landed 69% in both seasons against 80% on other nights: count on a step lower',
-  tpm: 'Played last night. Top-10 strong threes marks on a back-to-back landed 76% against 77–80% on other nights',
-  pra: 'Played last night: a back-to-back. The list\'s assists and rebounds marks land less often then',
+  pts: 'Played last night. On the site’s boards this season the top 10’s strong points marks on a back-to-back landed 80% against 85% on other nights',
+  reb: 'Played last night. Top-10 strong rebounds marks on a back-to-back landed 70% against 81% on other nights (the site’s boards this season; 73% against 77% in 2025-26)',
+  ast: 'Played last night. Top-10 strong assists marks on a back-to-back landed 74% against 80% on other nights (the site’s boards this season; 69% against 80% in 2025-26)',
+  tpm: 'Played last night. Threes marks on a back-to-back landed as often as on other nights (80%), this season and last',
+  pra: 'Played last night: a back-to-back. The points, rebounds and assists marks land less often then',
 };
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));

@@ -127,6 +127,20 @@ python3 -I tools/audit/nba_top10.py --prefix .nhl-data/audit/top10/nba-2026-04-1
   --prefix .nhl-data/audit/out/nba-2026-11-23-model --label 2026-27 --games .nhl-data/audit/nba/games --out docs/audits/2026-11-24-nba-top10-tables.md
 ```
 
+The site's own boards, from a copy of the store (read-only; Supabase keys from `.env.local`), go in as `--prefix store:…`:
+
+```bash
+node --env-file=.env.local tools/audit/nba-store-dump.mjs --from 2026-10-21 --to 2026-11-23 --out nba-store
+ln -sfn "$PWD/nba-store/nba" .nhl-data/nba    # the fs driver reads .nhl-data/ (NODE_ENV=development)
+NODE_ENV=development NHL_STORE_DRIVER=fs node --import ./tools/audit/register.mjs tools/audit/nba-store-top10.mjs \
+  --from 2026-10-21 --to 2026-11-23 --out .nhl-data/audit/store --calibrate
+python3 -I tools/audit/nba_top10.py ... --prefix store:.nhl-data/audit/store/store-cal --label site --games none --out ...
+```
+
+`--calibrate` grades the nights before each one with `scorecardFor` and puts that calibration in place first (it writes
+`.nhl-data/nba/meta/calibration.json`, i.e. into the copy). The loader (`register.mjs`) gives a bare `.json` import its
+`type: 'json'` attribute, as Next does, so the store's modules load outside Next.
+
 The 2025-26 replay needs that season's logs: `nba-fetch.mjs --from 2025-10-21 --to 2026-04-12 --raw $P --season 2025`
 (without `--no-logs`).
 

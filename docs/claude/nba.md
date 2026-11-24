@@ -461,15 +461,20 @@
   all on assists and threes over 2024-25 to now; splits of +8 points said 18-22 and landed about 15, the board said 16. The
   tab's legend and a big split's line say so. `__tests__/nba-without-glance.test.js`.
 - **The stat lists' top 10, graded** (Vincent, 2026-11-24: "reduce the number of misses in the top 10 … see if any patterns
-  can be detected"; `docs/audits/2026-11-24-nba-top10.md`, `tools/audit/nba_top10.py` on the replay's `--marks-all`): the
-  marks land at the chance they state (strong 76–82%, lean 59–64%, thin 43–49%, 2025-26 and this season); a night's top 10
-  shows 8 (points) to 11 (assists, rebounds) misses a stat, half of them from the thin column, half on nights he played under
-  90% of the minutes read. **One pattern holds both seasons: the second night of a back-to-back** — strong assists marks 69%
-  against 80%, rebounds 70–73% against 77–78%; points and threes nothing of weight. Pooled over every player rest predicts
-  nothing (the regulars give 2–5% back, the bench takes it), which is why the cocktail left it out. Shipped: a **B2B** tag on
-  the lists' rows (`tierRows` → `b2b` from the board player, `B2B_NOTE` in `NbaGames.jsx` the stat's measured rates on the
-  hover); display only. Open, his call: the assists chance × 0.82 odds on the second night (30 nights: 338 → 326 misses,
-  those rows 51% → 57.5%), hiding the thin column, a higher strong floor. `__tests__/nba-games.test.jsx`.
+  can be detected"; `docs/audits/2026-11-24-nba-top10.md`, `tools/audit/nba_top10.py`): the site's own boards rebuilt from a
+  copy of the store (`nba-store-dump.mjs`, then `nba-store-top10.mjs --calibrate`, Oct 21 – Nov 23) and 2025-26 replayed
+  (`nba-audit.mjs --marks-all`). The marks land at the chance they state or better (strong 79–84% on the site's boards); a
+  night shows 7 (points) to 11 (assists) misses a stat, half of them from the thin column, half (in the replays) on nights
+  he played under 90% of the minutes read. **The second night of a back-to-back** costs points, rebounds and assists 6–9
+  points of hit rate on the site's boards (strong rebounds 70% against 81%, assists 74 / 80, points 80 / 85), threes nothing;
+  2025-26 agrees on assists and rebounds. Shipped: a **B2B** tag on the lists' rows (`tierRows` → `b2b` from the board
+  player, `B2B_NOTE` in `NbaGames.jsx` the measured rates on the hover); display only. **The board's `b2b` was wrong until
+  2026-11-24**: PropFinder's `gameDate` is UTC and the pull kept its date, so an evening ET game carries the next day and the
+  flag fired on the team that played two nights ago (2,438 of 2,652 flags). The pull now keeps the ET night as `day`
+  (`etDayOf`, `lib/picks/propfinder.js`), the flag reads it (`playedLastNight`, `lib/picks/board.js`; an older pull: a log
+  dated the slate itself, not tonight's opponent), and so does the scorecard's `asOf`. Open, his call: the assists chance
+  × 0.82 odds on the second night (33 site nights: 369 → 358 misses, those rows 56% → 63%), points / rebounds likewise,
+  hiding the thin column, a higher strong floor. `__tests__/nba-games.test.jsx`, `__tests__/played-last-night.test.js`.
 - **The outlier nights** (Vincent, 2026-11-07: "we need to start calibrating the nba model … players were projected by us to
   get 4 or 5 rebounds but they actually got 10+"; `docs/audits/2026-11-07-nba-outliers.md`): the rebounds', assists', threes',
   steals' and blocks' rungs read a count's tail (the negative binomial with the ladder's centre and spread: a 4.5-rebound

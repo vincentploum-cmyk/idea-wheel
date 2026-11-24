@@ -353,8 +353,9 @@
   **Shipped** as `lineMoveMultiplier` (ratio ^0.8, both ways, defensemen on their own minutes); worth little overall
   (−0.9 per 1,000, interval across 0). The model's own run was not replayed (no scorecard export).
 - The NBA stat lists' top 10 (`docs/audits/2026-11-24-nba-top10.md`, `tools/audit/nba_top10.py`; Vincent, 2026-11-24:
-  "reduce the number of misses in the top 10"): 20,184 marks shown by the ten highest projections a night, 2025-26 (160
-  nights, trees off) and this season (30, trees on), replayed with `nba-audit.mjs --marks-all`. The tiers land at their
-  chance within 3 points; the misses are the chance playing out (thin is half of them) and lost minutes (half of them).
-  Of 18 reads only the back-to-back held both seasons, on assists (strong 69% against 80%) and rebounds (70–73 / 77–78).
-  Shipped: a B2B tag on the lists; the assists shift (odds × 0.82) left for Vincent.
+  "reduce the number of misses in the top 10"): the site's own boards rebuilt from a copy of the store (33 nights,
+  `nba-store-dump.mjs` + `nba-store-top10.mjs`, the fs driver on `.nhl-data/nba`) beside 2025-26 replayed
+  (`nba-audit.mjs --marks-all`). The tiers land at their chance or better; the misses are the chance playing out (thin is
+  half) and lost minutes. The back-to-back costs points, rebounds and assists 6–9 points on the site's boards, and the
+  board's own `b2b` flag turned out to fire on the team that played two nights ago (PropFinder's UTC log dates): fixed, a
+  B2B tag on the lists; the chance shift left for Vincent.

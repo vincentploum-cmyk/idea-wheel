@@ -242,6 +242,64 @@ def shift_test(allm, train, test):
     return L + ['']
 
 
+STORE_ROOT = '.nhl-data/nba'
+STEP = {'pts': 5, 'reb': 1, 'ast': 1, 'tpm': 1}
+
+
+def load_store(prefix, label):
+    """The site's own boards (tools/audit/nba-store-top10.mjs off a copy of the store): the shuffle's chance at every height,
+    the out and the idle off the list as `tierBoard` leaves them, the heights on the list's step. A player who did not play
+    (no box line) keeps his row on the page as DNP: counted apart, not graded."""
+    m = pd.read_csv(prefix + '-marks.csv')
+    pl = pd.read_csv(prefix + '-players.csv')
+    m = m[(m.health != 'Out') & (m.idle != 1) & m.market.isin(STATS)]
+    m = m[m.height % m.market.map(STEP) == 0].rename(columns={'date': 'slate', 'height': 'mark'})
+    m['b2b'] = np.nan
+    pl = pl.rename(columns={'date': 'slate', 'minutes': 'minTonight'}).drop_duplicates(['slate', 'key', 'team'])
+    # The back-to-back from the stored schedules (his team played the night before), not the board's flag: until 2026-11-24
+    # that flag read PropFinder's UTC log dates as ET and fired on the team that had played two nights ago.
+    played = set()
+    for d in os.listdir(STORE_ROOT):
+        try:
+            for g in json.load(open(os.path.join(STORE_ROOT, d, 'schedule.json'))).get('games', []):
+                played.update({(d, g['away']), (d, g['home'])})
+        except Exception:
+            pass
+    prev = lambda d: (date.fromisoformat(d) - timedelta(days=1)).isoformat()
+    pl['b2b'] = [int((prev(d), t) in played) for d, t in zip(pl.slate, pl.team)]
+    # A game already over when the stored pull was taken (its tip 2h30 or more before the pull's `at`) may sit in the
+    # player's own logs that night: left out. The rest of the night is graded as the page had it.
+    tips = {}
+    for d in m.slate.unique():
+        try:
+            for g in json.load(open(os.path.join(STORE_ROOT, d, 'schedule.json'))).get('games', []):
+                tips[str(g['id'])] = g.get('date')
+        except Exception:
+            pass
+    pull = pl.groupby('slate').pullAt.first().to_dict()
+    def done_before(row):
+        tip = tips.get(str(row.game)); at = pull.get(row.slate)
+        if not tip or not isinstance(at, str):
+            return False
+        return pd.Timestamp(tip) + pd.Timedelta(minutes=150) <= pd.Timestamp(at)
+    gm = m[['slate', 'game']].drop_duplicates()
+    gm['leak'] = [done_before(r) for r in gm.itertuples()]
+    print(f'{label}: {int(gm.leak.sum())} of {len(gm)} games over before the stored pull, left out', file=sys.stderr)
+    m = m.merge(gm, on=['slate', 'game'])
+    m = m[~m.leak].drop(columns=['leak'])
+    t = top10(m)
+    t = t.merge(pl[['slate', 'key', 'team', 'b2b', 'minTonight', 'starter', 'lineupStatus', 'latePull']], on=['slate', 'key', 'team'], how='left')
+    t['dnp'] = t.actual.isna().astype(int)
+    t['cushion'] = (t.exp - t.mark) / t.exp
+    for c in [f for f, _ in FEATS if f not in t]:
+        t[c] = np.nan
+    t['label'] = label
+    top = t[['slate', 'key', 'team', 'market']].drop_duplicates()
+    allm = m.drop(columns=['b2b']).merge(top, on=['slate', 'key', 'team', 'market']).merge(pl[['slate', 'key', 'team', 'b2b']], on=['slate', 'key', 'team'], how='left')
+    allm['label'] = label
+    return t, allm
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--prefix', action='append', required=True)
@@ -252,8 +310,15 @@ def main():
     a = ap.parse_args()
     labels = a.label or [os.path.basename(p) for p in a.prefix]
     games = a.games or [None] * len(a.prefix)
-    loaded = [load(p, g, l) for p, g, l in zip(a.prefix, games, labels)]
+    loaded = [load_store(p[len('store:'):], l) if p.startswith('store:') else load(p, g, l) for p, g, l in zip(a.prefix, games, labels)]
     df = pd.concat([x[0] for x in loaded], ignore_index=True)
+    if 'dnp' in df:
+        dnp = df[df.dnp == 1]
+        if len(dnp):
+            print(f'{len(dnp)} marks on a player who did not play, left out of the grading', file=sys.stderr)
+        df = df[df.dnp != 1]
+    allm = pd.concat([x[1] for x in loaded], ignore_index=True)
+    allm = allm[allm.actual.notna()]
     allm = pd.concat([x[1] for x in loaded], ignore_index=True)
     if a.csv:
         df.to_csv(a.csv, index=False)

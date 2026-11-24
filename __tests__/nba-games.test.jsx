@@ -173,7 +173,7 @@ describe('the NBA games, the NFL’s layout', () => {
     expect(rows.find((r) => r.player === 'Austin Reaves').b2b).toBe(false);
     const list = renderToStaticMarkup(<NbaStatList board={bb} shuffles={shuffles} market="pts" />);
     expect(list.match(/>B2B</g)).toHaveLength(1);
-    expect(list).toContain('Played last night. Top-10 strong points marks');
+    expect(list).toContain('top 10’s strong points marks on a back-to-back landed 80%');
   });
   test('closed by default; the stat tab lists the night', () => {
     const closed = renderToStaticMarkup(<NbaGames board={board} shuffles={shuffles} />);

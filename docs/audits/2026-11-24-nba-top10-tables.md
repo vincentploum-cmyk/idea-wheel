@@ -30,6 +30,18 @@ Written by `tools/audit/nba_top10.py`. Every mark the Points / Rebounds / Assist
 | 2026-27 | tpm | lean | 205 | 61.9% | 59.5% | -2.4 |
 | 2026-27 | tpm | strong | 299 | 79.0% | 78.9% | -0.1 |
 | 2026-27 | tpm | thin | 225 | 47.7% | 49.3% | +1.6 |
+| site | ast | lean | 309 | 61.6% | 61.8% | +0.2 |
+| site | ast | strong | 326 | 76.1% | 78.8% | +2.7 |
+| site | ast | thin | 315 | 46.4% | 43.2% | -3.2 |
+| site | pts | lean | 214 | 63.5% | 68.2% | +4.7 |
+| site | pts | strong | 318 | 78.7% | 83.6% | +4.9 |
+| site | pts | thin | 239 | 47.5% | 51.9% | +4.4 |
+| site | reb | lean | 295 | 60.8% | 68.1% | +7.4 |
+| site | reb | strong | 324 | 75.6% | 79.0% | +3.4 |
+| site | reb | thin | 318 | 45.6% | 50.0% | +4.4 |
+| site | tpm | lean | 207 | 62.2% | 60.4% | -1.8 |
+| site | tpm | strong | 326 | 78.6% | 79.8% | +1.2 |
+| site | tpm | thin | 245 | 48.1% | 49.4% | +1.3 |
 
 ## Misses a night in the top 10 (marks shown, misses)
 
@@ -43,42 +55,46 @@ Written by `tools/audit/nba_top10.py`. Every mark the Points / Rebounds / Assist
 | 2026-27 | pts | 30 | 23.4 | 8.0 |
 | 2026-27 | reb | 30 | 29.9 | 11.5 |
 | 2026-27 | tpm | 30 | 24.3 | 8.7 |
+| site | ast | 33 | 28.8 | 11.1 |
+| site | pts | 33 | 23.4 | 7.1 |
+| site | reb | 33 | 28.4 | 9.7 |
+| site | tpm | 33 | 23.6 | 8.2 |
 
 ## One read at a time, over the chance stated
 
 hit = σ(a + b·logit(said) + c·z(read)) per season and stat, every tier pooled: c > 0 means the marks land more often than said as the read rises; |z| ≥ 2 is worth a look, ≥ 3 is solid.
 
-| read | 2025-26 pts | 2025-26 reb | 2025-26 ast | 2025-26 tpm | 2026-27 pts | 2026-27 reb | 2026-27 ast | 2026-27 tpm |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| cushion: projection above the mark, share of the projection | -0.12 (z -0.9) | +0.12 (z +1.1) | +0.17 (z +1.5) | +0.29 (z +2.0) | +0.99 (z +2.9) | +0.47 (z +2.1) | +0.65 (z +2.5) | +0.51 (z +1.7) |
-| pos: place on the list (1 = highest projection) | +0.09 (z +2.6) | -0.04 (z -1.3) | +0.03 (z +1.1) | +0.05 (z +1.5) | -0.09 (z -1.1) | -0.09 (z -1.3) | +0.05 (z +0.7) | -0.06 (z -0.7) |
-| share10: his share of his last 10 games at the mark | +0.17 (z +3.3) | +0.13 (z +3.1) | +0.06 (z +1.4) | -0.03 (z -0.6) | -0.18 (z -1.1) | -0.18 (z -1.4) | -0.40 (z -3.1) | -0.10 (z -0.7) |
-| form: last five against his season (hot > 0) | -0.12 (z -3.3) | -0.11 (z -3.6) | -0.03 (z -0.9) | -0.03 (z -0.8) | -0.03 (z -0.3) | -0.11 (z -1.5) | -0.10 (z -1.3) | -0.02 (z -0.3) |
-| minTonight: minutes read tonight | -0.06 (z -1.8) | -0.06 (z -1.8) | +0.00 (z +0.1) | +0.01 (z +0.2) | -0.16 (z -1.9) | -0.23 (z -3.2) | -0.16 (z -2.1) | -0.06 (z -0.8) |
-| minCv: his minutes' spread over the last ten (sd / mean) | +0.03 (z +0.8) | +0.05 (z +1.5) | +0.06 (z +1.9) | -0.09 (z -2.4) | -0.02 (z -0.2) | +0.14 (z +1.6) | +0.12 (z +1.3) | +0.07 (z +0.7) |
-| minGap: minutes read tonight less his last-ten mean | -0.03 (z -0.7) | -0.02 (z -0.5) | +0.00 (z +0.0) | -0.07 (z -1.8) | -0.02 (z -0.2) | -0.10 (z -1.1) | -0.06 (z -0.7) | -0.10 (z -1.0) |
-| matchup: matchup factor on his rate | -0.10 (z -2.7) | -0.04 (z -1.3) | -0.13 (z -4.0) | -0.07 (z -2.0) | +0.25 (z +2.9) | +0.09 (z +1.3) | -0.04 (z -0.6) | -0.14 (z -1.7) |
-| oppRank: opponent's rank at his spot (1 = gives up the most) | +0.11 (z +2.9) | +0.07 (z +2.3) | +0.08 (z +2.5) | +0.13 (z +3.6) | +0.06 (z +0.7) | -0.16 (z -2.2) | +0.10 (z +1.3) | +0.06 (z +0.8) |
-| env: game environment factor | -0.21 (z -5.7) | -0.14 (z -4.6) | -0.16 (z -5.2) | -0.14 (z -3.9) | -0.01 (z -0.1) | +0.20 (z +2.5) | +0.01 (z +0.1) | +0.19 (z +2.3) |
-| teamScale: team scale | -0.32 (z -6.5) | -0.18 (z -4.1) | -0.20 (z -4.7) | -0.10 (z -1.9) | -0.14 (z -1.3) | +0.09 (z +0.8) | -0.11 (z -1.1) | -0.22 (z -1.8) |
-| lift: teammates-out lift | — | — | — | — | — | — | — | — |
-| sideOut: his side's players out | -0.05 (z -1.4) | -0.03 (z -1.1) | -0.08 (z -2.6) | -0.04 (z -1.1) | -0.13 (z -1.5) | +0.03 (z +0.4) | +0.06 (z +0.8) | +0.08 (z +1.0) |
-| b2b: his team on the second night of a back-to-back | -0.05 (z -1.4) | -0.07 (z -2.2) | -0.15 (z -4.9) | +0.01 (z +0.4) | -0.12 (z -1.5) | -0.15 (z -2.1) | -0.22 (z -3.0) | -0.12 (z -1.5) |
-| spread: his side's spread (negative = favoured) | +0.03 (z +0.8) | -0.15 (z -4.4) | -0.02 (z -0.6) | -0.19 (z -4.8) | -0.36 (z -4.2) | +0.05 (z +0.8) | +0.01 (z +0.1) | +0.06 (z +0.8) |
-| total: the game total | -0.03 (z -0.7) | +0.03 (z +1.0) | +0.05 (z +1.6) | +0.07 (z +1.9) | +0.06 (z +0.7) | -0.12 (z -1.7) | +0.07 (z +1.0) | +0.06 (z +0.7) |
-| nThis: his games this season | -0.08 (z -2.3) | -0.01 (z -0.3) | -0.08 (z -2.5) | +0.00 (z +0.1) | -0.06 (z -0.7) | +0.02 (z +0.3) | -0.08 (z -1.0) | -0.20 (z -2.4) |
-| sd: his spread (sd) on the stat | +0.07 (z +1.9) | +0.15 (z +4.8) | +0.13 (z +4.1) | +0.12 (z +3.3) | +0.11 (z +1.4) | +0.11 (z +1.5) | +0.04 (z +0.5) | +0.19 (z +2.3) |
+| read | 2025-26 pts | 2025-26 reb | 2025-26 ast | 2025-26 tpm | 2026-27 pts | 2026-27 reb | 2026-27 ast | 2026-27 tpm | site pts | site reb | site ast | site tpm |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cushion: projection above the mark, share of the projection | -0.12 (z -0.9) | +0.12 (z +1.1) | +0.17 (z +1.5) | +0.29 (z +2.0) | +0.99 (z +2.9) | +0.47 (z +2.1) | +0.65 (z +2.5) | +0.51 (z +1.7) | +0.06 (z +0.2) | +0.53 (z +2.8) | +0.51 (z +2.7) | +0.84 (z +3.0) |
+| pos: place on the list (1 = highest projection) | +0.09 (z +2.6) | -0.04 (z -1.3) | +0.03 (z +1.1) | +0.05 (z +1.5) | -0.09 (z -1.1) | -0.09 (z -1.3) | +0.05 (z +0.7) | -0.06 (z -0.7) | +0.06 (z +0.7) | -0.13 (z -1.8) | +0.01 (z +0.2) | +0.16 (z +2.0) |
+| share10: his share of his last 10 games at the mark | +0.17 (z +3.3) | +0.13 (z +3.1) | +0.06 (z +1.4) | -0.03 (z -0.6) | -0.18 (z -1.1) | -0.18 (z -1.4) | -0.40 (z -3.1) | -0.10 (z -0.7) | — | — | — | — |
+| form: last five against his season (hot > 0) | -0.12 (z -3.3) | -0.11 (z -3.6) | -0.03 (z -0.9) | -0.03 (z -0.8) | -0.03 (z -0.3) | -0.11 (z -1.5) | -0.10 (z -1.3) | -0.02 (z -0.3) | — | — | — | — |
+| minTonight: minutes read tonight | -0.06 (z -1.8) | -0.06 (z -1.8) | +0.00 (z +0.1) | +0.01 (z +0.2) | -0.16 (z -1.9) | -0.23 (z -3.2) | -0.16 (z -2.1) | -0.06 (z -0.8) | +0.03 (z +0.4) | -0.11 (z -1.5) | -0.13 (z -1.8) | +0.05 (z +0.7) |
+| minCv: his minutes' spread over the last ten (sd / mean) | +0.03 (z +0.8) | +0.05 (z +1.5) | +0.06 (z +1.9) | -0.09 (z -2.4) | -0.02 (z -0.2) | +0.14 (z +1.6) | +0.12 (z +1.3) | +0.07 (z +0.7) | — | — | — | — |
+| minGap: minutes read tonight less his last-ten mean | -0.03 (z -0.7) | -0.02 (z -0.5) | +0.00 (z +0.0) | -0.07 (z -1.8) | -0.02 (z -0.2) | -0.10 (z -1.1) | -0.06 (z -0.7) | -0.10 (z -1.0) | — | — | — | — |
+| matchup: matchup factor on his rate | -0.10 (z -2.7) | -0.04 (z -1.3) | -0.13 (z -4.0) | -0.07 (z -2.0) | +0.25 (z +2.9) | +0.09 (z +1.3) | -0.04 (z -0.6) | -0.14 (z -1.7) | — | — | — | — |
+| oppRank: opponent's rank at his spot (1 = gives up the most) | +0.11 (z +2.9) | +0.07 (z +2.3) | +0.08 (z +2.5) | +0.13 (z +3.6) | +0.06 (z +0.7) | -0.16 (z -2.2) | +0.10 (z +1.3) | +0.06 (z +0.8) | — | — | — | — |
+| env: game environment factor | -0.21 (z -5.7) | -0.14 (z -4.6) | -0.16 (z -5.2) | -0.14 (z -3.9) | -0.01 (z -0.1) | +0.20 (z +2.5) | +0.01 (z +0.1) | +0.19 (z +2.3) | — | — | — | — |
+| teamScale: team scale | -0.32 (z -6.5) | -0.18 (z -4.1) | -0.20 (z -4.7) | -0.10 (z -1.9) | -0.14 (z -1.3) | +0.09 (z +0.8) | -0.11 (z -1.1) | -0.22 (z -1.8) | — | — | — | — |
+| lift: teammates-out lift | — | — | — | — | — | — | — | — | — | — | — | — |
+| sideOut: his side's players out | -0.05 (z -1.4) | -0.03 (z -1.1) | -0.08 (z -2.6) | -0.04 (z -1.1) | -0.13 (z -1.5) | +0.03 (z +0.4) | +0.06 (z +0.8) | +0.08 (z +1.0) | — | — | — | — |
+| b2b: his team on the second night of a back-to-back | -0.05 (z -1.4) | -0.07 (z -2.2) | -0.15 (z -4.9) | +0.01 (z +0.4) | -0.12 (z -1.5) | -0.15 (z -2.1) | -0.22 (z -3.0) | -0.12 (z -1.5) | -0.15 (z -1.9) | -0.15 (z -2.2) | -0.10 (z -1.4) | +0.03 (z +0.3) |
+| spread: his side's spread (negative = favoured) | +0.03 (z +0.8) | -0.15 (z -4.4) | -0.02 (z -0.6) | -0.19 (z -4.8) | -0.36 (z -4.2) | +0.05 (z +0.8) | +0.01 (z +0.1) | +0.06 (z +0.8) | — | — | — | — |
+| total: the game total | -0.03 (z -0.7) | +0.03 (z +1.0) | +0.05 (z +1.6) | +0.07 (z +1.9) | +0.06 (z +0.7) | -0.12 (z -1.7) | +0.07 (z +1.0) | +0.06 (z +0.7) | — | — | — | — |
+| nThis: his games this season | -0.08 (z -2.3) | -0.01 (z -0.3) | -0.08 (z -2.5) | +0.00 (z +0.1) | -0.06 (z -0.7) | +0.02 (z +0.3) | -0.08 (z -1.0) | -0.20 (z -2.4) | — | — | — | — |
+| sd: his spread (sd) on the stat | +0.07 (z +1.9) | +0.15 (z +4.8) | +0.13 (z +4.1) | +0.12 (z +3.3) | +0.11 (z +1.4) | +0.11 (z +1.5) | +0.04 (z +0.5) | +0.19 (z +2.3) | — | — | — | — |
 
-## The back-to-back as a shift on the chance (fitted on 2025-26, read on 2026-27)
+## The back-to-back as a shift on the chance (fitted on 2025-26, read on site)
 
 logit p' = logit p + c · b2b on every height of the top 10's players (chances 25–95% in the fit); Brier on every height of the test season, then the tiers re-read off the moved chance.
 
 | stat | c | odds × | Brier now | Brier moved | misses now | misses moved | marks now | marks moved | b2b rows hit now | moved |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| pts | -0.053 | 0.95 | 0.11230 | 0.11226 | 241 | 240 | 703 | 706 | 61.3% | 62.6% |
-| reb | -0.047 | 0.95 | 0.10540 | 0.10538 | 344 | 340 | 896 | 895 | 54.8% | 56.9% |
-| ast | -0.197 | 0.82 | 0.11405 | 0.11353 | 338 | 326 | 883 | 878 | 51.0% | 57.5% |
-| tpm | -0.093 | 0.91 | 0.12711 | 0.12690 | 260 | 259 | 729 | 726 | 60.3% | 60.1% |
+| pts | -0.053 | 0.95 | 0.11478 | 0.11478 | 241 | 236 | 777 | 770 | 62.8% | 64.3% |
+| reb | -0.047 | 0.95 | 0.11001 | 0.10995 | 339 | 336 | 955 | 954 | 56.8% | 58.3% |
+| ast | -0.197 | 0.82 | 0.11166 | 0.11161 | 369 | 358 | 953 | 953 | 56.4% | 63.2% |
+| tpm | -0.093 | 0.91 | 0.12568 | 0.12582 | 274 | 272 | 780 | 782 | 66.4% | 68.2% |
 
 ### cushion: projection above the mark, share of the projection
 
@@ -116,6 +132,22 @@ logit p' = logit p + c · b2b on every height of the top 10's players (chances 2
 | 2026-27 | tpm | Q2 | 182 | 58.0% | 56.6% | -1.4 |
 | 2026-27 | tpm | Q3 | 182 | 71.4% | 68.7% | -2.7 |
 | 2026-27 | tpm | Q4 high | 182 | 81.9% | 83.0% | +1.0 |
+| site | ast | Q1 low | 238 | 45.5% | 41.2% | -4.4 |
+| site | ast | Q2 | 237 | 56.3% | 54.0% | -2.3 |
+| site | ast | Q3 | 237 | 67.7% | 68.4% | +0.6 |
+| site | ast | Q4 high | 238 | 76.6% | 82.4% | +5.8 |
+| site | pts | Q1 low | 193 | 46.5% | 51.3% | +4.8 |
+| site | pts | Q2 | 193 | 59.5% | 63.2% | +3.7 |
+| site | pts | Q3 | 192 | 71.7% | 78.1% | +6.4 |
+| site | pts | Q4 high | 193 | 81.5% | 85.5% | +4.0 |
+| site | reb | Q1 low | 235 | 44.6% | 47.7% | +3.0 |
+| site | reb | Q2 | 234 | 55.4% | 61.5% | +6.1 |
+| site | reb | Q3 | 234 | 67.3% | 71.8% | +4.5 |
+| site | reb | Q4 high | 234 | 75.8% | 82.1% | +6.3 |
+| site | tpm | Q1 low | 195 | 47.3% | 48.7% | +1.4 |
+| site | tpm | Q2 | 194 | 58.1% | 54.1% | -4.0 |
+| site | tpm | Q3 | 194 | 71.6% | 72.7% | +1.1 |
+| site | tpm | Q4 high | 195 | 81.4% | 84.6% | +3.2 |
 
 ### pos: place on the list (1 = highest projection)
 
@@ -153,6 +185,22 @@ logit p' = logit p + c · b2b on every height of the top 10's players (chances 2
 | 2026-27 | tpm | Q2 | 182 | 64.5% | 65.9% | +1.5 |
 | 2026-27 | tpm | Q3 | 182 | 65.4% | 62.6% | -2.7 |
 | 2026-27 | tpm | Q4 high | 182 | 65.0% | 64.8% | -0.2 |
+| site | ast | Q1 low | 238 | 61.3% | 59.2% | -2.1 |
+| site | ast | Q2 | 237 | 61.2% | 63.3% | +2.1 |
+| site | ast | Q3 | 237 | 61.4% | 62.0% | +0.6 |
+| site | ast | Q4 high | 238 | 62.2% | 61.3% | -0.9 |
+| site | pts | Q1 low | 193 | 65.4% | 70.5% | +5.1 |
+| site | pts | Q2 | 193 | 65.3% | 65.3% | -0.0 |
+| site | pts | Q3 | 192 | 63.9% | 72.4% | +8.5 |
+| site | pts | Q4 high | 193 | 64.6% | 69.9% | +5.4 |
+| site | reb | Q1 low | 235 | 60.1% | 67.7% | +7.5 |
+| site | reb | Q2 | 234 | 60.3% | 69.2% | +8.9 |
+| site | reb | Q3 | 234 | 60.8% | 63.2% | +2.4 |
+| site | reb | Q4 high | 234 | 61.8% | 62.8% | +1.1 |
+| site | tpm | Q1 low | 195 | 64.2% | 57.4% | -6.8 |
+| site | tpm | Q2 | 194 | 64.8% | 66.5% | +1.7 |
+| site | tpm | Q3 | 194 | 64.7% | 67.5% | +2.8 |
+| site | tpm | Q4 high | 195 | 64.7% | 68.7% | +4.0 |
 
 ### share10: his share of his last 10 games at the mark
 
@@ -264,6 +312,22 @@ logit p' = logit p + c · b2b on every height of the top 10's players (chances 2
 | 2026-27 | tpm | Q2 | 182 | 64.5% | 61.0% | -3.5 |
 | 2026-27 | tpm | Q3 | 182 | 64.4% | 62.1% | -2.3 |
 | 2026-27 | tpm | Q4 high | 182 | 64.4% | 64.8% | +0.4 |
+| site | ast | Q1 low | 238 | 61.5% | 64.3% | +2.8 |
+| site | ast | Q2 | 237 | 61.9% | 62.4% | +0.6 |
+| site | ast | Q3 | 237 | 61.3% | 58.6% | -2.6 |
+| site | ast | Q4 high | 238 | 61.5% | 60.5% | -1.0 |
+| site | pts | Q1 low | 193 | 63.8% | 69.4% | +5.6 |
+| site | pts | Q2 | 193 | 64.5% | 69.9% | +5.5 |
+| site | pts | Q3 | 192 | 65.2% | 69.8% | +4.6 |
+| site | pts | Q4 high | 193 | 65.7% | 68.9% | +3.2 |
+| site | reb | Q1 low | 235 | 61.1% | 68.9% | +7.9 |
+| site | reb | Q2 | 234 | 60.2% | 67.5% | +7.3 |
+| site | reb | Q3 | 234 | 60.9% | 65.0% | +4.0 |
+| site | reb | Q4 high | 234 | 60.8% | 61.5% | +0.8 |
+| site | tpm | Q1 low | 195 | 65.0% | 64.6% | -0.3 |
+| site | tpm | Q2 | 194 | 64.3% | 65.5% | +1.2 |
+| site | tpm | Q3 | 194 | 65.1% | 64.4% | -0.6 |
+| site | tpm | Q4 high | 195 | 64.1% | 65.6% | +1.6 |
 
 ### minCv: his minutes' spread over the last ten (sd / mean)
 
@@ -544,6 +608,14 @@ logit p' = logit p + c · b2b on every height of the top 10's players (chances 2
 | 2026-27 | reb | 1 | 168 | 60.4% | 54.8% | -5.7 |
 | 2026-27 | tpm | 0 | 583 | 64.3% | 65.4% | +1.1 |
 | 2026-27 | tpm | 1 | 146 | 65.6% | 60.3% | -5.3 |
+| site | ast | 0 | 787 | 61.6% | 62.5% | +0.9 |
+| site | ast | 1 | 163 | 61.3% | 56.4% | -4.8 |
+| site | pts | 0 | 609 | 64.8% | 71.1% | +6.3 |
+| site | pts | 1 | 162 | 64.7% | 63.6% | -1.2 |
+| site | reb | 0 | 774 | 60.7% | 67.2% | +6.5 |
+| site | reb | 1 | 163 | 60.9% | 58.9% | -2.0 |
+| site | tpm | 0 | 626 | 64.5% | 64.7% | +0.2 |
+| site | tpm | 1 | 152 | 64.9% | 66.4% | +1.5 |
 
 ### spread: his side's spread (negative = favoured)
 
