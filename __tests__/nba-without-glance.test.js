@@ -4,7 +4,7 @@
 import { describe, expect, test } from '@jest/globals';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import NbaOutBoosts from '../components/nba/NbaOutBoosts';
+import NbaOutBoosts, { sortBoosts } from '../components/nba/NbaOutBoosts';
 import { woBadge, woLine } from '../lib/picks/without-glance';
 import { buildBoard } from '../lib/nba/picks';
 import { OUT_BOOST } from '../lib/picks/out-boosts';
@@ -61,5 +61,30 @@ describe('the with / without glance', () => {
     expect(html).toContain('26 → <b>37</b>');
     expect(html).toContain('8 → <b>25</b>');
     expect(html).toContain('+11');
+  });
+});
+
+// Vincent, 2026-11-24: "in the missing players view, make sure I can sort".
+describe('the Teammates out tab sorts by every column', () => {
+  const row = (player, out, gpWithout, min, pts, exp) => ({ player, out: { name: out }, gpWith: 10, gpWithout, stats: { min: { with: 20, without: 20 + min, gap: min }, pts: { with: 10, without: 10 + pts, gap: pts } }, proj: { pts: { exp } } });
+  const rows = [row('Bronny James', 'Austin Reaves', 9, 10, 4.2, 7.9), row('Quentin Grimes', 'Austin Reaves', 4, 11.3, 17.5, 14.8), row('Ace Bailey', 'Lauri Markkanen', 2, 3, null, null)];
+  const names = (list) => list.map((r) => r.player);
+  test('a stat sorts by the gain, or by the average without him; nulls last whichever way', () => {
+    expect(names(sortBoosts(rows, { key: 'min', dir: 'desc' }))).toEqual(['Quentin Grimes', 'Bronny James', 'Ace Bailey']);
+    expect(names(sortBoosts(rows, { key: 'min', dir: 'asc' }))).toEqual(['Ace Bailey', 'Bronny James', 'Quentin Grimes']);
+    rows[2].stats.pts = null;
+    expect(names(sortBoosts(rows, { key: 'pts', dir: 'asc' }))).toEqual(['Bronny James', 'Quentin Grimes', 'Ace Bailey']);
+    expect(names(sortBoosts(rows, { key: 'pts', dir: 'desc', by: 'without' }))).toEqual(['Quentin Grimes', 'Bronny James', 'Ace Bailey']);
+  });
+  test('the player, the out teammate, the games without and tonight\'s projection sort too', () => {
+    expect(names(sortBoosts(rows, { key: 'player', dir: 'asc' }))).toEqual(['Ace Bailey', 'Bronny James', 'Quentin Grimes']);
+    expect(names(sortBoosts(rows, { key: 'out', dir: 'asc' }))[0]).toBe('Bronny James');
+    expect(names(sortBoosts(rows, { key: 'gp', dir: 'desc' }))).toEqual(['Bronny James', 'Quentin Grimes', 'Ace Bailey']);
+    expect(names(sortBoosts(rows, { key: 'tonight', dir: 'desc' }))).toEqual(['Quentin Grimes', 'Bronny James', 'Ace Bailey']);
+  });
+  test('the headers are buttons with the sort arrow on the sorted one', () => {
+    const html = renderToStaticMarkup(React.createElement(NbaOutBoosts, { board: { date: '2026-11-24', games: [{ id: 'g1', sides: {} }], outBoosts: rows.slice(0, 2).map((r) => ({ ...r, game: 'g1', team: 'LAL', opp: 'DAL', key: r.player })) } }));
+    for (const l of ['Player', 'Out', 'GP w/o', 'MIN', 'PTS', 'Tonight']) expect(html).toContain(`<button type="button">${l}`);
+    expect(html).toContain('aria-sort="descending"');
   });
 });

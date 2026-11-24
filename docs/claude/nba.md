@@ -450,8 +450,11 @@
   player out tonight (each side's `out`) with every active, non-idle teammate and reads the teammate's season with and
   without him off the pull's logs (`boostOf`: this season's REG games he played, split by `gamesPlayed` of the out player,
   3+ games together, 1+ without; min / pts / reb / ast / tpm / pra), the card's figures; each pair one row with tonight's
-  `proj` (the board's `ranges` exp and line). The tab sorts by the gain in minutes, points, rebounds, assists or PRA, with
-  "Gains only" and "2+ games without him" on by default and the head's game dropdown; a row opens the card. The chip's
+  `proj` (the board's `ranges` exp and line). **Every column sorts** (Vincent, 2026-11-24: "make sure I can sort";
+  `sortBoosts`, the Outliers' `SortHead`): Player, Out, GP w/o, each stat and Tonight, a second click flips it, nulls last;
+  a stat sorts by the gain or, with the "by avg without" pill, by his average without the teammate. Minutes by the gain,
+  descending, on open. "Gains only" (on the sorted stat) and "2+ games without him" on by default, the head's game
+  dropdown; under 640 px the Out and GP columns fold under the name. A row opens the card. The chip's
   badge ("w/o Reaves +11.3 min", `woBadge` in `lib/picks/without-glance.js`, beside the soft-spot badge) reads each side
   player's biggest `big` pair (`woSplit`: 2+ games without, 4+ minutes or points either way, `OUT_BOOST`) and the card
   opens with its line (`woLine`). The first version read the board's `withoutOf`, which the NBA's recipe never feeds

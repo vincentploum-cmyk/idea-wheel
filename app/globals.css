@@ -1229,6 +1229,16 @@ a.nhlx-rk-lines-pill:hover { text-decoration: underline; }
 .ir-ob-table + .ir-bd-legend, .nhlx-pk-table-wrap + .ir-bd-legend { margin-top: 12px; }
 .ir-ob-filters small { margin-left: auto; }
 .ir-ob-table td.ir-ob-player { min-width: 150px; }
+.ir-ob-table th button { all: unset; cursor: pointer; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; white-space: nowrap; }
+.ir-ob-table th button:hover, .ir-ob-table th.is-sorted button { color: var(--heading); }
+.ir-ob-table th button i { font-style: normal; margin-left: 3px; color: var(--primary); }
+.ir-ob-table td.ir-ob-outcell { min-width: 110px; }
+.ir-ob-table td.ir-ob-player small.ir-ob-narrow { display: none; color: var(--heading); }
+@media (max-width: 640px) {
+  .ir-ob-table .ir-ob-wide { display: none; }
+  .ir-ob-table td.ir-ob-player small.ir-ob-narrow { display: block; }
+}
+.ir-ob-table td.ir-ob-outcell small, .ir-ob-table td small.ir-ob-gp { display: block; font-size: 12px; color: var(--muted); }
 .ir-ob-table td.ir-ob-player small { display: block; font-size: 12px; color: var(--muted); line-height: 1.35; }
 .ir-ob-table td.ir-ob-player small.ir-ob-out { color: var(--heading); }
 .ir-ob-table td.ir-ob-cell span { display: block; white-space: nowrap; color: var(--heading); }

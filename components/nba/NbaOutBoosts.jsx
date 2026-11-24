@@ -6,9 +6,32 @@
 // `outBoosts`), the biggest gain first, tonight's projection and the book's line beside it. A row opens the player's card.
 import { useMemo, useState } from 'react';
 import { NbaPlayerCardProvider, useNbaPlayerCard } from './NbaPlayerCard';
+import { SortHead } from '@/components/picks/OutlierSort';
 
 const STATS = [['min', 'MIN'], ['pts', 'PTS'], ['reb', 'REB'], ['ast', 'AST'], ['tpm', '3PM'], ['pra', 'PRA']];
-const SORTS = [['min', 'Minutes'], ['pts', 'Points'], ['reb', 'Rebounds'], ['ast', 'Assists'], ['pra', 'PRA']];
+const STAT_KEYS = STATS.map(([k]) => k);
+// Every column sorts (Vincent, 2026-11-24: "in the missing players view, make sure I can sort"): a click sorts by it, a
+// second click flips it, nulls last. A stat column sorts by the gain or by the average without him (`by`).
+const FIRST = { player: 'asc', out: 'asc', gp: 'desc', tonight: 'desc' };
+const valueOf = (r, key, by) => {
+  if (key === 'player') return r.player;
+  if (key === 'out') return r.out?.name ?? null;
+  if (key === 'gp') return r.gpWithout;
+  if (key === 'tonight') return r.proj?.pts?.exp ?? null;
+  const st = r.stats?.[key]; return st ? (by === 'without' ? st.without : st.gap) : null;
+};
+export function sortBoosts(rows, { key = 'min', dir = 'desc', by = 'gap' } = {}) {
+  const sign = dir === 'asc' ? 1 : -1;
+  return rows.map((r, i) => [r, i]).sort(([a, i], [b, j]) => {
+    const x = valueOf(a, key, by); const y = valueOf(b, key, by);
+    if (x == null && y == null) return i - j;
+    if (x == null) return 1;
+    if (y == null) return -1;
+    const c = typeof x === 'string' ? x.localeCompare(y) : x - y;
+    return c ? sign * c : i - j;
+  }).map(([r]) => r);
+}
+const nextSort = (cur, k) => (cur.key === k ? { key: k, dir: cur.dir === 'asc' ? 'desc' : 'asc' } : { key: k, dir: FIRST[k] || 'desc' });
 const SHOW = 40;
 const num = (v) => (v == null ? '—' : Number.isInteger(v) ? String(v) : Number(v).toFixed(1));
 const signed = (v) => (v == null ? '' : `${v > 0 ? '+' : v < 0 ? '−' : '±'}${num(Math.abs(v))}`);
@@ -16,25 +39,30 @@ const LIMIT = { min: 3, pts: 2, reb: 1, ast: 1, tpm: 1, pra: 3 };   // the card'
 
 function Rows({ board, game }) {
   const open = useNbaPlayerCard();
-  const [sort, setSort] = useState('min');
+  const [sort, setSort] = useState({ key: 'min', dir: 'desc' });
+  const [by, setBy] = useState('gap');
+  const stat = STAT_KEYS.includes(sort.key) ? sort.key : 'min';   // the stat "Gains only" reads
   const [gains, setGains] = useState(true);
   const [two, setTwo] = useState(true);
   const [all, setAll] = useState(false);
   const rows = useMemo(() => (board?.outBoosts || [])
     .filter((r) => !game || r.game === game)
     .filter((r) => !two || r.gpWithout >= 2)
-    .filter((r) => !gains || (r.stats[sort]?.gap ?? 0) > 0)
-    .sort((a, b) => (b.stats[sort]?.gap ?? -99) - (a.stats[sort]?.gap ?? -99)), [board, game, sort, gains, two]);
+    .filter((r) => !gains || (r.stats[stat]?.gap ?? 0) > 0)
+    , [board, game, stat, gains, two]);
+  const sorted = useMemo(() => sortBoosts(rows, { ...sort, by }), [rows, sort, by]);
+  const onSort = (k) => setSort((cur) => nextSort(cur, k));
+  const head = { sort, onSort };
   const openRow = (r) => {
     const g = (board.games || []).find((x) => x.id === r.game); const side = g?.sides?.[r.team];
-    open({ key: r.key, player: side?.players?.find((p) => p.key === r.key) || r, team: r.team, opp: r.opp, venue: side?.venue, market: sort === 'min' ? 'pts' : sort });
+    open({ key: r.key, player: side?.players?.find((p) => p.key === r.key) || r, team: r.team, opp: r.opp, venue: side?.venue, market: stat === 'min' || stat === 'tpm' ? 'pts' : stat });
   };
   const outCount = new Set((board?.outBoosts || []).filter((r) => !game || r.game === game).map((r) => `${r.team}|${r.out.key}`)).size;
-  const shown = all ? rows : rows.slice(0, SHOW);
+  const shown = all ? sorted : sorted.slice(0, SHOW);
   return (
     <>
-      <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="Sort by the gain in">
-        {SORTS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={sort === k} className={`nhlx-tab${sort === k ? ' is-active' : ''}`} onClick={() => setSort(k)}>{l}</button>)}
+      <div className="nhlx-tabs is-pills is-small" role="tablist" aria-label="A stat column sorts by">
+        {[['gap', 'Sort stats by gain'], ['without', 'by avg without']].map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={by === k} className={`nhlx-tab${by === k ? ' is-active' : ''}`} onClick={() => setBy(k)}>{l}</button>)}
       </div>
       <div className="ir-ob-filters">
         <label className="nhlx-pc-check"><input type="checkbox" checked={gains} onChange={(e) => setGains(e.target.checked)} /> Gains only</label>
@@ -46,26 +74,30 @@ function Rows({ board, game }) {
           <table className="nhlx-db-table nhlx-pk-table ir-ob-table">
             <thead><tr>
               <th className="ir-slate-rank">#</th>
-              <th title="The teammate out tonight and his games this season without him, with him under the name">Player</th>
-              {STATS.map(([k, l]) => <th key={k} className={`is-num${k === sort ? ' is-lead' : ''}`} title={`${l} a game: with him → without him, the gap under it`}>{l}</th>)}
-              <th className="is-num" title="Tonight: the board’s projection and the book’s main line for the sorted stat (points under minutes)">Tonight</th>
+              <SortHead k="player" label="Player" title="The teammate out tonight and his games this season without him, with him under the name" {...head} />
+              <SortHead k="out" label="Out" className="ir-ob-wide" title="The teammate out tonight" {...head} />
+              <SortHead k="gp" label="GP w/o" className="is-num ir-ob-wide" title="His games this season without the out player" {...head} />
+              {STATS.map(([k, l]) => <SortHead key={k} k={k} label={l} className={`is-num${k === stat ? ' is-lead' : ''}`} title={`${l} a game: with him → without him, the gap under it; sorts by the ${by === 'without' ? 'average without him' : 'gain'}`} {...head} />)}
+              <SortHead k="tonight" label="Tonight" className="is-num" title="Tonight: the board’s projection and the book’s main line (the sorted stat; points under minutes and threes); sorts by the points projection" {...head} />
             </tr></thead>
             <tbody>
               {shown.map((r, i) => {
-                const tk = sort === 'min' ? 'pts' : sort; const t = r.proj?.[tk];
+                const tk = r.proj?.[stat] ? stat : 'pts'; const t = r.proj?.[tk];
                 return (
                   <tr key={`${r.team}|${r.key}|${r.out.key}`}>
                     <td className="ir-slate-rank">{i + 1}</td>
                     <td className="ir-ob-player">
                       <button type="button" className="ir-big-name" onClick={() => openRow(r)}><b>{r.player}</b></button>
                       <small>{r.team} · {r.pos || ''} · vs {r.opp}</small>
-                      <small className="ir-ob-out" title={`${r.out.name}${r.out.pos ? ` (${r.out.pos})` : ''}: ${r.out.status || 'Out'}${r.out.detail ? `, ${r.out.detail}` : ''}. His games this season with him: ${r.gpWith}, without him: ${r.gpWithout}.`}>w/o <b>{r.out.name}</b> · {r.gpWithout} game{r.gpWithout === 1 ? '' : 's'} without, {r.gpWith} with</small>
+                      <small className="ir-ob-narrow">w/o <b>{r.out.name}</b> · {r.gpWithout} of {r.gpWith + r.gpWithout} games</small>
                     </td>
+                    <td className="ir-ob-outcell ir-ob-wide" title={`${r.out.name}${r.out.pos ? ` (${r.out.pos})` : ''}: ${r.out.status || 'Out'}${r.out.detail ? `, ${r.out.detail}` : ''}`}><b>{r.out.name}</b><small>{r.out.status || 'Out'}</small></td>
+                    <td className="is-num ir-ob-wide" title={`His games this season without ${r.out.name}: ${r.gpWithout}; with him: ${r.gpWith}`}><b>{r.gpWithout}</b><small className="ir-ob-gp">of {r.gpWith + r.gpWithout}</small></td>
                     {STATS.map(([k]) => {
                       const s = r.stats[k];
                       if (!s) return <td key={k} className="is-num"><small>—</small></td>;
                       const tone = Math.abs(s.gap) >= LIMIT[k] ? (s.gap > 0 ? ' is-soft' : ' is-tough') : '';
-                      return <td key={k} className={`is-num ir-ob-cell${tone}${k === sort ? ' is-lead' : ''}`}><span>{num(s.with)} → <b>{num(s.without)}</b></span><small>{signed(s.gap)}</small></td>;
+                      return <td key={k} className={`is-num ir-ob-cell${tone}${k === stat ? ' is-lead' : ''}`}><span>{num(s.with)} → <b>{num(s.without)}</b></span><small>{signed(s.gap)}</small></td>;
                     })}
                     <td className="is-num">{t?.exp != null ? <><b>{num(t.exp)}</b><small>{t.line != null ? `line ${t.line}` : 'no line'} · {tk.toUpperCase()}</small></> : <small>—</small>}</td>
                   </tr>
