@@ -481,6 +481,7 @@
   his own averages by 2–4%; the night's top ten ran 1.15 points low, mostly from **the line blend reading junk lines** (a
   window or alternate line stored as the main one on 175 of 2,136 blends: a 9.5 took Gilgeous-Alexander from 31.1 to 21.7 on
   Nov 6). **`LINE_BLEND.ratio` = [0.6, 1.6]**: a line outside it is not read; top-ten bias +1.15 → +0.42, MAE 6.48 → 6.28.
+  The root cause is fixed in the pull: the NBA's `mainLine` bounds (picks-core.md, "The game line's bounds").
   Big nights (855 of 19,047: points +10 and 1.5×, rebounds / assists +4 and 1.5×, threes +3 and 2×) are rate, not minutes
   (+12.4 of a +14.3-point surplus): more shots and threes that went in, a rebound / assist surge, overtime twice as often.
   Before tip his recent ceiling and his usage raise the odds, and the board's chances already price both. Not changed: the

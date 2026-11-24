@@ -34,6 +34,30 @@ moved players from 12.1 to 9.7 against a line averaging 6.6; they scored 11.0.
 bias +1.15 → +0.42 and MAE 6.48 → 6.28; on every player 4.71 → 4.67. Tested with Gilgeous-Alexander's night
 (`__tests__/nba-model.test.js`).
 
+**The root cause, fixed in the pull** (Vincent: "fix the root cause of the bad lines in the pull"). The pull keeps one line
+per market (`playerProps`, `lib/picks/propfinder.js`): of the lines flagged main, the one priced nearest a toss-up. A line
+under 0.4× his average was set aside only while another line was left, so a market's only line was taken whatever it was.
+In the stored pulls (Oct 21 – Nov 24) two kinds came through that way:
+
+- **betJACK's "Player Points"**: 152 of its 161 points lines under 0.6× the scorer's last-ten average, median 0.25×
+  (first-quarter sized), each the market's only line. Its rebounds, assists and PRA lines are normal (median 0.88–1.07×).
+  The raw item's name is not stored, so whether betJACK files a period market under the full game's name cannot be read
+  back; the rule below does not depend on it.
+- **The prediction markets' lone rungs**: Polymarket (1,380), Prophet X (133), Kalshi (67) posting one one-sided line at a
+  ladder's price (Irving o1.5 rebounds at −3474), taken as the main line for want of another.
+
+(The "1st 3 Minutes Player Points" items had been filed as points until Oct 29; that was fixed on Oct 30 and is not among
+these.)
+
+**Shipped**: the NBA's `mainLine` = { ratio: [0.45, 2.5], balance: 0.25 } on `makePropfinder`
+(`lib/nba/propfinder-nba.js`): a line outside 0.45–2.5× his last-ten average is never the pick, even alone, and a pick priced
+further from a toss-up than 75 / 25 leaves the market without a book line (the board then reads its own). Near-even lines of
+the other books sit under 0.45× less than one time in a hundred. Applied to the stored pulls it would have taken the main line
+off 14.0% of points markets, 14.8% of rebounds, 10.7% of assists, 10.9% of threes and 2.1% of PRA (415 off on the ratio,
+1,548 as rungs). The NFL keeps the old rule (its touchdown ladders are priced far from even by design). The line blend's
+0.6–1.6× guard stays behind it. `__tests__/nba-propfinder-all.test.js` (Gilgeous-Alexander's lone o9.5 and a −3474 rung
+dropped, his real 30.5 read beside the 9.5). Pulls already stored keep their lines; the next pull after deploy is clean.
+
 ## Looked at, not changed
 
 - **The learned model's weight** (half and half): its factor's top fifth still ran 3–13% under, but re-weighting it from 0 to
@@ -78,6 +102,6 @@ before it predicts.
 
 ## Next
 
-- The line blend's own fault: why PropFinder's `isMain` lands on a window or alternate line (the pull's prop parse,
-  `lib/nba/propfinder-nba.js`). The guard keeps the projection safe meanwhile.
+- The plays graded at those lines: the scorecard's past nights still carry them (the 2026-11-20 audit's overpriced overs may
+  be partly these); re-grade once a few weeks of clean pulls are in.
 - Re-read the environment factor and points' remaining +0.4 once the guard has run a few weeks.

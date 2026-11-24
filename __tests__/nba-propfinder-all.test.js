@@ -45,6 +45,15 @@ describe('every PropFinder NBA market filed where it settles', () => {
     ] };
     expect(Object.fromEntries(playerProps(p).map((r) => [r.market, r.line]))).toEqual({ fgm: 7.5, q1_pts: 6.5, m3_pts: 0.5 });
   });
+  test('the game line: a lone first-quarter-sized line or a lone ladder rung is never his points / rebounds line (2026-11-24)', () => {
+    const avg = (m) => ({ pts: 31, reb: 4.2, ast: 6 }[m] ?? null);
+    // Gilgeous-Alexander, 2026-11-06: betJACK's o9.5 "Player Points" at -110 was the market's only line.
+    const sga = { name: 'S', odds: [item('Player Points', 'points', 9.5, -110), item('Player Rebounds', 'rebounds', 1.5, -3474), item('Player Assists', 'assists', 6.5, -115)] };
+    expect(Object.fromEntries(playerProps(sga, avg).map((r) => [r.market, r.line]))).toEqual({ ast: 6.5 });
+    // With his real line beside it, the real one is read.
+    const both = { name: 'S', odds: [item('Player Points', 'points', 9.5, -110), item('Player Points', 'points', 30.5, -115), item('Player Points', 'points', 30.5, -105, 'under')] };
+    expect(playerProps(both, avg).find((r) => r.market === 'pts')).toMatchObject({ line: 30.5 });
+  });
 });
 
 describe('the game rows read whole', () => {

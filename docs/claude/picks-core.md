@@ -257,6 +257,12 @@ config and keeps its own markets, teams, feeds and slate key:
   most clashes first, the lone book's of two; and `ladderOf` marks main only the pull's line (`prop.line`), never the rungs a
   book flags main on its alternate ladder (the first flagged, the lowest, had read as the night's line on the ranges, the
   shuffle and the card).
+- **The game line's bounds** (`mainLine` on `makePropfinder`, the NBA's { ratio: [0.45, 2.5], balance: 0.25 } since
+  2026-11-24; `docs/audits/2026-11-24-nba-projections.md`): a line outside lo–hi× his last-ten average is never the pick,
+  even as the market's only line (the old 0.4× rule fell back to it), and a pick priced further from a toss-up than
+  `balance` leaves the market with no book line. Behind it: betJACK's "Player Points" at a median 0.25× the scorer's average
+  (first-quarter sized: Gilgeous-Alexander o9.5 moved his projection from 31.1 to 21.7 through the line blend) and the
+  prediction markets' lone one-sided rungs (Polymarket, Prophet X, Kalshi). The NFL keeps the old rule.
 - **The outlier nights** (the cocktail's `countTail` and `lineup`; `OUTLIERS` on the NBA's `COCKTAIL` since 2026-11-07, the board
   before it `COCKTAIL_BEFORE_OUTLIERS`, the replay's `--cocktail outliersOff`; Vincent, 2026-11-07: "a few players were projected
   by us to get 4 or 5 rebounds but they actually got 10+ … that is where the money is for nba. The big players are nuked in odds
