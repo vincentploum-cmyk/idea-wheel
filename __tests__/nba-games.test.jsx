@@ -185,6 +185,23 @@ describe('the NBA games, the NFL’s layout', () => {
     expect(list).toContain('PF #25');
     expect(list).toContain('PF #3');
   });
+  test('threes: the matchup for the makes and the attempts the opponent gives up to his spot (2026-11-24)', () => {
+    const tb = JSON.parse(JSON.stringify(board));
+    for (const side of Object.values(tb.games[0].sides)) {
+      side.allowed.rows.C.tpm = { value: 1.9, rank: 6 }; side.allowed.rows.C.tpa = { value: 5.6, rank: 2 };
+      side.allowed.windows.l10.rows.C.tpa = { value: 6.1, rank: 1 };
+      for (const p of side.players) { p.ranges.tpm = { exp: 1.5, floor: 1, ceiling: 2 }; p.ladders.tpm = [{ line: 1.5, p: 0.55 }]; }
+    }
+    const rows = tierRows(tb, {}, 'tpm', 'g1');
+    const jokic = rows.find((r) => r.player === 'Nikola Jokic');
+    expect(jokic.matchup).toMatchObject({ pos: 'C', pf: 6, att: { stat: 'tpa', pf: 2, pfTone: 'soft', l10: 1, pfValue: 5.6 } });
+    const list = renderToStaticMarkup(<NbaStatList board={tb} shuffles={{}} market="tpm" />);
+    expect(list).toContain('>3PM<');
+    expect(list).toContain('>3PA<');
+    expect(list).toContain('threes attempted: PropFinder #2 of 30 (5.6 a game');
+    // Points keep the one line.
+    expect(tierRows(board, shuffles, 'pts', 'g1').find((r) => r.player === 'Nikola Jokic').matchup.att).toBeUndefined();
+  });
   test('closed by default; the stat tab lists the night', () => {
     const closed = renderToStaticMarkup(<NbaGames board={board} shuffles={shuffles} />);
     expect(closed).not.toContain('What DEN gives up');

@@ -2056,6 +2056,8 @@ div.nhlx-auto-msg > p { margin: 0; }
 /* The matchup column (the old Boards tab's chip, components/picks/Boards.jsx Matchup): his spot, the ranks, the factor; wraps on a phone. */
 .ir-ml-table td.ir-ml-mu { min-width: 120px; max-width: 190px; }
 .ir-ml-table td.ir-ml-mu .ir-bd-rk { white-space: nowrap; }
+.ir-ml-table td.ir-ml-mu .ir-bd-mu.has-att .ir-bd-mu-row { flex-wrap: nowrap; white-space: nowrap; }
+.ir-ml-table td.ir-ml-mu:has(.has-att) { max-width: none; }
 .ir-ml-rung { display: block; white-space: nowrap; }
 .ir-ml-rung + .ir-ml-rung { margin-top: 4px; }
 .ir-ml-rung b { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--heading); }
@@ -2448,6 +2450,11 @@ button.ir-bd-name:hover b { text-decoration: underline; }
 .ir-bd-rk.is-tough { background: var(--pf-tough-chip); color: var(--pf-tough-fg); }
 .ir-bd-fx { font-variant-numeric: tabular-nums; }
 .ir-bd-mu.is-none { font-style: italic; }
+/* Threes: the makes and the attempts the opponent gives up, each on its own line (3PM, then 3PA). */
+.ir-bd-mu-row { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 5px; }
+.ir-bd-mu.has-att { display: inline-grid; gap: 3px; }
+.ir-bd-mu-k { font-style: normal; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
+.ir-bd-mu-pad { visibility: hidden; }
 /* The player search in each board's head (2026-11-01) and the NFL player panel. */
 .ir-ps { position: relative; min-width: 220px; flex: 1 1 220px; max-width: 320px; }
 .ir-ps-input { width: 100%; }
