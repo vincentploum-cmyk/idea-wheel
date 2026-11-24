@@ -47,3 +47,5 @@ next-env.d.ts
 .nhl-data
 __pycache__/
 /.mock
+/nba-store/
+/nba-store.zip
