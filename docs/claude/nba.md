@@ -463,6 +463,12 @@
   blended into the board's read at n / (n + k), is best at k = 32 (noise-level) on points, rebounds and minutes and not at
   all on assists and threes over 2024-25 to now; splits of +8 points said 18-22 and landed about 15, the board said 16. The
   tab's legend and a big split's line say so. `__tests__/nba-without-glance.test.js`.
+- **Odds on the Big games tab** (Vincent, 2026-11-24, of the rebounds list: "can you add the odds here"): under each mark's
+  chance its fair odds (`fairOdds` in `lib/nba/big.js`, the American price at which the chance breaks even, rounded to 5) and,
+  where a line of the pull sits at the mark, the book's price with the board's edge in points (`odds[mark] = { fair, book }`
+  on each row, read off the ladder's rung at mark − 0.5 as the Outliers do; `OddsLine` in `NbaBigGames.jsx`). PropFinder sends
+  each book's main line, not its alternate ladder (every market of the 2026-11-20 / 22 / 24 pulls held one line), so the book's
+  price shows only where the main line is at the mark (Jokic's o11.5 rebounds at −152 under 12+). `__tests__/nba-big.test.jsx`.
 - **The matchup on every row of the stat lists** (Vincent, 2026-11-24: "add the matchup per player in each of the rebounds,
   assists, threes and points views"): a Matchup column after the player in `TierTable` (`NbaGames.jsx`; the Games tab's
   table too), the old Boards tab's chip (`Matchup`, now exported from `components/picks/Boards.jsx`) off `matchupOf`

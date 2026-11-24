@@ -17,6 +17,24 @@ const SHOW = 25;
 const pct = (v) => (v == null ? '—' : v < 0.005 ? '<1%' : `${Math.round(v * 100)}%`);
 const why = (r) => (r.market === 'tpm' ? `${r.ctx.tpa5} threes attempted a game lately` : `${r.marks[0]}+ in ${r.ctx.hits[r.marks[0]]} of his last ${r.ctx.n}`);
 
+/** Under a chance: its fair odds, and the book's price with the board's edge where a book's line sits at the mark. */
+function OddsLine({ o }) {
+  if (!o) return null;
+  return (
+    <small className="ir-big-odds">
+      {o.fair != null ? <span>fair {fmtOdds(o.fair)}</span> : null}
+      {o.book ? <span className={`ir-big-book${o.book.edge > 0 ? ' is-pos' : ''}`}>book {fmtOdds(o.book.odds)} {o.book.edge >= 0 ? '+' : '−'}{Math.abs(Math.round(o.book.edge * 100))}</span> : null}
+    </small>
+  );
+}
+const oddsTitle = (r, mk) => {
+  const o = r.odds?.[mk];
+  if (!o) return `His chance of ${mk}+ tonight`;
+  const fair = o.fair != null ? ` · fair odds ${fmtOdds(o.fair)} (the price at which ${pct(r.p[mk])} breaks even)` : '';
+  const book = o.book ? ` · the book prices o${o.book.line} at ${fmtOdds(o.book.odds)} (${pct(o.book.implied)}): the board is ${o.book.edge >= 0 ? `${Math.round(o.book.edge * 100)} points above` : `${Math.round(-o.book.edge * 100)} points below`} it` : ' · no book line at this mark in the pull (PropFinder sends each book’s main line, not its alternate ladder)';
+  return `His chance of ${mk}+ tonight: ${pct(r.p[mk])}${fair}${book}`;
+};
+
 function Rows({ board, market, game }) {
   const [all, setAll] = useState(false);
   const open = useNbaPlayerCard();
@@ -50,7 +68,7 @@ function Rows({ board, market, game }) {
                   <small className="ir-big-sub">{r.team} · {r.pos || ''} · {r.venue === 'H' ? 'vs' : '@'} {r.opp}{r.health === 'DTD' ? ' · DTD' : ''}</small>
                   <small className="ir-big-why-m">{why(r)}</small>
                 </td>
-                {marks.map((mk, j) => <td key={mk} className={`is-num${j === 0 ? ' is-lead' : ''}${r.got ? (r.got[mk] ? ' is-hit' : ' is-miss') : ''}`}><b>{pct(r.p[mk])}</b></td>)}
+                {marks.map((mk, j) => <td key={mk} className={`is-num${j === 0 ? ' is-lead' : ''}${r.got ? (r.got[mk] ? ' is-hit' : ' is-miss') : ''}`} title={oddsTitle(r, mk)}><b>{pct(r.p[mk])}</b><OddsLine o={r.odds?.[mk]} /></td>)}
                 <td className="is-num">{r.proj}</td>
                 <td className="ir-big-why"><small>{why(r)}</small></td>
                 {final ? <td className="is-num nhlx-pk-got">{r.actual == null ? <small>—</small> : <b>{r.actual}</b>}</td> : null}
