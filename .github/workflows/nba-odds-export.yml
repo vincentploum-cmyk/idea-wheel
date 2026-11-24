@@ -34,9 +34,10 @@ jobs:
           jq -c '.rows' out/scorecard.json | gzip -9 > out/nba-odds-rows.json.gz
           # The priced main rungs and the plays in the log too (base64 of the gzip, between the markers), for a session that
           # reads the run's log but cannot reach the artifact store.
+          jq -c '.rows.rungs[0] // {} | keys' out/scorecard.json
           echo "::group::main rungs and plays (base64 gzip)"
           echo "ROWS-BEGIN"
-          jq -c '{rungs: [.rows.rungs[] | select(.priced) | {mn: .main, s: .slate, g: .game, k: .key, m: .market, l: .line, j: .proj, p, r: .raw, o: .odds, u: .underOdds, b: .books, a: .actual}], plays: [.rows.plays[] | {s: .slate, k: .key, m: .market, l: .line, sd: .side, p, o: .odds, e: .edge, h: .hit}]}' out/scorecard.json | gzip -9 | base64 -w 4000
+          jq -c '{rungs: [.rows.rungs[] | select(.odds != null) | {mn: .main, s: .slate, g: .game, k: .key, m: .market, l: .line, j: .proj, p, r: .raw, o: .odds, u: .underOdds, b: .books, a: .actual}], plays: [.rows.plays[] | {s: .slate, k: .key, m: .market, l: .line, sd: .side, p, o: .odds, e: .edge, h: .hit}]}' out/scorecard.json | gzip -9 | base64 -w 4000
           echo "ROWS-END"
           echo "::endgroup::"
           # The report without its rows beside them (the predictors, the calibration and the book anchor as the site learned them).
