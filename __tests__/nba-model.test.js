@@ -76,4 +76,17 @@ describe('the NBA learned read', () => {
     // A line priced far from even is no projection.
     expect(read(-400).pts.lineRead).toBeUndefined();
   });
+  test('a "main" line far from his own figure is not his game line: under 0.6× or over 1.6× it is not read (2026-11-24)', () => {
+    const games = [{ id: 'g1', date: '2026-11-02T00:00Z', away: 'BOS', home: 'NY', final: false, state: 'pre' }];
+    const mk = (line) => ({ at: '2026-11-01T14:00:00Z', data: { players: [
+      { id: 'p1', name: 'Lead Guard', key: 'lead guard', team: 'BOS', pos: 'PG', games: logs(12, (i) => ({ pts: 28 + (i % 5), reb: 5 })), props: [{ market: 'pts', line, odds: -115, underOdds: -110, isMain: true }] },
+      { id: 'p3', name: 'Other Side', key: 'other side', team: 'NY', pos: 'C', games: logs(12, () => ({ reb: 10 })), props: [] },
+    ], defense: null, injuries: { rows: [] } } });
+    const read = (line) => buildBoard({ date: '2026-11-01', season: 2026, games, sheets: [], pf: mk(line), results: {} }).games[0].sides.BOS.players.find((p) => p.key === 'lead guard').ranges.pts;
+    // Gilgeous-Alexander on 2026-11-06: a 9.5 stored as his main points line put him from 31.1 to 21.7.
+    const junk = read(9.5);
+    expect(junk.lineRead == null).toBe(true);
+    expect(junk.exp).toBeGreaterThan(25);
+    expect(read(27.5).lineRead).toMatchObject({ line: 27.5 });
+  });
 });

@@ -25,6 +25,9 @@ const CAL_PATH = path.join(process.cwd(), '.nhl-data', 'nba', 'meta', 'calibrati
 const dates = (await datesWithData()).filter((d) => d >= FROM && d <= TO).sort();
 const marks = ['date,market,key,team,game,height,p,raw,exp,actual,health,idle'];
 const players = ['date,key,team,game,b2b,minutes,health,starter,lineupStatus,pullAt,firstTip,latePull'];
+// The projection's parts per stat (board.js `ranges[market]`): what moved his figure tonight.
+const PARTS = ['exp', 'base', 'rate', 'matchup', 'team', 'env', 'out', 'lineup', 'lift', 'minutes'];
+const parts = [`date,key,team,opp,venue,market,${PARTS.join(',')},model,modelBefore,lineFactor,lineBefore,line,minBase,own_season,own_l10,own_l5,sideOut`];
 for (const date of dates) {
   if (CAL) {
     const before = dates.filter((d) => d < date);
@@ -43,6 +46,13 @@ for (const date of dates) {
   try { const buf = fs.readFileSync(path.join(process.cwd(), '.nhl-data', 'nba', date, 'propfinder.json')); pullAt = JSON.parse((buf[0] === 0x1f && buf[1] === 0x8b ? gunzipSync(buf) : buf).toString('utf8')).at || null; } catch { /* no pull */ }
   const late = pullAt && firstTip ? pullAt > firstTip : '';
   for (const g of board.games) for (const t of [g.away, g.home]) for (const p of g.sides?.[t]?.players || []) {
+    const side = g.sides[t];
+    for (const market of MARKETS) {
+      const r = p.ranges?.[market]; if (!r) continue;
+      const stat = market;
+      parts.push([date, JSON.stringify(p.key), t, side.opp || '', side.venue || '', market, ...PARTS.map((k) => r[k] ?? ''), r.model?.factor ?? '', r.model?.before ?? '', r.lineRead?.factor ?? '', r.lineRead?.before ?? '', r.lineRead?.line ?? '',
+        p.minutes?.base ?? '', p.own?.[stat]?.season ?? '', p.own?.[stat]?.l10 ?? '', p.own?.[stat]?.l5 ?? '', (side.out || []).length].join(','));
+    }
     players.push([date, JSON.stringify(p.key), t, g.id, p.b2b ? 1 : 0, p.minutes?.tonight ?? '', p.health || '', p.lineup?.role || '', p.lineup?.status || '', pullAt || '', firstTip || '', late].join(','));
   }
   let n = 0;
@@ -61,4 +71,5 @@ for (const date of dates) {
 }
 fs.writeFileSync(path.join(OUT, `store${CAL ? '-cal' : ''}-marks.csv`), marks.join('\n'));
 fs.writeFileSync(path.join(OUT, `store${CAL ? '-cal' : ''}-players.csv`), players.join('\n'));
+fs.writeFileSync(path.join(OUT, `store${CAL ? '-cal' : ''}-parts.csv`), parts.join('\n'));
 console.error(`written ${OUT}/store${CAL ? '-cal' : ''}-marks.csv and -players.csv`);

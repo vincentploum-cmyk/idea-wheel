@@ -359,3 +359,7 @@
   half) and lost minutes. The back-to-back costs points, rebounds and assists 6–9 points on the site's boards, and the
   board's own `b2b` flag turned out to fire on the team that played two nights ago (PropFinder's UTC log dates): fixed, a
   B2B tag on the lists; the chance shift left for Vincent.
+- The NBA projections themselves and the big nights (`docs/audits/2026-11-24-nba-projections.md`, `tools/audit/nba_overs.py`):
+  on the store's boards the points line blend read a window / alternate line as the main one on 175 of 2,136 blends; a
+  0.6–1.6× guard (`LINE_BLEND.ratio`) took the top ten's points bias from +1.15 to +0.42. Big nights are shooting and rate
+  surges (minutes +1.9 of a +14.3-point surplus); the reads that raise their odds before tip are already in the board's chances.

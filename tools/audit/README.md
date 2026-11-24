@@ -144,6 +144,16 @@ python3 -I tools/audit/nba_top10.py ... --prefix store:.nhl-data/audit/store/sto
 The 2025-26 replay needs that season's logs: `nba-fetch.mjs --from 2025-10-21 --to 2026-04-12 --raw $P --season 2025`
 (without `--no-logs`).
 
+## NBA: why players beat their projection (`nba_overs.py`)
+
+On the site's boards from the store (`nba-store-top10.mjs` writes `store-parts.csv`, each projection's factors): every big night
+(points +10 and 1.5×, rebounds / assists +4 and 1.5×, threes +3 and 2×) split into what happened in the box score against
+his usual and the board's minutes, and every pre-game read by fifth. Written up in `docs/audits/2026-11-24-nba-projections.md`.
+
+```bash
+python3 -I tools/audit/nba_overs.py --parts .nhl-data/audit/store/store --store .nhl-data/nba --out docs/audits/2026-11-24-nba-overs-tables.md
+```
+
 ## NBA: the big players, and what it takes (`nba_stars.py`, `nba_what_it_takes.py`)
 
 Vincent, 2026-11-13: is the board too conservative with the big players in a soft matchup or with a teammate out, and which
