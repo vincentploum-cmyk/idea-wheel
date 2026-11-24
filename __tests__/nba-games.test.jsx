@@ -165,6 +165,16 @@ describe('the NBA games, the NFL’s layout', () => {
     expect(big).toMatchObject({ proj: 0.3, strong: null, lean: null, thin: null, top: null });
     expect(rows.map((r) => r.player)).toEqual(['Nikola Jokic', 'Austin Reaves', 'Big Man']);
   });
+  test('the B2B tag: a player who played last night carries it on the stat list, the measured hit rates on its hover', () => {
+    const bb = JSON.parse(JSON.stringify(board));
+    bb.games[0].sides.DEN.players[0].b2b = true;
+    const rows = tierRows(bb, shuffles, 'pts', 'g1');
+    expect(rows.find((r) => r.player === 'Nikola Jokic').b2b).toBe(true);
+    expect(rows.find((r) => r.player === 'Austin Reaves').b2b).toBe(false);
+    const list = renderToStaticMarkup(<NbaStatList board={bb} shuffles={shuffles} market="pts" />);
+    expect(list.match(/>B2B</g)).toHaveLength(1);
+    expect(list).toContain('Played last night. Top-10 strong points marks');
+  });
   test('closed by default; the stat tab lists the night', () => {
     const closed = renderToStaticMarkup(<NbaGames board={board} shuffles={shuffles} />);
     expect(closed).not.toContain('What DEN gives up');

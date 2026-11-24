@@ -55,7 +55,9 @@ const { buildBoard, ownWindows, statOf, actualFor } = nbaBoard(CK);
 const DAYS = arg('--days', path.join(RAW, 'days')); const GAMES = arg('--games', path.join(RAW, 'games')); const LOGS = arg('--gamelogs', path.join(RAW, 'gamelogs'));
 const TAG = arg('--tag', '');
 // --marks: the site's chance at round marks for every player-night (the shuffle's read, the court's and the stat lists' figure), as -marks.csv
-const MARKS = process.argv.includes('--marks') ? { pts: [15, 20, 25, 30, 35, 40], reb: [6, 8, 10, 12, 15], ast: [4, 6, 8, 10, 12], tpm: [1, 2, 3, 4, 5, 6], pra: [25, 30, 35, 40, 45, 50], stl: [1, 2, 3], blk: [1, 2, 3] } : null;
+// --marks-all: every height the stat lists read (points and PRA by 5, the rest by 1), for the top-of-list study (nba_top10.py).
+const STEPS = (lo, hi, by) => Array.from({ length: Math.floor((hi - lo) / by) + 1 }, (_, i) => lo + i * by);
+const MARKS = process.argv.includes('--marks-all') ? { pts: STEPS(5, 60, 5), reb: STEPS(1, 20, 1), ast: STEPS(1, 16, 1), tpm: STEPS(1, 10, 1), pra: STEPS(10, 75, 5) } : process.argv.includes('--marks') ? { pts: [15, 20, 25, 30, 35, 40], reb: [6, 8, 10, 12, 15], ast: [4, 6, 8, 10, 12], tpm: [1, 2, 3, 4, 5, 6], pra: [25, 30, 35, 40, 45, 50], stl: [1, 2, 3], blk: [1, 2, 3] } : null;
 const markRows = [];
 const markShuffle = MARKS ? makeShuffle({ board: nbaBoard(CK), markets: SHUFFLE_MARKETS }) : null;
 const DUMP = process.argv.includes('--board');   // also write the slate's board and its shuffle payloads as JSON (the page's data, for a look at the views)

@@ -111,6 +111,25 @@ absences. Poisson with his read as the offset, fitted on 2024-25. Written up in 
 python3 -I tools/audit/nba_star_out.py --box .nhl-data/audit/nba-box --out docs/audits/2026-11-09-nba-star-out-tables.md
 ```
 
+## NBA: the stat lists' top 10 (`nba_top10.py`)
+
+The Points / Rebounds / Assists / Threes tabs' ten highest projections a night, every strong / lean / thin mark they show,
+graded; one read at a time over the stated chance, and the back-to-back as a shift on the odds fitted on the first
+`--prefix` and read on the last. `--marks-all` on the replay writes the chance at every height the lists read. Written up
+in `docs/audits/2026-11-24-nba-top10.md`.
+
+```bash
+P=.nhl-data/audit/nba/prior
+npm run audit:nba -- --date 2026-11-23 --from 2026-10-24 --prior $P/games --marks-all --model lib/nba/model-trees.json --tag -model
+node --import ./tools/audit/register.mjs tools/audit/nba-audit.mjs --season 2025 --date 2026-04-12 --from 2025-10-26 --raw .nhl-data/audit/nba \
+  --days $P/days --games $P/games --gamelogs $P/gamelogs --out .nhl-data/audit/top10 --marks-all --tag -ls-nomodel
+python3 -I tools/audit/nba_top10.py --prefix .nhl-data/audit/top10/nba-2026-04-12-ls-nomodel --label 2025-26 --games $P/games \
+  --prefix .nhl-data/audit/out/nba-2026-11-23-model --label 2026-27 --games .nhl-data/audit/nba/games --out docs/audits/2026-11-24-nba-top10-tables.md
+```
+
+The 2025-26 replay needs that season's logs: `nba-fetch.mjs --from 2025-10-21 --to 2026-04-12 --raw $P --season 2025`
+(without `--no-logs`).
+
 ## NBA: the big players, and what it takes (`nba_stars.py`, `nba_what_it_takes.py`)
 
 Vincent, 2026-11-13: is the board too conservative with the big players in a soft matchup or with a teammate out, and which

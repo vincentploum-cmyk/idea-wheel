@@ -460,6 +460,16 @@
   blended into the board's read at n / (n + k), is best at k = 32 (noise-level) on points, rebounds and minutes and not at
   all on assists and threes over 2024-25 to now; splits of +8 points said 18-22 and landed about 15, the board said 16. The
   tab's legend and a big split's line say so. `__tests__/nba-without-glance.test.js`.
+- **The stat lists' top 10, graded** (Vincent, 2026-11-24: "reduce the number of misses in the top 10 … see if any patterns
+  can be detected"; `docs/audits/2026-11-24-nba-top10.md`, `tools/audit/nba_top10.py` on the replay's `--marks-all`): the
+  marks land at the chance they state (strong 76–82%, lean 59–64%, thin 43–49%, 2025-26 and this season); a night's top 10
+  shows 8 (points) to 11 (assists, rebounds) misses a stat, half of them from the thin column, half on nights he played under
+  90% of the minutes read. **One pattern holds both seasons: the second night of a back-to-back** — strong assists marks 69%
+  against 80%, rebounds 70–73% against 77–78%; points and threes nothing of weight. Pooled over every player rest predicts
+  nothing (the regulars give 2–5% back, the bench takes it), which is why the cocktail left it out. Shipped: a **B2B** tag on
+  the lists' rows (`tierRows` → `b2b` from the board player, `B2B_NOTE` in `NbaGames.jsx` the stat's measured rates on the
+  hover); display only. Open, his call: the assists chance × 0.82 odds on the second night (30 nights: 338 → 326 misses,
+  those rows 51% → 57.5%), hiding the thin column, a higher strong floor. `__tests__/nba-games.test.jsx`.
 - **The outlier nights** (Vincent, 2026-11-07: "we need to start calibrating the nba model … players were projected by us to
   get 4 or 5 rebounds but they actually got 10+"; `docs/audits/2026-11-07-nba-outliers.md`): the rebounds', assists', threes',
   steals' and blocks' rungs read a count's tail (the negative binomial with the ladder's centre and spread: a 4.5-rebound

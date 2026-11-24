@@ -19,6 +19,15 @@ const UNIT = { pts: 'pts', reb: 'reb', ast: 'ast', tpm: '3PM', pra: 'PRA' };
 const STEP = Object.fromEntries(NBA_BOARDS.filter((b) => b.kind === 'ladder').map((b) => [b.market, b.step || 1]));
 const TIER_COLS = [['strong', 'Strong', '70'], ['lean', 'Lean', '55'], ['thin', 'Thin', '40']];
 const SHOW = 40;
+// The second night of a back-to-back, measured on the lists' top 10 (docs/audits/2026-11-24-nba-top10.md, 2025-26 replayed
+// and this season to 2026-11-23): the strong marks landed less often than the other nights, most of all assists.
+const B2B_NOTE = {
+  pts: 'Played last night. Top-10 strong points marks on a back-to-back landed about as often as on other nights (79% vs 80% in 2025-26)',
+  reb: 'Played last night. Top-10 strong rebounds marks on a back-to-back landed 73% (2025-26) and 70% (this season) against 77–78% on other nights',
+  ast: 'Played last night. Top-10 strong assists marks on a back-to-back landed 69% in both seasons against 80% on other nights: count on a step lower',
+  tpm: 'Played last night. Top-10 strong threes marks on a back-to-back landed 76% against 77–80% on other nights',
+  pra: 'Played last night: a back-to-back. The list\'s assists and rebounds marks land less often then',
+};
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
 
@@ -53,8 +62,11 @@ export function tierRows(board, shuffles, market, gameId = null) {
   const wo = new Map();
   // His Q1 read for the stat (lib/nba/quarter.js, put on the board by boardFor): the row's Q1 badge.
   const q1 = new Map();
+  // Played last night (board.js `b2b`): the row's B2B tag (docs/audits/2026-11-24-nba-top10.md: the list's marks land less often then).
+  const b2b = new Set();
   for (const g of board?.games || []) for (const t of [g.away, g.home]) for (const p of g.sides?.[t]?.players || []) {
     spot.set(`${t}|${p.key}`, p.envPos || envPosOf(p));
+    if (p.b2b) b2b.add(`${t}|${p.key}`);
     if (p.q1?.[market]) q1.set(`${t}|${p.key}`, p.q1[market]);
     for (const x of p.plays || []) {
       const e = x.market === market ? x.without?.edge : null;
@@ -63,7 +75,7 @@ export function tierRows(board, shuffles, market, gameId = null) {
       if (!prev || e.gap > prev.gap) wo.set(k, { ...e, line: x.line, side: x.side, names: x.without.names || [] });
     }
   }
-  return rows.map((r) => ({ ...r, envPos: spot.get(`${r.team}|${r.key}`) || null, woEdge: wo.get(`${r.team}|${r.key}`) || null, q1: q1.get(`${r.team}|${r.key}`) || null })).sort((a, b) => (b.proj ?? -1) - (a.proj ?? -1) || a.player.localeCompare(b.player));
+  return rows.map((r) => ({ ...r, envPos: spot.get(`${r.team}|${r.key}`) || null, woEdge: wo.get(`${r.team}|${r.key}`) || null, q1: q1.get(`${r.team}|${r.key}`) || null, b2b: b2b.has(`${r.team}|${r.key}`) })).sort((a, b) => (b.proj ?? -1) - (a.proj ?? -1) || a.player.localeCompare(b.player));
 }
 
 function Who({ r, game = false, onOpen }) {
@@ -76,6 +88,7 @@ function Who({ r, game = false, onOpen }) {
         <small>
           {r.team} · {r.slot && r.depth ? `${r.slot}${r.depth}` : r.pos || '—'}{game ? ` · ${r.venue === 'H' ? 'vs' : '@'} ${r.opp}` : ''}
           {r.health === 'DTD' ? <> · <span className="ir-health is-dtd">DTD</span></> : null}
+          {r.b2b ? <> · <span className="ir-health is-b2b" title={B2B_NOTE[r.market] || B2B_NOTE.pts}>B2B</span></> : null}
           {r.caveat && r.health !== 'DTD' ? <span className="ir-bd-role is-role">{r.caveat}</span> : null}
           {r.woEdge ? <WoEdgeTag e={r.woEdge} /> : null}
         </small>
