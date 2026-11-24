@@ -11,6 +11,7 @@ on:
   schedule:
     - cron: '47 13 * * *'   # ~9:47 ET: tonight's schedule, the PropFinder pull
     - cron: '23 21 * * *'   # ~5:23 PM ET: lines and logs again before tip-off
+    - cron: '40 23 * * *'   # ~6:40 PM ET: the last lines before the 7 PM tips (the close)
     - cron: '11 6 * * *'    # ~2:11 AM ET: last night's finals and box scores
   workflow_dispatch:
     inputs:
@@ -38,7 +39,7 @@ jobs:
           WHAT="${{ github.event.inputs.what }}"; [ -z "$WHAT" ] && WHAT=all
           TODAY=$(TZ=America/New_York date +%F); YDAY=$(TZ=America/New_York date -d 'yesterday' +%F)
           # The job from the cron that fired (not the hour it ran: the 2:11 AM slot fired at 8:53 AM on 2026-10-29).
-          JOB=""; case "${{ github.event.schedule }}" in '47 13 * * *') JOB=nba-morning ;; '23 21 * * *') JOB=nba-pregame ;; '11 6 * * *') JOB=nba-overnight ;; esac
+          JOB=""; case "${{ github.event.schedule }}" in '47 13 * * *') JOB=nba-morning ;; '23 21 * * *') JOB=nba-pregame ;; '40 23 * * *') JOB=nba-tip ;; '11 6 * * *') JOB=nba-overnight ;; esac
           J=""; [ -n "$JOB" ] && J="&job=$JOB"
           # The dates to refresh: the input (one date or a from..to range), else today, else
           # yesterday in the 2 AM slot.
@@ -84,6 +85,10 @@ jobs:
               # markets with the one each was filed under (null = skipped), the keys, the samples.
               jq -c '.propfinder | {players, withProps, withGames, defenseTeams, depthCharts, depthFrom, paceTeams, extra}' pf.json 2>/dev/null || true
               jq -c '.propfinder.fieldsSeen | {unread, stored, player, prop}' pf.json 2>/dev/null || true
+              # Which books answered the odds call (over, under, pick'em), the lines carried from the earlier pull, and whether
+              # PropFinder's games payload carries a spread, a total or the starters (2026-11-24).
+              jq -c '.propfinder | {oddsBooksSent, oddsBooksSeen, carried}' pf.json 2>/dev/null || true
+              jq -c '.propfinder.gamesSeen // empty' pf.json 2>/dev/null || true
               jq -r '.propfinder.fieldsSeen.markets // {} | to_entries | sort_by(-.value.n) | .[] | "market \(.value.n)\t\(.value.market // "SKIPPED")\t\(.key)"' pf.json 2>/dev/null || true
               jq -r '.propfinder.fieldsSeen.sample | to_entries[] | "sample \(.key): \(.value | tostring | .[0:4000])"' pf.json 2>/dev/null || true
               # The Defensive Matchups route: rows read, the check against /teams both ways and its verdict (the sample left out).

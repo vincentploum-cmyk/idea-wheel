@@ -138,7 +138,8 @@ config and keeps its own markets, teams, feeds and slate key:
   the court's chips, the Tonight table (its cell filled green when a play clears the threshold, `is-best`) — green at or
   over the market's threshold, red under it, by the chance as the model states it (`raw`); a market without one keeps the
   old colouring. `__tests__/picks-reliability.test.js`.
-  **A best bet needs an edge over the book's price** (`BEST_EDGE_MIN` = 0 in `board.js`, `inBest`; Vincent, 2026-10-31:
+  **A best bet needs an edge over the book's price** (the cocktail's `edgeMin` per market, else `BEST_EDGE_MIN` = 0 in
+  `board.js`, `edgeMinOf` / `inBest`; the NBA's 0.08 since 2026-11-24; Vincent, 2026-10-31:
   "I only want to see profitable bets with an edge"): `best`, each side's `picks`, the game line's count and best play
   carry only the plays over the floor whose chance (calibrated where the fit applies) beats the price's implied
   probability; a play without a price makes no best bet; the per-game tables, the cards and the grading keep every row.
@@ -402,7 +403,9 @@ config and keeps its own markets, teams, feeds and slate key:
   `sameCalibration` sees it), learned by the same `scorecardFor(…, { save: true })` / `relearnCalibration`. Applied by
   `playChance(cal, market, side, stated, implied)` (the anchor where it holds and there is a price, else the stated-only
   fit) and `ladderOf(…, { anchor })` (`rungAnchor`; a rung with odds, else `cal`); the shuffle passes the same. An
-  anchored rung carries `anchored: true` and **no under read**: `evUnder` null and `edgeRows` reads its over alone, since
+  anchored rung carries `anchored: true`, the board's own chance beside it (`own`: its calibration alone; `edgeRows` reads
+  that one, both sides, since 2026-11-24: an anchor that learned no weight on the board prints the price and never
+  disagrees with it), and **no under read** on the ladder: `evUnder` null, since
   the complement hands the over's learned margin to the under, a side no graded night checks (the first board test showed a
   +0.2-point under "edge" at -110 / -110). `board.calibration.anchored` = the keys printed through it. Replayed on the five
   nights (each night left out in turn, the real `fitAnchor` per market): Brier 0.2469 as stated, 0.2381 the price, 0.2329
