@@ -474,7 +474,9 @@
   table too), the old Boards tab's chip (`Matchup`, now exported from `components/picks/Boards.jsx`) off `matchupOf`
   (`lib/picks/boards.js`, put on each row by `tierRows`): his spot, PropFinder's rank for the stat this season ("PF #3",
   green soft third, red tough third, 1 = gives up the most), the last ten's rank, the cheat sheet's tile ✓ / ✗ and the factor
-  on his rate; the hover says it in words. `__tests__/nba-games.test.jsx`.
+  on his rate; the hover says it in words. **Threes read the makes and the attempts** (Vincent, 2026-11-24: "for threes i
+  need to see the matchup for actual 3pm and 3pa"): `matchupOf` adds `att` (`ATTEMPTS` = { tpm: 'tpa' }, the 3PA the opponent
+  gives up to his spot, season and last ten, off the same table), drawn as a second row (3PM, then 3PA). `__tests__/nba-games.test.jsx`.
 - **The stat lists' top 10, graded** (Vincent, 2026-11-24: "reduce the number of misses in the top 10 … see if any patterns
   can be detected"; `docs/audits/2026-11-24-nba-top10.md`, `tools/audit/nba_top10.py`): the site's own boards rebuilt from a
   copy of the store (`nba-store-dump.mjs`, then `nba-store-top10.mjs --calibrate`, Oct 21 – Nov 23) and 2025-26 replayed
