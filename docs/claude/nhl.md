@@ -874,6 +874,14 @@
   `node tools/propfinder-seed.mjs <season> <csv…>`). They are descriptive views, not model
   inputs; the slate's defense edges fall back to the per-position opponent tables while a
   team has fewer than 10 stored games at a venue this season.
+- Study export (`/api/nhl/data/study-export`, admin session only, read-only, `?from=&to=`; Vincent, 2026-11-24: "do the
+  study for this season since you have pre game PropFinder data"): one JSON download of every stored slate's pre-game
+  PropFinder reads, `lib/nhl-data/study-export.js` — the defense table by position (All / C / LW / RW / D, per-game
+  G / A / SOG / iCF / iFF / iSCF and ranks, the block's window label) and every skater with PropFinder's position label
+  and his season / L5 rates, read back from `data/slates/<date>/season.xlsx` and `l5.xlsx` (`parseMatchupWorkbook`, by
+  header name), plus the book's prices (`data/propfinder/skater-props/<date>.json`). The L10 table is one file per season
+  (overwritten each pull), so it is not in the export; the study rebuilds it from the box scores with PropFinder's labels
+  (it matched the Defense tab within 0.1 on NJD vs D, 2026-11-23). Test: `__tests__/nhl-study-export.test.js`.
 - Player card (`components/nhl/PlayerCard.jsx`, data from `/api/nhl/data/player`): laid out as
   PropFinder's player view — top bar (headshot, position badge, shot form, graph average, average
   TOI; the badge is the night's lineup slot, "LW1 tonight", read from the position snapshot for the
