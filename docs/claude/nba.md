@@ -460,6 +460,12 @@
   blended into the board's read at n / (n + k), is best at k = 32 (noise-level) on points, rebounds and minutes and not at
   all on assists and threes over 2024-25 to now; splits of +8 points said 18-22 and landed about 15, the board said 16. The
   tab's legend and a big split's line say so. `__tests__/nba-without-glance.test.js`.
+- **The matchup on every row of the stat lists** (Vincent, 2026-11-24: "add the matchup per player in each of the rebounds,
+  assists, threes and points views"): a Matchup column after the player in `TierTable` (`NbaGames.jsx`; the Games tab's
+  table too), the old Boards tab's chip (`Matchup`, now exported from `components/picks/Boards.jsx`) off `matchupOf`
+  (`lib/picks/boards.js`, put on each row by `tierRows`): his spot, PropFinder's rank for the stat this season ("PF #3",
+  green soft third, red tough third, 1 = gives up the most), the last ten's rank, the cheat sheet's tile ✓ / ✗ and the factor
+  on his rate; the hover says it in words. `__tests__/nba-games.test.jsx`.
 - **The stat lists' top 10, graded** (Vincent, 2026-11-24: "reduce the number of misses in the top 10 … see if any patterns
   can be detected"; `docs/audits/2026-11-24-nba-top10.md`, `tools/audit/nba_top10.py`): the site's own boards rebuilt from a
   copy of the store (`nba-store-dump.mjs`, then `nba-store-top10.mjs --calibrate`, Oct 21 – Nov 23) and 2025-26 replayed

@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { teamLogo, teamName, teamAbbrFromText } from '@/lib/nba/teams';
 import { headshotUrl } from '@/lib/nba/espn';
-import { tierBoard, ladderBoard, withEveryone, NBA_BOARDS } from '@/lib/picks/boards';
+import { tierBoard, ladderBoard, withEveryone, matchupOf, NBA_BOARDS } from '@/lib/picks/boards';
+import { Matchup } from '@/components/picks/Boards';
 import { AllowedTable, windowsOf, tableFor, windowLabel, zoneTone, envPos as envPosOf } from './NbaCourt';
 import { NbaPlayerCardProvider, useNbaPlayerCard, WoEdgeTag } from './NbaPlayerCard';
 import NbaSoftSpots from './NbaSoftSpots';
@@ -75,7 +76,7 @@ export function tierRows(board, shuffles, market, gameId = null) {
       if (!prev || e.gap > prev.gap) wo.set(k, { ...e, line: x.line, side: x.side, names: x.without.names || [] });
     }
   }
-  return rows.map((r) => ({ ...r, envPos: spot.get(`${r.team}|${r.key}`) || null, woEdge: wo.get(`${r.team}|${r.key}`) || null, q1: q1.get(`${r.team}|${r.key}`) || null, b2b: b2b.has(`${r.team}|${r.key}`) })).sort((a, b) => (b.proj ?? -1) - (a.proj ?? -1) || a.player.localeCompare(b.player));
+  return rows.map((r) => ({ ...r, envPos: spot.get(`${r.team}|${r.key}`) || null, woEdge: wo.get(`${r.team}|${r.key}`) || null, q1: q1.get(`${r.team}|${r.key}`) || null, b2b: b2b.has(`${r.team}|${r.key}`), matchup: matchupOf(board, { ...r, market: r.market || market }) })).sort((a, b) => (b.proj ?? -1) - (a.proj ?? -1) || a.player.localeCompare(b.player));
 }
 
 function Who({ r, game = false, onOpen }) {
@@ -113,6 +114,7 @@ function TierTable({ rows, market, game = false, onOpen }) {
       <table className="nhlx-db-table nhlx-pk-table ir-ml-table">
         <thead><tr>
           <th className="ir-slate-rank">#</th><th>Player</th>
+          <th className="ir-ml-mu" title="Tonight’s opponent against his position for this stat: PropFinder’s rank this season (PF, 1 = gives up the most; green soft third, red tough third), the last 10 games’ rank, the cheat sheet’s tile, and the factor it puts on his rate">Matchup</th>
           <th className="is-num ir-ml-proj" title="Tonight’s projection: his rate × tonight’s matchup (what the defense gives up to all positions, PropFinder)">Proj</th>
           <th className="is-num ir-ml-fc" title="His floor tonight: he lands under it one night in four">Floor</th>
           <th className="is-num ir-ml-fc" title="His ceiling tonight: he lands over it one night in four (the Big games tab lists the nights far over it)">Ceiling</th>
@@ -124,6 +126,7 @@ function TierTable({ rows, market, game = false, onOpen }) {
             <tr key={`${r.team}|${r.key}`}>
               <td className="ir-slate-rank">{i + 1}</td>
               <td><Who r={r} game={game} onOpen={onOpen} /></td>
+              <td className="ir-ml-mu"><Matchup m={r.matchup} opp={r.opp} /></td>
               <td className="is-num ir-ml-proj" title={r.noLogs ? 'No game of his in the PropFinder pull yet: nothing to project from' : r.floor != null ? `${num(r.floor, 0)}–${num(r.ceiling, 0)} half the nights` : ''}><b>{num(r.proj)}</b><small>{r.noLogs ? 'no games yet' : unit}</small></td>
               <td className="is-num ir-ml-fc">{r.floor != null ? <b>{num(r.floor, 0)}</b> : <small>—</small>}</td>
               <td className="is-num ir-ml-fc">{r.ceiling != null ? <b>{num(r.ceiling, 0)}</b> : <small>—</small>}</td>

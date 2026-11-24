@@ -263,6 +263,17 @@ config and keeps its own markets, teams, feeds and slate key:
   `balance` leaves the market with no book line. Behind it: betJACK's "Player Points" at a median 0.25× the scorer's average
   (first-quarter sized: Gilgeous-Alexander o9.5 moved his projection from 31.1 to 21.7 through the line blend) and the
   prediction markets' lone one-sided rungs (Polymarket, Prophet X, Kalshi). The NFL keeps the old rule.
+- **The books' own lines, saved** (Vincent, 2026-11-24: "start with saving the real book line"): `bookLineMarkets` on
+  `makePropfinder` (the NBA: points, rebounds, assists, threes, PRA) → `bookLines(raw)`: every book's line per player and
+  market with the over and the under where the book posts it, its main flag and update time, and `consensusLine` (each book's
+  own near-even main line within `mainLine`'s bounds; the line most books post, the median breaking a tie; the over's fair
+  chance with the vig split). The store writes it beside the pull as `<sport>/<date>/book-lines.json`, a snapshot a pull, the
+  day's first and the latest five kept (`BOOK_SNAPSHOTS` = 6, each marked before / after the first tip); the pull's meta
+  counts it (`bookLines`). The scorecard grades the board against it (`vsBookRows` / `vsBookOf` in `lib/picks/store.js`:
+  the latest snapshot before the first tip; per market the board's miss, the book's, the two halved, got − said, and on a
+  1+ point lean off the line how often he landed on the board's side) as `vsBook` on the report, `vsBookRows` with `rows=1`;
+  the daily results print it (`tools/audit/yesterday.mjs`). `__tests__/nba-propfinder-all.test.js`, `__tests__/vs-book.test.js`,
+  `__tests__/nfl-propfinder-extra-store.test.js`.
 - **The outlier nights** (the cocktail's `countTail` and `lineup`; `OUTLIERS` on the NBA's `COCKTAIL` since 2026-11-07, the board
   before it `COCKTAIL_BEFORE_OUTLIERS`, the replay's `--cocktail outliersOff`; Vincent, 2026-11-07: "a few players were projected
   by us to get 4 or 5 rebounds but they actually got 10+ … that is where the money is for nba. The big players are nuked in odds

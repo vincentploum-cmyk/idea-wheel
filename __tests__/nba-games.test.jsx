@@ -175,6 +175,16 @@ describe('the NBA games, the NFL’s layout', () => {
     expect(list.match(/>B2B</g)).toHaveLength(1);
     expect(list).toContain('top 10’s strong points marks on a back-to-back landed 80%');
   });
+  test('the matchup per player on the stat lists: his spot, PropFinder\'s rank for the stat, the last ten, the sheet (2026-11-24)', () => {
+    const rows = tierRows(board, shuffles, 'pts', 'g1');
+    // Jokic (C) faces LAL's table: C gives up 18.2 points, rank 25 (the tough third); last ten #27.
+    expect(rows.find((r) => r.player === 'Nikola Jokic').matchup).toMatchObject({ pos: 'C', pf: 25, pfTone: 'tough', l10: 27 });
+    expect(rows.find((r) => r.player === 'Austin Reaves').matchup).toMatchObject({ pos: 'PG', pf: 3, pfTone: 'soft', sheet: 4, agree: true });
+    const list = renderToStaticMarkup(<NbaStatList board={board} shuffles={shuffles} market="pts" />);
+    expect(list).toContain('>Matchup<');
+    expect(list).toContain('PF #25');
+    expect(list).toContain('PF #3');
+  });
   test('closed by default; the stat tab lists the night', () => {
     const closed = renderToStaticMarkup(<NbaGames board={board} shuffles={shuffles} />);
     expect(closed).not.toContain('What DEN gives up');

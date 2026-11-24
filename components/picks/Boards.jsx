@@ -15,7 +15,7 @@ const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 const num = (v, d = 1) => (v == null ? '—' : Number(v).toFixed(d));
 
 /** The matchup behind the projection: his spot, PropFinder's rank (season, then last 10), the cheat sheet's tile ✓ / ✗, the factor. */
-function Matchup({ m, opp }) {
+export function Matchup({ m, opp }) {
   if (!m) return <small className="ir-bd-mu is-none" title={matchupText(null)}>no table</small>;
   return (
     <small className="ir-bd-mu" title={matchupText(m, opp)}>
