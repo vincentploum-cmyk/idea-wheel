@@ -4,7 +4,7 @@
 import { describe, expect, test } from '@jest/globals';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { NBA_BIG, boardTail, nbaBigChance, nbaBigGames } from '../lib/nba/big';
+import { NBA_BIG, boardTail, nbaBigChance, nbaBigGames, fairOdds } from '../lib/nba/big';
 import { statOf, actualFor } from '../lib/nba/picks';
 import NbaBigGames, { outlierWhy, sortOutliers } from '../components/nba/NbaBigGames';
 
@@ -43,14 +43,34 @@ describe('NBA big games: the read', () => {
     expect(big.rows['star one|DEN|tpm'].ctx.tpa5).toBe(8);
   });
 
-  test('the tab draws the stat’s list with the reason, no price', () => {
+  test('the tab draws the stat’s list with the reason, each chance with its fair odds (2026-11-24: "can you add the odds here")', () => {
     const b = { ...board, big: nbaBigGames(board, { pf, results: {}, statOf, actualFor }) };
     const html = renderToStaticMarkup(<NbaBigGames board={b} />);
     expect(html).toContain('Star One');
     expect(html).toContain('30+ in 7 of his last 20');
     expect(html).toContain('>30+<');
     expect(html).toContain('>40+<');
-    expect(html).not.toMatch(/\bEV\b|edge|juice/i);
+    const star = b.big.rows['star one|DEN|pts'];
+    expect(star.odds[30].fair).toBe(fairOdds(star.p[30]));
+    expect(html).toContain(`fair ${star.odds[30].fair > 0 ? '+' : ''}${star.odds[30].fair}`);
+    expect(star.odds[30].book).toBeNull();
+  });
+  test('the book’s price where a line of the pull sits at the mark, the board’s edge on it', () => {
+    const priced = JSON.parse(JSON.stringify(board));
+    priced.games[0].sides.DEN.players[0].ladders.pts = [{ sd: 7 }, { line: 29.5, odds: 150, main: true }];
+    const big = nbaBigGames(priced, { pf, results: {}, statOf, actualFor });
+    const o = big.rows['star one|DEN|pts'].odds;
+    expect(o[30].book).toMatchObject({ line: 29.5, odds: 150, implied: 0.4 });
+    expect(o[30].book.edge).toBeCloseTo(big.rows['star one|DEN|pts'].p[30] - 0.4, 3);
+    expect(o[40].book).toBeNull();
+    const html = renderToStaticMarkup(<NbaBigGames board={{ ...priced, big }} />);
+    expect(html).toContain('book +150');
+  });
+  test('fair odds: a chance as American odds, rounded to 5', () => {
+    expect(fairOdds(0.51)).toBe(-105);
+    expect(fairOdds(0.21)).toBe(375);
+    expect(fairOdds(0.5)).toBe(-100);
+    expect(fairOdds(0)).toBeNull();
   });
 });
 

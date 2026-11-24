@@ -1981,6 +1981,10 @@ div.nhlx-auto-msg > p { margin: 0; }
 /* The Outliers view: the book's price at the mark, its edge in points (green when the board's chance beats it). */
 .ir-big-table td small.ir-out-edge { color: var(--muted); font-size: 12px; }
 .ir-big-table td small.ir-out-edge.is-pos { color: var(--ok-fg); }
+/* The Big games chance cells: the fair odds of the chance and the book's price at the mark with the edge (NbaBigGames OddsLine). */
+.ir-big-table td small.ir-big-odds { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.ir-big-table td small.ir-big-odds span { display: block; }
+.ir-big-table td small.ir-big-odds .ir-big-book.is-pos { color: var(--ok-fg); }
 .ir-overview > .nhlx-tabs + .nhlx-tabs { margin-top: 8px; }
 .ir-out-table th button { all: unset; cursor: pointer; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; }
 .ir-out-table th button:hover, .ir-out-table th.is-sorted button { color: var(--heading); }
