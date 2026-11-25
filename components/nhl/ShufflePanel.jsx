@@ -81,7 +81,10 @@ export default function ShufflePanel() {
   const [bars, setBars] = useState(() => Object.fromEntries(NHL_BARS.map((b) => [b.market, b.start])));
   const [floors, setFloors] = useState(() => Object.fromEntries(NHL_BARS.map((b) => [b.market, b.floor])));
   const [picked, setPicked] = useState(null);   // the tab pressed this session; until then the panel follows the scorecard's verdict for the active bar
-  const [matchupKey, setMatchupKey] = useState(null);   // the PropFinder tab the Matchup column reads; null = the Matchups tab's default (this season's)
+  const [matchupKey, setMatchupKey] = useState(null);   // the PropFinder tab the Matchup column reads; null = the Matchups tab's default for the bar (L10 shots, L15 goals)
+  // Switching the bar puts the Matchup column back on that market's window, as the Matchups switch does.
+  const [seenActive, setSeenActive] = useState(active);
+  if (seenActive !== active) { setSeenActive(active); setMatchupKey(null); }
   const [pos, setPos] = useState('All');   // the position shuffled: every skater, or C / LW / RW / D alone
   const [data, setData] = useState(null);
   const [card, setCard] = useState(null);   // { predictors } from the History tab's scorecard, { failed } when it could not be read, null until read
@@ -145,7 +148,7 @@ export default function ShufflePanel() {
   const fromLabel = readLabel(from);
   // The Matchup column's tabs: the opponents' PropFinder tables as Matchups draws them above the rinks.
   const mTabs = useMemo(() => matchupTabs(data?.defense), [data]);
-  const mTab = matchupTabOf(matchupKey, mTabs);
+  const mTab = matchupTabOf(matchupKey, mTabs, active);
   const final = rows.some((r) => r.final);
   const statLabel = active === 'sog' ? 'shots' : 'goals';
   // The board's λ is the projection column; the centre column shows only when the chance is read from somewhere else.

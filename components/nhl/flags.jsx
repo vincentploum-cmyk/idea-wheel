@@ -31,9 +31,9 @@ export function flagsFor(c, stat) {
     const read = s && stat === 'sog' && s.rankShots != null
       ? `${c.opp}'s shots read at ${c.pos} over ${s.tab.text} is #${s.rankShots} of ${o.teams} (the soft third): ${s.shotsParts}, weighted; ${Number(v).toFixed(2)} shots a game · PropFinder’s table above the rink on Matchups, its ${s.tab.label} tab`
       : s && stat === 'g' && s.rankChances != null
-      ? `${c.opp} gives up the #${s.rankChances} most scoring chances (ISCF) of ${o.teams} to ${c.pos} over ${s.tab.text} (the soft third), the read that predicts goals; ${Number(v).toFixed(2)} goals a game (#${s.rankG}) · PropFinder’s table above the rink on Matchups, its ${s.tab.label} tab`
+      ? `${c.opp} gives up the #${s.rankChances} most scoring chances (ISCF) of ${o.teams} to ${c.pos} over ${(s.tabG || s.tab).text} (the soft third), the read that predicts goals; ${Number(v).toFixed(2)} goals a game (#${s.rankG}) · PropFinder’s table above the rink on Matchups, its ${(s.tabG || s.tab).label} tab`
       : s
-      ? `${c.opp} allows ${Number(v).toFixed(2)} ${word} a game to ${c.pos} over ${s.tab.text}, #${rank} of ${o.teams} (the soft third) · PropFinder’s table above the rink on Matchups, its ${s.tab.label} tab`
+      ? `${c.opp} allows ${Number(v).toFixed(2)} ${word} a game to ${c.pos} over ${(stat === 'g' ? s.tabG || s.tab : s.tab).text}, #${rank} of ${o.teams} (the soft third) · PropFinder’s table above the rink on Matchups, its ${(stat === 'g' ? s.tabG || s.tab : s.tab).label} tab`
       : `${c.opp} allows ${Number(v).toFixed(stat === 'sog' ? 2 : 3)} ${word} per ${c.pos} a game, #${rank} of ${o.teams} (the soft third) · the stored box scores, this season blended into last season’s, per skater at the position: no PropFinder table for ${c.opp}`;
     out.push({ kind: 'soft', title: `Soft spot: ${read}` });
   }
