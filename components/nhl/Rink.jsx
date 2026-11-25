@@ -299,8 +299,8 @@ function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false, 
 }
 
 // The toggle above each rink: which window of the opponent's defense tints the ice.
-const WINDOWS = [['home', 'Home'], ['away', 'Away'], ['l5', 'L5'], ['l10', 'L10'], ['l5home', 'L5 home'], ['l5away', 'L5 away'], ['h2hhome', 'H2H home'], ['h2haway', 'H2H away']];
-const WINDOW_TEXT = { home: 'at home', away: 'away', l5: 'over its last 5 games', l10: 'over its last 10 games', l5home: 'over its last 5 home games', l5away: 'over its last 5 away games', h2hhome: 'at home against this team (stored meetings, this season and last)', h2haway: 'away against this team (stored meetings, this season and last)' };
+const WINDOWS = [['home', 'Home'], ['away', 'Away'], ['l5', 'L5'], ['l10', 'L10'], ['l15', 'L15'], ['l5home', 'L5 home'], ['l5away', 'L5 away'], ['h2hhome', 'H2H home'], ['h2haway', 'H2H away']];
+const WINDOW_TEXT = { home: 'at home', away: 'away', l5: 'over its last 5 games', l10: 'over its last 10 games', l15: 'over its last 15 games', l5home: 'over its last 5 home games', l5away: 'over its last 5 away games', h2hhome: 'at home against this team (stored meetings, this season and last)', h2haway: 'away against this team (stored meetings, this season and last)' };
 const WINDOW_TITLE = { h2hhome: 'What the opponent allowed in its home games against this team', h2haway: 'What the opponent allowed in its road games against this team' };
 
 // The rank that tints the ice (`shotsEnvRank` / `goalsEnvRank` in propfinder-csv.js, graded 2026-11-12): under Shots
@@ -374,14 +374,15 @@ function SoftestLine({ side, metric = 'sog' }) {
   const dp = metric === 'g' ? 2 : 1;
   const facing = most ? side.skaters.find((p) => p.inLineup && `${p.pos}${p.line || ''}` === most.slot) || null : null;
   const verdictTone = rank ? zoneTone(rank, a.of) : 'none';
-  const verdictTitle = rank ? `${side.opp} allows ${num(a[metric], dp)} ${unit} a game over its ${a.gp} games this season, #${rank} of ${a.of} (1 = the most allowed; the league ${num(a.league?.[metric], dp)}). Green = the top third, red = the bottom third.` : '';
+  const span = a?.window ? `its last ${a.window} games` : `its ${a?.gp} games this season`;
+  const verdictTitle = rank ? `${side.opp} allows ${num(a[metric], dp)} ${unit} a game over ${span}, #${rank} of ${a.of} (1 = the most allowed; the league ${num(a.league?.[metric], dp)}, every team over the same window). Green = the top third, red = the bottom third. The last 15 games since 2026-11-25: the team read that predicted best this season.` : '';
   const league = most ? lines?.league?.[most.slot] : null;
   const title = most ? `${side.opp} gives up ${num(most.value, dp)} ${unit} a game to the skater at ${most.slot}, more than to any other slot, over ${most.n} skater-games this season at both venues; #${most.rank} of ${most.of} teams at that slot${league != null ? ` (the league gives ${num(league, dp)})` : ''}. A cell this early is a dozen skater-games and moves with every night, so it says where the ${unit} went, not where they will go; the chips' slot badges carry every slot's rank.` : '';
   return (
     <small className="nhlx-rk-line">
       {rank ? (
         <span title={verdictTitle}>
-          {side.opp} <i className={`nhlx-rk-verdict is-${verdictTone}`}>{ALLOWS_WORDS[verdictTone]} {unit}</i> · {num(a[metric], dp)} a game · <b>#{rank}</b> of {a.of}
+          {side.opp} <i className={`nhlx-rk-verdict is-${verdictTone}`}>{ALLOWS_WORDS[verdictTone]} {unit}</i> · {num(a[metric], dp)} a game{a.window ? ` over its last ${a.window}` : ''} · <b>#{rank}</b> of {a.of}
         </span>
       ) : null}
       {most ? (
@@ -432,23 +433,27 @@ export function Rink({ side, teamCount, posFilter = '', minGp = 1, log = null, m
   const isPicked = (p) => picked.has(`id:${p.id}`) || picked.has(`nm:${String(p.name).toLowerCase()}`);
   const score = log?.score ? (side.venue === 'H' ? [log.score.home, log.score.away] : [log.score.away, log.score.home]) : null;
   // The venue window = where the opponent actually plays tonight (its home table when we're away), marked with a dot;
-  // the picker opens on the last ten games when the stored tables carry that window (Vincent, 2026-10-31: "make sure
-  // that last 10 is the default when loading the matchup view"), the venue until then.
+  // the picker opens on the metric's window when the stored tables carry it: the last ten games under Shots (Vincent,
+  // 2026-10-31: "make sure that last 10 is the default when loading the matchup view"), the last 15 under Goals
+  // (Vincent, 2026-11-25: "If I select goals, L15 should be selected automatically"), the last ten, then the venue.
   const defaultView = side.venue === 'A' ? 'home' : 'away';
-  const hasL10 = ZONES.some((z) => side.defense?.[z]?.windows?.l10);
+  const hasWin = (k) => ZONES.some((z) => side.defense?.[z]?.windows?.[k]);
   const [view, setView] = useState(null);
-  const v = view || (hasL10 ? 'l10' : defaultView);
+  const v = view || (metric === 'g' && hasWin('l15') ? 'l15' : hasWin('l10') ? 'l10' : defaultView);
   // What tints the ice: the PropFinder table above (its selected tab, which the rink then owns;
-  // the last 10 games by default since 2026-10-31, `defaultDefenseTab`) when the opponent has one, else our
+  // the metric's tab by default, L10 under Shots and L15 under Goals, `defaultDefenseTab`) when the opponent has one, else our
   // stored games (the window toggle). On the opponents with 10+ games this season's table was the best tint
   // by deviance (docs/shots-goals-predictors.md section 10, refreshed 2026-10-27); the tint is colour only.
   const [tint, setTint] = useState('propfinder');
   // The PropFinder tab: owned here, or by the panel (`pfKey` / `onPfKey`) so the defense card under the rink reads the same tab.
   const [ownKey, setOwnKey] = useState(null);
+  // Switching Shots / Goals puts both pickers back on that metric's window (L10 / L15), whatever was pressed before.
+  const [seenMetric, setSeenMetric] = useState(metric);
+  if (seenMetric !== metric) { setSeenMetric(metric); setView(null); setOwnKey(null); }
   const pfKey = controlledKey === undefined ? ownKey : controlledKey;
   const setPfKey = (k) => { setOwnKey(k); onPfKey?.(k); };
   const pfTabs = side.propfinder?.tabs || [];
-  const pfTab = pfTabs.find((t) => t.key === pfKey) || defaultDefenseTab(pfTabs);
+  const pfTab = pfTabs.find((t) => t.key === pfKey) || defaultDefenseTab(pfTabs, metric);
   const fromPf = tint === 'propfinder' && !!pfTab;
   const defAt = (pos) => (fromPf ? defenseBandFromTab(pfTab, pos) : side.defense?.[pos]?.windows?.[v] ?? (v === defaultView ? side.defense?.[pos] : null) ?? null);
   const windowText = fromPf ? `over ${defenseTabText(pfTab)} (PropFinder)` : WINDOW_TEXT[v];

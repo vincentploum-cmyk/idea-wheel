@@ -363,3 +363,15 @@
   on the store's boards the points line blend read a window / alternate line as the main one on 175 of 2,136 blends; a
   0.6–1.6× guard (`LINE_BLEND.ratio`) took the top ten's points bias from +1.15 to +0.42. Big nights are shooting and rate
   surges (minutes +1.9 of a +14.3-point surplus); the reads that raise their odds before tip are already in the board's chances.
+- This season: PropFinder's "allows a lot" and home / away (`docs/audits/2026-11-25-nhl-home-away-and-allows.md`,
+  `tools/predictors/pf_allows.py` on the site's study export + the box scores; `home_away.py` and `allows_verdict.py`
+  for last season; Vincent, 2026-11-25: "I only care about this season! And based on the stored propfinder data").
+  9,824 skater-games against his own PropFinder season rate (5+ GP): the opponent's SOG rank at his position green
+  1.073×, amber 0.961×, red 0.948× (green − red +12.5%, CI +7.5 to +16.9%, both months alike; the All row +9%); a 2.5+
+  shooter's 3+ 57% / 51% / 47% at ~57% said. Goals: the G rank at his position nothing, the ISCF rank green 1.11× (1+
+  17.3% against 15.6%). No book prices in the export. Home / away: 7 of 128 team splits at p < .05 against 6.4, 23 of
+  477 skater shots splits against 24, none of last season's repeating; 3+ shot skaters +11% at home (both seasons)
+  against the board's flat +3.5% (leak-free, the tier read from the games before, it shrinks to ≈ ±4% and saves nothing
+  measurable over the board's term: home left as is, to look at again at mid-season). Which window of the environment
+  (`pf_env_windows.py`): L5 the worst everywhere; shots at his position L10 / L15 / Season tie (deviance saved 14.9 /
+  15.9 / 14.2), the team read and goals by ISCF want L15 or Season. Nothing changed.

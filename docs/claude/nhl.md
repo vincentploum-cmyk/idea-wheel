@@ -97,7 +97,15 @@
   `lib/nhl-data/propfinder.js`, drawn by `PropfinderDefense` in `components/nhl/Propfinder.jsx`:
   All/C/LW/RW/D rows, season tabs then L5 / L10 / L15, per game or total, PropFinder's ranks, sortable; **the table
   and the PropFinder tint open on the L10 tab** whenever the team has one (Vincent, 2026-10-31: "make sure that last 10
-  is the default when loading the matchup view"; `defaultDefenseTab` in `propfinder-csv.js`: L10, else this season's,
+  is the default when loading the matchup view"; **since 2026-11-25 the tab follows the Shots / Goals switch: L10 under
+  Shots, L15 under Goals** — Vincent: "when I select shots, it should automatically select L10. If I select goals, L15
+  should be selected automatically", after the window study (`docs/audits/2026-11-25-nhl-home-away-and-allows.md` §4:
+  L5 the worst read, shots at the position L10 / L15 / Season alike, goals and the team read best on L15 / Season);
+  `defaultDefenseTab(tabs, metric)`, the switch (`pickMetric` in `MatchupsPanel`) drops the tabs pressed before and
+  each `Rink` puts its stored-games picker back on the metric's window (`l15` added to the slate's stored windows and
+  the picker), the defense card and skater table under the rink, the shuffle's Matchup column (its bar) and the
+  goals half of the soft-spot flag (`spotFromTabs`: shots off L10, goals off L15, `tabG`) follow;
+  `__tests__/nhl-matchup-windows.test.js`. Before: `defaultDefenseTab` in `propfinder-csv.js`: L10, else this season's,
   else last season's — the stored window stands in for an L10 PropFinder has not published, so a team without it is
   rare; from 2026-10-27 until then this season's table led, Vincent's call that the teams on the ice are this season's,
   and `seasonDefenseTab` keeps that read for the matchup profile's Allows stand-in, whose Last 10 row carries the window
@@ -173,7 +181,10 @@
   Goals switch) allowed a game this season from the stored rows, ranked among the teams with `ALLOWS_MIN_GAMES` = 3,
   the verdict tinted by third (green "a lot of", amber "an average number of", red "few"); the slot part follows as
   before, and stands alone in its old words ("PIT gives the most shots to the C1 …") while the team has no rank;
-  `__tests__/nhl-rink-line.test.jsx`;
+  `__tests__/nhl-rink-line.test.jsx`; **since 2026-11-25 the verdict reads each team's last 15 games this season**
+  (`ALLOWS_LAST_N`, `teamAllowsBook(rows, season, { lastN })`, its season to date until it has 15; "· 30.1 a game over its
+  last 15"; Vincent: "switch the team and goals reads to L15"), and so does Best bets' team column (`oppRank` / `oppSog`
+  off `teamDefenseTab`, PropFinder's L15 All row);
   **the 1 · 2 · 3 period badges beside the PP badge** (Vincent, 2026-11-10, after a look at shots by period: "a simple
   1, 2, 3 next to the player on the board colored in green / amber / red to define the match up (opposing team allows +
   own production)"; `PeriodBadges` in `Rink.jsx`, `.nhlx-rk-per`, `p.periods` from `periodRead(periodBook(rows, season), id,

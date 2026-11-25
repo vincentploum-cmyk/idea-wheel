@@ -60,13 +60,13 @@ function FirstGoalCell({ fg, pos, opp, venue, teamCount }) {
 /**
  * The defense card under a rink (in "Defense tables and all skaters"): what `side.opp` allows per
  * game to each position on PropFinder's table, the one above the rink, on the tab the rink is on
- * (`pfKey`; this season's by default) with PropFinder's ranks, the L10 column off its L10 tab; the
+ * (`pfKey`; else the metric's, L10 under Shots and L15 under Goals) with PropFinder's ranks, the L10 column off its L10 tab; the
  * first goals given up at tonight's venue stay the stored games' (PropFinder has none). The stored
  * venue table stands in, named, for a team without a PropFinder table.
  */
-function DefenseCard({ side, teamCount, mp, pfKey = null }) {
+function DefenseCard({ side, teamCount, mp, pfKey = null, metric = 'sog' }) {
   const defVenue = side.venue === 'A' ? 'home' : 'away';
-  const card = defenseCardFromTabs(side.propfinder?.tabs, pfKey);
+  const card = defenseCardFromTabs(side.propfinder?.tabs, pfKey, metric);
   const n = card?.tab?.count || teamCount;
   const fg = side.defense.All?.firstGoal;
   const fgText = fg?.games ? ` · first goal given up in ${fg.allowed} of ${fg.games} games at ${defVenue} (${slotBreakdown(fg.bySlot) || 'no line on record'})` : '';
@@ -250,6 +250,8 @@ export default function MatchupsPanel() {
   const [metric, setMetric] = useState('sog');
   // The PropFinder tab each rink is on (game | team → tab key; null = the tab it opens on), so the defense card and skater table under it read the same tab.
   const [pfKeys, setPfKeys] = useState({});
+  // Shots opens every table on its last 10 games, Goals on its last 15 (defaultDefenseTab): a switch drops the tabs pressed before.
+  const pickMetric = (k) => { setMetric(k); setPfKeys({}); };
 
   const load = useCallback((d) => fetch(`/api/nhl/data/slate${d ? `?date=${d}` : ''}`, { cache: 'no-store' })
     .then(async (res) => {
@@ -429,7 +431,7 @@ export default function MatchupsPanel() {
               </GameNumbers>
               )}
               <div className="nhlx-rink-pair">
-                {g.rinkSides.map((s) => <Rink key={s.team} side={s} teamCount={slate.teamCount} posFilter={pos} minGp={minGp} log={g.log} modelRun={slate.modelRun} startTimeUTC={g.startTimeUTC || null} metric={metric} onMetric={setMetric} pfKey={pfKeys[`${g.id}|${s.team}`] ?? null} onPfKey={(k) => setPfKeys((m) => ({ ...m, [`${g.id}|${s.team}`]: k }))} />)}
+                {g.rinkSides.map((s) => <Rink key={s.team} side={s} teamCount={slate.teamCount} posFilter={pos} minGp={minGp} log={g.log} modelRun={slate.modelRun} startTimeUTC={g.startTimeUTC || null} metric={metric} onMetric={pickMetric} pfKey={pfKeys[`${g.id}|${s.team}`] ?? null} onPfKey={(k) => setPfKeys((m) => ({ ...m, [`${g.id}|${s.team}`]: k }))} />)}
               </div>
               <RinkLegend metric={metric} />
               {g.log && <PositionLog game={g} />}
@@ -442,8 +444,8 @@ export default function MatchupsPanel() {
                       <small>{s.venue === 'H' ? 'home' : 'away'} · positions from {{ lineup: 'the NHL.com projected lineup', gamedaytweets: 'the beat writers’ lines', propfinder: 'PropFinder’s depth chart' }[s.source] || 'the roster (no lineup yet)'}</small>
                     </div>
                     <div className="nhlx-mu-grid">
-                      <DefenseCard side={s} teamCount={slate.teamCount} mp={slate.moneypuck} pfKey={pfKeys[`${g.id}|${s.team}`] ?? null} />
-                      {s.skaters.length ? <SkaterTable skaters={s.skaters} teamCount={slate.teamCount} card={defenseCardFromTabs(s.propfinder?.tabs, pfKeys[`${g.id}|${s.team}`] ?? null)} /> : <p className="nhlx-auto-meta">No skaters match the filter.</p>}
+                      <DefenseCard side={s} teamCount={slate.teamCount} mp={slate.moneypuck} pfKey={pfKeys[`${g.id}|${s.team}`] ?? null} metric={metric} />
+                      {s.skaters.length ? <SkaterTable skaters={s.skaters} teamCount={slate.teamCount} card={defenseCardFromTabs(s.propfinder?.tabs, pfKeys[`${g.id}|${s.team}`] ?? null, metric)} /> : <p className="nhlx-auto-meta">No skaters match the filter.</p>}
                     </div>
                   </div>
                 ))}
