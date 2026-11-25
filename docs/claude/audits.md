@@ -371,4 +371,7 @@
   shooter's 3+ 57% / 51% / 47% at ~57% said. Goals: the G rank at his position nothing, the ISCF rank green 1.11× (1+
   17.3% against 15.6%). No book prices in the export. Home / away: 7 of 128 team splits at p < .05 against 6.4, 23 of
   477 skater shots splits against 24, none of last season's repeating; 3+ shot skaters +11% at home (both seasons)
-  against the board's flat +3.5%. Nothing changed.
+  against the board's flat +3.5% (leak-free, the tier read from the games before, it shrinks to ≈ ±4% and saves nothing
+  measurable over the board's term: home left as is, to look at again at mid-season). Which window of the environment
+  (`pf_env_windows.py`): L5 the worst everywhere; shots at his position L10 / L15 / Season tie (deviance saved 14.9 /
+  15.9 / 14.2), the team read and goals by ISCF want L15 or Season. Nothing changed.

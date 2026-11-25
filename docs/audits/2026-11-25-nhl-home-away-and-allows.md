@@ -65,3 +65,26 @@ points on 1+ goal; amber and red read alike.
 - Team or player home / away splits by name: do not use.
 - Store the book's lines with the slate (`skater-props/<date>.json` is empty on every exported date) so the next
   pass can say whether the price already carries the colour.
+
+## 4. Which window of the environment predicts best, this season (`tools/predictors/pf_env_windows.py`)
+
+The opponent's shots / goals / ISCF allowed over its last 5, 10, 15 games and season to date, rebuilt from the box
+scores with PropFinder's position labels (the export stores the Season table only), against each skater's own
+PropFinder season rate (10,131 skater-games, 5+ GP). Scored two ways: a multiplier (opp / league)^b fitted before Oct 28
+and graded after it (Poisson deviance saved over no environment), and the green / amber / red split by rank on the
+rows where the opponent has 15+ games, so every window is full (4,405).
+
+| Read | L5 | L10 | L15 | Season |
+|---|---|---|---|---|
+| Shots, at his position: deviance saved | 5.9 | 14.9 | **15.9** | 14.2 |
+| Shots, at his position: green − red | +6.3% | +8.6% | **+10.3%** | +8.6% |
+| Shots, team (All): deviance saved | −2.4 | 1.8 | **12.4** | 10.0 |
+| Goals by ISCF, at his position: deviance saved | 3.2 | 3.8 | 4.2 | 4.1 |
+| Goals by ISCF, team: deviance saved | −2.7 | 2.7 | 4.2 | **4.7** |
+| Goals by goals allowed, at his position | ≈ 0 | ≈ 0 | ≈ 0 | ≈ 0 |
+
+L5 is the worst read everywhere (at the team level worse than nothing). For shots at the position L10, L15 and Season
+are within noise of each other (the gaps are 1–2 units of deviance); for the team as a whole and for goals the
+longer windows win (L15 / Season). The fitted multiplier is small at the position (b ≈ 0.20: an opponent allowing 20%
+more than the league adds ≈ 4%). Nothing changed; the Matchups tab's L10 default is fine for shots by position, the
+team and goals reads would do better on L15 or the season.
