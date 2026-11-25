@@ -371,7 +371,7 @@
   of the box scores … they should be listed as a best bet if it's applicable"): the game records have carried every goalie's
   line since the first ingest (`game.goalies` in `game.js`: shots against `sa`, saves `sv`, goals against `ga`, `toi`, the
   `starter` flag, the `decision`); `writeGoalieRows` (every `ingestGames`) indexes them per season at
-  `data/goalie-rows/<season>.json` (`GOALIE_ROW_FIELDS`, the skater rows' shape) and `POST /api/nhl/data/refresh?only=goalies
+  `data/goalie-rows/<season>.json` by the season's **start year** (`GOALIE_ROW_FIELDS`, the skater rows' shape; until 2026-11-25 the ingest keyed on the game record's `season`, 20262027, a file nothing read, so the goalie book stood still at the Oct 31 rebuild — Vincent: "the goalkeepers for nhl are not updated"; the misfiled rows are folded in by the next ingest and read beside the season's file until then, `legacyGoalieRowsPath` / `mergeGoalieRows`, `__tests__/nhl-goalie-rows.test.js`) and `POST /api/nhl/data/refresh?only=goalies
   [&season=]` rebuilds a season's file from every stored game (`rebuildGoalieRows`, run once on 2026-10-31 for 2026);
   `loadGoalieRows(date)` reads this season's and last season's. `goalieBook(rows, season, { through })` reads every team's
   goalies before the date (appearances, starts, shots, saves, the raw and the **shrunk save percentage** — his own toward
