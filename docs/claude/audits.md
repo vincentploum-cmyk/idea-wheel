@@ -363,3 +363,12 @@
   on the store's boards the points line blend read a window / alternate line as the main one on 175 of 2,136 blends; a
   0.6–1.6× guard (`LINE_BLEND.ratio`) took the top ten's points bias from +1.15 to +0.42. Big nights are shooting and rate
   surges (minutes +1.9 of a +14.3-point surplus); the reads that raise their odds before tip are already in the board's chances.
+- Home / away and the rink head's verdict (`docs/audits/2026-11-25-nhl-home-away-and-allows.md`,
+  `tools/predictors/home_away.py`, `allows_verdict.py`; Vincent, 2026-11-25: teams or players that differ home and away,
+  and whether players hit more when "allows a lot of shots / goals" is shown). The verdict replayed leak-free
+  (`teamAllowsBook` thirds against the skater's own rate): green 1.046× his shots both seasons, red 0.932× (2025-26) /
+  0.985× (2026-27), about 2 points of 3+; the goals verdict 1.04 / 0.96 last season, this season's +12% gap inside noise,
+  and the shots verdict sorts goals as well. Team splits are chance (8 of 128 at p < .05 against 6.4; none repeats half
+  to half or season to season, the rink's count neither); skater splits too (33 of 600 against 30, r 0.00 half to half,
+  0.14 season to season). The real pattern is by volume: 3+ shot skaters +11% at home both seasons, 1–3 +4%, under 1
+  ±0, against the board's flat +3.5%. Nothing changed; a tiered home term is the proposal.
