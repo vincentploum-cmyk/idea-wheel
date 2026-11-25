@@ -1,85 +1,67 @@
-# NHL: home / away splits, and does "allows a lot of shots / goals" hold (2026-11-25)
+# NHL, this season: does "allows a lot" on PropFinder's table hold, and home / away splits (2026-11-25)
 
 Vincent, 2026-11-25: "check if there are teams or players that perform significantly different home and away?
 Also … the comment 'team allows a lot of shots / team allows a lot of goals': if that comment is listed, are the
-players indeed hitting more?"
+players indeed hitting more?", then "I only care about this season! And based on the stored propfinder data".
 
-Data: the NHL API's box scores through `tools/predictors/fetch.mjs`: 2025-26 whole (1,312 games) and 2026-27 to
-Nov 24 (377 games). Scripts: `tools/predictors/home_away.py`, `tools/predictors/allows_verdict.py`.
+Data: the site's study export (`/api/nhl/data/study-export`, downloaded 2026-11-25: 55 slates, Oct 1 – Nov 25, the
+pre-game PropFinder defense table by position and every skater's PropFinder season rate) against the NHL API's box
+scores of 2026-27 through Nov 24 (`tools/predictors/fetch.mjs`). Script: `tools/predictors/pf_allows.py`. The export
+carries no book prices (no `skater-props` file was stored for these slates), so nothing is graded against a line.
+The L10 table is stored on one date only, so only the Season table is read.
 
-## 1. The rink head's verdict ("allows a lot of / an average number of / few")
+Method: each skater-game is matched to his PropFinder row by name (13,572 skater-games, 683 without a row), and
+kept when PropFinder's season rate stands on 5+ games (9,824). "Hitting more" = beating his own PropFinder season
+rate going into the game. The opponent's colour is PropFinder's rank the morning of the game as the table shows it
+(`rankThird`: 1–11 green "allows a lot", 12–22 amber, 23–32 red), on the row at his PropFinder position and on the
+All row.
 
-Replayed leak-free as the site builds it (`teamAllowsBook` + `zoneTone`): each morning every opponent's shots and
-goals allowed a game this season, ranked among teams with 3+ games, cut in thirds. Each skater-game is set against
-the skater's own season-to-date rate (10+ games), so "hitting more" means more than he usually does.
+## 1. PropFinder's "allows a lot" → shots
 
-### Shots verdict → skater shots
+| Opponent on PropFinder's SOG rank | at his position: n | shots / his rate | 3+ hit (Poisson at his rate) | All row: shots / his rate | 3+ hit (exp.) |
+|---|---|---|---|---|---|
+| green, allows a lot | 3,439 | **1.073** | 24.7% (21.9%) | 1.036 | 24.1% (22.4%) |
+| amber | 3,327 | 0.961 | 21.4% (22.8%) | 0.998 | 22.4% (22.2%) |
+| red, allows few | 3,058 | **0.948** | 20.2% (22.0%) | 0.945 | 19.8% (22.0%) |
 
-| Verdict | 2025-26 n | actual / own rate | 3+ hit (Poisson exp.) | 2026-27 n | actual / own rate | 3+ hit (exp.) |
-|---|---|---|---|---|---|---|
-| allows a lot (green) | 13,452 | **1.046** | 24.4% (22.6%) | 2,274 | **1.045** | 25.2% (22.9%) |
-| average (amber) | 11,955 | 1.004 | 22.7% (22.5%) | 2,153 | 0.984 | 23.3% (23.4%) |
-| few (red) | 13,429 | **0.932** | 20.3% (22.5%) | 2,160 | 0.985 | 21.6% (22.2%) |
+- Green against red at his position: +12.5% shots (95% CI +7.5 to +16.9%, games resampled); on the All row +9%
+  (+4.6 to +13.4%). The position row is the better read.
+- It held in both months: October green 1.082 / red 0.949, November 1.064 / 0.947.
+- For shooters at 2.5+ shots a game: 3+ landed **57% against green, 51% amber, 47% red** (each said ~57% off his
+  rate). Against a green opponent he hits his rate; against red he falls 10 points short.
 
-Green against red: +11% shots last season (95% CI +9 to +14%), +6% this season (+0.5 to +11%). At team level a
-team shot +4.6% over its own average against a green opponent and −7.2% against a red one (2025-26; this season
-+4.3% / −1.6%). For a 2.5+ shots-a-game shooter the 3+ rate was 54% against green, 50% against red last season
-(about 3 to 4 points, the same size the soft-spots and top-shooters audits found). The verdict reads better as the
-opponent's sample grows (last season, opponents with 40+ games: green 1.058, red 0.916).
+## 2. PropFinder's "allows a lot" → goals
 
-So yes, players hit more when the comment says "allows a lot of shots", but the effect is modest: about +5% on his
-own rate, roughly 2 points of 3+ probability. The red verdict is the stronger signal last season (−7%).
-
-### Goals verdict → skater goals
-
-| Verdict | 2025-26 actual / own | 1+ goal (exp.) | 2026-27 actual / own | 1+ goal (exp.) |
+| Read | green: goals / his rate (1+ hit, exp.) | amber | red | green − red, 95% CI |
 |---|---|---|---|---|
-| allows a lot | 1.038 | 16.1% (15.3%) | 1.106 | 17.8% (16.0%) |
-| average | 0.996 | 15.6% (15.3%) | 0.937 | 15.6% (16.2%) |
-| few | 0.961 | 14.9% (15.3%) | 0.983 | 16.4% (16.1%) |
+| G rank, at his position | 1.031 (16.1%, 15.4%) | 1.012 | 1.019 | −0.11 to +0.14 (nothing) |
+| ISCF rank, at his position | **1.109** (17.3%, 15.6%) | 0.963 | 0.983 | +0.01 to +0.23 |
+| G rank, All row | 1.098 (17.0%, 15.5%) | 0.984 | 0.980 | −0.01 to +0.22 |
+| ISCF rank, All row | **1.121** (17.7%, 15.6%) | 0.951 | 0.981 | +0.03 to +0.24 |
 
-Green against red: +8% last season (CI +2 to +13%), +12% this season but the CI crosses zero (−2 to +26%). Goals
-allowed is a noisier ranking than shots allowed; this season the **shots** verdict sorted goals better than the goals
-verdict did (green 1.127, red 0.885). The effect on a 1+ goal bet is about one point.
+The goals-allowed rank by position says nothing this season. The scoring-chances-allowed rank (ISCF, what the ice is
+tinted by under Goals since 2026-11-12) does: about +11–12% on his goal rate against a green opponent, +1.7–2.1
+points on 1+ goal; amber and red read alike.
 
-## 2. Home / away
+## 3. Home / away, this season (box scores; PropFinder publishes no venue split)
 
-League: home teams take ~1.1 (2025-26) to 1.6 (this season) more shots a game and score 0.13 (last season) and 0.07 (this season) more goals; a
-skater shoots ~4% more at home. The board already carries this (`SHOTS_FIT.home` +3.5%, `GOALS_FIT.home` +7%).
-
-### Teams
-
-- 2025-26, 32 teams × 4 metrics (shots for / against, goals for / against): 8 of 128 splits at p < 0.05 where
-  chance alone gives 6.4. After the false-discovery adjustment the survivors are Florida's shots for (30.1 home,
-  25.9 away) and Chicago's shots against (27.0 home, 32.9 away); Carolina, Montreal and Detroit's shots against at q 0.06.
-- Shuffling the venue within each team: the spread of the teams' shots-for, goals-for and goals-against splits is
-  what chance gives (p 0.73 / 0.65 / 0.50); only shots against spreads wider (p 0.02).
-- None of it repeats: a team's split in the first half of 2025-26 against the second r −0.25 to +0.10, last season
-  against this season r −0.24 to +0.10. Chicago's 27.0 / 32.9 is 30.5 / 30.0 this season. Florida's shots-for
-  split is the one that carried (31.1 / 28.2 this season), on 9 home games.
-- The rink (both teams' shots at a team's home against in its road games, the scorekeeper's count): sd 2.3 shots,
-  but it does not carry half to half (r −0.07) or season to season (r 0.00).
-
-Verdict: no team has a home / away split worth betting on.
-
-### Skaters
-
-- 2025-26, 600 skaters with 20+ games at each venue: 33 shots splits at p < 0.05 where chance gives 30 (shuffled
-  venues: 30, 95th percentile 37); 26 goals splits against 30. None survives the false-discovery adjustment.
-- Repeat: first half against second half of 2025-26 r 0.00 (shots), 0.00 (goals); last season against this season
-  r +0.14 (shots), −0.03 (goals).
-- The eleven biggest shots splits last season (p < 0.01) went the same way this season for 9 (McDavid 4.4 / 3.0 →
-  3.1 / 2.5, Kaprizov 4.1 / 2.8 → 3.9 / 2.6, McMichael, Ekblad, Carlson, Giroux, Sharangovich, Roy, Greenway); the
-  two that flipped were Dvorak and Xhekaj. 9 of 11 is p ≈ 0.03 against coin flips but on 8–14 games a venue.
-- **The one real pattern is by volume, not by name**: the home lift grows with the shooter. Skaters at 3+ shots a
-  game shoot 11% more at home in both seasons (3.64 / 3.28 last season, 3.71 / 3.33 this season) on 1–2% more ice
-  time; 1–3 shot skaters +4%, under 1 shot +0% last season. The board's flat +3.5% understates the home lift for
-  the top shooters by about 7% and overstates it for the depth players.
+- League: home 28.2 shots and 3.19 goals a game, away 26.6 and 3.12.
+- Teams: 7 of 128 splits (shots and goals for and against) at p < 0.05, chance alone 6.4. The biggest: BUF shots
+  allowed 23.7 home / 30.9 away (10 / 14 games, p 0.002), TOR goals 2.5 / 4.3 (p 0.012), EDM shots 26.6 / 22.0
+  (p 0.015), NSH shots allowed 27.3 / 32.4, TBL goals allowed 2.25 / 3.55. None of last season's team splits carried
+  into this one (`home_away.py`), so these are 10–14 games of noise until shown otherwise.
+- Skaters with 8+ games at each venue: 477; shots splits at p < 0.05: 23, chance 24; goals 11. The largest
+  (MacKinnon 4.7 / 2.1, Gauthier 5.5 / 3.4, Cuylle 3.1 / 1.1, Kaprizov 3.9 / 2.6, Pionk 1.4 / 2.9) are what chance
+  throws up among 477.
+- The pattern that holds is by volume: 3+ shot skaters +11.4% at home, 1–3 shots +4–5%, against the board's flat
+  +3.5% (`SHOTS_FIT.home`), and it held last season too (+11%).
 
 ## What it asks for (nothing changed)
 
-- The verdict is honest but small; it should not be read as more than "+5% / −5% on his own rate". The red verdict on
-  shots is the stronger read; the goals verdict is the weakest, and the shots verdict could stand in for it.
-- A tiered home term for shots (≈ +11% for 3+ shots a game, +4% for 1–3, 0 below), to be fitted in `replay.py`
-  before it touches `SHOTS_FIT`.
-- Player or team home / away splits by name: do not use.
+- PropFinder's position row is worth reading: green ≈ +7% on his shots, red ≈ −5%, about ±2–3 points on 3+ and ±5
+  for a 2.5+ shooter. Red is as informative as green.
+- For goals, read the ISCF colour, not the goals-allowed colour.
+- A tiered home term for shots (≈ +11% at 3+ shots a game, +4% at 1–3), to be fitted before it touches `SHOTS_FIT`.
+- Team or player home / away splits by name: do not use.
+- Store the book's lines with the slate (`skater-props/<date>.json` is empty on every exported date) so the next
+  pass can say whether the price already carries the colour.

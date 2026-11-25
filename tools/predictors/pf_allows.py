@@ -38,6 +38,12 @@ def load_games(d):
     return pd.DataFrame(rows)
 
 
+def wtag(w, season_w):
+    if w == season_w: return 'season'
+    m = re.search(r'(\d+)', w or '')
+    return f'l{m.group(1)}' if m else re.sub(r'\W', '', (w or 'x').lower())
+
+
 def implied(odds):
     if odds is None: return None
     return 100 / (odds + 100) if odds > 0 else -odds / (-odds + 100)
@@ -51,11 +57,9 @@ def build(export, R):
         box = R[R.date == d]
         if box.empty: continue
         ranks = {}
-        nteams = defaultdict(set)
         for r in sl['defense']:
             ranks[(r['window'], r['team'], (r['pos'] or 'All'))] = r
-            nteams[r['window']].add(r['team'])
-        windows = sorted(nteams)
+        windows = sorted({r['window'] for r in sl['defense']} | {s['window'] for s in sl['skaters']})
         pf = {}
         for s in sl['skaters']:
             pf[(s['window'], s['team'], norm(s['name']))] = s
@@ -66,7 +70,7 @@ def build(export, R):
             total += 1
             row = dict(date=d, gid=b.gid, pid=b.pid, name=b.name, team=b.team, opp=b.opp, venue=b.venue, sog=b.sog, g=b.g, toi=b.toi)
             # his PropFinder season row (position label, rates before the game)
-            season_w = next((w for w in windows if not re.search(r'\bL\s*\d', w, re.I)), None)
+            season_w = next((w for w in windows if re.search(r'season', w, re.I)), None)
             me = None
             for w in windows:
                 m = pf.get((w, b.team, b.key))
@@ -74,7 +78,7 @@ def build(export, R):
                     cands = [v for (ww, t, k), v in pf.items() if ww == w and t == b.team and k.endswith(b.last)]
                     m = cands[0] if len(cands) == 1 else None
                 if m is not None:
-                    tag = 'season' if w == season_w else 'l5'
+                    tag = wtag(w, season_w)
                     row[f'pf_{tag}_sog'] = m.get('sog'); row[f'pf_{tag}_g'] = m.get('g'); row[f'pf_{tag}_gp'] = m.get('gp')
                     if tag == 'season' or me is None: me = m
             if me is None: unmatched += 1
@@ -82,8 +86,8 @@ def build(export, R):
             pos = {'F': 'C', 'L': 'LW', 'R': 'RW'}.get(pos, pos)
             row['pf_pos'] = pos
             for w in windows:
-                tag = 'season' if w == season_w else 'l5'
-                n = len(nteams[w]) or 32
+                tag = wtag(w, season_w)
+                n = 32  # PropFinder ranks every team; the slate's block holds only tonight's
                 for slot, key in [('pos', pos), ('all', 'All')]:
                     dr = ranks.get((w, b.opp, key))
                     if not dr: continue
@@ -123,7 +127,7 @@ def verdict_tables(df):
     rng = np.random.default_rng(1)
     print('\n=========== 1. PropFinder\'s defense table and what the skaters did (this season) ===========')
     print('Baseline = his own PropFinder season SOG/G and G/G before the game (GP 5+). green = rank 1-11 (allows the most).')
-    for tag in ['season', 'l5']:
+    for tag in ['season']:  # the export's L10 block is stored on one date only (one file a season, overwritten)
         if f'{tag}_pos_sog_tone' not in df: continue
         for slot, lab in [('pos', 'at his position'), ('all', 'All row (the team as a whole)')]:
             tc = f'{tag}_{slot}_sog_tone'
@@ -138,6 +142,10 @@ def verdict_tables(df):
                 bk = s[s.book_line.notna() & s.book_implied.notna()]
                 over = (bk.sog > bk.book_line).mean() if len(bk) else float('nan')
                 print(f"{t:6} {len(s):6d} {s.sog.mean():6.2f} {s.pf_season_sog.mean():6.2f} {s.sog.sum() / s.pf_season_sog.sum():6.3f} {(s.sog >= 3).mean():6.1%} {s.p3.mean():6.1%} | {len(bk):6d} {over:8.1%} {bk.book_implied.mean() if len(bk) else float('nan'):8.1%}")
+            for lab2, mk in [('Oct', x.date < '2026-11-01'), ('Nov', x.date >= '2026-11-01')]:
+                y = x[mk]
+                if len(y) > 300:
+                    print(f'   {lab2}: ' + '  '.join(f"{t} {y[y[tc] == t].sog.sum() / y[y[tc] == t].pf_season_sog.sum():.3f} (3+ {(y[y[tc] == t].sog >= 3).mean():.1%} vs {y[y[tc] == t].p3.mean():.1%}, n {len(y[y[tc] == t])})" for t in ['soft', 'mid', 'tough']))
             lo, hi = boot_gap(x, 'sog', 'pf_season_sog', tc, rng)
             print(f'   green minus red, shots over his own rate: 95% CI [{lo:+.3f}, {hi:+.3f}]')
             sh = x[x.pf_season_sog >= 2.5]
