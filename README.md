@@ -21,7 +21,7 @@ audited against box scores later.
 
 ## Access
 
-Only emails in `NHL_ADMIN_EMAILS` (default `vincentploum@gmail.com,sjlever@yahoo.com`) can use the
+Only emails in `NHL_ADMIN_EMAILS` (default `vincentploum@gmail.com,sjlever@yahoo.com,jbatista1129@gmail.com`) can use the
 model or its API. Everyone else sees the landing page or an "access restricted" panel.
 
 ## Layout

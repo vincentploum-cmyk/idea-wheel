@@ -29,7 +29,7 @@ services:
         sync: false
 
     # Optional overrides (safe defaults in code):
-    #   NHL_ADMIN_EMAILS  comma-separated allow-list (default vincentploum@gmail.com,sjlever@yahoo.com;
+    #   NHL_ADMIN_EMAILS  comma-separated allow-list (default vincentploum@gmail.com,sjlever@yahoo.com,jbatista1129@gmail.com;
     #                     when set in the dashboard it replaces the default, so add new people there too)
     #   NHL_MODEL_BUCKET  storage bucket name (default nhl-model)
     # Optional PropFinder account, for pulling the matchup workbooks and stats tables
