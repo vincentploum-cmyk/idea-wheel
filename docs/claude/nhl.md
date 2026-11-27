@@ -1010,9 +1010,16 @@
   iCF (their 3+ barely moved with the defense) and λ's `defMult` is unchanged (45,455 skater-games of 2025-26 and 2026-27:
   an even-money 3+ for a forward took 6.1 attempts a game against the toughest defenses and 5.1 against the softest;
   `docs/audits/2026-11-27-nhl-icf-thresholds.md`, `tools/predictors/icf_thresholds.py`, `__tests__/nhl-model-icf-env.test.js`).
-  `node tools/port-model-core.mjs [App.jsx]` applies all eight ports on the Mac (the 2026-10-13 shots odds, the
+  And the same day for goals (port it too, Vincent: "now do the same for goals with iSCF thresholds"): the goal gates
+  that test a forward's own iSCF (`playerGoalFloorProfile`: level, caps, `premium1Open`, `defDamp`; `scorerTierInfo`;
+  the finisher / shooter gate; the finisher goal model) read `matchupIscf`: his iSCF × the opponent's ISCF/G allowed at
+  his position over the league's mean, to the power `ISCF_ENV_EXP` 0.74, the shift held to ±0.25 (`ISCF_ENV_MAX_SHIFT`),
+  his last-5 iSCF by the same ratio (`goalGateSkaterOf`); defensemen, the goal-leak overrides (`positionGoalLeakOverride`,
+  `buildDefenseRoleMarketBoost`, which already fire on the opponent's table) and `defenseGoalMultiplier` unchanged (forwards'
+  goals follow the chances allowed at 0.78 and the goals allowed at 0.32; same audit, `tools/predictors/iscf_thresholds.py`).
+  `node tools/port-model-core.mjs [App.jsx]` applies all nine ports on the Mac (the 2026-10-13 shots odds, the
   2026-10-20 goal odds, the 2026-10-27 weights, the 2026-11-07 minutes, the 2026-11-12 goals environment and
-  `defenseGoalMultiplier`, the 2026-11-13 line move, the 2026-11-27 matchup iCF), each group all-or-nothing by exact-text anchors: a backup beside the
+  `defenseGoalMultiplier`, the 2026-11-13 line move, the 2026-11-27 matchup iCF and iSCF), each group all-or-nothing by exact-text anchors: a backup beside the
   file, a group already there reported as ported, a group with a differing anchor skipped and named, `--check` to
   look first. On 2026-10-27 App.jsx had neither odds port: the local app had published the ladder's odds since Oct 13.
 

@@ -82,3 +82,55 @@ own iCF; λ's own opponent read (`defMult`) is unchanged, so the shift reaches t
 gates (tiers, caps and `shotBias`). Port group 8 of `tools/port-model-core.mjs`; `__tests__/nhl-model-icf-env.test.js`.
 Not replayed through the model's scorecard (the model's inputs for past slates are not stored here): grade it on the
 History tab's scorecard over the coming weeks.
+
+## Goals: iSCF thresholds and the matchup (same day)
+
+Vincent: "now do the same for goals with iSCF thresholds" (`matchupIscf`). Same games, 45,450 skater-games read the same
+way with iSCF (scoring chances) in place of iCF and goals as the outcome; 1+ goal 15.7% (forwards 19.7%, defensemen
+7.7%), 2+ 1.8%. Script: `tools/predictors/iscf_thresholds.py <games dirs>`.
+
+**In the game:** 0 chances 1+ 2.9%, 1: 11.7%, 2: 20.4%, 3: 29.4%, 4: 34.6%, 5: 40.3%, 6: 43.3%, 7: 50.5%.
+
+**His iSCF a game coming in (forwards):**
+
+| iSCF / game | 1–1.25 | 1.25–1.5 | 1.5–1.75 | 1.75–2 | 2–2.25 | 2.25–2.5 | 2.5–2.75 | 2.75–3 | 3–3.5 | 3.5+ |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1+ goal | 11.9% | 14.1% | 16.9% | 18.2% | 21.9% | 24.7% | 27.4% | 27.4% | 32.6% | 37.5% |
+| 2+ goals | 0.7% | 1.1% | 1.4% | 2.0% | 2.6% | 3.7% | 4.3% | 4.1% | 5.4% | 7.4% |
+
+Defensemen: 0.8–1 8.8%, 1–1.2 9.4%, 1.2–1.5 14.2%, 1.5+ 19.7%.
+
+**The defense, iSCF allowed per skater at his group (forwards):** ranks 1–5 (×1.11 the league) goals ×1.137 his rate,
+1+ 22.2%; 6–10 ×1.013; 11–22 ×0.974; 23–27 ×0.927; 28–32 (×0.88) ×0.950, 1+ 18.6%. Defensemen: ×1.13 / ×1.12 / ×0.98 /
+×1.15 / ×0.87, no order.
+
+**Both (forwards, 1+ goal by env: tough < 0.92 / firm / loose / soft > 1.08; 16 / 32 / 37 / 14% of games):**
+
+| His iSCF a game | tough | firm | loose | soft |
+|---|---|---|---|---|
+| 0.75–1.25 | 9.1% | 11.0% | 10.6% | 11.7% |
+| 1.25–1.75 | 14.6% | 15.3% | 14.8% | 18.8% |
+| 1.75–2.25 | 20.4% | 18.6% | 19.8% | 23.7% |
+| 2.25–2.75 | 24.7% | 25.6% | 26.0% | 29.1% |
+| 2.75+ | 29.0% | 32.3% | 32.8% | 36.9% |
+
+**Fitted** (Poisson, goals = A × iSCF^b × env^c): forwards b 1.059, c 0.778 → the matchup is worth iSCF × env^0.74
+(×0.91 at env 0.88, ×1.09 at 1.12); with his own goal rate in the fit, env^0.82, so the read is not his iSCF standing in
+for finishing. The opponent's goals-allowed ratio in place of its iSCF-allowed ratio: env^0.32 (the 2026-11-12 finding
+again: chances allowed carry the signal, goals allowed are noise). iSCF a game needed for 1+ at 40%: 4.62 at env 0.88,
+4.21 at 1.00, 3.87 at 1.12 (few forwards get there: the 3.5+ band hits 37.5%); 2+ at 8%: 4.24 / 3.86 / 3.55. Defensemen
+b 1.013, c 0.373 (×0.37 of the ratio) and the rank rows above do not line up: left out.
+
+**Head to head (forwards, 1+ goal):** 1.25–1.75 iSCF against a soft defense 18.8% (0.207 goals a game), 1.75–2.25
+against a tough one 20.4% (0.228); 1.75–2.25 soft 23.7%, 2.25–2.75 tough 24.7%; 1.25–1.75 soft 18.8%, 2.25+ tough 27.0%.
+As with shots, the environment closes one band (about half a chance a game), not two.
+
+**What changed.** `matchupIscf(posKey, iscfSeason, teamPos, defenseAvg)`: a forward's season iSCF × (the opponent's
+ISCF/G allowed at his position on the cheat-sheet table over the league's mean)^0.74, the shift held to ±0.25
+(`ISCF_ENV_EXP`, `ISCF_ENV_MAX_SHIFT`), his last-5 iSCF moved by the same ratio (`goalGateSkaterOf`). The goal gates that
+test his own iSCF read it: `playerGoalFloorProfile` (the goal floor's level, its caps `max1` / `max2`, `premium1Open`
+and `defDamp`, which sets how much of `defenseGoalMultiplier` reaches λ goals), `scorerTierInfo` (the tier and its
+`baseMult`), `buildFinisherShooterGate` and `buildFinisherGoalModel`. Not the goal-leak overrides
+(`positionGoalLeakOverride`, `buildDefenseRoleMarketBoost`), which already fire on the opponent's goals and chances
+allowed, and not `defenseGoalMultiplier` itself. Port group 9 of `tools/port-model-core.mjs` (needs group 8);
+`__tests__/nhl-model-icf-env.test.js`. Not replayed through the model's scorecard: grade it on the History tab.
