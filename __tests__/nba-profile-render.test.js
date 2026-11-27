@@ -29,19 +29,18 @@ const sport = { teamLogo: () => `data:image/svg+xml,${encodeURIComponent('<svg x
 const render = () => renderToStaticMarkup(React.createElement(GameProfile, { g, sport }));
 
 describe('the NBA matchup profile renders', () => {
-  test('the NHL card: the expected points, the heads with the defense pill, five rows of a word over a toned line', () => {
+  test('the NHL card: the expected points, the heads with the defense pill, each team\'s strengths and weaknesses', () => {
     const html = render();
-    expect(html).toContain('class="nhlx-prof"');
+    expect(html).toContain('class="nhlx-prof nhlx-char"');
     expect(html).toContain('212 points expected · CHA 102 · WSH 110');
-    expect(html).toContain('this season · green = more points likely, red = fewer');
+    expect(html).toContain('this season · only what stands out from the league');
     expect(html).toContain('5 games · 5 out · PropFinder');
-    expect((html.match(/class="nhlx-prof-row is-(?!head)/g) || []).length).toBe(5);
-    for (const label of ['Scoring', 'Rebounding', 'Playmaking', 'Allows', 'Soft spots']) expect(html).toContain(`>${label}</div>`);
-    // CHA scores the least of thirty: Poor, red, the rank phrase red too.
-    expect(html).toMatch(/nhlx-prof-word is-tough is-very[^>]*>Poor</);
-    expect(html).toContain('<b class="nhlx-prof-rank is-tough">30th of 30</b>');
-    // What CHA gives up: SG #2 on points and threes, PG and PF #3 on rebounds, in green.
-    expect(html).toContain('<b class="nhlx-prof-rank is-soft">SG #2</b>');
+    expect(html).not.toMatch(/nhlx-char-badge[^>]*>Average</);
+    // CHA scores the least of thirty: a weakness, Poor in red; its soft spots (SG #2…) a weakness too.
+    expect(html).toMatch(/Scoring little<\/span><span class="nhlx-edge nhlx-char-badge is-tough is-very">Poor</);
+    expect(html).toMatch(/Soft spots<\/span><span class="nhlx-edge nhlx-char-badge is-tough">Leaky</);
+    expect(html).toContain('SG #2');
+    expect(html).toMatch(/Rebounding<\/span><span class="nhlx-edge nhlx-char-badge is-soft">Strong</);
     expect(html).not.toContain('role="tablist"');
   });
   test('mock-up pages (MOCK_OUT)', () => {
