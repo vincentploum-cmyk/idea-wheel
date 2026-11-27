@@ -1386,18 +1386,24 @@ function lineMoveMultiplier(posKey, postedLine, playerToi, toiL5, toiSeason) {
 // matchup is worth his iCF times that ratio to the power 0.73 (0.65 / 0.89). From the toughest defenses (x0.88)
 // to the softest (x1.12) that is about one attempt a game: an even-money 3+ needed 6.1 against the first and
 // 5.1 against the second. The gates that read his season iCF (5.0 / 5.4 / 5.5 / 5.8 / 6.0 / 6.5) read this
-// instead, the shift held to +/-0.5. Forwards only: a defenseman's 3+ barely moved with the defense in the same
-// rows. lambda's own defense read (defMult) is unchanged. Vincent: "Add the +/-0.5 iCF environment adjustment
-// to the model". 0 turns it off.
+// instead, the shift held to +/-0.5. lambda's own defense read (defMult) is unchanged. Vincent: "Add the +/-0.5
+// iCF environment adjustment to the model". 0 turns it off.
+// Defensemen too since later the same day (Vincent: "now do the same for defensemen"), at their own fit: their shots
+// follow their attempts to the power 0.96 and the attempts allowed to defensemen to the power 0.63, so 0.65; held out
+// by date the read saved 59.6 deviance over their own rate (forwards 102.5). Their 3+ grid had looked flat only
+// because few defensemen reach 3+; by rank they shot x1.066 against the five loosest defenses, x0.905 the tightest.
+// Their goals and points did not move with the defense (iSCF allowed -1.2 and +5.7): no goal or points shift.
 const ICF_ENV_EXP = 0.73;
+const ICF_ENV_EXP_D = 0.65;
 const ICF_ENV_MAX_SHIFT = 0.5;
 function matchupIcf(posKey, icfSeason, teamPos, defenseAvg) {
   const icf = Number(icfSeason) || 0;
-  if (!ICF_ENV_EXP || !(icf > 0) || (posKey || "").toUpperCase() === "D") return icf;
+  const exp = (posKey || "").toUpperCase() === "D" ? ICF_ENV_EXP_D : ICF_ENV_EXP;
+  if (!exp || !(icf > 0)) return icf;
   const allowed = Number(teamPos?.icf);
   const league = Number(defenseAvg?.icf);
   if (!(allowed > 0) || !(league > 0)) return icf;
-  const shift = clamp(icf * (Math.pow(allowed / league, ICF_ENV_EXP) - 1), -ICF_ENV_MAX_SHIFT, ICF_ENV_MAX_SHIFT);
+  const shift = clamp(icf * (Math.pow(allowed / league, exp) - 1), -ICF_ENV_MAX_SHIFT, ICF_ENV_MAX_SHIFT);
   return +(icf + shift).toFixed(3);
 }
 
@@ -5758,7 +5764,7 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
             defenseAvg,
             effectiveToi,
             todayLine,
-            skater,
+            skater: gateSkater,
             environmentScore,
           });
           p3s = blendDefensemanProbability(p3s, dBaseline.s3, dBaseline.confidence);
@@ -6353,6 +6359,7 @@ export {
   TOI_MOVE_EXP,
   matchupIcf,
   ICF_ENV_EXP,
+  ICF_ENV_EXP_D,
   ICF_ENV_MAX_SHIFT,
   matchupIscf,
   goalGateSkaterOf,

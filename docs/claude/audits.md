@@ -381,7 +381,7 @@
   2025-26 and 2026-27. Elite defenses cost the top shooters ×0.89 and scorers ×0.90, and beating them does not repeat
   (r ≈ 0 half to half and season to season). Shots: an even-money 3+ for a forward takes ~5.5 attempts a game, 6.1 against
   the toughest iCF-allowed defenses and 5.1 against the softest (matchup worth iCF × env^0.73); defensemen need ~6.8 and
-  barely move. Goals: chances allowed carry it (iSCF × env^0.74; goals allowed 0.32). Points: ~0.4 assists a game for an
+  move as much per game (held out, +59.6; their 3+ grid only looked flat, too few reach 3+). Goals: chances allowed carry it (iSCF × env^0.74; goals allowed 0.32). Points: ~0.4 assists a game for an
   even-money 1+; the opponent's iSCF allowed saves 68.5 deviance against 30.3 for assists allowed, and the cheat sheet's
-  assists steps were worse than no read. Changed: `matchupIcf` (±0.5) and `matchupIscf` (±0.25) on the forwards' gates,
+  assists steps were worse than no read. Changed: `matchupIcf` (±0.5; forwards, then defensemen at 0.65) and `matchupIscf` (±0.25, forwards) on the gates,
   `iscfPointMultiplier` and the iSCF ratio in `pointDefenseMult` (port groups 8 to 10, `docs/claude/nhl.md`).

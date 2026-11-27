@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Port the site's model changes into the local model app (App.jsx, the model's source of truth),
-// the same edits made to components/nhl/model-core.js, in ten groups, each all-or-nothing:
+// the same edits made to components/nhl/model-core.js, in eleven groups, each all-or-nothing:
 //   1. 2026-10-13 (a022443): p2s / p3s / p4s / p5s are the Poisson tails of λ shots; the ladder's
 //      figures ride along as ladderP3s / P4s / P5s and still set the attack score.
 //   2. 2026-10-20 (4ec641f): p1g / p2g / p3g are the Poisson tails of λ goals; the ladder's figures
@@ -31,12 +31,15 @@
 //      points branch is a smooth ISCF/G rank term (iscfPointMultiplier, ISCF_POINT_PER_SD 0.069, defensemen 1) in
 //      place of the Assists/G steps, and λ points' pointDefenseMult takes its 0.35 from the iSCF ratio in place of the
 //      assists ratio (same audit, "Points").
+//  11. 2026-11-27: matchupIcf moves defensemen too, at their own exponent (ICF_ENV_EXP_D 0.65), and the defensemen's
+//      baseline (defensemanCapabilityProfile) reads the gates' skater; it revises group 8's matchupIcf, which still
+//      reads as ported once this is in (same audit, "Defensemen"). Needs group 8 in first.
 //
 //   node tools/port-model-core.mjs [path to App.jsx] [--check]
 //
 // Default path: ~/Desktop/NHL/nhl-project/nhl-predictor/src/App.jsx. Every edit is an exact-text
-// replacement that must match once. A group whose new text is already there is reported as
-// ported; a group with a missing anchor is skipped and named, the others still go in. A backup
+// replacement that must match once. A group whose new text is already there (or that text as a later group
+// revised it) is reported as ported; a group with a missing anchor is skipped and named, the others still go in. A backup
 // is written beside the file before it is changed. --check reports and writes nothing.
 // Self-test: applied to the model-core of 2026-10-12, groups 1 and 2 reproduce the file of
 // 2026-10-20 exactly (`git show 15512c0^1:components/nhl/model-core.js`, `git show 4ec641f:…`).
@@ -381,6 +384,19 @@ const POINTS_ENV = [
   },
 ];
 
+const ICF_ENV_D = [
+  {
+    name: "matchupIcf for defensemen at their own exponent (ICF_ENV_EXP_D)",
+    old: "// instead, the shift held to +/-0.5. Forwards only: a defenseman's 3+ barely moved with the defense in the same\n// rows. lambda's own defense read (defMult) is unchanged. Vincent: \"Add the +/-0.5 iCF environment adjustment\n// to the model\". 0 turns it off.\nconst ICF_ENV_EXP = 0.73;\nconst ICF_ENV_MAX_SHIFT = 0.5;\nfunction matchupIcf(posKey, icfSeason, teamPos, defenseAvg) {\n  const icf = Number(icfSeason) || 0;\n  if (!ICF_ENV_EXP || !(icf > 0) || (posKey || \"\").toUpperCase() === \"D\") return icf;\n  const allowed = Number(teamPos?.icf);\n  const league = Number(defenseAvg?.icf);\n  if (!(allowed > 0) || !(league > 0)) return icf;\n  const shift = clamp(icf * (Math.pow(allowed / league, ICF_ENV_EXP) - 1), -ICF_ENV_MAX_SHIFT, ICF_ENV_MAX_SHIFT);\n",
+    new: "// instead, the shift held to +/-0.5. lambda's own defense read (defMult) is unchanged. Vincent: \"Add the +/-0.5\n// iCF environment adjustment to the model\". 0 turns it off.\n// Defensemen too since later the same day (Vincent: \"now do the same for defensemen\"), at their own fit: their shots\n// follow their attempts to the power 0.96 and the attempts allowed to defensemen to the power 0.63, so 0.65; held out\n// by date the read saved 59.6 deviance over their own rate (forwards 102.5). Their 3+ grid had looked flat only\n// because few defensemen reach 3+; by rank they shot x1.066 against the five loosest defenses, x0.905 the tightest.\n// Their goals and points did not move with the defense (iSCF allowed -1.2 and +5.7): no goal or points shift.\nconst ICF_ENV_EXP = 0.73;\nconst ICF_ENV_EXP_D = 0.65;\nconst ICF_ENV_MAX_SHIFT = 0.5;\nfunction matchupIcf(posKey, icfSeason, teamPos, defenseAvg) {\n  const icf = Number(icfSeason) || 0;\n  const exp = (posKey || \"\").toUpperCase() === \"D\" ? ICF_ENV_EXP_D : ICF_ENV_EXP;\n  if (!exp || !(icf > 0)) return icf;\n  const allowed = Number(teamPos?.icf);\n  const league = Number(defenseAvg?.icf);\n  if (!(allowed > 0) || !(league > 0)) return icf;\n  const shift = clamp(icf * (Math.pow(allowed / league, exp) - 1), -ICF_ENV_MAX_SHIFT, ICF_ENV_MAX_SHIFT);\n",
+  },
+  {
+    name: "the defensemen's baseline (their capability profile) reads the gates' skater",
+    old: "            todayLine,\n            skater,\n            environmentScore,\n          });\n",
+    new: "            todayLine,\n            skater: gateSkater,\n            environmentScore,\n          });\n",
+  },
+];
+
 export const GROUPS = [
   { key: 'shotsOdds20261013', label: 'shots odds (2026-10-13): p2s / p3s / p4s / p5s the Poisson tails of λ shots, the ladder as ladderP3s / P4s / P5s', edits: SHOTS_ODDS },
   { key: 'goalOdds20261020', label: 'goal odds (2026-10-20): p1g / p2g / p3g the Poisson tails of λ goals, the ladder as ladderP1g / P2g / P3g', edits: GOAL_ODDS },
@@ -392,6 +408,7 @@ export const GROUPS = [
   { key: 'icfEnv20261127', label: 'the matchup moves the iCF the gates read (2026-11-27): matchupIcf, forwards, +/-0.5 at most', edits: ICF_ENV },
   { key: 'iscfEnv20261127', label: 'the matchup moves the iSCF the goal gates read (2026-11-27): matchupIscf, forwards, +/-0.25 at most', edits: ISCF_ENV },
   { key: 'pointsEnv20261127', label: 'points environment (2026-11-27): the cheat sheet\'s points multiplier a smooth ISCF/G term, λ points\' 0.35 on the iSCF ratio, assists allowed out', edits: POINTS_ENV },
+  { key: 'icfEnvD20261127', label: 'the matchup iCF for defensemen too (2026-11-27): matchupIcf at 0.65 for D, their capability profile reads it', edits: ICF_ENV_D },
 ];
 
 /** The end index of the `function poissonAtLeast(` body (after its closing brace), or -1. */
@@ -408,9 +425,17 @@ function afterPoissonAtLeast(src) {
 }
 
 /** One group on a source text, all or nothing: { text, status: 'ported' | 'applied' | 'missing', missing: [names] }. */
+/** An edit's text as the later groups revised it (their edits applied in order where their anchor sits inside it). */
+function revisedText(group, edit) {
+  const at = GROUPS.findIndex((g) => g.key === group.key);
+  if (at < 0) return edit.new;
+  return GROUPS.slice(at + 1).flatMap((g) => g.edits).reduce((t, l) => (t.includes(l.old) ? t.replace(l.old, l.new) : t), edit.new);
+}
+
 export function applyGroup(src, group) {
   const hasConstants = !group.constants || src.includes('const VENUE_SPLIT_WEIGHT = ');
-  const present = group.edits.filter((e) => src.includes(e.new));
+  // An edit a later group revised (group 11 rewrote part of group 8's matchupIcf) still counts as ported.
+  const present = group.edits.filter((e) => src.includes(e.new) || src.includes(revisedText(group, e)));
   if (hasConstants && present.length === group.edits.length) return { text: src, status: 'ported', missing: [] };
   const missing = [];
   if (present.length) missing.push(`already partly there (${present.map((e) => e.name).join(', ')}): port the rest by hand from components/nhl/model-core.js`);

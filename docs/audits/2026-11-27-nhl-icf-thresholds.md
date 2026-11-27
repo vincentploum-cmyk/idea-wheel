@@ -77,8 +77,8 @@ one: 2.23, 39%, 19% (even: one band is closed). 4.5–5.5 soft: 2.42, 42%, 24%, 
 `matchupIcf(posKey, icfSeason, teamPos, defenseAvg)`: a forward's season iCF × (the opponent's iCF allowed at his
 position on the cheat-sheet table over the league's mean)^0.73, the shift held to ±0.5 (`ICF_ENV_EXP`,
 `ICF_ENV_MAX_SHIFT`). The gates that compare his iCF with a threshold read it in place of his raw figure: the shot volume
-gate, the shot explosion engine, the 4+ / 5+ gate, the RW shot filter and the RW elite-volume cap. Defensemen keep their
-own iCF; λ's own opponent read (`defMult`) is unchanged, so the shift reaches the published odds only through those
+gate, the shot explosion engine, the 4+ / 5+ gate, the RW shot filter and the RW elite-volume cap. Defensemen kept their
+own iCF here (they move too since later the same day: "Defensemen" below); λ's own opponent read (`defMult`) is unchanged, so the shift reaches the published odds only through those
 gates (tiers, caps and `shotBias`). Port group 8 of `tools/port-model-core.mjs`; `__tests__/nhl-model-icf-env.test.js`.
 Not replayed through the model's scorecard (the model's inputs for past slates are not stored here): grade it on the
 History tab's scorecard over the coming weeks.
@@ -184,3 +184,33 @@ position over the league's mean, floor 3.5; no iSCF on the table → 1) in place
 `buildGoalProbabilityFromPipeline`), so goals take a little more of the iSCF ratio, the direction the goals fit above
 supports (0.78). Port group 10 of `tools/port-model-core.mjs`; `__tests__/nhl-model-points-env.test.js`. Not replayed
 through the model's scorecard: grade it on the History tab.
+
+## Defensemen (same day)
+
+Vincent: "now do the same for defensemen". Every opponent read tested for defensemen the way points was: his own rate
+(shots: his SOG and iCF rates; goals: his iSCF and goal rates; points: his points rate), then one opponent read at his
+group, fitted on half the dates and scored on the other (deviance saved over his rate alone; 15,179 defenseman-games,
+forwards beside them). Script: `tools/predictors/env_by_group.py`.
+
+| Market | Read | Defensemen | coef | Forwards | coef |
+|---|---|---|---|---|---|
+| Shots | iCF allowed | **59.6** | 0.626 | 102.5 | 0.651 |
+| Shots | SOG allowed | 60.1 | 0.499 | 130.4 | 0.666 |
+| Goals | iSCF allowed | −1.2 | 0.432 | 27.6 | 0.820 |
+| Goals | goals allowed | 5.2 | 0.236 | 7.8 | 0.330 |
+| Points | iSCF allowed | 5.7 | 0.250 | 68.5 | 0.832 |
+| Points | assists allowed | 4.0 | 0.173 | 30.3 | 0.326 |
+
+**A correction.** The shots section above read the defensemen's 3+ grid as flat and said their shots barely moved with the
+defense. The grid was thin (few defensemen reach 3+); their shots against their own rate ran ×1.066 against the five
+loosest defenses to ×0.905 against the five tightest, the forwards' ×1.062 to ×0.911, and held out the iCF read saves 59.6
+for them (per game, about as much as the forwards' 102.5 on twice the rows). Goals and points stay as they were: nothing
+for defensemen.
+
+**What changed.** `matchupIcf` moves defensemen too, at their own exponent `ICF_ENV_EXP_D` 0.65 (their fit's 0.625 over
+0.961), the same ±0.5 hold. It reaches them through the same gates as forwards (the shot volume gate's 4.8, the explosion
+engine's 5.0, the 4+ / 5+ gate's 5.0 / 5.8 role paths) and through their baseline's capability profile
+(`defensemanBaselineProbabilities` → `defensemanCapabilityProfile`: 4.4 / 5.0 / 5.5 / 6.5 on the shot score; its one iCF
+point bonus at 5.0 moves with it). No goal or points shift for defensemen. Port group 11 of `tools/port-model-core.mjs`
+(it rewrites part of group 8's `matchupIcf`; the tool now counts an edit a later group revised as ported);
+`__tests__/nhl-model-icf-env.test.js`. Not replayed through the model's scorecard: grade it on the History tab.

@@ -1006,8 +1006,8 @@
   And on 2026-11-27 (port it too, Vincent: "Add the ±0.5 iCF environment adjustment to the model"): the gates that compare
   a forward's season iCF with a threshold (the shot volume gate, the shot explosion engine, the 4+ / 5+ gate, the RW shot
   filter and the RW elite-volume cap) read `matchupIcf`: his iCF × the opponent's iCF allowed at his position over the
-  league's mean, to the power `ICF_ENV_EXP` 0.73, the shift held to ±0.5 (`ICF_ENV_MAX_SHIFT`); defensemen keep their own
-  iCF (their 3+ barely moved with the defense) and λ's `defMult` is unchanged (45,455 skater-games of 2025-26 and 2026-27:
+  league's mean, to the power `ICF_ENV_EXP` 0.73, the shift held to ±0.5 (`ICF_ENV_MAX_SHIFT`); defensemen at first kept their own
+  iCF (later the same day they move too, below) and λ's `defMult` is unchanged (45,455 skater-games of 2025-26 and 2026-27:
   an even-money 3+ for a forward took 6.1 attempts a game against the toughest defenses and 5.1 against the softest;
   `docs/audits/2026-11-27-nhl-icf-thresholds.md`, `tools/predictors/icf_thresholds.py`, `__tests__/nhl-model-icf-env.test.js`).
   And the same day for goals (port it too, Vincent: "now do the same for goals with iSCF thresholds"): the goal gates
@@ -1027,9 +1027,16 @@
   `tools/predictors/points_thresholds.py`, `points_env_fit.py`; `__tests__/nhl-model-points-env.test.js`). There is no
   player-side assists gate to move: the model's only own-assists cuts are the style classifier (which also sets shots and
   goals) and the defensemen's capability score.
-  `node tools/port-model-core.mjs [App.jsx]` applies all ten ports on the Mac (the 2026-10-13 shots odds, the
+  And the same day for defensemen (port it too, Vincent: "now do the same for defensemen"): `matchupIcf` moves them too, at
+  their own exponent `ICF_ENV_EXP_D` 0.65 (their shots follow their attempts at 0.96 and the attempts allowed to defensemen
+  at 0.63; held out by date the read saved 59.6 deviance, forwards 102.5), through the same gates as forwards plus their
+  baseline's capability profile (`defensemanBaselineProbabilities` reads the gates' skater; its `icf ≥ 5.0` point bonus moves
+  with it). Their goals and points get no shift: iSCF allowed saved −1.2 and +5.7 for them. The earlier note that their 3+
+  barely moved was wrong: few defensemen reach 3+, so that grid was thin; by rank they shot ×1.066 to ×0.905 of their rate.
+  Port group 11 revises group 8's `matchupIcf`; `applyGroup` counts an edit a later group revised as ported (`revisedText`).
+  `node tools/port-model-core.mjs [App.jsx]` applies all eleven ports on the Mac (the 2026-10-13 shots odds, the
   2026-10-20 goal odds, the 2026-10-27 weights, the 2026-11-07 minutes, the 2026-11-12 goals environment and
-  `defenseGoalMultiplier`, the 2026-11-13 line move, the 2026-11-27 matchup iCF and iSCF and the points environment), each group all-or-nothing by exact-text anchors: a backup beside the
+  `defenseGoalMultiplier`, the 2026-11-13 line move, the 2026-11-27 matchup iCF and iSCF, the points environment and the defensemen's iCF), each group all-or-nothing by exact-text anchors: a backup beside the
   file, a group already there reported as ported, a group with a differing anchor skipped and named, `--check` to
   look first. On 2026-10-27 App.jsx had neither odds port: the local app had published the ladder's odds since Oct 13.
 

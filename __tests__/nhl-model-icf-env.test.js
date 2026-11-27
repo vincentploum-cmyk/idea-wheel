@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { describe, expect, test } from '@jest/globals';
-import { matchupIcf, ICF_ENV_EXP, ICF_ENV_MAX_SHIFT, rwShotFilterContext, matchupIscf, goalGateSkaterOf, ISCF_ENV_EXP, ISCF_ENV_MAX_SHIFT, playerGoalFloorProfile, scorerTierInfo } from '../components/nhl/model-core';
+import { matchupIcf, ICF_ENV_EXP, ICF_ENV_EXP_D, ICF_ENV_MAX_SHIFT, rwShotFilterContext, matchupIscf, goalGateSkaterOf, ISCF_ENV_EXP, ISCF_ENV_MAX_SHIFT, playerGoalFloorProfile, scorerTierInfo } from '../components/nhl/model-core';
 
 // docs/audits/2026-11-27-nhl-icf-thresholds.md: a forward's season iCF moved by the opponent's iCF allowed to his
 // position, for the gates that read his iCF (5.0 / 5.4 / 5.5 / 5.8 / 6.0 / 6.5).
@@ -8,6 +8,7 @@ const avg = { icf: 16 };
 describe('the matchup moves the iCF the gates read (2026-11-27)', () => {
   test('the constants', () => {
     expect(ICF_ENV_EXP).toBe(0.73);
+    expect(ICF_ENV_EXP_D).toBe(0.65);
     expect(ICF_ENV_MAX_SHIFT).toBe(0.5);
   });
 
@@ -22,8 +23,15 @@ describe('the matchup moves the iCF the gates read (2026-11-27)', () => {
     expect(matchupIcf('C', 6.5, { icf: 16 * 0.7 }, avg)).toBe(6);
   });
 
-  test('defensemen, a missing table or no iCF: his own figure', () => {
-    expect(matchupIcf('D', 5.5, { icf: 16 * 1.2 }, avg)).toBe(5.5);
+  test('defensemen move too, at their own 0.65 (later the same day), held to the same half attempt', () => {
+    expect(matchupIcf('D', 5, { icf: 16 * 1.1 }, avg)).toBeCloseTo(5 * Math.pow(1.1, 0.65), 3);
+    expect(matchupIcf('D', 5, { icf: 16 * 0.9 }, avg)).toBeCloseTo(5 * Math.pow(0.9, 0.65), 3);
+    expect(matchupIcf('D', 5, { icf: 16 * 1.1 }, avg)).toBeLessThan(matchupIcf('C', 5, { icf: 16 * 1.1 }, avg));
+    expect(matchupIcf('D', 6.5, { icf: 16 * 1.4 }, avg)).toBe(7);
+    expect(matchupIcf('D', 5, null, avg)).toBe(5);
+  });
+
+  test('a missing table or no iCF: his own figure', () => {
     expect(matchupIcf('C', 5.5, null, avg)).toBe(5.5);
     expect(matchupIcf('C', 5.5, { icf: 0 }, avg)).toBe(5.5);
     expect(matchupIcf('C', 5.5, { icf: 18 }, null)).toBe(5.5);
@@ -40,22 +48,27 @@ describe('the matchup moves the iCF the gates read (2026-11-27)', () => {
   });
 });
 
-describe('the port (group 8 of tools/port-model-core.mjs)', () => {
-  test('applied to the model before the change, it gives the change; applied again, it reports ported', () => {
-    // The model before the change, rebuilt from today's by undoing the group (each edit is an exact text swap).
+describe('the ports (groups 8 and 11 of tools/port-model-core.mjs)', () => {
+  test('applied in order to the model before them, they give today\'s; group 8 still reads ported once group 11 revised it', () => {
+    // The model before the changes, rebuilt from today's by undoing group 11, then group 8 (each edit is an exact text swap).
     const script = `
       const { GROUPS, applyGroup } = await import('./tools/port-model-core.mjs');
       const { readFileSync } = await import('node:fs');
       const g = GROUPS.find((x) => x.key === 'icfEnv20261127');
+      const d = GROUPS.find((x) => x.key === 'icfEnvD20261127');
       const nl = String.fromCharCode(10);
-      const strip = (t) => t.replace('  matchupIcf,' + nl + '  ICF_ENV_EXP,' + nl + '  ICF_ENV_MAX_SHIFT,' + nl, '');   // the site's own exports
+      const strip = (t) => t.replace('  matchupIcf,' + nl + '  ICF_ENV_EXP,' + nl + '  ICF_ENV_EXP_D,' + nl + '  ICF_ENV_MAX_SHIFT,' + nl, '');   // the site's own exports
       const now = strip(readFileSync('components/nhl/model-core.js', 'utf8'));
-      const before = g.edits.reduce((x, e) => x.replace(e.new, e.old), now);
+      const undo = (t, grp) => grp.edits.reduce((x, e) => x.replace(e.new, e.old), t);
+      const mid = undo(now, d);
+      const before = undo(mid, g);
       const r = applyGroup(before, g);
-      console.log(JSON.stringify({ undone: before !== now && !before.includes('matchupIcf'), status: r.status,
-        same: r.text === now, again: applyGroup(r.text, g).status }));`;
+      const r2 = applyGroup(r.text, d);
+      console.log(JSON.stringify({ undone: mid !== now && before !== mid && !before.includes('matchupIcf') && !mid.includes('ICF_ENV_EXP_D'),
+        status: r.status, mid: r.text === mid, again: applyGroup(r.text, g).status,
+        status11: r2.status, same: r2.text === now, again11: applyGroup(r2.text, d).status, g8after11: applyGroup(r2.text, g).status }));`;
     const out = JSON.parse(execFileSync('node', ['--input-type=module', '-e', script], { encoding: 'utf8' }).trim());
-    expect(out).toEqual({ undone: true, status: 'applied', same: true, again: 'ported' });
+    expect(out).toEqual({ undone: true, status: 'applied', mid: true, again: 'ported', status11: 'applied', same: true, again11: 'ported', g8after11: 'ported' });
   });
 });
 
