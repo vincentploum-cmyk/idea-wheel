@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Port the site's model changes into the local model app (App.jsx, the model's source of truth),
-// the same edits made to components/nhl/model-core.js, in eight groups, each all-or-nothing:
+// the same edits made to components/nhl/model-core.js, in nine groups, each all-or-nothing:
 //   1. 2026-10-13 (a022443): p2s / p3s / p4s / p5s are the Poisson tails of λ shots; the ladder's
 //      figures ride along as ladderP3s / P4s / P5s and still set the attack score.
 //   2. 2026-10-20 (4ec641f): p1g / p2g / p3g are the Poisson tails of λ goals; the ladder's figures
@@ -23,6 +23,10 @@
 //      volume) read matchupIcf: a forward's season iCF times the opponent's iCF allowed to his position over the
 //      league's, to the power 0.73, the shift held to +/-0.5; defensemen and lambda's defMult unchanged
 //      (docs/audits/2026-11-27-nhl-icf-thresholds.md). Needs group 7 in first.
+//   9. 2026-11-27: the goal gates that test a forward's own iSCF (playerGoalFloorProfile, scorerTierInfo, the
+//      finisher / shooter gate, the finisher goal model) read matchupIscf: his iSCF times the opponent's iSCF allowed
+//      to his position over the league's, to the power 0.74, the shift held to +/-0.25, his last-5 iSCF by the same
+//      ratio; defensemen, the goal-leak overrides and defenseGoalMultiplier unchanged (same audit). Needs group 8 in first.
 //
 //   node tools/port-model-core.mjs [path to App.jsx] [--check]
 //
@@ -322,6 +326,39 @@ const ICF_ENV = [
   },
 ];
 
+const ISCF_ENV = [
+  {
+    name: "the matchup-adjusted iSCF (matchupIscf, goalGateSkaterOf, ISCF_ENV_EXP, ISCF_ENV_MAX_SHIFT)",
+    old: "  return +(icf + shift).toFixed(3);\n}\n",
+    new: "  return +(icf + shift).toFixed(3);\n}\n\n// \u2500\u2500\u2500 THE MATCHUP MOVES THE iSCF THE GOAL GATES READ (2026-11-27) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n// The same study for goals (45,450 skater-games of 2025-26 and 2026-27, leak-free): a forward's goals follow his\n// scoring chances a game (iSCF) to the power 1.06 and the opponent's chances allowed to forwards (over the league's)\n// to the power 0.78, so the matchup is worth his iSCF times that ratio to the power 0.74; the opponent's goals\n// allowed read only 0.32. The goal gates that test his own iSCF (the goal floor's level, caps and premium 1+, the\n// scorer tier, the finisher goal model, the finisher / shooter routing) read this instead, the shift held to\n// +/-0.25 (about +/-9% at the gates' 1.7 to 2.8). Forwards only (defensemen: 0.37, and their rows by the\n// opponent's rank do not line up). Not the goal-leak overrides, which already fire on the opponent's goals and\n// chances allowed; lambda's defenseGoalMultiplier is unchanged. Vincent: \"now do the same for goals with iSCF\n// thresholds\". 0 turns it off.\nconst ISCF_ENV_EXP = 0.74;\nconst ISCF_ENV_MAX_SHIFT = 0.25;\nfunction matchupIscf(posKey, iscfSeason, teamPos, defenseAvg) {\n  const iscf = Number(iscfSeason) || 0;\n  if (!ISCF_ENV_EXP || !(iscf > 0) || (posKey || \"\").toUpperCase() === \"D\") return iscf;\n  const allowed = Number(teamPos?.iscf);\n  const league = Number(defenseAvg?.iscf);\n  if (!(allowed > 0) || !(league > 0)) return iscf;\n  const shift = clamp(iscf * (Math.pow(allowed / league, ISCF_ENV_EXP) - 1), -ISCF_ENV_MAX_SHIFT, ISCF_ENV_MAX_SHIFT);\n  return +(iscf + shift).toFixed(3);\n}\n/** The skater the goal gates read: his season iSCF moved by the matchup and his last-5 iSCF by the same ratio. */\nfunction goalGateSkaterOf(skater, iscfMatchup) {\n  const season = Number(skater?.iscfSeason) || 0;\n  if (!(season > 0) || iscfMatchup === season) return skater;\n  const l5 = skater.iscfL5 == null ? skater.iscfL5 : +(Number(skater.iscfL5) * iscfMatchup / season).toFixed(3);\n  return { ...skater, iscfSeason: iscfMatchup, iscfL5: l5 };\n}\n",
+  },
+  {
+    name: "the matchup iSCF and the goal gates' skater, read once a skater",
+    old: "        const gateSkater = icfMatchup === (skater.icfSeason || 0) ? skater : { ...skater, icfSeason: icfMatchup };\n",
+    new: "        const gateSkater = icfMatchup === (skater.icfSeason || 0) ? skater : { ...skater, icfSeason: icfMatchup };\n        const iscfMatchup = matchupIscf(posKey, skater.iscfSeason, teamPos, defenseAvg);\n        const goalGateSkater = goalGateSkaterOf(skater, iscfMatchup);\n",
+  },
+  {
+    name: "the goal floor profile reads it",
+    old: "        const goalFloor = playerGoalFloorProfile(skater, posKey, todayLine, effectiveToi);\n",
+    new: "        const goalFloor = playerGoalFloorProfile(goalGateSkater, posKey, todayLine, effectiveToi);\n",
+  },
+  {
+    name: "the scorer tier reads it",
+    old: "        const scorerTier = scorerTierInfo({\n          ...skater,\n          goalsL5,\n",
+    new: "        const scorerTier = scorerTierInfo({\n          ...goalGateSkater,\n          goalsL5,\n",
+  },
+  {
+    name: "the finisher / shooter gate reads it",
+    old: "          goalsSeason,\n          iscfSeason: skater.iscfSeason || 0,\n          assistsSeason: skater.astSeason || 0,\n",
+    new: "          goalsSeason,\n          iscfSeason: goalGateSkater.iscfSeason || 0,\n          assistsSeason: skater.astSeason || 0,\n",
+  },
+  {
+    name: "the finisher goal model reads it",
+    old: "          shotsSeason: skater.shotsSeason || 0,\n          iscfSeason: skater.iscfSeason || 0,\n          dangerRate,\n",
+    new: "          shotsSeason: skater.shotsSeason || 0,\n          iscfSeason: goalGateSkater.iscfSeason || 0,\n          dangerRate,\n",
+  },
+];
+
 export const GROUPS = [
   { key: 'shotsOdds20261013', label: 'shots odds (2026-10-13): p2s / p3s / p4s / p5s the Poisson tails of λ shots, the ladder as ladderP3s / P4s / P5s', edits: SHOTS_ODDS },
   { key: 'goalOdds20261020', label: 'goal odds (2026-10-20): p1g / p2g / p3g the Poisson tails of λ goals, the ladder as ladderP1g / P2g / P3g', edits: GOAL_ODDS },
@@ -331,6 +368,7 @@ export const GROUPS = [
   { key: 'defenseGoal20261112', label: 'λ goals\' opponent read (2026-11-12): defenseGoalMultiplier is the ISCF ratio alone, Goals/G and Shots/G out', edits: DEFENSE_GOAL },
   { key: 'lineMove20261113', label: 'shots follow the posted line\'s minutes (2026-11-13): lineMoveMultiplier in place of the up-only +6% a line', edits: LINE_MOVE },
   { key: 'icfEnv20261127', label: 'the matchup moves the iCF the gates read (2026-11-27): matchupIcf, forwards, +/-0.5 at most', edits: ICF_ENV },
+  { key: 'iscfEnv20261127', label: 'the matchup moves the iSCF the goal gates read (2026-11-27): matchupIscf, forwards, +/-0.25 at most', edits: ISCF_ENV },
 ];
 
 /** The end index of the `function poissonAtLeast(` body (after its closing brace), or -1. */

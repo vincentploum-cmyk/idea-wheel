@@ -1401,6 +1401,35 @@ function matchupIcf(posKey, icfSeason, teamPos, defenseAvg) {
   return +(icf + shift).toFixed(3);
 }
 
+// ─── THE MATCHUP MOVES THE iSCF THE GOAL GATES READ (2026-11-27) ─────────────
+// The same study for goals (45,450 skater-games of 2025-26 and 2026-27, leak-free): a forward's goals follow his
+// scoring chances a game (iSCF) to the power 1.06 and the opponent's chances allowed to forwards (over the league's)
+// to the power 0.78, so the matchup is worth his iSCF times that ratio to the power 0.74; the opponent's goals
+// allowed read only 0.32. The goal gates that test his own iSCF (the goal floor's level, caps and premium 1+, the
+// scorer tier, the finisher goal model, the finisher / shooter routing) read this instead, the shift held to
+// +/-0.25 (about +/-9% at the gates' 1.7 to 2.8). Forwards only (defensemen: 0.37, and their rows by the
+// opponent's rank do not line up). Not the goal-leak overrides, which already fire on the opponent's goals and
+// chances allowed; lambda's defenseGoalMultiplier is unchanged. Vincent: "now do the same for goals with iSCF
+// thresholds". 0 turns it off.
+const ISCF_ENV_EXP = 0.74;
+const ISCF_ENV_MAX_SHIFT = 0.25;
+function matchupIscf(posKey, iscfSeason, teamPos, defenseAvg) {
+  const iscf = Number(iscfSeason) || 0;
+  if (!ISCF_ENV_EXP || !(iscf > 0) || (posKey || "").toUpperCase() === "D") return iscf;
+  const allowed = Number(teamPos?.iscf);
+  const league = Number(defenseAvg?.iscf);
+  if (!(allowed > 0) || !(league > 0)) return iscf;
+  const shift = clamp(iscf * (Math.pow(allowed / league, ISCF_ENV_EXP) - 1), -ISCF_ENV_MAX_SHIFT, ISCF_ENV_MAX_SHIFT);
+  return +(iscf + shift).toFixed(3);
+}
+/** The skater the goal gates read: his season iSCF moved by the matchup and his last-5 iSCF by the same ratio. */
+function goalGateSkaterOf(skater, iscfMatchup) {
+  const season = Number(skater?.iscfSeason) || 0;
+  if (!(season > 0) || iscfMatchup === season) return skater;
+  const l5 = skater.iscfL5 == null ? skater.iscfL5 : +(Number(skater.iscfL5) * iscfMatchup / season).toFixed(3);
+  return { ...skater, iscfSeason: iscfMatchup, iscfL5: l5 };
+}
+
 
 function positionGoalLeakOverride({ posKey, todayLine, effectiveToi, skater, teamPos }) {
   if (!teamPos) return null;
@@ -4781,9 +4810,11 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
         const rawTeamPosStats = oppDef?.posStats?.[posKey] || null;
         const icfMatchup = matchupIcf(posKey, skater.icfSeason, teamPos, defenseAvg);
         const gateSkater = icfMatchup === (skater.icfSeason || 0) ? skater : { ...skater, icfSeason: icfMatchup };
+        const iscfMatchup = matchupIscf(posKey, skater.iscfSeason, teamPos, defenseAvg);
+        const goalGateSkater = goalGateSkaterOf(skater, iscfMatchup);
 
         const shotFloor = playerShotFloorProfile(skater, posKey, todayLine, effectiveToi, iffAnchor, convBlend, dangerRate);
-        const goalFloor = playerGoalFloorProfile(skater, posKey, todayLine, effectiveToi);
+        const goalFloor = playerGoalFloorProfile(goalGateSkater, posKey, todayLine, effectiveToi);
 
         let defMult = 1.0;
         if (teamPos && defenseAvg) {
@@ -4942,7 +4973,7 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
         const rawGoalsBlend = 0.25 * goalsL5 + 0.75 * goalsSeason;
         const goalsFloor = goalsL5 === 0 ? 0.85 * goalsSeason : 0.9 * goalsSeason;
         const scorerTier = scorerTierInfo({
-          ...skater,
+          ...goalGateSkater,
           goalsL5,
           goalsSeason,
         }, todayLine, effectiveToi, posKey);
@@ -5102,7 +5133,7 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
           posKey,
           shotsSeason: skater.shotsSeason || 0,
           goalsSeason,
-          iscfSeason: skater.iscfSeason || 0,
+          iscfSeason: goalGateSkater.iscfSeason || 0,
           assistsSeason: skater.astSeason || 0,
           effectiveToi,
           todayLine,
@@ -5147,7 +5178,7 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
           goalsSeason,
           goalsL5,
           shotsSeason: skater.shotsSeason || 0,
-          iscfSeason: skater.iscfSeason || 0,
+          iscfSeason: goalGateSkater.iscfSeason || 0,
           dangerRate,
           convBlend,
           leakScore: 0,
@@ -6308,6 +6339,10 @@ export {
   matchupIcf,
   ICF_ENV_EXP,
   ICF_ENV_MAX_SHIFT,
+  matchupIscf,
+  goalGateSkaterOf,
+  ISCF_ENV_EXP,
+  ISCF_ENV_MAX_SHIFT,
   resolvePaceTier,
   resolveRoleLabelAgainstCheatSheet,
   roleGoalAccessMultiplier,
