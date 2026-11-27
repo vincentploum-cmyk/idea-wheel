@@ -1211,7 +1211,6 @@ a.nhlx-rk-lines-pill:hover { text-decoration: underline; }
 .nhlx-rk-pic img[style*="display: none"] + .nhlx-rk-num { position: static; font-size: max(14px, 4.8cqw); padding: 0; border: 0; background: none; }
 /* The text column never pushes past the chip: it takes what the photo leaves and clips, the name ellipsised behind its marks. */
 .nhlx-rk-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
-.nhlx-rk-fire { flex: none; font-size: max(11px, 2.6cqw); line-height: 1; }
 .nhlx-rk-h2h { flex: none; display: inline-block; font-family: var(--font-ui); font-size: max(9.5px, 2.3cqw); font-weight: 700; line-height: 1.35; letter-spacing: 0.02em; text-transform: uppercase; color: var(--info-fg); background: var(--info-bg); border-radius: 4px; padding: 0 0.5cqw; vertical-align: 1px; }
 .nhlx-rk-legend i.nhlx-rk-h2h { width: auto; height: auto; font-size: 11px; padding: 0 5px; margin-right: 6px; vertical-align: 0; font-style: normal; }
 /* The chip's slot badge (LW1, C2, D2 …), tinted by the opponent's rank against that slot: the Defense tab's by-line read on the ice. */
@@ -1219,6 +1218,8 @@ a.nhlx-rk-lines-pill:hover { text-decoration: underline; }
 .nhlx-rk-slot.is-soft { color: var(--ok-fg); background: var(--ok-bg); border-color: var(--ok-line); }
 .nhlx-rk-slot.is-mid { color: var(--warn-fg); background: var(--warn-bg); border-color: var(--warn-line); }
 .nhlx-rk-slot.is-tough { color: var(--bad-fg); background: var(--bad-bg); border-color: var(--bad-line); }
+.nhlx-rk-slot.is-info { color: var(--info-fg); background: var(--info-bg); border-color: var(--primary-line); }
+td .nhlx-rk-slot.nhlx-rk-pt { font-size: 11px; padding: 0 5px; vertical-align: 0; }
 /* The with / without badge (lib/picks/without-glance.js): a teammate out tonight moved his minutes or points 4+. */
 .nhlx-rk-wo { white-space: nowrap; }
 /* The NHL back-to-back badge beside a team's name (components/nhl/flags.jsx B2bBadge). */

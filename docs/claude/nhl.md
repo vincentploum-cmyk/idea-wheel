@@ -351,7 +351,12 @@
   hover. Vincent, 2026-11-10: "mark the players in the rinks with the same flame as players that are on a hot streak",
   shipped as the flame; 2026-11-12 its own badge ("Sure"), since one flame for a streak and a matchup could not be told
   apart on a phone: the flame is the hot streak alone, on the plays strip per play, and in the all-skaters table's
-  L5 S/G and Goals cells; `buildSlate` puts
+  L5 S/G and Goals cells. **The model's points flag is a badge, not a flame** (Vincent, 2026-11-27, of a cold
+  Rantanen wearing a 🔥 on the rink: "how can there be a flame for this player?", then "replace the badge"): the model's
+  on-fire rule (`isOnFire` in `model-core.js`: 1+ point ≥ 50%, 2.0+ iSCF/G, 16+ min; a projection and usage read, no
+  form in it) shows as `PointBadge` in `flags.jsx`, "1P 55%" in rink blue (`is-info`) on the chip; in the Model tab's
+  table a "1P" pill in the 1+ point cell (it sat in the 1+ G cell before); off the First goal panel (a goals table). No
+  🔥 is left on the NHL pages but the player card's Hot form chip; `buildSlate` puts
   `heat` and `oppPos` on every skater and `sidePlays` carries them onto the plays. A stored game grades the rows
   (`withActuals` / `hitOf` in `picks-pure.js`: each skater's box-score SOG and goals ride on his row as `actual`,
   null when he did not play): every probability cell green when he reached that market's floor, red when he fell
@@ -1033,16 +1038,23 @@
   the whole cut and gained half the lift. Replayed on 5,843 graded skater-games with each shot tier's level fitted, the cut
   scored best near nothing, 0.25 about twice the gain of matching the lift's damping (`docs/audits/2026-11-27-nhl-team-shots.md`,
   `__tests__/nhl-model-def-cut.test.js`).
+  And the same day (port it too, Vincent: "fix the tier bias first"): the published λ shots is `shotSpreadLambda`, 1.30 ·
+  λ^0.611 (`SHOT_SPREAD_A` / `_B`), and p2s … p5s its Poisson tails; the shot ladder, the attack score and the tiers read
+  the λ before it (`lambdaSRaw` on the row). The tier bias (elite landing 0.85 of λ, weak 1.41) was the spread: inside every
+  tier low reads ran low and high reads high; held out the curve beat one factor per tier (+52 against +32 per 1,000
+  skater-games). The board's calibration reads stored runs as the model makes them now (`lambdaSNow` in
+  `lib/nhl-data/calibration.js`: the cut replayed before 11-27, the spread on every run without `lambdaSRaw`), so it is
+  not applied twice (`docs/audits/2026-11-27-nhl-shot-spread.md`, `__tests__/nhl-model-shot-spread.test.js`).
   And the same day for defensemen (port it too, Vincent: "now do the same for defensemen"): `matchupIcf` moves them too, at
   their own exponent `ICF_ENV_EXP_D` 0.65 (their shots follow their attempts at 0.96 and the attempts allowed to defensemen
   at 0.63; held out by date the read saved 59.6 deviance, forwards 102.5), through the same gates as forwards plus their
   baseline's capability profile (`defensemanBaselineProbabilities` reads the gates' skater; its `icf ≥ 5.0` point bonus moves
   with it). Their goals and points get no shift: iSCF allowed saved −1.2 and +5.7 for them. The earlier note that their 3+
   barely moved was wrong: few defensemen reach 3+, so that grid was thin; by rank they shot ×1.066 to ×0.905 of their rate.
-  Port group 12 revises group 8's `matchupIcf`; `applyGroup` counts an edit a later group revised as ported (`revisedText`).
-  `node tools/port-model-core.mjs [App.jsx]` applies all twelve ports on the Mac (the 2026-10-13 shots odds, the
+  Port group 13 revises group 8's `matchupIcf`; `applyGroup` counts an edit a later group revised as ported (`revisedText`).
+  `node tools/port-model-core.mjs [App.jsx]` applies all thirteen ports on the Mac (the 2026-10-13 shots odds, the
   2026-10-20 goal odds, the 2026-10-27 weights, the 2026-11-07 minutes, the 2026-11-12 goals environment and
-  `defenseGoalMultiplier`, the 2026-11-13 line move, the 2026-11-27 matchup iCF and iSCF, the points environment, the softer cut and the defensemen's iCF), each group all-or-nothing by exact-text anchors: a backup beside the
+  `defenseGoalMultiplier`, the 2026-11-13 line move, the 2026-11-27 matchup iCF and iSCF, the points environment, the softer cut, the shot spread and the defensemen's iCF), each group all-or-nothing by exact-text anchors: a backup beside the
   file, a group already there reported as ported, a group with a differing anchor skipped and named, `--check` to
   look first. On 2026-10-27 App.jsx had neither odds port: the local app had published the ladder's odds since Oct 13.
 

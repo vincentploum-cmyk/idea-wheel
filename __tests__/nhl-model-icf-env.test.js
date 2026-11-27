@@ -48,9 +48,9 @@ describe('the matchup moves the iCF the gates read (2026-11-27)', () => {
   });
 });
 
-describe('the ports (groups 8 and 12 of tools/port-model-core.mjs)', () => {
-  test('applied in order to the model before them, they give today\'s; group 8 still reads ported once group 12 revised it', () => {
-    // The model before the changes, rebuilt from today's by undoing group 12, then group 8 (each edit is an exact text swap).
+describe('the ports (groups 8 and 13 of tools/port-model-core.mjs)', () => {
+  test('applied in order to the model before them, they give today\'s; group 8 still reads ported once group 13 revised it', () => {
+    // The model before the changes, rebuilt from today's by undoing group 13, then group 8 (each edit is an exact text swap).
     const script = `
       const { GROUPS, applyGroup } = await import('./tools/port-model-core.mjs');
       const { readFileSync } = await import('node:fs');
@@ -64,11 +64,16 @@ describe('the ports (groups 8 and 12 of tools/port-model-core.mjs)', () => {
       const before = undo(mid, g);
       const r = applyGroup(before, g);
       const r2 = applyGroup(r.text, d);
+      // An App.jsx with group 13 in but not group 12 (the shot spread, an insertion after group 11's text): group 8 still ported.
+      const spread = GROUPS.find((x) => x.key === 'shotSpread20261127');
+      const no12 = undo(now, spread);
       console.log(JSON.stringify({ undone: mid !== now && before !== mid && !before.includes('matchupIcf') && !mid.includes('ICF_ENV_EXP_D'),
         status: r.status, mid: r.text === mid, again: applyGroup(r.text, g).status,
-        status11: r2.status, same: r2.text === now, again11: applyGroup(r2.text, d).status, g8after11: applyGroup(r2.text, g).status }));`;
+        status13: r2.status, same: r2.text === now, again13: applyGroup(r2.text, d).status, g8after13: applyGroup(r2.text, g).status,
+        no12: no12 !== now, g8without12: applyGroup(no12, g).status, g12without12: applyGroup(no12, spread).status }));`;
     const out = JSON.parse(execFileSync('node', ['--input-type=module', '-e', script], { encoding: 'utf8' }).trim());
-    expect(out).toEqual({ undone: true, status: 'applied', mid: true, again: 'ported', status11: 'applied', same: true, again11: 'ported', g8after11: 'ported' });
+    expect(out).toEqual({ undone: true, status: 'applied', mid: true, again: 'ported', status13: 'applied', same: true, again13: 'ported', g8after13: 'ported',
+      no12: true, g8without12: 'ported', g12without12: 'applied' });
   });
 });
 
