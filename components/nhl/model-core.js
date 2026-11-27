@@ -1380,6 +1380,27 @@ function lineMoveMultiplier(posKey, postedLine, playerToi, toiL5, toiSeason) {
   return clamp(Math.pow(at / base, TOI_MOVE_EXP), 0.88, 1.14);
 }
 
+// ─── THE MATCHUP MOVES THE iCF THE GATES READ (2026-11-27) ───────────────────
+// 45,455 skater-games of 2025-26 and 2026-27, read leak-free: a forward's shots follow his attempts a game to
+// the power 0.89 and the opponent's attempts allowed to forwards (over the league's) to the power 0.65, so the
+// matchup is worth his iCF times that ratio to the power 0.73 (0.65 / 0.89). From the toughest defenses (x0.88)
+// to the softest (x1.12) that is about one attempt a game: an even-money 3+ needed 6.1 against the first and
+// 5.1 against the second. The gates that read his season iCF (5.0 / 5.4 / 5.5 / 5.8 / 6.0 / 6.5) read this
+// instead, the shift held to +/-0.5. Forwards only: a defenseman's 3+ barely moved with the defense in the same
+// rows. lambda's own defense read (defMult) is unchanged. Vincent: "Add the +/-0.5 iCF environment adjustment
+// to the model". 0 turns it off.
+const ICF_ENV_EXP = 0.73;
+const ICF_ENV_MAX_SHIFT = 0.5;
+function matchupIcf(posKey, icfSeason, teamPos, defenseAvg) {
+  const icf = Number(icfSeason) || 0;
+  if (!ICF_ENV_EXP || !(icf > 0) || (posKey || "").toUpperCase() === "D") return icf;
+  const allowed = Number(teamPos?.icf);
+  const league = Number(defenseAvg?.icf);
+  if (!(allowed > 0) || !(league > 0)) return icf;
+  const shift = clamp(icf * (Math.pow(allowed / league, ICF_ENV_EXP) - 1), -ICF_ENV_MAX_SHIFT, ICF_ENV_MAX_SHIFT);
+  return +(icf + shift).toFixed(3);
+}
+
 
 function positionGoalLeakOverride({ posKey, todayLine, effectiveToi, skater, teamPos }) {
   if (!teamPos) return null;
@@ -4758,6 +4779,8 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
         const defenseAvg = defenseEnv.avgMap[posKey] || null;
         const teamPos = defenseEnv.teamPosAvg[oppShort]?.[posKey] || null;
         const rawTeamPosStats = oppDef?.posStats?.[posKey] || null;
+        const icfMatchup = matchupIcf(posKey, skater.icfSeason, teamPos, defenseAvg);
+        const gateSkater = icfMatchup === (skater.icfSeason || 0) ? skater : { ...skater, icfSeason: icfMatchup };
 
         const shotFloor = playerShotFloorProfile(skater, posKey, todayLine, effectiveToi, iffAnchor, convBlend, dangerRate);
         const goalFloor = playerGoalFloorProfile(skater, posKey, todayLine, effectiveToi);
@@ -4869,7 +4892,7 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
           posKey,
           shotsSeason: skater.shotsSeason || 0,
           iffBlend,
-          icfSeason: skater.icfSeason || 0,
+          icfSeason: icfMatchup,
           iscfSeason: skater.iscfSeason || 0,
           effectiveToi,
           todayLine,
@@ -4881,7 +4904,7 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
           posKey,
           shotsSeason: skater.shotsSeason || 0,
           iffBlend,
-          icfSeason: skater.icfSeason || 0,
+          icfSeason: icfMatchup,
           iscfSeason: skater.iscfSeason || 0,
           effectiveToi,
           todayLine,
@@ -5170,7 +5193,7 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
           effectiveToi >= 18.5 &&
           (skater.shotsSeason || 0) >= 3.0 &&
           (skater.iffSeason || iffAnchor || 0) >= 4.2 &&
-          (skater.icfSeason || 0) >= 6.0 &&
+          icfMatchup >= 6.0 &&
           (skater.iscfSeason || 0) >= 2.4;
 
         if (!shotFloor.premium4Open) p4s = Math.min(p4s, shotFloor.max4);
@@ -5537,11 +5560,11 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
         );
         const environmentTier = environmentTierFromScore(environmentScore);
 
-        const fourPlusGate = fourPlusShotGateContext({ skater, effectiveToi, iffAnchor, posKey, todayLine, teamPos, leakScore, environmentScore, histS4Rate, histS5Rate });
+        const fourPlusGate = fourPlusShotGateContext({ skater: gateSkater, effectiveToi, iffAnchor, posKey, todayLine, teamPos, leakScore, environmentScore, histS4Rate, histS5Rate });
 
         const rwShotFilter = posKey === 'RW'
           ? rwShotFilterContext({
-              skater,
+              skater: gateSkater,
               effectiveToi,
               todayLine,
               lineShare,
@@ -6282,6 +6305,9 @@ export {
   lineMoveMultiplier,
   usualLineFromToi,
   TOI_MOVE_EXP,
+  matchupIcf,
+  ICF_ENV_EXP,
+  ICF_ENV_MAX_SHIFT,
   resolvePaceTier,
   resolveRoleLabelAgainstCheatSheet,
   roleGoalAccessMultiplier,

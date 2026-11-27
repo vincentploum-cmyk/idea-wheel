@@ -1003,9 +1003,16 @@
   the forwards' minute cuts, which never lowered a demoted skater and left promoted defensemen unread (7,044 posted-line
   skater-games: up one line shot ×1.04, down one ×0.98, defensemen ×1.05 / ×0.95; worth little overall, −0.9 per 1,000
   with an interval across 0; `docs/audits/2026-11-13-nhl-formula-refit.md`, `__tests__/nhl-model-line-move.test.js`).
-  `node tools/port-model-core.mjs [App.jsx]` applies all seven ports on the Mac (the 2026-10-13 shots odds, the
+  And on 2026-11-27 (port it too, Vincent: "Add the ±0.5 iCF environment adjustment to the model"): the gates that compare
+  a forward's season iCF with a threshold (the shot volume gate, the shot explosion engine, the 4+ / 5+ gate, the RW shot
+  filter and the RW elite-volume cap) read `matchupIcf`: his iCF × the opponent's iCF allowed at his position over the
+  league's mean, to the power `ICF_ENV_EXP` 0.73, the shift held to ±0.5 (`ICF_ENV_MAX_SHIFT`); defensemen keep their own
+  iCF (their 3+ barely moved with the defense) and λ's `defMult` is unchanged (45,455 skater-games of 2025-26 and 2026-27:
+  an even-money 3+ for a forward took 6.1 attempts a game against the toughest defenses and 5.1 against the softest;
+  `docs/audits/2026-11-27-nhl-icf-thresholds.md`, `tools/predictors/icf_thresholds.py`, `__tests__/nhl-model-icf-env.test.js`).
+  `node tools/port-model-core.mjs [App.jsx]` applies all eight ports on the Mac (the 2026-10-13 shots odds, the
   2026-10-20 goal odds, the 2026-10-27 weights, the 2026-11-07 minutes, the 2026-11-12 goals environment and
-  `defenseGoalMultiplier`, the 2026-11-13 line move), each group all-or-nothing by exact-text anchors: a backup beside the
+  `defenseGoalMultiplier`, the 2026-11-13 line move, the 2026-11-27 matchup iCF), each group all-or-nothing by exact-text anchors: a backup beside the
   file, a group already there reported as ported, a group with a differing anchor skipped and named, `--check` to
   look first. On 2026-10-27 App.jsx had neither odds port: the local app had published the ladder's odds since Oct 13.
 

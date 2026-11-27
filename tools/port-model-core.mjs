@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Port the site's model changes into the local model app (App.jsx, the model's source of truth),
-// the same edits made to components/nhl/model-core.js, in seven groups, each all-or-nothing:
+// the same edits made to components/nhl/model-core.js, in eight groups, each all-or-nothing:
 //   1. 2026-10-13 (a022443): p2s / p3s / p4s / p5s are the Poisson tails of λ shots; the ladder's
 //      figures ride along as ladderP3s / P4s / P5s and still set the attack score.
 //   2. 2026-10-20 (4ec641f): p1g / p2g / p3g are the Poisson tails of λ goals; the ladder's figures
@@ -19,6 +19,10 @@
 //   7. 2026-11-13: the line boost is lineMoveMultiplier: the projected minutes at tonight's posted line over
 //      the same at his usual line, to the power 0.8, both ways, defensemen on their own minutes, in place of
 //      +6% a line upward only (docs/audits/2026-11-13-nhl-formula-refit.md). Needs group 4 in first.
+//   8. 2026-11-27: the iCF gates (shot volume gate, explosion engine, 4+ / 5+ gate, RW shot filter, RW elite
+//      volume) read matchupIcf: a forward's season iCF times the opponent's iCF allowed to his position over the
+//      league's, to the power 0.73, the shift held to +/-0.5; defensemen and lambda's defMult unchanged
+//      (docs/audits/2026-11-27-nhl-icf-thresholds.md). Needs group 7 in first.
 //
 //   node tools/port-model-core.mjs [path to App.jsx] [--check]
 //
@@ -280,6 +284,44 @@ const LINE_MOVE = [
   },
 ];
 
+const ICF_ENV = [
+  {
+    name: "the matchup-adjusted iCF (matchupIcf, ICF_ENV_EXP, ICF_ENV_MAX_SHIFT)",
+    old: "  return clamp(Math.pow(at / base, TOI_MOVE_EXP), 0.88, 1.14);\n}\n",
+    new: "  return clamp(Math.pow(at / base, TOI_MOVE_EXP), 0.88, 1.14);\n}\n\n// \u2500\u2500\u2500 THE MATCHUP MOVES THE iCF THE GATES READ (2026-11-27) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n// 45,455 skater-games of 2025-26 and 2026-27, read leak-free: a forward's shots follow his attempts a game to\n// the power 0.89 and the opponent's attempts allowed to forwards (over the league's) to the power 0.65, so the\n// matchup is worth his iCF times that ratio to the power 0.73 (0.65 / 0.89). From the toughest defenses (x0.88)\n// to the softest (x1.12) that is about one attempt a game: an even-money 3+ needed 6.1 against the first and\n// 5.1 against the second. The gates that read his season iCF (5.0 / 5.4 / 5.5 / 5.8 / 6.0 / 6.5) read this\n// instead, the shift held to +/-0.5. Forwards only: a defenseman's 3+ barely moved with the defense in the same\n// rows. lambda's own defense read (defMult) is unchanged. Vincent: \"Add the +/-0.5 iCF environment adjustment\n// to the model\". 0 turns it off.\nconst ICF_ENV_EXP = 0.73;\nconst ICF_ENV_MAX_SHIFT = 0.5;\nfunction matchupIcf(posKey, icfSeason, teamPos, defenseAvg) {\n  const icf = Number(icfSeason) || 0;\n  if (!ICF_ENV_EXP || !(icf > 0) || (posKey || \"\").toUpperCase() === \"D\") return icf;\n  const allowed = Number(teamPos?.icf);\n  const league = Number(defenseAvg?.icf);\n  if (!(allowed > 0) || !(league > 0)) return icf;\n  const shift = clamp(icf * (Math.pow(allowed / league, ICF_ENV_EXP) - 1), -ICF_ENV_MAX_SHIFT, ICF_ENV_MAX_SHIFT);\n  return +(icf + shift).toFixed(3);\n}\n",
+  },
+  {
+    name: "the matchup iCF and the gates' skater, read once a skater",
+    old: "        const rawTeamPosStats = oppDef?.posStats?.[posKey] || null;\n",
+    new: "        const rawTeamPosStats = oppDef?.posStats?.[posKey] || null;\n        const icfMatchup = matchupIcf(posKey, skater.icfSeason, teamPos, defenseAvg);\n        const gateSkater = icfMatchup === (skater.icfSeason || 0) ? skater : { ...skater, icfSeason: icfMatchup };\n",
+  },
+  {
+    name: "the shot volume gate reads it",
+    old: "          icfSeason: skater.icfSeason || 0,\n          iscfSeason: skater.iscfSeason || 0,\n          effectiveToi,\n          todayLine,\n          dynamicLineShare,\n",
+    new: "          icfSeason: icfMatchup,\n          iscfSeason: skater.iscfSeason || 0,\n          effectiveToi,\n          todayLine,\n          dynamicLineShare,\n",
+  },
+  {
+    name: "the shot explosion engine reads it",
+    old: "          icfSeason: skater.icfSeason || 0,\n          iscfSeason: skater.iscfSeason || 0,\n          effectiveToi,\n          todayLine,\n          blockPaceMult,\n          teamPos,\n",
+    new: "          icfSeason: icfMatchup,\n          iscfSeason: skater.iscfSeason || 0,\n          effectiveToi,\n          todayLine,\n          blockPaceMult,\n          teamPos,\n",
+  },
+  {
+    name: "the RW elite-volume cap reads it",
+    old: "          (skater.icfSeason || 0) >= 6.0 &&\n",
+    new: "          icfMatchup >= 6.0 &&\n",
+  },
+  {
+    name: "the 4+ / 5+ gate reads it",
+    old: "const fourPlusGate = fourPlusShotGateContext({ skater, effectiveToi,",
+    new: "const fourPlusGate = fourPlusShotGateContext({ skater: gateSkater, effectiveToi,",
+  },
+  {
+    name: "the RW shot filter reads it",
+    old: "          ? rwShotFilterContext({\n              skater,\n",
+    new: "          ? rwShotFilterContext({\n              skater: gateSkater,\n",
+  },
+];
+
 export const GROUPS = [
   { key: 'shotsOdds20261013', label: 'shots odds (2026-10-13): p2s / p3s / p4s / p5s the Poisson tails of λ shots, the ladder as ladderP3s / P4s / P5s', edits: SHOTS_ODDS },
   { key: 'goalOdds20261020', label: 'goal odds (2026-10-20): p1g / p2g / p3g the Poisson tails of λ goals, the ladder as ladderP1g / P2g / P3g', edits: GOAL_ODDS },
@@ -288,6 +330,7 @@ export const GROUPS = [
   { key: 'goalsEnv20261112', label: 'goals environment (2026-11-12): the cheat sheet\'s goals multiplier is a smooth ISCF/G term, the Goals/G steps out', edits: GOALS_ENV },
   { key: 'defenseGoal20261112', label: 'λ goals\' opponent read (2026-11-12): defenseGoalMultiplier is the ISCF ratio alone, Goals/G and Shots/G out', edits: DEFENSE_GOAL },
   { key: 'lineMove20261113', label: 'shots follow the posted line\'s minutes (2026-11-13): lineMoveMultiplier in place of the up-only +6% a line', edits: LINE_MOVE },
+  { key: 'icfEnv20261127', label: 'the matchup moves the iCF the gates read (2026-11-27): matchupIcf, forwards, +/-0.5 at most', edits: ICF_ENV },
 ];
 
 /** The end index of the `function poissonAtLeast(` body (after its closing brace), or -1. */
