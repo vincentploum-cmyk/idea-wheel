@@ -48,9 +48,9 @@ describe('the matchup moves the iCF the gates read (2026-11-27)', () => {
   });
 });
 
-describe('the ports (groups 8 and 11 of tools/port-model-core.mjs)', () => {
-  test('applied in order to the model before them, they give today\'s; group 8 still reads ported once group 11 revised it', () => {
-    // The model before the changes, rebuilt from today's by undoing group 11, then group 8 (each edit is an exact text swap).
+describe('the ports (groups 8 and 12 of tools/port-model-core.mjs)', () => {
+  test('applied in order to the model before them, they give today\'s; group 8 still reads ported once group 12 revised it', () => {
+    // The model before the changes, rebuilt from today's by undoing group 12, then group 8 (each edit is an exact text swap).
     const script = `
       const { GROUPS, applyGroup } = await import('./tools/port-model-core.mjs');
       const { readFileSync } = await import('node:fs');

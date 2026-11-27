@@ -211,6 +211,6 @@ for defensemen.
 0.961), the same ±0.5 hold. It reaches them through the same gates as forwards (the shot volume gate's 4.8, the explosion
 engine's 5.0, the 4+ / 5+ gate's 5.0 / 5.8 role paths) and through their baseline's capability profile
 (`defensemanBaselineProbabilities` → `defensemanCapabilityProfile`: 4.4 / 5.0 / 5.5 / 6.5 on the shot score; its one iCF
-point bonus at 5.0 moves with it). No goal or points shift for defensemen. Port group 11 of `tools/port-model-core.mjs`
+point bonus at 5.0 moves with it). No goal or points shift for defensemen. Port group 12 of `tools/port-model-core.mjs`
 (it rewrites part of group 8's `matchupIcf`; the tool now counts an edit a later group revised as ported);
 `__tests__/nhl-model-icf-env.test.js`. Not replayed through the model's scorecard: grade it on the History tab.

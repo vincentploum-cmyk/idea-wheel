@@ -1436,6 +1436,22 @@ function goalGateSkaterOf(skater, iscfMatchup) {
   return { ...skater, iscfSeason: iscfMatchup, iscfL5: l5 };
 }
 
+// ─── A TOUGH OPPONENT CUTS λ SHOTS A QUARTER AS HARD AS A SOFT ONE LIFTS THEM (2026-11-27) ─
+// λ shots' opponent read (defMult): a soft defense's lift has always been scaled by the skater's shot tier (defDamp:
+// elite 1.0, good 0.82, average 0.64, weak 0.48), while a tough defense's cut went in at 0.94 to 1.03 of its size, so a
+// depth skater lost the whole cut and gained half the lift. Replayed on the season's 5,843 graded skater-games
+// (docs/audits/2026-11-27-nhl-team-shots.md): the teams the run read lowest got 24.3 shots on 18.7 projected, and with
+// each tier's level fitted the cut scored best near nothing (the cut at the lift's damping x1: +4.6 log-likelihood per
+// 1,000 skater-games; x0.25: about twice that, and the same order fitted before 11-13 and scored after). The cut is
+// (1 - raw) x defDamp x DEF_CUT_SHARE; the lift is unchanged. Vincent: "yes soften the cut and port it to the local app".
+// The cut as it was: 1 - (1 - raw) x max(0.9, 1.12 - 0.18 x defDamp).
+const DEF_CUT_SHARE = 0.25;
+function opponentShotMult(rawDefMult, defDamp) {
+  return rawDefMult >= 1
+    ? 1 + (rawDefMult - 1) * defDamp
+    : 1 - (1 - rawDefMult) * defDamp * DEF_CUT_SHARE;
+}
+
 
 function positionGoalLeakOverride({ posKey, todayLine, effectiveToi, skater, teamPos }) {
   if (!teamPos) return null;
@@ -4843,9 +4859,7 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
           const compositeRatio = 0.3 * shotsRatio + 0.25 * icfRatio + 0.25 * iffRatio + 0.2 * iscfRatio;
           const rawDefMult = clamp(compositeRatio, 0.55, 1.75);
           const dampStrength = shotFloor.defDamp;
-          defMult = rawDefMult >= 1
-            ? 1 + (rawDefMult - 1) * dampStrength
-            : 1 - (1 - rawDefMult) * Math.max(0.9, 1.12 - 0.18 * dampStrength);
+          defMult = opponentShotMult(rawDefMult, dampStrength);
           defMult = clamp(defMult, 0.58, shotFloor.level === 'elite' ? 1.72 : shotFloor.level === 'good' ? 1.48 : shotFloor.level === 'average' ? 1.28 : 1.16);
         }
 
@@ -6367,6 +6381,8 @@ export {
   ISCF_ENV_MAX_SHIFT,
   iscfPointMultiplier,
   ISCF_POINT_PER_SD,
+  opponentShotMult,
+  DEF_CUT_SHARE,
   resolvePaceTier,
   resolveRoleLabelAgainstCheatSheet,
   roleGoalAccessMultiplier,

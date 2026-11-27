@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Port the site's model changes into the local model app (App.jsx, the model's source of truth),
-// the same edits made to components/nhl/model-core.js, in eleven groups, each all-or-nothing:
+// the same edits made to components/nhl/model-core.js, in twelve groups, each all-or-nothing:
 //   1. 2026-10-13 (a022443): p2s / p3s / p4s / p5s are the Poisson tails of λ shots; the ladder's
 //      figures ride along as ladderP3s / P4s / P5s and still set the attack score.
 //   2. 2026-10-20 (4ec641f): p1g / p2g / p3g are the Poisson tails of λ goals; the ladder's figures
@@ -31,7 +31,10 @@
 //      points branch is a smooth ISCF/G rank term (iscfPointMultiplier, ISCF_POINT_PER_SD 0.069, defensemen 1) in
 //      place of the Assists/G steps, and λ points' pointDefenseMult takes its 0.35 from the iSCF ratio in place of the
 //      assists ratio (same audit, "Points").
-//  11. 2026-11-27: matchupIcf moves defensemen too, at their own exponent (ICF_ENV_EXP_D 0.65), and the defensemen's
+//  11. 2026-11-27: λ shots' opponent read (defMult) cuts for a tough defense at (1 - raw) x defDamp x DEF_CUT_SHARE (0.25),
+//      the skater's shot-tier damping as the lift has, at a quarter of it; the lift unchanged (opponentShotMult;
+//      docs/audits/2026-11-27-nhl-team-shots.md). Needs group 9 in first (its anchor is the end of goalGateSkaterOf).
+//  12. 2026-11-27: matchupIcf moves defensemen too, at their own exponent (ICF_ENV_EXP_D 0.65), and the defensemen's
 //      baseline (defensemanCapabilityProfile) reads the gates' skater; it revises group 8's matchupIcf, which still
 //      reads as ported once this is in (same audit, "Defensemen"). Needs group 8 in first.
 //
@@ -384,6 +387,19 @@ const POINTS_ENV = [
   },
 ];
 
+const DEF_CUT = [
+  {
+    name: "the softer cut (opponentShotMult, DEF_CUT_SHARE)",
+    old: "  return { ...skater, iscfSeason: iscfMatchup, iscfL5: l5 };\n}\n",
+    new: "  return { ...skater, iscfSeason: iscfMatchup, iscfL5: l5 };\n}\n\n// ─── A TOUGH OPPONENT CUTS λ SHOTS A QUARTER AS HARD AS A SOFT ONE LIFTS THEM (2026-11-27) ─\n// λ shots' opponent read (defMult): a soft defense's lift has always been scaled by the skater's shot tier (defDamp:\n// elite 1.0, good 0.82, average 0.64, weak 0.48), while a tough defense's cut went in at 0.94 to 1.03 of its size, so a\n// depth skater lost the whole cut and gained half the lift. Replayed on the season's 5,843 graded skater-games\n// (docs/audits/2026-11-27-nhl-team-shots.md): the teams the run read lowest got 24.3 shots on 18.7 projected, and with\n// each tier's level fitted the cut scored best near nothing (the cut at the lift's damping x1: +4.6 log-likelihood per\n// 1,000 skater-games; x0.25: about twice that, and the same order fitted before 11-13 and scored after). The cut is\n// (1 - raw) x defDamp x DEF_CUT_SHARE; the lift is unchanged. Vincent: \"yes soften the cut and port it to the local app\".\n// The cut as it was: 1 - (1 - raw) x max(0.9, 1.12 - 0.18 x defDamp).\nconst DEF_CUT_SHARE = 0.25;\nfunction opponentShotMult(rawDefMult, defDamp) {\n  return rawDefMult >= 1\n    ? 1 + (rawDefMult - 1) * defDamp\n    : 1 - (1 - rawDefMult) * defDamp * DEF_CUT_SHARE;\n}\n",
+  },
+  {
+    name: "λ shots' opponent read uses it",
+    old: "          defMult = rawDefMult >= 1\n            ? 1 + (rawDefMult - 1) * dampStrength\n            : 1 - (1 - rawDefMult) * Math.max(0.9, 1.12 - 0.18 * dampStrength);\n",
+    new: "          defMult = opponentShotMult(rawDefMult, dampStrength);\n",
+  },
+];
+
 const ICF_ENV_D = [
   {
     name: "matchupIcf for defensemen at their own exponent (ICF_ENV_EXP_D)",
@@ -408,6 +424,7 @@ export const GROUPS = [
   { key: 'icfEnv20261127', label: 'the matchup moves the iCF the gates read (2026-11-27): matchupIcf, forwards, +/-0.5 at most', edits: ICF_ENV },
   { key: 'iscfEnv20261127', label: 'the matchup moves the iSCF the goal gates read (2026-11-27): matchupIscf, forwards, +/-0.25 at most', edits: ISCF_ENV },
   { key: 'pointsEnv20261127', label: 'points environment (2026-11-27): the cheat sheet\'s points multiplier a smooth ISCF/G term, λ points\' 0.35 on the iSCF ratio, assists allowed out', edits: POINTS_ENV },
+  { key: 'defCut20261127', label: 'a tough opponent cuts λ shots a quarter as hard as a soft one lifts them (2026-11-27): opponentShotMult, DEF_CUT_SHARE 0.25', edits: DEF_CUT },
   { key: 'icfEnvD20261127', label: 'the matchup iCF for defensemen too (2026-11-27): matchupIcf at 0.65 for D, their capability profile reads it', edits: ICF_ENV_D },
 ];
 
@@ -434,7 +451,7 @@ function revisedText(group, edit) {
 
 export function applyGroup(src, group) {
   const hasConstants = !group.constants || src.includes('const VENUE_SPLIT_WEIGHT = ');
-  // An edit a later group revised (group 11 rewrote part of group 8's matchupIcf) still counts as ported.
+  // An edit a later group revised (group 12 rewrote part of group 8's matchupIcf) still counts as ported.
   const present = group.edits.filter((e) => src.includes(e.new) || src.includes(revisedText(group, e)));
   if (hasConstants && present.length === group.edits.length) return { text: src, status: 'ported', missing: [] };
   const missing = [];
