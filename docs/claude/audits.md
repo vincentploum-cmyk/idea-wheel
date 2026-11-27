@@ -385,3 +385,7 @@
   even-money 1+; the opponent's iSCF allowed saves 68.5 deviance against 30.3 for assists allowed, and the cheat sheet's
   assists steps were worse than no read. Changed: `matchupIcf` (±0.5; forwards, then defensemen at 0.65) and `matchupIscf` (±0.25, forwards) on the gates,
   `iscfPointMultiplier` and the iSCF ratio in `pointDefenseMult` (port groups 8 to 10, `docs/claude/nhl.md`).
+  Goalie saves the same day ("now do the same for goalies saves", `tools/predictors/saves_env.py`, 5,514 starts): the
+  saves read is already the environment (`SAVES_SHOTS_FIT` 0.89 / 0.87 / 0.53); refitted on 2024-25 and 2025-26 it lands on
+  0.886 / 0.870 / 0.517, and on 2026-27's starts the shipped formula is best or within noise (MAE 4.958, r 0.212); attempts,
+  chances and last-10 windows do worse. An even-money 25+ takes ~28.5 projected shots against, 28+ ~31. Nothing changed.

@@ -214,3 +214,48 @@ engine's 5.0, the 4+ / 5+ gate's 5.0 / 5.8 role paths) and through their baselin
 point bonus at 5.0 moves with it). No goal or points shift for defensemen. Port group 13 of `tools/port-model-core.mjs`
 (it rewrites part of group 8's `matchupIcf`; the tool now counts an edit a later group revised as ported);
 `__tests__/nhl-model-icf-env.test.js`. Not replayed through the model's scorecard: grade it on the History tab.
+
+## Goalie saves (same day)
+
+Vincent: "now do the same for goalies saves". The saves projection has no threshold checks to move: it is the shots the
+goalie's team is expected to allow (`shotsAgainst` in `lib/nhl-data/goalies-pure.js`: the league's shots a team a game
++ 0.89 × the opponent's shots-for gap + 0.87 × his team's shots-allowed gap ∓ 0.53 for home ice, each this season blended
+into last season's gap at games / (games + 10)) × 97% × his save %, read at a normal of SD 6.8, fitted on 2024-25 and
+2025-26 on 2026-11-08 (`docs/audits/2026-11-08-nhl-saves.md`). The environment is already nearly all of it. So the
+question was whether those weights still hold on this season and whether attempts, chances or a recent window predict the
+shots against better, as attempts and chances did for the skaters. Data: 5,514 starts (2024-25 and 2025-26 to fit, 2026-27
+to Nov 25 to score, 612 starts). Script: `tools/predictors/saves_env.py <2024-25> <2025-26> <2026-27 games dirs>`.
+
+| Scored on 2026-27 starts | MAE | bias | r | Brier 25+ | 28+ | 30+ |
+|---|---|---|---|---|---|---|
+| league average only | 5.060 | +0.23 | −0.03 | 0.2486 | 0.1996 | 0.1490 |
+| **site formula as shipped (0.89 / 0.87 / 0.53)** | **4.958** | +0.22 | **0.212** | **0.2419** | 0.1967 | 0.1477 |
+| the same with his own shrunk save % | 4.950 | +0.18 | 0.214 | 0.2419 | 0.1970 | 0.1481 |
+| refit, shots (0.886 / 0.870 / 0.517) | 4.985 | +0.49 | 0.212 | 0.2424 | 0.1962 | 0.1470 |
+| refit, attempts (iCF) | 4.987 | +0.50 | 0.188 | 0.2421 | 0.1971 | 0.1473 |
+| refit, chances (iSCF) | 5.029 | +0.49 | 0.182 | 0.2433 | 0.1972 | 0.1458 |
+| refit, shots + attempts | 4.991 | +0.50 | 0.210 | 0.2421 | 0.1963 | 0.1470 |
+| refit, last 10 games in place of the season | 4.943 | +0.24 | 0.169 | 0.2424 | 0.1981 | 0.1491 |
+| refit, season + last 10 | 4.972 | +0.41 | 0.207 | 0.2424 | 0.1971 | 0.1479 |
+
+The refit on the same two seasons lands on the shipped weights (0.886 / 0.870 / 0.517), and on this season's starts the
+shipped formula is best or within noise on every measure. Unlike the skaters, attempts and chances do worse than shots for
+a goalie (a save is a shot on goal). The last 10 shaves the average miss by pulling toward the league but ranks the
+night worse (r 0.169). His own save % moves nothing. The bias (+0.2: about a fifth of a save low a start) is small.
+
+**What it takes** (all three seasons; the gaps are shots a game against the league's): 25+ saves land 48.0% of starts,
+28+ 31.4%, 30+ 21.9%.
+
+| Opponent's shots-for gap | His team allows little (< −1.5) | average | a lot (> +1.5) |
+|---|---|---|---|
+| shoots little (< −1.5) | 25+ 22.4%, 28+ 10.5%, 30+ 5.5% | 37.3%, 20.5%, 12.9% | 44.0%, 30.5%, 18.5% |
+| average | 38.4%, 22.3%, 13.4% | 49.2%, 32.0%, 22.1% | 58.3%, 41.2%, 30.5% |
+| shoots a lot (> +1.5) | 48.6%, 26.3%, 20.6% | 62.1%, 44.5%, 34.3% | 62.7%, 51.6%, 39.8% |
+
+By the site's projected shots against: under 25 → 20.7 saves (25+ 24.8%); 26.5–28 → 23.7 (44.4%); 28–29.5 → 24.7
+(51.7%); 29.5–31 → 25.7 (56.2%, 28+ 39.8%); 31+ → 27.3 (66.8%, 28+ 49.7%, 30+ 38.4%). An even-money 25+ takes about 28.5
+projected shots against, an even-money 28+ about 31; 30+ never reaches 40%. Both sides count about the same (0.89 and
+0.87), so a goalie on a team that allows a lot facing an opponent that shoots little is roughly a coin flip on 25+, the
+same as the reverse.
+
+**What changed.** Nothing in the model: the saves read is the environment, its weights hold, and no other read beat it.
