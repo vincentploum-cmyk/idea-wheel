@@ -1,35 +1,73 @@
 'use client';
 
 import { TeamLink } from './links';
-import { VERY_LEVELS } from '@/lib/nhl-data/matchup-profile';
+import { ICON } from './Characteristics';
 
-// The matchup profile under a game head on Matchups: the two teams side by side, five rows (shooting,
-// allows, power play, penalty kill, last 10), each cell a word over one line of figures at tonight's
-// venue, every other source in the cell's hover. Data: `profile` on a slate game
-// (lib/nhl-data/matchup-profile.js). Cut to five rows and one layout on 2026-10-30 (Vincent: "the
-// summary needs to be compact. 5 rows max.").
+// The matchup profile under a game head on Matchups, drawn the way WhoScored draws a club's characteristics:
+// the two teams side by side, each with its strengths and its weaknesses as short lines with a badge, only the
+// extremes (Vincent, 2026-11-27: "average doesn't help me … steady for last 10 doesn't tell me anything. I only
+// need the extremes", then WhoScored's Strengths / Weaknesses card as the format, without the style of play).
+// Data: `profile` on a slate game (lib/nhl-data/matchup-profile.js; the NBA's and NFL's builders give the same
+// shape): every row's cell carries a level, rank 1 = the best for the team on that read, so elite / strong (and a
+// rising last ten) is a strength, weak / poor (and a falling one) a weakness; Average and Steady are left out.
+// The full line and every source ride on the line's hover.
 
 const VENUE = { H: 'home', A: 'away' };
 
-function Word({ cell }) {
-  if (!cell?.word) return null;
-  return <span className={`nhlx-edge nhlx-prof-word ${cell.tone || ''}${VERY_LEVELS.includes(cell.level) ? ' is-very' : ''}`}>{cell.word}</span>;
+/** The levels that say nothing either way. */
+export const QUIET_LEVELS = ['average', 'steady'];
+const GOOD = { elite: 2, strong: 1, rising: 1 };
+const BAD = { poor: 2, weak: 1, falling: 1 };
+
+// Each row's line as a strength and as a weakness, and its glyph. A row without an entry reads its label.
+const PHRASES = {
+  shooting: { kind: 'attack', good: 'Shooting a lot', bad: 'Shooting little' },
+  allows: { kind: 'defense', good: 'Limiting the opponent', bad: 'Giving up a lot' },
+  saves: { kind: 'defense', good: 'Goaltending', bad: 'Goaltending' },
+  powerplay: { kind: 'attack', good: 'Power play', bad: 'Power play' },
+  discipline: { kind: 'defense', good: 'Staying out of the box', bad: 'Taking penalties' },
+  last10: { kind: 'tempo', good: 'Shooting more lately (last 10)', bad: 'Shooting less lately (last 10)' },
+  scoring: { kind: 'attack', good: 'Scoring a lot', bad: 'Scoring little' },
+  rebounding: { kind: 'attack', good: 'Rebounding', bad: 'Rebounding' },
+  playmaking: { kind: 'attack', good: 'Playmaking', bad: 'Playmaking' },
+  passing: { kind: 'attack', good: 'Passing game', bad: 'Passing game' },
+  rushing: { kind: 'attack', good: 'Running game', bad: 'Running game' },
+  endzone: { kind: 'attack', good: 'Finding the end zone', bad: 'Finding the end zone' },
+  spots: { kind: 'defense', good: 'No soft spots', bad: 'Soft spots' },
+};
+
+/**
+ * One team's strengths and weaknesses from the profile's rows: { strengths, weaknesses }, each a list of
+ * { key, kind, text, short, word, very, title }, the most extreme first (then the row order).
+ */
+export function traitsOf(rows, team) {
+  const strengths = []; const weaknesses = [];
+  rows.forEach((row, i) => {
+    const c = row.cells?.[team];
+    if (!c?.level || QUIET_LEVELS.includes(c.level) || !c.word) return;
+    const good = GOOD[c.level]; const bad = BAD[c.level];
+    if (!good && !bad) return;
+    const ph = PHRASES[row.key] || { kind: 'attack', good: row.label, bad: row.label };
+    const x = { key: row.key, kind: ph.kind, text: good ? ph.good : ph.bad, short: c.short || null, word: c.word, very: (good || bad) === 2, title: [c.text, c.title].filter(Boolean).join(' · '), i };
+    (good ? strengths : weaknesses).push(x);
+  });
+  const order = (a, b) => (b.very - a.very) || (a.i - b.i);
+  return { strengths: strengths.sort(order), weaknesses: weaknesses.sort(order) };
 }
 
-/** One team's cell of a row; an empty cell reads a dash. */
-function Cell({ cell, side }) {
-  const cls = `nhlx-prof-cell is-${side}`;
-  if (!cell) return <div className={cls}><span className="nhlx-prof-detail">—</span></div>;
+function Trait({ x, tone }) {
   return (
-    <div className={cls} title={cell.title || undefined}>
-      <Word cell={cell} />
-      <span className="nhlx-prof-detail">{(cell.parts || [{ t: cell.text }]).map((x, i) => (x.tone ? <b key={i} className={`nhlx-prof-rank ${x.tone}`}>{x.t}</b> : <span key={i}>{x.t}</span>))}</span>
-    </div>
+    <li className="nhlx-char-row" title={x.title || undefined}>
+      <i className={`nhlx-char-icon is-${x.kind}`} aria-hidden="true">{ICON[x.kind] || ICON.attack}</i>
+      <span>{x.text}{x.short ? <small className="nhlx-prof-short">{x.short}</small> : null}</span>
+      <span className={`nhlx-edge nhlx-char-badge ${tone}${x.very ? ' is-very' : ''}`}>{x.word}</span>
+    </li>
   );
 }
 
-function TeamHead({ head, side, renderTeam }) {
-  if (!head) return <div className={`nhlx-prof-cell is-${side}`} />;
+function TeamTraits({ head, rows, renderTeam }) {
+  const team = head.team;
+  const { strengths, weaknesses } = traitsOf(rows, team);
   const v = head.verdict;
   const spz = head.shotpropz;
   // The NHL head says where its boards stand; a profile that writes its own line (the NBA's) passes `sub`.
@@ -37,13 +75,22 @@ function TeamHead({ head, side, renderTeam }) {
     ? `ShotPropz${spz.venueGames != null ? ` · ${spz.venueGames} ${VENUE[head.venue] || ''} game${spz.venueGames === 1 ? '' : 's'}` : ''}${spz.leadAt === 'all' ? ' (all games until four there)' : ''}${spz.updated ? ` · ${spz.updated}` : ''}`
     : head.games ? `${head.games} stored game${head.games === 1 ? '' : 's'} · no ShotPropz snapshot yet` : 'no ShotPropz snapshot yet');
   return (
-    <div className={`nhlx-prof-cell nhlx-prof-team is-${side}`}>
-      <span className="nhlx-prof-team-name">
-        {renderTeam ? renderTeam(head.team) : <TeamLink abbr={head.team} logo={22}><b>{head.team}</b></TeamLink>}
+    <div className="nhlx-char-team">
+      <div className="nhlx-mu-verdict-head nhlx-prof-team-head">
+        {renderTeam ? renderTeam(team) : <TeamLink abbr={team} logo={22}><b>{team}</b></TeamLink>}
         <small>{VENUE[head.venue] || ''}</small>
-        {v?.headline ? <span className={`nhlx-edge ${v.tier === 'leaky' ? 'is-soft' : v.tier === 'tight' ? 'is-tough' : ''}`}>{v.headline}</span> : null}
-      </span>
-      <span className="nhlx-prof-team-sub">{sub}</span>
+        {/* Neutral here: the lists below colour by the team's quality, the rest of the rink by more shots likely. */}
+        {v?.headline ? <span className="nhlx-edge">{v.headline}</span> : null}
+        <span className="nhlx-prof-team-sub">{sub}</span>
+      </div>
+      <section className="nhlx-char-strengths" aria-label={`${team} strengths`}>
+        <h5><i className="is-plus">+</i> Strengths</h5>
+        {strengths.length ? <ul>{strengths.map((x) => <Trait key={x.key} x={x} tone="is-soft" />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out</p>}
+      </section>
+      <section className="nhlx-char-weaknesses" aria-label={`${team} weaknesses`}>
+        <h5><i className="is-minus">−</i> Weaknesses</h5>
+        {weaknesses.length ? <ul>{weaknesses.map((x) => <Trait key={x.key} x={x} tone="is-tough" />)}</ul> : <p className="nhlx-auto-meta">Nothing stands out</p>}
+      </section>
     </div>
   );
 }
@@ -77,27 +124,18 @@ export function MatchupProfile({ profile, renderTeam = null, projected = null, f
   const [away, home] = profile.order;
   const t = profile.total;
   return (
-    <div className="nhlx-prof">
+    <div className="nhlx-prof nhlx-char">
       <div className="nhlx-prof-head">
         <b>{profile.title || 'Matchup profile'}</b>
         {projected?.exp
           ? <ProjectedScore projected={projected} final={final} away={away} home={home} />
           : t?.headline ? <span className={`nhlx-edge ${t.tier === 'high' ? 'is-soft' : t.tier === 'low' ? 'is-tough' : ''}`} title={t.title || (t.league != null ? `${t.projected} goals read against a league average of ${t.league}` : undefined)}>{t.headline}</span> : null}
-        <small>{profile.legend || 'tonight’s venue · green = more shots and goals likely, red = fewer · hover a cell for every source'}</small>
+        <small>{profile.legend ? profile.legend.split(' · ')[0] : 'tonight’s venue'} · only what stands out from the league · hover a line for the numbers</small>
       </div>
-      <div className="nhlx-prof-rows">
-        <div className="nhlx-prof-row is-head">
-          <div className="nhlx-prof-label is-head" />
-          <TeamHead head={profile.teams[away]} side="away" renderTeam={renderTeam} />
-          <TeamHead head={profile.teams[home]} side="home" renderTeam={renderTeam} />
-        </div>
-        {profile.rows.map((row) => (
-          <div key={row.key} className={`nhlx-prof-row is-${row.key}`}>
-            <div className="nhlx-prof-label" title={row.hint}>{row.label}</div>
-            <Cell cell={row.cells[away]} side="away" />
-            <Cell cell={row.cells[home]} side="home" />
-          </div>
-        ))}
+      <div className="nhlx-char-grid">
+        {[away, home].map((team) => (profile.teams[team]
+          ? <TeamTraits key={team} head={profile.teams[team]} rows={profile.rows} renderTeam={renderTeam} />
+          : <div key={team} className="nhlx-char-team"><div className="nhlx-mu-verdict-head">{renderTeam ? renderTeam(team) : <TeamLink abbr={team} logo={22}><b>{team}</b></TeamLink>}<small>No read yet</small></div></div>))}
       </div>
     </div>
   );

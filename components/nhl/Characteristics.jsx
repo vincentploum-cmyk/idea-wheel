@@ -11,7 +11,7 @@ import { SHOWN } from '@/lib/picks/levels';
 // (lib/nhl-data/characteristics.js).
 
 // 14-unit glyphs in the current colour: a stick for the attack, a shield for the defense, a stopwatch for the tempo.
-const ICON = {
+export const ICON = {
   attack: <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 1.5 6 10.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" /><path d="M6.6 9.8 3.3 13.2a1.6 1.6 0 0 1-2.3-2.3L4.4 7.5" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" fill="none" /><circle cx="12.8" cy="12.6" r="1.6" fill="currentColor" /></svg>,
   defense: <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 2.5 3.6v4.2c0 3.3 2.3 5.6 5.5 6.7 3.2-1.1 5.5-3.4 5.5-6.7V3.6L8 1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" fill="none" /></svg>,
   tempo: <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="9" r="5.5" stroke="currentColor" strokeWidth="1.5" fill="none" /><path d="M8 6v3.2l2.2 1.3M6.3 1.5h3.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" /></svg>,

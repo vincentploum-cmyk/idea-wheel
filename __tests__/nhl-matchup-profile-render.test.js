@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { MatchupProfile } from '../components/nhl/MatchupProfile';
+import { MatchupProfile, traitsOf } from '../components/nhl/MatchupProfile';
 import { matchupProfile } from '../lib/nhl-data/matchup-profile';
 import { game, rates, pfTeams, shotpropz } from './fixtures/matchup-profile-mtl-dal';
 
@@ -18,29 +18,39 @@ const mark = (abbr) => React.createElement('b', { className: 'nhlx-prof-mark' },
 const render = () => renderToStaticMarkup(React.createElement(MatchupProfile, { profile, renderTeam: mark }));
 
 describe('MatchupProfile renders', () => {
-  test('the heads, five rows, a word over one line, every source in the hover', () => {
+  test('the heads, then each team\'s strengths and weaknesses: only the extremes, a badge on each line', () => {
     const html = render();
-    expect(html).toContain('class="nhlx-prof"');
+    expect(html).toContain('class="nhlx-prof nhlx-char"');
     expect(html).toContain('Matchup profile');
     expect(html).toContain('Average scoring · 6.0 goals');
     expect(html).toContain('Leaky defense away'); expect(html).toContain('Tight defense at home');
     expect(html).toContain('ShotPropz · 6 away games · Oct 30, 2026');
-    for (const label of ['Shooting', 'Allows', 'Saves', 'Power play', 'Discipline', 'Last 10']) expect(html).toContain(`>${label}</div>`);
-    expect((html.match(/class="nhlx-prof-row is-(?!head)/g) || []).length).toBe(6);
-    expect(html).toContain('>Saves</div>');
-    expect(html).toContain('~26 saves expected · 28.6 shots faced · Montembeault likely · .908 over 7 starts</span>');
-    expect(html).toMatch(/nhlx-prof-word is-soft[^>]*>Strong</);
-    expect(html).toMatch(/nhlx-prof-word is-tough is-very[^>]*>Elite</);
-    expect(html).toContain('<span class="nhlx-prof-detail"><span>29.7 shots · 2.83 goals a game on the road (6 games) · </span><span>9th of 32 in shots</span></span>');
-    expect(html).toContain('<b class="nhlx-prof-rank is-tough">31st of 32 most</b>');
-    expect(html).toContain('<b class="nhlx-prof-rank is-soft">7th of 32 most</b>');
-    expect(html).toContain('title="ShotPropz 2026-27, Oct 30, 2026 · ShotPropz on the road: 29.7 shots (9th of 32)');
+    expect(html).toContain('aria-label="MTL strengths"'); expect(html).toContain('aria-label="DAL weaknesses"');
+    expect(html).not.toMatch(/nhlx-char-badge[^>]*>(Average|Steady)</);
+    expect(html).not.toContain('Style of play');
+    expect(html).toMatch(/Giving up a lot<small class="nhlx-prof-short">32.5 shots allowed a game<\/small><\/span><span class="nhlx-edge nhlx-char-badge is-tough is-very">Very leaky</);
+    expect(html).toMatch(/Taking penalties<small class="nhlx-prof-short">gives 3.3 a game · ≈ 3.0 tonight<\/small><\/span><span class="nhlx-edge nhlx-char-badge is-tough">Undisciplined</);
+    expect(html).toContain('Goaltending<small class="nhlx-prof-short">Montembeault .908 · ~26 saves tonight</small>');
+    expect(html).toMatch(/Power play<small class="nhlx-prof-short">27.8% · ≈ 3.0 tonight<\/small><\/span><span class="nhlx-edge nhlx-char-badge is-soft">Strong</);
+    expect(html).toContain('Nothing stands out'); // DAL has no weakness
+    expect(html).toContain('title="32.5 shots · 3.17 goals allowed a game on the road · 3rd of 32 most · ShotPropz 2026-27, Oct 30, 2026');
     expect(html).not.toContain('role="tablist"');
+  });
+  test('traitsOf: elite / strong / rising a strength, weak / poor / falling a weakness, the most extreme first', () => {
+    const mtl = traitsOf(profile.rows, 'MTL');
+    expect(mtl.strengths.map((x) => x.key)).toEqual(['saves']);
+    expect(mtl.weaknesses.map((x) => [x.key, x.word])).toEqual([['allows', 'Very leaky'], ['discipline', 'Undisciplined']]);
+    const dal = traitsOf(profile.rows, 'DAL');
+    expect(dal.strengths.map((x) => x.key)).toEqual(['allows', 'saves', 'powerplay', 'discipline']);
+    expect(dal.weaknesses).toEqual([]);
+    const rows = [{ key: 'last10', label: 'Last 10', cells: { A: { level: 'rising', word: 'Rising' }, B: { level: 'steady', word: 'Steady' } } }];
+    expect(traitsOf(rows, 'A').strengths[0]).toMatchObject({ text: 'Shooting more lately (last 10)', word: 'Rising' });
+    expect(traitsOf(rows, 'B')).toEqual({ strengths: [], weaknesses: [] });
   });
   test('without a snapshot the head says so', () => {
     const html = renderToStaticMarkup(React.createElement(MatchupProfile, { profile: matchupProfile({ game, rates, pfTeams }), renderTeam: mark }));
     expect(html).toContain('10 stored games · no ShotPropz snapshot yet');
-    expect(html).toContain('PropFinder 2026-27</span>');
+    expect(html).toContain('PropFinder 2026-27');
   });
   test('nothing without a profile', () => {
     expect(renderToStaticMarkup(React.createElement(MatchupProfile, { profile: null }))).toBe('');

@@ -80,13 +80,15 @@ describe('the NFL matchup profile', () => {
   test('renders through the shared card', () => {
     const p = gameProfile({ away: 'KC', home: 'CAR' }, defense, sides);
     const html = renderToStaticMarkup(React.createElement(MatchupProfile, { profile: p, renderTeam: mark }));
-    expect(html).toContain('class="nhlx-prof"');
+    expect(html).toContain('class="nhlx-prof nhlx-char"');
     expect(html).toContain('4.9 touchdowns expected · KC 3.5 · CAR 1.4');
-    expect(html).toContain('this season · green = more yards and touchdowns likely, red = fewer');
-    expect((html.match(/class="nhlx-prof-row is-(?!head)/g) || []).length).toBe(5);
-    for (const label of ['Passing', 'Rushing', 'End zone', 'Allows', 'Soft spots']) expect(html).toContain(`>${label}</div>`);
-    expect(html).toContain('<b class="nhlx-prof-rank is-soft">QB #3</b>');
-    expect(html).toContain('<b class="nhlx-prof-rank is-tough">16th of 16 most</b>');
+    expect(html).toContain('this season · only what stands out from the league');
+    // KC: four Elite strengths, its Average soft spots left out; CAR: a Poor passing game and a Very leaky defense.
+    expect((html.match(/nhlx-char-badge is-soft is-very">Elite</g) || []).length).toBe(4);
+    expect(html).not.toMatch(/nhlx-char-badge[^>]*>Average</);
+    expect(html).toMatch(/Passing game<\/span><span class="nhlx-edge nhlx-char-badge is-tough is-very">Poor</);
+    expect(html).toMatch(/Giving up a lot<\/span><span class="nhlx-edge nhlx-char-badge is-tough is-very">Very leaky</);
+    expect(html).toContain('passing to QB #3');
     const out = process.env.MOCK_OUT;
     if (!out) return;
     fs.mkdirSync(out, { recursive: true });

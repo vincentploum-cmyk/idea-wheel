@@ -2199,6 +2199,8 @@ div.nhlx-auto-msg > p { margin: 0; }
 .nhlx-prof-team-name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-weight: 600; color: var(--heading); }
 .nhlx-prof-team-name small { color: var(--muted); font-weight: 400; }
 .nhlx-prof-team-sub { font-size: 12.5px; color: var(--muted); }
+.nhlx-prof-team-head .nhlx-prof-team-sub { flex-basis: 100%; font-weight: 400; }
+.nhlx-prof-short { display: block; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 @media (max-width: 700px) {
   .nhlx-prof { --prof-cols: 74px minmax(0, 1fr) minmax(0, 1fr); }
   .nhlx-prof-row { column-gap: 10px; padding: 7px 0; }
