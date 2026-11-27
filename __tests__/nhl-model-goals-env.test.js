@@ -26,9 +26,8 @@ describe('the smooth ISCF goals term', () => {
     expect(cheatSheetMajorMultiplier(ranks({ goals: 1 }), 'goals', 'C')).toBe(1);   // was 1.18 + 0.07
     expect(cheatSheetMajorMultiplier(ranks({ iscf: 1 }), 'goals', 'D')).toBeCloseTo(iscfGoalMultiplier(1) * 0.88, 6);
   });
-  test('shots and points are unchanged', () => {
+  test('shots are unchanged (points moved to its own ISCF term on 2026-11-27: nhl-model-points-env.test.js)', () => {
     expect(cheatSheetMajorMultiplier(ranks({ shots: 5, iff: 5, iscf: 5, icf: 5 }), 'shots', 'C')).toBe(1.3);   // 1 + 0.18 + 0.12 + 0.10 + 0.08, capped at 1.30
-    expect(cheatSheetMajorMultiplier(ranks({ assists: 5 }), 'points', 'C')).toBeCloseTo(1.16, 6);
   });
 });
 

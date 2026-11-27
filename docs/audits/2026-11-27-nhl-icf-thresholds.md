@@ -134,3 +134,53 @@ and `defDamp`, which sets how much of `defenseGoalMultiplier` reaches λ goals),
 (`positionGoalLeakOverride`, `buildDefenseRoleMarketBoost`), which already fire on the opponent's goals and chances
 allowed, and not `defenseGoalMultiplier` itself. Port group 9 of `tools/port-model-core.mjs` (needs group 8);
 `__tests__/nhl-model-icf-env.test.js`. Not replayed through the model's scorecard: grade it on the History tab.
+
+## Points: assists thresholds, and which opponent read carries points (same day)
+
+Vincent: "now do the same for points with assists thresholds"; after the findings below, option 1 ("go with option 1"):
+move the points environment off assists allowed onto chances allowed. Same games, 45,455 skater-games; 1+ point 35.8%
+(forwards 39.1%, defensemen 29.1%), 2+ 9.5%. Scripts: `tools/predictors/points_thresholds.py`, `points_env_fit.py`.
+
+**His assists a game (forwards):** 0.10–0.15 1+ point 26.6%, 0.20–0.25 32.5%, 0.30–0.35 41.5%, 0.35–0.40 47.1%,
+0.40–0.50 50.3%, 0.50–0.60 56.3%, 0.60–0.80 61.8%, 0.80+ 69.8% (2+: 4.4 / 7.2 / 10.6 / 13.3 / 17.1 / 20.2 / 24.9 / 35.5%).
+An even-money 1+ point takes about 0.4 assists a game (≈ 0.75 points a game: 0.7–0.8 points 51.6%). Defensemen: 0.30–0.40
+33.5%, 0.40–0.50 37.9%, 0.50+ 56.1%.
+
+**The opponent's assists allowed (forwards, by rank):** 1–5 (×1.19 the league) points ×1.065 his rate, 6–10 ×1.019,
+11–22 ×0.997, 23–27 ×0.967, 28–32 (×0.80) ×0.938. Defensemen ×1.115 / ×1.026 / ×0.997 / ×1.019 / ×0.968.
+
+**Which read carries points** (Poisson on his points rate + one opponent read, fitted on half the dates and scored on the
+other, deviance saved over his rate alone):
+
+| Read added | Forwards | Defensemen | Coefficient (F) |
+|---|---|---|---|
+| Assists allowed | 30.3 | 3.9 | 0.33 |
+| Points allowed | 27.7 | 1.7 | 0.35 |
+| Shots allowed | 26.5 | 0.8 | 0.66 |
+| iSCF allowed | 68.5 | 5.7 | 0.83 |
+| Assists + iSCF | 73.0 | 8.3 | 0.14 + 0.73 |
+
+**The cheat sheet's points multiplier, as a rank term** (`points_env_fit.py`, same split): the Assists/G rank steps as
+shipped (+16% / +8% / −12%, the assists part only) −38.7 forwards, −23.7 defensemen (worse than no read); a smooth
+assists-rank term +5.6 / −5.8; a smooth ISCF-rank term +42.3 at 0.069 per SD of rank (rank 1 ×1.12, rank 32 ×0.89) for
+forwards, −0.0 at 0.007 for defensemen.
+
+**Grid (forwards, 1+ point, his assists a game by the iSCF-allowed env tough < 0.92 / firm / loose / soft > 1.08):**
+0.1–0.2 26.5 / 27.2 / 27.6 / 33.0%; 0.2–0.3 34.9 / 32.1 / 34.8 / 39.5%; 0.3–0.4 40.5 / 44.6 / 42.2 / 50.1%; 0.4–0.55
+48.4 / 51.5 / 52.7 / 55.2%; 0.55+ 57.7 / 64.1 / 63.1 / 67.0%. By the assists-allowed env the 0.3–0.4 row is only
+42.6 / 41.6 / 44.9 / 47.4%.
+
+**Why not the same gate shift as shots and goals.** The model has almost no checks on a skater's own assists: the style
+classifier's playmaker index (which also sets his shots and goals multipliers, a Playmaker ×0.90 on shots) and the
+defensemen's capability score; the rest of its assist cuts sit in the role overrides that already fire on the opponent's
+table. The environment was the weak part: it read assists allowed twice (0.35 of `pointDefenseMult`, and the cheat sheet's
+steps).
+
+**What changed.** `cheatSheetMajorMultiplier`'s points branch is `iscfPointMultiplier(iscfRank, posKey)`: ×exp(0.069 per SD
+of the opponent's ISCF/G rank at the position), forwards only (`ISCF_POINT_PER_SD`); the Assists/G steps and the soft /
+hard counts are out. `pointDefenseMult` (λ points) takes its 0.35 from the opponent's iSCF ratio (ISCF/G allowed at the
+position over the league's mean, floor 3.5; no iSCF on the table → 1) in place of its assists ratio; the 0.45 on
+`defenseGoalMult` and 0.20 on shots stay. Expected goals read part of λ points (`lambdaGDisplay`, the 1+ point chance in
+`buildGoalProbabilityFromPipeline`), so goals take a little more of the iSCF ratio, the direction the goals fit above
+supports (0.78). Port group 10 of `tools/port-model-core.mjs`; `__tests__/nhl-model-points-env.test.js`. Not replayed
+through the model's scorecard: grade it on the History tab.
