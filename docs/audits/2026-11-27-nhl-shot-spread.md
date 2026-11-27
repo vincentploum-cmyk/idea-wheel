@@ -53,3 +53,21 @@ pull the new λ in twice.
 
 Where it goes: `shotSpreadLambda` in `model-core.js` on the published λ shots and the odds from it (p2s … p5s); the
 ladder, the attack score and the tiers read the λ before it (`lambdaSRaw` on the row). Port group 12.
+
+## The lift against a soft defense: left as it is (Vincent: "yes fix the boost and port it")
+
+Before the spread, an elite shooter lifted by a soft defense was read 3.31 and took 2.69, and a free exponent on the whole
+`defMult` scored best at 0.25 of its strength. Both were the spread: replayed with the lift at a share L of
+(raw − 1) × defDamp and the spread refitted each time (fitted before 11-13, scored after), the lift as it is scored best:
+
+| lift share L | held-out log-lik | Brier 3+ | Brier 4+ | lifted rows only |
+| --- | --- | --- | --- | --- |
+| **1.0 (as it is)** | **−1.55065** | **0.15136** | **0.07914** | **−1.56226** |
+| 0.5 | −1.55145 | 0.15157 | 0.07921 | −1.56371 |
+| 0.25 | −1.55194 | 0.15170 | 0.07926 | −1.56457 |
+| 0 | −1.55249 | 0.15184 | 0.07932 | −1.56554 |
+
+With the spread the lifted rows land at their λ in every tier (actual over λ: elite 1.01, good 1.08, average 0.95, weak
+0.97). The cut checked the same way: as it was −1.55064, ×1 −1.55105, ×0.5 −1.55070, ×0.25 −1.55065, none −1.55068 (Brier
+3+ 0.15156 / 0.15153 / 0.15140 / 0.15136 / 0.15134): within noise of each other once the spread is in, 0.25 kept. Nothing
+changed in the model, nothing to port.

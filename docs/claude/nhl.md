@@ -1044,7 +1044,7 @@
   tier low reads ran low and high reads high; held out the curve beat one factor per tier (+52 against +32 per 1,000
   skater-games). The board's calibration reads stored runs as the model makes them now (`lambdaSNow` in
   `lib/nhl-data/calibration.js`: the cut replayed before 11-27, the spread on every run without `lambdaSRaw`), so it is
-  not applied twice (`docs/audits/2026-11-27-nhl-shot-spread.md`, `__tests__/nhl-model-shot-spread.test.js`).
+  not applied twice (`docs/audits/2026-11-27-nhl-shot-spread.md`, `__tests__/nhl-model-shot-spread.test.js`). The lift against a soft defense was checked after it (Vincent: "yes fix the boost and port it") and **left as it is**: with the spread in, the full lift scored best held out and the lifted rows land at their λ in every tier; its "too strong" reading was the spread (same audit, last section).
   And the same day for defensemen (port it too, Vincent: "now do the same for defensemen"): `matchupIcf` moves them too, at
   their own exponent `ICF_ENV_EXP_D` 0.65 (their shots follow their attempts at 0.96 and the attempts allowed to defensemen
   at 0.63; held out by date the read saved 59.6 deviance, forwards 102.5), through the same gates as forwards plus their
