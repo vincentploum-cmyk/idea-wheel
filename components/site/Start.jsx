@@ -62,7 +62,7 @@ const PANELS = [
   },
 ];
 
-export default function Start({ email }) {
+export default function Start({ email, owner = false }) {
   const [status, setStatus] = useState(null);
   const [err, setErr] = useState('');
 
@@ -129,7 +129,7 @@ export default function Start({ email }) {
       <footer className="nhlx-footer">
         <div className="nhlx-wrap">
           <span>ideareels · NFL, NBA and NHL picks</span>
-          <span>Private tool · access by invitation</span>
+          <span>Private tool · access by invitation{owner ? <> · <Link href="/access">Access log</Link></> : null}</span>
         </div>
       </footer>
     </>

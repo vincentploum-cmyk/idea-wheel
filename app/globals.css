@@ -2484,3 +2484,23 @@ button.ir-bd-name:hover b { text-decoration: underline; }
 .ir-bd-mark.is-hit { box-shadow: inset 0 0 0 1.5px var(--ok-fg); }
 .ir-bd-mark.is-miss { box-shadow: inset 0 0 0 1.5px var(--bad-fg); }
 @media (max-width: 700px) { .ir-ps { max-width: none; flex-basis: 100%; } }
+
+/* ── Access log (/access) ─────────────────────────────────────────────── */
+.ir-access { padding-top: 40px; padding-bottom: 72px; }
+.ir-access h1 { margin-top: 6px; font-family: var(--font-display); color: var(--heading); font-size: clamp(28px, 4vw, 36px); }
+.ir-access-note { margin-top: 10px; max-width: 65ch; color: var(--muted); font-size: 16px; }
+.ir-access-user { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--line); }
+.ir-access-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+.ir-access-head h2 { font-family: var(--font-display); color: var(--heading); font-size: 20px; overflow-wrap: anywhere; }
+.ir-access-figs { display: flex; flex-wrap: wrap; gap: 4px 18px; color: var(--muted); font-size: 15px; font-variant-numeric: tabular-nums; }
+.ir-access-figs b { color: var(--heading); font-weight: 700; }
+.ir-access-flag { margin-top: 10px; color: var(--bad-fg); font-weight: 600; font-size: 15px; }
+.ir-access-ok { margin-top: 10px; color: var(--muted); font-size: 15px; }
+.ir-access-scroll { margin-top: 14px; overflow-x: auto; }
+.ir-access-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.ir-access-table th { text-align: left; font-weight: 600; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); padding: 8px 12px 8px 0; border-bottom: 1px solid var(--line-strong); white-space: nowrap; }
+.ir-access-table td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--line); color: var(--body); vertical-align: top; }
+.ir-access-table td:first-child { color: var(--heading); white-space: nowrap; }
+.ir-access-table td:nth-child(2), .ir-access-table td:nth-child(3) { white-space: nowrap; }
+.ir-access-ips { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; min-width: 14ch; }
+.nhlx-footer a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }

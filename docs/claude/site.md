@@ -85,3 +85,22 @@
   factor and only the 5+ point disagreements did no better (≤ 51%); this season's 92 games read 56–60% on spreads, noise. The
   hover says so.
 
+
+## Access log (`/access`)
+
+Vincent, 2026-11-27: "Can you monitor how many devices are logged in? I want to make sure this website is not re-shared."
+Supabase keeps sign-ins in `auth.sessions` but no API lists them, so the site keeps its own log (`lib/site/access.js`).
+- `getSessionUser` (`lib/nhl-store.js`), after a verified `getUser()`, calls `noteDevice` in the background: the session id
+  is the access token's `session_id` claim read from the `sb-*-auth-token` cookie (`sessionIdFromCookies`, chunked
+  `.0` `.1` cookies joined, the `-code-verifier` cookie skipped), the device from the user agent (`deviceOf`), the
+  address and place from Cloudflare's `cf-connecting-ip` / `cf-ipcity` / `cf-region` / `cf-ipcountry` (`originOf`; the city
+  shows only with Cloudflare's visitor-location headers on). One Supabase session = one sign-in on one browser.
+- `recordAccess` writes `access/users/<userId>.json` at most every 10 minutes per session (one user's writes chained so
+  they never overlap); 200 sessions and 20 addresses per session kept. Writes under `access/` do not bump `dataRevision`
+  (`OUTSIDE_DATA` in `invalidate`), so the log never busts the picks / patterns memos.
+- `summarizeUser` flags an account past `ACCESS_DEVICE_LIMIT` (default 3) devices in 7 days, from more than one country
+  in 7 days, or on two devices within the same 30 minutes from different addresses. Flagged accounts list first.
+- The page and `GET /api/site/access` are the owner's only: `isSiteOwner` (`SITE_OWNER_EMAILS`, default
+  `DEFAULT_OWNER_EMAILS` in `lib/nhl-admin.js`, and on the admin list); other admins get a 404 / 403. The start screen's
+  footer links "Access log" for the owner. The dev user (`NHL_DEV_USER_EMAIL`) is never logged.
+- Monitoring only: nothing is signed out. `__tests__/site-access.test.js`.

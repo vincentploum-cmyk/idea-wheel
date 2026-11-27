@@ -1,5 +1,5 @@
 import { getSessionUser } from '@/lib/nhl-store';
-import { isNhlAdmin } from '@/lib/nhl-admin';
+import { isNhlAdmin, isSiteOwner } from '@/lib/nhl-admin';
 import Landing from '@/components/nhl/Landing';
 import Locked from '@/components/nhl/Locked';
 import Start from '@/components/site/Start';
@@ -11,5 +11,5 @@ export default async function HomePage() {
   const user = await getSessionUser();
   if (!user) return <Landing />;
   if (!isNhlAdmin(user)) return <Locked email={user.email} />;
-  return <Start email={user.email} />;
+  return <Start email={user.email} owner={isSiteOwner(user)} />;
 }
