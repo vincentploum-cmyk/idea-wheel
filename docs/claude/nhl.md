@@ -1017,9 +1017,15 @@
   his last-5 iSCF by the same ratio (`goalGateSkaterOf`); defensemen, the goal-leak overrides (`positionGoalLeakOverride`,
   `buildDefenseRoleMarketBoost`, which already fire on the opponent's table) and `defenseGoalMultiplier` unchanged (forwards'
   goals follow the chances allowed at 0.78 and the goals allowed at 0.32; same audit, `tools/predictors/iscf_thresholds.py`).
-  `node tools/port-model-core.mjs [App.jsx]` applies all nine ports on the Mac (the 2026-10-13 shots odds, the
+  And the same day for shots (port it too, Vincent: "yes soften the cut and port it to the local app"): λ shots'
+  opponent read cuts for a tough defense at (1 − raw) × the skater's `defDamp` × `DEF_CUT_SHARE` 0.25 (`opponentShotMult`),
+  the lift unchanged at (raw − 1) × `defDamp`; the cut went in at 0.94 to 1.03 of its size before, so a depth skater lost
+  the whole cut and gained half the lift. Replayed on 5,843 graded skater-games with each shot tier's level fitted, the cut
+  scored best near nothing, 0.25 about twice the gain of matching the lift's damping (`docs/audits/2026-11-27-nhl-team-shots.md`,
+  `__tests__/nhl-model-def-cut.test.js`).
+  `node tools/port-model-core.mjs [App.jsx]` applies all ten ports on the Mac (the 2026-10-13 shots odds, the
   2026-10-20 goal odds, the 2026-10-27 weights, the 2026-11-07 minutes, the 2026-11-12 goals environment and
-  `defenseGoalMultiplier`, the 2026-11-13 line move, the 2026-11-27 matchup iCF and iSCF), each group all-or-nothing by exact-text anchors: a backup beside the
+  `defenseGoalMultiplier`, the 2026-11-13 line move, the 2026-11-27 matchup iCF and iSCF and the softer cut), each group all-or-nothing by exact-text anchors: a backup beside the
   file, a group already there reported as ported, a group with a differing anchor skipped and named, `--check` to
   look first. On 2026-10-27 App.jsx had neither odds port: the local app had published the ladder's odds since Oct 13.
 

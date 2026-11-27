@@ -24,6 +24,27 @@ The share inside a team is about right (season, predicted / actual share of the 
 W1 10.0% / 9.1%, C2 7.5% / 6.9%, W2 7.4% / 7.2%, D1 6.4% / 6.1%, D2 4.4% / 4.7%, depth forwards ~4.1% / 4.6%, D3 3.2% / 3.6%:
 the first line a touch heavy, the depth a touch light.
 
-Not changed: the run's λ is the model's math (ported from the local app). A likely cause to test is `defMult`'s asymmetry:
-a soft opponent's lift is damped by the skater's floor (`defDamp`), a tough opponent's cut is applied at 0.9× to 1.12× in
-full. The printed chances go through the calibration, which absorbs part of the bias.
+## The cut, replayed (Vincent: "yes soften the cut and port it to the local app")
+
+The scorecard export carries each graded skater's `defMult` and shot tier since this audit, so the cut can be replayed:
+the raw ratio recovered from the old cut, the new cut applied, λ scaled by the change in `defMult` (it also scales the
+shots cap). 2,889 of the 5,843 skater-games had a cut.
+
+| the cut | log-lik / skater-game | Brier 3+ | λ a skater (actual 1.535) | lowest quarter of team-games |
+| --- | --- | --- | --- | --- |
+| as it was, 0.94–1.03 × (1 − raw) | −1.6035 | 0.1544 | 1.368 | 18.7 / 24.3 |
+| × defDamp (the lift's damping) | −1.5989 | 0.1541 | 1.380 | 19.0 / 24.4 |
+| × defDamp × 0.5 | −1.5958 | 0.1539 | 1.401 | 19.6 / 24.2 |
+| **× defDamp × 0.25 (shipped)** | **−1.5947** | **0.1538** | 1.412 | 19.8 / 24.2 |
+| no cut | −1.5940 | 0.1539 | 1.422 | 20.0 / 24.3 |
+
+The run's λ runs low on its own (1.37 a skater against 1.54), so anything that raises it scores better; with each shot
+tier's level fitted on the same rows the order holds (no cut −1.5657, ×0.25 −1.5661, ×0.5 −1.5666, ×1 −1.5686, as it
+was −1.5695), and fitted before 11-13 and scored after (no cut −1.5701, ×0.25 −1.5702, ×1 −1.5720, as it was −1.5726).
+A free exponent on the whole `defMult` (lift and cut) scores best at 0.25 of its strength. The gain of ×1 over the old
+cut: +4.6 per 1,000 skater-games (95% 3.5 to 5.7, games resampled); ×0.5: +7.7 (5.9 to 9.7).
+
+Shipped: `DEF_CUT_SHARE` = 0.25 (`opponentShotMult` in `model-core.js`, port group 10). The two larger findings are left
+for a decision: the lift is too strong as well (an elite shooter against a soft defense: λ 3.31, 2.69 landed), and the
+run's λ is off by shot tier whatever the opponent (actual over λ, season: elite 0.86, good 1.09, average 1.16, weak 1.41).
+The board’s calibration was fitted on the old λ (the stored runs keep it); it learns the new one as runs made from today are graded.
