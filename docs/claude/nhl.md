@@ -1017,9 +1017,19 @@
   his last-5 iSCF by the same ratio (`goalGateSkaterOf`); defensemen, the goal-leak overrides (`positionGoalLeakOverride`,
   `buildDefenseRoleMarketBoost`, which already fire on the opponent's table) and `defenseGoalMultiplier` unchanged (forwards'
   goals follow the chances allowed at 0.78 and the goals allowed at 0.32; same audit, `tools/predictors/iscf_thresholds.py`).
-  `node tools/port-model-core.mjs [App.jsx]` applies all nine ports on the Mac (the 2026-10-13 shots odds, the
+  And the same day for points (port it too, Vincent: "now do the same for points with assists thresholds", then "go with
+  option 1"): the points environment reads chances allowed, not assists allowed. `cheatSheetMajorMultiplier`'s points
+  branch is `iscfPointMultiplier` (×exp(`ISCF_POINT_PER_SD` 0.069 per SD of the ISCF/G rank), about +12% at rank 1, −11% at
+  32; defensemen 1) in place of the Assists/G steps (+16% / +8% / −12% and the soft / hard counts), and `pointDefenseMult`'s
+  0.35 reads the iSCF ratio (`pointIscfRatio`) in place of the assists ratio. Held out on half the dates, the assists steps
+  made points worse than no read (forwards −38.7 deviance, defensemen −23.7), the iSCF rank term saved 42.3 for forwards and
+  nothing for defensemen; as a ratio on λ points iSCF allowed saved 68.5 against 30.3 for assists (same audit, "Points";
+  `tools/predictors/points_thresholds.py`, `points_env_fit.py`; `__tests__/nhl-model-points-env.test.js`). There is no
+  player-side assists gate to move: the model's only own-assists cuts are the style classifier (which also sets shots and
+  goals) and the defensemen's capability score.
+  `node tools/port-model-core.mjs [App.jsx]` applies all ten ports on the Mac (the 2026-10-13 shots odds, the
   2026-10-20 goal odds, the 2026-10-27 weights, the 2026-11-07 minutes, the 2026-11-12 goals environment and
-  `defenseGoalMultiplier`, the 2026-11-13 line move, the 2026-11-27 matchup iCF and iSCF), each group all-or-nothing by exact-text anchors: a backup beside the
+  `defenseGoalMultiplier`, the 2026-11-13 line move, the 2026-11-27 matchup iCF and iSCF and the points environment), each group all-or-nothing by exact-text anchors: a backup beside the
   file, a group already there reported as ported, a group with a differing anchor skipped and named, `--check` to
   look first. On 2026-10-27 App.jsx had neither odds port: the local app had published the ladder's odds since Oct 13.
 

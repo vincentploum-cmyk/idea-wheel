@@ -4355,6 +4355,23 @@ function buildCapabilityBaseFloors({ skater, pHA, isHome, effectiveToi, playerTo
   };
 }
 
+// ─── POINTS ENVIRONMENT (2026-11-27) ──────────────────────────────────────────
+// The opponent's points read on the cheat sheet is its ISCF/G rank at the position as a smooth term, like goals:
+// ×exp(0.069 per SD of rank), about +12% for the rank 1 defense and -11% for rank 32; defensemen none. 45,455
+// skater-games of 2025-26 and 2026-27, read leak-free on top of his own points rate and scored on held-out dates
+// (docs/audits/2026-11-27-nhl-icf-thresholds.md, "Points"): the assists-allowed rank steps it replaces
+// (+16% / +8% / -12%) made points worse than no opponent read at all (forwards -38.7 deviance, defensemen -23.7),
+// a smooth assists term barely helped (+5.6), the iSCF term did (+42.3); for defensemen it was flat (0.007 per SD).
+// Vincent: "now do the same for points with assists thresholds", then option 1: "go with option 1".
+const ISCF_POINT_PER_SD = 0.069;
+function iscfPointMultiplier(iscfRank, posKey, teams = 32) {
+  const r = Number(iscfRank);
+  if ((posKey || "").toUpperCase() === "D" || iscfRank == null || !Number.isFinite(r) || r <= 0) return 1;
+  const n = teams || 32;
+  const z = ((n + 1) / 2 - r) / (n / Math.sqrt(12));
+  return +Math.exp(ISCF_POINT_PER_SD * z).toFixed(3);
+}
+
 // ─── GOALS ENVIRONMENT (2026-11-12) ───────────────────────────────────────────
 // The opponent's goals read on the cheat sheet is its ISCF/G rank at the position, as a smooth
 // term: ×exp(0.04 per SD of rank), about +7% for the rank 1 defense and -6.5% for rank 32.
@@ -4396,14 +4413,9 @@ function cheatSheetMajorMultiplier(posStats, market, posKey) {
     else if (hard(shotRank, 24)) mult -= 0.12;
     if (openScore >= 3) mult += 0.08;
   } else if (market === 'points') {
-    const openScore = [assistRank, shotRank, icfRank, iffRank, iscfRank].filter((v) => soft(v, 16)).length;
-    const hardScore = [assistRank, shotRank, icfRank, iffRank, iscfRank].filter((v) => hard(v)).length;
-    if (open(assistRank, 10)) mult += 0.16;
-    else if (soft(assistRank, 16)) mult += 0.08;
-    if (open(shotRank, 12)) mult += 0.08;
-    if (openScore >= 3) mult += 0.08;
-    if (hardScore >= 3) mult -= 0.18;
-    else if (hard(assistRank, 24)) mult -= 0.12;
+    // Points: the smooth ISCF term (2026-11-27, above iscfPointMultiplier); the Assists/G rank steps (+16% / +8% /
+    // -12%, and the soft / hard counts with Shots) made points worse than no opponent read.
+    mult = iscfPointMultiplier(iscfRank, posKey);
   } else {
     // Goals: the smooth ISCF term (2026-11-12, above iscfGoalMultiplier); the Goals/G rank steps
     // (+18% / +9% / -12%, and the soft / hard counts with Shots) predicted nothing over his rate.
@@ -5010,11 +5022,14 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
         const pointsSeason = goalsSeason + astSeason;
         const rawPointsBlend = 0.35 * pointsL5 + 0.65 * pointsSeason;
         const pointsFloor = pointsL5 === 0 ? 0.9 * pointsSeason : 0.92 * pointsSeason;
-        const assistRatio = teamPos && defenseAvg
-          ? safeRatio(teamPos.assists || 0, Math.max(0.75, defenseAvg.assists || 0.75), 1)
+        // The 0.35 that read the opponent's assists allowed reads its scoring chances allowed (2026-11-27): on top of
+        // his points rate the iSCF ratio carried 68.5 of held-out deviance against 30.3 for assists, and with both in
+        // assists kept 0.14 to iSCF's 0.73 (docs/audits/2026-11-27-nhl-icf-thresholds.md, "Points"). No iSCF: neutral.
+        const pointIscfRatio = teamPos && defenseAvg && Number(teamPos.iscf) > 0
+          ? safeRatio(Number(teamPos.iscf), Math.max(3.5, defenseAvg.iscf || 3.5), 1)
           : 1;
         const pointDefenseMult = clamp(
-          0.45 * defenseGoalMult + 0.35 * assistRatio + 0.20 * safeRatio(teamPos?.shots || 0, Math.max(3.5, defenseAvg?.shots || 3.5), 1),
+          0.45 * defenseGoalMult + 0.35 * pointIscfRatio + 0.20 * safeRatio(teamPos?.shots || 0, Math.max(3.5, defenseAvg?.shots || 3.5), 1),
           0.84,
           1.22
         );
@@ -6343,6 +6358,8 @@ export {
   goalGateSkaterOf,
   ISCF_ENV_EXP,
   ISCF_ENV_MAX_SHIFT,
+  iscfPointMultiplier,
+  ISCF_POINT_PER_SD,
   resolvePaceTier,
   resolveRoleLabelAgainstCheatSheet,
   roleGoalAccessMultiplier,

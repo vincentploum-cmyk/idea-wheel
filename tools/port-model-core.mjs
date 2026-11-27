@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Port the site's model changes into the local model app (App.jsx, the model's source of truth),
-// the same edits made to components/nhl/model-core.js, in nine groups, each all-or-nothing:
+// the same edits made to components/nhl/model-core.js, in ten groups, each all-or-nothing:
 //   1. 2026-10-13 (a022443): p2s / p3s / p4s / p5s are the Poisson tails of λ shots; the ladder's
 //      figures ride along as ladderP3s / P4s / P5s and still set the attack score.
 //   2. 2026-10-20 (4ec641f): p1g / p2g / p3g are the Poisson tails of λ goals; the ladder's figures
@@ -27,6 +27,10 @@
 //      finisher / shooter gate, the finisher goal model) read matchupIscf: his iSCF times the opponent's iSCF allowed
 //      to his position over the league's, to the power 0.74, the shift held to +/-0.25, his last-5 iSCF by the same
 //      ratio; defensemen, the goal-leak overrides and defenseGoalMultiplier unchanged (same audit). Needs group 8 in first.
+//  10. 2026-11-27: the points environment reads chances allowed, not assists allowed: cheatSheetMajorMultiplier's
+//      points branch is a smooth ISCF/G rank term (iscfPointMultiplier, ISCF_POINT_PER_SD 0.069, defensemen 1) in
+//      place of the Assists/G steps, and λ points' pointDefenseMult takes its 0.35 from the iSCF ratio in place of the
+//      assists ratio (same audit, "Points").
 //
 //   node tools/port-model-core.mjs [path to App.jsx] [--check]
 //
@@ -359,6 +363,24 @@ const ISCF_ENV = [
   },
 ];
 
+const POINTS_ENV = [
+  {
+    name: "the smooth ISCF points term (iscfPointMultiplier, ISCF_POINT_PER_SD)",
+    old: "// \u2500\u2500\u2500 GOALS ENVIRONMENT (2026-11-12)",
+    new: "// \u2500\u2500\u2500 POINTS ENVIRONMENT (2026-11-27) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n// The opponent's points read on the cheat sheet is its ISCF/G rank at the position as a smooth term, like goals:\n// \u00d7exp(0.069 per SD of rank), about +12% for the rank 1 defense and -11% for rank 32; defensemen none. 45,455\n// skater-games of 2025-26 and 2026-27, read leak-free on top of his own points rate and scored on held-out dates\n// (docs/audits/2026-11-27-nhl-icf-thresholds.md, \"Points\"): the assists-allowed rank steps it replaces\n// (+16% / +8% / -12%) made points worse than no opponent read at all (forwards -38.7 deviance, defensemen -23.7),\n// a smooth assists term barely helped (+5.6), the iSCF term did (+42.3); for defensemen it was flat (0.007 per SD).\n// Vincent: \"now do the same for points with assists thresholds\", then option 1: \"go with option 1\".\nconst ISCF_POINT_PER_SD = 0.069;\nfunction iscfPointMultiplier(iscfRank, posKey, teams = 32) {\n  const r = Number(iscfRank);\n  if ((posKey || \"\").toUpperCase() === \"D\" || iscfRank == null || !Number.isFinite(r) || r <= 0) return 1;\n  const n = teams || 32;\n  const z = ((n + 1) / 2 - r) / (n / Math.sqrt(12));\n  return +Math.exp(ISCF_POINT_PER_SD * z).toFixed(3);\n}\n\n// \u2500\u2500\u2500 GOALS ENVIRONMENT (2026-11-12)",
+  },
+  {
+    name: "the cheat sheet's points multiplier (the ISCF term in place of the Assists/G steps)",
+    old: "  } else if (market === 'points') {\n    const openScore = [assistRank, shotRank, icfRank, iffRank, iscfRank].filter((v) => soft(v, 16)).length;\n    const hardScore = [assistRank, shotRank, icfRank, iffRank, iscfRank].filter((v) => hard(v)).length;\n    if (open(assistRank, 10)) mult += 0.16;\n    else if (soft(assistRank, 16)) mult += 0.08;\n    if (open(shotRank, 12)) mult += 0.08;\n    if (openScore >= 3) mult += 0.08;\n    if (hardScore >= 3) mult -= 0.18;\n    else if (hard(assistRank, 24)) mult -= 0.12;\n",
+    new: "  } else if (market === 'points') {\n    // Points: the smooth ISCF term (2026-11-27, above iscfPointMultiplier); the Assists/G rank steps (+16% / +8% /\n    // -12%, and the soft / hard counts with Shots) made points worse than no opponent read.\n    mult = iscfPointMultiplier(iscfRank, posKey);\n",
+  },
+  {
+    name: "\u03bb points' opponent read (the iSCF ratio in place of the assists ratio)",
+    old: "        const assistRatio = teamPos && defenseAvg\n          ? safeRatio(teamPos.assists || 0, Math.max(0.75, defenseAvg.assists || 0.75), 1)\n          : 1;\n        const pointDefenseMult = clamp(\n          0.45 * defenseGoalMult + 0.35 * assistRatio + 0.20 * safeRatio(teamPos?.shots || 0, Math.max(3.5, defenseAvg?.shots || 3.5), 1),\n",
+    new: "        // The 0.35 that read the opponent's assists allowed reads its scoring chances allowed (2026-11-27): on top of\n        // his points rate the iSCF ratio carried 68.5 of held-out deviance against 30.3 for assists, and with both in\n        // assists kept 0.14 to iSCF's 0.73 (docs/audits/2026-11-27-nhl-icf-thresholds.md, \"Points\"). No iSCF: neutral.\n        const pointIscfRatio = teamPos && defenseAvg && Number(teamPos.iscf) > 0\n          ? safeRatio(Number(teamPos.iscf), Math.max(3.5, defenseAvg.iscf || 3.5), 1)\n          : 1;\n        const pointDefenseMult = clamp(\n          0.45 * defenseGoalMult + 0.35 * pointIscfRatio + 0.20 * safeRatio(teamPos?.shots || 0, Math.max(3.5, defenseAvg?.shots || 3.5), 1),\n",
+  },
+];
+
 export const GROUPS = [
   { key: 'shotsOdds20261013', label: 'shots odds (2026-10-13): p2s / p3s / p4s / p5s the Poisson tails of λ shots, the ladder as ladderP3s / P4s / P5s', edits: SHOTS_ODDS },
   { key: 'goalOdds20261020', label: 'goal odds (2026-10-20): p1g / p2g / p3g the Poisson tails of λ goals, the ladder as ladderP1g / P2g / P3g', edits: GOAL_ODDS },
@@ -369,6 +391,7 @@ export const GROUPS = [
   { key: 'lineMove20261113', label: 'shots follow the posted line\'s minutes (2026-11-13): lineMoveMultiplier in place of the up-only +6% a line', edits: LINE_MOVE },
   { key: 'icfEnv20261127', label: 'the matchup moves the iCF the gates read (2026-11-27): matchupIcf, forwards, +/-0.5 at most', edits: ICF_ENV },
   { key: 'iscfEnv20261127', label: 'the matchup moves the iSCF the goal gates read (2026-11-27): matchupIscf, forwards, +/-0.25 at most', edits: ISCF_ENV },
+  { key: 'pointsEnv20261127', label: 'points environment (2026-11-27): the cheat sheet\'s points multiplier a smooth ISCF/G term, λ points\' 0.35 on the iSCF ratio, assists allowed out', edits: POINTS_ENV },
 ];
 
 /** The end index of the `function poissonAtLeast(` body (after its closing brace), or -1. */
