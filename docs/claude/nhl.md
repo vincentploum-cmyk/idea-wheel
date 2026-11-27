@@ -1033,9 +1033,16 @@
   the whole cut and gained half the lift. Replayed on 5,843 graded skater-games with each shot tier's level fitted, the cut
   scored best near nothing, 0.25 about twice the gain of matching the lift's damping (`docs/audits/2026-11-27-nhl-team-shots.md`,
   `__tests__/nhl-model-def-cut.test.js`).
-  `node tools/port-model-core.mjs [App.jsx]` applies all eleven ports on the Mac (the 2026-10-13 shots odds, the
+  And the same day (port it too, Vincent: "fix the tier bias first"): the published λ shots is `shotSpreadLambda`, 1.30 ·
+  λ^0.611 (`SHOT_SPREAD_A` / `_B`), and p2s … p5s its Poisson tails; the shot ladder, the attack score and the tiers read
+  the λ before it (`lambdaSRaw` on the row). The tier bias (elite landing 0.85 of λ, weak 1.41) was the spread: inside every
+  tier low reads ran low and high reads high; held out the curve beat one factor per tier (+52 against +32 per 1,000
+  skater-games). The board's calibration reads stored runs as the model makes them now (`lambdaSNow` in
+  `lib/nhl-data/calibration.js`: the cut replayed before 11-27, the spread on every run without `lambdaSRaw`), so it is
+  not applied twice (`docs/audits/2026-11-27-nhl-shot-spread.md`, `__tests__/nhl-model-shot-spread.test.js`).
+  `node tools/port-model-core.mjs [App.jsx]` applies all twelve ports on the Mac (the 2026-10-13 shots odds, the
   2026-10-20 goal odds, the 2026-10-27 weights, the 2026-11-07 minutes, the 2026-11-12 goals environment and
-  `defenseGoalMultiplier`, the 2026-11-13 line move, the 2026-11-27 matchup iCF and iSCF, the points environment and the softer cut), each group all-or-nothing by exact-text anchors: a backup beside the
+  `defenseGoalMultiplier`, the 2026-11-13 line move, the 2026-11-27 matchup iCF and iSCF, the points environment, the softer cut and the shot spread), each group all-or-nothing by exact-text anchors: a backup beside the
   file, a group already there reported as ported, a group with a differing anchor skipped and named, `--check` to
   look first. On 2026-10-27 App.jsx had neither odds port: the local app had published the ladder's odds since Oct 13.
 

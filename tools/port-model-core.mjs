@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Port the site's model changes into the local model app (App.jsx, the model's source of truth),
-// the same edits made to components/nhl/model-core.js, in eleven groups, each all-or-nothing:
+// the same edits made to components/nhl/model-core.js, in twelve groups, each all-or-nothing:
 //   1. 2026-10-13 (a022443): p2s / p3s / p4s / p5s are the Poisson tails of λ shots; the ladder's
 //      figures ride along as ladderP3s / P4s / P5s and still set the attack score.
 //   2. 2026-10-20 (4ec641f): p1g / p2g / p3g are the Poisson tails of λ goals; the ladder's figures
@@ -34,6 +34,9 @@
 //  11. 2026-11-27: λ shots' opponent read (defMult) cuts for a tough defense at (1 - raw) x defDamp x DEF_CUT_SHARE (0.25),
 //      the skater's shot-tier damping as the lift has, at a quarter of it; the lift unchanged (opponentShotMult;
 //      docs/audits/2026-11-27-nhl-team-shots.md). Needs group 9 in first (its anchor is the end of goalGateSkaterOf).
+//  12. 2026-11-27: the published λ shots (and p2s … p5s, its Poisson tails) = 1.30 · λ^0.611 (shotSpreadLambda), the
+//      ladder, attack score and tiers on the λ before it, kept as lambdaSRaw (docs/audits/2026-11-27-nhl-shot-spread.md).
+//      Needs group 11 in first (its anchor is the end of opponentShotMult).
 //
 //   node tools/port-model-core.mjs [path to App.jsx] [--check]
 //
@@ -397,6 +400,29 @@ const DEF_CUT = [
   },
 ];
 
+const SHOT_SPREAD = [
+  {
+    name: "the published λ shots' spread (shotSpreadLambda, SHOT_SPREAD_A, SHOT_SPREAD_B)",
+    old: "    : 1 - (1 - rawDefMult) * defDamp * DEF_CUT_SHARE;\n}\n",
+    new: "    : 1 - (1 - rawDefMult) * defDamp * DEF_CUT_SHARE;\n}\n\n// ─── THE PUBLISHED λ SHOTS PULLED TOWARD THE MIDDLE (2026-11-27) ─────────────\n// The run's λ shots spread too wide: on the season's 5,843 graded skater-games (the softer cut above replayed in), a\n// skater read under 0.5 took 0.78 shots and one read over 3.5 took 3.23 on 4.20; by shot tier elite landed 0.85 of its λ\n// and weak 1.41, and inside every tier the low reads ran low and the high reads high, so the tier only follows the size\n// of λ. Fitted on the games before 11-13 and scored on those after, landed = A · λ^B beat the λ as it was (log-likelihood\n// +52 per 1,000 skater-games, Brier 3+ 0.1573 → 0.1514, 4+ 0.0824 → 0.0791) and one factor per tier (+32); on the season\n// A = 1.30, B = 0.611: a read of 1.96 stays, 0.36 becomes 0.70, 4.2 becomes 3.12 (docs/audits/2026-11-27-nhl-shot-spread.md).\n// Applied to the published λ shots and the odds read from it (p2s … p5s); the shot ladder, the attack score and the\n// tiers read the λ before it (`lambdaSRaw` on the row). Vincent: \"fix the tier bias first\". B = 1 and A = 1 turn it off.\nconst SHOT_SPREAD_A = 1.3;\nconst SHOT_SPREAD_B = 0.611;\nfunction shotSpreadLambda(lam) {\n  const v = Number(lam);\n  if (!(v > 0)) return v;\n  return SHOT_SPREAD_A * Math.pow(v, SHOT_SPREAD_B);\n}\n",
+  },
+  {
+    name: "λ shots after the line move can be pulled in",
+    old: "        const lineBoostedS = cappedLambdaS * (1 + lineBoost);\n",
+    new: "        let lineBoostedS = cappedLambdaS * (1 + lineBoost);\n",
+  },
+  {
+    name: "the published λ shots and its odds read it (the ladder before it)",
+    old: "        // Final hard clamp after all overlays so rendered probabilities can never exceed 100%\n",
+    new: "        // The published λ shots (and the odds below, its Poisson tails) pulled toward the middle (shotSpreadLambda, 2026-11-27);\n        // the ladder above read the λ before it, kept on the row as lambdaSRaw.\n        const lambdaSRaw = lineBoostedS;\n        lineBoostedS = shotSpreadLambda(lineBoostedS);\n        // Final hard clamp after all overlays so rendered probabilities can never exceed 100%\n",
+  },
+  {
+    name: "the row keeps the λ before it (lambdaSRaw)",
+    old: "          lambdaS: +lineBoostedS.toFixed(2),\n",
+    new: "          lambdaS: +lineBoostedS.toFixed(2),\n          lambdaSRaw: +lambdaSRaw.toFixed(2),\n",
+  },
+];
+
 export const GROUPS = [
   { key: 'shotsOdds20261013', label: 'shots odds (2026-10-13): p2s / p3s / p4s / p5s the Poisson tails of λ shots, the ladder as ladderP3s / P4s / P5s', edits: SHOTS_ODDS },
   { key: 'goalOdds20261020', label: 'goal odds (2026-10-20): p1g / p2g / p3g the Poisson tails of λ goals, the ladder as ladderP1g / P2g / P3g', edits: GOAL_ODDS },
@@ -409,6 +435,7 @@ export const GROUPS = [
   { key: 'iscfEnv20261127', label: 'the matchup moves the iSCF the goal gates read (2026-11-27): matchupIscf, forwards, +/-0.25 at most', edits: ISCF_ENV },
   { key: 'pointsEnv20261127', label: 'points environment (2026-11-27): the cheat sheet\'s points multiplier a smooth ISCF/G term, λ points\' 0.35 on the iSCF ratio, assists allowed out', edits: POINTS_ENV },
   { key: 'defCut20261127', label: 'a tough opponent cuts λ shots a quarter as hard as a soft one lifts them (2026-11-27): opponentShotMult, DEF_CUT_SHARE 0.25', edits: DEF_CUT },
+  { key: 'shotSpread20261127', label: 'the published λ shots pulled toward the middle (2026-11-27): 1.30 · λ^0.611, the ladder on the λ before it (lambdaSRaw)', edits: SHOT_SPREAD },
 ];
 
 /** The end index of the `function poissonAtLeast(` body (after its closing brace), or -1. */

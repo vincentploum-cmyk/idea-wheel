@@ -1,7 +1,7 @@
 import { describe, expect, test } from '@jest/globals';
 import * as XLSX from 'xlsx';
 import { matchupWorkbooks } from '../lib/nhl-data/propfinder-api';
-import { parseMatchups, buildProjections } from '../components/nhl/model-core';
+import { parseMatchups, buildProjections, shotSpreadLambda } from '../components/nhl/model-core';
 import { TEAMS, PLAYERS } from './fixtures/propfinder-api';
 
 const poissonAtLeast = (lambda, k) => {
@@ -28,6 +28,13 @@ describe('the published odds are the Poisson tails of the row’s λ (shots sinc
       expect(r.p5s).toBeCloseTo(Math.min(0.999, poissonAtLeast(r.lambdaS, 5)), 2);
       expect(r.p2s).toBeCloseTo(Math.min(0.999, poissonAtLeast(r.lambdaS, 2)), 2);
       expect(typeof r.ladderP3s).toBe('number');
+    }
+  });
+
+  test('the published λ shots is the spread of the λ the ladder read (2026-11-27)', () => {
+    for (const r of rows) {
+      expect(r.lambdaSRaw).toBeGreaterThan(0);
+      expect(r.lambdaS).toBeCloseTo(shotSpreadLambda(r.lambdaSRaw), 1);
     }
   });
 

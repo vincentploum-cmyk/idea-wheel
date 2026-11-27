@@ -1446,6 +1446,23 @@ function opponentShotMult(rawDefMult, defDamp) {
     : 1 - (1 - rawDefMult) * defDamp * DEF_CUT_SHARE;
 }
 
+// ─── THE PUBLISHED λ SHOTS PULLED TOWARD THE MIDDLE (2026-11-27) ─────────────
+// The run's λ shots spread too wide: on the season's 5,843 graded skater-games (the softer cut above replayed in), a
+// skater read under 0.5 took 0.78 shots and one read over 3.5 took 3.23 on 4.20; by shot tier elite landed 0.85 of its λ
+// and weak 1.41, and inside every tier the low reads ran low and the high reads high, so the tier only follows the size
+// of λ. Fitted on the games before 11-13 and scored on those after, landed = A · λ^B beat the λ as it was (log-likelihood
+// +52 per 1,000 skater-games, Brier 3+ 0.1573 → 0.1514, 4+ 0.0824 → 0.0791) and one factor per tier (+32); on the season
+// A = 1.30, B = 0.611: a read of 1.96 stays, 0.36 becomes 0.70, 4.2 becomes 3.12 (docs/audits/2026-11-27-nhl-shot-spread.md).
+// Applied to the published λ shots and the odds read from it (p2s … p5s); the shot ladder, the attack score and the
+// tiers read the λ before it (`lambdaSRaw` on the row). Vincent: "fix the tier bias first". B = 1 and A = 1 turn it off.
+const SHOT_SPREAD_A = 1.3;
+const SHOT_SPREAD_B = 0.611;
+function shotSpreadLambda(lam) {
+  const v = Number(lam);
+  if (!(v > 0)) return v;
+  return SHOT_SPREAD_A * Math.pow(v, SHOT_SPREAD_B);
+}
+
 
 function positionGoalLeakOverride({ posKey, todayLine, effectiveToi, skater, teamPos }) {
   if (!teamPos) return null;
@@ -5061,7 +5078,7 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
         );
 
         const lineBoost = lineMoveMultiplier(posKey, prep.postedLine, playerToi, skater.toiL5, skater.toiSeason) - 1;
-        const lineBoostedS = cappedLambdaS * (1 + lineBoost);
+        let lineBoostedS = cappedLambdaS * (1 + lineBoost);
         const lineBoostedG = baseLambdaG * (1 + lineBoost * 0.12);
         const lineBoostedP = baseLambdaP * (1 + lineBoost * 0.08);
 
@@ -5827,6 +5844,10 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
           volatilityPenalty,
         });
 
+        // The published λ shots (and the odds below, its Poisson tails) pulled toward the middle (shotSpreadLambda, 2026-11-27);
+        // the ladder above read the λ before it, kept on the row as lambdaSRaw.
+        const lambdaSRaw = lineBoostedS;
+        lineBoostedS = shotSpreadLambda(lineBoostedS);
         // Final hard clamp after all overlays so rendered probabilities can never exceed 100%
         const ladderP3s = clamp(Number.isFinite(Number(p3s)) ? Number(p3s) : 0, 0, 0.999);
         const ladderP4s = clamp(Number.isFinite(Number(p4s)) ? Number(p4s) : 0, 0, 0.999);
@@ -5950,6 +5971,7 @@ function buildProjections(games, histData, playerHomeAway, lineupData, paceData)
           effectiveToi: +effectiveToi.toFixed(1),
           baseLambdaS: +baseLambdaS.toFixed(2),
           lambdaS: +lineBoostedS.toFixed(2),
+          lambdaSRaw: +lambdaSRaw.toFixed(2),
           lambdaP: +lambdaPDisplay.toFixed(3),
           lambdaG: +lambdaGDisplay.toFixed(3),
           goalOpportunityLambda: goalProbModel.opportunityLambda,
@@ -6376,6 +6398,9 @@ export {
   ISCF_POINT_PER_SD,
   opponentShotMult,
   DEF_CUT_SHARE,
+  shotSpreadLambda,
+  SHOT_SPREAD_A,
+  SHOT_SPREAD_B,
   resolvePaceTier,
   resolveRoleLabelAgainstCheatSheet,
   roleGoalAccessMultiplier,
