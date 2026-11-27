@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Flags, ICON, TopSpotBadge, B2bBadge } from './flags';
+import { Flags, ICON, TopSpotBadge, B2bBadge, PointBadge } from './flags';
 import { SOFT_TOP } from '@/lib/nhl-data/picks-pure';
 import { Headshot, TeamLogo, headshotUrl } from './media';
 import { TeamLink } from './links';
@@ -257,7 +257,7 @@ function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false, 
   // Probability as "42%" (not `pct`, which converts rink feet to % and places the chip below).
   const prob = (v) => (v == null ? null : `${Math.round(v * 100)}%`);
   // The figures as Best bets prints them when the board's read rides on the chip (`m.run` = the run as stated, lib/nhl-data/board-reads.js).
-  const modelText = m ? ` · ${m.run ? 'board' : 'model'}: ${num(m.sog)} SOG, ${num(m.g, 2)} G${m.p3s != null ? `, 3+ SOG ${prob(m.p3s)}` : ''}${m.p1g != null ? `, 1+ G ${prob(m.p1g)}` : ''}${m.gateOpen === false ? ' (gate closed)' : ''}${m.fire ? ' · ON FIRE (1+ point ≥ 50%, 2.0+ iSCF/G, 16+ min)' : ''}${m.run ? ` · the run as stated: ${num(m.run.sog)} SOG, ${num(m.run.g, 2)} G${m.run.p3s != null ? `, 3+ SOG ${prob(m.run.p3s)}` : ''}${m.run.p1g != null ? `, 1+ G ${prob(m.run.p1g)}` : ''}` : ''}` : '';
+  const modelText = m ? ` · ${m.run ? 'board' : 'model'}: ${num(m.sog)} SOG, ${num(m.g, 2)} G${m.p3s != null ? `, 3+ SOG ${prob(m.p3s)}` : ''}${m.p1g != null ? `, 1+ G ${prob(m.p1g)}` : ''}${m.gateOpen === false ? ' (gate closed)' : ''}${m.fire ? ` · 1P: 1+ point ${m.p1p != null ? prob(m.p1p) : '≥ 50%'} (2.0+ iSCF/G, 16+ min)` : ''}${m.run ? ` · the run as stated: ${num(m.run.sog)} SOG, ${num(m.run.g, 2)} G${m.run.p3s != null ? `, 3+ SOG ${prob(m.run.p3s)}` : ''}${m.run.p1g != null ? `, 1+ G ${prob(m.run.p1g)}` : ''}` : ''}` : '';
   // Head to head: his stored games against this opponent; the mark when he scores more than a goal a game on them.
   const h2hText = p.h2h ? ` · vs ${p.opp}: ${p.h2h.g} G, ${p.h2h.sog} SOG in ${p.h2h.gp} GP${p.h2h.hot ? ' (scores on them)' : ''}${p.h2h.shotsHot ? ' (fires at them)' : ''}` : '';
   // The h2h mark follows the rink's metric: scorers when the ice shows goals, shooters when it shows shots.
@@ -284,7 +284,7 @@ function Chip({ p, x, y, minGp, actual, played, metric = 'sog', picked = false, 
         <i className="nhlx-rk-num">{p.number ?? p.pos}</i>
       </span>
       <span className="nhlx-rk-meta">
-        <b className="nhlx-rk-name">{m?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire">🔥</span> : null}{h2hMark ? <span className="nhlx-rk-h2h" title={h2hTitle}>h2h</span> : null}<Flags c={p} stat={metric} className="nhlx-rk-flags" soft={false} /><TopSpotBadge c={p} stat={metric} /><SlotBadge p={p} lines={lines} metric={metric} /><PpBadge pp={p.pp} metric={metric} /><PeriodBadges periods={p.periods} /><span className="nhlx-rk-nm">{shortName(p.name)}</span></b>
+        <b className="nhlx-rk-name">{h2hMark ? <span className="nhlx-rk-h2h" title={h2hTitle}>h2h</span> : null}<Flags c={p} stat={metric} className="nhlx-rk-flags" soft={false} /><TopSpotBadge c={p} stat={metric} /><SlotBadge p={p} lines={lines} metric={metric} /><PpBadge pp={p.pp} metric={metric} /><PointBadge m={m} /><PeriodBadges periods={p.periods} /><span className="nhlx-rk-nm">{shortName(p.name)}</span></b>
         {played ? (actual
           ? <span className={`nhlx-rk-stat is-actual${(m?.sog ?? p.projSog) != null && actual.sog >= (m?.sog ?? p.projSog) ? ' is-over' : ''}`}><em>{actual.sog}</em>{NB}SOG{NB}· <em>{actual.g}</em>{NB}G{actual.a ? <>{NB}· <em>{actual.a}</em>{NB}A</> : null}{m?.sog != null ? <i>m{NB}{num(m.sog)}</i> : p.projSog != null ? <i>p{NB}{num(p.projSog)}</i> : null}</span>
           : <span className="nhlx-rk-stat">did not play</span>)
@@ -534,7 +534,7 @@ export function RinkLegend({ metric = 'sog' }) {
       <span><i className="is-mid" /> neutral: ranks 12–21 of 32, or 12–22 when PropFinder tints the ice (its table’s split, the colours of the cells above)</span>
       <span><i className="is-tough" /> stingy: ranks 22–32, or 23–32 from PropFinder</span>
       <span>on each player: the model’s projected SOG and goals from the latest saved run for this slate (3+ SOG and 1+ G odds in the tooltip), or a matchup read when no run exists; once the game is final, the actual shots, goals and assists with the model’s number after “m”; click for the player card</span>
-      <span>🔥 on fire, by the model’s rule: 1+ point at 50% or better, 2.0+ scoring chances per game, 16+ minutes</span>
+      <span><i className="nhlx-rk-slot is-info nhlx-rk-pt is-legend">1P 55%</i> the model’s points flag: his 1+ point chance tonight, shown when it is 50% or better and he has 2.0+ scoring chances a game and 16+ minutes; about points only, not his form (that is the flame / snowflake)</span>
       <span><i className="nhlx-rk-lines-pill is-ok is-legend">GameDayTweets</i> under the team: where the lines came from — green, the beat writers’ tweet from the warm-up window (90 minutes before puck drop) or the game; amber, an earlier tweet (projected lines) or NHL.com’s projected lineup; red, a guess (PropFinder’s depth chart, the roster or the last known lineup) until a tweet or preview arrives; hover for the time and the link</span>
       <span><i className="nhlx-rk-slot is-legend">LW1</i> his line slot tonight; the hover gives the {word} the opponent gives up to that slot per skater a game this season (the Defense tab’s by-line table, both venues), untinted because that table has not predicted shots beyond a skater’s own rate; the rink head names the slot the opponent gives the most to, with its rank against the league there, and who sits at that slot tonight</span>
       <span><i className="nhlx-rk-slot is-soft nhlx-rk-top is-legend">RW #3</i> a top-{SOFT_TOP} soft spot: the opponent allows one of the five most {word} to his position on PropFinder’s table above the rink, the tab it opens on (the Soft spots list on Best bets)</span>

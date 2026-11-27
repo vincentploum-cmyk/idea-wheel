@@ -39,7 +39,7 @@ function CandidateRow({ c, rank }) {
       <LeakCell c={c} />
       <td>{c.h2h ? <>{c.h2h.hot ? <span className="nhlx-rk-h2h is-legend">h2h</span> : null}{c.h2h.g} G in {c.h2h.gp} GP</> : <span className="nhlx-auto-meta">—</span>}</td>
       <td title={c.h2h ? `${c.h2h.sog} shots in ${c.h2h.gp} meeting${c.h2h.gp === 1 ? '' : 's'} with ${c.opp}, this season and last` : undefined}>{c.h2h ? <>{c.h2h.shotsHot ? <span className="nhlx-rk-h2h is-legend">h2h</span> : null}<b>{c.h2h.spg.toFixed(1)}</b> <small className="nhlx-auto-meta">{c.h2h.sog} in {c.h2h.gp}</small></> : <span className="nhlx-auto-meta">—</span>}</td>
-      <td title={c.modelled ? `His 1+ goal chance as Best bets prints it for the latest saved run${c.model?.board?.calibrated ? ' (calibrated to what such calls have landed this season)' : ''}${c.model?.run?.p1g != null && c.model.run.p1g !== c.p1g ? `; the run as stated: ${pct(c.model.run.p1g)}` : ''}` : 'No model run: 1+ goal odds from the matchup read'}><b>{pct(c.p1g)}</b>{c.modelled ? null : <i className="nhlx-fg-rank">read</i>}{c.model?.fire ? <span className="nhlx-rk-fire" role="img" aria-label="on fire"> 🔥</span> : null}</td>
+      <td title={c.modelled ? `His 1+ goal chance as Best bets prints it for the latest saved run${c.model?.board?.calibrated ? ' (calibrated to what such calls have landed this season)' : ''}${c.model?.run?.p1g != null && c.model.run.p1g !== c.p1g ? `; the run as stated: ${pct(c.model.run.p1g)}` : ''}` : 'No model run: 1+ goal odds from the matchup read'}><b>{pct(c.p1g)}</b>{c.modelled ? null : <i className="nhlx-fg-rank">read</i>}</td>
       <td><div className="nhlx-fg-score"><div className="nhlx-fg-bar"><i style={{ width: `${c.score}%` }} /></div><b>{c.score}</b></div></td>
     </tr>
   );

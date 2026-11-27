@@ -351,7 +351,12 @@
   hover. Vincent, 2026-11-10: "mark the players in the rinks with the same flame as players that are on a hot streak",
   shipped as the flame; 2026-11-12 its own badge ("Sure"), since one flame for a streak and a matchup could not be told
   apart on a phone: the flame is the hot streak alone, on the plays strip per play, and in the all-skaters table's
-  L5 S/G and Goals cells; `buildSlate` puts
+  L5 S/G and Goals cells. **The model's points flag is a badge, not a flame** (Vincent, 2026-11-27, of a cold
+  Rantanen wearing a 🔥 on the rink: "how can there be a flame for this player?", then "replace the badge"): the model's
+  on-fire rule (`isOnFire` in `model-core.js`: 1+ point ≥ 50%, 2.0+ iSCF/G, 16+ min; a projection and usage read, no
+  form in it) shows as `PointBadge` in `flags.jsx`, "1P 55%" in rink blue (`is-info`) on the chip; in the Model tab's
+  table a "1P" pill in the 1+ point cell (it sat in the 1+ G cell before); off the First goal panel (a goals table). No
+  🔥 is left on the NHL pages but the player card's Hot form chip; `buildSlate` puts
   `heat` and `oppPos` on every skater and `sidePlays` carries them onto the plays. A stored game grades the rows
   (`withActuals` / `hitOf` in `picks-pure.js`: each skater's box-score SOG and goals ride on his row as `actual`,
   null when he did not play): every probability cell green when he reached that market's floor, red when he fell
