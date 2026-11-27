@@ -566,7 +566,7 @@ function ProbCell({ p, hist, highlight, onHover, onLeave, prop, fire, stated = n
     >
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
-          {fire && <span style={{ fontSize: "19px", lineHeight: 1 }}>🔥</span>}
+          {fire && <i className="nhlx-rk-slot is-info nhlx-rk-pt" title="The model's points flag: 1+ point at 50% or better, 2.0+ scoring chances a game this season, 16+ minutes">1P</i>}
           <span
             title={statedTitle}
             style={{
@@ -1808,9 +1808,9 @@ function ResultsTable({ data, hasHist, matchups = [], rankingsData = null }) {
                       <ProbCell p={r.p3s} stated={r.run?.p3s} hist={r.hist.s3} highlight={sortCol === "p3s"} onHover={showTip} onLeave={hideTip} prop="p3s" />
                       <ProbCell p={r.p4s} stated={r.run?.p4s} hist={r.hist.s4} highlight={sortCol === "p4s"} onHover={showTip} onLeave={hideTip} prop="p4s" />
                       <ProbCell p={r.p5s} stated={r.run?.p5s} hist={r.hist.s5} highlight={sortCol === "p5s"} onHover={showTip} onLeave={hideTip} prop="p5s" />
-                      <ProbCell p={r.p1p} hist={null} highlight={sortCol === "p1p"} onHover={showTip} onLeave={hideTip} prop="p1p" />
+                      <ProbCell p={r.p1p} hist={null} highlight={sortCol === "p1p"} onHover={showTip} onLeave={hideTip} prop="p1p" fire={isOnFire(r)} />
                       <ProbCell p={r.p2p} hist={null} highlight={sortCol === "p2p"} onHover={showTip} onLeave={hideTip} prop="p2p" />
-                      <ProbCell p={r.p1g} stated={r.run?.p1g} hist={r.hist.g1} highlight={sortCol === "p1g"} onHover={showTip} onLeave={hideTip} prop="p1g" fire={isOnFire(r)} />
+                      <ProbCell p={r.p1g} stated={r.run?.p1g} hist={r.hist.g1} highlight={sortCol === "p1g"} onHover={showTip} onLeave={hideTip} prop="p1g" />
                       <ProbCell p={r.p2g} stated={r.run?.p2g} hist={r.hist.g2} highlight={sortCol === "p2g"} onHover={showTip} onLeave={hideTip} prop="p2g" />
                       <ProbCell p={r.p3g} hist={null} highlight={sortCol === "p3g"} onHover={showTip} onLeave={hideTip} />
                     </tr>

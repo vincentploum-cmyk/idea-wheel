@@ -61,6 +61,19 @@ export function TopSpotBadge({ c, stat }) {
 }
 
 /**
+ * The model's point badge on a rink chip: "1P 55%", rink blue, when the run's row passes the model's on-fire rule
+ * (`isOnFire` in model-core.js: 1+ point at 50% or better, 2.0+ iSCF/G this season, 16+ minutes), the figure his
+ * 1+ point chance tonight. Until 2026-11-27 a 🔥, which read as a hot streak beside the form flame / snowflake
+ * (Vincent, of a cold Rantanen wearing it: "how can there be a flame for this player?"). `m` = the chip's model object.
+ */
+export function PointBadge({ m }) {
+  if (!m?.fire) return null;
+  const pc = m.p1p != null ? Math.round(m.p1p * 100) : null;
+  const title = `The model's points flag: 1+ point ${pc != null ? `at ${pc}%` : 'at 50% or better'} tonight, with 2.0+ scoring chances a game this season and 16+ minutes. About points only, not his form, shots or goals`;
+  return <i className="nhlx-rk-slot is-info nhlx-rk-pt" title={title} aria-label={title}>1P{pc != null ? ` ${pc}%` : ''}</i>;
+}
+
+/**
  * The back-to-back badge beside a team's name (Vincent, 2026-11-23: "Can we add a b2b badge next to the team name for
  * nhl?"): "B2B" when the team played last night (the slate side's `b2b`, goalies-pure.js playedLastNight). The hover says
  * what it is worth: its own skaters shoot about 2.6% less (the study λ's SHOTS_FIT.b2b); on the road, the skaters facing it
