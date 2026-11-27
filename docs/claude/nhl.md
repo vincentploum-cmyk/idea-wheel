@@ -497,7 +497,7 @@
   is in the skaters' λ, the special teams measured nothing); fitted on 2025-26's team-games, checked on 2026-27 (MAE 1.37 a
   team against the league's 1.38; the skaters' sum rescaled alone read 1.364, within noise, the team reads kept for the
   goaltending they carry) — the total, each side's win chance (`winProbability`: a Poisson race, a tie split in half) with
-  the fair price, MoneyPuck's expected goals on the hover as a comparison. **Stored before puck drop** (`stampProjectedScores`
+  the fair price, MoneyPuck's expected goals on the hover as a comparison. **Scaled by `SCORE.level` = 1.10 since 2026-11-27** (Vincent: "check the score prediction per game over the last 40 games and see if we need to adjust"; `docs/audits/2026-11-27-nhl-score-level.md`): the stored projections read 5.67 goals a game against 6.40 over the season's first 173 graded games and 5.61 against 6.03 over the last 40, the fit being 2025-26's lower-scoring league; the spread between teams (SD 0.3 goals a team, correlation with the goals scored ≈ 0.05 over the last 40) was left alone, too few games to refit it. **Stored before puck drop** (`stampProjectedScores`
   in `ingest.js` after every lineup read and model run → `stampScores`, `data/scores/<date>.json`: a game still to start
   takes the newest projection, a started or final game keeps its entry) and **graded on the History tab's scorecard**
   (`scoresReport` in `scorecard.js`, `scores` on the report: the stored projections, the run's Σ λ goals over the graded

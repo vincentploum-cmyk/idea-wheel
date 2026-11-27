@@ -3,7 +3,7 @@ import { SCORE, winProbability, sumSkaters, teamGoals, gameScore, gradeScores } 
 import { LEAGUE_POS } from '../lib/nhl-data/picks-pure';
 
 const b = SCORE.blend;
-const expected = ({ sum, own, opp, home, st = null }) => Math.exp(b.const + b.study * Math.log(sum) + b.ownGf * Math.log(own) + b.oppGa * Math.log(opp) + b.home * (home ? 1 : 0)
+const expected = ({ sum, own, opp, home, st = null }) => SCORE.level * Math.exp(b.const + b.study * Math.log(sum) + b.ownGf * Math.log(own) + b.oppGa * Math.log(opp) + b.home * (home ? 1 : 0)
   + b.oppGives * Math.log(st?.ppFor?.oppGives?.ratio ?? 1) + b.oppDraws * Math.log(st?.ppAgainst?.oppDraws?.ratio ?? 1) + b.oppKillLeak * Math.log(st?.kill?.leak ?? 1));
 
 describe('the predicted score', () => {
